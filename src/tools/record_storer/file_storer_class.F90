@@ -43,6 +43,8 @@ module file_storer_class
 !
       logical :: delete, direct_ 
 !
+      logical, dimension(:), allocatable :: written_to_record
+!
       type(direct_file), allocatable :: direct_file
       type(sequential_file), dimension(:), allocatable :: sequential_files
 !
@@ -274,6 +276,8 @@ contains
 !
       endif
 !
+      storer%written_to_record(record) = .true.
+!
    end subroutine set_file_storer
 !
 !
@@ -352,13 +356,15 @@ contains
 !
       if (storer%direct_) then 
 !
-         call storer%direct_file%delete_()
+         if (any(storer%written_to_record)) &
+            call storer%direct_file%delete_()
 !
       else 
 !
          do I = 1, storer%n_records
 !
-            call storer%sequential_files(I)%delete_()
+            if (storer%written_to_record(I)) &
+               call storer%sequential_files(I)%delete_()
 !
          enddo
 !
@@ -383,6 +389,12 @@ contains
 !
       call output%printf('debug', 'Doing preparations for file storer (a0)', &
                          chars=[storer%name_], fs='(/t3,a)')
+!
+!     Set up logical array telling us record has been written to or not 
+!     
+      call mem%alloc(storer%written_to_record, storer%n_records)
+!
+      storer%written_to_record = .false.
 !
 !     Set up index array telling us which record is 
 !     stored in which position
@@ -422,15 +434,15 @@ contains
 !
       call mem%dealloc(storer%record_indices, storer%n_records)
 !
+      if (storer%direct_) call storer%direct_file%close_('keep')
+!
       if (storer%delete) then 
 !
          call storer%delete_()
 !
-      else 
+      endif
 !
-         if (storer%direct_) call storer%direct_file%close_('keep')
-!
-      endif      
+      call mem%dealloc(storer%written_to_record, storer%n_records)     
 !
    end subroutine finalize_storer_file_storer
 !
