@@ -119,7 +119,7 @@ module wavefunction_class
 !
       procedure :: projected_atomic_orbitals => projected_atomic_orbitals_wavefunction
       procedure :: get_orbital_overlap       => get_orbital_overlap_wavefunction
-      procedure :: lovdin_orthonormalization => lovdin_orthonormalization_wavefunction
+      procedure :: lowdin_orthonormalization => lowdin_orthonormalization_wavefunction
 !
       procedure :: construct_ao_electrostatics &
                 => construct_ao_electrostatics_wavefunction       ! V_wx, E_wx, V(D), E(D)
@@ -951,7 +951,7 @@ contains
    end subroutine get_orbital_overlap_wavefunction
 !
 !
-   subroutine lovdin_orthonormalization_wavefunction(wf, orbital_coeff, S, n_orbitals, rank)
+   subroutine lowdin_orthonormalization_wavefunction(wf, orbital_coeff, S, n_orbitals, rank)
 !!
 !!    Lövdin orthonormalization 
 !!    Written by Linda Goletto and sarai D. Folkestad, Jun 2019
@@ -991,7 +991,9 @@ contains
 !
       integer :: i, info
 !
-      real(dp), parameter :: threshold = 1.0d-10
+      real(dp), parameter :: threshold = 1.0d-6 ! Threshold for linear dependency. 
+                                                ! Chosen such that 1/sqrt(lambda) will
+                                                ! not give numerical instabilities.
 !
 !     Diagonalize S
 !
@@ -1073,7 +1075,7 @@ contains
 !
       call mem%dealloc(orbital_coeff_copy, wf%n_ao, n_orbitals)
 !
-   end subroutine lovdin_orthonormalization_wavefunction
+   end subroutine lowdin_orthonormalization_wavefunction
 !
 !
    subroutine get_ao_v_wx_wavefunction(wf, V)

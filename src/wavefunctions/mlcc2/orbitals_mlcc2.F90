@@ -1058,7 +1058,7 @@ contains
 !
       call wf%get_orbital_overlap(PAO_coeff, n_active_aos, S)
 !
-      call wf%lovdin_orthonormalization(PAO_coeff, S, n_active_aos, rank)
+      call wf%lowdin_orthonormalization(PAO_coeff, S, n_active_aos, rank)
 !
       call mem%dealloc(S, n_active_aos, n_active_aos)
 !
@@ -1107,7 +1107,7 @@ contains
 !
          call wf%get_orbital_overlap(PAO_coeff, wf%n_ao, S)
 !
-         call wf%lovdin_orthonormalization(PAO_coeff, S, wf%n_ao, rank)
+         call wf%lowdin_orthonormalization(PAO_coeff, S, wf%n_ao, rank)
 !
          call mem%dealloc(S, wf%n_ao, wf%n_ao)
 !
