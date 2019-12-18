@@ -170,15 +170,12 @@ module ccs_class
       procedure :: destruct_gs_density_complex                   => destruct_gs_density_ccs_complex
 !
       procedure :: initialize_transition_densities               => initialize_transition_densities_ccs
-!
       procedure :: destruct_transition_densities                 => destruct_transition_densities_ccs
 !
       procedure :: initialize_right_excitation_energies          => initialize_right_excitation_energies_ccs
-!
       procedure :: destruct_right_excitation_energies            => destruct_right_excitation_energies_ccs
 !
       procedure :: initialize_left_excitation_energies           => initialize_left_excitation_energies_ccs
-!
       procedure :: destruct_left_excitation_energies             => destruct_left_excitation_energies_ccs
 !
       procedure :: initialize_core_MOs                           => initialize_core_MOs_ccs 

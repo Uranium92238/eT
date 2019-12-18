@@ -65,6 +65,8 @@ module shell_class
 !
       procedure, nopass :: get_angular_momentum_label => get_angular_momentum_label_shell
 !
+      procedure :: cleanup                            => cleanup_shell 
+!
    end type shell
 !
 !
@@ -335,6 +337,21 @@ contains
       get_n_primitives_shell = sh%n_primitives
 !
    end function get_n_primitives_shell
+!
+!
+   subroutine cleanup_shell(sh)
+!!
+!!    Cleanup
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+      implicit none
+!
+      class(shell) :: sh
+!
+      call sh%destruct_exponents()   
+      call sh%destruct_coefficients()
+!
+   end subroutine cleanup_shell
 !
 !
    subroutine get_angular_momentum_label_shell(l, ao, label, cartesian)
