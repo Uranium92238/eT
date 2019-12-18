@@ -1044,50 +1044,43 @@ contains
    end subroutine construct_ao_G_1der_hf
 !
 !
-   module subroutine add_pcm_fock_term_hf(wf)
+   subroutine add_pcm_fock_term_hf(wf)
 !!
-!!    Add Fock PCM 
+!!    Update Fock PCM 
 !!    Written by Tommaso Giovannini, Oct 2019 
 !!
 !!    The QM Fock is updated with the contributions coming 
 !!    from the PCM:
-!!       q*V_αβ
+!!       q*V_wx
 !!
 !!    Done by interfacing to PCMSolver
 !!
-      use pcmsolver
       implicit none
 !
       class(hf) :: wf
 !
-      character(kind=c_char, len=*), parameter :: mep_lbl = 'NucMEP'
-      character(kind=c_char, len=*), parameter :: asc_lbl = 'NucASC'
       integer :: i
 !     
 ! 
-      if(.not.allocated(wf%system%pcm%pcm_rhs))   call mem%alloc(wf%system%pcm%pcm_rhs, wf%system%pcm%n_tesserae)
-!
-      call zero_array(wf%pcm_fock,wf%n_ao*wf%n_ao)
-      call zero_array(wf%system%pcm%pcm_rhs,wf%system%pcm%n_tesserae)
+      call zero_array(wf%pcm_fock, wf%n_ao*wf%n_ao)
+      call zero_array(wf%system%pcm%pcm_rhs, wf%system%pcm%n_tesserae)
 !      
 !     electrostatic potential contracted with density : \sum_i V_mu(D_mu)(r_i)
 !
-      call wf%construct_ao_electrostatics(0,1,'prop',wf%system%pcm%n_tesserae,wf%system%pcm%grid_coord*bohr_to_angstrom, &
-                                          property_points=wf%system%pcm%pcm_rhs,ao_density=wf%ao_density) 
+      call wf%construct_ao_electrostatics(0, 1, 'prop', &
+                                          wf%system%pcm%n_tesserae, &
+                                          wf%system%pcm%grid_coord*bohr_to_angstrom, &
+                                          property_points=wf%system%pcm%pcm_rhs, &
+                                          ao_density=wf%ao_density) 
 !      
 !     solve q=D^-1 (V(D)) 
 ! 
-      call pcmsolver_set_surface_function(wf%system%pcm%pcm_context, int(wf%system%pcm%n_tesserae, kind=c_int), &
-                                          -wf%system%pcm%pcm_rhs,pcmsolver_fstring_to_carray(mep_lbl))
+      call wf%system%pcm%set_surface_function('NucMEP')
 !                                          
-      call pcmsolver_compute_asc(wf%system%pcm%pcm_context, &
-                                 pcmsolver_fstring_to_carray(mep_lbl), &
-                                 pcmsolver_fstring_to_carray(asc_lbl), &
-                                 irrep=0_c_int)
-!                                 
-      call pcmsolver_get_surface_function(wf%system%pcm%pcm_context, int(wf%system%pcm%n_tesserae, kind=c_int), &
-                                          wf%system%pcm%charges,pcmsolver_fstring_to_carray(asc_lbl))
-!
+      call wf%system%pcm%compute_asc('NucMEP', 'NucASC')
+!                                          
+      call wf%system%pcm%get_surface_function('NucASC')
+!                                          
       call output%print_separator('verbose', 67, fs='(/t3,a)')
 !
       call output%printf('v', 'Atom         PCM ASC            PCM RHS', fs='(t6,a)')
@@ -1104,8 +1097,11 @@ contains
 !
 !     Fock creation: F_munu = \sum_i q_i V_munu(r_i)
 !
-      call wf%construct_ao_electrostatics(0,0,'fock',wf%system%pcm%n_tesserae,wf%system%pcm%grid_coord*bohr_to_angstrom, & 
-                                          elec_fock=wf%pcm_fock,charges=wf%system%pcm%charges) 
+      call wf%construct_ao_electrostatics(0, 0, 'fock', &
+                                          wf%system%pcm%n_tesserae, &
+                                          wf%system%pcm%grid_coord*bohr_to_angstrom, & 
+                                          elec_fock=wf%pcm_fock, &
+                                          charges=wf%system%pcm%charges) 
 !
       wf%ao_fock = wf%ao_fock + half*wf%pcm_fock
 !

@@ -94,8 +94,8 @@ if (args.verbose):
 #([file].pcm specified in input continuum section) 
 if (args.pcm_input_file):
     pcm_input_file = os.path.abspath(args.pcm_input_file)
-    PCMSolver_GOPCM = '${PCMSolver_INCLUDE_DIR}'[:-7]+'bin/'
-    os.environ['PCMSOLVER_GO_PCM'] = PCMSolver_GOPCM
+    PCMSolver_GOPCM = os.path.split('${PCMSolver_INCLUDE_DIR}')
+    PCMSolver_GOPCM = os.path.join(PCMSolver_GOPCM[0], 'bin', 'go_pcm.py')
 
     if (args.verbose):
         print("PCM inputfile:", pcm_input_file)
@@ -163,10 +163,27 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
         print("Ready to run eT in", scratch, "with", omps, "threads")
 
     # preprocess for PCMSolver external file
+    # have to use subprocess to get the module loading right
     if (args.pcm_input_file):
-       PCMSolver_libpy = '${PCMSolver_INCLUDE_DIR}'[:-7]
-       os.environ["PYTHONPATH"] = PCMSolver_libpy+'lib/python:$PYTHONPATH'
-       os.system('python3 '+PCMSolver_GOPCM+'go_pcm.py --inp pcmsolver.inp')
+        PCMSolver_libpy = '${PCMSolver_PYMOD}'
+        os.environ["PYTHONPATH"] = PCMSolver_libpy+':$PYTHONPATH'
+        
+        pcmprocess = subprocess.run('python3 ' + PCMSolver_GOPCM + ' --inp pcmsolver.inp',
+                                     shell=True,
+                                     stderr=subprocess.PIPE,
+                                     stdout=subprocess.PIPE)
+        pcmerror = pcmprocess.stdout.decode('utf8') + pcmprocess.stderr.decode('utf8') 
+
+        if (pcmerror != ''):
+            if (not args.ignore_errors):
+                something_wrong = True
+            print()
+            print("Error message for pcm input file", pcm_input_file, ":")
+            print(pcmerror)
+
+        if (something_wrong):
+            print("Stopping now")
+            break
         
     # Run eT
     p = subprocess.run(executable,

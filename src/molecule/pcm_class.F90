@@ -30,6 +30,8 @@ module pcm_class
    use global_in, only : input
    use global_out, only : output
    use parameters
+!
+#ifdef HAS_PCMSOLVER
    use atomic_class, only: atomic
    use memory_manager_class, only: mem
    use, intrinsic :: iso_c_binding, only:c_char, c_int, c_null_char
@@ -60,6 +62,9 @@ module pcm_class
       procedure :: pcmsolver_input                 => pcmsolver_input_pcm
       procedure :: print_description_and_settings  => print_description_and_settings_pcm
 !
+      procedure :: set_surface_function            => set_surface_function_pcm
+      procedure :: get_surface_function            => get_surface_function_pcm
+      procedure :: compute_asc                     => compute_asc_pcm
 !
    end type pcm
 !
@@ -112,7 +117,7 @@ contains
       endif
 !                                  
       molecule%n_tesserae = pcmsolver_get_cavity_size(molecule%pcm_context)
-!                                  
+!               
       call mem%alloc(molecule%grid_coord, 3*molecule%n_tesserae)
 !      
       molecule%grid_coord = zero
@@ -381,5 +386,220 @@ contains
 !
    end subroutine print_description_and_settings_pcm
 !
+!
+   subroutine set_surface_function_pcm(molecule, mep_lbl)
+!!
+!!    Set surface function
+!!    Written by Rolf Heilemann Myhre, Dec 2019
+!!
+!!    Wrapper for pcmsolvers set_surface_function
+!!
+      implicit none 
+!
+      class(pcm) :: molecule  
+      character(len=*), intent(in) :: mep_lbl
+!
+      call pcmsolver_set_surface_function(molecule%pcm_context, &
+                                          int(molecule%n_tesserae, kind=c_int), &
+                                          -molecule%pcm_rhs, &
+                                          pcmsolver_fstring_to_carray(mep_lbl))
+!                                          
+   end subroutine set_surface_function_pcm
+!
+!
+   subroutine get_surface_function_pcm(molecule, asc_lbl)
+!!
+!!    Set surface function
+!!    Written by Rolf Heilemann Myhre, Dec 2019
+!!
+!!    Wrapper for pcmsolvers set_surface_function
+!!
+      implicit none 
+!
+      class(pcm) :: molecule  
+      character(len=*), intent(in) :: asc_lbl
+!
+      call pcmsolver_get_surface_function(molecule%pcm_context, &
+                                          int(molecule%n_tesserae, kind=c_int), &
+                                          molecule%charges, &
+                                          pcmsolver_fstring_to_carray(asc_lbl))
+!
+   end subroutine get_surface_function_pcm
+!
+!
+   subroutine compute_asc_pcm(molecule, mep_lbl, asc_lbl)
+!!
+!!    Compute ASC
+!!    Written by Rolf Heilemann Myhre, Dec 2019
+!!
+!!    Wrapper for pcmsolvers compute_asc
+!!
+      implicit none 
+!
+      class(pcm) :: molecule  
+      character(len=*), intent(in) :: mep_lbl
+      character(len=*), intent(in) :: asc_lbl
+!
+      call pcmsolver_compute_asc(molecule%pcm_context, &
+                                 pcmsolver_fstring_to_carray(mep_lbl), &
+                                 pcmsolver_fstring_to_carray(asc_lbl), &
+                                 irrep=0_c_int)
+!                                 
+   end subroutine compute_asc_pcm
+!
+#else
+!
+!  Dummy type to scream errors at you if you compile without PCMSolver
+!  but call pcm in input
+!
+   implicit none
+!
+   type :: pcm
+!
+      real(dp), dimension(:), allocatable   :: charges
+      real(dp), dimension(:), allocatable   :: pcm_rhs
+      real(dp), dimension(:), allocatable   :: grid_coord
+      integer :: n_tesserae             
+!      
+   contains
+!
+      procedure :: prepare                         => prepare_pcm
+      procedure :: cleanup                         => cleanup_pcm
+      procedure :: print_description_and_settings  => print_description_and_settings_pcm
+!
+      procedure :: set_surface_function            => set_surface_function_pcm
+      procedure :: get_surface_function            => get_surface_function_pcm
+      procedure :: compute_asc                     => compute_asc_pcm
+!
+   end type pcm
+!
+contains
+!
+!
+   subroutine prepare_pcm(molecule, n_atoms_qm, qm_coordinates, qm_charges)
+!!
+!!    Prepare PCM dummy
+!!    Written by Rolf Heilemann Myhre, Dec 2019
+!!
+      implicit none
+!
+      class(pcm) :: molecule
+!
+      integer, intent(in)                             :: n_atoms_qm
+      real(dp), dimension(3*n_atoms_qm), intent(out)  :: qm_coordinates
+      real(dp), dimension(n_atoms_qm), intent(out)    :: qm_charges
+!
+      call output%error_msg('prepare_pcm called, but eT is not compiled with pcm. &
+                            &Use --pcm when running setup to link to PCMSolver.')
+!
+!     Some assignments to keep the compiler from complaining
+      qm_coordinates = zero
+      qm_charges = zero
+      molecule%n_tesserae = 0
+!
+   end subroutine prepare_pcm
+!
+!
+   subroutine cleanup_pcm(molecule)
+!!
+!!    Clean Up dummy
+!!    Written by Rolf Heilemann Myhre, Dec 2019
+!!
+      implicit none
+!
+      class(pcm) :: molecule
+!
+      call output%error_msg('cleanup_pcm called, but eT is not compiled with pcm. &
+                            & Use --pcm when running setup to link to PCMSolver.')
+!
+!     Some assignment to keep the compiler from complaining
+      molecule%n_tesserae = 0
+!
+   end subroutine cleanup_pcm
+!
+!
+   subroutine print_description_and_settings_pcm(molecule)
+!!
+!!    Print description and settings dummy
+!!    Written by Rolf Heilemann Myhre, Dec 2019
+!!
+      implicit none 
+!
+      class(pcm) :: molecule  
+!
+      call output%error_msg('print_description_and_settings_pcm called, &
+                            &but eT is not compiled with pcm. &
+                            &Use --pcm when running setup to link to PCMSolver.')
+!
+!     Some assignment to keep the compiler from complaining
+      molecule%n_tesserae = 0
+!
+   end subroutine print_description_and_settings_pcm
+!
+!
+   subroutine set_surface_function_pcm(molecule, mep_lbl)
+!!
+!!    Set surface function dummy
+!!    Written by Rolf Heilemann Myhre, Dec 2019
+!!
+      implicit none 
+!
+      class(pcm) :: molecule  
+      character(len=*), intent(in) :: mep_lbl
+!
+      call output%error_msg('set_surface_function_pcm called with (a0), &
+                            &but eT is not compiled with pcm. &
+                            &Use --pcm when running setup to link to PCMSolver.', &
+                             chars=[mep_lbl])
+!
+!     Some assignment to keep the compiler from complaining
+      molecule%n_tesserae = 0
+!                                          
+   end subroutine set_surface_function_pcm
+!
+!
+   subroutine get_surface_function_pcm(molecule, asc_lbl)
+!!
+!!    Get surface function dummy
+!!    Written by Rolf Heilemann Myhre, Dec 2019
+!!
+      implicit none 
+!
+      class(pcm) :: molecule  
+      character(len=*), intent(in) :: asc_lbl
+!
+      call output%error_msg('get_surface_function_pcm called with (a0), &
+                            &but eT is not compiled with pcm. &
+                            &Use --pcm when running setup to link to PCMSolver.', &
+                             chars=[asc_lbl])
+!
+!     Some assignment to keep the compiler from complaining
+      molecule%n_tesserae = 0
+!                                          
+   end subroutine get_surface_function_pcm
+!
+!
+   subroutine compute_asc_pcm(molecule, mep_lbl, asc_lbl)
+!!
+!!    Compute ASC dummy
+!!    Written by Rolf Heilemann Myhre, Dec 2019
+!!
+      implicit none 
+!
+      class(pcm) :: molecule  
+      character(len=*), intent(in) :: mep_lbl
+      character(len=*), intent(in) :: asc_lbl
+!
+      call output%error_msg('get_surface_function_pcm called with (a0) and (a0), &
+                            &but eT is not compiled with pcm. &
+                            &Use --pcm when running setup to link to PCMSolver.', &
+                             chars=[mep_lbl, asc_lbl])
+!
+!     Some assignment to keep the compiler from complaining
+      molecule%n_tesserae = 0
+!                                          
+   end subroutine compute_asc_pcm
+!
+#endif
 !
 end module pcm_class
