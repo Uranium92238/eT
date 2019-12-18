@@ -581,7 +581,7 @@ contains
       spectrum_file = output_file(trim(wf%system%name_)//'_'// &
                trim(adjustl(chain_length_string))//'_'//component_string(component))
 !
-      call spectrum_file%open_
+      call spectrum_file%open_()
 !
 !     Print entire spectrum
 !
@@ -601,6 +601,8 @@ contains
                                     fs='(a)', ll=500)
 !
       enddo
+!
+      call spectrum_file%close_()
 !
 !     Print summary for eT.out
 !
