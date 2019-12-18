@@ -88,6 +88,11 @@ def input_parser():
     parser.add_argument('-CXX-flags', '--extra-CXX-flags',
                          help="additional C++ flags")
 
+#Link to optional libraries
+    parser.add_argument('--pcm',
+                         help="Enable and link to PCMSolver",
+                         action='store_true',
+                         default=False)
 
     args = parser.parse_args()
 
@@ -142,6 +147,7 @@ def construct_command(args):
     command += " -DENABLE_THREADED_MKL=" + cmake_translator(args.omp)
     command += " -DENABLE_RUNTIME_CHECKS=" + cmake_translator(args.runtime_checks)
     command += " -DENABLE_FORCED_BATCHING=" + cmake_translator(args.forced_batching)
+    command += " -DENABLE_PCMSOLVER=" + cmake_translator(args.pcm)
 
     if (args.libint_lib):
         command += " -DLIBINT2_ROOT=" + args.libint_lib   
