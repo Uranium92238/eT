@@ -299,6 +299,7 @@ contains
 !
       call wf%general_cc_preparations(system)
       call wf%set_variables_from_template_wf(template_wf)
+      call wf%print_banner()
 !
       wf%need_g_abcd = .true.
 !
@@ -309,6 +310,8 @@ contains
       wf%need_g_abcd     = .true.
 !
       call wf%initialize_fock()
+!
+      call wf%print_amplitude_info()
 !
    end function new_ccsd
 !

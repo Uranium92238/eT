@@ -157,6 +157,8 @@ module doubles_class
 !
       procedure :: make_doubles_complex                  => make_doubles_complex_doubles
 !
+      procedure :: print_amplitude_info                  => print_amplitude_info_doubles
+!
    end type doubles
 !
    interface
@@ -178,6 +180,24 @@ module doubles_class
    end interface
 !
 contains
+!
+!
+   subroutine print_amplitude_info_doubles(wf)
+!!
+!!    Print amplitude info
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+!!
+      implicit none
+!
+      class(doubles), intent(in) :: wf
+!
+      call wf%ccs%print_amplitude_info()
+!
+      call output%printf('m', 'Double excitation amplitudes:  (i0)', &
+            ints=[wf%n_t2], fs='(t6,a)')
+!
+   end subroutine print_amplitude_info_doubles
 !
 !
    subroutine get_cvs_projector_doubles(wf, projector, n_cores, core_MOs)
