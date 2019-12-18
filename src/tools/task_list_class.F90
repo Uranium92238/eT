@@ -123,6 +123,8 @@ contains
 !!
 !!    'append_fs' : optional argument for format of appended string
 !!
+      use timings_class, only: timing
+!
       implicit none
 !
       class(task_list), intent(in) :: tasks
@@ -141,15 +143,20 @@ contains
             call output%printf('m', '(i0)) ' // trim(tasks%descriptions(i)), &
                                ints=[i], fs='(//t3,a)')
 !
+            call timing%printf('m', '(i0)) ' // trim(tasks%descriptions(i)), &
+                               ints=[i], fs='(//t3,a)')
+!
             if (present(append_string)) then
 !
                if (present(append_fs)) then
 !
                   call output%printf('m', append_string, fs=append_fs)
+                  call timing%printf('m', append_string, fs=append_fs)
 !
                else
 !
                   call output%printf('m', append_string, fs='(//t3,a)')
+                  call timing%printf('m', append_string, fs='(//t3,a)')
 !
                endif
 !
