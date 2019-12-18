@@ -157,6 +157,8 @@ program eT_program
 !
    call finalize_libint() ! No longer safe to use Libint
 !
+   call timing%printf('m', ":: Total time", fs='(//t3,a)')
+   call timing%print_separator('m', 16, '=')
    call eT_timer%turn_off()
 !
    call system%cleanup()
