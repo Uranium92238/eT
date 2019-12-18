@@ -2536,6 +2536,14 @@ contains
             call mem%dealloc(cholesky_basis, solver%n_cholesky + n_qual_aop, 3)
             call mem%dealloc(screening_vector, n_sig_aop)
 !
+            call mem%dealloc(sig_sp_to_first_sig_aop, n_sig_sp + 1)
+            call mem%dealloc(sig_sp_to_shells, n_sig_sp, 2)
+            call mem%dealloc(sig_aop_to_aos, n_sig_aop, 2)
+            call mem%dealloc(new_sig_sp, (n_sig_sp))
+!
+            call mem%dealloc(qual_aop, n_qual_aop, 3)
+            call mem%dealloc(qual_sp, n_qual_sp, 3)
+!
             solver%n_cholesky = solver%n_cholesky + n_new_cholesky
 !
             done = .true.
@@ -2629,6 +2637,8 @@ contains
 !
       call mem%dealloc(basis_shell_info, n_sp_in_basis, 4)
       call mem%dealloc(cholesky_basis_new, solver%n_cholesky, 3)
+!
+      call mem%dealloc(sig_sp, solver%n_sp)
 !
    end subroutine determine_cholesky_basis_eri_cd
 !
@@ -4078,6 +4088,7 @@ contains
       enddo
 !
       call mem%dealloc(L_J, solver%n_cholesky)
+      call mem%dealloc(construct_sp, solver%n_sp)
       call system%ao_cholesky_file%close_('keep')
 !
       call solver%cholesky_ao_vectors_info%close_()
