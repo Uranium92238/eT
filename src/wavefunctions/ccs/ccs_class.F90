@@ -63,8 +63,6 @@ module ccs_class
 !
       logical :: need_g_abcd
 !
-      logical :: mlhf_reference
-!
       type(sequential_file) :: t_file, tbar_file
       type(sequential_file) :: excitation_energies_file
       type(sequential_file) :: restart_file
@@ -104,6 +102,9 @@ module ccs_class
       integer, dimension(:), allocatable :: core_MOs
 !
    contains
+!
+      procedure :: print_banner                                  => print_banner_ccs
+      procedure :: print_amplitude_info                          => print_amplitude_info_ccs
 !
       procedure :: construct_and_save_mo_cholesky                => construct_and_save_mo_cholesky_ccs
 !
@@ -191,7 +192,6 @@ module ccs_class
 !
       procedure :: read_settings                                 => read_settings_ccs
       procedure :: read_cvs_settings                             => read_cvs_settings_ccs
-      procedure :: read_mlhf_settings                            => read_mlhf_settings_ccs
 !
       procedure :: read_singles_vector                           => read_singles_vector_ccs
       procedure :: save_amplitudes                               => save_amplitudes_ccs
@@ -544,6 +544,7 @@ contains
 !
       call wf%general_cc_preparations(system)
       call wf%set_variables_from_template_wf(template_wf)
+      call wf%print_banner()
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
@@ -551,6 +552,8 @@ contains
       wf%need_g_abcd     = .false.
 !
       call wf%initialize_fock()
+!
+      call wf%print_amplitude_info()
 !
    end function new_ccs
 !
@@ -575,7 +578,6 @@ contains
 !     Logicals for special methods
 !
       wf%bath_orbital = .false.
-      wf%mlhf_reference = .false.
       wf%cvs = .false.
       wf%need_g_abcd = .false.
 !
@@ -584,6 +586,67 @@ contains
       call wf%read_settings()
 !
    end subroutine general_cc_preparations_ccs
+!
+!
+   subroutine print_banner_ccs(wf)
+!!
+!!    Print banner
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      character(len=200) :: name_
+!
+      name_ = trim(convert_to_uppercase(wf%name_)) // ' wavefunction'
+!
+      call output%printf('m', ':: (a0)', chars=[name_], fs='(//t3,a)')
+      call output%print_separator('m', len_trim(name_) + 6, '=')
+!
+!     Print settings
+!
+      call output%printf('m', 'Bath orbital(s):         (l1)', &
+            logs=[wf%bath_orbital], fs='(/t6, a)')
+!
+      call output%printf('m', 'Core-valence separation: (l1)', &
+            logs=[wf%bath_orbital], fs='(t6, a)')
+!
+!     Print orbital space info for cc
+!
+      call output%printf('m', ' - Number of orbitals:', &
+                         fs='(/t3,a)')
+      call output%printf('m', 'Occupied orbitals:    (i0)', &
+                         ints=[wf%n_o], fs='(/t6,a)')
+      call output%printf('m', 'Virtual orbitals:     (i0)', &
+                         ints=[wf%n_v], fs='(t6,a)')
+      call output%printf('m', 'Molecular orbitals:   (i0)', &
+                         ints=[wf%n_mo], fs='(t6,a)')
+      call output%printf('m', 'Atomic orbitals:      (i0)', &
+                         ints=[wf%n_ao], fs='(t6,a)')
+!
+   end subroutine print_banner_ccs
+!
+!
+   subroutine print_amplitude_info_ccs(wf)
+!!
+!!    Print amplitude info
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+!     Print orbital space info for cc
+!
+      call output%printf('m', ' - Number of ground state amplitudes:', fs='(/t3,a)')     
+!
+      call output%printf('m', 'Single excitation amplitudes:  (i0)', &
+            ints=[wf%n_t1], fs='(/t6,a)')
+
+!
+   end subroutine print_amplitude_info_ccs
 !
 !
    subroutine set_variables_from_template_wf_ccs(wf, template_wf)
@@ -631,19 +694,6 @@ contains
          call dcopy(wf%n_mo**2, template_wf%mo_fock_frozen, 1, wf%mo_fock_frozen, 1)
 !
       endif
-!
-!     Print orbital space info for cc
-!
-      call output%printf('m', ' - Number of orbitals for coupled cluster calculation', &
-                         fs='(/t3,a)')
-      call output%printf('m', 'Number of occupied orbitals:    (i12)', &
-                         ints=[wf%n_o], fs='(/t6,a)')
-      call output%printf('m', 'Number of virtual orbitals:     (i12)', &
-                         ints=[wf%n_v], fs='(t6,a)')
-      call output%printf('m', 'Number of molecular orbitals:   (i12)', &
-                         ints=[wf%n_mo], fs='(t6,a)')
-      call output%printf('m', 'Number of atomic orbitals:      (i12)', &
-                         ints=[wf%n_ao], fs='(t6,a)')
 !
    end subroutine set_variables_from_template_wf_ccs
 !
@@ -699,25 +749,6 @@ contains
       endif
 !
    end subroutine read_settings_ccs
-!
-!
-   subroutine read_mlhf_settings_ccs(wf)
-!!
-!!    Read mlhf settings 
-!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
-!!
-!!    Looks for "mlhf" in the method section of the input
-!!
-!!    This routine is read at cc level to figure out if there
-!!    should be a mlhf inactive fock contribution
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (input%requested_keyword_in_section('mlhf', 'method')) wf%mlhf_reference = .true.
-!
-   end subroutine read_mlhf_settings_ccs
 !
 !
    subroutine read_hf_ccs(wf)

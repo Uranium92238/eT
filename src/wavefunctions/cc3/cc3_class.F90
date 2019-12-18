@@ -272,6 +272,7 @@ contains
 !
       call wf%general_cc_preparations(system)
       call wf%set_variables_from_template_wf(template_wf)
+      call wf%print_banner()
 !
       wf%n_t1 = (wf%n_o)*(wf%n_v)
       wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
@@ -281,6 +282,8 @@ contains
       wf%need_g_abcd     = .true.
 !
       call wf%initialize_fock()
+!
+      call wf%print_amplitude_info()
 !
    end function new_cc3
 !

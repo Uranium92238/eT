@@ -99,6 +99,8 @@ module mlcc2_class
 !
    contains
 !
+      procedure :: print_amplitude_info                              => print_amplitude_info_mlcc2
+!
       procedure :: cleanup                                           => cleanup_mlcc2
 !
 !     Initializations and destructions
@@ -271,6 +273,7 @@ contains
 !
       call wf%general_cc_preparations(system)
       call wf%set_variables_from_template_wf(template_wf)
+      call wf%print_banner()
 !
       if (wf%bath_orbital) call output%error_msg('Bath orbitals not yet implemented for MLCC2')
 !
@@ -281,7 +284,28 @@ contains
 !
       call wf%initialize_fock()
 !
+      call wf%print_amplitude_info()
+!
    end function new_mlcc2
+!
+!
+   subroutine print_amplitude_info_mlcc2(wf)
+!!
+!!    Print amplitude info
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+!!
+      implicit none
+!
+      class(mlcc2), intent(in) :: wf
+!
+      call wf%ccs%print_amplitude_info()  
+!
+      call output%printf('m', 'Double excitation amplitudes:  (i0)', &
+            ints=[wf%n_x2], fs='(t6,a)')
+!
+   end subroutine print_amplitude_info_mlcc2
+!
 !
 !
    subroutine print_orbital_space_mlcc2(wf)
@@ -293,7 +317,7 @@ contains
 !
       class(mlcc2) :: wf
 !
-      call output%printf('m', '- Summary of MLCC2 orbital partitioning:',fs='(/t3,a)')
+      call output%printf('m', '- MLCC2 orbital partitioning:',fs='(/t3,a)')
 !
       call output%printf('m', 'Orbital type: ' // trim(wf%cc2_orbital_type), fs='(/t6,a)')
       call output%printf('m', 'Number occupied cc2 orbitals: (i4)', &
