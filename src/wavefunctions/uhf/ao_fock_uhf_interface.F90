@@ -132,7 +132,7 @@
 !!
 !!    The QM Fock is updated with the contributions coming 
 !!    from the PCM:
-!!       q*V_αβ
+!!       q*V_wx
 !!
 !!    Done by interfacing to PCMSolver
 !!

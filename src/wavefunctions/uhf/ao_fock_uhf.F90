@@ -441,7 +441,7 @@ contains
    end subroutine update_fock_mm_uhf
 !
 !
-   subroutine update_fock_pcm_uhf(wf)
+   module subroutine update_fock_pcm_uhf(wf)
 !!
 !!    Update Fock PCM 
 !!    Written by Tommaso Giovannini, Oct 2019 

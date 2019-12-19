@@ -252,12 +252,12 @@
 !
    module subroutine add_pcm_fock_term_hf(wf)
 !!
-!!    Add Fock PCM 
+!!    Update Fock PCM 
 !!    Written by Tommaso Giovannini, Oct 2019 
 !!
 !!    The QM Fock is updated with the contributions coming 
 !!    from the PCM:
-!!       q*V_αβ
+!!       q*V_wx
 !!
 !!    Done by interfacing to PCMSolver
 !!

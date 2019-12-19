@@ -1044,7 +1044,7 @@ contains
    end subroutine construct_ao_G_1der_hf
 !
 !
-   subroutine add_pcm_fock_term_hf(wf)
+   module subroutine add_pcm_fock_term_hf(wf)
 !!
 !!    Update Fock PCM 
 !!    Written by Tommaso Giovannini, Oct 2019 
