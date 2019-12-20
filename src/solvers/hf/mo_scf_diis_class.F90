@@ -53,6 +53,9 @@ module mo_scf_diis_class
       character(len=200) :: storage
       logical :: records_in_memory
 !
+      logical  :: cumulative
+      real(dp) :: cumulative_threshold
+!
    contains
 !
       procedure :: prepare                      => prepare_mo_scf_diis
@@ -101,6 +104,8 @@ contains
       solver%energy_threshold   = 1.0D-6
       solver%gradient_threshold = 1.0D-6
       solver%storage            = 'memory'
+      solver%cumulative             = .false.
+      solver%cumulative_threshold   = 1.0d-2
 !
       call solver%read_settings()
 !
@@ -208,6 +213,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable  :: F
       real(dp), dimension(:,:), allocatable  :: G
+      real(dp), dimension(:,:), allocatable  :: prev_ao_density
 !
       integer :: dim_gradient, dim_fock
 !
@@ -238,6 +244,7 @@ contains
 !
       call mem%alloc(G, wf%n_v, wf%n_o)
       call mem%alloc(F, wf%n_mo, wf%n_mo)
+      call mem%alloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
 !
       call wf%get_roothan_hall_mo_gradient(G)
 !
@@ -302,11 +309,37 @@ contains
 !
             prev_energy = wf%energy
 !
+!           Switch to cumulative Fock construction?
+!
+            if (.not. solver%cumulative .and. &
+                max_grad .lt. solver%cumulative_threshold) then 
+!
+               solver%cumulative = .true.
+!
+               call output%printf('v', 'Switching to Fock construction using &
+                                  &density differences.', fs='(t3,a)')
+!
+            endif
+!
+            if (solver%cumulative) call wf%get_ao_density_sq(prev_ao_density)
+!
 !           Update Fock, coefficients, density and gradient
 !
             call wf%roothan_hall_update_orbitals_mo()  ! DIIS F => C
             call wf%update_ao_density()                ! C => D
-            call wf%update_fock_and_energy_mo()        ! MO F
+!
+!           Construct updated Fock matrix from the density 
+!
+            if (solver%cumulative) then 
+!
+               call wf%update_fock_and_energy_mo(prev_ao_density) ! MO F
+!
+            else 
+!
+               call wf%update_fock_and_energy_mo() ! MO F
+!
+            endif
+!      
             call wf%get_roothan_hall_mo_gradient(G)    ! MO G
             max_grad = get_abs_max(G, dim_gradient)
 !
@@ -337,6 +370,7 @@ contains
 !
       call mem%dealloc(G, wf%n_v, wf%n_o)
       call mem%dealloc(F, wf%n_mo, wf%n_mo)
+      call mem%dealloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
 !
 !     Initialize engine (make final deallocations, and other stuff)
 !
