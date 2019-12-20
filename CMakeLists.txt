@@ -104,7 +104,7 @@ set(eT_CXX_sources
 
 add_executable(eT ${eT_fortran_sources} ${eT_CXX_sources})
 
-target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} ${PCMSolver_LIBRARY})
+target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} ${PCMSolver_LIBRARY} ${EXTRA_LINKER_FLAGS})
 
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
 
