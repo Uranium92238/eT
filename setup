@@ -86,7 +86,11 @@ def input_parser():
     parser.add_argument('-F-flags', '--extra-F-flags',
                          help="additional Fortran flags")
     parser.add_argument('-CXX-flags', '--extra-CXX-flags',
-                         help="additional C++ flags")
+                        help="additional C++ flags")
+    parser.add_argument('-cmake-flags', '--extra-cmake-flags',
+                        help="additional CMake flags")
+    parser.add_argument('-linker-flags', '--extra-linker-flags',
+                        help="additional linker flags")
 
 #Link to optional libraries
     parser.add_argument('--pcm',
@@ -160,9 +164,13 @@ def construct_command(args):
         command += " -DCMAKE_C_COMPILER=" + args.C_compiler
 
     if (args.extra_F_flags):
-        command += " -DEXTRA_Fortran_FLAGS=" + args.extra_F_flags   
+        command += " -DEXTRA_Fortran_FLAGS=" + '"' + args.extra_F_flags.strip() + '"'
     if (args.extra_CXX_flags):
-        command += " -DEXTRA_CXX_FLAGS=" + args.extra_CXX_flags   
+        command += " -DEXTRA_CXX_FLAGS=" + '"' + args.extra_CXX_flags.strip() + '"'
+    if (args.extra_linker_flags):
+        command += " -DEXTRA_LINKER_FLAGS=" + '"' + args.extra_linker_flags.strip() + '"'
+    if (args.extra_cmake_flags):
+        command += ' ' + args.extra_cmake_flags.strip()
 
     if(args.blas_type):
         command += " -DBLAS_TYPE=" + args.blas_type
