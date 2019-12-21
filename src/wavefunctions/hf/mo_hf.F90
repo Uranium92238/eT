@@ -263,27 +263,45 @@ contains
 !
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
 !
+      real(dp), dimension(:,:), allocatable :: G
+!
       type(timings) :: timer
-!
-      if (present(prev_ao_density)) then ! Hack (should be fixed asap)
-!
-!        Nothing to do here 
-!
-      endif
 !
       timer = timings('AO Fock construction', pl='normal')
       call timer%turn_on()
 !
-!     AO fock construction and energy calculation
+      if (present(prev_ao_density)) then 
 !
-!     Construct the two electron part of the Fock matrix (G),
-!     and add the contribution to the Fock matrix
+!        Nothing to do here 
 !
-      call wf%construct_ao_G(wf%ao_density, wf%ao_fock)
+!        Construct the two electron part of the Fock matrix (G),
+!        and add the contribution to the Fock matrix
 !
-!     Add the one-electron part
+         call daxpy(wf%n_ao**2, -one, prev_ao_density, 1, wf%ao_density, 1)
 !
-      call daxpy(wf%n_ao**2, one, wf%ao_h, 1, wf%ao_fock, 1)
+         call mem%alloc(G, wf%n_ao, wf%n_ao)
+         call wf%construct_ao_G(wf%ao_density, G)
+!
+         call daxpy(wf%n_ao**2, one, G, 1, wf%ao_fock, 1)
+!
+         call mem%dealloc(G, wf%n_ao, wf%n_ao)
+!
+         call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density, 1)         
+!
+      else
+!
+!        AO fock construction and energy calculation
+!
+!        Construct the two electron part of the Fock matrix (G),
+!        and add the contribution to the Fock matrix
+!
+         call wf%construct_ao_G(wf%ao_density, wf%ao_fock)
+!
+!        Add the one-electron part
+!
+         call daxpy(wf%n_ao**2, one, wf%ao_h, 1, wf%ao_fock, 1)
+!
+      endif
 !
       call timer%turn_off()
 !
