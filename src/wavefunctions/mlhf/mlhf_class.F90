@@ -404,14 +404,6 @@ contains
       real(dp), dimension(:,:), allocatable :: Z_pq ! = sum_x G_De_old_wx * w_xq
       real(dp), dimension(:,:), allocatable :: G_De_old
 !
-      type(timings) :: timer
-!
-      if (present(prev_ao_density)) then ! Hack (should be fixed asap)
-!
-!        Nothing to do here
-!
-      endif
-!
 !     Update of the MO basis for the G_De
 !     G_De =  w^T * G_De_old * w
 !
@@ -457,33 +449,11 @@ contains
 !
 !     AO fock construction and energy calculation
 !
-      timer = timings('AO Fock construction', pl='normal')
-      call timer%turn_on()
-!
-!     AO fock construction and energy calculation
-!
-!     Construct the two electron part of the Fock matrix (G),
-!     and add the contribution to the Fock matrix
-!
-      call wf%construct_ao_G(wf%ao_density, wf%ao_fock)
-!
-!     Add the one-electron part
-!
-      call daxpy(wf%n_ao**2, one, wf%ao_h, 1, wf%ao_fock, 1)
-!
-      call timer%turn_off()
-!
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao_h)
+      call wf%hf%update_fock_and_energy_mo(prev_ao_density)
 !
 !     Add the Tr[Da * G(De)] and inactive energy contributions to the energy
 !
       wf%energy = wf%energy + wf%inactive_energy + wf%get_active_energy_G_De_term()
-!
-!     Transformation of the AO fock in the MO basis and addition of the G_De term
-!     to costruct the effective MO fock
-!     F = h + G(Da) + G(De)
-!
-      call wf%mo_transform(wf%ao_fock, wf%mo_fock)
 !
 !     Add G_De to MO fock
 !
