@@ -272,8 +272,6 @@ contains
 !
       if (present(prev_ao_density)) then 
 !
-!        Nothing to do here 
-!
 !        Construct the two electron part of the Fock matrix (G),
 !        and add the contribution to the Fock matrix
 !
