@@ -59,20 +59,46 @@ module zop_engine_class
 !
 contains
 !
-   function new_zop_engine() result(engine)
+   function new_zop_engine(wf) result(engine)
 !!
 !!    New ZOP engine
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
+!     Needed for defaults and sanity checks
+      class(ccs), intent(in)       :: wf
+!
       type(zop_engine) :: engine
+!
+      if (wf%name_ .eq. 'ccsd(t)' .or. &
+          wf%name_ .eq. 'low memory cc2' .or. &
+          wf%name_ .eq. 'mlcc2' .or. &
+          wf%name_ .eq. 'mp2') then
+!
+         call output%error_msg("Zero order properties not implemented for (a0)", &
+                               chars=[wf%name_])
+!
+      end if
+!
+      engine%gs_algorithm           = 'diis'
+!
+      if (wf%name_ .eq. 'cc2' .or. &
+          wf%name_ .eq. 'low memory cc2' .or. &
+          wf%name_ .eq. 'mlcc2' .or. &
+          wf%name_ .eq. 'cc3') then
+!
+         engine%multipliers_algorithm = 'diis'
+!
+      else
+!
+         engine%multipliers_algorithm = 'davidson'
+!
+      end if
 !
       engine%dipole                 = .false.
       engine%quadrupole             = .false.
       engine%plot_density           = .false.
-      engine%multipliers_algorithm  = 'davidson'
-      engine%gs_algorithm           = 'diis'
 !
       engine%gs_restart            = .false.
       engine%multipliers_restart   = .false.
