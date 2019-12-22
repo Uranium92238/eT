@@ -606,11 +606,11 @@ contains
 !
 !     Print settings
 !
-      call output%printf('m', 'Bath orbital(s):         (l1)', &
+      call output%printf('m', 'Bath orbital(s):         (l0)', &
             logs=[wf%bath_orbital], fs='(/t6, a)')
 !
-      call output%printf('m', 'Core-valence separation: (l1)', &
-            logs=[wf%bath_orbital], fs='(t6, a)')
+      call output%printf('m', 'Core-valence separation: (l0)', &
+            logs=[wf%cvs], fs='(t6, a)')
 !
 !     Print orbital space info for cc
 !

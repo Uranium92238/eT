@@ -325,23 +325,23 @@ subroutine cc_calculation(system, ref_wf)
 !
    if (input%requested_keyword_in_section('fop', 'do')) then
 !
-      cc_engine = fop_engine()
+      cc_engine = fop_engine(cc_wf)
 !
    elseif (input%requested_keyword_in_section('excited state', 'do')) then
 !
-      cc_engine = es_engine()
+      cc_engine = es_engine(cc_wf)
 !
    elseif (input%requested_keyword_in_section('zop', 'do')) then 
 !
-      cc_engine = zop_engine()
+      cc_engine = zop_engine(cc_wf)
 !
    elseif (input%requested_keyword_in_section('ground state', 'do')) then
 !
-      cc_engine = gs_engine()
+      cc_engine = gs_engine(cc_wf)
 !
    elseif (input%requested_keyword_in_section('time dependent state', 'do')) then
 !
-      cc_engine = td_engine()
+      cc_engine = td_engine(cc_wf)
 !
    else
 !

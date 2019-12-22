@@ -71,7 +71,7 @@ module td_engine_class
 contains
 !
 !
-   function new_td_engine() result(engine)
+   function new_td_engine(wf) result(engine)
 !!
 !!    New td engine  
 !!    Written by Alice Balbi and Andreas Skeidsvoll, Oct 2018 
@@ -81,12 +81,34 @@ contains
 !!
       implicit none
 !
+!     Needed for defaults and sanity checks
+      class(ccs), intent(in)       :: wf
+!
       type(td_engine) :: engine
 !
 !     Set defaults
 !
-      engine%multipliers_algorithm = 'davidson'
+      if (wf%name_ .eq. 'ccsd(t)') then
+!
+         call output%error_msg("TD (a0) makes no sense", &
+                               chars=[wf%name_])
+!
+      end if
+!
       engine%gs_algorithm          = 'diis'
+!
+      if (wf%name_ .eq. 'cc2' .or. &
+          wf%name_ .eq. 'cc3' .or. &
+          wf%name_ .eq. 'low memory cc2') then
+!
+         engine%multipliers_algorithm = 'diis'
+!
+      else
+!
+         engine%multipliers_algorithm = 'davidson'
+!
+      end if
+!
       engine%integrator            = 'rk4'
 !
       engine%propagation        = .false.
