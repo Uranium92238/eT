@@ -1111,6 +1111,11 @@ contains
 !
       class(mlhf), intent(inout) :: wf
 !
+      type(timings) :: G_De_construction_timer
+!
+      G_De_construction_timer = timings('G(De) construction', pl='normal')
+      call G_De_construction_timer%turn_on()
+!
 !     Scale by two to get non-idempotent inactive density De
 !
       call dscal(wf%n_ao**2, two, wf%ao_density, 1)
@@ -1126,6 +1131,8 @@ contains
       call wf%mlhf_inactive_fock_term_file%open_('write', 'rewind')
       call wf%mlhf_inactive_fock_term_file%write_(wf%G_De, wf%n_mo**2)
       call wf%mlhf_inactive_fock_term_file%close_
+!
+      call G_De_construction_timer%turn_off()
 !
    end subroutine construct_G_De_mlhf
 !
@@ -1224,6 +1231,11 @@ contains
 !
       integer,  dimension(:),   allocatable :: active_aos
 !
+      type(timings) :: active_mos_construction_timer
+!
+      active_mos_construction_timer = timings('Active MOs construction', pl='normal')
+      call active_mos_construction_timer%turn_on()
+!
       n_active_aos = 0
       n_vectors    = 0
 !
@@ -1283,6 +1295,8 @@ contains
       call mem%dealloc(C_o, wf%n_ao, wf%n_ao)
 !
       call mem%dealloc(active_aos, n_active_aos)
+!
+      call active_mos_construction_timer%turn_off()
 !
    end subroutine construct_active_mos_mlhf
 !
