@@ -739,24 +739,23 @@ contains
 !
       integer              :: io_error
       character(len=100)   :: io_msg
-      character(len=100)   :: fstring
-!
-      if(present(format_string)) then
-         if (the_file%format_ .eq. 'unformatted') then
-            call output%error_msg(trim(the_file%name_)//' is unformatted')
-         endif
-         fstring = trim(format_string)
-      else
-         fstring = '*'
-      endif
 !
       if (the_file%format_ .eq. 'unformatted') then
+!
+         if (present(format_string)) call output%error_msg(trim(the_file%name_)//' is unformatted')
          write(the_file%unit_, iostat=io_error, iomsg=io_msg) string
+!
       else
-         write(the_file%unit_, trim(fstring), iostat=io_error, iomsg=io_msg) string
+!
+         if (present(format_string) .and. trim(format_string) .ne. '*') then
+            write(the_file%unit_, trim(format_string), iostat=io_error, iomsg=io_msg) string
+         else
+            write(the_file%unit_, *, iostat=io_error, iomsg=io_msg) string
+         endif
+!
       endif
 !
-      if(io_error .ne. 0) then
+      if (io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
       endif
@@ -1225,12 +1224,16 @@ contains
    end subroutine read_l_1_sequential_file
 !
 !
-   subroutine read_char_sequential_file(the_file, string, format_string)
+   subroutine read_char_sequential_file(the_file, string, format_string, io_stat)
 !!
 !!    Sequential file read, character
 !!    Written by Rolf H. Myhre, May 2019
 !!    string:  character string to read in to
 !!    format_string: optional format string
+!!
+!!    Modified by Andreas Skeidsvoll, Dec 2019
+!!    Added optional argument
+!!    io_stat: optional integer set to io_error if it is less than or equal to 0
 !!
       implicit none
 !
@@ -1238,29 +1241,35 @@ contains
 !
       character(len=*), intent(out)          :: string
       character(len=*), intent(in), optional :: format_string
+      integer, intent(out), optional         :: io_stat
 !
       integer              :: io_error
       character(len=100)   :: io_msg
-      character(len=100)   :: fstring
-!
-      if(present(format_string)) then
-         if (the_file%format_ .eq. 'unformatted') then
-            call output%error_msg(trim(the_file%name_)//' is unformatted')
-         endif
-         fstring = trim(format_string)
-      else
-         fstring = '*'
-      endif
 !
       if (the_file%format_ .eq. 'unformatted') then
+!
+         if (present(format_string)) call output%error_msg(trim(the_file%name_)//' is unformatted')
          read(the_file%unit_, iostat=io_error, iomsg=io_msg) string
+!
       else
-         read(the_file%unit_, trim(fstring), iostat=io_error, iomsg=io_msg) string
+!
+         if (present(format_string) .and. trim(format_string) .ne. '*') then
+            read(the_file%unit_, trim(format_string), iostat=io_error, iomsg=io_msg) string
+         else
+            read(the_file%unit_, *, iostat=io_error, iomsg=io_msg) string
+         endif
+!
       endif
 !
-      if(io_error .ne. 0) then
+      if (present(io_stat) .and. io_error .le. 0) then
+!
+         io_stat = io_error
+!
+      elseif (io_error .ne. 0) then
+!
          call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
+!
       endif
 !
    end subroutine read_char_sequential_file
