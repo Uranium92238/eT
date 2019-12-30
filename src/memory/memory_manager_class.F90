@@ -2181,7 +2181,7 @@ contains
             if (((p_elements+1)*(q_elements+1)*req2_min &
                   + (p_elements+1)*req1_p_min          &
                   + (q_elements+1)*req1_q_min          &
-                  + req0) .lt. mem%available) then
+                  + req0_tot) .lt. mem%available) then
 !
                p_elements = p_elements + 1 ! can hold +1 batch size
                q_elements = q_elements + 1
@@ -2209,7 +2209,7 @@ contains
                do while (((p_elements+1)*q_elements*req2_min &
                            + (p_elements+1)*req1_p_min       &
                            + q_elements*req1_q_min           &
-                           + req0) .lt. mem%available)
+                           + req0_tot) .lt. mem%available)
 !
                   p_elements = p_elements + 1
 !
@@ -2222,7 +2222,7 @@ contains
                do while ((p_elements*(q_elements+1)*req2_min &
                            + p_elements*req1_p_min           &
                            + (q_elements+1)*req1_q_min       &
-                           + req0) .lt. mem%available)
+                           + req0_tot) .lt. mem%available)
 !
                   q_elements = q_elements + 1
 !
@@ -2444,7 +2444,7 @@ contains
                   + (p_elements)*req1_p_min          &
                   + (q_elements)*req1_q_min          &
                   + (r_elements)*req1_r_min          &
-                  + req0 .ge. mem%available) then
+                  + req0_tot .ge. mem%available) then
 !
                   found_batch_size = .true.       ! cannot hold +1 batch size
                   if (p_incremented) p_elements = p_elements - 1
