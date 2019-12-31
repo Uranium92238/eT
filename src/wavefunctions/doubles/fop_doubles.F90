@@ -890,6 +890,8 @@ contains
       enddo
 !$omp end parallel do
 !
+      call mem%dealloc(csiX_ai, wf%n_v, wf%n_o)
+!
 !     csiX_aibj
 !      
       call mem%alloc(csiX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -959,7 +961,7 @@ contains
 !
 !     Form u_aick = 2 t_ai_ck - t_ak_ci
 !
-      call mem%alloc(u_aick, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
+      call mem%alloc(u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(u_aick, (wf%n_o*wf%n_v)**2)
 !
       call add_1432_to_1234(-one, t_aick, u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o) 

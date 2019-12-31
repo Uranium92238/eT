@@ -219,7 +219,7 @@ contains
       type(eigen_davidson_tool) :: davidson 
 !
 !     :: Preparations ::
-!
+!  
       davidson = eigen_davidson_tool('cc_es_davidson', wf%n_es_amplitudes, &
                         solver%n_singlet_states, solver%residual_threshold, &
                         solver%max_dim_red)

@@ -383,7 +383,7 @@ contains
 !
          call add_1432_to_1234(-one, g_cajb, L_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call mem%dealloc(g_cajb, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+         call mem%dealloc(g_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
          call dgemm('T', 'N',                      &
                      wf%n_o,                       &

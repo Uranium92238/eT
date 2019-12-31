@@ -265,8 +265,6 @@ contains
 !
       character(len=*) :: guess
 !
-      real(dp), dimension(:,:), allocatable :: h_wx
-!
       if (trim(guess) == 'sad' .or. trim(guess) == 'SAD') then
 !
          call wf%set_ao_density_to_sad()
@@ -276,12 +274,7 @@ contains
 !
       elseif (trim(guess) == 'core' .or. trim(guess) == 'CORE') then
 !
-         call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-         call wf%get_ao_h_wx(h_wx)
-!
-         call wf%set_ao_density_to_core_guess(h_wx)
-!
-         call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+         call wf%set_ao_density_to_core_guess(wf%ao_h)
 !
       else
 !
@@ -474,7 +467,6 @@ contains
 !
       if(wf%system%mm_calculation) call wf%print_energy_mm()
       if(wf%system%pcm_calculation) call wf%print_energy_pcm()
-!      
 !
    end subroutine print_energy_uhf
 !
@@ -929,20 +921,15 @@ contains
 !     Deallocations
 !
       call wf%destruct_orbital_energies()
-      call wf%destruct_orbital_energies_a()
-      call wf%destruct_orbital_energies_b()
       call wf%destruct_orbital_coefficients()
-      call wf%destruct_orbital_coefficients_a()
-      call wf%destruct_orbital_coefficients_b()
       call wf%destruct_ao_overlap()
       call wf%destruct_fock()
       call wf%destruct_ao_density()
-      call wf%destruct_ao_density_a()
-      call wf%destruct_ao_density_b()
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
       call wf%destruct_sp_eri_schwarz()
       call wf%destruct_sp_eri_schwarz_list()
+      call wf%destruct_ao_h()
 !
       call wf%destruct_W_mo_update()
       call wf%destruct_mo_fock()

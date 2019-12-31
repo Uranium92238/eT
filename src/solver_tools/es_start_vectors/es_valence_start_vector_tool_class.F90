@@ -79,8 +79,8 @@ contains
       call mem%alloc(tool%indices, tool%n_vectors)
       call get_n_lowest(tool%n_vectors, tool%vector_length, eps, lowest_eps, tool%indices)
 !
-      call mem%dealloc(lowest_eps, wf%n_singlet_states)
-      call mem%dealloc(eps, wf%n_es_amplitudes)
+      call mem%dealloc(lowest_eps, tool%n_vectors)
+      call mem%dealloc(eps, tool%vector_length)
 !
    end function new_es_valence_start_vector_tool
 !

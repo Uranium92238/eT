@@ -135,6 +135,9 @@ contains
                   Y_jl,                &
                   wf%n_o)
 !
+      call mem%dealloc(t_blck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
       wf%jacobian_a1_intermediate_oo = sequential_file('jacobian_a1_intermediate_oo_doubles')
       call wf%jacobian_a1_intermediate_oo%open_('write', 'rewind')
 !

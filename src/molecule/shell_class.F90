@@ -339,21 +339,6 @@ contains
    end function get_n_primitives_shell
 !
 !
-   subroutine cleanup_shell(sh)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad, Dec 2019
-!!
-      implicit none
-!
-      class(shell) :: sh
-!
-      call sh%destruct_exponents()   
-      call sh%destruct_coefficients()
-!
-   end subroutine cleanup_shell
-!
-!
    subroutine get_angular_momentum_label_shell(l, ao, label, cartesian)
 !!
 !!    Get angular momentum label
@@ -421,6 +406,21 @@ contains
       end if
 !
    end subroutine get_angular_momentum_label_shell
+!
+!
+   subroutine cleanup_shell(sh)
+!!
+!!    Cleanup
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+      implicit none
+!
+      class(shell) :: sh
+!
+      call sh%destruct_exponents()   
+      call sh%destruct_coefficients()
+!
+   end subroutine cleanup_shell
 !
 !
 end module shell_class

@@ -71,6 +71,7 @@ module cc2_class
 !
       procedure :: initialize_amplitudes                       => initialize_amplitudes_cc2 
       procedure :: destruct_amplitudes                         => destruct_amplitudes_cc2 
+      procedure :: destruct_multipliers                        => destruct_multipliers_cc2 
 !
 !     Restart
 !

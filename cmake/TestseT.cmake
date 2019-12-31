@@ -78,9 +78,6 @@ add_eT_runtest(mlhf_initial_full_space_optimization         "eT;short;mlhf;sad;p
 add_eT_runtest(mlhf_restart                                 "eT;short;mlhf;sad;pao;restart")
 add_eT_runtest(mlhf_dipole                                  "eT;short;mlhf;sad;pao;dipole")
 add_eT_runtest(mlhf_quadrupole                              "eT;short;mlhf;sad;pao;quadrupole")
-add_eT_runtest(mlhf_ccsd_gs_energy                          "eT;short;mlhf;ccsd;pao")
-add_eT_runtest(mlhf_frozen_hf_ccsd_gs_energy                "eT;short;mlhf;ccsd;pao;frozen core")
-add_eT_runtest(mlhf_fc_ccsd_gs_energy                       "eT;short;mlhf;ccsd;pao;frozen hf")
 add_eT_runtest(mp2_energy                                   "eT;short;hf;mp2")
 add_eT_runtest(mp2_energy_qmmmnopol                         "eT;short;hf;mp2;qmmm;mmnopol")
 add_eT_runtest(mp2_energy_qmfq                              "eT;short;hf;mp2;qmmm;fq")
@@ -157,6 +154,9 @@ add_eT_runtest(ccsd_td_gl6                                  "eT;short;ccsd;compl
 add_eT_runtest(restart_ccsd_es                              "eT;short;ccsd;es;restart")
 add_eT_runtest(restart_ccsd_eom                             "eT;short;ccsd;eom;restart")
 add_eT_runtest(restart_ccsd_eom_diis                        "eT;short;ccsd;eom;restart")
+add_eT_runtest(mlhf_ccsd_gs_energy                          "eT;short;mlhf;ccsd;pao")
+add_eT_runtest(mlhf_frozen_hf_ccsd_gs_energy                "eT;short;mlhf;ccsd;pao;frozen core")
+add_eT_runtest(mlhf_fc_ccsd_gs_energy                       "eT;short;mlhf;ccsd;pao;frozen hf")
 #
 add_eT_runtest(ccsdpt_gs_energy                             "eT;short;ccsdpt;gs")
 #

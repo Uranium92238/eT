@@ -41,49 +41,13 @@
    end subroutine destruct_amplitudes_cc2
 !
 !
-   module subroutine initialize_t2_cc2(wf)
+   module subroutine destruct_multipliers_cc2(wf)
 !!
-!!    Initialize t2 amplitudes
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-   end subroutine initialize_t2_cc2
-!
-!
-   module subroutine destruct_t2_cc2(wf)
-!!
-!!    Destruct t2 amplitudes
-!!    Written by Sarai D. Folkestad
+!!    Destruct multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
 !!
       implicit none
 !
       class(cc2) :: wf
 !
-   end subroutine destruct_t2_cc2
-!
-!
-   module subroutine initialize_t2bar_cc2(wf)
-!!
-!!    Initialize t2bar amplitudes
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-   end subroutine initialize_t2bar_cc2
-!
-!
-   module subroutine destruct_t2bar_cc2(wf)
-!!
-!!    Destruct t2bar amplitudes
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-   end subroutine destruct_t2bar_cc2
+   end subroutine destruct_multipliers_cc2

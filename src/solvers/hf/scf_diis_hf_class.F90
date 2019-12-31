@@ -466,6 +466,7 @@ contains
 !
    end subroutine run_scf_diis_hf
 !
+!
    subroutine read_settings_scf_diis_hf(solver)
 !!
 !!    Read settings
@@ -525,5 +526,6 @@ contains
       call wf%print_screening_settings()
 !
    end subroutine print_settings_scf_diis_hf
+!
 !
 end module scf_diis_hf_class

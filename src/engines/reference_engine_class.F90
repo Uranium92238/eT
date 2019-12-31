@@ -279,10 +279,10 @@ contains
 !
       class(hf)                        :: wf
 !
-      type(atomic)                     :: atom
-      type(molecular_system)           :: sad_system
-      type(uhf),         allocatable   :: sad_wf
-      type(scf_hf), allocatable        :: sad_solver
+      type(atomic), allocatable              :: atom
+      type(molecular_system), allocatable    :: sad_system
+      type(uhf),         allocatable         :: sad_wf
+      type(scf_hf), allocatable              :: sad_solver
 !
       character(len=200)    :: ao_density_guess
       real(dp)              :: energy_threshold
@@ -379,6 +379,9 @@ contains
          call sad_wf%cleanup()
          call sad_system%cleanup()
 !
+         deallocate(sad_wf)
+         deallocate(sad_system)
+!
          call output%unmute()
 !
          call output%printf('v', 'Generated atomic density for ' //  &
@@ -401,6 +404,8 @@ contains
          beta_density_file  = sequential_file('ao_density_b')
          call beta_density_file%copy(beta_fname)
          call beta_density_file%delete_()
+!
+         deallocate(atom)
 !
       enddo
 !

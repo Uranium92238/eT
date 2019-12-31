@@ -713,12 +713,19 @@ contains
       call wf%destruct_right_excitation_energies()
       call wf%destruct_left_excitation_energies()
       call wf%destruct_mo_fock_frozen()
-!
       call wf%destruct_fock()
+      call wf%destruct_mo_fock_frozen()
+      call wf%destruct_orbital_coefficients()
+      call wf%destruct_orbital_energies()
+      call wf%destruct_gs_density()
+      call wf%destruct_transition_densities()
 !
       call wf%integrals%cleanup()
 !
-      call wf%destruct_core_MOs
+      call wf%destruct_core_MOs()
+!
+      if (allocated(wf%l_files)) call wf%l_files%finalize_storer()
+      if (allocated(wf%r_files)) call wf%r_files%finalize_storer()
 !
       call output%printf('v', '- Cleaning up ' // trim(wf%name_) // ' wavefunction', &
                          fs='(/t3,a)')

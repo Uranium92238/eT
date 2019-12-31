@@ -438,36 +438,6 @@ contains
    end subroutine initialize_storage_mo_integral_tool
 !
 !
-   subroutine cleanup_mo_integral_tool(integrals)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2019
-!!
-      implicit none
-!
-      class(mo_integral_tool) :: integrals
-!
-      if (integrals%cholesky_mem) then 
-!
-!        Deallocate Cholesky arrays 
-!
-         call mem%dealloc(integrals%L_J_pq_t1, integrals%n_J, integrals%n_mo, integrals%n_mo)
-         call mem%dealloc(integrals%L_J_pq_mo, integrals%n_J, integrals%n_mo, integrals%n_mo)
-!
-      endif
-!
-      if (integrals%eri_t1_mem) then
-!
-!        Deallocate electron repulsion integrals
-!
-         call mem%dealloc(integrals%g_pqrs, integrals%n_mo, integrals%n_mo, &
-                                          integrals%n_mo, integrals%n_mo)
-!
-      endif
-!
-   end subroutine cleanup_mo_integral_tool
-!
-!
    function room_for_g_pqrs_t1_mo_integral_tool(integrals) result(is_room)
 !!
 !!    Room for g_pqrs t1
@@ -2092,7 +2062,8 @@ contains
       if (required_mem*dp .gt. (mem%available + mem_real_eri*dp)/fraction_of_total_mem) &
          call output%error_msg('not enough memory to place complex ERI-T1 integrals in memory.')
 !
-      call mem%alloc(integrals%g_pqrs_complex, integrals%n_mo, integrals%n_mo, integrals%n_mo, integrals%n_mo)
+      call mem%alloc(integrals%g_pqrs_complex, integrals%n_mo, integrals%n_mo, &
+                                               integrals%n_mo, integrals%n_mo)
 !
       integrals%g_pqrs_complex = cmplx(integrals%g_pqrs, zero, dp)
 !
@@ -2103,6 +2074,45 @@ contains
       integrals%eri_t1_complex_placed_in_mem = .true. 
 !
    end subroutine make_eri_complex_mo_integral_tool
+!
+!
+   subroutine cleanup_mo_integral_tool(integrals)
+!!
+!!    Cleanup
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2019
+!!
+      implicit none
+!
+      class(mo_integral_tool) :: integrals
+!
+      if (integrals%cholesky_mem) then 
+!
+!        Deallocate Cholesky arrays 
+!
+         call mem%dealloc(integrals%L_J_pq_t1, integrals%n_J, integrals%n_mo, integrals%n_mo)
+         call mem%dealloc(integrals%L_J_pq_mo, integrals%n_J, integrals%n_mo, integrals%n_mo)
+!
+      endif
+!
+      if (integrals%eri_t1_mem) then
+!
+!        Deallocate electron repulsion integrals
+!
+         call mem%dealloc(integrals%g_pqrs, integrals%n_mo, integrals%n_mo, &
+                                          integrals%n_mo, integrals%n_mo)
+!
+      endif
+!
+      if (integrals%eri_t1_complex_placed_in_mem) then 
+!
+!        Deallocate complex electron repulsion integrals
+!
+         call mem%dealloc(integrals%g_pqrs_complex, integrals%n_mo, integrals%n_mo, &
+                                                    integrals%n_mo, integrals%n_mo)
+!
+      endif
+!
+   end subroutine cleanup_mo_integral_tool
 !
 !
 end module mo_integral_tool_class

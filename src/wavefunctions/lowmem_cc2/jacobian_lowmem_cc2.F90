@@ -313,7 +313,7 @@ contains
 !
 !     X_ab = t_akcj L_kcjb
 !
-      call mem%alloc(X_ab, (wf%n_v), (wf%n_v))
+      call mem%alloc(X_ab, wf%n_v, wf%n_v)
       call zero_array(X_ab, wf%n_v**2)
 !
       req0 = 0
@@ -1599,7 +1599,7 @@ contains
                               1, wf%n_v,                    &
                               batch_k%first, batch_k%last)
 !
-            call mem%alloc(X_bjak, wf%n_v, (batch_j%length), wf%n_v, (batch_k%length))
+            call mem%alloc(X_bjak, wf%n_v, batch_j%length, wf%n_v, batch_k%length)
 !
             call dgemm('N', 'N',                                     &
                         (wf%n_v),                                    &
@@ -1645,7 +1645,7 @@ contains
 !
 !           Y_ajbk = (X_bjak + X_akbj)/(ε_bjak + ω)
 !
-            call mem%alloc(Y_ajbk, wf%n_v, (batch_j%length), wf%n_v, (batch_k%length))
+            call mem%alloc(Y_ajbk, wf%n_v, batch_j%length, wf%n_v, batch_k%length)
 !
 !$omp parallel do private(k,b,j,a)
             do b = 1, wf%n_v

@@ -179,7 +179,7 @@ contains
 !
             call dscal((wf%n_v)*(wf%n_o)*(batch_a%length)*(batch_j%length), two, L_bjia, 1)
 !
-            call mem%alloc(g_baij, wf%n_v, (batch_a%length), wf%n_o, (batch_j%length))
+            call mem%alloc(g_baij, wf%n_v, batch_a%length, wf%n_o, batch_j%length)
 !
             call wf%get_vvoo(g_baij,                     &
                            1, wf%n_v,                    &
@@ -1318,7 +1318,7 @@ contains
                         X_kajb,                                   &
                         wf%n_v*(batch_k%length)*(batch_j%length))
 !
-            call mem%dealloc(g_kajl, batch_j%length, wf%n_v, batch_k%length, wf%n_o)
+            call mem%dealloc(g_kajl, batch_k%length, wf%n_v, batch_j%length, wf%n_o)
 !
             call add_2143_to_1234(two, X_kajb, Y_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
             call add_2341_to_1234(-one, X_kajb, Y_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
