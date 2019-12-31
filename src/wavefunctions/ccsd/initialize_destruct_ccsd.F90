@@ -157,7 +157,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_gs_amplitudes)
+      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_t2)
 !
    end subroutine destruct_t2bar_ccsd
 !

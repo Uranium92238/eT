@@ -231,26 +231,6 @@ contains
    end function new_diis_tool
 !
 !
-   subroutine finalize_storers_diis_tool(diis)
-!!
-!!    Cleanup storers 
-!!    Written by Eirik F. Kjønstad, Nov 2019 
-!!
-!!    Performs cleanup for the different storers. 
-!!    Cannot be done in the constructor. 
-!!
-      implicit none 
-!
-      class(diis_tool) :: diis
-!
-      call diis%e_vectors%finalize_storer()
-      call diis%x_vectors%finalize_storer()
-!
-      call mem%dealloc(diis%G, diis%dimension_, diis%dimension_)
-!
-   end subroutine finalize_storers_diis_tool
-!
-!
    subroutine initialize_storers_diis_tool(diis, records_in_memory)
 !!
 !!    Prepare storers 
@@ -296,6 +276,26 @@ contains
       call mem%alloc(diis%G, diis%dimension_, diis%dimension_)
 !
    end subroutine initialize_storers_diis_tool
+!
+!
+   subroutine finalize_storers_diis_tool(diis)
+!!
+!!    Cleanup storers 
+!!    Written by Eirik F. Kjønstad, Nov 2019 
+!!
+!!    Performs cleanup for the different storers. 
+!!    Cannot be done in the constructor. 
+!!
+      implicit none 
+!
+      class(diis_tool) :: diis
+!
+      call diis%e_vectors%finalize_storer()
+      call diis%x_vectors%finalize_storer()
+!
+      call mem%dealloc(diis%G, diis%dimension_, diis%dimension_)
+!
+   end subroutine finalize_storers_diis_tool
 !
 !
     subroutine update_diis_tool(diis, e, x)

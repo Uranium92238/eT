@@ -473,7 +473,7 @@ contains
                   rho_aibj,               & ! rho_b_jai but we will symmetrize later
                   n_cc2_v)
 !
-      call mem%dealloc(g_kjai, n_cc2_o, n_cc2_o, n_cc2_v, n_cc2_o)
+      call mem%dealloc(g_kjai, wf%n_o, n_cc2_o, n_cc2_v, n_cc2_o)
 !
 !     Term 1: sum_c g_aibc c_cj
 !
@@ -935,15 +935,14 @@ contains
                   Y_Ab,                   &
                   n_cc2_v)
 !
-
       call mem%dealloc(g_jckb, n_cc2_o, n_cc2_v, n_cc2_o, wf%n_v)
 !
       wf%jacobian_a1_intermediate_vv = sequential_file('jacobian_a1_intermediate_vv_doubles')
       call wf%jacobian_a1_intermediate_vv%open_('write', 'rewind')
 !
-      call wf%jacobian_a1_intermediate_vv%write_(Y_ab, n_cc2_v*wf%n_v)
+      call wf%jacobian_a1_intermediate_vv%write_(Y_Ab, n_cc2_v*wf%n_v)
 !
-      call mem%dealloc(Y_ab, n_cc2_v, wf%n_v)
+      call mem%dealloc(Y_Ab, n_cc2_v, wf%n_v)
 !
       call wf%jacobian_a1_intermediate_vv%close_('keep')
 !

@@ -132,7 +132,7 @@ contains
 !
       class(uhf) :: wf
 !
-      call wf%destruct_ao_fock()
+      call wf%hf%destruct_ao_fock()
 !
       call wf%destruct_ao_fock_a()
       call wf%destruct_ao_fock_b()

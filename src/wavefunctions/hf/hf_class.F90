@@ -791,6 +791,8 @@ contains
       call wf%destruct_mm_matrices()
       call wf%destruct_pcm_matrices()
       call wf%destruct_mo_fock_frozen()
+      call wf%destruct_orbital_coefficients_fc()
+      call wf%destruct_orbital_coefficients_frozen_hf()
 !
    end subroutine cleanup_hf
 !

@@ -323,9 +323,11 @@ contains
 !
       class(ccs) :: wf
 !
-      call mem%dealloc(wf%left_transition_density, wf%n_mo, wf%n_mo)
+      if (allocated(wf%left_transition_density)) &
+         call mem%dealloc(wf%left_transition_density, wf%n_mo, wf%n_mo)
 !
-      call mem%dealloc(wf%right_transition_density, wf%n_mo, wf%n_mo)
+      if (allocated(wf%right_transition_density)) &
+         call mem%dealloc(wf%right_transition_density, wf%n_mo, wf%n_mo)
 !
    end subroutine destruct_transition_densities_ccs
 !

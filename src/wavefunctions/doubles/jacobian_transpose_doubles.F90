@@ -250,7 +250,7 @@ contains
 !
       call mem%dealloc(X_kc, wf%n_o, wf%n_v)
       call mem%dealloc(L_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call mem%dealloc(sigma_ia, wf%n_v, wf%n_o)
+      call mem%dealloc(sigma_ia, wf%n_o, wf%n_v)
 !
 !     :: Term 2: sigma_ai -= c_ak Y_ik
 !

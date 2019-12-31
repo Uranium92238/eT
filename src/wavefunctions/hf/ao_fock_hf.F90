@@ -201,7 +201,7 @@ contains
 !
 !     Construct the density screening vector and the maximum element in the density
 !
-      call mem%alloc(sp_Density_schwarz, wf%system%n_s, wf%system%n_s)
+      call mem%alloc(sp_density_schwarz, wf%system%n_s, wf%system%n_s)
 !
       call wf%construct_sp_Density_schwarz(sp_Density_schwarz, D)
       max_D_schwarz = get_abs_max(sp_Density_schwarz, wf%system%n_s**2)
