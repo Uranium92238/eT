@@ -1815,8 +1815,10 @@ contains
 !!    units:   'angstrom' or 'bohr'
 !!
 !!    Modified by Tor S. Haugland, Oct 2019
-!!
 !!    Printf and print_separator. Modified to take unit as input
+!!
+!!    Modifified by Alexander C. Paul, Dec 2019
+!!    Print of atom numbers and separate lines for basis sets    
 !!
       implicit none 
 !
@@ -1850,14 +1852,14 @@ contains
 !
 !     Print header
 !
-      line_length = 73
+      line_length = 78
 !
-      call output%print_separator(pl='m', symbol='=', n=line_length, fs='(/t5,a)')
-      call output%printf('m', 'Geometry((a0))', fs='(t32,a)', chars=[local_units])
-      call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(t5,a)')
-      call output%printf('m', 'Atom          X                Y                &
-                         &Z                Basis', ll=100, fs='(t6,a)')
-      call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(t5,a)')
+      call output%print_separator(pl='m', symbol='=', n=line_length, fs='(/t6,a)')
+      call output%printf('m', 'Geometry((a0))', chars=[local_units], fs='(t38,a)')
+      call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(t6,a)')
+      call output%printf('m', 'Atom           X                  Y                  &
+                         &Z         # in input', ll=100, fs='(t9,a)')
+      call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(t6,a)')
 !
 !     Print geometry for every atom
 !
@@ -1865,18 +1867,24 @@ contains
 !
          atom = molecule%atoms(I)
 !
-         start_integer = 1
-         if (atom%basis(1:1) == '_') start_integer = 2
+         if((I == 1) .or. (molecule%atoms(I-1)%basis .ne. atom%basis)) then
 !
-         call output%printf('m', adjustl(atom%symbol) // &
-                            ' (f17.12)(f17.12)(f17.12)  (a14)', &
-                            chars=[atom%basis(start_integer:)], &
-                            reals=[atom%x * scaling, atom%y * scaling, &
-                            atom%z * scaling], ll=100, fs='(t7,a)')
+            start_integer = 1
+            if (atom%basis(1:1) == '_') start_integer = 2
+!
+            call output%printf('m', 'Basis: ' // trim(atom%basis(start_integer:)), fs='(t9,a)')
+!
+         end if
+!
+         call output%printf('m', '(i4) ' // adjustl(atom%symbol) // &
+                            ' (f18.12) (f18.12) (f18.12)  (i7)',    &
+                            ints=[I, atom%input_number],            &
+                            reals=[atom%x*scaling, atom%y*scaling,  &
+                            atom%z * scaling], ll=100, fs='(t6,a)')
 !
       enddo 
 !
-      call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(t5,a)')
+      call output%print_separator(pl='m', symbol='=', n=line_length, fs='(t6,a)')
 !
    end subroutine print_geometry_molecular_system
 !
@@ -2512,7 +2520,7 @@ contains
 !  
                    if(angmom .gt. 4) then
 !  
-                      call output%error_msg('Cartesian G functions not yet implemented')
+                      call output%error_msg('Cartesian functions not yet implemented for l > 3')
 !  
                    endIf
 !  
@@ -3116,9 +3124,9 @@ contains
 !
       call output%printf('m', 'Active atoms:', fs='(/t6, a)')
 !
-      call output%print_separator('m', 38,'=', fs='(/t6, a)')
-      call output%printf('m',' Atom   Symbol       Basis     Method', fs='(t6, a)')
-      call output%print_separator('m', 38,'=', fs='(t6, a)')
+      call output%print_separator('m', 36,'=', fs='(/t6, a)')
+      call output%printf('m','   Atom              Basis   Method', fs='(t6, a)')
+      call output%print_separator('m', 36,'=', fs='(t6, a)')
 !
       n_total = 0
 !
@@ -3130,15 +3138,15 @@ contains
 !
          do atom = first, last
 !
-            call output%printf('m','(i4)      '// molecule%atoms(atom)%symbol //'      '      &
-                              // trim(molecule%atoms(atom)%basis)                         &
-                              // '       '// trim(molecule%active_atom_spaces(i)%level), &
-                              ints=[molecule%atoms(atom)%input_number],                   &
+            call output%printf('m','(i4) '// molecule%atoms(atom)%symbol //'  (a17)'  &
+                              // '    '// trim(molecule%active_atom_spaces(i)%level), &
+                              ints=[molecule%atoms(atom)%input_number], &
+                              chars=[molecule%atoms(atom)%basis],       &
                               fs='(t6,a)')
          enddo
       enddo
 !
-      call output%print_separator('m', 38,'=', fs='(t6, a)')
+      call output%print_separator('m', 36,'=', fs='(t6, a)')
       call output%printf('m','Total number of active atoms: (i0)', ints=[n_total], fs='(t6, a)')
       call output%printf('m','OBS: Atoms will be reordered, active atoms first', fs='(t6, a)')
 !

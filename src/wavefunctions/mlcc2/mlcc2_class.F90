@@ -618,13 +618,13 @@ contains
       call wf%check_orthonormality_of_MOs()
 !
       if (wf%n_cc2_o .eq. 0) &
-               call output%error_msg('no occupied cc2 orbitals in mlcc2 calulation.')
+               call output%error_msg('no occupied cc2 orbitals in mlcc2 calculation.')
 !
       if (wf%n_cc2_v .eq. 0) &
-               call output%error_msg('no virtual cc2 orbitals in mlcc2 calulation.')
+               call output%error_msg('no virtual cc2 orbitals in mlcc2 calculation.')
 !
       if (wf%n_ccs_o + wf%n_ccs_v .eq. 0)  &
-            call output%warning_msg('no ccs orbitals in mlcc2 calulation, ' //&
+            call output%warning_msg('no ccs orbitals in mlcc2 calculation, ' //&
                'recomended to run standard cc2 code.')
 !
       if (wf%n_cc2_o .lt. 0 .or. wf%n_ccs_o .lt. 0 .or. &
