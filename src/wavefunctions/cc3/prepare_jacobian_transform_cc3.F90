@@ -20,8 +20,7 @@
 submodule (cc3_class) prepare_jacobian_transform
 !
 !!
-!!    Prepare jacobian transformation (cc3)
-!!    Written by Alexander C. Paul and Rolf H. Myhre, March 2019
+!!    Prepare jacobian transformation
 !!
 !!    Routines setting up the files containing intermediates for the linear 
 !!    transform of trial vectors by the Jacobian matrix and its transpose.

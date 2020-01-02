@@ -20,7 +20,7 @@
 submodule (ccsd_class) file_handling_ccsd
 !
 !!
-!!    File handling submodule (CCSD)
+!!    File handling submodule
 !!
 !!    Gathers routines that save wavefunction parameters to file,
 !!    and reads them from file, plus other routines related to the 

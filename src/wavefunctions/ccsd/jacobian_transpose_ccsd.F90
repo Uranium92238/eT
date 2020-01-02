@@ -21,7 +21,6 @@ submodule (ccsd_class) jacobian_transpose_ccsd
 !
 !!
 !!    Jacobian transpose submodule 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the transpose of the Jacobian matrix

@@ -20,8 +20,7 @@
 submodule (ccs_class) t1_ccs_complex
 !
 !!
-!!    t1 submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Oct 2019
+!!    t1 submodule
 !!
 !!    Submodule containing routines that can be used t1-transform arrays.
 !!

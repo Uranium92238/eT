@@ -20,7 +20,7 @@
 submodule (mlcc2_class) debug_jacobian_mlcc2
 !
 !!
-!!    Debug Jacobian (MLCC2)
+!!    Debug Jacobian
 !!
 !!    Routines debug analytical Jacobian by comparing to 
 !!    Jacobian computed by numerical differentiation of 

@@ -20,7 +20,7 @@
 submodule (mlcc2_class) jacobian_mlcc2
 !
 !!
-!!    Jacobian submodule (MLCC2)
+!!    Jacobian submodule 
 !!
 !!    ρ_i = A * c_i,
 !!

@@ -20,8 +20,7 @@
 submodule (cc2_class) omega_cc2
 !
 !!
-!!    Omega submodule (CC2)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
+!!    Omega submodule
 !!
 !!    Routines to construct
 !!

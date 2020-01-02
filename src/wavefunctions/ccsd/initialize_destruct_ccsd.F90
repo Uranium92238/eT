@@ -20,8 +20,7 @@
 submodule (ccsd_class) initialize_destruct_ccsd
 !
 !!
-!!    Initialize destruct submodule (CCSD)
-!!    Set up by Andreas Skeidsvoll, Sep 2019
+!!    Initialize destruct submodule
 !!
 !!    Gathers routines that initialize and destruct the CCSD type-bound variables.
 !!

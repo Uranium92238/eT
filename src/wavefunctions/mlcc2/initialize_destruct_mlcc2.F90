@@ -20,7 +20,7 @@
 submodule (mlcc2_class) initialize_desctruct_mlcc2
 !
 !!
-!!    Initialize destruct submodule (MLCC2)
+!!    Initialize destruct submodule
 !!
 !!    Gathers routines that initialize and destruct the MLCC2 allocatable variables.
 !!

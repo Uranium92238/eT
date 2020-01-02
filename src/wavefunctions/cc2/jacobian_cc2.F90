@@ -20,8 +20,7 @@
 submodule (cc2_class) jacobian_cc2
 !
 !!
-!!    Jacobian submodule (CC2)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
+!!    Jacobian submodule
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian matrix 

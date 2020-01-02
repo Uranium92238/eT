@@ -20,8 +20,7 @@
 submodule (ccs_class) complex_ccs
 !
 !!
-!!    Complex submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Sep 2019
+!!    Complex submodule 
 !!
 !!    Gathers routines that makes the CCS wavefunction complex, and that are otherwise related to
 !!    the complex wavefunction.

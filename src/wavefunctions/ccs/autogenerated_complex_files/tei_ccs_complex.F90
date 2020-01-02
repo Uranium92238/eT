@@ -20,8 +20,7 @@
 submodule (ccs_class) tei_ccs_complex
 !
 !!
-!!    Two-electron integrals submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    Two-electron integrals submodule
 !!
 !!    Submodule containing routines that can be used to construct t1-transformed two-electron integrals.
 !!

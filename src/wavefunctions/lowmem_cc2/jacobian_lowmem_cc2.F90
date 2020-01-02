@@ -20,9 +20,7 @@
 submodule (lowmem_cc2_class) jacobian
 !
 !!
-!!    Jacobian submodule (lowmem CC2)
-!!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
-!!    Linda Goletto, and Alexander C. Paul, Dec 2018
+!!    Jacobian submodule 
 !!
 !!    Routines for the lowmem CC2 linear transform of trial
 !!    vectors by the Jacobian matrix

@@ -20,7 +20,7 @@
 submodule (mlcc2_class) jacobian_transpose_mlcc2
 !
 !!
-!!    Jacobian transpose submodule (MLCC2)
+!!    Jacobian transpose submodule 
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the transpose of the Jacobian matrix

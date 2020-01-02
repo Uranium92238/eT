@@ -23,10 +23,11 @@ module doubles_class
 !!    Abstract doubles class module
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019
 !!
-!!    Doubles class which Contains routines that are in common 
-!!    for both ccsd and cc2.
-!!    Both ccsd and cc2 inherit from this doubles class 
-!!    but need additional routines to work.
+!!    Doubles class which contains routines that are in common 
+!!    for both CCSD and CC2.
+!!
+!!    Both CCSD and CC2 inherit from this doubles class 
+!!    but need specialized routines.
 !!
 !
    use ccs_class

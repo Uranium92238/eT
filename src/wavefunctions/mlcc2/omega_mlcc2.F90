@@ -20,10 +20,9 @@
 submodule (mlcc2_class) omega_mlcc2
 !
 !!
-!!    Omega submodule (MLCC2)
-!!    Written by Sarai D. Folkestad, 2019
+!!    Omega submodule
 !!
-!!    Based on the cc2 routines written by Sarai D. Folkestad 
+!!    Based on the CC2 routines written by Sarai D. Folkestad 
 !!    and Eirik F. Kjønstad
 !!
 !!    Routines to construct

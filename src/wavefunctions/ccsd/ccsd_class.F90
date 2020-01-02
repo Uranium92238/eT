@@ -321,6 +321,11 @@ contains
 !!    Set initial amplitudes guess
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
+!!    Sets the cluster amplitudes to the MP2 guess, i.e. 
+!!
+!!       t_ai   = zero 
+!!       t_aibj = - g_aibj / epsilon_aibj
+!!
       implicit none
 !
       class(ccsd) :: wf
@@ -337,7 +342,9 @@ contains
 !!    Set t2 amplitudes guess
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    t_aibj = - g_aibj/ε_aibj
+!!    Sets the doubles amplitudes to the MP2 guess:
+!!
+!!       t_aibj = - g_aibj/ε_aibj
 !!
       implicit none
 !
@@ -398,6 +405,14 @@ contains
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    and Andreas Skeidsvoll, 2018
 !!
+!!    Sets the (ground state) orbital differences vector:
+!!
+!!       epsilon_ai     = epsilon_a - epsilon_i 
+!!       epsilon_aibj   = epsilon_a + epsilon_b - epsilon_i - epsilon_j 
+!!
+!!    Here, the epsilon vector has dimensionality N = n_t1 + n_t2, i.e. 
+!!    the doubles part of the vector is packed. 
+!!
       implicit none
 !
       class(ccsd), intent(in) :: wf
@@ -446,6 +461,8 @@ contains
 !!    Print dominant amplitudes
 !!    Written by Eirik F. Kjønstad, Dec 2018
 !!
+!!    Prints the dominant amplitudes in the cluster amplitude vector.
+!!
       implicit none
 !
       class(ccsd), intent(in) :: wf
@@ -458,8 +475,13 @@ contains
 !
    subroutine print_dominant_x_amplitudes_ccsd(wf, x, tag)
 !!
-!!    Print dominant amplitudes  (TODO)
+!!    Print dominant x amplitudes
 !!    Written by Eirik F. Kjønstad, Dec 2018
+!!
+!!    Prints the dominant amplitudes in the amplitude vector x.
+!!
+!!    tag specified the printed label for the vector, e.g. tag = "t" for 
+!!    the cluster amplitudes. 
 !!
       implicit none
 !
@@ -482,6 +504,9 @@ contains
 !!
 !!    Prints the 20 most dominant double amplitudes,
 !!    or sorts them if there are fewer than twenty of them.
+!!
+!!    tag specified the printed label for the vector, e.g. tag = "t" for 
+!!    the cluster amplitudes. 
 !!
       implicit none
 !

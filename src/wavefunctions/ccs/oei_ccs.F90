@@ -20,10 +20,10 @@
 submodule (ccs_class) oei_ccs
 !
 !!
-!!    One-electron integrals submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    One-electron integrals submodule
 !!
-!!    Submodule containing routines that can be used to construct t1-transformed one-electron integrals.
+!!    Submodule containing routines that can be used to 
+!!    construct t1-transformed one-electron integrals.
 !!
 !
       implicit none

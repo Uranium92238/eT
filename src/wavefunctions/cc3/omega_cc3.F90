@@ -20,8 +20,7 @@
 submodule (cc3_class) omega_cc3
 !
 !!
-!!    Omega submodule (CC3)
-!!    Written by Rolf H. Myhre, January 2019
+!!    Omega submodule
 !!
 !!    Routines to construct
 !!

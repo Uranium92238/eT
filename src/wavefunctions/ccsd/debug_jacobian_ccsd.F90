@@ -20,7 +20,7 @@
 submodule (ccsd_class) debug_jacobian_ccsd
 !
 !!
-!!    Debug Jacobian (CCSD)
+!!    Debug Jacobian
 !!
 !!    Routines debug analytical Jacobian by comparing to 
 !!    Jacobian computed by numerical differentiation of 
