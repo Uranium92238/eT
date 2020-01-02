@@ -20,7 +20,7 @@
 submodule (doubles_class) omega_doubles_complex
 !
 !!
-!!    Omega submodule (Abstract doubles)
+!!    Omega submodule 
 !!
 !!    Routines to construct
 !!

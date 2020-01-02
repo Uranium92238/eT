@@ -20,8 +20,7 @@
 submodule (cc3_class) jacobian_transpose
 !
 !!
-!!    Jacobian transpose submodule (cc3)
-!!    Written by Alexander C. Paul and Rolf H. Myhre, March 2019
+!!    Jacobian transpose submodule
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the transpose of the Jacobian matrix

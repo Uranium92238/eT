@@ -20,8 +20,16 @@
 submodule (ccs_class) jacobian_ccs
 !
 !!
-!!    Jacobian submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    Jacobian submodule
+!!
+!!    Routines for the linear transform of trial
+!!    vectors by the Jacobian matrix
+!!
+!!    ρ_i = A * c_i,
+!!
+!!    where
+!!
+!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
 !!
 !
    implicit none

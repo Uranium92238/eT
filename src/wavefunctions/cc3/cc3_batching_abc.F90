@@ -21,7 +21,6 @@ submodule (cc3_class) batching_abc
 !
 !!
 !!    Batching abc submodule
-!!    Written by Alexander C. Paul July 2019
 !!
 !!    Routines that construct the triples T-amplitudes and
 !!    components of the excitation vectors in batches 

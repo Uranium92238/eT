@@ -20,7 +20,7 @@
 submodule (cc2_class) debug_jacobian_cc2
 !
 !!
-!!    Debug Jacobian (CCS)
+!!    Debug Jacobian 
 !!
 !!    Routines debug analytical Jacobian by comparing to 
 !!    Jacobian computed by numerical differentiation of 

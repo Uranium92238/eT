@@ -20,8 +20,7 @@
 submodule (cc3_class) initialize_destruct_cc3
 !
 !!
-!!    Initialize destruct submodule (CC3)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    Initialize destruct submodule
 !!
 !!    Gathers routines that initialize and destruct the CC3 type-bound variables.
 !!

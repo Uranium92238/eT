@@ -20,8 +20,7 @@
 submodule (ccs_class) set_get_ccs
 !
 !!
-!!    Set get submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    Set get submodule
 !!
 !!    Gathers routines that set and get the CCS type-bound variables.
 !!

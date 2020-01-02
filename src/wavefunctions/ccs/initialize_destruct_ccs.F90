@@ -20,8 +20,7 @@
 submodule (ccs_class) initialize_destruct_ccs
 !
 !!
-!!    Initialize destruct submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    Initialize destruct submodule
 !!
 !!    Gathers routines that initialize and destruct the CCS type-bound variables.
 !!

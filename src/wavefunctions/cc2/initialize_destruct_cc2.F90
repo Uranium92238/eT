@@ -20,8 +20,7 @@
 submodule (cc2_class) initialize_destruct_cc2
 !
 !!
-!!    Initialize destruct submodule (CC2)
-!!    Set up by Andreas Skeidsvoll, Sep 2019
+!!    Initialize destruct submodule 
 !!
 !!    Gathers routines that initialize and destruct the CC2 type-bound variables.
 !!

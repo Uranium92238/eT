@@ -23,7 +23,6 @@ module mlhf_class
 !!    Written by Linda Goletto Ida-Marie Høyvik,
 !!    and Sarai D. Folkestad, 2019
 !!
-!!
 !!    An initial idempotent density D, is
 !!    partitioned into an active and an external part 
 !!
@@ -52,7 +51,6 @@ module mlhf_class
 !!    For further information, 
 !!    see S. Sæther, T. Kjærgaard, H. Koch, and I-M. Høyvik, JCTC 13, no. 11 (2017),
 !!    and I-M. Høyvik, Mol. Phys. (2019).
-!!
 !!
 !
    use hf_class

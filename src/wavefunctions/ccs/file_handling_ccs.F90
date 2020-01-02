@@ -20,8 +20,7 @@
 submodule (ccs_class) file_handling_ccs
 !
 !!
-!!    File handling submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    File handling submodule
 !!
 !!    Gathers routines that save wavefunction parameters to file,
 !!    and reads them from file, plus other routines related to the 

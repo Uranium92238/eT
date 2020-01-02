@@ -20,8 +20,7 @@
 submodule (doubles_class) jacobian_doubles
 !
 !!
-!!    Jacobian submodule (Abstract doubles)
-!!
+!!    Jacobian submodule
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian matrix 

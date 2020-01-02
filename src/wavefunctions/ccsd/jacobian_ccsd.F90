@@ -20,8 +20,7 @@
 submodule (ccsd_class) jacobian_ccsd
 !
 !!
-!!    Jacobian submodule (CCSD)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2017-2018
+!!    Jacobian submodule
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian matrix

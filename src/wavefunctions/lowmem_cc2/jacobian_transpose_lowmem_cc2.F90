@@ -20,8 +20,7 @@
 submodule (lowmem_cc2_class) jacobian_transpose
 !
 !!
-!!    Jacobian transpose submodule (CC2)
-!!    Written by Sarai Dery Folkestad, Jun 2019
+!!    Jacobian transpose submodule
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian transpose matrix

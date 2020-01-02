@@ -20,8 +20,7 @@
 submodule (ccsd_class) set_get_ccsd_complex
 !
 !!
-!!    Set get submodule (CCSD)
-!!    Set up by Eirik F. Kjønstad and Andreas Skeidsvoll, Aug 2019
+!!    Set get submodule
 !!
 !!    Gathers routines that set and get the CCSD type-bound variables.
 !!

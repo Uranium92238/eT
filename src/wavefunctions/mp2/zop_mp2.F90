@@ -21,7 +21,6 @@ submodule (mp2_class) zop_mp2
 !
 !!
 !!    Zeroth order properties submodule 
-!!    Set up by Andreas Skeidsvoll, Aug 2019
 !!
 !!    Contains routines related to the mean values, i.e. 
 !!    the construction of density matrices as well as expectation 

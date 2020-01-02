@@ -20,9 +20,7 @@
 submodule (lowmem_cc2_class) omega_lowmem_cc2
 !
 !!
-!!    Omega submodule (CC2)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    Linda Goletto and Alexander C. Paul, 2018
+!!    Omega submodule 
 !!
 !!    Routines to construct 
 !!

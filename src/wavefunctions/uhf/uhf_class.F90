@@ -30,26 +30,29 @@ module uhf_class
 !
    implicit none
 !
-!  Unrestricted Hartree-Fock wavefunction
 !
    type, extends(hf) :: uhf
 !
-      integer :: n_alpha
-      integer :: n_beta
+      integer :: n_alpha ! Number of alpha electrons 
+      integer :: n_beta  ! Number of beta electrons 
 !
-      real(dp), dimension(:,:), allocatable :: ao_density_a
-      real(dp), dimension(:,:), allocatable :: ao_density_b
+      real(dp), dimension(:,:), allocatable :: ao_density_a ! Alpha density 
+      real(dp), dimension(:,:), allocatable :: ao_density_b ! Beta density 
 !
-      real(dp), dimension(:,:), allocatable :: ao_fock_a
-      real(dp), dimension(:,:), allocatable :: ao_fock_b
+      real(dp), dimension(:,:), allocatable :: ao_fock_a    ! Alpha Fock 
+      real(dp), dimension(:,:), allocatable :: ao_fock_b    ! Beta Fock 
 !
-      real(dp), dimension(:,:), allocatable :: orbital_coefficients_a
-      real(dp), dimension(:,:), allocatable :: orbital_coefficients_b
+      real(dp), dimension(:,:), allocatable :: orbital_coefficients_a  ! Alpha orbital coeffs.
+      real(dp), dimension(:,:), allocatable :: orbital_coefficients_b  ! Beta orbital coeffs.
 !
-      real(dp), dimension(:), allocatable :: orbital_energies_a
-      real(dp), dimension(:), allocatable :: orbital_energies_b
+      real(dp), dimension(:), allocatable :: orbital_energies_a ! Alpha orbital energies 
+      real(dp), dimension(:), allocatable :: orbital_energies_b ! Beta orbital energies
 !
-      logical :: fractional_uniform_valence = .false.
+      logical :: fractional_uniform_valence = .false. ! If true, smears electrons for degenerate 
+                                                      ! HOMOs. Used to generate spherically 
+                                                      ! symmetrical SAD guess. Gives non-UHF 
+                                                      ! energy and should be false if the 
+                                                      ! user wants standard UHF numbers.
 !
    contains
 !

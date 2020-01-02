@@ -20,8 +20,7 @@
 submodule (doubles_class) complex_doubles
 !
 !!
-!!    Complex submodule (abstract doubles)
-!!    Set up by Andreas Skeidsvoll, Sep 2019
+!!    Complex submodule
 !!
 !!    Gathers routines that makes the abstract doubles wavefunction complex.
 !!

@@ -20,8 +20,7 @@
 submodule (mlcc2_class) orbitals_mlcc2
 !
 !!
-!!    MLCC2 orbitals
-!!    Written by Sarai D. Folkestad, Apr 2019
+!!    MLCC2 orbitals submodule
 !!
 !!    This submodule contains routines that handle orbital
 !!    transformation and orbital partitioning for MLCC2.

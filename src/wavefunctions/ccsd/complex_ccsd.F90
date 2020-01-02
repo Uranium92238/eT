@@ -21,7 +21,6 @@ submodule (ccsd_class) complex_ccsd
 !
 !!
 !!    Complex submodule (CCSD)
-!!    Set up by Andreas Skeidsvoll, Sep 2019
 !!
 !!    Gathers routines that makes the CCSD wavefunction complex, and that are otherwise related to
 !!    the complex wavefunction.

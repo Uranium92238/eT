@@ -24,6 +24,9 @@ module lowmem_cc2_class
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto and Alexander C. Paul, 2018
 !!
+!!    Version of CC2 that has an O(M^2) memory requirement - making it suitable 
+!!    to treat larger systems than the standard CC2 wavefunction.
+!!
 !
    use ccs_class
 !

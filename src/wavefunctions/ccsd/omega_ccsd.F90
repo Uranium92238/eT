@@ -20,12 +20,11 @@
 submodule (ccsd_class) omega_ccsd
 !
 !!
-!!    Omega submodule (CCSD)
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
+!!    Omega submodule
 !!
 !!    Routines to construct 
 !!
-!!    Ω =  < mu | exp(-T) H exp(T) | R >
+!!    Omega_mu =  < mu | exp(-T) H exp(T) | R >
 !!
 !!    Transfered to the current eT program from the first version 
 !!    of eT by Andreas Skeidsvoll and Sarai D. Folkestad, 2018.

@@ -20,8 +20,7 @@
 submodule (ccs_class) fock_ccs
 !
 !!
-!!    Fock submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Sep 2019
+!!    Fock submodule
 !!
 !!    Submodule containing routines that can be used to construct the t1-transformed Fock matrix.
 !!

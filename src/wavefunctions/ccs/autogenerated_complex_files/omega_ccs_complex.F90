@@ -20,8 +20,11 @@
 submodule (ccs_class) omega_ccs_complex
 !
 !!
-!!    Omega submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    Omega submodule
+!!
+!!    Routines to construct 
+!!
+!!    Omega_mu =  < mu | exp(-T) H exp(T) | R >
 !!
 !
    implicit none

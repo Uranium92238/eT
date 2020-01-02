@@ -1049,6 +1049,12 @@ contains
 !!    Get orbital differences
 !!    Written by Sarai D. Folkestad, Sep 2018
 !!
+!!    Sets the (ground state) orbital differences vector:
+!!
+!!       epsilon_ai = epsilon_a - epsilon_i 
+!!
+!!    Here, the epsilon vector has dimensionality N = n_t1 
+!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -1167,6 +1173,8 @@ contains
 !!    Print dominant amplitudes
 !!    Written by Eirik F. Kjønstad, Dec 2018
 !!
+!!    Prints the dominant amplitudes in the cluster amplitude vector.
+!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -1180,6 +1188,11 @@ contains
 !!
 !!    Print dominant amplitudes
 !!    Written by Eirik F. Kjønstad, Dec 2018
+!!
+!!    Prints the dominant amplitudes in the amplitude vector x.
+!!
+!!    tag specified the printed label for the vector, e.g. tag = "t" for 
+!!    the cluster amplitudes. 
 !!
       implicit none
 !
@@ -1201,6 +1214,9 @@ contains
 !!
 !!    Prints the 10 most dominant single amplitudes,
 !!    or sorts them if there are fewer than twenty of them.
+!!
+!!    tag specified the printed label for the vector, e.g. tag = "t" for 
+!!    the cluster amplitudes. 
 !!
       implicit none
 !

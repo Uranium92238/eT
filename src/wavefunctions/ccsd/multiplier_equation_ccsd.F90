@@ -20,10 +20,16 @@
 submodule (ccsd_class) multiplier_equation_ccsd
 !
 !!
-!!    Multiplier equation (CCSD)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    Multiplier equation
 !!
-!!    Equation related to the construction of CCSD multipliers.
+!!    Routines for calculation of the multiplier equation,
+!!
+!!       t-bar^T A + eta = 0,
+!!
+!!    where t-bar is the multiplier vector, and
+!! 
+!!       A_mu,nu = < mu | exp(-T) [H, τ_nu] exp(T) | R >
+!!       eta_mu  = < R | exp(-T) [H, τ_mu] exp(T) | R >.
 !!
 !
    implicit none
