@@ -53,7 +53,7 @@ module gl6_cc_propagation_class
 !
       procedure :: step => gl6_step
 !
-      final     :: destructor_gl6_cc_propagation
+      final :: destructor_gl6_cc_propagation
 !
    end type gl6_cc_propagation
 !

@@ -332,7 +332,6 @@ contains
                                                              'energy output',         &
                                                              'dipole moment output',  &
                                                              'electric field output', &
-                                                             'density diag output',   &
                                                              'amplitudes output',     &
                                                              'multipliers output',    &
                                                              'density matrix output', &
