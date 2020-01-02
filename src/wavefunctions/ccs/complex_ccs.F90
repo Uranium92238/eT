@@ -75,7 +75,6 @@ contains
       if (allocated(wf%fock_ij)) then
          call wf%initialize_fock_ij_complex()
          wf%fock_ij_complex = cmplx(wf%fock_ij, zero, dp)
-         call mem%dealloc(wf%fock_ij, wf%n_o, wf%n_o)
          call wf%destruct_fock_ij()
       endif
 !

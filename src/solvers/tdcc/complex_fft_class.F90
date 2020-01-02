@@ -36,8 +36,8 @@ module complex_fft_class
 !!
 !!    real_angular_frequency real_x_val imag_x_val real_y_val imag_y_val real_z_val imag_z_val
 !!
-!! The complex fast Fourier transformation itself is done using a modified version of modern FFTPACK
-!! by Jon Lo Kim Lin
+!! The complex fast Fourier transformation itself is done using a modified version of modern
+!! FFTPACK by Jon Lo Kim Lin
 !!
 !
    use fftpack_complex_forward_1d
@@ -100,16 +100,20 @@ contains
       solver%tag = trim(tag)
 !
       solver%name_ = 'Complex FFT ' // trim(solver%tag) // ' solver'
-      solver%description = 'A solver that calculates the complex fast Fourier transform (FFT) of the ' // trim(solver%tag) // &
-                           ' time series by using modified FFTPACK routines.'
-      solver%summary = 'Complex FFT finished successfully, angular frequency series has been written to file.'
+      solver%description = 'A solver that calculates the complex fast Fourier transform (FFT) '  &
+                           // 'of the ' // trim(solver%tag) // ' time series by using modified ' &
+                           // 'FFTPACK routines.'
+      solver%summary = 'Complex FFT finished successfully, angular frequency series has been ' &
+                       // 'written to file.'
 !
       call solver%print_banner()
 !
       call solver%read_settings()
 !
       solver%time_series_file = sequential_file(trim(solver%file_name), 'formatted')
-      solver%angular_frequency_series_file = sequential_file('complex_fft_' // trim(solver%file_name) // '_to_angular_frequency', &
+      solver%angular_frequency_series_file = sequential_file('complex_fft_'              &
+                                                             // trim(solver%file_name)   &
+                                                             // '_to_angular_frequency', &
                                                              'formatted')
 !
    end function new_complex_fft
@@ -120,7 +124,8 @@ contains
 !!    Run complex FFT
 !!    Written by Andreas Skeidsvoll, Feb 2019
 !!
-!!    Do the complex fast Fourier transform (complex FFT) of the time series to get an angular frequency spectrum.
+!!    Do the complex fast Fourier transform (complex FFT) of the time series to get an angular
+!!    frequency spectrum.
 !!
       use iso_fortran_env, only: iostat_end
 !
@@ -236,7 +241,7 @@ contains
                   error_index)
 !
       if (error_index .ne. 0) then
-            call output%error_msg('could not initialize work_save_array, which is used used for FFT')
+         call output%error_msg('could not initialize work_save_array, which is used used for FFT')
       endif
 !
 !     Do complex FFT of time series using FFTPACK
@@ -363,8 +368,10 @@ contains
 !!
 !!    Settings:
 !!
-!!    initial time: the solver starts considering the values of the time series when reaching this time
-!!    final time:   the solver stops considering the values of the time series when reaching this time
+!!    initial time: the solver starts considering the values of the time series when reaching this
+!!                  time
+!!    final time:   the solver stops considering the values of the time series when reaching this
+!!                  time
 !!    time step:    the temporal spacing between the values of the time series
 !!
       implicit none

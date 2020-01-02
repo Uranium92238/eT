@@ -88,7 +88,7 @@ contains
 !
       integer, intent(in) :: n
 !
-      complex(dp), dimension(n), intent(in) ::  ui
+      complex(dp), dimension(n), intent(in) :: ui
       complex(dp), dimension(n), intent(out) :: uf
 !
       complex(dp), dimension(:), allocatable :: u1, u2, u3, ddt_ui, ddt_u1, ddt_u2, ddt_u3
@@ -97,9 +97,9 @@ contains
 !
 !     Construct derivative of the first stage
 !
-      call mem%alloc(ddt_ui, n)
-!
       call solver%update_field_and_wavefunction(wf, field, ti, ui)
+!
+      call mem%alloc(ddt_ui, n)
       call wf%construct_complex_time_derivative(ddt_ui)
 !
 !     Construct derivative of the second stage
@@ -112,12 +112,11 @@ contains
       call zcopy(n, ui, 1, u1, 1)
       call zaxpy(n, cmplx(dt*half, zero, dp), ddt_ui, 1, u1, 1)
 !
-      call mem%alloc(ddt_u1, n)
-!
       call solver%update_field_and_wavefunction(wf, field, t1, u1)
-      call wf%construct_complex_time_derivative(ddt_u1)
-!
       call mem%dealloc(u1, n)
+!
+      call mem%alloc(ddt_u1, n)
+      call wf%construct_complex_time_derivative(ddt_u1)
 !
 !     Construct derivative of the third stage
 !
@@ -129,12 +128,12 @@ contains
       call zcopy(n, ui, 1, u2, 1)
       call zaxpy(n, cmplx(dt*half, zero, dp), ddt_u1, 1, u2, 1)
 !
-      call mem%alloc(ddt_u2, n)
-!
       call solver%update_field_and_wavefunction(wf, field, t2, u2)
+      call mem%dealloc(u2, n)
+!
+      call mem%alloc(ddt_u2, n)
       call wf%construct_complex_time_derivative(ddt_u2)
 !
-      call mem%dealloc(u2, n)
 !
 !     Construct derivative of the fourth stage
 !
@@ -146,12 +145,11 @@ contains
       call zcopy(n, ui, 1, u3, 1)
       call zaxpy(n, cmplx(dt, zero, dp), ddt_u2, 1, u3, 1)
 !
-      call mem%alloc(ddt_u3, n)
-!
       call solver%update_field_and_wavefunction(wf, field, t3, u3)
-      call wf%construct_complex_time_derivative(ddt_u3)
-!
       call mem%dealloc(u3, n)
+!
+      call mem%alloc(ddt_u3, n)
+      call wf%construct_complex_time_derivative(ddt_u3)
 !
 !     Use the derivative of the four stages to estimate the solution uf at time t = ti + dt.
 !
@@ -167,7 +165,7 @@ contains
       call mem%dealloc(ddt_u2, n)
       call mem%dealloc(ddt_u3, n)
 !
-      call zscal(n, dt/six, uf, 1)
+      call zdscal(n, dt/six, uf, 1)
       call zaxpy(n, one_complex, ui, 1, uf, 1)
 !
    end subroutine rk4_step

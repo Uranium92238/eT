@@ -348,10 +348,10 @@ contains
 !
       class(td_engine) :: engine
 !
-      engine%name_  = 'Time dependent coupled cluster engine'
+      engine%name_ = 'Time dependent coupled cluster engine'
 !
       engine%description = 'Calculates the time dependent CC wavefunction'
-      engine%tag    = 'time dependent'
+      engine%tag = 'time dependent'
 !
 !
 !     Prepare the list of tasks

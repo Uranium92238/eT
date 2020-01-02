@@ -93,9 +93,9 @@ contains
 !
       complex(dp), dimension(:), allocatable :: ddt_ui
 !
-      call mem%alloc(ddt_ui, n)
-!
       call solver%update_field_and_wavefunction(wf, field, ti, ui)
+!
+      call mem%alloc(ddt_ui, n)
       call wf%construct_complex_time_derivative(ddt_ui)
 !
 !     Use the derivative of the single stage to estimate the solution uf at t = ti + dt.
