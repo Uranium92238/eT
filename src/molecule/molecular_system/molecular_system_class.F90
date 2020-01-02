@@ -39,6 +39,7 @@ module molecular_system_class
    use atomic_class, only : atomic
    use mm_class, only : mm
    use pcm_class, only : pcm
+   use timings_class, only: timings
 !
    implicit none
 !
@@ -299,6 +300,14 @@ contains
       real(dp), dimension(:,:), allocatable :: qm_coordinates
       real(dp), dimension(:), allocatable :: qm_charges
 !
+      type(timings), allocatable :: timer 
+      type(timings), allocatable :: libint_timer  
+!
+      timer = timings('Preparation of molecular system (total)', 'normal')
+      call timer%turn_on()
+!
+      libint_timer = timings('Preparation of molecular system (Libint)', 'normal')
+!
 !     First have a look to the basis set infos
 !
       call molecule%rename_core_valence_dunning_sets()
@@ -307,8 +316,12 @@ contains
 !     Initialize libint with atoms and basis sets,
 !     then initialize the integral engines 
 !
+      call libint_timer%turn_on()
+!
       call molecule%initialize_libint_atoms_and_bases()
       call molecule%initialize_libint_integral_engines()
+!
+      call libint_timer%turn_off()
 !
 !     Initialize atoms and shells for eT
 !
@@ -428,6 +441,7 @@ contains
 !
       enddo
 !
+      call timer%turn_off()
 !
    end subroutine prepare_molecular_system
 !
