@@ -312,46 +312,6 @@ contains
    end subroutine update_fock_and_energy_mo_hf
 !
 !
-   module subroutine initialize_W_mo_update_hf(wf)
-!!
-!!    Initialize W MO update
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
-!!    and Linda Goletto, Jan 2019
-!!
-!!    Modified by Ida-Marie Hoyvik, Oct 2019
-!!
-!!    Initializes the eigenvectors W 
-!!    for Roothan-Hall in the mo basis (FW = We)
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (.not. allocated(wf%W_mo_update)) call mem%alloc(wf%W_mo_update, wf%n_mo, wf%n_mo)
-!
-   end subroutine initialize_W_mo_update_hf
-!
-!
-   module subroutine destruct_W_mo_update_hf(wf)
-!!
-!!    Destruct W MO update 
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
-!!    and Linda Goletto, Jan 2019
-!!
-!!    Destructs the eigenvectors W 
-!!    for Roothan-Hall in the mo basis (FW = We)
-!!
-!!    Modified by Ida-Marie Hoyvik, Oct 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (allocated(wf%W_mo_update)) call mem%dealloc(wf%W_mo_update, wf%n_mo, wf%n_mo)
-!
-   end subroutine destruct_W_mo_update_hf
-!
-!
    module subroutine prepare_for_roothan_hall_mo_hf(wf)
 !!
 !!    Construct idempotent density and prepare for Roothan-Hall

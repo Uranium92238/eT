@@ -262,18 +262,25 @@ contains
 !!    Sets initial AO density (or densities) to the
 !!    appropriate initial guess requested by the solver.
 !!
+      use array_utilities, only: copy_and_scale
+!
       implicit none
 !
       class(uhf) :: wf
 !
       character(len=*) :: guess
 !
+      real(dp) :: alpha_prefactor, beta_prefactor 
+!
       if (trim(guess) == 'sad' .or. trim(guess) == 'SAD') then
 !
          call wf%set_ao_density_to_sad()
 !
-         wf%ao_density_a = (real(wf%n_alpha, kind=dp)/real(wf%n_alpha + wf%n_beta, kind=dp))*wf%ao_density
-         wf%ao_density_b = (real(wf%n_beta, kind=dp)/real(wf%n_alpha + wf%n_beta, kind=dp))*wf%ao_density
+         alpha_prefactor = real(wf%n_alpha, kind=dp)/real(wf%n_alpha + wf%n_beta, kind=dp)
+         beta_prefactor  = real(wf%n_beta,  kind=dp)/real(wf%n_alpha + wf%n_beta, kind=dp)
+!
+         call copy_and_scale(alpha_prefactor, wf%ao_density, wf%ao_density_a, wf%n_ao**2)
+         call copy_and_scale(beta_prefactor,  wf%ao_density, wf%ao_density_b, wf%n_ao**2)
 !
       elseif (trim(guess) == 'core' .or. trim(guess) == 'CORE') then
 !
@@ -388,7 +395,8 @@ contains
 !
       class(uhf) :: wf
 !
-      wf%fractional_uniform_valence = input%requested_keyword_in_section('fractional uniform valence', 'hf')
+      wf%fractional_uniform_valence = &
+            input%requested_keyword_in_section('fractional uniform valence', 'hf')
 !
    end subroutine read_uhf_settings_uhf
 !
@@ -405,12 +413,6 @@ contains
       implicit none
 !
       class(uhf) :: wf
-!
-      wf%orbital_coefficients_a = zero
-      wf%orbital_energies_a     = zero
-!
-      wf%orbital_coefficients_b = zero
-      wf%orbital_energies_b     = zero
 !
       call wf%do_roothan_hall(wf%ao_fock_a, wf%orbital_coefficients_a, wf%orbital_energies_a)
       call wf%do_roothan_hall(wf%ao_fock_b, wf%orbital_coefficients_b, wf%orbital_energies_b)
@@ -511,14 +513,14 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
-      wf%ao_fock = h_wx
+      call dcopy(wf%n_ao**2, h_wx, 1, wf%ao_fock, 1)
       call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies)
 !
-      wf%orbital_coefficients_a = wf%orbital_coefficients
-      wf%orbital_coefficients_b = wf%orbital_coefficients
+      call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, wf%orbital_coefficients_a, 1)
+      call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, wf%orbital_coefficients_b, 1)
 !
-      wf%orbital_energies_a = wf%orbital_energies
-      wf%orbital_energies_b = wf%orbital_energies
+      call dcopy(wf%n_mo, wf%orbital_energies, 1, wf%orbital_energies_a, 1)
+      call dcopy(wf%n_mo, wf%orbital_energies, 1, wf%orbital_energies_b, 1)
 !
       call wf%construct_ao_spin_density('alpha')
       call wf%construct_ao_spin_density('beta')
@@ -597,7 +599,7 @@ contains
 !
          if (.not. wf%fractional_uniform_valence) then ! Standard
 !
-            wf%ao_density_a = zero
+            call zero_array(wf%ao_density_a, wf%n_ao**2)
             if (wf%n_alpha .eq. 0) return
 !
             call dgemm('N', 'T',                   &
@@ -618,7 +620,7 @@ contains
             call wf%get_homo_degeneracy(wf%orbital_energies_a, homo_first, homo_last, &
                                           n_homo_orbitals, n_homo_electrons, wf%n_alpha)
 !
-            wf%ao_density_a = zero
+            call zero_array(wf%ao_density_a, wf%n_ao**2)
             if (wf%n_alpha .eq. 0) return
 !
             electrons_to_fill = real(n_homo_electrons, kind=dp)/real(n_homo_orbitals, kind=dp)
@@ -649,7 +651,7 @@ contains
 !
          if (.not. wf%fractional_uniform_valence) then ! Standard
 !
-            wf%ao_density_b = zero
+            call zero_array(wf%ao_density_b, wf%n_ao**2)
             if (wf%n_beta .eq. 0) return
 !
             call dgemm('N', 'T',                   &
@@ -670,7 +672,7 @@ contains
             call wf%get_homo_degeneracy(wf%orbital_energies_b, homo_first, homo_last, &
                                           n_homo_orbitals, n_homo_electrons, wf%n_beta)
 !
-            wf%ao_density_b = zero
+            call zero_array(wf%ao_density_b, wf%n_ao**2)
             if (wf%n_beta .eq. 0) return
 !
             electrons_to_fill = real(n_homo_electrons, kind=dp)/real(n_homo_orbitals, kind=dp)
@@ -788,7 +790,8 @@ contains
 !
       class(uhf) :: wf
 !
-      wf%ao_density = wf%ao_density_a + wf%ao_density_b
+      call dcopy(wf%n_ao**2, wf%ao_density_a, 1, wf%ao_density, 1)
+      call daxpy(wf%n_ao**2, one, wf%ao_density_b, 1, wf%ao_density, 1)
 !
    end subroutine form_ao_density_uhf
 !
@@ -841,7 +844,7 @@ contains
       call wf%construct_ao_overlap()
       call wf%decompose_ao_overlap()
 !
-      wf%n_densities = 2
+      wf%n_densities = 2 ! [D_alpha, D_beta]
 !
       call wf%determine_n_alpha_and_n_beta()
 !

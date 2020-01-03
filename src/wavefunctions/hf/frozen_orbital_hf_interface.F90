@@ -31,7 +31,6 @@
 !!    for a localized region of a large molecule
 !!    which has been treated at HF level of theory.
 !!
-!!
       implicit none
 !
       class(hf) :: wf
@@ -133,61 +132,12 @@
 !!
 !!    in preparation of CC in subspace.
 !!
-!!
       implicit none
 !
       class(hf) :: wf
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: mo_frozen_hf_fock
 !
    end subroutine construct_mo_fock_frozen_hf_term_hf
-!
-!
-   module subroutine initialize_orbital_coefficients_frozen_hf_hf(wf)
-!!
-!!    Initialize orbital coefficients frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_orbital_coefficients_frozen_hf_hf
-!
-!
-   module subroutine destruct_orbital_coefficients_frozen_hf_hf(wf)
-!!
-!!    Destruct orbital coefficients frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_orbital_coefficients_frozen_hf_hf
-!
-!
-   module subroutine initialize_orbital_coefficients_fc_hf(wf)
-!!
-!!    Initialize orbital coefficients frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_orbital_coefficients_fc_hf
-!
-!
-   module subroutine destruct_orbital_coefficients_fc_hf(wf)
-!!
-!!    Destruct orbital coefficients frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_orbital_coefficients_fc_hf
 !
 !
    module function get_n_active_hf_atoms_hf(wf) result(n_active_hf_atoms)

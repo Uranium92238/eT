@@ -970,10 +970,12 @@ contains
 !
       call mem%alloc(used_diag, wf%n_ao)
 !
-      wf%ao_density = half*wf%ao_density
+      call dscal(wf%n_ao**2, half, wf%ao_density, 1)
+!
       call full_cholesky_decomposition_system(wf%ao_density, wf%orbital_coefficients, &
                                               wf%n_ao, rank, 1.0d-12, used_diag)
-      wf%ao_density = two*wf%ao_density
+!
+      call dscal(wf%n_ao**2, two, wf%ao_density, 1)
 !
 !     Make permutation matrix P
 !
@@ -988,13 +990,15 @@ contains
 !
       end if
 !
-      perm_matrix = zero
+      call zero_array(perm_matrix, wf%n_ao**2)
 !
+!$omp parallel do private(j)
       do j = 1, wf%n_ao
 !
          perm_matrix(used_diag(j), j) = one
 !
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(used_diag, wf%n_ao)
       call mem%dealloc(perm_matrix, wf%n_ao, wf%n_ao)
@@ -1029,20 +1033,36 @@ contains
 !
       real(dp), dimension(:, :), allocatable :: L
 !
-      integer :: j
+      integer :: i, j
 !
       call mem%alloc(used_diag, wf%n_ao)
-      used_diag = 0
+!
+!$omp parallel do private(j)
+      do j = 1, wf%n_ao 
+!
+         used_diag(j) = 0
+!
+      enddo
+!$omp end parallel do
 !
       call mem%alloc(L, wf%n_ao, wf%n_ao) ! Full Cholesky vector
-      L = zero
+!
+      call zero_array(L, wf%n_ao**2)
 !
       call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, wf%n_mo, &
                                               wf%linear_dep_threshold, used_diag)
 !
       call wf%initialize_cholesky_ao_overlap()
 !
-      wf%cholesky_ao_overlap(:,:) = L(1:wf%n_mo, 1:wf%n_mo)
+!$omp parallel do private(j, i)
+      do j = 1, wf%n_mo
+         do i = 1, wf%n_mo 
+!
+            wf%cholesky_ao_overlap(i, j) = L(i, j)
+!
+         enddo
+      enddo
+!$omp end parallel do 
 !
       call mem%dealloc(L, wf%n_ao, wf%n_ao)
 !
@@ -1050,7 +1070,7 @@ contains
 !
       call wf%initialize_pivot_matrix_ao_overlap()
 !
-      wf%pivot_matrix_ao_overlap = zero
+      call zero_array(wf%pivot_matrix_ao_overlap, wf%n_ao*wf%n_mo)
 !
       if (wf%n_mo .gt. wf%n_ao .or. wf%n_mo .le. 0 .or. &
           any(used_diag .gt. wf%n_ao) .or. any(used_diag .le. 0)) then
@@ -1069,11 +1089,13 @@ contains
 !
       end if
 !
+!$omp parallel do private(j)
       do j = 1, wf%n_mo
 !
          wf%pivot_matrix_ao_overlap(used_diag(j), j) = one
 !
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(used_diag, wf%n_ao)
 !
@@ -1119,16 +1141,19 @@ contains
 !
 !     Pv = I
 !
-      Pv = zero
+      call zero_array(Pv, wf%n_ao**2)
 !
+!$omp parallel do private(x)
       do x = 1, wf%n_ao
 !
          Pv(x, x) = one
 !
       enddo
+!$omp end parallel do
 !
 !     Pv = I - Po
 !
+!$omp parallel do private(x, w)
       do x = 1, wf%n_ao
          do w = 1, wf%n_ao
 !
@@ -1136,6 +1161,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine construct_projection_matrices_hf
 !
@@ -1159,20 +1185,15 @@ contains
       call mem%alloc(Po, wf%n_ao, wf%n_ao)
       call mem%alloc(Pv, wf%n_ao, wf%n_ao)
 !
-      Po = zero
-      Pv = zero
-!
       call wf%construct_projection_matrices(Po, Pv, wf%ao_density)
 !
       call mem%alloc(G_sq, wf%n_mo, wf%n_mo)
-      G_sq = zero
 !
       call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock)
 !
       call mem%dealloc(Po, wf%n_ao, wf%n_ao)
       call mem%dealloc(Pv, wf%n_ao, wf%n_ao)
 !
-      G = zero
       call packin_anti(G(:,1), G_sq, wf%n_mo)
 !
       call mem%dealloc(G_sq, wf%n_mo, wf%n_mo)
@@ -1236,17 +1257,17 @@ contains
       call mem%alloc(tmp, wf%n_ao, wf%n_ao)
       call mem%alloc(G_ao, wf%n_ao, wf%n_ao)
 !
-      tmp = F
+      call dcopy(wf%n_ao**2, F, 1, tmp, 1)
       call sandwich(tmp, Po, Pv, wf%n_ao)
 !
-      G_ao = tmp
+      call dcopy(wf%n_ao**2, tmp, 1, G_ao, 1)
 !
 !     Construct tmp = Fvo = Pv^T F Po and set H = H - tmp = Fov - Fvo
 !
-      tmp = F
+      call dcopy(wf%n_ao**2, F, 1, tmp, 1)
       call sandwich(tmp, Pv, Po, wf%n_ao)
 !
-      G_ao = G_ao - tmp
+      call daxpy(wf%n_ao**2, -one, tmp, 1, G_ao, 1)
 !
       call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
 !
@@ -1391,7 +1412,7 @@ contains
       info = 0
 !
       call mem%alloc(work, 4*wf%n_mo)
-      work = zero
+      call zero_array(work, 4*wf%n_mo)
 !
       call dsygv(1, 'V', 'L',       &
                   wf%n_mo,          &
@@ -1407,12 +1428,12 @@ contains
       call mem%dealloc(metric, wf%n_mo, wf%n_mo)
       call mem%dealloc(work, 4*wf%n_mo)
 !
-      if (info .ne. 0)  call output%error_msg('Error: could not solve Roothan-Hall equations.')
+      if (info .ne. 0) call output%error_msg('Error: could not solve Roothan-Hall equations.')
 !
 !     Transform back the solutions to original basis, C = P (P^T C) = P C'
 !
       call mem%alloc(prev_C, wf%n_ao, wf%n_mo)
-      prev_C = C
+      call dcopy(wf%n_ao*wf%n_mo, C, 1, prev_C, 1)
 !
       call dgemm('N','N',                       &
                   wf%n_ao,                      &
@@ -1436,11 +1457,12 @@ contains
 !
       do p = 1, wf%n_mo
 !
-         orbital_dotprod = ddot(wf%n_ao, prev_C(1, p), 1, C(1, p), 1)/ddot(wf%n_ao, C(1, p), 1, C(1, p), 1)
+         orbital_dotprod = ddot(wf%n_ao, prev_C(1, p), 1, C(1, p), 1)&
+                          /ddot(wf%n_ao, C(1, p), 1, C(1, p), 1)
 !
          if (orbital_dotprod .lt. zero) then
 !
-            C(:,p) = -C(:,p)
+            call dscal(wf%n_ao, -one, C(:, p), 1)
 !
          endif
 !
@@ -1486,7 +1508,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: atomic_density
 !
-      wf%ao_density = zero
+      call zero_array(wf%ao_density, wf%n_ao**2)
 !
       do I = 1, wf%system%n_atoms
 !
@@ -1500,8 +1522,9 @@ contains
 !
          call wf%system%atoms(I)%read_atomic_density(atomic_density)
 !
-         wf%ao_density(first_ao_on_atom:last_ao_on_atom, first_ao_on_atom:last_ao_on_atom) &
-                                             = atomic_density(1:n_ao_on_atom, 1:n_ao_on_atom)
+         wf%ao_density(first_ao_on_atom : last_ao_on_atom, &
+                       first_ao_on_atom : last_ao_on_atom) = atomic_density(1 : n_ao_on_atom, &
+                                                                            1 : n_ao_on_atom)
 !
          call mem%dealloc(atomic_density, n_ao_on_atom, n_ao_on_atom)
 !
@@ -1546,11 +1569,13 @@ contains
 !
       n_electrons = zero
 !
+!$omp parallel do private(ao) reduction(+:n_electrons)
       do ao = 1, wf%n_ao
 !
          n_electrons = n_electrons + DS(ao, ao)
 !
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(DS, wf%n_ao, wf%n_ao)
 !
@@ -1573,7 +1598,7 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
-      wf%ao_fock = h_wx
+      call dcopy(wf%n_ao**2, h_wx, 1, wf%ao_fock, 1)
       call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies)
       call wf%construct_ao_density()
 !
@@ -1765,14 +1790,12 @@ contains
 !
       call s_timer%turn_on()
 !
-      s_wxqk = zero
       call wf%get_ao_s_wx_1der(s_wxqk)
 !
       call s_timer%turn_off()
 !
       call G_timer%turn_on()
 !
-      G_wxqk = zero
       call wf%construct_ao_G_1der(G_wxqk, wf%ao_density)
 !
       call G_timer%turn_off()
@@ -1783,7 +1806,7 @@ contains
          do q = 1, 3
 
            call symmetric_sum(G_wxqk(:,:,q,k), wf%n_ao)
-           G_wxqk(:,:,q,k) = half*G_wxqk(:,:,q,k)
+           call dscal(wf%n_ao**2, half, G_wxqk(:,:,q,k), 1)
 
          enddo
 
@@ -1793,7 +1816,6 @@ contains
 !
       call h_timer%turn_on()
 !
-      h_wxqk = zero
       call wf%get_ao_h_wx_1der(h_wxqk)
 !
       call h_timer%turn_off()
@@ -1839,14 +1861,14 @@ contains
       do k = 1, wf%system%n_atoms
          do q = 1, 3
 !
-            TrDh_qk(q,k) = ddot(wf%n_ao**2, wf%ao_density, 1, h_wxqk(:,:,q,k), 1)
-            TrDG_qk(q,k) = ddot(wf%n_ao**2, wf%ao_density, 1, G_wxqk(:,:,q,k), 1)
+            TrDh_qk(q,k)   = ddot(wf%n_ao**2, wf%ao_density, 1, h_wxqk(:,:,q,k), 1)
+            TrDG_qk(q,k)   = ddot(wf%n_ao**2, wf%ao_density, 1, G_wxqk(:,:,q,k), 1)
             TrDFDS_qk(q,k) = ddot(wf%n_ao**2, DFD, 1, s_wxqk(:,:,q,k), 1)
 !
-            E_qk(q,k) = E_qk(q,k)   &
-              + TrDh_qk(q,k)        &
-              + half*TrDG_qk(q,k)   &
-              - half*TrDFDS_qk(q,k)
+            E_qk(q,k) = E_qk(q,k)            &
+                      + TrDh_qk(q,k)         &
+                      + half*TrDG_qk(q,k)    &
+                      - half*TrDFDS_qk(q,k)
 !
          enddo
       enddo

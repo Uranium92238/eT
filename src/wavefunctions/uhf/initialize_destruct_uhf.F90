@@ -55,14 +55,6 @@ contains
       call wf%initialize_orbital_energies_a()
       call wf%initialize_orbital_energies_b()
 !
-      wf%orbital_coefficients   = zero
-      wf%orbital_coefficients_a = zero
-      wf%orbital_coefficients_b = zero
-!
-      wf%orbital_energies   = zero
-      wf%orbital_energies_a = zero
-      wf%orbital_energies_b = zero
-!
    end subroutine initialize_orbitals_uhf
 !
 !
@@ -85,10 +77,6 @@ contains
       call wf%initialize_ao_density_a()
       call wf%initialize_ao_density_b()
 !
-      wf%ao_density   = zero
-      wf%ao_density_a = zero
-      wf%ao_density_b = zero
-!
    end subroutine initialize_density_uhf
 !
 !
@@ -110,10 +98,6 @@ contains
 !
       call wf%initialize_ao_fock_a()
       call wf%initialize_ao_fock_b()
-!
-      wf%ao_fock   = zero
-      wf%ao_fock_a = zero
-      wf%ao_fock_b = zero
 !
    end subroutine initialize_fock_uhf
 !
