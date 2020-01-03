@@ -1831,6 +1831,8 @@ contains
       integer            :: I, line_length, start_integer
       type(atomic)       :: atom
 !
+      logical :: print_basis
+!
 !     Choose unit
 !
       if (trim(units) == 'angstrom') then
@@ -1867,7 +1869,17 @@ contains
 !
          atom = molecule%atoms(I)
 !
-         if((I == 1) .or. (molecule%atoms(I-1)%basis .ne. atom%basis)) then
+         print_basis = .false. 
+!
+         if (I == 1) print_basis = .true. ! first atom => print basis 
+!
+         if (I > 1) then ! not first atom => print basis if basis changes
+!
+            if (molecule%atoms(I-1)%basis .ne. atom%basis) print_basis = .true.
+!
+         endif 
+!
+         if (print_basis) then
 !
             start_integer = 1
             if (atom%basis(1:1) == '_') start_integer = 2
