@@ -300,3 +300,87 @@
       class(hf) :: wf
 !
    end subroutine destruct_ao_h_hf
+!
+!
+   module subroutine initialize_orbital_coefficients_frozen_hf_hf(wf)
+!!
+!!    Initialize orbital coefficients frozen core
+!!    Written by Sarai D. Folkestad, Sep. 2019
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+   end subroutine initialize_orbital_coefficients_frozen_hf_hf
+!
+!
+   module subroutine destruct_orbital_coefficients_frozen_hf_hf(wf)
+!!
+!!    Destruct orbital coefficients frozen core
+!!    Written by Sarai D. Folkestad, Sep. 2019
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+   end subroutine destruct_orbital_coefficients_frozen_hf_hf
+!
+!
+   module subroutine initialize_orbital_coefficients_fc_hf(wf)
+!!
+!!    Initialize orbital coefficients frozen core
+!!    Written by Sarai D. Folkestad, Sep. 2019
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+   end subroutine initialize_orbital_coefficients_fc_hf
+!
+!
+   module subroutine destruct_orbital_coefficients_fc_hf(wf)
+!!
+!!    Destruct orbital coefficients frozen core
+!!    Written by Sarai D. Folkestad, Sep. 2019
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+   end subroutine destruct_orbital_coefficients_fc_hf
+!
+!
+   module subroutine initialize_W_mo_update_hf(wf)
+!!
+!!    Initialize W MO update
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
+!!    and Linda Goletto, Jan 2019
+!!
+!!    Modified by Ida-Marie Hoyvik, Oct 2019
+!!
+!!    Initializes the eigenvectors W 
+!!    for Roothan-Hall in the mo basis (FW = We)
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+   end subroutine initialize_W_mo_update_hf
+!
+!
+   module subroutine destruct_W_mo_update_hf(wf)
+!!
+!!    Destruct W MO update 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
+!!    and Linda Goletto, Jan 2019
+!!
+!!    Destructs the eigenvectors W 
+!!    for Roothan-Hall in the mo basis (FW = We)
+!!
+!!    Modified by Ida-Marie Hoyvik, Oct 2019
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+   end subroutine destruct_W_mo_update_hf

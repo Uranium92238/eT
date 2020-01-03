@@ -45,7 +45,6 @@ contains
 !!    for a localized region of a large molecule
 !!    which has been treated at HF level of theory.
 !!
-!!
       implicit none
 !
       class(hf) :: wf
@@ -62,6 +61,7 @@ contains
 !     MO coefficients for core orbitals are placed in 
 !     wf%orbital_coefficients_fc and removed from wf%orbital_coefficients
 !     the number of frozen core orbitals is wf%n_frozen_core_orbitals
+!
       if (wf%frozen_core) call wf%remove_core_orbitals()
 !
 !     Cholesky decomposition of density for reduced space CC calculation
@@ -69,6 +69,7 @@ contains
 !     MO coefficients for frozen hf orbitals now placed in 
 !     wf%orbital_coefficients_frozen_hf and removed from wf%orbital_coefficients
 !     the number of frozen hf orbitals is wf%n_frozen_hf_orbitals
+!
       if (wf%frozen_hf_mos) call wf%remove_frozen_hf_orbitals()
 !
    end subroutine prepare_mos_hf
@@ -99,7 +100,7 @@ contains
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_copy
       real(dp), dimension(:), allocatable :: orbital_energies_copy
 !
-      integer :: I, ao, mo
+      integer :: I, ao, mo, K
 !
       logical, dimension(:), allocatable :: freeze_atom
 !
@@ -158,8 +159,15 @@ contains
 !
       call wf%initialize_orbital_coefficients_fc()
 !
-      wf%orbital_coefficients_fc(1:wf%n_ao, 1:wf%n_frozen_core_orbitals) = &
-            orbital_coefficients_copy(1:wf%n_ao, 1:wf%n_frozen_core_orbitals)
+!$omp parallel do private(K, i) collapse(2)
+      do K = 1, wf%n_frozen_core_orbitals
+         do i = 1, wf%n_ao
+!
+            wf%orbital_coefficients_fc(i, K) = orbital_coefficients_copy(i, K)
+!
+         enddo
+      enddo
+!$omp end parallel do 
 !
 !     Check for crossover:
 !
@@ -185,9 +193,9 @@ contains
      call mem%alloc(wf%orbital_energies, wf%n_mo - wf%n_frozen_core_orbitals)
 !
 !$omp parallel do private (mo)
-         do mo = 1, wf%n_mo - wf%n_frozen_core_orbitals
+      do mo = 1, wf%n_mo - wf%n_frozen_core_orbitals
 !
-            wf%orbital_energies(mo) = orbital_energies_copy(wf%n_frozen_core_orbitals + mo)
+         wf%orbital_energies(mo) = orbital_energies_copy(wf%n_frozen_core_orbitals + mo)
 !
       enddo
 !$omp end parallel do
@@ -195,7 +203,7 @@ contains
      call mem%dealloc(orbital_energies_copy, wf%n_mo)
 !
       wf%n_mo = wf%n_mo  - wf%n_frozen_core_orbitals
-      wf%n_o = wf%n_o  - wf%n_frozen_core_orbitals    
+      wf%n_o  = wf%n_o  - wf%n_frozen_core_orbitals    
 !
       call output%printf('m', '- Preparation for frozen core approximation', &
                          fs='(/t3,a)')
@@ -282,11 +290,13 @@ contains
 !
       call mem%alloc(active_aos, n_active_aos)
 !
+!$omp parallel do private(i)
       do i = 1, n_active_aos
 !
          active_aos(i) =  i
 !
       enddo
+!$omp end parallel do
 !
 !     1. Set up active occupied density
 !
@@ -357,21 +367,25 @@ contains
 !
 !$omp parallel do private (ao, i, a, ii)
       do ao = 1, wf%n_ao
+!
          do i = 1, wf%n_o
 !
             wf%orbital_coefficients(ao, i) = orbitals_copy(ao, i)
 !
          enddo
+!
          do a = 1, wf%n_v
 !
             wf%orbital_coefficients(ao, wf%n_o + a) = orbitals_copy(ao, a + wf%n_o + wf%n_frozen_hf_o)
 !
          enddo
+!
          do ii = 1, wf%n_frozen_hf_o
 !
             wf%orbital_coefficients_frozen_hf(ao, ii) = orbitals_copy(ao, wf%n_o + ii)
 !
          enddo
+!
       enddo
 !$omp end parallel do
 !
@@ -459,7 +473,8 @@ contains
 !
       call mem%alloc(D, wf%n_ao, wf%n_ao)
 !
-!     add frozen core contribution
+!     Add frozen core contribution
+!
       call dgemm('N', 'T',                      &
                   wf%n_ao,                      &
                   wf%n_ao,                      &
@@ -502,7 +517,6 @@ contains
 !!
 !!    in preparation of CC in subspace.
 !!
-!!
       implicit none
 !
       class(hf) :: wf
@@ -541,66 +555,6 @@ contains
       call wf%destruct_orbital_coefficients_frozen_hf()
 !
    end subroutine construct_mo_fock_frozen_hf_term_hf
-!
-!
-   module subroutine initialize_orbital_coefficients_frozen_hf_hf(wf)
-!!
-!!    Initialize orbital coefficients frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (.not. allocated(wf%orbital_coefficients_frozen_hf)) &
-            call mem%alloc(wf%orbital_coefficients_frozen_hf, wf%n_ao, wf%n_frozen_hf_o)
-!
-   end subroutine initialize_orbital_coefficients_frozen_hf_hf
-!
-!
-   module subroutine destruct_orbital_coefficients_frozen_hf_hf(wf)
-!!
-!!    Destruct orbital coefficients frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (allocated(wf%orbital_coefficients_frozen_hf)) &
-            call mem%dealloc(wf%orbital_coefficients_frozen_hf, wf%n_ao, wf%n_frozen_hf_o)
-!
-   end subroutine destruct_orbital_coefficients_frozen_hf_hf
-!
-!
-   module subroutine initialize_orbital_coefficients_fc_hf(wf)
-!!
-!!    Initialize orbital coefficients frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (.not. allocated(wf%orbital_coefficients_fc)) &
-            call mem%alloc(wf%orbital_coefficients_fc, wf%n_ao, wf%n_frozen_core_orbitals)
-!
-   end subroutine initialize_orbital_coefficients_fc_hf
-!
-!
-   module subroutine destruct_orbital_coefficients_fc_hf(wf)
-!!
-!!    Destruct orbital coefficients frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (allocated(wf%orbital_coefficients_fc)) &
-            call mem%dealloc(wf%orbital_coefficients_fc, wf%n_ao, wf%n_frozen_core_orbitals)
-!
-   end subroutine destruct_orbital_coefficients_fc_hf
 !
 !
    module function get_n_active_hf_atoms_hf(wf) result(n_active_hf_atoms)

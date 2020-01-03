@@ -50,24 +50,24 @@ module wavefunction_class
       real(dp),    dimension(3) :: dipole_moment
       complex(dp), dimension(3) :: dipole_moment_complex
 !
-      integer :: n_ao
-      integer :: n_mo
-      integer :: n_o
-      integer :: n_v
+      integer :: n_ao ! Number of atomic orbitals 
+      integer :: n_mo ! Number of molecular orbitals 
+      integer :: n_o  ! Number of occupied orbitals 
+      integer :: n_v  ! Number of virtual orbbitals 
 !
       type(molecular_system), pointer :: system
 !
       real(dp), dimension(:,:), allocatable :: orbital_coefficients
-      real(dp), dimension(:), allocatable :: orbital_energies
+      real(dp), dimension(:), allocatable   :: orbital_energies
 !      
 !     QMMM matrices
 !
-      real(dp), dimension(:,:), allocatable :: nopol_h_wx         ! one-electron for non-polarizable QM/MM
-      real(dp), dimension(:,:), allocatable :: pol_emb_fock       ! Fock for polarizable QM/MM
+      real(dp), dimension(:,:), allocatable :: nopol_h_wx   ! one-electron for non-polarizable QM/MM
+      real(dp), dimension(:,:), allocatable :: pol_emb_fock ! Fock for polarizable QM/MM
 !
 !     QMPCM matrices
 !
-      real(dp), dimension(:,:), allocatable :: pcm_fock   ! Fock for QM/PCM
+      real(dp), dimension(:,:), allocatable :: pcm_fock     ! Fock for QM/PCM
 !
 !     Frozen orbital variables. Frozen orbitals are typically frozen core or frozen HF orbitals.
 !
@@ -77,7 +77,7 @@ module wavefunction_class
 !
       real(dp) :: cholesky_orbital_threshold = 1.0D-2
 !
-      logical :: exists_frozen_fock_terms
+      logical :: exists_frozen_fock_terms ! Are there frozen Fock terms?
 !
    contains
 !
@@ -252,7 +252,8 @@ contains
 !
             call construct_ao_x_AB(wf%system, x_AB, A, B)
 !
-            x_AB_p(1 : A_interval%length, 1 : B_interval%length) => x_AB(1 : A_interval%length*B_interval%length)
+            x_AB_p(1 : A_interval%length, 1 : B_interval%length) &
+                                    => x_AB(1 : A_interval%length*B_interval%length)
 !
             do x = 1, A_interval%length
                do y = 1, B_interval%length
@@ -317,13 +318,13 @@ contains
             x_ABqk_p(1 : A_interval%length, 1 : B_interval%length, 1 : 3, 1 : 2) &
                                  => x_ABqk(1 : (A_interval%length)*(B_interval%length)*6)
 !
-            call construct_ao_x_AB_1der(wf%system,            &
-                                       x_ABqk_p(:,:,1,1),   &
-                                       x_ABqk_p(:,:,2,1),   &
-                                       x_ABqk_p(:,:,3,1),   &
-                                       x_ABqk_p(:,:,1,2),   &
-                                       x_ABqk_p(:,:,2,2),   &
-                                       x_ABqk_p(:,:,3,2),   &
+            call construct_ao_x_AB_1der(wf%system,             &
+                                       x_ABqk_p(:,:,1,1),      &
+                                       x_ABqk_p(:,:,2,1),      &
+                                       x_ABqk_p(:,:,3,1),      &
+                                       x_ABqk_p(:,:,1,2),      &
+                                       x_ABqk_p(:,:,2,2),      &
+                                       x_ABqk_p(:,:,3,2),      &
                                        A, B)
 !
             do q = 1, 3
@@ -475,7 +476,6 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: h 
 !
       call wf%get_ao_x_wx(construct_ao_h_wx_molecular_system, h)
-!
 !
    end subroutine get_ao_h_wx_wavefunction
 !
@@ -663,14 +663,27 @@ contains
 !
             B_interval = wf%system%shell_limits(B)
 !
-            call wf%system%construct_ao_q_wx(q_AB_xx, q_AB_xy, q_AB_xz, q_AB_yy, q_AB_yz, q_AB_zz, A, B)
+            call wf%system%construct_ao_q_wx(q_AB_xx, q_AB_xy, q_AB_xz, &
+                                             q_AB_yy, q_AB_yz, q_AB_zz, A, B)
 !
-            q_AB_xx_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_xx(1 : A_interval%length*B_interval%length)
-            q_AB_xy_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_xy(1 : A_interval%length*B_interval%length)
-            q_AB_xz_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_xz(1 : A_interval%length*B_interval%length)
-            q_AB_yy_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_yy(1 : A_interval%length*B_interval%length)
-            q_AB_yz_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_yz(1 : A_interval%length*B_interval%length)
-            q_AB_zz_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_zz(1 : A_interval%length*B_interval%length)
+            q_AB_xx_p(1 : A_interval%length, 1 : B_interval%length) &
+                                             => q_AB_xx(1 : A_interval%length*B_interval%length)
+!
+            q_AB_xy_p(1 : A_interval%length, 1 : B_interval%length) &
+                                             => q_AB_xy(1 : A_interval%length*B_interval%length)
+!
+            q_AB_xz_p(1 : A_interval%length, 1 : B_interval%length) &
+                                             => q_AB_xz(1 : A_interval%length*B_interval%length)
+!
+            q_AB_yy_p(1 : A_interval%length, 1 : B_interval%length) &
+                                             => q_AB_yy(1 : A_interval%length*B_interval%length)
+!
+            q_AB_yz_p(1 : A_interval%length, 1 : B_interval%length) &
+                                             => q_AB_yz(1 : A_interval%length*B_interval%length)
+!
+            q_AB_zz_p(1 : A_interval%length, 1 : B_interval%length) &
+                                             => q_AB_zz(1 : A_interval%length*B_interval%length)
+!
 !
              do x = 1, A_interval%length
                 do y = 1, B_interval%length
@@ -714,7 +727,8 @@ contains
 !
       character(len=*), intent(in) :: task 
 !
-      call output%error_msg('Cannot restart for task ' // trim(task) // ' from abstract wavefunction ' // trim(wf%name_))
+      call output%error_msg('Cannot restart for task ' // trim(task) &
+                           // ' from abstract wavefunction ' // trim(wf%name_))
 !
    end subroutine is_restart_safe_wavefunction
 !
@@ -738,13 +752,17 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable :: mu_wxk
 !
+      integer :: k
+!
       call mem%alloc(mu_wxk, wf%n_ao, wf%n_ao, 3)
 !
       call wf%get_ao_mu_wx(mu_wxk(:,:,1), mu_wxk(:,:,2), mu_wxk(:,:,3))
 !
-      call wf%mo_transform(mu_wxk(:,:,1), mu_pqk(:,:,1))
-      call wf%mo_transform(mu_wxk(:,:,2), mu_pqk(:,:,2))
-      call wf%mo_transform(mu_wxk(:,:,3), mu_pqk(:,:,3))
+      do k = 1, 3 
+!
+         call wf%mo_transform(mu_wxk(:,:,k), mu_pqk(:,:,k))
+!
+      enddo 
 !
       call mem%dealloc(mu_wxk, wf%n_ao, wf%n_ao, 3)
 !
@@ -770,16 +788,18 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable :: q_wxk
 !
+      integer :: k 
+!
       call mem%alloc(q_wxk, wf%n_ao, wf%n_ao, 6)
 !
-      call wf%get_ao_q_wx(q_wxk(:,:,1), q_wxk(:,:,2), q_wxk(:,:,3), q_wxk(:,:,4), q_wxk(:,:,5), q_wxk(:,:,6))
+      call wf%get_ao_q_wx(q_wxk(:,:,1), q_wxk(:,:,2), q_wxk(:,:,3), &
+                          q_wxk(:,:,4), q_wxk(:,:,5), q_wxk(:,:,6))
 !
-      call wf%mo_transform(q_wxk(:,:,1), q_pqk(:,:,1))
-      call wf%mo_transform(q_wxk(:,:,2), q_pqk(:,:,2))
-      call wf%mo_transform(q_wxk(:,:,3), q_pqk(:,:,3))
-      call wf%mo_transform(q_wxk(:,:,4), q_pqk(:,:,4))
-      call wf%mo_transform(q_wxk(:,:,5), q_pqk(:,:,5))
-      call wf%mo_transform(q_wxk(:,:,6), q_pqk(:,:,6))
+      do k = 1, 6
+!
+         call wf%mo_transform(q_wxk(:,:,k), q_pqk(:,:,k))
+!
+      enddo
 !
       call mem%dealloc(q_wxk, wf%n_ao, wf%n_ao, 6)
 !
@@ -863,7 +883,7 @@ contains
 !$omp parallel do private(i)
       do i = 1, n_orbitals
 !
-         PAO_coeff(i + local_first - 1,i) = one
+         PAO_coeff(i + local_first - 1, i) = one
 !
       enddo
 !$omp end parallel do
@@ -954,7 +974,7 @@ contains
    subroutine lowdin_orthonormalization_wavefunction(wf, orbital_coeff, S, n_orbitals, rank)
 !!
 !!    Lövdin orthonormalization 
-!!    Written by Linda Goletto and sarai D. Folkestad, Jun 2019
+!!    Written by Linda Goletto and Sarai D. Folkestad, Jun 2019
 !!
 !!    Orthonormalizes the orbital_coeff using Lövdin 
 !!    orthonormalization
