@@ -365,7 +365,7 @@ contains
 !
                   log_count = log_count + 1
                   if (log_count .gt. log_len) then
-                     print *, 'Not enough ints in printf'
+                     print *, 'Not enough logicals in printf'
                      stop
                   endif
 !
@@ -388,14 +388,25 @@ contains
 !
                   printed = i + 1
 !
-!                 Copy format string to fstring and write the next real to pstring
+!                 Copy format string to fstring and figure out the printed length
                   fstring = string(j:i)
-                  if (fstring(2:3) .eq. 'l0') then
+!
+                  if (fstring(2:3) .eq. 'l0' .or. &
+                      fstring(2:3) .eq. 'L0') then
+!
                      fstring = '(a)'
-                     advance_position = len_trim(chars(char_count))
+!
+                     if (logs(log_count)) then
+                        advance_position = 4
+                     else
+                        advance_position = 5
+                     end if
+!
                   else
+!
                      fstring(2:2) = 'a'
                      advance_position = the_file%get_format_length(fstring)
+!
                   endif
 !
                   if(logs(log_count)) then
@@ -409,7 +420,7 @@ contains
 !
                endif
 !  
-!           Is ( followed by a or A?
+!           Is ( followed by a or A or b or B?
             elseif((string(i+1:i+1) .eq. "a") .or. (string(i+1:i+1) .eq. "A") .or. &
                    (string(i+1:i+1) .eq. "b") .or. (string(i+1:i+1) .eq. "B")) then
 !
