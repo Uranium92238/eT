@@ -720,6 +720,9 @@ contains
 !!    of g_wxwx^1/2 for each shell pair (A,B), where w and x is in A and B,
 !!    respectively.
 !!
+!
+      use array_utilities, only: quicksort_with_index_descending
+!
       implicit none
 !
       class(hf) :: wf
@@ -729,13 +732,18 @@ contains
 !
 !     Local variables
 !
-      integer :: s1, s2, s1s2
+      integer :: s1, s2, s1s2, sp
 !
       real(dp) :: maximum
 !
       real(dp), dimension(wf%system%max_shell_size**4) :: g
 !
       type(interval) :: A_interval, B_interval
+!
+      type(timings) :: timer, timer_sort
+!
+      timer = timings('Construct eri screening list','v')
+      call timer%turn_on()
 !
 !     Set the maximum element in each shell pair
 !
@@ -767,20 +775,38 @@ contains
 !     to resort the sp_eri_schwarz_list matrix
 !
       call mem%alloc(sp_eri_schwarz_index_list, wf%system%n_s*(wf%system%n_s + 1)/2)
-      sp_eri_schwarz_index_list = 0
-!
       call mem%alloc(sorted_sp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2)
-      sorted_sp_eri_schwarz = wf%sp_eri_schwarz(:, 1)
 !
-      call get_n_highest(wf%system%n_s*(wf%system%n_s + 1)/2, wf%system%n_s*(wf%system%n_s + 1)/2, wf%sp_eri_schwarz,&
-                      sorted_sp_eri_schwarz, sp_eri_schwarz_index_list)
+      call dcopy(wf%system%n_s*(wf%system%n_s + 1)/2, &
+                  wf%sp_eri_schwarz(:, 1), 1, sorted_sp_eri_schwarz, 1)
 !
-      wf%sp_eri_schwarz(:, 2) = wf%sp_eri_schwarz(:, 1)
-      wf%sp_eri_schwarz(:, 1) = sorted_sp_eri_schwarz
+      timer_sort = timings('Sort in eri screening list','v')
+      call timer_sort%turn_on()
+!
+      call quicksort_with_index_descending(sorted_sp_eri_schwarz, sp_eri_schwarz_index_list, &
+                                                wf%system%n_s*(wf%system%n_s + 1)/2)
+!
+      call timer_sort%turn_off()
+!
+      call dcopy(wf%system%n_s*(wf%system%n_s + 1)/2, &
+                  wf%sp_eri_schwarz(:, 1), 1, wf%sp_eri_schwarz(:, 2), 1)
+!
+      call dcopy(wf%system%n_s*(wf%system%n_s + 1)/2, sorted_sp_eri_schwarz, 1, &
+                  wf%sp_eri_schwarz(:, 1), 1)
+
       call mem%dealloc(sorted_sp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2)
 !
-      wf%sp_eri_schwarz_list(:,3) = sp_eri_schwarz_index_list
+!$omp parallel do private(sp)
+      do sp = 1, wf%system%n_s*(wf%system%n_s + 1)/2
+!
+         wf%sp_eri_schwarz_list(sp, 3) = sp_eri_schwarz_index_list(sp)
+!
+      enddo
+!$omp end parallel do
+!
       call mem%dealloc(sp_eri_schwarz_index_list, wf%system%n_s*(wf%system%n_s + 1)/2)
+!
+      call timer%turn_off()
 !
    end subroutine construct_sp_eri_schwarz_hf
 !
