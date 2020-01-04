@@ -1035,6 +1035,11 @@ contains
 !
       integer :: i, j
 !
+      type(timings), allocatable :: timer
+!
+      timer = timings('Cholesky decomposition of AO overlap', 'normal')
+      call timer%turn_on()
+!
       call mem%alloc(used_diag, wf%n_ao)
 !
 !$omp parallel do private(j)
@@ -1099,6 +1104,8 @@ contains
 !
       call mem%dealloc(used_diag, wf%n_ao)
 !
+      call timer%turn_off()
+!
    end subroutine decompose_ao_overlap_hf
 !
 !
@@ -1123,6 +1130,11 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
 !
       integer :: w, x
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Construction of projection matrices (Po, Pv)', 'verbose')
+      call timer%turn_on()
 !
 !     Po = 1/2 D S
 !
@@ -1162,6 +1174,8 @@ contains
          enddo
       enddo
 !$omp end parallel do
+!
+      call timer%turn_off()
 !
    end subroutine construct_projection_matrices_hf
 !
@@ -1237,7 +1251,7 @@ contains
 !!
 !!       G = Fov - Fvo = Po^T F Pv - Pv^T F Po,
 !!
-!!    where Po = D S and Pv = 1 - Po. In Po, D is the AO density and S
+!!    where Po = 1/2 D S and Pv = 1 - Po. In Po, D is the AO density and S
 !!    is the AO overlap matrix.
 !!
       implicit none
@@ -1251,6 +1265,11 @@ contains
       real(dp), dimension(wf%n_mo, wf%n_mo) :: G
 !
       real(dp), dimension(:, :), allocatable :: tmp, G_ao 
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Construct RH gradient', 'verbose')
+      call timer%turn_on()
 !
 !     Construct tmp = Fov = Po^T F Pv and set G = tmp = Fov
 !
@@ -1275,34 +1294,36 @@ contains
 !
       call mem%alloc(tmp, wf%n_ao, wf%n_mo)
 !
-      call dgemm('N', 'N', &
-                  wf%n_ao, &
-                  wf%n_mo, &
-                  wf%n_ao, &
-                  one, &
-                  G_ao, &
-                  wf%n_ao, &
-                  wf%pivot_matrix_ao_overlap, & ! P 
-                  wf%n_ao, &
-                  zero, &
-                  tmp, &
+      call dgemm('N', 'N',                      &
+                  wf%n_ao,                      &
+                  wf%n_mo,                      &
+                  wf%n_ao,                      &
+                  one,                          &
+                  G_ao,                         &
+                  wf%n_ao,                      &
+                  wf%pivot_matrix_ao_overlap,   & ! P 
+                  wf%n_ao,                      &
+                  zero,                         &
+                  tmp,                          &
                   wf%n_ao)
 !
-      call dgemm('T', 'N', &
-                  wf%n_mo, &
-                  wf%n_mo, &
-                  wf%n_ao, &
-                  one, &
-                  wf%pivot_matrix_ao_overlap, & ! P 
-                  wf%n_ao, &
-                  tmp, & ! G P  
-                  wf%n_ao, &
-                  zero, &
-                  G, &
+      call dgemm('T', 'N',                      &
+                  wf%n_mo,                      &
+                  wf%n_mo,                      &
+                  wf%n_ao,                      &
+                  one,                          &
+                  wf%pivot_matrix_ao_overlap,   & ! P 
+                  wf%n_ao,                      &
+                  tmp,                          & ! G P  
+                  wf%n_ao,                      &
+                  zero,                         &
+                  G,                            &
                   wf%n_mo)
 !
       call mem%dealloc(tmp, wf%n_ao, wf%n_mo)
       call mem%dealloc(G_ao, wf%n_ao, wf%n_ao)
+!
+      call timer%turn_off()
 !
    end subroutine construct_roothan_hall_gradient_hf
 !
@@ -1354,6 +1375,11 @@ contains
       real(dp) :: ddot, orbital_dotprod
 !
       integer :: info, p
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Solve FC = SCe', 'verbose')
+      call timer%turn_on()
 !
       call mem%alloc(metric, wf%n_mo, wf%n_mo)
 !
@@ -1469,6 +1495,8 @@ contains
       enddo
 !
       call mem%dealloc(prev_C, wf%n_ao, wf%n_mo)
+!
+      call timer%turn_off()
 !
    end subroutine do_roothan_hall_hf
 !
@@ -1620,7 +1648,7 @@ contains
       call output%printf('n', 'Exchange screening threshold: (e11.4)', &
                          reals=[wf%exchange_threshold], fs='(t6,a)')
 !
-      call output%printf('n', 'ERI integral precision:       (e11.4)', &
+      call output%printf('n', 'Fock precision:               (e11.4)', &
                          reals=[wf%libint_epsilon], fs='(t6,a)')
 !
    end subroutine print_screening_settings_hf

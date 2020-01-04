@@ -742,7 +742,7 @@ contains
 !
       type(timings) :: timer, timer_sort
 !
-      timer = timings('Construct eri screening list','v')
+      timer = timings('Construct ERI screening list', 'v')
       call timer%turn_on()
 !
 !     Set the maximum element in each shell pair
@@ -780,7 +780,7 @@ contains
       call dcopy(wf%system%n_s*(wf%system%n_s + 1)/2, &
                   wf%sp_eri_schwarz(:, 1), 1, sorted_sp_eri_schwarz, 1)
 !
-      timer_sort = timings('Sort in eri screening list','v')
+      timer_sort = timings('Construct ERI screening list (time to sort)','v')
       call timer_sort%turn_on()
 !
       call quicksort_with_index_descending(sorted_sp_eri_schwarz, sp_eri_schwarz_index_list, &
@@ -1206,8 +1206,7 @@ contains
 !
          call output%print_separator('verbose', 67)
 !
-!
-!        put FQ charges into charge (I am discrading langrangian multipliers)
+!        Put FQ charges into charge (I am discrading langrangian multipliers)
 !
          wf%system%mm%charge = wf%system%mm%pol_emb_lhs(1:wf%system%mm%n_atoms)
 !
@@ -1254,13 +1253,17 @@ contains
 !
       real(dp), intent(in) :: gradient_threshold
 !
-      if (wf%coulomb_threshold .gt. gradient_threshold*1.0d-3)  wf%coulomb_threshold  = gradient_threshold*1.0d-3
-      if (wf%exchange_threshold .gt. gradient_threshold*1.0d-3) wf%exchange_threshold = gradient_threshold*1.0d-3
+      if (wf%coulomb_threshold .gt. gradient_threshold*1.0d-3)  &
+                  wf%coulomb_threshold  = gradient_threshold*1.0d-3
+!
+      if (wf%exchange_threshold .gt. gradient_threshold*1.0d-3) &
+                  wf%exchange_threshold = gradient_threshold*1.0d-3
 !
       wf%coulomb_threshold  = min(wf%coulomb_threshold,  1.0d-12)
       wf%exchange_threshold = min(wf%exchange_threshold, 1.0d-10)
 !
-      if (wf%libint_epsilon .gt. (wf%coulomb_threshold)**2) wf%libint_epsilon = (wf%coulomb_threshold)**2
+      if (wf%libint_epsilon .gt. (wf%coulomb_threshold)**2) &
+                  wf%libint_epsilon = (wf%coulomb_threshold)**2
 !
    end subroutine set_screening_and_precision_thresholds_hf
 !
