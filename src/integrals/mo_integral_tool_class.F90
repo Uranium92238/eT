@@ -290,12 +290,12 @@ contains
       call output%printf('m', '- Settings for integral handling:', fs='(/t3,a)')
 !
       call output%printf('m', &
-                         'Cholesky vectors in memory: (l1)', &
+                         'Cholesky vectors in memory: (l0)', &
                          logs=[integrals%cholesky_mem],     &
                          fs='(/t6,a)')
 !
       call output%printf('m', &
-                         'ERI matrix in memory:       (l1)', &
+                         'ERI matrix in memory:       (l0)', &
                          logs=[integrals%eri_t1_mem],        &
                          fs='(t6,a)')
 !
