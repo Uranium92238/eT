@@ -41,6 +41,7 @@ endmacro()
 # 
 # NEVER comment out tests
 add_eT_runtest(eri_cholesky                                 "eT;short;cholesky;eri")
+add_eT_runtest(eri_cholesky_no_vectors                      "eT;short;cholesky;eri")
 #
 add_eT_runtest(hf_energy                                    "eT;short;hf;sad")
 add_eT_runtest(hf_low_memory                                "eT;short;hf;sad")
