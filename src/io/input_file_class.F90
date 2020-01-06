@@ -365,16 +365,22 @@ contains
 !
       active_atoms%name_    = 'active atoms'
       active_atoms%required = .false.
-      active_atoms%keywords = [character(len=30) ::       &
-                                 'selection type       ', &
-                                 'central atom         ', &
-                                 'hf                   ', &
-                                 'ccs                  ', &
-                                 'cc2                  ', &
-                                 'inactive basis       ', &
-                                 'hf basis             ', &
-                                 'ccs basis            ', &
-                                 'cc2 basis            ']
+      active_atoms%keywords = [character(len=30) :: &
+                              'selection type', &
+                              'central atom  ', &
+                              'hf            ', &
+                              'ccs           ', &
+                              'cc2           ', &
+                              'ccsd          ', &
+                              'cc3           ', &
+                              'ccsd(t)       ', &
+                              'inactive basis', &
+                              'hf basis      ', &
+                              'ccs basis     ', &
+                              'cc2 basis     ', &
+                              'ccsd basis    ', &
+                              'cc3 basis     ', &
+                              'ccsd(t) basis ']
 !
       mlcc%name_    = 'mlcc'
       mlcc%required = .false.

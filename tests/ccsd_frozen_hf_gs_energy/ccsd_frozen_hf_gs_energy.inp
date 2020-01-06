@@ -42,7 +42,7 @@ end frozen orbitals
 
 active atoms
    selection type: range
-   ccs: [3,4]
+   ccsd: [3,4]
 end active atoms
 
 geometry
