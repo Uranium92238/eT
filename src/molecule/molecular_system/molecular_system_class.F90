@@ -1095,7 +1095,7 @@ contains
 !
             do lower_level_method = method + 1, size(methods)
 !
-               if (radius(lower_level_method) == 0) cycle
+               if (radius(lower_level_method) == zero) cycle
 !
                if (radius(method) .gt. radius(lower_level_method)) &
                   call output%error_msg('Active atoms by radius, but ' // trim(methods(method)) //&
@@ -1168,7 +1168,6 @@ contains
 !
          call mem%dealloc(radius, size(methods))
          call mem%dealloc(counter, size(methods))
-         call mem%dealloc(radius, size(methods))
 !
       endif
 !
