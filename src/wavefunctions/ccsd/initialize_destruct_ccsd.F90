@@ -69,34 +69,6 @@ contains
    end subroutine destruct_amplitudes_ccsd
 !
 !
-   module subroutine initialize_t2_ccsd(wf)
-!!
-!!    Initialize t2 amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      if (.not. allocated(wf%t2)) call mem%alloc(wf%t2, wf%n_t2)
-!
-   end subroutine initialize_t2_ccsd
-!
-!
-   module subroutine destruct_t2_ccsd(wf)
-!!
-!!    Destruct t2 amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      if (allocated(wf%t2)) call mem%dealloc(wf%t2, wf%n_t2)
-!
-   end subroutine destruct_t2_ccsd
-!
-!
    module subroutine initialize_multipliers_ccsd(wf)
 !!
 !!    Initialize multipliers
@@ -131,34 +103,6 @@ contains
       call wf%destruct_t2bar()
 !
    end subroutine destruct_multipliers_ccsd
-!
-!
-   module subroutine initialize_t2bar_ccsd(wf)
-!!
-!!    Initialize T2-bar
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      if (.not. allocated(wf%t2bar)) call mem%alloc(wf%t2bar, wf%n_t2)
-!
-   end subroutine initialize_t2bar_ccsd
-!
-!
-   module subroutine destruct_t2bar_ccsd(wf)
-!!
-!!    Destruct T2-bar
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_t2)
-!
-   end subroutine destruct_t2bar_ccsd
 !
 !
 end submodule initialize_destruct_ccsd

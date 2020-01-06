@@ -269,10 +269,10 @@ contains
                             &specified on input:', fs='(/t3,a)')
 !
          call output%printf('m', 'Memory available (eT):    (a0)', &
-                            chars=[mem%get_memory_as_character(mem%available)], fs='(/t6,a)')
+                            chars=[mem%get_memory_as_character(mem%available,.true.)], fs='(/t6,a)')
 !
          call output%printf('m', 'Memory available (input): (a0)', &
-                            chars=[mem%get_memory_as_character(mem%total)], fs='(t6,a)')
+                            chars=[mem%get_memory_as_character(mem%total,.true.)], fs='(t6,a)')
 !
          call output%warning_msg('Deallocations may be missing or specified with &
                                  &incorrect dimensionalities.')

@@ -90,6 +90,10 @@ contains
 !
       wf%energy = wf%hf_energy - e2_neg
 !
+      call mem%dealloc(eps, wf%n_mo)
+      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
    end subroutine calculate_energy_mp2
 !
 !

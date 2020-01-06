@@ -297,7 +297,7 @@ contains
 !
       class(cc3) :: wf
 !
-      call wf%ccs%cleanup()
+      call wf%ccsd%cleanup()
 !
       call wf%delete_intermediate_files
 !

@@ -457,7 +457,7 @@ contains
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%alloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       else ! batching
 !
@@ -682,7 +682,7 @@ contains
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%dealloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         call mem%dealloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
          call mem%dealloc(g_lbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -703,13 +703,13 @@ contains
          call mem%dealloc(g_lick, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%dealloc(g_ljck, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
 !
-         call mem%dealloc(g_lbic, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(g_lbjc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(g_lbkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
+         call mem%dealloc(g_lbic, wf%n_v, wf%n_v, wf%n_o, batch_i%length)
+         call mem%dealloc(g_lbjc, wf%n_v, wf%n_v, wf%n_o, batch_i%length)
+         call mem%dealloc(g_lbkc, wf%n_v, wf%n_v, wf%n_o, batch_i%length)
 !
-         call mem%dealloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%dealloc(X_abdj, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%dealloc(X_abdk, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         call mem%dealloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%dealloc(X_abdj, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%dealloc(X_abdk, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
       endif
 !
