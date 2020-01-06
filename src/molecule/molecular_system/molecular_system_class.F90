@@ -978,7 +978,7 @@ contains
 !
       integer, dimension(:), allocatable :: active_atoms, atoms_tmp, counter
 !
-      character(len=4), dimension(:), allocatable :: methods
+      character(len=7), dimension(:), allocatable :: methods
 !
       character(len=200), dimension(:), allocatable :: basis
 !
@@ -994,10 +994,12 @@ contains
 !
 !     Possible methods for active atoms ( ordered after level !! )
 !
-      methods = (/   'ccsd', &
-                     'cc2 ', &
-                     'ccs ', &
-                     'hf  '/)  
+      methods = (/   'cc3    ',  &
+                     'ccsd(t)',  &
+                     'ccsd   ', &
+                     'cc2    ', &
+                     'ccs    ', &
+                     'hf     '/)  
 !
       call mem%alloc(n_active, size(methods))
 !
