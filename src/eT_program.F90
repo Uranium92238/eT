@@ -374,10 +374,11 @@ subroutine do_eri_cholesky(system)
 !
    eri_cholesky_solver = eri_cd(system)
 !
-   call eri_cholesky_solver%run(system)            ! Do the Cholesky decomposition 
+   call eri_cholesky_solver%run(system)               ! Do the Cholesky decomposition 
 !
-   call eri_cholesky_solver%diagonal_test(system)  ! Determine the largest 
-                                                   ! deviation in the ERI matrix 
+   if (eri_cholesky_solver%construct_vectors) &
+      call eri_cholesky_solver%diagonal_test(system)  ! Determine the largest 
+                                                      ! deviation in the ERI matrix 
 !
    call eri_cholesky_solver%cleanup(system)
 !

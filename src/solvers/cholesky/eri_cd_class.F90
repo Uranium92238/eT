@@ -346,11 +346,15 @@ contains
 !
       type(molecular_system), intent(inout) :: system
 !
-      call solver%write_ao_cholesky_to_direct_file(system)
-      system%n_J = solver%n_cholesky
+      if (solver%construct_vectors) then 
 !
-      call solver%cholesky_ao_vectors_info%delete_()
-      call solver%cholesky_ao_vectors%delete_()
+         call solver%write_ao_cholesky_to_direct_file(system)
+         system%n_J = solver%n_cholesky
+!
+         call solver%cholesky_ao_vectors_info%delete_()
+         call solver%cholesky_ao_vectors%delete_()
+!
+      endif
 !
       call solver%timer%turn_off()
 !
