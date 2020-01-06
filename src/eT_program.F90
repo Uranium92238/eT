@@ -431,48 +431,34 @@ subroutine print_program_banner()
 !
    implicit none 
 !
-   call output%printf('m', 'eT - a coupled cluster program ', fs='(///t24,a)')
-   call output%printf('m', 'Original authors: Sarai D. Folkestad, Eirik F. Kjønstad,' &
-                      // ' and Henrik Koch', ll=80, fs='(t8,a)')
+   call output%printf('m', 'eT - an electronic structure program ', fs='(///t22,a)')
 !
-   call output%print_separator('m',82,'-', fs='(/t3,a)')
+   call output%print_separator('m',72,'-', fs='(/t3,a)')
 !
-   call output%printf('m', 'Author:                 Contribution(s):', fs='(t4,a)')
+   call output%printf('m', 'Author list in alphabetical order:', fs='(t4,a)')
 !
-   call output%print_separator('m',82,'-', fs='(t3,a)')
+   call output%print_separator('m',72,'-', fs='(t3,a)')
 !
-   call output%printf('m', 'Josefine H. Andersen   first order properties', fs='(t4,a)', ll=82)
-   call output%printf('m', 'Alice Balbi            CC propagation', fs='(t4,a)', ll=82)
+   call output%printf('m', 'J. H. Andersen, '   // &
+                           'A. Balbi, '         // &
+                           'S. Coriani, '       // &
+                           'S. D. Folkestad, '  // &
+                           'T. Giovannini, '    // &
+                           'L. Goletto, '       // &
+                           'T. S. Haugland, '   // &
+                           'A. Hutcheson, '     // &
+                           'I-M. Høyvik, '      // &
+                           'E. F. Kjønstad, '   // &
+                           'H. Koch, '          // &
+                           'T. Moitra, '        // &
+                           'R. H. Myhre, '      // &
+                           'A. C. Paul, '       // &
+                           'M. Scavino, '       // &
+                           'A. Skeidsvoll, '    // &
+                           'Å. H. Tveten',         &
+                           ffs='(t4,a)', fs='(t4,a)', ll=70)
 !
-   call output%printf('m', 'Sarai D. Folkestad     program design, HF, CCS, &
-                      &CC2, CCSD, Libint-interface, Cholesky decomposition, &
-                      &Davidson-tool, CVS, DIIS-tool, zeroth order properties, &
-                      &first order properties, IP, frozen core, MLCC2, MLHF, visualization', &
-                      ll=50, ffs='(t4,a)', fs='(t27,a)')
-!
-   call output%printf('m', 'Tommaso Giovannini     QM/MM, PCM, Libint-interface', &
-                      ll=82, fs='(t4,a)')
-   call output%printf('m', 'Linda Goletto          CC2, MLHF', fs='(t4,a)', ll=82)
-   call output%printf('m', 'Tor S. Haugland        SAD', fs='(t4,a)', ll=82)
-   call output%printf('m', 'Anders Hutcheson       frozen HF orbitals', fs='(t4,a)', ll=82)
-   call output%printf('m', 'Ida-Marie Høyvik       MLHF, frozen HF orbitals', &
-                      ll=82, fs='(t4,a)')
-!
-   call output%printf('m', 'Eirik F. Kjønstad      program design, HF, UHF, &
-                      &CCS, CC2, CCSD, DIIS-tool, Cholesky decomposition, &
-                      &Libint-interface, Davidson-tool, zeroth order &
-                      &properties, first order properties, SAD, BFGS-tool', ffs='(t4,a)',fs='(t27,a)')
-!
-   call output%printf('m', 'Rolf H. Myhre          CC3, Runtest-interface, &
-                      &launch script, file system', ll=82, fs='(t4,a)')
-   call output%printf('m', 'Alexander C. Paul      CC2, CC3, first order properties', &
-                      ll=82, fs='(t4,a)')
-   call output%printf('m', 'Andreas Skeidsvoll     MP2, CC propagation, FFT &
-                      &solver, visualization', ll=82, fs='(t4,a)')
-   call output%printf('m', 'Åsmund H. Tveten       HF', fs='(t4,a)', ll=82)
-!
-   call output%print_separator('m', 82, '-', fs='(t3,a)')
-   call output%printf('m', 'Other contributors: M. Scavino', fs='(t4,a)', ll=82) 
+   call output%print_separator('m',72,'-', fs='(t3,a)')
 !
 end subroutine print_program_banner
 !
