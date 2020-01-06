@@ -148,7 +148,6 @@ contains
       solver%max_iterations       = 100
       solver%eigenvalue_threshold = 1.0d-6
       solver%residual_threshold   = 1.0d-6
-      solver%transformation       = 'right'
       solver%diis_dimension       = 20
       solver%restart              = restart
       solver%transformation       = trim(transformation)

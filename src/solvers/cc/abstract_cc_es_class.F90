@@ -200,9 +200,6 @@ contains
 !               
       call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
 !  
-      if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) solver%transformation = 'left'    
-      if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) solver%transformation = 'right'    
-!
       if (input%requested_keyword_in_section('core excitation', 'solver cc es') .and. .not. &
           input%requested_keyword_in_section('ionization', 'solver cc es')) solver%es_type = 'core'
 !
