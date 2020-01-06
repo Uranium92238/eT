@@ -76,14 +76,14 @@
    module subroutine jacobian_transpose_ccs_b1_ccs_complex(wf, sigma_ai, b_ai)
 !!
 !!    Jacobian transpose B1 (CCS)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!    Written by Sarai D. Folkestad, Jun 2019
 !!
-!!    Calculates the B1 term,
+!!    Calculates the (CCS) B1 term of the Jacobian transpose 
+!!    transfromation. 
 !!
-!!       sum_ck L_ckia b_ck
-!!
-!!    and adds it to the sigma-vector (b^T -> sigma^T = b^T A).
-!!
+!!       B1 = sum_bj L_bjia b_bj
+!!          = sum_bj (2 g_bjia b_bj - g_baij b_bj)
+!!    
       implicit none
 !
       class(ccs), intent(in) :: wf

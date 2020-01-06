@@ -34,8 +34,8 @@ module lowmem_cc2_class
 !
    type, extends(ccs) :: lowmem_cc2
 !
-      type(sequential_file) :: jacobian_b1_intermediate_vv
-      type(sequential_file) :: jacobian_b1_intermediate_oo
+      type(sequential_file) :: jacobian_a1_intermediate_vv
+      type(sequential_file) :: jacobian_a1_intermediate_oo
 !
    contains
 !
@@ -52,10 +52,9 @@ module lowmem_cc2_class
       procedure :: effective_jacobian_transformation  => effective_jacobian_transformation_lowmem_cc2
 !
       procedure :: prepare_for_jacobian               => prepare_for_jacobian_lowmem_cc2
-      procedure :: save_jacobian_b1_2_intermediate    => save_jacobian_b1_2_intermediate_lowmem_cc2
-      procedure :: save_jacobian_b1_3_intermediate    => save_jacobian_b1_3_intermediate_lowmem_cc2      
+      procedure :: save_jacobian_a1_2_intermediate    => save_jacobian_a1_2_intermediate_lowmem_cc2
+      procedure :: save_jacobian_a1_3_intermediate    => save_jacobian_a1_3_intermediate_lowmem_cc2
       procedure :: jacobian_cc2_a1                    => jacobian_cc2_a1_lowmem_cc2
-      procedure :: jacobian_cc2_b1                    => jacobian_cc2_b1_lowmem_cc2
 !
       procedure :: effective_jacobian_cc2_a1 => effective_jacobian_cc2_a1_lowmem_cc2
       procedure :: effective_jacobian_cc2_b1 => effective_jacobian_cc2_b1_lowmem_cc2
@@ -64,8 +63,9 @@ module lowmem_cc2_class
       procedure :: effective_jacobian_cc2_e1 => effective_jacobian_cc2_e1_lowmem_cc2
       procedure :: effective_jacobian_cc2_f1 => effective_jacobian_cc2_f1_lowmem_cc2
 !
-      procedure :: effective_jacobian_transpose_transformation => effective_jacobian_transpose_transformation_lowmem_cc2
-      procedure :: jacobian_transpose_ccs_b1 => jacobian_transpose_ccs_b1_lowmem_cc2
+      procedure :: effective_jacobian_transpose_transformation &
+               => effective_jacobian_transpose_transformation_lowmem_cc2
+!
       procedure :: jacobian_transpose_cc2_a1 => jacobian_transpose_cc2_a1_lowmem_cc2
       procedure :: jacobian_transpose_cc2_b1 => jacobian_transpose_cc2_b1_lowmem_cc2
       procedure :: effective_jacobian_transpose_cc2_a1   => effective_jacobian_transpose_cc2_a1_lowmem_cc2

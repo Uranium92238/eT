@@ -72,21 +72,24 @@
    end subroutine jacobian_ccs_a1_ccs
 !
 !
-   module subroutine jacobian_ccs_b1_ccs(wf, rho1, c1)
+   module subroutine jacobian_ccs_b1_ccs(wf, rho_ai, c_bj)
 !!
 !!    Jacobian CCS B1
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
-!!    Calculates the B1 term,
+!!    Calculates the A1 term
 !!
-!!       sum_bj L_aijb c_bj = sum_bj (2 g_aijb - g_abji) c_bj,
+!!       A1: sum_bj (2 g_aijb - g_abji) * c_bj
 !!
-!!    and adds it to the rho1 vector.
+!!    and adds it to rho_ai.
+!!
+!!    Separate calculation of both terms due to batching.
 !!
       implicit none
 !
-      class(ccs) :: wf
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c1
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1
+      class(ccs), intent(in) :: wf
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_bj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
 !
    end subroutine jacobian_ccs_b1_ccs
