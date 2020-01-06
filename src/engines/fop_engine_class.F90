@@ -224,6 +224,9 @@ contains
       if (engine%polarizabilities .or. &
             (engine%lr .and. engine%transition_moments)) then 
 !
+         call mem%alloc(engine%csiX, wf%n_es_amplitudes, 3)
+         call mem%alloc(engine%etaX, wf%n_es_amplitudes, 3)
+!
          call engine%construct_etaX_and_csiX(wf) ! etaX_mu = < Lambda | [X-bar, τ_mu] | HF >
                                                  ! csiX_mu = < mu | X-bar | HF >         
 !
@@ -278,6 +281,15 @@ contains
 !
       endif 
 !
+!     Deallocate csi and eta if they were constructed
+      if (engine%polarizabilities .or. &
+            (engine%lr .and. engine%transition_moments)) then 
+!
+         call mem%dealloc(engine%csiX, wf%n_es_amplitudes, 3)
+         call mem%dealloc(engine%etaX, wf%n_es_amplitudes, 3)
+!
+      endif 
+!
    end subroutine run_fop_engine
 !
 !
@@ -315,8 +327,6 @@ contains
 !     Construct the right-hand-side vector for operator X,
 !     i.e. csiX_mu = < mu | X-bar | HF >.
 !
-      call mem%alloc(engine%csiX, wf%n_gs_amplitudes, 3)
-!
       do k = 1, 3
 !
          call wf%construct_csiX(X(:,:,k), engine%csiX(:,k))
@@ -325,8 +335,6 @@ contains
 !
 !     Construct the left-hand-side vector for operator X,
 !     i.e. etaX_nu = < Lambda | [X-bar, τ_nu] | HF >
-!  
-      call mem%alloc(engine%etaX, wf%n_gs_amplitudes, 3)
 !
       do k = 1, 3
 !
@@ -1068,6 +1076,8 @@ contains
                                reals=[trace_r_tdm], fs='(t6,a/)')
 !
          enddo
+!
+         call mem%dealloc(operator, wf%n_mo, wf%n_mo, 3)
 !
       endif
 !

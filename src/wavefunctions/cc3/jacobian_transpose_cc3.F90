@@ -399,7 +399,7 @@ contains
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%alloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       else ! batching
 !
@@ -578,7 +578,7 @@ contains
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%dealloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         call mem%dealloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       else ! batching
 !

@@ -65,12 +65,7 @@ contains
       call timer%turn_on()
 !
       call mem%alloc(omega1, wf%n_v, wf%n_o)
-      call mem%alloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Set the omega vector to zero
-!
       call zero_array(omega1, wf%n_t1)
-      call zero_array(omega_aibj, wf%n_t1**2)
 !
 !     Construct CCSD singles contributions
 !
@@ -85,6 +80,9 @@ contains
       call wf%omega_doubles_c1(omega1, wf%u_aibj)
 !
 !     Construct CCSD doubles contributions
+!
+      call mem%alloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call zero_array(omega_aibj, wf%n_t1**2)
 !
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_aibj, wf%n_t1)

@@ -121,7 +121,7 @@ contains
 !
       class(ccsdpt) :: wf
 !
-      call wf%ccs%cleanup()
+      call wf%ccsd%cleanup()
 !
       call wf%g_jbkc%delete_
       call wf%g_bdck%delete_
@@ -540,7 +540,7 @@ contains
       if (batch_i%num_batches .eq. 1) then !no batching
 !
          call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%dealloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         call mem%dealloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
          call mem%dealloc(g_ibjc, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       else ! batching

@@ -323,6 +323,8 @@ contains
       call mem%alloc(R_abcijk, wf%n_v,wf%n_v,wf%n_v,wf%n_o,wf%n_o,wf%n_o)
       call wf%construct_full_R3(R_abij, R_abcijk, wf%right_excitation_energies(state))
 !
+      call mem%dealloc(R_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
       call wf%debug_right_ov_R3(density_ov, R_abcijk)
 !
       do a = 1, wf%n_v
@@ -1557,6 +1559,7 @@ contains
       enddo
 !
       call mem%dealloc(Y_acdi, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+      call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
    end subroutine debug_right_ov_Y_term_cc3
 !

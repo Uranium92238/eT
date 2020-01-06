@@ -668,6 +668,8 @@ contains
          call daxpy(wf%n_o**2, one, density_oo_thread(:,:,i), 1, density_oo, 1)
       enddo
 !
+      call mem%dealloc(density_oo_thread, wf%n_o, wf%n_o, n_threads)
+!
 !     Close files
 !
       call wf%g_bdck_t_v%close_()
@@ -727,6 +729,12 @@ contains
       call mem%dealloc(u_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
       call mem%dealloc(v_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
       call mem%dealloc(tbar_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
+!
+      if(cvs) then
+!
+         call mem%dealloc(projector_ijk, wf%n_o, wf%n_o, wf%n_o)
+!
+      end if
 !
    end subroutine density_cc3_mu_ref_abc_cc3
 !
