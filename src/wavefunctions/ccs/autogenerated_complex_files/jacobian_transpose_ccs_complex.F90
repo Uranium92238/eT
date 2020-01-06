@@ -163,14 +163,14 @@ contains
    module subroutine jacobian_transpose_ccs_b1_ccs_complex(wf, sigma_ai, b_ai)
 !!
 !!    Jacobian transpose B1 (CCS)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!    Written by Sarai D. Folkestad, Jun 2019
 !!
-!!    Calculates the B1 term,
+!!    Calculates the (CCS) B1 term of the Jacobian transpose 
+!!    transfromation. 
 !!
-!!       sum_ck L_ckia b_ck
-!!
-!!    and adds it to the sigma-vector (b^T -> sigma^T = b^T A).
-!!
+!!       B1 = sum_bj L_bjia b_bj
+!!          = sum_bj (2 g_bjia b_bj - g_baij b_bj)
+!!    
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -178,90 +178,95 @@ contains
       complex(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       complex(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_ai
 !
-      complex(dp), dimension(:,:,:,:), allocatable :: g_ckia ! g_ckia
-      complex(dp), dimension(:,:,:,:), allocatable :: g_caik ! g_caik
+      integer :: req0, req1_j, req1_a, req2
+      integer :: current_a_batch, current_j_batch
 !
-      complex(dp), dimension(:,:,:,:), allocatable :: L_aick ! L_ckia = 2 * g_ckia - g_caik
+      type(batching_index) batch_a, batch_j
 !
-      integer :: k, c, i, a
+      complex(dp), dimension(:,:), allocatable :: sigma_ia
+      complex(dp), dimension(:,:,:,:), allocatable :: L_bjia, g_baij
 !
-      integer              :: req0, req1, current_a_batch
-      type(batching_index) :: batch_a
+      integer :: i, a
 !
       type(timings), allocatable :: timer 
 !
       timer = timings('Jacobian transpose CCS B1', pl='verbose')
       call timer%turn_on()
 !
-!     :: Construct L_aick = L_ckia
+      call mem%alloc(sigma_ia, wf%n_o, wf%n_v)
+      call zero_array_complex(sigma_ia, wf%n_t1)
 !
-      call mem%alloc(g_ckia, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call wf%get_voov_complex(g_ckia)
+      req0 = 0
 !
-      call mem%alloc(L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array_complex(L_aick, (wf%n_o)**2*(wf%n_v)**2)
+      req1_a = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
+      req1_j = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
+!
+      req2 = (wf%n_o)*(wf%n_v)*2
 !
       batch_a = batching_index(wf%n_v)
+      batch_j = batching_index(wf%n_o)
 !
-      req0 = wf%integrals%n_J*wf%n_o**2 ! L_ik^J
-      req1 = wf%n_v*wf%n_o**2 + wf%integrals%n_J*wf%n_v ! g_caik
-!
-      call mem%batch_setup(batch_a, req0, req1)
+      call mem%batch_setup(batch_a, batch_j, req0, req1_a, req1_j, req2)
 !
       do current_a_batch = 1, batch_a%num_batches
 !
-!        Set part of L_aick = L_ckia = 2 * g_ckia - g_caik for current a batch
-!
          call batch_a%determine_limits(current_a_batch)
 !
-         call mem%alloc(g_caik, wf%n_v, batch_a%length, wf%n_o, wf%n_o)
+         do current_j_batch = 1, batch_j%num_batches
 !
-         call wf%get_vvoo_complex(g_caik,         &
-                           1,             &
-                           wf%n_v,        &
-                           batch_a%first, &
-                           batch_a%last,  &
-                           1,             &
-                           wf%n_o,        &
-                           1,             &
-                           wf%n_o)
+            call batch_j%determine_limits(current_j_batch)
 !
-!$omp parallel do private(k,c,i,a)
-         do k = 1, wf%n_o
-            do c = 1, wf%n_v
-               do i = 1, wf%n_o
-                  do a = 1, batch_a%length
+            call mem%alloc(L_bjia, wf%n_v, batch_j%length, wf%n_o, batch_a%length)
 !
-                     L_aick(a + batch_a%first - 1,i,c,k) = two_complex*g_ckia(c,k,i,a + batch_a%first - 1) - g_caik(c,a,i,k)
+            call wf%get_voov_complex(L_bjia,                        &
+                              1, wf%n_v,                    &
+                              batch_j%first, batch_j%last,  &
+                              1, wf%n_o,                    &
+                              batch_a%first, batch_a%last)
 !
-                  enddo
-               enddo
-            enddo
+            call zscal((wf%n_v)*(wf%n_o)*(batch_a%length)*(batch_j%length), two_complex, L_bjia, 1)
+!
+            call mem%alloc(g_baij, wf%n_v, batch_a%length, wf%n_o, batch_j%length)
+!
+            call wf%get_vvoo_complex(g_baij,                     &
+                           1, wf%n_v,                    &
+                           batch_a%first, batch_a%last,  &
+                           1, wf%n_o,                    &
+                           batch_j%first, batch_j%last)
+!
+            call add_1432_to_1234(-one_complex, g_baij, L_bjia, wf%n_v, batch_j%length, wf%n_o, batch_a%length)
+!
+            call mem%dealloc(g_baij, wf%n_v, batch_a%length, wf%n_o, batch_j%length)
+!
+            call zgemm('N', 'N',                   &
+                        1,                         &
+                        wf%n_o*(batch_a%length),   &
+                        (batch_j%length)*(wf%n_v), &
+                        one_complex,                       &
+                        b_ai(1, batch_j%first),    & ! b_bj
+                        1,                         &
+                        L_bjia,                    &
+                        (batch_j%length)*(wf%n_v), &
+                        one_complex,                       &
+                        sigma_ia(1, batch_a%first),&
+                        1)
+!
+            call mem%dealloc(L_bjia, wf%n_v, batch_j%length, wf%n_o, batch_a%length)
+!
+         enddo ! batch j
+      enddo ! batch a
+!
+!$omp parallel do private(a, i)
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            sigma_ai(a,i) = sigma_ai(a,i) + sigma_ia(i,a)
+!
          enddo
+      enddo
 !$omp end parallel do
 !
-         call mem%dealloc(g_caik, wf%n_v, batch_a%length, wf%n_o, wf%n_o)
-!
-      enddo ! End of batches over a
-!
-      call mem%dealloc(g_ckia, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-!     :: Add sum_ck L_ckia b_ck = sum_ck L_aick b_ck to sigma
-!
-      call zgemm('N','N',            &
-                  (wf%n_v)*(wf%n_o), &
-                  1,                 &
-                  (wf%n_v)*(wf%n_o), &
-                  one_complex,               &
-                  L_aick,            &
-                  (wf%n_v)*(wf%n_o), &
-                  b_ai,              & ! "b_ai"
-                  (wf%n_v)*(wf%n_o), &
-                  one_complex,               &
-                  sigma_ai,          & ! "sigma_ai"
-                  (wf%n_v)*(wf%n_o))
-!
-      call mem%dealloc(L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(sigma_ia, wf%n_o, wf%n_v)
 !
       call timer%turn_off()
 !
