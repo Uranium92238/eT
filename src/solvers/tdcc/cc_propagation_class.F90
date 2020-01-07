@@ -275,7 +275,7 @@ contains
             if (solver%amplitudes_output) call solver%write_amplitudes_to_file(wf, t)
             if (solver%multipliers_output) call solver%write_multipliers_to_file(wf, t)
             if (solver%density_matrix_output) &
-               call solver%write_density_matrix_to_file(wf, step_number)
+               call solver%write_density_matrix_to_file(wf)
 !
             call output%printf('n', 'Properties written at time: (f10.4) au', &
                                reals=[t], fs='(t3,a)')
@@ -613,64 +613,25 @@ contains
    end subroutine write_multipliers_to_file_cc_propagation
 !
 !
-   subroutine write_density_matrix_to_file_cc_propagation(solver, wf, step_number)
+   subroutine write_density_matrix_to_file_cc_propagation(solver, wf)
 !!
 !!    Write density matrix to file
 !!    Written by Andreas Skeidsvoll, Dec 2019
 !!
-!!    Write the real and imaginary parts of the density matrix to two files, numbered by the
-!!    current time step number.
+!!    Write the real and imaginary parts of the density matrix to separate files
 !!
       implicit none
 !
       class(cc_propagation) :: solver
       class(ccs) :: wf
-      integer, intent(in) :: step_number
 !
-      integer :: n_digits_last_step
-!
-      character(len=100) :: n_digits_last_step_string
-      character(len=100) :: step_format
-      character(len=100) :: step_string
-!
-!     Maximum number of digits in step number, used to decide length of density matrix file names
-!
-      n_digits_last_step = floor(log10((solver%tf-solver%ti)/solver%dt)) + 1
-!
-!     Writes the format used for formatting step numbers in file names to a string
-!
-      write(n_digits_last_step_string, *) n_digits_last_step
-!
-      step_format = '(I' // trim(n_digits_last_step_string) // '.' &
-                    // trim(n_digits_last_step_string) // ')'
-!
-!     Writes the formatted step number to a string
-!
-      write(step_string, step_format) step_number
-!
-!     Writes real part of density matrix to z file
-!
-      solver%density_matrix_real_file = sequential_file('cc_propagation_density_' &
-                                                        // trim(step_string)      &
-                                                        // '_real', 'formatted')
-!
-      call solver%density_matrix_real_file%open_('write', 'rewind')
+!     Write real part of density matrix to file
 !
       call solver%density_matrix_real_file%write_(real(wf%density_complex), wf%n_mo*wf%n_mo)
 !
-      call solver%density_matrix_real_file%close_
-!
-!     Writes imaginary part of density matrix to file
-!
-      solver%density_matrix_imaginary_file = sequential_file('cc_propagation_density_' &
-                                                             // trim(step_string)      &
-                                                             // '_imaginary', 'formatted')
-!
-      call solver%density_matrix_imaginary_file%open_('write', 'rewind')
+!     Write imaginary part of density matrix to file
 !
       call solver%density_matrix_imaginary_file%write_(aimag(wf%density_complex), wf%n_mo*wf%n_mo)
-!
-      call solver%density_matrix_imaginary_file%close_
 !
    end subroutine write_density_matrix_to_file_cc_propagation
 !
@@ -848,6 +809,18 @@ contains
          call solver%multipliers_file%open_('write','rewind')                                           
       endif
 !
+      if (solver%density_matrix_output) then
+!
+         solver%density_matrix_real_file = sequential_file('cc_propagation_density_matrix_real', &
+                                                           'formatted')
+         call solver%density_matrix_real_file%open_('write','rewind')
+!
+         solver%density_matrix_imaginary_file = &
+            sequential_file('cc_propagation_density_matrix_imaginary', 'formatted')
+         call solver%density_matrix_imaginary_file%open_('write','rewind')
+!
+      endif
+!
    end subroutine open_files_cc_propagation
 !
 !
@@ -880,6 +853,11 @@ contains
 !
       if (solver%multipliers_output) then
          call solver%multipliers_file%close_
+      endif
+!
+      if (solver%density_matrix_output) then
+         call solver%density_matrix_real_file%close_
+         call solver%density_matrix_imaginary_file%close_
       endif
 !
    end subroutine close_files_cc_propagation
