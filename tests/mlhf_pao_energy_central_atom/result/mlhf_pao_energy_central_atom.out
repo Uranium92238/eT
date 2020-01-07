@@ -1,0 +1,202 @@
+
+
+
+                     eT - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
+   Å. H. Tveten
+  ------------------------------------------------------------------------
+
+  Running on 4 OMP thread(s)
+  Memory available for calculation: 8.000000 GB
+
+
+  :: Molecular system specifications
+  =====================================
+
+     Name:             2 water molecules close
+     Charge:           0
+     Multiplicity:     1
+     Coordinate units: angstrom
+
+     Pure basis functions:         48
+     Cartesian basis functions:    50
+     Primitive basis functions:    98
+
+     Nuclear repulsion energy (a.u.):             37.386395233393
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+     Active atoms:
+
+     ====================================
+        Atom              Basis   Method
+     ====================================
+        1 O             cc-pvdz    hf
+        2 H             cc-pvdz    hf
+        3 H             cc-pvdz    hf
+     ====================================
+     Total number of active atoms: 3
+     OBS: Atoms will be reordered, active atoms first
+
+     ==============================================================================
+                                     Geometry(Å)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1 O     -0.573030000000     2.189950000000    -0.052560000000        1
+        2 H      0.347690000000     2.485980000000     0.050490000000        2
+        3 H     -1.075800000000     3.019470000000     0.020240000000        3
+        4 O     -1.567030000000    -0.324500000000     0.450780000000        4
+        5 H     -1.211220000000     0.588750000000     0.375890000000        5
+        6 H     -1.604140000000    -0.590960000000    -0.479690000000        6
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry(a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1 O     -1.082869761160     4.138405726491    -0.099324005107        1
+        2 H      0.657038876250     4.697821351146     0.095412272029        2
+        3 H     -2.032967364807     5.705971341340     0.038248056761        3
+        4 O     -2.961257528977    -0.613216127421     0.851850742431        4
+        5 H     -2.288874076596     1.112576255838     0.710329152963        5
+        6 H     -3.031385265460    -1.116752550573    -0.906482724693        6
+     ==============================================================================
+
+
+  :: MLHF wavefunction
+  =======================
+
+  - MLHF settings:
+
+     Occupied orbitals:    Cholesky
+     Virtual orbitals:     PAOs
+
+     Cholesky decomposition threshold:  0.10E-01
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+  - Orbital details:
+
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         38
+     Number of molecular orbitals:       48
+     Number of atomic orbitals:          48
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a MLHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (MO-SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (MO-SCF-DIIS algorithm)
+
+   - MO Self-consistent field DIIS Hartree-Fock solver
+  -------------------------------------------------------
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
+  matrix is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:                         8
+
+     Energy threshold:              0.1000E-10
+     Gradient threshold:            0.1000E-10
+
+     Coulomb screening threshold:   0.1000E-13
+     Exchange screening threshold:  0.1000E-13
+     Fock precision:                0.1000E-27
+
+  - Setting initial AO density to SAD
+
+     Energy of initial guess:              -151.796506244372
+     Number of electrons in guess:           20.000000000000
+
+  - Active orbital space:
+
+      Number of active occupied orbitals:        5
+      Number of active virtual orbitals:        23
+      Number of active orbitals:                28
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1          -152.011877032065     0.1544E+00     0.1520E+03
+     2          -152.016473856419     0.8902E-01     0.4597E-02
+     3          -152.018679270091     0.6660E-02     0.2205E-02
+     4          -152.018703828355     0.1115E-02     0.2456E-04
+     5          -152.018704682990     0.2473E-03     0.8546E-06
+     6          -152.018704719607     0.3389E-04     0.3662E-07
+     7          -152.018704720367     0.8171E-05     0.7598E-09
+     8          -152.018704720403     0.1073E-05     0.3601E-10
+     9          -152.018704720404     0.2288E-06     0.1052E-11
+    10          -152.018704720404     0.1150E-06     0.2842E-13
+    11          -152.018704720404     0.6250E-07     0.0000E+00
+    12          -152.018704720404     0.8290E-08     0.8527E-13
+    13          -152.018704720404     0.8493E-09     0.2842E-13
+    14          -152.018704720404     0.1225E-09     0.2842E-13
+    15          -152.018704720404     0.1591E-10     0.2842E-13
+    16          -152.018704720404     0.2801E-11     0.2842E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 16 iterations!
+
+  - Summary of MLHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.695204742951
+     Nuclear repulsion energy:      37.386395233393
+     Electronic energy:           -189.405099953797
+     Total energy:                -152.018704720404
+
+  - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
+
+     Active energy:               -104.805789875476
+     Active-inactive energy:        19.262564524026
+     Inactive energy:             -103.861874602348
+
+  - Molecular orbital energies
+
+  -----------------------------------------------------------------------------------
+   1 -20.597709580394   8   0.458665860142  15   1.443331554976  22   2.374619406130
+   2  -1.372911488330   9   0.668896810228  16   1.463136740295  23   2.421972934982
+   3  -0.730862340668  10   0.731654593338  17   1.562496405238  24   3.232245451549
+   4  -0.620416745565  11   0.820592565432  18   1.605207271354  25   3.271905348923
+   5  -0.538607985035  12   1.158130144434  19   1.749844436911  26   3.454691598574
+   6   0.156596757916  13   1.182144316564  20   1.878493135025  27   3.822907871913
+   7   0.229837619132  14   1.233002103365  21   1.926282928847  28   4.102532651953
+  -----------------------------------------------------------------------------------
+
+  - Timings for the MLHF ground state calculation
+
+     Total wall time (sec):              0.65400
+     Total cpu time (sec):               2.30310
+
+  Mismatch in memory according to eT and specified on input:
+
+     Memory available (eT):    7999981568 B
+     Memory available (input): 8000000000 B
+
+  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
+
+  :: There was 1 warning during the execution of eT. ::
+
+  eT terminated successfully!

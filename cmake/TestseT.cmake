@@ -72,6 +72,7 @@ add_eT_runtest(uhf_energy_qmfq                              "eT;short;uhf;sad;qm
 add_eT_runtest(uhf_dipole                                   "eT;short;uhf;sad;dipole")
 add_eT_runtest(mlhf_cholesky_energy                         "eT;short;mlhf;sad;cholesky")
 add_eT_runtest(mlhf_pao_energy                              "eT;short;mlhf;sad;pao")
+add_eT_runtest(mlhf_pao_energy_central_atom                 "eT;short;mlhf;sad;pao;central-atom")
 add_eT_runtest(mlhf_scf_energy                              "eT;short;mlhf;sad;pao")
 add_eT_runtest(mlhf_full_space_energy                       "eT;short;mlhf;sad;pao")
 add_eT_runtest(mlhf_min_basis_diagonalization_energy        "eT;short;mlhf;sad;pao")
