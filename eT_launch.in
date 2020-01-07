@@ -237,3 +237,6 @@ if (not args.keep_scratch and not something_wrong):
         print()
         print("Deleting scratch")
     shutil.rmtree(scratch)
+
+if (something_wrong):
+    raise Exception('Error message from eT')
