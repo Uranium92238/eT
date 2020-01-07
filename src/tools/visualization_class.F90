@@ -491,7 +491,7 @@ contains
       class(visualization), intent(in)     :: plotter
       class(molecular_system), intent(in)  :: system
 !
-      character(len=200), intent(in) :: file_tag
+      character(len=*), intent(in) :: file_tag
 !
       real(dp), dimension(plotter%n_ao, plotter%n_ao), intent(in) :: density
 !

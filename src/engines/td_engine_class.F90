@@ -38,6 +38,8 @@ module td_engine_class
    use ccs_class,       only: ccs
    use timings_class,   only: timings
    use task_list_class, only: task_list
+   use kinds
+   use memory_manager_class, only: mem
 !
    type, extends(gs_engine) :: td_engine
 !
@@ -47,16 +49,18 @@ module td_engine_class
 !
    contains 
 !
-      procedure :: run                                   => run_td_engine
+      procedure :: run                   => run_td_engine
 !
-      procedure :: read_settings                         => read_settings_td_engine
+      procedure :: read_settings         => read_settings_td_engine
 !
-      procedure :: do_propagation                        => do_propagation_td_engine
+      procedure :: do_propagation        => do_propagation_td_engine
 !
-      procedure :: do_fft_dipole_moment          => do_fft_dipole_moment_td_engine
-      procedure :: do_fft_electric_field         => do_fft_electric_field_td_engine
+      procedure :: do_fft_dipole_moment  => do_fft_dipole_moment_td_engine
+      procedure :: do_fft_electric_field => do_fft_electric_field_td_engine
 !
-      procedure :: set_printables                        => set_printables_td_engine
+      procedure :: do_visualization      => do_visualization_td_engine
+!
+      procedure :: set_printables        => set_printables_td_engine
 !
    end type td_engine
 !
@@ -209,6 +213,10 @@ contains
 !     Do complex FFT of the time dependent electric field
 !
       if (engine%fft_electric_field) call engine%do_fft_electric_field()
+!
+!     Plot density matrices
+!
+      if (engine%plot_density) call engine%do_visualization(wf)
 !
    end subroutine run_td_engine
 !
@@ -391,7 +399,125 @@ contains
 !
       endif
 !
+      if (engine%plot_density) then
+!
+         call engine%tasks%add(label='plotting', description='Plot density') 
+!
+      endif
+!
    end subroutine set_printables_td_engine
+!
+!
+   subroutine do_visualization_td_engine(engine, wf)
+!!
+!!    Do visualization
+!!    Written by Andreas Skeidsvoll, Dec 2019
+!!
+!!    Reads the electron density matrices listed in cc_propagation_density_matrix_real and
+!!    cc_propagation_density_matrix_imaginary, and writes the corresponding electron densities to
+!!    file.
+!!
+!!    Based on do_visualization_gs_engine by Tor S. Haugland, Nov 2019
+!!
+      use visualization_class, only : visualization
+      use array_utilities, only: symmetric_sandwich_right_transposition
+      use sequential_file_class, only: sequential_file
+!
+      implicit none
+!
+      class(td_engine) :: engine
+      class(ccs) :: wf 
+!
+      type(visualization), allocatable :: plotter
+!
+      real(dp), dimension(:,:), allocatable :: mo_density, density
+!
+      type(sequential_file) :: density_matrix_real_file, density_matrix_imaginary_file
+!
+      integer :: file_count, iostat
+!
+      character(len=200) :: file_count_string
+!
+      call engine%tasks%print_('plotting')
+!
+!     Initialize the plotter
+!
+      plotter = visualization(wf%system, wf%n_ao)
+!
+      call mem%alloc(mo_density, wf%n_mo, wf%n_mo)
+      call mem%alloc(density, wf%n_ao, wf%n_ao)
+!
+!     Plot real electron densities using density matrices on file
+!
+      density_matrix_real_file = sequential_file('cc_propagation_density_matrix_real', 'formatted')
+      call density_matrix_real_file%open_('read','rewind')
+!
+      file_count = 0
+!
+      do
+!
+         call density_matrix_real_file%read_(mo_density, wf%n_mo*wf%n_mo, io_stat=iostat)
+!
+         if (iostat .ne. 0) exit
+!
+!        D_alpha,beta = sum_pq  D_pq C_alpha,p C_beta,q
+!
+         call symmetric_sandwich_right_transposition(density,                 &
+                                                     mo_density,              &
+                                                     wf%orbital_coefficients, &
+                                                     wf%n_ao,                 &
+                                                     wf%n_mo)
+!
+!        Plot density
+!
+         file_count = file_count + 1
+         write(file_count_string, *) file_count
+!
+         call plotter%plot_density(wf%system, density, 'cc_propagation_density_matrix_real_' &
+                                                       // trim(adjustl(file_count_string)))
+!
+      enddo
+!
+      call density_matrix_real_file%close_
+!
+!     Plot imaginary electron densities using density matrices on file
+!
+      density_matrix_imaginary_file = sequential_file('cc_propagation_density_matrix_imaginary', &
+                                                      'formatted')
+      call density_matrix_imaginary_file%open_('read','rewind')
+!
+      file_count = 0
+!
+      do
+!
+         call density_matrix_imaginary_file%read_(mo_density, wf%n_mo*wf%n_mo, io_stat=iostat)
+!
+         if (iostat .ne. 0) exit
+!
+!        D_alpha,beta = sum_pq  D_pq C_alpha,p C_beta,q
+!
+         call symmetric_sandwich_right_transposition(density,                 &
+                                                     mo_density,              &
+                                                     wf%orbital_coefficients, &
+                                                     wf%n_ao,                 &
+                                                     wf%n_mo)
+!
+!        Plot density
+!
+         file_count = file_count + 1
+         write(file_count_string, *) file_count
+!
+         call plotter%plot_density(wf%system, density, 'cc_propagation_density_matrix_imaginary_' &
+                                                       // trim(adjustl(file_count_string)))
+!
+      enddo
+!
+      call density_matrix_imaginary_file%close_
+!
+      call mem%dealloc(mo_density, wf%n_mo, wf%n_mo)
+      call mem%dealloc(density, wf%n_ao, wf%n_ao)
+!
+   end subroutine do_visualization_td_engine
 !
 !
 end module td_engine_class
