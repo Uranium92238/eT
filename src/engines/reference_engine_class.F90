@@ -463,7 +463,7 @@ contains
          call density_plotting_timer%turn_on()
 !
          density_file_tag = 'AO_density'
-         call plotter%plot_density(wf%system,wf%ao_density, density_file_tag)
+         call plotter%plot_density(wf%system, wf%ao_density, density_file_tag)
 !
          call density_plotting_timer%turn_off()
 !

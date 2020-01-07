@@ -122,6 +122,8 @@ contains
          enddo
       enddo
 !
+      wf%correlation_energy = correlation_energy
+!
       wf%energy = wf%hf_energy + correlation_energy
 !
    end subroutine calculate_energy_lowmem_cc2
