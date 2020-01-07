@@ -350,8 +350,8 @@ contains
 !
          solver%chain_length = lanczos%chain_length  
 !
-         call mem%dealloc (Aq, wf%n_es_amplitudes)
-         call mem%dealloc (pA, wf%n_es_amplitudes)
+         call mem%dealloc(Aq, wf%n_es_amplitudes)
+         call mem%dealloc(pA, wf%n_es_amplitudes)
 !
 !        Diagonalize T to get the eigenvalues and eigenvectors 
 !

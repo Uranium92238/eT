@@ -181,7 +181,7 @@ contains
 !
       class(ccs) :: wf
 !
-      type(linear_davidson_tool) :: davidson
+      type(linear_davidson_tool), allocatable :: davidson
 !
       logical :: converged_residual
 !
@@ -212,6 +212,7 @@ contains
          call wf%print_dominant_x_amplitudes(multipliers, 'tbar')
 !
          call mem%dealloc(multipliers, wf%n_gs_amplitudes)
+         call mem%dealloc(eta, wf%n_gs_amplitudes)
 !
          return
 !
