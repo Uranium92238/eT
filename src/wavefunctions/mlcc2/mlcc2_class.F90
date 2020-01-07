@@ -598,6 +598,8 @@ contains
       call mem%dealloc(g_iajb, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v)
       call mem%dealloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
+      wf%correlation_energy = correlation_energy
+!
       wf%energy = wf%hf_energy + correlation_energy
 !
    end subroutine calculate_energy_mlcc2
