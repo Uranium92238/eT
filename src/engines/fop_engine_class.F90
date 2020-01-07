@@ -290,6 +290,10 @@ contains
 !
       endif 
 !
+      if (engine%polarizabilities) then
+         call mem%dealloc(engine%frequencies, engine%n_frequencies)
+      end if
+!
    end subroutine run_fop_engine
 !
 !

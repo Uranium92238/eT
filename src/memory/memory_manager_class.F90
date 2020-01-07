@@ -1,4 +1,4 @@
-!
+
 !
 !  eT - a coupled cluster program
 !  Copyright (C) 2016-2019 the authors of eT
@@ -263,7 +263,11 @@ contains
 !
       class(memory_manager), intent(in) :: mem
 !
+      integer(i15) :: difference 
+!
       if (mem%available .ne. mem%total) then 
+!
+         difference = mem%total-mem%available
 !
          call output%printf('m', 'Mismatch in memory according to eT and &
                             &specified on input:', fs='(/t3,a)')
@@ -273,6 +277,9 @@ contains
 !
          call output%printf('m', 'Memory available (input): (a0)', &
                             chars=[mem%get_memory_as_character(mem%total,.true.)], fs='(t6,a)')
+!
+         call output%printf('m', 'Difference:               (a0)', &
+                            chars=[mem%get_memory_as_character(difference,.true.)], fs='(t6,a)')
 !
          call output%warning_msg('Deallocations may be missing or specified with &
                                  &incorrect dimensionalities.')

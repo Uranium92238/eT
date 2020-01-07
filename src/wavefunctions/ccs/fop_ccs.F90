@@ -644,17 +644,9 @@ contains
       real(dp) :: X_cc
       real(dp) :: ddot
 !
-      real(dp), dimension(:), allocatable :: multipliers
+      X_cc = ddot(wf%n_es_amplitudes, wf%t1bar, 1, csiX, 1)
 !
-      call mem%alloc(multipliers, wf%n_es_amplitudes)
-!
-      call dcopy(wf%n_t1, wf%t1bar, 1, multipliers, 1)
-!
-      X_cc = ddot(wf%n_es_amplitudes, multipliers, 1, csiX, 1)
-!
-      call daxpy(wf%n_es_amplitudes, -X_cc, multipliers, 1, etaX, 1)
-!
-      call mem%dealloc(multipliers, wf%n_es_amplitudes)
+      call daxpy(wf%n_es_amplitudes, -X_cc, wf%t1bar, 1, etaX, 1)
 !
    end subroutine etaX_eom_a_ccs
 !

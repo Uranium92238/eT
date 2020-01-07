@@ -69,34 +69,6 @@ contains
    end subroutine destruct_amplitudes_ccsd_complex
 !
 !
-   module subroutine initialize_t2_ccsd_complex(wf)
-!!
-!!    Initialize t2 amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      if (.not. allocated(wf%t2_complex)) call mem%alloc(wf%t2_complex, wf%n_t2)
-!
-   end subroutine initialize_t2_ccsd_complex
-!
-!
-   module subroutine destruct_t2_ccsd_complex(wf)
-!!
-!!    Destruct t2 amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      if (allocated(wf%t2_complex)) call mem%dealloc(wf%t2_complex, wf%n_t2)
-!
-   end subroutine destruct_t2_ccsd_complex
-!
-!
    module subroutine initialize_multipliers_ccsd_complex(wf)
 !!
 !!    Initialize multipliers
@@ -131,34 +103,6 @@ contains
       call wf%destruct_t2bar_complex()
 !
    end subroutine destruct_multipliers_ccsd_complex
-!
-!
-   module subroutine initialize_t2bar_ccsd_complex(wf)
-!!
-!!    Initialize T2-bar
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      if (.not. allocated(wf%t2bar_complex)) call mem%alloc(wf%t2bar_complex, wf%n_t2)
-!
-   end subroutine initialize_t2bar_ccsd_complex
-!
-!
-   module subroutine destruct_t2bar_ccsd_complex(wf)
-!!
-!!    Destruct T2-bar
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      if (allocated(wf%t2bar_complex)) call mem%dealloc(wf%t2bar_complex, wf%n_t2)
-!
-   end subroutine destruct_t2bar_ccsd_complex
 !
 !
 end submodule initialize_destruct_ccsd_complex

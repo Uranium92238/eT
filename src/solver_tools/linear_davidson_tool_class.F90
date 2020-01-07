@@ -324,6 +324,8 @@ contains
 !
       enddo
 !
+      call mem%dealloc(c, davidson%n_parameters)
+!
    end subroutine set_trials_to_preconditioner_guess_linear_davidson
 !
 !
@@ -590,9 +592,21 @@ contains
 !
       type(linear_davidson_tool) :: davidson 
 !
-      if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
-      if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
-      if (allocated(davidson%F_red)) call mem%dealloc(davidson%F_red, davidson%dim_red, davidson%n_rhs)
+      if (allocated(davidson%frequencies)) then
+         call mem%dealloc(davidson%frequencies, davidson%n_solutions)
+      end if
+!
+      if (allocated(davidson%A_red)) then
+         call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
+      end if
+!
+      if (allocated(davidson%X_red)) then 
+         call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
+      end if
+!
+      if (allocated(davidson%F_red)) then 
+         call mem%dealloc(davidson%F_red, davidson%dim_red, davidson%n_rhs)
+      end if
 !
       davidson%F => null()
 !

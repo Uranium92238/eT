@@ -41,13 +41,6 @@ module davidson_cc_linear_equations_class
 !!    of the ground state multipliers Davidson solver (authors Eirik F. Kjønstad, Sarai D. Folkestad) 
 !!    as well as the solvers for response made by Josefine H. Andersen, spring 2019. 
 !!
-!!    --------
-!!    Some things that should be done before the release: 
-!!
-!!       TODO: Use this solver when solving for the CC multipliers. 
-!!       TODO: Write restart functionality.
-!!    --------
-!!
 !
    use kinds
    use ccs_class
