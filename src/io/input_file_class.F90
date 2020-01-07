@@ -43,6 +43,8 @@ module input_file_class
       procedure :: close_                                               => close_input_file
 !
       procedure :: check_for_errors                                     => check_for_errors_input_file
+      procedure :: print_to_output                                      => print_to_output_input_file
+!
       procedure :: requested_section                                    => requested_section_input_file
       procedure :: requested_keyword_in_section                         => requested_keyword_in_section_input_file
       procedure :: get_n_elements_for_keyword_in_section                => get_n_elements_for_keyword_in_section_input_file
@@ -2118,6 +2120,49 @@ contains
       n_records = end_record - start_record - 1
 !
    end subroutine move_to_mm_geometry_input_file
+!
+!
+   subroutine print_to_output_input_file(the_file)
+!!
+!!    Print to output 
+!!    Written by Eirik F. Kjønstad, Jan 2020
+!!
+!!    Prints the input file - except for the geometry specification - to the output file. 
+!!
+      implicit none 
+!
+      class(input_file) :: the_file
+!
+      integer :: io_error
+!
+      character(len=200) :: line 
+!
+      call output%printf('m', ':: Input file', fs='(//t3,a)')
+      call output%print_separator('m', 16, '=', fs='(t3,a/)')
+!
+      call output%printf('m', 'Note: geometry section is excluded from this print', fs='(t6,a/)')
+!
+      rewind(the_file%unit_)
+!
+      do 
+!
+         read(the_file%unit_, '(a)', iostat=io_error) line 
+!
+         if (trim(adjustl(line)) == 'geometry') then 
+!
+            exit 
+!
+         elseif (io_error .ne. 0) then 
+!
+            call output%error_msg("The 'geometry' section appears to be missing in the input file.")
+!
+         endif
+!
+         call output%printf('m', line, fs='(t6,a)', ll=120)
+!  
+      enddo 
+!
+   end subroutine print_to_output_input_file
 !
 !
 end module input_file_class

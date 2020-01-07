@@ -1839,7 +1839,7 @@ contains
       if (trim(units) == 'angstrom') then
 !
          scaling = one
-         local_units = 'Å'
+         local_units = 'angstrom'
 !
       elseif (trim(units) == 'bohr') then
 !
@@ -1858,7 +1858,7 @@ contains
       line_length = 78
 !
       call output%print_separator(pl='m', symbol='=', n=line_length, fs='(/t6,a)')
-      call output%printf('m', 'Geometry((a0))', chars=[local_units], fs='(t38,a)')
+      call output%printf('m', 'Geometry ((a0))', chars=[local_units], fs='(t38,a)')
       call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(t6,a)')
       call output%printf('m', 'Atom           X                  Y                  &
                          &Z         # in input', ll=100, fs='(t9,a)')

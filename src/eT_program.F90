@@ -103,13 +103,14 @@ program eT_program
 !
    call print_program_banner()
 !
+   call input%print_to_output()  ! Print input file to output file 
+   call input%check_for_errors() ! Check for incorrect/missing keywords/sections
+!
    n_threads = 1
 !
 !$   n_threads = omp_get_max_threads()
 !
    call output%printf('m', 'Running on (i0) OMP thread(s)', ints=[n_threads], fs='(/t3,a)')
-!
-   call input%check_for_errors()
 !
 !  Set print level in output and timing files
 !
