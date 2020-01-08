@@ -301,9 +301,6 @@ contains
 !
       call wf%ccs%print_amplitude_info()  
 !
-      call output%printf('m', 'Double excitation amplitudes:  (i0)', &
-            ints=[wf%n_x2], fs='(t6,a)')
-!
    end subroutine print_amplitude_info_mlcc2
 !
 !
