@@ -114,6 +114,7 @@ add_eT_runtest(cc2_lowmem_frozen_core                       "eT;short;lowmem-cc2
 add_eT_runtest(cc2_lowmem_right_es_energies                 "eT;short;lowmem-cc2;es;right")
 add_eT_runtest(cc2_lowmem_left_es_energies                  "eT;short;lowmem-cc2;es")
 add_eT_runtest(restart_lowmem_cc2_es                        "eT;short;lowmem-cc2;es;restart")
+add_eT_runtest(restart_cc2_lowmem_from_ccs                  "eT;short;lowmem-cc2;es;restart")
 #
 add_eT_runtest(ccsd_gs_energy                               "eT;short;ccsd;gs")
 add_eT_runtest(ccsd_gs_energy_nr_crop                       "eT;short;ccsd;newton-raphson;crop")
