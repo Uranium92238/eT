@@ -195,7 +195,7 @@ contains
 !
       type(timings), allocatable :: timer
 !
-      timer = timings('Jacobian lowmem-CC2 A1', pl='verbose')
+      timer = timings('Jacobian CCS B1', pl='verbose')
       call timer%turn_on()
 !
 !     :: Term 1: rho_ai = sum_bj 2 g_aijb * c_bj ::
