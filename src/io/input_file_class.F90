@@ -125,7 +125,7 @@ contains
       type(section) :: memory 
       type(section) :: cc_zop 
       type(section) :: cc_fop 
-      type(section) :: hf_zop
+      type(section) :: hf_expectation_value
       type(section) :: cc_td
       type(section) :: method 
       type(section) :: solver_cholesky
@@ -197,7 +197,7 @@ contains
       system%required = .true.
       system%keywords = [character(len=30) ::'name',  &
                            'cartesian gaussians',     &
-                           'pure gaussians',     &
+                           'pure gaussians',          &
                            'charge',                  &
                            'multiplicity']
 !
@@ -206,10 +206,10 @@ contains
       memory%keywords = [character(len=30) :: 'available', &
                                               'unit']
 !
-      hf_zop%name_    = 'hf zop'
-      hf_zop%required = .false.
-      hf_zop%keywords = [character(len=30) ::         &
-                           'dipole               ',   &
+      hf_expectation_value%name_    = 'hf expectation value'
+      hf_expectation_value%required = .false.
+      hf_expectation_value%keywords = [character(len=30) :: &
+                           'dipole               ',         &
                            'quadrupole           ']
 !
       cc_zop%name_    = 'cc zop'
@@ -461,7 +461,7 @@ contains
                            system,                    &
                            memory,                    &
                            method,                    &
-                           hf_zop,                    &
+                           hf_expectation_value,      &
                            cc_zop,                    &
                            cc_fop,                    &
                            cc_td,                     &

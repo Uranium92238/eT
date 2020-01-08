@@ -26,9 +26,9 @@ do
    ground state
 end do
 
-hf zop
+hf expectation value
    dipole
-end hf zop
+end hf expectation value
 
 geometry
 basis: cc-pVDZ
