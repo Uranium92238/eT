@@ -25,9 +25,9 @@ method
    hf
 end method
 
-hf zop
+hf expectation value
    quadrupole
-end hf zop
+end hf expectation value
 
 geometry
 basis: cc-pVDZ

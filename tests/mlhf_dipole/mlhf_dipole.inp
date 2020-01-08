@@ -31,9 +31,9 @@ active atoms
    hf: {1, 2, 3}
 end active atoms
 
-hf zop
+hf expectation value
    dipole
-end hf zop
+end hf expectation value
 
 geometry
    basis: aug-cc-pVDZ
