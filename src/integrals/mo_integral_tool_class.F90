@@ -2052,14 +2052,15 @@ contains
 !
       integer, parameter :: fraction_of_total_mem = 5
 !
-      integer :: required_mem, mem_real_eri
+      integer(i15) :: required_mem, mem_real_eri, mem_available
 !
       if (.not. integrals%eri_t1_mem) call integrals%place_g_pqrs_t1_in_memory()
 !
       required_mem = 2*integrals%n_mo**4
       mem_real_eri = (integrals%n_mo**4) ! Added to mem%available
 !
-      if (required_mem*dp .gt. (mem%available + mem_real_eri*dp)/fraction_of_total_mem) &
+      mem_available = mem%get_available()
+      if (required_mem*dp .gt. (mem_available + mem_real_eri*dp)/fraction_of_total_mem) &
          call output%error_msg('not enough memory to place complex ERI-T1 integrals in memory.')
 !
       call mem%alloc(integrals%g_pqrs_complex, integrals%n_mo, integrals%n_mo, &
