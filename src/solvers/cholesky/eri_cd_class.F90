@@ -3081,6 +3081,9 @@ contains
 !
       type(interval) :: A_interval, B_interval, C_interval, D_interval
 !
+!     Available memory
+      integer(i15) :: mem_available
+!
       call cpu_time(s_build_vectors_time)
 !
 !     Read diagonal info
@@ -3146,6 +3149,7 @@ contains
 !
          found_size = .false.
 !
+         mem_available = mem%get_available()
          do B = 1, solver%n_s
             do A = B, solver%n_s
 !
@@ -3160,7 +3164,7 @@ contains
                   n_AB_included_current = n_AB_included_current + 1
 !
                   if ((2*size_AB_current*(solver%n_cholesky)*dp + (solver%n_cholesky**2)*dp)*1.1d0 & 
-                       .ge. mem%available) then ! 10 percent buffer
+                       .ge. mem_available) then ! 10 percent buffer
 !
                      if (.not. found_size) then
 !

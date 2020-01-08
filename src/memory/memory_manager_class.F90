@@ -70,16 +70,16 @@ module memory_manager_class
 !
 !     The total amount of memory specified by user (standard: 8 GB)
 !
-      integer(i15) :: total
+      integer(i15), private :: total
 !
 !     The amount of memory currently available, based on the arrays currently allocated
 !     (memory used by objects and local variables are not included in this estimate)
 !
-      integer(i15) :: available
+      integer(i15), private :: available
 !
 !     Unit for memory, default is GB
 !
-      character(len=2) :: unit
+      character(len=2), private :: units
 !
    contains
 !
@@ -214,25 +214,25 @@ contains
 !     Default is 8 GB
 !
       mem%total = 8 
-      mem%unit = 'gb'
+      mem%units = 'gb'
 !
       call mem%read_settings()
 !
 !     Convert from current unit to B
 !
-      if (mem%unit == 'gb') then
+      if (mem%units == 'gb') then
 !
         mem%total =  mem%total*1000000000
 !
-      elseif (mem%unit == 'mb') then
+      elseif (mem%units == 'mb') then
 !
         mem%total =  mem%total*1000000
 !
-      elseif (mem%unit == 'kb') then
+      elseif (mem%units == 'kb') then
 !
         mem%total =  mem%total*1000
 !
-      elseif (trim(mem%unit) == 'b') then
+      elseif (trim(mem%units) == 'b') then
 !
 !       Do nothing
 !
@@ -263,11 +263,9 @@ contains
 !
       class(memory_manager), intent(in) :: mem
 !
-      integer(i15) :: difference 
+      character(len=200) :: difference_string
 !
       if (mem%available .ne. mem%total) then 
-!
-         difference = mem%total-mem%available
 !
          call output%printf('m', 'Mismatch in memory according to eT and &
                             &specified on input:', fs='(/t3,a)')
@@ -278,8 +276,10 @@ contains
          call output%printf('m', 'Memory available (input): (a0)', &
                             chars=[mem%get_memory_as_character(mem%total,.true.)], fs='(t6,a)')
 !
+!
+         difference_string = mem%get_memory_as_character(mem%total-mem%available,.true.)
          call output%printf('m', 'Difference:               (a0)', &
-                            chars=[mem%get_memory_as_character(difference,.true.)], fs='(t6,a)')
+                            chars=[trim(difference_string)], fs='(t6,a)')
 !
          call output%warning_msg('Deallocations may be missing or specified with &
                                  &incorrect dimensionalities.')
@@ -323,29 +323,36 @@ contains
 !
       character(len=17) :: memory
 !
-      if(present(all_digits) .and. all_digits) then
+      logical :: all_digits_local
 !
-         write(memory,'(i15, a)') input_mem, ' B'
-         memory = trim(adjustl(memory))
+!     Print all digits? (i.e. give memory in B)
 !
-      else if(input_mem .lt. 1d6) then
+      all_digits_local = .false.
+      if (present(all_digits)) all_digits_local = all_digits
+!
+      if (all_digits_local) then
+!
+            write(memory,'(i0, a)') input_mem, ' B'
+            memory = trim(adjustl(memory))
+!
+      else if (abs(input_mem) .lt. 1d6) then
 !
          write(memory,'(f10.3, a)') dble(input_mem)/1.0d3, ' KB'
          memory = trim(adjustl(memory))
 !         
-      else if(input_mem .lt. 1d9) then
+      else if (abs(input_mem) .lt. 1d9) then
 !
          write(memory,'(f10.6, a)') dble(input_mem)/1.0d6, ' MB'
          memory = trim(adjustl(memory))
 !
-      else if(input_mem .lt. 1d12) then
+      else if (abs(input_mem) .lt. 1d12) then
 !
          write(memory,'(f10.6, a)') dble(input_mem)/1.0d9, ' GB'
          memory = trim(adjustl(memory))
 !
-      else if(input_mem .lt. 1d15) then
+      else if (abs(input_mem) .lt. 1d15) then
 !
-         write(memory,'(f13.9, a)') dble(input_mem)/1.0d12, ' TB'
+         write(memory,'(f13.6, a)') dble(input_mem)/1.0d12, ' TB'
          memory = trim(adjustl(memory))
 !
       end if
@@ -1950,7 +1957,7 @@ contains
          call input%get_keyword_in_section('unit', 'memory', unit_string)
 !
          unit_string = adjustl(unit_string)
-         mem%unit(1 : 2) = unit_string(1 : 2)
+         mem%units(1 : 2) = unit_string(1 : 2)
 !
 !        Sanity check: 
 !     
