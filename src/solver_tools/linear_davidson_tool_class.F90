@@ -175,7 +175,7 @@ contains
 !
       davidson%F(1:n_parameters, 1:davidson%n_rhs) => F(1:n_parameters)
 !
-      call mem%alloc(davidson%frequencies, davidson%n_solutions)
+      allocate(davidson%frequencies(davidson%n_solutions))
 !
       if (present(frequencies)) then 
 !
@@ -591,10 +591,6 @@ contains
       implicit none 
 !
       type(linear_davidson_tool) :: davidson 
-!
-      if (allocated(davidson%frequencies)) then
-         call mem%dealloc(davidson%frequencies, davidson%n_solutions)
-      end if
 !
       if (allocated(davidson%A_red)) then
          call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
