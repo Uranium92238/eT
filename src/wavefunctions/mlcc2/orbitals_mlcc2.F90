@@ -783,6 +783,7 @@ contains
 !
       enddo
 !
+      call mem%dealloc(omega_ccs, n_cnto_states)
       call mem%dealloc(R_ai_k, wf%n_v, wf%n_o)
       call mem%dealloc(R_aibj_k, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(R_ai, wf%n_v, wf%n_o, n_cnto_states)
@@ -1368,6 +1369,8 @@ contains
             omega_ccs(n) = all_omega_ccs(cnto_states(n))   
 !
          enddo  
+!
+         call mem%dealloc(all_omega_ccs, n_es)
 !
       endif
 !

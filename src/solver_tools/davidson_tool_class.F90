@@ -717,10 +717,12 @@ contains
 !
       call mem%dealloc(X, davidson%n_parameters, davidson%n_solutions)
 !
-!     Delete A_red if it is there
+!     Delete A_red and X_red if they are there
 !
       if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, &
-         davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
+         davidson%dim_red, davidson%dim_red)
+      if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, &
+         davidson%dim_red, davidson%n_solutions)
 !
       davidson%dim_red = davidson%n_solutions
       davidson%n_new_trials = davidson%n_solutions
