@@ -185,6 +185,9 @@ contains
 !
 !        Re-decompose the AO overlap 
 !
+         call wf%destruct_pivot_matrix_ao_overlap()
+         call wf%destruct_cholesky_ao_overlap()
+!
          call wf%set_n_mo() 
 !
 !        Re-compute the AO h matrix 
