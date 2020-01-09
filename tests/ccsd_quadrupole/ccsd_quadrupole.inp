@@ -8,12 +8,12 @@ end print
 
 do
   ground state
-  zop
+  expectation value
 end do
 
-cc zop
+cc expectation value
    quadrupole
-end cc zop
+end cc expectation value
 
 memory
    available: 8
