@@ -202,9 +202,9 @@ contains
 !
       class(ccs) :: wf
 !
-      logical :: converged
-      logical :: converged_eigenvalue
-      logical :: converged_residual
+      logical, dimension(:), allocatable :: converged
+      logical, dimension(:), allocatable :: converged_eigenvalue
+      logical, dimension(:), allocatable :: converged_residual
 !
       integer :: iteration, trial, n, state
 !
@@ -217,12 +217,18 @@ contains
       real(dp), dimension(:), allocatable :: solution 
 !
       type(eigen_davidson_tool) :: davidson 
+!  
+      real(dp) :: lindep_threshold
 !
 !     :: Preparations ::
 !  
-      davidson = eigen_davidson_tool('cc_es_davidson', wf%n_es_amplitudes, &
-                        solver%n_singlet_states, solver%residual_threshold, &
-                        solver%max_dim_red)
+      lindep_threshold = min(solver%residual_threshold, 1.0d-11)
+!
+      davidson = eigen_davidson_tool('cc_es_davidson',                           &
+                                       wf%n_es_amplitudes,                       &
+                                       solver%n_singlet_states,                  &
+                                       lindep_threshold,                         &
+                                       solver%max_dim_red)
 !
       call davidson%initialize_trials_and_transforms(solver%records_in_memory)
 !
@@ -231,13 +237,17 @@ contains
 !
 !     :: Iterative loop :: 
 !
+      call mem%alloc(converged, solver%n_singlet_states)
+      call mem%alloc(converged_eigenvalue, solver%n_singlet_states)
+      call mem%alloc(converged_residual, solver%n_singlet_states)
+!
       converged            = .false. 
       converged_eigenvalue = .false. 
       converged_residual   = .false. 
 !
       iteration = 0
 !
-      do while (.not. converged .and. (iteration .le. solver%max_iterations))
+      do while (.not. all(converged) .and. (iteration .le. solver%max_iterations))
 !
          iteration = iteration + 1
          call davidson%iterate()
@@ -274,45 +284,59 @@ contains
          call mem%alloc(residual, wf%n_es_amplitudes)
          call mem%alloc(solution, wf%n_es_amplitudes)
 !
-         call output%printf('n', ' Root     Eigenvalue (Re)        Eigenvalue &
-                            &(Im)      Residual norm', fs='(/t3,a)')
-         call output%print_separator('n', 69,'-')
+         call output%printf('n', ' Root  Eigenvalue (Re)   Eigenvalue &
+                            &(Im)    |residual|   Delta E (Re)', fs='(/t3,a)', ll=120)
+         call output%print_separator('n', 72,'-')
 !
          converged_residual   = .true.
          converged_eigenvalue = .true.
 !
          do n = 1, solver%n_singlet_states
 !
-            call davidson%construct_solution(solution, n)
+            call davidson%construct_solution(solution, n) 
 !
-            call wf%save_excited_state(solution, n, solver%transformation)
+            call wf%save_excited_state(solution, n, solver%transformation) 
 !
-            call davidson%construct_residual(residual, solution, n)
+            call davidson%construct_residual(residual, solution, n) 
 !
-            if (solver%projector%active) call solver%projector%do_(residual)
+            if (solver%projector%active) call solver%projector%do_(residual) ! CVS projection, 
+                                                                             ! for instance
 !
             residual_norm = get_l2_norm(residual, wf%n_es_amplitudes)
 !
-            if (residual_norm >= solver%residual_threshold) then
+            converged_residual(n)   = residual_norm <= solver%residual_threshold
 !
-               converged_residual = .false.
+            converged_eigenvalue(n) = dabs(davidson%omega_re(n) &
+                                          - solver%energies(n)) <= solver%eigenvalue_threshold
+!
+            converged(n) = converged_residual(n) .and. converged_eigenvalue(n) .or. &
+                           converged_residual(n) .and. iteration == 1
+!
+            if (.not. converged(n)) then 
+!
+               if (residual_norm <= lindep_threshold) then 
+!
+                  call output%error_msg('Residual norm for root (i0) smaller than linear ' // &
+                                        'dependence threshold, but energy and residual  '  // &
+                                        'thresholds have not yet been met.', ints=[n])
+!
+               endif
+!
                call davidson%construct_next_trial(residual, n)
 !
-            endif 
+            endif
 !
-            if (abs(davidson%omega_re(n) - solver%energies(n)) >= solver%eigenvalue_threshold) then
-!
-               converged_eigenvalue = .false.               
-!
-            endif 
-!
-            call output%printf('n', '(i4)    (f16.12)       (f16.12)           (e11.4)', &
-                               ints=[n], reals=[davidson%omega_re(n), &
-                               davidson%omega_im(n), residual_norm])
+            call output%printf('n', '(i4) (f16.12)  (f16.12)    (e11.4)  (e11.4) ',       &
+                               ints=[n],                                                  &
+                               reals=[davidson%omega_re(n),                               &
+                                      davidson%omega_im(n),                               &
+                                      residual_norm,                                      &
+                                      dabs(davidson%omega_re(n) - solver%energies(n))],   &
+                               ll=120)
 !
          enddo ! Done constructing new trials from residuals
 !
-         call output%print_separator('n', 69,'-')
+         call output%print_separator('n', 72,'-')
 !
          call mem%dealloc(residual, wf%n_es_amplitudes)
          call mem%dealloc(solution, wf%n_es_amplitudes)
@@ -322,13 +346,11 @@ contains
          solver%energies = davidson%omega_re
          call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
 !
-!        Test for total convergence
+!        Special case when residuals converge in first iteration, e.g. on restart
+!        => Exit without testing energy convergence 
 !
-         converged = converged_residual .and. converged_eigenvalue
+         if (all(converged_residual) .and. iteration == 1) then 
 !
-         if (converged_residual .and. iteration == 1) then 
-!
-            converged = .true.
             call output%printf('m', 'Note: Residual(s) converged in first &
                                &iteration. ' // 'Energy convergence therefore &
                                &not tested in this calculation.')
@@ -339,7 +361,7 @@ contains
 !
 !     :: Calculation summary :: 
 !
-      if (.not. converged) then
+      if (.not. all(converged)) then
 !
          call output%error_msg("Did not converge in the max number of " // & 
                                  "iterations in run_davidson_cc_es.")
@@ -364,6 +386,10 @@ contains
       endif
 !
       call davidson%finalize_trials_and_transforms()
+!
+      call mem%dealloc(converged, solver%n_singlet_states)
+      call mem%dealloc(converged_eigenvalue, solver%n_singlet_states)
+      call mem%dealloc(converged_residual, solver%n_singlet_states)
 !
    end subroutine run_davidson_cc_es
 !
