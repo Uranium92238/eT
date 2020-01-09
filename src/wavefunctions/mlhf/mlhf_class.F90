@@ -1083,14 +1083,19 @@ contains
       call wf%destruct_ao_density()
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
+      call wf%destruct_sp_eri_schwarz()
+      call wf%destruct_sp_eri_schwarz_list()
+      call wf%destruct_ao_h()
 !
       call wf%destruct_W_mo_update()
       call wf%destruct_G_De()
       call wf%destruct_G_De_ao()
 !
-      call wf%destruct_sp_eri_schwarz()
-      call wf%destruct_sp_eri_schwarz_list()
+      call wf%destruct_mm_matrices()
+      call wf%destruct_pcm_matrices()
       call wf%destruct_mo_fock_frozen()
+      call wf%destruct_orbital_coefficients_fc()
+      call wf%destruct_orbital_coefficients_frozen_hf()
 !
       call wf%G_De_ao_file%delete_
 !
@@ -1711,6 +1716,10 @@ contains
       call wf%destruct_mo_fock()
       call wf%destruct_W_mo_update()
       call wf%destruct_G_De()
+!
+!     We are done with these and want to delete them before n_mo changes
+      call wf%destruct_pivot_matrix_ao_overlap()
+      call wf%destruct_cholesky_ao_overlap()
 !
 !     Eliminate the core orbitals if frozen core requested
 !
