@@ -55,6 +55,10 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: ao_fock
       real(dp), dimension(:,:), allocatable :: mo_fock
 !
+      real(dp), dimension(:,:), allocatable :: frozen_CCT   ! Matrix CC^T where the contraction is 
+                                                            ! over frozen orbitals. Needed if 
+                                                            ! PAO construction follows (e.g in mlcc)
+!
       real(dp) :: coulomb_threshold  = 1.0D-12   ! Screening threshold (Fock, Coulomb)
       real(dp) :: exchange_threshold = 1.0D-10   ! Screening threshold (Fock, exchange)
       real(dp) :: libint_epsilon     = 1.0D-20   ! Libint electron repulsion integral 
@@ -166,6 +170,8 @@ module hf_class
       procedure :: add_pcm_fock_term                           => add_pcm_fock_term_hf
       procedure :: initialize_ao_h                             => initialize_ao_h_hf
       procedure :: destruct_ao_h                               => destruct_ao_h_hf
+      procedure :: initialize_frozen_CCT                       => initialize_frozen_CCT_hf
+      procedure :: destruct_frozen_CCT                         => destruct_frozen_CCT_hf
 !
 !     AO Density related routines
 !
@@ -249,6 +255,8 @@ module hf_class
 !
       procedure :: remove_core_orbitals                        => remove_core_orbitals_hf
       procedure :: remove_frozen_hf_orbitals                   => remove_frozen_hf_orbitals_hf
+!
+      procedure :: construct_full_occupied_density             => construct_full_occupied_density_hf
 !
       procedure :: construct_mo_fock_fc_term                   => construct_mo_fock_fc_term_hf
       procedure :: construct_mo_fock_frozen_hf_term            => construct_mo_fock_frozen_hf_term_hf
@@ -793,6 +801,7 @@ contains
       call wf%destruct_mo_fock_frozen()
       call wf%destruct_orbital_coefficients_fc()
       call wf%destruct_orbital_coefficients_frozen_hf()
+      call wf%destruct_frozen_CCT()
 !
    end subroutine cleanup_hf
 !
@@ -2189,6 +2198,13 @@ contains
       endif
 !
       wf%exists_frozen_fock_terms = .true.
+!
+      if (wf%frozen_core .or. wf%frozen_hf_MOs) then
+!
+         call wf%initialize_frozen_CCT()
+         call zero_array(wf%frozen_CCT, wf%n_ao**2)
+!
+      endif
 !
       call wf%initialize_mo_fock_frozen()
       call zero_array(wf%mo_fock_frozen, wf%n_mo**2)

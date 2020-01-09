@@ -992,7 +992,7 @@ contains
 !!       C = C U λ^(-1/2).
 !!
 !!    Linear dependence is removed by screening on the eigenvalues
-!!    with a threshold of 1.0 * 10^-10
+!!    with a threshold of 1.0 * 10^-6
 !!
       use array_utilities, only: copy_and_scale
 !
@@ -1012,8 +1012,6 @@ contains
       integer :: i, info
 !
       real(dp), parameter :: threshold = 1.0d-6 ! Threshold for linear dependency. 
-                                                ! Chosen such that 1/sqrt(lambda) will
-                                                ! not give numerical instabilities.
 !
 !     Diagonalize S
 !

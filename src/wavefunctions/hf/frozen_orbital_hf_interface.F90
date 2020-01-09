@@ -155,3 +155,19 @@
       integer :: n_active_hf_atoms
 !
    end function get_n_active_hf_atoms_hf
+!
+!
+   module subroutine construct_full_occupied_density_hf(wf, D)
+!!
+!!    Construct full occcupied density
+!!    Written by Sarai D. Folkestad
+!!
+!!    Constructs the full occupied density
+!!    for determining the frozen HF virtuals
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+      real(dp), dimension(wf%n_ao,wf%n_ao), intent(out) :: D
+!
+   end subroutine construct_full_occupied_density_hf
