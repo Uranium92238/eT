@@ -123,7 +123,7 @@ contains
       type(section) :: calculations
       type(section) :: system 
       type(section) :: memory 
-      type(section) :: cc_zop 
+      type(section) :: cc_expectation_value 
       type(section) :: cc_fop 
       type(section) :: hf_expectation_value
       type(section) :: cc_td
@@ -188,7 +188,7 @@ contains
       calculations%keywords = [character(len=30) :: 'ground state',         &
                                                     'ground state geoopt',  &
                                                     'excited state',        &
-                                                    'zop',                  &
+                                                    'expectation value',    &
                                                     'fop',                  &
                                                     'time dependent state', &
                                                     'cholesky eri']
@@ -212,9 +212,9 @@ contains
                            'dipole               ',         &
                            'quadrupole           ']
 !
-      cc_zop%name_    = 'cc zop'
-      cc_zop%required = .false.
-      cc_zop%keywords = [character(len=30) ::         &
+      cc_expectation_value%name_    = 'cc expectation value'
+      cc_expectation_value%required = .false.
+      cc_expectation_value%keywords = [character(len=30) ::         &
                            'dipole               ',   &
                            'quadrupole           ']
 !
@@ -462,7 +462,7 @@ contains
                            memory,                    &
                            method,                    &
                            hf_expectation_value,      &
-                           cc_zop,                    &
+                           cc_expectation_value,      &
                            cc_fop,                    &
                            cc_td,                     &
                            solver_cholesky,           &
