@@ -1414,7 +1414,7 @@ contains
 !
       call copy_and_scale(one, wf%orbital_coefficients, orbital_coefficients_copy, wf%n_mo*wf%n_ao)
 !
-      call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
+      call wf%destruct_orbital_coefficients()
 !
       call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo + wf%n_bath_orbitals)
       call zero_array(wf%orbital_coefficients, wf%n_ao*(wf%n_mo + wf%n_bath_orbitals))
@@ -1427,7 +1427,7 @@ contains
 !
       call copy_and_scale(one, wf%orbital_energies, orbital_energies_copy, wf%n_mo)
 !
-      call mem%dealloc(wf%orbital_energies, wf%n_mo)
+      call wf%destruct_orbital_energies()
       call mem%alloc(wf%orbital_energies, wf%n_mo + wf%n_bath_orbitals)
       call zero_array(wf%orbital_energies, wf%n_mo + wf%n_bath_orbitals)
 !

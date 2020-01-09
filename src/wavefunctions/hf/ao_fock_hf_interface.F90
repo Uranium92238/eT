@@ -87,9 +87,9 @@
    end subroutine construct_ao_G_hf
 !
 !
-   module subroutine construct_ao_G_thread_terms_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,    &
-                                          sp_density_schwarz, n_sig_sp, coulomb_thr, &
-                                          exchange_thr, precision_thr, shells)
+   module subroutine construct_ao_G_thread_terms_hf(wf, F, D, n_threads, max_D_schwarz,   &
+                                          max_eri_schwarz, sp_density_schwarz, n_sig_sp,  &
+                                          coulomb_thr, exchange_thr, precision_thr, shells)
 !!
 !!    Construct AO G
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -104,6 +104,9 @@
 !!    Note: the contributions from each thread need to be added to a single
 !!    n_ao x n_ao matrix & symmetrized to get G(D)_αβ.
 !!
+!!    Routine partly based on Hartree-Fock implementation shipped with 
+!!    the Libint 2 integral package by E. Valeev. 
+!!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -111,7 +114,8 @@
       type(interval), dimension(wf%system%n_s), intent(in) :: shells
       real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
-      real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, exchange_thr, precision_thr
+      real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz 
+      real(dp), intent(in) :: coulomb_thr, exchange_thr, precision_thr
       real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: sp_density_schwarz
 !
    end subroutine construct_ao_G_thread_terms_hf

@@ -290,7 +290,7 @@ contains
 !     Allocate active mo specific arrays
 !     and construct them
 !
-      call wf%initialize_w_mo_update()
+      call wf%initialize_W_mo_update()
       call identity_array(wf%w_mo_update, wf%n_mo)
 !
       call wf%initialize_G_De_ao()
@@ -1084,7 +1084,7 @@ contains
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
 !
-      call wf%destruct_w_mo_update()
+      call wf%destruct_W_mo_update()
       call wf%destruct_G_De()
       call wf%destruct_G_De_ao()
 !

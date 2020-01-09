@@ -55,6 +55,10 @@ contains
       call wf%destruct_mo_fock()
       call wf%destruct_W_mo_update()
 !
+!     We are done with these and want to delete them before n_mo changes
+      call wf%destruct_pivot_matrix_ao_overlap()
+      call wf%destruct_cholesky_ao_overlap()
+!
 !
 !     Eliminate the core orbitals if frozen core requested
 !
@@ -140,7 +144,7 @@ contains
 !
       call dcopy(wf%n_mo*wf%n_ao, wf%orbital_coefficients, 1, orbital_coefficients_copy, 1)
 !
-      call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
+      call wf%destruct_orbital_coefficients()
 !
       call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo - wf%n_frozen_core_orbitals)
 !
@@ -183,14 +187,15 @@ contains
 !
       enddo
 !
-     call mem%dealloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
+      call mem%dealloc(freeze_atom, wf%get_n_active_hf_atoms())
+      call mem%dealloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
 !
-     call mem%alloc(orbital_energies_copy, wf%n_mo)
+      call mem%alloc(orbital_energies_copy, wf%n_mo)
 !
-     call dcopy(wf%n_mo, wf%orbital_energies, 1, orbital_energies_copy, 1)
+      call dcopy(wf%n_mo, wf%orbital_energies, 1, orbital_energies_copy, 1)
 !
-     call mem%dealloc(wf%orbital_energies, wf%n_mo)
-     call mem%alloc(wf%orbital_energies, wf%n_mo - wf%n_frozen_core_orbitals)
+      call wf%destruct_orbital_energies()
+      call mem%alloc(wf%orbital_energies, wf%n_mo - wf%n_frozen_core_orbitals)
 !
 !$omp parallel do private (mo)
       do mo = 1, wf%n_mo - wf%n_frozen_core_orbitals
@@ -391,7 +396,7 @@ contains
 !
       call mem%dealloc(orbitals_copy, wf%n_ao, wf%n_mo)
 !
-      call mem%dealloc(wf%orbital_energies, wf%n_mo)
+      call wf%destruct_orbital_energies()
       call mem%alloc(wf%orbital_energies, wf%n_o + wf%n_v)
 !
       wf%n_frozen_hf_orbitals = wf%n_mo - wf%n_o - wf%n_v
