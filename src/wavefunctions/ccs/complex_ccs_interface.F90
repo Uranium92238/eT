@@ -44,6 +44,32 @@
    end subroutine make_ccs_complex_ccs
 !
 !
+   module subroutine cleanup_complex_ccs(wf)
+!!
+!!    Cleanup complex (CCS)
+!!    Written by Andreas Skeidsvoll, Jan 2020
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+   end subroutine cleanup_complex_ccs
+!
+!
+   module subroutine cleanup_ccs_complex_ccs(wf)
+!!
+!!    Cleanup CCS complex (CCS)
+!!    Written by Andreas Skeidsvoll, Jan 2020
+!!
+!!    Deallocates complex CCS variables.
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+   end subroutine cleanup_ccs_complex_ccs
+!
+!
    module subroutine construct_complex_time_derivative_ccs(wf, ddt_amplitudes_multipliers)
 !!
 !!    Construct complex time derivative (CCS)

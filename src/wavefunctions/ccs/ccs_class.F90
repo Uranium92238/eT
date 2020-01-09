@@ -476,6 +476,9 @@ module ccs_class
       procedure :: make_complex                                  => make_complex_ccs
       procedure :: make_ccs_complex                              => make_ccs_complex_ccs
 !
+      procedure :: cleanup_complex                               => cleanup_complex_ccs
+      procedure :: cleanup_ccs_complex                           => cleanup_ccs_complex_ccs
+!
       procedure :: construct_complex_time_derivative             => construct_complex_time_derivative_ccs
 !
       procedure :: construct_complex_time_derivative_amplitudes  => construct_complex_time_derivative_amplitudes_ccs

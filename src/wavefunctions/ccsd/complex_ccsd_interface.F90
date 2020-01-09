@@ -29,6 +29,18 @@
    end subroutine make_complex_ccsd
 !
 !
+   module subroutine cleanup_complex_ccsd(wf)
+!!
+!!    Make complex (CCSD)
+!!    Written by Andreas Skeidsvoll, Sep 2019
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+!
+   end subroutine cleanup_complex_ccsd
+!
+!
    module subroutine construct_complex_time_derivative_amplitudes_ccsd(wf, ddt_amplitudes)
 !!
 !!    Construct complex time derivative amplitudes (CCSD)

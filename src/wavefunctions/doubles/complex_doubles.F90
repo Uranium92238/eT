@@ -64,4 +64,30 @@ contains
    end subroutine make_doubles_complex_doubles
 !
 !
+   module subroutine cleanup_doubles_complex_doubles(wf)
+!!
+!!    Cleanup doubles complex (doubles)
+!!    Written by Andreas Skeidsvoll, Jan 2020
+!!
+!!    Dellocates complex doubles variables.
+!!
+      implicit none
+!
+      class(doubles), intent(inout) :: wf
+!
+      if (allocated(wf%t2_complex)) then
+         call wf%destruct_t2_complex()
+      endif
+!
+      if (allocated(wf%t2bar_complex)) then
+         call wf%destruct_t2bar_complex()
+      endif
+!
+      if (allocated(wf%u_aibj_complex)) then
+         call wf%destruct_u_aibj_complex()
+      endif
+!
+   end subroutine cleanup_doubles_complex_doubles
+!
+!
 end submodule complex_doubles

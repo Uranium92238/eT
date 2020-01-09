@@ -242,6 +242,7 @@ module ccsd_class
 !     Procedures related to time dependency
 !
       procedure :: make_complex                               => make_complex_ccsd
+      procedure :: cleanup_complex                            => cleanup_complex_ccsd
 !
       procedure :: construct_complex_time_derivative_amplitudes       => construct_complex_time_derivative_amplitudes_ccsd
       procedure :: construct_complex_time_derivative_multipliers      => construct_complex_time_derivative_multipliers_ccsd

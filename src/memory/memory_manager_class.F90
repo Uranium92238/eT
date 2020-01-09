@@ -1402,7 +1402,7 @@ contains
 !
       integer, intent(in) :: M, N, O, P, Q ! First, second, third, fourth, fifth dimension of array
 !
-      integer :: size_array ! Total size of array (M*N*O*P)
+      integer :: size_array ! Total size of array (M*N*O*P*Q)
       integer :: error = 0
 !
       size_array = M*N*O*P*Q
