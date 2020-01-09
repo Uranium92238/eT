@@ -218,6 +218,10 @@ contains
 !
       if (engine%plot_density) call engine%do_visualization(wf)
 !
+!     Deallocate complex arrays
+!
+      call wf%cleanup_complex()
+!
    end subroutine run_td_engine
 !
 !

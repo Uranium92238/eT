@@ -157,6 +157,7 @@ module doubles_class
 !     Procedures related to time dependency
 !
       procedure :: make_doubles_complex                  => make_doubles_complex_doubles
+      procedure :: cleanup_doubles_complex               => cleanup_doubles_complex_doubles
 !
       procedure :: print_amplitude_info                  => print_amplitude_info_doubles
 !
