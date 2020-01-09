@@ -130,6 +130,8 @@ module mlhf_class
       procedure :: get_n_active_hf_atoms                    => get_n_active_hf_atoms_mlhf
       procedure :: prepare_mos                              => prepare_mos_mlhf
 !
+      procedure :: construct_full_occupied_density          => construct_full_occupied_density_mlhf
+!
    end type mlhf
 !
 !
@@ -213,6 +215,9 @@ contains
 !
       call wf%initialize_ao_h()
       call wf%get_ao_h_wx(wf%ao_h)
+!
+      call wf%initialize_frozen_CCT()
+      call zero_array(wf%frozen_CCT, wf%n_ao**2)
 !
    end subroutine prepare_mlhf
 !
@@ -918,9 +923,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: C_pao_copy
       real(dp), dimension(:,:), allocatable :: S_pao
+      real(dp), dimension(:,:), allocatable :: D
 !
       integer   :: n_active_aos
       integer   :: last_hf_ao
+      integer   :: rank
 !
       call wf%system%last_ao_active_space('hf', last_hf_ao)
 !
@@ -940,6 +947,64 @@ contains
       call dcopy(wf%n_ao*wf%n_v, C_pao_copy, 1, C_pao, 1)
 !
       call mem%dealloc(C_pao_copy, wf%n_ao, n_active_aos)
+!
+!     Construct inactive virtuals and add to frozen CC^T. Needed for later PAO construction
+!     e.g. to perform CC in reduced space or MLCC with PAOs
+!
+      call mem%alloc(C_pao_copy, wf%n_ao, wf%n_ao)
+      call mem%alloc(D, wf%n_ao, wf%n_ao)
+!
+!     Active virtual density
+!
+      call dgemm('N', 'T', &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  wf%n_v,  &
+                  one,     &
+                  C_pao,   &
+                  wf%n_ao, &
+                  C_pao,   &
+                  wf%n_ao, &
+                  zero,    &
+                  D,       &
+                  wf%n_ao)
+!
+!     Add AO density
+!
+      call daxpy(wf%n_ao**2, one, wf%ao_density, 1, D, 1)
+!
+!     Project occupied and active virtual out of AOs
+!
+      call wf%projected_atomic_orbitals(D, C_pao_copy, wf%n_ao)
+!
+      call mem%dealloc(D, wf%n_ao, wf%n_ao)
+!
+      call mem%alloc(S_pao, wf%n_ao, wf%n_ao)
+!
+      call wf%get_orbital_overlap(C_pao_copy, wf%n_ao, S_pao)
+!
+!     Orthonormalize
+!
+      call wf%lowdin_orthonormalization(C_pao_copy, S_pao, wf%n_ao, rank)
+!
+      call mem%dealloc(S_pao, wf%n_ao, wf%n_ao)
+!
+!     Add to CC^T
+!
+      call dgemm('N', 'T',       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  rank,          &
+                  one,           &
+                  C_pao_copy,    &
+                  wf%n_ao,       &
+                  C_pao_copy,    &
+                  wf%n_ao,       &
+                  one,           &
+                  wf%frozen_CCT, &
+                  wf%n_ao)
+!
+      call mem%dealloc(C_pao_copy, wf%n_ao, wf%n_ao)      
 !
    end subroutine construct_active_paos_mlhf
 !
@@ -1096,6 +1161,8 @@ contains
       call wf%destruct_mo_fock_frozen()
       call wf%destruct_orbital_coefficients_fc()
       call wf%destruct_orbital_coefficients_frozen_hf()
+!
+      call wf%destruct_frozen_CCT()
 !
       call wf%G_De_ao_file%delete_
 !
@@ -1273,6 +1340,10 @@ contains
          call cholesky_decomposition_limited_diagonal(D_v, C_v, wf%n_ao, wf%n_v, &
                                        wf%cholesky_threshold, n_active_aos, active_aos)
 !
+!        Add inactive virtual density to frozen_CCT to be used if new PAOs are constructed later
+!
+         call daxpy(wf%n_ao**2, one, D_v, 1, wf%frozen_CCT, 1)
+!
          call mem%dealloc(D_v, wf%n_ao, wf%n_ao)
 !
       else
@@ -1289,6 +1360,10 @@ contains
 !
       call cholesky_decomposition_limited_diagonal(wf%ao_density, C_o, wf%n_ao, wf%n_o, &
                                   wf%cholesky_threshold, n_active_aos, active_aos)
+!
+!     Add inactive density to frozen_CCT to be used if new PAOs are constructed later
+!
+      call daxpy(wf%n_ao**2, one, wf%ao_density, 1, wf%frozen_CCT, 1)
 !
 !     Set molecular orbitals coefficients
 !
@@ -1738,6 +1813,27 @@ contains
       if (wf%frozen_hf_mos) call wf%remove_frozen_hf_orbitals()
 !
    end subroutine prepare_mos_mlhf
+!
+!
+   subroutine construct_full_occupied_density_mlhf(wf, D)
+!!
+!!    Construct full occcupied density
+!!    Written by Sarai D. Folkestad, Jan 2020
+!!
+!!    Constructs the full occupied density
+!!    for determining the frozen HF virtuals
+!!
+      implicit none
+!
+      class(mlhf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: D
+!
+      call wf%hf%construct_full_occupied_density(D)
+!
+      call daxpy(wf%n_ao**2, one, wf%frozen_CCT, 1, D, 1)
+!
+   end subroutine construct_full_occupied_density_mlhf
 !
 !
 end module mlhf_class

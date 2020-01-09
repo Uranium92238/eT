@@ -384,3 +384,29 @@
       class(hf) :: wf
 !
    end subroutine destruct_W_mo_update_hf
+!
+!
+   module subroutine initialize_frozen_CCT_hf(wf)
+!!
+!!    Initialize frozen CC^T 
+!!    Written bySarai D. Folkestad, Jan 2020
+!!
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+   end subroutine initialize_frozen_CCT_hf
+!
+!
+   module subroutine destruct_frozen_CCT_hf(wf)
+!!
+!!    Destruct frozen CC^T  
+!!    Written bySarai D. Folkestad, Jan 2020
+!!
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+   end subroutine destruct_frozen_CCT_hf

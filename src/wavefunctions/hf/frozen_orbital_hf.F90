@@ -237,15 +237,15 @@ contains
 !
       class(hf), intent(inout) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: D, orbitals_copy
+      real(dp), dimension(:,:), allocatable :: D, orbitals_copy, S, PAO_coeff
 !
       integer, dimension(:), allocatable :: active_aos
 !
-      integer :: first_ao, last_ao, i, ii, n_active_aos, a
+      integer :: first_ao, last_ao, i, n_active_aos, a
 !
       real(dp), parameter :: full_cd_threshold = 1.0d-4
 !
-      integer :: mo_offset, ao
+      integer :: mo_offset, ao, rank
 !
       character(len=100) :: last_active_level
 !
@@ -303,6 +303,8 @@ contains
       enddo
 !$omp end parallel do
 !
+!     Occupied orbitals
+!
 !     1. Set up active occupied density
 !
       call mem%alloc(D, wf%n_ao, wf%n_ao)
@@ -320,43 +322,47 @@ contains
                   D,                         &
                   wf%n_ao)
 !
-!     Construct occupied active orbitals
+!     2. Construct occupied active orbitals
 !
       mo_offset = 0
 !
-      call wf%construct_orbital_block_by_density_cd(D, wf%n_o, wf%cholesky_orbital_threshold, mo_offset, active_aos)
+      call wf%construct_orbital_block_by_density_cd(D, wf%n_o, wf%cholesky_orbital_threshold, &
+                  mo_offset, active_aos)
 !
-!     Construct occupied orbitals to be frozen 
+      call mem%dealloc(active_aos, n_active_aos)
+!
+!     3. Construct occupied orbitals to be frozen 
 !
       mo_offset = wf%n_o
 !
-      call wf%construct_orbital_block_by_density_cd(D, wf%n_frozen_hf_o, full_cd_threshold, mo_offset)
+      call wf%construct_orbital_block_by_density_cd(D, wf%n_frozen_hf_o, full_cd_threshold, &
+                  mo_offset)
 !
-!     1. Set up virtual density
+!     Virtual orbitals
 !
-      mo_offset = wf%n_o + wf%n_frozen_hf_o
+      call wf%construct_full_occupied_density(D)  
 !
-      call dgemm('N', 'T',                                     &
-                  wf%n_ao,                                     &
-                  wf%n_ao,                                     &
-                  wf%n_v,                                      &
-                  one,                                         &
-                  wf%orbital_coefficients(1, mo_offset + 1),   &
-                  wf%n_ao,                                     &
-                  wf%orbital_coefficients(1, mo_offset + 1),   &
-                  wf%n_ao,                                     &
-                  zero,                                        &
-                  D,                                           &
-                  wf%n_ao)
+!     1. Construct PAOs for active atoms
 !
-!     Construct active virtual orbitals
+      call mem%alloc(PAO_coeff, wf%n_ao, n_active_aos)
 !
-      call wf%construct_orbital_block_by_density_cd(D, wf%n_v, wf%cholesky_orbital_threshold, mo_offset, active_aos)
+      call wf%projected_atomic_orbitals(D, PAO_coeff, n_active_aos, first_ao)
 !
-!     Need not construct the frozen virtual orbitals
-!
-      call mem%dealloc(active_aos, n_active_aos)
       call mem%dealloc(D, wf%n_ao, wf%n_ao)
+!
+!     2. Orthonormalize PAOs to get active virtual orbitals
+!
+      call mem%alloc(S, n_active_aos, n_active_aos)
+!
+      call wf%get_orbital_overlap(PAO_coeff, n_active_aos, S)
+!
+      call wf%lowdin_orthonormalization(PAO_coeff, S, n_active_aos, rank)
+!
+      call mem%dealloc(S, n_active_aos, n_active_aos)
+!
+      wf%n_v = rank
+!     
+!     NOTE: Need not construct the frozen virtual orbitals !    
 !
 !     Update orbital_coefficients and place orbital_coefficients_frozen_hf
 !
@@ -370,31 +376,38 @@ contains
 !
       call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_o + wf%n_v)
 !
-!$omp parallel do private (ao, i, a, ii)
+!$omp parallel do private (ao, i)
       do ao = 1, wf%n_ao
-!
          do i = 1, wf%n_o
 !
             wf%orbital_coefficients(ao, i) = orbitals_copy(ao, i)
 !
          enddo
-!
-         do a = 1, wf%n_v
-!
-            wf%orbital_coefficients(ao, wf%n_o + a) = orbitals_copy(ao, a + wf%n_o + wf%n_frozen_hf_o)
-!
-         enddo
-!
-         do ii = 1, wf%n_frozen_hf_o
-!
-            wf%orbital_coefficients_frozen_hf(ao, ii) = orbitals_copy(ao, wf%n_o + ii)
-!
-         enddo
-!
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(orbitals_copy, wf%n_ao, wf%n_mo)
+!$omp parallel do private (ao, a)
+      do ao = 1, wf%n_ao
+         do a = 1, wf%n_v
+!
+            wf%orbital_coefficients(ao, wf%n_o + a) = PAO_coeff(ao, a)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+!$omp parallel do private (ao, i)
+      do ao = 1, wf%n_ao
+         do i = 1, wf%n_frozen_hf_o
+!
+            wf%orbital_coefficients_frozen_hf(ao, i) = orbitals_copy(ao, wf%n_o + i)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call mem%dealloc(orbitals_copy, wf%n_ao, (wf%n_o + wf%n_frozen_hf_o))
+      call mem%dealloc(PAO_coeff, wf%n_ao, n_active_aos)
 !
       call wf%destruct_orbital_energies()
       call mem%alloc(wf%orbital_energies, wf%n_o + wf%n_v)
@@ -493,6 +506,8 @@ contains
                   D,                            &
                   wf%n_ao)
 !
+      call daxpy(wf%n_ao**2, half, D, 1, wf%frozen_CCT, 1)
+!
 !     Construct the frozen core contribution to the active Fock matrix
 !
       call mem%alloc(ao_F_fc, wf%n_ao, wf%n_ao)
@@ -547,6 +562,8 @@ contains
                   D,                                      &
                   wf%n_ao)
 !
+      call daxpy(wf%n_ao**2, half, D, 1, wf%frozen_CCT, 1)
+!
 !     Construct the frozen core contribution to the active Fock matrix
 !
       call mem%alloc(ao_F_frozen_hf, wf%n_ao, wf%n_ao)
@@ -580,6 +597,26 @@ contains
       n_active_hf_atoms = wf%system%n_atoms
 !
    end function get_n_active_hf_atoms_hf
+!
+!
+   module subroutine construct_full_occupied_density_hf(wf, D)
+!!
+!!    Construct full occcupied density
+!!    Written by Sarai D. Folkestad, Jan 2020
+!!
+!!    Constructs the full occupied density
+!!    for determining the frozen HF virtuals
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_ao,wf%n_ao), intent(out) :: D
+!
+      call dcopy(wf%n_ao**2, wf%ao_density, 1, D, 1)
+      call dscal(wf%n_ao**2, half, D, 1)
+!
+   end subroutine construct_full_occupied_density_hf
 !
 !
 end submodule frozen_orbital_hf

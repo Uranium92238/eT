@@ -472,4 +472,34 @@ contains
    end subroutine destruct_W_mo_update_hf
 !
 !
+   module subroutine initialize_frozen_CCT_hf(wf)
+!!
+!!    Initialize frozen CC^T 
+!!    Written by Sarai D. Folkestad, Jan 2020
+!!
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%alloc(wf%frozen_CCT, wf%n_ao, wf%n_ao)
+!
+   end subroutine initialize_frozen_CCT_hf
+!
+!
+   module subroutine destruct_frozen_CCT_hf(wf)
+!!
+!!    Destruct frozen CC^T  
+!!    Written by Sarai D. Folkestad, Jan 2020
+!!
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (allocated(wf%frozen_CCT)) call mem%dealloc(wf%frozen_CCT, wf%n_ao, wf%n_ao)
+!
+   end subroutine destruct_frozen_CCT_hf
+!
+!
 end submodule initialize_destruct_hf
