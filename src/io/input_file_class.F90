@@ -427,7 +427,8 @@ contains
                                  'grid buffer',          &
                                  'plot cc density',      &
                                  'plot hf orbitals',     &
-                                 'plot hf density'    ]
+                                 'plot hf density',      &
+                                 'plot hf active density']
 !
       global_print%name_    = 'print'
       global_print%required = .false.

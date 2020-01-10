@@ -107,6 +107,8 @@ module hf_class
       type(sequential_file) :: restart_file
       type(sequential_file) :: orbital_information_file
 !
+      logical :: plot_active_density
+!
    contains
 !
       procedure :: print_banner                                => print_banner_hf
@@ -2285,6 +2287,8 @@ contains
 !!
 !!    - Frozen hf orbitals
 !!
+!!    - plot active density
+!!
 !!    This routine is used at HF level to prepare mos and 
 !!    frozen fock contributions.
 !!
@@ -2298,8 +2302,16 @@ contains
       wf%frozen_core    = .false.
       wf%frozen_hf_mos  = .false.
 !
-      if (input%requested_keyword_in_section('core', 'frozen orbitals')) wf%frozen_core = .true.
-      if (input%requested_keyword_in_section('hf', 'frozen orbitals')) wf%frozen_hf_mos = .true.
+      wf%plot_active_density = .false.
+!
+      wf%frozen_core = input%requested_keyword_in_section('core', 'frozen orbitals')
+      wf%frozen_hf_mos = input%requested_keyword_in_section('hf', 'frozen orbitals')
+!
+      wf%plot_active_density = input%requested_keyword_in_section('plot hf active density', &
+            'visualization')
+!
+      if (wf%plot_active_density .and. .not.  (wf%frozen_core .or. wf%frozen_hf_mos)) &
+         call output%warning_msg('no active density for CC to plot in HF, no plots produced.')
 !
    end subroutine read_frozen_orbitals_settings_hf
 !
