@@ -35,8 +35,6 @@ module es_ip_projection_tool_class
 !
    contains
 !
-      final :: destructor 
-!
    end type es_ip_projection_tool
 !
 !
@@ -68,20 +66,6 @@ contains
       call wf%get_ip_projector(tool%projector)
 !
    end function new_es_ip_projection_tool
-!
-!
-   subroutine destructor(tool)
-!!
-!!    Destructor 
-!!    Written by Eirik F. Kjønstad, Sep 2019 
-!!
-      implicit none 
-!
-      type(es_ip_projection_tool) :: tool 
-!
-      if (allocated(tool%projector)) call mem%dealloc(tool%projector, tool%vector_length)
-!
-   end subroutine destructor
 !
 !
 end module es_ip_projection_tool_class

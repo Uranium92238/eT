@@ -58,7 +58,7 @@ module precondition_tool_class
 !
       procedure :: do_ => do_precondition_tool 
 !
-      final :: destructor 
+      procedure :: destruct_precondition_vector => destruct_precondition_vector_precondition_tool
 !
    end type precondition_tool
 !
@@ -161,18 +161,18 @@ contains
    end subroutine do_precondition_tool
 !
 !
-   subroutine destructor(tool)
+   subroutine destruct_precondition_vector_precondition_tool(tool)
 !!
-!!    Destructor 
+!!    Destruct precondition vector 
 !!    Written by Eirik F. Kjønstad, 2019 
 !!
       implicit none 
 !
-      type(precondition_tool) :: tool 
+      class(precondition_tool), intent(inout) :: tool 
 !
-      call mem%dealloc(tool%preconditioner, tool%dim_)
+      if (allocated(tool%preconditioner)) call mem%dealloc(tool%preconditioner, tool%dim_)
 !
-   end subroutine destructor
+   end subroutine destruct_precondition_vector_precondition_tool
 !
 !
 end module precondition_tool_class

@@ -390,7 +390,7 @@ contains
       class(diis_cc_gs) :: solver
       class(ccs) :: wf
 !
-!     Save amplitudes 
+      call solver%preconditioner%destruct_precondition_vector()
 !
       call wf%save_amplitudes()
 !

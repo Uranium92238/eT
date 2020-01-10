@@ -252,6 +252,7 @@ contains
       class(ccs), intent(in) :: wf
 !
       call solver%destruct_energies()
+      call solver%projector%destruct_projection_vector()
 !
       call solver%timer%turn_off()
 !

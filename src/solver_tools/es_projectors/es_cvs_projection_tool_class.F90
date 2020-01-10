@@ -35,8 +35,6 @@ module es_cvs_projection_tool_class
 !
    contains
 !
-      final :: destructor 
-!
    end type es_cvs_projection_tool
 !
 !
@@ -68,20 +66,6 @@ contains
       call wf%get_cvs_projector(tool%projector, wf%n_core_MOs, wf%core_MOs)
 !
    end function new_es_cvs_projection_tool
-!
-!
-   subroutine destructor(tool)
-!!
-!!    Destructor 
-!!    Written by Eirik F. Kjønstad, Sep 2019 
-!!
-      implicit none 
-!
-      type(es_cvs_projection_tool) :: tool 
-!
-      if (allocated(tool%projector)) call mem%dealloc(tool%projector, tool%vector_length)
-!
-   end subroutine destructor
 !
 !
 end module es_cvs_projection_tool_class
