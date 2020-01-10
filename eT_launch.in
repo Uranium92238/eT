@@ -38,6 +38,20 @@ class OMPaction(argparse.Action):
             parser.error("{0} must be greater than 0".format(option_string))
         setattr(namespace, self.dest, value)
 
+def list_restart_files(restart_dir):
+
+    #Determine what files are present
+    rfiles =  [rfile for rfile in fnmatch.filter(os.listdir(restart_dir), '*restart_file')]
+    rfiles += [rfile for rfile in fnmatch.filter(os.listdir(restart_dir), 'orbital_*')]
+    rfiles += [rfile for rfile in fnmatch.filter(os.listdir(restart_dir), 'excitation_energies')]
+    rfiles += [rfile for rfile in fnmatch.filter(os.listdir(restart_dir), 't')]
+    rfiles += [rfile for rfile in fnmatch.filter(os.listdir(restart_dir), 'tbar')]
+    rfiles += [rfile for rfile in fnmatch.filter(os.listdir(restart_dir), 'r_*')]
+    rfiles += [rfile for rfile in fnmatch.filter(os.listdir(restart_dir), 'l_*')]
+    rfiles += [rfile for rfile in fnmatch.filter(os.listdir(restart_dir), 'G_De_ao')]
+
+    return rfiles
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('input_file', help="eT input file(s)", nargs='*', default=glob.glob("*.inp"), metavar="input file")
@@ -51,6 +65,12 @@ parser.add_argument('-bd', "--binary-dir", help="Specify location of eT executab
 parser.add_argument('-basis', "--basis-path-dir", help="Specify location of the basis directory", type=str)
 parser.add_argument('-pcm', "--pcm-input-file", help="Specify PCMSolver Input File", type=str)
 parser.add_argument('-i-err', '--ignore-errors', help="Continue with default behaviour if errors detected", action='store_true')
+
+parser.add_argument('-save', '--save-restart-dir',
+                    help="Directory to save restart files", type=str, nargs='?', default='off')
+parser.add_argument('-load', '--load-restart-dir',
+                    help="Directory(ies) to get restart files", type=str, nargs='+', default=[None])
+
 args = parser.parse_args()
 
 something_wrong = False
@@ -59,13 +79,19 @@ something_wrong = False
 if (not args.input_file):
     sys.exit('Could not find any input files')
 
-#Check that output file makes sense and set default
+#Check that output file makes sense or set default
 if (args.output_file[0]):
     if (len(args.output_file) != len(args.input_file)):
         parser.error('Number of output files must be same as input files')
 else:
     args.output_file = args.output_file*len(args.input_file)
-        
+
+if (len(args.load_restart_dir) < len(args.input_file)):
+    n = len(args.input_file) - len(args.load_restart_dir)
+    args.load_restart_dir = args.load_restart_dir + n*[None]
+elif (len(args.load_restart_dir) > len(args.input_file)):
+    parser.error('Number of restart load directories greater than number of input files')
+
 
 cwd = os.getcwd() # Get current directory
 
@@ -115,6 +141,17 @@ else:
     tmpscratch = os.getenv('eT_SCRATCH')
     scratch = tempfile.mkdtemp(dir=tmpscratch)
 
+if (args.save_restart_dir != 'off'):
+    if (args.save_restart_dir):
+        save_dir = os.path.abspath(args.save_restart_dir)
+    else:
+        env_save = os.getenv('eT_SAVE')
+        if (env_save):
+            save_dir = env_save
+        else:
+            save_dir = cwd
+
+
 # Set OMP_NUM_THREADS in environment
 if args.omp:
     os.environ['OMP_NUM_THREADS'] = str(args.omp)
@@ -125,18 +162,18 @@ if (not omps):
     omps = 'dynamic number of'
 mkls = os.getenv('MKL_NUM_THREADS')
 
-for (inpf,outf) in zip (args.input_file,args.output_file):
+for i, (inpf,outf) in enumerate(zip(args.input_file, args.output_file)):
 
     # Set up name for output files
+    inp_name = os.path.splitext(inpf)[0]
     if outf:
         output_file = outf
         out_name = os.path.splitext(outf)[0]
         time_file = '{0}{1}{2}'.format(out_name,'.timing','.out')
     else:
-        inp_name = os.path.splitext(inpf)[0]
         out_name = inp_name
-        output_file = '{0}{1}'.format(inp_name,'.out')
-        time_file = '{0}{1}{2}'.format(inp_name,'.timing','.out')
+        output_file = '{0}{1}'.format(out_name,'.out')
+        time_file = '{0}{1}{2}'.format(out_name,'.timing','.out')
 
     if (args.verbose):
         print()
@@ -157,7 +194,21 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
     shutil.copyfile(inp_src,inp_dest)
     if (args.pcm_input_file):
        shutil.copyfile(pcm_src,pcm_dest)
-    os.chdir(scratch)
+
+    if (args.load_restart_dir[i]):
+        load_dir = os.path.abspath(args.load_restart_dir[i])
+        loadfiles = list_restart_files(load_dir)
+
+        if (args.verbose):
+            print("Copying restart files to", load_dir)
+
+        for loadfile in loadfiles:
+            loadsrc  = os.path.join(load_dir, loadfile)
+            loaddest = os.path.join(scratch, loadfile)
+            shutil.copyfile(loadsrc, loaddest)
+
+
+    os.chdir(scratch) #Now in scratch
 
     if (args.verbose):
         print("Ready to run eT in", scratch, "with", omps, "threads")
@@ -211,10 +262,10 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
     coeff_files = [coeff_file for coeff_file in fnmatch.filter \
                       (os.listdir(scratch), '*mo_coefficients.out')]
     for coeff_file in coeff_files:
-        mo_coeff_src = os.path.join(scratch,coeff_file)
+        mo_coeff_src = os.path.join(scratch, coeff_file)
         mo_coeff_name = out_name + '_' + coeff_file
-        mo_coeff_dest = os.path.join(cwd,mo_coeff_name)
-        shutil.copyfile(mo_coeff_src,mo_coeff_dest)
+        mo_coeff_dest = os.path.join(cwd, mo_coeff_name)
+        shutil.copyfile(mo_coeff_src, mo_coeff_dest)
         
     #Check if there are any .plt files    
     pltfiles = [pltfile for pltfile in fnmatch.filter(os.listdir(scratch), '*.plt')]
@@ -224,7 +275,23 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
         pltdest = os.path.join(cwd, pltname)
         shutil.copyfile(pltsrc, pltdest)
 
-    os.chdir(cwd)
+    #Save restart files somewhere if requested
+    if(args.save_restart_dir != 'off'):
+        current_save_dir = os.path.join(save_dir,inp_name + '_restart_files')
+        os.makedirs(current_save_dir, exist_ok=True)
+
+        if (args.verbose):
+            print("Copying restart files to", current_save_dir)
+
+        savefiles = list_restart_files(scratch)
+        #Copy the files
+        for savefile in savefiles:
+            savesrc = os.path.join(scratch, savefile)
+            savedest = os.path.join(current_save_dir, savefile)
+            shutil.copyfile(savesrc, savedest)
+        
+
+    os.chdir(cwd) #Now in work
 
     if (something_wrong):
         print("Stopping now")
