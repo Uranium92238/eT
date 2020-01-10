@@ -1781,9 +1781,18 @@ contains
 !!    which has been treated at HF level of theory.
 !!
 !!
+!
+      use visualization_class, only : visualization
+!
       implicit none
 !
       class(mlhf) :: wf
+!
+      type(visualization), allocatable :: plotter
+!
+      character(len=200) :: label
+!
+      real(dp), dimension(:,:), allocatable :: D
 !
 !     Destruct MO quantities in the old MO dimension, if they are allocated,
 !     before n_mo changes
@@ -1812,6 +1821,33 @@ contains
 !
       if (wf%frozen_hf_mos) call wf%remove_frozen_hf_orbitals()
 !
+      if (wf%plot_active_density) then
+!
+         plotter = visualization(wf%system, wf%n_ao)
+!
+         call mem%alloc(D, wf%n_ao, wf%n_ao)
+!
+         call dgemm('N', 'T',                   &
+                     wf%n_ao,                   &
+                     wf%n_ao,                   &
+                     wf%n_o,                    &
+                     one,                       &
+                     wf%orbital_coefficients,   &
+                     wf%n_ao,                   &
+                     wf%orbital_coefficients,   &
+                     wf%n_ao,                   &
+                     zero,                      &
+                     D,                         &
+                     wf%n_ao)
+!
+         label = 'MLHF_density_for_CC'
+!
+         call plotter%plot_density(wf%system, D, label)
+!
+         call mem%dealloc(D, wf%n_ao, wf%n_ao)
+!
+      endif
+
    end subroutine prepare_mos_mlhf
 !
 !
