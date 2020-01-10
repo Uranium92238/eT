@@ -116,6 +116,7 @@ module mlcc2_class
 !
       procedure :: initialize_t2bar                                  => initialize_t2bar_mlcc2
       procedure :: destruct_t2bar                                    => destruct_t2bar_mlcc2
+      procedure :: destruct_multipliers                              => destruct_multipliers_mlcc2
 !
       procedure :: initialize_nto_states                             => initialize_nto_states_mlcc2
       procedure :: destruct_nto_states                               => destruct_nto_states_mlcc2
@@ -1126,17 +1127,26 @@ contains
       class(mlcc2) :: wf
 !
       call wf%destruct_amplitudes()
-      call wf%destruct_t2bar()
+      call wf%destruct_multipliers()
+
+      call wf%destruct_orbital_coefficients()
+      call wf%destruct_orbital_energies()
+!
       call wf%destruct_right_excitation_energies()
       call wf%destruct_left_excitation_energies()
 !
-      call wf%destruct_fock_ij()
-      call wf%destruct_fock_ia()
-      call wf%destruct_fock_ai()
-      call wf%destruct_fock_ab()
+      call wf%destruct_core_MOs()
+!
+      call wf%destruct_fock()
+      call wf%destruct_mo_fock_frozen()
+!
+      call wf%integrals%cleanup()
 !
       call wf%destruct_nto_states()
       call wf%destruct_cnto_states()
+!
+      if (allocated(wf%l_files)) call wf%l_files%finalize_storer()
+      if (allocated(wf%r_files)) call wf%r_files%finalize_storer()
 !
       call output%printf('v', '- Cleaning up (a0) wavefunction', &
                          chars=[trim(convert_to_uppercase(wf%name_))], fs='(/t3, a)')
