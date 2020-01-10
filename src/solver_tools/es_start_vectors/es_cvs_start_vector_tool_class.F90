@@ -36,8 +36,6 @@ module es_cvs_start_vector_tool_class
 !
    contains
 !
-      final :: destructor
-!
    end type es_cvs_start_vector_tool
 !
 !
@@ -67,24 +65,10 @@ contains
       tool%n_vectors = wf%n_singlet_states
       tool%vector_length = wf%n_es_amplitudes
 !
-      call mem%alloc(tool%indices, tool%n_vectors)
+      allocate(tool%indices(tool%n_vectors))
       call wf%set_cvs_start_indices(tool%indices)
 !
    end function new_es_cvs_start_vector_tool
-!
-!
-   subroutine destructor(tool)
-!!
-!!    Destructor 
-!!    Written by Eirik F. Kjønstad, Sep 2019 
-!!
-      implicit none 
-!
-      type(es_cvs_start_vector_tool) :: tool 
-!
-      call mem%dealloc(tool%indices, tool%n_vectors)
-!
-   end subroutine destructor
 !
 !
 end module es_cvs_start_vector_tool_class

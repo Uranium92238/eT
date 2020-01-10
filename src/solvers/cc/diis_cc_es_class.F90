@@ -543,6 +543,8 @@ contains
 !
       enddo 
 !
+      call solver%preconditioner%destruct_precondition_vector()
+!
    end subroutine run_diis_cc_es
 !
 !
