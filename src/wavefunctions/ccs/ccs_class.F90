@@ -717,7 +717,6 @@ contains
       call wf%destruct_left_excitation_energies()
       call wf%destruct_mo_fock_frozen()
       call wf%destruct_fock()
-      call wf%destruct_mo_fock_frozen()
       call wf%destruct_orbital_coefficients()
       call wf%destruct_orbital_energies()
       call wf%destruct_gs_density()

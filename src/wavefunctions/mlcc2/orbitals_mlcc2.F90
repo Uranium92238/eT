@@ -804,6 +804,8 @@ contains
       call transformation_o%close_('keep')
       call transformation_v%close_('keep')
 !
+      call wf%integrals%cleanup()
+!
    end subroutine construct_ccs_cnto_transformation_matrices_mlcc2
 !
 !
@@ -953,6 +955,8 @@ contains
       call transformation_o%write_(T_o, wf%n_o**2)
 !
       call transformation_o%close_('keep')
+!
+      call wf%integrals%cleanup()
 !
    end subroutine construct_ccs_nto_transformation_matrix_mlcc2
 !
@@ -1280,8 +1284,8 @@ contains
 !
       type(ccs), allocatable :: ccs_wf
 !
-      type(diis_cc_gs) :: cc_gs_solver_diis
-      type(davidson_cc_es) :: cc_es_solver_davidson
+      type(diis_cc_gs), allocatable :: cc_gs_solver_diis
+      type(davidson_cc_es), allocatable :: cc_es_solver_davidson
 !
       type(timings) :: timer, timer_gs, timer_es
 !
@@ -1333,7 +1337,6 @@ contains
 !     1. Integrals
 !
       wf%integrals = mo_integral_tool(ccs_wf%integrals)
-!
       call wf%integrals%initialize_storage(ccs_wf%integrals)
 !
 !     2. Excitation vectors
@@ -1378,7 +1381,8 @@ contains
 !
       call ccs_wf%cleanup() 
 !
-      if (.not. input%requested_keyword_in_section('print ccs calculation','mlcc')) call output%unmute()
+      if (.not. input%requested_keyword_in_section('print ccs calculation','mlcc')) &
+         call output%unmute()
 !
       call timer%turn_off()
 !

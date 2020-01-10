@@ -202,4 +202,19 @@ contains
    end subroutine destruct_cnto_states_mlcc2
 !
 !
+   module subroutine destruct_multipliers_mlcc2(wf)
+!!
+!!    Destruct multipliers states
+!!    Written by Sarai D. Folkestad, Jan 2020
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      call wf%destruct_t1bar()
+      call wf%destruct_t2bar()
+!
+   end subroutine destruct_multipliers_mlcc2
+!
+!
 end submodule initialize_desctruct_mlcc2
