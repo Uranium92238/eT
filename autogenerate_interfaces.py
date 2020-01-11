@@ -1,7 +1,7 @@
 #
 #
 #  eT - a coupled cluster program
-#  Copyright (C) 2016-2019 the authors of eT
+#  Copyright (C) 2016-2020 the authors of eT
 #
 #  eT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -96,7 +96,7 @@ for directory_name in wavefunction_all_submodules:
       interface_file.write('!\n'
                            '!\n'
                            '!  eT - a coupled cluster program\n'
-                           '!  Copyright (C) 2016-2019 the authors of eT\n'
+                           '!  Copyright (C) 2016-2020 the authors of eT\n'
                            '!\n'
                            '!  eT is free software: you can redistribute it '
                            'and/or modify\n'
