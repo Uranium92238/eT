@@ -45,7 +45,7 @@ module reference_engine_class
       character(len=200) :: algorithm 
 !
       logical :: restart
-      logical :: requested_expectation_value
+      logical :: requested_mean_value
 !
       logical :: plot_orbitals
       logical :: print_coeff
@@ -56,21 +56,21 @@ module reference_engine_class
 !
       procedure :: run                                 => run_reference_engine
       procedure :: read_settings                       => read_settings_reference_engine
-      procedure :: read_expectation_value_settings &
-                    => read_expectation_value_settings_reference_engine
+      procedure :: read_mean_value_settings &
+                    => read_mean_value_settings_reference_engine
 !
-      procedure :: calculate_expectation_values        => calculate_expectation_values_reference_engine
+      procedure :: calculate_mean_values               => calculate_mean_values_reference_engine
       procedure, nopass :: calculate_quadrupole_moment => calculate_quadrupole_moment_reference_engine
       procedure, nopass :: calculate_dipole_moment     => calculate_dipole_moment_reference_engine
 !
       procedure :: set_printables                      => set_printables_reference_engine
 !
-      procedure :: generate_sad_density               => generate_sad_density_reference_engine
+      procedure :: generate_sad_density                => generate_sad_density_reference_engine
 !
-      procedure :: do_visualization                   => do_visualization_reference_engine
-      procedure, nopass :: do_orbital_plotting        => do_orbital_plotting_reference_engine
+      procedure :: do_visualization                    => do_visualization_reference_engine
+      procedure, nopass :: do_orbital_plotting         => do_orbital_plotting_reference_engine
 !
-      procedure :: do_ground_state                    => do_ground_state_reference_engine
+      procedure :: do_ground_state                     => do_ground_state_reference_engine
 !
    end type reference_engine 
 !
@@ -166,7 +166,7 @@ contains
 !
 !     Calculate the zeroth order properties
 !
-      if(engine%requested_expectation_value) call engine%calculate_expectation_values(wf)
+      if(engine%requested_mean_value) call engine%calculate_mean_values(wf)
 !
    end subroutine run_reference_engine
 !
@@ -200,7 +200,7 @@ contains
          engine%plot_density = .true.
       end if
 !
-      call engine%read_expectation_value_settings()
+      call engine%read_mean_value_settings()
 !
    end subroutine read_settings_reference_engine
 !
@@ -552,7 +552,7 @@ contains
    end subroutine do_orbital_plotting_reference_engine
 !
 !
-   subroutine read_expectation_value_settings_reference_engine(engine)
+   subroutine read_mean_value_settings_reference_engine(engine)
 !!
 !!    Read ZOP settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -562,22 +562,22 @@ contains
 !
       class(reference_engine) :: engine
 !
-      engine%requested_expectation_value = input%requested_section('hf expectation value')
+      engine%requested_mean_value = input%requested_section('hf mean value')
 !
-      if (engine%requested_expectation_value) then 
+      if (engine%requested_mean_value) then 
 !
-         if (input%requested_keyword_in_section('dipole','hf expectation value')) &
+         if (input%requested_keyword_in_section('dipole','hf mean value')) &
              engine%dipole = .true.
 !
-         if (input%requested_keyword_in_section('quadrupole','hf expectation value')) &
+         if (input%requested_keyword_in_section('quadrupole','hf mean value')) &
              engine%quadrupole = .true.
 !
       endif
 !
-   end subroutine read_expectation_value_settings_reference_engine
+   end subroutine read_mean_value_settings_reference_engine
 !
 !
-   subroutine calculate_expectation_values_reference_engine(engine, wf)
+   subroutine calculate_mean_values_reference_engine(engine, wf)
 !!
 !!    Calculate expectation values
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -656,7 +656,7 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine calculate_expectation_values_reference_engine
+   end subroutine calculate_mean_values_reference_engine
 !
 !
    subroutine calculate_dipole_moment_reference_engine(wf, electronic, nuclear, total)

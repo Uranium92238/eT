@@ -27,9 +27,9 @@ active atoms
    hf: {1, 2, 3}
 end active atoms
 
-hf expectation value
+hf mean value
    quadrupole
-end hf expectation value
+end hf mean value
 
 geometry
 basis: aug-cc-pVDZ

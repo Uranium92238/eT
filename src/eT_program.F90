@@ -267,7 +267,7 @@ subroutine cc_calculation(system, ref_wf)
 !
    use gs_engine_class, only: gs_engine
    use es_engine_class, only: es_engine
-   use expectation_value_engine_class, only: expectation_value_engine 
+   use mean_value_engine_class, only: mean_value_engine 
    use fop_engine_class, only: fop_engine 
    use td_engine_class, only: td_engine
 !
@@ -332,9 +332,9 @@ subroutine cc_calculation(system, ref_wf)
 !
       cc_engine = es_engine(cc_wf)
 !
-   elseif (input%requested_keyword_in_section('expectation value', 'do')) then 
+   elseif (input%requested_keyword_in_section('mean value', 'do')) then 
 !
-      cc_engine = expectation_value_engine(cc_wf)
+      cc_engine = mean_value_engine(cc_wf)
 !
    elseif (input%requested_keyword_in_section('ground state', 'do')) then
 !

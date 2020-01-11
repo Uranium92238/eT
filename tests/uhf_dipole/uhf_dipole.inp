@@ -26,9 +26,9 @@ do
    ground state
 end do
 
-hf expectation value
+hf mean value
    dipole
-end hf expectation value
+end hf mean value
 
 geometry
 basis: cc-pVDZ

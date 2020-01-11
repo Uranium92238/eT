@@ -123,9 +123,9 @@ contains
       type(section) :: calculations
       type(section) :: system 
       type(section) :: memory 
-      type(section) :: cc_expectation_value 
+      type(section) :: cc_mean_value 
       type(section) :: cc_fop 
-      type(section) :: hf_expectation_value
+      type(section) :: hf_mean_value
       type(section) :: cc_td
       type(section) :: method 
       type(section) :: solver_cholesky
@@ -188,7 +188,7 @@ contains
       calculations%keywords = [character(len=30) :: 'ground state',         &
                                                     'ground state geoopt',  &
                                                     'excited state',        &
-                                                    'expectation value',    &
+                                                    'mean value',           &
                                                     'fop',                  &
                                                     'time dependent state', &
                                                     'cholesky eri']
@@ -206,16 +206,16 @@ contains
       memory%keywords = [character(len=30) :: 'available', &
                                               'unit']
 !
-      hf_expectation_value%name_    = 'hf expectation value'
-      hf_expectation_value%required = .false.
-      hf_expectation_value%keywords = [character(len=30) :: &
+      hf_mean_value%name_    = 'hf mean value'
+      hf_mean_value%required = .false.
+      hf_mean_value%keywords = [character(len=30) ::        &
                            'dipole               ',         &
                            'quadrupole           ']
 !
-      cc_expectation_value%name_    = 'cc expectation value'
-      cc_expectation_value%required = .false.
-      cc_expectation_value%keywords = [character(len=30) ::         &
-                           'dipole               ',   &
+      cc_mean_value%name_    = 'cc mean value'
+      cc_mean_value%required = .false.
+      cc_mean_value%keywords = [character(len=30) ::        &
+                           'dipole               ',         &
                            'quadrupole           ']
 !
       cc_fop%name_    = 'cc fop'
@@ -462,8 +462,8 @@ contains
                            system,                    &
                            memory,                    &
                            method,                    &
-                           hf_expectation_value,      &
-                           cc_expectation_value,      &
+                           hf_mean_value,      &
+                           cc_mean_value,      &
                            cc_fop,                    &
                            cc_td,                     &
                            solver_cholesky,           &
