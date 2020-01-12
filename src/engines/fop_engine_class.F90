@@ -700,7 +700,7 @@ contains
       call M_vectors_solver%run(wf, minus_FR, wf%n_singlet_states, -wf%right_excitation_energies, &
                            wf%n_singlet_states, engine%M_vectors, 'left')
 !
-      call M_vectors_solver%cleanup(wf)    
+      call M_vectors_solver%cleanup(wf)   
 !
       call mem%dealloc(minus_FR, wf%n_es_amplitudes, wf%n_singlet_states)
 !

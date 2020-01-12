@@ -180,6 +180,8 @@ contains
       call davidson%destruct_omega_re()
       call davidson%destruct_omega_im()
 !
+      if (davidson%do_precondition) call davidson%preconditioner%destruct_precondition_vector()
+!
    end subroutine destructor_eigen_davidson_tool
 !  
 !

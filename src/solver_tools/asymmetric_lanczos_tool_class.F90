@@ -85,8 +85,8 @@ use global_out, only: output
 !
    contains
 !
-      procedure :: read_p => read_p_asymmetric_lanczos_tool
-      procedure :: read_q => read_q_asymmetric_lanczos_tool
+      procedure :: read_p                    => read_p_asymmetric_lanczos_tool
+      procedure :: read_q                    => read_q_asymmetric_lanczos_tool
 !
       procedure :: calculate_alpha           => calculate_alpha_asymmetric_lanczos_tool
       procedure :: construct_s               => construct_s_asymmetric_lanczos_tool

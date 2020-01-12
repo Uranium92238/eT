@@ -287,9 +287,9 @@ contains
 !
       endif
 !
+      call cc_propagation_solver%initializations()
       call cc_propagation_solver%run(wf, field)
       call cc_propagation_solver%cleanup(wf, field)
-!
 !
       call field%cleanup()
 !

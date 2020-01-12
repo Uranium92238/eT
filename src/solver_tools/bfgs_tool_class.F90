@@ -65,6 +65,7 @@ module bfgs_tool_class
 !
       procedure, public :: get_step                => get_step_bfgs_tool
       procedure, public :: update_hessian          => update_hessian_bfgs_tool
+      procedure, public :: initialize_arrays       => initialize_arrays_bfgs_tool
 !
       final :: destructor_bfgs_tool
 !
@@ -90,13 +91,28 @@ contains
 !
       integer, intent(in)  :: n_parameters
       real(dp), intent(in) :: max_step
-!  
-      integer :: k 
 !
       bfgs%n_parameters = n_parameters
       bfgs%max_step     = max_step
 !
       bfgs%iteration    = 0
+!
+   end function new_bfgs_tool
+!
+!
+   subroutine initialize_arrays_bfgs_tool(bfgs)
+!!
+!!    Initialize arrays 
+!!    Written by Eirik F. Kjønstad, Jan 2020 
+!!
+!!    Allocates and initializes the previous g and x (gradient, parameters),
+!!    as well as the Hessian. 
+!!
+      implicit none 
+!
+      class(bfgs_tool) :: bfgs
+!
+      integer :: k 
 !
       call mem%alloc(bfgs%prev_g, bfgs%n_parameters)
       call mem%alloc(bfgs%prev_x, bfgs%n_parameters)
@@ -106,15 +122,17 @@ contains
 !
       call mem%alloc(bfgs%Hessian, bfgs%n_parameters, bfgs%n_parameters)
 !
-      bfgs%Hessian = zero 
+      call zero_array(bfgs%Hessian, bfgs%n_parameters**2)
 !
+!$omp parallel do private(k)
       do k = 1, bfgs%n_parameters
 !
          bfgs%Hessian(k,k) = one
 !
       enddo
+!$omp end parallel do 
 !
-   end function new_bfgs_tool
+   end subroutine initialize_arrays_bfgs_tool
 !
 !
    subroutine destructor_bfgs_tool(bfgs)

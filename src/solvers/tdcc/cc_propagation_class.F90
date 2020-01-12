@@ -103,6 +103,8 @@ module cc_propagation_class
       procedure :: open_files                      => open_files_cc_propagation
       procedure :: close_files                     => close_files_cc_propagation
 !
+      procedure :: initializations                 => initializations_cc_propagation
+!
 !     Single propagation step for the selected method
 !
       procedure(propagation_step), deferred :: step
@@ -327,6 +329,23 @@ contains
                          reals=[solver%tf], fs='(/t3,a)')
 !
    end subroutine run_cc_propagation
+!
+!
+   subroutine initializations_cc_propagation(solver)
+!!
+!!    Initializations   
+!!    Written by Eirik F. Kjønstad, Jan 2020 
+!!
+!!    Performs initializations needed for run (if any).
+!!
+      implicit none 
+!
+      class(cc_propagation), intent(inout) :: solver 
+!
+      call output%printf('v', 'No initializations for (a0)', &
+                           chars=[trim(solver%name_)], fs='(/t3,a)')
+!
+   end subroutine initializations_cc_propagation
 !
 !
    subroutine cleanup_cc_propagation(solver, wf, field)
