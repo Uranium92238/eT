@@ -149,7 +149,8 @@ module hf_class
                 => read_frozen_orbitals_settings_hf
 !
       procedure :: construct_ao_G                              => construct_ao_G_hf
-      procedure, private :: construct_ao_G_thread_terms        => construct_ao_G_thread_terms_hf
+      procedure :: construct_ao_G_thread_terms                 => construct_ao_G_thread_terms_hf
+      procedure :: construct_ao_G_thread_terms_mo_screened     => construct_ao_G_thread_terms_mo_screened_hf
       procedure :: construct_ao_G_1der                         => construct_ao_G_1der_hf
 !
       procedure :: construct_coulomb_ao_G                      => construct_coulomb_ao_G_hf

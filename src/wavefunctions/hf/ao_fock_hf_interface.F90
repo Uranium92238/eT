@@ -66,7 +66,7 @@
    end subroutine update_fock_and_energy_non_cumulative_hf
 !
 !
-   module subroutine construct_ao_G_hf(wf, D, G)
+   module subroutine construct_ao_G_hf(wf, D, G, C_screening)
 !!
 !!    Construct AO G(D)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -83,6 +83,7 @@
       class(hf)   :: wf
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: D
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: G
+      logical, optional, intent(in) :: C_screening
 !
    end subroutine construct_ao_G_hf
 !
@@ -119,6 +120,40 @@
       real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: sp_density_schwarz
 !
    end subroutine construct_ao_G_thread_terms_hf
+!
+!
+   module subroutine construct_ao_G_thread_terms_mo_screened_hf(wf, F, D, n_threads, max_D_schwarz,   &
+                                          max_eri_schwarz, sp_density_schwarz, n_sig_sp,  &
+                                          coulomb_thr, exchange_thr, precision_thr, shells)
+!!
+!!    Construct AO G MO screened
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    This routine constructs the entire two-electron part of the Fock matrix,
+!!
+!!       F_αβ =+ sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ (= G(D)_αβ),
+!!
+!!    where contributions from different threads are gathered column blocks
+!!    of the incoming F matrix.
+!!
+!!    Note: the contributions from each thread need to be added to a single
+!!    n_ao x n_ao matrix & symmetrized to get G(D)_αβ.
+!!
+!!    Routine partly based on Hartree-Fock implementation shipped with 
+!!    the Libint 2 integral package by E. Valeev. 
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+      integer, intent(in) :: n_threads, n_sig_sp
+      type(interval), dimension(wf%system%n_s), intent(in) :: shells
+      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
+      real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz 
+      real(dp), intent(in) :: coulomb_thr, exchange_thr, precision_thr
+      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: sp_density_schwarz
+!
+   end subroutine construct_ao_G_thread_terms_mo_screened_hf
 !
 !
    module subroutine construct_coulomb_ao_G_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
