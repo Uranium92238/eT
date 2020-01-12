@@ -278,7 +278,10 @@ contains
          call daxpy(wf%n_ao**2, -one, prev_ao_density, 1, wf%ao_density, 1)
 !
          call mem%alloc(G, wf%n_ao, wf%n_ao)
-         call wf%construct_ao_G(wf%ao_density, G)
+!
+         call wf%construct_ao_G(wf%ao_density,                    &
+                                G,                                &
+                                C_screening=(wf%name_ == 'mlhf'))
 !
          call daxpy(wf%n_ao**2, one, G, 1, wf%ao_fock, 1)
 !
@@ -293,7 +296,9 @@ contains
 !        Construct the two electron part of the Fock matrix (G),
 !        and add the contribution to the Fock matrix
 !
-         call wf%construct_ao_G(wf%ao_density, wf%ao_fock)
+         call wf%construct_ao_G(wf%ao_density,                    &
+                                wf%ao_fock,                       &
+                                C_screening=(wf%name_ == 'mlhf'))
 !
 !        Add the one-electron part
 !
