@@ -267,8 +267,8 @@ subroutine cc_calculation(system, ref_wf)
 !
    use gs_engine_class, only: gs_engine
    use es_engine_class, only: es_engine
+   use response_engine_class, only: response_engine 
    use mean_value_engine_class, only: mean_value_engine 
-   use fop_engine_class, only: fop_engine 
    use td_engine_class, only: td_engine
 !
    implicit none
@@ -324,9 +324,9 @@ subroutine cc_calculation(system, ref_wf)
 !
    end select
 !
-   if (input%requested_keyword_in_section('fop', 'do')) then
+   if (input%requested_keyword_in_section('response', 'do')) then
 !
-      cc_engine = fop_engine(cc_wf)
+      cc_engine = response_engine(cc_wf)
 !
    elseif (input%requested_keyword_in_section('excited state', 'do')) then
 !

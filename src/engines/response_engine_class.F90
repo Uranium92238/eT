@@ -17,9 +17,9 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module fop_engine_class
+module response_engine_class
 !!
-!!    First order coupled cluster engine class module
+!!    Response coupled cluster engine class module
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
 !!    and Josefine H. Andersen, Apr 2019
 !!
@@ -38,7 +38,7 @@ module fop_engine_class
 !
    use array_utilities, only: copy_and_scale
 !
-   type, extends(es_engine) :: fop_engine
+   type, extends(es_engine) :: response_engine
 !
 !     Run equation-of-motion or linear response?
 !
@@ -77,41 +77,41 @@ module fop_engine_class
 !
    contains
 !
-      procedure :: run                              => run_fop_engine
+      procedure :: run                              => run_response_engine
 !
-      procedure :: read_settings                    => read_settings_fop_engine
-      procedure :: read_fop_settings                => read_fop_settings_fop_engine
+      procedure :: read_settings                    => read_settings_response_engine
+      procedure :: read_response_settings                => read_response_settings_response_engine
 !
-      procedure, nopass :: get_thresholds           => get_thresholds_fop_engine
+      procedure, nopass :: get_thresholds           => get_thresholds_response_engine
 !
-      procedure :: print_transition_moment_summary  => print_transition_moment_summary_fop_engine
+      procedure :: print_transition_moment_summary  => print_transition_moment_summary_response_engine
 !
-      procedure :: set_printables                   => set_printables_fop_engine
+      procedure :: set_printables                   => set_printables_response_engine
 !
-      procedure :: do_eom_transition_moments        => do_eom_transition_moments_fop_engine
-      procedure :: do_lr_transition_moments         => do_lr_transition_moments_fop_engine
+      procedure :: do_eom_transition_moments        => do_eom_transition_moments_response_engine
+      procedure :: do_lr_transition_moments         => do_lr_transition_moments_response_engine
 !
-      procedure :: construct_etaX_and_csiX          => construct_etaX_and_csiX_fop_engine
-      procedure :: determine_M_vectors              => determine_M_vectors_fop_engine
-      procedure :: determine_amplitude_response     => determine_amplitude_response_fop_engine 
-      procedure :: calculate_polarizabilities       => calculate_polarizabilities_fop_engine
+      procedure :: construct_etaX_and_csiX          => construct_etaX_and_csiX_response_engine
+      procedure :: determine_M_vectors              => determine_M_vectors_response_engine
+      procedure :: determine_amplitude_response     => determine_amplitude_response_response_engine 
+      procedure :: calculate_polarizabilities       => calculate_polarizabilities_response_engine
 !
-   end type fop_engine
+   end type response_engine
 !
 !
-   interface fop_engine
+   interface response_engine
 !
-      procedure :: new_fop_engine 
+      procedure :: new_response_engine 
 !
-   end interface fop_engine
+   end interface response_engine
 !
 !
 contains
 !
 !
-   function new_fop_engine(wf) result(engine)
+   function new_response_engine(wf) result(engine)
 !!
-!!    New FOP engine
+!!    New response engine
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -119,7 +119,7 @@ contains
 !     Needed for defaults and sanity checks
       class(ccs), intent(in)       :: wf
 !
-      type(fop_engine) :: engine
+      type(response_engine) :: engine
 !
 !     Set standards and then read if nonstandard
 !
@@ -180,17 +180,17 @@ contains
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
 !
-   end function new_fop_engine
+   end function new_response_engine
 !
 !
-   subroutine run_fop_engine(engine, wf)
+   subroutine run_response_engine(engine, wf)
 !!
 !!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
       implicit none
 !
-      class(fop_engine) :: engine
+      class(response_engine) :: engine
       class(ccs)         :: wf
 !
       real(dp) :: energy_threshold, residual_threshold
@@ -199,9 +199,9 @@ contains
 !
       if (trim(wf%name_) == 'low memory cc2') then
 !
-         call output%printf('m', 'Requested first order properites (FOP) with lowmem-cc2.', &
+         call output%printf('m', 'Requested response calculation with lowmem-cc2.', &
                             fs='(/t3,a)')
-         call output%error_msg('FOP not implemented for low memory cc2.')
+         call output%error_msg('Response not implemented for low memory cc2.')
 !
       end if
 !
@@ -294,10 +294,10 @@ contains
          call mem%dealloc(engine%frequencies, engine%n_frequencies)
       end if
 !
-   end subroutine run_fop_engine
+   end subroutine run_response_engine
 !
 !
-   subroutine construct_etaX_and_csiX_fop_engine(engine, wf)
+   subroutine construct_etaX_and_csiX_response_engine(engine, wf)
 !!
 !!    Construct etaX and csiX 
 !!    Written by Eirik F. Kjønstad, Nov 2019
@@ -315,7 +315,7 @@ contains
 !!
       implicit none 
 !
-      class(fop_engine) :: engine 
+      class(response_engine) :: engine 
 !
       class(ccs), intent(in) :: wf 
 !
@@ -356,10 +356,10 @@ contains
 !
       call mem%dealloc(X, wf%n_mo, wf%n_mo, 3)
 !
-   end subroutine construct_etaX_and_csiX_fop_engine
+   end subroutine construct_etaX_and_csiX_response_engine
 !
 !
-   subroutine calculate_polarizabilities_fop_engine(engine, wf)
+   subroutine calculate_polarizabilities_response_engine(engine, wf)
 !!
 !!    Calculate polarizabilities 
 !!    Written by Josefine H. Andersen, spring 2019 
@@ -391,7 +391,7 @@ contains
 !!
       implicit none 
 !
-      class(fop_engine) :: engine 
+      class(response_engine) :: engine 
 !
       class(ccs) :: wf 
 !
@@ -517,10 +517,10 @@ contains
 !
       endif 
 !
-   end subroutine calculate_polarizabilities_fop_engine
+   end subroutine calculate_polarizabilities_response_engine
 !
 !
-   subroutine determine_amplitude_response_fop_engine(engine, wf)
+   subroutine determine_amplitude_response_response_engine(engine, wf)
 !!
 !!    Determine amplitude response
 !!    Written by Eirik F. Kjønstad and Josefine H. Andersen, 2019 
@@ -552,7 +552,7 @@ contains
 !!
       implicit none 
 !
-      class(fop_engine) :: engine 
+      class(response_engine) :: engine 
 !
       class(ccs) :: wf 
 !
@@ -624,10 +624,10 @@ contains
 !
       call mem%dealloc(rhs, wf%n_es_amplitudes)
 !
-   end subroutine determine_amplitude_response_fop_engine
+   end subroutine determine_amplitude_response_response_engine
 !
 !
-   subroutine determine_M_vectors_fop_engine(engine, wf)
+   subroutine determine_M_vectors_response_engine(engine, wf)
 !!
 !!    Determine M vectors 
 !!    Written by Eirik F. Kjønstad and Josefine H. Andersen, 2019 
@@ -652,7 +652,7 @@ contains
 !!
       implicit none 
 !
-      class(fop_engine) :: engine 
+      class(response_engine) :: engine 
 !
       class(ccs) :: wf 
 !
@@ -704,61 +704,61 @@ contains
 !
       call mem%dealloc(minus_FR, wf%n_es_amplitudes, wf%n_singlet_states)
 !
-   end subroutine determine_M_vectors_fop_engine
+   end subroutine determine_M_vectors_response_engine
 !
 !
-   subroutine read_settings_fop_engine(engine)
+   subroutine read_settings_response_engine(engine)
 !!
 !!    Read settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
       implicit none
 !
-      class(fop_engine) :: engine
+      class(response_engine) :: engine
 !
       call engine%read_gs_settings()
       call engine%read_es_settings()
-      call engine%read_fop_settings()
+      call engine%read_response_settings()
 !
-   end subroutine read_settings_fop_engine
+   end subroutine read_settings_response_engine
 !
 !
-   subroutine read_fop_settings_fop_engine(engine)
+   subroutine read_response_settings_response_engine(engine)
 !!
-!!    Read FOP settings
+!!    Read response settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
       implicit none
 !
-      class(fop_engine) :: engine
+      class(response_engine) :: engine
 !
       integer :: n_polarizabilities, k, l
       integer, dimension(:), allocatable :: polarizabilities
 !
-      if (input%requested_keyword_in_section('eom','cc fop')) then 
+      if (input%requested_keyword_in_section('eom','cc response')) then 
 !
          engine%eom = .true.
 !
       endif 
 !
-      if (input%requested_keyword_in_section('lr','cc fop')) then 
+      if (input%requested_keyword_in_section('lr','cc response')) then 
 !
          engine%lr = .true.
 !
       endif 
 !
-      if (input%requested_keyword_in_section('transition moments','cc fop')) then 
+      if (input%requested_keyword_in_section('transition moments','cc response')) then 
 !
          engine%transition_moments = .true.
 !
       endif 
 !
-      if (input%requested_keyword_in_section('polarizabilities','cc fop')) then 
+      if (input%requested_keyword_in_section('polarizabilities','cc response')) then 
 !
          engine%polarizabilities = .true.
 !
          n_polarizabilities = input%get_n_elements_for_keyword_in_section('polarizabilities', &
-                                                                           'cc fop')
+                                                                           'cc response')
 !
          if (n_polarizabilities == 0) then 
 !
@@ -774,7 +774,7 @@ contains
 !
             call mem%alloc(polarizabilities, n_polarizabilities)
 !
-            call input%get_array_for_keyword_in_section('polarizabilities', 'cc fop', &
+            call input%get_array_for_keyword_in_section('polarizabilities', 'cc response', &
                                                          n_polarizabilities, polarizabilities)
 !
             do k = 1, n_polarizabilities
@@ -833,13 +833,13 @@ contains
 !
 !        Read in for which frequencies to compute the polarizability
 !
-         if (input%requested_keyword_in_section('frequencies', 'cc fop')) then 
+         if (input%requested_keyword_in_section('frequencies', 'cc response')) then 
 !
-            engine%n_frequencies = input%get_n_elements_for_keyword_in_section('frequencies', 'cc fop')
+            engine%n_frequencies = input%get_n_elements_for_keyword_in_section('frequencies', 'cc response')
 !  
             call mem%alloc(engine%frequencies, engine%n_frequencies)
 !
-            call input%get_array_for_keyword_in_section('frequencies', 'cc fop', &
+            call input%get_array_for_keyword_in_section('frequencies', 'cc response', &
                                                    engine%n_frequencies, engine%frequencies) 
 !
          else 
@@ -852,22 +852,25 @@ contains
 !
 !     Set operator
 !
-      engine%dipole_length = input%requested_keyword_in_section('dipole length','cc fop')
+      engine%dipole_length = input%requested_keyword_in_section('dipole length','cc response')
 !
 !     Sanity checks
 !
-      if (engine%eom .and. engine%lr) call output%error_msg('can not run lr and eom in same calculation.')
-      if (.not. engine%eom .and. .not. engine%lr) call output%error_msg('specify either eom or lr for fop.')
+      if (engine%eom .and. engine%lr) &
+         call output%error_msg('can not run lr and eom in same calculation.')
+   !
+      if (.not. engine%eom .and. .not. engine%lr) &
+         call output%error_msg('specify either eom or lr for response.')
 !
 !     Since dipole is the only operator we currently have, we will check that it is indeed true
 !
       if (.not. engine%dipole_length) &
-            call output%error_msg('no operator selected in fop calculation')
+            call output%error_msg('no operator selected in response calculation')
 !
-   end subroutine read_fop_settings_fop_engine
+   end subroutine read_response_settings_response_engine
 !
 !
-   subroutine do_lr_transition_moments_fop_engine(engine, wf, skip_states)
+   subroutine do_lr_transition_moments_response_engine(engine, wf, skip_states)
 !!
 !!    Do LR transition moments 
 !!    Written by Eirik F. Kjønstad, Nov 2019
@@ -891,7 +894,7 @@ contains
 !!
       implicit none
 !
-      class(fop_engine) :: engine
+      class(response_engine) :: engine
       class(ccs)        :: wf
 !
       logical, dimension(wf%n_singlet_states), intent(in) :: skip_states
@@ -952,10 +955,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine do_lr_transition_moments_fop_engine
+   end subroutine do_lr_transition_moments_response_engine
 !
 !
-   subroutine do_eom_transition_moments_fop_engine(engine, wf, skip_states)
+   subroutine do_eom_transition_moments_response_engine(engine, wf, skip_states)
 !!
 !!    Do EOM transition moments 
 !!    Written by Josefine H. Andersen, Sarai D. Folkestad 
@@ -966,7 +969,7 @@ contains
 !!
       implicit none
 !
-      class(fop_engine) :: engine
+      class(response_engine) :: engine
       class(ccs)        :: wf
 !
       logical, dimension(wf%n_singlet_states), intent(in) :: skip_states
@@ -996,7 +999,7 @@ contains
       call wf%construct_gs_density()
       call wf%initialize_transition_densities()
 !
-      call output%printf('m', ':: EOM first order properties calculation', fs='(/t3,a)')
+      call output%printf('m', ':: EOM properties calculation', fs='(/t3,a)')
 !
       if (engine%dipole_length) then
 !
@@ -1009,7 +1012,7 @@ contains
 !        Loop over excited states, construct transition density
 !        and calculate transition strength
 !
-         call output%printf('m', '- Summary of EOM first order properties calculation:', &
+         call output%printf('m', '- Summary of EOM properties calculation:', &
                             fs='(/t3,a)')
 !
          do state = 1, wf%n_singlet_states
@@ -1090,10 +1093,10 @@ contains
 !
       call EOM_timer%turn_off()
 !
-   end subroutine do_eom_transition_moments_fop_engine
+   end subroutine do_eom_transition_moments_response_engine
 !
 !
-   subroutine get_thresholds_fop_engine(energy_threshold, residual_threshold)
+   subroutine get_thresholds_response_engine(energy_threshold, residual_threshold)
 !!
 !!    Get thresholds from input
 !!    Written by Alexander C. Paul, Oct 2019
@@ -1130,10 +1133,10 @@ contains
 !
       endif
 !
-   end subroutine get_thresholds_fop_engine
+   end subroutine get_thresholds_response_engine
 !
 !
-   subroutine print_transition_moment_summary_fop_engine(engine, transition_strength, &
+   subroutine print_transition_moment_summary_response_engine(engine, transition_strength, &
                   transition_moment_left, transition_moment_right, state, excitation_energy)
 !!
 !!    Print transition moment summary
@@ -1143,7 +1146,7 @@ contains
 !!
       implicit none
 !
-      class(fop_engine) :: engine 
+      class(response_engine) :: engine 
 !
       real(dp), dimension(3), intent(in) :: transition_strength
       real(dp), dimension(3), intent(in) :: transition_moment_left 
@@ -1200,10 +1203,10 @@ contains
       call output%printf('m', 'Oscillator strength [a.u.]: (f19.12)', &
                          reals=[(two/three)*excitation_energy*sum_strength], fs='(t6,a)')
 !
-   end subroutine print_transition_moment_summary_fop_engine
+   end subroutine print_transition_moment_summary_response_engine
 !
 !
-   subroutine set_printables_fop_engine(engine)
+   subroutine set_printables_response_engine(engine)
 !!
 !!    Set printables
 !!    Written by sarai D. Folkestad, May 2019
@@ -1213,21 +1216,21 @@ contains
 !
       implicit none
 !
-      class(fop_engine) :: engine
+      class(response_engine) :: engine
 !
-      character(len=5) :: fop_type
+      character(len=5) :: response_type
 !
-      engine%name_       = 'First order coupled cluster properties engine'
+      engine%name_       = 'Coupled cluster response engine'
 !
-      engine%tag = 'first order properties'
+      engine%tag = 'response'
 !
       if (engine%eom) then
 !
-         fop_type = 'EOM'
+         response_type = 'EOM'
 !
       else
 !
-         fop_type = 'LR'
+         response_type = 'LR'
 !
       endif
 !
@@ -1255,21 +1258,21 @@ contains
 !
          call engine%tasks%add(label='transition moments',                       &
                            description='Calculation of the transition moments (' &
-                           //trim(fop_type)//')')
+                           //trim(response_type)//')')
 !
       endif
 !
       if (engine%polarizabilities) then
 !
          call engine%tasks%add(label='polarizabilities',                         &
-                           description='Calculation of the '//trim(fop_type)//' polarizabilities')
+                           description='Calculation of the '//trim(response_type)//' polarizabilities')
 !
       endif
 !
       engine%description = 'Calculates dipole transition moments and oscillator strengths between &
                            &the ground state and the excited states.'
 !
-   end subroutine set_printables_fop_engine
+   end subroutine set_printables_response_engine
 !
 !
-end module fop_engine_class
+end module response_engine_class
