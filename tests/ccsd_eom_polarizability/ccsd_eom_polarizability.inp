@@ -5,7 +5,7 @@ system
 end system
 
 do
-  fop
+  response
 end do
 
 method
@@ -21,12 +21,12 @@ solver cholesky
   threshold: 1.0d-11
 end solver cholesky
 
-cc fop
+cc response
   eom
   polarizabilities: {11,13}
   frequencies: {0.02d0, 0.04d0, 0.06d0}
   dipole length
-end cc fop
+end cc response
 
 solver cc multipliers
   threshold: 1.0d-11

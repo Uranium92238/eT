@@ -124,7 +124,7 @@ contains
       type(section) :: system 
       type(section) :: memory 
       type(section) :: cc_mean_value 
-      type(section) :: cc_fop 
+      type(section) :: cc_response
       type(section) :: hf_mean_value
       type(section) :: cc_td
       type(section) :: method 
@@ -188,8 +188,8 @@ contains
       calculations%keywords = [character(len=30) :: 'ground state',         &
                                                     'ground state geoopt',  &
                                                     'excited state',        &
+                                                    'response',             &
                                                     'mean value',           &
-                                                    'fop',                  &
                                                     'time dependent state', &
                                                     'cholesky eri']
 !
@@ -218,9 +218,9 @@ contains
                            'dipole               ',         &
                            'quadrupole           ']
 !
-      cc_fop%name_    = 'cc fop'
-      cc_fop%required = .false.
-      cc_fop%keywords = [character(len=30) ::         &
+      cc_response%name_    = 'cc response'
+      cc_response%required = .false.
+      cc_response%keywords = [character(len=30) ::    &
                            'transition moments   ',   &
                            'frequencies          ',   &
                            'polarizabilities     ',   &
@@ -462,9 +462,9 @@ contains
                            system,                    &
                            memory,                    &
                            method,                    &
-                           hf_mean_value,      &
-                           cc_mean_value,      &
-                           cc_fop,                    &
+                           hf_mean_value,             &
+                           cc_mean_value,             &
+                           cc_response,               &
                            cc_td,                     &
                            solver_cholesky,           &
                            solver_scf,                &

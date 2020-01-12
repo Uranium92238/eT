@@ -26,7 +26,7 @@ set(eT_fortran_sources
    src/engines/gs_engine_class.F90
    src/engines/es_engine_class.F90
    src/engines/mean_value_engine_class.F90
-   src/engines/fop_engine_class.F90
+   src/engines/response_engine_class.F90
    src/engines/td_engine_class.F90
 #
    src/integrals/mo_integral_tool_class.F90
