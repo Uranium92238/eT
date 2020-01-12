@@ -442,7 +442,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(orbitals_copy, wf%n_ao, (wf%n_o + wf%n_frozen_hf_o))
+      call mem%dealloc(orbitals_copy, wf%n_ao, wf%n_mo)
       call mem%dealloc(PAO_coeff, wf%n_ao, n_active_aos)
 !
       call wf%destruct_orbital_energies()
