@@ -239,7 +239,7 @@ contains
 !
       davidson%F(1:n_parameters, 1:n_rhs) => F
 !
-      call mem%alloc(davidson%frequencies, davidson%n_solutions)
+      allocate(davidson%frequencies(davidson%n_solutions))
 !
       davidson%frequencies = frequencies
 !
@@ -605,6 +605,8 @@ contains
       end if
 !
       davidson%F => null()
+!
+      if (davidson%do_precondition) call davidson%preconditioner%destruct_precondition_vector()
 !
    end subroutine destructor_linear_davidson_tool
 !

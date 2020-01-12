@@ -281,7 +281,7 @@ contains
          call output%printf('m', 'Difference:               (a0)', &
                             chars=[trim(difference_string)], fs='(t6,a)')
 !
-         call output%warning_msg('Deallocations may be missing or specified with &
+         call output%error_msg('Deallocations are missing or specified with &
                                  &incorrect dimensionalities.')
 !
       endif 

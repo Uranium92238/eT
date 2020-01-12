@@ -106,8 +106,8 @@ contains
       call solver%read_settings()
       call solver%print_settings()
 !
-      call mem%alloc(solver%energies, solver%max_iterations)
-      call mem%alloc(solver%gradient_maxs, solver%max_iterations)
+      allocate(solver%energies(solver%max_iterations))
+      allocate(solver%gradient_maxs(solver%max_iterations))
 !
    end function new_bfgs_geoopt_hf
 !
@@ -245,6 +245,7 @@ contains
       type(timings), allocatable :: iteration_timer  
 !
       bfgs = bfgs_tool(3*wf%system%n_atoms, solver%max_step)
+      call bfgs%initialize_arrays()
 !
       iteration_timer = timings('BFGS geoopt iteration time', pl='normal')
 !
@@ -382,9 +383,6 @@ contains
       class(bfgs_geoopt_hf) :: solver 
 !
       call output%printf('m', '- Finished optimizing the HF geometry', fs='(/t3, a)')
-!
-      call mem%dealloc(solver%energies, solver%max_iterations)
-      call mem%dealloc(solver%gradient_maxs, solver%max_iterations)
 !
       call solver%timer%turn_off()
 !

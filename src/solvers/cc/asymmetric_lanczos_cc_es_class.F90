@@ -677,6 +677,8 @@ contains
 !
       call solver%destruct_energies()
 !
+      call solver%projector%destruct_projection_vector()
+!
       call solver%timer%turn_off()
 !
       call output%printf('m', '- Finished solving the ' //  &

@@ -158,8 +158,6 @@ contains
 !
       call wf%construct_fock()
 !
-      call wf%initialize_multipliers()
-!
 !     Determine whether to store records in memory or on file
 !
       if (trim(solver%storage) == 'memory') then 
@@ -241,6 +239,7 @@ contains
 !
       integer :: iteration
 !
+      call wf%initialize_multipliers()
       call wf%prepare_for_multiplier_equation()
 !
       diis = diis_tool('cc_multipliers_diis',             &
@@ -350,6 +349,7 @@ contains
       class(diis_cc_multipliers) :: solver
       class(ccs) :: wf
 !
+      call solver%preconditioner%destruct_precondition_vector()
       call wf%save_multipliers()
 !
       call solver%timer%turn_off()

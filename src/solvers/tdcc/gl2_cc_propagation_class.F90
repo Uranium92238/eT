@@ -53,6 +53,8 @@ module gl2_cc_propagation_class
 !
       procedure :: step => gl2_step
 !
+      procedure :: initializations => initializations_gl2_cc_propagation
+!
       final :: destructor_gl2_cc_propagation
 !
    end type gl2_cc_propagation
@@ -83,11 +85,26 @@ contains
 !
       call solver%new_cc_propagation(wf)
 !
-      call mem%alloc(solver%z1_guess, solver%vector_length)
-!
-      solver%z1_guess = zero_complex
-!
    end function new_gl2_cc_propagation
+!
+!
+   subroutine initializations_gl2_cc_propagation(solver)
+!!
+!!    Initializations 
+!!    Written by Andreas Skedsvoll, Sep 2019
+!!
+!!    Allocates z1 guess and sets it to zero.
+!!
+!!    Moved from constructor, Eirik F. Kjønstad, Jan 2020.
+!!
+      implicit none 
+!
+      class(gl2_cc_propagation), intent(inout) :: solver 
+!
+      call mem%alloc(solver%z1_guess, solver%vector_length)
+      solver%z1_guess = zero_complex      
+!
+   end subroutine initializations_gl2_cc_propagation
 !
 !
    subroutine destructor_gl2_cc_propagation(solver)
@@ -101,7 +118,7 @@ contains
 !
       type(gl2_cc_propagation), intent(inout) :: solver
 !
-      call mem%dealloc(solver%z1_guess, solver%vector_length)
+      if (allocated(solver%z1_guess)) call mem%dealloc(solver%z1_guess, solver%vector_length)
 !
    end subroutine destructor_gl2_cc_propagation
 !
