@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module expectation_value_engine_class
+module mean_value_engine_class
 !!
 !!    Expectation value coupled cluster engine class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -35,38 +35,33 @@ module expectation_value_engine_class
 !
    use task_list_class, only: task_list
 !
-   type, extends(gs_engine) :: expectation_value_engine
+   type, extends(gs_engine) :: mean_value_engine
 !
    contains
 !
-      procedure :: run                                      &
-                => run_expectation_value_engine
+      procedure :: run => run_mean_value_engine
 !
-      procedure :: read_settings                            &
-                => read_settings_expectation_value_engine
+      procedure :: read_settings => read_settings_mean_value_engine
 !
-      procedure :: read_cc_expectation_value_settings       &
-                => read_cc_expectation_value_settings_expectation_value_engine
+      procedure :: read_cc_mean_value_settings  => read_cc_mean_value_settings_mean_value_engine
 !
-      procedure :: calculate_expectation_values &
-                => calculate_expectation_values_expectation_value_engine
+      procedure :: calculate_mean_values  => calculate_mean_values_mean_value_engine
 !
-      procedure :: set_printables               &
-                => set_printables_expectation_value_engine
+      procedure :: set_printables  => set_printables_mean_value_engine
 !
-   end type expectation_value_engine
+   end type mean_value_engine
 !
 !
-   interface expectation_value_engine
+   interface mean_value_engine
 !
-      procedure :: new_expectation_value_engine
+      procedure :: new_mean_value_engine
 !
-   end interface expectation_value_engine
+   end interface mean_value_engine
 !
 !
 contains
 !
-   function new_expectation_value_engine(wf) result(engine)
+   function new_mean_value_engine(wf) result(engine)
 !!
 !!    New expectation value engine
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -76,7 +71,7 @@ contains
 !     Needed for defaults and sanity checks
       class(ccs), intent(in) :: wf
 !
-      type(expectation_value_engine) :: engine
+      type(mean_value_engine) :: engine
 !
       if (wf%name_ .eq. 'ccsd(t)' .or. &
           wf%name_ .eq. 'low memory cc2' .or. &
@@ -88,7 +83,7 @@ contains
 !
       end if
 !
-      engine%gs_algorithm           = 'diis'
+      engine%gs_algorithm = 'diis'
 !
       if (wf%name_ .eq. 'cc2' .or. &
           wf%name_ .eq. 'low memory cc2' .or. &
@@ -119,40 +114,40 @@ contains
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
 !
-   end function new_expectation_value_engine
+   end function new_mean_value_engine
 !
 !
-   subroutine read_settings_expectation_value_engine(engine)
+   subroutine read_settings_mean_value_engine(engine)
 !!
 !!    Read settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
       implicit none
 !
-      class(expectation_value_engine) :: engine
+      class(mean_value_engine) :: engine
 !
       call engine%read_gs_settings()
-      call engine%read_cc_expectation_value_settings()
+      call engine%read_cc_mean_value_settings()
 !
-   end subroutine read_settings_expectation_value_engine
+   end subroutine read_settings_mean_value_engine
 !
 !
-   subroutine read_cc_expectation_value_settings_expectation_value_engine(engine)
+   subroutine read_cc_mean_value_settings_mean_value_engine(engine)
 !!
 !!    Read expectation value settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
       implicit none
 !
-      class(expectation_value_engine) :: engine
+      class(mean_value_engine) :: engine
 !
-      if (input%requested_keyword_in_section('dipole','cc expectation value')) engine%dipole = .true.
-      if (input%requested_keyword_in_section('quadrupole','cc expectation value')) engine%quadrupole = .true.
+      if (input%requested_keyword_in_section('dipole','cc mean value')) engine%dipole = .true.
+      if (input%requested_keyword_in_section('quadrupole','cc mean value')) engine%quadrupole = .true.
 !
-   end subroutine read_cc_expectation_value_settings_expectation_value_engine
+   end subroutine read_cc_mean_value_settings_mean_value_engine
 !
 !
-   subroutine run_expectation_value_engine(engine, wf)
+   subroutine run_mean_value_engine(engine, wf)
 !!
 !!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -160,7 +155,7 @@ contains
       implicit none
 !
       class(ccs)         :: wf
-      class(expectation_value_engine)  :: engine
+      class(mean_value_engine)  :: engine
 !
       call engine%tasks%print_('mo preparations')
 !
@@ -182,7 +177,7 @@ contains
       call wf%initialize_gs_density()
       call wf%construct_gs_density()
 !
-      call engine%calculate_expectation_values(wf)
+      call engine%calculate_mean_values(wf)
 !
       if (engine%plot_density) then
 !
@@ -192,10 +187,10 @@ contains
 !
       call wf%destruct_gs_density()
 !
-   end subroutine run_expectation_value_engine
+   end subroutine run_mean_value_engine
 !
 !
-   subroutine set_printables_expectation_value_engine(engine)
+   subroutine set_printables_mean_value_engine(engine)
 !!
 !!    Set printables
 !!    Written by sarai D. Folkestad, May 2019
@@ -204,7 +199,7 @@ contains
 !
       implicit none
 !
-      class(expectation_value_engine) :: engine
+      class(mean_value_engine) :: engine
 !
       engine%name_ = 'Zeroth order coupled cluster properties engine'
 !
@@ -236,17 +231,17 @@ contains
       engine%description  = 'Calculates the time-independent expectation value of&
                             & one-electron operators A, < A > = < Λ | A | CC >.'
 !
-   end subroutine set_printables_expectation_value_engine
+   end subroutine set_printables_mean_value_engine
 !
 !
-   subroutine calculate_expectation_values_expectation_value_engine(engine, wf)
+   subroutine calculate_mean_values_mean_value_engine(engine, wf)
 !!
 !!    Calculate expectation values
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
       implicit none
 !
-      class(expectation_value_engine), intent(in) :: engine
+      class(mean_value_engine), intent(in) :: engine
 !
       class(ccs), intent(in) :: wf
 !
@@ -311,7 +306,7 @@ contains
 !
       endif
 !
-   end subroutine calculate_expectation_values_expectation_value_engine
+   end subroutine calculate_mean_values_mean_value_engine
 !
 !
-end module expectation_value_engine_class
+end module mean_value_engine_class

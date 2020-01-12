@@ -25,7 +25,7 @@ set(eT_fortran_sources
    src/engines/hf_geoopt_engine_class.F90
    src/engines/gs_engine_class.F90
    src/engines/es_engine_class.F90
-   src/engines/expectation_value_engine_class.F90
+   src/engines/mean_value_engine_class.F90
    src/engines/fop_engine_class.F90
    src/engines/td_engine_class.F90
 #

@@ -8,12 +8,12 @@ end print
 
 do
   ground state
-  expectation value
+  mean value
 end do
 
-cc expectation value
+cc mean value
    quadrupole
-end cc expectation value
+end cc mean value
 
 memory
    available: 8
