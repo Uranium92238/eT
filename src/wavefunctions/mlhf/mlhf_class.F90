@@ -125,12 +125,13 @@ module mlhf_class
       procedure :: update_fock_and_energy                   => update_fock_and_energy_mlhf
       procedure :: update_fock_and_energy_mo                => update_fock_and_energy_mlhf
 !
+      procedure :: prepare_for_cc                           => prepare_for_cc_mlhf
       procedure :: prepare_frozen_fock_terms                => prepare_frozen_fock_terms_mlhf
       procedure :: diagonalize_fock_frozen_hf_orbitals      => diagonalize_fock_frozen_hf_orbitals_mlhf
       procedure :: get_n_active_hf_atoms                    => get_n_active_hf_atoms_mlhf
       procedure :: prepare_mos                              => prepare_mos_mlhf
 !
-      procedure :: construct_full_occupied_density          => construct_full_occupied_density_mlhf
+      procedure :: get_full_idempotent_density              => get_full_idempotent_density_mlhf
 !
    end type mlhf
 !
@@ -969,7 +970,7 @@ contains
                   D,       &
                   wf%n_ao)
 !
-!     Add AO density
+!     Add AO density (occupied orbitals)
 !
       call daxpy(wf%n_ao**2, one, wf%ao_density, 1, D, 1)
 !
@@ -1161,6 +1162,8 @@ contains
       call wf%destruct_mo_fock_frozen()
       call wf%destruct_orbital_coefficients_fc()
       call wf%destruct_orbital_coefficients_frozen_hf()
+!
+      call wf%destruct_frozen_CCT()
 !
       call wf%destruct_frozen_CCT()
 !
@@ -1618,8 +1621,6 @@ contains
       real(dp), dimension(:,:), allocatable :: mo_frozen_hf_fock
       real(dp), dimension(:,:), allocatable :: mo_frozen_mlhf_fock
 !
-      wf%exists_frozen_fock_terms = .true.
-!
       call wf%initialize_mo_fock_frozen()
       call zero_array(wf%mo_fock_frozen, wf%n_mo**2)
 !
@@ -1851,9 +1852,9 @@ contains
    end subroutine prepare_mos_mlhf
 !
 !
-   subroutine construct_full_occupied_density_mlhf(wf, D)
+   subroutine get_full_idempotent_density_mlhf(wf, D)
 !!
-!!    Construct full occcupied density
+!!    Get full idempotent density
 !!    Written by Sarai D. Folkestad, Jan 2020
 !!
 !!    Constructs the full occupied density
@@ -1865,11 +1866,40 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: D
 !
-      call wf%hf%construct_full_occupied_density(D)
+      call wf%hf%get_full_idempotent_density(D)
 !
       call daxpy(wf%n_ao**2, one, wf%frozen_CCT, 1, D, 1)
 !
-   end subroutine construct_full_occupied_density_mlhf
+   end subroutine get_full_idempotent_density_mlhf
+!
+!
+   subroutine prepare_for_cc_mlhf(wf)
+!!
+!!    Prepare for CC
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Prepares frozen fock terms, 
+!!    and places energy in hf_energy
+!!
+      implicit none
+!
+      class(mlhf) :: wf
+!
+      wf%hf_energy = wf%energy
+!
+      wf%exists_frozen_fock_terms = .true. ! Always true for MLHF
+!
+!     Change the MOs if frozen core or frozen hf 
+!     is requested
+!
+      call wf%prepare_mos()
+!
+!     Prepare frozen Fock terms from frozen core 
+!     and frozen HF
+!
+      call wf%prepare_frozen_fock_terms()
+!
+   end subroutine prepare_for_cc_mlhf
 !
 !
 end module mlhf_class

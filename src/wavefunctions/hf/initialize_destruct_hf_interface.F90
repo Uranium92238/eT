@@ -389,7 +389,7 @@
    module subroutine initialize_frozen_CCT_hf(wf)
 !!
 !!    Initialize frozen CC^T 
-!!    Written bySarai D. Folkestad, Jan 2020
+!!    Written by Sarai D. Folkestad, Jan 2020
 !!
 !!
       implicit none
@@ -402,7 +402,7 @@
    module subroutine destruct_frozen_CCT_hf(wf)
 !!
 !!    Destruct frozen CC^T  
-!!    Written bySarai D. Folkestad, Jan 2020
+!!    Written by Sarai D. Folkestad, Jan 2020
 !!
 !!
       implicit none

@@ -178,6 +178,8 @@ add_eT_runtest(restart_cc3_from_ccsd                        "eT;short;cc3;es;eom
 add_eT_runtest(mlcc2_cnto_full_right_es                     "eT;short;mlcc2;cnto")
 add_eT_runtest(mlcc2_pao_full_right_es                      "eT;short;mlcc2;pao")
 add_eT_runtest(mlcc2_pao_right_es                           "eT;short;mlcc2;pao")
+add_eT_runtest(mlcc2_pao_right_es_fc                        "eT;short;mlcc2;pao;fc")
+add_eT_runtest(mlcc2_pao_right_es_frozen_hf                 "eT;short;mlcc2;pao;frozen-hf")
 add_eT_runtest(mlcc2_pao_left_es                            "eT;short;mlcc2;pao")
 add_eT_runtest(mlcc2_nto_full_right_es                      "eT;short;mlcc2;nto")
 add_eT_runtest(mlcc2_nto_right_es                           "eT;short;mlcc2;nto")
