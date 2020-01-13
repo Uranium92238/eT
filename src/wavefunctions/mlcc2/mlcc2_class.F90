@@ -615,8 +615,6 @@ contains
 !
       class(mlcc2) :: wf
 !
-      call wf%check_orthonormality_of_MOs()
-!
       if (wf%n_cc2_o .eq. 0) &
                call output%error_msg('no occupied cc2 orbitals in mlcc2 calculation.')
 !
@@ -636,6 +634,8 @@ contains
 !
       if (wf%n_cc2_v + wf%n_ccs_v .ne. wf%n_v) &
             call output%error_msg('virtual spaces do not add to n_v.')
+!
+      call wf%check_orthonormality_of_MOs()
 !
    end subroutine check_orbital_space_mlcc2
 !
@@ -1110,8 +1110,8 @@ contains
 !
       call wf%construct_and_save_mo_cholesky(wf%n_mo, wf%orbital_coefficients)
 !
-      call wf%check_orbital_space()
       call wf%print_orbital_space()
+      call wf%check_orbital_space()
 !
    end subroutine mo_preparations_mlcc2
 !
@@ -1139,6 +1139,7 @@ contains
 !
       call wf%destruct_fock()
       call wf%destruct_mo_fock_frozen()
+      call wf%destruct_frozen_CCT()
 !
       call wf%integrals%cleanup()
 !

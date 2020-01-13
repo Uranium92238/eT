@@ -55,10 +55,6 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: ao_fock
       real(dp), dimension(:,:), allocatable :: mo_fock
 !
-      real(dp), dimension(:,:), allocatable :: frozen_CCT   ! Matrix CC^T where the contraction is 
-                                                            ! over frozen orbitals. Needed if 
-                                                            ! PAO construction follows (e.g in mlcc)
-!
       real(dp) :: coulomb_threshold  = 1.0D-12   ! Screening threshold (Fock, Coulomb)
       real(dp) :: exchange_threshold = 1.0D-10   ! Screening threshold (Fock, exchange)
       real(dp) :: libint_epsilon     = 1.0D-20   ! Libint electron repulsion integral 
@@ -259,7 +255,7 @@ module hf_class
       procedure :: remove_core_orbitals                        => remove_core_orbitals_hf
       procedure :: remove_frozen_hf_orbitals                   => remove_frozen_hf_orbitals_hf
 !
-      procedure :: construct_full_occupied_density             => construct_full_occupied_density_hf
+      procedure :: get_full_idempotent_density                 => get_full_idempotent_density_hf
 !
       procedure :: construct_mo_fock_fc_term                   => construct_mo_fock_fc_term_hf
       procedure :: construct_mo_fock_frozen_hf_term            => construct_mo_fock_frozen_hf_term_hf
@@ -821,6 +817,27 @@ contains
 !
       class(hf) :: wf
 !
+      wf%hf_energy = wf%energy
+!
+!     Check if there are frozen Fock contributions, if not
+!     return
+!
+      if ((.not. wf%frozen_core) .and. &
+          (.not. wf%frozen_hf_MOs) .and. &
+          (.not. wf%system%pcm_calculation) .and. &  
+          (.not. wf%system%mm_calculation)) then
+!
+         call output%printf('v', 'No frozen fock contributions!', fs='(/t3,a)')
+         wf%exists_frozen_fock_terms = .false.
+         return
+!
+      endif
+!
+      wf%exists_frozen_fock_terms = .true.
+!
+      call wf%initialize_frozen_CCT()
+      call zero_array(wf%frozen_CCT, wf%n_ao**2)
+!
 !     Change the MOs if frozen core or frozen hf 
 !     is requested
 !
@@ -830,8 +847,6 @@ contains
 !     and frozen HF
 !
       call wf%prepare_frozen_fock_terms()
-!
-      wf%hf_energy = wf%energy
 !
    end subroutine prepare_for_cc_hf
 !
@@ -2185,29 +2200,6 @@ contains
       real(dp), dimension(:,:), allocatable :: mo_mm_fock
       real(dp), dimension(:,:), allocatable :: mo_fc_fock
       real(dp), dimension(:,:), allocatable :: mo_frozen_hf_fock
-!
-!     Check if there are frozen Fock contributions, if not
-!     return
-!
-      if ((.not. wf%frozen_core) .and. &
-          (.not. wf%frozen_hf_MOs) .and. &
-          (.not. wf%system%pcm_calculation) .and. &  
-          (.not. wf%system%mm_calculation)) then
-!
-         call output%printf('v', 'No frozen fock contributions!', fs='(/t3,a)')
-         wf%exists_frozen_fock_terms = .false.
-         return
-!
-      endif
-!
-      wf%exists_frozen_fock_terms = .true.
-!
-      if (wf%frozen_core .or. wf%frozen_hf_MOs) then
-!
-         call wf%initialize_frozen_CCT()
-         call zero_array(wf%frozen_CCT, wf%n_ao**2)
-!
-      endif
 !
       call wf%initialize_mo_fock_frozen()
       call zero_array(wf%mo_fock_frozen, wf%n_mo**2)

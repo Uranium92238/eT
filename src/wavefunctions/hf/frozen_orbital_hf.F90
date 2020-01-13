@@ -376,7 +376,7 @@ contains
 !
 !     Virtual orbitals
 !
-      call wf%construct_full_occupied_density(D)  
+      call wf%get_full_idempotent_density(D)  
 !
 !     1. Construct PAOs for active atoms
 !
@@ -396,9 +396,7 @@ contains
 !
       call mem%dealloc(S, n_active_aos, n_active_aos)
 !
-      wf%n_v = rank
-!     
-!     NOTE: Need not construct the frozen virtual orbitals !    
+      wf%n_v = rank  
 !
 !     Update orbital_coefficients and place orbital_coefficients_frozen_hf
 !
@@ -466,6 +464,63 @@ contains
 
       call output%printf('m', 'There are (i0) frozen virtual orbitals.', &
                         ints=[wf%n_frozen_hf_orbitals-wf%n_frozen_hf_o], fs='(t6,a)')
+!
+!
+!     Construct inactive virtuals and add to frozen CC^T. Needed for later PAO construction
+!     e.g. to perform CC in reduced space or MLCC with PAOs
+!
+      call mem%alloc(PAO_coeff, wf%n_ao, wf%n_ao)
+      call mem%alloc(D, wf%n_ao, wf%n_ao)
+!
+      call wf%get_full_idempotent_density(D)
+!
+!     Add active virtual density
+!
+      call dgemm('N', 'T',                               &
+                  wf%n_ao,                               &
+                  wf%n_ao,                               &
+                  wf%n_v,                                &
+                  one,                                   &
+                  wf%orbital_coefficients(1,wf%n_o + 1), &
+                  wf%n_ao,                               &
+                  wf%orbital_coefficients(1,wf%n_o + 1), &
+                  wf%n_ao,                               &
+                  one,                                   &
+                  D,                                     &
+                  wf%n_ao)
+!
+!     Project occupied and active virtual out of AOs
+!
+      call wf%projected_atomic_orbitals(D, PAO_coeff, wf%n_ao)
+!
+      call mem%dealloc(D, wf%n_ao, wf%n_ao)
+!
+      call mem%alloc(S, wf%n_ao, wf%n_ao)
+!
+      call wf%get_orbital_overlap(PAO_coeff, wf%n_ao, S)
+!
+!     Orthonormalize
+!
+      call wf%lowdin_orthonormalization(PAO_coeff, S, wf%n_ao, rank)
+!
+      call mem%dealloc(S, wf%n_ao, wf%n_ao)
+!
+!     Add to CC^T inactive virtual density to frozen CC^T
+!
+     call dgemm('N', 'T',       &
+                 wf%n_ao,       &
+                 wf%n_ao,       &
+                 rank,          &
+                 one,           &
+                 PAO_coeff,     &
+                 wf%n_ao,       &
+                 PAO_coeff,     &
+                 wf%n_ao,       &
+                 one,           &
+                 wf%frozen_CCT, &
+                 wf%n_ao)
+!
+     call mem%dealloc(PAO_coeff, wf%n_ao, wf%n_ao)      
 !
    end subroutine remove_frozen_hf_orbitals_hf
 !
@@ -635,12 +690,12 @@ contains
    end function get_n_active_hf_atoms_hf
 !
 !
-   module subroutine construct_full_occupied_density_hf(wf, D)
+   module subroutine get_full_idempotent_density_hf(wf, D)
 !!
-!!    Construct full occcupied density
+!!    Get full idempotent density
 !!    Written by Sarai D. Folkestad, Jan 2020
 !!
-!!    Constructs the full occupied density
+!!    Constructs the full idempotent, occupied density
 !!    for determining the frozen HF virtuals
 !!
       implicit none
@@ -652,7 +707,7 @@ contains
       call dcopy(wf%n_ao**2, wf%ao_density, 1, D, 1)
       call dscal(wf%n_ao**2, half, D, 1)
 !
-   end subroutine construct_full_occupied_density_hf
+   end subroutine get_full_idempotent_density_hf
 !
 !
 end submodule frozen_orbital_hf

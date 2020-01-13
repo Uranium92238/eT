@@ -696,6 +696,10 @@ contains
 !
          call dcopy(wf%n_mo**2, template_wf%mo_fock_frozen, 1, wf%mo_fock_frozen, 1)
 !
+         call wf%initialize_frozen_CCT()
+!
+         call dcopy(wf%n_ao**2, template_wf%frozen_CCT, 1, wf%frozen_CCT, 1)
+!
       endif
 !
    end subroutine set_variables_from_template_wf_ccs
@@ -721,6 +725,7 @@ contains
       call wf%destruct_orbital_energies()
       call wf%destruct_gs_density()
       call wf%destruct_transition_densities()
+      call wf%destruct_frozen_CCT()
 !
       call wf%integrals%cleanup()
 !

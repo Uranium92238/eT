@@ -1050,6 +1050,12 @@ contains
                   D,                         &
                   wf%n_ao)
 !
+      if (wf%exists_frozen_fock_terms) then
+!
+         call daxpy(wf%n_ao**2, one, wf%frozen_CCT, 1, D, 1)
+!
+      endif
+!
 !     2. Construct PAOs for active atoms
 !
       call mem%alloc(PAO_coeff, wf%n_ao, n_active_aos)
@@ -1098,6 +1104,12 @@ contains
                      zero,                      &
                      D,                         &
                      wf%n_ao)
+!
+         if (wf%exists_frozen_fock_terms) then
+!
+            call daxpy(wf%n_ao**2, one, wf%frozen_CCT, 1, D, 1)
+!
+         endif
 !
 !        Construct PAOs for the remaining virtual orbitals
 !

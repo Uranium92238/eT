@@ -79,6 +79,11 @@ module wavefunction_class
 !
       logical :: exists_frozen_fock_terms ! Are there frozen Fock terms?
 !
+      real(dp), dimension(:,:), allocatable :: frozen_CCT   ! Matrix CC^T where the contraction is 
+                                                            ! over frozen orbitals. Needed if 
+                                                            ! PAO construction follows (e.g in mlcc)
+                                                            ! other reducrtion of orbitals
+!
    contains
 !
       procedure :: initialize_orbital_coefficients => initialize_orbital_coefficients_wavefunction
@@ -92,6 +97,9 @@ module wavefunction_class
 !      
       procedure :: destruct_mm_matrices            => destruct_mm_matrices_wavefunction
       procedure :: destruct_pcm_matrices           => destruct_pcm_matrices_wavefunction
+!
+      procedure :: initialize_frozen_CCT           => initialize_frozen_CCT_wavefunction
+      procedure :: destruct_frozen_CCT             => destruct_frozen_CCT_wavefunction
 !
       procedure :: get_ao_x_wx                     => get_ao_x_wx_wavefunction
       procedure :: get_ao_x_wx_1der                => get_ao_x_wx_1der_wavefunction
@@ -1509,6 +1517,34 @@ contains
       if(allocated(wf%pcm_fock))  call mem%dealloc(wf%pcm_fock, wf%n_ao,wf%n_ao)
 !
    end subroutine destruct_pcm_matrices_wavefunction
+!
+!
+   subroutine initialize_frozen_CCT_wavefunction(wf)
+!!
+!!    Initialize frozen CC^T 
+!!    Written by Sarai D. Folkestad, Jan 2020
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      call mem%alloc(wf%frozen_CCT, wf%n_ao, wf%n_ao)
+!
+   end subroutine initialize_frozen_CCT_wavefunction
+!
+!
+   subroutine destruct_frozen_CCT_wavefunction(wf)
+!!
+!!    Destruct frozen CC^T  
+!!    Written by Sarai D. Folkestad, Jan 2020
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      if (allocated(wf%frozen_CCT)) call mem%dealloc(wf%frozen_CCT, wf%n_ao, wf%n_ao)
+!
+   end subroutine destruct_frozen_CCT_wavefunction
 !
 !
 end module wavefunction_class
