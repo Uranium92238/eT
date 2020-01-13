@@ -2,10 +2,6 @@ system
    name: HOF-He
    charge: 0
 end system
- 
-print 
-   output print level: debug 
-end print
 
 do
    response

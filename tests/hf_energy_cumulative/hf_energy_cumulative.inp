@@ -4,7 +4,7 @@ system
 end system
  
 print 
-   output print level: debug 
+   output print level: verbose
 end print
 
 do

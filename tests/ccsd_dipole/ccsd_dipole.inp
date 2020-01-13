@@ -1,10 +1,6 @@
 system
    name: hypofluorous_acid
 end system
- 
-print 
-   output print level: debug 
-end print
 
 do
   ground state
