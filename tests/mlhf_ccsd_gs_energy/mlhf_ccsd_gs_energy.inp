@@ -4,10 +4,6 @@ system
    multiplicity: 1
 end system
 
-print
-   output print level: debug
-end print
-
 do
    ground state
 end do

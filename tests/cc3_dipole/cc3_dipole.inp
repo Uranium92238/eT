@@ -1,10 +1,6 @@
 system
    name: water + helium
 end system
- 
-print 
-   output print level: debug 
-end print
 
 do
   ground state
