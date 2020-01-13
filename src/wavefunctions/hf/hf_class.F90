@@ -59,6 +59,7 @@ module hf_class
       real(dp) :: exchange_threshold = 1.0D-10   ! Screening threshold (Fock, exchange)
       real(dp) :: libint_epsilon     = 1.0D-20   ! Libint electron repulsion integral 
                                                  ! precision given approximately by sqrt(epsilon)
+      real(dp) :: integral_cutoff    = 1.0D-10   ! Default: sqrt(epsilon) 
 !
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz      ! Screening for (wx | yz)
       integer,  dimension(:,:), allocatable :: sp_eri_schwarz_list ! Indices for screening 
@@ -481,9 +482,21 @@ contains
 !
       class(hf) :: wf
 !
-      call input%get_keyword_in_section('coulomb threshold', 'solver scf', wf%coulomb_threshold)
-      call input%get_keyword_in_section('exchange threshold', 'solver scf', wf%exchange_threshold)
-      call input%get_keyword_in_section('integral precision', 'solver scf', wf%libint_epsilon)
+      call input%get_keyword_in_section('coulomb threshold',   &
+                                        'solver scf',          &
+                                        wf%coulomb_threshold)
+!
+      call input%get_keyword_in_section('exchange threshold',  &
+                                        'solver scf',          &
+                                        wf%exchange_threshold)
+!
+      call input%get_keyword_in_section('integral precision',  &
+                                        'solver scf',          &
+                                        wf%libint_epsilon)
+!
+      call input%get_keyword_in_section('integral cutoff',     &
+                                        'solver scf',          &
+                                        wf%integral_cutoff)      
 !
    end subroutine read_hf_settings_hf
 !
@@ -1677,6 +1690,9 @@ contains
 !
       call output%printf('n', 'Fock precision:               (e11.4)', &
                          reals=[wf%libint_epsilon], fs='(t6,a)')
+!
+      call output%printf('n', 'Integral cutoff:              (e11.4)', &
+                         reals=[wf%integral_cutoff], fs='(t6,a)')
 !
    end subroutine print_screening_settings_hf
 !
