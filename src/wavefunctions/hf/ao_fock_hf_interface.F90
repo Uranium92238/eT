@@ -80,6 +80,12 @@
 !!
 !!    where D is the inactive AO Density.
 !!
+!!    Modified by Eirik F. Kjønstad, Jan 2020. Added C_screening optional.
+!!
+!!    C_screening: If true, G(D) will be constructed in the AO basis, as usual, but the 
+!!                 Coulomb and exchange screening will target the MO basis G(D). Used in 
+!!                 MLHF when constructing G(Da). Default: false.
+!!
       class(hf)   :: wf
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: D
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: G
@@ -141,6 +147,20 @@
 !!
 !!    Routine partly based on Hartree-Fock implementation shipped with 
 !!    the Libint 2 integral package by E. Valeev. 
+!!
+!!    This routine modifies the existing construct AO G routine by:
+!!
+!!       - Constructing the maximum MO coefficients list:
+!!
+!!          C_max(s) = max_p | C_wp | for AOs w in the shell s
+!!
+!!       - Use this MO coefficients list to screen (Coulomb, exchange) for the precision of 
+!!
+!!          G_pq = G_alpha,beta C_alpha,p C_beta,q        (not G_alpha,beta)
+!!
+!!    Used to construct G(Da), where Da is the active density, in MLHF. In that case 
+!!    the MOs are local, which means that screening for G(Da) in the MO basis is more efficient  
+!!    than screening for G(Da) in the AO basis.
 !!
       implicit none
 !
