@@ -316,13 +316,16 @@ contains
 !
                if (residual_norm <= lindep_threshold) then 
 !
-                  call output%error_msg('Residual norm for root (i0) smaller than linear ' // &
-                                        'dependence threshold, but energy and residual  '  // &
-                                        'thresholds have not yet been met.', ints=[n])
+                  call output%warning_msg('Residual norm for root (i0) smaller than linear ' // &
+                                          'dependence threshold, but energy and residual  '  // &
+                                          'thresholds have not yet been met. No new trial ' // &
+                                          'added for this root.', ints=[n])
+!
+               else
+!
+                  call davidson%construct_next_trial(residual, n)
 !
                endif
-!
-               call davidson%construct_next_trial(residual, n)
 !
             endif
 !
