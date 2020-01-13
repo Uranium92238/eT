@@ -97,15 +97,15 @@ contains
 !
 !     Set standard settings
 !
-      solver%restart            = restart
-      solver%diis_dimension     = 8
-      solver%max_iterations     = 100
-      solver%ao_density_guess   = 'SAD'
-      solver%energy_threshold   = 1.0D-6
-      solver%gradient_threshold = 1.0D-6
-      solver%storage            = 'memory'
+      solver%restart                = restart
+      solver%diis_dimension         = 8
+      solver%max_iterations         = 100
+      solver%ao_density_guess       = 'SAD'
+      solver%energy_threshold       = 1.0D-6
+      solver%gradient_threshold     = 1.0D-6
+      solver%storage                = 'memory'
       solver%cumulative             = .false.
-      solver%cumulative_threshold   = 1.0d-2
+      solver%cumulative_threshold   = 1.0d0
 !
       call solver%read_settings()
 !

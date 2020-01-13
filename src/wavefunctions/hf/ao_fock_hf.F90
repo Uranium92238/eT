@@ -1148,7 +1148,7 @@ contains
 !
       do s1s2 = 1, wf%system%n_s*(wf%system%n_s + 1)/2
 !
-         if (wf%sp_eri_schwarz(s1s2, 1)*wf%sp_eri_schwarz(1, 1) .lt. sqrt(wf%libint_epsilon)) then
+         if (wf%sp_eri_schwarz(s1s2, 1)*wf%sp_eri_schwarz(1, 1) .lt. wf%integral_cutoff) then
 !
             exit
 !
@@ -1494,13 +1494,7 @@ contains
 !!
 !!    Sets the screening thresholds for Coulomb and exchange
 !!    integrals given the convergence threshold for the gradient
-!!
-!!       coulomb_threshold  = gradient_threshold * 1.0d-3
-!!       exchange_threshold = gradient_threshold * 1.0d-3
-!!
-!!       libint_epsilon = (gradient_threshold * 1.0d-3)**2
-!!
-!!    unless stricter thresholds are already set on input or by default.
+!!    unless other thresholds are already set on input.
 !!
       implicit none
 !
@@ -1508,17 +1502,63 @@ contains
 !
       real(dp), intent(in) :: gradient_threshold
 !
-      if (wf%coulomb_threshold .gt. gradient_threshold*1.0d-3)  &
-                  wf%coulomb_threshold  = gradient_threshold*1.0d-3
+!     If not specified by user, set Coulomb and exchange thresholds 
+!     (For ref., this will give 10-12 and 10-10 for gradient threshold: 10-6)
 !
-      if (wf%exchange_threshold .gt. gradient_threshold*1.0d-3) &
-                  wf%exchange_threshold = gradient_threshold*1.0d-3
+      if (.not. input%requested_keyword_in_section('coulomb threshold', 'solver scf')) then 
 !
-      wf%coulomb_threshold  = min(wf%coulomb_threshold,  1.0d-12)
-      wf%exchange_threshold = min(wf%exchange_threshold, 1.0d-10)
+         wf%coulomb_threshold  = gradient_threshold*1.0d-6
 !
-      if (wf%libint_epsilon .gt. (wf%coulomb_threshold)**2) &
-                  wf%libint_epsilon = (wf%coulomb_threshold)**2
+      endif 
+!
+      if (.not. input%requested_keyword_in_section('exchange threshold', 'solver scf')) then 
+!
+         wf%exchange_threshold = gradient_threshold*1.0d-4
+!
+      endif
+!
+!     If not requested by user, set Libint integral accuracy according to thresholds 
+!
+      if (.not. input%requested_keyword_in_section('integral precision', 'solver scf')) then 
+!
+!        Tighten the default threshold if it is larger than 
+!        the lowest screening threshold squared
+!
+!        Either 10-20 (which wf%libint_epsilon is set to by default),
+!        or the minimum of coulomb and exchange squared
+!
+         wf%libint_epsilon = min(wf%libint_epsilon,                                    &
+                                 min(wf%coulomb_threshold, wf%exchange_threshold)**2)
+!
+      else
+!
+!        Warn user about tampering with integral precision (Libint epsilon)
+!
+         call output%warning_msg("Setting a specific integral precision can cause instabilities.&
+                                 & Be aware that the 'precision' given to Libint is not exact&
+                                 & but approximate. Don't use unless you know what you are doing.")
+!
+      endif 
+!
+!     If not requested by user, set integral cutoff
+!
+      if (.not. input%requested_keyword_in_section('integral cutoff', 'solver scf')) then
+!
+         wf%integral_cutoff = sqrt(wf%libint_epsilon)
+!
+      endif
+!
+!     Currently, exchange threshold must be >= coulomb threshold in the Fock construction 
+!
+      if (wf%exchange_threshold .lt. wf%coulomb_threshold) then 
+!
+         call output%printf('m', 'Exchange threshold is restricted to being higher than, or&
+                                 & equal, to the Coulomb threshold. Setting them equal to&
+                                 & each other.')
+!
+         wf%exchange_threshold = wf%coulomb_threshold
+!
+      endif
 !
    end subroutine set_screening_and_precision_thresholds_hf
 !

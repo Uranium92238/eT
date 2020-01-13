@@ -104,7 +104,7 @@ contains
       solver%gradient_threshold     = 1.0d-6
       solver%storage                = 'memory'
       solver%cumulative             = .false.
-      solver%cumulative_threshold   = 1.0d-2
+      solver%cumulative_threshold   = 1.0d0
       solver%crop                   = .false.
 !
       call solver%read_settings()

@@ -347,13 +347,7 @@
 !!
 !!    Sets the screening thresholds for Coulomb and exchange
 !!    integrals given the convergence threshold for the gradient
-!!
-!!       coulomb_threshold  = gradient_threshold * 1.0d-3
-!!       exchange_threshold = gradient_threshold * 1.0d-3
-!!
-!!       libint_epsilon = (gradient_threshold * 1.0d-3)**2
-!!
-!!    unless stricter thresholds are already set on input or by default.
+!!    unless other thresholds are already set on input.
 !!
       implicit none
 !

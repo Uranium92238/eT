@@ -254,6 +254,10 @@ contains
                               'crop',                       &
                               'cumulative fock threshold',  &
                               'max iterations',             &
+                              'coulomb threshold',          &
+                              'exchange threshold',         &
+                              'integral precision',         &
+                              'integral cutoff',            &
                               'diis dimension',             &
                               'restart',                    &
                               'ao density guess',           &

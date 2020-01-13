@@ -16,6 +16,8 @@ solver scf
    algorithm: mo-scf-diis
    energy threshold:   1.0d-11
    gradient threshold: 1.0d-11
+   coulomb threshold:  1.0d-14
+   exchange threshold: 1.0d-14
 end solver scf
 
 method
