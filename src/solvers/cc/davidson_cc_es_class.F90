@@ -423,10 +423,10 @@ contains
          call solver%determine_restart_transformation(wf) ! Read right or left?
          n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
 !
-         call output%printf('m', 'Requested restart - there are (i0) (a0) &
-                            &eigenvectors on file.', &
+         call output%printf('m', 'Requested restart - restarting (i0) (a0) &
+                           &eigenvectors from file.', fs='(/t3,a)', &
                             ints=[n_solutions_on_file], &
-                            chars=[solver%restart_transformation], fs='(/t3,a)')
+                            chars=[solver%restart_transformation])
 !
          call mem%alloc(c, wf%n_es_amplitudes)
 !

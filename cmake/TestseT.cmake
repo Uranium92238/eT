@@ -156,6 +156,7 @@ add_eT_runtest(ccsd_td_gl4                                  "eT;short;ccsd;compl
 add_eT_runtest(ccsd_td_gl6                                  "eT;short;ccsd;complex;td")
 add_eT_runtest(restart_ccsd_es                              "eT;short;ccsd;es;restart")
 add_eT_runtest(restart_ccsd_eom                             "eT;short;ccsd;eom;restart")
+add_eT_runtest(restart_ccsd_2_states_from_1                 "eT;short;ccsd;eom;restart")
 add_eT_runtest(restart_ccsd_eom_diis                        "eT;short;ccsd;eom;restart")
 add_eT_runtest(mlhf_ccsd_gs_energy                          "eT;short;mlhf;ccsd;pao")
 add_eT_runtest(mlhf_frozen_hf_ccsd_gs_energy                "eT;short;mlhf;ccsd;pao;frozen core")

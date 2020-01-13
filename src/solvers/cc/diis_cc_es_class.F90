@@ -345,11 +345,12 @@ contains
 !
          n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
 !
-         call output%printf('m', 'Requested restart - there are (i0) (a0) &
-                            &eigenvectors on file.', &
-                            ints=[n_solutions_on_file], chars=[solver%restart_transformation])
+         call output%printf('m', 'Requested restart - restarting (i0) (a0) &
+                           &eigenvectors from file.', fs='(/t3,a)', &
+                            ints=[n_solutions_on_file], &
+                            chars=[solver%restart_transformation])
 !
-         do state = 1, n_solutions_on_file
+         do state = 1, min(n_solutions_on_file,wf%n_singlet_states)
 !
             call wf%read_excited_state(X(:,state), state, solver%restart_transformation)
 !
@@ -361,7 +362,7 @@ contains
          enddo
 !
          solver%energies = zero
-         call wf%read_excitation_energies(n_solutions_on_file, solver%energies(1:n_solutions_on_file))
+         call wf%read_excitation_energies(n_solutions_on_file, solver%energies)
 !
       endif
 !
