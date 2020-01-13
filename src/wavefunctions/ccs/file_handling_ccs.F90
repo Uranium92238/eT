@@ -367,30 +367,38 @@ contains
 !!          by either reading the restart file or by calling the function 
 !!          read_n_excitation_energies
 !!
+!!    n_states: number of states found on file
+!!              Obtained by the number of existing records in the file storer
+!!
       implicit none 
 !
       class(ccs), intent(inout) :: wf
 !
-      integer, intent(in) :: n_states ! Obtained by reading the restart file 
-!                                     ! or by calling read_n_excitation_energies 
+      integer, intent(in) :: n_states
 !
-      real(dp), dimension(n_states), intent(out) :: energies
+      real(dp), dimension(:), intent(out) :: energies
 !
-      integer :: local_n_states
+      integer :: dim_
+!
+      dim_ = size(energies)
 !
       call wf%excitation_energies_file%open_('read', 'rewind')
 !
-      call wf%excitation_energies_file%read_(local_n_states)
+!     First line of excitation_energies_file contains n_states
 !
-      if (local_n_states .ne. n_states) then
+      call wf%excitation_energies_file%skip(1)
 !
-         call output%error_msg('Dimension of excited state array does not match what is on file.')
+      if (dim_ .gt. n_states) then
+!
+         call wf%excitation_energies_file%read_(energies(1:n_states), n_states)
+         call wf%excitation_energies_file%close_()
+!
+      else if (dim_ .le. n_states) then
+!
+         call wf%excitation_energies_file%read_(energies, dim_)
+         call wf%excitation_energies_file%close_()
 !
       endif
-!
-      call wf%excitation_energies_file%read_(energies, n_states)
-!
-      call wf%excitation_energies_file%close_()
 !     
    end subroutine read_excitation_energies_ccs
 !

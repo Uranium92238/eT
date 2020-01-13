@@ -200,11 +200,14 @@
 !!          by either reading the restart file or by calling the function 
 !!          read_n_excitation_energies
 !!
+!!    n_states: number of states found on file
+!!              Obtained by the number of existing records in the file storer
+!!
       implicit none 
 !
       class(ccs), intent(inout) :: wf
-      integer, intent(in) :: n_states ! Obtained by reading the restart file 
-      real(dp), dimension(n_states), intent(out) :: energies
+      integer, intent(in) :: n_states
+      real(dp), dimension(:), intent(out) :: energies
 !
    end subroutine read_excitation_energies_ccs
 !
