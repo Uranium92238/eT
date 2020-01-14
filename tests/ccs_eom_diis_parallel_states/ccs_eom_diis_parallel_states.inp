@@ -1,5 +1,5 @@
 system
-   name: water+he
+   name: H2O He
    charge: 0
    multiplicity: 1
 end system
