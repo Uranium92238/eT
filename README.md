@@ -30,7 +30,7 @@ The install directory cannot be in the source directory.
 
 Note that when compiling with Intel, one should include the following flags:
 ```shell
--DCMAKE_CXX_COMPILER=icc -DCMAKE_CXX_COMPILER=icpc -DCMAKE_CXX_FLAGS=-std=c++11
+-DCMAKE_C_COMPILER=icc -DCMAKE_CXX_COMPILER=icpc -DCMAKE_CXX_FLAGS=-std=c++11
 ```
 Make sure the Libint configure step finds the correct compilers (as compiling Libint can take several hours). Compile and install:
 ```shell
@@ -162,5 +162,5 @@ or copy the script to somewhere more convenient.
 See the [wiki](https://gitlab.com/eT-program/eT/-/wikis/home) 
 for more help or look in `eT/tests` for inspiration when making your own input file.
 For example, 
-`eT/tests/hf_energy/hf_energy.inp` is an input file for an Hartree-Fock calculation.
+`eT/tests/hf_energy/hf_energy.inp` is an input file for a Hartree-Fock calculation.
 
