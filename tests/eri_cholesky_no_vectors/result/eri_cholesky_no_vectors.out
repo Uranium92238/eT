@@ -12,14 +12,39 @@
    Å. H. Tveten
   ------------------------------------------------------------------------
 
-  Running on 4 OMP thread(s)
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: H2O He
+        charge: 0
+     end system
+
+     do
+       cholesky eri
+     end do
+
+     memory
+        available: 8
+     end memory
+
+     solver cholesky
+        threshold: 1.0d-10
+        no vectors
+     end solver cholesky
+
+
+  Running on 2 OMP thread(s)
   Memory available for calculation: 8.000000 GB
 
 
   :: Molecular system specifications
   =====================================
 
-     Name:             h2o-he
+     Name:             h2o he
      Charge:           0
      Multiplicity:     1
      Coordinate units: angstrom
@@ -32,7 +57,7 @@
      Bohr/angstrom value (CODATA 2010):            0.529177210920
 
      ==============================================================================
-                                     Geometry(Å)
+                                     Geometry (angstrom)
      ==============================================================================
         Atom           X                  Y                  Z         # in input
      ==============================================================================
@@ -44,7 +69,7 @@
      ==============================================================================
 
      ==============================================================================
-                                     Geometry(a.u.)
+                                     Geometry (a.u.)
      ==============================================================================
         Atom           X                  Y                  Z         # in input
      ==============================================================================
@@ -80,8 +105,6 @@
      Total number of shell pairs:           120
      Total number of AO pairs:              435
 
-  - Preparing diagonal for decomposition:
-
      Significant shell pairs:               116
      Significant AO pairs:                  427
 
@@ -104,7 +127,7 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.06400
-     Total cpu time (sec):               0.13284
+     Total wall time (sec):              0.07200
+     Total cpu time (sec):               0.10861
 
   eT terminated successfully!

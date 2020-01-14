@@ -1,374 +1,116 @@
 
 
 
-                       eT - a coupled cluster program 
-       Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch
+                     eT - an electronic structure program
 
-  ----------------------------------------------------------------------------------
-   Author:                Contribution(s):
-  ----------------------------------------------------------------------------------
-   Josefine H. Andersen   First order properties
-   Sarai D. Folkestad     Program design, HF, CCS, CC2, CCSD, Libint-interface,
-                          Cholesky decomposition, Davidson-tool, CVS, DIIS-tool
-                          Zeroth order properties, First order properties
-   Linda Goletto          CC2
-   Eirik F. Kjønstad      Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,
-                          Cholesky decomposition, Libint-interface, Davidson-tool
-                          Zeroth order properties, First order properties
-   Rolf H. Myhre          CC3, Runtest-interface, Launch script
-   Alexander Paul         CC2, CC3, First order properties
-   Andreas Skeidsvoll     MP2
-  ----------------------------------------------------------------------------------
-   Other contributors: A. Balbi, M. Scavino
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
+   Å. H. Tveten
+  ------------------------------------------------------------------------
 
-  Running on 4 OMP threads
 
-  Memory available for calculation:         8 GB
-  Disk space available for calculation:  3000 GB
+  :: Input file
+  ================
 
-  - Molecular system specifications:
+     Note: geometry section is excluded from this print
 
-     Name:         hof-he
-     Charge:       0
-     Multiplicity: 1
+     system
+        name: HOF He
+        charge: 0
+     end system
+
+     do
+        response
+     end do
+
+     memory
+        available: 8
+     end memory
+
+     method
+        hf
+        ccs
+     end method
+
+     cc response
+        eom
+        dipole length
+        transition moments
+     end cc response
+
+     solver scf
+        energy threshold:   1.0d-11
+        gradient threshold: 1.0d-11
+     end solver scf
+
+     solver cholesky
+        threshold: 1.0d-11
+     end solver cholesky
+
+     solver cc gs
+        energy threshold: 1.0d-11
+        omega threshold:  1.0d-11
+     end solver cc gs
+
+     solver cc multipliers
+        threshold: 1.0d-12
+     end solver cc multipliers
+
+     solver cc es
+        singlet states: 2
+        residual threshold: 1.0d-11
+     end solver cc es
+
+
+  Running on 2 OMP thread(s)
+  Memory available for calculation: 8.000000 GB
+
+
+  :: Molecular system specifications
+  =====================================
+
+     Name:             hof he
+     Charge:           0
+     Multiplicity:     1
+     Coordinate units: angstrom
+
+     Pure basis functions:         38
+     Cartesian basis functions:    40
+     Primitive basis functions:    84
 
      Nuclear repulsion energy (a.u.):             48.499011140892
      Bohr/angstrom value (CODATA 2010):            0.529177210920
 
-     Geometry (Å):
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1 H      0.866810000000     0.601440000000     5.000000000000        1
+        2 F     -0.866810000000     0.601440000000     5.000000000000        2
+        3 O      0.000000000000    -0.075790000000     5.000000000000        3
+        4 He     0.100000000000     0.100000000000     7.500000000000        4
+     ==============================================================================
 
-     H    0.866810000000   0.601440000000   5.000000000000   cc-pvdz    
-     F   -0.866810000000   0.601440000000   5.000000000000   cc-pvdz    
-     O    0.000000000000  -0.075790000000   5.000000000000   cc-pvdz    
-     He   0.100000000000   0.100000000000   7.500000000000   cc-pvdz    
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1 H      1.638033502034     1.136556880358     9.448630622825        1
+        2 F     -1.638033502034     1.136556880358     9.448630622825        2
+        3 O      0.000000000000    -0.143222342981     9.448630622825        3
+        4 He     0.188972612457     0.188972612457    14.172945934238        4
+     ==============================================================================
 
-     Geometry (bohr):
-
-     H    1.638033502034   1.136556880358   9.448630622825   cc-pvdz    
-     F   -1.638033502034   1.136556880358   9.448630622825   cc-pvdz    
-     O    0.000000000000  -0.143222342981   9.448630622825   cc-pvdz    
-     He   0.188972612457   0.188972612457  14.172945934238   cc-pvdz    
-
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-     Number of occupied orbitals:        10
-     Number of virtual orbitals:         28
-     Number of molecular orbitals:       38
-     Number of atomic orbitals:          38
-
-
-  :: Self-consistent field DIIS Hartree-Fock solver
-  :: E. F. Kjønstad and S, D. Folkestad, 2018
-
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock matrix 
-  is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:               8
-     Energy threshold:              0.1000E-05
-     Gradient threshold:            0.1000E-10
-
-     Coulomb screening threshold:   0.1000E-13
-     Exchange screening threshold:  0.1000E-13
-     ERI integral precision:        0.1000E-27
-
-  - Setting initial AO density to SAD:
-
-     Energy of initial guess:      -178.316435963750
-     Number of electrons in guess:   20.000000000000
-
-  Iteration    Energy (a.u.)        Max(grad.)    Delta E (a.u.)
-  --------------------------------------------------------------
-    1          -177.452460028557     0.7565E-01     0.1775E+03
-    2          -177.479057957612     0.1346E-01     0.2660E-01
-    3          -177.480054155340     0.4308E-02     0.9962E-03
-    4          -177.480180562475     0.1844E-02     0.1264E-03
-    5          -177.480194220845     0.3631E-03     0.1366E-04
-    6          -177.480195441223     0.7394E-04     0.1220E-05
-    7          -177.480195516819     0.2206E-04     0.7560E-07
-    8          -177.480195527024     0.5084E-05     0.1021E-07
-    9          -177.480195527847     0.1218E-05     0.8232E-09
-   10          -177.480195527874     0.2531E-06     0.2646E-10
-   11          -177.480195527875     0.4375E-07     0.1137E-11
-   12          -177.480195527875     0.9241E-08     0.5684E-13
-   13          -177.480195527875     0.4370E-08     0.5684E-13
-   14          -177.480195527875     0.1744E-08     0.1990E-12
-   15          -177.480195527875     0.3643E-09     0.0000E+00
-   16          -177.480195527875     0.1712E-09     0.8527E-13
-   17          -177.480195527875     0.5855E-10     0.1137E-12
-   18          -177.480195527875     0.5045E-11     0.2842E-13
-  --------------------------------------------------------------
-
-  Convergence criterion met in  18 iterations!
-
-  - Summary of HF wavefunction energetics (a.u.):
-
-     HOMO-LUMO gap:                 0.600390987886
-     Nuclear repulsion energy:     48.499011140892
-     Electronic energy:          -225.979206668767
-     Total energy:               -177.480195527875
-
-  - Molecular orbital energies:
-
-    1  -26.334192004700      2  -20.644662877237      3   -1.894491828922
-    4   -1.204308976031      5   -0.911949983661      6   -0.866287973463
-    7   -0.832614061197      8   -0.790123932097      9   -0.497908722170
-   10   -0.439606471484     11    0.160784516403     12    0.548538270213
-   13    0.716617362076     14    1.106279200333     15    1.130688493503
-   16    1.195338322958     17    1.332576309251     18    1.427802958738
-   19    1.453664008356     20    1.485675098613     21    1.557386191143
-   22    1.685781695475     23    1.771160576632     24    2.107888307849
-   25    2.500306219284     26    2.529687453714     27    2.529802664165
-   28    2.601526974778     29    2.725866593376     30    2.888341323819
-   31    3.061118983645     32    3.534276472644     33    3.763035846069
-   34    3.962304853878     35    4.000653348396     36    4.553980959887
-   37    4.580686751359     38    5.083719172632
-
-  Printing 20 MOs (out of the total 38 MOs).
-
-  - Printing molecular orbitals: 1, 2, 3, 4
-
-     AO   Atom          1           2           3           4
-    ---------------------------------------------------------------
-     1   1 H (s)   -0.000261    0.000489    0.035536    0.136855
-     2   1 H (s)    0.000306    0.000636   -0.007044    0.001753
-     3   1 H (p)   -0.000001    0.000008   -0.008972   -0.019569
-     4   1 H (p)    0.000017    0.000151   -0.005702   -0.016719
-     5   1 H (p)   -0.000001    0.000002    0.000013    0.000039
-     6   2 F (s)    1.001049   -0.000029   -0.002984    0.000565
-     7   2 F (s)    0.001521    0.000118    0.393328   -0.295137
-     8   2 F (s)   -0.004893    0.000103    0.370079   -0.423227
-     9   2 F (p)    0.001399   -0.000076    0.125217    0.182962
-    10   2 F (p)   -0.001020    0.000038   -0.091241   -0.117609
-    11   2 F (p)    0.000001    0.000001    0.000033    0.000133
-    12   2 F (p)   -0.001567   -0.000237    0.047243    0.081759
-    13   2 F (p)    0.001140    0.000350   -0.030447   -0.052161
-    14   2 F (p)   -0.000001    0.000002    0.000054    0.000053
-    15   2 F (d)    0.000095    0.000481   -0.016521   -0.013913
-    16   2 F (d)    0.000000   -0.000001   -0.000008   -0.000009
-    17   2 F (d)    0.000072    0.000284   -0.010769   -0.008733
-    18   2 F (d)   -0.000000    0.000001    0.000007    0.000014
-    19   2 F (d)   -0.000036   -0.000129    0.005356    0.006196
-    20   3 O (s)   -0.000019    1.000964   -0.002193    0.004145
-    21   3 O (s)   -0.000189    0.001420    0.258593    0.378001
-    22   3 O (s)    0.002151   -0.003395    0.145588    0.404384
-    23   3 O (p)   -0.000000   -0.000941   -0.127388    0.073509
-    24   3 O (p)    0.000029    0.002207    0.114253    0.011963
-    25   3 O (p)   -0.000002   -0.000000    0.000090    0.000455
-    26   3 O (p)   -0.001008   -0.000042   -0.012823    0.031896
-    27   3 O (p)    0.000840   -0.001164    0.013087   -0.003879
-    28   3 O (p)    0.000006   -0.000009   -0.000039    0.000124
-    29   3 O (d)    0.000308   -0.000282   -0.027215    0.006657
-    30   3 O (d)    0.000000    0.000000    0.000002    0.000015
-    31   3 O (d)    0.000142    0.000077   -0.016635   -0.000226
-    32   3 O (d)   -0.000000    0.000002    0.000001    0.000003
-    33   3 O (d)   -0.000071    0.000002    0.003565   -0.001936
-    34   4 He(s)    0.000011   -0.000051    0.000719    0.006497
-    35   4 He(s)   -0.000033    0.000073    0.001326    0.006439
-    36   4 He(p)   -0.000001   -0.000005   -0.000042    0.000093
-    37   4 He(p)   -0.000002   -0.000001    0.000034   -0.000080
-    38   4 He(p)    0.000012   -0.000009   -0.000319   -0.000648
-    ---------------------------------------------------------------
-
-  - Printing molecular orbitals: 5, 6, 7, 8
-
-     AO   Atom          5           6           7           8
-    ---------------------------------------------------------------
-     1   1 H (s)    0.008203   -0.203506   -0.001447    0.079581
-     2   1 H (s)    0.010725   -0.049734    0.002775    0.053434
-     3   1 H (p)   -0.001660    0.027998    0.000026   -0.006121
-     4   1 H (p)   -0.001356    0.017019   -0.000177   -0.015764
-     5   1 H (p)    0.002756    0.000206   -0.009963    0.000068
-     6   2 F (s)   -0.000791    0.003247   -0.000062   -0.004924
-     7   2 F (s)    0.005611   -0.048271    0.000535    0.059284
-     8   2 F (s)    0.014350   -0.101191    0.001114    0.133155
-     9   2 F (p)   -0.015247   -0.091792   -0.007959   -0.486848
-    10   2 F (p)    0.027967   -0.481955   -0.003123    0.030945
-    11   2 F (p)    0.065187    0.007782   -0.542417    0.005617
-    12   2 F (p)   -0.008375   -0.061724   -0.005023   -0.306396
-    13   2 F (p)    0.016043   -0.288681   -0.001930    0.016435
-    14   2 F (p)    0.039967    0.004755   -0.327789    0.003405
-    15   2 F (d)    0.001706   -0.017350    0.000112    0.015051
-    16   2 F (d)   -0.001989   -0.000231    0.014609   -0.000146
-    17   2 F (d)    0.001204   -0.005559    0.000180    0.011421
-    18   2 F (d)    0.002888    0.000311   -0.020751    0.000195
-    19   2 F (d)    0.000269   -0.019035   -0.000405   -0.016682
-    20   3 O (s)   -0.001318    0.006813   -0.000146   -0.009008
-    21   3 O (s)   -0.008036    0.022729    0.000562    0.125349
-    22   3 O (s)    0.000016   -0.015695    0.002363    0.302738
-    23   3 O (p)    0.022745   -0.325519    0.000259    0.240409
-    24   3 O (p)   -0.004263   -0.154550   -0.006277   -0.336532
-    25   3 O (p)    0.055147    0.005426   -0.355212    0.003255
-    26   3 O (p)    0.005542   -0.122992   -0.000951    0.066319
-    27   3 O (p)   -0.000945   -0.093428   -0.003212   -0.159966
-    28   3 O (p)    0.032872    0.003218   -0.193306    0.001372
-    29   3 O (d)    0.001886   -0.017049    0.000282    0.033551
-    30   3 O (d)    0.003500    0.000385   -0.025796    0.000242
-    31   3 O (d)    0.002036   -0.002740    0.000454    0.018284
-    32   3 O (d)   -0.002603   -0.000317    0.021903   -0.000224
-    33   3 O (d)   -0.001039    0.030320    0.000459    0.015928
-    34   4 He(s)    0.583979    0.031088    0.092007   -0.025492
-    35   4 He(s)    0.505429    0.027268    0.077043   -0.019508
-    36   4 He(p)    0.000418   -0.000133    0.000494    0.000018
-    37   4 He(p)    0.000780   -0.000135   -0.000017   -0.000300
-    38   4 He(p)    0.000129    0.000094    0.001825   -0.000486
-    ---------------------------------------------------------------
-
-  - Printing molecular orbitals: 9, 10, 11, 12
-
-     AO   Atom          9          10          11          12
-    ---------------------------------------------------------------
-     1   1 H (s)   -0.318499    0.000366    0.138295   -0.172452
-     2   1 H (s)   -0.107818    0.003893    1.259675    0.080960
-     3   1 H (p)    0.027652   -0.000207   -0.005360    0.006806
-     4   1 H (p)    0.016117   -0.000172   -0.001551   -0.052593
-     5   1 H (p)   -0.000023   -0.023285    0.000176   -0.000052
-     6   2 F (s)   -0.003041    0.000009    0.005791   -0.025245
-     7   2 F (s)   -0.009512   -0.000161   -0.006620    0.168169
-     8   2 F (s)    0.009600   -0.000770   -0.100364    1.403049
-     9   2 F (p)    0.241524   -0.000196    0.084165    0.269674
-    10   2 F (p)    0.393282   -0.000626    0.004552   -0.213506
-    11   2 F (p)    0.000873    0.439501   -0.000040    0.000358
-    12   2 F (p)    0.193930   -0.000301    0.097243    0.803643
-    13   2 F (p)    0.313425   -0.000442    0.016500   -0.672939
-    14   2 F (p)    0.000835    0.374469   -0.000918   -0.000225
-    15   2 F (d)    0.001293    0.000013    0.001956    0.000021
-    16   2 F (d)    0.000018    0.004604   -0.000114   -0.000020
-    17   2 F (d)    0.001296    0.000035    0.000321    0.000538
-    18   2 F (d)   -0.000006   -0.005129    0.000143    0.000021
-    19   2 F (d)   -0.000918   -0.000009   -0.009536    0.004186
-    20   3 O (s)   -0.002128    0.000003    0.031928    0.039378
-    21   3 O (s)    0.103206   -0.000640   -0.072145   -0.092926
-    22   3 O (s)    0.256227   -0.002005   -0.688410   -1.318730
-    23   3 O (p)   -0.169852   -0.000263   -0.230091    0.315217
-    24   3 O (p)   -0.399153    0.000443   -0.186109   -0.150294
-    25   3 O (p)   -0.001267   -0.583489    0.005015    0.000503
-    26   3 O (p)   -0.123234   -0.001042   -0.390581    1.168829
-    27   3 O (p)   -0.290064    0.000262   -0.288216   -0.827323
-    28   3 O (p)   -0.001042   -0.473365    0.000575   -0.000301
-    29   3 O (d)   -0.010548   -0.000039   -0.005285   -0.020065
-    30   3 O (d)   -0.000031   -0.009001    0.000103    0.000022
-    31   3 O (d)    0.012458    0.000065    0.001082    0.001328
-    32   3 O (d)   -0.000002   -0.007100   -0.000121   -0.000033
-    33   3 O (d)   -0.005606    0.000011    0.009632    0.007561
-    34   4 He(s)   -0.000523    0.022176   -0.030857    0.011048
-    35   4 He(s)    0.005747    0.019569   -0.045475   -0.005694
-    36   4 He(p)   -0.000251   -0.000411    0.001654    0.002957
-    37   4 He(p)   -0.000385    0.000689    0.001190   -0.001300
-    38   4 He(p)   -0.000345    0.002810   -0.003820    0.003310
-    ---------------------------------------------------------------
-
-  - Printing molecular orbitals: 13, 14, 15, 16
-
-     AO   Atom         13          14          15          16
-    ---------------------------------------------------------------
-     1   1 H (s)   -1.218843    0.028433   -0.002095    0.696236
-     2   1 H (s)    1.088889   -0.062203    0.083015    0.084575
-     3   1 H (p)   -0.174320   -0.008811   -0.129170   -0.323074
-     4   1 H (p)   -0.128775    0.017684    0.076382   -0.104515
-     5   1 H (p)    0.000584    0.154775   -0.037518   -0.004213
-     6   2 F (s)   -0.007831    0.001412    0.010038   -0.046211
-     7   2 F (s)   -0.088906    0.008324    0.039849   -0.085195
-     8   2 F (s)   -0.300472   -0.134973   -0.690666    0.311640
-     9   2 F (p)   -0.098177    0.041266    0.172267    0.010672
-    10   2 F (p)   -0.051563   -0.039420   -0.249115    0.173747
-    11   2 F (p)   -0.000960   -0.153468    0.030364    0.001670
-    12   2 F (p)   -0.226004   -0.020653   -0.083028    0.373372
-    13   2 F (p)    0.074435    0.026965    0.189819   -0.063607
-    14   2 F (p)    0.001469   -0.031871    0.009903    0.001729
-    15   2 F (d)    0.001163    0.018890    0.091129    0.025460
-    16   2 F (d)   -0.000011    0.018177   -0.003867   -0.000303
-    17   2 F (d)    0.002310    0.011523    0.049757   -0.001784
-    18   2 F (d)    0.000028   -0.020525    0.004292    0.000310
-    19   2 F (d)    0.020331   -0.004496   -0.019288    0.014101
-    20   3 O (s)    0.052014   -0.051836   -0.133067   -0.119235
-    21   3 O (s)    0.192393   -0.124745   -0.318093   -0.381361
-    22   3 O (s)   -0.041228    0.197674    0.568816   -0.335336
-    23   3 O (p)    0.212513    0.130420    0.715723    0.365130
-    24   3 O (p)    0.335069   -0.112062   -0.567016    0.614732
-    25   3 O (p)    0.001237   -0.825116    0.177128    0.014173
-    26   3 O (p)   -0.153760   -0.171214   -0.986696   -0.765042
-    27   3 O (p)    0.162574    0.143399    0.680552   -1.254432
-    28   3 O (p)   -0.002571    0.904389   -0.197041   -0.016499
-    29   3 O (d)   -0.065222   -0.003923   -0.031151    0.045604
-    30   3 O (d)   -0.000031   -0.016172    0.003186    0.000161
-    31   3 O (d)    0.055882   -0.002089   -0.017799   -0.005121
-    32   3 O (d)    0.000089    0.039676   -0.008856   -0.000808
-    33   3 O (d)   -0.029180    0.001981    0.004086   -0.051406
-    34   4 He(s)   -0.087585   -0.377006    0.013244   -0.012270
-    35   4 He(s)    0.021065    0.329714   -0.012753    0.013964
-    36   4 He(p)    0.004361   -0.002892   -0.004325   -0.003983
-    37   4 He(p)    0.003447   -0.002734    0.004443   -0.005958
-    38   4 He(p)   -0.013535   -0.038951    0.001495    0.004858
-    ---------------------------------------------------------------
-
-  - Printing molecular orbitals: 17, 18, 19, 20
-
-     AO   Atom         17          18          19          20
-    ---------------------------------------------------------------
-     1   1 H (s)    0.028952   -0.063487    0.163719   -0.017149
-     2   1 H (s)   -0.034115   -0.193057   -0.276935   -0.215793
-     3   1 H (p)   -0.366633    0.056085   -0.103038    0.016530
-     4   1 H (p)    0.373310    0.018370    0.164873    0.057471
-     5   1 H (p)    0.025283   -0.496748   -0.144596   -0.032308
-     6   2 F (s)   -0.005170    0.006918   -0.058022   -0.015262
-     7   2 F (s)    0.073545    0.036660   -0.197801   -0.042531
-     8   2 F (s)    0.778576    0.066813   -0.066870    0.001684
-     9   2 F (p)   -0.732974   -0.103573    0.140989   -0.012333
-    10   2 F (p)   -0.103458    0.201237   -0.768585   -0.077868
-    11   2 F (p)    0.003407   -0.346963   -0.176356    0.796230
-    12   2 F (p)    1.242828    0.149436   -0.356289   -0.038151
-    13   2 F (p)   -0.199194   -0.324779    1.172356    0.113675
-    14   2 F (p)   -0.012121    0.461603    0.223029   -1.039095
-    15   2 F (d)   -0.006853    0.005087   -0.013704    0.001889
-    16   2 F (d)    0.000798   -0.005767   -0.000032   -0.015938
-    17   2 F (d)   -0.016794    0.008589   -0.011750    0.004452
-    18   2 F (d)   -0.000491   -0.005015   -0.003774    0.019808
-    19   2 F (d)    0.003936    0.000517   -0.005793   -0.001021
-    20   3 O (s)    0.054169   -0.093360   -0.098409   -0.111438
-    21   3 O (s)    0.118758   -0.201043   -0.270566   -0.258311
-    22   3 O (s)   -1.001031    0.149795    0.873182    0.435976
-    23   3 O (p)   -0.125426   -0.079597   -0.136438   -0.092595
-    24   3 O (p)   -0.049859   -0.051013    0.159345    0.008369
-    25   3 O (p)   -0.033621    0.203003    0.026256    0.042442
-    26   3 O (p)    0.553967    0.250435   -0.079474    0.144029
-    27   3 O (p)   -0.583136    0.141423   -0.290961    0.047838
-    28   3 O (p)    0.039430   -0.259295   -0.056776    0.244572
-    29   3 O (d)    0.090485    0.031208   -0.078238   -0.003268
-    30   3 O (d)    0.000980   -0.045581   -0.016409    0.012407
-    31   3 O (d)    0.043644    0.038692   -0.075432    0.007282
-    32   3 O (d)    0.003442   -0.054013   -0.013686   -0.021159
-    33   3 O (d)   -0.055066   -0.007238    0.019206    0.000307
-    34   4 He(s)    0.084945   -0.777168   -0.098272   -0.528158
-    35   4 He(s)   -0.082398    0.819703    0.112863    0.559071
-    36   4 He(p)    0.002205   -0.003747   -0.004014    0.005644
-    37   4 He(p)   -0.001790    0.002467   -0.003937   -0.007246
-    38   4 He(p)    0.004812    0.010715    0.004821    0.003163
-    ---------------------------------------------------------------
-
-  - Cleaning up Self-consistent field DIIS Hartree-Fock solver
-
-
-  :: First order coupled cluster properties engine
-  :: J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, A. Paul 2019
-
-  Calculates dipole transition moments and oscillator strengths between the 
-  ground state and the excited states.
-
-  This is a CCS first order properties calculation. The following tasks will be performed:
-
-     - Cholesky decomposition of the ERI-matrix
-     - Calculation of the ground state amplitudes and energy (diis-algorithm)
-     - Calculation of the multipliers (davidson-algorithm)
-     - Calculation of the valence excitation vectors and energies (davidson-algorithm)
-     - Calculation of the first order property (EOM)
-
-
-  :: Cholesky decomposition of electronic repulsion integrals solver
-  :: E. F. Kjønstad, S. D. Folkestad, 2018
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -377,7 +119,8 @@
 
   Once the Cholesky basis has been determined, the vectors L^J are constructed 
   and stored to disk. These may either be used directly, or be transformed 
-  to the MO basis for use in post-HF calculations.
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
 
   - Cholesky decomposition settings:
 
@@ -385,74 +128,229 @@
      Span factor:           0.10E-01
      Max qual:                  1000
 
+  - Cholesky decomposition system details:
+
      Total number of AOs:                    38
      Total number of shell pairs:           171
      Total number of AO pairs:              741
 
-  - Preparing diagonal for decomposition:
+     Significant shell pairs:               161
+     Significant AO pairs:                  697
 
-     Significant shell pairs:                   161
-     Significant AO pairs:                      697
-
-     Construct shell pairs:                     171
-     Construct AO pairs:                        741
+     Construct shell pairs:                 171
+     Construct AO pairs:                    741
 
   Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
   -------------------------------------------------------------------------------------------------------
-     1              671 /      150       0.53537E+01     194             49                32879
-     2              524 /      128       0.52718E-01     398            155                81220
-     3              484 /      114       0.52421E-03     303            243               117612
-     4              362 /       92       0.51415E-05     311            362               131044
-     5              232 /       54       0.50229E-07     225            475               110200
-     6                0 /        0       0.50128E-09     127            550                    0
+     1               671 /     150       0.53537E+01         194             49             32879
+     2               524 /     128       0.52718E-01         398            155             81220
+     3               484 /     114       0.52421E-03         303            243            117612
+     4               362 /      92       0.51415E-05         311            362            131044
+     5               232 /      54       0.50229E-07         225            475            110200
+     6                 0 /       0       0.50128E-09         127            550                 0
   -------------------------------------------------------------------------------------------------------
 
-  - Summary of Cholesky decomposition of electronic repulsion integrals: 
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
 
-     Final number of Cholesky vectors:        550
+     Final number of Cholesky vectors: 550
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9471E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.2220E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1554E-14
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.28200
-     Total cpu time (sec):               1.93476
+     Total wall time (sec):              0.29200
+     Total cpu time (sec):               0.49050
 
 
-  :: DIIS CC ground solver
-  :: E. F. Kjønstad, S. D. Folkestad, 2018
+  :: RHF wavefunction
+  ======================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+  - Orbital details:
+
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         28
+     Number of molecular orbitals:       38
+     Number of atomic orbitals:          38
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+   - Self-consistent field DIIS Hartree-Fock solver
+  ----------------------------------------------------
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
+  matrix is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:                         8
+     Cumulative Fock threshold:       0.10E+01
+
+     Energy threshold:              0.1000E-10
+     Gradient threshold:            0.1000E-10
+
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Fock precision:                0.1000E-33
+     Integral cutoff:               0.1000E-16
+
+  - Setting initial AO density to SAD
+
+     Energy of initial guess:              -178.316435989142
+     Number of electrons in guess:           20.000000000000
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1          -177.452460025510     0.7565E-01     0.1775E+03
+     2          -177.479057956534     0.1346E-01     0.2660E-01
+     3          -177.480054154998     0.4309E-02     0.9962E-03
+     4          -177.480180562238     0.1844E-02     0.1264E-03
+     5          -177.480194220839     0.3631E-03     0.1366E-04
+     6          -177.480195441222     0.7394E-04     0.1220E-05
+     7          -177.480195516819     0.2206E-04     0.7560E-07
+     8          -177.480195527024     0.5084E-05     0.1021E-07
+     9          -177.480195527848     0.1218E-05     0.8233E-09
+    10          -177.480195527874     0.2531E-06     0.2655E-10
+    11          -177.480195527875     0.4375E-07     0.1222E-11
+    12          -177.480195527875     0.9241E-08     0.8527E-13
+    13          -177.480195527875     0.4370E-08     0.1705E-12
+    14          -177.480195527875     0.1744E-08     0.1137E-12
+    15          -177.480195527875     0.3643E-09     0.5684E-13
+    16          -177.480195527875     0.1712E-09     0.1137E-12
+    17          -177.480195527875     0.5855E-10     0.2842E-13
+    18          -177.480195527875     0.5045E-11     0.8527E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 18 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.600390987886
+     Nuclear repulsion energy:      48.499011140892
+     Electronic energy:           -225.979206668767
+     Total energy:                -177.480195527875
+
+  - Molecular orbital energies
+
+  -----------------------------------------------------------------------------------
+   1 -26.334192004700  11   0.160784516403  21   1.557386191143  31   3.061118983645
+   2 -20.644662877237  12   0.548538270213  22   1.685781695475  32   3.534276472644
+   3  -1.894491828922  13   0.716617362076  23   1.771160576632  33   3.763035846069
+   4  -1.204308976031  14   1.106279200333  24   2.107888307849  34   3.962304853878
+   5  -0.911949983661  15   1.130688493503  25   2.500306219284  35   4.000653348396
+   6  -0.866287973463  16   1.195338322958  26   2.529687453714  36   4.553980959887
+   7  -0.832614061196  17   1.332576309251  27   2.529802664165  37   4.580686751359
+   8  -0.790123932097  18   1.427802958738  28   2.601526974778  38   5.083719172632
+   9  -0.497908722170  19   1.453664008356  29   2.725866593376
+  10  -0.439606471484  20   1.485675098613  30   2.888341323819
+  -----------------------------------------------------------------------------------
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              1.19200
+     Total cpu time (sec):               2.16701
+
+
+  :: CCS wavefunction
+  ======================
+
+     Bath orbital(s):         False
+     Core-valence separation: False
+
+   - Number of orbitals:
+
+     Occupied orbitals:    10
+     Virtual orbitals:     28
+     Molecular orbitals:   38
+     Atomic orbitals:      38
+
+   - Number of ground state amplitudes:
+
+     Single excitation amplitudes:  280
+
+
+  :: Coupled cluster response engine
+  =====================================
+
+  Calculates dipole transition moments and oscillator strengths between 
+
+  the ground state and the excited states.
+
+  This is a CCS response calculation.
+  The following tasks will be performed:
+
+     1) Preparation of MO basis and integrals
+     2) Calculation of the ground state (diis algorithm)
+     3) Calculation of the multipliers (davidson algorithm)
+     4) Calculation of the excited state (davidson algorithm)
+     5) Calculation of the transition moments (EOM)
+
+
+  1) Preparation of MO basis and integrals
+
+  - Settings for integral handling:
+
+     Cholesky vectors in memory: True
+     ERI matrix in memory:       False
+
+
+  2) Calculation of the ground state (diis algorithm)
+
+   - DIIS coupled cluster ground state solver
+  ----------------------------------------------
 
   A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
   of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
-  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 13. 
-  
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
+  13.
 
   - DIIS CC ground state solver settings:
 
      Omega threshold:           0.10E-10
-     Energy threshold:          0.10E-05
+     Energy threshold:          0.10E-10
 
      DIIS dimension:                   8
      Max number of iterations:       100
 
-  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) 
+     Storage: disk
+
+  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -177.480195527875     0.4417E-10     0.1775E+03
-    2          -177.480195527875     0.8189E-11     0.0000E+00
-  --------------------------------------------------------------
+    1          -177.480195527875     0.4424E-10     0.1775E+03
+    2          -177.480195527875     0.8197E-11     0.0000E+00
+  ---------------------------------------------------------------
+  Convergence criterion met in 2 iterations!
 
-  Convergence criterion met in   2 iterations!
-
-  - DIIS CC ground state solver summary:
+  - Ground state summary:
 
      Final ground state energy (a.u.):  -177.480195527875
 
+     Correlation energy (a.u.):            0.000000000000
+
      Largest single amplitudes:
      -----------------------------------
-        a       i         t(a,i)             
+        a       i         t(a,i)
      -----------------------------------
         2      4        0.000000000007
         2      8        0.000000000007
@@ -470,57 +368,65 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.05700
-     Total cpu time (sec):               0.40007
+     Total wall time (sec):              0.03900
+     Total cpu time (sec):               0.08196
 
 
-  :: Davidson coupled cluster multipliers solver
-  :: E. F. Kjønstad, S. D. Folkestad, 2018
+  3) Calculation of the multipliers (davidson algorithm)
+
+   - Davidson coupled cluster multipliers solver
+  -------------------------------------------------
 
   A Davidson solver that solves the multiplier equation: t-bar^T A = -η. 
-  The linear  problem is solved in a reduced space, the dimension of which 
-  is  expanded until the convergence criteria are met.
-
-  A complete description of the algorithm can be found in  E. R. Davidson, 
-  J. Comput. Phys. 17, 87 (1975).
+  This linear equation is solved in a reduced space. A description of 
+  the algorithm can be found in E. R. Davidson, J. Comput. Phys. 17, 87 
+  (1975).
 
   - Davidson CC multipliers solver settings:
 
-     Residual threshold:        0.10E-10
+     Residual threshold:        0.10E-11
      Max number of iterations:       100
+
+     Reduced space basis and transforms are stored on disk.
 
   Iteration     Residual norm
   ---------------------------
-    1             0.1404E-10
-    2             0.3161E-11
+    1             0.1405E-10
+    2             0.3164E-11
+    3             0.8498E-12
   ---------------------------
+
+  Convergence criterion met in 3 iterations!
 
   - Davidson CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
-        a       i         r(a,i)             
+        a       i         t(a,i)
      -----------------------------------
         2      8        0.000000000021
-        2      9       -0.000000000020
+        2      9       -0.000000000021
         1      8       -0.000000000018
         2      4        0.000000000018
-        2     10        0.000000000016
-        1     10        0.000000000013
+        2     10        0.000000000017
+        1     10        0.000000000014
         5      9       -0.000000000010
-        1      9       -0.000000000008
+        1      9       -0.000000000009
        18      4       -0.000000000008
-        1      6        0.000000000007
+       15      4        0.000000000008
      ------------------------------------
 
   - Finished solving the CCS multipliers equations
 
-     Total wall time (sec):              0.00300
-     Total cpu time (sec):               0.01040
+     Total wall time (sec):               0.01100
+     Total cpu time (sec):                0.03710
 
 
-  :: Davidson coupled cluster excited state solver
-  :: E. F. Kjønstad, S. D. Folkestad, 2018
+  4) Calculation of the excited state (davidson algorithm)
+     Calculating right vectors
+
+   - Davidson coupled cluster excited state solver
+  ---------------------------------------------------
 
   A Davidson solver that calculates the lowest eigenvalues and  the right 
   or left eigenvectors of the Jacobian matrix, A. The eigenvalue  problem 
@@ -532,246 +438,217 @@
 
   - Settings for coupled cluster excited state solver (Davidson):
 
-     Energy threshold:    0.10E-05
-     Residual threshold:  0.10E-10
+     Calculation type:    valence
+     Excitation vectors:  right
 
-     Number of singlet states:   2
-     Max number of iterations: 100
+     Energy threshold:                0.10E-05
+     Residual threshold:              0.10E-10
 
-     Solving for the right eigenvectors.
+     Number of singlet states:               2
+     Max number of iterations:             100
 
-     Max reduced space dimension:  100
+     Max reduced space dimension:          100
 
-  No preparation for ccs excited state equation.
-
-  Orthonormalizing the trial vectors.
+     Reduced space basis and transforms are stored on disk.
 
   Iteration:                  1
   Reduced space dimension:    2
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.277442657796         0.000000000000            0.1346E+00
-   2       0.382190189895         0.000000000000            0.1531E+00
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.277442657796    0.000000000000     0.1346E+00   0.2774E+00
+     2   0.382190189895    0.000000000000     0.1531E+00   0.3822E+00
+  ------------------------------------------------------------------------
 
   Iteration:                  2
   Reduced space dimension:    4
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.250849134718         0.000000000000            0.4184E-01
-   2       0.366512146685         0.000000000000            0.4311E-01
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.250270898577    0.000000000000     0.3093E-01   0.2717E-01
+     2   0.366084101126    0.000000000000     0.3983E-01   0.1611E-01
+  ------------------------------------------------------------------------
 
   Iteration:                  3
   Reduced space dimension:    6
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249585470761         0.000000000000            0.1158E-01
-   2       0.364491955068         0.000000000000            0.1658E-01
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249528220067    0.000000000000     0.6985E-02   0.7427E-03
+     2   0.364350685673    0.000000000000     0.1031E-01   0.1733E-02
+  ------------------------------------------------------------------------
 
   Iteration:                  4
   Reduced space dimension:    8
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249490507544         0.000000000000            0.5965E-02
-   2       0.364261401805         0.000000000000            0.8013E-02
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249471912209    0.000000000000     0.4115E-02   0.5631E-04
+     2   0.364242856353    0.000000000000     0.3136E-02   0.1078E-03
+  ------------------------------------------------------------------------
 
   Iteration:                  5
   Reduced space dimension:   10
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249462957226         0.000000000000            0.2566E-02
-   2       0.364239032338         0.000000000000            0.3349E-02
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461396305    0.000000000000     0.8110E-03   0.1052E-04
+     2   0.364236585650    0.000000000000     0.8907E-03   0.6271E-05
+  ------------------------------------------------------------------------
 
   Iteration:                  6
   Reduced space dimension:   12
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461257884         0.000000000000            0.7998E-03
-   2       0.364236081783         0.000000000000            0.6850E-03
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461127132    0.000000000000     0.1442E-03   0.2692E-06
+     2   0.364235956766    0.000000000000     0.2707E-03   0.6289E-06
+  ------------------------------------------------------------------------
 
   Iteration:                  7
   Reduced space dimension:   14
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461126960         0.000000000000            0.1613E-03
-   2       0.364235931749         0.000000000000            0.1788E-03
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121186    0.000000000000     0.2129E-04   0.5946E-08
+     2   0.364235914502    0.000000000000     0.1008E-03   0.4226E-07
+  ------------------------------------------------------------------------
 
   Iteration:                  8
   Reduced space dimension:   16
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121234         0.000000000000            0.2328E-04
-   2       0.364235911657         0.000000000000            0.8399E-04
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121053    0.000000000000     0.3177E-05   0.1330E-09
+     2   0.364235908012    0.000000000000     0.3909E-04   0.6491E-08
+  ------------------------------------------------------------------------
 
   Iteration:                  9
   Reduced space dimension:   18
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121058         0.000000000000            0.6083E-05
-   2       0.364235908114         0.000000000000            0.3360E-04
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.5394E-06   0.2924E-11
+     2   0.364235907335    0.000000000000     0.1010E-04   0.6763E-09
+  ------------------------------------------------------------------------
 
   Iteration:                 10
   Reduced space dimension:   20
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.1430E-05
-   2       0.364235907406         0.000000000000            0.1796E-04
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.1128E-06   0.8435E-13
+     2   0.364235907301    0.000000000000     0.1808E-05   0.3436E-10
+  ------------------------------------------------------------------------
 
   Iteration:                 11
   Reduced space dimension:   22
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.3023E-06
-   2       0.364235907307         0.000000000000            0.6845E-05
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.1991E-07   0.1971E-14
+     2   0.364235907300    0.000000000000     0.4035E-06   0.9584E-12
+  ------------------------------------------------------------------------
 
   Iteration:                 12
   Reduced space dimension:   24
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.5114E-07
-   2       0.364235907300         0.000000000000            0.1359E-05
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.2312E-08   0.7216E-15
+     2   0.364235907300    0.000000000000     0.6352E-07   0.3153E-13
+  ------------------------------------------------------------------------
 
   Iteration:                 13
   Reduced space dimension:   26
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.7864E-08
-   2       0.364235907300         0.000000000000            0.2961E-06
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.3741E-09   0.4441E-15
+     2   0.364235907300    0.000000000000     0.1060E-07   0.1776E-14
+  ------------------------------------------------------------------------
 
   Iteration:                 14
   Reduced space dimension:   28
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.1514E-08
-   2       0.364235907300         0.000000000000            0.8031E-07
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.4645E-10   0.1249E-14
+     2   0.364235907300    0.000000000000     0.1558E-08   0.2609E-14
+  ------------------------------------------------------------------------
 
   Iteration:                 15
   Reduced space dimension:   30
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.2952E-09
-   2       0.364235907300         0.000000000000            0.2154E-07
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.5198E-11   0.8327E-15
+     2   0.364235907300    0.000000000000     0.3256E-09   0.1110E-14
+  ------------------------------------------------------------------------
 
   Iteration:                 16
-  Reduced space dimension:   32
+  Reduced space dimension:   31
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.5129E-10
-   2       0.364235907300         0.000000000000            0.5032E-08
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.4134E-11   0.2442E-14
+     2   0.364235907300    0.000000000000     0.7867E-10   0.6106E-15
+  ------------------------------------------------------------------------
 
   Iteration:                 17
-  Reduced space dimension:   34
+  Reduced space dimension:   32
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.7520E-11
-   2       0.364235907300         0.000000000000            0.1363E-08
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.4128E-11   0.2498E-14
+     2   0.364235907300    0.000000000000     0.1044E-10   0.5551E-15
+  ------------------------------------------------------------------------
 
   Iteration:                 18
-  Reduced space dimension:   35
+  Reduced space dimension:   33
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.6979E-11
-   2       0.364235907300         0.000000000000            0.2319E-09
-  -------------------------------------------------------------------
-
-  Iteration:                 19
-  Reduced space dimension:   36
-
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.6947E-11
-   2       0.364235907300         0.000000000000            0.5093E-10
-  -------------------------------------------------------------------
-
-  Iteration:                 20
-  Reduced space dimension:   37
-
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.6850E-11
-   2       0.364235907300         0.000000000000            0.1502E-10
-  -------------------------------------------------------------------
-
-  Iteration:                 21
-  Reduced space dimension:   38
-
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.6424E-11
-   2       0.364235907300         0.000000000000            0.1866E-11
-  -------------------------------------------------------------------
-
-  Convergence criterion met in  21 iterations!
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.4135E-11   0.1277E-14
+     2   0.364235907300    0.000000000000     0.1417E-11   0.8882E-15
+  ------------------------------------------------------------------------
+  Convergence criterion met in 18 iterations!
 
   - Excitation vector amplitudes:
 
-     Electronic state nr.  1
+     Electronic state nr. 1
 
-     Energy (Hartree):              0.249461121050
-     Fraction singles (|R1|/|R|):   1.000000000000
+     Energy (Hartree):                  0.249461121050
+     Fraction singles (|R1|/|R|):       1.000000000000
 
      Largest single amplitudes:
      -----------------------------------
-        a       i         R(a,i)             
+        a       i         R(a,i)
      -----------------------------------
         1     10        0.973162537047
         3     10       -0.168263402283
         1      7        0.104341703993
         2     10       -0.067100663592
-        3      7       -0.041677102960
-        6     10       -0.038449656359
+        3      7       -0.041677102961
+        6     10       -0.038449656360
        13     10        0.034004833233
-       12     10        0.029446423404
+       12     10        0.029446423405
         2      7       -0.026118722506
        14     10       -0.025855984980
      ------------------------------------
 
-     Electronic state nr.  2
+     Electronic state nr. 2
 
-     Energy (Hartree):              0.364235907300
-     Fraction singles (|R1|/|R|):   1.000000000000
+     Energy (Hartree):                  0.364235907300
+     Fraction singles (|R1|/|R|):       1.000000000000
 
      Largest single amplitudes:
      -----------------------------------
-        a       i         R(a,i)             
+        a       i         R(a,i)
      -----------------------------------
         1      9        0.988736994283
         1      8        0.082941647363
-        3      9       -0.058522705146
+        3      9       -0.058522705147
         4     10       -0.055699997982
         5      8       -0.037061400584
        13      9        0.029217527049
@@ -781,27 +658,28 @@
        12      9        0.022996909818
      ------------------------------------
 
-  - Electronic excitation energies:
+     - Electronic excitation energies:
 
-                                      Excitation energy            
+                                      Excitation energy
                           ------------------------------------------
-     State                (Hartree)             (eV)                
+      State                (Hartree)             (eV)
      ---------------------------------------------------------------
-      1                   0.249461121050         6.788182861870
-      2                   0.364235907300         9.911363875885
+        1                  0.249461121050        6.788182861870
+        2                  0.364235907300        9.911363875885
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  - Storing excited states to file.
-
   - Finished solving the CCS excited state equations (right)
 
-     Total wall time (sec):              0.04800
-     Total cpu time (sec):               0.33590
+     Total wall time (sec):              0.11700
+     Total cpu time (sec):               0.39831
 
 
-  :: Davidson coupled cluster excited state solver
-  :: E. F. Kjønstad, S. D. Folkestad, 2018
+  4) Calculation of the excited state (davidson algorithm)
+     Calculating left vectors
+
+   - Davidson coupled cluster excited state solver
+  ---------------------------------------------------
 
   A Davidson solver that calculates the lowest eigenvalues and  the right 
   or left eigenvectors of the Jacobian matrix, A. The eigenvalue  problem 
@@ -813,289 +691,259 @@
 
   - Settings for coupled cluster excited state solver (Davidson):
 
-     Energy threshold:    0.10E-05
-     Residual threshold:  0.10E-10
+     Calculation type:    valence
+     Excitation vectors:  left
 
-     Number of singlet states:   2
-     Max number of iterations: 100
+     Energy threshold:                0.10E-05
+     Residual threshold:              0.10E-10
 
-     Solving for the left eigenvectors.
+     Number of singlet states:               2
+     Max number of iterations:             100
 
-     Max reduced space dimension:  100
+     Max reduced space dimension:          100
 
-  No preparation for ccs excited state equation.
-
-  Orthonormalizing the trial vectors.
+     Reduced space basis and transforms are stored on disk.
 
   Iteration:                  1
   Reduced space dimension:    2
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.277442657796         0.000000000000            0.1346E+00
-   2       0.382190189895         0.000000000000            0.1531E+00
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.277442657796    0.000000000000     0.1346E+00   0.2774E+00
+     2   0.382190189895    0.000000000000     0.1531E+00   0.3822E+00
+  ------------------------------------------------------------------------
 
   Iteration:                  2
   Reduced space dimension:    4
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.250849134718         0.000000000000            0.4184E-01
-   2       0.366512146685         0.000000000000            0.4311E-01
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.250270898577    0.000000000000     0.3093E-01   0.2717E-01
+     2   0.366084101127    0.000000000000     0.3983E-01   0.1611E-01
+  ------------------------------------------------------------------------
 
   Iteration:                  3
   Reduced space dimension:    6
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249585470761         0.000000000000            0.1158E-01
-   2       0.364491955068         0.000000000000            0.1658E-01
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249528220067    0.000000000000     0.6985E-02   0.7427E-03
+     2   0.364350685673    0.000000000000     0.1031E-01   0.1733E-02
+  ------------------------------------------------------------------------
 
   Iteration:                  4
   Reduced space dimension:    8
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249490507544         0.000000000000            0.5965E-02
-   2       0.364261401805         0.000000000000            0.8013E-02
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249471912209    0.000000000000     0.4115E-02   0.5631E-04
+     2   0.364242856353    0.000000000000     0.3136E-02   0.1078E-03
+  ------------------------------------------------------------------------
 
   Iteration:                  5
   Reduced space dimension:   10
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249462957226         0.000000000000            0.2566E-02
-   2       0.364239032338         0.000000000000            0.3349E-02
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461396305    0.000000000000     0.8110E-03   0.1052E-04
+     2   0.364236585650    0.000000000000     0.8907E-03   0.6271E-05
+  ------------------------------------------------------------------------
 
   Iteration:                  6
   Reduced space dimension:   12
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461257884         0.000000000000            0.7998E-03
-   2       0.364236081783         0.000000000000            0.6850E-03
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461127132    0.000000000000     0.1442E-03   0.2692E-06
+     2   0.364235956766    0.000000000000     0.2707E-03   0.6289E-06
+  ------------------------------------------------------------------------
 
   Iteration:                  7
   Reduced space dimension:   14
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461126960         0.000000000000            0.1613E-03
-   2       0.364235931749         0.000000000000            0.1788E-03
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121186    0.000000000000     0.2129E-04   0.5946E-08
+     2   0.364235914502    0.000000000000     0.1008E-03   0.4226E-07
+  ------------------------------------------------------------------------
 
   Iteration:                  8
   Reduced space dimension:   16
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121234         0.000000000000            0.2328E-04
-   2       0.364235911657         0.000000000000            0.8399E-04
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121053    0.000000000000     0.3177E-05   0.1330E-09
+     2   0.364235908012    0.000000000000     0.3909E-04   0.6491E-08
+  ------------------------------------------------------------------------
 
   Iteration:                  9
   Reduced space dimension:   18
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121058         0.000000000000            0.6083E-05
-   2       0.364235908114         0.000000000000            0.3360E-04
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.5394E-06   0.2924E-11
+     2   0.364235907335    0.000000000000     0.1010E-04   0.6763E-09
+  ------------------------------------------------------------------------
 
   Iteration:                 10
   Reduced space dimension:   20
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.1430E-05
-   2       0.364235907406         0.000000000000            0.1796E-04
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.1128E-06   0.8379E-13
+     2   0.364235907301    0.000000000000     0.1808E-05   0.3436E-10
+  ------------------------------------------------------------------------
 
   Iteration:                 11
   Reduced space dimension:   22
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.3023E-06
-   2       0.364235907307         0.000000000000            0.6845E-05
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.1991E-07   0.3914E-14
+     2   0.364235907300    0.000000000000     0.4035E-06   0.9576E-12
+  ------------------------------------------------------------------------
 
   Iteration:                 12
   Reduced space dimension:   24
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.5114E-07
-   2       0.364235907300         0.000000000000            0.1359E-05
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.2312E-08   0.2498E-15
+     2   0.364235907300    0.000000000000     0.6352E-07   0.3247E-13
+  ------------------------------------------------------------------------
 
   Iteration:                 13
   Reduced space dimension:   26
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.7864E-08
-   2       0.364235907300         0.000000000000            0.2961E-06
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.3741E-09   0.1082E-14
+     2   0.364235907300    0.000000000000     0.1060E-07   0.2220E-15
+  ------------------------------------------------------------------------
 
   Iteration:                 14
   Reduced space dimension:   28
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.1514E-08
-   2       0.364235907300         0.000000000000            0.8031E-07
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.4645E-10   0.5551E-16
+     2   0.364235907300    0.000000000000     0.1558E-08   0.3331E-15
+  ------------------------------------------------------------------------
 
   Iteration:                 15
   Reduced space dimension:   30
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.2952E-09
-   2       0.364235907300         0.000000000000            0.2154E-07
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.5199E-11   0.1332E-14
+     2   0.364235907300    0.000000000000     0.3256E-09   0.1110E-14
+  ------------------------------------------------------------------------
 
   Iteration:                 16
-  Reduced space dimension:   32
+  Reduced space dimension:   31
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.5129E-10
-   2       0.364235907300         0.000000000000            0.5032E-08
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.4134E-11   0.6939E-15
+     2   0.364235907300    0.000000000000     0.7867E-10   0.5551E-16
+  ------------------------------------------------------------------------
 
   Iteration:                 17
-  Reduced space dimension:   34
+  Reduced space dimension:   32
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.7519E-11
-   2       0.364235907300         0.000000000000            0.1363E-08
-  -------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.4129E-11   0.1554E-14
+     2   0.364235907300    0.000000000000     0.1044E-10   0.2776E-15
+  ------------------------------------------------------------------------
 
   Iteration:                 18
-  Reduced space dimension:   35
+  Reduced space dimension:   33
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.6977E-11
-   2       0.364235907300         0.000000000000            0.2319E-09
-  -------------------------------------------------------------------
-
-  Iteration:                 19
-  Reduced space dimension:   36
-
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.6950E-11
-   2       0.364235907300         0.000000000000            0.5093E-10
-  -------------------------------------------------------------------
-
-  Iteration:                 20
-  Reduced space dimension:   37
-
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.6849E-11
-   2       0.364235907300         0.000000000000            0.1502E-10
-  -------------------------------------------------------------------
-
-  Iteration:                 21
-  Reduced space dimension:   38
-
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  -------------------------------------------------------------------
-   1       0.249461121050         0.000000000000            0.6424E-11
-   2       0.364235907300         0.000000000000            0.1867E-11
-  -------------------------------------------------------------------
-
-  Convergence criterion met in  21 iterations!
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.249461121050    0.000000000000     0.4136E-11   0.4163E-15
+     2   0.364235907300    0.000000000000     0.1417E-11   0.3331E-15
+  ------------------------------------------------------------------------
+  Convergence criterion met in 18 iterations!
 
   - Excitation vector amplitudes:
 
-     Electronic state nr.  1
+     Electronic state nr. 1
 
-     Energy (Hartree):              0.249461121050
-     Fraction singles (|L1|/|L|):   1.000000000000
+     Energy (Hartree):                  0.249461121050
+     Fraction singles (|L1|/|L|):       1.000000000000
 
      Largest single amplitudes:
      -----------------------------------
-        a       i         L(a,i)             
+        a       i         L(a,i)
      -----------------------------------
         1     10        0.973162537047
         3     10       -0.168263402283
-        1      7        0.104341703993
+        1      7        0.104341703994
         2     10       -0.067100663593
         3      7       -0.041677102961
         6     10       -0.038449656359
        13     10        0.034004833233
        12     10        0.029446423404
-        2      7       -0.026118722505
+        2      7       -0.026118722506
        14     10       -0.025855984980
      ------------------------------------
 
-     Electronic state nr.  2
+     Electronic state nr. 2
 
-     Energy (Hartree):              0.364235907300
-     Fraction singles (|L1|/|L|):   1.000000000000
+     Energy (Hartree):                  0.364235907300
+     Fraction singles (|L1|/|L|):       1.000000000000
 
      Largest single amplitudes:
      -----------------------------------
-        a       i         L(a,i)             
+        a       i         L(a,i)
      -----------------------------------
-        1      9        0.988736994284
-        1      8        0.082941647363
-        3      9       -0.058522705145
-        4     10       -0.055699997982
-        5      8       -0.037061400583
-       13      9        0.029217527049
-        4      7       -0.028872707042
-        3      8       -0.028257047906
-        9      9        0.023261990233
-       12      9        0.022996909818
+        1      9       -0.988736994284
+        1      8       -0.082941647363
+        3      9        0.058522705145
+        4     10        0.055699997982
+        5      8        0.037061400583
+       13      9       -0.029217527050
+        4      7        0.028872707042
+        3      8        0.028257047905
+        9      9       -0.023261990233
+       12      9       -0.022996909818
      ------------------------------------
 
-  - Electronic excitation energies:
+     - Electronic excitation energies:
 
-                                      Excitation energy            
+                                      Excitation energy
                           ------------------------------------------
-     State                (Hartree)             (eV)                
+      State                (Hartree)             (eV)
      ---------------------------------------------------------------
-      1                   0.249461121050         6.788182861870
-      2                   0.364235907300         9.911363875885
+        1                  0.249461121050        6.788182861870
+        2                  0.364235907300        9.911363875885
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  - Storing excited states to file.
-
   - Finished solving the CCS excited state equations (left)
 
-     Total wall time (sec):              0.05000
-     Total cpu time (sec):               0.35439
+     Total wall time (sec):              0.12000
+     Total cpu time (sec):               0.39910
 
-  No preparations for the density for ccs wavefunction.
 
-  :: EOM first order properties calculation
-  :: J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, A. Paul 2019
+  5) Calculation of the transition moments (EOM)
 
-  - Summary of EOM first order properties calculation:
+  :: EOM properties calculation
 
-     State   1:
+  - Summary of EOM properties calculation:
+
+     State 1:
      ----------
+     Calculation type:                             EOM
      Excitation energy [E_h]:           0.249461121050
      Excitation energy [eV]:            6.788182861870
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
      --------------------------------------------------------------------------
-     Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >  
+     Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
      --------------------------------------------------------------------------
      X          -0.0028386219     -0.0056772438            0.0000161155
      Y          -0.0010577793     -0.0021155586            0.0000022378
@@ -1103,15 +951,16 @@
      --------------------------------------------------------------------------
      Oscillator strength [a.u.]:      0.002792045493
 
-     State   2:
+     State 2:
      ----------
+     Calculation type:                             EOM
      Excitation energy [E_h]:           0.364235907300
      Excitation energy [eV]:            9.911363875885
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
      --------------------------------------------------------------------------
-     Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >  
+     Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
      --------------------------------------------------------------------------
      X           0.5893698627      1.1787397255            0.6947136702
      Y           0.3328979667      0.6657959334            0.2216421125
@@ -1119,18 +968,9 @@
      --------------------------------------------------------------------------
      Oscillator strength [a.u.]:      0.222517129664
 
-  - Finalizing the CCS first order properties calculation
+  - Timings for the CCS response calculation
 
-     Total wall time (sec):              0.48500
-     Total cpu time (sec):               3.29282
-
-  - Cleaning up CCS wavefunction
-
-  Mismatch in memory according to eT and specified on input:
-
-     Memory available (eT):          7.9830 GB
-     Memory available (input):       8.0000 GB
-
-  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
+     Total wall time (sec):              0.30800
+     Total cpu time (sec):               0.95101
 
   eT terminated successfully!

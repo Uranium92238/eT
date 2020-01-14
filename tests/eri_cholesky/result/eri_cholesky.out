@@ -1,44 +1,49 @@
 
 
 
-                       eT - a coupled cluster program
-       Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch
+                     eT - an electronic structure program
 
-  ----------------------------------------------------------------------------------
-   Author:                 Contribution(s):
-  ----------------------------------------------------------------------------------
-   Josefine H. Andersen   first order properties
-   Alice Balbi            CC propagation
-   Sarai D. Folkestad     program design, HF, CCS, 
-                          CC2, CCSD, Libint-interface, 
-                          Cholesky decomposition, 
-                          Davidson-tool, CVS, DIIS-tool, 
-                          zeroth order properties, 
-                          first order properties, 
-                          IP, frozen core, MLCC2, 
-                          MLHF, visualization
-   Tommaso Giovannini     QM/MM, PCM, Libint-interface
-   Linda Goletto          CC2, MLHF
-   Tor S. Haugland        SAD
-   Anders Hutcheson       frozen HF orbitals
-   Ida-Marie Høyvik       MLHF, frozen HF orbitals
-   Eirik F. Kjønstad      program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool, 
-                          Cholesky decomposition, Libint-interface, Davidson-tool, 
-                          zeroth order properties, first order properties, 
-                          SAD, BFGS-tool
-   Rolf H. Myhre          CC3, Runtest-interface, launch script, file system
-   Alexander C. Paul      CC2, CC3, first order properties
-   Andreas Skeidsvoll     MP2, CC propagation, FFT solver, visualization
-   Åsmund H. Tveten       HF
-  ----------------------------------------------------------------------------------
-   Other contributors: M. Scavino
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
+   Å. H. Tveten
+  ------------------------------------------------------------------------
 
-  Running on 4 OMP thread(s)
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: H2O He
+        charge: 0
+     end system
+
+     do
+       cholesky eri
+     end do
+
+     memory
+        available: 8
+     end memory
+
+     solver cholesky
+        threshold: 1.0d-10
+     end solver cholesky
+
+
+  Running on 2 OMP thread(s)
   Memory available for calculation: 8.000000 GB
 
-  - Molecular system specifications:
 
-     Name:             h2o-he
+  :: Molecular system specifications
+  =====================================
+
+     Name:             h2o he
      Charge:           0
      Multiplicity:     1
      Coordinate units: angstrom
@@ -50,31 +55,32 @@
      Nuclear repulsion energy (a.u.):             12.116100574587
      Bohr/angstrom value (CODATA 2010):            0.529177210920
 
-    =========================================================================
-                               Geometry(Å)
-    =========================================================================
-     Atom          X                Y                Z                Basis
-    =========================================================================
-      H     0.866810000000   0.601440000000   5.000000000000         cc-pvdz
-      H    -0.866810000000   0.601440000000   5.000000000000         cc-pvdz
-      O     0.000000000000  -0.075790000000   5.000000000000         cc-pvdz
-      He    0.100000000000  -0.020000000000   7.530000000000         cc-pvdz
-    =========================================================================
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1 H      0.866810000000     0.601440000000     5.000000000000        1
+        2 H     -0.866810000000     0.601440000000     5.000000000000        2
+        3 O      0.000000000000    -0.075790000000     5.000000000000        3
+        4 He     0.100000000000    -0.020000000000     7.530000000000        4
+     ==============================================================================
 
-    =========================================================================
-                               Geometry(a.u.)
-    =========================================================================
-     Atom          X                Y                Z                Basis
-    =========================================================================
-      H     1.638033502034   1.136556880358   9.448630622825         cc-pvdz
-      H    -1.638033502034   1.136556880358   9.448630622825         cc-pvdz
-      O     0.000000000000  -0.143222342981   9.448630622825         cc-pvdz
-      He    0.188972612457  -0.037794522491  14.229637717975         cc-pvdz
-    =========================================================================
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1 H      1.638033502034     1.136556880358     9.448630622825        1
+        2 H     -1.638033502034     1.136556880358     9.448630622825        2
+        3 O      0.000000000000    -0.143222342981     9.448630622825        3
+        4 He     0.188972612457    -0.037794522491    14.229637717975        4
+     ==============================================================================
 
-
-  :: Cholesky decomposition of electronic repulsion integrals solver
-  :: E. F. Kjønstad, S. D. Folkestad, 2018
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -83,7 +89,8 @@
 
   Once the Cholesky basis has been determined, the vectors L^J are constructed 
   and stored to disk. These may either be used directly, or be transformed 
-  to the MO basis for use in post-HF calculations.
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
 
   - Cholesky decomposition settings:
 
@@ -91,11 +98,11 @@
      Span factor:           0.10E-01
      Max qual:                  1000
 
+  - Cholesky decomposition system details:
+
      Total number of AOs:                    29
      Total number of shell pairs:           120
      Total number of AO pairs:              435
-
-  - Preparing diagonal for decomposition:
 
      Significant shell pairs:               116
      Significant AO pairs:                  427
@@ -120,20 +127,11 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.8462E-10
-     Minimal element of difference between approximate and actual diagonal:  -0.9437E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.9992E-15
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.10400
-     Total cpu time (sec):               0.18571
-
-  Mismatch in memory according to eT and specified on input:
-
-     Memory available (eT):    7.999998 GB
-     Memory available (input): 8.000000 GB
-
-  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
-
-  :: There was 1 warning during the execution of eT. ::
+     Total wall time (sec):              0.10700
+     Total cpu time (sec):               0.15505
 
   eT terminated successfully!

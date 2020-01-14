@@ -19,13 +19,9 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O-He
+        name: H2O He
         charge: 0
      end system
-
-     print
-        output print level: debug
-     end print
 
      do
         excited state
@@ -63,14 +59,14 @@
      end solver cc es
 
 
-  Running on 8 OMP thread(s)
+  Running on 2 OMP thread(s)
   Memory available for calculation: 8.000000 GB
 
 
   :: Molecular system specifications
   =====================================
 
-     Name:             h2o-he
+     Name:             h2o he
      Charge:           0
      Multiplicity:     1
      Coordinate units: angstrom
@@ -131,8 +127,6 @@
      Total number of shell pairs:           120
      Total number of AO pairs:              435
 
-  - Preparing diagonal for decomposition:
-
      Significant shell pairs:               118
      Significant AO pairs:                  431
 
@@ -161,8 +155,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.11200
-     Total cpu time (sec):               0.42618
+     Total wall time (sec):              0.10600
+     Total cpu time (sec):               0.16881
 
 
   :: RHF wavefunction
@@ -191,9 +185,6 @@
 
 
   1) Generate initial SAD density
-     Generated atomic density for H  using UHF/cc-pvdz
-     Generated atomic density for O  using UHF/cc-pvdz
-     Generated atomic density for He using UHF/cc-pvdz
 
 
   2) Calculation of reference state (SCF-DIIS algorithm)
@@ -209,45 +200,39 @@
   - Hartree-Fock solver settings:
 
      DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E-01
+     Cumulative Fock threshold:       0.10E+01
 
      Energy threshold:              0.1000E-10
      Gradient threshold:            0.1000E-10
 
-     Coulomb screening threshold:   0.1000E-13
-     Exchange screening threshold:  0.1000E-13
-     Fock precision:                0.1000E-27
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Fock precision:                0.1000E-33
+     Integral cutoff:               0.1000E-16
 
   - Setting initial AO density to SAD
 
      Energy of initial guess:               -78.492022836321
      Number of electrons in guess:           12.000000000000
 
-  Storing DIIS records in memory.
-
-  Doing preparations for memory storer hf_diis_e
-
-  Doing preparations for memory storer hf_diis_x
-
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1           -78.796606592593     0.9053E-01     0.7880E+02
      2           -78.828675852657     0.7128E-01     0.3207E-01
      3           -78.843428154462     0.8290E-02     0.1475E-01
-  Switching to Fock construction using density differences.
      4           -78.843809541675     0.2414E-02     0.3814E-03
      5           -78.843850846799     0.3301E-03     0.4131E-04
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
-     8           -78.843851693556     0.2356E-05     0.7053E-09
-     9           -78.843851693630     0.2071E-06     0.7383E-10
-    10           -78.843851693631     0.1594E-07     0.3837E-12
-    11           -78.843851693631     0.3322E-08     0.7105E-13
+     8           -78.843851693557     0.2356E-05     0.7053E-09
+     9           -78.843851693630     0.2071E-06     0.7377E-10
+    10           -78.843851693631     0.1594E-07     0.4263E-12
+    11           -78.843851693631     0.3322E-08     0.1421E-13
     12           -78.843851693631     0.1197E-08     0.4263E-13
-    13           -78.843851693631     0.4264E-09     0.1421E-13
-    14           -78.843851693631     0.1280E-09     0.2842E-13
-    15           -78.843851693631     0.1479E-10     0.1421E-13
-    16           -78.843851693631     0.2908E-11     0.2842E-13
+    13           -78.843851693631     0.4264E-09     0.0000E+00
+    14           -78.843851693631     0.1280E-09     0.1421E-13
+    15           -78.843851693631     0.1479E-10     0.2842E-13
+    16           -78.843851693631     0.2907E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -255,32 +240,26 @@
 
      HOMO-LUMO gap:                  0.645629080248
      Nuclear repulsion energy:      12.116100574587
-     Electronic energy:            -90.959952268217
+     Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
   - Molecular orbital energies
 
   -----------------------------------------------------------------------------------
-   1 -20.574269195145   9   0.704416610867  17   1.682695299878  25   3.175416260660
+   1 -20.574269195145   9   0.704416610867  17   1.682695299877  25   3.175416260660
    2  -1.277667044968  10   0.746260122914  18   1.804186820052  26   3.209661156313
-   3  -0.898849406810  11   1.155862024383  19   1.902641648742  27   3.328173215201
+   3  -0.898849406810  11   1.155862024383  19   1.902641648742  27   3.328173215200
    4  -0.629870222690  12   1.170770887076  20   2.148883457168  28   3.721936473470
    5  -0.541641772852  13   1.267961746552  21   2.200395756969  29   3.985492632586
    6  -0.485872762832  14   1.449847537220  22   2.540321860021
-   7   0.159756317416  15   1.463234913437  23   2.541517310547
+   7   0.159756317416  15   1.463234913438  23   2.541517310547
    8   0.229311906283  16   1.474444394527  24   2.559338707350
   -----------------------------------------------------------------------------------
 
-  Doing finalizations for memory storer hf_diis_e
-
-  Doing finalizations for memory storer hf_diis_x
-
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.38800
-     Total cpu time (sec):               1.69721
-
-  No frozen fock contributions!
+     Total wall time (sec):              0.45700
+     Total cpu time (sec):               0.77938
 
 
   :: CCS wavefunction
@@ -342,19 +321,9 @@
 
      Storage: disk
 
-  Storing DIIS records on file.
-
-  Using direct file to store records with name: cc_gs_diis_e.
-
-  Using direct file to store records with name: cc_gs_diis_x.
-
-  Doing preparations for file storer cc_gs_diis_e
-
-  Doing preparations for file storer cc_gs_diis_x
-
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -78.843851693631     0.5458E-11     0.7884E+02
+    1           -78.843851693631     0.5453E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -385,14 +354,10 @@
 
      T1 diagnostic (|T1|/sqrt(N_e)): 0.000000000000
 
-  Doing finalizations for file storer cc_gs_diis_e
-
-  Doing finalizations for file storer cc_gs_diis_x
-
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.01100
-     Total cpu time (sec):               0.03135
+     Total wall time (sec):              0.00900
+     Total cpu time (sec):               0.01608
 
 
   3) Calculation of the excited state (davidson algorithm)
@@ -422,211 +387,159 @@
 
      Max reduced space dimension:          100
 
-  Using sequential file array to store records using the prefix: r_.
-
-  Doing preparations for file storer r_
-
-  - No preparations for the ccs excited state equation.
-
      Reduced space basis and transforms are stored on disk.
-
-  Using direct file to store records with name: cc_es_davidson_trials.
-
-  Using direct file to store records with name: cc_es_davidson_transforms.
-
-  Doing preparations for file storer cc_es_davidson_trials
-
-  Doing preparations for file storer cc_es_davidson_transforms
-
-  Orthonormalizing trial vectors.
 
   Iteration:                  1
   Reduced space dimension:    1
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.304675238813         0.000000000000            0.1313E+00
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.304675238814    0.000000000000     0.1313E+00   0.3047E+00
+  ------------------------------------------------------------------------
 
   Iteration:                  2
   Reduced space dimension:    2
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283493717699         0.000000000000            0.2388E-01
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283493717699    0.000000000000     0.2388E-01   0.2118E-01
+  ------------------------------------------------------------------------
 
   Iteration:                  3
   Reduced space dimension:    3
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283150713308         0.000000000000            0.4144E-02
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283150713308    0.000000000000     0.4144E-02   0.3430E-03
+  ------------------------------------------------------------------------
 
   Iteration:                  4
   Reduced space dimension:    4
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283141695202         0.000000000000            0.7900E-03
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283141695202    0.000000000000     0.7900E-03   0.9018E-05
+  ------------------------------------------------------------------------
 
   Iteration:                  5
   Reduced space dimension:    5
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283141125807         0.000000000000            0.3575E-03
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283141125807    0.000000000000     0.3575E-03   0.5694E-06
+  ------------------------------------------------------------------------
 
   Iteration:                  6
   Reduced space dimension:    6
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283140828198         0.000000000000            0.2421E-03
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283140828198    0.000000000000     0.2421E-03   0.2976E-06
+  ------------------------------------------------------------------------
 
   Iteration:                  7
   Reduced space dimension:    7
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283140804449         0.000000000000            0.5204E-04
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283140804449    0.000000000000     0.5204E-04   0.2375E-07
+  ------------------------------------------------------------------------
 
   Iteration:                  8
   Reduced space dimension:    8
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283140803952         0.000000000000            0.7578E-05
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283140803952    0.000000000000     0.7578E-05   0.4978E-09
+  ------------------------------------------------------------------------
 
   Iteration:                  9
   Reduced space dimension:    9
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283140803927         0.000000000000            0.7019E-05
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283140803927    0.000000000000     0.7019E-05   0.2497E-10
+  ------------------------------------------------------------------------
 
   Iteration:                 10
   Reduced space dimension:   10
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283140803898         0.000000000000            0.2464E-05
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283140803898    0.000000000000     0.2464E-05   0.2851E-10
+  ------------------------------------------------------------------------
 
   Iteration:                 11
   Reduced space dimension:   11
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283140803895         0.000000000000            0.7326E-06
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283140803895    0.000000000000     0.7326E-06   0.2783E-11
+  ------------------------------------------------------------------------
 
   Iteration:                 12
   Reduced space dimension:   12
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283140803895         0.000000000000            0.1607E-06
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283140803895    0.000000000000     0.1607E-06   0.4139E-12
+  ------------------------------------------------------------------------
 
   Iteration:                 13
   Reduced space dimension:   13
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283140803895         0.000000000000            0.8925E-07
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283140803895    0.000000000000     0.8925E-07   0.2454E-13
+  ------------------------------------------------------------------------
 
   Iteration:                 14
   Reduced space dimension:   14
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283140803895         0.000000000000            0.2529E-07
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283140803895    0.000000000000     0.2529E-07   0.3442E-14
+  ------------------------------------------------------------------------
 
   Iteration:                 15
   Reduced space dimension:   15
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283140803895         0.000000000000            0.1169E-07
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283140803895    0.000000000000     0.1169E-07   0.6106E-15
+  ------------------------------------------------------------------------
 
   Iteration:                 16
   Reduced space dimension:   16
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283140803895         0.000000000000            0.1664E-08
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283140803895    0.000000000000     0.1664E-08   0.7772E-15
+  ------------------------------------------------------------------------
 
   Iteration:                 17
   Reduced space dimension:   17
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283140803895         0.000000000000            0.2267E-09
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283140803895    0.000000000000     0.2267E-09   0.7772E-15
+  ------------------------------------------------------------------------
 
   Iteration:                 18
   Reduced space dimension:   18
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283140803895         0.000000000000            0.3544E-10
-  ---------------------------------------------------------------------
-
-  Orthonormalizing trial vectors.
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283140803895    0.000000000000     0.3544E-10   0.7216E-15
+  ------------------------------------------------------------------------
 
   Iteration:                 19
   Reduced space dimension:   19
 
-   Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  ---------------------------------------------------------------------
-     1      0.283140803895         0.000000000000            0.3102E-11
-  ---------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1   0.283140803895    0.000000000000     0.3103E-11   0.1166E-14
+  ------------------------------------------------------------------------
   Convergence criterion met in 19 iterations!
 
   - Excitation vector amplitudes:
@@ -640,16 +553,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      6        0.983643739611
-        4      6        0.157041269777
-        6      6        0.065052447145
-       13      6       -0.047162913485
-       15      6        0.020463284034
-        1      3       -0.011446417248
-        9      6        0.011160558004
-       10      6        0.009804553971
-       22      6        0.009439702303
-       19      5       -0.009153283040
+        1      6       -0.983643739611
+        4      6       -0.157041269777
+        6      6       -0.065052447145
+       13      6        0.047162913485
+       15      6       -0.020463284034
+        1      3        0.011446417248
+        9      6       -0.011160558004
+       10      6       -0.009804553971
+       22      6       -0.009439702303
+       19      5        0.009153283040
      ------------------------------------
 
      - Electronic excitation energies:
@@ -658,26 +571,18 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.283140803895        7.704653712797
+        1                  0.283140803895        7.704653712798
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  Doing finalizations for file storer cc_es_davidson_trials
-
-  Doing finalizations for file storer cc_es_davidson_transforms
-
   - Finished solving the CCS excited state equations (right)
 
-     Total wall time (sec):              0.04300
-     Total cpu time (sec):               0.09710
+     Total wall time (sec):              0.02900
+     Total cpu time (sec):               0.05548
 
   - Timings for the CCS excited state calculation
 
-     Total wall time (sec):              0.06000
-     Total cpu time (sec):               0.14177
-
-  Doing finalizations for file storer r_
-
-  - Cleaning up ccs wavefunction
+     Total wall time (sec):              0.04300
+     Total cpu time (sec):               0.07981
 
   eT terminated successfully!

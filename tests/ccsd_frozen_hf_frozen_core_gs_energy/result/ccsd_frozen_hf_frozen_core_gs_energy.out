@@ -12,6 +12,57 @@
    Å. H. Tveten
   ------------------------------------------------------------------------
 
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: Formamide
+        charge: 0
+     end system
+
+     do
+        ground state
+     end do
+
+     memory
+        available: 16
+     end memory
+
+     solver cholesky
+        threshold: 1.0d-12
+     end solver cholesky
+
+     solver scf
+        algorithm:          scf
+        energy threshold:   1.0d-11
+        gradient threshold: 1.0d-11
+     end solver scf
+
+     solver cc gs
+        energy threshold: 1.0d-11
+        omega threshold:  1.0d-11
+     end solver cc gs
+
+     method
+        hf
+        ccsd
+     end method
+
+     frozen orbitals
+        core
+        hf
+     end frozen orbitals
+
+
+     active atoms
+        selection type: range
+        ccsd: [3,4]
+     end active atoms
+
+
   Running on 2 OMP thread(s)
   Memory available for calculation: 16.000000 GB
 
@@ -43,7 +94,7 @@
      OBS: Atoms will be reordered, active atoms first
 
      ==============================================================================
-                                     Geometry(Å)
+                                     Geometry (angstrom)
      ==============================================================================
         Atom           X                  Y                  Z         # in input
      ==============================================================================
@@ -57,7 +108,7 @@
      ==============================================================================
 
      ==============================================================================
-                                     Geometry(a.u.)
+                                     Geometry (a.u.)
      ==============================================================================
         Atom           X                  Y                  Z         # in input
      ==============================================================================
@@ -95,8 +146,6 @@
      Total number of shell pairs:            78
      Total number of AO pairs:              171
 
-  - Preparing diagonal for decomposition:
-
      Significant shell pairs:                76
      Significant AO pairs:                  169
 
@@ -120,12 +169,12 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.4557E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.7772E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.3331E-15
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.11200
-     Total cpu time (sec):               0.18952
+     Total wall time (sec):              0.06400
+     Total cpu time (sec):               0.10997
 
 
   :: RHF wavefunction
@@ -154,10 +203,6 @@
 
 
   1) Generate initial SAD density
-     Generated atomic density for H  using UHF/sto-3g
-     Generated atomic density for C  using UHF/sto-3g
-     Generated atomic density for O  using UHF/sto-3g
-     Generated atomic density for N  using UHF/sto-3g
 
 
   2) Calculation of reference state (SCF algorithm)
@@ -180,9 +225,10 @@
      Energy threshold:              0.1000E-10
      Gradient threshold:            0.1000E-10
 
-     Coulomb screening threshold:   0.1000E-13
-     Exchange screening threshold:  0.1000E-13
-     Fock precision:                0.1000E-27
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Fock precision:                0.1000E-33
+     Integral cutoff:               0.1000E-16
 
   - Setting initial AO density to SAD
 
@@ -195,7 +241,7 @@
      2          -166.615837132106     0.1011E+00     0.8981E-01
      3          -166.653902505872     0.6370E-01     0.3807E-01
      4          -166.666439535201     0.3849E-01     0.1254E-01
-     5          -166.671637703802     0.2505E-01     0.5198E-02
+     5          -166.671637703803     0.2505E-01     0.5198E-02
      6          -166.673477847056     0.1442E-01     0.1840E-02
      7          -166.674186528525     0.9471E-02     0.7087E-03
      8          -166.674444686187     0.5389E-02     0.2582E-03
@@ -211,35 +257,35 @@
     18          -166.674599119340     0.3942E-04     0.1329E-07
     19          -166.674599124291     0.2503E-04     0.4951E-08
     20          -166.674599126136     0.1473E-04     0.1844E-08
-    21          -166.674599126823     0.9303E-05     0.6873E-09
+    21          -166.674599126823     0.9303E-05     0.6870E-09
     22          -166.674599127079     0.5504E-05     0.2561E-09
-    23          -166.674599127174     0.3459E-05     0.9535E-10
-    24          -166.674599127210     0.2056E-05     0.3544E-10
-    25          -166.674599127223     0.1286E-05     0.1327E-10
-    26          -166.674599127228     0.7676E-06     0.5002E-11
-    27          -166.674599127230     0.4785E-06     0.1705E-11
-    28          -166.674599127230     0.2865E-06     0.6253E-12
-    29          -166.674599127231     0.1781E-06     0.4547E-12
-    30          -166.674599127231     0.1069E-06     0.2842E-13
-    31          -166.674599127231     0.6627E-07     0.2842E-13
-    32          -166.674599127231     0.3989E-07     0.0000E+00
+    23          -166.674599127174     0.3459E-05     0.9547E-10
+    24          -166.674599127210     0.2056E-05     0.3564E-10
+    25          -166.674599127223     0.1286E-05     0.1296E-10
+    26          -166.674599127228     0.7676E-06     0.5031E-11
+    27          -166.674599127230     0.4785E-06     0.1677E-11
+    28          -166.674599127231     0.2865E-06     0.9379E-12
+    29          -166.674599127231     0.1781E-06     0.1421E-12
+    30          -166.674599127231     0.1069E-06     0.1421E-12
+    31          -166.674599127231     0.6627E-07     0.0000E+00
+    32          -166.674599127231     0.3989E-07     0.8527E-13
     33          -166.674599127231     0.2467E-07     0.2842E-13
     34          -166.674599127231     0.1488E-07     0.1137E-12
-    35          -166.674599127231     0.9185E-08     0.8527E-13
-    36          -166.674599127231     0.5550E-08     0.2274E-12
-    37          -166.674599127231     0.3420E-08     0.2558E-12
-    38          -166.674599127231     0.2070E-08     0.5684E-13
-    39          -166.674599127231     0.1274E-08     0.8527E-13
-    40          -166.674599127231     0.7718E-09     0.8527E-13
+    35          -166.674599127231     0.9185E-08     0.1705E-12
+    36          -166.674599127231     0.5550E-08     0.5684E-13
+    37          -166.674599127231     0.3420E-08     0.5684E-13
+    38          -166.674599127231     0.2070E-08     0.1137E-12
+    39          -166.674599127231     0.1274E-08     0.1137E-12
+    40          -166.674599127231     0.7718E-09     0.5684E-13
     41          -166.674599127231     0.4744E-09     0.5684E-13
-    42          -166.674599127231     0.2878E-09     0.2842E-13
-    43          -166.674599127231     0.1767E-09     0.8527E-13
-    44          -166.674599127231     0.1073E-09     0.1421E-12
-    45          -166.674599127231     0.6581E-10     0.2842E-13
-    46          -166.674599127231     0.3999E-10     0.0000E+00
-    47          -166.674599127231     0.2452E-10     0.1137E-12
-    48          -166.674599127231     0.1491E-10     0.2842E-13
-    49          -166.674599127231     0.9127E-11     0.5684E-13
+    42          -166.674599127231     0.2878E-09     0.1990E-12
+    43          -166.674599127231     0.1767E-09     0.1137E-12
+    44          -166.674599127231     0.1073E-09     0.2842E-13
+    45          -166.674599127231     0.6582E-10     0.5684E-13
+    46          -166.674599127231     0.3999E-10     0.5684E-13
+    47          -166.674599127231     0.2452E-10     0.0000E+00
+    48          -166.674599127231     0.1491E-10     0.5684E-13
+    49          -166.674599127231     0.9124E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 49 iterations!
 
@@ -262,14 +308,14 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.72800
-     Total cpu time (sec):               1.37318
+     Total wall time (sec):              0.45100
+     Total cpu time (sec):               0.82449
 
   - Preparation for frozen core approximation
 
      There are 3 frozen core orbitals.
 
-     The smallest diagonal after decomposition is:  -0.1769E-15
+     The smallest diagonal after decomposition is:  -0.1026E-15
 
   - Preparation for frozen Hartree-Fock orbitals
 
@@ -336,16 +382,6 @@
 
      Storage: disk
 
-  Storing DIIS records on file.
-
-  Using direct file to store records with name: cc_gs_diis_e.
-
-  Using direct file to store records with name: cc_gs_diis_x.
-
-  Doing preparations for file storer cc_gs_diis_e
-
-  Doing preparations for file storer cc_gs_diis_x
-
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
     1          -166.764536146194     0.6750E-01     0.1668E+03
@@ -381,11 +417,11 @@
         1      5       -0.013740327587
         2      4       -0.002370572850
         2      3       -0.001794827849
-        2      2       -0.001647663357
+        2      2        0.001647663357
         2      1        0.001388943120
-        5      2        0.001211074159
+        5      2       -0.001211074159
         5      1        0.000877552811
-        3      2       -0.000725795073
+        3      2        0.000725795073
         4      4       -0.000700010466
         4      1       -0.000528063774
      ------------------------------------
@@ -399,7 +435,7 @@
         4      3       4      3       -0.037303065961
         2      2       2      2       -0.037130437729
         5      4       5      4       -0.035935760462
-        5      2       1      5        0.032516493757
+        5      2       1      5       -0.032516493757
         3      1       3      1       -0.029138014638
         3      3       3      3       -0.028552206144
         3      1       1      5        0.027669085634
@@ -408,29 +444,14 @@
 
      T1 diagnostic (|T1|/sqrt(N_e)): 0.002935420374
 
-  Doing finalizations for file storer cc_gs_diis_e
-
-  Doing finalizations for file storer cc_gs_diis_x
-
   - Finished solving the CCSD ground state equations
 
      Total wall time (sec):              0.04700
-     Total cpu time (sec):               0.05357
+     Total cpu time (sec):               0.05299
 
   - Timings for the CCSD ground state calculation
 
      Total wall time (sec):              0.04900
-     Total cpu time (sec):               0.05540
-
-  - Cleaning up ccsd wavefunction
-
-  Mismatch in memory according to eT and specified on input:
-
-     Memory available (eT):    15.999996 GB
-     Memory available (input): 16.000000 GB
-
-  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
-
-  :: There was 1 warning during the execution of eT. ::
+     Total cpu time (sec):               0.05464
 
   eT terminated successfully!
