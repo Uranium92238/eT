@@ -19,13 +19,9 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O-He
+        name: H2O He
         charge: 0
      end system
-
-     print
-        output print level: debug
-     end print
 
      do
         excited state
@@ -66,14 +62,14 @@
      end solver cc es
 
 
-  Running on 8 OMP thread(s)
+  Running on 2 OMP thread(s)
   Memory available for calculation: 8.000000 GB
 
 
   :: Molecular system specifications
   =====================================
 
-     Name:             h2o-he
+     Name:             h2o he
      Charge:           0
      Multiplicity:     1
      Coordinate units: angstrom
@@ -134,8 +130,6 @@
      Total number of shell pairs:           120
      Total number of AO pairs:              435
 
-  - Preparing diagonal for decomposition:
-
      Significant shell pairs:               118
      Significant AO pairs:                  431
 
@@ -164,8 +158,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.11400
-     Total cpu time (sec):               0.43288
+     Total wall time (sec):              0.10600
+     Total cpu time (sec):               0.17221
 
 
   :: RHF wavefunction
@@ -205,26 +199,21 @@
   - Hartree-Fock solver settings:
 
      DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E-01
+     Cumulative Fock threshold:       0.10E+01
 
      Energy threshold:              0.1000E-10
      Gradient threshold:            0.1000E-10
 
-     Coulomb screening threshold:   0.1000E-13
-     Exchange screening threshold:  0.1000E-13
-     Fock precision:                0.1000E-27
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Fock precision:                0.1000E-33
+     Integral cutoff:               0.1000E-16
 
   - Requested restart. Reading orbitals from file
 
-  Storing DIIS records in memory.
-
-  Doing preparations for memory storer hf_diis_e
-
-  Doing preparations for memory storer hf_diis_x
-
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.2911E-11     0.7884E+02
+     1           -78.843851693631     0.2906E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -241,26 +230,20 @@
   - Molecular orbital energies
 
   -----------------------------------------------------------------------------------
-   1 -20.574269195145   9   0.704416610867  17   1.682695299878  25   3.175416260660
+   1 -20.574269195145   9   0.704416610867  17   1.682695299877  25   3.175416260660
    2  -1.277667044968  10   0.746260122914  18   1.804186820052  26   3.209661156313
-   3  -0.898849406810  11   1.155862024383  19   1.902641648742  27   3.328173215201
+   3  -0.898849406810  11   1.155862024383  19   1.902641648742  27   3.328173215200
    4  -0.629870222690  12   1.170770887076  20   2.148883457168  28   3.721936473470
    5  -0.541641772852  13   1.267961746552  21   2.200395756969  29   3.985492632586
    6  -0.485872762832  14   1.449847537220  22   2.540321860021
-   7   0.159756317416  15   1.463234913437  23   2.541517310547
+   7   0.159756317416  15   1.463234913438  23   2.541517310547
    8   0.229311906283  16   1.474444394527  24   2.559338707350
   -----------------------------------------------------------------------------------
 
-  Doing finalizations for memory storer hf_diis_e
-
-  Doing finalizations for memory storer hf_diis_x
-
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.01000
-     Total cpu time (sec):               0.05443
-
-  No frozen fock contributions!
+     Total wall time (sec):              0.01300
+     Total cpu time (sec):               0.02286
 
 
   :: LOW MEMORY CC2 wavefunction
@@ -324,16 +307,6 @@
 
   Requested restart. Reading in solution from file.
 
-  Storing DIIS records on file.
-
-  Using direct file to store records with name: cc_gs_diis_e.
-
-  Using direct file to store records with name: cc_gs_diis_x.
-
-  Doing preparations for file storer cc_gs_diis_e
-
-  Doing preparations for file storer cc_gs_diis_x
-
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
     1           -79.084241931608     0.3734E-01     0.7908E+02
@@ -343,8 +316,8 @@
     5           -79.085769937826     0.3615E-04     0.1352E-05
     6           -79.085769725742     0.6004E-05     0.2121E-06
     7           -79.085769729164     0.2063E-05     0.3422E-08
-    8           -79.085769729229     0.3646E-06     0.6527E-10
-    9           -79.085769729230     0.3393E-07     0.9095E-12
+    8           -79.085769729229     0.3646E-06     0.6526E-10
+    9           -79.085769729230     0.3393E-07     0.9237E-12
    10           -79.085769729553     0.4633E-08     0.3225E-09
    11           -79.085769729585     0.9303E-09     0.3266E-10
    12           -79.085769729575     0.2416E-09     0.1074E-10
@@ -377,14 +350,10 @@
 
      T1 diagnostic (|T1|/sqrt(N_e)): 0.007125912546
 
-  Doing finalizations for file storer cc_gs_diis_e
-
-  Doing finalizations for file storer cc_gs_diis_x
-
   - Finished solving the LOW MEMORY CC2 ground state equations
 
-     Total wall time (sec):              0.14500
-     Total cpu time (sec):               0.43220
+     Total wall time (sec):              0.12300
+     Total cpu time (sec):               0.23639
 
 
   3) Calculation of the excited state (diis algorithm)
@@ -414,26 +383,12 @@
 
      DIIS dimension:                        20
 
-  Using sequential file array to store records using the prefix: r_.
-
-  Doing preparations for file storer r_
-
-  Storing DIIS records on file.
-
-  Using direct file to store records with name: diis_cc_es_001_e.
-
-  Using direct file to store records with name: diis_cc_es_001_x.
-
-  Doing preparations for file storer diis_cc_es_001_e
-
-  Doing preparations for file storer diis_cc_es_001_x
-  Requested restart - there are 1 right eigenvectors on file.
+  Requested restart - restarting 1 right eigenvectors from file.
 
   Iteration:                  1
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.283140803895
      1      0.247191164778       0.5380E-01
   -----------------------------------------------
 
@@ -441,7 +396,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.247191164778
      1      0.246418027184       0.1716E-01
   -----------------------------------------------
 
@@ -449,7 +403,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.246418027184
      1      0.245976716005       0.2236E-02
   -----------------------------------------------
 
@@ -457,7 +410,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245976716005
      1      0.245982244883       0.3865E-03
   -----------------------------------------------
 
@@ -465,7 +417,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245982244883
      1      0.245983601326       0.5288E-04
   -----------------------------------------------
 
@@ -473,7 +424,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245983601326
      1      0.245983418520       0.1465E-04
   -----------------------------------------------
 
@@ -481,7 +431,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245983418520
      1      0.245983456102       0.7997E-05
   -----------------------------------------------
 
@@ -489,7 +438,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245983456102
      1      0.245983441853       0.3047E-05
   -----------------------------------------------
 
@@ -497,7 +445,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245983441853
      1      0.245983439642       0.2006E-05
   -----------------------------------------------
 
@@ -505,7 +452,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245983439642
      1      0.245983444282       0.8254E-06
   -----------------------------------------------
 
@@ -513,7 +459,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245983444282
      1      0.245983440407       0.1668E-06
   -----------------------------------------------
 
@@ -521,7 +466,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245983440407
      1      0.245983442046       0.1228E-06
   -----------------------------------------------
 
@@ -529,7 +473,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245983442046
      1      0.245983440978       0.5778E-07
   -----------------------------------------------
 
@@ -537,7 +480,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245983440978
      1      0.245983441408       0.9288E-08
   -----------------------------------------------
 
@@ -545,7 +487,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245983441408
      1      0.245983441336       0.7875E-09
   -----------------------------------------------
 
@@ -553,7 +494,6 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245983441336
      1      0.245983441338       0.2283E-09
   -----------------------------------------------
 
@@ -561,16 +501,14 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245983441338
-     1      0.245983441338       0.4645E-10
+     1      0.245983441338       0.4644E-10
   -----------------------------------------------
 
   Iteration:                 18
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.245983441338
-     1      0.245983441338       0.3875E-11
+     1      0.245983441338       0.3864E-11
   -----------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -589,16 +527,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      6        0.992570977340
-        4      6        0.108934949547
-        6      6        0.036841280985
-       13      6       -0.030571764351
-        1      3       -0.011873170889
-       22      6        0.008128864923
-        1      5        0.008036840172
-       19      5       -0.007869044457
-        9      6        0.007462543552
-       20      4        0.007116746219
+        1      6       -0.992570977340
+        4      6       -0.108934949547
+        6      6       -0.036841280985
+       13      6        0.030571764351
+        1      3        0.011873170889
+       22      6       -0.008128864923
+        1      5       -0.008036840172
+       19      5        0.007869044457
+        9      6       -0.007462543552
+       20      4       -0.007116746219
      ------------------------------------
 
      - Electronic excitation energies:
@@ -611,22 +549,14 @@
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  Doing finalizations for file storer diis_cc_es_001_e
-
-  Doing finalizations for file storer diis_cc_es_001_x
-
   - Finished solving the LOW MEMORY CC2 excited state equations (right)
 
-     Total wall time (sec):              0.25100
-     Total cpu time (sec):               0.72809
+     Total wall time (sec):              0.23400
+     Total cpu time (sec):               0.64897
 
   - Timings for the LOW MEMORY CC2 excited state calculation
 
-     Total wall time (sec):              0.40200
-     Total cpu time (sec):               1.17748
-
-  Doing finalizations for file storer r_
-
-  - Cleaning up low memory cc2 wavefunction
+     Total wall time (sec):              0.36400
+     Total cpu time (sec):               0.89442
 
   eT terminated successfully!

@@ -23,10 +23,6 @@
         charge: 0
      end system
 
-     print
-        output print level: debug
-     end print
-
      do
         response
      end do
@@ -146,8 +142,6 @@
      Total number of shell pairs:           120
      Total number of AO pairs:              435
 
-  - Preparing diagonal for decomposition:
-
      Significant shell pairs:               118
      Significant AO pairs:                  431
 
@@ -172,12 +166,12 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.7161E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.8882E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.1110E-14
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.14715
-     Total cpu time (sec):               0.24507
+     Total wall time (sec):              0.10900
+     Total cpu time (sec):               0.17112
 
 
   :: RHF wavefunction
@@ -217,26 +211,21 @@
   - Hartree-Fock solver settings:
 
      DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E-01
+     Cumulative Fock threshold:       0.10E+01
 
      Energy threshold:              0.1000E-10
      Gradient threshold:            0.1000E-10
 
-     Coulomb screening threshold:   0.1000E-13
-     Exchange screening threshold:  0.1000E-13
-     Fock precision:                0.1000E-27
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Fock precision:                0.1000E-33
+     Integral cutoff:               0.1000E-16
 
   - Requested restart. Reading orbitals from file
 
-  Storing DIIS records in memory.
-
-  Doing preparations for memory storer hf_diis_e
-
-  Doing preparations for memory storer hf_diis_x
-
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.2906E-11     0.7884E+02
+     1           -78.843851693631     0.2903E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -253,26 +242,20 @@
   - Molecular orbital energies
 
   -----------------------------------------------------------------------------------
-   1 -20.574269195145   9   0.704416610867  17   1.682695299878  25   3.175416260660
+   1 -20.574269195145   9   0.704416610867  17   1.682695299877  25   3.175416260660
    2  -1.277667044968  10   0.746260122914  18   1.804186820052  26   3.209661156313
    3  -0.898849406810  11   1.155862024383  19   1.902641648742  27   3.328173215200
    4  -0.629870222690  12   1.170770887076  20   2.148883457168  28   3.721936473470
    5  -0.541641772852  13   1.267961746552  21   2.200395756969  29   3.985492632586
    6  -0.485872762832  14   1.449847537220  22   2.540321860021
-   7   0.159756317416  15   1.463234913437  23   2.541517310547
+   7   0.159756317416  15   1.463234913438  23   2.541517310547
    8   0.229311906283  16   1.474444394527  24   2.559338707350
   -----------------------------------------------------------------------------------
 
-  Doing finalizations for memory storer hf_diis_e
-
-  Doing finalizations for memory storer hf_diis_x
-
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.01520
-     Total cpu time (sec):               0.03120
-
-  No frozen fock contributions!
+     Total wall time (sec):              0.01300
+     Total cpu time (sec):               0.02245
 
 
   :: CCSD wavefunction
@@ -341,16 +324,6 @@
 
   Requested restart. Reading in solution from file.
 
-  Storing DIIS records on file.
-
-  Using direct file to store records with name: cc_gs_diis_e.
-
-  Using direct file to store records with name: cc_gs_diis_x.
-
-  Doing preparations for file storer cc_gs_diis_e
-
-  Doing preparations for file storer cc_gs_diis_x
-
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
     1           -79.100383481556     0.7516E-11     0.7910E+02
@@ -400,14 +373,10 @@
 
      T1 diagnostic (|T1|/sqrt(N_e)): 0.007226152112
 
-  Doing finalizations for file storer cc_gs_diis_e
-
-  Doing finalizations for file storer cc_gs_diis_x
-
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.01212
-     Total cpu time (sec):               0.02412
+     Total wall time (sec):              0.02100
+     Total cpu time (sec):               0.05420
 
 
   3) Calculation of the multipliers (diis algorithm)
@@ -429,23 +398,12 @@
 
      DIIS dimension:                   8
      Max number of iterations:       100
-  - Prepare for multiplier equation
-
-  Storing DIIS records on file.
-
-  Using direct file to store records with name: cc_multipliers_diis_e.
-
-  Using direct file to store records with name: cc_multipliers_diis_x.
-
-  Doing preparations for file storer cc_multipliers_diis_e
-
-  Doing preparations for file storer cc_multipliers_diis_x
 
   Requested restart. Reading multipliers from file.
 
   Iteration    Norm residual
   ----------------------------
-    1          0.5255E-11
+    1          0.5256E-11
   ----------------------------
   Convergence criterion met in 1 iterations!
 
@@ -483,15 +441,10 @@
         6      5       6      5       -0.068075967747
      --------------------------------------------------
 
-  Doing finalizations for file storer cc_multipliers_diis_e
-
-  Doing finalizations for file storer cc_multipliers_diis_x
-
   - Finished solving the ccsd multipliers equations
 
-     Total wall time (sec):              0.00826
-     Total cpu time (sec):               0.02025
-  No intermediates to save in ccsd
+     Total wall time (sec):              0.01600
+     Total cpu time (sec):               0.02519
 
 
   4) Calculation of the excited state (diis algorithm)
@@ -521,39 +474,13 @@
 
      DIIS dimension:                        20
 
-  Using sequential file array to store records using the prefix: r_.
-
-  Doing preparations for file storer r_
-
-  Storing DIIS records on file.
-
-  Using direct file to store records with name: diis_cc_es_001_e.
-
-  Using direct file to store records with name: diis_cc_es_001_x.
-
-  Doing preparations for file storer diis_cc_es_001_e
-
-  Doing preparations for file storer diis_cc_es_001_x
-
-  Storing DIIS records on file.
-
-  Using direct file to store records with name: diis_cc_es_002_e.
-
-  Using direct file to store records with name: diis_cc_es_002_x.
-
-  Doing preparations for file storer diis_cc_es_002_e
-
-  Doing preparations for file storer diis_cc_es_002_x
-
   Requested restart - restarting 1 right eigenvectors from file.
 
   Iteration:                  1
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian right transform with energy:      0.247194255572
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.000000000000
      2      0.485434878054       0.4256E+00
   -----------------------------------------------
 
@@ -562,7 +489,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.485434878054
      2      0.364484094152       0.1086E+00
   -----------------------------------------------
 
@@ -571,7 +497,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.364484094152
      2      0.357980977931       0.3954E-01
   -----------------------------------------------
 
@@ -580,7 +505,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.357980977931
      2      0.355928657452       0.1760E-01
   -----------------------------------------------
 
@@ -589,7 +513,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.355928657452
      2      0.356038966715       0.7119E-02
   -----------------------------------------------
 
@@ -598,7 +521,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356038966715
      2      0.355969960542       0.6833E-02
   -----------------------------------------------
 
@@ -607,7 +529,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.355969960542
      2      0.356130939455       0.4234E-02
   -----------------------------------------------
 
@@ -616,7 +537,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356130939455
      2      0.356130450329       0.1725E-02
   -----------------------------------------------
 
@@ -625,7 +545,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356130450329
      2      0.356085522076       0.6006E-03
   -----------------------------------------------
 
@@ -634,7 +553,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085522076
      2      0.356087984757       0.2199E-03
   -----------------------------------------------
 
@@ -643,7 +561,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356087984757
      2      0.356085647581       0.1084E-03
   -----------------------------------------------
 
@@ -652,7 +569,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085647581
      2      0.356085294615       0.9903E-04
   -----------------------------------------------
 
@@ -661,7 +577,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085294615
      2      0.356085227435       0.9273E-04
   -----------------------------------------------
 
@@ -670,7 +585,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085227435
      2      0.356085200908       0.4987E-04
   -----------------------------------------------
 
@@ -679,7 +593,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085200908
      2      0.356084920180       0.2338E-04
   -----------------------------------------------
 
@@ -688,7 +601,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356084920180
      2      0.356085032388       0.1575E-04
   -----------------------------------------------
 
@@ -697,7 +609,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085032388
      2      0.356085117709       0.1148E-04
   -----------------------------------------------
 
@@ -706,7 +617,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085117709
      2      0.356085047330       0.6809E-05
   -----------------------------------------------
 
@@ -715,7 +625,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085047330
      2      0.356085082613       0.3090E-05
   -----------------------------------------------
 
@@ -724,7 +633,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085082613
      2      0.356085060660       0.1446E-05
   -----------------------------------------------
 
@@ -733,7 +641,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085060660
      2      0.356085050114       0.9253E-06
   -----------------------------------------------
 
@@ -742,7 +649,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085050114
      2      0.356085056315       0.5010E-06
   -----------------------------------------------
 
@@ -751,7 +657,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085056315
      2      0.356085057993       0.1754E-06
   -----------------------------------------------
 
@@ -760,7 +665,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085057993
      2      0.356085057972       0.5712E-07
   -----------------------------------------------
 
@@ -769,7 +673,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085057972
      2      0.356085057702       0.2201E-07
   -----------------------------------------------
 
@@ -778,7 +681,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085057702
      2      0.356085057567       0.8429E-08
   -----------------------------------------------
 
@@ -787,7 +689,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085057567
      2      0.356085057581       0.2591E-08
   -----------------------------------------------
 
@@ -796,7 +697,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085057581
      2      0.356085057600       0.7095E-09
   -----------------------------------------------
 
@@ -805,7 +705,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085057600
      2      0.356085057594       0.2195E-09
   -----------------------------------------------
 
@@ -814,7 +713,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085057594
      2      0.356085057594       0.7179E-10
   -----------------------------------------------
 
@@ -823,7 +721,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085057594
      2      0.356085057592       0.2029E-10
   -----------------------------------------------
 
@@ -832,7 +729,6 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-  Calling Jacobian right transform with energy:      0.356085057592
      2      0.356085057592       0.5341E-11
   -----------------------------------------------
   Convergence criterion met in 32 iterations!
@@ -923,23 +819,15 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.247194255572        6.726498310303
+        1                  0.247194255572        6.726498310302
         2                  0.356085057592        9.689567958101
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  Doing finalizations for file storer diis_cc_es_001_e
-
-  Doing finalizations for file storer diis_cc_es_001_x
-
-  Doing finalizations for file storer diis_cc_es_002_e
-
-  Doing finalizations for file storer diis_cc_es_002_x
-
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              0.16308
-     Total cpu time (sec):               0.32310
+     Total wall time (sec):              0.35000
+     Total cpu time (sec):               0.65519
 
 
   4) Calculation of the excited state (diis algorithm)
@@ -969,39 +857,13 @@
 
      DIIS dimension:                        20
 
-  Using sequential file array to store records using the prefix: l_.
-
-  Doing preparations for file storer l_
-
-  Storing DIIS records on file.
-
-  Using direct file to store records with name: diis_cc_es_001_e.
-
-  Using direct file to store records with name: diis_cc_es_001_x.
-
-  Doing preparations for file storer diis_cc_es_001_e
-
-  Doing preparations for file storer diis_cc_es_001_x
-
-  Storing DIIS records on file.
-
-  Using direct file to store records with name: diis_cc_es_002_e.
-
-  Using direct file to store records with name: diis_cc_es_002_x.
-
-  Doing preparations for file storer diis_cc_es_002_e
-
-  Doing preparations for file storer diis_cc_es_002_x
-
   Requested restart - restarting 1 left eigenvectors from file.
 
   Iteration:                  1
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-  Calling Jacobian left transform with energy:      0.247194255572
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.000000000000
+     1      0.247194255572       0.4514E-11
      2      0.485434878054       0.7383E+00
   -----------------------------------------------
 
@@ -1009,8 +871,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.485434878054
+     1      0.247194255572       0.4514E-11
      2      0.367437736592       0.1474E+00
   -----------------------------------------------
 
@@ -1018,8 +879,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.367437736592
+     1      0.247194255572       0.4514E-11
      2      0.358747566895       0.5073E-01
   -----------------------------------------------
 
@@ -1027,8 +887,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.358747566895
+     1      0.247194255572       0.4514E-11
      2      0.358486196464       0.2794E-01
   -----------------------------------------------
 
@@ -1036,8 +895,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.358486196464
+     1      0.247194255572       0.4514E-11
      2      0.355723292705       0.1151E-01
   -----------------------------------------------
 
@@ -1045,8 +903,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.355723292705
+     1      0.247194255572       0.4514E-11
      2      0.355938830664       0.8900E-02
   -----------------------------------------------
 
@@ -1054,8 +911,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.355938830664
+     1      0.247194255572       0.4514E-11
      2      0.356218981609       0.7523E-02
   -----------------------------------------------
 
@@ -1063,8 +919,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356218981609
+     1      0.247194255572       0.4514E-11
      2      0.355980575215       0.3257E-02
   -----------------------------------------------
 
@@ -1072,8 +927,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.355980575215
+     1      0.247194255572       0.4514E-11
      2      0.356073432773       0.1172E-02
   -----------------------------------------------
 
@@ -1081,8 +935,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356073432773
+     1      0.247194255572       0.4514E-11
      2      0.356077621716       0.4360E-03
   -----------------------------------------------
 
@@ -1090,8 +943,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356077621716
+     1      0.247194255572       0.4514E-11
      2      0.356083051742       0.1610E-03
   -----------------------------------------------
 
@@ -1099,8 +951,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356083051742
+     1      0.247194255572       0.4514E-11
      2      0.356084313772       0.1207E-03
   -----------------------------------------------
 
@@ -1108,8 +959,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356084313772
+     1      0.247194255572       0.4514E-11
      2      0.356084410351       0.1209E-03
   -----------------------------------------------
 
@@ -1117,8 +967,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356084410351
+     1      0.247194255572       0.4514E-11
      2      0.356084982492       0.8100E-04
   -----------------------------------------------
 
@@ -1126,8 +975,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356084982492
+     1      0.247194255572       0.4514E-11
      2      0.356085251936       0.3427E-04
   -----------------------------------------------
 
@@ -1135,8 +983,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085251936
+     1      0.247194255572       0.4514E-11
      2      0.356085029757       0.2027E-04
   -----------------------------------------------
 
@@ -1144,8 +991,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085029757
+     1      0.247194255572       0.4514E-11
      2      0.356085090405       0.1455E-04
   -----------------------------------------------
 
@@ -1153,8 +999,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085090405
+     1      0.247194255572       0.4514E-11
      2      0.356085034410       0.9048E-05
   -----------------------------------------------
 
@@ -1162,8 +1007,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085034410
+     1      0.247194255572       0.4514E-11
      2      0.356085038751       0.4803E-05
   -----------------------------------------------
 
@@ -1171,8 +1015,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085038751
+     1      0.247194255572       0.4514E-11
      2      0.356085063632       0.2259E-05
   -----------------------------------------------
 
@@ -1180,8 +1023,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085063632
+     1      0.247194255572       0.4514E-11
      2      0.356085061963       0.1200E-05
   -----------------------------------------------
 
@@ -1189,8 +1031,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085061963
+     1      0.247194255572       0.4514E-11
      2      0.356085057154       0.7101E-06
   -----------------------------------------------
 
@@ -1198,8 +1039,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085057154
+     1      0.247194255572       0.4514E-11
      2      0.356085053406       0.2911E-06
   -----------------------------------------------
 
@@ -1207,8 +1047,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085053406
+     1      0.247194255572       0.4514E-11
      2      0.356085055485       0.1102E-06
   -----------------------------------------------
 
@@ -1216,8 +1055,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085055485
+     1      0.247194255572       0.4514E-11
      2      0.356085056851       0.3906E-07
   -----------------------------------------------
 
@@ -1225,8 +1063,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085056851
+     1      0.247194255572       0.4514E-11
      2      0.356085057686       0.1302E-07
   -----------------------------------------------
 
@@ -1234,8 +1071,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085057686
+     1      0.247194255572       0.4514E-11
      2      0.356085057570       0.4471E-08
   -----------------------------------------------
 
@@ -1243,8 +1079,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085057570
+     1      0.247194255572       0.4514E-11
      2      0.356085057582       0.1555E-08
   -----------------------------------------------
 
@@ -1252,8 +1087,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085057582
+     1      0.247194255572       0.4514E-11
      2      0.356085057589       0.5057E-09
   -----------------------------------------------
 
@@ -1261,8 +1095,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085057589
+     1      0.247194255572       0.4514E-11
      2      0.356085057579       0.1965E-09
   -----------------------------------------------
 
@@ -1270,8 +1103,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085057579
+     1      0.247194255572       0.4514E-11
      2      0.356085057594       0.6402E-10
   -----------------------------------------------
 
@@ -1279,8 +1111,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085057594
+     1      0.247194255572       0.4514E-11
      2      0.356085057592       0.1715E-10
   -----------------------------------------------
 
@@ -1288,8 +1119,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
-  Calling Jacobian left transform with energy:      0.356085057592
+     1      0.247194255572       0.4514E-11
      2      0.356085057593       0.3735E-11
   -----------------------------------------------
   Convergence criterion met in 33 iterations!
@@ -1385,35 +1215,13 @@
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  Doing finalizations for file storer diis_cc_es_001_e
-
-  Doing finalizations for file storer diis_cc_es_001_x
-
-  Doing finalizations for file storer diis_cc_es_002_e
-
-  Doing finalizations for file storer diis_cc_es_002_x
-
   - Finished solving the CCSD excited state equations (left)
 
-     Total wall time (sec):              0.19892
-     Total cpu time (sec):               0.39892
-
-  Biorthonormalization of left and right excited state vectors
-
-     The left and right states corresponding to root 1 are consistent
-     Degree of degeneracy: 1
-
-     Overlap of 1. left and 1. right state:    0.9826733613
-
-     The left and right states corresponding to root 2 are consistent
-     Degree of degeneracy: 1
-
-     Overlap of 2. left and 2. right state:    0.9806045517
+     Total wall time (sec):              0.34800
+     Total cpu time (sec):               0.60774
 
 
   5) Calculation of the transition moments (EOM)
-
-  - No preparations for the density for ccsd wavefunction.
 
   :: EOM properties calculation
 
@@ -1423,7 +1231,7 @@
      ----------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.247194255572
-     Excitation energy [eV]:            6.726498310303
+     Excitation energy [eV]:            6.726498310302
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
@@ -1435,9 +1243,6 @@
      Z           0.2024326697      0.3970439121            0.0803746591
      --------------------------------------------------------------------------
      Oscillator strength [a.u.]:      0.013247851457
-     Trace left transition density:  -0.000000000000
-     Trace right transition density:  0.000000000000
-
 
      State 2:
      ----------
@@ -1455,19 +1260,10 @@
      Z          -0.0045071524     -0.0088103669            0.0000397097
      --------------------------------------------------------------------------
      Oscillator strength [a.u.]:      0.102561743915
-     Trace left transition density:  -0.000000000000
-     Trace right transition density: -0.000000000000
-
 
   - Timings for the CCSD response calculation
 
-     Total wall time (sec):              0.38797
-     Total cpu time (sec):               0.77597
-
-  Doing finalizations for file storer l_
-
-  Doing finalizations for file storer r_
-
-  - Cleaning up ccsd wavefunction
+     Total wall time (sec):              0.74600
+     Total cpu time (sec):               1.35750
 
   eT terminated successfully!
