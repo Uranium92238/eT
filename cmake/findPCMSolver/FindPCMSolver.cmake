@@ -10,8 +10,6 @@
 
 #Where to look for PCMSolver
 
-#Eirik F. Kjønstad, Nov 2019: assume .dylib if mac, .so otherwise
-
 set(_PCMSolver_NORMAL_SEARCH
   "/usr/local"
   "/usr/local/PCMSolver"
