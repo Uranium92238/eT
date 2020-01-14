@@ -1,5 +1,5 @@
 system
-   name: water + helium
+   name: H2O He
 end system
 
 do
