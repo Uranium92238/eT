@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 submodule (ccs_class) debug_jacobian_ccs
 !
 !!
-!!    Debug Jacobian (CCS)
+!!    Debug Jacobian
 !!
 !!    Routines debug analytical Jacobian by comparing to 
 !!    Jacobian computed by numerical differentiation of 
@@ -68,8 +68,7 @@ contains
       call wf%get_amplitudes(t_copy)
       call wf%set_amplitudes(t)
 !
-      call wf%integrals%write_t1_cholesky(wf%t1)
-      if (wf%integrals%get_eri_t1_mem()) call wf%integrals%update_g_pqrs_t1_in_memory()
+      call wf%integrals%update_t1_integrals(wf%t1)
 !
       call wf%construct_fock()
       call wf%construct_omega(omega)
@@ -123,9 +122,8 @@ contains
 !
       integer, intent(in) :: nu
 !
-!     Dirty hack to avoid warnings on compilation:
-!
-      if (.false.) call output%printf('No normalization needed for CCS (f20.5)', reals=[A_numerical_mu_nu(nu)], pl='verbose')     
+      call output%printf('v', 'No normalization needed for CCS (f20.5)', &
+                         reals=[A_numerical_mu_nu(nu)])     
 !
    end subroutine normalization_for_jacobian_debug_ccs
 !
@@ -226,10 +224,8 @@ contains
          call zero_array(e, wf%n_es_amplitudes)
          e(nu) = one
 !
-         call wf%integrals%write_t1_cholesky(wf%t1)
+         call wf%integrals%update_t1_integrals(wf%t1)
 !
-         if (wf%integrals%get_eri_t1_mem()) call wf%integrals%update_g_pqrs_t1_in_memory()
-
          call wf%construct_fock()
 !
          call wf%jacobian_transformation(e)
@@ -271,7 +267,8 @@ contains
 !
       endif
 !
-      call output%printf('Exited numerical test for jacobian without errors.', fs='(/t3, a)',pl='normal')
+      call output%printf('n', 'Exited numerical test for jacobian without errors.', &
+                         fs='(/t3, a)')
 !
    end subroutine numerical_test_jacobian_ccs
 !

@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (cc3_class) jacobian_transpose
 !
 !!
-!!    Jacobian transpose submodule (cc3)
-!!    Written by Alexander C. Paul and Rolf H. Myhre, March 2019
+!!    Jacobian transpose submodule
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the transpose of the Jacobian matrix
@@ -62,6 +61,7 @@ contains
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
+!     Same routines used for tbar3 and L3
       logical, intent(in) :: cvs
 !
       real(dp), dimension(:,:), allocatable :: c_ai
@@ -71,13 +71,17 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj, sigma_abij
 !
       type(timings) :: cc3_timer, cc3_timer_t3_a1, cc3_timer_t3_b1, cc3_timer_c3
-      type(timings) :: ccsd_timer
+      type(timings) :: ccsd_timer, timer 
 !
-      cc3_timer_t3_a1 = timings('Time in CC3 T3 a1')
-      cc3_timer_t3_b1 = timings('Time in CC3 T3 b1')
-      cc3_timer_c3   = timings('Time in CC3 C3')
-      cc3_timer      = timings('Total CC3 contribution')
-      ccsd_timer     = timings('Total CCSD contribution')
+      cc3_timer_t3_a1   = timings('Time in CC3 T3 a1', pl='normal')
+      cc3_timer_t3_b1   = timings('Time in CC3 T3 b1', pl='normal')
+      cc3_timer_c3      = timings('Time in CC3 C3', pl='normal')
+!
+      timer             = timings('Jacobian transpose CC3', pl='normal')
+      cc3_timer         = timings('Jacobian transpose CC3 (CC3 contribution)', pl='normal')
+      ccsd_timer        = timings('Jacobian transpose CC3 (CCSD contribution)', pl='normal')
+!
+      call timer%turn_on()
 !
 !     Allocate and zero the transformed singles vector
 !
@@ -199,6 +203,8 @@ contains
       call packin(c(wf%n_t1 + 1 : wf%n_es_amplitudes), sigma_abij, wf%n_v, wf%n_o)
 !
       call mem%dealloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine effective_jacobian_transpose_transformation_cc3
 !
@@ -366,7 +372,6 @@ contains
       integer :: req_0, req_1, req_2, req_3
 !
       logical :: ijk_core
-      integer :: i_cvs
 !
 !     :: Construct intermediate X_ai ::
 !
@@ -394,7 +399,7 @@ contains
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%alloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       else ! batching
 !
@@ -518,21 +523,19 @@ contains
                         end if
 !
 !                       Check if at least one index i,j,k is a core orbital
+!                       Here t3 is contracted with L2 and can, thus, be restricted as well
+!
                         if(cvs) then
 !
                            ijk_core = .false.
 !
-                           do i_cvs = 1, wf%n_core_MOs
+                           if(     any(wf%core_MOs .eq. i) &
+                              .or. any(wf%core_MOs .eq. j) &
+                              .or. any(wf%core_MOs .eq. k)) then
 !
-                              if(     i .eq. wf%core_MOs(i_cvs)   &
-                                 .or. j .eq. wf%core_MOs(i_cvs)   &
-                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+                              ijk_core = .true.
 !
-                                 ijk_core = .true.
-!
-                              end if
-!
-                           end do
+                           end if
 !
 !                          Cycle if i,j,k are not core orbitals
                            if (.not. ijk_core) cycle
@@ -575,7 +578,7 @@ contains
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%dealloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         call mem%dealloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       else ! batching
 !
@@ -817,6 +820,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: sigma_abij
 !
+!     Same routines used for tbar3 and L3
       logical, intent(in) :: cvs
 !
 !     Arrays for triples amplitudes
@@ -898,7 +902,6 @@ contains
       integer              :: req_0, req_1, req_2, req_3
 !
       logical :: ijk_core
-      integer :: i_cvs
 !
 !
 !     Set up arrays for amplitudes
@@ -1152,21 +1155,18 @@ contains
                         call zero_array(c_abc, wf%n_v**3)
 !
 !                       Check if at least one index i,j,k is a core orbital
+!
                         if(cvs) then
 !
                            ijk_core = .false.
 !
-                           do i_cvs = 1, wf%n_core_MOs
+                           if(     any(wf%core_MOs .eq. i) &
+                              .or. any(wf%core_MOs .eq. j) &
+                              .or. any(wf%core_MOs .eq. k)) then
 !
-                              if(     i .eq. wf%core_MOs(i_cvs)   &
-                                 .or. j .eq. wf%core_MOs(i_cvs)   &
-                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+                              ijk_core = .true.
 !
-                                 ijk_core = .true.
-!
-                              end if
-!
-                           end do
+                           end if
 !
 !                          Cycle if i,j,k are not core orbitals
                            if (.not. ijk_core) cycle

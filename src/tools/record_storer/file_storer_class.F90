@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -42,6 +42,8 @@ module file_storer_class
    type, extends(record_storer) :: file_storer
 !
       logical :: delete, direct_ 
+!
+      logical, dimension(:), allocatable :: written_to_record
 !
       type(direct_file), allocatable :: direct_file
       type(sequential_file), dimension(:), allocatable :: sequential_files
@@ -148,8 +150,8 @@ contains
 !
 !        Use array of sequential files 
 !
-         call output%printf('Using sequential file array to store records using the prefix: ' &
-                              // trim(storer%name_) // '.', pl='verbose', fs='(/t3,a)')
+         call output%printf('v', 'Using sequential file array to store records &
+                            &using the prefix: ' // trim(storer%name_) // '.', fs='(/t3,a)')
 !
          allocate(storer%sequential_files(storer%n_records))
 !
@@ -164,8 +166,8 @@ contains
 !
 !        Use one direct file 
 !
-         call output%printf('Using direct file to store records with name: ' &
-                              // trim(storer%name_) // '.', pl='verbose', fs='(/t3,a)')
+         call output%printf('v', 'Using direct file to store records with name: ' &
+                            // trim(storer%name_) // '.', fs='(/t3,a)')
 !
          storer%direct_file = direct_file(trim(storer%name_), storer%record_dim)
 !
@@ -274,6 +276,8 @@ contains
 !
       endif
 !
+      storer%written_to_record(record) = .true.
+!
    end subroutine set_file_storer
 !
 !
@@ -352,13 +356,15 @@ contains
 !
       if (storer%direct_) then 
 !
-         call storer%direct_file%delete_()
+         if (any(storer%written_to_record)) &
+            call storer%direct_file%delete_()
 !
       else 
 !
          do I = 1, storer%n_records
 !
-            call storer%sequential_files(I)%delete_()
+            if (storer%written_to_record(I)) &
+               call storer%sequential_files(I)%delete_()
 !
          enddo
 !
@@ -381,8 +387,14 @@ contains
 !
       integer :: I 
 !
-      call output%printf('Doing preparations for file storer (a0)', pl='debug', &
-                           chars=[storer%name_], fs='(/t3,a)')
+      call output%printf('debug', 'Doing preparations for file storer (a0)', &
+                         chars=[storer%name_], fs='(/t3,a)')
+!
+!     Set up logical array telling us record has been written to or not 
+!     
+      call mem%alloc(storer%written_to_record, storer%n_records)
+!
+      storer%written_to_record = .false.
 !
 !     Set up index array telling us which record is 
 !     stored in which position
@@ -417,20 +429,20 @@ contains
 !
       class(file_storer) :: storer 
 !
-      call output%printf('Doing finalizations for file storer (a0)', pl='debug', &
-                           chars=[storer%name_], fs='(/t3,a)')
+      call output%printf('debug', 'Doing finalizations for file storer (a0)', &
+                         chars=[storer%name_], fs='(/t3,a)')
 !
       call mem%dealloc(storer%record_indices, storer%n_records)
+!
+      if (storer%direct_) call storer%direct_file%close_('keep')
 !
       if (storer%delete) then 
 !
          call storer%delete_()
 !
-      else 
+      endif
 !
-         if (storer%direct_) call storer%direct_file%close_('keep')
-!
-      endif      
+      call mem%dealloc(storer%written_to_record, storer%n_records)     
 !
    end subroutine finalize_storer_file_storer
 !

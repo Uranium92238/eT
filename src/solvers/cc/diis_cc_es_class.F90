@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -131,7 +131,6 @@ contains
 !
       solver%name_  = 'DIIS coupled cluster excited state solver'
       solver%tag    = 'DIIS'
-      solver%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       solver%description1 = 'A DIIS solver that solves for the lowest eigenvalues and &
                            & the right eigenvectors of the Jacobian matrix, A. The eigenvalue &
@@ -149,7 +148,6 @@ contains
       solver%max_iterations       = 100
       solver%eigenvalue_threshold = 1.0d-6
       solver%residual_threshold   = 1.0d-6
-      solver%transformation       = 'right'
       solver%diis_dimension       = 20
       solver%restart              = restart
       solver%transformation       = trim(transformation)
@@ -172,8 +170,6 @@ contains
       call solver%initialize_projection_tool(wf)
 !
       call solver%prepare_wf_for_excited_state(wf)
-
-      if (wf%frozen_core .and. solver%es_type=='core') call output%error_msg('No support for frozen core with CVS yet.')
 !
 !     Initialize preconditioner 
 !
@@ -215,12 +211,12 @@ contains
 !
       call solver%print_es_settings()
 !
-      call output%printf('DIIS dimension: (i3)', pl='minimal', &
+      call output%printf('m', 'DIIS dimension:               (i11)', &
                          ints=[solver%diis_dimension], fs='(/t6,a)')
 !
       if (solver%crop) then 
 !
-         call output%printf('Enabled CROP in the DIIS algorithm.', pl='minimal', fs='(/t6,a)')
+         call output%printf('m', 'Enabled CROP in the DIIS algorithm.', fs='(/t6,a)')
 !
       endif
 !
@@ -305,9 +301,9 @@ contains
       prev_energies     = zero 
       residual_norms    = zero 
 !
-      allocate(converged(solver%n_singlet_states))
-      allocate(converged_residual(solver%n_singlet_states))
-      allocate(converged_eigenvalue(solver%n_singlet_states))
+      call mem%alloc(converged, (solver%n_singlet_states))
+      call mem%alloc(converged_residual, (solver%n_singlet_states))
+      call mem%alloc(converged_eigenvalue, (solver%n_singlet_states))
 !
       converged            = .false.
       converged_residual   = .false.
@@ -349,10 +345,12 @@ contains
 !
          n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
 !
-         call output%printf('Requested restart - there are (i0) (a0) eigenvectors on file.', &
-                              ints=[n_solutions_on_file], chars=[solver%restart_transformation])
+         call output%printf('m', 'Requested restart - restarting (i0) (a0) &
+                           &eigenvectors from file.', fs='(/t3,a)', &
+                            ints=[n_solutions_on_file], &
+                            chars=[solver%restart_transformation])
 !
-         do state = 1, n_solutions_on_file
+         do state = 1, min(n_solutions_on_file,wf%n_singlet_states)
 !
             call wf%read_excited_state(X(:,state), state, solver%restart_transformation)
 !
@@ -364,7 +362,7 @@ contains
          enddo
 !
          solver%energies = zero
-         call wf%read_excitation_energies(n_solutions_on_file, solver%energies(1:n_solutions_on_file))
+         call wf%read_excitation_energies(n_solutions_on_file, solver%energies)
 !
       endif
 !
@@ -378,12 +376,10 @@ contains
 !
          iteration = iteration + 1   
 !
-         call output%printf('Iteration: (i18)', &
-                     ints=[iteration], fs='(/t3,a)', pl='n')
+         call output%printf('n', 'Iteration: (i18)', ints=[iteration], fs='(/t3,a)')
 !
-         call output%printf('Root     Eigenvalue (Re)     Residual norm', &
-                            fs='(/t3,a)', pl='n')
-         call output%print_separator('n', 46, '-')
+         call output%printf('n', ' Root     Eigenvalue (Re)     Residual norm', fs='(/t3,a)')
+         call output%print_separator('n', 47, '-')
 !
          do state = 1, solver%n_singlet_states
 !
@@ -433,7 +429,9 @@ contains
 !
 !                 Form quasi-Newton estimate for X 
 !
-                  call solver%preconditioner%do_(R(:,state), shift=solver%energies(state))
+                  call solver%preconditioner%do_(R(:,state),                     &
+                                                 shift=solver%energies(state),   &
+                                                 prefactor=-one)
 !
                   call daxpy(wf%n_es_amplitudes, one, R(:, state), 1, X(:, state), 1)
 !
@@ -450,8 +448,9 @@ contains
 !
             endif 
 !
-            call output%printf('(i0)   (f19.12)      (e11.4)', ints=[state], &
-                 reals=[solver%energies(state), residual_norms(state)], pl='n')
+            call output%printf('n', '(i4)  (f18.12)      (e11.4)', &
+                               ints=[state], reals=[solver%energies(state), &
+                               residual_norms(state)])
 !
          enddo
 !
@@ -467,7 +466,7 @@ contains
                            solver%energies, solver%transformation)
          prev_energies = solver%energies 
 !
-         call output%print_separator('n', 46, '-')
+         call output%print_separator('n', 47, '-')
 !
       enddo 
 !
@@ -475,17 +474,16 @@ contains
 !
          if (iteration .eq. 1) then 
 !
-            call output%printf('Note: residual of all states converged &
-                              & in first iteration.', fs='(/t3,a)',pl='n')
-            call output%printf('Energy convergence has not been tested.', &
-                                fs='(t3,a/)',pl='n')
+            call output%printf('n', 'Note: residual of all states converged  in &
+                               &first iteration.', fs='(/t3,a)')
+            call output%printf('n', 'Energy convergence has not been tested.', fs='(t3,a/)')
 !
          endif
 !
-         call output%printf('Convergence criterion met in (i0) iterations!', &
-                            ints=[iteration], fs='(/t3,a)',pl='m')
-         call output%printf('- Resorting roots according to excitation energy.', &
-                            fs='(/t3,a)', pl='n')
+         call output%printf('m', 'Convergence criterion met in (i0) iterations!', &
+                            ints=[iteration], fs='(t3,a)')
+         call output%printf('n', '- Resorting roots according to excitation energy.', &
+                            fs='(/t3,a)')
 !
 !        Sort roots and store the original state number in prev_state_numbers
 !
@@ -502,8 +500,8 @@ contains
 !
             if(prev_state_numbers(state) .ne. state) then
 !
-               call output%printf('Root number (i3) renamed to state (i3)',      &
-                     ints=[prev_state_numbers(state), state], fs='(t5,a)', pl='v')
+               call output%printf('v', 'Root number (i0) renamed to state (i0)' &
+                                  &, ints=[prev_state_numbers(state), state], fs='(t5,a)')
 !
             end if
 !
@@ -513,7 +511,7 @@ contains
 !
          call mem%dealloc(prev_state_numbers, solver%n_singlet_states)
 !
-         call output%printf('- Stored converged states to file.', fs='(/t3,a)', pl='n')
+         call output%printf('n', '- Stored converged states to file.', fs='(/t3,a)')
 !
          call solver%print_summary(wf, X_sorted)
 !
@@ -532,9 +530,9 @@ contains
       call mem%dealloc(prev_energies, solver%n_singlet_states)
       call mem%dealloc(residual_norms, solver%n_singlet_states)
 !
-      deallocate(converged)
-      deallocate(converged_residual)
-      deallocate(converged_eigenvalue)
+      call mem%dealloc(converged, (solver%n_singlet_states))
+      call mem%dealloc(converged_residual, (solver%n_singlet_states))
+      call mem%dealloc(converged_eigenvalue, (solver%n_singlet_states))
 !
       call mem%dealloc(eps, wf%n_es_amplitudes)
       call mem%dealloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
@@ -545,6 +543,8 @@ contains
          call diis(state)%finalize_storers()
 !
       enddo 
+!
+      call solver%preconditioner%destruct_precondition_vector()
 !
    end subroutine run_diis_cc_es
 !

@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -53,7 +53,9 @@ module gl2_cc_propagation_class
 !
       procedure :: step => gl2_step
 !
-      final     :: destructor_gl2_cc_propagation
+      procedure :: initializations => initializations_gl2_cc_propagation
+!
+      final :: destructor_gl2_cc_propagation
 !
    end type gl2_cc_propagation
 !
@@ -83,11 +85,26 @@ contains
 !
       call solver%new_cc_propagation(wf)
 !
-      call mem%alloc(solver%z1_guess, solver%vector_length)
-!
-      solver%z1_guess = zero_complex
-!
    end function new_gl2_cc_propagation
+!
+!
+   subroutine initializations_gl2_cc_propagation(solver)
+!!
+!!    Initializations 
+!!    Written by Andreas Skedsvoll, Sep 2019
+!!
+!!    Allocates z1 guess and sets it to zero.
+!!
+!!    Moved from constructor, Eirik F. Kjønstad, Jan 2020.
+!!
+      implicit none 
+!
+      class(gl2_cc_propagation), intent(inout) :: solver 
+!
+      call mem%alloc(solver%z1_guess, solver%vector_length)
+      solver%z1_guess = zero_complex      
+!
+   end subroutine initializations_gl2_cc_propagation
 !
 !
    subroutine destructor_gl2_cc_propagation(solver)
@@ -101,7 +118,7 @@ contains
 !
       type(gl2_cc_propagation), intent(inout) :: solver
 !
-      call mem%dealloc(solver%z1_guess, solver%vector_length)
+      if (allocated(solver%z1_guess)) call mem%dealloc(solver%z1_guess, solver%vector_length)
 !
    end subroutine destructor_gl2_cc_propagation
 !
@@ -179,7 +196,7 @@ contains
 !
       enddo
 !
-      call output%printf('GL2 iterations: (i6)', ints=[i], pl='n', fs='(t3,a)')
+      call output%printf('n', 'GL2 iterations: (i6)', ints=[i], fs='(t3,a)')
 !
       call mem%dealloc(z1, n)
       call mem%dealloc(z1_next, n)

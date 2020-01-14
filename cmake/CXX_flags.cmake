@@ -1,7 +1,7 @@
 #
 #
 #   eT - a coupled cluster program
-#   Copyright (C) 2016-2019 the authors of eT
+#   Copyright (C) 2016-2020 the authors of eT
 #
 #   eT is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -26,8 +26,6 @@ if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
 #   Set standard flags 
 #  
     set(CMAKE_CXX_FLAGS "-std=c++11 -xHost -O3 -Wall")
-# 
-    set (CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -shared-intel")
 # 
 #   Flags needed for Libint package
 # 
@@ -85,13 +83,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
             )
     endif()
 # 
-#   Enable profiling 
-# 
-    if(ENABLE_PROFILING)
-        set(CMAKE_CXX_FLAGS
-            "${CMAKE_CXX_FLAGS} -pg"
-            )
-    endif()
 endif()
 
 if(DEFINED EXTRA_CXX_FLAGS)

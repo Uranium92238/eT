@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -158,11 +158,12 @@
 !!    Construct u_aibj
 !!    Written by Tor S. Haugland, Nov 2019
 !!
-!!    Construct
+!!    Constructs 
+!!
 !!       u_aibj = 2t_aibj - t_ajbi
 !!
       implicit none
 !
-      class(ccsd),                  intent(inout)          :: wf
+      class(ccsd), intent(inout) :: wf
 !
    end subroutine construct_u_aibj_ccsd

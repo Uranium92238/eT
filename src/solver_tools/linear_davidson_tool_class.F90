@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -175,7 +175,7 @@ contains
 !
       davidson%F(1:n_parameters, 1:davidson%n_rhs) => F(1:n_parameters)
 !
-      call mem%alloc(davidson%frequencies, davidson%n_solutions)
+      allocate(davidson%frequencies(davidson%n_solutions))
 !
       if (present(frequencies)) then 
 !
@@ -239,7 +239,7 @@ contains
 !
       davidson%F(1:n_parameters, 1:n_rhs) => F
 !
-      call mem%alloc(davidson%frequencies, davidson%n_solutions)
+      allocate(davidson%frequencies(davidson%n_solutions))
 !
       davidson%frequencies = frequencies
 !
@@ -318,11 +318,13 @@ contains
 !
          call davidson%preconditioner%do_(c,                               &
                                           shift=davidson%frequencies(i),   &
-                                          prefactor=-one)
+                                          prefactor=one)
 !
          call davidson%set_trial(c, i)
 !
       enddo
+!
+      call mem%dealloc(c, davidson%n_parameters)
 !
    end subroutine set_trials_to_preconditioner_guess_linear_davidson
 !
@@ -561,7 +563,10 @@ contains
       call mem%alloc(trial, davidson%n_parameters)
       call dcopy(davidson%n_parameters, R, 1, trial, 1)
 !
-      if (davidson%do_precondition) call davidson%preconditioner%do_(trial, shift=davidson%frequencies(n))
+      if (davidson%do_precondition) &
+            call davidson%preconditioner%do_(trial,                           &
+                                             shift=davidson%frequencies(n),   &
+                                             prefactor=-one)
 !
 !     Renormalize 
 !
@@ -587,11 +592,21 @@ contains
 !
       type(linear_davidson_tool) :: davidson 
 !
-      if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
-      if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
-      if (allocated(davidson%F_red)) call mem%dealloc(davidson%F_red, davidson%dim_red, davidson%n_rhs)
+      if (allocated(davidson%A_red)) then
+         call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
+      end if
+!
+      if (allocated(davidson%X_red)) then 
+         call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
+      end if
+!
+      if (allocated(davidson%F_red)) then 
+         call mem%dealloc(davidson%F_red, davidson%dim_red, davidson%n_rhs)
+      end if
 !
       davidson%F => null()
+!
+      if (davidson%do_precondition) call davidson%preconditioner%destruct_precondition_vector()
 !
    end subroutine destructor_linear_davidson_tool
 !

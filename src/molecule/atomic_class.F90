@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -145,6 +145,14 @@ contains
       implicit none
 !
       class(atomic) :: atom
+!
+      integer :: sh
+!
+      do sh = 1, atom%n_shells
+!
+         call atom%shells(sh)%cleanup()
+!
+      enddo
 !
       if (allocated(atom%shells)) deallocate(atom%shells)
 !

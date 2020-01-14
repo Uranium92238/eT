@@ -11,7 +11,7 @@ build:
     - cmake --version
     - git submodule init
     - git submodule update
-    - ./setup --int32 -FC=gfortran-8 -CXX=g++-8 $extra_setup_options
+    - ./setup --int32 -FC=gfortran-8 -CXX=g++-8 --pcm $extra_setup_options
     - cd build
     - make
   tags:

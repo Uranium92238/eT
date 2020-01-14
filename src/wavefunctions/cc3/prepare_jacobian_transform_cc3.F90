@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (cc3_class) prepare_jacobian_transform
 !
 !!
-!!    Prepare jacobian transformation (cc3)
-!!    Written by Alexander C. Paul and Rolf H. Myhre, March 2019
+!!    Prepare jacobian transformation
 !!
 !!    Routines setting up the files containing intermediates for the linear 
 !!    transform of trial vectors by the Jacobian matrix and its transpose.
@@ -58,8 +57,8 @@ contains
       prep_timer = timings("Time preparing for Jacobian")
       call prep_timer%turn_on()
 !
-      call output%printf('Preparing for (a0) right excited state equations', pl='v', &
-                          chars=[trim(wf%name_)], fs='(/t3,a)')
+      call output%printf('v', 'Preparing for (a0) right excited state equations', &
+                         chars=[trim(wf%name_)], fs='(/t3,a)')
 !
       call wf%prepare_cc3_jacobian_intermediates()
       call wf%save_jacobian_a1_intermediates()
@@ -93,8 +92,8 @@ contains
       prep_timer = timings("Time preparing for Jacobian", pl='normal')
       call prep_timer%turn_on()
 !
-      call output%printf('Preparing for (a0) left excited state equations',   &
-                          chars=[trim(wf%name_)], pl='v', fs='(/t3,a)')
+      call output%printf('v', 'Preparing for (a0) left excited state equations' &
+                         &, chars=[trim(wf%name_)], fs='(/t3,a)')
 !
       call wf%ccsd%prepare_for_jacobian_transpose()
 !
@@ -458,7 +457,7 @@ contains
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%alloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       else ! batching
 !
@@ -683,7 +682,7 @@ contains
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%dealloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         call mem%dealloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
          call mem%dealloc(g_lbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -704,13 +703,13 @@ contains
          call mem%dealloc(g_lick, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%dealloc(g_ljck, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
 !
-         call mem%dealloc(g_lbic, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(g_lbjc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(g_lbkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
+         call mem%dealloc(g_lbic, wf%n_v, wf%n_v, wf%n_o, batch_i%length)
+         call mem%dealloc(g_lbjc, wf%n_v, wf%n_v, wf%n_o, batch_i%length)
+         call mem%dealloc(g_lbkc, wf%n_v, wf%n_v, wf%n_o, batch_i%length)
 !
-         call mem%dealloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%dealloc(X_abdj, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%dealloc(X_abdk, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         call mem%dealloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%dealloc(X_abdj, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%dealloc(X_abdk, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
       endif
 !

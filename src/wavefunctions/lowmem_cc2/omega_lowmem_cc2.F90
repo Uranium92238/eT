@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,9 +20,7 @@
 submodule (lowmem_cc2_class) omega_lowmem_cc2
 !
 !!
-!!    Omega submodule (CC2)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    Linda Goletto and Alexander C. Paul, 2018
+!!    Omega submodule 
 !!
 !!    Routines to construct 
 !!
@@ -49,13 +47,20 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
-      omega = zero
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Construct omega lowmem-cc2', pl='normal')
+      call timer%turn_on()
+!
+      call zero_array(omega, wf%n_gs_amplitudes)
 !
       call wf%omega_ccs_a1(omega)
 !
       call wf%omega_cc2_a1(omega, wf%orbital_energies(1:wf%n_o), wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
       call wf%omega_cc2_b1(omega, wf%orbital_energies(1:wf%n_o), wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
       call wf%omega_cc2_c1(omega, wf%orbital_energies(1:wf%n_o), wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
+!
+      call timer%turn_off()
 !
    end subroutine construct_omega_lowmem_cc2
 !
@@ -89,8 +94,10 @@ contains
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_bicj
-      real(dp), dimension(:,:,:,:), allocatable :: L_bjci
+      real(dp), dimension(:,:,:,:), allocatable :: u_bjci
       real(dp), dimension(:,:,:,:), allocatable :: g_abjc
+!
+      real(dp) :: eps_ci
 !
       integer :: b, j, c, i
 !
@@ -99,6 +106,11 @@ contains
       integer :: current_b_batch, current_c_batch
 !
       type(batching_index) :: batch_b, batch_c
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('omega cc2 a1 lowmem', pl='verbose')
+      call timer%turn_on()
 !
       req0 = 0
 !
@@ -120,8 +132,10 @@ contains
 !
             call batch_c%determine_limits(current_c_batch)
 !
+!           Construct u_bicj = -2g_bicj + g_bjci/(e_bjci), ordered as u_bjci
+!
             call mem%alloc(g_bicj, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
-            call mem%alloc(L_bjci, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
+            call mem%alloc(u_bjci, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
 !
             call wf%get_vovo(g_bicj,                        &
                               batch_b%first, batch_b%last,  &
@@ -129,16 +143,19 @@ contains
                               batch_c%first, batch_c%last,  &
                               1, wf%n_o)
 !
-!$omp parallel do schedule(static) private(i, j, c, b)
-            do b = 1, (batch_b%length)
-               do  j = 1, wf%n_o
-                   do c = 1, (batch_c%length)
-                      do i = 1, wf%n_o
+!$omp parallel do schedule(static) private(i, j, c, b, eps_ci) collapse(2)
+            do i = 1, wf%n_o
+               do c = 1, (batch_c%length)
+!
+                  eps_ci = eps_v(c + batch_c%first - 1) - eps_o(i)
+!
+                  do  j = 1, wf%n_o
+                     do b = 1, (batch_b%length)
 !                 
-                         L_bjci(b,j,c,i) = -(two*g_bicj(b,i,c,j) - g_bicj(b,j,c,i))&
-                                                                /(eps_v(b + batch_b%first - 1)&
-                                                                + eps_v(c + batch_c%first - 1) &
-                                                                - eps_o(i) - eps_o(j))
+                        u_bjci(b,j,c,i) = -(two*g_bicj(b,i,c,j) - g_bicj(b,j,c,i))&
+                                                                /(eps_ci +  &
+                                                                  eps_v(b + batch_b%first - 1)&
+                                                                - eps_o(j))
                       enddo
                    enddo
                enddo
@@ -146,6 +163,8 @@ contains
 !$omp end parallel do
 !
             call mem%dealloc(g_bicj, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
+!
+!           Omega_ai += sum_bjc u_bicj g_abjc       
 !
             call mem%alloc(g_abjc, batch_b%length,wf%n_v, batch_c%length,wf%n_o)
 !
@@ -162,17 +181,19 @@ contains
                         one,                                      &
                         g_abjc,                                   &
                         wf%n_v,                                   &
-                        L_bjci,                                   &
+                        u_bjci,                                   &
                         (batch_b%length)*(batch_c%length)*wf%n_o, &
                         one,                                      &
                         omega,                                    &
                         wf%n_v)
 !
             call mem%dealloc(g_abjc, batch_b%length, wf%n_v, batch_c%length, wf%n_o)
-            call mem%dealloc(L_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
+            call mem%dealloc(u_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
          enddo
       enddo
+!
+      call timer%turn_off()
 !
    end subroutine omega_cc2_a1_lowmem_cc2
 !
@@ -214,6 +235,11 @@ contains
 !
       type(batching_index) :: batch_b, batch_j, batch_k
 !
+      type(timings), allocatable :: timer 
+!
+      timer = timings('omega cc2 b1 lowmem', pl='verbose')
+      call timer%turn_on()
+!
       req0 = 0
 !
       req1_b = wf%integrals%n_J
@@ -244,6 +270,9 @@ contains
             do current_k_batch = 1, batch_k%num_batches
 !
                call batch_k%determine_limits(current_k_batch)
+!
+!               Construct t_ajbk = - g_ajbk/e_ajbk, 
+!               store in g_ajbk to avoid double memory requirement
 !
                call mem%alloc(g_ajbk, wf%n_v, batch_j%length,&
                               batch_b%length, batch_k%length)
@@ -280,6 +309,8 @@ contains
                                  batch_k%first, batch_k%last, & 
                                  1, wf%n_o)
 !
+!              Omega_ai += sum_jbk t_ajbk g_jbki       
+!
                call dgemm('N','N',                                             &
                            wf%n_v,                                             &
                            wf%n_o,                                             &
@@ -296,6 +327,7 @@ contains
                call mem%dealloc(g_jbki, batch_j%length, batch_b%length, &
                                 batch_k%length, wf%n_o)
 !
+!              Construct g_kbij and reorder as g_jbki
 !
                call mem%alloc(g_kbji, batch_k%length, batch_b%length, &
                                       batch_j%length, wf%n_o)
@@ -314,6 +346,8 @@ contains
 !
                call mem%dealloc(g_kbji, batch_k%length, batch_b%length, &
                                         batch_j%length, wf%n_o)
+!
+!              Omega_ai += sum_bjk t_ajbk g_kbji
 !
                call dgemm('N','N',                                             &
                            wf%n_v,                                             &
@@ -336,6 +370,8 @@ contains
             enddo
          enddo
       enddo
+!
+      call timer%turn_off()
 !
    end subroutine omega_cc2_b1_lowmem_cc2
 !
@@ -381,6 +417,11 @@ contains
 !
       type(batching_index) :: batch_j, batch_i
 !
+      type(timings), allocatable :: timer 
+!
+      timer = timings('omega cc2 c1 lowmem', pl='verbose')
+      call timer%turn_on()
+!
       req0 = 0
 !
       req1_j = (wf%n_v)*(wf%integrals%n_J)
@@ -400,6 +441,8 @@ contains
          do current_j_batch = 1, batch_j%num_batches
 !
             call batch_j%determine_limits(current_j_batch)
+!
+!           Construct u_aibj = -(2g_aibj - g_ajbi)/e_aibj
 !
             call mem%alloc(g_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
 !
@@ -432,6 +475,8 @@ contains
 !
             call mem%dealloc(g_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
 !
+!           Reorder F_jb as F_bj
+!
             call mem%alloc(F_bj, wf%n_v, batch_j%length)
 !
 !$omp parallel do schedule(static) private(b,j)
@@ -443,6 +488,8 @@ contains
                enddo
             enddo
 !$omp end parallel do
+!
+!           Omega_ai += u_aibj F_jb
 !
             omega_offset = wf%n_v*(batch_i%first - 1) + 1
 !
@@ -464,6 +511,8 @@ contains
 !
          enddo
       enddo
+!
+      call timer%turn_off()
 !
    end subroutine omega_cc2_c1_lowmem_cc2
 !

@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -32,6 +32,10 @@ program eT_program
    use libint_initialization, only : initialize_libint, finalize_libint
    use molecular_system_class, only : molecular_system
 !
+   use hf_class, only: hf 
+   use uhf_class, only: uhf 
+   use mlhf_class, only: mlhf 
+!
    use omp_lib
 !
    implicit none
@@ -45,6 +49,41 @@ program eT_program
 !  Timer object
 !
    type(timings) :: eT_timer
+!
+!  Reference wavefunction
+!
+   class(hf), allocatable  :: ref_wf
+!
+!  Interface reference and CC wavefunction calculation
+!
+   interface
+!
+      subroutine reference_calculation(system, ref_wf)
+!
+         use molecular_system_class, only: molecular_system
+         use hf_class, only: hf
+!
+         implicit none
+!
+         type(molecular_system), intent(inout)  :: system
+         class(hf), allocatable, intent(inout)  :: ref_wf
+!
+      end subroutine reference_calculation
+!
+      subroutine cc_calculation(system, ref_wf)
+!
+         use molecular_system_class, only: molecular_system
+!
+         use hf_class, only: hf 
+!
+         implicit none
+!
+         type(molecular_system) :: system
+         class(hf), intent(in)  :: ref_wf
+!
+      end subroutine cc_calculation
+!
+   end interface
 !
 !  Prepare input, output and timing file
 !
@@ -64,13 +103,14 @@ program eT_program
 !
    call print_program_banner()
 !
+   call input%print_to_output()  ! Print input file to output file 
+   call input%check_for_errors() ! Check for incorrect/missing keywords/sections
+!
    n_threads = 1
 !
 !$   n_threads = omp_get_max_threads()
 !
-   call output%printf('Running on (i0) OMP thread(s)', pl='minimal', fs='(/t3,a)', ints=[n_threads])
-!
-   call input%check_for_errors()
+   call output%printf('m', 'Running on (i0) OMP thread(s)', ints=[n_threads], fs='(/t3,a)')
 !
 !  Set print level in output and timing files
 !
@@ -86,16 +126,40 @@ program eT_program
 !
    system = molecular_system()
 !
+!  Cholesky decomposition of electron repulsion integrals (ERIs)
+!
+   if (input%requested_cc_calculation() .or.                      &
+       input%requested_keyword_in_section('cholesky eri', 'do'))  &
+         call do_eri_cholesky(system) 
+!
 !  Hartree-Fock calculation
 !
-   if (input%requested_reference_calculation()) call reference_calculation(system)
+   if (input%requested_reference_calculation()) then
 !
-!  Coupled cluster calculation
+      call reference_calculation(system, ref_wf)
 !
-   if (input%requested_cc_calculation()) call cc_calculation(system)
+!     Coupled cluster calculation
+!
+      if (input%requested_cc_calculation()) then
+!
+         call ref_wf%prepare_for_cc()
+         call cc_calculation(system, ref_wf)
+!
+      endif
+!
+      call ref_wf%cleanup()
+!
+   else
+!
+      if (input%requested_cc_calculation()) &
+         call output%error_msg('to run CC calculation reference wavefunction must be specified.')
+!
+   endif
 !
    call finalize_libint() ! No longer safe to use Libint
 !
+   call timing%printf('m', ":: Total time", fs='(//t3,a)')
+   call timing%print_separator('m', 16, '=')
    call eT_timer%turn_off()
 !
    call system%cleanup()
@@ -104,7 +168,7 @@ program eT_program
 !
    call output%check_for_warnings()
 !
-   call output%printf('eT terminated successfully!', pl='minimal', fs='(/t3,a)')
+   call output%printf('m', 'eT terminated successfully!', fs='(/t3,a)')
 !
    call output%close_()
    call input%close_()
@@ -113,7 +177,7 @@ program eT_program
 end program eT_program
 !
 !
-subroutine reference_calculation(system)
+subroutine reference_calculation(system, ref_wf)
 !!
 !! Reference calculation
 !! Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -125,18 +189,18 @@ subroutine reference_calculation(system)
    use global_in,  only: input 
    use global_out, only: output
 !
+   use reference_engine_class, only: reference_engine 
+   use hf_geoopt_engine_class, only: hf_geoopt_engine 
+!
    use hf_class, only: hf 
    use uhf_class, only: uhf 
    use mlhf_class, only: mlhf 
 !
-   use reference_engine_class, only: reference_engine 
-   use hf_geoopt_engine_class, only: hf_geoopt_engine 
-!
    implicit none
 !
-   type(molecular_system) :: system
+   type(molecular_system), intent(inout) :: system
 !
-   class(hf), allocatable  :: ref_wf
+   class(hf), allocatable, intent(inout)  :: ref_wf
 !
    class(reference_engine), allocatable :: ref_engine
 !
@@ -174,12 +238,11 @@ subroutine reference_calculation(system)
    endif 
 !
    call ref_engine%ignite(ref_wf)
-   call ref_wf%cleanup()
 !
 end subroutine reference_calculation
 !
 !
-subroutine cc_calculation(system)
+subroutine cc_calculation(system, ref_wf)
 !!
 !! Coupled cluster calculation
 !! Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -190,6 +253,8 @@ subroutine cc_calculation(system)
    use global_out, only: output 
 !
    use molecular_system_class, only: molecular_system
+!
+   use hf_class, only: hf 
 !
    use ccs_class, only: ccs 
    use cc2_class, only: cc2 
@@ -202,21 +267,20 @@ subroutine cc_calculation(system)
 !
    use gs_engine_class, only: gs_engine
    use es_engine_class, only: es_engine
-   use zop_engine_class, only: zop_engine 
-   use fop_engine_class, only: fop_engine 
-   use td_engine_class, only: td_engine 
+   use response_engine_class, only: response_engine 
+   use mean_value_engine_class, only: mean_value_engine 
+   use td_engine_class, only: td_engine
 !
    implicit none
 !
    type(molecular_system) :: system
 !
+   class(hf), intent(in)  :: ref_wf
+!
    class(ccs), allocatable :: cc_wf
    class(gs_engine), allocatable :: cc_engine 
 !
    character(len=30) :: cc_wf_name
-!
-   if (.not. input%requested_reference_calculation()) &
-      call output%error_msg('to run CC calculation reference wavefunction must be specified.')
 !
    cc_wf_name = input%get_cc_wf()
 !
@@ -224,35 +288,35 @@ subroutine cc_calculation(system)
 !
       case ('ccs')
 !
-         cc_wf = ccs(system)
+         cc_wf = ccs(system, ref_wf)
 !
       case ('cc2')
 !
-         cc_wf = cc2(system)
+         cc_wf = cc2(system, ref_wf)
 !
       case ('lowmem-cc2')
 !
-         cc_wf = lowmem_cc2(system)
+         cc_wf = lowmem_cc2(system, ref_wf)
 !
       case ('ccsd')
 !
-         cc_wf = ccsd(system)
+         cc_wf = ccsd(system, ref_wf)
 !
       case ('cc3')
 !
-         cc_wf = cc3(system)
+         cc_wf = cc3(system, ref_wf)
 !
       case ('ccsd(t)')
 !
-         cc_wf = ccsdpt(system)
+         cc_wf = ccsdpt(system, ref_wf)
 !
       case ('mp2')
 !
-         cc_wf = mp2(system)
+         cc_wf = mp2(system, ref_wf)
 !
       case ('mlcc2')
 !
-         cc_wf = mlcc2(system)
+         cc_wf = mlcc2(system, ref_wf)
 !
       case default
 !
@@ -260,25 +324,25 @@ subroutine cc_calculation(system)
 !
    end select
 !
-   if (input%requested_keyword_in_section('fop', 'do')) then
+   if (input%requested_keyword_in_section('response', 'do')) then
 !
-      cc_engine = fop_engine()
+      cc_engine = response_engine(cc_wf)
 !
    elseif (input%requested_keyword_in_section('excited state', 'do')) then
 !
-      cc_engine = es_engine()
+      cc_engine = es_engine(cc_wf)
 !
-   elseif (input%requested_keyword_in_section('zop', 'do')) then 
+   elseif (input%requested_keyword_in_section('mean value', 'do')) then 
 !
-      cc_engine = zop_engine()
+      cc_engine = mean_value_engine(cc_wf)
 !
    elseif (input%requested_keyword_in_section('ground state', 'do')) then
 !
-      cc_engine = gs_engine()
+      cc_engine = gs_engine(cc_wf)
 !
    elseif (input%requested_keyword_in_section('time dependent state', 'do')) then
 !
-      cc_engine = td_engine()
+      cc_engine = td_engine(cc_wf)
 !
    else
 !
@@ -290,6 +354,36 @@ subroutine cc_calculation(system)
    call cc_wf%cleanup()
 !
 end subroutine cc_calculation
+!
+!
+subroutine do_eri_cholesky(system)
+!!
+!! Do ERI Cholesky 
+!! Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019 and Dec 2019
+!! 
+!! Performs Cholesky decomposition of the atomic orbital (AO) electron repulsion 
+!! integrals. 
+!!
+   use eri_cd_class,             only: eri_cd 
+   use molecular_system_class,   only: molecular_system
+!
+   implicit none 
+!
+   type(molecular_system), intent(inout) :: system
+!
+   type(eri_cd), allocatable :: eri_cholesky_solver 
+!
+   eri_cholesky_solver = eri_cd(system)
+!
+   call eri_cholesky_solver%run(system)               ! Do the Cholesky decomposition 
+!
+   if (eri_cholesky_solver%construct_vectors) &
+      call eri_cholesky_solver%diagonal_test(system)  ! Determine the largest 
+                                                      ! deviation in the ERI matrix 
+!
+   call eri_cholesky_solver%cleanup(system)
+!
+end subroutine do_eri_cholesky
 !
 !
 subroutine set_global_print_levels()
@@ -339,47 +433,34 @@ subroutine print_program_banner()
 !
    implicit none 
 !
-   call output%printf('eT - a coupled cluster program ', pl='m', fs='(///t24,a)')
-   call output%printf('Original authors: Sarai D. Folkestad, Eirik F. Kjønstad,' &
-                     // ' and Henrik Koch', pl='m', fs='(t8,a)', ll=80)
+   call output%printf('m', 'eT - an electronic structure program ', fs='(///t22,a)')
 !
-   call output%print_separator('m',82,'-', fs='(/t3,a)')
+   call output%print_separator('m',72,'-', fs='(/t3,a)')
 !
-   call output%printf('Author:                 Contribution(s):', pl='m', fs='(t4,a)')
+   call output%printf('m', 'Author list in alphabetical order:', fs='(t4,a)')
 !
-   call output%print_separator('m',82,'-', fs='(t3,a)')
+   call output%print_separator('m',72,'-', fs='(t3,a)')
 !
-   call output%printf('Josefine H. Andersen   first order properties', pl='m', fs='(t4,a)', ll=82)
-   call output%printf('Alice Balbi            CC propagation', pl='m', fs='(t4,a)', ll=82)
+   call output%printf('m', 'J. H. Andersen, '   // &
+                           'A. Balbi, '         // &
+                           'S. Coriani, '       // &
+                           'S. D. Folkestad, '  // &
+                           'T. Giovannini, '    // &
+                           'L. Goletto, '       // &
+                           'T. S. Haugland, '   // &
+                           'A. Hutcheson, '     // &
+                           'I-M. Høyvik, '      // &
+                           'E. F. Kjønstad, '   // &
+                           'H. Koch, '          // &
+                           'T. Moitra, '        // &
+                           'R. H. Myhre, '      // &
+                           'A. C. Paul, '       // &
+                           'M. Scavino, '       // &
+                           'A. Skeidsvoll, '    // &
+                           'Å. H. Tveten',         &
+                           ffs='(t4,a)', fs='(t4,a)', ll=70)
 !
-   call output%printf('Sarai D. Folkestad     &
-                      &program design, HF, CCS, CC2, CCSD, Libint-interface, &
-                      &Cholesky decomposition, Davidson-tool, CVS, DIIS-tool, &
-                      &zeroth order properties, first order properties, IP, &
-                      &frozen core, MLCC2, MLHF, visualization', &
-                      pl='m', ffs='(t4,a)', fs='(t27,a)', ll=50)
-!
-   call output%printf('Tommaso Giovannini     QM/MM, PCM, Libint-interface', pl='m', fs='(t4,a)', ll=82)
-   call output%printf('Linda Goletto          CC2, MLHF', pl='m', fs='(t4,a)', ll=82)
-   call output%printf('Tor S. Haugland        SAD', pl='m', fs='(t4,a)', ll=82)
-   call output%printf('Anders Hutcheson       frozen HF orbitals', pl='m', fs='(t4,a)', ll=82)
-   call output%printf('Ida-Marie Høyvik       MLHF, frozen HF orbitals', pl='m', fs='(t4,a)', ll=82)
-!
-   call output%printf('Eirik F. Kjønstad      &
-                      &program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool, &
-                      &Cholesky decomposition, Libint-interface, Davidson-tool, &
-                      &zeroth order properties, first order properties, SAD, &
-                      &BFGS-tool', pl='m', ffs='(t4,a)',fs='(t27,a)')
-!
-   call output%printf('Rolf H. Myhre          CC3, Runtest-interface, launch script, file system', &
-                        pl='m', fs='(t4,a)', ll=82)
-   call output%printf('Alexander C. Paul      CC2, CC3, first order properties', pl='m', fs='(t4,a)', ll=82)
-   call output%printf('Andreas Skeidsvoll     MP2, CC propagation, FFT solver, visualization', &
-                      pl='m', fs='(t4,a)', ll=82)
-   call output%printf('Åsmund H. Tveten       HF', pl='m', fs='(t4,a)', ll=82)
-!
-   call output%print_separator('m', 82, '-', fs='(t3,a)')
-   call output%printf('Other contributors: M. Scavino', pl='m', fs='(t4,a)', ll=82) 
+   call output%print_separator('m',72,'-', fs='(t3,a)')
 !
 end subroutine print_program_banner
 !

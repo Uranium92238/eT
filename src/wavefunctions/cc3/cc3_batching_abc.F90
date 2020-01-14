@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@ submodule (cc3_class) batching_abc
 !
 !!
 !!    Batching abc submodule
-!!    Written by Alexander C. Paul July 2019
 !!
 !!    Routines that construct the triples T-amplitudes and
 !!    components of the excitation vectors in batches 
@@ -185,7 +184,7 @@ contains
          call wf%integrals%construct_cholesky_ab_c1(L_J_bd, R_ai, 1, wf%n_v, 1,  wf%n_v)
 !
          call mem%alloc(L_J_ck, wf%integrals%n_J, batch_c%length, wf%n_o)
-         call wf%integrals%read_cholesky_t1(L_J_ck, wf%n_o + batch_c%first, &
+         call wf%integrals%get_cholesky_t1(L_J_ck, wf%n_o + batch_c%first, &
                                             wf%n_o + batch_c%last, 1, wf%n_o)
 !
          call mem%alloc(g_pqrs, wf%n_v, wf%n_v, batch_c%length, wf%n_o)
@@ -211,7 +210,7 @@ contains
          call wf%integrals%construct_cholesky_ai_a_c1(L_J_ck_c1, R_ai, batch_c%first,  &
                                                       batch_c%last, 1, wf%n_o)
 !
-         call wf%integrals%read_cholesky_t1(L_J_bd, wf%n_o + 1, wf%n_o + wf%n_v, &
+         call wf%integrals%get_cholesky_t1(L_J_bd, wf%n_o + 1, wf%n_o + wf%n_v, &
                                             wf%n_o + 1, wf%n_o + wf%n_v)
 !
          call dgemm('T', 'N',                   &

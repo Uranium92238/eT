@@ -1,7 +1,7 @@
 #
 #
 #   eT - a coupled cluster program
-#   Copyright (C) 2016-2019 the authors of eT
+#   Copyright (C) 2016-2020 the authors of eT
 #
 #   eT is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
 # 
 #   Set standard flags 
 # 
-    set(CMAKE_Fortran_FLAGS "-fpp -O3 -W1 -xHost")
+    set(CMAKE_Fortran_FLAGS "-fpp -O3 -W1 -xHost -no-wrap-margin")
 # 
 #   Enable 64 bit flag if requested (default)
 # 
@@ -95,14 +95,6 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
             )
     endif()
 # 
-#   Enable profiling 
-# 
-    if(ENABLE_PROFILING)
-        set(CMAKE_Fortran_FLAGS
-            "${CMAKE_Fortran_FLAGS} -pg"
-            )
-    endif()
-#
 #   Enable runtime checks if requested (not default)
 # 
     if(ENABLE_RUNTIME_CHECKS)

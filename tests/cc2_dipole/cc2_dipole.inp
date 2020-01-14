@@ -1,19 +1,15 @@
 system
-   name: hypofluorous_acid
+   name: HOF He
 end system
- 
-print 
-   output print level: debug 
-end print
 
 do
   ground state
-  zop
+  mean value
 end do
 
-cc zop
+cc mean value
    dipole
-end cc zop
+end cc mean value
 
 memory
    available: 8

@@ -1,0 +1,190 @@
+
+
+
+                     eT - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
+   Å. H. Tveten
+  ------------------------------------------------------------------------
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: 2 H2O close
+        charge: 0
+        multiplicity: 1
+     end system
+
+     do
+        ground state
+     end do
+
+     memory
+        available: 8
+     end memory
+
+     solver scf
+        max iterations: 5
+        algorithm: mo-scf-diis
+        energy threshold:   1.0d-11
+        gradient threshold: 1.0d-11
+     end solver scf
+
+     method
+        mlhf
+     end method
+
+     active atoms
+        selection type: list
+        hf: {1, 2, 3}
+     end active atoms
+
+
+  Running on 2 OMP thread(s)
+  Memory available for calculation: 8.000000 GB
+
+
+  :: Molecular system specifications
+  =====================================
+
+     Name:             2 h2o close
+     Charge:           0
+     Multiplicity:     1
+     Coordinate units: angstrom
+
+     Pure basis functions:         82
+     Cartesian basis functions:    86
+     Primitive basis functions:   134
+
+     Nuclear repulsion energy (a.u.):             37.386395233393
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+     Active atoms:
+
+     ====================================
+        Atom              Basis   Method
+     ====================================
+        1 O         aug-cc-pvdz    hf
+        2 H         aug-cc-pvdz    hf
+        3 H         aug-cc-pvdz    hf
+     ====================================
+     Total number of active atoms: 3
+     OBS: Atoms will be reordered, active atoms first
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: aug-cc-pvdz
+        1 O     -0.573030000000     2.189950000000    -0.052560000000        1
+        2 H      0.347690000000     2.485980000000     0.050490000000        2
+        3 H     -1.075800000000     3.019470000000     0.020240000000        3
+        4 O     -1.567030000000    -0.324500000000     0.450780000000        4
+        5 H     -1.211220000000     0.588750000000     0.375890000000        5
+        6 H     -1.604140000000    -0.590960000000    -0.479690000000        6
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: aug-cc-pvdz
+        1 O     -1.082869761160     4.138405726491    -0.099324005107        1
+        2 H      0.657038876250     4.697821351146     0.095412272029        2
+        3 H     -2.032967364807     5.705971341340     0.038248056761        3
+        4 O     -2.961257528977    -0.613216127421     0.851850742431        4
+        5 H     -2.288874076596     1.112576255838     0.710329152963        5
+        6 H     -3.031385265460    -1.116752550573    -0.906482724693        6
+     ==============================================================================
+
+
+  :: MLHF wavefunction
+  =======================
+
+  - MLHF settings:
+
+     Occupied orbitals:    Cholesky
+     Virtual orbitals:     PAOs
+
+     Cholesky decomposition threshold:  0.10E-01
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+  - Orbital details:
+
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         72
+     Number of molecular orbitals:       82
+     Number of atomic orbitals:          82
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a MLHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (MO-SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (MO-SCF-DIIS algorithm)
+
+   - MO Self-consistent field DIIS Hartree-Fock solver
+  -------------------------------------------------------
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
+  matrix is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:                         8
+
+     Energy threshold:              0.1000E-10
+     Gradient threshold:            0.1000E-10
+
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Fock precision:                0.1000E-33
+     Integral cutoff:               0.1000E-16
+
+  - Setting initial AO density to SAD
+
+     Energy of initial guess:              -151.700236809961
+     Number of electrons in guess:           20.000000000000
+
+  - Active orbital space:
+
+      Number of active occupied orbitals:        5
+      Number of active virtual orbitals:        40
+      Number of active orbitals:                45
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1          -152.024109278144     0.2024E+00     0.1520E+03
+     2          -152.030947253751     0.1192E+00     0.6838E-02
+     3          -152.035375815953     0.6515E-02     0.4429E-02
+     4          -152.035401061491     0.1083E-02     0.2525E-04
+     5          -152.035402508919     0.2202E-03     0.1447E-05
+  ---------------------------------------------------------------
+
+  Error: Was not able to converge the equations in the given number of 
+         maximum iterations.

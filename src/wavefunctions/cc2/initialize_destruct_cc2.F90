@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (cc2_class) initialize_destruct_cc2
 !
 !!
-!!    Initialize destruct submodule (CC2)
-!!    Set up by Andreas Skeidsvoll, Sep 2019
+!!    Initialize destruct submodule 
 !!
 !!    Gathers routines that initialize and destruct the CC2 type-bound variables.
 !!
@@ -58,64 +57,24 @@ contains
 !
       call wf%destruct_t1()
       call wf%destruct_u_aibj()
+      call wf%destruct_t2()
 !
    end subroutine destruct_amplitudes_cc2
 !
 !
-   module subroutine initialize_t2_cc2(wf)
+   module subroutine destruct_multipliers_cc2(wf)
 !!
-!!    Initialize t2 amplitudes
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      if (.not. allocated(wf%t2)) call mem%alloc(wf%t2, wf%n_t2)
-!
-   end subroutine initialize_t2_cc2
-!
-!
-   module subroutine destruct_t2_cc2(wf)
-!!
-!!    Destruct t2 amplitudes
-!!    Written by Sarai D. Folkestad
+!!    Destruct multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
 !!
       implicit none
 !
       class(cc2) :: wf
 !
-      if (allocated(wf%t2)) call mem%dealloc(wf%t2, wf%n_t2)
+      call wf%destruct_t1bar()
+      call wf%destruct_t2bar()
 !
-   end subroutine destruct_t2_cc2
-!
-!
-   module subroutine initialize_t2bar_cc2(wf)
-!!
-!!    Initialize t2bar amplitudes
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      if (.not. allocated(wf%t2bar)) call mem%alloc(wf%t2bar, wf%n_t2)
-!
-   end subroutine initialize_t2bar_cc2
-!
-!
-   module subroutine destruct_t2bar_cc2(wf)
-!!
-!!    Destruct t2bar amplitudes
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_t2)
-!
-   end subroutine destruct_t2bar_cc2
+   end subroutine destruct_multipliers_cc2
 !
 !
 end submodule initialize_destruct_cc2

@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -152,8 +152,6 @@ contains
                                tbar_R_overlap)
 !
       call mem%dealloc(R_k, wf%n_es_amplitudes)
-!
-      call R_TDM_timer%turn_off()
 !
       call R_TDM_timer%turn_off()
 !
@@ -378,9 +376,9 @@ contains
 !
       type(timings) :: L_TDM_timer
 !
-      call L_TDM_timer%turn_on()
-!
       L_TDM_timer = timings('Left transition density')
+!
+      call L_TDM_timer%turn_on()
 !
       call mem%alloc(L_k, wf%n_es_amplitudes)
       call wf%read_excited_state(L_k, state, 'left')
@@ -646,17 +644,9 @@ contains
       real(dp) :: X_cc
       real(dp) :: ddot
 !
-      real(dp), dimension(:), allocatable :: multipliers
+      X_cc = ddot(wf%n_es_amplitudes, wf%t1bar, 1, csiX, 1)
 !
-      call mem%alloc(multipliers, wf%n_es_amplitudes)
-!
-      call dcopy(wf%n_t1, wf%t1bar, 1, multipliers, 1)
-!
-      X_cc = ddot(wf%n_es_amplitudes, multipliers, 1, csiX, 1)
-!
-      call daxpy(wf%n_es_amplitudes, -X_cc, multipliers, 1, etaX, 1)
-!
-      call mem%dealloc(multipliers, wf%n_es_amplitudes)
+      call daxpy(wf%n_es_amplitudes, -X_cc, wf%t1bar, 1, etaX, 1)
 !
    end subroutine etaX_eom_a_ccs
 !

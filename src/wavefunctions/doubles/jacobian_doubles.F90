@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (doubles_class) jacobian_doubles
 !
 !!
-!!    Jacobian submodule (Abstract doubles)
-!!
+!!    Jacobian submodule
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian matrix 
@@ -61,7 +60,7 @@ contains
 !
       class(doubles) :: wf
 !
-      type(timings) :: jacobian_a1_intermediate_timer
+      type(timings), allocatable :: jacobian_a1_intermediate_timer
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_ldkc
       real(dp), dimension(:,:,:,:), allocatable :: L_dlck
@@ -70,7 +69,9 @@ contains
       real(dp), dimension(:,:), allocatable :: Y_bd
       real(dp), dimension(:,:), allocatable :: Y_jl
 !
-      jacobian_a1_intermediate_timer = timings('Jacobian CCSD G2 intermediate construction')
+      jacobian_a1_intermediate_timer = &
+         timings('Jacobian doubles G2 intermediate construction', pl='verbose')
+!
       call jacobian_a1_intermediate_timer%turn_on()
 !
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -133,6 +134,9 @@ contains
                   Y_jl,                &
                   wf%n_o)
 !
+      call mem%dealloc(t_blck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
       wf%jacobian_a1_intermediate_oo = sequential_file('jacobian_a1_intermediate_oo_doubles')
       call wf%jacobian_a1_intermediate_oo%open_('write', 'rewind')
 !
@@ -180,10 +184,10 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: t_ckai
       real(dp), dimension(:,:,:,:), allocatable :: u_aikc
 !
-      type(timings) :: jacobian_doubles_a1_timer
+      type(timings), allocatable :: timer
 !
-      jacobian_doubles_a1_timer = timings('jacobian doubles a1')
-      call jacobian_doubles_a1_timer%turn_on()
+      timer = timings('Jacobian doubles A1', pl='verbose')
+      call timer%turn_on()
 !
 !     Term 1: sum_ckdl L_kcld u_ki^ca c_dl ::
 !
@@ -301,7 +305,7 @@ contains
 !
       call mem%dealloc(Y_il, wf%n_o, wf%n_o)
 !
-      call jacobian_doubles_a1_timer%turn_off()
+      call timer%turn_off()
 !
    end subroutine jacobian_doubles_a1_doubles
 !
@@ -323,10 +327,10 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: v_aijb
 !
-      type(timings) :: jacobian_doubles_b1_timer
+      type(timings), allocatable :: timer
 !
-      jacobian_doubles_b1_timer = timings('jacobian doubles b1')
-      call jacobian_doubles_b1_timer%turn_on()
+      timer = timings('Jacobian doubles B1', pl='verbose')
+      call timer%turn_on()
 !
 !     Construct v_aibj = 2*c_aibj - c_ajbi ordered as
 !
@@ -354,7 +358,7 @@ contains
 !
       call mem%dealloc(v_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call jacobian_doubles_b1_timer%turn_off()
+      call timer%turn_off()
 !
    end subroutine jacobian_doubles_b1_doubles
 !
@@ -377,10 +381,10 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_jikb
       real(dp), dimension(:,:,:,:), allocatable :: L_jbki
 !
-      type(timings) :: jacobian_doubles_c1_timer
+      type(timings), allocatable :: timer
 !
-      jacobian_doubles_c1_timer = timings('jacobian doubles c1')
-      call jacobian_doubles_c1_timer%turn_on()
+      timer = timings('Jacobian doubles C1', pl='verbose')
+      call timer%turn_on()
 !
 !     Construct L_jikb = 2*g_jikb - g_kijb as
 !
@@ -414,7 +418,7 @@ contains
 !
       call mem%dealloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call jacobian_doubles_c1_timer%turn_off()
+      call timer%turn_off()
 !
    end subroutine jacobian_doubles_c1_doubles
 !
@@ -441,12 +445,12 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_abjc
       real(dp), dimension(:,:,:,:), allocatable :: L_abjc
 !
-      type(timings) :: jacobian_doubles_d1_timer
+      type(timings), allocatable :: timer
 !
       integer :: rec0, rec1
 !
-      jacobian_doubles_d1_timer = timings('jacobian doubles d1')
-      call jacobian_doubles_d1_timer%turn_on()
+      timer = timings('Jacobian doubles D1', pl='verbose')
+      call timer%turn_on()
 !
 !     Prepare for batching over index a
 !
@@ -504,7 +508,7 @@ contains
 !
       enddo ! End batching over a
 !
-      call jacobian_doubles_d1_timer%turn_off()
+      call timer%turn_off()
 !
    end subroutine jacobian_doubles_d1_doubles
 !
@@ -532,12 +536,12 @@ contains
 !
       type(batching_index) :: batch_b
 !
-      type(timings) :: jacobian_doubles_a2_timer
+      type(timings), allocatable :: timer
 !
       integer :: rec0, rec1
 !
-      jacobian_doubles_a2_timer = timings('jacobian doubles a2')
-      call jacobian_doubles_a2_timer%turn_on()
+      timer = timings('Jacobian doubles A2', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Term 1. - sum_k g_aikj c_bk ::
 !
@@ -623,7 +627,7 @@ contains
 !
       enddo ! End of batches over b
 !
-      call jacobian_doubles_a2_timer%turn_off()
+      call timer%turn_off()
 !
    end subroutine jacobian_doubles_a2_doubles
 !

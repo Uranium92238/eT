@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ module mp2_class
 contains
 !
 !
-   function new_mp2(system) result(wf)
+   function new_mp2(system, template_wf) result(wf)
 !!
 !!    New MP2
 !!    Written by Andreas Skeidsvoll, 2018
@@ -67,11 +67,15 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
+      class(wavefunction), intent(in) :: template_wf
+!
       wf%name_ = 'mp2'
 !
       wf%system => system
 !
       call wf%general_cc_preparations(system)
+      call wf%set_variables_from_template_wf(template_wf)
+      call wf%print_banner()
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
@@ -83,6 +87,8 @@ contains
       call wf%initialize_fock()
       call wf%initialize_amplitudes()
       call zero_array(wf%t1, wf%n_o*wf%n_v)
+!
+      call wf%print_amplitude_info()
 !
    end function new_mp2
 !

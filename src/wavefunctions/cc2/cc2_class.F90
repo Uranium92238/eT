@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -71,6 +71,7 @@ module cc2_class
 !
       procedure :: initialize_amplitudes                       => initialize_amplitudes_cc2 
       procedure :: destruct_amplitudes                         => destruct_amplitudes_cc2 
+      procedure :: destruct_multipliers                        => destruct_multipliers_cc2 
 !
 !     Restart
 !
@@ -112,7 +113,7 @@ module cc2_class
 contains
 !
 !
-   function new_cc2(system) result(wf)
+   function new_cc2(system, template_wf) result(wf)
 !!
 !!    New CC2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -123,9 +124,13 @@ contains
 !
       class(molecular_system), target, intent(in) :: system
 !
+      class(wavefunction), intent(in) :: template_wf
+!
       wf%name_ = 'cc2'
 !
       call wf%general_cc_preparations(system)
+      call wf%set_variables_from_template_wf(template_wf)
+      call wf%print_banner()
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_t2            = wf%n_t1*(wf%n_t1+1)/2
@@ -134,6 +139,8 @@ contains
       wf%need_g_abcd     = .false.
 !
       call wf%initialize_fock()
+!
+      call wf%print_amplitude_info()
 !
    end function new_cc2
 !

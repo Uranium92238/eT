@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -61,6 +61,10 @@ module asymmetric_lanczos_cc_es_class
    use global_in,             only : input
    use memory_manager_class,  only : mem
    use string_utilities,      only : convert_to_uppercase
+!
+   use es_projection_tool_class,          only : es_projection_tool
+   use es_cvs_projection_tool_class,      only : es_cvs_projection_tool
+   use es_valence_projection_tool_class,  only : es_valence_projection_tool
 
    implicit none
 
@@ -80,7 +84,9 @@ module asymmetric_lanczos_cc_es_class
       real(dp), dimension(:), allocatable :: energies 
 !
       type(timings) :: timer
-
+!
+      class(es_projection_tool), allocatable :: projector
+!
    contains
 !
       procedure :: read_settings                   =>  read_settings_asymmetric_lanczos_cc_es
@@ -138,9 +144,8 @@ contains
 !
 !     Set printables
 !
-      solver%name_  = 'Asymmetric Lanczos solver'
-      solver%tag    = 'Asymmetric Lanczos'
-      solver%author = 'T. Moitra, S. D. Folkestad and S. Coriani, 2019'
+      solver%name_  = 'Asymmetric Lanczos excited state solver'
+      solver%tag    = 'asymmetric lanczos'
 !
       solver%description1 = 'An asymmetric Lanczos solver builds a reduced space&
                & tridiagonal representation of the CC Jacobian of dimension defined&
@@ -155,6 +160,7 @@ contains
 !     Set defaults
 !
       solver%normalization = 'asymmetric'
+      solver%es_type       = 'valence'
 !   
       call solver%read_settings()
 !
@@ -177,6 +183,21 @@ contains
 !     Prepare wavefunction for Jacobian transformations
 !
       call solver%prepare_wf_for_excited_state(wf)
+!
+      if (trim(solver%es_type) == 'valence') then
+!
+         solver%projector = es_valence_projection_tool()
+!
+      elseif (trim(solver%es_type) == 'core') then
+!
+         call wf%read_cvs_settings()
+         solver%projector = es_cvs_projection_tool(wf)
+!
+      else
+!
+         call output%error_msg('did not recognize the excited state type: ' //trim(solver%es_type))
+!
+      endif
 !
    end function new_asymmetric_lanczos_cc_es
 !
@@ -233,6 +254,13 @@ contains
          call wf%construct_csiX(dipole_length(:,:,cartesian), csiX)
          call wf%construct_eom_etaX(dipole_length(:,:,cartesian), csiX, etaX)
 !
+         if (solver%projector%active) then
+!
+            call solver%projector%do_(csiX)
+            call solver%projector%do_(etaX)
+!
+         endif
+!
 !        Prepare initial seeds (p1,q1) as binormalized etaX and csiX vectors
 !        
 !        The binormalization procedure is either 'symmetric' or 'asymmetric'
@@ -286,6 +314,13 @@ contains
 !
             call wf%jacobian_transformation(Aq) 
             call wf%jacobian_transpose_transformation(pA)
+!
+            if (solver%projector%active) then
+!
+               call solver%projector%do_(Aq)
+               call solver%projector%do_(pA)
+!
+            endif
 !            
 !           Calculates alpha_(i) 
 ! 
@@ -304,8 +339,8 @@ contains
 !
             if (lanczos%chain_length .lt. solver%chain_length) then 
 !
-               call output%printf('WARNING: Chain length value reset = (i4)', &
-                  & ints=[lanczos%chain_length], pl='m', fs='(/t6,a)')
+               call output%warning_msg('Chain length value reset = (i4)', &
+                  & ints=[lanczos%chain_length], fs='(/t6,a)')
 !
                exit 
 !
@@ -315,8 +350,8 @@ contains
 !
          solver%chain_length = lanczos%chain_length  
 !
-         call mem%dealloc (Aq, wf%n_es_amplitudes)
-         call mem%dealloc (pA, wf%n_es_amplitudes)
+         call mem%dealloc(Aq, wf%n_es_amplitudes)
+         call mem%dealloc(pA, wf%n_es_amplitudes)
 !
 !        Diagonalize T to get the eigenvalues and eigenvectors 
 !
@@ -370,22 +405,14 @@ contains
 !
       class(asymmetric_lanczos_cc_es) :: solver 
 !
-      call output%printf('Lanczos seeds chosen as biorthonormalized EOM &
-             & eta^{op} xi^{op} vectors', pl ='m', fs='(/t6,a)')
+      call output%printf('m', '- Settings for coupled cluster excited state &
+                         &solver (' //trim(solver%tag) // '):', fs='(/t3,a)')
 !
-      call output%printf('Chain length asked for: (i4)', &
-          & ints=[solver%chain_length],pl='m',fs='(/t6,a)')
+      call output%printf('m', 'Chain length: (i6)', ints=[solver%chain_length], &
+                         fs='(/t6,a)')
 !
-      if (solver%normalization == "asymmetric") then
-!
-         call output%printf('Unequally split biorthonormalization procedure requested', &
-             & pl='minimal', fs='(/t6,a)')
-!
-      elseif (solver%normalization == "symmetric") then
-!
-         call output%printf('Equally split biorthonormalization procedure requested', &
-             & pl='minimal', fs='(t6,a)')
-      endif
+     call output%printf('m', 'Biorthonormalization procedure: (a0)', &
+                        chars=[trim(solver%normalization)], fs='(t6,a)')
 !
    end subroutine print_settings_asymmetric_lanczos_cc_es
 !
@@ -402,8 +429,14 @@ contains
 !
       call input%get_keyword_in_section('chain length', 'solver cc es', solver%chain_length)
 !
-      call input%get_required_keyword_in_section('lanczos normalization', 'solver cc es', &
+      call input%get_keyword_in_section('lanczos normalization', 'solver cc es', &
                                                    solver%normalization)
+!
+      if (input%requested_keyword_in_section('core excitation', 'solver cc es')) &
+            solver%es_type = 'core'
+!
+      if (input%requested_keyword_in_section('ionization', 'solver cc es')) &
+            call output%error_msg('Ionization not possible with the asymmetric Lanczos solver')
 !
    end subroutine read_settings_asymmetric_lanczos_cc_es
 !
@@ -548,65 +581,66 @@ contains
       spectrum_file = output_file(trim(wf%system%name_)//'_'// &
                trim(adjustl(chain_length_string))//'_'//component_string(component))
 !
-      call spectrum_file%open_
+      call spectrum_file%open_()
 !
 !     Print entire spectrum
 !
-      call spectrum_file%printf('Nbr.      energy (Re) [eV]      energy (Im) [eV]  &
-                              &   energy (Re) [a.u]    energy (Im) [a.u.]   Osc. strength  ',   &
-                              pl='minimal', fs='(a)', ll=500)
+      call spectrum_file%printf('m', 'Nbr.      energy (Re) [eV]      energy (Im) [eV]    &
+                                & energy (Re) [a.u]    energy (Im) [a.u.]   Osc. strength  ',   &
+                                fs='(a)', ll=500)
 !
       do j = 1, solver%chain_length
 !
-         call spectrum_file%printf('(i4) (f20.12)  (f20.12) (f20.12)' //         &
+         call spectrum_file%printf('m', '(i4) (f20.12)  (f20.12) (f20.12)' //    &
                                    ' (f20.12)     (f16.12)', ints=[j],           &
                                     reals=[eigenvalues_Re(j)*Hartree_to_eV,      &
                                     eigenvalues_Im(index_list(j))*Hartree_to_eV, &
                                     eigenvalues_Re(j),                           &
                                     eigenvalues_Im(index_list(j)),               &
                                     oscillator_strength(index_list(j))],         &
-                                    pl='minimal', fs='(a)', ll=500)
+                                    fs='(a)', ll=500)
 !
       enddo
+!
+      call spectrum_file%close_()
 !
 !     Print summary for eT.out
 !
       if (component == 1) then
 !
-         call output%printf('- Summary of the asymmetric Lanczos solver for excited states', &
-                  fs='(/t3,a)', pl='minimal')
+         call output%printf('m', '- Summary of the asymmetric Lanczos solver &
+                            &for excited states', fs='(/t3,a)')
 !
-         call output%printf('Printing the (i0) lowest excited states for each Cartesian&
-                           & component of the electric dipole moment', &
-                           ints = [min(print_in_output, solver%chain_length)], &
-                           ffs='(/t6,a)', fs='(t6,a)', pl='minimal')
+         call output%printf('m', 'Printing the (i0) lowest excited states for &
+                            &each Cartesian component of the electric dipole moment', &
+                            ints = [min(print_in_output, solver%chain_length)], ffs='(/t6,a)', fs='(t6,a)')
 !
       endif
 !
-      call output%printf('Component: (a1) ',chars=[component_string(component)], &
-                       pl='minimal', fs='(/t6,a)')
+      call output%printf('m', 'Component: (a1) ', &
+                         chars=[component_string(component)], fs='(/t6,a)')
 !
-      call output%printf('State.      energy [a.u]         energy [eV]         Osc. strength  ' &
-             & ,pl='minimal', fs='(/t6, a)')
+      call output%printf('m', 'State.      energy [a.u]         energy [eV]     &
+                         &    Osc. strength  ', fs='(/t6, a)')
 !
       call output%print_separator('minimal', 70, '-', fs='(t6, a)')
 !
 
       do j = 1, min(print_in_output, solver%chain_length)
 !
-         call output%printf('(i4)  (f20.12) (f20.12)    (f16.12)', ints=[j], &
-                       reals=[eigenvalues_Re(j), eigenvalues_Re(j)*Hartree_to_eV, &
-                       oscillator_strength(index_list(j))], &
-                       pl='minimal', fs='(t6,a)')
+         call output%printf('m', '(i4)  (f20.12) (f20.12)    (f16.12)', &
+                            ints=[j], reals=[eigenvalues_Re(j), &
+                            eigenvalues_Re(j)*Hartree_to_eV, &
+                            oscillator_strength(index_list(j))], fs='(t6,a)')
 !
       enddo
 !
       call output%print_separator('minimal', 70, '-', fs='(t6, a)')
 !
-     call output%printf('For full spectrum see file: ' //           &
-             & trim(wf%system%name_) // '_' //                 &
-             & trim(adjustl(chain_length_string)) // '_' //    &
-             & component_string(component), pl='m', fs='(t6,a)')
+      call output%printf('m', 'For full spectrum see file: ' //  &
+                        trim(wf%system%name_) // '_' //  &
+                        trim(adjustl(chain_length_string)) // '_' //  &
+                        component_string(component), fs='(t6,a)')
 !
       call mem%dealloc(index_list, solver%chain_length)
 !
@@ -622,10 +656,11 @@ contains
 !
       class(asymmetric_lanczos_cc_es) :: solver 
 !
-      call output%printf(':: ' // solver%name_, pl='m', fs='(//t3,a)')
-      call output%printf(':: ' // solver%author, pl='m', fs='(t3,a)')
-      call output%printf(solver%description1, pl='n', ffs='(/t3,a)', fs='(t3,a)')
-      call output%printf(solver%description2, pl='n', ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
+      call output%printf('n', solver%description1, ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('n', solver%description2, ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_asymmetric_lanczos_cc_es
 !
@@ -642,15 +677,18 @@ contains
 !
       call solver%destruct_energies()
 !
+      call solver%projector%destruct_projection_vector()
+!
       call solver%timer%turn_off()
 !
-      call output%printf('- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) &
-                 // ' excited state equations.', pl='m', fs='(/t3,a)')
+      call output%printf('m', '- Finished solving the ' //  &
+                         trim(convert_to_uppercase(wf%name_)) // ' excited &
+                         &state equations.', fs='(/t3,a)')
 !
-      call output%printf('Total wall time (sec): (f20.5)', &
-                  reals=[solver%timer%get_elapsed_time('wall')], pl='m', fs='(/t6,a)')
-      call output%printf('Total cpu time (sec):  (f20.5)', &
-                  reals=[solver%timer%get_elapsed_time('cpu')], pl='m', fs='(t6,a)')
+      call output%printf('m', 'Total wall time (sec): (f20.5)', &
+                         reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+      call output%printf('m', 'Total cpu time (sec):  (f20.5)', &
+                         reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cleanup_asymmetric_lanczos_cc_es
 !

@@ -1,11 +1,7 @@
 system
-   name: formamide
+   name: Formamide
    charge: 0
 end system
- 
-print 
-   output print level: debug 
-end print
 
 do
    ground state
@@ -42,7 +38,7 @@ end frozen orbitals
 
 active atoms
    selection type: range
-   ccs: [3,4]
+   ccsd: [3,4]
 end active atoms
 
 geometry

@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -67,8 +67,7 @@ module diis_cc_gs_class
 !
    type :: diis_cc_gs
 !
-      character(len=100) :: tag = ':: DIIS CC ground solver'
-      character(len=100) :: author = ':: E. F. Kjønstad, S. D. Folkestad, 2018'
+      character(len=100) :: name_ = 'DIIS coupled cluster ground state solver'
 !
       character(len=500) :: description1 = 'A DIIS CC ground state amplitude equations solver. It uses &
                                            &an extrapolation of previous quasi-Newton perturbation theory &
@@ -129,7 +128,7 @@ contains
 !
       logical, intent(in) :: restart
 !
-      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' ground state')
+      solver%timer = timings('DIIS CC GS solver time', pl='minimal')
       call solver%timer%turn_on()
 !
 !     Print solver banner
@@ -155,25 +154,18 @@ contains
 !
       call wf%initialize_amplitudes()
 !
-!     Prepare restart information file 
-!
       if (solver%restart) then
 !
-         call output%printf('Requested restart. Reading in solution from file.', fs='(/t3,a)', pl='minimal')
+         call output%printf('m', 'Requested restart. Reading in solution from file.', &
+                            fs='(/t3,a)')
 !
          call wf%read_amplitudes()
 !
-         call wf%integrals%write_t1_cholesky(wf%t1) 
+         call wf%integrals%update_t1_integrals(wf%t1)
 !
-         if(wf%need_g_abcd .and. wf%integrals%room_for_g_pqrs_t1()) &
-            call wf%integrals%place_g_pqrs_t1_in_memory()
-! 
       else
 !
-         call wf%integrals%write_t1_cholesky(wf%t1) 
-!
-         if(wf%need_g_abcd .and. wf%integrals%room_for_g_pqrs_t1()) &
-            call wf%integrals%place_g_pqrs_t1_in_memory()
+         call wf%integrals%update_t1_integrals(wf%t1)
 !
          call wf%set_initial_amplitudes_guess()
 !
@@ -217,19 +209,23 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      call output%printf('- DIIS CC ground state solver settings:', fs='(/t3,a)', pl='minimal')
+      call output%printf('m', '- DIIS CC ground state solver settings:', fs='(/t3,a)')
 !
-      call output%printf('Omega threshold:          (e9.2)', reals=[solver%omega_threshold], fs='(/t6, a)', pl='minimal')
-      call output%printf('Energy threshold:         (e9.2)', reals=[solver%energy_threshold], fs='(t6, a)', pl='minimal')
+      call output%printf('m', 'Omega threshold:          (e9.2)', &
+                         reals=[solver%omega_threshold], fs='(/t6, a)')
+      call output%printf('m', 'Energy threshold:         (e9.2)', &
+                         reals=[solver%energy_threshold], fs='(t6, a)')
 !
-      call output%printf('DIIS dimension:           (i9)', ints=[solver%diis_dimension], fs='(/t6, a)', pl='minimal')
-      call output%printf('Max number of iterations: (i9)', ints=[solver%max_iterations], fs='(t6, a)', pl='minimal')
+      call output%printf('m', 'DIIS dimension:           (i9)', &
+                         ints=[solver%diis_dimension], fs='(/t6, a)')
+      call output%printf('m', 'Max number of iterations: (i9)', &
+                         ints=[solver%max_iterations], fs='(t6, a)')
 !
-      call output%printf('Storage:                    '//trim(solver%storage), fs='(/t6, a)', pl='minimal')
+      call output%printf('m', 'Storage: '//trim(solver%storage), fs='(/t6, a)')
 !
       if (solver%crop) then 
 !
-         call output%printf('Enabled CROP in the DIIS algorithm.', pl='minimal', fs='(/t6,a)')
+         call output%printf('m', 'Enabled CROP in the DIIS algorithm.', fs='(/t6,a)')
 !
       endif
 !
@@ -261,6 +257,8 @@ contains
 !
       integer :: iteration
 !
+      type(timings), allocatable :: iteration_timer 
+!
       diis = diis_tool('cc_gs_diis',                        &
                         wf%n_gs_amplitudes,                 &
                         wf%n_gs_amplitudes,                 &
@@ -276,13 +274,19 @@ contains
       converged_energy   = .false.
       converged_omega    = .false.
 !
-      call output%printf('Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) ', fs='(/t3,a)', pl='normal')
+      call output%printf('n', 'Iteration    Energy (a.u.)        |omega|       &
+                         &Delta E (a.u.) ', fs='(/t3,a)')
       call output%print_separator('n', 63,'-')
 !
-      prev_energy = zero
-      iteration   = 1
+      iteration_timer = timings('DIIS CC GS iteration time', pl='normal')
 !
-      do while (.not. converged .and. iteration .le. solver%max_iterations)         
+      prev_energy = zero
+      iteration   = 0
+!
+      do while (.not. converged .and. iteration .le. solver%max_iterations)
+!
+         iteration = iteration + 1
+         call iteration_timer%turn_on()         
 !
 !        Calculate the energy and error vector omega 
 !
@@ -295,10 +299,9 @@ contains
 !
          omega_norm = get_l2_norm(omega, wf%n_gs_amplitudes)
 !
-         call output%printf('(i3)  (f25.12)    (e11.4)    (e11.4)', &
-            ints=[iteration], &
-            reals=[wf%energy, omega_norm, abs(wf%energy-prev_energy)], &
-            fs='(t3, a)', pl='normal')
+         call output%printf('n', '(i3)  (f25.12)    (e11.4)    (e11.4)', &
+                            ints=[iteration], reals=[wf%energy, omega_norm, &
+                            abs(wf%energy-prev_energy)], fs='(t3, a)')
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !
@@ -313,14 +316,15 @@ contains
 !
             call output%print_separator('n', 63,'-')
 !
-           call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
+           call output%printf('n', 'Convergence criterion met in (i0) iterations!', &
+                              ints=[iteration], fs='(t3,a)')
 !
             if (.not. converged_energy) then 
 !
 !
-               call output%printf('Note: the omega vector converged in the first iteration, &
-                                 & so the energy convergence has not been tested!', &
-                                 ffs='(/t3,a)', pl='normal')
+               call output%printf('n', 'Note: the omega vector converged in the &
+                                  &first iteration,  so the energy convergence &
+                                  &has not been tested!', ffs='(/t3,a)')
 !
             endif
 !
@@ -329,7 +333,8 @@ contains
 !           Precondition omega, shift amplitudes by preconditioned omega, 
 !           then ask for the DIIS update of the amplitudes 
 !
-            call solver%preconditioner%do_(omega)
+            call solver%preconditioner%do_(omega, &
+                                           prefactor=-one)
 !
             call wf%get_amplitudes(amplitudes)
             call wf%form_newton_raphson_t_estimate(amplitudes, omega)
@@ -339,20 +344,19 @@ contains
 !
             prev_energy = energy 
 !
-!           Compute the new T1 transformed Cholesky vectors,
-!           and store in memory the entire ERI-T1 matrix if possible and necessary 
+!           Update the Cholesky (and electron repulsion integrals, if in memory) 
+!           to new T1 amplitudes 
 !
-            call wf%integrals%write_t1_cholesky(wf%t1)
-            if (wf%integrals%get_eri_t1_mem()) &
-               call wf%integrals%update_g_pqrs_t1_in_memory()
+            call wf%integrals%update_t1_integrals(wf%t1)
 !
          endif
-!
-         iteration = iteration + 1
 !
 !        Save amplitudes
 !
          call wf%save_amplitudes()
+!
+         call iteration_timer%turn_off()         
+         call iteration_timer%reset()         
 !
       enddo
 !
@@ -386,20 +390,19 @@ contains
       class(diis_cc_gs) :: solver
       class(ccs) :: wf
 !
-!     Save amplitudes 
+      call solver%preconditioner%destruct_precondition_vector()
 !
       call wf%save_amplitudes()
 !
       call solver%timer%turn_off()
 !
-      call output%printf('- Finished solving the (a0) ground state equations', & 
-                        chars=[convert_to_uppercase(wf%name_)], &
-                        fs='(/t3, a)', pl='minimal')
+      call output%printf('m', '- Finished solving the (a0) ground state equations', &
+                         chars=[convert_to_uppercase(wf%name_)], fs='(/t3, a)')
 !
-      call output%printf('Total wall time (sec): (f20.5)', &
-            reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6, a)', pl='minimal')
-      call output%printf('Total cpu time (sec):  (f20.5)', &
-            reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6, a)', pl='minimal')
+      call output%printf('m', 'Total wall time (sec): (f20.5)', &
+                         reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6, a)')
+      call output%printf('m', 'Total cpu time (sec):  (f20.5)', &
+                         reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6, a)')
 !
    end subroutine cleanup_diis_cc_gs
 !
@@ -413,9 +416,10 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      call output%printf(solver%tag, pl='m', fs='(//t3,a)')
-      call output%printf(solver%author, pl='m', fs='(t3,a)')
-      call output%printf(solver%description1, pl='m', ffs='(/t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
+      call output%printf('m', solver%description1, ffs='(/t3,a)')
 !
    end subroutine print_banner_diis_cc_gs
 !

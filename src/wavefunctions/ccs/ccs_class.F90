@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -39,7 +39,9 @@ module ccs_class
    use index_invert, only : invert_compound_index, invert_packed_index
    use batching_index_class, only : batching_index
    use timings_class, only : timings
-   use file_storer_class, only: file_storer
+   use file_storer_class, only : file_storer
+!
+   use hf_class, only : hf
 !
    implicit none
 !
@@ -61,8 +63,6 @@ module ccs_class
 !
       logical :: need_g_abcd
 !
-      logical :: mlhf_reference
-!
       type(sequential_file) :: t_file, tbar_file
       type(sequential_file) :: excitation_energies_file
       type(sequential_file) :: restart_file
@@ -73,7 +73,6 @@ module ccs_class
 !
       type(mo_integral_tool) :: integrals
 !
-      real(dp)    :: hf_energy
       complex(dp) :: hf_energy_complex
 !
       real(dp),    dimension(:,:), allocatable :: t1
@@ -104,6 +103,11 @@ module ccs_class
 !
    contains
 !
+      procedure :: print_banner                                  => print_banner_ccs
+      procedure :: print_amplitude_info                          => print_amplitude_info_ccs
+!
+      procedure :: construct_and_save_mo_cholesky                => construct_and_save_mo_cholesky_ccs
+!
 !     Initialization/destruction procedures
 !
       procedure :: initialize_amplitudes                         => initialize_amplitudes_ccs
@@ -120,6 +124,9 @@ module ccs_class
 !
       procedure :: initialize_fock                               => initialize_fock_ccs
       procedure :: initialize_fock_complex                       => initialize_fock_ccs_complex
+!
+      procedure :: destruct_fock                                 => destruct_fock_ccs
+      procedure :: destruct_fock_complex                         => destruct_fock_ccs_complex
 !
       procedure :: initialize_fock_ij                            => initialize_fock_ij_ccs
       procedure :: initialize_fock_ij_complex                    => initialize_fock_ij_ccs_complex
@@ -164,15 +171,12 @@ module ccs_class
       procedure :: destruct_gs_density_complex                   => destruct_gs_density_ccs_complex
 !
       procedure :: initialize_transition_densities               => initialize_transition_densities_ccs
-!
       procedure :: destruct_transition_densities                 => destruct_transition_densities_ccs
 !
       procedure :: initialize_right_excitation_energies          => initialize_right_excitation_energies_ccs
-!
       procedure :: destruct_right_excitation_energies            => destruct_right_excitation_energies_ccs
 !
       procedure :: initialize_left_excitation_energies           => initialize_left_excitation_energies_ccs
-!
       procedure :: destruct_left_excitation_energies             => destruct_left_excitation_energies_ccs
 !
       procedure :: initialize_core_MOs                           => initialize_core_MOs_ccs 
@@ -188,7 +192,6 @@ module ccs_class
 !
       procedure :: read_settings                                 => read_settings_ccs
       procedure :: read_cvs_settings                             => read_cvs_settings_ccs
-      procedure :: read_mlhf_settings                            => read_mlhf_settings_ccs
 !
       procedure :: read_singles_vector                           => read_singles_vector_ccs
       procedure :: save_amplitudes                               => save_amplitudes_ccs
@@ -199,8 +202,6 @@ module ccs_class
       procedure :: read_excited_state                            => read_excited_state_ccs
       procedure :: save_excitation_energies                      => save_excitation_energies_ccs
       procedure :: read_excitation_energies                      => read_excitation_energies_ccs
-      procedure :: read_frozen_orbital_terms                     => read_frozen_orbital_terms_ccs
-      procedure :: read_mlhf_inactive_fock_term                  => read_mlhf_inactive_fock_term_ccs
 !
       procedure :: write_cc_restart                              => write_cc_restart_ccs
 !
@@ -238,23 +239,11 @@ module ccs_class
       procedure :: construct_fock                                => construct_fock_ccs
       procedure :: construct_fock_complex                        => construct_fock_ccs_complex
 !
-      procedure :: add_frozen_core_fock_term                     => add_frozen_core_fock_term_ccs
-      procedure :: add_frozen_core_fock_term_complex             => add_frozen_core_fock_term_ccs_complex
-
-      procedure :: add_frozen_hf_fock_term                       => add_frozen_hf_fock_term_ccs
-      procedure :: add_frozen_hf_fock_term_complex               => add_frozen_hf_fock_term_ccs_complex
-!
-      procedure :: add_mlhf_inactive_fock_term                   => add_mlhf_inactive_fock_term_ccs
-      procedure :: add_mlhf_inactive_fock_term_complex           => add_mlhf_inactive_fock_term_ccs_complex
-!
-      procedure :: add_molecular_mechanics_fock_term             => add_molecular_mechanics_fock_term_ccs
-      procedure :: add_molecular_mechanics_fock_term_complex     => add_molecular_mechanics_fock_term_ccs_complex
+      procedure :: add_frozen_fock_terms                         => add_frozen_fock_terms_ccs
+      procedure :: add_frozen_fock_terms_complex                 => add_frozen_fock_terms_ccs_complex
 !
       procedure :: add_t1_fock_length_dipole_term                => add_t1_fock_length_dipole_term_ccs
       procedure :: add_t1_fock_length_dipole_term_complex        => add_t1_fock_length_dipole_term_ccs_complex
-!
-      procedure :: add_pcm_fock_contribution                     => add_pcm_fock_contribution_ccs
-      procedure :: add_pcm_fock_contribution_complex             => add_pcm_fock_contribution_ccs_complex
 !
 !     Procedures related to the omega vector
 !
@@ -435,16 +424,10 @@ module ccs_class
 !
 !     Frozen core
 !
-      procedure :: construct_t1_fock_fc_term                     => construct_t1_fock_fc_term_ccs
-      procedure :: construct_t1_fock_fc_term_complex             => construct_t1_fock_fc_term_ccs_complex
-!
-      procedure :: construct_t1_fock_frozen_hf_term              => construct_t1_fock_frozen_hf_term_ccs
-      procedure :: construct_t1_fock_frozen_hf_term_complex      => construct_t1_fock_frozen_hf_term_ccs_complex
-!
-!     MLHF reference
-!
-      procedure :: construct_t1_mlhf_inactive_fock_term          => construct_t1_mlhf_inactive_fock_term_ccs
-      procedure :: construct_t1_mlhf_inactive_fock_term_complex  => construct_t1_mlhf_inactive_fock_term_ccs_complex
+      procedure :: construct_t1_frozen_fock_terms  &
+                => construct_t1_frozen_fock_terms_ccs
+      procedure :: construct_t1_frozen_fock_terms_complex &
+                => construct_t1_frozen_fock_terms_ccs_complex
 !
 !     MO preparations
 !
@@ -457,11 +440,6 @@ module ccs_class
       procedure :: normalization_for_jacobian_debug              => normalization_for_jacobian_debug_ccs
       procedure :: numerical_test_jacobian                       => numerical_test_jacobian_ccs
 !
-!     MM and PCM reading fock matrices
-!
-      procedure :: read_mm_fock_contributions                  => read_mm_fock_contributions_ccs
-      procedure :: read_pcm_fock_contributions                 => read_pcm_fock_contributions_ccs
-!
 !     Core-valence separation procedures
 !
       procedure :: get_cvs_projector                             => get_cvs_projector_ccs
@@ -471,6 +449,8 @@ module ccs_class
 !
       procedure :: cleanup                                       => cleanup_ccs
       procedure :: general_cc_preparations                       => general_cc_preparations_ccs
+      procedure :: set_variables_from_template_wf  &
+                => set_variables_from_template_wf_ccs
 !
       procedure :: is_restart_safe                               => is_restart_safe_ccs
 !
@@ -495,6 +475,9 @@ module ccs_class
 !
       procedure :: make_complex                                  => make_complex_ccs
       procedure :: make_ccs_complex                              => make_ccs_complex_ccs
+!
+      procedure :: cleanup_complex                               => cleanup_complex_ccs
+      procedure :: cleanup_ccs_complex                           => cleanup_ccs_complex_ccs
 !
       procedure :: construct_complex_time_derivative             => construct_complex_time_derivative_ccs
 !
@@ -547,7 +530,7 @@ module ccs_class
 contains
 !
 !
-   function new_ccs(system) result(wf)
+   function new_ccs(system, template_wf) result(wf)
 !!
 !!    New CCS
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -556,11 +539,15 @@ contains
 !
       type(ccs) :: wf
 !
+      class(wavefunction), intent(in) :: template_wf
+!
       class(molecular_system), target, intent(in) :: system 
 !
       wf%name_ = 'ccs'
 !
       call wf%general_cc_preparations(system)
+      call wf%set_variables_from_template_wf(template_wf)
+      call wf%print_banner()
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
@@ -568,6 +555,8 @@ contains
       wf%need_g_abcd     = .false.
 !
       call wf%initialize_fock()
+!
+      call wf%print_amplitude_info()
 !
    end function new_ccs
 !
@@ -592,9 +581,6 @@ contains
 !     Logicals for special methods
 !
       wf%bath_orbital = .false.
-      wf%frozen_core = .false.
-      wf%frozen_hf_mos = .false.
-      wf%mlhf_reference = .false.
       wf%cvs = .false.
       wf%need_g_abcd = .false.
 !
@@ -602,31 +588,121 @@ contains
 !
       call wf%read_settings()
 !
-!     Read necessary information from HF
+   end subroutine general_cc_preparations_ccs
 !
-      call wf%read_hf()
+!
+   subroutine print_banner_ccs(wf)
+!!
+!!    Print banner
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      character(len=200) :: name_
+!
+      name_ = trim(convert_to_uppercase(wf%name_)) // ' wavefunction'
+!
+      call output%printf('m', ':: (a0)', chars=[name_], fs='(//t3,a)')
+      call output%print_separator('m', len_trim(name_) + 6, '=')
+!
+!     Print settings
+!
+      call output%printf('m', 'Bath orbital(s):         (l0)', &
+            logs=[wf%bath_orbital], fs='(/t6, a)')
+!
+      call output%printf('m', 'Core-valence separation: (l0)', &
+            logs=[wf%cvs], fs='(t6, a)')
+!
+!     Print orbital space info for cc
+!
+      call output%printf('m', ' - Number of orbitals:', &
+                         fs='(/t3,a)')
+      call output%printf('m', 'Occupied orbitals:    (i0)', &
+                         ints=[wf%n_o], fs='(/t6,a)')
+      call output%printf('m', 'Virtual orbitals:     (i0)', &
+                         ints=[wf%n_v], fs='(t6,a)')
+      call output%printf('m', 'Molecular orbitals:   (i0)', &
+                         ints=[wf%n_mo], fs='(t6,a)')
+      call output%printf('m', 'Atomic orbitals:      (i0)', &
+                         ints=[wf%n_ao], fs='(t6,a)')
+!
+   end subroutine print_banner_ccs
+!
+!
+   subroutine print_amplitude_info_ccs(wf)
+!!
+!!    Print amplitude info
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+!     Print orbital space info for cc
+!
+      call output%printf('m', ' - Number of ground state amplitudes:', fs='(/t3,a)')     
+!
+      call output%printf('m', 'Single excitation amplitudes:  (i0)', &
+            ints=[wf%n_t1], fs='(/t6,a)')
+
+!
+   end subroutine print_amplitude_info_ccs
+!
+!
+   subroutine set_variables_from_template_wf_ccs(wf, template_wf)
+!!
+!!    Set variables from template wavefunction
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Transfers the wavefunction variables needed to start a 
+!!    CC calculation from either an HF of a CC wavefunction
+!!
+      implicit none
+!
+      class(ccs) :: wf
+
+      class(wavefunction), intent(in) :: template_wf
+!
+      wf%n_o = template_wf%n_o
+      wf%n_v = template_wf%n_v
+!
+      wf%n_ao = template_wf%n_ao
+      wf%n_mo = template_wf%n_mo
+!
+      wf%hf_energy = template_wf%energy
+!
+!     Set orbital coefficients and energies
+!
+      call wf%initialize_orbital_coefficients()
+      call wf%initialize_orbital_energies()
+!
+      call dcopy(wf%n_mo, template_wf%orbital_energies, 1, wf%orbital_energies, 1)
+!
+      call dcopy(wf%n_ao*wf%n_mo, template_wf%orbital_coefficients, 1, wf%orbital_coefficients, 1)
 !
 !     Handle changes in the number of MOs as a result of 
 !     special methods
 !
       if (wf%bath_orbital) call wf%make_bath_orbital()
 !
-      if (wf%frozen_core .or. wf%frozen_hf_mos) call wf%read_frozen_orbital_terms()
-      if (wf%mlhf_reference) call wf%read_mlhf_inactive_fock_term()
+      wf%exists_frozen_fock_terms = template_wf%exists_frozen_fock_terms
 !
-!     Read MM or PCM file if present
+      if (wf%exists_frozen_fock_terms) then
 !
-      if (wf%system%mm_calculation)  call wf%read_mm_fock_contributions()
-      if (wf%system%pcm_calculation) call wf%read_pcm_fock_contributions()
+         call wf%initialize_mo_fock_frozen()
 !
-!     print orbital space info for cc
-      call output%printf(' - Number of orbitals for coupled cluster calculation', fs='(/t3,a)', pl='minimal')
-      call output%printf('Number of occupied orbitals:    (i12)',ints=[wf%n_o], fs='(/t6,a)', pl='minimal')
-      call output%printf('Number of virtual orbitals:     (i12)',ints=[wf%n_v], fs='(t6,a)', pl='minimal')
-      call output%printf('Number of molecular orbitals:   (i12)',ints=[wf%n_mo], fs='(t6,a)', pl='minimal')
-      call output%printf('Number of atomic orbitals:      (i12)',ints=[wf%n_ao], fs='(t6,a)', pl='minimal')
+         call dcopy(wf%n_mo**2, template_wf%mo_fock_frozen, 1, wf%mo_fock_frozen, 1)
 !
-   end subroutine general_cc_preparations_ccs
+         call wf%initialize_frozen_CCT()
+!
+         call dcopy(wf%n_ao**2, template_wf%frozen_CCT, 1, wf%frozen_CCT, 1)
+!
+      endif
+!
+   end subroutine set_variables_from_template_wf_ccs
 !
 !
    subroutine cleanup_ccs(wf)
@@ -643,17 +719,23 @@ contains
       call wf%destruct_multipliers()
       call wf%destruct_right_excitation_energies()
       call wf%destruct_left_excitation_energies()
-      call wf%destruct_mo_fock_fc_term()
-      call wf%destruct_mo_fock_frozen_hf_term()
-      call wf%destruct_mlhf_inactive_fock_term()
-!
-      call wf%destruct_mm_matrices()
-!
-      call wf%destruct_pcm_matrices()
+      call wf%destruct_mo_fock_frozen()
+      call wf%destruct_fock()
+      call wf%destruct_orbital_coefficients()
+      call wf%destruct_orbital_energies()
+      call wf%destruct_gs_density()
+      call wf%destruct_transition_densities()
+      call wf%destruct_frozen_CCT()
 !
       call wf%integrals%cleanup()
 !
-      call output%printf('- Cleaning up ' // trim(wf%name_) // ' wavefunction', pl='v', fs='(/t3,a)')
+      call wf%destruct_core_MOs()
+!
+      if (allocated(wf%l_files)) call wf%l_files%finalize_storer()
+      if (allocated(wf%r_files)) call wf%r_files%finalize_storer()
+!
+      call output%printf('v', '- Cleaning up ' // trim(wf%name_) // ' wavefunction', &
+                         fs='(/t3,a)')
 !
    end subroutine cleanup_ccs
 !
@@ -669,9 +751,6 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      call wf%read_frozen_orbitals_settings()
-      call wf%read_mlhf_settings()
-!
       if (input%requested_section('cc')) then
 !
          if (input%requested_keyword_in_section('bath orbital','cc')) then 
@@ -684,25 +763,6 @@ contains
       endif
 !
    end subroutine read_settings_ccs
-!
-!
-   subroutine read_mlhf_settings_ccs(wf)
-!!
-!!    Read mlhf settings 
-!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
-!!
-!!    Looks for "mlhf" in the method section of the input
-!!
-!!    This routine is read at cc level to figure out if there
-!!    should be a mlhf inactive fock contribution
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (input%requested_keyword_in_section('mlhf', 'method')) wf%mlhf_reference = .true.
-!
-   end subroutine read_mlhf_settings_ccs
 !
 !
    subroutine read_hf_ccs(wf)
@@ -772,6 +832,142 @@ contains
       call wf%restart_file%close_()
 !
    end subroutine write_cc_restart_ccs
+!
+!
+   subroutine construct_and_save_mo_cholesky_ccs(wf, n_mo, mo_coeff)
+!!
+!!    Construct and save MO Cholesky 
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Reads the AO Cholesky vectors, transforms them
+!!    by the MO coefficients, and saves them (file or memory).
+!!
+!!    
+!!    n_mo:             Number of MOs in mo_coeff
+!!
+!!    mo_coeff:         MO coefficients used to transform to MO
+!!                      basis. Dimension (wf%n_ao, n_mo)
+!!
+!
+      use direct_file_class, only: direct_file
+      use batching_index_class, only: batching_index
+      use reordering, only: sort_123_to_132
+      use timings_class, only: timings
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      integer, intent(in) :: n_mo
+!
+      real(dp), dimension(wf%n_ao, n_mo), intent(in) :: mo_coeff
+!
+      real(dp), dimension(:,:,:), allocatable :: L_Jxy, L_Jxp, L_Jpx, L_Jpq
+!
+      integer :: x, y, rec_xy
+!
+      type(batching_index) :: batch_p, batch_y
+!
+      integer :: req0, req1_p, req1_y, req2, current_p_batch, current_y_batch
+!
+      type(timings) :: timer
+!
+      timer = timings('MO transform and write Cholesky vectors')
+      call timer%turn_on()
+!
+      call wf%system%ao_cholesky_file%open_('read')
+!
+      req0 = 0
+!
+      req1_p =  max(2*wf%system%n_J*wf%n_ao, wf%system%n_J*wf%n_ao + wf%system%n_J*n_mo)
+      req1_y = wf%system%n_J*wf%n_ao
+!
+      req2 = 0
+!
+!     Initialize batching variables
+!
+      batch_p = batching_index(n_mo)
+      batch_y = batching_index(wf%n_ao)
+!
+      call mem%batch_setup(batch_p, batch_y, req0, req1_p, req1_y, req2)
+!
+      do current_p_batch = 1, batch_p%num_batches
+!
+         call batch_p%determine_limits(current_p_batch)
+!
+         call mem%alloc(L_Jxp, wf%system%n_J, wf%n_ao, batch_p%length)
+         call zero_array(L_Jxp, (wf%system%n_J)*(wf%n_ao)*(batch_p%length))
+!
+         do current_y_batch = 1, batch_y%num_batches
+!
+            call batch_y%determine_limits(current_y_batch)
+!
+            call mem%alloc(L_Jxy, wf%system%n_J, wf%n_ao, batch_y%length)
+!
+            do x = 1, wf%n_ao
+               do y = 1, batch_y%length
+!
+                  rec_xy = max(x,y + batch_y%first - 1)*(max(x,y + batch_y%first - 1)-3)/2 + x + y + batch_y%first - 1
+!
+                  call wf%system%ao_cholesky_file%read_(L_Jxy(:,x,y), rec_xy)
+!
+               enddo
+            enddo
+!
+            call dgemm('N', 'N',                         &
+                  wf%n_ao*wf%system%n_J,                 &
+                  batch_p%length,                        &
+                  batch_y%length,                        &
+                  one,                                   &
+                  L_Jxy,                                 &
+                  wf%n_ao*wf%system%n_J,                 &
+                  mo_coeff(batch_y%first,batch_p%first), &
+                  wf%n_ao,                               &
+                  one,                                   &
+                  L_Jxp,                                 &
+                  wf%n_ao*wf%system%n_J)
+!
+            call mem%dealloc(L_Jxy, wf%system%n_J, wf%n_ao, batch_y%length)
+!
+         enddo ! y batches
+!
+         call mem%alloc(L_Jpx, wf%system%n_J, batch_p%length, wf%n_ao)
+         call sort_123_to_132(L_Jxp, L_Jpx, wf%system%n_J, wf%n_ao, batch_p%length)
+         call mem%dealloc(L_Jxp, wf%system%n_J, wf%n_ao, batch_p%length)
+!
+         call mem%alloc(L_Jpq, wf%system%n_J, batch_p%length, n_mo)
+!
+         call dgemm('N', 'N',                         &
+                     batch_p%length*wf%system%n_J,    &
+                     n_mo,                            &
+                     wf%n_ao,                         &
+                     one,                             &
+                     L_Jpx,                           &
+                     batch_p%length*wf%system%n_J,    &
+                     mo_coeff,                        &
+                     wf%n_ao,                         &
+                     zero,                            &
+                     L_Jpq,                           &
+                     batch_p%length*wf%system%n_J)
+!
+         call mem%dealloc(L_Jpx, wf%system%n_J, batch_p%length, wf%n_ao)
+!
+         call wf%integrals%set_cholesky_mo(L_Jpq,           &
+                                           batch_p%first,   &
+                                           batch_p%last,    &
+                                           1,               &
+                                           n_mo,            &
+                                           q_leq_p=.true.)
+!
+         call mem%dealloc(L_Jpq, wf%system%n_J, batch_p%length, n_mo)
+!
+      enddo ! p batches
+!
+      call wf%system%ao_cholesky_file%close_('keep')
+!
+      call timer%turn_off()
+!
+   end subroutine construct_and_save_mo_cholesky_ccs
 !
 !
    subroutine construct_molecular_gradient_ccs(wf, E_qk)
@@ -860,6 +1056,12 @@ contains
 !!    Get orbital differences
 !!    Written by Sarai D. Folkestad, Sep 2018
 !!
+!!    Sets the (ground state) orbital differences vector:
+!!
+!!       epsilon_ai = epsilon_a - epsilon_i 
+!!
+!!    Here, the epsilon vector has dimensionality N = n_t1 
+!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -917,8 +1119,8 @@ contains
       real(dp), intent(in), optional :: w
 !
       if (present(w)) then
-         call output%printf('Calling Jacobian (a0) transform with energy: (f19.12)', &
-                            pl='debug', chars=[r_or_l], reals=[w])
+         call output%printf('debug', 'Calling Jacobian (a0) transform with &
+                            &energy: (f19.12)', chars=[r_or_l], reals=[w])
       endif
 !
 !     Compute the transformed matrix
@@ -978,6 +1180,8 @@ contains
 !!    Print dominant amplitudes
 !!    Written by Eirik F. Kjønstad, Dec 2018
 !!
+!!    Prints the dominant amplitudes in the cluster amplitude vector.
+!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -991,6 +1195,11 @@ contains
 !!
 !!    Print dominant amplitudes
 !!    Written by Eirik F. Kjønstad, Dec 2018
+!!
+!!    Prints the dominant amplitudes in the amplitude vector x.
+!!
+!!    tag specified the printed label for the vector, e.g. tag = "t" for 
+!!    the cluster amplitudes. 
 !!
       implicit none
 !
@@ -1012,6 +1221,9 @@ contains
 !!
 !!    Prints the 10 most dominant single amplitudes,
 !!    or sorts them if there are fewer than twenty of them.
+!!
+!!    tag specified the printed label for the vector, e.g. tag = "t" for 
+!!    the cluster amplitudes. 
 !!
       implicit none
 !
@@ -1044,17 +1256,17 @@ contains
 !
 !     Print largest contributions
 !
-      call output%printf('Largest single amplitudes:', pl='m', fs='(/t6,a)')
+      call output%printf('m', 'Largest single amplitudes:', fs='(/t6,a)')
       call output%print_separator('m', 35, '-', fs='(t6,a)')
-      call output%printf('a       i         ' // tag // '(a,i)', pl='m', fs='(t9,a)')
+      call output%printf('m', 'a       i         ' // tag // '(a,i)', fs='(t9,a)')
       call output%print_separator('m', 35, '-', fs='(t6,a)')
 !
       do elm = 1, n_elements
 !
          call invert_compound_index(dominant_indices(elm), a, i, wf%n_v, wf%n_o)
 !
-         call output%printf('(i4)    (i3)   (f19.12)', fs='(t6,a)', pl='m', &
-                             ints=[a, i], reals=[x1(dominant_indices(elm))])
+         call output%printf('m', '(i4)    (i3)   (f19.12)', ints=[a, i], &
+                            reals=[x1(dominant_indices(elm))], fs='(t6,a)')
 !
       enddo
 !
@@ -1148,8 +1360,9 @@ contains
 !
       L_R_overlap_ccs = ddot(wf%n_es_amplitudes, L, 1, R, 1)
 !
-      call output%printf('Overlap of (i0). left and (i0). right state: (f15.10)',   &
-                          fs='(/t6,a)', ints=[left_state, right_state], reals=[L_R_overlap_ccs], pl='debug')
+      call output%printf('debug', 'Overlap of (i0). left and (i0). right state: (f15.10)', &
+                         ints=[left_state, right_state], &
+                         reals=[L_R_overlap_ccs], fs='(/t6,a)')
 !
    end function L_R_overlap_ccs
 !
@@ -1208,7 +1421,7 @@ contains
 !
       call copy_and_scale(one, wf%orbital_coefficients, orbital_coefficients_copy, wf%n_mo*wf%n_ao)
 !
-      call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
+      call wf%destruct_orbital_coefficients()
 !
       call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo + wf%n_bath_orbitals)
       call zero_array(wf%orbital_coefficients, wf%n_ao*(wf%n_mo + wf%n_bath_orbitals))
@@ -1221,7 +1434,7 @@ contains
 !
       call copy_and_scale(one, wf%orbital_energies, orbital_energies_copy, wf%n_mo)
 !
-      call mem%dealloc(wf%orbital_energies, wf%n_mo)
+      call wf%destruct_orbital_energies()
       call mem%alloc(wf%orbital_energies, wf%n_mo + wf%n_bath_orbitals)
       call zero_array(wf%orbital_energies, wf%n_mo + wf%n_bath_orbitals)
 !
@@ -1340,8 +1553,8 @@ contains
       call mem%alloc(L_Jai, wf%integrals%n_J, wf%n_v, wf%n_o)
       call mem%alloc(L_Jkj, wf%integrals%n_J, wf%n_o, wf%n_o)
 !
-      call wf%integrals%read_cholesky(L_Jai, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
-      call wf%integrals%read_cholesky(L_Jkj, 1, wf%n_o, 1, wf%n_o)
+      call wf%integrals%get_cholesky_mo(L_Jai, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
+      call wf%integrals%get_cholesky_mo(L_Jkj, 1, wf%n_o, 1, wf%n_o)
 !
 !     Construct g_kjai integrals in MO basis
 !
@@ -1395,7 +1608,7 @@ contains
 !
          call mem%alloc(L_Jac, wf%integrals%n_J, wf%n_v, batch_c%length)
 !
-         call wf%integrals%read_cholesky(L_Jac, wf%n_o + 1, wf%n_mo, wf%n_o + batch_c%first, wf%n_o + batch_c%last)
+         call wf%integrals%get_cholesky_mo(L_Jac, wf%n_o + 1, wf%n_mo, wf%n_o + batch_c%first, wf%n_o + batch_c%last)
 !
 !        X_ai_J = sum_c R_ci L_ac_J
 !
@@ -1516,6 +1729,15 @@ contains
 !
       wf%cvs = .true.
 !
+!     Consistency check (given currently implemented CVS capabilities)
+!
+      if (input%requested_keyword_in_section('core excitation', 'solver cc es') .and. &
+          input%requested_keyword_in_section('core', 'frozen orbitals')) then 
+!
+         call output%error_msg('No support for CVS with frozen core yet. Turn off frozen core.')
+!
+      endif
+!
    end subroutine read_cvs_settings_ccs
 !
 !
@@ -1538,72 +1760,14 @@ contains
 !
       class(ccs) :: wf
 !
-      wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, wf%system%n_J)
-      call wf%construct_and_write_mo_cholesky(wf%n_mo, wf%orbital_coefficients, wf%integrals%cholesky_mo)
+      wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, wf%system%n_J, wf%need_g_abcd)
+!
+      call wf%integrals%initialize_storage()
+!
+      call wf%construct_and_save_mo_cholesky(wf%n_mo, &
+                                              wf%orbital_coefficients)
 !
    end subroutine mo_preparations_ccs
-!
-!
-   subroutine read_frozen_orbital_terms_ccs(wf)
-!!
-!!    Read frozen orbital contributions
-!!    Written by Sarai D. Folkestad, Oct 2019
-!!
-!!    Reads frozen orbital contributions to the
-!!    mo Fock matrix.
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (wf%frozen_core) then
-!      
-         call wf%initialize_mo_fock_fc_term()
-!
-         wf%mo_fock_fc_file = sequential_file('MO_Fock_FC')
-!
-         call wf%mo_fock_fc_file%open_('read', 'rewind')
-         call wf%mo_fock_fc_file%read_(wf%mo_fock_fc_term, wf%n_mo**2)
-         call wf%mo_fock_fc_file%close_('keep')
-!
-      endif
-!
-      if (wf%frozen_hf_mos) then
-!
-         call wf%initialize_mo_fock_frozen_hf_term()
-!
-         wf%mo_fock_frozen_hf_file = sequential_file('MO_frozen_hf_Fock')
-!
-         call wf%mo_fock_frozen_hf_file%open_('read', 'rewind')
-         call wf%mo_fock_frozen_hf_file%read_(wf%mo_fock_frozen_hf_term, wf%n_mo**2)
-         call wf%mo_fock_frozen_hf_file%close_('keep')
-!
-      endif
-!
-   end subroutine read_frozen_orbital_terms_ccs
-!
-!
-   subroutine read_mlhf_inactive_fock_term_ccs(wf)
-!!
-!!    Read mlhf inactive Fock term
-!!    Written by Sarai D. Folkestad and Linda Goletto, Oct 2019
-!!
-!!    Reads frozen orbital contributions to the
-!!    mo Fock matrix.
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!      
-      call wf%initialize_mlhf_inactive_fock_term()
-!
-      wf%mlhf_inactive_fock_term_file = sequential_file('mlhf_inactive_fock_term')
-!
-      call wf%mlhf_inactive_fock_term_file%open_('read', 'rewind')
-      call wf%mlhf_inactive_fock_term_file%read_(wf%mlhf_inactive_fock_term, wf%n_mo**2)
-      call wf%mlhf_inactive_fock_term_file%close_('keep')
-!
-   end subroutine read_mlhf_inactive_fock_term_ccs
 !
 !
    subroutine check_for_degeneracies_ccs(wf, transformation, threshold)
@@ -1681,15 +1845,15 @@ contains
             reduced_degeneracy = n_degeneracy
 !
             do p = 2, n_degeneracy ! if p == 1 then also q == 1 and we cycle anyway
-               do q = 1, p
-!
-                  if(p .eq. q) cycle
+               do q = 1, p-1
 !
                   if(are_vectors_parallel(R(:,p), R(:,q), wf%n_es_amplitudes, threshold)) then
 !
-                     call output%printf('Warning: The (a0) states (i0) and (i0) are parallel.',&
-                                         ints=[current_state + p - 1, current_state + q - 1],  &
-                                         chars=[trim(transformation)], fs='(//t3,a)', pl='m')
+                     call output%printf('m', 'Warning: The (a0) states (i0) and &
+                                        &(i0) are parallel.', &
+                                        ints=[current_state + p - 1, &
+                                        current_state + q - 1], &
+                                        chars=[trim(transformation)], fs='(//t3,a)')
 !
                      reduced_degeneracy = reduced_degeneracy - 1
 !
@@ -1700,9 +1864,9 @@ contains
 !
             if(reduced_degeneracy .gt. 1) then
 !
-               call output%printf('Found a (i0)-fold degeneracy involving the &
-                                  &(i0). state.', fs='(//t6,a)', pl='v',      &
-                                  ints=[reduced_degeneracy, current_state])
+               call output%printf('v', 'Found a (i0)-fold degeneracy involving &
+                                  &the (i0). state.', ints=[reduced_degeneracy, &
+                                  current_state], fs='(//t6,a)')
 !
             end if
 !
@@ -1760,8 +1924,8 @@ contains
 !     discard parallel states
 !     biorthonormalize degenerate states
 !
-      call output%printf('Biorthonormalization of left and right excited state vectors', &
-                          pl='v', fs='(/t3,a)')
+      call output%printf('v', 'Biorthonormalization of left and right excited &
+                         &state vectors', fs='(/t3,a)')
 !
       current_state = 1
 !
@@ -1772,8 +1936,9 @@ contains
          if (abs(wf%left_excitation_energies(current_state) &
                - wf%right_excitation_energies(current_state)) .lt. energy_threshold) then
 !
-            call output%printf('The left and right states corresponding to root (i0) &
-                               &are consistent', fs='(/t6,a)', ints=[current_state], pl='v')
+            call output%printf('v', 'The left and right states corresponding to &
+                               &root (i0) are consistent', &
+                               ints=[current_state], fs='(/t6,a)')
 !
             n_degeneracy = 1
             state = current_state + 1
@@ -1803,8 +1968,8 @@ contains
 !
             end do
 !
-            call output%printf('Degree of degeneracy: (i0)', fs='(t6,a)', &
-                                ints=[n_degeneracy], pl='debug')
+            call output%printf('debug', 'Degree of degeneracy: (i0)', &
+                               ints=[n_degeneracy], fs='(t6,a)')
 !
             if(n_degeneracy .gt. 1) then
 !
@@ -1824,18 +1989,21 @@ contains
 !
                   parallel(p) = .false.
 !
-                  do q = 1, p
+                  do q = 1, p-1
 !
-                     if(q .eq. p) cycle
+!                    Skip if the state q was already parallel to another p
+!
+                     if (parallel(q)) cycle
 !
                      if(are_vectors_parallel(R(:,p), R(:,q), &
                         wf%n_es_amplitudes, residual_threshold)) then
 !
                         parallel(p) = .true.
 !
-                        call output%printf('Warning: The right states (i0) and (i0) &
-                                           &are parallel', pl='m', fs='(/t3,a)',   &
-                                           ints=[current_state+p-1, current_state+q-1])
+                        call output%printf('m', 'Warning: The right states (i0) &
+                                           &and (i0) are parallel', &
+                                           ints=[current_state+p-1, &
+                                           current_state+q-1], fs='(/t3,a)')
 !
                         reduced_degeneracy_r = reduced_degeneracy_r - 1
 !
@@ -1876,18 +2044,21 @@ contains
                   parallel(p) = .false.
                   skip_states(current_state + p - 1) = .false.
 !
-                  do q = 1, p
+                  do q = 1, p-1
 !
-                     if(q .eq. p) cycle
+!                    Skip if the state q was already parallel to another p
+!
+                     if (parallel(q)) cycle
 !
                      if(are_vectors_parallel(L(:,p), L(:,q), &
                         wf%n_es_amplitudes, residual_threshold)) then
 !
                         parallel(p) = .true.
 !
-                        call output%printf('Warning: The left states (i0) and (i0) &
-                                           &are parallel', pl='m', fs='(/t3,a)',   &
-                                           ints=[current_state + p - 1, current_state+q-1])
+                        call output%printf('m', 'Warning: The left states (i0) &
+                                           &and (i0) are parallel', &
+                                           ints=[current_state + p - 1, &
+                                           current_state+q-1], fs='(/t3,a)')
 !
                         reduced_degeneracy_l = reduced_degeneracy_l - 1
 !
@@ -1927,18 +2098,17 @@ contains
 !
                if (reduced_degeneracy_r .gt. 1) then
 !
-                  call output%printf('Found a degeneracy between:', fs='(/t6,a)', pl='n')
+                  call output%printf('n', 'Found a degeneracy between:', fs='(/t6,a)')
                   call output%print_separator('n', 29,'-', fs='(t6,a)')
-                  call output%printf('State     Excitation Energy', fs='(t6,a)', pl='n')
+                  call output%printf('n', 'State     Excitation Energy', fs='(t6,a)')
 !
                   do p = 1, n_degeneracy
 !
                      if(parallel(p)) cycle
 !
-                     call output%printf(' (i2)     (f19.12)', &
-                          fs='(t6,a)', pl='n',                &
-                          ints=[current_state + p - 1],       & 
-                          reals=[wf%right_excitation_energies(current_state+p-1)])
+                     call output%printf('n', ' (i2)     (f19.12)', &
+                                        ints=[current_state + p - 1], &
+                                        reals=[wf%right_excitation_energies(current_state+p-1)], fs='(t6,a)')
 !
                   end do
 !
@@ -2015,8 +2185,9 @@ contains
                   if((.not. biorthonormalize) .and. &
                      (n_overlap_zero .eq. reduced_degeneracy_r-1)) then
 !
-                     call output%printf('Degenerate states except one are biorthogonal &
-                                       &- Thus, only binormalize', pl='v', fs='(/t6,a)')
+                     call output%printf('v', 'Degenerate states except one are &
+                                        &biorthogonal - Thus, only binormalize' &
+                                        &, fs='(/t6,a)')
 !
                      LT_R = wf%L_R_overlap(L(:, state),                             &
                                            current_state + state - 1,               &
@@ -2027,9 +2198,8 @@ contains
 !
                      if(abs(LT_R) .lt. 1.0d-2) then
 !
-                        call output%printf('Warning: Overlap of (i0). left and &
-                                          &right state close to zero.',        &
-                                           pl='m', ints=[current_state])
+                        call output%printf('m', 'Warning: Overlap of (i0). left &
+                                           &and right state close to zero.', ints=[current_state])
 !
                      end if
 !
@@ -2046,8 +2216,8 @@ contains
 !
                   else ! Actual biorthonormalization needed
 !
-                     call output%printf('Biorthonormalization of degenerate states', &
-                                         pl='n',fs='(/t6,a)')
+                     call output%printf('n', 'Biorthonormalization of &
+                                        &degenerate states', fs='(/t6,a)')
 !
 !                    Make sure to not run into the other branch of the if statement
                      biorthonormalize = .true.
@@ -2138,14 +2308,14 @@ contains
 !
                      if(abs(LT_R) .lt. 1.0d-2) then
 !
-                        call output%printf('Warning: Overlap of (i0). left and right state close to zero.', &
-                                          pl='m', ints=[current_state])
+                        call output%printf('m', 'Warning: Overlap of (i0). left &
+                                           &and right state close to zero.', ints=[current_state])
 !
                      else if(abs(LT_R) .lt. residual_threshold) then
 !
-                        call output%printf('Overlap of (i0). left and right state less than &
-                                          &threshold: (e8.3).', reals=[residual_threshold], &
-                                          pl='m', ints=[current_state])
+                        call output%printf('m', 'Overlap of (i0). left and &
+                                           &right state less than threshold: (e8.3).', &
+                                           reals=[residual_threshold], ints=[current_state])
 !
                         call output%error_msg('Trying to binormalize nonoverlapping states.')
 !
@@ -2186,14 +2356,14 @@ contains
 !
                if(abs(LT_R) .lt. 1.0d-2) then
 !
-                  call output%printf('Warning: Overlap of (i0). left and right state close to zero.', &
-                                     pl='m', ints=[current_state])
+                  call output%printf('m', 'Warning: Overlap of (i0). left and &
+                                     &right state close to zero.', ints=[current_state])
 !
                else if(abs(LT_R) .lt. residual_threshold) then
 !
-                  call output%printf('Overlap of (i0). left and right state less than &
-                                    &threshold: (e8.3).', reals=[residual_threshold], &
-                                     pl='m', ints=[current_state])
+                  call output%printf('m', 'Overlap of (i0). left and right &
+                                     &state less than threshold: (e8.3).', &
+                                     reals=[residual_threshold], ints=[current_state])
 !
                   call output%error_msg('Trying to binormalize biorthogonal states.')
 !
@@ -2212,14 +2382,14 @@ contains
 !
          else ! Sanity check failed - roots ordered incorrectly
 !
-            call output%printf('Eigenvector (i0) is not left-right consistent &
-                              & to threshold (e8.3).', fs='(/t6,a)', pl='m',  &
-                                ints=[current_state], reals=[energy_threshold])
+            call output%printf('m', 'Eigenvector (i0) is not left-right &
+                               &consistent  to threshold (e8.3).', &
+                               ints=[current_state], reals=[energy_threshold], fs='(/t6,a)')
 !
-            call output%printf('Energies (left, right): (f19.12) (f19.12)', &
-                 reals=[wf%left_excitation_energies(current_state),         &
-                 wf%right_excitation_energies(current_state)], fs='(/t6,a)',&
-                 pl='m')
+            call output%printf('m', 'Energies (left, right): (f19.12) (f19.12)' &
+                               &, &
+                               reals=[wf%left_excitation_energies(current_state), &
+                               wf%right_excitation_energies(current_state)], fs='(/t6,a)')
 !
             call output%error_msg('while biorthonormalizing.')
 !
@@ -2230,47 +2400,6 @@ contains
       end do
 !
    end subroutine biorthonormalize_L_and_R_ccs
-!
-!
-   subroutine read_mm_fock_contributions_ccs(wf)
-!!
-!!    Read MM Fock contributions
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-!!    Reads HF MM Fock contributions at convergence
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      call wf%initialize_mm_matrices()
-!      
-      if(wf%system%mm%forcefield.eq.'non-polarizable') &
-         call mem%alloc(wf%nopol_h_wx,wf%n_ao,wf%n_ao)
-!
-      call wf%read_mm_matrices()
-!
-!
-   end subroutine read_mm_fock_contributions_ccs
-!
-!
-   subroutine read_pcm_fock_contributions_ccs(wf)
-!!
-!!    Read MM Fock contributions
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-!!    Reads HF MM Fock contributions at convergence
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      call wf%initialize_pcm_matrices()
-!
-      call wf%read_pcm_matrices()
-!
-!
-   end subroutine read_pcm_fock_contributions_ccs
 !
 !
    subroutine print_gs_summary_ccs(wf)
@@ -2284,19 +2413,19 @@ contains
 !
       real(dp) :: t1_diagnostic 
 !
-      call output%printf('- Ground state summary:', fs='(/t3,a)', pl='m')
+      call output%printf('m', '- Ground state summary:', fs='(/t3,a)')
 !
-      call output%printf('Final ground state energy (a.u.): (f18.12)', &
-                         reals=[wf%energy], fs='(/t6,a)', pl='m')
+      call output%printf('m', 'Final ground state energy (a.u.): (f18.12)', &
+                         reals=[wf%energy], fs='(/t6,a)')
 !
-      call output%printf('Correlation energy (a.u.):        (f18.12)', &
-                         reals=[wf%correlation_energy], fs='(/t6,a)', pl='m')
+      call output%printf('m', 'Correlation energy (a.u.):        (f18.12)', &
+                         reals=[wf%correlation_energy], fs='(/t6,a)')
 !
       call wf%print_dominant_amplitudes()
 !
       t1_diagnostic = wf%get_t1_diagnostic() 
-      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', &
-                         reals=[t1_diagnostic], fs='(/t6,a)', pl='m')
+      call output%printf('m', 'T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', &
+                         reals=[t1_diagnostic], fs='(/t6,a)')
 !
    end subroutine print_gs_summary_ccs
 !

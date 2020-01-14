@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (cc2_class) jacobian_transpose_cc2
 !
 !!
-!!    Jacobian transpose submodule (CC2)
-!!    Written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
+!!    Jacobian transpose submodule
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the transpose of the Jacobian matrix
@@ -53,7 +52,14 @@ contains
 !
       class(cc2), intent(inout) :: wf
 !
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Prepare for Jacobian transpose CC2', pl='normal')
+      call timer%turn_on()
+!
       call wf%save_jacobian_transpose_a1_intermediates(wf%u_aibj)
+!
+      call timer%turn_off()
 !
    end subroutine prepare_for_jacobian_transpose_cc2
 !
@@ -84,9 +90,9 @@ contains
       real(dp), dimension(:,:), allocatable :: sigma_ai
       real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj
 !
-      type(timings) :: timer
+      type(timings), allocatable :: timer
 !
-      timer = timings('Jacobian transpose transformation CC2')
+      timer = timings('Jacobian transpose CC2', pl='normal')
       call timer%turn_on()
 !
 !     Allocate and zero the transformed vecotr (singles part)
@@ -171,9 +177,9 @@ contains
 !
       integer :: a, i, b, j
 !
-      type(timings) :: timer
+      type(timings), allocatable :: timer
 !
-      timer = timings('jacobian transpose b2 cc2')
+      timer = timings('Jacobian transpose CC2 B2', pl='verbose')
       call timer%turn_on()
 !
 !$omp parallel do private(a, i, b, j)

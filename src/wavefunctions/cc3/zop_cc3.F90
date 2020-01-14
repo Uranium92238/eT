@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -668,6 +668,8 @@ contains
          call daxpy(wf%n_o**2, one, density_oo_thread(:,:,i), 1, density_oo, 1)
       enddo
 !
+      call mem%dealloc(density_oo_thread, wf%n_o, wf%n_o, n_threads)
+!
 !     Close files
 !
       call wf%g_bdck_t_v%close_()
@@ -727,6 +729,12 @@ contains
       call mem%dealloc(u_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
       call mem%dealloc(v_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
       call mem%dealloc(tbar_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
+!
+      if(cvs) then
+!
+         call mem%dealloc(projector_ijk, wf%n_o, wf%n_o, wf%n_o)
+!
+      end if
 !
    end subroutine density_cc3_mu_ref_abc_cc3
 !
@@ -996,7 +1004,6 @@ contains
       integer :: a
 !
 !     CVS
-      integer :: i_cvs
       logical :: ijk_core
 !
 !     Setup and Batching loops
@@ -1225,26 +1232,23 @@ contains
 !
                         if (i .eq. j .and. i .eq. k) cycle
 !
-!
 !                       Check if at least one index i,j,k is a core orbital
+!                       cvs == .true. if we construct the left transition density
+!
                         if(cvs) then
 !
                            ijk_core = .false.
 !
-                           do i_cvs = 1, wf%n_core_MOs
-!
-                              if(     i .eq. wf%core_MOs(i_cvs)   &
-                                 .or. j .eq. wf%core_MOs(i_cvs)   &
-                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+                           if(     any(wf%core_MOs .eq. i) &
+                              .or. any(wf%core_MOs .eq. j) &
+                              .or. any(wf%core_MOs .eq. k)) then
 !
                               ijk_core = .true.
 !
-                              end if
+                           end if
 !
-                           end do
-!
-!                       Cycle if i,j,k are not core orbitals
-                        if (.not. ijk_core) cycle
+!                          Cycle if i,j,k are not core orbitals
+                           if (.not. ijk_core) cycle
 !
                         end if
 !

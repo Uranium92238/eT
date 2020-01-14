@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 submodule (mlcc2_class) debug_jacobian_mlcc2
 !
 !!
-!!    Debug Jacobian (MLCC2)
+!!    Debug Jacobian
 !!
 !!    Routines debug analytical Jacobian by comparing to 
 !!    Jacobian computed by numerical differentiation of 
@@ -68,7 +68,7 @@ contains
       call wf%get_amplitudes(t_copy)
       call wf%set_amplitudes(t(1:wf%n_gs_amplitudes))
 !
-      call wf%integrals%write_t1_cholesky(wf%t1)
+      call wf%integrals%update_t1_integrals(wf%t1)
 !
       wf%x2 = t(wf%n_gs_amplitudes+1:wf%n_es_amplitudes)
 !

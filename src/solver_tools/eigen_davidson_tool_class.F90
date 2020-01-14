@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ module eigen_davidson_tool_class
 !!
 !!             II. Read new trials, transform them, & store the result 
 !!
-!!             do trial = davidson%first_trial(), davidson%last_trial()
+!!             do trial = davidson%first_new_trial(), davidson%last_new_trial()
 !!
 !!                call davidson%get_trial(c, trial)
 !!                Transform: c <- A c 
@@ -179,6 +179,8 @@ contains
 !
       call davidson%destruct_omega_re()
       call davidson%destruct_omega_im()
+!
+      if (davidson%do_precondition) call davidson%preconditioner%destruct_precondition_vector()
 !
    end subroutine destructor_eigen_davidson_tool
 !  
@@ -597,7 +599,10 @@ contains
       call mem%alloc(trial, davidson%n_parameters)
       call dcopy(davidson%n_parameters, R, 1, trial, 1)
 !
-      if (davidson%do_precondition) call davidson%preconditioner%do_(trial, shift=davidson%omega_re(n))
+      if (davidson%do_precondition) &
+         call davidson%preconditioner%do_(trial,                        &
+                                          shift=davidson%omega_re(n),   &
+                                          prefactor=-one)
 !
 !     Renormalize 
 !

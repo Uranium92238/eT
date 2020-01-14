@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@
 !
       class(hf), intent(in) :: wf
       real(dp) :: max_gradient
+!
    end function get_max_roothan_hall_mo_gradient_hf
 !
 !
@@ -123,7 +124,7 @@
    end subroutine do_roothan_hall_mo_hf
 !
 !
-   module subroutine update_fock_and_energy_mo_hf(wf, h_wx, prev_ao_density)
+   module subroutine update_fock_and_energy_mo_hf(wf, prev_ao_density)
 !!
 !!    Update Fock and energy
 !!    Written by Linda Goletto and Sarai D. Folkestad, 2019
@@ -136,46 +137,9 @@
       implicit none
 !
       class(hf) :: wf
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
 !
    end subroutine update_fock_and_energy_mo_hf
-!
-!
-   module subroutine initialize_W_mo_update_hf(wf)
-!!
-!!    Initialize W MO update
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
-!!    and Linda Goletto, Jan 2019
-!!
-!!    Modified by Ida-Marie Hoyvik, Oct 2019
-!!
-!!    Initializes the eigenvectors W 
-!!    for Roothan-Hall in the mo basis (FW = We)
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_W_mo_update_hf
-!
-!
-   module subroutine destruct_W_mo_update_hf(wf)
-!!
-!!    Destruct W MO update 
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
-!!    and Linda Goletto, Jan 2019
-!!
-!!    Destructs the eigenvectors W 
-!!    for Roothan-Hall in the mo basis (FW = We)
-!!
-!!    Modified by Ida-Marie Hoyvik, Oct 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_W_mo_update_hf
 !
 !
    module subroutine prepare_for_roothan_hall_mo_hf(wf)
@@ -203,3 +167,46 @@
       class(hf) :: wf
 !
    end subroutine prepare_for_roothan_hall_mo_hf
+!
+!
+   module subroutine read_for_scf_restart_mo_hf(wf)
+!!
+!!    Read for SCF restart
+!!    Written by Sarai D. Folkestad and Linda Goletto, Oct 2019
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+   end subroutine read_for_scf_restart_mo_hf
+!
+!
+   module subroutine construct_mo_fock_hf(wf)
+!!
+!!    Construct MO Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the MO Fock matrix F_pq using the current AO
+!!    Fock and the orbital coefficients.
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+   end subroutine construct_mo_fock_hf
+!
+!
+   module subroutine get_fock_ov_hf(wf, F)
+!!
+!!    Get HF equations
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the occupied-virtual block of the Fock MO matrix,
+!!    and returns the result in the array F.
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+      real(dp), dimension(wf%n_o, wf%n_v)   :: F ! F_ia
+!
+   end subroutine get_fock_ov_hf

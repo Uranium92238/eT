@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -159,3 +159,15 @@
       class(mlcc2) :: wf
 !
    end subroutine destruct_cnto_states_mlcc2
+!
+!
+   module subroutine destruct_multipliers_mlcc2(wf)
+!!
+!!    Destruct multipliers states
+!!    Written by Sarai D. Folkestad, Jan 2020
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+   end subroutine destruct_multipliers_mlcc2

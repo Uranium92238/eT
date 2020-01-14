@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@ submodule (mp2_class) zop_mp2
 !
 !!
 !!    Zeroth order properties submodule 
-!!    Set up by Andreas Skeidsvoll, Aug 2019
 !!
 !!    Contains routines related to the mean values, i.e. 
 !!    the construction of density matrices as well as expectation 
@@ -90,6 +89,10 @@ contains
 !$omp end parallel do
 !
       wf%energy = wf%hf_energy - e2_neg
+!
+      call mem%dealloc(eps, wf%n_mo)
+      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine calculate_energy_mp2
 !

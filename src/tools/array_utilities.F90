@@ -1,6 +1,6 @@
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -664,22 +664,22 @@ contains
 !
       cholesky_vectors = matrix
 !
-      allocate(work(2*dim_))
+      call mem%alloc(work, (2*dim_))
 !
 !     DPSTRF computes the Cholesky factorization with complete pivoting
 !     of a real symmetric positive semidefinite matrix.
 !
-      call dpstrf('L',      &
-            dim_,              &
+      call dpstrf('L',        &
+            dim_,             &
             cholesky_vectors, &
-            dim_,              &
+            dim_,             &
             used_diag,        &
             n_vectors,        &
             threshold,        &
             work,             &
             info)
 !
-      deallocate(work)
+      call mem%dealloc(work, (2*dim_))
 !
       do I = 1, dim_ ! Zero upper unreferenced triangle
          do J = 1, I - 1
@@ -690,8 +690,7 @@ contains
       enddo
 !
       if (info .lt. 0) then
-         write(*,*) info
-         stop 'Cholesky decomposition failed! Something wrong in call to dpstrf'
+         call output%error_msg('Cholesky decomposition failed! Something wrong in call to dpstrf')
       end if
 !
    end subroutine full_cholesky_decomposition_system
@@ -791,8 +790,8 @@ contains
 !
             enddo
 !
-            call output%printf('The smallest diagonal after decomposition is: (e12.4)', &
-                                reals=[min_diagonal], pl='n', fs='(/t6,a)')
+            call output%printf('n', 'The smallest diagonal after decomposition &
+                               &is: (e12.4)', reals=[min_diagonal], fs='(/t6,a)')
             call mem%dealloc(diagonal, dim_)
 !
             return
@@ -863,8 +862,8 @@ contains
 !
       enddo
 !
-      call output%printf('The smallest diagonal after decomposition is: (e12.4)', &
-                          reals=[min_diagonal], pl='n', fs='(/t6,a)')
+      call output%printf('n', 'The smallest diagonal after decomposition is: (e12.4)', &
+                         reals=[min_diagonal], fs='(/t6,a)')
 !
       call mem%dealloc(diagonal, dim_)
 !

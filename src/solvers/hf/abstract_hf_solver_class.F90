@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -24,8 +24,10 @@ module abstract_hf_solver_class
 !!
    use global_in,  only : input
    use global_out, only : output
-   use hf_class, only : hf
-   use memory_manager_class, only : mem
+!
+   use hf_class,              only : hf
+   use memory_manager_class,  only : mem
+   use timings_class,         only : timings
 !
    use parameters   
 !
@@ -33,8 +35,8 @@ module abstract_hf_solver_class
 !
    type, abstract :: abstract_hf_solver 
 !
+      character(len=100) :: name_
       character(len=100) :: tag
-      character(len=100) :: author
       character(len=400) :: description
 !
       real(dp) :: energy_threshold  
@@ -46,6 +48,8 @@ module abstract_hf_solver_class
 !
       integer, dimension(:), allocatable :: orbitals_to_print
 !
+      type(timings), allocatable :: timer 
+!
    contains 
 !
       procedure :: print_banner             => print_banner_abstract_hf_solver
@@ -54,8 +58,6 @@ module abstract_hf_solver_class
       procedure :: read_hf_solver_settings  => read_hf_solver_settings_abstract_hf_solver
 !
       procedure :: print_hf_solver_settings => print_hf_solver_settings_hf_solver
-!
-      procedure :: print_summary            => print_summary_abstract_hf_solver
 !
       procedure, nopass :: run_single_ao    => run_single_ao_abstract_hf_solver 
 !
@@ -81,17 +83,10 @@ contains
 !
       class(hf) :: wf 
 !
-      real(dp), dimension(:,:), allocatable :: h_wx 
+      call output%printf('m', 'The system contains just one atomic orbital. &
+                         &Just constructing the solutions.', fs='(/t3,a)')
 !
-      call output%printf('The system contains just one atomic orbital. Just constructing the solutions.', &
-                           pl='m', fs='(/t3,a)')
-!
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_h_wx(h_wx)
-!
-      call wf%update_fock_and_energy(h_wx)  
-!
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+      call wf%update_fock_and_energy()  
 !
       call wf%roothan_hall_update_orbitals() ! F => C
       call wf%update_ao_density()            ! C => D
@@ -111,11 +106,11 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      call output%printf('Energy threshold:             (e11.4)',&
-         reals=[solver%energy_threshold], fs='(/t6,a)', pl='minimal')
+      call output%printf('m', 'Energy threshold:             (e11.4)', &
+                         reals=[solver%energy_threshold], fs='(/t6,a)')
 !
-      call output%printf('Gradient threshold:           (e11.4)',&
-         reals=[solver%gradient_threshold], fs='(t6,a)', pl='minimal')
+      call output%printf('m', 'Gradient threshold:           (e11.4)', &
+                         reals=[solver%gradient_threshold], fs='(t6,a)')
 !
    end subroutine print_hf_solver_settings_hf_solver
 !
@@ -144,28 +139,14 @@ contains
 !!
 !!    Reads the settings specific to this class.
 !!
-      use memory_manager_class, only: mem
-!
       implicit none 
 !
       class(abstract_hf_solver) :: solver 
-!
-      integer :: n_orbitals_to_print
 !
       call input%get_keyword_in_section('energy threshold', 'solver scf', solver%energy_threshold)
       call input%get_keyword_in_section('gradient threshold', 'solver scf', solver%gradient_threshold)
       call input%get_keyword_in_section('max iterations', 'solver scf', solver%max_iterations)
       call input%get_keyword_in_section('ao density guess', 'solver scf', solver%ao_density_guess)
-!
-      if (input%requested_keyword_in_section('print orbitals', 'solver scf')) then
-!
-         n_orbitals_to_print = input%get_n_elements_for_keyword_in_section('print orbitals', 'solver scf')
-!
-         call mem%alloc(solver%orbitals_to_print, n_orbitals_to_print)
-!
-         call input%get_array_for_keyword_in_section('print orbitals', 'solver scf', n_orbitals_to_print, solver%orbitals_to_print)
-!
-      endif
 !
    end subroutine read_hf_solver_settings_abstract_hf_solver
 !
@@ -179,42 +160,11 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      call output%printf(':: (a0)', pl='normal', fs='(//t3,a)',  chars=[trim(solver%tag)])
-      call output%printf(':: (a0)', pl='normal', fs='(t3,a)',    chars=[trim(solver%author)])
-      call output%printf('(a0)',    pl='normal', ffs='(/t3,a)',  chars=[trim(solver%description)])
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
+      call output%printf('n', '(a0)', ffs='(/t3,a)',  chars=[trim(solver%description)])
 !
    end subroutine print_banner_abstract_hf_solver
-!
-!
-   subroutine print_summary_abstract_hf_solver(solver, wf)
-!!
-!!    Print banner
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      use string_utilities, only: convert_to_uppercase
-      use hf_class, only: hf 
-!
-      implicit none 
-!
-      class(abstract_hf_solver) :: solver
-      class(hf), intent(inout) :: wf
-!
-      call output%printf('- Summary of '// trim(convert_to_uppercase(wf%name_))//&
-             ' wavefunction energetics (a.u.):', fs='(/t3,a)', pl='minimal')
-!
-      call wf%print_energy()
-      call wf%print_orbital_energies()
-!
-      if (allocated(solver%orbitals_to_print)) then
-!      
-         call wf%print_orbitals(solver%orbitals_to_print)
-!
-      else
-!
-         call wf%print_orbitals()
-!
-      endif
-!
-   end subroutine print_summary_abstract_hf_solver
 !
 end module abstract_hf_solver_class

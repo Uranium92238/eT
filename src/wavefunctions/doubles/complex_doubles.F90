@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (doubles_class) complex_doubles
 !
 !!
-!!    Complex submodule (abstract doubles)
-!!    Set up by Andreas Skeidsvoll, Sep 2019
+!!    Complex submodule
 !!
 !!    Gathers routines that makes the abstract doubles wavefunction complex.
 !!
@@ -63,6 +62,32 @@ contains
       endif
 !
    end subroutine make_doubles_complex_doubles
+!
+!
+   module subroutine cleanup_doubles_complex_doubles(wf)
+!!
+!!    Cleanup doubles complex (doubles)
+!!    Written by Andreas Skeidsvoll, Jan 2020
+!!
+!!    Dellocates complex doubles variables.
+!!
+      implicit none
+!
+      class(doubles), intent(inout) :: wf
+!
+      if (allocated(wf%t2_complex)) then
+         call wf%destruct_t2_complex()
+      endif
+!
+      if (allocated(wf%t2bar_complex)) then
+         call wf%destruct_t2bar_complex()
+      endif
+!
+      if (allocated(wf%u_aibj_complex)) then
+         call wf%destruct_u_aibj_complex()
+      endif
+!
+   end subroutine cleanup_doubles_complex_doubles
 !
 !
 end submodule complex_doubles

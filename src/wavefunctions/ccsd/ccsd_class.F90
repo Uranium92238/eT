@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -242,6 +242,7 @@ module ccsd_class
 !     Procedures related to time dependency
 !
       procedure :: make_complex                               => make_complex_ccsd
+      procedure :: cleanup_complex                            => cleanup_complex_ccsd
 !
       procedure :: construct_complex_time_derivative_amplitudes       => construct_complex_time_derivative_amplitudes_ccsd
       procedure :: construct_complex_time_derivative_multipliers      => construct_complex_time_derivative_multipliers_ccsd
@@ -282,7 +283,7 @@ module ccsd_class
 contains
 !
 !
-   function new_ccsd(system) result(wf)
+   function new_ccsd(system, template_wf) result(wf)
 !!
 !!    New CCSD
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -291,11 +292,15 @@ contains
 !
       type(ccsd) :: wf
 !
+      class(wavefunction), intent(in) :: template_wf
+!
       class(molecular_system), target, intent(in) :: system 
 !
       wf%name_ = 'ccsd'
 !
       call wf%general_cc_preparations(system)
+      call wf%set_variables_from_template_wf(template_wf)
+      call wf%print_banner()
 !
       wf%need_g_abcd = .true.
 !
@@ -307,6 +312,8 @@ contains
 !
       call wf%initialize_fock()
 !
+      call wf%print_amplitude_info()
+!
    end function new_ccsd
 !
 !
@@ -314,6 +321,11 @@ contains
 !!
 !!    Set initial amplitudes guess
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+!!    Sets the cluster amplitudes to the MP2 guess, i.e. 
+!!
+!!       t_ai   = zero 
+!!       t_aibj = - g_aibj / epsilon_aibj
 !!
       implicit none
 !
@@ -331,40 +343,51 @@ contains
 !!    Set t2 amplitudes guess
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    t_aibj = - g_aibj/ε_aibj
+!!    Sets the doubles amplitudes to the MP2 guess:
+!!
+!!       t_aibj = - g_aibj/ε_aibj
 !!
       implicit none
 !
       class(ccsd) :: wf
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_aibj
+      real(dp) :: eps_ai
 !
-      integer :: a, b, i, j, ai, bj, aibj
+      integer :: a, b, i, j, ai, bj, aibj, b_end
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call wf%get_vovo(g_aibj)
+      call wf%integrals%construct_g_pqrs_mo(g_aibj,                  &
+                                            wf%n_o+1, wf%n_o+wf%n_v, &
+                                            1, wf%n_o,               &
+                                            wf%n_o+1, wf%n_o+wf%n_v, &
+                                            1, wf%n_o)
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
+!$omp parallel do schedule(guided) collapse(2) &
+!$omp private(a, i, b, j, ai, bj, aibj, b_end, eps_ai)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
             ai = wf%n_v*(i-1) + a
+            eps_ai = wf%orbital_energies(i) - wf%orbital_energies(a + wf%n_o)
 !
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
+            do j = 1, i
+!
+               if (j .ne. i) then
+                  b_end = wf%n_v
+               else
+                  b_end = a
+               end if
+!
+               do b = 1, b_end
 !
                   bj = wf%n_v*(j-1) + b
 !
-                  if (ai .ge. bj) then
+                  aibj = (ai*(ai-3)/2) + ai + bj
 !
-                     aibj = (ai*(ai-3)/2) + ai + bj
-!
-                     wf%t2(aibj) = g_aibj(a,i,b,j)/(wf%orbital_energies(i) + &
-                                                    wf%orbital_energies(j) - &
-                                                    wf%orbital_energies(a + wf%n_o) - &
-                                                    wf%orbital_energies(b + wf%n_o))
-!
-                  endif
+                  wf%t2(aibj) = g_aibj(b,j,a,i)/(eps_ai +                     &
+                                                 wf%orbital_energies(j) -     &
+                                                 wf%orbital_energies(b + wf%n_o))
 !
                enddo
             enddo
@@ -382,6 +405,14 @@ contains
 !!    Get orbital differences
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    and Andreas Skeidsvoll, 2018
+!!
+!!    Sets the (ground state) orbital differences vector:
+!!
+!!       epsilon_ai     = epsilon_a - epsilon_i 
+!!       epsilon_aibj   = epsilon_a + epsilon_b - epsilon_i - epsilon_j 
+!!
+!!    Here, the epsilon vector has dimensionality N = n_t1 + n_t2, i.e. 
+!!    the doubles part of the vector is packed. 
 !!
       implicit none
 !
@@ -431,6 +462,8 @@ contains
 !!    Print dominant amplitudes
 !!    Written by Eirik F. Kjønstad, Dec 2018
 !!
+!!    Prints the dominant amplitudes in the cluster amplitude vector.
+!!
       implicit none
 !
       class(ccsd), intent(in) :: wf
@@ -443,8 +476,13 @@ contains
 !
    subroutine print_dominant_x_amplitudes_ccsd(wf, x, tag)
 !!
-!!    Print dominant amplitudes  (TODO)
+!!    Print dominant x amplitudes
 !!    Written by Eirik F. Kjønstad, Dec 2018
+!!
+!!    Prints the dominant amplitudes in the amplitude vector x.
+!!
+!!    tag specified the printed label for the vector, e.g. tag = "t" for 
+!!    the cluster amplitudes. 
 !!
       implicit none
 !
@@ -467,6 +505,9 @@ contains
 !!
 !!    Prints the 20 most dominant double amplitudes,
 !!    or sorts them if there are fewer than twenty of them.
+!!
+!!    tag specified the printed label for the vector, e.g. tag = "t" for 
+!!    the cluster amplitudes. 
 !!
       implicit none
 !
@@ -499,10 +540,10 @@ contains
 !
 !     Print largest contributions
 !
-      call output%printf('Largest double amplitudes:', pl='m', fs='(/t6,a)') 
+      call output%printf('m', 'Largest double amplitudes:', fs='(/t6,a)') 
       call output%print_separator('m', 50, '-', fs='(t6,a)')
-      call output%printf('a      i       b      j         ' // tag // '(ai,bj)', &
-                         pl='m', fs='(t9,a)')
+      call output%printf('m', 'a      i       b      j         ' // tag // '(ai,bj)', &
+                         fs='(t9,a)')
       call output%print_separator('m', 50, '-', fs='(t6,a)')
 !
       do elm = 1, n_elements
@@ -511,8 +552,9 @@ contains
          call invert_compound_index(ai, a, i, wf%n_v, wf%n_o)
          call invert_compound_index(bj, b, j, wf%n_v, wf%n_o)
 !
-         call output%printf('(i4)    (i3)    (i4)    (i3)   (f19.12)', ints=[a,i,b,j], &
-                            reals=[x2(dominant_indices(elm))], fs='(t6,a)', pl='m')
+         call output%printf('m', '(i4)    (i3)    (i4)    (i3)   (f19.12)', &
+                            ints=[a, i, b, j], &
+                            reals=[x2(dominant_indices(elm))], fs='(t6,a)')
 !
       enddo
 !           '

@@ -1,11 +1,11 @@
 system
-  name: HOF-He
+  name: HOF He
   charge: 0
   multiplicity: 1
 end system
 
 do
-  fop
+  response
 end do
 
 method
@@ -21,13 +21,13 @@ solver cholesky
   threshold: 1.0d-11
 end solver cholesky
 
-cc fop
+cc response
   lr
   polarizabilities: {11,13}
   frequencies: {0.02d0, 0.04d0, 0.06d0}
   dipole length
   transition moments
-end cc fop
+end cc response
 
 solver cc es
   singlet states: 4

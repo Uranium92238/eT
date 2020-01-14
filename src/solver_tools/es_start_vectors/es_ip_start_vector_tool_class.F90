@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -36,8 +36,6 @@ module es_ip_start_vector_tool_class
 !
    contains
 !
-      final :: destructor
-!
    end type es_ip_start_vector_tool
 !
 !
@@ -67,24 +65,10 @@ contains
       tool%n_vectors = wf%n_singlet_states
       tool%vector_length = wf%n_es_amplitudes
 !
-      call mem%alloc(tool%indices, tool%n_vectors)
+      allocate(tool%indices(tool%n_vectors))
       call wf%set_ip_start_indices(tool%indices)
 !
    end function new_es_ip_start_vector_tool
-!
-!
-   subroutine destructor(tool)
-!!
-!!    Destructor 
-!!    Written by Eirik F. Kjønstad, Sep 2019 
-!!
-      implicit none 
-!
-      type(es_ip_start_vector_tool) :: tool 
-!
-      call mem%dealloc(tool%indices, tool%n_vectors)
-!
-   end subroutine destructor
 !
 !
 end module es_ip_start_vector_tool_class

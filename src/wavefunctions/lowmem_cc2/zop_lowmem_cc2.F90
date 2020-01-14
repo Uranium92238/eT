@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@ submodule (lowmem_cc2_class) zop_lowmem_cc2
 !
 !!
 !!    Zeroth order properties submodule 
-!!    Set up by Andreas Skeidsvoll, Aug 2019
 !!
 !!    Contains routines related to the mean values, i.e. 
 !!    the construction of density matrices as well as expectation 
@@ -122,6 +121,8 @@ contains
 !
          enddo
       enddo
+!
+      wf%correlation_energy = correlation_energy
 !
       wf%energy = wf%hf_energy + correlation_energy
 !

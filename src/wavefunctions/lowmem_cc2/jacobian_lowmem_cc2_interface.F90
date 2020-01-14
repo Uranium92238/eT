@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -19,11 +19,11 @@
 !
    module subroutine prepare_for_jacobian_lowmem_cc2(wf)
 !!
-!!    Prepare for jacobian
+!!    Prepare for Jacobian
 !!    Written by Linda Goletto, Oct 2019
 !!
 !!    Gets occupied and virtual orbital energies and construcs 
-!!    the jacobian_doubles_b1_doubles routine second and 
+!!    the jacobian_doubles_a1_doubles routine second and 
 !!    third intermediates
 !!
       implicit none
@@ -33,9 +33,9 @@
    end subroutine prepare_for_jacobian_lowmem_cc2
 !
 !
-   module subroutine save_jacobian_b1_2_intermediate_lowmem_cc2(wf,eps_o, eps_v)
+   module subroutine save_jacobian_a1_2_intermediate_lowmem_cc2(wf, eps_o, eps_v)
 !!
-!!    Save jacobian b1 second intermediate
+!!    Save jacobian a1 second intermediate
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad,
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
@@ -45,7 +45,7 @@
 !!
 !!    and stores it on the file:
 !!
-!!       jacobian_b1_intermediate_oo
+!!       jacobian_a1_intermediate_oo
 !!
 !!    which is a wavefunction variable
 !!
@@ -60,12 +60,12 @@
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
-   end subroutine save_jacobian_b1_2_intermediate_lowmem_cc2
+   end subroutine save_jacobian_a1_2_intermediate_lowmem_cc2
 !
 !
-   module subroutine save_jacobian_b1_3_intermediate_lowmem_cc2(wf, eps_o, eps_v)
+   module subroutine save_jacobian_a1_3_intermediate_lowmem_cc2(wf, eps_o, eps_v)
 !!
-!!    Save jacobian b1 term 3 intermediates
+!!    Save jacobian a1 term 3 intermediates
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad,
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
@@ -75,7 +75,7 @@
 !!
 !!    and stores it on the file:
 !!
-!!       jacobian_b1_intermediate_vv
+!!       jacobian_a1_intermediate_vv
 !!
 !!    which is a wavefunction variable
 !!
@@ -90,7 +90,7 @@
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
-   end subroutine save_jacobian_b1_3_intermediate_lowmem_cc2
+   end subroutine save_jacobian_a1_3_intermediate_lowmem_cc2
 !
 !
    module subroutine effective_jacobian_transformation_lowmem_cc2(wf, omega, c)
@@ -103,8 +103,6 @@
 !!    for lowmem CC2 according to
 !!    
 !!       C. Hättig and F. Weigend, J. Chem. Phys. 113, 5154 (2000).
-!!
-!!
       implicit none
 !
       class(lowmem_cc2) :: wf
@@ -114,7 +112,7 @@
    end subroutine effective_jacobian_transformation_lowmem_cc2
 !
 !
-   module subroutine jacobian_cc2_a1_lowmem_cc2(wf, rho_ai, c_bj)
+   module subroutine jacobian_cc2_a1_lowmem_cc2(wf, rho_ai, c_bj, eps_o, eps_v)
 !!
 !!    Jacobian CC2 A1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -122,30 +120,7 @@
 !!
 !!    Calculates the A1 term
 !!
-!!       A1: sum_bj (2 g_aijb - g_abji) * c_bj
-!!
-!!    and adds it to rho_ai.
-!!
-!!    Separate calculation of both terms due to batching.
-!!
-      implicit none
-!
-      class(lowmem_cc2), intent(in) :: wf
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_bj
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
-!
-   end subroutine jacobian_cc2_a1_lowmem_cc2
-!
-!
-   module subroutine jacobian_cc2_b1_lowmem_cc2(wf, rho_ai, c_bj, eps_o, eps_v)
-!!
-!!    Jacobian CC2 B1
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander C. Paul, Dec 2018
-!!
-!!    Calculates the B1 term
-!!
-!!       B1 = L_kcjb c_bj (2 t^ac_ik - t^ac_ki)
+!!       A1 = L_kcjb c_bj (2 t^ac_ik - t^ac_ki)
 !!           - L_kcjb t^cb_ki c_aj - L_kcjb t^ca_kj c_bi
 !!
 !!    and adds it to rho_ai
@@ -165,7 +140,7 @@
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
-   end subroutine jacobian_cc2_b1_lowmem_cc2
+   end subroutine jacobian_cc2_a1_lowmem_cc2
 !
 !
    module subroutine effective_jacobian_cc2_a1_lowmem_cc2(wf, omega, rho_ai, c_ai, eps_o, eps_v)

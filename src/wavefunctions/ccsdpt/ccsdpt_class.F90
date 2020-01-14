@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -76,12 +76,13 @@ module ccsdpt_class
 contains
 !
 !
-   function new_ccsdpt(system) result(wf)
+   function new_ccsdpt(system, template_wf) result(wf)
 !!
 !!    New CCSD(T)
 !!    Written by Rolf H. Myhre, 2018
 !!
       use molecular_system_class, only: molecular_system
+      use wavefunction_class, only : wavefunction
 !
       implicit none
 !
@@ -89,9 +90,13 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
+      class(wavefunction), intent(in) :: template_wf
+!
       wf%name_ = 'ccsd(t)'
 !
       call wf%general_cc_preparations(system)
+      call wf%set_variables_from_template_wf(template_wf)
+      call wf%print_banner()
 !
       wf%n_t1 = (wf%n_o)*(wf%n_v)
       wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
@@ -101,6 +106,8 @@ contains
       wf%need_g_abcd     = .true.
 !
       call wf%initialize_fock()
+!
+      call wf%print_amplitude_info()
 !
    end function new_ccsdpt
 !   
@@ -114,7 +121,7 @@ contains
 !
       class(ccsdpt) :: wf
 !
-      call wf%ccs%cleanup()
+      call wf%ccsd%cleanup()
 !
       call wf%g_jbkc%delete_
       call wf%g_bdck%delete_
@@ -533,7 +540,7 @@ contains
       if (batch_i%num_batches .eq. 1) then !no batching
 !
          call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%dealloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         call mem%dealloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
          call mem%dealloc(g_ibjc, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       else ! batching
@@ -751,27 +758,27 @@ contains
 !
       call wf%calculate_energy_correction()
 !
-      call output%printf('- Ground state summary:', fs='(/t3,a)', pl='m')
+      call output%printf('m', '- Ground state summary:', fs='(/t3,a)')
 !
-      call output%printf('Final ground state CCSD energy (a.u.):    (f18.12)', &
-                         reals=[wf%energy], fs='(/t6,a)', pl='m')
+      call output%printf('m', 'Final ground state CCSD energy (a.u.):    (f18.12)', &
+                         reals=[wf%energy], fs='(/t6,a)')
 !
-      call output%printf('Correlation energy CCSD (a.u.):           (f18.12)', &
-                         reals=[wf%correlation_energy], fs='(/t6,a)', pl='m')
+      call output%printf('m', 'Correlation energy CCSD (a.u.):           (f18.12)', &
+                         reals=[wf%correlation_energy], fs='(/t6,a)')
 !
       wf%energy = wf%energy + wf%ccsdpt_energy_correction
 !
-      call output%printf('Final ground state CCSD(T) energy (a.u.): (f18.12)', &
-                         reals=[wf%energy], fs='(/t6,a)', pl='m')
+      call output%printf('m', 'Final ground state CCSD(T) energy (a.u.): (f18.12)', &
+                         reals=[wf%energy], fs='(/t6,a)')
 !
-      call output%printf('CCSD(T) energy correction (a.u.):         (f18.12)', &
-                          pl='m', reals=[wf%ccsdpt_energy_correction], fs='(/t6,a)')
+      call output%printf('m', 'CCSD(T) energy correction (a.u.):         (f18.12)', &
+                         reals=[wf%ccsdpt_energy_correction], fs='(/t6,a)')
 !
       call wf%print_dominant_amplitudes()
 !
       t1_diagnostic = wf%get_t1_diagnostic() 
-      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', &
-                         reals=[t1_diagnostic], fs='(/t6,a)', pl='m')
+      call output%printf('m', 'T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', &
+                         reals=[t1_diagnostic], fs='(/t6,a)')
 !
    end subroutine print_gs_summary_ccsdpt
 !

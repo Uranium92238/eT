@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (cc3_class) jacobian
 !
 !!
-!!    Jacobian submodule (cc3)
-!!    Written by Alexander C. Paul and Rolf H. Myhre Feb 2019
+!!    Jacobian submodule
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian matrix
@@ -72,14 +71,13 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_ai
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj, rho_abij
 !
-      type(timings) :: cc3_timer, cc3_timer_t3_a2, cc3_timer_t3_b2, cc3_timer_c3
-      type(timings) :: ccsd_timer
+      type(timings), allocatable :: cc3_timer, ccsd_timer, timer
 !
-      cc3_timer_t3_a2 = timings('Time in CC3 T3 a2')
-      cc3_timer_t3_b2 = timings('Time in CC3 T3 b2')
-      cc3_timer_c3    = timings('Time in CC3 C3')
-      cc3_timer       = timings('Total CC3 contribution')
-      ccsd_timer      = timings('Total CCSD contribution')
+      timer           = timings('Jacobian CC3')
+      cc3_timer       = timings('Jacobian CC3 (CC3 contribution)', pl='normal')
+      ccsd_timer      = timings('Jacobian CC3 (CCSD contribution)', pl='normal')
+!
+      call timer%turn_on()
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -155,27 +153,17 @@ contains
       call ccsd_timer%freeze()
 !
       call cc3_timer%turn_on()
-      call cc3_timer_t3_a2%turn_on()
 !
 !     CC3-Contributions from the T3-amplitudes
       call wf%jacobian_cc3_t3_a2(c_ai, rho_abij)
 !
-      call cc3_timer_t3_a2%turn_off()
-!
-      call cc3_timer_t3_b2%turn_on()
-!
       call wf%jacobian_cc3_t3_b2(c_ai, rho_abij)
 !
-      call cc3_timer_t3_b2%turn_off()
-!
 !     CC3-Contributions from the C3-amplitudes
-      call cc3_timer_c3%turn_on()
 !
       call wf%jacobian_cc3_c3_a(omega, c_ai, c_abij, rho_ai, rho_abij)
 !
-      call cc3_timer_c3%turn_off()
-!
-      call cc3_timer%turn_off()
+      call cc3_timer%freeze()
 !
 !     Done with singles vector c; Overwrite the incoming singles c vector for exit
 !
@@ -200,7 +188,7 @@ contains
 !
       call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call ccsd_timer%turn_off()
+      call ccsd_timer%freeze()
 !
 !     divide by the biorthonormal factor 1 + delta_ai,bj
 ! 
@@ -212,6 +200,10 @@ contains
       call packin(c(wf%n_t1 + 1 : wf%n_es_amplitudes), rho_abij, wf%n_v, wf%n_o)
 !
       call mem%dealloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call timer%turn_off()
+      call cc3_timer%turn_off()
+      call ccsd_timer%turn_off()
 !
    end subroutine effective_jacobian_transformation_cc3
 !
@@ -244,6 +236,11 @@ contains
       type(batching_index) :: batch_d
       integer :: d_batch
       integer :: req_0, req_d
+!
+      type(timings), allocatable :: cc3_timer_t3_a2
+!
+      cc3_timer_t3_a2 = timings('Time in CC3 T3 a2', pl='verbose') 
+      call cc3_timer_t3_a2%turn_on()
 !
 !     :: X_abid term ::
 !
@@ -312,6 +309,8 @@ contains
 !
       call mem%dealloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
+      call cc3_timer_t3_a2%turn_off()
+!
    end subroutine jacobian_cc3_t3_a2_cc3
 !
 !
@@ -369,7 +368,11 @@ contains
       integer              :: req_0, req_1, req_2, req_3
 !
       logical :: ijk_core
-      integer :: i_cvs
+!
+      type(timings), allocatable :: cc3_timer_t3_b2
+!
+      cc3_timer_t3_b2 = timings('Time in CC3 T3 b2', pl='verbose')
+      call cc3_timer_t3_b2%turn_on()
 !
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -400,7 +403,7 @@ contains
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%alloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       else ! batching
 !
@@ -516,22 +519,19 @@ contains
                         end if
 !
 !                       Check if at least one index i,j,k is a core orbital
-!                       i,j,k contribute to rho2 and thus have to be restricted as well
+!                       Here t3 contributes to rho2 and can, thus, be restricted as well
+!
                         if(wf%cvs) then
 !
                            ijk_core = .false.
 !
-                           do i_cvs = 1, wf%n_core_MOs
+                           if(     any(wf%core_MOs .eq. i) &
+                              .or. any(wf%core_MOs .eq. j) &
+                              .or. any(wf%core_MOs .eq. k)) then
 !
-                              if(     i .eq. wf%core_MOs(i_cvs)   &
-                                 .or. j .eq. wf%core_MOs(i_cvs)   &
-                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+                              ijk_core = .true.
 !
-                                 ijk_core = .true.
-!
-                              end if
-!
-                           end do
+                           end if
 !
 !                          Cycle if i,j,k are not core orbitals
                            if (.not. ijk_core) cycle
@@ -574,7 +574,7 @@ contains
       if (batch_i%num_batches .eq. 1) then !no batching
 !
          call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%dealloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         call mem%dealloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       else ! batching
 !
@@ -601,6 +601,8 @@ contains
       call mem%dealloc(F_ov_ck_c1, wf%n_v, wf%n_o)
 !
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call cc3_timer_t3_b2%turn_off()
 !
    end subroutine jacobian_cc3_t3_b2_cc3
 !
@@ -733,8 +735,11 @@ contains
       integer              :: req_0, req_1, req_2, req_3
 !
       logical :: ijk_core
-      integer :: i_cvs
 !
+      type(timings), allocatable :: cc3_timer_c3
+!
+      cc3_timer_c3    = timings('Time in CC3 C3', pl='verbose')
+      call cc3_timer_c3%turn_on()
 !
 !     Set up required c1-transformed integrals
       call wf%construct_c1_integrals(c_ai)
@@ -1035,21 +1040,18 @@ contains
                         end if
 !
 !                       Check if at least one index i,j,k is a core orbital
+!
                         if(wf%cvs) then
 !
                            ijk_core = .false.
 !
-                           do i_cvs = 1, wf%n_core_MOs
+                           if(     any(wf%core_MOs .eq. i) &
+                              .or. any(wf%core_MOs .eq. j) &
+                              .or. any(wf%core_MOs .eq. k)) then
 !
-                              if(     i .eq. wf%core_MOs(i_cvs)   &
-                                 .or. j .eq. wf%core_MOs(i_cvs)   &
-                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+                              ijk_core = .true.
 !
-                                 ijk_core = .true.
-!
-                              end if
-!
-                           end do
+                           end if
 !
 !                          Cycle if i,j,k are not core orbitals
                            if (.not. ijk_core) cycle
@@ -1200,6 +1202,8 @@ contains
 !
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
+      call cc3_timer_c3%turn_off()
+!
    end subroutine jacobian_cc3_c3_a_cc3
 !
 !
@@ -1254,7 +1258,7 @@ contains
          call wf%integrals%construct_cholesky_ab_c1(L_J_bd, c_ai, 1, wf%n_v, 1, wf%n_v)
 !
          call mem%alloc(L_J_ck, wf%integrals%n_J, wf%n_v, batch_k%length)
-         call wf%integrals%read_cholesky_t1(L_J_ck, wf%n_o + 1, wf%n_o + wf%n_v, batch_k%first, batch_k%last)
+         call wf%integrals%get_cholesky_t1(L_J_ck, wf%n_o + 1, wf%n_o + wf%n_v, batch_k%first, batch_k%last)
 !
          call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
@@ -1278,7 +1282,7 @@ contains
          call mem%alloc(L_J_ck_c1, wf%integrals%n_J, wf%n_v, batch_k%length)
          call wf%integrals%construct_cholesky_ai_a_c1(L_J_ck_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
 !
-         call wf%integrals%read_cholesky_t1(L_J_bd, wf%n_o + 1, wf%n_o + wf%n_v, wf%n_o + 1, wf%n_o + wf%n_v)
+         call wf%integrals%get_cholesky_t1(L_J_bd, wf%n_o + 1, wf%n_o + wf%n_v, wf%n_o + 1, wf%n_o + wf%n_v)
 !
          call dgemm('T', 'N',                   &
                      (wf%n_v)**2,               &
@@ -1356,7 +1360,7 @@ contains
          call wf%integrals%construct_cholesky_ij_c1(L_J_lj, c_ai, 1, wf%n_o, 1, wf%n_o)
 !
          call mem%alloc(L_J_ck, wf%integrals%n_J, wf%n_v, batch_k%length)
-         call wf%integrals%read_cholesky_t1(L_J_ck, wf%n_o + 1, wf%n_o + wf%n_v, batch_k%first, batch_k%last)
+         call wf%integrals%get_cholesky_t1(L_J_ck, wf%n_o + 1, wf%n_o + wf%n_v, batch_k%first, batch_k%last)
 !
          call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
 !
@@ -1380,7 +1384,7 @@ contains
          call mem%alloc(L_J_ck_c1, wf%integrals%n_J, wf%n_v, batch_k%length)
          call wf%integrals%construct_cholesky_ai_i_c1(L_J_ck_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
 !
-         call wf%integrals%read_cholesky_t1(L_J_lj, 1, wf%n_o, 1, wf%n_o)
+         call wf%integrals%get_cholesky_t1(L_J_lj, 1, wf%n_o, 1, wf%n_o)
 !
          call dgemm('T', 'N',                   &
                      (wf%n_o)**2,               &
@@ -1465,7 +1469,7 @@ contains
 !
       call mem%alloc(L_J_ia, wf%integrals%n_J, wf%n_o, wf%n_v)
 !
-      call wf%integrals%read_cholesky_t1(L_J_ia, 1, wf%n_o, wf%n_o + 1, wf%n_o + wf%n_v)
+      call wf%integrals%get_cholesky_t1(L_J_ia, 1, wf%n_o, wf%n_o + 1, wf%n_o + wf%n_v)
 !
       call mem%alloc(L_J_jk_c1, wf%integrals%n_J, wf%n_o, wf%n_o)
 !

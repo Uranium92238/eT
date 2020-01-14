@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (ccs_class) complex_ccs
 !
 !!
-!!    Complex submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Sep 2019
+!!    Complex submodule 
 !!
 !!    Gathers routines that makes the CCS wavefunction complex, and that are otherwise related to
 !!    the complex wavefunction.
@@ -75,7 +74,6 @@ contains
       if (allocated(wf%fock_ij)) then
          call wf%initialize_fock_ij_complex()
          wf%fock_ij_complex = cmplx(wf%fock_ij, zero, dp)
-         call mem%dealloc(wf%fock_ij, wf%n_o, wf%n_o)
          call wf%destruct_fock_ij()
       endif
 !
@@ -106,6 +104,62 @@ contains
       call wf%integrals%make_eri_complex()
 !
    end subroutine make_ccs_complex_ccs
+!
+!
+   module subroutine cleanup_complex_ccs(wf)
+!!
+!!    Cleanup complex (CCS)
+!!    Written by Andreas Skeidsvoll, Jan 2020
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      call wf%cleanup_ccs_complex()
+!
+   end subroutine cleanup_complex_ccs
+!
+!
+   module subroutine cleanup_ccs_complex_ccs(wf)
+!!
+!!    Cleanup CCS complex (CCS)
+!!    Written by Andreas Skeidsvoll, Jan 2020
+!!
+!!    Deallocates complex CCS variables.
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      if (allocated(wf%t1_complex)) then
+         call wf%destruct_t1_complex()
+      endif
+!
+      if (allocated(wf%t1bar_complex)) then
+         call wf%destruct_t1bar_complex()
+      endif
+!
+      if (allocated(wf%fock_ij_complex)) then
+         call wf%destruct_fock_ij_complex()
+      endif
+!
+      if (allocated(wf%fock_ia_complex)) then
+         call wf%destruct_fock_ia_complex()
+      endif
+!
+      if (allocated(wf%fock_ai_complex)) then
+         call wf%destruct_fock_ai_complex()
+      endif
+!
+      if (allocated(wf%fock_ab_complex)) then
+         call wf%destruct_fock_ab_complex()
+      endif
+!
+      if (allocated(wf%density_complex)) then
+         call wf%destruct_gs_density_complex()
+      endif
+!
+   end subroutine cleanup_ccs_complex_ccs
 !
 !
    module subroutine construct_complex_time_derivative_ccs(wf, ddt_amplitudes_multipliers)

@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -24,10 +24,11 @@ module hf_geoopt_engine_class
 !!
    use reference_engine_class, only: reference_engine
 !
-   use global_out,    only: output
-   use global_in,     only: input
-   use timings_class, only: timings
-   use hf_class,      only: hf
+   use global_out,      only: output
+   use global_in,       only: input
+   use timings_class,   only: timings
+   use hf_class,        only: hf
+   use task_list_class, only: task_list
 !
    use bfgs_geoopt_hf_class, only: bfgs_geoopt_hf
 !
@@ -62,10 +63,11 @@ contains
 !
       type(hf_geoopt_engine) :: engine
 !
-      engine%algorithm = 'bfgs'
-      engine%restart = .false.
-      engine%plot_orbitals = .false.
-      engine%plot_density = .false.
+      engine%algorithm        = 'bfgs'
+      engine%ao_density_guess = 'sad'
+      engine%restart          = .false.
+      engine%plot_orbitals    = .false.
+      engine%plot_density     = .false.
 !
       call engine%read_settings()
 !
@@ -89,7 +91,17 @@ contains
 !
       type(bfgs_geoopt_hf) :: bfgs_geoopt
 !
+      if (.not. engine%restart .and. (trim(engine%ao_density_guess) == 'sad')) then
+!
+!        Generate SAD if requested
+!
+         call engine%generate_sad_density(wf)
+!
+      endif
+!
       if (trim(engine%algorithm) == 'bfgs') then
+!
+         call engine%tasks%print_('optimize geometry')
 !
          bfgs_geoopt = bfgs_geoopt_hf(engine%restart)
          call bfgs_geoopt%run(wf)
@@ -126,18 +138,26 @@ contains
 !!
 !!    Should be overwritten by descendants.
 !!
+!
+      use string_utilities, only : convert_to_uppercase
+!
       implicit none
 !
       class(hf_geoopt_engine) :: engine
 !
       engine%name_       = 'Hartree-Fock geometry optimization engine'
-      engine%author      = 'E. F. Kjønstad, 2019'
 !
-      engine%description = 'Calculates the optimized geometry for the HF wavefunction | HF >.'
+      engine%description = 'Calculates the optimized geometry for the Hartree-Fock wavefunction.'
       engine%tag         = 'geometry optimization'
 !
-      engine%tasks       = [character(len=150) ::              &
-                           'Calculation of optimized geometry (' // trim(engine%algorithm) // ')' ]
+      engine%tasks = task_list()
+!
+      if (trim(engine%ao_density_guess) == 'sad' .and. .not. engine%restart) &
+         call engine%tasks%add(label='sad', description='Generate initial SAD density') 
+!
+      call engine%tasks%add(label='optimize geometry', &
+                            description='Calculation of optimized geometry (' //&
+                            trim((engine%algorithm)) // ' algorithm)')
 !
    end subroutine set_printables_hf_geoopt_engine
 !

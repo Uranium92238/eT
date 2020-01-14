@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -66,8 +66,8 @@ module davidson_tool_class
       procedure :: get_trial                                   => get_trial_davidson_tool 
       procedure :: set_transform                               => set_transform_davidson_tool 
       procedure :: get_transform                               => get_transform_davidson_tool 
-      procedure :: first_trial                                 => first_trial_davidson_tool
-      procedure :: last_trial                                  => last_trial_davidson_tool
+      procedure :: first_new_trial                             => first_new_trial_davidson_tool
+      procedure :: last_new_trial                              => last_new_trial_davidson_tool
 !
       procedure :: set_preconditioner                          => set_preconditioner_davidson_tool
 !
@@ -129,8 +129,8 @@ contains
 !
       if (records_in_memory) then 
 !
-         call output%printf('Reduced space basis and transforms are stored in memory.', &
-                                    pl='m', fs='(/t6,a)')
+         call output%printf('m', 'Reduced space basis and transforms are stored &
+                            &in memory.', fs='(/t6,a)')
 !
          davidson%trials = memory_storer(trim(davidson%name_) // '_trials', &
                      davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions)   
@@ -140,8 +140,8 @@ contains
 !
       else
 !
-         call output%printf('Reduced space basis and transforms are stored on disk.', &
-                                 pl='m', fs='(/t6,a)')
+         call output%printf('m', 'Reduced space basis and transforms are stored &
+                            &on disk.', fs='(/t6,a)')
 !
          davidson%trials = file_storer(trim(davidson%name_) // '_trials', &
                      davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions, &
@@ -298,7 +298,7 @@ contains
    end subroutine iterate_davidson_tool
 !
 !
-   function first_trial_davidson_tool(davidson) result(first)
+   function first_new_trial_davidson_tool(davidson) result(first)
 !!
 !!    First trial 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 
@@ -313,10 +313,10 @@ contains
 !
       first = davidson%dim_red - davidson%n_new_trials + 1
 !  
-   end function first_trial_davidson_tool
+   end function first_new_trial_davidson_tool
 !
 !
-   function last_trial_davidson_tool(davidson) result(last)
+   function last_new_trial_davidson_tool(davidson) result(last)
 !!
 !!    Last trial 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 
@@ -331,7 +331,7 @@ contains
 !
       last = davidson%dim_red
 !  
-   end function last_trial_davidson_tool
+   end function last_new_trial_davidson_tool
 !
 !
    subroutine read_trial_davidson_tool(davidson, c, n)
@@ -396,14 +396,14 @@ contains
 !
       integer :: i, j
 !
-      call output%printf('Orthonormalizing trial vectors.', pl='v', fs='(/t3,a)')
+      call output%printf('v', 'Orthonormalizing trial vectors.', fs='(/t3,a)')
 !
       call mem%alloc(c_i, davidson%n_parameters)
       call mem%alloc(c_j, davidson%n_parameters)
 !
 !     First orthonormalization of new trials 
 !
-      do j = davidson%first_trial(), davidson%last_trial() 
+      do j = davidson%first_new_trial(), davidson%last_new_trial() 
 !
          call davidson%get_trial(c_j, j)
 !
@@ -432,7 +432,7 @@ contains
 !
 !     Second orthonormalization to avoid accumulation of noise
 !
-      do j = davidson%first_trial(), davidson%last_trial() 
+      do j = davidson%first_new_trial(), davidson%last_new_trial() 
 !
          call davidson%get_trial(c_j, j)
 !
@@ -717,10 +717,12 @@ contains
 !
       call mem%dealloc(X, davidson%n_parameters, davidson%n_solutions)
 !
-!     Delete A_red if it is there
+!     Delete A_red and X_red if they are there
 !
       if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, &
-         davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
+         davidson%dim_red, davidson%dim_red)
+      if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, &
+         davidson%dim_red, davidson%n_solutions)
 !
       davidson%dim_red = davidson%n_solutions
       davidson%n_new_trials = davidson%n_solutions

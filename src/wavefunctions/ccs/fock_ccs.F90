@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (ccs_class) fock_ccs
 !
 !!
-!!    Fock submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Sep 2019
+!!    Fock submodule
 !!
 !!    Submodule containing routines that can be used to construct the t1-transformed Fock matrix.
 !!
@@ -85,11 +84,7 @@ contains
 !
 !     Add effective contributions to Fock matrix 
 !
-      if (wf%frozen_core) call wf%add_frozen_core_fock_term(F_pq)
-      if (wf%frozen_hf_mos) call wf%add_frozen_hf_fock_term(F_pq)
-      if (wf%mlhf_reference) call wf%add_mlhf_inactive_fock_term(F_pq)
-      if (wf%system%mm_calculation) call wf%add_molecular_mechanics_fock_term(F_pq)
-      if (wf%system%pcm_calculation) call wf%add_pcm_fock_contribution(F_pq)
+      if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_pq)
 !
 !     Add occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
@@ -305,9 +300,9 @@ contains
    end subroutine construct_fock_ccs
 !
 !
-   module subroutine add_frozen_core_fock_term_ccs(wf, F_pq)
+   module subroutine add_frozen_fock_terms_ccs(wf, F_pq)
 !!
-!!    Add frozen core Fock contribution 
+!!    Add frozen Fock terms
 !!    Written by Sarai D. Folkestad, 2019 
 !!
 !!    Adds the frozen core contributions to
@@ -321,139 +316,19 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
 !
-      real(dp), dimension(:,:), allocatable :: F_pq_core
+      real(dp), dimension(:,:), allocatable :: F_pq_frozen
 !
-      call mem%alloc(F_pq_core, wf%n_mo, wf%n_mo)
+      call mem%alloc(F_pq_frozen, wf%n_mo, wf%n_mo)
 !
-      call wf%construct_t1_fock_fc_term(F_pq_core)
-      call daxpy(wf%n_mo**2, one, F_pq_core, 1, F_pq, 1)
+      call wf%construct_t1_frozen_fock_terms(F_pq_frozen)
+      call daxpy(wf%n_mo**2, one, F_pq_frozen, 1, F_pq, 1)
 !
-      call mem%dealloc(F_pq_core, wf%n_mo, wf%n_mo)      
+      call mem%dealloc(F_pq_frozen, wf%n_mo, wf%n_mo)      
 !
-   end subroutine add_frozen_core_fock_term_ccs
-!
-!
-   module subroutine add_frozen_hf_fock_term_ccs(wf, F_pq)
-!!
-!!    Add frozen HF Fock contribution 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 
-!!
-!!    Adds the contributions from frozen HF orbitals to
-!!    the effective T1-transformed Fock matrix.  
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
-!
-      real(dp), dimension(:,:), allocatable :: F_pq_core
-!
-      call mem%alloc(F_pq_core, wf%n_mo, wf%n_mo)
-!
-      call wf%construct_t1_fock_frozen_hf_term(F_pq_core)
-      call daxpy(wf%n_mo**2, one, F_pq_core, 1, F_pq, 1)
-!
-      call mem%dealloc(F_pq_core, wf%n_mo, wf%n_mo)      
-!
-   end subroutine add_frozen_hf_fock_term_ccs
+   end subroutine add_frozen_fock_terms_ccs
 !
 !
-   module subroutine add_mlhf_inactive_fock_term_ccs(wf, F_pq)
-!!
-!!    Add MLHF inactive Fock term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
-!!    and Linda Goletto, Nov 2019 
-!!
-!!    Adds the contribution from MLHF inactive orbitals to
-!!    the effective T1-transformed Fock matrix.  
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
-!
-      real(dp), dimension(:,:), allocatable :: F_pq_mlhf_inactive
-!
-      call mem%alloc(F_pq_mlhf_inactive, wf%n_mo, wf%n_mo)
-!
-      call wf%construct_t1_mlhf_inactive_fock_term(F_pq_mlhf_inactive)
-      call daxpy(wf%n_mo**2, one, F_pq_mlhf_inactive, 1, F_pq, 1)
-!
-      call mem%dealloc(F_pq_mlhf_inactive, wf%n_mo, wf%n_mo)      
-!
-   end subroutine add_mlhf_inactive_fock_term_ccs
-!
-!
-   module subroutine add_molecular_mechanics_fock_term_ccs(wf, F_pq)
-!!
-!!    Add molecular mechanics Fock contribution 
-!!    Written by Tommaso Giovannini, 2019 
-!!
-!!    Adds the molecular mechanics contributions to  
-!!    the effective T1-transformed Fock matrix. 
-!!
-!!    Isolated into subroutine by Eirik F. Kjønstad, 2019
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
-!
-      real(dp), dimension(:,:), allocatable :: h_mm_t1
-!
-      call mem%alloc(h_mm_t1, wf%n_mo, wf%n_mo) 
-!
-      if (wf%system%mm%forcefield == 'non-polarizable') then
-!
-         call wf%ao_to_t1_transformation(wf%nopol_h_wx, h_mm_t1)
-         call daxpy(wf%n_mo**2, half, h_mm_t1, 1, F_pq, 1)
-!
-      else
-!
-         call wf%ao_to_t1_transformation(wf%pol_emb_fock, h_mm_t1)
-         call daxpy(wf%n_mo**2, half, h_mm_t1, 1, F_pq, 1)
-!
-      endif    
-!
-      call mem%dealloc(h_mm_t1, wf%n_mo, wf%n_mo) 
-!
-   end subroutine add_molecular_mechanics_fock_term_ccs
-!
-!
-   module subroutine add_pcm_fock_contribution_ccs(wf, F_pq)
-!!
-!!    Add PCM Fock contribution 
-!!    Written by Tommaso Giovannini, 2019 
-!!
-!!    Adds the PCM contributions to  
-!!    the effective T1-transformed Fock matrix. 
-!!
-!!    Isolated into subroutine by Eirik F. Kjønstad, 2019
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
-!
-      real(dp), dimension(:,:), allocatable :: h_mm_t1
-!
-      call mem%alloc(h_mm_t1, wf%n_mo, wf%n_mo) 
-!
-!
-      call wf%ao_to_t1_transformation(wf%pcm_fock, h_mm_t1)
-      call daxpy(wf%n_mo**2, half, h_mm_t1, 1, F_pq, 1)
-!
-!
-      call mem%dealloc(h_mm_t1, wf%n_mo, wf%n_mo) 
-!
-   end subroutine add_pcm_fock_contribution_ccs
-!
-!
-   module subroutine construct_t1_fock_fc_term_ccs(wf, F_pq)
+   module subroutine construct_t1_frozen_fock_terms_ccs(wf, F_pq)
 !!
 !!    Calculate T1 Fock frozen core contribution
 !!    Written by Sarai D. Folkestad, Sep 2019
@@ -464,47 +339,11 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
-      call copy_(wf%mo_fock_fc_term, F_pq, wf%n_mo, wf%n_mo)
+      call copy_(wf%mo_fock_frozen, F_pq, wf%n_mo, wf%n_mo)
 !
       call wf%t1_transform(F_pq)
 !
-   end subroutine construct_t1_fock_fc_term_ccs
-!
-!
-   module subroutine construct_t1_fock_frozen_hf_term_ccs(wf, F_pq)
-!!
-!!    Calculate T1 Fock frozen fock contribution
-!!    Written by Sarai D. Folkestad, Sep 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf 
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
-!
-      call copy_(wf%mo_fock_frozen_hf_term, F_pq, wf%n_mo, wf%n_mo)
-!
-      call wf%t1_transform(F_pq)
-!
-   end subroutine construct_t1_fock_frozen_hf_term_ccs
-!
-!
-   module subroutine construct_t1_mlhf_inactive_fock_term_ccs(wf, F_pq)
-!!
-!!    Calculate T1 MLHF inactive Fock term
-!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf 
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
-!
-      call copy_(wf%mlhf_inactive_fock_term, F_pq, wf%n_mo, wf%n_mo)
-!
-      call wf%t1_transform(F_pq)
-!
-   end subroutine construct_t1_mlhf_inactive_fock_term_ccs
+   end subroutine construct_t1_frozen_fock_terms_ccs
 !
 !
    module subroutine add_t1_fock_length_dipole_term_ccs(wf, electric_field)

@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 submodule (mlcc2_class) jacobian_transpose_mlcc2
 !
 !!
-!!    Jacobian transpose submodule (MLCC2)
+!!    Jacobian transpose submodule 
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the transpose of the Jacobian matrix
@@ -66,6 +66,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: sigma_ai
       real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Jacobian transpose transformation MLCC2', pl='normal')
+      call timer%turn_on()
 !
 !     Allocate and zero the transformed vecotr (singles part)
 !
@@ -134,6 +139,8 @@ contains
 !
       call mem%dealloc(sigma_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_transformation_mlcc2
 !
 !
@@ -175,6 +182,11 @@ contains
       real(dp), dimension(:,:), allocatable :: c_bj_active
 !
       integer :: b, j, A, I, c, k
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Jacobian transpose MLCC2 A1 transformation', pl='verbose')
+      call timer%turn_on()
 !
 !     Term 1: sum_bjck c_bj u_bjck L_iakc
 !
@@ -362,7 +374,9 @@ contains
                   wf%n_v)
 !
       call mem%dealloc(Y_ca, n_cc2_v, wf%n_v)
-
+!
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_cc2_a1_mlcc2
 !
 !
@@ -409,6 +423,11 @@ contains
       type(batching_index) :: batch_a
 !
       integer :: req0, req1, current_a_batch
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Jacobian transpose MLCC2 B1 transformation', pl='verbose')
+      call timer%turn_on()
 !
 !     Term 1: sum_bjc c_bjci g_bjca
 !
@@ -485,6 +504,8 @@ contains
 !
       call mem%dealloc(g_ikbj, wf%n_o, n_cc2_o, n_cc2_v, n_cc2_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_cc2_b1_mlcc2
 !
 !
@@ -536,6 +557,11 @@ contains
       integer :: req0, req1, current_c_batch
 !
       integer :: a, i, b, j
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Jacobian transpose MLCC2 A2 transformation', pl='verbose')
+      call timer%turn_on()
 !
 !     Terms 1 and 2: (2F_jb c_ai - F_ib c_aj)
 !
@@ -657,6 +683,8 @@ contains
 !
       call mem%dealloc(sigma_iajb, n_cc2_o, n_cc2_v, n_cc2_o, n_cc2_v)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_cc2_a2_mlcc2
 !
 !
@@ -687,6 +715,11 @@ contains
 !
       integer :: a, i, b, j
 !
+      type(timings), allocatable :: timer
+!
+      timer = timings('Jacobian transpose MLCC2 B2 transformation', pl='verbose')
+      call timer%turn_on()
+!
 !$omp parallel do private(a, i, b, j) collapse(2)
       do j = 1, wf%n_cc2_o
          do b = 1, wf%n_cc2_v
@@ -704,6 +737,8 @@ contains
          enddo
       enddo
 !$omp end parallel do
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_transpose_cc2_b2_mlcc2
 !

@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,10 +20,16 @@
 submodule (ccsd_class) multiplier_equation_ccsd_complex
 !
 !!
-!!    Multiplier equation (CCSD)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    Multiplier equation
 !!
-!!    Equation related to the construction of CCSD multipliers.
+!!    Routines for calculation of the multiplier equation,
+!!
+!!       t-bar^T A + eta = 0,
+!!
+!!    where t-bar is the multiplier vector, and
+!! 
+!!       A_mu,nu = < mu | exp(-T) [H, τ_nu] exp(T) | R >
+!!       eta_mu  = < R | exp(-T) [H, τ_mu] exp(T) | R >.
 !!
 !
    implicit none
@@ -41,7 +47,7 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      call output%printf('- Prepare for multiplier equation', pl='verbose')
+      call output%printf('v', '- Prepare for multiplier equation')
       call wf%prepare_for_jacobian_transpose_complex()
 !
    end subroutine prepare_for_multiplier_equation_ccsd_complex
@@ -64,8 +70,7 @@ contains
       complex(dp), dimension(:,:,:,:), allocatable :: g_iajb
       complex(dp), dimension(:,:,:,:), allocatable :: eta_aibj
 !
-      integer :: i = 0, a = 0, j = 0, b = 0, aibj = 0
-      integer :: bj = 0, ai = 0
+      integer :: i, a, ai
 !
       call zero_array_complex(eta, wf%n_gs_amplitudes)
 !
@@ -96,26 +101,7 @@ contains
 !
 !     Pack vector into doubles eta
 !
-!$omp parallel do private(j,b,bj,i,a,ai,aibj)
-      do j = 1, wf%n_o
-         do b = 1, wf%n_v
-!
-            bj = wf%n_v*(j - 1) + b
-!
-            do i = 1, wf%n_o
-               do a = 1, wf%n_v
-!
-                  ai = wf%n_v*(i - 1) + a
-!
-                  aibj = max(ai, bj)*(max(ai,bj)-3)/2 + ai + bj
-!
-                  eta(wf%n_t1 + aibj) = eta_aibj(a, i, b, j)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call packin(eta(wf%n_t1 + 1 : wf%n_gs_amplitudes), eta_aibj, wf%n_t1)
 !
       call mem%dealloc(eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !

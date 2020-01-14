@@ -1,5 +1,5 @@
 system 
-   name: H2O-PCM
+   name: H2O
    charge: 0
 end system
 

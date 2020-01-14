@@ -2,10 +2,6 @@ system
    name: H2O-H2O-FQ
    charge: 0
 end system
- 
-print 
-   output print level: debug 
-end print
 
 do
   ground state

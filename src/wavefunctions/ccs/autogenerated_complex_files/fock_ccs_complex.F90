@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (ccs_class) fock_ccs_complex
 !
 !!
-!!    Fock submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Sep 2019
+!!    Fock submodule
 !!
 !!    Submodule containing routines that can be used to construct the t1-transformed Fock matrix.
 !!
@@ -49,6 +48,13 @@ contains
 !!       QM/MM by Tommaso Giovannini, 2019
 !!       QM/PCM by Tommaso Giovannini, 2019
 !!
+!!       Modified by Sarai D. Folkestad, Nov 2019
+!!
+!!       Added batching for N^2 memory requirement.
+!!
+!
+      use batching_index_class, only : batching_index
+!
       implicit none
 !
       class(ccs) :: wf
@@ -58,10 +64,17 @@ contains
       integer :: i, j, k, a, b
 !
       complex(dp), dimension(:,:,:,:), allocatable :: g_ijkl
-      complex(dp), dimension(:,:,:,:), allocatable :: g_abij
-      complex(dp), dimension(:,:,:,:), allocatable :: g_aijb
-      complex(dp), dimension(:,:,:,:), allocatable :: g_iajk
-      complex(dp), dimension(:,:,:,:), allocatable :: g_aijk
+      complex(dp), dimension(:,:,:,:), allocatable :: g_iajj
+      complex(dp), dimension(:,:,:,:), allocatable :: g_ijja
+      complex(dp), dimension(:,:,:,:), allocatable :: g_aijj
+      complex(dp), dimension(:,:,:,:), allocatable :: g_ajji
+      complex(dp), dimension(:,:,:,:), allocatable :: g_abii
+      complex(dp), dimension(:,:,:,:), allocatable :: g_aiib
+!
+      integer :: req0, req2, req1_i, req1_k, current_i_batch, current_k_batch
+      integer :: req1_j, current_j_batch, req1_a, current_a_batch
+!
+      type(batching_index) :: batch_i, batch_k, batch_j, batch_a
 !
 !     Set F_pq = h_pq (t1-transformed) 
 !
@@ -71,79 +84,215 @@ contains
 !
 !     Add effective contributions to Fock matrix 
 !
-      if (wf%frozen_core) call wf%add_frozen_core_fock_term_complex(F_pq)
-      if (wf%frozen_hf_mos) call wf%add_frozen_hf_fock_term_complex(F_pq)
-      if (wf%mlhf_reference) call wf%add_mlhf_inactive_fock_term_complex(F_pq)
-      if (wf%system%mm_calculation) call wf%add_molecular_mechanics_fock_term_complex(F_pq)
-      if (wf%system%pcm_calculation) call wf%add_pcm_fock_contribution_complex(F_pq)
+      if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms_complex(F_pq)
 !
 !     Add occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
-      call mem%alloc(g_ijkl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
-      call wf%get_oooo_complex(g_ijkl)
+!     Batching over i and k
+!
+      req0 = 0
+!
+      req1_i = (wf%integrals%n_J)*(wf%n_o)
+      req1_k = (wf%integrals%n_J)*(wf%n_o)
+!
+      req2 =  (wf%n_o**2)
+!
+      batch_i = batching_index(wf%n_o)
+      batch_k = batching_index(wf%n_o)
+!
+      call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2)
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+         do current_k_batch = 1, batch_k%num_batches
+!
+            call batch_k%determine_limits(current_k_batch)
+!
+            call mem%alloc(g_ijkl, batch_i%length, wf%n_o, batch_k%length, wf%n_o)
+!
+            call wf%get_oooo_complex(g_ijkl,                        &
+                              batch_i%first, batch_i%last,  &
+                              1, wf%n_o,                    &
+                              batch_k%first, batch_k%last,  &
+                              1, wf%n_o)
 !
 !$omp parallel do private(i,j,k)
-      do j = 1, wf%n_o
-         do i = 1, wf%n_o
-            do k = 1, wf%n_o
+            do j = 1, wf%n_o
+               do i = 1, batch_i%length
+                  do k = 1, batch_k%length
 !
-               F_pq(i, j) = F_pq(i, j) + two_complex*g_ijkl(i,j,k,k) - g_ijkl(i,k,k,j)
+                     F_pq(i + batch_i%first - 1, j) = F_pq(i + batch_i%first - 1, j) &
+                                 + two_complex*g_ijkl(i, j, k, k + batch_k%first - 1) &
+                                 - g_ijkl(i, k + batch_k%first - 1, k, j)
 !
+                  enddo
+               enddo
             enddo
-         enddo
-      enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g_ijkl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+            call mem%dealloc(g_ijkl, batch_i%length, wf%n_o, batch_k%length, wf%n_o)
+!
+         enddo
+!
+      enddo
 !
 !     Add occupied-virtual contributions: F_ia = F_ia + sum_j (2*g_iajj - g_ijja)
 !                                         F_ai = F_ai + sum_j (2*g_aijj - g_ajji)
 !
-      call mem%alloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call wf%get_ovoo_complex(g_iajk)
+!     batching over i and j
 !
-      call mem%alloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      call wf%get_vooo_complex(g_aijk)
+      req0 = 0
 !
-!$omp parallel do private(i,a,j)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-            do j = 1, wf%n_o
+      req1_i = (wf%integrals%n_J)*(wf%n_v)
+      req1_j = (wf%integrals%n_J)*(wf%n_v)
 !
-               F_pq(i, a + wf%n_o) = F_pq(i, a + wf%n_o) + two_complex*g_iajk(i,a,j,j) - g_iajk(j,a,i,j)
-               F_pq(a + wf%n_o, i) = F_pq(a + wf%n_o, i) + two_complex*g_aijk(a,i,j,j) - g_aijk(a,j,j,i)
+      req2 =  2*wf%n_o*wf%n_v
 !
+      batch_i = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+!
+      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+         do current_j_batch = 1, batch_j%num_batches
+!
+            call batch_j%determine_limits(current_j_batch)
+!
+!           F_ia = F_ia + sum_j (2*g_iajj - g_ijja)
+!
+            call mem%alloc(g_iajj, batch_i%length, wf%n_v, batch_j%length, batch_j%length)
+            call mem%alloc(g_ijja, batch_i%length, batch_j%length, batch_j%length, wf%n_v)
+!
+            call wf%get_ovoo_complex(g_iajj,                        &
+                              batch_i%first, batch_i%last,  &
+                              1, wf%n_v,                    &
+                              batch_j%first, batch_j%last,  &
+                              batch_j%first, batch_j%last)
+!
+            call wf%get_ooov_complex(g_ijja,                        &
+                              batch_i%first, batch_i%last,  &
+                              batch_j%first, batch_j%last,  &
+                              batch_j%first, batch_j%last,  &
+                              1, wf%n_v)
+!
+!$omp parallel do private (a, i, j)
+            do a = 1, wf%n_v
+               do i = 1, batch_i%length
+                  do j = 1, batch_j%length
+!
+                     F_pq(i + batch_i%first - 1, a + wf%n_o) & 
+                        = F_pq(i + batch_i%first - 1, a + wf%n_o) &
+                        + two_complex*g_iajj(i, a, j, j) - g_ijja(i, j, j, a)
+!
+                  enddo
+               enddo 
             enddo
+!$omp end parallel do
+!
+            call mem%dealloc(g_ijja, batch_i%length, batch_j%length, batch_j%length, wf%n_v)
+            call mem%dealloc(g_iajj, batch_i%length, wf%n_v, batch_j%length, batch_j%length)
+!
+!           F_ai = F_ai + sum_j (2*g_aijj - g_ajji)
+!
+            call mem%alloc(g_aijj, wf%n_v, batch_i%length, batch_j%length, batch_j%length)
+            call mem%alloc(g_ajji, wf%n_v, batch_j%length, batch_j%length, batch_i%length)
+!
+            call wf%get_vooo_complex(g_aijj,                        &
+                              1, wf%n_v,                    &
+                              batch_i%first, batch_i%last,  &
+                              batch_j%first, batch_j%last,  &
+                              batch_j%first, batch_j%last)
+!
+            call wf%get_vooo_complex(g_ajji,                        &
+                              1, wf%n_v,                    &
+                              batch_j%first, batch_j%last,  &
+                              batch_j%first, batch_j%last,  &
+                              batch_i%first, batch_i%last)
+!
+!$omp parallel do private(i, a, j)
+            do i = 1, batch_i%length
+               do a = 1, wf%n_v
+                  do j = 1, batch_j%length
+!
+                     F_pq(a + wf%n_o, i + batch_i%first - 1)   &
+                     = F_pq(a + wf%n_o, i + batch_i%first - 1) &
+                     + two_complex*g_aijj(a, i, j, j) - g_ajji(a, j, j, i)
+!
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+            call mem%dealloc(g_aijj, wf%n_v, batch_i%length, batch_j%length, batch_j%length)
+            call mem%dealloc(g_ajji, wf%n_v, batch_j%length, batch_j%length, batch_i%length)
 !
          enddo
       enddo
-!$omp end parallel do
-!
-      call mem%dealloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call mem%dealloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
 !     Add virtual-virtual contributions: F_ab = h_ab + sum_i (2*g_abii - g_aiib) 
 !
-      call mem%alloc(g_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call wf%get_vvoo_complex(g_abij)
+!     batching over a and i
 !
-      call mem%alloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call wf%get_voov_complex(g_aijb)
+      req0 = 0
 !
-!$omp parallel do private(a,b,i)
-      do a = 1, wf%n_v
-         do b = 1, wf%n_v
-            do i = 1, wf%n_o
+      req1_i = (wf%integrals%n_J)*(wf%n_v)
+      req1_a = (wf%integrals%n_J)*(wf%n_v)
 !
-               F_pq(wf%n_o + a, wf%n_o + b) = F_pq(wf%n_o + a, wf%n_o + b) + two_complex*g_abij(a,b,i,i) - g_aijb(a,i,i,b)
+      req2 =  2*wf%n_o*wf%n_v
 !
+      batch_i = batching_index(wf%n_o)
+      batch_a = batching_index(wf%n_v)
+!
+      call mem%batch_setup(batch_i, batch_a, req0, req1_i, req1_a, req2)
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+         do current_a_batch = 1, batch_a%num_batches
+!
+            call batch_a%determine_limits(current_a_batch)
+!
+            call mem%alloc(g_abii, batch_a%length, wf%n_v, batch_i%length, batch_i%length)
+!
+            call wf%get_vvoo_complex(g_abii,                        &
+                              batch_a%first, batch_a%last,  &
+                              1, wf%n_v,                    &
+                              batch_i%first, batch_i%last,  &
+                              batch_i%first, batch_i%last)
+!
+            call mem%alloc(g_aiib, batch_a%length, batch_i%length, batch_i%length, wf%n_v)
+!
+            call wf%get_voov_complex(g_aiib,                        &
+                              batch_a%first, batch_a%last,  &
+                              batch_i%first, batch_i%last,  &
+                              batch_i%first, batch_i%last,  &
+                              1, wf%n_v)
+!
+!$omp parallel do private (a, b, i)
+            do a = 1, batch_a%length
+               do b = 1, wf%n_v
+                  do i = 1, batch_i%length
+!
+                     F_pq(a + batch_a%first - 1 + wf%n_o, b + wf%n_o) &
+                     = F_pq(a + batch_a%first - 1 + wf%n_o, b + wf%n_o) &
+                     + two_complex*g_abii(a, b, i, i) - g_aiib(a, i, i, b)
+!
+                  enddo
+               enddo
             enddo
-         enddo
-      enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%dealloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+            call mem%dealloc(g_aiib, batch_a%length, batch_i%length, batch_i%length, wf%n_v)
+            call mem%dealloc(g_abii, batch_a%length, wf%n_v, batch_i%length, batch_i%length)
+!
+         enddo
+      enddo
 !
       call wf%set_fock_complex(F_pq) 
       call mem%dealloc(F_pq, wf%n_mo, wf%n_mo)
@@ -151,9 +300,9 @@ contains
    end subroutine construct_fock_ccs_complex
 !
 !
-   module subroutine add_frozen_core_fock_term_ccs_complex(wf, F_pq)
+   module subroutine add_frozen_fock_terms_ccs_complex(wf, F_pq)
 !!
-!!    Add frozen core Fock contribution 
+!!    Add frozen Fock terms
 !!    Written by Sarai D. Folkestad, 2019 
 !!
 !!    Adds the frozen core contributions to
@@ -167,139 +316,19 @@ contains
 !
       complex(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
 !
-      complex(dp), dimension(:,:), allocatable :: F_pq_core
+      complex(dp), dimension(:,:), allocatable :: F_pq_frozen
 !
-      call mem%alloc(F_pq_core, wf%n_mo, wf%n_mo)
+      call mem%alloc(F_pq_frozen, wf%n_mo, wf%n_mo)
 !
-      call wf%construct_t1_fock_fc_term_complex(F_pq_core)
-      call zaxpy(wf%n_mo**2, one_complex, F_pq_core, 1, F_pq, 1)
+      call wf%construct_t1_frozen_fock_terms_complex(F_pq_frozen)
+      call zaxpy(wf%n_mo**2, one_complex, F_pq_frozen, 1, F_pq, 1)
 !
-      call mem%dealloc(F_pq_core, wf%n_mo, wf%n_mo)      
+      call mem%dealloc(F_pq_frozen, wf%n_mo, wf%n_mo)      
 !
-   end subroutine add_frozen_core_fock_term_ccs_complex
-!
-!
-   module subroutine add_frozen_hf_fock_term_ccs_complex(wf, F_pq)
-!!
-!!    Add frozen HF Fock contribution 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 
-!!
-!!    Adds the contributions from frozen HF orbitals to
-!!    the effective T1-transformed Fock matrix.  
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      complex(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
-!
-      complex(dp), dimension(:,:), allocatable :: F_pq_core
-!
-      call mem%alloc(F_pq_core, wf%n_mo, wf%n_mo)
-!
-      call wf%construct_t1_fock_frozen_hf_term_complex(F_pq_core)
-      call zaxpy(wf%n_mo**2, one_complex, F_pq_core, 1, F_pq, 1)
-!
-      call mem%dealloc(F_pq_core, wf%n_mo, wf%n_mo)      
-!
-   end subroutine add_frozen_hf_fock_term_ccs_complex
+   end subroutine add_frozen_fock_terms_ccs_complex
 !
 !
-   module subroutine add_mlhf_inactive_fock_term_ccs_complex(wf, F_pq)
-!!
-!!    Add MLHF inactive Fock term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
-!!    and Linda Goletto, Nov 2019 
-!!
-!!    Adds the contribution from MLHF inactive orbitals to
-!!    the effective T1-transformed Fock matrix.  
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      complex(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
-!
-      complex(dp), dimension(:,:), allocatable :: F_pq_mlhf_inactive
-!
-      call mem%alloc(F_pq_mlhf_inactive, wf%n_mo, wf%n_mo)
-!
-      call wf%construct_t1_mlhf_inactive_fock_term_complex(F_pq_mlhf_inactive)
-      call zaxpy(wf%n_mo**2, one_complex, F_pq_mlhf_inactive, 1, F_pq, 1)
-!
-      call mem%dealloc(F_pq_mlhf_inactive, wf%n_mo, wf%n_mo)      
-!
-   end subroutine add_mlhf_inactive_fock_term_ccs_complex
-!
-!
-   module subroutine add_molecular_mechanics_fock_term_ccs_complex(wf, F_pq)
-!!
-!!    Add molecular mechanics Fock contribution 
-!!    Written by Tommaso Giovannini, 2019 
-!!
-!!    Adds the molecular mechanics contributions to  
-!!    the effective T1-transformed Fock matrix. 
-!!
-!!    Isolated into subroutine by Eirik F. Kjønstad, 2019
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
-!
-      complex(dp), dimension(:,:), allocatable :: h_mm_t1
-!
-      call mem%alloc(h_mm_t1, wf%n_mo, wf%n_mo) 
-!
-      if (wf%system%mm%forcefield == 'non-polarizable') then
-!
-         call wf%ao_to_t1_transformation_complex(wf%nopol_h_wx, h_mm_t1)
-         call zaxpy(wf%n_mo**2, half_complex, h_mm_t1, 1, F_pq, 1)
-!
-      else
-!
-         call wf%ao_to_t1_transformation_complex(wf%pol_emb_fock, h_mm_t1)
-         call zaxpy(wf%n_mo**2, half_complex, h_mm_t1, 1, F_pq, 1)
-!
-      endif    
-!
-      call mem%dealloc(h_mm_t1, wf%n_mo, wf%n_mo) 
-!
-   end subroutine add_molecular_mechanics_fock_term_ccs_complex
-!
-!
-   module subroutine add_pcm_fock_contribution_ccs_complex(wf, F_pq)
-!!
-!!    Add PCM Fock contribution 
-!!    Written by Tommaso Giovannini, 2019 
-!!
-!!    Adds the PCM contributions to  
-!!    the effective T1-transformed Fock matrix. 
-!!
-!!    Isolated into subroutine by Eirik F. Kjønstad, 2019
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
-!
-      complex(dp), dimension(:,:), allocatable :: h_mm_t1
-!
-      call mem%alloc(h_mm_t1, wf%n_mo, wf%n_mo) 
-!
-!
-      call wf%ao_to_t1_transformation_complex(wf%pcm_fock, h_mm_t1)
-      call zaxpy(wf%n_mo**2, half_complex, h_mm_t1, 1, F_pq, 1)
-!
-!
-      call mem%dealloc(h_mm_t1, wf%n_mo, wf%n_mo) 
-!
-   end subroutine add_pcm_fock_contribution_ccs_complex
-!
-!
-   module subroutine construct_t1_fock_fc_term_ccs_complex(wf, F_pq)
+   module subroutine construct_t1_frozen_fock_terms_ccs_complex(wf, F_pq)
 !!
 !!    Calculate T1 Fock frozen core contribution
 !!    Written by Sarai D. Folkestad, Sep 2019
@@ -310,47 +339,11 @@ contains
 !
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
-      call copy_(wf%mo_fock_fc_term, F_pq, wf%n_mo, wf%n_mo)
+      call copy_(wf%mo_fock_frozen, F_pq, wf%n_mo, wf%n_mo)
 !
       call wf%t1_transform_complex(F_pq)
 !
-   end subroutine construct_t1_fock_fc_term_ccs_complex
-!
-!
-   module subroutine construct_t1_fock_frozen_hf_term_ccs_complex(wf, F_pq)
-!!
-!!    Calculate T1 Fock frozen fock contribution
-!!    Written by Sarai D. Folkestad, Sep 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf 
-!
-      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
-!
-      call copy_(wf%mo_fock_frozen_hf_term, F_pq, wf%n_mo, wf%n_mo)
-!
-      call wf%t1_transform_complex(F_pq)
-!
-   end subroutine construct_t1_fock_frozen_hf_term_ccs_complex
-!
-!
-   module subroutine construct_t1_mlhf_inactive_fock_term_ccs_complex(wf, F_pq)
-!!
-!!    Calculate T1 MLHF inactive Fock term
-!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf 
-!
-      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
-!
-      call copy_(wf%mlhf_inactive_fock_term, F_pq, wf%n_mo, wf%n_mo)
-!
-      call wf%t1_transform_complex(F_pq)
-!
-   end subroutine construct_t1_mlhf_inactive_fock_term_ccs_complex
+   end subroutine construct_t1_frozen_fock_terms_ccs_complex
 !
 !
    module subroutine add_t1_fock_length_dipole_term_ccs_complex(wf, electric_field)

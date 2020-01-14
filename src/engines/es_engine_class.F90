@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -24,9 +24,10 @@ module es_engine_class
 !!
 !
    use kinds
-   use global_in,     only: input
-   use global_out,    only: output
-   use timings_class, only: timings
+   use global_in,       only: input
+   use global_out,      only: output
+   use timings_class,   only: timings
+   use task_list_class, only: task_list
 !
    use gs_engine_class, only: gs_engine
    use ccs_class,       only: ccs
@@ -65,22 +66,49 @@ module es_engine_class
 contains
 !
 !
-   function new_es_engine() result(engine)
+   function new_es_engine(wf) result(engine)
 !!
 !!    New ES engine
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
+!     Needed for defaults and sanity checks
+      class(ccs), intent(in)       :: wf
+!
       type(es_engine) :: engine
 !
 !     Set standards and then read if nonstandard
 !
-      engine%es_algorithm           = 'davidson'
       engine%gs_algorithm           = 'diis'
+!
+      if (wf%name_ .eq. 'ccsd(t)' .or. &
+          wf%name_ .eq. 'mp2') then
+         call output%error_msg("Excited states not implemented for (a0)", &
+                               chars=[wf%name_])
+      end if
+!
+      if (wf%name_ .eq. 'cc3' .or. &
+          wf%name_ .eq. 'low memory cc2') then
+!
+         engine%multipliers_algorithm = 'diis'
+         engine%es_algorithm          = 'diis'
+!
+      else if (wf%name_ .eq. 'cc2' .or. &
+               wf%name_ .eq. 'mlcc2') then
+!
+         engine%multipliers_algorithm = 'diis'
+         engine%es_algorithm          = 'davidson'
+!
+      else
+!
+         engine%multipliers_algorithm = 'davidson'
+         engine%es_algorithm          = 'davidson'
+!
+      end if
+!
       engine%es_type                = 'valence'
       engine%es_transformation      = 'right'
-      engine%multipliers_algorithm  = 'davidson'
 !
       engine%gs_restart            = .false.
       engine%multipliers_restart   = .false.
@@ -146,6 +174,7 @@ contains
 !
    end subroutine read_es_settings_es_engine
 !
+!
    subroutine run_es_engine(engine, wf)
 !!
 !!    Run
@@ -156,9 +185,7 @@ contains
       class(es_engine)  :: engine
       class(ccs)        :: wf
 !
-!     Cholesky decomposition
-!
-      call engine%do_cholesky(wf)
+      call engine%tasks%print_('mo preparations')
 !
       call wf%mo_preparations()
 !
@@ -167,13 +194,6 @@ contains
 !     Ground state solution
 !
       call engine%do_ground_state(wf)
-!
-      call wf%integrals%write_t1_cholesky(wf%t1)
-!      
-      if (wf%integrals%get_eri_t1_mem()) call wf%integrals%update_g_pqrs_t1_in_memory()
-!
-      if(wf%integrals%get_eri_t1_mem()) &
-         call output%printf('Note: All T1-integrals are stored in memory',fs='(/t3, a)',pl='normal')
 !
 !     Excited state solutions
 !
@@ -213,9 +233,13 @@ contains
 
       class(abstract_cc_es), allocatable :: cc_es_solver
 !
+      call engine%tasks%print_('es solver', &
+            append_string='Calculating ' // trim(transformation) //' vectors', append_fs='(t6,a)')
+!
 !     Prepare for excited state
 !
-      if (engine%es_algorithm == 'asymmetric lanczos')then
+      if (engine%es_algorithm == 'asymmetric lanczos') then
+!
          call engine%do_multipliers(wf)       
          cc_es_solver_asymmetric_lanczos = asymmetric_lanczos_cc_es(wf)
          call cc_es_solver_asymmetric_lanczos%run(wf)
@@ -256,22 +280,46 @@ contains
 !!    Set printables
 !!    Written by sarai D. Folkestad, May 2019
 !!
+!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       class(es_engine) :: engine
 !
-      engine%name_  = 'Excited state engine'
-      engine%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+      engine%name_  = 'Excited state coupled cluster engine'
 !
       engine%tag = 'excited state'
 !
-      engine%tasks = [character(len=150) ::                                                              &
-      'Cholesky decomposition of the ERI-matrix',                                                        &
-      'Calculation of the ground state amplitudes ('//trim(engine%gs_algorithm)//'-algorithm)',          &
-      'Calculation of the ground state energy',                                                          &
-      'Calculation of the ' // trim(engine%es_transformation) //' hand side '// trim(engine%es_type) //  &
-      ' excitation vectors ('//trim(engine%es_algorithm)//'-algorithm)',                                 &
-      'Calculation of the excitation energies ('//trim(engine%es_algorithm)//'-algorithm)']
+!     Prepare the list of tasks
+!
+      engine%tasks = task_list()
+!
+      call engine%tasks%add(label='mo preparations',                             &
+                            description='Preparation of MO basis and integrals')
+!
+      call engine%tasks%add(label='gs solver',                                &
+                           description='Calculation of the ground state ('//  &
+                           trim(engine%gs_algorithm)//' algorithm)')
+!
+      if (engine%es_algorithm == 'asymmetric lanczos') then
+!
+         call engine%tasks%add(label='multipliers solver',                    &
+                           description='Calculation of the multipliers ('     &
+                           //trim(engine%multipliers_algorithm)&
+                           //' algorithm)')
+!
+         call engine%tasks%add(label='es solver',                             &
+                           description='Calculation of the excited state ('// &
+                           trim(engine%es_algorithm)//' algorithm)')
+!
+      else
+!
+         call engine%tasks%add(label='es solver',                              &
+                           description='Calculation of the excited state ('//  &
+                           trim((engine%es_algorithm))//' algorithm)')
+!
+      endif
 !
       engine%description  = 'Calculates the coupled cluster excitation vectors and excitation energies'
 !

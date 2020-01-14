@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (ccsd_class) set_get_ccsd_complex
 !
 !!
-!!    Set get submodule (CCSD)
-!!    Set up by Eirik F. Kjønstad and Andreas Skeidsvoll, Aug 2019
+!!    Set get submodule
 !!
 !!    Gathers routines that set and get the CCSD type-bound variables.
 !!

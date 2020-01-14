@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -34,6 +34,10 @@
 !!       QM/MM by Tommaso Giovannini, 2019
 !!       QM/PCM by Tommaso Giovannini, 2019
 !!
+!!       Modified by Sarai D. Folkestad, Nov 2019
+!!
+!!       Added batching for N^2 memory requirement.
+!!
       implicit none
 !
       class(ccs) :: wf
@@ -41,9 +45,9 @@
    end subroutine construct_fock_ccs_complex
 !
 !
-   module subroutine add_frozen_core_fock_term_ccs_complex(wf, F_pq)
+   module subroutine add_frozen_fock_terms_ccs_complex(wf, F_pq)
 !!
-!!    Add frozen core Fock contribution 
+!!    Add frozen Fock terms
 !!    Written by Sarai D. Folkestad, 2019 
 !!
 !!    Adds the frozen core contributions to
@@ -56,79 +60,10 @@
       class(ccs), intent(in) :: wf 
       complex(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
 !
-   end subroutine add_frozen_core_fock_term_ccs_complex
+   end subroutine add_frozen_fock_terms_ccs_complex
 !
 !
-   module subroutine add_frozen_hf_fock_term_ccs_complex(wf, F_pq)
-!!
-!!    Add frozen HF Fock contribution 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 
-!!
-!!    Adds the contributions from frozen HF orbitals to
-!!    the effective T1-transformed Fock matrix.  
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-      complex(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
-!
-   end subroutine add_frozen_hf_fock_term_ccs_complex
-!
-!
-   module subroutine add_mlhf_inactive_fock_term_ccs_complex(wf, F_pq)
-!!
-!!    Add MLHF inactive Fock term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
-!!    and Linda Goletto, Nov 2019 
-!!
-!!    Adds the contribution from MLHF inactive orbitals to
-!!    the effective T1-transformed Fock matrix.  
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-      complex(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
-!
-   end subroutine add_mlhf_inactive_fock_term_ccs_complex
-!
-!
-   module subroutine add_molecular_mechanics_fock_term_ccs_complex(wf, F_pq)
-!!
-!!    Add molecular mechanics Fock contribution 
-!!    Written by Tommaso Giovannini, 2019 
-!!
-!!    Adds the molecular mechanics contributions to  
-!!    the effective T1-transformed Fock matrix. 
-!!
-!!    Isolated into subroutine by Eirik F. Kjønstad, 2019
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
-!
-   end subroutine add_molecular_mechanics_fock_term_ccs_complex
-!
-!
-   module subroutine add_pcm_fock_contribution_ccs_complex(wf, F_pq)
-!!
-!!    Add PCM Fock contribution 
-!!    Written by Tommaso Giovannini, 2019 
-!!
-!!    Adds the PCM contributions to  
-!!    the effective T1-transformed Fock matrix. 
-!!
-!!    Isolated into subroutine by Eirik F. Kjønstad, 2019
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
-!
-   end subroutine add_pcm_fock_contribution_ccs_complex
-!
-!
-   module subroutine construct_t1_fock_fc_term_ccs_complex(wf, F_pq)
+   module subroutine construct_t1_frozen_fock_terms_ccs_complex(wf, F_pq)
 !!
 !!    Calculate T1 Fock frozen core contribution
 !!    Written by Sarai D. Folkestad, Sep 2019
@@ -138,33 +73,7 @@
       class(ccs) :: wf 
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
-   end subroutine construct_t1_fock_fc_term_ccs_complex
-!
-!
-   module subroutine construct_t1_fock_frozen_hf_term_ccs_complex(wf, F_pq)
-!!
-!!    Calculate T1 Fock frozen fock contribution
-!!    Written by Sarai D. Folkestad, Sep 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf 
-      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
-!
-   end subroutine construct_t1_fock_frozen_hf_term_ccs_complex
-!
-!
-   module subroutine construct_t1_mlhf_inactive_fock_term_ccs_complex(wf, F_pq)
-!!
-!!    Calculate T1 MLHF inactive Fock term
-!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf 
-      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
-!
-   end subroutine construct_t1_mlhf_inactive_fock_term_ccs_complex
+   end subroutine construct_t1_frozen_fock_terms_ccs_complex
 !
 !
    module subroutine add_t1_fock_length_dipole_term_ccs_complex(wf, electric_field)

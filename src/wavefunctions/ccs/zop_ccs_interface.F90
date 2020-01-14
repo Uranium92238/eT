@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -110,6 +110,7 @@
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: A
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: density
       real(dp) :: expectation_value
+!
    end function calculate_expectation_value_ccs
 !
 !

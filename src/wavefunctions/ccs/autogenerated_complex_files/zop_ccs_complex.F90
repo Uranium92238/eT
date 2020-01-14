@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -86,8 +86,8 @@ contains
 !
 !     For now, do nothing.
 !
-      call output%printf('- No preparations for the density for ' // trim(wf%name_) // &
-                         ' wavefunction.', pl='v', fs='(/t3,a)')
+      call output%printf('v', '- No preparations for the density for ' //  &
+                         trim(wf%name_) // ' wavefunction.', fs='(/t3,a)')
 !
    end subroutine prepare_for_density_ccs_complex
 !
@@ -228,7 +228,7 @@ contains
 !
       complex(dp), dimension(:,:,:,:), allocatable :: g_iajb
 !
-      complex(dp) :: correlation_energy 
+      complex(dp) :: omp_correlation_energy
 !
       integer :: a, i, b, j
 !
@@ -236,17 +236,17 @@ contains
 !
       call wf%get_ovov_complex(g_iajb)
 !
-      correlation_energy = zero_complex 
+      omp_correlation_energy = zero_complex
 !
-!$omp parallel do private(a,i,j,b) reduction(+:correlation_energy)
+!$omp parallel do private(a,i,j,b) reduction(+:omp_correlation_energy)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
             do j = 1, wf%n_o
                do b = 1, wf%n_v
 !
-                  correlation_energy = correlation_energy &
-                                       + (wf%t1_complex(a,i))*(wf%t1_complex(b,j)) &
-                                       * (two_complex*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
+                  omp_correlation_energy = omp_correlation_energy &
+                                        + (wf%t1_complex(a,i))*(wf%t1_complex(b,j)) &
+                                        * (two_complex*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
 !
                enddo
             enddo
@@ -256,7 +256,9 @@ contains
 !
       call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      wf%energy_complex = wf%hf_energy_complex + correlation_energy
+      wf%correlation_energy_complex = omp_correlation_energy 
+!
+      wf%energy_complex = wf%hf_energy + wf%correlation_energy_complex
 !
    end subroutine calculate_energy_ccs_complex
 !
@@ -335,6 +337,8 @@ contains
                                       + mu(i, i, 3)*electric_field(3))
 !
       enddo
+!
+      call mem%dealloc(mu, wf%n_mo, wf%n_mo, 3)
 !
    end subroutine calculate_energy_length_dipole_term_ccs_complex
 !

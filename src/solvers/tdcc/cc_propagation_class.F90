@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -56,23 +56,25 @@ module cc_propagation_class
 !
       character(len=100) :: tag
       character(len=100) :: name_
-      character(len=100) :: author
       character(len=500) :: description
 !
       integer :: steps_between_output, vector_length
 !
-      real(dp) :: ti, tf, h, implicit_threshold
+      real(dp) :: ti, tf, dt, implicit_threshold
 !
       complex(dp), dimension(:,:,:,:), allocatable :: g_pqrs_complex_ti
-      complex(dp), dimension(:,:), allocatable     :: t1_complex_ti
+      complex(dp), dimension(:,:), allocatable :: t1_complex_ti
 !
-      logical :: energy_output, dipole_moment_output, electric_field_output, amplitudes_output, multipliers_output
+      logical :: energy_output, dipole_moment_output, electric_field_output, amplitudes_output, &
+                 multipliers_output, density_matrix_output
 !
       type(sequential_file) :: energy_file
       type(sequential_file) :: dipole_moment_file
       type(sequential_file) :: electric_field_file
       type(sequential_file) :: amplitudes_file
       type(sequential_file) :: multipliers_file
+      type(sequential_file) :: density_matrix_real_file
+      type(sequential_file) :: density_matrix_imaginary_file
 !
    contains
 !
@@ -96,11 +98,16 @@ module cc_propagation_class
       procedure :: write_electric_field_to_file    => write_electric_field_to_file_cc_propagation
       procedure :: write_amplitudes_to_file        => write_amplitudes_to_file_cc_propagation
       procedure :: write_multipliers_to_file       => write_multipliers_to_file_cc_propagation
+      procedure :: write_density_matrix_to_file    => write_density_matrix_to_file_cc_propagation
 !
       procedure :: open_files                      => open_files_cc_propagation
       procedure :: close_files                     => close_files_cc_propagation
 !
-      procedure(propagation_step), deferred        :: step ! Single propagation step for the selected method
+      procedure :: initializations                 => initializations_cc_propagation
+!
+!     Single propagation step for the selected method
+!
+      procedure(propagation_step), deferred :: step
 !
    end type cc_propagation  
 !
@@ -150,7 +157,6 @@ contains
 !
 !     Set printables
 !
-      solver%author = 'A. Skeidsvoll, A. Balbi, 2018'
       solver%description = 'A solver that propagates a coupled cluster wavefunction from the ' &
                             // 'ground state using the ' // trim(solver%tag) // ' method.'
 !
@@ -167,6 +173,7 @@ contains
       solver%electric_field_output   = .false.
       solver%amplitudes_output       = .false.
       solver%multipliers_output      = .false.
+      solver%density_matrix_output   = .false.
 !
       call solver%read_settings()
       call solver%print_settings()
@@ -175,7 +182,7 @@ contains
 !
 !     Initial state t1 and t1 transformed g_pqrs
 !
-      call mem%alloc(solver%t1_complex_ti, wf%n_v, wf%n_o)!
+      call mem%alloc(solver%t1_complex_ti, wf%n_v, wf%n_o)
       call mem%alloc(solver%g_pqrs_complex_ti, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
 !
       call zcopy(wf%n_t1, wf%t1_complex, 1, solver%t1_complex_ti, 1)
@@ -183,8 +190,9 @@ contains
 !
 !     Complex density matrix used to calculate properties
 !
-      if (solver%energy_output .or. solver%dipole_moment_output) &
-         call wf%initialize_gs_density_complex()
+      if (solver%energy_output             &
+          .or. solver%dipole_moment_output &
+          .or. solver%density_matrix_output) call wf%initialize_gs_density_complex()
 !
       call solver%open_files()
 !
@@ -207,11 +215,11 @@ contains
 !
       complex(dp), dimension(:), allocatable :: amplitudes_multipliers, amplitudes_multipliers_next
 !
-      real(dp) :: t, dt, t_next
+      real(dp) :: t, t_next
 !
-      integer :: step
+      integer :: step_number
 !
-      logical :: last
+      logical :: last_step
 !
       type(timings) :: step_timer
 !
@@ -224,24 +232,36 @@ contains
       call wf%get_multipliers_complex( &
          amplitudes_multipliers(wf%n_gs_amplitudes+1:solver%vector_length))
 !
+!     Check that propagation time is finite and nonzero, and that the time step is consistent with
+!     the propagation direction.
+!
+      last_step = .false.
+      if (solver%dt .eq. zero .or. solver%tf - solver%ti .eq. zero) then
+         last_step = .true.
+      elseif (solver%dt .gt. zero .and. solver%tf - solver%ti .lt. zero) then
+         call output%error_msg('Time steps should be negative for backward propagation.')
+      elseif (solver%dt .lt. zero .and. solver%tf - solver%ti .gt. zero) then
+         call output%error_msg('Time steps should be positive for forward propagation.')
+      endif
+!
 !     Propagate until tf
 !
       t = solver%ti
-      step = 0
-      last = .false.
+      step_number = 0
 !
       do
 !
-         call output%printf('Time: (f10.4) au', reals=[t], pl='verbose', fs='(/t3,a)')
+         call output%printf('v', 'Time: (f10.4) au', reals=[t], fs='(/t3,a)')
 !
          call solver%update_field_and_wavefunction(wf, field, t, amplitudes_multipliers)
 !
 !        Write properties to file
 !
-         if (mod(step, solver%steps_between_output) == 0) then
+         if (modulo(step_number, solver%steps_between_output) == 0) then
 !
-            if (solver%energy_output .or. solver%dipole_moment_output) &
-               call wf%construct_gs_density_complex()
+            if (solver%energy_output             &
+                .or. solver%dipole_moment_output &
+                .or. solver%density_matrix_output) call wf%construct_gs_density_complex()
 !
             if (solver%energy_output) then
                call solver%calculate_energy(wf, field)
@@ -253,72 +273,79 @@ contains
                call solver%write_dipole_moment_to_file(wf, t)
             endif
 !
-            if (solver%electric_field_output)   call solver%write_electric_field_to_file(field, t)
-            if (solver%amplitudes_output)       call solver%write_amplitudes_to_file(wf, t)
-            if (solver%multipliers_output)      call solver%write_multipliers_to_file(wf, t)
+            if (solver%electric_field_output) call solver%write_electric_field_to_file(field, t)
+            if (solver%amplitudes_output) call solver%write_amplitudes_to_file(wf, t)
+            if (solver%multipliers_output) call solver%write_multipliers_to_file(wf, t)
+            if (solver%density_matrix_output) &
+               call solver%write_density_matrix_to_file(wf)
 !
-            call output%printf('Properties written at time: (f10.4) au', reals=[t], pl='normal', &
-                               fs='(t3,a)')
+            call output%printf('n', 'Properties written at time: (f10.4) au', &
+                               reals=[t], fs='(t3,a)')
 !
          endif
 !
-!        Count current step
+!        Count the current step
 !
-         step = step + 1
+         step_number = step_number + 1
 !
-         if (last) exit
+         if (last_step) exit
 !
-!        Make a trial next time value
+!        Calculate the next time value
 !
-         t_next = solver%ti + real(step, dp)*(solver%h)
+         t_next = solver%ti + real(step_number, dp)*solver%dt
 !
-!        Check if trial next time value goes beyond final time value, adjust size of last time 
-!        step if it does
+!        Check if the next time value passes the final time, adjust it to the final time if it does
 !
-         last = (((dt .gt. zero) .and. (t_next .ge. solver%tf)) .or. ((dt .lt. zero) .and. &
-                                                                      (t_next .le. solver%tf)))
-!
-         if (last) then
-            dt = solver%tf - t
-         else
-            dt = solver%h
+         if ((solver%dt .gt. zero .and. t_next .ge. solver%tf) &
+             .or. (solver%dt .lt. zero .and. t_next .le. solver%tf)) then
+            last_step = .true.
+            t_next = solver%tf
          endif
-!
-         if (dt .eq. zero) exit
 !
 !        Do a propagation step
 !
          step_timer = timings('cc propagation step', pl='verbose')
          call step_timer%turn_on()
 !
-         call solver%step(wf, field, t, dt, amplitudes_multipliers, amplitudes_multipliers_next, &
-                          solver%vector_length) 
+         call solver%step(wf, field, t, t_next-t, amplitudes_multipliers, &
+                          amplitudes_multipliers_next, solver%vector_length)
 !
          call step_timer%turn_off()
          call step_timer%reset()
 !
-!        Update to next amplitudes_multipliers
+!        Update to the next amplitudes_multipliers and time value
 !
          call zcopy(solver%vector_length, amplitudes_multipliers_next, 1, amplitudes_multipliers, &
                     1)
 !
-!        Calculate next time value
-!
-         if (last) then
-            t = solver%ti + real(step-1, dp)*(solver%h) + dt
-         else
-            t = solver%ti + real(step, dp)*(solver%h)
-         endif
+         t = t_next
 !
       enddo
 !
       call mem%dealloc(amplitudes_multipliers, solver%vector_length)
       call mem%dealloc(amplitudes_multipliers_next, solver%vector_length)
 !
-      call output%printf('Finished propagating for (f10.4) au', reals=[solver%tf], pl='minimal', &
-                         fs='(/t3,a)')
+      call output%printf('m', 'Finished propagating for (f10.4) au', &
+                         reals=[solver%tf], fs='(/t3,a)')
 !
    end subroutine run_cc_propagation
+!
+!
+   subroutine initializations_cc_propagation(solver)
+!!
+!!    Initializations   
+!!    Written by Eirik F. Kjønstad, Jan 2020 
+!!
+!!    Performs initializations needed for run (if any).
+!!
+      implicit none 
+!
+      class(cc_propagation), intent(inout) :: solver 
+!
+      call output%printf('v', 'No initializations for (a0)', &
+                           chars=[trim(solver%name_)], fs='(/t3,a)')
+!
+   end subroutine initializations_cc_propagation
 !
 !
    subroutine cleanup_cc_propagation(solver, wf, field)
@@ -335,6 +362,8 @@ contains
       class(ccs) :: wf
       class(electric_field) :: field
 !
+      call solver%print_summary(wf, field)
+!
       call solver%close_files()
 !
 !     Initial state t1 and t1 transformed g_pqrs
@@ -344,9 +373,9 @@ contains
 !
 !     Complex density matrix used to calculate properties
 !
-      if (solver%energy_output .or. solver%dipole_moment_output) call wf%destruct_gs_density()
-!
-      call solver%print_summary(wf, field)
+      if (solver%energy_output             &
+          .or. solver%dipole_moment_output &
+          .or. solver%density_matrix_output) call wf%destruct_gs_density_complex()
 !
    end subroutine cleanup_cc_propagation
 !
@@ -362,11 +391,11 @@ contains
 !!
       implicit none 
 !
-      class(cc_propagation)                            :: solver
-      class(ccs), intent(inout)                                 :: wf
-      class(electric_field), intent(inout)                      :: field
-      real(dp), intent(in)                                      :: t
-      complex(dp), dimension(solver%vector_length), intent(in)  :: amplitudes_multipliers
+      class(cc_propagation) :: solver
+      class(ccs), intent(inout) :: wf
+      class(electric_field), intent(inout) :: field
+      real(dp), intent(in) :: t
+      complex(dp), dimension(solver%vector_length), intent(in) :: amplitudes_multipliers
 !
 !     Update field
 !
@@ -388,10 +417,10 @@ contains
 !!
       implicit none 
 !
-      class(cc_propagation)                            :: solver
-      class(ccs), intent(inout)                                 :: wf
-      class(electric_field), intent(inout)                      :: field
-      complex(dp), dimension(solver%vector_length), intent(in)  :: amplitudes_multipliers
+      class(cc_propagation) :: solver
+      class(ccs), intent(inout) :: wf
+      class(electric_field), intent(inout) :: field
+      complex(dp), dimension(solver%vector_length), intent(in) :: amplitudes_multipliers
 !
       call wf%set_amplitudes_complex(amplitudes_multipliers(1:wf%n_gs_amplitudes))
       call wf%set_multipliers_complex( &
@@ -420,9 +449,10 @@ contains
 !
       class(cc_propagation) :: solver 
 !
-      call output%printf(':: ' // solver%name_, pl='minimal', fs='(//t3,a)')
-      call output%printf(':: ' // solver%author, pl='minimal', fs='(t3,a)')
-      call output%printf(solver%description, pl='normal', ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
+      call output%printf('n', solver%description, ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_cc_propagation
 !
@@ -436,8 +466,8 @@ contains
 !!
       implicit none 
 !
-      class(ccs)                     :: wf
-      class(electric_field)          :: field
+      class(ccs) :: wf
+      class(electric_field) :: field
 !
 !     Total variational energy with interaction, <Λ| e^-T H e^T |R>
 !
@@ -458,8 +488,8 @@ contains
       implicit none 
 !
       class(cc_propagation) :: solver
-      class(ccs)                     :: wf
-      real(dp), intent(in)           :: t
+      class(ccs) :: wf
+      real(dp), intent(in) :: t
 !
 !     Write energy to file
 !
@@ -602,6 +632,29 @@ contains
    end subroutine write_multipliers_to_file_cc_propagation
 !
 !
+   subroutine write_density_matrix_to_file_cc_propagation(solver, wf)
+!!
+!!    Write density matrix to file
+!!    Written by Andreas Skeidsvoll, Dec 2019
+!!
+!!    Write the real and imaginary parts of the density matrix to separate files
+!!
+      implicit none
+!
+      class(cc_propagation) :: solver
+      class(ccs) :: wf
+!
+!     Write real part of density matrix to file
+!
+      call solver%density_matrix_real_file%write_(real(wf%density_complex), wf%n_mo*wf%n_mo)
+!
+!     Write imaginary part of density matrix to file
+!
+      call solver%density_matrix_imaginary_file%write_(aimag(wf%density_complex), wf%n_mo*wf%n_mo)
+!
+   end subroutine write_density_matrix_to_file_cc_propagation
+!
+!
    subroutine print_summary_cc_propagation(solver, wf, field)
 !!
 !!    Print summary 
@@ -620,33 +673,44 @@ contains
       endif
 !
       if (solver%dipole_moment_output) then
+         call wf%construct_gs_density_complex()
          call solver%calculate_dipole_moment(wf)
       endif
 !
-      call output%printf('- ' // trim(solver%name_) // ' summary', pl='minimal', fs='(/t3,a)')
-      call output%printf('Energy after propagation [au]:', pl='minimal', fs='(/t6,a)')
-      call output%print_separator('minimal', 42, '-', fs='(t6,a)')
-      call output%printf('    Real part         Imaginary part      ', pl='minimal', fs='(t6,a)')
-      call output%print_separator('minimal', 42, '-', fs='(t6,a)')
-      call output%printf('    (f16.10)  (f16.10)',                                                &
-                         reals=[real(wf%energy_complex), aimag(wf%energy_complex)], pl='minimal', &
-                         fs='(t6,a)')
-      call output%print_separator('minimal', 42, '-', fs='(t6,a)')
-      call output%printf('Dipole moment after propagation [au]:', pl='minimal', fs='(/t6,a)')
-      call output%print_separator('minimal', 45, '-', fs='(t6,a)')
-      call output%printf('       Real part         Imaginary part      ', pl='minimal', &
-                         fs='(t6,a)')
-      call output%print_separator('minimal', 45, '-', fs='(t6,a)')
-      call output%printf('    x  (f16.10)  (f16.10)', pl='minimal', fs='(t6,a)', &
-                         reals=[real(wf%dipole_moment_complex(1)),               &
-                                aimag(wf%dipole_moment_complex(1))])
-      call output%printf('    y  (f16.10)  (f16.10)', pl='minimal', fs='(t6,a)', &
-                         reals=[real(wf%dipole_moment_complex(2)),               &
-                                aimag(wf%dipole_moment_complex(2))])
-      call output%printf('    z  (f16.10)  (f16.10)', pl='minimal', fs='(t6,a)', &
-                         reals=[real(wf%dipole_moment_complex(3)),               &
-                                aimag(wf%dipole_moment_complex(3))])
-      call output%print_separator('minimal', 42, '-', fs='(t6,a)')
+      call output%printf('m', '- ' // trim(solver%name_) // ' summary', fs='(/t3,a)')
+!
+!
+      if (solver%energy_output) then
+!
+         call output%printf('m', 'Energy after propagation [au]:', fs='(/t6,a)')
+         call output%print_separator('minimal', 42, '-', fs='(t6,a)')
+         call output%printf('m', '    Real part         Imaginary part      ', fs='(t6,a)')
+         call output%print_separator('minimal', 42, '-', fs='(t6,a)')
+         call output%printf('m', '    (f16.10)  (f16.10)', &
+                            reals=[real(wf%energy_complex), &
+                            aimag(wf%energy_complex)], fs='(t6,a)')
+         call output%print_separator('minimal', 42, '-', fs='(t6,a)')
+!
+      endif
+!
+      if (solver%dipole_moment_output) then
+!
+         call output%printf('m', 'Dipole moment after propagation [au]:', fs='(/t6,a)')
+         call output%print_separator('minimal', 45, '-', fs='(t6,a)')
+         call output%printf('m', '       Real part         Imaginary part      ', fs='(t6,a)')
+         call output%print_separator('minimal', 45, '-', fs='(t6,a)')
+         call output%printf('m', '    x  (f16.10)  (f16.10)', &
+                            reals=[real(wf%dipole_moment_complex(1)), &
+                            aimag(wf%dipole_moment_complex(1))], fs='(t6,a)')
+         call output%printf('m', '    y  (f16.10)  (f16.10)', &
+                            reals=[real(wf%dipole_moment_complex(2)), &
+                            aimag(wf%dipole_moment_complex(2))], fs='(t6,a)')
+         call output%printf('m', '    z  (f16.10)  (f16.10)', &
+                            reals=[real(wf%dipole_moment_complex(3)), &
+                            aimag(wf%dipole_moment_complex(3))], fs='(t6,a)')
+         call output%print_separator('minimal', 42, '-', fs='(t6,a)')
+!
+      endif
 !
    end subroutine print_summary_cc_propagation
 !
@@ -672,12 +736,12 @@ contains
 !!    energy output:         writes energy time series to file if this is specified
 !!    dipole moment output:  writes dipole moment vector time series to file if this is specified
 !!    electric field output: writes electric field vector time series to file if this is specified
-!!    density diag output:   writes real part of the density matrix diagonal time series if this is
-!!                           specified
 !!    amplitudes output:     writes real part of the vector of amplitudes time series to file if
 !!                           this is specified
 !!    multipliers output:    writes real part of the vector of multipliers time series to file if
 !!                           this is specified
+!!    density matrix output: writes real and imaginary parts of the density matrix to a new set of
+!!                           files at each output step if this is specified
 !!
       implicit none 
 !
@@ -686,7 +750,7 @@ contains
       call input%get_required_keyword_in_section('initial time', 'solver cc propagation', &
                                                  solver%ti)
       call input%get_required_keyword_in_section('final time', 'solver cc propagation', solver%tf)
-      call input%get_required_keyword_in_section('time step', 'solver cc propagation', solver%h)
+      call input%get_required_keyword_in_section('time step', 'solver cc propagation', solver%dt)
       call input%get_keyword_in_section('steps between output', 'solver cc propagation', &
                                         solver%steps_between_output)
       call input%get_keyword_in_section('implicit threshold', 'solver cc propagation', &
@@ -702,6 +766,8 @@ contains
          solver%amplitudes_output = .true.
       if (input%requested_keyword_in_section('multipliers output', 'solver cc propagation')) &
          solver%multipliers_output = .true.
+      if (input%requested_keyword_in_section('density matrix output', 'solver cc propagation')) &
+         solver%density_matrix_output = .true.
 !
    end subroutine read_settings_cc_propagation
 !
@@ -717,11 +783,11 @@ contains
 !
       class(cc_propagation) :: solver 
 !
-      call output%printf('- Propagation settings:', pl='minimal', fs='(/t3,a)')
+      call output%printf('m', '- Propagation settings:', fs='(/t3,a)')
 !
-      call output%printf('Initial time: (f10.4) au', reals=[solver%ti], pl='minimal', fs='(/t6,a)')
-      call output%printf('Final time:   (f10.4) au', reals=[solver%tf], pl='minimal', fs='(t6,a)')
-      call output%printf('Time step:    (f10.4) au', reals=[solver%h], pl='minimal', fs='(t6,a)')
+      call output%printf('m', 'Initial time: (f10.4) au', reals=[solver%ti], fs='(/t6,a)')
+      call output%printf('m', 'Final time:   (f10.4) au', reals=[solver%tf], fs='(t6,a)')
+      call output%printf('m', 'Time step:    (f10.4) au', reals=[solver%dt], fs='(t6,a)')
 !
    end subroutine print_settings_cc_propagation
 !
@@ -762,6 +828,18 @@ contains
          call solver%multipliers_file%open_('write','rewind')                                           
       endif
 !
+      if (solver%density_matrix_output) then
+!
+         solver%density_matrix_real_file = sequential_file('cc_propagation_density_matrix_real', &
+                                                           'formatted')
+         call solver%density_matrix_real_file%open_('write','rewind')
+!
+         solver%density_matrix_imaginary_file = &
+            sequential_file('cc_propagation_density_matrix_imaginary', 'formatted')
+         call solver%density_matrix_imaginary_file%open_('write','rewind')
+!
+      endif
+!
    end subroutine open_files_cc_propagation
 !
 !
@@ -794,6 +872,11 @@ contains
 !
       if (solver%multipliers_output) then
          call solver%multipliers_file%close_
+      endif
+!
+      if (solver%density_matrix_output) then
+         call solver%density_matrix_real_file%close_
+         call solver%density_matrix_imaginary_file%close_
       endif
 !
    end subroutine close_files_cc_propagation

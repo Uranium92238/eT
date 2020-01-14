@@ -1,11 +1,7 @@
 system
-   name: H2O-He
+   name: H2O He
    charge: 0
 end system
- 
-print 
-   output print level: debug 
-end print
 
 method
    hf

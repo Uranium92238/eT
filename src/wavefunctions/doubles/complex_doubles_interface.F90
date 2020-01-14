@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -30,3 +30,17 @@
       class(doubles), intent(inout) :: wf
 !
    end subroutine make_doubles_complex_doubles
+!
+!
+   module subroutine cleanup_doubles_complex_doubles(wf)
+!!
+!!    Cleanup doubles complex (doubles)
+!!    Written by Andreas Skeidsvoll, Jan 2020
+!!
+!!    Dellocates complex doubles variables.
+!!
+      implicit none
+!
+      class(doubles), intent(inout) :: wf
+!
+   end subroutine cleanup_doubles_complex_doubles

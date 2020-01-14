@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -64,8 +64,7 @@ module newton_raphson_cc_gs_class
 !
    type :: newton_raphson_cc_gs
 !
-      character(len=100) :: tag = ':: DIIS Newton-Raphson coupled cluster ground state solver'
-      character(len=100) :: author = ':: E. F. Kjønstad, S. D. Folkestad, 2019'
+      character(len=100) :: name_ = 'DIIS Newton-Raphson coupled cluster ground state solver'
 !
       character(len=500) :: description1 = 'A Newton-Raphson CC ground state equations solver. Solves the &
                                              &ground state equation using updates Δt based on the Newton equation, &
@@ -87,9 +86,11 @@ module newton_raphson_cc_gs_class
       character(len=200) :: storage 
       logical :: restart, records_in_memory 
 !
+      type(timings), allocatable :: timer 
+!
    contains
 !     
-      procedure, nopass :: cleanup          => cleanup_newton_raphson_cc_gs
+      procedure :: cleanup                  => cleanup_newton_raphson_cc_gs
       procedure :: run                      => run_newton_raphson_cc_gs
 !
       procedure :: do_micro_iterations      => do_micro_iterations_newton_raphson_cc_gs
@@ -124,6 +125,9 @@ contains
 !
       logical, intent(in) :: restart
 !
+      solver%timer = timings('Newton-Raphson CC GS solver time', pl='minimal')
+      call solver%timer%turn_on()
+!
 !     Print solver banner
 !
       call solver%print_banner()
@@ -150,23 +154,15 @@ contains
 !
       call wf%initialize_amplitudes()
 !
-!     Prepare restart information file 
-!
       if (solver%restart) then
 !
          call wf%read_amplitudes()
 !
-         call wf%integrals%write_t1_cholesky(wf%t1) 
-!
-         if(wf%need_g_abcd .and. wf%integrals%room_for_g_pqrs_t1()) &
-            call wf%integrals%place_g_pqrs_t1_in_memory()
+         call wf%integrals%update_t1_integrals(wf%t1)
 ! 
       else
 !
-         call wf%integrals%write_t1_cholesky(wf%t1) 
-!
-         if(wf%need_g_abcd .and. wf%integrals%room_for_g_pqrs_t1()) &
-            call wf%integrals%place_g_pqrs_t1_in_memory()
+         call wf%integrals%update_t1_integrals(wf%t1)
 !
          call wf%set_initial_amplitudes_guess()
 !
@@ -201,26 +197,26 @@ contains
 !
       class(newton_raphson_cc_gs) :: solver 
 !
-      call output%printf('- DIIS accelerated Newton-Raphson CC ground state solver settings:', &
-                          pl='m', fs='(/t3,a)')
+      call output%printf('m', '- DIIS accelerated Newton-Raphson CC ground &
+                         &state solver settings:', fs='(/t3,a)')
 !
-      call output%printf('Omega threshold: (e23.3)', reals=[solver%omega_threshold], pl='m', fs='(/t6,a)')
-      call output%printf('Energy threshold: (e22.3)', reals=[solver%energy_threshold], pl='m', fs='(t6,a)')
-      call output%printf('Relative micro threshold: (e14.3)',               &
-                          reals=[solver%relative_micro_residual_threshold], &
-                          pl='m', fs='(t6,a)')
+      call output%printf('m', 'Omega threshold:          (e14.3)', &
+                         reals=[solver%omega_threshold], fs='(/t6,a)')
+      call output%printf('m', 'Energy threshold:         (e14.3)', &
+                         reals=[solver%energy_threshold], fs='(t6,a)')
+      call output%printf('m', 'Relative micro threshold: (e14.3)', &
+                         reals=[solver%relative_micro_residual_threshold], fs='(t6,a)')
 !
-      call output%printf('DIIS dimension: (i25)', ints=[solver%diis_dimension], &
-                          pl='m', fs='(/t6,a)')
-      call output%printf('Max number of iterations: (i15)', ints=[solver%max_iterations], &
-                          pl='m', fs='(t6,a)')
-      call output%printf('Max number of micro-iterations: (i9)', &
-                          ints=[solver%max_micro_iterations],    &
-                          pl='m', fs='(t6,a)')
+      call output%printf('m', 'DIIS dimension:           (i14)', &
+                         ints=[solver%diis_dimension], fs='(/t6,a)')
+      call output%printf('m', 'Max number of iterations: (i14)', &
+                         ints=[solver%max_iterations], fs='(t6,a)')
+      call output%printf('m', 'Max number of micro-iterations: (i8)', &
+                         ints=[solver%max_micro_iterations], fs='(t6,a)')
 !
       if (solver%crop) then 
 !
-         call output%printf('Enabled CROP in the DIIS algorithm.', pl='minimal', fs='(/t6,a)')
+         call output%printf('m', 'Enabled CROP in the DIIS algorithm.', fs='(/t6,a)')
 !
       endif
 !
@@ -248,6 +244,8 @@ contains
 !
       real(dp) :: energy, prev_energy, omega_norm
 !
+      type(timings), allocatable :: macro_iteration_timer
+!
       diis = diis_tool('cc_gs_diis',                        &
                         wf%n_gs_amplitudes,                 &
                         wf%n_gs_amplitudes,                 &
@@ -264,6 +262,9 @@ contains
       converged_omega = .false.
       converged = .false.
 !
+      macro_iteration_timer = timings('Newton-Raphson macro-iteration time ' // &
+                                       '(includes micro-iteration time)', pl='normal')
+!
       call mem%alloc(omega, wf%n_gs_amplitudes)
       call mem%alloc(dt, wf%n_gs_amplitudes)
       call mem%alloc(t, wf%n_gs_amplitudes)
@@ -271,6 +272,7 @@ contains
       do while (.not. converged .and. iteration .le. solver%max_iterations) 
 !
          iteration = iteration + 1
+         call macro_iteration_timer%turn_on()
 !
 !        Construct Fock, calculate energy, and construct omega 
 !
@@ -285,15 +287,13 @@ contains
 !
 !        Print energy, energy difference and residual, then test convergence 
 !
-         call output%printf('Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)', &
-                             fs='(/t3,a)', pl='n')
+         call output%printf('n', 'Macro-iter.    Energy (a.u.)        |omega|   &
+                            &    Delta E (a.u.)', fs='(/t3,a)')
 !
          call output%print_separator('n', 64, '-', fs='(t3,a)')
 !
-         call output%printf('(i5)         (f17.12)    (e11.4)    (e11.4)',           &
-                             ints=[iteration],                                       &
-                             reals=[wf%energy, omega_norm, abs(energy-prev_energy)], &
-                             pl='n')
+         call output%printf('n', '(i5)         (f17.12)    (e11.4)    (e11.4)', &
+                            ints=[iteration], reals=[wf%energy, omega_norm, abs(energy-prev_energy)])
 !
          call output%print_separator('n', 64, '-', fs='(t3,a)')
 !
@@ -319,16 +319,17 @@ contains
 !
             call wf%set_amplitudes(t)
 !
-!           Compute the new T1 transformed Cholesky vectors,
-!           and store in memory the entire ERI-T1 matrix if possible and necessary 
+!           Update the Cholesky (and electron repulsion integrals, if in memory) 
+!           to new T1 amplitudes 
 !
-            call wf%integrals%write_t1_cholesky(wf%t1)
-            if (wf%integrals%get_eri_t1_mem()) &
-               call wf%integrals%update_g_pqrs_t1_in_memory()
+            call wf%integrals%update_t1_integrals(wf%t1)
 !
          endif 
 !
          prev_energy = energy 
+!
+         call macro_iteration_timer%turn_off()
+         call macro_iteration_timer%reset()
 !
       enddo
 !
@@ -339,8 +340,8 @@ contains
 !
       else
 !
-         call output%printf('Convergence criterion met in (i0) iterations!', &
-                             ints=[iteration], pl='m', fs='(/t3,a)')
+         call output%printf('m', 'Convergence criterion met in (i0) iterations!', &
+                            ints=[iteration], fs='(t3,a)')
 !
          call wf%print_gs_summary()
 !
@@ -385,6 +386,11 @@ contains
 !
       logical :: converged_residual 
 !
+      type(timings), allocatable :: micro_iteration_timer, timer 
+!
+      timer = timings('Newton-Raphson total micro-iteration time', pl='normal')
+      call timer%turn_on()
+!
 !     Initialize solver tool and set preconditioner 
 !
       call mem%alloc(preconditioner, wf%n_gs_amplitudes)
@@ -413,7 +419,7 @@ contains
 !
 !     Enter iterative loop
 !
-      call output%printf('Micro-iter.  Residual norm', pl='n', fs='(/t6,a)')
+      call output%printf('n', 'Micro-iter.  Residual norm', fs='(/t6,a)')
       call output%print_separator('n', 26, '-', fs='(t6,a)')
 !
       micro_iteration = 0
@@ -422,9 +428,13 @@ contains
       call mem%alloc(c, davidson%n_parameters)
       call mem%alloc(residual, davidson%n_parameters)
 !
+      micro_iteration_timer = timings('Newton-Raphson micro-iteration time', pl='verbose')
+!
       do while (.not. converged_residual .and. (micro_iteration .le. solver%max_micro_iterations))
 !
          micro_iteration = micro_iteration + 1
+         call micro_iteration_timer%turn_on()
+!
          call davidson%iterate()
 !
 !        Transform new trial vectors and write to file
@@ -450,8 +460,11 @@ contains
 !
          endif 
 !
-         call output%printf('(i3)          (e11.4)', pl='n', ints=[micro_iteration], &
-                            reals=[residual_norm], fs='(t6,a)')
+         call output%printf('n', '(i3)          (e11.4)', &
+                            ints=[micro_iteration], reals=[residual_norm], fs='(t6,a)')
+!
+         call micro_iteration_timer%turn_off()
+         call micro_iteration_timer%reset()
 !
       enddo
 !
@@ -474,19 +487,28 @@ contains
 !
       call mem%dealloc(minus_omega, wf%n_gs_amplitudes)
 !
+      call timer%turn_off()
+!
    end subroutine do_micro_iterations_newton_raphson_cc_gs
 !
 !
-   subroutine cleanup_newton_raphson_cc_gs(wf)
+   subroutine cleanup_newton_raphson_cc_gs(solver, wf)
 !!
 !! 	Cleanup 
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
+      class(newton_raphson_cc_gs) :: solver 
+!
       class(ccs) :: wf
 !
-      call wf%save_amplitudes()  
+      call output%printf('m', '- Finished solving the (a0) ground state equations', &
+                         chars=[convert_to_uppercase(wf%name_)], fs='(/t3, a)')
+!
+      call wf%save_amplitudes()
+!
+      call solver%timer%turn_off() 
 !
    end subroutine cleanup_newton_raphson_cc_gs
 !
@@ -500,9 +522,10 @@ contains
 !
       class(newton_raphson_cc_gs) :: solver 
 !
-      call output%printf(solver%tag, pl='m', fs='(//t3,a)')
-      call output%printf(solver%author, pl='m')
-      call output%printf(solver%description1, pl='m', ffs='(/t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
+      call output%printf('m', solver%description1, ffs='(/t3,a)')
 !
    end subroutine print_banner_newton_raphson_cc_gs
 !

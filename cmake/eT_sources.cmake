@@ -1,7 +1,7 @@
 #
 #
 #   eT - a coupled cluster program
-#   Copyright (C) 2016-2019 the authors of eT
+#   Copyright (C) 2016-2020 the authors of eT
 #
 #   eT is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -20,15 +20,13 @@
 set(eT_fortran_sources
    src/eT_program.F90
 #
-   external/PCMSolver-api/pcmsolver.f90
-#
    src/engines/abstract_engine_class.F90
    src/engines/reference_engine_class.F90
    src/engines/hf_geoopt_engine_class.F90
    src/engines/gs_engine_class.F90
    src/engines/es_engine_class.F90
-   src/engines/zop_engine_class.F90
-   src/engines/fop_engine_class.F90
+   src/engines/mean_value_engine_class.F90
+   src/engines/response_engine_class.F90
    src/engines/td_engine_class.F90
 #
    src/integrals/mo_integral_tool_class.F90
@@ -116,19 +114,30 @@ set(eT_fortran_sources
    src/tools/record_storer/file_storer_class.F90
    src/tools/string_utilities.F90
    src/tools/visualization_class.F90
+   src/tools/task_list_class.F90
 #
    src/various/butcher_tables.F90
    src/various/continuous_output_coefficients.F90
    src/various/kinds.F90
    src/various/parameters.F90
-   
+   src/various/angular_momentum.F90 
 #
    src/wavefunctions/wavefunction/wavefunction_class.F90
 
    src/wavefunctions/hf/frozen_orbital_hf.F90
    src/wavefunctions/hf/hf_class.F90  
    src/wavefunctions/hf/mo_hf.F90
+   src/wavefunctions/hf/set_get_hf.F90
+   src/wavefunctions/hf/initialize_destruct_hf.F90
+   src/wavefunctions/hf/ao_fock_hf.F90
+   src/wavefunctions/hf/file_handling_hf.F90
+#
    src/wavefunctions/uhf/uhf_class.F90
+   src/wavefunctions/uhf/initialize_destruct_uhf.F90
+   src/wavefunctions/uhf/set_get_uhf.F90
+   src/wavefunctions/uhf/file_handling_uhf.F90
+   src/wavefunctions/uhf/ao_fock_uhf.F90
+#
    src/wavefunctions/mlhf/mlhf_class.F90
 #
    src/wavefunctions/mp2/mp2_class.F90

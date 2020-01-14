@@ -63,7 +63,7 @@ for inp in ['ccsd_eom.inp']:
     ierr += run(options,
                 configure,
                 input_files=inp,
-                extra_args='-ks --scratch ./scratch',
+                extra_args='-save .',
                 filters={'out': f}) 
 
 # reset ierr: helpful if the first calculation is supposed to crash
@@ -81,7 +81,7 @@ for inp in ['restart_cc3_from_ccsd.inp']:
     ierr += run(options,
                 configure,
                 input_files=inp,
-                extra_args='--scratch ./scratch',
+                extra_args='-load ./ccsd_eom_restart_files',
                 filters={'out': f})
 
 sys.exit(ierr)

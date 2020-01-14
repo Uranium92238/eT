@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -36,9 +36,10 @@ module scf_hf_class
    use kinds
    use abstract_hf_solver_class
 !
-   use memory_manager_class, only : mem
-   use hf_class, only : hf
-   use array_utilities, only: get_abs_max
+   use hf_class,              only : hf
+   use memory_manager_class,  only : mem
+   use timings_class,         only : timings 
+   use array_utilities,       only : get_abs_max
 !
    implicit none
 !
@@ -50,11 +51,11 @@ module scf_hf_class
 !
    contains
 !
-      procedure :: run           => run_scf_hf
-      procedure :: cleanup       => cleanup_scf_hf
+      procedure :: run              => run_scf_hf
 !
-      procedure :: print_banner  => print_banner_scf_hf
-      procedure :: prepare       => prepare_scf_hf
+      procedure :: print_banner     => print_banner_scf_hf
+      procedure :: print_settings   => print_settings_scf_hf
+      procedure :: prepare          => prepare_scf_hf
 !
    end type scf_hf
 !
@@ -145,10 +146,13 @@ contains
 !
       class(hf) :: wf
 !
+      solver%timer = timings('SCF solver time', pl='minimal')
+      call solver%timer%turn_on()
+!
 !     Print solver banner
 !
-      solver%tag = 'Self-consistent field solver'
-      solver%author = 'E. F. Kjønstad and S, D. Folkestad, 2018'
+      solver%name_   = 'Self-consistent field solver'
+      solver%tag     = 'SCF'
 !
       solver%description = 'A Roothan-Hall self-consistent field solver. In each iteration, &
                                   &the Roothan-Hall equation (or equations for unrestricted HF theory) &
@@ -165,10 +169,7 @@ contains
 !
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
 !
-      call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
-!
-      call solver%print_hf_solver_settings()
-      call wf%print_screening_settings()
+      call solver%print_settings(wf)
 !
 !     Initialize orbital coefficients, densities, and Fock matrices (plural for unrestricted methods)
 !
@@ -181,15 +182,16 @@ contains
 !
       if (solver%restart) then
 !
-         call output%printf('- Requested restart. Reading orbitals from file',fs='(/t3,a)', pl='minimal')
+         call output%printf('m', '- Requested restart. Reading orbitals from file', &
+                            fs='(/t3,a)')
 !
          call wf%is_restart_safe('ground state')
          call wf%read_for_scf_restart()
 !
       else 
 !
-         call output%printf('- Setting initial AO density to '//trim(solver%ao_density_guess),&
-            fs='(/t3,a)',pl='minimal')
+         call output%printf('m', '- Setting initial AO density to &
+                            &'//trim(solver%ao_density_guess), fs='(/t3,a)')
 !
          call wf%write_scf_restart()
          call wf%set_initial_ao_density_guess(solver%ao_density_guess)
@@ -218,26 +220,25 @@ contains
 !
       integer :: iteration
 !
-      real(dp), dimension(:,:), allocatable :: h_wx
+      type(timings), allocatable :: iteration_timer
 !
       if (wf%n_ao == 1) then 
 !
          call solver%run_single_ao(wf)
-         call solver%print_summary(wf)
+         call wf%print_summary()
          return
 !
       endif 
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_h_wx(h_wx)
-!
 !     Construct first Fock from initial idempotent density 
 !
-      call wf%update_fock_and_energy(h_wx)
+      call wf%update_fock_and_energy()
 !
 !     :: Part I. Iterative SCF loop.
 !
-      iteration = 1
+      iteration_timer = timings('SCF iteration time', pl='normal')
+!
+      iteration = 0
 !
       converged            = .false.
       converged_energy     = .false.
@@ -245,10 +246,14 @@ contains
 !
       prev_energy = zero
 !
-      call output%printf('Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)',fs='(/t3,a)',pl='normal') 
+      call output%printf('n', 'Iteration       Energy (a.u.)      Max(grad.)    &
+                         &Delta E (a.u.)', fs='(/t3,a)')
       call output%print_separator('n', 63,'-')
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)
+!
+         iteration = iteration + 1
+         call iteration_timer%turn_on()
 !
          energy = wf%energy
 !
@@ -256,10 +261,9 @@ contains
 !
 !        Print current iteration information
 !
-         call output%printf('(i4)  (f25.12)    (e11.4)    (e11.4)', &
-               ints=[iteration], &
-               reals=[wf%energy, max_grad, abs(wf%energy-prev_energy)], &
-               fs='(t3,a)', pl='normal')
+         call output%printf('n', '(i4)  (f25.12)    (e11.4)    (e11.4)', &
+                            ints=[iteration], reals=[wf%energy, max_grad, &
+                            abs(wf%energy-prev_energy)], fs='(t3,a)')
 !
 !        Test for convergence:
 !
@@ -273,9 +277,11 @@ contains
          if (converged) then
 !
             call output%print_separator('n', 63,'-')
-            call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
 !
-            call solver%print_summary(wf)
+            call output%printf('n', 'Convergence criterion met in (i0) iterations!', &
+                               ints=[iteration], fs='(t3,a)')
+!
+            call wf%print_summary()
 !
          else
 !
@@ -283,18 +289,17 @@ contains
             call wf%update_ao_density()            ! C => D
 !
             prev_energy = wf%energy
-            call wf%update_fock_and_energy(h_wx)
+            call wf%update_fock_and_energy()
 !
          endif
 !
          call wf%save_orbital_coefficients()
          call wf%save_orbital_energies()
 !
-         iteration = iteration + 1
+         call iteration_timer%turn_off()
+         call iteration_timer%reset()
 !
       enddo
-!
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
       if (.not. converged) then
 !
@@ -304,43 +309,9 @@ contains
 !
       endif
 !
+      call solver%timer%turn_off()
+!
    end subroutine run_scf_hf
-!
-!
-   subroutine cleanup_scf_hf(solver, wf)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(scf_hf) :: solver
-!
-      class(hf) :: wf
-!
-      call output%printf('- Cleaning up (a0)', pl='normal', fs='(/t3,a)', &
-                        chars=[trim(solver%tag)] )
-!
-!     Save the orbitals to file & store restart information
-!
-      call wf%save_orbital_coefficients()
-!
-!     MO transform the AO Fock matrix
-!     [NB! This is bound to go wrong for UHF. We should generalize and overwrite. @todo]
-!
-      call wf%initialize_mo_fock()
-      call wf%construct_mo_fock()
-!
-!     Save AO density (or densities) to disk
-!
-      call wf%save_ao_density()
-!
-!     Final deallocations of solver
-!     (note that we keep certain arrays in the wavefunction for later)
-!
-      call wf%destruct_ao_overlap()
-!
-   end subroutine cleanup_scf_hf
 !
 !
    subroutine print_banner_scf_hf(solver)
@@ -352,12 +323,31 @@ contains
 !
       class(scf_hf) :: solver
 !
-      call output%printf(':: (a0)', pl='normal', fs='(//t3,a)',  chars=[trim(solver%tag)])
-      call output%printf(':: (a0)', pl='normal', fs='(t3,a)',    chars=[trim(solver%author)])
-      call output%printf('(a0)',    pl='normal', ffs='(/t3,a)',  chars=[trim(solver%warning)])
-      call output%printf('(a0)',    pl='normal', ffs='(/t3,a)',  chars=[trim(solver%description)])
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
+      call output%printf('n', '(a0)', ffs='(/t3,a)',  chars=[trim(solver%warning)])
+      call output%printf('n', '(a0)', ffs='(/t3,a)',  chars=[trim(solver%description)])
 !
    end subroutine print_banner_scf_hf
 !
+!
+   subroutine print_settings_scf_hf(solver, wf)
+!!
+!!    Print settings
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+      implicit none
+!
+      class(scf_hf), intent(in) :: solver
+!
+      class(hf), intent(in) :: wf
+!
+      call output%printf('m', '- Hartree-Fock solver settings:',fs='(/t3,a)')
+!
+      call solver%print_hf_solver_settings()
+      call wf%print_screening_settings()
+!
+   end subroutine print_settings_scf_hf
 !
 end module scf_hf_class

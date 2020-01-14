@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 submodule (mlcc2_class) jacobian_mlcc2
 !
 !!
-!!    Jacobian submodule (MLCC2)
+!!    Jacobian submodule 
 !!
 !!    ρ_i = A * c_i,
 !!
@@ -50,7 +50,14 @@ contains
 !
       class(mlcc2), intent(inout) :: wf 
 !
+      type(timings), allocatable :: timer
+!
+      timer = timings('Prepare for Jacobian transformation MLCC2', pl='normal')
+      call timer%turn_on()
+!
       call wf%save_jacobian_a1_intermediates(wf%n_cc2_o, wf%n_cc2_v, wf%first_cc2_o, wf%first_cc2_v)
+!
+      call timer%turn_off()
 !
    end subroutine prepare_for_jacobian_mlcc2
 !
@@ -90,9 +97,9 @@ contains
 !
       integer :: a, i
 !
-      type(timings) :: timer
+      type(timings), allocatable :: timer
 !
-      timer = timings('Jacobian transformation MLCC2')
+      timer = timings('Jacobian transformation MLCC2', pl='normal')
       call timer%turn_on()
 !
 !     Allocate and zero the transformed vector (singles part)
@@ -241,9 +248,9 @@ contains
 !
       integer :: a, i, c, k, b, j
 !
-      type(timings) :: timer
+      type(timings), allocatable :: timer
 !
-      timer = timings('jacobian mlcc2 a1')
+      timer = timings('Jacobian MLCC2 A1 transformation', pl='verbose')
       call timer%turn_on()
 !
 !     Term 1: sum_bjck L_kcjb u_aick c_bj 
@@ -434,9 +441,9 @@ contains
       type(batching_index) :: batch_c 
       integer              :: req0, req1, current_c_batch 
 !
-      type(timings) :: timer
+      type(timings), allocatable :: timer
 !
-      timer = timings('jacobian mlcc2 a2')
+      timer = timings('Jacobian MLCC2 A2 transformation', pl='verbose')
       call timer%turn_on()
 !
 !     Term 2: - sum_k c_bk g_kjai
@@ -466,7 +473,7 @@ contains
                   rho_aibj,               & ! rho_b_jai but we will symmetrize later
                   n_cc2_v)
 !
-      call mem%dealloc(g_kjai, n_cc2_o, n_cc2_o, n_cc2_v, n_cc2_o)
+      call mem%dealloc(g_kjai, wf%n_o, n_cc2_o, n_cc2_v, n_cc2_o)
 !
 !     Term 1: sum_c g_aibc c_cj
 !
@@ -573,9 +580,9 @@ contains
       integer              :: req0, req1, current_a_batch
       integer              :: a, b, i, j
 !
-      type(timings) :: timer
+      type(timings), allocatable :: timer
 !
-      timer = timings('jacobian mlcc2 b1')
+      timer = timings('Jacobian MLCC2 B1 transformation', pl='verbose')
       call timer%turn_on()
 !
 !     Terms 1 and 2: 2 sum_bj F_jb c_aibj - F_jb c_ajbi = sum_bj X_aijb F_jb 
@@ -758,9 +765,9 @@ contains
 !
       integer :: i, j, a, b
 !
-      type(timings) :: timer
+      type(timings), allocatable :: timer
 !
-      timer = timings('jacobian mlcc2 b2')
+      timer = timings('Jacobian MLCC2 B2 transformation', pl='verbose')
       call timer%turn_on()
 !
 !     c_aibj/(1/Δ_aibj) 
@@ -841,15 +848,15 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_jbkc, u_bkci, g_jckb
 !
-      type(timings) :: jacobian_a1_intermediate_timer
+      type(timings), allocatable :: timer
 !
       real(dp), dimension(:,:), allocatable :: Y_Ab
       real(dp), dimension(:,:), allocatable :: Y_jI
 !
       integer :: c, k, b, j
 !
-      jacobian_a1_intermediate_timer = timings('Jacobian mlcc2 A1 intermediate construction')
-      call jacobian_a1_intermediate_timer%turn_on()
+      timer = timings('Jacobian mlcc2 A1 intermediate construction', pl='verbose')
+      call timer%turn_on()
 !
 !     Construct integrals for both intermediates
 !
@@ -928,17 +935,18 @@ contains
                   Y_Ab,                   &
                   n_cc2_v)
 !
-
       call mem%dealloc(g_jckb, n_cc2_o, n_cc2_v, n_cc2_o, wf%n_v)
 !
       wf%jacobian_a1_intermediate_vv = sequential_file('jacobian_a1_intermediate_vv_doubles')
       call wf%jacobian_a1_intermediate_vv%open_('write', 'rewind')
 !
-      call wf%jacobian_a1_intermediate_vv%write_(Y_ab, n_cc2_v*wf%n_v)
+      call wf%jacobian_a1_intermediate_vv%write_(Y_Ab, n_cc2_v*wf%n_v)
 !
-      call mem%dealloc(Y_ab, n_cc2_v, wf%n_v)
+      call mem%dealloc(Y_Ab, n_cc2_v, wf%n_v)
 !
       call wf%jacobian_a1_intermediate_vv%close_('keep')
+!
+      call timer%turn_off()
 !
    end subroutine save_jacobian_a1_intermediates_mlcc2
 !

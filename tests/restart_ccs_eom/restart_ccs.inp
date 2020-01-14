@@ -1,10 +1,10 @@
 system
-   name: H2O-He
+   name: H2O He
    charge: 0
 end system
 
 do
-  fop
+  response
 end do
 
 memory
@@ -40,11 +40,11 @@ solver cc es
    energy threshold:   1.0d-11
 end solver cc es
 
-cc fop
+cc response
    eom
    dipole length
    transition moments
-end cc fop
+end cc response
 
 geometry
 basis: cc-pVDZ
