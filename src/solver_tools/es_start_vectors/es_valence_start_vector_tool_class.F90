@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -36,8 +36,6 @@ module es_valence_start_vector_tool_class
    type, extends(es_start_vector_tool) :: es_valence_start_vector_tool
 !
    contains
-!
-      final :: destructor
 !
    end type es_valence_start_vector_tool
 !
@@ -76,27 +74,13 @@ contains
 !
       call mem%alloc(lowest_eps, tool%n_vectors)
 !
-      call mem%alloc(tool%indices, tool%n_vectors)
+      allocate(tool%indices(tool%n_vectors))
       call get_n_lowest(tool%n_vectors, tool%vector_length, eps, lowest_eps, tool%indices)
 !
-      call mem%dealloc(lowest_eps, wf%n_singlet_states)
-      call mem%dealloc(eps, wf%n_es_amplitudes)
+      call mem%dealloc(lowest_eps, tool%n_vectors)
+      call mem%dealloc(eps, tool%vector_length)
 !
    end function new_es_valence_start_vector_tool
-!
-!
-   subroutine destructor(tool)
-!!
-!!    Destructor 
-!!    Written by Eirik F. Kjønstad, Sep 2019 
-!!
-      implicit none 
-!
-      type(es_valence_start_vector_tool) :: tool 
-!
-      call mem%dealloc(tool%indices, tool%n_vectors)
-!
-   end subroutine destructor
 !
 !
 end module es_valence_start_vector_tool_class

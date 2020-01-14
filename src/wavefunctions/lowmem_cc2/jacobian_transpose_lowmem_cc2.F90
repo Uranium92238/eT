@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (lowmem_cc2_class) jacobian_transpose
 !
 !!
-!!    Jacobian transpose submodule (CC2)
-!!    Written by Sarai Dery Folkestad, Jun 2019
+!!    Jacobian transpose submodule
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian transpose matrix
@@ -60,7 +59,12 @@ contains
       real(dp), dimension(:), allocatable :: eps_o
       real(dp), dimension(:), allocatable :: eps_v
 !
-      if(cvs) call output%error_msg('CVS not yet implemented for lowmem CC2.')
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Effective Jacobian transpose lowmem CC2', pl='normal')
+      call timer%turn_on()
+!
+      if (cvs) call output%error_msg('CVS not yet implemented for lowmem CC2.')
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -100,116 +104,9 @@ contains
       call copy_and_scale(one, sigma_ai, b, wf%n_t1)
       call mem%dealloc(sigma_ai, wf%n_v, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine effective_jacobian_transpose_transformation_lowmem_cc2
-!
-!
-   module subroutine jacobian_transpose_ccs_b1_lowmem_cc2(wf, sigma_ai, b_ai)
-!!
-!!    Jacobian transpose B1 (CCS)
-!!    Written by Sarai D. Folkestad, Jun 2019
-!!
-!!    Calculates the (CCS) B1 term of the Jacobian transpose 
-!!    transfromation. 
-!!
-!!       B1 = sum_bj L_bjia b_bj
-!!          = sum_bj (2 g_bjia b_bj - g_baij b_bj)
-!!    
-!!    This routine is overwritten in order to 
-!!    keep to the N^2 memory limit of lowmem-CC2
-!!
-      implicit none
-!
-      class(lowmem_cc2), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_ai
-!
-      integer :: req0, req1_j, req1_a, req2
-      integer :: current_a_batch, current_j_batch
-!
-      type(batching_index) batch_a, batch_j
-!
-      real(dp), dimension(:,:), allocatable :: sigma_ia
-      real(dp), dimension(:,:,:,:), allocatable :: L_bjia, g_baij
-!
-      integer :: i, a
-!
-      call mem%alloc(sigma_ia, wf%n_o, wf%n_v)
-      call zero_array(sigma_ia, wf%n_t1)
-!
-      req0 = 0
-!
-      req1_a = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
-      req1_j = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
-!
-      req2 = (wf%n_o)*(wf%n_v)*2
-!
-      batch_a = batching_index(wf%n_v)
-      batch_j = batching_index(wf%n_o)
-!
-      call mem%batch_setup(batch_a, batch_j, req0, req1_a, req1_j, req2)
-!
-      do current_a_batch = 1, batch_a%num_batches
-!
-         call batch_a%determine_limits(current_a_batch)
-!
-         do current_j_batch = 1, batch_j%num_batches
-!
-            call batch_j%determine_limits(current_j_batch)
-!
-            call mem%alloc(L_bjia, wf%n_v, batch_j%length, wf%n_o, batch_a%length)
-!
-            call wf%get_voov(L_bjia,                        &
-                              1, wf%n_v,                    &
-                              batch_j%first, batch_j%last,  &
-                              1, wf%n_o,                    &
-                              batch_a%first, batch_a%last)
-!
-            call dscal((wf%n_v)*(wf%n_o)*(batch_a%length)*(batch_j%length), two, L_bjia, 1)
-!
-            call mem%alloc(g_baij, wf%n_v, (batch_a%length), wf%n_o, (batch_j%length))
-!
-            call wf%get_vvoo(g_baij,                     &
-                           1, wf%n_v,                    &
-                           batch_a%first, batch_a%last,  &
-                           1, wf%n_o,                    &
-                           batch_j%first, batch_j%last)
-!
-            call add_1432_to_1234(-one, g_baij, L_bjia, wf%n_v, batch_j%length, wf%n_o, batch_a%length)
-!
-            call mem%dealloc(g_baij, wf%n_v, batch_a%length, wf%n_o, batch_j%length)
-!
-            call dgemm('N', 'N',                   &
-                        1,                         &
-                        wf%n_o*(batch_a%length),   &
-                        (batch_j%length)*(wf%n_v), &
-                        one,                       &
-                        b_ai(1, batch_j%first),    & ! b_bj
-                        1,                         &
-                        L_bjia,                    &
-                        (batch_j%length)*(wf%n_v), &
-                        one,                       &
-                        sigma_ia(1, batch_a%first),&
-                        1)
-!
-            call mem%dealloc(L_bjia, wf%n_v, batch_j%length, wf%n_o, batch_a%length)
-!
-         enddo ! batch j
-      enddo ! batch a
-!
-!$omp parallel do private(a, i)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            sigma_ai(a,i) = sigma_ai(a,i) + sigma_ia(i,a)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call mem%dealloc(sigma_ia, wf%n_o, wf%n_v)
-!
-   end subroutine jacobian_transpose_ccs_b1_lowmem_cc2
 !
 !
    module subroutine jacobian_transpose_cc2_a1_lowmem_cc2(wf, sigma_ai, b_ai, eps_o, eps_v)
@@ -257,6 +154,11 @@ contains
       integer :: current_i_batch, current_j_batch, current_k_batch
 !
       type(batching_index) :: batch_i, batch_j, batch_k
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CC2 A1', pl='verbose')
+      call timer%turn_on()
 !
       req0 = 0
 !
@@ -450,6 +352,8 @@ contains
 !
       call mem%dealloc(X_ck, wf%n_v, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_cc2_a1_lowmem_cc2
 !
 !
@@ -490,6 +394,11 @@ contains
       integer :: current_b_batch, current_c_batch
 !
       type(batching_index) :: batch_b, batch_c
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CC2 B1', pl='verbose')
+      call timer%turn_on()
 !
       req0 = 0
 !
@@ -591,6 +500,8 @@ contains
 !
       call mem%dealloc(X_ij, wf%n_o, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_cc2_b1_lowmem_cc2
 !
 !
@@ -624,6 +535,11 @@ contains
       integer :: i, j, b, c
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_bjci, g_bjca
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Effective jacobian transpose CC2 A1', pl='verbose')
+      call timer%turn_on()
 !     
       req0 = 0
 !
@@ -693,6 +609,8 @@ contains
          enddo
       enddo
 !
+      call timer%turn_off()
+!
    end subroutine effective_jacobian_transpose_cc2_a1_lowmem_cc2
 !
 !
@@ -726,13 +644,18 @@ contains
       integer :: i, j, b, c
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_bjca, Y_bjci, X_icjb, X_jbic, g_dcjb, g_dbic
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Effective jacobian transpose CC2 B1', pl='verbose')
+      call timer%turn_on()
 !     
-     req0 = 0
+      req0 = 0
 !
-     req1_b = max((wf%integrals%n_J)*wf%n_v, (wf%integrals%n_J)*wf%n_o)
-     req1_c = max((wf%integrals%n_J)*wf%n_v, (wf%integrals%n_J)*wf%n_o)
+      req1_b = max((wf%integrals%n_J)*wf%n_v, (wf%integrals%n_J)*wf%n_o)
+      req1_c = max((wf%integrals%n_J)*wf%n_v, (wf%integrals%n_J)*wf%n_o)
 !
-     req2 = 3*(wf%n_v)*(wf%n_o)
+      req2 = 3*(wf%n_v)*(wf%n_o)
 !
       batch_b = batching_index(wf%n_v)
       batch_c = batching_index(wf%n_v)
@@ -854,6 +777,8 @@ contains
          enddo
       enddo
 !
+      call timer%turn_off()
+!
    end subroutine effective_jacobian_transpose_cc2_b1_lowmem_cc2
 !
 !
@@ -887,6 +812,11 @@ contains
       integer :: req0, req1_k, req1_c, req1_b, req2_kb, req2_kc, req2_bc, req3
 !
       integer :: i, j, c, b
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Effective jacobian transpose CC2 C1', pl='verbose')
+      call timer%turn_on()
 !
       req0 = 0
 !
@@ -1045,6 +975,8 @@ contains
          enddo
       enddo
 !
+      call timer%turn_off()
+!
    end subroutine effective_jacobian_transpose_cc2_c1_lowmem_cc2
 !
 !
@@ -1078,6 +1010,11 @@ contains
       integer :: k, j, b, a
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_akbj, g_ikbj
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Effective jacobian transpose CC2 D1', pl='verbose')
+      call timer%turn_on()
 !     
       req0 = 0
 !
@@ -1147,6 +1084,8 @@ contains
          enddo
       enddo
 !
+      call timer%turn_off()
+!
    end subroutine effective_jacobian_transpose_cc2_d1_lowmem_cc2
 !
 !
@@ -1181,6 +1120,11 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: Y_akbj, X_jbka, X_kajb, g_jbkl, g_kajl, g_ikbj
 !     
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Effective jacobian transpose CC2 E1', pl='verbose')
+      call timer%turn_on()
+!
       req0 = 0
 !
       req1_j = (wf%integrals%n_J)*wf%n_v
@@ -1257,7 +1201,7 @@ contains
                         X_kajb,                                   &
                         wf%n_v*(batch_k%length)*(batch_j%length))
 !
-            call mem%dealloc(g_kajl, batch_j%length, wf%n_v, batch_k%length, wf%n_o)
+            call mem%dealloc(g_kajl, batch_k%length, wf%n_v, batch_j%length, wf%n_o)
 !
             call add_2143_to_1234(two, X_kajb, Y_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
             call add_2341_to_1234(-one, X_kajb, Y_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
@@ -1306,6 +1250,8 @@ contains
          enddo
       enddo
 !
+      call timer%turn_off()
+!
    end subroutine effective_jacobian_transpose_cc2_e1_lowmem_cc2
 !
 !
@@ -1339,6 +1285,11 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_akbj, Y_kajb, Y_jbka
       real(dp), dimension(:,:,:,:), allocatable :: L_cajb, L_cbka, g_cajb, g_cbka, g_ikbj
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Effective jacobian transpose CC2 F1', pl='verbose')
+      call timer%turn_on()
 !
       req0 = 0
 !
@@ -1491,7 +1442,9 @@ contains
             call mem%dealloc(X_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
 !
          enddo
-      enddo   
+      enddo 
+!
+      call timer%turn_off()  
 !
    end subroutine effective_jacobian_transpose_cc2_f1_lowmem_cc2
 !

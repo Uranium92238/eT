@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (cc2_class) jacobian_cc2
 !
 !!
-!!    Jacobian submodule (CC2)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
+!!    Jacobian submodule
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian matrix 
@@ -48,9 +47,16 @@ contains
 !
       class(cc2), intent(inout) :: wf
 !
+      type(timings), allocatable :: timer
+!
+      timer = timings('Prepare for Jacobian CC2', pl='normal')
+      call timer%turn_on()
+!
       call wf%initialize_t2()
       call wf%construct_t2()
       call wf%save_jacobian_a1_intermediates()
+!
+      call timer%turn_off()
 !
    end subroutine prepare_for_jacobian_cc2
 !
@@ -87,7 +93,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = timings('Jacobian transformation CC2')
+      timer = timings('Jacobian transformation CC2', pl='normal')
       call timer%turn_on()
 !
 !     Allocate and zero the transformed vector (singles part)
@@ -182,7 +188,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = timings('jacobian cc2 b2')
+      timer = timings('Jacobian CC2 B2', pl='verbose')
       call timer%turn_on()
 !
 !     c_aibj/(1/Δ_aibj) 

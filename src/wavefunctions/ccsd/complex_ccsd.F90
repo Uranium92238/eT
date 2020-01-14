@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@ submodule (ccsd_class) complex_ccsd
 !
 !!
 !!    Complex submodule (CCSD)
-!!    Set up by Andreas Skeidsvoll, Sep 2019
 !!
 !!    Gathers routines that makes the CCSD wavefunction complex, and that are otherwise related to
 !!    the complex wavefunction.
@@ -46,6 +45,21 @@ contains
       call wf%make_doubles_complex()
 !
    end subroutine make_complex_ccsd
+!
+!
+   module subroutine cleanup_complex_ccsd(wf)
+!!
+!!    Make complex (CCSD)
+!!    Written by Andreas Skeidsvoll, Sep 2019
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+!
+      call wf%cleanup_ccs_complex()
+      call wf%cleanup_doubles_complex()
+!
+   end subroutine cleanup_complex_ccsd
 !
 !
    module subroutine construct_complex_time_derivative_amplitudes_ccsd(wf, ddt_amplitudes)

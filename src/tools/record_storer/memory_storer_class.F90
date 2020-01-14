@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -151,8 +151,8 @@ contains
 !
       integer :: I 
 !
-      call output%printf('Doing preparations for memory storer (a0)', pl='debug', &
-                           chars=[storer%name_], fs='(/t3,a)')
+      call output%printf('debug', 'Doing preparations for memory storer (a0)', &
+                         chars=[storer%name_], fs='(/t3,a)')
 !
 !     Set up index array telling us which record is 
 !     stored in which position
@@ -183,8 +183,8 @@ contains
 !
       class(memory_storer) :: storer 
 !
-      call output%printf('Doing finalizations for memory storer (a0)', pl='debug', &
-                           chars=[storer%name_], fs='(/t3,a)')
+      call output%printf('debug', 'Doing finalizations for memory storer (a0)', &
+                         chars=[storer%name_], fs='(/t3,a)')
 !
       call mem%dealloc(storer%record_indices, storer%n_records)
       call mem%dealloc(storer%array, storer%record_dim, storer%n_records)

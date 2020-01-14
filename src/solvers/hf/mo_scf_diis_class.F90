@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -53,15 +53,18 @@ module mo_scf_diis_class
       character(len=200) :: storage
       logical :: records_in_memory
 !
+      logical  :: cumulative
+      real(dp) :: cumulative_threshold
+!
    contains
 !
       procedure :: prepare                      => prepare_mo_scf_diis
       procedure :: run                          => run_mo_scf_diis
-      procedure :: cleanup                      => cleanup_mo_scf_diis
 !
       procedure :: read_settings                => read_settings_mo_scf_diis
       procedure :: read_mo_scf_diis_settings    => read_mo_scf_diis_settings_mo_scf_diis
 !
+      procedure :: print_settings               => print_settings_mo_scf_diis
       procedure :: print_mo_scf_diis_settings   => print_mo_scf_diis_settings_mo_scf_diis
 !
       procedure, private :: update_diis_history => update_diis_history_mo_scf_diis
@@ -94,13 +97,15 @@ contains
 !
 !     Set standard settings
 !
-      solver%restart            = restart
-      solver%diis_dimension     = 8
-      solver%max_iterations     = 100
-      solver%ao_density_guess   = 'SAD'
-      solver%energy_threshold   = 1.0D-6
-      solver%gradient_threshold = 1.0D-6
-      solver%storage            = 'memory'
+      solver%restart                = restart
+      solver%diis_dimension         = 8
+      solver%max_iterations         = 100
+      solver%ao_density_guess       = 'SAD'
+      solver%energy_threshold       = 1.0D-6
+      solver%gradient_threshold     = 1.0D-6
+      solver%storage                = 'memory'
+      solver%cumulative             = .false.
+      solver%cumulative_threshold   = 1.0d0
 !
       call solver%read_settings()
 !
@@ -120,8 +125,9 @@ contains
 !
       class(hf) :: wf
 !
-      solver%tag           = 'MO Self-consistent field DIIS Hartree-Fock solver'
-      solver%author        = 'E. F. Kjønstad and S, D. Folkestad, 2018'
+      solver%name_         = 'MO Self-consistent field DIIS Hartree-Fock solver'
+      solver%tag           = 'MO SCF DIIS'
+!
       solver%description   = 'A DIIS-accelerated Roothan-Hall self-consistent field solver. &
                               &A least-square DIIS fit is performed on the previous Fock matrices and &
                               &associated gradients. Following the Roothan-Hall update of the density, &
@@ -135,11 +141,7 @@ contains
 !
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
 !
-      call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
-!
-      call solver%print_mo_scf_diis_settings()
-      call solver%print_hf_solver_settings()
-      call wf%print_screening_settings()
+      call solver%print_settings(wf)
 !
 !     Initialize the orbitals, density, and the Fock matrix (or matrices)
 !
@@ -149,16 +151,16 @@ contains
 !
       if (solver%restart) then
 !
-         call output%printf('- Requested restart. Reading orbitals from file',fs='(/t3,a)', pl='minimal')
+         call output%printf('m', '- Requested restart. Reading orbitals from file', &
+                            fs='(/t3,a)')
 !
          call wf%is_restart_safe('ground state')
-         call wf%read_for_scf_restart()
+         call wf%read_for_scf_restart_mo()
 !
       else
 !
-         call output%printf('- Setting initial AO density to (a0)',&
-            chars=[solver%ao_density_guess], &
-            fs='(/t3,a)', pl='minimal')
+         call output%printf('m', '- Setting initial AO density to (a0)', &
+                            chars=[solver%ao_density_guess], fs='(/t3,a)')
 !
          call wf%write_scf_restart()
          call wf%set_initial_ao_density_guess(solver%ao_density_guess)
@@ -211,7 +213,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable  :: F
       real(dp), dimension(:,:), allocatable  :: G
-      real(dp), dimension(:,:), allocatable  :: h_wx
+      real(dp), dimension(:,:), allocatable  :: prev_ao_density
 !
       integer :: dim_gradient, dim_fock
 !
@@ -219,15 +221,12 @@ contains
 !
 !     :: Part I. Preparations.
 !
-      iteration_timer = timings('MO SCF DIIS iteration time')
-      solver_timer = timings('MO SCF DIIS solver time')
+      iteration_timer = timings('MO SCF DIIS iteration time', pl='normal')
+      solver_timer = timings('MO SCF DIIS solver time', pl='minimal')
 !
       call solver_timer%turn_on()
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_h_wx(h_wx)
-!
-      call wf%update_fock_and_energy_mo(h_wx)
+      call wf%update_fock_and_energy_mo()
 !
 !     Initialize the DIIS manager object
 !
@@ -245,6 +244,7 @@ contains
 !
       call mem%alloc(G, wf%n_v, wf%n_o)
       call mem%alloc(F, wf%n_mo, wf%n_mo)
+      call mem%alloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
 !
       call wf%get_roothan_hall_mo_gradient(G)
 !
@@ -261,7 +261,8 @@ contains
 !
       prev_energy = zero
 !
-      call output%printf('Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)',fs='(/t3,a)',pl='normal') 
+      call output%printf('n', 'Iteration       Energy (a.u.)      Max(grad.)    &
+                         &Delta E (a.u.)', fs='(/t3,a)')
       call output%print_separator('n', 63,'-')
 !
       iteration = 1
@@ -274,10 +275,9 @@ contains
 !
          energy = wf%energy
 !
-         call output%printf('(i4)  (f25.12)    (e11.4)    (e11.4)', &
-               ints=[iteration], &
-               reals=[wf%energy, max_grad, abs(wf%energy-prev_energy)], &
-               fs='(t3,a)', pl='normal')
+         call output%printf('n', '(i4)  (f25.12)    (e11.4)    (e11.4)', &
+                            ints=[iteration], reals=[wf%energy, max_grad, &
+                            abs(wf%energy-prev_energy)], fs='(t3,a)')
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !
@@ -292,28 +292,54 @@ contains
 !
             call output%print_separator('n', 63,'-')
 !
-            call output%printf('Convergence criterion met in (i0) iterations!',&
-               ints=[iteration],fs='(t3,a)', pl='normal')
+            call output%printf('n', 'Convergence criterion met in (i0) iterations!', &
+                               ints=[iteration], fs='(t3,a)')
 !
             if (.not. converged_energy) then
 !
-               call output%printf('Note: the gradient converged in the first iteration, &
-                                 & so the energy convergence has not been tested!', &
-                                 ffs='(/t3,a)', pl='normal')
+               call output%printf('n', 'Note: the gradient converged in the &
+                                  &first iteration,  so the energy convergence &
+                                  &has not been tested!', ffs='(/t3,a)')
 !
             endif
 !
-            call solver%print_summary(wf)
+            call wf%print_summary()
 !
          else
 !
             prev_energy = wf%energy
 !
+!           Switch to cumulative Fock construction?
+!
+            if (.not. solver%cumulative .and. &
+                max_grad .lt. solver%cumulative_threshold) then 
+!
+               solver%cumulative = .true.
+!
+               call output%printf('v', 'Switching to Fock construction using &
+                                  &density differences.', fs='(t3,a)')
+!
+            endif
+!
+            if (solver%cumulative) call wf%get_ao_density_sq(prev_ao_density)
+!
 !           Update Fock, coefficients, density and gradient
 !
             call wf%roothan_hall_update_orbitals_mo()  ! DIIS F => C
             call wf%update_ao_density()                ! C => D
-            call wf%update_fock_and_energy_mo(h_wx)    ! MO F
+!
+!           Construct updated Fock matrix from the density 
+!
+            if (solver%cumulative) then 
+!
+               call wf%update_fock_and_energy_mo(prev_ao_density) ! MO F
+!
+            else 
+!
+               call wf%update_fock_and_energy_mo() ! MO F
+!
+            endif
+!      
             call wf%get_roothan_hall_mo_gradient(G)    ! MO G
             max_grad = get_abs_max(G, dim_gradient)
 !
@@ -344,8 +370,7 @@ contains
 !
       call mem%dealloc(G, wf%n_v, wf%n_o)
       call mem%dealloc(F, wf%n_mo, wf%n_mo)
-!
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
 !
 !     Initialize engine (make final deallocations, and other stuff)
 !
@@ -373,35 +398,10 @@ contains
 !
       class(mo_scf_diis) :: solver
 !
-      call output%printf('DIIS dimension:                (i0)', &
-         ints=[solver%diis_dimension],fs='(t6,a)', pl='minimal')
+      call output%printf('m', 'DIIS dimension:               (i11)', &
+                         ints=[solver%diis_dimension], fs='(/t6,a)')
 !
    end subroutine print_mo_scf_diis_settings_mo_scf_diis
-!
-!
-   subroutine cleanup_mo_scf_diis(solver, wf)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(mo_scf_diis) :: solver
-!
-      class(hf) :: wf
-!
-      call output%printf('- Cleaning up (a0)',chars=[solver%tag], fs='(/t3, a)', pl='verbose')
-!
-!     Save the orbitals to file & store restart information
-!
-      call wf%save_orbital_coefficients()
-      call wf%save_orbital_energies()
-!
-!     Save AO density (or densities) to disk 
-!
-      call wf%save_ao_density()
-!
-   end subroutine cleanup_mo_scf_diis
 !
 !
    subroutine read_settings_mo_scf_diis(solver)
@@ -555,6 +555,26 @@ contains
       call mem%dealloc(Y_i, wf%n_v, wf%n_o)
 !
    end subroutine update_diis_history_mo_scf_diis
+!
+!
+   subroutine print_settings_mo_scf_diis(solver, wf)
+!!
+!!    Print settings
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+      implicit none
+!
+      class(mo_scf_diis), intent(in) :: solver
+!
+      class(hf), intent(in) :: wf
+!
+      call output%printf('m', '- Hartree-Fock solver settings:',fs='(/t3,a)')
+!
+      call solver%print_mo_scf_diis_settings()
+      call solver%print_hf_solver_settings()
+      call wf%print_screening_settings()
+!
+   end subroutine print_settings_mo_scf_diis
 !
 !
 end module mo_scf_diis_class

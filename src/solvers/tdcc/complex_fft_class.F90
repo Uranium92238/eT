@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -36,8 +36,8 @@ module complex_fft_class
 !!
 !!    real_angular_frequency real_x_val imag_x_val real_y_val imag_y_val real_z_val imag_z_val
 !!
-!! The complex fast Fourier transformation itself is done using a modified version of modern FFTPACK
-!! by Jon Lo Kim Lin
+!! The complex fast Fourier transformation itself is done using a modified version of modern
+!! FFTPACK by Jon Lo Kim Lin
 !!
 !
    use fftpack_complex_forward_1d
@@ -52,7 +52,7 @@ module complex_fft_class
 !
    type :: complex_fft
 !
-      character(len=100) :: name_, tag, author, file_name
+      character(len=100) :: name_, tag, file_name
 !
       character(len=500) :: description
       character(len=500) :: summary
@@ -100,17 +100,20 @@ contains
       solver%tag = trim(tag)
 !
       solver%name_ = 'Complex FFT ' // trim(solver%tag) // ' solver'
-      solver%author = 'A. Skeidsvoll, 2019'
-      solver%description = 'A solver that calculates the complex fast Fourier transform (FFT) of the ' // trim(solver%tag) // &
-                           ' time series by using modified FFTPACK routines.'
-      solver%summary = 'Complex FFT finished successfully, angular frequency series has been written to file.'
+      solver%description = 'A solver that calculates the complex fast Fourier transform (FFT) '  &
+                           // 'of the ' // trim(solver%tag) // ' time series by using modified ' &
+                           // 'FFTPACK routines.'
+      solver%summary = 'Complex FFT finished successfully, angular frequency series has been ' &
+                       // 'written to file.'
 !
       call solver%print_banner()
 !
       call solver%read_settings()
 !
       solver%time_series_file = sequential_file(trim(solver%file_name), 'formatted')
-      solver%angular_frequency_series_file = sequential_file('complex_fft_' // trim(solver%file_name) // '_to_angular_frequency', &
+      solver%angular_frequency_series_file = sequential_file('complex_fft_'              &
+                                                             // trim(solver%file_name)   &
+                                                             // '_to_angular_frequency', &
                                                              'formatted')
 !
    end function new_complex_fft
@@ -121,7 +124,8 @@ contains
 !!    Run complex FFT
 !!    Written by Andreas Skeidsvoll, Feb 2019
 !!
-!!    Do the complex fast Fourier transform (complex FFT) of the time series to get an angular frequency spectrum.
+!!    Do the complex fast Fourier transform (complex FFT) of the time series to get an angular
+!!    frequency spectrum.
 !!
       use iso_fortran_env, only: iostat_end
 !
@@ -183,7 +187,7 @@ contains
 !
          endif
 !
-         n_complex_fft_lines = 1
+         n_complex_fft_lines = n_complex_fft_lines + 1
 !
       enddo
 !
@@ -237,7 +241,7 @@ contains
                   error_index)
 !
       if (error_index .ne. 0) then
-            call output%error_msg('could not initialize work_save_array, which is used used for FFT')
+         call output%error_msg('could not initialize work_save_array, which is used used for FFT')
       endif
 !
 !     Do complex FFT of time series using FFTPACK
@@ -331,9 +335,10 @@ contains
 !
       class(complex_fft) :: solver
 !
-      call output%printf(':: ' // solver%name_, pl='minimal', fs='(//t3,a)')
-      call output%printf(':: ' // solver%author, pl='minimal', fs='(t3,a)')
-      call output%printf(solver%description, pl='normal', ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
+      call output%printf('n', solver%description, ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_complex_fft
 !
@@ -349,7 +354,7 @@ contains
 !
       class(complex_fft) :: solver
 !
-      call output%printf(solver%summary, pl='normal', ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('n', solver%summary, ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_summary_complex_fft
 !
@@ -363,8 +368,10 @@ contains
 !!
 !!    Settings:
 !!
-!!    initial time: the solver starts considering the values of the time series when reaching this time
-!!    final time:   the solver stops considering the values of the time series when reaching this time
+!!    initial time: the solver starts considering the values of the time series when reaching this
+!!                  time
+!!    final time:   the solver stops considering the values of the time series when reaching this
+!!                  time
 !!    time step:    the temporal spacing between the values of the time series
 !!
       implicit none

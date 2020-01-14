@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,12 +20,11 @@
 submodule (ccsd_class) omega_ccsd_complex
 !
 !!
-!!    Omega submodule (CCSD)
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
+!!    Omega submodule
 !!
 !!    Routines to construct 
 !!
-!!    Ω =  < mu | exp(-T) H exp(T) | R >
+!!    Omega_mu =  < mu | exp(-T) H exp(T) | R >
 !!
 !!    Transfered to the current eT program from the first version 
 !!    of eT by Andreas Skeidsvoll and Sarai D. Folkestad, 2018.
@@ -54,6 +53,11 @@ contains
       complex(dp), dimension(:,:), allocatable :: omega1
       complex(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij
       complex(dp), dimension(:,:,:,:), allocatable :: omega_aibj, omega_abij
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Construct ccsd omega', pl='normal')
+      call timer%turn_on()
 !
 !     Construct singles contributions
 !
@@ -102,6 +106,8 @@ contains
 !
       call packin(omega(wf%n_t1+1 : wf%n_gs_amplitudes), omega_abij, wf%n_v, wf%n_o)
       call mem%dealloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine construct_omega_ccsd_complex
 !
@@ -169,8 +175,8 @@ contains
 !
       type(timings) :: ccsd_a2_timer, ccsd_a2_integral_timer
 !
-      ccsd_a2_timer = timings('omega ccsd a2')
-      ccsd_a2_integral_timer = timings('omega ccsd a2 g_abcd')
+      ccsd_a2_timer = timings('omega ccsd a2', pl='verbose')
+      ccsd_a2_integral_timer = timings('omega ccsd a2 g_abcd', pl='verbose')
 !      
       call ccsd_a2_timer%turn_on()
 !
@@ -577,18 +583,9 @@ contains
       complex(dp), dimension(:,:,:,:), allocatable :: g_klij
       complex(dp), dimension(:,:,:,:), allocatable :: g_kilj
 !
-!     Reordered T2 apmlitudes
-!
-     ! complex(dp), dimension(:,:,:,:), allocatable :: t_cdij
-!
-!     Reordered omega
-!
-   !   complex(dp), dimension(:,:,:,:), allocatable :: omega_abij
-   !   complex(dp), dimension(:,:,:,:), allocatable :: omega_aibj
-!
       type(timings) :: ccsd_b2_timer
 !
-      ccsd_b2_timer = timings('omega ccsd b2')
+      ccsd_b2_timer = timings('omega ccsd b2', pl='verbose')
       call ccsd_b2_timer%turn_on()
 !
 !     Construct g_aibj and add to omega2 
@@ -718,7 +715,7 @@ contains
 !
       type(timings) :: ccsd_c2_timer
 !
-      ccsd_c2_timer = timings('omega ccsd c2')
+      ccsd_c2_timer = timings('omega ccsd c2', pl='verbose')
       call ccsd_c2_timer%turn_on()
 !
 !     Sort t_al_di = t_li^ad as t_aidl (1234 to 1432)
@@ -941,7 +938,7 @@ contains
 !
       type(timings) :: ccsd_d2_timer
 !
-      ccsd_d2_timer = timings('omega ccsd d2')
+      ccsd_d2_timer = timings('omega ccsd d2', pl='verbose')
       call ccsd_d2_timer%turn_on()
 !
 !     :: Calculate the D2.2 term of omega ::
@@ -1074,7 +1071,7 @@ contains
 !
       type(timings) :: ccsd_e2_timer 
 !
-      ccsd_e2_timer = timings('omega ccsd e2')
+      ccsd_e2_timer = timings('omega ccsd e2', pl='verbose')
       call ccsd_e2_timer%turn_on()
 !
 !     :: Calculate the E2.1 term of omega ::
@@ -1206,18 +1203,19 @@ contains
 !!    Construct u_aibj
 !!    Written by Tor S. Haugland, Nov 2019
 !!
-!!    Construct
+!!    Constructs 
+!!
 !!       u_aibj = 2t_aibj - t_ajbi
 !!
       implicit none
 !
-      class(ccsd),                  intent(inout)          :: wf
+      class(ccsd), intent(inout) :: wf
 !
       complex(dp), dimension(:,:,:,:), allocatable :: t_aibj
 !
       type(timings) :: timer
 !
-      timer = timings('Construct u_aibj', pl='debug')
+      timer = timings('Construct u_aibj', pl='verbose')
       call timer%turn_on()
 !
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)

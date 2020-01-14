@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -30,7 +30,6 @@
 !!    approximation and if CC is only done
 !!    for a localized region of a large molecule
 !!    which has been treated at HF level of theory.
-!!
 !!
       implicit none
 !
@@ -100,23 +99,7 @@
    end subroutine diagonalize_fock_frozen_hf_orbitals_hf
 !
 !
-   module subroutine prepare_frozen_fock_terms_hf(wf)
-!!
-!!    Prepare frozen Fock contributions
-!!    Written by Sarai D. Folkestad, Oct 2019
-!!
-!!    This routine prepares the frozen Fock contributions
-!!    to coupled cluster. This occurs e.g.,  in the cases where there
-!!    is a reduction in the number of MOs in CC compared to HF
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine prepare_frozen_fock_terms_hf
-!
-!
-   module subroutine construct_mo_fock_fc_term_hf(wf)
+   module subroutine construct_mo_fock_fc_term_hf(wf, mo_fc_fock)
 !!
 !!    Calculate MO Fock frozen core contribution
 !!    Written by Sarai D. Folkestad, Sep 2019
@@ -131,11 +114,12 @@
       implicit none
 !
       class(hf) :: wf
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: mo_fc_fock
 !
    end subroutine construct_mo_fock_fc_term_hf
 !
 !
-   module subroutine construct_mo_fock_frozen_hf_term_hf(wf)
+   module subroutine construct_mo_fock_frozen_hf_term_hf(wf, mo_frozen_hf_fock)
 !!
 !!    Construct MO fock frozen hf  contribution
 !!    Written by Ida-Marie Høyvik, Oct 2019
@@ -148,60 +132,12 @@
 !!
 !!    in preparation of CC in subspace.
 !!
-!!
       implicit none
 !
       class(hf) :: wf
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: mo_frozen_hf_fock
 !
    end subroutine construct_mo_fock_frozen_hf_term_hf
-!
-!
-   module subroutine initialize_orbital_coefficients_frozen_hf_hf(wf)
-!!
-!!    Initialize orbital coefficients frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_orbital_coefficients_frozen_hf_hf
-!
-!
-   module subroutine destruct_orbital_coefficients_frozen_hf_hf(wf)
-!!
-!!    Destruct orbital coefficients frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_orbital_coefficients_frozen_hf_hf
-!
-!
-   module subroutine initialize_orbital_coefficients_fc_hf(wf)
-!!
-!!    Initialize orbital coefficients frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_orbital_coefficients_fc_hf
-!
-!
-   module subroutine destruct_orbital_coefficients_fc_hf(wf)
-!!
-!!    Destruct orbital coefficients frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_orbital_coefficients_fc_hf
 !
 !
    module function get_n_active_hf_atoms_hf(wf) result(n_active_hf_atoms)
@@ -217,4 +153,21 @@
 !
       class(hf), intent(in) :: wf
       integer :: n_active_hf_atoms
+!
    end function get_n_active_hf_atoms_hf
+!
+!
+   module subroutine get_full_idempotent_density_hf(wf, D)
+!!
+!!    Get full idempotent density
+!!    Written by Sarai D. Folkestad, Jan 2020
+!!
+!!    Constructs the full idempotent, occupied density
+!!    for determining the frozen HF virtuals
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+      real(dp), dimension(wf%n_ao,wf%n_ao), intent(out) :: D
+!
+   end subroutine get_full_idempotent_density_hf

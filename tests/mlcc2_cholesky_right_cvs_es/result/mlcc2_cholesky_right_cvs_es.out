@@ -1,50 +1,88 @@
 
 
 
-                       eT - a coupled cluster program 
-       Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch
+                     eT - an electronic structure program
 
-  ----------------------------------------------------------------------------------
-   Author:                Contribution(s):
-  ----------------------------------------------------------------------------------
-   Josefine H. Andersen   first order properties
-   Sarai D. Folkestad     program design, HF, CCS, CC2, CCSD, libint-interface,
-                          Cholesky decomposition, Davidson-tool, CVS, DIIS-tool
-                          zeroth order properties, first order properties, IP
-                          frozen core, MLCC2
-   Tommaso Giovannini     QM/MM
-   Linda Goletto          CC2
-   Eirik F. Kjønstad      program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,
-                          Cholesky decomposition, Libint-interface, Davidson-tool
-                          zeroth order properties, first order properties,       
-                          BFGS-tool                                              
-   Rolf H. Myhre          CC3, Runtest-interface, launch script, file system
-   Alexander Paul         CC2, CC3, first order properties
-   Andreas Skeidsvoll     MP2
-   Åsmund H. Tveten       HF
-  ----------------------------------------------------------------------------------
-   Other contributors: A. Balbi, M. Scavino
-
-  Running on 4 OMP threads
-
-  Memory available for calculation:         8 GB
-  Disk space available for calculation:   300 GB
-
-     Active atoms:
-     --------------------------------------
-      Atom   Symbol       Basis     Method
-     --------------------------------------
-        3      O       cc-pvdz       cc2
-     --------------------------------------
-     Total number of active atoms:    1
-     OBS: Atoms will be reordered, active atoms first.
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
+   Å. H. Tveten
+  ------------------------------------------------------------------------
 
 
-  - Molecular system specifications:
+  :: Input file
+  ================
 
-     Name:         h2o-he
-     Charge:       0
-     Multiplicity: 1
+     Note: geometry section is excluded from this print
+
+     system
+        name: H2O He
+        charge: 0
+     end system
+
+     do
+       ground state
+       excited state
+     end do
+
+     memory
+        available: 8
+     end memory
+
+     solver cholesky
+        threshold: 1.0d-12
+     end solver cholesky
+
+     solver scf
+        algorithm:          scf-diis
+        energy threshold:   1.0d-11
+        gradient threshold: 1.0d-11
+     end solver scf
+
+     method
+        hf
+        mlcc2
+     end method
+
+     solver cc gs
+        omega threshold:  1.0d-11
+        energy threshold: 1.0d-11
+     end solver cc gs
+
+     solver cc es
+        algorithm:          davidson
+        singlet states:     2
+        residual threshold: 1.0d-11
+        energy threshold:   1.0d-11
+        right eigenvectors
+        core excitation: {1}
+     end solver cc es
+
+     active atoms
+        selection type: list
+        cc2: {3}
+     end active atoms
+
+     mlcc
+        cc2 orbitals: cholesky
+        cholesky threshold: 1.0d-1
+     end mlcc
+
+
+  Running on 2 OMP thread(s)
+  Memory available for calculation: 8.000000 GB
+
+
+  :: Molecular system specifications
+  =====================================
+
+     Name:             h2o he
+     Charge:           0
+     Multiplicity:     1
+     Coordinate units: angstrom
 
      Pure basis functions:         29
      Cartesian basis functions:    30
@@ -53,260 +91,42 @@
      Nuclear repulsion energy (a.u.):             12.116100574587
      Bohr/angstrom value (CODATA 2010):            0.529177210920
 
+     Active atoms:
 
-    ====================================================================
-                               Geometry (Å)
-    ====================================================================
-    Atom         X                Y                Z             Basis
-    ====================================================================
-     O    0.000000000000  -0.075790000000   5.000000000000       cc-pvdz
-     H    0.866810000000   0.601440000000   5.000000000000       cc-pvdz
-     H   -0.866810000000   0.601440000000   5.000000000000       cc-pvdz
-     He   0.100000000000  -0.020000000000   7.530000000000       cc-pvdz
-    ====================================================================
-                             Geometry (a.u.)
-    ====================================================================
-    Atom         X                Y                Z             Basis
-    ====================================================================
-     O    0.000000000000  -0.143222342981   9.448630622825       cc-pvdz
-     H    1.638033502034   1.136556880358   9.448630622825       cc-pvdz
-     H   -1.638033502034   1.136556880358   9.448630622825       cc-pvdz
-     He   0.188972612457  -0.037794522491  14.229637717975       cc-pvdz
-    ====================================================================
+     ====================================
+        Atom              Basis   Method
+     ====================================
+        3 O             cc-pvdz    cc2
+     ====================================
+     Total number of active atoms: 1
+     OBS: Atoms will be reordered, active atoms first
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1 O      0.000000000000    -0.075790000000     5.000000000000        3
+        2 H      0.866810000000     0.601440000000     5.000000000000        1
+        3 H     -0.866810000000     0.601440000000     5.000000000000        2
+        4 He     0.100000000000    -0.020000000000     7.530000000000        4
+     ==============================================================================
 
-     Number of occupied orbitals:         6
-     Number of virtual orbitals:         23
-     Number of molecular orbitals:       29
-     Number of atomic orbitals:          29
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1 O      0.000000000000    -0.143222342981     9.448630622825        3
+        2 H      1.638033502034     1.136556880358     9.448630622825        1
+        3 H     -1.638033502034     1.136556880358     9.448630622825        2
+        4 He     0.188972612457    -0.037794522491    14.229637717975        4
+     ==============================================================================
 
-
-  :: Self-consistent field DIIS Hartree-Fock solver
-  :: E. F. Kjønstad and S, D. Folkestad, 2018
-
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock matrix 
-  is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-     DIIS dimension:                8
-     Energy threshold:              0.1000E-10
-     Gradient threshold:            0.1000E-10
-
-     Coulomb screening threshold:   0.1000E-13
-     Exchange screening threshold:  0.1000E-13
-     ERI integral precision:        0.1000E-27
-
-  - Setting initial AO density to SAD
-
-     Energy of initial guess:               -78.492022922278
-     Number of electrons in guess:           12.000000000000
-
-  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
-  ---------------------------------------------------------------
-     1           -78.796606526463     0.9053E-01     0.7880E+02
-     2           -78.828675823330     0.7128E-01     0.3207E-01
-     3           -78.843428154401     0.8290E-02     0.1475E-01
-     4           -78.843809541667     0.2414E-02     0.3814E-03
-     5           -78.843850846800     0.3301E-03     0.4131E-04
-     6           -78.843851669326     0.5527E-04     0.8225E-06
-     7           -78.843851692851     0.5865E-05     0.2353E-07
-     8           -78.843851693557     0.2356E-05     0.7053E-09
-     9           -78.843851693630     0.2071E-06     0.7384E-10
-    10           -78.843851693631     0.1594E-07     0.3411E-12
-    11           -78.843851693631     0.3322E-08     0.1137E-12
-    12           -78.843851693631     0.1197E-08     0.1421E-13
-    13           -78.843851693631     0.4264E-09     0.1421E-13
-    14           -78.843851693631     0.1280E-09     0.0000E+00
-    15           -78.843851693631     0.1479E-10     0.0000E+00
-    16           -78.843851693631     0.2908E-11     0.2842E-13
-  ---------------------------------------------------------------
-
-  Convergence criterion met in 16 iterations!
-
-  - Summary of HF wavefunction energetics (a.u.):
-
-     HOMO-LUMO gap:                 0.645629080248
-     Nuclear repulsion energy:     12.116100574587
-     Electronic energy:           -90.959952268218
-     Total energy:                -78.843851693631
-
-  - Molecular orbital energies:
-
-    1  -20.574269195145      2   -1.277667044968      3   -0.898849406810
-    4   -0.629870222690      5   -0.541641772852      6   -0.485872762832
-    7    0.159756317416      8    0.229311906283      9    0.704416610867
-   10    0.746260122914     11    1.155862024383     12    1.170770887076
-   13    1.267961746552     14    1.449847537220     15    1.463234913437
-   16    1.474444394527     17    1.682695299878     18    1.804186820052
-   19    1.902641648742     20    2.148883457168     21    2.200395756969
-   22    2.540321860021     23    2.541517310547     24    2.559338707350
-   25    3.175416260660     26    3.209661156313     27    3.328173215200
-   28    3.721936473470     29    3.985492632586
-
-  Printing 16 MOs (out of the total 29 MOs).
-
-  - Printing molecular orbitals: 1, 2, 3, 4
-
-     AO   Atom          1           2           3           4
-    ---------------------------------------------------------------
-     1   1 O (s)   -1.000739    0.005312    0.000110    0.000001
-     2   1 O (s)   -0.000619   -0.456473    0.012259    0.000033
-     3   1 O (s)    0.003381   -0.460793    0.014617    0.000067
-     4   1 O (p)    0.000000   -0.000012   -0.000896    0.474242
-     5   1 O (p)   -0.001443   -0.054123    0.002349    0.000028
-     6   1 O (p)    0.000005   -0.000431   -0.016254   -0.000025
-     7   1 O (p)   -0.000000   -0.000015   -0.000322    0.261952
-     8   1 O (p)    0.000875   -0.004804    0.001898    0.000031
-     9   1 O (p)    0.000002   -0.000038   -0.013336   -0.000070
-    10   1 O (d)    0.000000   -0.000001   -0.000022    0.023359
-    11   1 O (d)   -0.000002   -0.000010   -0.000390   -0.000002
-    12   1 O (d)   -0.000149    0.002929   -0.001182   -0.000007
-    13   1 O (d)   -0.000000   -0.000002   -0.000052   -0.000012
-    14   1 O (d)    0.000026   -0.000342    0.000050   -0.000001
-    15   2 H (s)   -0.000325   -0.140729    0.004085    0.299590
-    16   2 H (s)   -0.000460   -0.013665   -0.004414    0.118840
-    17   2 H (p)   -0.000150    0.026700   -0.000211   -0.022931
-    18   2 H (p)   -0.000207    0.016138    0.000030   -0.029318
-    19   2 H (p)   -0.000001   -0.000048   -0.001520    0.000014
-    20   3 H (s)   -0.000325   -0.140698    0.005313   -0.299533
-    21   3 H (s)   -0.000461   -0.013742   -0.003428   -0.118961
-    22   3 H (p)    0.000150   -0.026706    0.000333   -0.022935
-    23   3 H (p)   -0.000207    0.016140   -0.000166    0.029322
-    24   3 H (p)   -0.000001   -0.000048   -0.001280   -0.000022
-    25   4 He(s)    0.000032   -0.006652   -0.591799   -0.002040
-    26   4 He(s)   -0.000033   -0.007964   -0.512037   -0.001944
-    27   4 He(p)    0.000000    0.000025   -0.000115    0.000403
-    28   4 He(p)    0.000002    0.000004   -0.000970    0.000001
-    29   4 He(p)    0.000001    0.000710   -0.001363   -0.000104
-    ---------------------------------------------------------------
-
-  - Printing molecular orbitals: 5, 6, 7, 8
-
-     AO   Atom          5           6           7           8
-    ---------------------------------------------------------------
-     1   1 O (s)    0.001494   -0.000237   -0.046350   -0.000141
-     2   1 O (s)   -0.139081    0.000882    0.080112    0.000130
-     3   1 O (s)   -0.300118    0.005090    0.845883    0.002184
-     4   1 O (p)   -0.000011    0.000124   -0.000719    0.328394
-     5   1 O (p)    0.530018   -0.001267    0.246969    0.000735
-     6   1 O (p)    0.002830    0.637774   -0.005155   -0.000523
-     7   1 O (p)   -0.000036    0.000184   -0.001367    0.655086
-     8   1 O (p)    0.377695   -0.000176    0.388086    0.001062
-     9   1 O (p)    0.002167    0.498402   -0.001235   -0.000053
-    10   1 O (d)   -0.000003    0.000012   -0.000046    0.009841
-    11   1 O (d)    0.000062    0.016098   -0.000067   -0.000006
-    12   1 O (d)   -0.012540   -0.000113   -0.005406    0.000024
-    13   1 O (d)   -0.000002   -0.000006    0.000015    0.000023
-    14   1 O (d)   -0.011394    0.000055   -0.005244   -0.000022
-    15   2 H (s)    0.207381   -0.000367   -0.097969   -0.071158
-    16   2 H (s)    0.072812   -0.004196   -0.753944   -1.185226
-    17   2 H (p)   -0.028671    0.000368    0.002857    0.009777
-    18   2 H (p)    0.003426    0.000181    0.008900    0.002893
-    19   2 H (p)    0.000080    0.025374   -0.000275   -0.000032
-    20   3 H (s)    0.207420   -0.000503   -0.097751    0.070038
-    21   3 H (s)    0.072652   -0.003404   -0.759201    1.181626
-    22   3 H (p)    0.028660   -0.000331   -0.002956    0.009834
-    23   3 H (p)    0.003433    0.000154    0.008964   -0.002883
-    24   3 H (p)    0.000086    0.025399   -0.000358   -0.000034
-    25   4 He(s)    0.001476   -0.038607    0.033543    0.001869
-    26   4 He(s)   -0.005772   -0.024728    0.045989    0.004985
-    27   4 He(p)    0.000029   -0.000188    0.000042   -0.003447
-    28   4 He(p)    0.000572   -0.000147   -0.001248   -0.000182
-    29   4 He(p)    0.000524   -0.004042    0.004173    0.000256
-    ---------------------------------------------------------------
-
-  - Printing molecular orbitals: 9, 10, 11, 12
-
-     AO   Atom          9          10          11          12
-    ---------------------------------------------------------------
-     1   1 O (s)   -0.000418    0.079160    0.023170    0.018436
-     2   1 O (s)   -0.001383    0.248916    0.058331    0.138791
-     3   1 O (s)    0.001566   -0.346328   -0.075653    0.378174
-     4   1 O (p)    0.281907    0.001112    0.005687   -0.000075
-     5   1 O (p)   -0.001782    0.314957   -0.024181   -0.775026
-     6   1 O (p)    0.000433   -0.000532    0.883959   -0.045170
-     7   1 O (p)    0.239172    0.001266   -0.010073    0.000118
-     8   1 O (p)   -0.000355    0.040871    0.021089    1.074138
-     9   1 O (p)   -0.000353   -0.000787   -0.863502    0.044605
-    10   1 O (d)   -0.091605   -0.000467   -0.000245    0.000009
-    11   1 O (d)    0.000003   -0.000017   -0.005698    0.000362
-    12   1 O (d)   -0.000365    0.069168   -0.000051    0.004621
-    13   1 O (d)   -0.000014    0.000018   -0.000579    0.000011
-    14   1 O (d)    0.000216   -0.042047   -0.004562   -0.038101
-    15   2 H (s)   -0.927120   -0.874595   -0.035265   -0.334021
-    16   2 H (s)    0.866218    0.647772    0.055176   -0.095573
-    17   2 H (p)   -0.037289   -0.189767   -0.017130    0.017349
-    18   2 H (p)   -0.109727   -0.037978    0.010655    0.315387
-    19   2 H (p)    0.000006    0.000366   -0.099062    0.005535
-    20   3 H (s)    0.936398   -0.865104   -0.035907   -0.334105
-    21   3 H (s)   -0.872380    0.638222    0.041547   -0.095261
-    22   3 H (p)   -0.039305    0.189586    0.014093   -0.017334
-    23   3 H (p)    0.110225   -0.036957    0.012888    0.315349
-    24   3 H (p)    0.000078    0.000233   -0.094153    0.005441
-    25   4 He(s)   -0.004171   -0.093740    0.389816   -0.002641
-    26   4 He(s)   -0.001275    0.028439   -0.351911    0.005443
-    27   4 He(p)    0.007915   -0.000235    0.001653   -0.000248
-    28   4 He(p)    0.000218    0.004167    0.001403    0.004636
-    29   4 He(p)   -0.001205   -0.013526    0.035178   -0.002251
-    ---------------------------------------------------------------
-
-  - Printing molecular orbitals: 13, 14, 15, 16
-
-     AO   Atom         13          14          15          16
-    ---------------------------------------------------------------
-     1   1 O (s)    0.000508   -0.021451    0.046311   -0.249582
-     2   1 O (s)    0.001130   -0.046472    0.088375   -0.635009
-     3   1 O (s)   -0.002318    0.096276   -0.270150    0.608978
-     4   1 O (p)    0.792588    0.000854   -0.002080    0.000380
-     5   1 O (p)    0.000562   -0.021393    0.107944    0.251506
-     6   1 O (p)   -0.008010    0.079738   -0.253804    0.059400
-     7   1 O (p)   -1.576004   -0.002702    0.007448   -0.001568
-     8   1 O (p)   -0.001124    0.062347   -0.313119   -0.700358
-     9   1 O (p)    0.007816   -0.059350    0.174620   -0.037209
-    10   1 O (d)    0.004624    0.000278   -0.000988    0.000248
-    11   1 O (d)    0.000189   -0.010406    0.038437   -0.010309
-    12   1 O (d)   -0.000008    0.003586   -0.017608   -0.033906
-    13   1 O (d)   -0.000045    0.138374    0.039279   -0.005056
-    14   1 O (d)   -0.000067    0.006782   -0.041658   -0.136244
-    15   2 H (s)    0.281345   -0.003398    0.052356    0.288723
-    16   2 H (s)    0.627986   -0.042878    0.125458   -0.209574
-    17   2 H (p)   -0.329129    0.025162   -0.137051   -0.366490
-    18   2 H (p)   -0.097266   -0.011262    0.098693    0.454845
-    19   2 H (p)    0.001727    0.586169    0.432525   -0.088613
-    20   3 H (s)   -0.281975   -0.006841    0.063681    0.285998
-    21   3 H (s)   -0.625432   -0.040131    0.114558   -0.206629
-    22   3 H (p)   -0.328310   -0.028870    0.149124    0.363510
-    23   3 H (p)    0.097049   -0.012292    0.102671    0.453768
-    24   3 H (p)    0.002070   -0.722684    0.058908   -0.040282
-    25   4 He(s)    0.005570   -0.277444    0.944133   -0.221937
-    26   4 He(s)   -0.007047    0.293198   -0.998118    0.245745
-    27   4 He(p)    0.001987    0.000520   -0.000182   -0.000023
-    28   4 He(p)    0.000615    0.000023   -0.000953   -0.009208
-    29   4 He(p)    0.000801    0.004868   -0.015665    0.007810
-    ---------------------------------------------------------------
-
-
-  :: Excited state engine
-  :: E. F. Kjønstad, S. D. Folkestad, 2018
-
-  Calculates the coupled cluster excitation vectors and excitation energies 
-  
-
-  This is a MLCC2 excited state calculation. The following tasks will be performed:
-
-  - Cholesky decomposition of the ERI-matrix
-  - Calculation of the ground state amplitudes (diis-algorithm)
-  - Calculation of the ground state energy
-  - Calculation of the right hand side core excitation vectors (davidson-algorithm) 
-  
-  - Calculation of the excitation energies (davidson-algorithm)
-
-
-  :: Cholesky decomposition of electronic repulsion integrals solver
-  :: E. F. Kjønstad, S. D. Folkestad, 2018
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -315,7 +135,8 @@
 
   Once the Cholesky basis has been determined, the vectors L^J are constructed 
   and stored to disk. These may either be used directly, or be transformed 
-  to the MO basis for use in post-HF calculations.
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
 
   - Cholesky decomposition settings:
 
@@ -323,32 +144,32 @@
      Span factor:           0.10E-01
      Max qual:                  1000
 
+  - Cholesky decomposition system details:
+
      Total number of AOs:                    29
      Total number of shell pairs:           120
      Total number of AO pairs:              435
 
-  - Preparing diagonal for decomposition:
+     Significant shell pairs:               118
+     Significant AO pairs:                  431
 
-     Significant shell pairs:                   118
-     Significant AO pairs:                      431
-
-     Construct shell pairs:                     120
-     Construct AO pairs:                        435
+     Construct shell pairs:                 120
+     Construct AO pairs:                    435
 
   Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
   -------------------------------------------------------------------------------------------------------
-     1              406 /      108       0.47383E+01     147             42                17052
-     2              319 /       93       0.47165E-01     234            111                35409
-     3              250 /       76       0.46944E-03     178            183                45750
-     4              187 /       55       0.38270E-05     145            265                49555
-     5               87 /       25       0.38106E-07      78            324                28188
-     6               21 /        3       0.37202E-09      43            349                 7329
-     7                0 /        0       0.36652E-11       7            354                    0
+     1               406 /     108       0.47383E+01         147             42             17052
+     2               319 /      93       0.47165E-01         234            111             35409
+     3               250 /      76       0.46944E-03         178            183             45750
+     4               187 /      55       0.38270E-05         145            265             49555
+     5                87 /      25       0.38106E-07          78            324             28188
+     6                21 /       3       0.37202E-09          43            349              7329
+     7                 0 /       0       0.36652E-11           7            354                 0
   -------------------------------------------------------------------------------------------------------
 
-  - Summary of Cholesky decomposition of electronic repulsion integrals: 
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
 
-     Final number of Cholesky vectors:        354
+     Final number of Cholesky vectors: 354
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
@@ -357,25 +178,156 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.14200
-     Total cpu time (sec):               0.29005
-  The smallest diagonal after decomposition is:  -0.5551E-16
-  The smallest diagonal after decomposition is:  -0.1161E-13
-  Forced batch of index with dimension: 29. Number of batches: 3, Max length of batch: 10
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 8
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 17
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 14
-  Forced batch of index with dimension: 29. Number of batches: 2, Max length of batch: 24
+     Total wall time (sec):              0.11600
+     Total cpu time (sec):               0.17143
 
-  - Summary of MLCC2 orbital partitioning:
+
+  :: RHF wavefunction
+  ======================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+  - Orbital details:
+
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:         23
+     Number of molecular orbitals:       29
+     Number of atomic orbitals:          29
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+   - Self-consistent field DIIS Hartree-Fock solver
+  ----------------------------------------------------
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
+  matrix is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:                         8
+     Cumulative Fock threshold:       0.10E+01
+
+     Energy threshold:              0.1000E-10
+     Gradient threshold:            0.1000E-10
+
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Fock precision:                0.1000E-33
+     Integral cutoff:               0.1000E-16
+
+  - Setting initial AO density to SAD
+
+     Energy of initial guess:               -78.492022836321
+     Number of electrons in guess:           12.000000000000
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -78.796606592593     0.9053E-01     0.7880E+02
+     2           -78.828675852657     0.7128E-01     0.3207E-01
+     3           -78.843428154462     0.8290E-02     0.1475E-01
+     4           -78.843809541675     0.2414E-02     0.3814E-03
+     5           -78.843850846800     0.3301E-03     0.4131E-04
+     6           -78.843851669326     0.5527E-04     0.8225E-06
+     7           -78.843851692851     0.5865E-05     0.2353E-07
+     8           -78.843851693557     0.2356E-05     0.7054E-09
+     9           -78.843851693630     0.2071E-06     0.7383E-10
+    10           -78.843851693631     0.1594E-07     0.3695E-12
+    11           -78.843851693631     0.3322E-08     0.1137E-12
+    12           -78.843851693631     0.1197E-08     0.5684E-13
+    13           -78.843851693631     0.4264E-09     0.0000E+00
+    14           -78.843851693631     0.1280E-09     0.0000E+00
+    15           -78.843851693631     0.1479E-10     0.1421E-13
+    16           -78.843851693631     0.2909E-11     0.4263E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 16 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.645629080248
+     Nuclear repulsion energy:      12.116100574587
+     Electronic energy:            -90.959952268218
+     Total energy:                 -78.843851693631
+
+  - Molecular orbital energies
+
+  -----------------------------------------------------------------------------------
+   1 -20.574269195145   9   0.704416610867  17   1.682695299877  25   3.175416260660
+   2  -1.277667044968  10   0.746260122914  18   1.804186820052  26   3.209661156313
+   3  -0.898849406810  11   1.155862024383  19   1.902641648742  27   3.328173215200
+   4  -0.629870222690  12   1.170770887076  20   2.148883457168  28   3.721936473470
+   5  -0.541641772852  13   1.267961746552  21   2.200395756969  29   3.985492632586
+   6  -0.485872762832  14   1.449847537220  22   2.540321860021
+   7   0.159756317416  15   1.463234913438  23   2.541517310547
+   8   0.229311906283  16   1.474444394527  24   2.559338707350
+  -----------------------------------------------------------------------------------
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              0.45300
+     Total cpu time (sec):               0.77175
+
+
+  :: MLCC2 wavefunction
+  ========================
+
+     Bath orbital(s):         False
+     Core-valence separation: False
+
+   - Number of orbitals:
+
+     Occupied orbitals:    6
+     Virtual orbitals:     23
+     Molecular orbitals:   29
+     Atomic orbitals:      29
+
+   - Number of ground state amplitudes:
+
+     Single excitation amplitudes:  138
+
+
+  :: Excited state coupled cluster engine
+  ==========================================
+
+  Calculates the coupled cluster excitation vectors and excitation energies
+
+  This is a MLCC2 excited state calculation.
+  The following tasks will be performed:
+
+     1) Preparation of MO basis and integrals
+     2) Calculation of the ground state (diis algorithm)
+     3) Calculation of the excited state (davidson algorithm)
+
+
+  1) Preparation of MO basis and integrals
+
+     The smallest diagonal after decomposition is:  -0.1110E-15
+
+     The smallest diagonal after decomposition is:  -0.4311E-13
+
+  - Settings for integral handling:
+
+     Cholesky vectors in memory: True
+     ERI matrix in memory:       False
+
+  - MLCC2 orbital partitioning:
 
      Orbital type: cholesky
 
@@ -386,13 +338,15 @@
      Number virtual ccs orbitals:    10
 
 
-  :: DIIS CC ground solver
-  :: E. F. Kjønstad, S. D. Folkestad, 2018
+  2) Calculation of the ground state (diis algorithm)
+
+   - DIIS coupled cluster ground state solver
+  ----------------------------------------------
 
   A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
   of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
-  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 13. 
-  
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
+  13.
 
   - DIIS CC ground state solver settings:
 
@@ -401,430 +355,47 @@
 
      DIIS dimension:                   8
      Max number of iterations:       100
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 8
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 7
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 11
+
+     Storage: disk
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-  Forced batch of index with dimension: 23. Number of batches: 5, Max length of batch: 5
     1           -78.991239569036     0.2815E-01     0.7899E+02
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 21
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 20
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 14
     2           -78.991934311171     0.1295E-01     0.6947E-03
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 12
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 17
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 8, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 13
     3           -78.992356001603     0.5943E-02     0.4217E-03
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 9
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 19
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 19
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 11
     4           -78.992614945282     0.1643E-02     0.2589E-03
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 11
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 9
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 8, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
     5           -78.992652952996     0.7528E-03     0.3801E-04
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 14
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 16
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 12, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 8
-    6           -78.992655383665     0.4255E-03     0.2431E-05
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 12, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 8, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 8
-  Forced batch of index with dimension: 23. Number of batches: 12, Max length of batch: 2
+    6           -78.992655383666     0.4255E-03     0.2431E-05
     7           -78.992658054161     0.1110E-03     0.2670E-05
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 7
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 16
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 14
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 20
     8           -78.992658419625     0.4063E-04     0.3655E-06
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 18
-  Forced batch of index with dimension: 23. Number of batches: 23, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 12, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 16
     9           -78.992658348445     0.1137E-04     0.7118E-07
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 12, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 10
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 11
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 20
    10           -78.992658317935     0.2727E-05     0.3051E-07
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 11
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 17
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 6
-  Forced batch of index with dimension: 23. Number of batches: 5, Max length of batch: 5
    11           -78.992658320632     0.1418E-05     0.2697E-08
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 8
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 7
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 21
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 19
    12           -78.992658325639     0.9051E-06     0.5007E-08
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 10
-  Forced batch of index with dimension: 23. Number of batches: 5, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 19
-  Forced batch of index with dimension: 23. Number of batches: 8, Max length of batch: 3
    13           -78.992658327967     0.2578E-06     0.2328E-08
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 19
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 10
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 8
-  Forced batch of index with dimension: 23. Number of batches: 8, Max length of batch: 3
    14           -78.992658325824     0.9628E-07     0.2143E-08
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 9
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 9
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 6
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 16
    15           -78.992658323541     0.3812E-07     0.2283E-08
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 12
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 10
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 7
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 22
    16           -78.992658322422     0.1367E-07     0.1120E-08
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 9
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 20
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 5, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
    17           -78.992658322018     0.4768E-08     0.4037E-09
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 5, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 22
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 12, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 16
    18           -78.992658321920     0.1716E-08     0.9825E-10
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 6
-  Forced batch of index with dimension: 23. Number of batches: 12, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 9
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 19
    19           -78.992658321896     0.5490E-09     0.2345E-10
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 6
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 9
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 5, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 18
-   20           -78.992658321885     0.1811E-09     0.1090E-10
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 20
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 14
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 9
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 18
+   20           -78.992658321886     0.1811E-09     0.1090E-10
    21           -78.992658321885     0.8976E-10     0.6963E-12
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 16
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 22
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 22
    22           -78.992658321885     0.5379E-10     0.7105E-13
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 6
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 17
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 8, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 13
    23           -78.992658321885     0.2207E-10     0.8527E-13
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 12
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 19
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 3
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 23, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
    24           -78.992658321885     0.7706E-11     0.1847E-12
   ---------------------------------------------------------------
-
   Convergence criterion met in 24 iterations!
 
-  - DIIS CC ground state solver summary:
+  - Ground state summary:
 
      Final ground state energy (a.u.):   -78.992658321885
 
+     Correlation energy (a.u.):           -0.148806628254
+
      Largest single amplitudes:
      -----------------------------------
-        a       i         t(a,i)             
+        a       i         t(a,i)
      -----------------------------------
        15      4        0.016328878162
         5      3       -0.014564153926
@@ -842,21 +413,15 @@
 
   - Finished solving the MLCC2 ground state equations
 
-     Total wall time (sec):              0.68700
-     Total cpu time (sec):               0.92600
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 12
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 3, Max length of batch: 2
-  Forced batch of index with dimension: 6. Number of batches: 2, Max length of batch: 4
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 6. Number of batches: 6, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 13
+     Total wall time (sec):              0.16400
+     Total cpu time (sec):               0.32394
 
 
-  :: Davidson coupled cluster excited state solver
-  :: E. F. Kjønstad, S. D. Folkestad, 2018
+  3) Calculation of the excited state (davidson algorithm)
+     Calculating right vectors
+
+   - Davidson coupled cluster excited state solver
+  ---------------------------------------------------
 
   A Davidson solver that calculates the lowest eigenvalues and  the right 
   or left eigenvectors of the Jacobian matrix, A. The eigenvalue  problem 
@@ -868,317 +433,198 @@
 
   - Settings for coupled cluster excited state solver (Davidson):
 
-     Energy threshold:      0.10E-10
+     Calculation type:    core
+     Excitation vectors:  right
 
-     Residual threshold:    0.10E-10
+     Energy threshold:                0.10E-10
+     Residual threshold:              0.10E-10
 
-     Number of singlet states:       2
-     Max number of iterations:     100
-     Calculation type:          core
+     Number of singlet states:               2
+     Max number of iterations:             100
 
-     Solving for the right eigenvectors.
+     Max reduced space dimension:          100
 
-     Max reduced space dimension:  100
-
-  Orthonormalizing trial vectors.
+     Reduced space basis and transforms are stored on disk.
 
   Iteration:                  1
   Reduced space dimension:    2
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 12
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 22
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 7
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 9
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 16
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.904590452834         0.000000000000            0.8908E+00
-   2      20.932568788545         0.000000000000            0.1058E+01
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.904590452834    0.000000000000     0.8908E+00   0.2090E+02
+     2  20.932568788545    0.000000000000     0.1058E+01   0.2093E+02
+  ------------------------------------------------------------------------
 
   Iteration:                  2
   Reduced space dimension:    4
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 10
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 21
-  Forced batch of index with dimension: 23. Number of batches: 5, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 14
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 18
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 10
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.447450136773         0.000000000000            0.2558E+00
-   2      20.631813989011         0.000000000000            0.9175E-01
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.447450136773    0.000000000000     0.2558E+00   0.4571E+00
+     2  20.631813989011    0.000000000000     0.9175E-01   0.3008E+00
+  ------------------------------------------------------------------------
 
   Iteration:                  3
   Reduced space dimension:    6
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 17
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 18
-  Forced batch of index with dimension: 23. Number of batches: 5, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 23, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 22
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.359526482744         0.000000000000            0.4513E+00
-   2      20.627170300400         0.000000000000            0.1164E+00
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.359526482744    0.000000000000     0.4513E+00   0.8792E-01
+     2  20.627170300400    0.000000000000     0.1164E+00   0.4644E-02
+  ------------------------------------------------------------------------
 
   Iteration:                  4
   Reduced space dimension:    8
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 7
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 21
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 21
-  Forced batch of index with dimension: 23. Number of batches: 23, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 8
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 10
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.127682051702         0.000000000000            0.2414E+00
-   2      20.483104781141         0.000000000000            0.1495E+00
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.127682051702    0.000000000000     0.2414E+00   0.2318E+00
+     2  20.483104781141    0.000000000000     0.1495E+00   0.1441E+00
+  ------------------------------------------------------------------------
 
   Iteration:                  5
   Reduced space dimension:   10
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 8
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 20
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 21
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 15
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 8
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 20
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.101037101771         0.000000000000            0.7325E-01
-   2      20.474000690761         0.000000000000            0.5388E+00
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.101037101771    0.000000000000     0.7325E-01   0.2664E-01
+     2  20.474000690761    0.000000000000     0.5388E+00   0.9104E-02
+  ------------------------------------------------------------------------
 
   Iteration:                  6
   Reduced space dimension:   12
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 21
-  Forced batch of index with dimension: 23. Number of batches: 23, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 12, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 8, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 12, Max length of batch: 2
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.099963753609         0.000000000000            0.3230E-01
-   2      20.143727854572         0.000000000000            0.3561E+00
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.099963753609    0.000000000000     0.3230E-01   0.1073E-02
+     2  20.143727854572    0.000000000000     0.3561E+00   0.3303E+00
+  ------------------------------------------------------------------------
 
   Iteration:                  7
   Reduced space dimension:   14
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 13
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 7
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 10
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 22
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 18
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 22
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.093612479064         0.000000000000            0.1387E+00
-   2      20.100567375004         0.000000000000            0.3165E-01
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.093612479064    0.000000000000     0.1387E+00   0.6351E-02
+     2  20.100567375004    0.000000000000     0.3165E-01   0.4316E-01
+  ------------------------------------------------------------------------
 
   Iteration:                  8
   Reduced space dimension:   16
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 10
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 19
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 17
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 8
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 13
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 17
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.087158383213         0.000000000000            0.4585E-01
-   2      20.100459691968         0.000000000000            0.5776E-02
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.087158383213    0.000000000000     0.4585E-01   0.6454E-02
+     2  20.100459691968    0.000000000000     0.5776E-02   0.1077E-03
+  ------------------------------------------------------------------------
 
   Iteration:                  9
   Reduced space dimension:   18
-  Forced batch of index with dimension: 23. Number of batches: 12, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 14
-  Forced batch of index with dimension: 23. Number of batches: 5, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 5, Max length of batch: 5
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 10
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 22
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.087580765127         0.000000000000            0.1480E-01
-   2      20.100489639752         0.000000000000            0.2080E-02
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.087580765127    0.000000000000     0.1480E-01   0.4224E-03
+     2  20.100489639752    0.000000000000     0.2080E-02   0.2995E-04
+  ------------------------------------------------------------------------
 
   Iteration:                 10
   Reduced space dimension:   20
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 21
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 16
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 20
-  Forced batch of index with dimension: 23. Number of batches: 8, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 7
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 22
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.087407318169         0.000000000000            0.3999E-02
-   2      20.100482300574         0.000000000000            0.4460E-03
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.087407318169    0.000000000000     0.3999E-02   0.1734E-03
+     2  20.100482300574    0.000000000000     0.4460E-03   0.7339E-05
+  ------------------------------------------------------------------------
 
   Iteration:                 11
   Reduced space dimension:   22
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 17
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 19
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 8, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 11
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.087372279418         0.000000000000            0.7380E-03
-   2      20.100481602767         0.000000000000            0.7738E-04
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.087372279418    0.000000000000     0.7380E-03   0.3504E-04
+     2  20.100481602767    0.000000000000     0.7738E-04   0.6978E-06
+  ------------------------------------------------------------------------
 
   Iteration:                 12
   Reduced space dimension:   24
-  Forced batch of index with dimension: 23. Number of batches: 12, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 12, Max length of batch: 2
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 21
-  Forced batch of index with dimension: 23. Number of batches: 8, Max length of batch: 3
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 8
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 13
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.087387701454         0.000000000000            0.2143E-03
-   2      20.100481750886         0.000000000000            0.1760E-04
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.087387701454    0.000000000000     0.2143E-03   0.1542E-04
+     2  20.100481750885    0.000000000000     0.1760E-04   0.1481E-06
+  ------------------------------------------------------------------------
 
   Iteration:                 13
   Reduced space dimension:   26
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 9
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 22
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 19
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 10
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.087387792521         0.000000000000            0.4627E-04
-   2      20.100481528895         0.000000000000            0.3633E-05
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.087387792521    0.000000000000     0.4627E-04   0.9107E-07
+     2  20.100481528895    0.000000000000     0.3633E-05   0.2220E-06
+  ------------------------------------------------------------------------
 
   Iteration:                 14
   Reduced space dimension:   28
-  Forced batch of index with dimension: 23. Number of batches: 23, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 13
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 10
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 22
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 6
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.087387311488         0.000000000000            0.6753E-05
-   2      20.100481511426         0.000000000000            0.5425E-06
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.087387311488    0.000000000000     0.6753E-05   0.4810E-06
+     2  20.100481511426    0.000000000000     0.5425E-06   0.1747E-07
+  ------------------------------------------------------------------------
 
   Iteration:                 15
   Reduced space dimension:   30
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 7
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 11
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 7
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 19
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 7
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 17
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.087387315351         0.000000000000            0.3870E-06
-   2      20.100481510538         0.000000000000            0.3183E-07
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.087387315351    0.000000000000     0.3870E-06   0.3863E-08
+     2  20.100481510538    0.000000000000     0.3183E-07   0.8881E-09
+  ------------------------------------------------------------------------
 
   Iteration:                 16
   Reduced space dimension:   32
-  Forced batch of index with dimension: 23. Number of batches: 23, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 7
-  Forced batch of index with dimension: 23. Number of batches: 23, Max length of batch: 1
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 14
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 17
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 17
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.087387318591         0.000000000000            0.2857E-07
-   2      20.100481510478         0.000000000000            0.2933E-08
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.087387318591    0.000000000000     0.2857E-07   0.3241E-08
+     2  20.100481510478    0.000000000000     0.2933E-08   0.5987E-10
+  ------------------------------------------------------------------------
 
   Iteration:                 17
   Reduced space dimension:   34
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 6
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 8
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 20
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 15
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 20
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 21
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.087387319210         0.000000000000            0.7531E-08
-   2      20.100481510468         0.000000000000            0.7983E-09
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.087387319210    0.000000000000     0.7531E-08   0.6186E-09
+     2  20.100481510468    0.000000000000     0.7983E-09   0.1035E-10
+  ------------------------------------------------------------------------
 
   Iteration:                 18
   Reduced space dimension:   36
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 12
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 9
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 18
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 16
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 7
-  Forced batch of index with dimension: 23. Number of batches: 12, Max length of batch: 2
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.087387319119         0.000000000000            0.4300E-09
-   2      20.100481510470         0.000000000000            0.4488E-10
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.087387319119    0.000000000000     0.4300E-09   0.9063E-10
+     2  20.100481510470    0.000000000000     0.4487E-10   0.1815E-11
+  ------------------------------------------------------------------------
 
   Iteration:                 19
   Reduced space dimension:   38
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 19
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 22
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 17
-  Forced batch of index with dimension: 23. Number of batches: 4, Max length of batch: 6
-  Forced batch of index with dimension: 23. Number of batches: 6, Max length of batch: 4
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 14
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.087387319107         0.000000000000            0.1256E-10
-   2      20.100481510470         0.000000000000            0.1177E-11
-  --------------------------------------------------------------------
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.087387319107    0.000000000000     0.1258E-10   0.1253E-10
+     2  20.100481510470    0.000000000000     0.1186E-11   0.1101E-12
+  ------------------------------------------------------------------------
 
   Iteration:                 20
   Reduced space dimension:   39
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 20
-  Forced batch of index with dimension: 23. Number of batches: 2, Max length of batch: 15
-  Forced batch of index with dimension: 23. Number of batches: 3, Max length of batch: 10
 
-  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
-  --------------------------------------------------------------------
-   1      20.087387319107         0.000000000000            0.4150E-12
-   2      20.100481510470         0.000000000000            0.1768E-12
-  --------------------------------------------------------------------
-
+   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  ------------------------------------------------------------------------
+     1  20.087387319107    0.000000000000     0.4120E-12   0.2665E-12
+     2  20.100481510470    0.000000000000     0.1598E-12   0.1066E-13
+  ------------------------------------------------------------------------
   Convergence criterion met in 20 iterations!
 
   - Excitation vector amplitudes:
@@ -1190,9 +636,9 @@
 
      Largest single amplitudes:
      -----------------------------------
-        a       i         R(a,i)             
+        a       i         R(a,i)
      -----------------------------------
-        5      1       -0.554949129620
+        5      1       -0.554949129619
         3      1        0.534513867315
        17      1        0.517132801565
        14      1       -0.326796510442
@@ -1211,11 +657,11 @@
 
      Largest single amplitudes:
      -----------------------------------
-        a       i         R(a,i)             
+        a       i         R(a,i)
      -----------------------------------
        15      1       -0.683933227407
         6      1        0.596951384568
-        1      1        0.270297952752
+        1      1        0.270297952751
        16      1        0.205345553902
         4      1        0.196053955618
         7      1       -0.055752281335
@@ -1229,27 +675,21 @@
 
                                       Excitation energy
                           ------------------------------------------
-     State                (Hartree)             (eV)
+      State                (Hartree)             (eV)
      ---------------------------------------------------------------
-      1                  20.087387319107       546.605650473473
-      2                  20.100481510470       546.961961569265
+        1                 20.087387319107      546.605650473474
+        2                 20.100481510470      546.961961569265
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the MLCC2 excited state equations (right)
 
-     Total wall time (sec):              0.43700
-     Total cpu time (sec):               0.48344
+     Total wall time (sec):              0.14900
+     Total cpu time (sec):               0.24790
 
-  - Finalizing the MLCC2 excited state calculation
-  Total wall time (sec):              1.33100
-  Total cpu time (sec):               1.78078
+  - Timings for the MLCC2 excited state calculation
 
-  Mismatch in memory according to eT and specified on input:
-
-     Memory available (eT):          7.9997 GB
-     Memory available (input):       8.0000 GB
-
-  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
+     Total wall time (sec):              0.33400
+     Total cpu time (sec):               0.60772
 
   eT terminated successfully!

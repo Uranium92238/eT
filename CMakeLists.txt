@@ -1,7 +1,7 @@
 #
 #
 #   eT - a coupled cluster program
-#   Copyright (C) 2016-2019 the authors of eT
+#   Copyright (C) 2016-2020 the authors of eT
 #
 #   eT is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -35,25 +35,34 @@ set(CMAKE_MODULE_PATH
 
 # Set options with standard values 
 
-option(ENABLE_64BIT_INTEGERS  "Enable 64-bit integers"      	                         ON)
+option(ENABLE_64BIT_INTEGERS  "Enable 64-bit integers"      	                          ON)
 option(ENABLE_AUTO_BLAS       "Enable CMake to autodetect BLAS"                          ON)
 option(ENABLE_AUTO_LAPACK     "Enable CMake to autodetect LAPACK"                        ON)
 option(ENABLE_OMP             "Enable OpenMP parallelization"                            ON)
 option(ENABLE_THREADED_MKL    "Enable OpenMP parallelization in MKL"                     ON)
-option(ENABLE_PROFILING       "Enable profiling of code"                                 OFF)
 option(ENABLE_RUNTIME_CHECKS  "Enable all runtime checks (for debug purposes)"           OFF)
 option(ENABLE_FORCED_BATCHING "Enable batching in every batch loop (for debug purposes)" OFF)
+option(ENABLE_PCMSOLVER       "Enable PCMSolver library"                                 OFF)
 
 # Find packages needed for libint
 find_package(Libint2 REQUIRED)
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3)
 find_package(Boost REQUIRED)
-find_package(PCMSolver REQUIRED)
+
+if(ENABLE_PCMSOLVER)
+   add_definitions(-DHAS_PCMSOLVER)
+   message(STATUS "Polarizable Continuum Model via PCMSolver ENABLED")
+   find_package(PCMSolver REQUIRED)
+
+endif()
 
 message("-- Boost location: ${Boost_INCLUDE_DIRS}")
 
 # Include the relevant directories 
-include_directories(${PCMSolver_INCLUDE_DIR})
+if(ENABLE_PCMSOLVER)
+   include_directories(${PCMSolver_INCLUDE_DIR})
+endif()
+
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Libint2_H_DIR})
@@ -65,6 +74,13 @@ include(Fortran_flags)
 include(eT_CXX_sources)
 include(CXX_flags)
 include(ConfigTesting)
+
+if(ENABLE_PCMSOLVER)
+   set(eT_fortran_sources 
+   ${PCMSolver_INCLUDE_DIR}/PCMSolver/pcmsolver.f90
+   ${eT_fortran_sources}
+   )
+endif()
 
 # Math detection
 set(BLAS_LANG "Fortran")
@@ -88,7 +104,7 @@ set(eT_CXX_sources
 
 add_executable(eT ${eT_fortran_sources} ${eT_CXX_sources})
 
-target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} ${PCMSolver_LIBRARY})
+target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} ${PCMSolver_LIBRARY} ${EXTRA_LINKER_FLAGS})
 
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
 

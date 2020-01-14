@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (cc3_class) initialize_destruct_cc3
 !
 !!
-!!    Initialize destruct submodule (CC3)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    Initialize destruct submodule
 !!
 !!    Gathers routines that initialize and destruct the CC3 type-bound variables.
 !!

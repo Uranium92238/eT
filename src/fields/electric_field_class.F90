@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -272,8 +272,8 @@ contains
 !
          field%repetition = 1
 !
-         call input%get_array_for_keyword_in_section('envelope', 'electric field', field%n_pulses, &
-                                                     field%envelope)
+         call input%get_array_for_keyword_in_section('envelope', 'electric field', &
+                                                     field%n_pulses, field%envelope)
          call input%get_array_for_keyword_in_section('x polarization', 'electric field', &
                                                      field%n_pulses, field%x_polarization)
          call input%get_array_for_keyword_in_section('y polarization', 'electric field', &
@@ -284,8 +284,9 @@ contains
                                                      field%n_pulses, field%tc)
          call input%get_array_for_keyword_in_section('width', 'electric field', field%n_pulses, &
                                                      field%width)
-         call input%get_array_for_keyword_in_section('central angular frequency', 'electric field', &
-                                                     field%n_pulses, field%angfreqc)
+         call input%get_array_for_keyword_in_section('central angular frequency',      &
+                                                     'electric field', field%n_pulses, &
+                                                     field%angfreqc)
          call input%get_array_for_keyword_in_section('peak strength', 'electric field', &
                                                      field%n_pulses, field%peak_strength)
          call input%get_array_for_keyword_in_section('phase shift', 'electric field', &

@@ -1,6 +1,6 @@
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -120,8 +120,8 @@ contains
       type(timings) :: cc3_ijk_timer, cc3_abc_timer
 !
       L_TDM_timer    = timings('Left transition density', pl='m')
-      cc3_ijk_timer  = timings('CC3 left TDM ijk batching', pl='n')
-      cc3_abc_timer  = timings('CC3 left TDM abc batching', pl='n')
+      cc3_ijk_timer  = timings('CC3 left TDM ijk batching', pl='v')
+      cc3_abc_timer  = timings('CC3 left TDM abc batching', pl='v')
       cc3_timer      = timings('Total CC3 contribution left TDM', pl='n')
       ccsd_timer     = timings('Total CCSD contribution left TDM', pl='n')
 !
@@ -305,13 +305,11 @@ contains
       type(timings) :: cc3_ijk_timer, cc3_abc_timer, cc3_int_timer
 !
       R_TDM_timer    = timings('Right transition density', pl='m')
-      cc3_ijk_timer  = timings('CC3 right TDM ijk batching', pl='n')
-      cc3_abc_timer  = timings('CC3 right TDM abc batching', pl='n')
-      cc3_int_timer  = timings('CC3 right TDM contributions from intermediates', pl='n')
+      cc3_ijk_timer  = timings('CC3 right TDM ijk batching', pl='v')
+      cc3_abc_timer  = timings('CC3 right TDM abc batching', pl='v')
+      cc3_int_timer  = timings('CC3 right TDM contributions from intermediates', pl='v')
       cc3_timer      = timings('Total CC3 contribution right TDM', pl='n')
       ccsd_timer     = timings('Total CCSD contribution right TDM', pl='n')
-!
-      call R_TDM_timer%turn_on()
 !
       call R_TDM_timer%turn_on()
 !
@@ -396,7 +394,7 @@ contains
 !
       call wf%density_cc3_mu_nu_oo_ov_vv(density_oo, density_ov, &
                                          density_vv, R_ai, R_aibj)
-      call cc3_int_timer%turn_off()
+      call cc3_int_timer%freeze()
 !
 !     :: CC3 contribution in batches of i,j,k ::
 !
@@ -499,7 +497,9 @@ contains
 !
 !        Z_bcjk = tbar^abc_ijk R^a_i
 !
+      call cc3_int_timer%turn_on()
       call wf%density_cc3_mu_nu_ov_Z_term(density_ov)
+      call cc3_int_timer%turn_off()
 !
 !$omp parallel do private(a, i)
       do a = 1, wf%n_v
@@ -912,7 +912,6 @@ contains
       integer :: req_0, req_1, req_2, req_3
 !
 !     for CVS
-      integer :: i_cvs
       logical :: ijk_core
 !
       real(dp) :: ddot
@@ -1209,6 +1208,31 @@ contains
 !
                         k_rel = k - batch_k%first + 1
 !
+!                       Check if at least one index i,j,k is a core orbital
+!
+                        if(wf%cvs) then
+!
+                           ijk_core = .false.
+!
+                           if(     any(wf%core_MOs .eq. i) &
+                              .or. any(wf%core_MOs .eq. j) &
+                              .or. any(wf%core_MOs .eq. k)) then
+!
+                              ijk_core = .true.
+!
+                           end if
+!
+!                          Cycle if i,j,k are not core orbitals
+                           if (.not. ijk_core) cycle
+!
+                        end if
+!
+!
+!                       Also terms that only include the triples multipliers 
+!                       can be cycled if we use CVS
+!                       Because they are contracted with R^a_i or R^ab_ij
+!                       which have to contain at least one core orbital.
+!
 !                       c3_calc does not zero out the array
                         call zero_array(tbar_abc, wf%n_v**3)
 !
@@ -1231,13 +1255,7 @@ contains
 !
                         call wf%divide_by_orbital_differences(i, j, k, tbar_abc)
 !
-!                       Scaling factor = 1/6 sum_abcijk tbar^abc_ijk R^abc_ijk
-!
-!                       Need to consider all permutations because we don't hold
-!                       the whole tbar3, R3 arrays. 
-!                       All the permutations yield the same result
-!
-                        call wf%density_cc3_mu_nu_vo(i, j, k, tbar_abc, v_abc,  &
+                        call wf%density_cc3_mu_nu_vo(i, j, k, tbar_abc, v_abc,   &
                                                                density_vo, R_abij)
 !
 !                       Construct intermediate used for the ov-block:
@@ -1253,30 +1271,6 @@ contains
 !                       Therefore the contributions to the R3-amplitudes can be computed 
 !                       using the same routine once for t1-transformed and once for 
 !                       c1-transformed integrals
-!
-!
-!                       Check if at least one index i,j,k is a core orbital
-!
-                        if(wf%cvs) then
-!
-                           ijk_core = .false.
-!
-                           do i_cvs = 1, wf%n_core_MOs
-!
-                              if(     i .eq. wf%core_MOs(i_cvs)   &
-                                 .or. j .eq. wf%core_MOs(i_cvs)   &
-                                 .or. k .eq. wf%core_MOs(i_cvs))  then
-!
-                                 ijk_core = .true.
-!
-                              end if
-!
-                           end do
-!
-!                          Cycle if i,j,k are not core orbitals
-                           if (.not. ijk_core) cycle
-!
-                        end if
 !
                         call wf%construct_W(i, j, k, R_abc, u_abc, R_abij, &
                                             g_bdci_p(:,:,:,i_rel),         &
@@ -2286,6 +2280,8 @@ contains
       do i = 1, n_threads
          call daxpy(wf%n_o**2, one, density_oo_thread(:,:,i), 1, density_oo, 1)
       enddo
+!
+      call mem%dealloc(density_oo_thread, wf%n_o, wf%n_o, n_threads)
 !
 !     Close files
 !

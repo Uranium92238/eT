@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -142,6 +142,10 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: C_old
 !
+      integer :: p
+!
+      real(dp) :: overlap, ddot
+!
       call wf%do_roothan_hall_mo(wf%mo_fock, wf%orbital_energies)
 !
 !     Update of the orbital coefficients in the new mo basis
@@ -161,6 +165,24 @@ contains
                   zero,                      &
                   wf%orbital_coefficients,   &
                   wf%n_ao)
+!
+!
+!     Test for orbitals that were approximately sign-flipped by dsygv,
+!     resetting them if this is the case. This is necessary for restart in 
+!     CC
+!
+      do p = 1, wf%n_mo
+!
+         overlap = ddot(wf%n_ao, C_old(1, p), 1, wf%orbital_coefficients(1, p), 1)
+!
+         if (overlap .lt. zero) then
+!
+            call dscal(wf%n_ao, -one, wf%orbital_coefficients(:,p), 1)
+            call dscal(wf%n_mo, -one, wf%W_mo_update(:,p), 1)
+!
+         endif
+!
+      enddo
 !
       call mem%dealloc(C_old, wf%n_ao, wf%n_mo)
 !
@@ -225,7 +247,7 @@ contains
    end subroutine do_roothan_hall_mo_hf
 !
 !
-   module subroutine update_fock_and_energy_mo_hf(wf, h_wx, prev_ao_density)
+   module subroutine update_fock_and_energy_mo_hf(wf, prev_ao_density)
 !!
 !!    Update Fock and energy
 !!    Written by Linda Goletto and Sarai D. Folkestad, 2019
@@ -239,67 +261,60 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
-!
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
 !
-      if (present(prev_ao_density)) then ! Hack (should be fixed asap)
+      real(dp), dimension(:,:), allocatable :: G
 !
-!        Nothing to do here 
+      type(timings) :: timer
+!
+      timer = timings('AO Fock construction', pl='normal')
+      call timer%turn_on()
+!
+      if (present(prev_ao_density)) then 
+!
+!        Construct the two electron part of the Fock matrix (G),
+!        and add the contribution to the Fock matrix
+!
+         call daxpy(wf%n_ao**2, -one, prev_ao_density, 1, wf%ao_density, 1)
+!
+         call mem%alloc(G, wf%n_ao, wf%n_ao)
+!
+         call wf%construct_ao_G(wf%ao_density,                    &
+                                G,                                &
+                                C_screening=(wf%name_ == 'mlhf'))
+!
+         call daxpy(wf%n_ao**2, one, G, 1, wf%ao_fock, 1)
+!
+         call mem%dealloc(G, wf%n_ao, wf%n_ao)
+!
+         call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density, 1)         
+!
+      else
+!
+!        AO fock construction and energy calculation
+!
+!        Construct the two electron part of the Fock matrix (G),
+!        and add the contribution to the Fock matrix
+!
+         call wf%construct_ao_G(wf%ao_density,                    &
+                                wf%ao_fock,                       &
+                                C_screening=(wf%name_ == 'mlhf'))
+!
+!        Add the one-electron part
+!
+         call daxpy(wf%n_ao**2, one, wf%ao_h, 1, wf%ao_fock, 1)
 !
       endif
 !
-!     AO fock construction and energy calculation
+      call timer%turn_off()
 !
-      call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx)
-!
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao_h)
 !
 !     Transformation of the AO fock in the MO basis
 !
       call wf%mo_transform(wf%ao_fock, wf%mo_fock)
 !
    end subroutine update_fock_and_energy_mo_hf
-!
-!
-   module subroutine initialize_W_mo_update_hf(wf)
-!!
-!!    Initialize W MO update
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
-!!    and Linda Goletto, Jan 2019
-!!
-!!    Modified by Ida-Marie Hoyvik, Oct 2019
-!!
-!!    Initializes the eigenvectors W 
-!!    for Roothan-Hall in the mo basis (FW = We)
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (.not. allocated(wf%W_mo_update)) call mem%alloc(wf%W_mo_update, wf%n_mo, wf%n_mo)
-!
-   end subroutine initialize_W_mo_update_hf
-!
-!
-   module subroutine destruct_W_mo_update_hf(wf)
-!!
-!!    Destruct W MO update 
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
-!!    and Linda Goletto, Jan 2019
-!!
-!!    Destructs the eigenvectors W 
-!!    for Roothan-Hall in the mo basis (FW = We)
-!!
-!!    Modified by Ida-Marie Hoyvik, Oct 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (allocated(wf%W_mo_update)) call mem%dealloc(wf%W_mo_update, wf%n_mo, wf%n_mo)
-!
-   end subroutine destruct_W_mo_update_hf
 !
 !
    module subroutine prepare_for_roothan_hall_mo_hf(wf)
@@ -337,6 +352,125 @@ contains
       call identity_array(wf%W_mo_update, wf%n_mo)
 !
    end subroutine prepare_for_roothan_hall_mo_hf
+!
+!
+   module subroutine read_for_scf_restart_mo_hf(wf)
+!!
+!!    Read for SCF restart
+!!    Written by Sarai D. Folkestad and Linda Goletto, Oct 2019
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call wf%read_orbital_coefficients()
+      call wf%update_ao_density()
+      call wf%read_orbital_energies()
+!
+!     Allocate active mo specific arrays
+!     and construct them
+!
+      call wf%initialize_W_mo_update()
+      call wf%initialize_mo_fock()
+!
+      call identity_array(wf%W_mo_update, wf%n_mo)
+!
+   end subroutine read_for_scf_restart_mo_hf
+!
+!
+   module subroutine construct_mo_fock_hf(wf)
+!!
+!!    Construct MO Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the MO Fock matrix F_pq using the current AO
+!!    Fock and the orbital coefficients.
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: X
+!
+      call mem%alloc(X, wf%n_ao, wf%n_mo)
+!
+      call dgemm('N', 'N',                   &
+                  wf%n_ao,                   &
+                  wf%n_mo,                   &
+                  wf%n_ao,                   &
+                  one,                       &
+                  wf%ao_fock,                &
+                  wf%n_ao,                   &
+                  wf%orbital_coefficients,   &
+                  wf%n_ao,                   &
+                  zero,                      &
+                  X,                         & ! X = F^ao C
+                  wf%n_ao)
+!
+      call dgemm('T', 'N',                   &
+                  wf%n_mo,                   &
+                  wf%n_mo,                   &
+                  wf%n_ao,                   &
+                  one,                       &
+                  wf%orbital_coefficients,   &
+                  wf%n_ao,                   &
+                  X,                         &
+                  wf%n_ao,                   &
+                  zero,                      &
+                  wf%mo_fock,                & ! F = C^T F^ao C
+                  wf%n_mo)
+!
+      call mem%dealloc(X, wf%n_ao, wf%n_mo)
+!
+   end subroutine construct_mo_fock_hf
+!
+!
+   module subroutine get_fock_ov_hf(wf, F)
+!!
+!!    Get HF equations
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the occupied-virtual block of the Fock MO matrix,
+!!    and returns the result in the array F.
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_o, wf%n_v)   :: F ! F_ia
+      real(dp), dimension(:,:), allocatable :: X
+!
+      call mem%alloc(X, wf%n_ao, wf%n_v)
+!
+      call dgemm('N', 'N',                                  &
+                  wf%n_ao,                                  &
+                  wf%n_v,                                   &
+                  wf%n_ao,                                  &
+                  one,                                      &
+                  wf%ao_fock,                               &
+                  wf%n_ao,                                  &
+                  wf%orbital_coefficients(1, wf%n_o + 1),   &
+                  wf%n_ao,                                  &
+                  zero,                                     &
+                  X,                                        &
+                  wf%n_ao)
+!
+      call dgemm('T', 'N',                   &
+                  wf%n_o,                    &
+                  wf%n_v,                    &
+                  wf%n_ao,                   &
+                  one,                       &
+                  wf%orbital_coefficients,   &
+                  wf%n_ao,                   &
+                  X,                         &
+                  wf%n_ao,                   &
+                  zero,                      &
+                  F,                         &
+                  wf%n_o)
+!
+      call mem%dealloc(X, wf%n_ao, wf%n_v)
+!
+   end subroutine get_fock_ov_hf
 !
 !
 end submodule mo_hf

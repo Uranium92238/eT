@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -27,6 +27,18 @@
       class(ccsd), intent(inout) :: wf
 !
    end subroutine make_complex_ccsd
+!
+!
+   module subroutine cleanup_complex_ccsd(wf)
+!!
+!!    Make complex (CCSD)
+!!    Written by Andreas Skeidsvoll, Sep 2019
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+!
+   end subroutine cleanup_complex_ccsd
 !
 !
    module subroutine construct_complex_time_derivative_amplitudes_ccsd(wf, ddt_amplitudes)

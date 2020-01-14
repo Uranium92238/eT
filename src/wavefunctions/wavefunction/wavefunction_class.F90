@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -41,59 +41,65 @@ module wavefunction_class
       character(len=40) :: name_
 !
       real(dp)    :: energy
+      real(dp)    :: hf_energy
       complex(dp) :: energy_complex
 !
       real(dp)    :: correlation_energy
+      complex(dp) :: correlation_energy_complex
 !
       real(dp),    dimension(3) :: dipole_moment
       complex(dp), dimension(3) :: dipole_moment_complex
 !
-      integer :: n_ao
-      integer :: n_mo
-      integer :: n_o
-      integer :: n_v
+      integer :: n_ao ! Number of atomic orbitals 
+      integer :: n_mo ! Number of molecular orbitals 
+      integer :: n_o  ! Number of occupied orbitals 
+      integer :: n_v  ! Number of virtual orbbitals 
 !
       type(molecular_system), pointer :: system
 !
       real(dp), dimension(:,:), allocatable :: orbital_coefficients
-      real(dp), dimension(:), allocatable :: orbital_energies
+      real(dp), dimension(:), allocatable   :: orbital_energies
 !      
 !     QMMM matrices
 !
-      real(dp), dimension(:,:), allocatable :: nopol_h_wx         ! one-electron for non-polarizable QM/MM
-      real(dp), dimension(:,:), allocatable :: pol_emb_fock       ! Fock for polarizable QM/MM
+      real(dp), dimension(:,:), allocatable :: nopol_h_wx   ! one-electron for non-polarizable QM/MM
+      real(dp), dimension(:,:), allocatable :: pol_emb_fock ! Fock for polarizable QM/MM
 !
 !     QMPCM matrices
 !
-      real(dp), dimension(:,:), allocatable :: pcm_fock   ! Fock for QM/PCM
+      real(dp), dimension(:,:), allocatable :: pcm_fock     ! Fock for QM/PCM
 !
 !     Frozen orbital variables. Frozen orbitals are typically frozen core or frozen HF orbitals.
 !
-      real(dp), dimension(:,:), allocatable :: mo_fock_fc_term 
-      real(dp), dimension(:,:), allocatable :: mo_fock_frozen_hf_term 
-      real(dp), dimension(:,:), allocatable :: mlhf_inactive_fock_term
+      real(dp), dimension(:,:), allocatable :: mo_fock_frozen
 !
-      type(sequential_file) :: mo_fock_fc_file, mo_fock_frozen_hf_file
       type(sequential_file) :: mm_matrices_file, pcm_matrices_file
 !
-      logical :: frozen_core
-      logical :: frozen_hf_mos
-!
       real(dp) :: cholesky_orbital_threshold = 1.0D-2
+!
+      logical :: exists_frozen_fock_terms ! Are there frozen Fock terms?
+!
+      real(dp), dimension(:,:), allocatable :: frozen_CCT   ! Matrix CC^T where the contraction is 
+                                                            ! over frozen orbitals. Needed if 
+                                                            ! PAO construction follows (e.g in mlcc)
+                                                            ! other reducrtion of orbitals
 !
    contains
 !
       procedure :: initialize_orbital_coefficients => initialize_orbital_coefficients_wavefunction
       procedure :: initialize_orbital_energies     => initialize_orbital_energies_wavefunction
 !
-      procedure :: initialize_mm_matrices          => initialize_mm_matrices_wavefunction
-      procedure :: initialize_pcm_matrices         => initialize_pcm_matrices_wavefunction
-!
       procedure :: destruct_orbital_coefficients   => destruct_orbital_coefficients_wavefunction
       procedure :: destruct_orbital_energies       => destruct_orbital_energies_wavefunction
+!
+      procedure :: initialize_mm_matrices          => initialize_mm_matrices_wavefunction
+      procedure :: initialize_pcm_matrices         => initialize_pcm_matrices_wavefunction
 !      
       procedure :: destruct_mm_matrices            => destruct_mm_matrices_wavefunction
       procedure :: destruct_pcm_matrices           => destruct_pcm_matrices_wavefunction
+!
+      procedure :: initialize_frozen_CCT           => initialize_frozen_CCT_wavefunction
+      procedure :: destruct_frozen_CCT             => destruct_frozen_CCT_wavefunction
 !
       procedure :: get_ao_x_wx                     => get_ao_x_wx_wavefunction
       procedure :: get_ao_x_wx_1der                => get_ao_x_wx_1der_wavefunction
@@ -121,29 +127,15 @@ module wavefunction_class
 !
       procedure :: projected_atomic_orbitals => projected_atomic_orbitals_wavefunction
       procedure :: get_orbital_overlap       => get_orbital_overlap_wavefunction
-      procedure :: lovdin_orthonormalization => lovdin_orthonormalization_wavefunction
+      procedure :: lowdin_orthonormalization => lowdin_orthonormalization_wavefunction
 !
-      procedure :: construct_ao_electrostatics                 => construct_ao_electrostatics_wavefunction       ! V_wx, E_wx, V(D), E(D)
-      procedure :: update_h_wx_mm                              => update_h_wx_mm_hf
+      procedure :: construct_ao_electrostatics &
+                => construct_ao_electrostatics_wavefunction       ! V_wx, E_wx, V(D), E(D)
 !  
-      procedure :: construct_and_write_mo_cholesky             => construct_and_write_mo_cholesky_wavefunction      
-!
       procedure :: construct_orbital_block_by_density_cd       => construct_orbital_block_by_density_cd_wavefunction
 !
-      procedure :: initialize_mo_fock_fc_term                  => initialize_mo_fock_fc_term_wavefunction                
-      procedure :: destruct_mo_fock_fc_term                    => destruct_mo_fock_fc_term_wavefunction  
-      procedure :: initialize_mo_fock_frozen_hf_term           => initialize_mo_fock_frozen_hf_term_wavefunction                
-      procedure :: destruct_mo_fock_frozen_hf_term             => destruct_mo_fock_frozen_hf_term_wavefunction 
-      procedure :: initialize_mlhf_inactive_fock_term          => initialize_mlhf_inactive_fock_term_wavefunction
-      procedure :: destruct_mlhf_inactive_fock_term            => destruct_mlhf_inactive_fock_term_wavefunction
-!
-      procedure :: read_frozen_orbitals_settings   => read_frozen_orbitals_settings_wavefunction 
-!
-      procedure :: write_mm_matrices               => write_mm_matrices_wavefunction
-      procedure :: write_pcm_matrices              => write_pcm_matrices_wavefunction
-!
-      procedure :: read_mm_matrices               => read_mm_matrices_wavefunction
-      procedure :: read_pcm_matrices              => read_pcm_matrices_wavefunction
+      procedure :: initialize_mo_fock_frozen                   => initialize_mo_fock_frozen_wavefunction
+      procedure :: destruct_mo_fock_frozen                     => destruct_mo_fock_frozen_wavefunction
 !      
    end type wavefunction 
 !
@@ -268,7 +260,8 @@ contains
 !
             call construct_ao_x_AB(wf%system, x_AB, A, B)
 !
-            x_AB_p(1 : A_interval%length, 1 : B_interval%length) => x_AB(1 : A_interval%length*B_interval%length)
+            x_AB_p(1 : A_interval%length, 1 : B_interval%length) &
+                                    => x_AB(1 : A_interval%length*B_interval%length)
 !
             do x = 1, A_interval%length
                do y = 1, B_interval%length
@@ -333,13 +326,13 @@ contains
             x_ABqk_p(1 : A_interval%length, 1 : B_interval%length, 1 : 3, 1 : 2) &
                                  => x_ABqk(1 : (A_interval%length)*(B_interval%length)*6)
 !
-            call construct_ao_x_AB_1der(wf%system,            &
-                                       x_ABqk_p(:,:,1,1),   &
-                                       x_ABqk_p(:,:,2,1),   &
-                                       x_ABqk_p(:,:,3,1),   &
-                                       x_ABqk_p(:,:,1,2),   &
-                                       x_ABqk_p(:,:,2,2),   &
-                                       x_ABqk_p(:,:,3,2),   &
+            call construct_ao_x_AB_1der(wf%system,             &
+                                       x_ABqk_p(:,:,1,1),      &
+                                       x_ABqk_p(:,:,2,1),      &
+                                       x_ABqk_p(:,:,3,1),      &
+                                       x_ABqk_p(:,:,1,2),      &
+                                       x_ABqk_p(:,:,2,2),      &
+                                       x_ABqk_p(:,:,3,2),      &
                                        A, B)
 !
             do q = 1, 3
@@ -491,7 +484,6 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: h 
 !
       call wf%get_ao_x_wx(construct_ao_h_wx_molecular_system, h)
-!
 !
    end subroutine get_ao_h_wx_wavefunction
 !
@@ -679,14 +671,27 @@ contains
 !
             B_interval = wf%system%shell_limits(B)
 !
-            call wf%system%construct_ao_q_wx(q_AB_xx, q_AB_xy, q_AB_xz, q_AB_yy, q_AB_yz, q_AB_zz, A, B)
+            call wf%system%construct_ao_q_wx(q_AB_xx, q_AB_xy, q_AB_xz, &
+                                             q_AB_yy, q_AB_yz, q_AB_zz, A, B)
 !
-            q_AB_xx_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_xx(1 : A_interval%length*B_interval%length)
-            q_AB_xy_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_xy(1 : A_interval%length*B_interval%length)
-            q_AB_xz_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_xz(1 : A_interval%length*B_interval%length)
-            q_AB_yy_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_yy(1 : A_interval%length*B_interval%length)
-            q_AB_yz_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_yz(1 : A_interval%length*B_interval%length)
-            q_AB_zz_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_zz(1 : A_interval%length*B_interval%length)
+            q_AB_xx_p(1 : A_interval%length, 1 : B_interval%length) &
+                                             => q_AB_xx(1 : A_interval%length*B_interval%length)
+!
+            q_AB_xy_p(1 : A_interval%length, 1 : B_interval%length) &
+                                             => q_AB_xy(1 : A_interval%length*B_interval%length)
+!
+            q_AB_xz_p(1 : A_interval%length, 1 : B_interval%length) &
+                                             => q_AB_xz(1 : A_interval%length*B_interval%length)
+!
+            q_AB_yy_p(1 : A_interval%length, 1 : B_interval%length) &
+                                             => q_AB_yy(1 : A_interval%length*B_interval%length)
+!
+            q_AB_yz_p(1 : A_interval%length, 1 : B_interval%length) &
+                                             => q_AB_yz(1 : A_interval%length*B_interval%length)
+!
+            q_AB_zz_p(1 : A_interval%length, 1 : B_interval%length) &
+                                             => q_AB_zz(1 : A_interval%length*B_interval%length)
+!
 !
              do x = 1, A_interval%length
                 do y = 1, B_interval%length
@@ -730,7 +735,8 @@ contains
 !
       character(len=*), intent(in) :: task 
 !
-      call output%error_msg('Cannot restart for task ' // trim(task) // ' from abstract wavefunction ' // trim(wf%name_))
+      call output%error_msg('Cannot restart for task ' // trim(task) &
+                           // ' from abstract wavefunction ' // trim(wf%name_))
 !
    end subroutine is_restart_safe_wavefunction
 !
@@ -754,13 +760,17 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable :: mu_wxk
 !
+      integer :: k
+!
       call mem%alloc(mu_wxk, wf%n_ao, wf%n_ao, 3)
 !
       call wf%get_ao_mu_wx(mu_wxk(:,:,1), mu_wxk(:,:,2), mu_wxk(:,:,3))
 !
-      call wf%mo_transform(mu_wxk(:,:,1), mu_pqk(:,:,1))
-      call wf%mo_transform(mu_wxk(:,:,2), mu_pqk(:,:,2))
-      call wf%mo_transform(mu_wxk(:,:,3), mu_pqk(:,:,3))
+      do k = 1, 3 
+!
+         call wf%mo_transform(mu_wxk(:,:,k), mu_pqk(:,:,k))
+!
+      enddo 
 !
       call mem%dealloc(mu_wxk, wf%n_ao, wf%n_ao, 3)
 !
@@ -786,16 +796,18 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable :: q_wxk
 !
+      integer :: k 
+!
       call mem%alloc(q_wxk, wf%n_ao, wf%n_ao, 6)
 !
-      call wf%get_ao_q_wx(q_wxk(:,:,1), q_wxk(:,:,2), q_wxk(:,:,3), q_wxk(:,:,4), q_wxk(:,:,5), q_wxk(:,:,6))
+      call wf%get_ao_q_wx(q_wxk(:,:,1), q_wxk(:,:,2), q_wxk(:,:,3), &
+                          q_wxk(:,:,4), q_wxk(:,:,5), q_wxk(:,:,6))
 !
-      call wf%mo_transform(q_wxk(:,:,1), q_pqk(:,:,1))
-      call wf%mo_transform(q_wxk(:,:,2), q_pqk(:,:,2))
-      call wf%mo_transform(q_wxk(:,:,3), q_pqk(:,:,3))
-      call wf%mo_transform(q_wxk(:,:,4), q_pqk(:,:,4))
-      call wf%mo_transform(q_wxk(:,:,5), q_pqk(:,:,5))
-      call wf%mo_transform(q_wxk(:,:,6), q_pqk(:,:,6))
+      do k = 1, 6
+!
+         call wf%mo_transform(q_wxk(:,:,k), q_pqk(:,:,k))
+!
+      enddo
 !
       call mem%dealloc(q_wxk, wf%n_ao, wf%n_ao, 6)
 !
@@ -879,7 +891,7 @@ contains
 !$omp parallel do private(i)
       do i = 1, n_orbitals
 !
-         PAO_coeff(i + local_first - 1,i) = one
+         PAO_coeff(i + local_first - 1, i) = one
 !
       enddo
 !$omp end parallel do
@@ -967,10 +979,10 @@ contains
    end subroutine get_orbital_overlap_wavefunction
 !
 !
-   subroutine lovdin_orthonormalization_wavefunction(wf, orbital_coeff, S, n_orbitals, rank)
+   subroutine lowdin_orthonormalization_wavefunction(wf, orbital_coeff, S, n_orbitals, rank)
 !!
 !!    Lövdin orthonormalization 
-!!    Written by Linda Goletto and sarai D. Folkestad, Jun 2019
+!!    Written by Linda Goletto and Sarai D. Folkestad, Jun 2019
 !!
 !!    Orthonormalizes the orbital_coeff using Lövdin 
 !!    orthonormalization
@@ -988,7 +1000,7 @@ contains
 !!       C = C U λ^(-1/2).
 !!
 !!    Linear dependence is removed by screening on the eigenvalues
-!!    with a threshold of 1.0 * 10^-10
+!!    with a threshold of 1.0 * 10^-6
 !!
       use array_utilities, only: copy_and_scale
 !
@@ -1007,7 +1019,7 @@ contains
 !
       integer :: i, info
 !
-      real(dp), parameter :: threshold = 1.0d-10
+      real(dp), parameter :: threshold = 1.0d-6 ! Threshold for linear dependency. 
 !
 !     Diagonalize S
 !
@@ -1089,7 +1101,7 @@ contains
 !
       call mem%dealloc(orbital_coeff_copy, wf%n_ao, n_orbitals)
 !
-   end subroutine lovdin_orthonormalization_wavefunction
+   end subroutine lowdin_orthonormalization_wavefunction
 !
 !
    subroutine get_ao_v_wx_wavefunction(wf, V)
@@ -1297,189 +1309,6 @@ contains
    end subroutine construct_ao_electrostatics_wavefunction
 !
 !
-   subroutine update_h_wx_mm_hf(wf, h_wx_eff)
-!!
-!!    Update one-electron Hamiltonian with fixed charges
-!!    for non-polarizable QM/MM
-!!    Written by Tommaso Giovannini, July 2019 for QM/MM
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: h_wx_eff
-!
-      if(.not.allocated(wf%nopol_h_wx)) then 
-!      
-         call mem%alloc(wf%nopol_h_wx, wf%n_ao, wf%n_ao)
-!         
-         call zero_array(wf%nopol_h_wx, wf%n_ao*wf%n_ao)
-!
-         call wf%construct_ao_electrostatics(0,0,'fock',wf%system%mm%n_atoms,wf%system%mm%coordinates, &
-                                             elec_fock=wf%nopol_h_wx,charges=wf%system%mm%charge)
-!         
-         call output%print_matrix('debug', 'Electrostatic Embedding h:', &
-                                  wf%nopol_h_wx, wf%n_ao, wf%n_ao)
-      endif
-!         
-      h_wx_eff = h_wx_eff + half * wf%nopol_h_wx
-!         
-!
-      call output%print_matrix('debug', 'h_eff (QM + Electrostatic Embedding)', & 
-                               h_wx_eff, wf%n_ao, wf%n_ao)
-!
-!
-   end subroutine update_h_wx_mm_hf
-!
-!
-   subroutine construct_and_write_mo_cholesky_wavefunction(wf, n_mo, mo_coeff, mo_cholesky_file)
-!!
-!!    Construct and write MO Cholesky 
-!!    Written by Sarai D. Folkestad, Sep 2019
-!!
-!!    Reads the AO Cholesky vectors, transforms them
-!!    by the MO coefficients and writes them to file.
-!!
-!!    
-!!    n_mo:             Number of MOs in mo_coeff
-!!
-!!    mo_coeff:         MO coefficients used to transform to MO
-!!                      basis. Dimension (wf%n_ao, n_mo)
-!!
-!!    mo_cholesky_file: File where the MO Cholesky vectors
-!!                      are stored. This file must be initialized
-!!                      before being passed to the routine
-!!
-!
-      use direct_file_class, only: direct_file
-      use batching_index_class, only: batching_index
-      use reordering, only: sort_123_to_132
-      use timings_class, only: timings
-!
-      implicit none
-!
-      class(wavefunction), intent(in) :: wf
-!
-      integer, intent(in) :: n_mo
-!
-      real(dp), dimension(wf%n_ao, n_mo), intent(in) :: mo_coeff
-!
-      type(direct_file), intent(inout) :: mo_cholesky_file
-!
-      real(dp), dimension(:,:,:), allocatable :: L_Jxy, L_Jxp, L_Jpx, L_Jpq
-!
-      integer :: p, q, x, y, rec_xy, rec_pq
-!
-      type(batching_index) :: batch_p, batch_y
-!
-      integer :: req0, req1_p, req1_y, req2, current_p_batch, current_y_batch
-!
-      type(timings) :: timer
-!
-      timer = timings('MO transform and write Cholesky vectors')
-      call timer%turn_on()
-!
-      call wf%system%ao_cholesky_file%open_('read')
-      call mo_cholesky_file%open_('write')
-!
-      req0 = 0
-!
-      req1_p =  max(2*wf%system%n_J*wf%n_ao, wf%system%n_J*wf%n_ao + wf%system%n_J*n_mo)
-      req1_y = wf%system%n_J*wf%n_ao
-!
-      req2 = 0
-!
-!     Initialize batching variables
-!
-      batch_p = batching_index(n_mo)
-      batch_y = batching_index(wf%n_ao)
-!
-      call mem%batch_setup(batch_p, batch_y, req0, req1_p, req1_y, req2)
-!
-      do current_p_batch = 1, batch_p%num_batches
-!
-         call batch_p%determine_limits(current_p_batch)
-!
-         call mem%alloc(L_Jxp, wf%system%n_J, wf%n_ao, batch_p%length)
-         call zero_array(L_Jxp, (wf%system%n_J)*(wf%n_ao)*(batch_p%length))
-!
-         do current_y_batch = 1, batch_y%num_batches
-!
-            call batch_y%determine_limits(current_y_batch)
-!
-            call mem%alloc(L_Jxy, wf%system%n_J, wf%n_ao, batch_y%length)
-!
-            do x = 1, wf%n_ao
-               do y = 1, batch_y%length
-!
-                  rec_xy = max(x,y + batch_y%first - 1)*(max(x,y + batch_y%first - 1)-3)/2 + x + y + batch_y%first - 1
-!
-                  call wf%system%ao_cholesky_file%read_(L_Jxy(:,x,y), rec_xy)
-!
-               enddo
-            enddo
-!
-            call dgemm('N', 'N',                         &
-                  wf%n_ao*wf%system%n_J,                 &
-                  batch_p%length,                        &
-                  batch_y%length,                        &
-                  one,                                   &
-                  L_Jxy,                                 &
-                  wf%n_ao*wf%system%n_J,                 &
-                  mo_coeff(batch_y%first,batch_p%first), &
-                  wf%n_ao,                               &
-                  one,                                   &
-                  L_Jxp,                                 &
-                  wf%n_ao*wf%system%n_J)
-!
-            call mem%dealloc(L_Jxy, wf%system%n_J, wf%n_ao, batch_y%length)
-!
-         enddo ! y batches
-!
-         call mem%alloc(L_Jpx, wf%system%n_J, batch_p%length, wf%n_ao)
-         call sort_123_to_132(L_Jxp, L_Jpx, wf%system%n_J, wf%n_ao, batch_p%length)
-         call mem%dealloc(L_Jxp, wf%system%n_J, wf%n_ao, batch_p%length)
-!
-         call mem%alloc(L_Jpq, wf%system%n_J, batch_p%length, n_mo)
-!
-         call dgemm('N', 'N',                         &
-                     batch_p%length*wf%system%n_J,    &
-                     n_mo,                            &
-                     wf%n_ao,                         &
-                     one,                             &
-                     L_Jpx,                           &
-                     batch_p%length*wf%system%n_J,    &
-                     mo_coeff,                        &
-                     wf%n_ao,                         &
-                     zero,                            &
-                     L_Jpq,                           &
-                     batch_p%length*wf%system%n_J)
-!
-         call mem%dealloc(L_Jpx, wf%system%n_J, batch_p%length, wf%n_ao)
-!
-         do p = batch_p%first, batch_p%last
-            do q = 1, p
-!
-               rec_pq = max(p,q)*(max(p,q)-3)/2 + p + q
-!
-               call mo_cholesky_file%write_(L_Jpq(:,p - batch_p%first + 1,q), rec_pq)
-!
-            enddo
-         enddo
-
-!
-         call mem%dealloc(L_Jpq, wf%system%n_J, batch_p%length, n_mo)
-!
-      enddo ! p batches
-!
-      call wf%system%ao_cholesky_file%close_('keep')
-      call mo_cholesky_file%close_('keep')
-!
-      call timer%turn_off()
-!
-   end subroutine construct_and_write_mo_cholesky_wavefunction
-!
-!
    subroutine construct_orbital_block_by_density_cd_wavefunction(wf, D, n_vectors, threshold, mo_offset, active_aos)
 !!
 !!    Construct orbital block by Cholesky decomposition for density
@@ -1588,119 +1417,32 @@ contains
    end subroutine construct_orbital_block_by_density_cd_wavefunction
 !
 !
-   subroutine read_frozen_orbitals_settings_wavefunction(wf)
+   subroutine initialize_mo_fock_frozen_wavefunction(wf)
 !!
-!!    Read frozen orbitals 
-!!    Written by Sarai D. Folkestad, Oct 2019
-!!
-!!    Reads the frozen orbitals section of the input
-!!
-!!     - Frozen core 
-!!
-!!    - Frozen hf orbitals
-!!
-!!    This routine is used at HF level to prepare mos and 
-!!    frozen fock contributions.
-!!
-!!    This routine is read at cc level to figure out if there
-!!    should be frozen fock contributions
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      wf%frozen_core    = .false.
-      wf%frozen_hf_mos  = .false.
-!
-      if (input%requested_keyword_in_section('core', 'frozen orbitals')) wf%frozen_core = .true.
-      if (input%requested_keyword_in_section('hf', 'frozen orbitals')) wf%frozen_hf_mos = .true.
-!
-   end subroutine read_frozen_orbitals_settings_wavefunction
-!
-!
-   subroutine initialize_mo_fock_frozen_hf_term_wavefunction(wf)
-!!
-!!    Initialize Fock frozen HF orbitals contributions
+!!    Initialize MO Fock frozen
 !!    Written by Sarai D. Folkestad, Sep. 2019
 !!
       implicit none
 !
       class(wavefunction) :: wf
 !
-      if (.not. allocated(wf%mo_fock_frozen_hf_term)) call mem%alloc(wf%mo_fock_frozen_hf_term, wf%n_mo, wf%n_mo)
+      call mem%alloc(wf%mo_fock_frozen, wf%n_mo, wf%n_mo)
 !
-   end subroutine initialize_mo_fock_frozen_hf_term_wavefunction
+   end subroutine initialize_mo_fock_frozen_wavefunction
 !
 !
-   subroutine destruct_mo_fock_frozen_hf_term_wavefunction(wf)
+   subroutine destruct_mo_fock_frozen_wavefunction(wf)
 !!
-!!    Destruct Fock frozen HF orbitals contributions
+!!    Destruct MO Fock frozen
 !!    Written by Sarai D. Folkestad, Sep. 2019
 !!
       implicit none
 !
       class(wavefunction) :: wf
 !
-      if (allocated(wf%mo_fock_frozen_hf_term)) call mem%dealloc(wf%mo_fock_frozen_hf_term, wf%n_mo, wf%n_mo)
+      if (allocated(wf%mo_fock_frozen)) call mem%dealloc(wf%mo_fock_frozen, wf%n_mo, wf%n_mo)
 !
-   end subroutine destruct_mo_fock_frozen_hf_term_wavefunction
-!
-!
-   subroutine initialize_mo_fock_fc_term_wavefunction(wf)
-!!
-!!    Initialize Fock frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      if (.not. allocated(wf%mo_fock_fc_term)) call mem%alloc(wf%mo_fock_fc_term, wf%n_mo, wf%n_mo)
-!
-   end subroutine initialize_mo_fock_fc_term_wavefunction
-!
-!
-   subroutine destruct_mo_fock_fc_term_wavefunction(wf)
-!!
-!!    Destruct Fock frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      if (allocated(wf%mo_fock_fc_term)) call mem%dealloc(wf%mo_fock_fc_term, wf%n_mo, wf%n_mo)
-!
-   end subroutine destruct_mo_fock_fc_term_wavefunction
-!
-!
-   subroutine initialize_mlhf_inactive_fock_term_wavefunction(wf)
-!!
-!!    Initialize mlhf inactive Fock term
-!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      call mem%alloc(wf%mlhf_inactive_fock_term, wf%n_mo, wf%n_mo)
-!
-   end subroutine initialize_mlhf_inactive_fock_term_wavefunction
-!
-!
-   subroutine destruct_mlhf_inactive_fock_term_wavefunction(wf)
-!!
-!!    Destruct mlhf inactive Fock term
-!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      if (allocated(wf%mlhf_inactive_fock_term)) &
-         call mem%dealloc(wf%mlhf_inactive_fock_term, wf%n_mo, wf%n_mo)
-!
-   end subroutine destruct_mlhf_inactive_fock_term_wavefunction
+   end subroutine destruct_mo_fock_frozen_wavefunction
 !
 !
    subroutine initialize_mm_matrices_wavefunction(wf)
@@ -1714,7 +1456,13 @@ contains
 !
       if(wf%system%mm%forcefield.eq.'fq') then
 !         
-         if(.not.allocated(wf%pol_emb_fock))  call mem%alloc(wf%pol_emb_fock, wf%n_ao,wf%n_ao)
+         call mem%alloc(wf%pol_emb_fock, wf%n_ao, wf%n_ao)
+!         
+      endif
+!
+      if(wf%system%mm%forcefield .eq. 'non-polarizable') then
+!         
+         call mem%alloc(wf%nopol_h_wx, wf%n_ao, wf%n_ao)
 !         
       endif
 !
@@ -1771,109 +1519,32 @@ contains
    end subroutine destruct_pcm_matrices_wavefunction
 !
 !
-   subroutine write_mm_matrices_wavefunction(wf)
+   subroutine initialize_frozen_CCT_wavefunction(wf)
 !!
-!!    Save MM matrices
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-!!    Save AO Fock or h_wx for QM/MM at the end
-!!    of SCF
+!!    Initialize frozen CC^T 
+!!    Written by Sarai D. Folkestad, Jan 2020
 !!
       implicit none
 !
-      class(wavefunction), intent(inout) :: wf
+      class(wavefunction) :: wf
 !
-      wf%mm_matrices_file = sequential_file('mm_matrices')
-!      
-      call wf%mm_matrices_file%open_('write', 'rewind')
+      call mem%alloc(wf%frozen_CCT, wf%n_ao, wf%n_ao)
 !
-      if(wf%system%mm%forcefield.eq.'non-polarizable') then 
-!
-         call wf%mm_matrices_file%write_(wf%nopol_h_wx, wf%n_ao*wf%n_ao)
-!
-      else if(wf%system%mm%forcefield.eq.'fq') then
-!
-         call wf%mm_matrices_file%write_(wf%pol_emb_fock, wf%n_ao*wf%n_ao)
-!
-      endif
-!
-      call wf%mm_matrices_file%close_
-!
-   end subroutine write_mm_matrices_wavefunction
+   end subroutine initialize_frozen_CCT_wavefunction
 !
 !
-   subroutine write_pcm_matrices_wavefunction(wf)
+   subroutine destruct_frozen_CCT_wavefunction(wf)
 !!
-!!    Save MM matrices
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-!!    Save AO Fock or h_wx for QM/MM at the end
-!!    of SCF
+!!    Destruct frozen CC^T  
+!!    Written by Sarai D. Folkestad, Jan 2020
 !!
       implicit none
 !
-      class(wavefunction), intent(inout) :: wf
+      class(wavefunction) :: wf
 !
-      wf%pcm_matrices_file = sequential_file('pcm_matrices')
-!      
-      call wf%pcm_matrices_file%open_('write', 'rewind')
+      if (allocated(wf%frozen_CCT)) call mem%dealloc(wf%frozen_CCT, wf%n_ao, wf%n_ao)
 !
-      call wf%pcm_matrices_file%write_(wf%pcm_fock, wf%n_ao*wf%n_ao)
-!
-      call wf%pcm_matrices_file%close_
-!
-   end subroutine write_pcm_matrices_wavefunction
-!
-!
-   subroutine read_mm_matrices_wavefunction(wf)
-!!
-!!    Read MM matrices 
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-      implicit none
-!
-      class(wavefunction), intent(inout) :: wf
-!
-      wf%mm_matrices_file = sequential_file('mm_matrices')
-!      
-      call wf%mm_matrices_file%open_('read', 'rewind')
-!
-      if(wf%system%mm%forcefield.eq.'non-polarizable') then 
-!
-         call wf%mm_matrices_file%read_(wf%nopol_h_wx, wf%n_ao*wf%n_ao)
-!
-      else if(wf%system%mm%forcefield.eq.'fq') then
-!
-         call wf%mm_matrices_file%read_(wf%pol_emb_fock, wf%n_ao*wf%n_ao)
-!
-      endif
-!
-      call wf%mm_matrices_file%close_
-!
-   end subroutine read_mm_matrices_wavefunction
-!
-!
-   subroutine read_pcm_matrices_wavefunction(wf)
-!!
-!!    Save MM matrices
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-!!    Save AO Fock or h_wx for QM/MM at the end
-!!    of SCF
-!!
-      implicit none
-!
-      class(wavefunction), intent(inout) :: wf
-!
-      wf%pcm_matrices_file = sequential_file('pcm_matrices')
-!      
-      call wf%pcm_matrices_file%open_('read', 'rewind')
-!
-      call wf%pcm_matrices_file%read_(wf%pcm_fock, wf%n_ao*wf%n_ao)
-!
-      call wf%pcm_matrices_file%close_
-!
-   end subroutine read_pcm_matrices_wavefunction
+   end subroutine destruct_frozen_CCT_wavefunction
 !
 !
 end module wavefunction_class

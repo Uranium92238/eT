@@ -1,6 +1,6 @@
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,35 @@ module mlhf_class
 !!    Written by Linda Goletto Ida-Marie Høyvik,
 !!    and Sarai D. Folkestad, 2019
 !!
+!!    An initial idempotent density D, is
+!!    partitioned into an active and an external part 
+!!
+!!       D = D^a + D^e
+!!
+!!    The Hartree-Fock energy expression becomes
+!!
+!!       E = e(D^a) + e(D^e) + 2Tr[D^aG(D^e)],
+!!    
+!!    where 
+!!
+!!       e(D^x) = 2Tr(hD^x) + Tr(D^xG(D^x)).
+!!
+!!    In the MLHF procedure, we only optimize the 
+!!    active density (i.e., only rotate among the active orbitals)
+!!
+!!    The Fock matrix of the active space is
+!!
+!!       F = F(D^a) + G(D^e),
+!!
+!!    and the SCF procedure is performed considering this Fock matrix.
+!!
+!!    The SCF procedure is always performed in the MO basis, either
+!!    with the standard Roothan-Hall procedure or with DIIS acceleration.
+!!
+!!    For further information, 
+!!    see S. Sæther, T. Kjærgaard, H. Koch, and I-M. Høyvik, JCTC 13, no. 11 (2017),
+!!    and I-M. Høyvik, Mol. Phys. (2019).
+!!
 !
    use hf_class
 !
@@ -44,10 +73,12 @@ module mlhf_class
 !
       real(dp) :: inactive_energy
       real(dp) :: cholesky_threshold
+      real(dp) :: full_space_hf_threshold
 !
       logical :: cholesky_virtuals
       logical :: minimal_basis_diagonalization
       logical :: full_space_optimization
+      logical :: print_initial_hf
 !
    contains
 !
@@ -56,10 +87,12 @@ module mlhf_class
       procedure :: prepare_for_roothan_hall                 => prepare_for_roothan_hall_mlhf
       procedure :: prepare_for_roothan_hall_mo              => prepare_for_roothan_hall_mlhf
       procedure :: print_energy                             => print_energy_mlhf
+      procedure :: print_banner                             => print_banner_mlhf
 !
       procedure :: append_orbital_info_to_restart           => append_orbital_info_to_restart_mlhf
       procedure :: is_restart_safe                          => is_restart_safe_mlhf
       procedure :: read_for_scf_restart                     => read_for_scf_restart_mlhf
+      procedure :: read_for_scf_restart_mo                  => read_for_scf_restart_mlhf
 !
       procedure :: roothan_hall_update_orbitals_mo          => roothan_hall_update_orbitals_mo_mlhf
       procedure :: roothan_hall_update_orbitals             => roothan_hall_update_orbitals_mo_mlhf
@@ -92,10 +125,13 @@ module mlhf_class
       procedure :: update_fock_and_energy                   => update_fock_and_energy_mlhf
       procedure :: update_fock_and_energy_mo                => update_fock_and_energy_mlhf
 !
+      procedure :: prepare_for_cc                           => prepare_for_cc_mlhf
       procedure :: prepare_frozen_fock_terms                => prepare_frozen_fock_terms_mlhf
-      procedure :: update_mlhf_inactive_fock_term           => update_mlhf_inactive_fock_term_mlhf
       procedure :: diagonalize_fock_frozen_hf_orbitals      => diagonalize_fock_frozen_hf_orbitals_mlhf
       procedure :: get_n_active_hf_atoms                    => get_n_active_hf_atoms_mlhf
+      procedure :: prepare_mos                              => prepare_mos_mlhf
+!
+      procedure :: get_full_idempotent_density              => get_full_idempotent_density_mlhf
 !
    end type mlhf
 !
@@ -125,11 +161,15 @@ contains
       wf%system => system
 !
       wf%cholesky_threshold            = 1.0d-2
+      wf%full_space_hf_threshold       = 1.0d-1
       wf%full_space_optimization       = .false.
       wf%minimal_basis_diagonalization = .false.
       wf%cholesky_virtuals             = .false.
+      wf%print_initial_hf              = .false.
 !
       call wf%read_settings()
+!
+      call wf%print_banner()
 !
       call wf%prepare()
 !
@@ -174,6 +214,12 @@ contains
 !
       call wf%construct_sp_eri_schwarz()
 !
+      call wf%initialize_ao_h()
+      call wf%get_ao_h_wx(wf%ao_h)
+!
+      call wf%initialize_frozen_CCT()
+      call zero_array(wf%frozen_CCT, wf%n_ao**2)
+!
    end subroutine prepare_mlhf
 !
 !
@@ -203,24 +249,37 @@ contains
 !
       class(mlhf) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: h_wx
       real(dp) :: n_electrons
+!
+      type(timings) :: timer
 !
 !     Construct AO Fock from SAD density
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_h_wx(h_wx)
+      timer = timings('AO Fock construction', pl='normal')
+      call timer%turn_on()
 !
-      call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx)
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+!     AO fock construction and energy calculation
+!
+!     Construct the two electron part of the Fock matrix (G),
+!     and add the contribution to the Fock matrix
+!
+      call wf%construct_ao_G(wf%ao_density, wf%ao_fock)
+!
+!     Add the one-electron part
+!
+      call daxpy(wf%n_ao**2, one, wf%ao_h, 1, wf%ao_fock, 1)
+!
+      call timer%turn_off()
+!
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao_h)
 !
       call wf%get_n_electrons_in_density(n_electrons)
 !
-      call output%printf('Energy of initial guess:      (f25.12)', &
-            reals=[wf%energy], fs='(/t6, a)',pl='minimal')
+      call output%printf('m', 'Energy of initial guess:      (f25.12)', &
+                         reals=[wf%energy], fs='(/t6, a)')
 !
-      call output%printf('Number of electrons in guess: (f25.12)', &
-            reals=[n_electrons], fs='(t6, a)',pl='minimal')
+      call output%printf('m', 'Number of electrons in guess: (f25.12)', &
+                         reals=[n_electrons], fs='(t6, a)')
 !
 !     Diagonalize to generate idempotent density
 !
@@ -237,14 +296,18 @@ contains
 !     Allocate active mo specific arrays
 !     and construct them
 !
-      call wf%initialize_w_mo_update()
+      call wf%initialize_W_mo_update()
       call identity_array(wf%w_mo_update, wf%n_mo)
 !
       call wf%initialize_G_De_ao()
       call wf%initialize_G_De()
       call wf%initialize_mo_fock()
 !
-      call wf%construct_G_De(h_wx)
+      call wf%construct_G_De()
+!
+!     Inactive energy contribution
+!
+      wf%inactive_energy = wf%calculate_hf_energy_from_G(wf%G_De_ao, wf%ao_h)
 !
 !     Print multilevel orbital information to restart file
 !
@@ -254,8 +317,8 @@ contains
 !
       call wf%construct_ao_density()
 !
-      call wf%update_fock_and_energy_mo(h_wx)
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+      call wf%update_fock_and_energy_mo()
+!
       call wf%roothan_hall_update_orbitals_mo()  ! DIIS F => C
       call wf%update_ao_density()
 !
@@ -274,14 +337,14 @@ contains
       integer :: i, n_active_atoms, n_active_spaces
       character(len=100) :: last_active_space_level
 !
-      n_active_spaces = wf%system%n_active_atoms_spaces
-      last_active_space_level = wf%system%active_atoms_spaces(n_active_spaces)%level
+      n_active_spaces = wf%system%n_active_atom_spaces
+      last_active_space_level = wf%system%active_atom_spaces(n_active_spaces)%level
 !
       if (trim(last_active_space_level) .ne. 'hf') then
          call output%error_msg('No hf active space found')
       endif
 !
-      n_active_atoms = wf%system%active_atoms_spaces(n_active_spaces)%last_atom
+      n_active_atoms = wf%system%active_atom_spaces(n_active_spaces)%last_atom
 !
       call wf%restart_file%open_('write', 'append')
 !
@@ -316,7 +379,7 @@ contains
    end subroutine roothan_hall_update_orbitals_mo_mlhf
 !
 !
-   subroutine update_fock_and_energy_mlhf(wf, h_wx, prev_ao_density)
+   subroutine update_fock_and_energy_mlhf(wf, prev_ao_density)
 !!
 !!    Update Fock and energy
 !!    Written by Linda Goletto and Sarai D. Folkestad, 2019
@@ -340,19 +403,10 @@ contains
 !
       class(mlhf) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
-!
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
 !
       real(dp), dimension(:,:), allocatable :: Z_pq ! = sum_x G_De_old_wx * w_xq
       real(dp), dimension(:,:), allocatable :: G_De_old
-!
-!
-      if (present(prev_ao_density)) then ! Hack (should be fixed asap)
-!
-!        Nothing to do here
-!
-      endif
 !
 !     Update of the MO basis for the G_De
 !     G_De =  w^T * G_De_old * w
@@ -399,19 +453,11 @@ contains
 !
 !     AO fock construction and energy calculation
 !
-      call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx)
-!
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+      call wf%hf%update_fock_and_energy_mo(prev_ao_density)
 !
 !     Add the Tr[Da * G(De)] and inactive energy contributions to the energy
 !
       wf%energy = wf%energy + wf%inactive_energy + wf%get_active_energy_G_De_term()
-!
-!     Transformation of the AO fock in the MO basis and addition of the G_De term
-!     to costruct the effective MO fock
-!     F = h + G(Da) + G(De)
-!
-      call wf%mo_transform(wf%ao_fock, wf%mo_fock)
 !
 !     Add G_De to MO fock
 !
@@ -832,6 +878,7 @@ contains
       class(mlhf) :: wf               
 !
       call input%get_keyword_in_section('cholesky threshold', 'multilevel hf', wf%cholesky_threshold)
+      call input%get_keyword_in_section('initial hf threshold', 'multilevel hf', wf%full_space_hf_threshold)
 !
       if (input%requested_keyword_in_section('project on minimal basis', 'multilevel hf')) &
             wf%minimal_basis_diagonalization = .true.
@@ -841,6 +888,9 @@ contains
 !
       if (input%requested_keyword_in_section('initial hf optimization', 'multilevel hf')) &
             wf%full_space_optimization = .true.
+!
+      if (input%requested_keyword_in_section('print initial hf', 'multilevel hf')) &
+            wf%print_initial_hf = .true.
 !
 !     Sanity checks
 !
@@ -874,9 +924,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: C_pao_copy
       real(dp), dimension(:,:), allocatable :: S_pao
+      real(dp), dimension(:,:), allocatable :: D
 !
       integer   :: n_active_aos
       integer   :: last_hf_ao
+      integer   :: rank
 !
       call wf%system%last_ao_active_space('hf', last_hf_ao)
 !
@@ -889,13 +941,71 @@ contains
 !
       call wf%get_orbital_overlap(C_pao_copy, n_active_aos, S_pao)
 !
-      call wf%lovdin_orthonormalization(C_pao_copy, S_pao, n_active_aos, wf%n_v)
+      call wf%lowdin_orthonormalization(C_pao_copy, S_pao, n_active_aos, wf%n_v)
 !
       call mem%dealloc(S_pao, n_active_aos, n_active_aos)
 !
       call dcopy(wf%n_ao*wf%n_v, C_pao_copy, 1, C_pao, 1)
 !
       call mem%dealloc(C_pao_copy, wf%n_ao, n_active_aos)
+!
+!     Construct inactive virtuals and add to frozen CC^T. Needed for later PAO construction
+!     e.g. to perform CC in reduced space or MLCC with PAOs
+!
+      call mem%alloc(C_pao_copy, wf%n_ao, wf%n_ao)
+      call mem%alloc(D, wf%n_ao, wf%n_ao)
+!
+!     Active virtual density
+!
+      call dgemm('N', 'T', &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  wf%n_v,  &
+                  one,     &
+                  C_pao,   &
+                  wf%n_ao, &
+                  C_pao,   &
+                  wf%n_ao, &
+                  zero,    &
+                  D,       &
+                  wf%n_ao)
+!
+!     Add AO density (occupied orbitals)
+!
+      call daxpy(wf%n_ao**2, one, wf%ao_density, 1, D, 1)
+!
+!     Project occupied and active virtual out of AOs
+!
+      call wf%projected_atomic_orbitals(D, C_pao_copy, wf%n_ao)
+!
+      call mem%dealloc(D, wf%n_ao, wf%n_ao)
+!
+      call mem%alloc(S_pao, wf%n_ao, wf%n_ao)
+!
+      call wf%get_orbital_overlap(C_pao_copy, wf%n_ao, S_pao)
+!
+!     Orthonormalize
+!
+      call wf%lowdin_orthonormalization(C_pao_copy, S_pao, wf%n_ao, rank)
+!
+      call mem%dealloc(S_pao, wf%n_ao, wf%n_ao)
+!
+!     Add to CC^T
+!
+      call dgemm('N', 'T',       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  rank,          &
+                  one,           &
+                  C_pao_copy,    &
+                  wf%n_ao,       &
+                  C_pao_copy,    &
+                  wf%n_ao,       &
+                  one,           &
+                  wf%frozen_CCT, &
+                  wf%n_ao)
+!
+      call mem%dealloc(C_pao_copy, wf%n_ao, wf%n_ao)      
 !
    end subroutine construct_active_paos_mlhf
 !
@@ -937,22 +1047,20 @@ contains
 !!    Print orbital space information
 !!    Written by Linda Goletto and Ida-Marie Hoyvik, 2019
 !!
-!!    Prints the information on the active and inactive orbitals
+!!    Prints the information on the active orbitals
 !!
       implicit none
 !
       class(mlhf) :: wf
 !
-     call output%printf('- Size of orbital spaces in MLHF ', &
-            fs='(/t3, a)',pl='minimal')
-     call output%printf(' Number of active occupied orbitals :  (i25)', &
-            ints=[wf%n_o], fs='(/t6, a)',pl='minimal')
-     call output%printf(' Number of active virtual orbitals  :  (i25)', &
-            ints=[wf%n_v], fs='(t6, a)',pl='minimal')
-     call output%printf(' Number of active orbitals          :  (i25)', &
-            ints=[wf%n_v+wf%n_o], fs='(t6, a)',pl='minimal')
-     call output%printf(' Number of inactive orbitals        :  (i25)', &
-            ints=[wf%n_ao-wf%n_v-wf%n_o], fs='(t6, a)',pl='minimal')
+     call output%printf('m', '- Active orbital space:', &
+            fs='(/t3, a)')
+     call output%printf('m', ' Number of active occupied orbitals: (i8)', &
+            ints=[wf%n_o], ffs='(/t6, a)')
+     call output%printf('m', ' Number of active virtual orbitals:  (i8)', &
+            ints=[wf%n_v], ffs='(t6, a)')
+     call output%printf('m', ' Number of active orbitals:          (i8)', &
+            ints=[wf%n_v+wf%n_o], ffs='(t6, a)')
 !
    end subroutine print_orbital_space_info_mlhf
 !
@@ -1030,13 +1138,8 @@ contains
       implicit none
 !
       class(mlhf) :: wf
-!
-      call wf%prepare_mos()
-      call wf%prepare_frozen_fock_terms()
-!
-!     Save orbital information in orbital_information_file for CC
-!
-      call wf%write_orbital_information()
+! 
+      call wf%save_ao_density()
 !
       call wf%destruct_orbital_energies()
       call wf%destruct_orbital_coefficients()
@@ -1046,20 +1149,30 @@ contains
       call wf%destruct_ao_density()
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
+      call wf%destruct_sp_eri_schwarz()
+      call wf%destruct_sp_eri_schwarz_list()
+      call wf%destruct_ao_h()
 !
-      call wf%destruct_w_mo_update()
+      call wf%destruct_W_mo_update()
       call wf%destruct_G_De()
       call wf%destruct_G_De_ao()
 !
-      call wf%destruct_sp_eri_schwarz()
-      call wf%destruct_sp_eri_schwarz_list()
+      call wf%destruct_mm_matrices()
+      call wf%destruct_pcm_matrices()
+      call wf%destruct_mo_fock_frozen()
+      call wf%destruct_orbital_coefficients_fc()
+      call wf%destruct_orbital_coefficients_frozen_hf()
+!
+      call wf%destruct_frozen_CCT()
+!
+      call wf%destruct_frozen_CCT()
 !
       call wf%G_De_ao_file%delete_
 !
    end subroutine cleanup_mlhf
 !
 !
-   subroutine construct_G_De_mlhf(wf, h_wx)
+   subroutine construct_G_De_mlhf(wf)
 !!
 !!    Construct G(De)
 !!    Written by Linda Goletto, Ida-Marie Høyvik
@@ -1071,7 +1184,10 @@ contains
 !
       class(mlhf), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
+      type(timings) :: G_De_construction_timer
+!
+      G_De_construction_timer = timings('G(De) construction', pl='normal')
+      call G_De_construction_timer%turn_on()
 !
 !     Scale by two to get non-idempotent inactive density De
 !
@@ -1089,9 +1205,7 @@ contains
       call wf%mlhf_inactive_fock_term_file%write_(wf%G_De, wf%n_mo**2)
       call wf%mlhf_inactive_fock_term_file%close_
 !
-!     Energy contribution, inactive
-!
-      wf%inactive_energy = wf%calculate_hf_energy_from_G(wf%G_De_ao, h_wx)
+      call G_De_construction_timer%turn_off()
 !
    end subroutine construct_G_De_mlhf
 !
@@ -1146,14 +1260,17 @@ contains
       nuclear_repulsion = wf%system%get_total_nuclear_repulsion()
       E_G_De = wf%get_active_energy_G_De_term()
 !
-      call output%printf('- Summary of '// trim(convert_to_uppercase(wf%name_))//&
-         ' active/inactive contributions to electronic energy (a.u.):', pl='m', fs='(/t3,a)', ll=80)
+      call output%printf('m', '- Summary of '// &
+                         trim(convert_to_uppercase(wf%name_))// &
+                         ' active/inactive contributions to electronic energy (a.u.):', &
+                         ll=80, fs='(/t3,a)')
 !
-      call output%printf('Active energy:             (f19.12)', pl='m', fs='(/t6,a)',  &
-                          reals=[wf%energy - (E_G_De + wf%inactive_energy + nuclear_repulsion)])
-      call output%printf('Active-inactive energy:    (f19.12)', pl='m', fs='(t6,a)', reals=[E_G_De])
-      call output%printf('Inactive energy:           (f19.12)', pl='m', fs='(t6,a)',  &
-                          reals=[wf%inactive_energy])
+      call output%printf('m', 'Active energy:             (f19.12)', &
+                         reals=[wf%energy - (E_G_De + wf%inactive_energy + nuclear_repulsion)], fs='(/t6,a)')
+      call output%printf('m', 'Active-inactive energy:    (f19.12)', &
+                         reals=[E_G_De], fs='(t6,a)')
+      call output%printf('m', 'Inactive energy:           (f19.12)', &
+                         reals=[wf%inactive_energy], fs='(t6,a)')
 !
    end subroutine print_energy_mlhf
 !
@@ -1186,6 +1303,11 @@ contains
       integer     :: last_hf_ao
 !
       integer,  dimension(:),   allocatable :: active_aos
+!
+      type(timings) :: active_mos_construction_timer
+!
+      active_mos_construction_timer = timings('Active MOs construction', pl='normal')
+      call active_mos_construction_timer%turn_on()
 !
       n_active_aos = 0
       n_vectors    = 0
@@ -1221,6 +1343,10 @@ contains
          call cholesky_decomposition_limited_diagonal(D_v, C_v, wf%n_ao, wf%n_v, &
                                        wf%cholesky_threshold, n_active_aos, active_aos)
 !
+!        Add inactive virtual density to frozen_CCT to be used if new PAOs are constructed later
+!
+         call daxpy(wf%n_ao**2, one, D_v, 1, wf%frozen_CCT, 1)
+!
          call mem%dealloc(D_v, wf%n_ao, wf%n_ao)
 !
       else
@@ -1238,6 +1364,10 @@ contains
       call cholesky_decomposition_limited_diagonal(wf%ao_density, C_o, wf%n_ao, wf%n_o, &
                                   wf%cholesky_threshold, n_active_aos, active_aos)
 !
+!     Add inactive density to frozen_CCT to be used if new PAOs are constructed later
+!
+      call daxpy(wf%n_ao**2, one, wf%ao_density, 1, wf%frozen_CCT, 1)
+!
 !     Set molecular orbitals coefficients
 !
       call wf%set_active_mo_coefficients(C_o(:,1:wf%n_o), C_v(:,1:wf%n_v))
@@ -1246,6 +1376,8 @@ contains
       call mem%dealloc(C_o, wf%n_ao, wf%n_ao)
 !
       call mem%dealloc(active_aos, n_active_aos)
+!
+      call active_mos_construction_timer%turn_off()
 !
    end subroutine construct_active_mos_mlhf
 !
@@ -1266,14 +1398,14 @@ contains
       integer, dimension(:), allocatable :: active_atoms
       character(len=100) :: last_active_space_level
 !
-      n_active_spaces = wf%system%n_active_atoms_spaces
-      last_active_space_level = wf%system%active_atoms_spaces(n_active_spaces)%level
+      n_active_spaces = wf%system%n_active_atom_spaces
+      last_active_space_level = wf%system%active_atom_spaces(n_active_spaces)%level
 !
       if (last_active_space_level .ne. 'hf') then
          call output%error_msg('The last active space is not hf, but:' // last_active_space_level)
       endif
 !
-      n_active_atoms = wf%system%active_atoms_spaces(n_active_spaces)%last_atom
+      n_active_atoms = wf%system%active_atom_spaces(n_active_spaces)%last_atom
 !
       call wf%restart_file%open_('read', 'rewind')
 !
@@ -1297,7 +1429,7 @@ contains
                                'of electrons for task ' // trim(task))
       endif
 !
-      if (n_active_atoms .ne. wf%system%active_atoms_spaces(n_active_spaces)%last_atom) then
+      if (n_active_atoms .ne. wf%system%active_atom_spaces(n_active_spaces)%last_atom) then
          call output%error_msg('attempted to restart MLHF with an inconsistent number ' // &
             'of active atoms for task ' // trim(task))
       endif
@@ -1407,39 +1539,35 @@ contains
       type(hf), allocatable            :: full_space_wf
       type(scf_diis_hf), allocatable   :: full_space_solver
 !
-      real(dp) :: full_space_thr
-!
       integer :: max_iterations, diis_dimension
       character(len=200) :: ao_density_guess, storage
 !
 !     Set the default settings
 !
-      full_space_thr = 1.0d-1
       max_iterations = 20
       diis_dimension = 8
       ao_density_guess = 'sad'
       storage = 'memory'
 !
-!     Read the optional threshold from input
-!
-      call input%get_keyword_in_section('initial hf threshold', 'multilevel hf', full_space_thr)
+      call output%printf('m', '- Initial full hf optimization to a gradient threshold of (e9.2)', &
+                  reals=[wf%full_space_hf_threshold], &
+                  ffs='(/t3,a)', fs='(t6,a)')
 !
 !     Perform the HF calculation in the full space
 !
+      if(.not. wf%print_initial_hf) call output%mute()
+!
       full_space_wf = hf(wf%system)
 !
-      call output%printf('Requested initial hf optimization. Performing scf-diis' // &
-                  'to the threshold (e9.2)', reals=[full_space_thr], pl='minimal', fs='(/t6,a)')
-!
-      full_space_solver = scf_diis_hf(wf=full_space_wf,    &
-                        restart=.false.,                   &
-                        diis_dimension=diis_dimension,     &
-                        ao_density_guess=ao_density_guess, &
-                        energy_threshold=full_space_thr,   &
-                        max_iterations=max_iterations,     &
-                        gradient_threshold=full_space_thr, &
-                        storage=storage,                   &
-                        cumulative_threshold=1.0d-2,       &
+      full_space_solver = scf_diis_hf(wf=full_space_wf,                 &
+                        restart=.false.,                                &
+                        diis_dimension=diis_dimension,                  &
+                        ao_density_guess=ao_density_guess,              &
+                        energy_threshold=wf%full_space_hf_threshold,    &
+                        max_iterations=max_iterations,                  &
+                        gradient_threshold=wf%full_space_hf_threshold,  &
+                        storage=storage,                                &
+                        cumulative_threshold=1.0d-2,                    &
                         crop=.false.)
 !
       call full_space_solver%run(full_space_wf)
@@ -1449,13 +1577,9 @@ contains
       wf%orbital_coefficients = full_space_wf%orbital_coefficients
       wf%orbital_energies = full_space_wf%orbital_energies
 !
-!     The orbitals are only going to be frozen in the mlhf calculation,
-!     if required, so for now the logical are set to false
-!
-      full_space_wf%frozen_core = .false.
-      full_space_wf%frozen_hf_mos = .false.
-!
       call full_space_wf%cleanup()
+!
+      if(.not. wf%print_initial_hf) call output%unmute()
 !
       call wf%update_ao_density()
 !
@@ -1468,8 +1592,21 @@ contains
 !!    Written by Sarai D. Folkestad, Oct 2019
 !!
 !!    This routine prepares the frozen Fock contributions
-!!    to coupled cluster. This occurs e.g.,  in the cases where there
-!!    is a reduction in the number of MOs in CC compared to HF
+!!    to coupled cluster. 
+!!
+!!    Always included
+!!
+!!       - G(De)
+!!
+!!    Possible contributions to frozen fock:
+!!
+!!       - Frozen core
+!!
+!!       - Frozen HF orbitals
+!!
+!!       - MM fock (QM/MM)
+!!
+!!       - PCM fock
 !!
 !!    Modified by Linda Goletto, Nov 2019
 !!
@@ -1480,43 +1617,51 @@ contains
 !
       class(mlhf) :: wf
 !
-      if (wf%frozen_core .or. wf%frozen_hf_mos) call wf%update_mlhf_inactive_fock_term()
-      if (wf%frozen_core)                       call wf%construct_mo_fock_fc_term()
-      if (wf%frozen_hf_mos)                     call wf%construct_mo_fock_frozen_hf_term()
+      real(dp), dimension(:,:), allocatable :: mo_fc_fock
+      real(dp), dimension(:,:), allocatable :: mo_frozen_hf_fock
+      real(dp), dimension(:,:), allocatable :: mo_frozen_mlhf_fock
+!
+      call wf%initialize_mo_fock_frozen()
+      call zero_array(wf%mo_fock_frozen, wf%n_mo**2)
+!
+!     Contribution from frozen core orbitals
+!
+      if (wf%frozen_core) then
+!
+         call mem%alloc(mo_fc_fock, wf%n_mo, wf%n_mo)
+!
+         call wf%construct_mo_fock_fc_term(mo_fc_fock)
+         call daxpy(wf%n_mo**2, one, mo_fc_fock, 1, wf%mo_fock_frozen, 1)
+!
+         call mem%dealloc(mo_fc_fock, wf%n_mo, wf%n_mo)
+!
+      endif
+!
+      if (wf%frozen_hf_mos) then
+!
+         call mem%alloc(mo_frozen_hf_fock, wf%n_mo, wf%n_mo)
+!
+         call wf%construct_mo_fock_frozen_hf_term(mo_frozen_hf_fock)
+         call daxpy(wf%n_mo**2, one, mo_frozen_hf_fock, 1, wf%mo_fock_frozen, 1)
+!
+         call mem%dealloc(mo_frozen_hf_fock, wf%n_mo, wf%n_mo)
+!
+      endif
+!
+!     Add G(De)
+!
+      call mem%alloc(mo_frozen_mlhf_fock, wf%n_mo, wf%n_mo)
+!
+      call wf%mo_transform(wf%G_De_ao, mo_frozen_mlhf_fock)
+!
+      call daxpy(wf%n_mo**2, one, mo_frozen_mlhf_fock, 1, wf%mo_fock_frozen, 1)
+!
+      call mem%dealloc(mo_frozen_mlhf_fock, wf%n_mo, wf%n_mo)
 !
    end subroutine prepare_frozen_fock_terms_mlhf
 !
 !
-   subroutine update_mlhf_inactive_fock_term_mlhf(wf)
-!!
-!!    Prepare frozen Fock contributions
-!!    Written by Linda Goletto, Nov. 2019
-!!
-!!    This routine reads the MLHF inactive term in the AO basis
-!!    and MO transforms it with respect to the new MO basis;
-!!    the result is written to the mlhf_inactive_fock_term file
-!!    to be used in CC.
-!!
-      implicit none
-!
-      class(mlhf) :: wf
-!
-      real(dp), dimension(:,:), allocatable :: G_De_mo
-!
-      call mem%alloc(G_De_mo, wf%n_mo, wf%n_mo)
-!
-      call wf%mo_transform(wf%G_De_ao, G_De_mo)
-!
-      call wf%mlhf_inactive_fock_term_file%open_('write', 'rewind')
-      call wf%mlhf_inactive_fock_term_file%write_(G_De_mo, wf%n_mo**2)
-      call wf%mlhf_inactive_fock_term_file%close_
-!
-      call mem%dealloc(G_De_mo, wf%n_mo, wf%n_mo)
-!
-   end subroutine update_mlhf_inactive_fock_term_mlhf
-!
-!
-   module subroutine diagonalize_fock_frozen_hf_orbitals_mlhf(wf)
+   subroutine diagonalize_fock_frozen_hf_orbitals_mlhf(wf)
 !!
 !!    Diagonalize Fock frozen HF orbitals
 !!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
@@ -1575,11 +1720,186 @@ contains
 !
       integer :: n_active_hf_atoms, n_active_spaces
 !
-      n_active_spaces = wf%system%n_active_atoms_spaces
+      n_active_spaces = wf%system%n_active_atom_spaces
 !
-      n_active_hf_atoms = wf%system%active_atoms_spaces(n_active_spaces)%last_atom
+      n_active_hf_atoms = wf%system%active_atom_spaces(n_active_spaces)%last_atom
 !
    end function get_n_active_hf_atoms_mlhf
+!
+!
+   subroutine print_banner_mlhf(wf)
+!!
+!!    Print banner
+!!    Sarai D. Folkestad, Dec 2019
+!!
+!
+      use string_utilities, only : convert_to_uppercase
+!
+      implicit none
+!
+      class(mlhf) :: wf
+!
+      call wf%hf%print_banner()
+!
+      call output%printf('m', '- MLHF settings:', fs='(/t3,a)')
+!
+      call output%printf('m', 'Occupied orbitals:    Cholesky', fs='(/t6,a)')
+!
+      if (wf%cholesky_virtuals) then
+!     
+         call output%printf('m', 'Virtual orbitals:     Cholesky', fs='(t6,a)')
+!
+      else
+!     
+         call output%printf('m', 'Virtual orbitals:     PAOs', fs='(t6,a)')
+!
+      endif
+!
+      call output%printf('m', 'Cholesky decomposition threshold: (e9.2)', fs='(/t6,a)', &
+            reals=[wf%cholesky_threshold])
+!
+      if (wf%full_space_optimization) then
+!
+         call output%printf('m', 'Initial optimization of full AO density enabled', fs='(/t6,a)')
+!
+      endif
+!
+   end subroutine print_banner_mlhf
+!
+!
+   subroutine prepare_mos_mlhf(wf)
+!!
+!!    Prepare MOs
+!!    Written by Ida-Marie Høyvik, Oct 2019
+!!
+!!    This routine prepares the MOs for coupled cluster
+!!    in the cases where there is a reduction in the
+!!    number of MOs in CC compared to HF
+!!
+!!    Examples of this is the frozen core
+!!    approximation and if CC is only done
+!!    for a localized region of a large molecule
+!!    which has been treated at HF level of theory.
+!!
+!!
+!
+      use visualization_class, only : visualization
+!
+      implicit none
+!
+      class(mlhf) :: wf
+!
+      type(visualization), allocatable :: plotter
+!
+      character(len=200) :: label
+!
+      real(dp), dimension(:,:), allocatable :: D
+!
+!     Destruct MO quantities in the old MO dimension, if they are allocated,
+!     before n_mo changes
+!
+      call wf%destruct_mo_fock()
+      call wf%destruct_W_mo_update()
+      call wf%destruct_G_De()
+!
+!     We are done with these and want to delete them before n_mo changes
+      call wf%destruct_pivot_matrix_ao_overlap()
+      call wf%destruct_cholesky_ao_overlap()
+!
+!     Eliminate the core orbitals if frozen core requested
+!
+!     MO coefficients for core orbitals are placed in 
+!     wf%orbital_coefficients_fc and removed from wf%orbital_coefficients
+!     the number of frozen core orbitals is wf%n_frozen_core_orbitals
+!
+      if (wf%frozen_core) call wf%remove_core_orbitals()
+!
+!     Cholesky decomposition of density for reduced space CC calculation
+!
+!     MO coefficients for frozen hf orbitals now placed in 
+!     wf%orbital_coefficients_frozen_hf and removed from wf%orbital_coefficients
+!     the number of frozen hf orbitals is wf%n_frozen_hf_orbitals
+!
+      if (wf%frozen_hf_mos) call wf%remove_frozen_hf_orbitals()
+!
+      if (wf%plot_active_density) then
+!
+         plotter = visualization(wf%system, wf%n_ao)
+!
+         call mem%alloc(D, wf%n_ao, wf%n_ao)
+!
+         call dgemm('N', 'T',                   &
+                     wf%n_ao,                   &
+                     wf%n_ao,                   &
+                     wf%n_o,                    &
+                     one,                       &
+                     wf%orbital_coefficients,   &
+                     wf%n_ao,                   &
+                     wf%orbital_coefficients,   &
+                     wf%n_ao,                   &
+                     zero,                      &
+                     D,                         &
+                     wf%n_ao)
+!
+         label = 'MLHF_density_for_CC'
+!
+         call plotter%plot_density(wf%system, D, label)
+!
+         call mem%dealloc(D, wf%n_ao, wf%n_ao)
+!
+      endif
+
+   end subroutine prepare_mos_mlhf
+!
+!
+   subroutine get_full_idempotent_density_mlhf(wf, D)
+!!
+!!    Get full idempotent density
+!!    Written by Sarai D. Folkestad, Jan 2020
+!!
+!!    Constructs the full occupied density
+!!    for determining the frozen HF virtuals
+!!
+      implicit none
+!
+      class(mlhf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: D
+!
+      call wf%hf%get_full_idempotent_density(D)
+!
+      call daxpy(wf%n_ao**2, one, wf%frozen_CCT, 1, D, 1)
+!
+   end subroutine get_full_idempotent_density_mlhf
+!
+!
+   subroutine prepare_for_cc_mlhf(wf)
+!!
+!!    Prepare for CC
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Prepares frozen fock terms, 
+!!    and places energy in hf_energy
+!!
+      implicit none
+!
+      class(mlhf) :: wf
+!
+      wf%hf_energy = wf%energy
+!
+      wf%exists_frozen_fock_terms = .true. ! Always true for MLHF
+!
+!     Change the MOs if frozen core or frozen hf 
+!     is requested
+!
+      call wf%prepare_mos()
+!
+!     Prepare frozen Fock terms from frozen core 
+!     and frozen HF
+!
+      call wf%prepare_frozen_fock_terms()
+!
+   end subroutine prepare_for_cc_mlhf
 !
 !
 end module mlhf_class

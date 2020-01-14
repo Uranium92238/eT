@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 submodule (cc2_class) debug_jacobian_cc2
 !
 !!
-!!    Debug Jacobian (CCS)
+!!    Debug Jacobian 
 !!
 !!    Routines debug analytical Jacobian by comparing to 
 !!    Jacobian computed by numerical differentiation of 
@@ -76,9 +76,7 @@ contains
 !
 !     Prepare T1 integrals and Fock 
 !
-      call wf%integrals%write_t1_cholesky(wf%t1)
-      if (wf%integrals%get_eri_t1_mem()) &
-         call wf%integrals%update_g_pqrs_t1_in_memory()
+      call wf%integrals%update_t1_integrals(wf%t1)
 !
       call wf%construct_fock()
 !

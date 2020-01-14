@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (mlcc2_class) orbitals_mlcc2
 !
 !!
-!!    MLCC2 orbitals
-!!    Written by Sarai D. Folkestad, Apr 2019
+!!    MLCC2 orbitals submodule
 !!
 !!    This submodule contains routines that handle orbital
 !!    transformation and orbital partitioning for MLCC2.
@@ -784,6 +783,7 @@ contains
 !
       enddo
 !
+      call mem%dealloc(omega_ccs, n_cnto_states)
       call mem%dealloc(R_ai_k, wf%n_v, wf%n_o)
       call mem%dealloc(R_aibj_k, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(R_ai, wf%n_v, wf%n_o, n_cnto_states)
@@ -803,6 +803,8 @@ contains
 !
       call transformation_o%close_('keep')
       call transformation_v%close_('keep')
+!
+      call wf%integrals%cleanup()
 !
    end subroutine construct_ccs_cnto_transformation_matrices_mlcc2
 !
@@ -954,6 +956,8 @@ contains
 !
       call transformation_o%close_('keep')
 !
+      call wf%integrals%cleanup()
+!
    end subroutine construct_ccs_nto_transformation_matrix_mlcc2
 !
 !
@@ -1046,6 +1050,12 @@ contains
                   D,                         &
                   wf%n_ao)
 !
+      if (wf%exists_frozen_fock_terms) then
+!
+         call daxpy(wf%n_ao**2, one, wf%frozen_CCT, 1, D, 1)
+!
+      endif
+!
 !     2. Construct PAOs for active atoms
 !
       call mem%alloc(PAO_coeff, wf%n_ao, n_active_aos)
@@ -1058,7 +1068,7 @@ contains
 !
       call wf%get_orbital_overlap(PAO_coeff, n_active_aos, S)
 !
-      call wf%lovdin_orthonormalization(PAO_coeff, S, n_active_aos, rank)
+      call wf%lowdin_orthonormalization(PAO_coeff, S, n_active_aos, rank)
 !
       call mem%dealloc(S, n_active_aos, n_active_aos)
 !
@@ -1095,6 +1105,12 @@ contains
                      D,                         &
                      wf%n_ao)
 !
+         if (wf%exists_frozen_fock_terms) then
+!
+            call daxpy(wf%n_ao**2, one, wf%frozen_CCT, 1, D, 1)
+!
+         endif
+!
 !        Construct PAOs for the remaining virtual orbitals
 !
          call mem%alloc(PAO_coeff, wf%n_ao, wf%n_ao)
@@ -1107,7 +1123,7 @@ contains
 !
          call wf%get_orbital_overlap(PAO_coeff, wf%n_ao, S)
 !
-         call wf%lovdin_orthonormalization(PAO_coeff, S, wf%n_ao, rank)
+         call wf%lowdin_orthonormalization(PAO_coeff, S, wf%n_ao, rank)
 !
          call mem%dealloc(S, wf%n_ao, wf%n_ao)
 !
@@ -1194,7 +1210,7 @@ contains
       enddo
 !
       if (count_zero_eigenvalues .gt. 0)  &
-         call output%printf('Warning: T_o has (i0) zero eigenvalues', ints=[count_zero_eigenvalues],pl='minimal')
+         call output%printf('m', 'Warning: T_o has (i0) zero eigenvalues', ints=[count_zero_eigenvalues])
 !
       call mem%dealloc(eigenvalues, wf%n_o)
 !
@@ -1280,8 +1296,8 @@ contains
 !
       type(ccs), allocatable :: ccs_wf
 !
-      type(diis_cc_gs) :: cc_gs_solver_diis
-      type(davidson_cc_es) :: cc_es_solver_davidson
+      type(diis_cc_gs), allocatable :: cc_gs_solver_diis
+      type(davidson_cc_es), allocatable :: cc_es_solver_davidson
 !
       type(timings) :: timer, timer_gs, timer_es
 !
@@ -1289,7 +1305,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: all_omega_ccs
 !
-      call output%printf('Running CCS calculation for NTOs/CNTOs.', fs='(/t3,a)',pl='minimal')
+      call output%printf('m', 'Running CCS calculation for NTOs/CNTOs.', fs='(/t3,a)')
 !
       if (.not. input%requested_keyword_in_section('print ccs calculation','mlcc')) call output%mute()
 !
@@ -1300,9 +1316,7 @@ contains
 !
 !     1. Preparations (Note that cholesky decomposition is already done)
 !
-      ccs_wf = ccs(wf%system)
-!
-      ccs_wf%integrals = mo_integral_tool(ccs_wf%n_o, ccs_wf%n_v, ccs_wf%system%n_J)
+      ccs_wf = ccs(wf%system, wf)
 !
       call ccs_wf%mo_preparations()
 !
@@ -1317,7 +1331,7 @@ contains
 !
       call timer_gs%turn_off()
 !
-      call ccs_wf%integrals%write_t1_cholesky(ccs_wf%t1)
+      call ccs_wf%integrals%update_t1_integrals(ccs_wf%t1)
 !
 !     Excited states
 !
@@ -1335,6 +1349,7 @@ contains
 !     1. Integrals
 !
       wf%integrals = mo_integral_tool(ccs_wf%integrals)
+      call wf%integrals%initialize_storage(ccs_wf%integrals)
 !
 !     2. Excitation vectors
 !
@@ -1370,27 +1385,30 @@ contains
 !
          enddo  
 !
+         call mem%dealloc(all_omega_ccs, n_es)
+!
       endif
 !
 !     Cleanup and print
 !
       call ccs_wf%cleanup() 
 !
-      if (.not. input%requested_keyword_in_section('print ccs calculation','mlcc')) call output%unmute()
+      if (.not. input%requested_keyword_in_section('print ccs calculation','mlcc')) &
+         call output%unmute()
 !
       call timer%turn_off()
 !
-      call output%printf('Summary of CCS calculation for NTOs/CNTOs:',fs='(/t3,a)',pl='minimal')
+      call output%printf('m', '- Summary of CCS calculation for NTOs/CNTOs:',fs='(/t3,a)')
 !
-      call output%printf('Wall time for CCS ground calculation (sec):   (f20.2)', &
-             reals=[timer_gs%get_elapsed_time('wall')], fs='(/t6,a)',pl='minimal')
-      call output%printf('CPU time for CCS ground calculation (sec):    (f20.2)', &
-             reals=[timer_gs%get_elapsed_time('cpu')], fs='(t6,a)',pl='minimal')
+      call output%printf('m', 'Wall time for CCS ground calculation (sec):   (f20.2)', &
+                         reals=[timer_gs%get_elapsed_time('wall')], fs='(/t6,a)')
+      call output%printf('m', 'CPU time for CCS ground calculation (sec):    (f20.2)', &
+                         reals=[timer_gs%get_elapsed_time('cpu')], fs='(t6,a)')
 !
-      call output%printf('Wall time for CCS excited calculation (sec):  (f20.2)', &
-             reals=[timer_es%get_elapsed_time('wall')], fs='(/t6,a)',pl='minimal')
-      call output%printf('CPU time for CCS excited calculation (sec):   (f20.2)', &
-             reals=[timer_es%get_elapsed_time('cpu')], fs='(t6,a)',pl='minimal')
+      call output%printf('m', 'Wall time for CCS excited calculation (sec):  (f20.2)', &
+                         reals=[timer_es%get_elapsed_time('wall')], fs='(/t6,a)')
+      call output%printf('m', 'CPU time for CCS excited calculation (sec):   (f20.2)', &
+                         reals=[timer_es%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine ccs_calculation_for_cntos_mlcc2
 !

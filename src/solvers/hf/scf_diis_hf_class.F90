@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -60,12 +60,12 @@ module scf_diis_hf_class
 !
       procedure, private :: prepare       => prepare_scf_diis_hf
       procedure :: run                    => run_scf_diis_hf
-      procedure :: cleanup                => cleanup_scf_diis_hf
 !
       procedure :: read_settings           => read_settings_scf_diis_hf
       procedure :: read_scf_diis_settings  => read_scf_diis_settings_scf_diis_hf
 !
-      procedure :: print_scf_diis_settings => print_scf_diis_settings_scf_diis_hf
+      procedure :: print_settings            => print_settings_scf_diis_hf
+      procedure :: print_scf_diis_settings   => print_scf_diis_settings_scf_diis_hf
 !
    end type scf_diis_hf
 !
@@ -104,7 +104,7 @@ contains
       solver%gradient_threshold     = 1.0d-6
       solver%storage                = 'memory'
       solver%cumulative             = .false.
-      solver%cumulative_threshold   = 1.0d-2
+      solver%cumulative_threshold   = 1.0d0
       solver%crop                   = .false.
 !
       call solver%read_settings()
@@ -171,8 +171,11 @@ contains
 !
       class(hf) :: wf
 !
-      solver%tag         = 'Self-consistent field DIIS Hartree-Fock solver'
-      solver%author      = 'E. F. Kjønstad and S, D. Folkestad, 2018'
+      solver%timer = timings('SCF DIIS solver time', pl='minimal')
+      call solver%timer%turn_on()
+!
+      solver%name_       = 'Self-consistent field DIIS Hartree-Fock solver'
+      solver%tag         = 'SCF DIIS'
       solver%description = 'A DIIS-accelerated Roothan-Hall self-consistent field solver. &
                            &A least-square DIIS fit is performed on the previous Fock matrices and &
                            &associated gradients. Following the Roothan-Hall update of the density, &
@@ -186,11 +189,7 @@ contains
 !
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
 !
-      call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
-!
-      call solver%print_scf_diis_settings()
-      call solver%print_hf_solver_settings()
-      call wf%print_screening_settings()
+      call solver%print_settings(wf)
 !
 !     Initialize the orbitals, density, and the Fock matrix (or matrices)
 !
@@ -200,16 +199,16 @@ contains
 !
       if (solver%restart) then
 !
-         call output%printf('- Requested restart. Reading orbitals from file',fs='(/t3,a)', pl='minimal')
+         call output%printf('m', '- Requested restart. Reading orbitals from file', &
+                            fs='(/t3,a)')
 !
          call wf%is_restart_safe('ground state')
          call wf%read_for_scf_restart()
 !
       else
 !
-         call output%printf('- Setting initial AO density to (a0)',&
-            chars=[solver%ao_density_guess], &
-            fs='(/t3,a)', pl='minimal')
+         call output%printf('m', '- Setting initial AO density to (a0)', &
+                            chars=[solver%ao_density_guess], fs='(/t3,a)')
 !
          call wf%write_scf_restart()
          call wf%set_initial_ao_density_guess(solver%ao_density_guess)
@@ -246,15 +245,15 @@ contains
 !
       class(scf_diis_hf) :: solver
 !
-      call output%printf('DIIS dimension:                (i0)', &
-         ints=[solver%diis_dimension],fs='(/t6,a)', pl='minimal')
+      call output%printf('m', 'DIIS dimension:               (i11)', &
+                         ints=[solver%diis_dimension], fs='(/t6,a)')
 !
-      call output%printf('Cumulative Fock threshold:     (e9.2)', &
-         reals=[solver%cumulative_threshold],fs='(t6,a)', pl='minimal')
+      call output%printf('m', 'Cumulative Fock threshold:    (e11.2)', &
+                         reals=[solver%cumulative_threshold], fs='(t6,a)')
 !
       if (solver%crop) then 
 !
-         call output%printf('Enabled CROP in the DIIS algorithm.', pl='minimal', fs='(/t6,a)')
+         call output%printf('m', 'Enabled CROP in the DIIS algorithm.', fs='(/t6,a)')
 !
       endif
 !
@@ -284,27 +283,23 @@ contains
       real(dp), dimension(:,:), allocatable :: F
       real(dp), dimension(:,:), allocatable :: G
       real(dp), dimension(:,:), allocatable :: ao_fock
-      real(dp), dimension(:,:), allocatable :: h_wx
       real(dp), dimension(:,:), allocatable :: prev_ao_density
 !
       integer :: dim_gradient, dim_fock
 !
-      type(timings) :: iteration_timer, solver_timer
+      type(timings), allocatable :: iteration_timer
 !
       if (wf%n_ao == 1) then 
 !
          call solver%run_single_ao(wf)
-         call solver%print_summary(wf)
+         call wf%print_summary()
          return
 !
       endif 
 !
 !     :: Part I. Preparations.
 !
-      iteration_timer = timings('SCF DIIS iteration time')
-      solver_timer = timings('SCF DIIS solver time')
-!
-      call solver_timer%turn_on()
+      iteration_timer = timings('SCF DIIS iteration time', pl='normal')
 !
 !     Initialize the DIIS manager object
 !
@@ -321,10 +316,7 @@ contains
 !
 !     Set the initial density guess and Fock matrix
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_h_wx(h_wx)
-!
-      call wf%update_fock_and_energy(h_wx)
+      call wf%update_fock_and_energy()
 !
       call mem%alloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
       call mem%alloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
@@ -347,23 +339,24 @@ contains
 !
       prev_energy = zero
 !
-      call output%printf('Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)',fs='(/t3,a)',pl='n') 
+      call output%printf('n', 'Iteration       Energy (a.u.)      Max(grad.)    &
+                         &Delta E (a.u.)', fs='(/t3,a)')
       call output%print_separator('n', 63, '-')
 !
-      iteration = 1
+      iteration = 0
 !
       do while (.not. solver%converged .and. iteration .le. solver%max_iterations)
 !
+         iteration = iteration + 1
          call iteration_timer%turn_on()
 !
 !        Set energy and print information for current iteration
 !
          energy = wf%energy
 !
-         call output%printf('(i4)  (f25.12)    (e11.4)    (e11.4)', &
-               ints=[iteration], &
-               reals=[wf%energy, max_grad, abs(wf%energy-prev_energy)], &
-               fs='(t3,a)', pl='normal')
+         call output%printf('n', '(i4)  (f25.12)    (e11.4)    (e11.4)', &
+                            ints=[iteration], reals=[wf%energy, max_grad, &
+                            abs(wf%energy-prev_energy)], fs='(t3,a)')
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !
@@ -378,17 +371,18 @@ contains
 !
             call output%print_separator('n', 63, '-', fs='(t3,a)')
 !
-            call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
+            call output%printf('n', 'Convergence criterion met in (i0) iterations!', &
+                               ints=[iteration], fs='(t3,a)')
 !
             if (.not. converged_energy) then
 !
-               call output%printf('Note: the gradient converged in the first iteration, &
-                                 & so the energy convergence has not been tested!', &
-                                 ffs='(/t3,a)', pl='normal')
+               call output%printf('n', 'Note: the gradient converged in the &
+                                  &first iteration,  so the energy convergence &
+                                  &has not been tested!', ffs='(/t3,a)')
 !
             endif
 !
-            call solver%print_summary(wf)
+            call wf%print_summary()
 !
          else
 !
@@ -398,8 +392,8 @@ contains
                   max_grad .lt. solver%cumulative_threshold) then 
 !
                solver%cumulative = .true.
-               call output%printf('Switching to Fock construction using density differences.', &
-                                    pl='verbose', fs='(t3,a)')
+               call output%printf('v', 'Switching to Fock construction using &
+                                  &density differences.', fs='(t3,a)')
 !
             endif
 !
@@ -420,11 +414,11 @@ contains
 !
             if (solver%cumulative) then 
 !
-               call wf%update_fock_and_energy(h_wx, prev_ao_density)
+               call wf%update_fock_and_energy(prev_ao_density)
 !
             else 
 !
-               call wf%update_fock_and_energy(h_wx)
+               call wf%update_fock_and_energy()
 !
             endif
 !
@@ -451,14 +445,10 @@ contains
          call iteration_timer%turn_off()
          call iteration_timer%reset()
 !
-         iteration = iteration + 1
-!
       enddo
 !
       call mem%dealloc(G, wf%n_mo*(wf%n_mo - 1)/2, wf%n_densities)
       call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
-!
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
       call mem%dealloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
       call mem%dealloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
@@ -472,39 +462,9 @@ contains
       endif
 !
       call diis%finalize_storers()
-      call solver_timer%turn_off()
+      call solver%timer%turn_off()
 !
    end subroutine run_scf_diis_hf
-!
-!
-   subroutine cleanup_scf_diis_hf(solver, wf)
-!!
-!! 	Cleanup
-!! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(scf_diis_hf) :: solver
-!
-      class(hf) :: wf
-!
-      call output%printf('- Cleaning up (a0)',chars=[solver%tag], fs='(/t3, a)', pl='verbose')
-!
-!     MO transform the AO Fock matrix
-!
-      call wf%initialize_mo_fock()
-      call wf%construct_mo_fock()
-!
-!     Save the orbitals to file & store restart information
-!
-      call wf%save_orbital_coefficients()
-      call wf%save_orbital_energies()
-!
-!     Save AO density (or densities) to disk 
-!
-      call wf%save_ao_density()
-!
-   end subroutine cleanup_scf_diis_hf
 !
 !
    subroutine read_settings_scf_diis_hf(solver)
@@ -546,6 +506,26 @@ contains
       endif
 !
    end subroutine read_scf_diis_settings_scf_diis_hf
+!
+!
+   subroutine print_settings_scf_diis_hf(solver, wf)
+!!
+!!    Print settings
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+      implicit none
+!
+      class(scf_diis_hf), intent(in) :: solver
+!
+      class(hf), intent(in) :: wf
+!
+      call output%printf('m', '- Hartree-Fock solver settings:',fs='(/t3,a)')
+!
+      call solver%print_scf_diis_settings()
+      call solver%print_hf_solver_settings()
+      call wf%print_screening_settings()
+!
+   end subroutine print_settings_scf_diis_hf
 !
 !
 end module scf_diis_hf_class

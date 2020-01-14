@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -256,18 +256,18 @@ contains
 !
       class(timings), intent(in) :: timer 
 !
-      call timing%printf(timer%name_, pl=timer%pl, fs='(/t3,a)')
+      call timing%printf(timer%pl, timer%name_, fs='(/t3,a)')
 !
-      call timing%printf('wall time (sec): (f20.2)', pl=timer%pl, fs='(t3,a)', &
-                                                      reals=[timer%elapsed_wall_time])
+      call timing%printf(timer%pl, 'wall time (sec): (f20.2)', fs='(t3,a)', &
+                         reals=[timer%elapsed_wall_time])
 !
-      call timing%printf('cpu time (sec):  (f20.2)', pl=timer%pl, fs='(t3,a)', &
-                                                      reals=[timer%elapsed_cpu_time])     
+      call timing%printf(timer%pl, 'cpu time (sec):  (f20.2)', fs='(t3,a)', &
+                         reals=[timer%elapsed_cpu_time])     
 !
       if (timer%elapsed_wall_time > 1.0d-8) then 
 !
-         call timing%printf('cpu/wall ratio:  (f20.2)', pl=timer%pl, fs='(t3,a)', &
-                                       reals=[timer%elapsed_cpu_time/timer%elapsed_wall_time])
+         call timing%printf(timer%pl, 'cpu/wall ratio:  (f20.2)', fs='(t3,a)', &
+                            reals=[timer%elapsed_cpu_time/timer%elapsed_wall_time])
 !
       endif 
 !

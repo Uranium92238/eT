@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,10 +20,9 @@
 submodule (mlcc2_class) omega_mlcc2
 !
 !!
-!!    Omega submodule (MLCC2)
-!!    Written by Sarai D. Folkestad, 2019
+!!    Omega submodule
 !!
-!!    Based on the cc2 routines written by Sarai D. Folkestad 
+!!    Based on the CC2 routines written by Sarai D. Folkestad 
 !!    and Eirik F. Kjønstad
 !!
 !!    Routines to construct

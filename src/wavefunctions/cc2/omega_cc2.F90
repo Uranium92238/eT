@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (cc2_class) omega_cc2
 !
 !!
-!!    Omega submodule (CC2)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
+!!    Omega submodule
 !!
 !!    Routines to construct
 !!
@@ -32,6 +31,7 @@ submodule (cc2_class) omega_cc2
 !
 !
 contains
+!
 !
    module subroutine construct_omega_cc2(wf, omega)
 !!
@@ -49,7 +49,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = timings('omega CC2')
+      timer = timings('Construct cc2 omega', pl='normal')
       call timer%turn_on()
 !
       call zero_array(omega, wf%n_gs_amplitudes)
@@ -129,5 +129,6 @@ contains
       enddo
 !
    end subroutine construct_omega2_cc2
+!
 !
 end submodule omega_cc2

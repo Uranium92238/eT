@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@ module reference_engine_class
    use global_out,           only: output
    use timings_class,        only: timings
    use memory_manager_class, only: mem
+   use task_list_class,      only: task_list
 !
    use hf_class,          only: hf
 !
@@ -44,9 +45,10 @@ module reference_engine_class
       character(len=200) :: algorithm 
 !
       logical :: restart
-      logical :: requested_zop
+      logical :: requested_mean_value
 !
       logical :: plot_orbitals
+      logical :: print_coeff
 !
    contains 
 !
@@ -54,18 +56,21 @@ module reference_engine_class
 !
       procedure :: run                                 => run_reference_engine
       procedure :: read_settings                       => read_settings_reference_engine
-      procedure :: read_zop_settings                   => read_zop_settings_reference_engine
+      procedure :: read_mean_value_settings &
+                    => read_mean_value_settings_reference_engine
 !
-      procedure :: calculate_expectation_values        => calculate_expectation_values_reference_engine
+      procedure :: calculate_mean_values               => calculate_mean_values_reference_engine
       procedure, nopass :: calculate_quadrupole_moment => calculate_quadrupole_moment_reference_engine
       procedure, nopass :: calculate_dipole_moment     => calculate_dipole_moment_reference_engine
 !
       procedure :: set_printables                      => set_printables_reference_engine
 !
-      procedure, nopass :: generate_sad_density        => generate_sad_density_reference_engine
+      procedure :: generate_sad_density                => generate_sad_density_reference_engine
 !
-      procedure :: do_visualization             => do_visualization_reference_engine
-      procedure, nopass :: do_orbital_plotting  => do_orbital_plotting_reference_engine
+      procedure :: do_visualization                    => do_visualization_reference_engine
+      procedure, nopass :: do_orbital_plotting         => do_orbital_plotting_reference_engine
+!
+      procedure :: do_ground_state                     => do_ground_state_reference_engine
 !
    end type reference_engine 
 !
@@ -96,6 +101,7 @@ contains
       engine%quadrupole       = .false.
       engine%plot_orbitals    = .false.
       engine%plot_density     = .false.
+      engine%print_coeff      = .false.
 !
       call engine%read_settings()
 !
@@ -131,60 +137,36 @@ contains
 !!
       implicit none 
 !
-      class(reference_engine)  :: engine 
-      class(hf)         :: wf 
-!
-      type(scf_hf),      allocatable :: scf
-      type(scf_diis_hf), allocatable :: scf_diis
-      type(mo_scf_diis), allocatable :: mo_scf_diis_
-!
-!     Generate SAD if requested
+      class(reference_engine)    :: engine 
+      class(hf)                  :: wf 
 !
       if (.not. engine%restart .and. (trim(engine%ao_density_guess) == 'sad')) then
+!
+!        Generate SAD if requested
 !
          call engine%generate_sad_density(wf)
 !
       endif
 !
-!     Choose solver
+!     Solve equations
 !
-      if (trim(engine%algorithm) .eq. 'scf-diis' .and. trim(wf%name_) .eq. 'mlhf') then
+      call engine%do_ground_state(wf)
 !
-         call output%error_msg('MLHF can not run with scf-diis, try mo-scf-diis.')
+!     Print MO-coefficients
 !
-      elseif (trim(engine%algorithm) .eq. 'mo-scf-diis' .and. trim(wf%name_) .eq. 'uhf') then
+      if (engine%print_coeff) then
 !
-         call output%error_msg('UHF can not run with mo-scf-diis, try scf-diis.')
+         call wf%print_orbitals()
 !
-      elseif (trim(engine%algorithm) == 'scf-diis') then
+      end if
 !
-         scf_diis = scf_diis_hf(wf, engine%restart)
-         call scf_diis%run(wf)
-         call scf_diis%cleanup(wf)
+!     Plot orbitals and/or density
 !
-      elseif (trim(engine%algorithm) == 'mo-scf-diis') then
-!
-         mo_scf_diis_ = mo_scf_diis(wf, engine%restart)
-         call mo_scf_diis_%run(wf)
-         call mo_scf_diis_%cleanup(wf)
-!
-      elseif (trim(engine%algorithm) == 'scf') then 
-!
-         scf = scf_hf(wf, engine%restart)
-         call scf%run(wf)
-         call scf%cleanup(wf)
-!
-      else
-!
-         call output%error_msg('did not recognize hf algorithm: '// engine%algorithm)
-!
-      endif
-!
-      call engine%do_visualization(wf)
+      if (engine%plot_orbitals .or. engine%plot_density) call engine%do_visualization(wf)
 !
 !     Calculate the zeroth order properties
 !
-      if(engine%requested_zop) call engine%calculate_expectation_values(wf)
+      if(engine%requested_mean_value) call engine%calculate_mean_values(wf)
 !
    end subroutine run_reference_engine
 !
@@ -199,14 +181,26 @@ contains
       class(reference_engine) :: engine 
 !
       call input%get_keyword_in_section('algorithm', 'solver scf', engine%algorithm)
-      if (input%requested_keyword_in_section('restart', 'solver scf')) engine%restart = .true.
+!
+      if (input%requested_keyword_in_section('restart', 'solver scf')) then
+         engine%restart = .true.
+      end if
 !
       call input%get_keyword_in_section('ao density guess', 'solver scf', engine%ao_density_guess)
 !
-      if (input%requested_keyword_in_section('plot hf orbitals', 'visualization')) engine%plot_orbitals = .true.
-      if (input%requested_keyword_in_section('plot hf density', 'visualization')) engine%plot_density = .true.
+      if (input%requested_keyword_in_section('print orbitals', 'solver scf')) then
+         engine%print_coeff = .true.
+      end if
 !
-      call engine%read_zop_settings()
+      if (input%requested_keyword_in_section('plot hf orbitals', 'visualization')) then
+         engine%plot_orbitals = .true.
+      end if
+!
+      if (input%requested_keyword_in_section('plot hf density', 'visualization')) then 
+         engine%plot_density = .true.
+      end if
+!
+      call engine%read_mean_value_settings()
 !
    end subroutine read_settings_reference_engine
 !
@@ -218,25 +212,40 @@ contains
 !!
 !!    Should be overwritten by descendants.
 !!
+!
+      use string_utilities, only : convert_to_uppercase
+!
       implicit none
 !
       class(reference_engine) :: engine
 !
-      engine%name_       = 'Reference state engine'
-      engine%author      = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+      engine%name_       = 'Hartree-Fock engine'
 !
-      engine%description = 'Calculates the reference wavefunction | R >.'
+      engine%description = 'Drives the calculation of the Hartree-Fock state. '
       engine%tag         = 'ground state'
 !
-      engine%tasks       = [character(len=150) ::                                                         &
-                           'Generate initial density (' // trim(engine%ao_density_guess) // ')',          &
-                           'Calculation of reference state (' // trim(engine%algorithm) // ' algorithm)', &
-                           'Calculation of the ground state energy']
+!     Prepare the list of tasks
+!
+      engine%tasks = task_list()
+!
+      if (trim(engine%ao_density_guess) == 'sad' .and. .not. engine%restart) &
+         call engine%tasks%add(label='sad', description='Generate initial SAD density') 
+!
+      call engine%tasks%add(label='gs solver',                                &
+                            description='Calculation of reference state (' // &
+                                 trim(convert_to_uppercase(engine%algorithm)) // ' algorithm)')
+!
+      if (engine%plot_orbitals .or. engine%plot_density) &
+         call engine%tasks%add(label='plotting', description='Plot orbitals and/or density') 
+!
+      if (engine%dipole .or. engine%quadrupole) &
+         call engine%tasks%add(label='expectation value', &
+            description='Calculate dipole and/or quadrupole moments') 
 !
    end subroutine set_printables_reference_engine
 !
 !
-   subroutine generate_sad_density_reference_engine(wf)
+   subroutine generate_sad_density_reference_engine(engine, wf)
 !!    
 !!    Generate SAD density
 !!    Written by Tor S. Haugland, Sep 2019
@@ -263,14 +272,18 @@ contains
 !
       use string_utilities,       only: index_of_unique_strings
 !
+      use timings_class,          only: timing
+!
       implicit none
+!
+      class(reference_engine)          :: engine
 !
       class(hf)                        :: wf
 !
-      type(atomic)                     :: atom
-      type(molecular_system)           :: sad_system
-      type(uhf),         allocatable   :: sad_wf
-      type(scf_hf), allocatable        :: sad_solver
+      type(atomic), allocatable              :: atom
+      type(molecular_system), allocatable    :: sad_system
+      type(uhf),         allocatable         :: sad_wf
+      type(scf_hf), allocatable              :: sad_solver
 !
       character(len=200)    :: ao_density_guess
       real(dp)              :: energy_threshold
@@ -289,7 +302,12 @@ contains
       character(len=50), dimension(wf%system%n_atoms) :: atom_and_basis
       integer,           dimension(wf%system%n_atoms) :: unique_atom_index
 !
-      call output%printf('- Generating SAD guess', pl='minimal', fs='(/t3,a)')
+      type(timings), allocatable :: sad_generation_timer
+!
+      call engine%tasks%print_('sad')
+!
+      sad_generation_timer = timings('SAD generation time', pl='normal')
+      call sad_generation_timer%turn_on()
 !
 !     SAD solver settings
 !
@@ -315,6 +333,8 @@ contains
       call index_of_unique_strings(unique_atom_index, wf%system%n_atoms, atom_and_basis)
 !
 !     For every unique atom, generate SAD density to file
+!
+      call timing%mute()
 !
       do I = 1, wf%system%n_atoms
 !
@@ -357,14 +377,17 @@ contains
 !
 !        Cleanup and generate ao_density_a and ao_density_b
 !
-         call sad_solver%cleanup(sad_wf)
          call sad_wf%cleanup()
          call sad_system%cleanup()
 !
+         deallocate(sad_wf)
+         deallocate(sad_system)
+!
          call output%unmute()
 !
-         call output%printf('Generated atomic density for ' // adjustl(atom%symbol) // &
-                            ' using UHF/(a0)', pl='verbose', fs='(t6,a)', chars=[atom%basis])
+         call output%printf('v', 'Generated atomic density for ' //  &
+                            adjustl(atom%symbol) // ' using UHF/(a0)', &
+                            chars=[atom%basis], fs='(t6,a)')
 !
 !        Move densities to where "set_ao_density_sad" can use them,
 !        but first delete SAD if it already exists.
@@ -383,12 +406,17 @@ contains
          call beta_density_file%copy(beta_fname)
          call beta_density_file%delete_()
 !
+         deallocate(atom)
+!
       enddo
 !
 !     Libint is overwritten by SAD. Re-initialize.
 !
       call wf%system%initialize_libint_atoms_and_bases()
       call wf%system%initialize_libint_integral_engines()
+!
+      call timing%unmute()
+      call sad_generation_timer%turn_off()
 !
    end subroutine generate_sad_density_reference_engine
 !
@@ -412,9 +440,11 @@ contains
 !
       type(visualization), allocatable :: plotter
 !
-      character(len=200)      :: density_file_tag
+      character(len=200) :: density_file_tag
 !
-      if (.not. engine%plot_orbitals .and. .not. engine%plot_density) return
+      type(timings), allocatable :: density_plotting_timer
+!
+      call engine%tasks%print_('plotting')
 !
       if (trim(wf%name_) .eq. 'uhf') call output%error_msg('no plotting for UHF')
 !
@@ -430,8 +460,13 @@ contains
 !
       if (engine%plot_density) then
 !
+         density_plotting_timer = timings('Density plotting time', pl='normal')
+         call density_plotting_timer%turn_on()
+!
          density_file_tag = 'AO_density'
-         call plotter%plot_density(wf%system,wf%ao_density, density_file_tag)
+         call plotter%plot_density(wf%system, wf%ao_density, density_file_tag)
+!
+         call density_plotting_timer%turn_off()
 !
       endif
 !
@@ -449,7 +484,6 @@ contains
 !!    orbital plot files using the visualization 
 !!    tool.
 !!
-!
       use visualization_class, only : visualization
       use memory_manager_class, only : mem
 !
@@ -466,6 +500,11 @@ contains
       real(dp), dimension(:,:), allocatable :: orbital_coefficients
 !
       character(len=200), dimension(:), allocatable :: orbital_file_tags
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Orbital plotting time', pl='normal')
+      call timer%turn_on()
 !
 !     Read orbital plotting settings
 !
@@ -508,10 +547,12 @@ contains
       call mem%dealloc(orbital_coefficients, wf%n_ao, n_orbitals_to_plot)
       deallocate(orbital_file_tags)
 !
+      call timer%turn_off()
+!
    end subroutine do_orbital_plotting_reference_engine
 !
 !
-   subroutine read_zop_settings_reference_engine(engine)
+   subroutine read_mean_value_settings_reference_engine(engine)
 !!
 !!    Read ZOP settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -521,22 +562,22 @@ contains
 !
       class(reference_engine) :: engine
 !
-      engine%requested_zop = input%requested_section('hf zop')
+      engine%requested_mean_value = input%requested_section('hf mean value')
 !
-      if (engine%requested_zop) then 
+      if (engine%requested_mean_value) then 
 !
-         if (input%requested_keyword_in_section('dipole','hf zop')) &
+         if (input%requested_keyword_in_section('dipole','hf mean value')) &
              engine%dipole = .true.
 !
-         if (input%requested_keyword_in_section('quadrupole','hf zop')) &
+         if (input%requested_keyword_in_section('quadrupole','hf mean value')) &
              engine%quadrupole = .true.
 !
       endif
 !
-   end subroutine read_zop_settings_reference_engine
+   end subroutine read_mean_value_settings_reference_engine
 !
 !
-   subroutine calculate_expectation_values_reference_engine(engine, wf)
+   subroutine calculate_mean_values_reference_engine(engine, wf)
 !!
 !!    Calculate expectation values
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -556,6 +597,13 @@ contains
       real(dp), dimension(6) :: q_total
 !      
       character(len=4), dimension(:), allocatable :: components
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Time to calculte dipole and/or quadrupole', pl='normal')
+      call timer%turn_on()
+!
+      call engine%tasks%print_('expectation value')
 !
       if(engine%dipole) then 
 !
@@ -595,9 +643,9 @@ contains
 !
          q_total = q_electronic + q_nuclear
 !
-         call output%printf('The traceless quadrupole is calculated as:', pl='minimal',fs='(/t6,a)')
-         call output%printf('Q_ij = 1/2[3*q_ij - tr(q)*delta_ij]', pl='minimal',fs='(/t9,a)')
-         call output%printf('where q_ij is the non-traceless matrix', pl='minimal',fs='(/t6,a)')
+         call output%printf('m', 'The traceless quadrupole is calculated as:', fs='(/t6,a)')
+         call output%printf('m', 'Q_ij = 1/2[3*q_ij - tr(q)*delta_ij]',fs='(/t9,a)')
+         call output%printf('m', 'where q_ij is the non-traceless matrix',fs='(/t6,a)')
 !
          call engine%print_operator('traceless quadrupole moment', q_electronic, q_nuclear, q_total, &
                                     components, 6)
@@ -606,7 +654,9 @@ contains
 !
       endif
 !
-   end subroutine calculate_expectation_values_reference_engine
+      call timer%turn_off()
+!
+   end subroutine calculate_mean_values_reference_engine
 !
 !
    subroutine calculate_dipole_moment_reference_engine(wf, electronic, nuclear, total)
@@ -651,7 +701,8 @@ contains
 !
       if(wf%name_.eq.'mlhf') then
 !
-         call output%printf('In MLHF the dipole moment is computed only in the active space', pl='minimal',fs='(/t6,a)')
+         call output%printf('m', 'In MLHF the dipole moment is computed only in &
+                            &the active space', fs='(/t6,a)')
 !
          call wf%system%get_nuclear_dipole_active(nuclear)
 !
@@ -709,7 +760,8 @@ contains
 !
       if(wf%name_.eq.'mlhf') then
 !
-         call output%printf('In MLHF the quadrupole moment is computed only in the active space', pl='minimal',fs='(/t6,a)')
+         call output%printf('m', 'In MLHF the quadrupole moment is computed &
+                            &only in the active space', fs='(/t6,a)')
 !
          call wf%system%get_nuclear_quadrupole_active(nuclear)
 !
@@ -722,6 +774,57 @@ contains
       total = electronic + nuclear
 !
    end subroutine calculate_quadrupole_moment_reference_engine
+!
+!
+   subroutine do_ground_state_reference_engine(engine, wf)
+!!
+!!    Do ground state 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!
+!!    Constructs the solver specified on input. 
+!!    Solves the ground state.
+!!
+      implicit none
+!
+      class(reference_engine), intent(in)    :: engine 
+      class(hf), intent(inout)               :: wf 
+!
+      type(scf_hf),      allocatable :: scf
+      type(scf_diis_hf), allocatable :: scf_diis
+      type(mo_scf_diis), allocatable :: mo_scf_diis_
+!
+      call engine%tasks%print_('gs solver')
+!
+      if (trim(engine%algorithm) .eq. 'scf-diis' .and. trim(wf%name_) .eq. 'mlhf') then
+!
+         call output%error_msg('MLHF can not run with scf-diis, try mo-scf-diis.')
+!
+      elseif (trim(engine%algorithm) .eq. 'mo-scf-diis' .and. trim(wf%name_) .eq. 'uhf') then
+!
+         call output%error_msg('UHF can not run with mo-scf-diis, try scf-diis.')
+!
+      elseif (trim(engine%algorithm) == 'scf-diis') then
+!
+         scf_diis = scf_diis_hf(wf, engine%restart)
+         call scf_diis%run(wf)
+!
+      elseif (trim(engine%algorithm) == 'mo-scf-diis') then
+!
+         mo_scf_diis_ = mo_scf_diis(wf, engine%restart)
+         call mo_scf_diis_%run(wf)
+!
+      elseif (trim(engine%algorithm) == 'scf') then 
+!
+         scf = scf_hf(wf, engine%restart)
+         call scf%run(wf)
+!
+      else
+!
+         call output%error_msg('did not recognize hf algorithm: '// engine%algorithm)
+!
+      endif
+!
+   end subroutine do_ground_state_reference_engine
 !
 !
 end module reference_engine_class

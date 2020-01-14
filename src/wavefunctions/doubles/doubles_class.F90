@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -23,10 +23,11 @@ module doubles_class
 !!    Abstract doubles class module
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019
 !!
-!!    Doubles class which Contains routines that are in common 
-!!    for both ccsd and cc2.
-!!    Both ccsd and cc2 inherit from this doubles class 
-!!    but need additional routines to work.
+!!    Doubles class which contains routines that are in common 
+!!    for both CCSD and CC2.
+!!
+!!    Both CCSD and CC2 inherit from this doubles class 
+!!    but need specialized routines.
 !!
 !
    use ccs_class
@@ -156,6 +157,9 @@ module doubles_class
 !     Procedures related to time dependency
 !
       procedure :: make_doubles_complex                  => make_doubles_complex_doubles
+      procedure :: cleanup_doubles_complex               => cleanup_doubles_complex_doubles
+!
+      procedure :: print_amplitude_info                  => print_amplitude_info_doubles
 !
    end type doubles
 !
@@ -178,6 +182,24 @@ module doubles_class
    end interface
 !
 contains
+!
+!
+   subroutine print_amplitude_info_doubles(wf)
+!!
+!!    Print amplitude info
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+!!
+      implicit none
+!
+      class(doubles), intent(in) :: wf
+!
+      call wf%ccs%print_amplitude_info()
+!
+      call output%printf('m', 'Double excitation amplitudes:  (i0)', &
+            ints=[wf%n_t2], fs='(t6,a)')
+!
+   end subroutine print_amplitude_info_doubles
 !
 !
    subroutine get_cvs_projector_doubles(wf, projector, n_cores, core_MOs)

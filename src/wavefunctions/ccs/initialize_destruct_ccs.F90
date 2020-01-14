@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (ccs_class) initialize_destruct_ccs
 !
 !!
-!!    Initialize destruct submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    Initialize destruct submodule
 !!
 !!    Gathers routines that initialize and destruct the CCS type-bound variables.
 !!
@@ -77,7 +76,7 @@ contains
 !
       if (.not. allocated(wf%t1)) call mem%alloc(wf%t1, wf%n_v, wf%n_o)
 !
-      call zero_array(wf%t1, wf%n_t1) ! Hack, fix later, for integrals
+      call zero_array(wf%t1, wf%n_t1)
 !
    end subroutine initialize_t1_ccs
 !
@@ -323,9 +322,11 @@ contains
 !
       class(ccs) :: wf
 !
-      call mem%dealloc(wf%left_transition_density, wf%n_mo, wf%n_mo)
+      if (allocated(wf%left_transition_density)) &
+         call mem%dealloc(wf%left_transition_density, wf%n_mo, wf%n_mo)
 !
-      call mem%dealloc(wf%right_transition_density, wf%n_mo, wf%n_mo)
+      if (allocated(wf%right_transition_density)) &
+         call mem%dealloc(wf%right_transition_density, wf%n_mo, wf%n_mo)
 !
    end subroutine destruct_transition_densities_ccs
 !
@@ -435,5 +436,24 @@ contains
       call wf%initialize_fock_ab()
 !
    end subroutine initialize_fock_ccs
+!
+!
+   module subroutine destruct_fock_ccs(wf)
+!!
+!!    Destruct Fock
+!!    Written by Alexander C. Paul, Dec 2019
+!!
+!!    Destructs all Fock matrix blocks
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      call wf%destruct_fock_ij()
+      call wf%destruct_fock_ia()
+      call wf%destruct_fock_ai()
+      call wf%destruct_fock_ab()
+!
+   end subroutine destruct_fock_ccs
 !
 end submodule initialize_destruct_ccs

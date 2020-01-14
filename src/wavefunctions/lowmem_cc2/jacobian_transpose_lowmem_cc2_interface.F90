@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -30,29 +30,6 @@
       logical, intent(in) :: cvs
 !
    end subroutine effective_jacobian_transpose_transformation_lowmem_cc2
-!
-!
-   module subroutine jacobian_transpose_ccs_b1_lowmem_cc2(wf, sigma_ai, b_ai)
-!!
-!!    Jacobian transpose B1 (CCS)
-!!    Written by Sarai D. Folkestad, Jun 2019
-!!
-!!    Calculates the (CCS) B1 term of the Jacobian transpose 
-!!    transfromation. 
-!!
-!!       B1 = sum_bj L_bjia b_bj
-!!          = sum_bj (2 g_bjia b_bj - g_baij b_bj)
-!!    
-!!    This routine is overwritten in order to 
-!!    keep to the N^2 memory limit of lowmem-CC2
-!!
-      implicit none
-!
-      class(lowmem_cc2), intent(in) :: wf
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_ai
-!
-   end subroutine jacobian_transpose_ccs_b1_lowmem_cc2
 !
 !
    module subroutine jacobian_transpose_cc2_a1_lowmem_cc2(wf, sigma_ai, b_ai, eps_o, eps_v)

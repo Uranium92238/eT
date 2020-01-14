@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -220,10 +220,11 @@ contains
       character(len=1000)  :: pstring 
       character(len=20)    :: fstring 
 !
-      integer :: i, p_pos, add_pos
+      integer :: i, j, advance_position
       integer :: int_len, real_len, log_len, char_len, string_len
       integer :: int_count, real_count, log_count, char_count
-      integer :: print_pos, printed
+      integer :: print_position, printed
+      integer :: length
 !
 !     Set print string and format string blank
       pstring = ' '
@@ -264,7 +265,7 @@ contains
       log_count  = 0
       char_count  = 0
 !
-      print_pos = 1
+      print_position = 1
       printed = 1
       i = 0
 !
@@ -289,9 +290,9 @@ contains
                   endif
 !
 !                 Print everything between previous print and (
-                  write(pstring(print_pos:),'(a)') string(printed:i-1)
-                  print_pos = print_pos + i - printed
-                  p_pos = i
+                  write(pstring(print_position:),'(a)') string(printed:i-1)
+                  print_position = print_position + i - printed
+                  j = i
 !
 !                 Get length of format string
                   do while (string(i:i) .ne. ")")
@@ -308,11 +309,11 @@ contains
                   printed = i+1
 !
 !                 Copy format string to fstring and write the next real to pstring
-                  fstring = string(p_pos:i)
-                  write(pstring(print_pos:),fstring) reals(real_count)
+                  fstring = string(j:i)
+                  write(pstring(print_position:),fstring) reals(real_count)
 !
 !                 Set next position to print
-                  print_pos = len_trim(pstring) + 1
+                  print_position = len_trim(pstring) + 1
 !
                endif
 !
@@ -329,9 +330,9 @@ contains
                   endif
 !
 !                 Print everything between previous print and (
-                  write(pstring(print_pos:),'(a)') string(printed:i-1)
-                  print_pos = print_pos + i - printed
-                  p_pos = i
+                  write(pstring(print_position:),'(a)') string(printed:i-1)
+                  print_position = print_position + i - printed
+                  j = i
 !
 !                 Get length of format string
                   do while (string(i:i) .ne. ")")
@@ -347,12 +348,12 @@ contains
 !
                   printed = i + 1
 !
-!                 Copy format string to fstring and write the next real to pstring
-                  fstring = string(p_pos:i)
-                  write(pstring(print_pos:),fstring) ints(int_count)
+!                 Copy format string to fstring and write the next int to pstring
+                  fstring = string(j:i)
+                  write(pstring(print_position:),fstring) ints(int_count)
 !
 !                 Set next position to print
-                  print_pos = len_trim(pstring) + 1
+                  print_position = len_trim(pstring) + 1
 !
                endif
 !  
@@ -364,14 +365,14 @@ contains
 !
                   log_count = log_count + 1
                   if (log_count .gt. log_len) then
-                     print *, 'Not enough ints in printf'
+                     print *, 'Not enough logicals in printf'
                      stop
                   endif
 !
 !                 Print everything between previous print and (
-                  write(pstring(print_pos:),'(a)') string(printed:i-1)
-                  print_pos = print_pos + i - printed
-                  p_pos = i
+                  write(pstring(print_position:),'(a)') string(printed:i-1)
+                  print_position = print_position + i - printed
+                  j = i
 !
 !                 Get length of format string
                   do while (string(i:i) .ne. ")")
@@ -387,29 +388,41 @@ contains
 !
                   printed = i + 1
 !
-!                 Copy format string to fstring and write the next real to pstring
-                  fstring = string(p_pos:i)
-                  if (fstring(2:3) .eq. 'l0') then
+!                 Copy format string to fstring and figure out the printed length
+                  fstring = string(j:i)
+!
+                  if (fstring(2:3) .eq. 'l0' .or. &
+                      fstring(2:3) .eq. 'L0') then
+!
                      fstring = '(a)'
-                     add_pos = len_trim(chars(char_count))
+!
+                     if (logs(log_count)) then
+                        advance_position = 4
+                     else
+                        advance_position = 5
+                     end if
+!
                   else
+!
                      fstring(2:2) = 'a'
-                     add_pos = the_file%get_format_length(fstring)
+                     advance_position = the_file%get_format_length(fstring)
+!
                   endif
 !
                   if(logs(log_count)) then
-                     write(pstring(print_pos:), fstring) 'True'     
+                     write(pstring(print_position:), fstring) 'True'     
                   else
-                     write(pstring(print_pos:), fstring) 'False'     
+                     write(pstring(print_position:), fstring) 'False'     
                   endif
 !
 !                 Set next position to print
-                  print_pos = print_pos + add_pos
+                  print_position = print_position + advance_position
 !
                endif
 !  
-!           Is ( followed by a or A?
-            elseif(string(i+1:i+1) .eq. "a" .or. string(i+1:i+1) .eq. "A") then
+!           Is ( followed by a or A or b or B?
+            elseif((string(i+1:i+1) .eq. "a") .or. (string(i+1:i+1) .eq. "A") .or. &
+                   (string(i+1:i+1) .eq. "b") .or. (string(i+1:i+1) .eq. "B")) then
 !
 !              Is it followed by a number, if so, assume a format string
                if (the_file%is_number(string(i + 2 : i + 2))) then
@@ -422,9 +435,9 @@ contains
                   endif
 !
 !                 Print everything between previous print and (
-                  write(pstring(print_pos:),'(a)') string(printed:i-1)
-                  print_pos = print_pos + i - printed
-                  p_pos = i
+                  write(pstring(print_position:),'(a)') string(printed:i-1)
+                  print_position = print_position + i - printed
+                  j = i
 !
 !                 Get length of format string
                   do while (string(i:i) .ne. ")")
@@ -441,18 +454,21 @@ contains
                   printed = i + 1
 !
 !                 Copy format string to fstring and check if a0
-                  fstring = string(p_pos:i)
-                  if (fstring(2:3) .eq. 'a0') then
+                  fstring = string(j:i)
+                  if ((fstring(2:3) .eq. 'a0') .or. (fstring(2:3) .eq. 'b0')) then
+                     advance_position = len_trim(chars(char_count))
                      fstring = '(a)'
-                     add_pos = len_trim(chars(char_count))
+                  else if ((fstring(2:2) .eq. 'b') .or. (fstring(2:2) .eq. 'B')) then
+                     advance_position = the_file%get_format_length(fstring)
+                     fstring = '(a)'
                   else
-                     add_pos = the_file%get_format_length(fstring)
-                  endif
+                     advance_position = the_file%get_format_length(fstring)
+                  end if
 !
-                  write(pstring(print_pos:), fstring) trim(chars(char_count))
+                  write(pstring(print_position:), fstring) trim(chars(char_count))
 !
 !                 Set next position to print
-                  print_pos = print_pos + add_pos
+                  print_position = print_position + advance_position
 !
                endif
 !  
@@ -463,9 +479,9 @@ contains
                if (the_file%is_number(string(i + 2 : i + 2))) then
 !
 !                 Print everything between previous print and (
-                  write(pstring(print_pos:),'(a)') string(printed:i-1)
-                  print_pos = print_pos + i - printed
-                  p_pos = i
+                  write(pstring(print_position:),'(a)') string(printed:i-1)
+                  print_position = print_position + i - printed
+                  j = i
 !
 !                 Get length of format string
                   do while (string(i:i) .ne. ")")
@@ -482,16 +498,16 @@ contains
                   printed = i + 1
 !
 !                 Copy format string to fstring and check if a0
-                  fstring = string(p_pos:i)
+                  fstring = string(j:i)
 !
-                  add_pos = the_file%get_format_length(fstring)
+                  advance_position = the_file%get_format_length(fstring)
 !
-                  write(fstring(1:), '(a1,i0,a2)') '(', add_pos, 'x)'
+                  write(fstring(1:), '(a1,i0,a2)') '(', advance_position, 'x)'
 !
-                  write(pstring(print_pos:), fstring) 
+                  write(pstring(print_position:), fstring) 
 !
 !                 Set next position to print
-                  print_pos = print_pos + add_pos
+                  print_position = print_position + advance_position
 !
                endif
             endif
@@ -499,23 +515,32 @@ contains
          elseif (i .eq. string_len) then
 !
 !           Reached the end, print the rest
-            write(pstring(print_pos:),'(a)') string(printed:i)
+            write(pstring(print_position:),'(a)') string(printed:i)
+!
+            print_position = print_position + i - printed + 1
 !
          endif
 !
       enddo 
 !
-      call the_file%long_string_print(pstring, fs, ffs, ll, padd, adv)
+      length = print_position - 1
+!
+      call the_file%long_string_print(pstring, length, fs, ffs, ll, padd, adv)
 !
    end subroutine format_print_abstract_out_file
 !
 !  
-   subroutine long_string_print_abstract_out_file(the_file, string, fs, ffs, ll, padd, adv)
+   subroutine long_string_print_abstract_out_file(the_file, string, length, fs, ffs, ll, padd, adv)
 !!
 !!    Long string print
 !!    Written by Rolf H. Myhre, Nov 2018
 !!
-!!    Inserts newlines into strings based on ll, padd and format and prints them to the_file
+!!    Prints a character string, possibly dividing it up over several lines 
+!!    based on ll, padd and format and prints them to the_file
+!!
+!!    string:  Character string to print
+!!
+!!    length:  Length of string
 !!
 !!    fs:      Optional character string specifies the format of the entire string,  
 !!             e.g. fs='(/t6,a)' gives a new line, then indentation 5, then the value 
@@ -539,14 +564,15 @@ contains
 !
       class(abstract_out_file), intent(in) :: the_file
 !
-      character(len=*), intent(in) :: string
+      character(len=*), intent(in)           :: string
+      integer, intent(in)                    :: length
       character(len=*), intent(in), optional :: fs, ffs
-      integer, intent(in), optional :: ll
-      logical, intent(in), optional :: adv
-      integer, intent(in), optional :: padd
+      integer, intent(in), optional          :: ll
+      logical, intent(in), optional          :: adv
+      integer, intent(in), optional          :: padd
 !
       character(200) :: temp
-      integer        :: length, length_with_tab
+      integer        :: length_with_tab
       integer        :: temp_length, printed
       integer        :: line_length, fline_length, l_l
       integer        :: padding, max_padd
@@ -554,9 +580,6 @@ contains
       logical        :: do_advance
 !
       character(len=3) :: advancing
-!
-!     Get string length
-      length = len_trim(string)
 !
 !     Just print a new line and return if empty
       if (length .eq. 0) then
@@ -704,6 +727,7 @@ contains
 !
 !        If character, integer, blank space or logical
          if(fstring(2:2) .eq. 'a' .or. fstring(2:2) .eq. 'A' .or. &
+            fstring(2:2) .eq. 'b' .or. fstring(2:2) .eq. 'B' .or. &
             fstring(2:2) .eq. 'i' .or. fstring(2:2) .eq. 'I' .or. &
             fstring(2:2) .eq. 'l' .or. fstring(2:2) .eq. 'L' .or. &
             fstring(2:2) .eq. 'x' .or. fstring(2:2) .eq. 'X') then

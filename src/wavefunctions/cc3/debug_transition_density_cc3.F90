@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -323,6 +323,8 @@ contains
       call mem%alloc(R_abcijk, wf%n_v,wf%n_v,wf%n_v,wf%n_o,wf%n_o,wf%n_o)
       call wf%construct_full_R3(R_abij, R_abcijk, wf%right_excitation_energies(state))
 !
+      call mem%dealloc(R_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
       call wf%debug_right_ov_R3(density_ov, R_abcijk)
 !
       do a = 1, wf%n_v
@@ -423,7 +425,6 @@ contains
       integer :: i,j,k,l,a,b,c,d
 !
 !     CVS
-      integer :: i_cvs
       logical :: ijk_core
 !
 !     Prepare t2 amplitudes and read in integrals
@@ -451,24 +452,21 @@ contains
                if (i .eq. j .and. i .eq. k) cycle
 !
 !              Check if at least one index i,j,k is a core orbital
+!
                if(wf%cvs) then
 !
                   ijk_core = .false.
 !
-                  do i_cvs = 1, wf%n_core_MOs
-!
-                     if(     i .eq. wf%core_MOs(i_cvs)   &
-                        .or. j .eq. wf%core_MOs(i_cvs)   &
-                        .or. k .eq. wf%core_MOs(i_cvs))  then
+                  if(     any(wf%core_MOs .eq. i) &
+                     .or. any(wf%core_MOs .eq. j) &
+                     .or. any(wf%core_MOs .eq. k)) then
 !
                      ijk_core = .true.
 !
-                     end if
+                  end if
 !
-                  end do
-!
-!              Cycle if i,j,k are not core orbitals
-               if (.not. ijk_core) cycle
+!                 Cycle if i,j,k are not core orbitals
+                  if (.not. ijk_core) cycle
 !
                end if
 !
@@ -521,24 +519,21 @@ contains
                if (i .eq. j .and. i .eq. k) cycle
 !
 !              Check if at least one index i,j,k is a core orbital
+!
                if(wf%cvs) then
 !
                   ijk_core = .false.
 !
-                  do i_cvs = 1, wf%n_core_MOs
+                  if(     any(wf%core_MOs .eq. i) &
+                     .or. any(wf%core_MOs .eq. j) &
+                     .or. any(wf%core_MOs .eq. k)) then
 !
-                     if(     i .eq. wf%core_MOs(i_cvs)   &
-                        .or. j .eq. wf%core_MOs(i_cvs)   &
-                        .or. k .eq. wf%core_MOs(i_cvs))  then
+                     ijk_core = .true.
 !
-                        ijk_core = .true.
+                  end if
 !
-                     end if
-!
-                  end do
-!
-!              Cycle if i,j,k are not core orbitals
-               if (.not. ijk_core) cycle
+!                 Cycle if i,j,k are not core orbitals
+                  if (.not. ijk_core) cycle
 !
                end if
 !
@@ -742,7 +737,6 @@ contains
       integer :: i,j,k,l,a,b,c,d
 !
 !     CVS
-      integer :: i_cvs
       logical :: ijk_core
 !
 !     Prepare t2 amplitudes and read in integrals
@@ -774,24 +768,21 @@ contains
                if (i .eq. j .and. i .eq. k) cycle
 !
 !              Check if at least one index i,j,k is a core orbital
+!
                if(cvs) then
 !
                   ijk_core = .false.
 !
-                  do i_cvs = 1, wf%n_core_MOs
-!
-                     if(     i .eq. wf%core_MOs(i_cvs)   &
-                        .or. j .eq. wf%core_MOs(i_cvs)   &
-                        .or. k .eq. wf%core_MOs(i_cvs))  then
+                  if(     any(wf%core_MOs .eq. i) &
+                     .or. any(wf%core_MOs .eq. j) &
+                     .or. any(wf%core_MOs .eq. k)) then
 !
                      ijk_core = .true.
 !
-                     end if
+                  end if
 !
-                  end do
-!
-!              Cycle if i,j,k are not core orbitals
-               if (.not. ijk_core) cycle
+!                 Cycle if i,j,k are not core orbitals
+                  if (.not. ijk_core) cycle
 !
                end if
 !
@@ -841,24 +832,21 @@ contains
                if (i .eq. j .and. i .eq. k) cycle
 !
 !              Check if at least one index i,j,k is a core orbital
+!
                if(cvs) then
 !
                   ijk_core = .false.
 !
-                  do i_cvs = 1, wf%n_core_MOs
-!
-                     if(     i .eq. wf%core_MOs(i_cvs)   &
-                        .or. j .eq. wf%core_MOs(i_cvs)   &
-                        .or. k .eq. wf%core_MOs(i_cvs))  then
+                  if(     any(wf%core_MOs .eq. i) &
+                     .or. any(wf%core_MOs .eq. j) &
+                     .or. any(wf%core_MOs .eq. k)) then
 !
                      ijk_core = .true.
 !
-                     end if
+                  end if
 !
-                  end do
-!
-!              Cycle if i,j,k are not core orbitals
-               if (.not. ijk_core) cycle
+!                 Cycle if i,j,k are not core orbitals
+                  if (.not. ijk_core) cycle
 !
                end if
 !
@@ -911,24 +899,21 @@ contains
                if (i .eq. j .and. i .eq. k) cycle
 !
 !              Check if at least one index i,j,k is a core orbital
+!
                if(cvs) then
 !
                   ijk_core = .false.
 !
-                  do i_cvs = 1, wf%n_core_MOs
-!
-                     if(     i .eq. wf%core_MOs(i_cvs)   &
-                        .or. j .eq. wf%core_MOs(i_cvs)   &
-                        .or. k .eq. wf%core_MOs(i_cvs))  then
+                  if(     any(wf%core_MOs .eq. i) &
+                     .or. any(wf%core_MOs .eq. j) &
+                     .or. any(wf%core_MOs .eq. k)) then
 !
                      ijk_core = .true.
 !
-                     end if
+                  end if
 !
-                  end do
-!
-!              Cycle if i,j,k are not core orbitals
-               if (.not. ijk_core) cycle
+!                 Cycle if i,j,k are not core orbitals
+                  if (.not. ijk_core) cycle
 !
                end if
 !
@@ -1574,6 +1559,7 @@ contains
       enddo
 !
       call mem%dealloc(Y_acdi, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+      call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
    end subroutine debug_right_ov_Y_term_cc3
 !

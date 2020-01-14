@@ -1,7 +1,7 @@
 #
 #
 #   eT - a coupled cluster program
-#   Copyright (C) 2016-2019 the authors of eT
+#   Copyright (C) 2016-2020 the authors of eT
 #
 #   eT is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -40,7 +40,11 @@ endmacro()
 # 	verylong > 200 seconds
 # 
 # NEVER comment out tests
+add_eT_runtest(eri_cholesky                                 "eT;short;cholesky;eri")
+add_eT_runtest(eri_cholesky_no_vectors                      "eT;short;cholesky;eri")
+#
 add_eT_runtest(hf_energy                                    "eT;short;hf;sad")
+add_eT_runtest(hf_low_memory                                "eT;short;hf;sad")
 add_eT_runtest(hf_energy_cumulative                         "eT;short;hf;cumulative-fock")
 add_eT_runtest(hf_energy_sto3g                              "eT;short;hf;sad;sto3g")
 add_eT_runtest(hf_energy_3-21g                              "eT;short;hf;sad;pople")
@@ -53,12 +57,11 @@ add_eT_runtest(hf_scf_energy                                "eT;short;hf;sad")
 add_eT_runtest(hf_mo_energy                                 "eT;short;hf;mo-diis")
 add_eT_runtest(hf_energy_qmmmnopol                          "eT;short;hf;sad;qmmm;mmnopol")
 add_eT_runtest(hf_energy_qmfq                               "eT;short;hf;sad;qmmm;fq")
-add_eT_runtest(hf_energy_pcm                                "eT;short;hf;sad;pcm;pcm_internal")
-add_eT_runtest(hf_energy_pcm_external                       "eT;short;hf;sad;pcm;pcm_external")
 add_eT_runtest(hf_scf_energy_qmmmnopol                      "eT;short;hf;sad;qmmm;mmnopol")
 add_eT_runtest(hf_scf_energy_qmfq                           "eT;short;hf;sad;qmmm;fq")
 add_eT_runtest(hf_dipole                                    "eT;short;hf;sad;dipole")
 add_eT_runtest(hf_quadrupole                                "eT;short;hf;sad;quadrupole")
+add_eT_runtest(restart_hf                                   "eT;short;hf;restart")
 #
 add_eT_runtest(hf_bohr_units                                "eT;short;hf;sad")
 #
@@ -66,11 +69,10 @@ add_eT_runtest(uhf_energy                                   "eT;short;uhf")
 #
 add_eT_runtest(uhf_energy_qmmmnopol                         "eT;short;uhf;sad;qmmm;mmnopol")
 add_eT_runtest(uhf_energy_qmfq                              "eT;short;uhf;sad;qmmm;fq")
-add_eT_runtest(uhf_energy_pcm                                "eT;short;uhf;sad;pcm;pcm_internal")
-add_eT_runtest(uhf_energy_pcm_external                       "eT;short;uhf;sad;pcm;pcm_external")
 add_eT_runtest(uhf_dipole                                   "eT;short;uhf;sad;dipole")
 add_eT_runtest(mlhf_cholesky_energy                         "eT;short;mlhf;sad;cholesky")
 add_eT_runtest(mlhf_pao_energy                              "eT;short;mlhf;sad;pao")
+add_eT_runtest(mlhf_pao_energy_central_atom                 "eT;short;mlhf;sad;pao;central-atom")
 add_eT_runtest(mlhf_scf_energy                              "eT;short;mlhf;sad;pao")
 add_eT_runtest(mlhf_full_space_energy                       "eT;short;mlhf;sad;pao")
 add_eT_runtest(mlhf_min_basis_diagonalization_energy        "eT;short;mlhf;sad;pao")
@@ -78,9 +80,6 @@ add_eT_runtest(mlhf_initial_full_space_optimization         "eT;short;mlhf;sad;p
 add_eT_runtest(mlhf_restart                                 "eT;short;mlhf;sad;pao;restart")
 add_eT_runtest(mlhf_dipole                                  "eT;short;mlhf;sad;pao;dipole")
 add_eT_runtest(mlhf_quadrupole                              "eT;short;mlhf;sad;pao;quadrupole")
-add_eT_runtest(mlhf_ccsd_gs_energy                          "eT;short;mlhf;ccsd;pao")
-add_eT_runtest(mlhf_frozen_hf_ccsd_gs_energy                "eT;short;mlhf;ccsd;pao;frozen core")
-add_eT_runtest(mlhf_fc_ccsd_gs_energy                       "eT;short;mlhf;ccsd;pao;frozen hf")
 add_eT_runtest(mp2_energy                                   "eT;short;hf;mp2")
 add_eT_runtest(mp2_energy_qmmmnopol                         "eT;short;hf;mp2;qmmm;mmnopol")
 add_eT_runtest(mp2_energy_qmfq                              "eT;short;hf;mp2;qmmm;fq")
@@ -94,6 +93,7 @@ add_eT_runtest(restart_ccs_es                               "eT;short;ccs;es;res
 add_eT_runtest(restart_ccs_eom                              "eT;short;ccs;eom;restart")
 #
 add_eT_runtest(cc2_gs_energy                                "eT;short;cc2;gs")
+add_eT_runtest(cc2_gs_energy_cholesky_on_file               "eT;short;cc2;gs;cholesky-storage")
 add_eT_runtest(cc2_gs_energy_batched_cd                     "eT;short;cc2;gs;pcd")
 add_eT_runtest(cc2_dipole                                   "eT;short;cc2;gs;dipole")
 add_eT_runtest(cc2_frozen_core                              "eT;short;cc2;gs;es;frozen core")
@@ -114,6 +114,7 @@ add_eT_runtest(cc2_lowmem_frozen_core                       "eT;short;lowmem-cc2
 add_eT_runtest(cc2_lowmem_right_es_energies                 "eT;short;lowmem-cc2;es;right")
 add_eT_runtest(cc2_lowmem_left_es_energies                  "eT;short;lowmem-cc2;es")
 add_eT_runtest(restart_lowmem_cc2_es                        "eT;short;lowmem-cc2;es;restart")
+add_eT_runtest(restart_cc2_lowmem_from_ccs                  "eT;short;lowmem-cc2;es;restart")
 #
 add_eT_runtest(ccsd_gs_energy                               "eT;short;ccsd;gs")
 add_eT_runtest(ccsd_gs_energy_nr_crop                       "eT;short;ccsd;newton-raphson;crop")
@@ -121,8 +122,6 @@ add_eT_runtest(ccsd_frozen_hf_gs_energy                     "eT;short;ccsd;gs;fr
 add_eT_runtest(ccsd_frozen_hf_frozen_core_gs_energy         "eT;short;ccsd;gs;frozen hf; frozen core")
 add_eT_runtest(ccsd_gs_energy_qmmmnopol                     "eT;short;ccsd;gs;qmmm;mmnopol")
 add_eT_runtest(ccsd_gs_energy_qmfq                          "eT;short;ccsd;gs;qmmm;fq")
-add_eT_runtest(ccsd_gs_energy_pcm                           "eT;short;ccsd;gs;pcm;pcm_internal")
-add_eT_runtest(ccsd_gs_energy_pcm_external                  "eT;short;ccsd;gs;pcm;pcm_external")
 add_eT_runtest(ccsd_gs_energy_1c_cd                         "eT;short;ccsd;gs;1c-cd")
 add_eT_runtest(ccsd_gs_energy_NR                            "eT;short;ccsd;gs;newton-raphson")
 add_eT_runtest(ccsd_dipole                                  "eT;short;ccsd;gs;dipole")
@@ -142,6 +141,7 @@ add_eT_runtest(ccsd_left_ip_diis                            "eT;short;ccsd;ip;le
 add_eT_runtest(ccsd_left_es_energies                        "eT;short;ccsd;es;left")
 add_eT_runtest(ccsd_left_es_diis                            "eT;short;ccsd;es;left;diis")
 add_eT_runtest(ccsd_es_lanczos                              "eT;short;ccsd;es;eom;lanczos")
+add_eT_runtest(ccsd_cvs_lanczos                          "eT;short;ccsd;es;eom;lanczos;cvs")
 add_eT_runtest(ccsd_eom_polarizability                      "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom                 "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom_crop            "eT;short;ccsd;es;eom;crop")
@@ -155,6 +155,12 @@ add_eT_runtest(ccsd_td_gl2                                  "eT;short;ccsd;compl
 add_eT_runtest(ccsd_td_gl4                                  "eT;short;ccsd;complex;td")
 add_eT_runtest(ccsd_td_gl6                                  "eT;short;ccsd;complex;td")
 add_eT_runtest(restart_ccsd_es                              "eT;short;ccsd;es;restart")
+add_eT_runtest(restart_ccsd_eom                             "eT;short;ccsd;eom;restart")
+add_eT_runtest(restart_ccsd_2_states_from_1                 "eT;short;ccsd;eom;restart")
+add_eT_runtest(restart_ccsd_eom_diis                        "eT;short;ccsd;eom;restart")
+add_eT_runtest(mlhf_ccsd_gs_energy                          "eT;short;mlhf;ccsd;pao")
+add_eT_runtest(mlhf_frozen_hf_ccsd_gs_energy                "eT;short;mlhf;ccsd;pao;frozen core")
+add_eT_runtest(mlhf_fc_ccsd_gs_energy                       "eT;short;mlhf;ccsd;pao;frozen hf")
 #
 add_eT_runtest(ccsdpt_gs_energy                             "eT;short;ccsdpt;gs")
 #
@@ -167,11 +173,14 @@ add_eT_runtest(cc3_right_cvs_es_energies                    "eT;short;cc3;es;rig
 add_eT_runtest(cc3_left_es_energies                         "eT;short;cc3;es;left;diis")
 add_eT_runtest(cc3_left_cvs_es_energies                     "eT;short;cc3;es;left;cvs;diis")
 add_eT_runtest(cc3_oscillator_strength_eom                  "eT;short;cc3;es;eom")
+add_eT_runtest(cc3_oscillator_strength_eom_cvs              "eT;short;cc3;es;eom;cvs")
 add_eT_runtest(restart_cc3_from_ccsd                        "eT;short;cc3;es;eom;restart")
 #
 add_eT_runtest(mlcc2_cnto_full_right_es                     "eT;short;mlcc2;cnto")
 add_eT_runtest(mlcc2_pao_full_right_es                      "eT;short;mlcc2;pao")
 add_eT_runtest(mlcc2_pao_right_es                           "eT;short;mlcc2;pao")
+add_eT_runtest(mlcc2_pao_right_es_fc                        "eT;short;mlcc2;pao;fc")
+add_eT_runtest(mlcc2_pao_right_es_frozen_hf                 "eT;short;mlcc2;pao;frozen-hf")
 add_eT_runtest(mlcc2_pao_left_es                            "eT;short;mlcc2;pao")
 add_eT_runtest(mlcc2_nto_full_right_es                      "eT;short;mlcc2;nto")
 add_eT_runtest(mlcc2_nto_right_es                           "eT;short;mlcc2;nto")
@@ -188,3 +197,12 @@ add_eT_runtest(mlcc2_full_fc_es                             "eT;short;mlcc2;chol
 add_eT_runtest(mlcc2_fc_es                             		"eT;short;mlcc2;cnto;frozen core")
 add_eT_runtest(restart_mlcc2_cholesky_es                    "eT;short;mlcc2;cholesky;restart")
 add_eT_runtest(restart_mlcc2_cnto_es                        "eT;short;mlcc2;cnto;restart")
+#
+if(ENABLE_PCMSOLVER)
+   add_eT_runtest(hf_energy_pcm                             "eT;short;hf;sad;pcm;pcm_internal")
+   add_eT_runtest(hf_energy_pcm_external                    "eT;short;hf;sad;pcm;pcm_external")
+   add_eT_runtest(uhf_energy_pcm                            "eT;short;uhf;sad;pcm;pcm_internal")
+   add_eT_runtest(uhf_energy_pcm_external                   "eT;short;uhf;sad;pcm;pcm_external")
+   add_eT_runtest(ccsd_gs_energy_pcm                        "eT;short;ccsd;gs;pcm;pcm_internal")
+   add_eT_runtest(ccsd_gs_energy_pcm_external               "eT;short;ccsd;gs;pcm;pcm_external")
+endif()

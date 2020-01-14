@@ -1,11 +1,7 @@
 system
-   name: H2O-He
+   name: HOF He
    charge: 0
 end system
- 
-print 
-   output print level: debug 
-end print
 
 do
    ground state
@@ -25,9 +21,9 @@ method
    hf
 end method
 
-hf zop
+hf mean value
    dipole
-end hf zop
+end hf mean value
 
 geometry
 basis: cc-pVDZ

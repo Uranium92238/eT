@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,11 @@
 submodule (ccs_class) omega_ccs_complex
 !
 !!
-!!    Omega submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    Omega submodule
+!!
+!!    Routines to construct 
+!!
+!!    Omega_mu =  < mu | exp(-T) H exp(T) | R >
 !!
 !
    implicit none
@@ -41,8 +44,15 @@ contains
 !
       complex(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Construct ccs omega', pl='normal')
+      call timer%turn_on()
+!
       call zero_array_complex(omega, wf%n_gs_amplitudes)
       call wf%omega_ccs_a1_complex(omega)
+!
+      call timer%turn_off()
 !
    end subroutine construct_omega_ccs_complex
 !
@@ -64,7 +74,7 @@ contains
 !
       type(timings) :: omega_ccs_a1_timer
 !
-      omega_ccs_a1_timer = timings('omega ccs a1')
+      omega_ccs_a1_timer = timings('omega ccs a1', pl='verbose')
       call omega_ccs_a1_timer%turn_on()
 !
       call zaxpy((wf%n_o)*(wf%n_v), one_complex, wf%fock_ai_complex, 1, omega, 1)

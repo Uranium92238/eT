@@ -1,12 +1,8 @@
 system
-   name: 3 water molecules
+   name: 3 H2O
    charge: 0
    multiplicity: 1
 end system
-
-print
-   output print level: debug
-end print
 
 do
    ground state

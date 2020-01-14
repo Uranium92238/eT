@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,10 +20,16 @@
 submodule (cc3_class) multiplier_equation_cc3
 !
 !!
-!!    Multiplier equation (CC3)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    Multiplier equation
 !!
-!!    Equation used for the construction of CC3 multipliers.
+!!    Routines for calculation of the multiplier equation,
+!!
+!!       t-bar^T A + eta = 0,
+!!
+!!    where t-bar is the multiplier vector, and
+!! 
+!!       A_mu,nu = < mu | exp(-T) [H, τ_nu] exp(T) | R >
+!!       eta_mu  = < R | exp(-T) [H, τ_mu] exp(T) | R >.
 !!
 !
    implicit none
@@ -46,8 +52,8 @@ contains
       prep_timer = timings("Prepare for multiplier equation", pl='normal')
       call prep_timer%turn_on()
 !
-      call output%printf('Preparing for (a0) multiplier equations', pl='verbose', &
-                        chars=[trim(wf%name_)], fs='(/t3,a)')
+      call output%printf('v', 'Preparing for (a0) multiplier equations', &
+                         chars=[trim(wf%name_)], fs='(/t3,a)')
 !
       call wf%prepare_for_jacobian_transpose()
 !

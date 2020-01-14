@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -99,6 +99,8 @@ module mlcc2_class
 !
    contains
 !
+      procedure :: print_amplitude_info                              => print_amplitude_info_mlcc2
+!
       procedure :: cleanup                                           => cleanup_mlcc2
 !
 !     Initializations and destructions
@@ -114,6 +116,7 @@ module mlcc2_class
 !
       procedure :: initialize_t2bar                                  => initialize_t2bar_mlcc2
       procedure :: destruct_t2bar                                    => destruct_t2bar_mlcc2
+      procedure :: destruct_multipliers                              => destruct_multipliers_mlcc2
 !
       procedure :: initialize_nto_states                             => initialize_nto_states_mlcc2
       procedure :: destruct_nto_states                               => destruct_nto_states_mlcc2
@@ -243,7 +246,7 @@ module mlcc2_class
 contains
 !
 !
-   function new_mlcc2(system) result(wf)
+   function new_mlcc2(system, template_wf) result(wf)
 !!
 !!    New mlcc2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -255,6 +258,8 @@ contains
       type(mlcc2) :: wf
 !
       class(molecular_system), target, intent(in) :: system 
+!
+      class(wavefunction) :: template_wf
 !
       wf%name_ = 'mlcc2'
 !
@@ -268,6 +273,8 @@ contains
       wf%cholesky_orbital_threshold = 1.0d-2
 !
       call wf%general_cc_preparations(system)
+      call wf%set_variables_from_template_wf(template_wf)
+      call wf%print_banner()
 !
       if (wf%bath_orbital) call output%error_msg('Bath orbitals not yet implemented for MLCC2')
 !
@@ -278,7 +285,25 @@ contains
 !
       call wf%initialize_fock()
 !
+      call wf%print_amplitude_info()
+!
    end function new_mlcc2
+!
+!
+   subroutine print_amplitude_info_mlcc2(wf)
+!!
+!!    Print amplitude info
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+!!
+      implicit none
+!
+      class(mlcc2), intent(in) :: wf
+!
+      call wf%ccs%print_amplitude_info()  
+!
+   end subroutine print_amplitude_info_mlcc2
+!
 !
 !
    subroutine print_orbital_space_mlcc2(wf)
@@ -290,17 +315,17 @@ contains
 !
       class(mlcc2) :: wf
 !
-      call output%printf('- Summary of MLCC2 orbital partitioning:',fs='(/t3,a)',pl='minimal')
+      call output%printf('m', '- MLCC2 orbital partitioning:',fs='(/t3,a)')
 !
-      call output%printf('Orbital type: ' // trim(wf%cc2_orbital_type), fs='(/t6,a)',pl='minimal')
-      call output%printf('Number occupied cc2 orbitals: (i4)', &
-            ints=[wf%n_cc2_o], fs='(/t6,a)',pl='minimal')
-      call output%printf('Number virtual cc2 orbitals:  (i4)', &
-            ints=[wf%n_cc2_v], fs='(t6,a)',pl='minimal')
-      call output%printf('Number occupied ccs orbitals: (i4)', &
-            ints=[wf%n_ccs_o], fs='(/t6,a)',pl='minimal')
-      call output%printf('Number virtual ccs orbitals:  (i4)', &
-            ints=[wf%n_ccs_v], fs='(t6,a)',pl='minimal')
+      call output%printf('m', 'Orbital type: ' // trim(wf%cc2_orbital_type), fs='(/t6,a)')
+      call output%printf('m', 'Number occupied cc2 orbitals: (i4)', &
+                         ints=[wf%n_cc2_o], fs='(/t6,a)')
+      call output%printf('m', 'Number virtual cc2 orbitals:  (i4)', &
+                         ints=[wf%n_cc2_v], fs='(t6,a)')
+      call output%printf('m', 'Number occupied ccs orbitals: (i4)', &
+                         ints=[wf%n_ccs_o], fs='(/t6,a)')
+      call output%printf('m', 'Number virtual ccs orbitals:  (i4)', &
+                         ints=[wf%n_ccs_v], fs='(t6,a)')
 !
    end subroutine print_orbital_space_mlcc2
 !
@@ -571,6 +596,8 @@ contains
       call mem%dealloc(g_iajb, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v)
       call mem%dealloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
+      wf%correlation_energy = correlation_energy
+!
       wf%energy = wf%hf_energy + correlation_energy
 !
    end subroutine calculate_energy_mlcc2
@@ -588,16 +615,14 @@ contains
 !
       class(mlcc2) :: wf
 !
-      call wf%check_orthonormality_of_MOs()
-!
       if (wf%n_cc2_o .eq. 0) &
-               call output%error_msg('no occupied cc2 orbitals in mlcc2 calulation.')
+               call output%error_msg('no occupied cc2 orbitals in mlcc2 calculation.')
 !
       if (wf%n_cc2_v .eq. 0) &
-               call output%error_msg('no virtual cc2 orbitals in mlcc2 calulation.')
+               call output%error_msg('no virtual cc2 orbitals in mlcc2 calculation.')
 !
       if (wf%n_ccs_o + wf%n_ccs_v .eq. 0)  &
-            call output%warning_msg('no ccs orbitals in mlcc2 calulation, ' //&
+            call output%warning_msg('no ccs orbitals in mlcc2 calculation, ' //&
                'recomended to run standard cc2 code.')
 !
       if (wf%n_cc2_o .lt. 0 .or. wf%n_ccs_o .lt. 0 .or. &
@@ -609,6 +634,8 @@ contains
 !
       if (wf%n_cc2_v + wf%n_ccs_v .ne. wf%n_v) &
             call output%error_msg('virtual spaces do not add to n_v.')
+!
+      call wf%check_orthonormality_of_MOs()
 !
    end subroutine check_orbital_space_mlcc2
 !
@@ -1040,15 +1067,16 @@ contains
       call wf%determine_n_gs_amplitudes()
       call wf%determine_n_es_amplitudes()
 !
-      wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, wf%system%n_J)
+      wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, wf%system%n_J, wf%need_g_abcd)
 !
-      call wf%construct_and_write_mo_cholesky(wf%n_mo, &
-            wf%orbital_coefficients, wf%integrals%cholesky_mo)
+      call wf%integrals%initialize_storage()
+!
+      call wf%construct_and_save_mo_cholesky(wf%n_mo, wf%orbital_coefficients)
 !
 !     Frozen fock terms transformed from the canonical MO basis to 
 !     the basis of orbital partitioning
 !
-      if ((wf%frozen_core) .or. (wf%frozen_hf_mos)) &
+      if (wf%exists_frozen_fock_terms) &
          call wf%update_MO_fock_contributions(canonical_orbitals)
 !
       call mem%dealloc(canonical_orbitals, wf%n_ao, wf%n_mo)
@@ -1056,7 +1084,7 @@ contains
       call wf%initialize_t1()
       call zero_array(wf%t1, wf%n_t1)
 !
-      call wf%integrals%write_t1_cholesky(wf%t1)
+      call wf%integrals%update_t1_integrals(wf%t1)
 !
       call wf%construct_fock()
       call wf%destruct_t1()
@@ -1070,22 +1098,20 @@ contains
 !
       call wf%construct_block_diagonal_fock_orbitals()
 !
-      call wf%construct_and_write_mo_cholesky(wf%n_mo, &
-            wf%orbital_coefficients, wf%integrals%cholesky_mo)
+      call wf%construct_and_save_mo_cholesky(wf%n_mo, wf%orbital_coefficients)
 !
 !     Frozen fock terms transformed from the basis of orbital partitioning to 
 !     the MLCC basis
 !
-      if ((wf%frozen_core) .or. (wf%frozen_hf_mos)) &
+      if (wf%exists_frozen_fock_terms) &
          call wf%update_MO_fock_contributions(partitioning_orbitals)
 !
       call mem%dealloc(partitioning_orbitals, wf%n_ao, wf%n_mo)
 !
-      call wf%construct_and_write_mo_cholesky(wf%n_mo, wf%orbital_coefficients, &
-                  wf%integrals%cholesky_mo)
+      call wf%construct_and_save_mo_cholesky(wf%n_mo, wf%orbital_coefficients)
 !
-      call wf%check_orbital_space()
       call wf%print_orbital_space()
+      call wf%check_orbital_space()
 !
    end subroutine mo_preparations_mlcc2
 !
@@ -1101,20 +1127,30 @@ contains
       class(mlcc2) :: wf
 !
       call wf%destruct_amplitudes()
-      call wf%destruct_t2bar()
+      call wf%destruct_multipliers()
+
+      call wf%destruct_orbital_coefficients()
+      call wf%destruct_orbital_energies()
+!
       call wf%destruct_right_excitation_energies()
       call wf%destruct_left_excitation_energies()
 !
-      call wf%destruct_fock_ij()
-      call wf%destruct_fock_ia()
-      call wf%destruct_fock_ai()
-      call wf%destruct_fock_ab()
+      call wf%destruct_core_MOs()
+!
+      call wf%destruct_fock()
+      call wf%destruct_mo_fock_frozen()
+      call wf%destruct_frozen_CCT()
+!
+      call wf%integrals%cleanup()
 !
       call wf%destruct_nto_states()
       call wf%destruct_cnto_states()
 !
-      call output%printf('- Cleaning up (a0) wavefunction', &
-         chars=[trim(convert_to_uppercase(wf%name_))], fs='(/t3, a)', pl='verbose')
+      if (allocated(wf%l_files)) call wf%l_files%finalize_storer()
+      if (allocated(wf%r_files)) call wf%r_files%finalize_storer()
+!
+      call output%printf('v', '- Cleaning up (a0) wavefunction', &
+                         chars=[trim(convert_to_uppercase(wf%name_))], fs='(/t3, a)')
 !
    end subroutine cleanup_mlcc2
 !
@@ -1373,23 +1409,7 @@ contains
 !
       call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, C_old, T)
 !
-      if (wf%frozen_core) then
-!
-         call symmetric_sandwich_right_transposition_replace(wf%mo_fock_fc_term, T, wf%n_mo)
-!
-      endif
-!
-      if (wf%frozen_hf_mos) then
-!
-         call symmetric_sandwich_right_transposition_replace(wf%mo_fock_frozen_hf_term, T, wf%n_mo)
-!
-      endif
-!
-      if (wf%mlhf_reference) then
-!
-         call symmetric_sandwich_right_transposition_replace(wf%mlhf_inactive_fock_term, T, wf%n_mo)
-!
-      endif
+      call symmetric_sandwich_right_transposition_replace(wf%mo_fock_frozen, T, wf%n_mo)
 !
       call mem%dealloc(T, wf%n_mo, wf%n_mo)
 !

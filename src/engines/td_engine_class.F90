@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -32,11 +32,14 @@ module td_engine_class
 !! and use them to read and process time series files.
 !! 
 !
-   use global_in, only: input
-   use global_out, only:output
+   use global_in,       only: input
+   use global_out,      only: output
    use gs_engine_class, only: gs_engine
-   use ccs_class, only: ccs
-   use timings_class, only: timings
+   use ccs_class,       only: ccs
+   use timings_class,   only: timings
+   use task_list_class, only: task_list
+   use kinds
+   use memory_manager_class, only: mem
 !
    type, extends(gs_engine) :: td_engine
 !
@@ -46,16 +49,18 @@ module td_engine_class
 !
    contains 
 !
-      procedure :: run                                   => run_td_engine
+      procedure :: run                   => run_td_engine
 !
-      procedure :: read_settings                         => read_settings_td_engine
+      procedure :: read_settings         => read_settings_td_engine
 !
-      procedure :: do_propagation                        => do_propagation_td_engine
+      procedure :: do_propagation        => do_propagation_td_engine
 !
-      procedure, nopass :: do_fft_dipole_moment          => do_fft_dipole_moment_td_engine
-      procedure, nopass :: do_fft_electric_field         => do_fft_electric_field_td_engine
+      procedure :: do_fft_dipole_moment  => do_fft_dipole_moment_td_engine
+      procedure :: do_fft_electric_field => do_fft_electric_field_td_engine
 !
-      procedure :: set_printables                        => set_printables_td_engine
+      procedure :: do_visualization      => do_visualization_td_engine
+!
+      procedure :: set_printables        => set_printables_td_engine
 !
    end type td_engine
 !
@@ -70,7 +75,7 @@ module td_engine_class
 contains
 !
 !
-   function new_td_engine() result(engine)
+   function new_td_engine(wf) result(engine)
 !!
 !!    New td engine  
 !!    Written by Alice Balbi and Andreas Skeidsvoll, Oct 2018 
@@ -80,12 +85,34 @@ contains
 !!
       implicit none
 !
+!     Needed for defaults and sanity checks
+      class(ccs), intent(in)       :: wf
+!
       type(td_engine) :: engine
 !
 !     Set defaults
 !
-      engine%multipliers_algorithm = 'davidson'
+      if (wf%name_ .eq. 'ccsd(t)') then
+!
+         call output%error_msg("TD (a0) makes no sense", &
+                               chars=[wf%name_])
+!
+      end if
+!
       engine%gs_algorithm          = 'diis'
+!
+      if (wf%name_ .eq. 'cc2' .or. &
+          wf%name_ .eq. 'cc3' .or. &
+          wf%name_ .eq. 'low memory cc2') then
+!
+         engine%multipliers_algorithm = 'diis'
+!
+      else
+!
+         engine%multipliers_algorithm = 'davidson'
+!
+      end if
+!
       engine%integrator            = 'rk4'
 !
       engine%propagation        = .false.
@@ -159,9 +186,7 @@ contains
 !
       call engine%print_banner(wf)
 !
-!     Cholesky decoposition of the electron repulsion integrals
-!
-      call engine%do_cholesky(wf)
+      call engine%tasks%print_('mo preparations')
 !
       call wf%mo_preparations()
 !
@@ -188,6 +213,14 @@ contains
 !     Do complex FFT of the time dependent electric field
 !
       if (engine%fft_electric_field) call engine%do_fft_electric_field()
+!
+!     Plot density matrices
+!
+      if (engine%plot_density) call engine%do_visualization(wf)
+!
+!     Deallocate complex arrays
+!
+      call wf%cleanup_complex()
 !
    end subroutine run_td_engine
 !
@@ -219,6 +252,8 @@ contains
       type(electric_field) :: field
 !
       class(cc_propagation), allocatable :: cc_propagation_solver
+!
+      call engine%tasks%print_('propagation')
 !
 !     Prepare electric field object
 !
@@ -252,16 +287,16 @@ contains
 !
       endif
 !
+      call cc_propagation_solver%initializations()
       call cc_propagation_solver%run(wf, field)
       call cc_propagation_solver%cleanup(wf, field)
-!
 !
       call field%cleanup()
 !
    end subroutine do_propagation_td_engine
 !
 !
-   subroutine do_fft_dipole_moment_td_engine()
+   subroutine do_fft_dipole_moment_td_engine(engine)
 !!
 !!    Do FFT of dipole moment
 !!    Written by Alice Balbi and Andreas Skeidsvoll, Oct 2018
@@ -272,8 +307,12 @@ contains
       use complex_fft_class, only: complex_fft
 !
       implicit none
+
+      class(td_engine) :: engine
 !
       class(complex_fft), allocatable :: fft_solver_dipole_moment
+!
+      call engine%tasks%print_('FFT dipole')
 !
       fft_solver_dipole_moment = complex_fft('dipole moment', 'cc_propagation_dipole_moment')
       call fft_solver_dipole_moment%run()
@@ -282,7 +321,7 @@ contains
    end subroutine do_fft_dipole_moment_td_engine
 !
 !
-   subroutine do_fft_electric_field_td_engine()
+   subroutine do_fft_electric_field_td_engine(engine)
 !!
 !!    Do FFT of electric field
 !!    Written by Alice Balbi and Andreas Skeidsvoll, Oct 2018
@@ -295,7 +334,10 @@ contains
 !
       implicit none
 !
+      class(td_engine) :: engine 
       class(complex_fft), allocatable :: fft_solver_electric_field
+
+      call engine%tasks%print_('FFT electric field')
 !
       fft_solver_electric_field = complex_fft('electric field', 'cc_propagation_electric_field')
       call fft_solver_electric_field%run()
@@ -311,29 +353,175 @@ contains
 !!
 !!    Sets the information that is printed in the banner of the engine in the output file.
 !!
+!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       class(td_engine) :: engine
 !
-      engine%name_  = 'Time dependent coupled cluster engine'
-      engine%author = 'A. Balbi and A. Skeidsvoll, 2018'
+      engine%name_ = 'Time dependent coupled cluster engine'
 !
       engine%description = 'Calculates the time dependent CC wavefunction'
-      engine%tag    = 'time dependent'
+      engine%tag = 'time dependent'
 !
-      engine%tasks = [character(len=150) ::                                 &
-            'Cholesky decomposition of the ERI-matrix',                     &
-            'Calculation of the ground state amplitudes '                   &
-            // '('//trim(engine%gs_algorithm)//'-algorithm)',               &
-            'Calculation of the ground state energy',                       &
-            'Calculation of the ground state multipliers '                  &
-            // '('//trim(engine%multipliers_algorithm)//'-algorithm)',      &
-            'Propagation from the ground state if requested by user',       &
-            'FFT of the time dependent dipole moment if requested by user', &
-            'FFT of the time dependent electric field if requested by user']
 !
+!     Prepare the list of tasks
+!
+      engine%tasks = task_list()
+!
+      call engine%tasks%add(label='mo preparations',                             &
+                            description='Preparation of MO basis and integrals')
+!
+      call engine%tasks%add(label='gs solver',                                &
+                            description='Calculation of the ground state ('// &
+                           trim((engine%gs_algorithm))//' algorithm)')
+!
+      call engine%tasks%add(label='multipliers solver',                       &
+                            description='Calculation of the multipliers ('    &
+                            //trim((engine%multipliers_algorithm))&
+                            //' algorithm)')
+!
+      if (engine%propagation) then
+!
+         call engine%tasks%add(label='propagation',                    &
+                            description='Propagation from the ground state')
+!
+      endif
+!
+      if (engine%fft_dipole_moment) then
+!
+         call engine%tasks%add(label='FFT dipole',                      &
+                            description='FFT of the time dependent dipole moment')
+!
+      endif
+!
+      if (engine%fft_electric_field) then
+!
+         call engine%tasks%add(label='FFT electric field',              &
+                            description='FFT of the time dependent electric field')
+!
+      endif
+!
+      if (engine%plot_density) then
+!
+         call engine%tasks%add(label='plotting', description='Plot density') 
+!
+      endif
 !
    end subroutine set_printables_td_engine
+!
+!
+   subroutine do_visualization_td_engine(engine, wf)
+!!
+!!    Do visualization
+!!    Written by Andreas Skeidsvoll, Dec 2019
+!!
+!!    Reads the electron density matrices listed in cc_propagation_density_matrix_real and
+!!    cc_propagation_density_matrix_imaginary, and writes the corresponding electron densities to
+!!    file.
+!!
+!!    Based on do_visualization_gs_engine by Tor S. Haugland, Nov 2019
+!!
+      use visualization_class, only : visualization
+      use array_utilities, only: symmetric_sandwich_right_transposition
+      use sequential_file_class, only: sequential_file
+!
+      implicit none
+!
+      class(td_engine) :: engine
+      class(ccs) :: wf 
+!
+      type(visualization), allocatable :: plotter
+!
+      real(dp), dimension(:,:), allocatable :: mo_density, density
+!
+      type(sequential_file) :: density_matrix_real_file, density_matrix_imaginary_file
+!
+      integer :: file_count, iostat
+!
+      character(len=200) :: file_count_string
+!
+      call engine%tasks%print_('plotting')
+!
+!     Initialize the plotter
+!
+      plotter = visualization(wf%system, wf%n_ao)
+!
+      call mem%alloc(mo_density, wf%n_mo, wf%n_mo)
+      call mem%alloc(density, wf%n_ao, wf%n_ao)
+!
+!     Plot real electron densities using density matrices on file
+!
+      density_matrix_real_file = sequential_file('cc_propagation_density_matrix_real', 'formatted')
+      call density_matrix_real_file%open_('read','rewind')
+!
+      file_count = 0
+!
+      do
+!
+         call density_matrix_real_file%read_(mo_density, wf%n_mo*wf%n_mo, io_stat=iostat)
+!
+         if (iostat .ne. 0) exit
+!
+!        D_alpha,beta = sum_pq  D_pq C_alpha,p C_beta,q
+!
+         call symmetric_sandwich_right_transposition(density,                 &
+                                                     mo_density,              &
+                                                     wf%orbital_coefficients, &
+                                                     wf%n_ao,                 &
+                                                     wf%n_mo)
+!
+!        Plot density
+!
+         file_count = file_count + 1
+         write(file_count_string, *) file_count
+!
+         call plotter%plot_density(wf%system, density, 'cc_propagation_density_matrix_real_' &
+                                                       // trim(adjustl(file_count_string)))
+!
+      enddo
+!
+      call density_matrix_real_file%close_
+!
+!     Plot imaginary electron densities using density matrices on file
+!
+      density_matrix_imaginary_file = sequential_file('cc_propagation_density_matrix_imaginary', &
+                                                      'formatted')
+      call density_matrix_imaginary_file%open_('read','rewind')
+!
+      file_count = 0
+!
+      do
+!
+         call density_matrix_imaginary_file%read_(mo_density, wf%n_mo*wf%n_mo, io_stat=iostat)
+!
+         if (iostat .ne. 0) exit
+!
+!        D_alpha,beta = sum_pq  D_pq C_alpha,p C_beta,q
+!
+         call symmetric_sandwich_right_transposition(density,                 &
+                                                     mo_density,              &
+                                                     wf%orbital_coefficients, &
+                                                     wf%n_ao,                 &
+                                                     wf%n_mo)
+!
+!        Plot density
+!
+         file_count = file_count + 1
+         write(file_count_string, *) file_count
+!
+         call plotter%plot_density(wf%system, density, 'cc_propagation_density_matrix_imaginary_' &
+                                                       // trim(adjustl(file_count_string)))
+!
+      enddo
+!
+      call density_matrix_imaginary_file%close_
+!
+      call mem%dealloc(mo_density, wf%n_mo, wf%n_mo)
+      call mem%dealloc(density, wf%n_ao, wf%n_ao)
+!
+   end subroutine do_visualization_td_engine
 !
 !
 end module td_engine_class

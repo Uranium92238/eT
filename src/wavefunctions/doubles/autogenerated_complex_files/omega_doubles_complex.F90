@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 submodule (doubles_class) omega_doubles_complex
 !
 !!
-!!    Omega submodule (Abstract doubles)
+!!    Omega submodule 
 !!
 !!    Routines to construct
 !!
@@ -63,7 +63,7 @@ contains
 !
       type(timings) :: timer 
 !  
-      timer = timings('omega doubles a1')
+      timer = timings('omega doubles a1', pl='verbose')
       call timer%turn_on()
 !
       call mem%alloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -157,7 +157,7 @@ contains
 !
       type(timings) :: timer 
 !  
-      timer = timings('omega doubles b1')
+      timer = timings('omega doubles b1', pl='verbose')
       call timer%turn_on()
 !
 !     g_kbji ordered as g_jbki
@@ -219,7 +219,7 @@ contains
 !
       type(timings) :: timer
 !  
-      timer = timings('omega doubles c1')
+      timer = timings('omega doubles c1', pl='verbose')
       call timer%turn_on()
 !
       call mem%alloc(F_bj, wf%n_o, wf%n_v)

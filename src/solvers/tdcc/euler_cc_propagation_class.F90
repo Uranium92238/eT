@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -93,9 +93,9 @@ contains
 !
       complex(dp), dimension(:), allocatable :: ddt_ui
 !
-      call mem%alloc(ddt_ui, n)
-!
       call solver%update_field_and_wavefunction(wf, field, ti, ui)
+!
+      call mem%alloc(ddt_ui, n)
       call wf%construct_complex_time_derivative(ddt_ui)
 !
 !     Use the derivative of the single stage to estimate the solution uf at t = ti + dt.

@@ -1,7 +1,7 @@
 #
 #
 #  eT - a coupled cluster program
-#  Copyright (C) 2016-2019 the authors of eT
+#  Copyright (C) 2016-2020 the authors of eT
 #
 #  eT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -42,6 +42,8 @@ wavefunction_directory = join(source_directory, 'wavefunctions')
 #  file as value
 #
 wavefunction_classes = {
+   'hf': ['hf_class.F90'],
+   'uhf': ['uhf_class.F90'],
    'cc2': ['cc2_class.F90'],
    'cc3': ['cc3_class.F90'],
    'ccs': ['ccs_class.F90'],
@@ -94,7 +96,7 @@ for directory_name in wavefunction_all_submodules:
       interface_file.write('!\n'
                            '!\n'
                            '!  eT - a coupled cluster program\n'
-                           '!  Copyright (C) 2016-2019 the authors of eT\n'
+                           '!  Copyright (C) 2016-2020 the authors of eT\n'
                            '!\n'
                            '!  eT is free software: you can redistribute it '
                            'and/or modify\n'
@@ -203,7 +205,7 @@ for directory_name in wavefunction_all_submodules:
                   if (search(r'\b'+'end'+r'\b', line_without_comments)
                       and search(r'\b'+'function'+r'\b',
                                  line_without_comments)):
-                     interface_file.write(line)
+                     interface_file.write('!\n'+line)
                      break
 #
 #                 Reached implicit none

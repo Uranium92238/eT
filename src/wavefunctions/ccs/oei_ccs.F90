@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,10 +20,10 @@
 submodule (ccs_class) oei_ccs
 !
 !!
-!!    One-electron integrals submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    One-electron integrals submodule
 !!
-!!    Submodule containing routines that can be used to construct t1-transformed one-electron integrals.
+!!    Submodule containing routines that can be used to 
+!!    construct t1-transformed one-electron integrals.
 !!
 !
       implicit none

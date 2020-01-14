@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -47,30 +47,6 @@
    end subroutine destruct_amplitudes_ccsd_complex
 !
 !
-   module subroutine initialize_t2_ccsd_complex(wf)
-!!
-!!    Initialize t2 amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-   end subroutine initialize_t2_ccsd_complex
-!
-!
-   module subroutine destruct_t2_ccsd_complex(wf)
-!!
-!!    Destruct t2 amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-   end subroutine destruct_t2_ccsd_complex
-!
-!
    module subroutine initialize_multipliers_ccsd_complex(wf)
 !!
 !!    Initialize multipliers
@@ -99,27 +75,3 @@
       class(ccsd) :: wf
 !
    end subroutine destruct_multipliers_ccsd_complex
-!
-!
-   module subroutine initialize_t2bar_ccsd_complex(wf)
-!!
-!!    Initialize T2-bar
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-   end subroutine initialize_t2bar_ccsd_complex
-!
-!
-   module subroutine destruct_t2bar_ccsd_complex(wf)
-!!
-!!    Destruct T2-bar
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-   end subroutine destruct_t2bar_ccsd_complex

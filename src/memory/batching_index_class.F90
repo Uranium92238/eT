@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -181,8 +181,10 @@ contains
       batch_p%max_length = 1 + floor((batch_p%index_dimension - 1)*some_number_between_0_and_1) ! 1, 2, 3, ..., index_dimension - 1
       batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
 !
-      call output%printf('Forced batch of index with dimension: (i0). Number of batches: (i0), Max length of batch: (i0)', &
-                          ints=[batch_p%index_dimension, batch_p%num_batches, batch_p%max_length], pl='m', ll=90)
+      call output%printf('m', 'Forced batch of index with dimension: (i0). &
+                         &Number of batches: (i0), Max length of batch: (i0)', &
+                         ints=[batch_p%index_dimension, batch_p%num_batches, &
+                         batch_p%max_length], ll=90)
 !
    end subroutine force_batch_batching_index
 !

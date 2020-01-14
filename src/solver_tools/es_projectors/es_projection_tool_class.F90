@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@ module es_projection_tool_class
 !
    use kinds 
    use global_out, only: output
+   use memory_manager_class, only: mem
 !
    implicit none
 !
@@ -50,6 +51,8 @@ module es_projection_tool_class
    contains
 !
       procedure :: do_ => do_es_projection_tool 
+!
+      procedure :: destruct_projection_vector => destruct_projection_vector_es_projection_tool
 !
    end type es_projection_tool
 !
@@ -88,6 +91,20 @@ contains
 !$omp end parallel do
 !
    end subroutine do_es_projection_tool
+!
+!
+   subroutine destruct_projection_vector_es_projection_tool(tool)
+!!
+!!    Destruct projection vector 
+!!    Written by Eirik F. Kjønstad, Jan 2020
+!!
+      implicit none 
+!
+      class(es_projection_tool), intent(inout) :: tool 
+!  
+      if (allocated(tool%projector)) call mem%dealloc(tool%projector, tool%vector_length)
+!
+   end subroutine destruct_projection_vector_es_projection_tool
 !
 !
 end module es_projection_tool_class

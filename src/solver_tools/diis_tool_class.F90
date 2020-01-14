@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -231,26 +231,6 @@ contains
    end function new_diis_tool
 !
 !
-   subroutine finalize_storers_diis_tool(diis)
-!!
-!!    Cleanup storers 
-!!    Written by Eirik F. Kjønstad, Nov 2019 
-!!
-!!    Performs cleanup for the different storers. 
-!!    Cannot be done in the constructor. 
-!!
-      implicit none 
-!
-      class(diis_tool) :: diis
-!
-      call diis%e_vectors%finalize_storer()
-      call diis%x_vectors%finalize_storer()
-!
-      call mem%dealloc(diis%G, diis%dimension_, diis%dimension_)
-!
-   end subroutine finalize_storers_diis_tool
-!
-!
    subroutine initialize_storers_diis_tool(diis, records_in_memory)
 !!
 !!    Prepare storers 
@@ -269,7 +249,8 @@ contains
 !
       if (records_in_memory) then 
 !
-         call output%printf('Storing DIIS records in memory.', pl='v', fs='(/t3,a)')
+         call output%printf('v', 'Storing DIIS records in memory.', fs='(/t3,a)')
+
 !
          diis%e_vectors = memory_storer(trim(diis%name_) // '_e', &
                            diis%n_equations, diis%dimension_)
@@ -279,7 +260,8 @@ contains
 !
       else 
 !
-         call output%printf('Storing DIIS records on file.', pl='v', fs='(/t3,a)')
+         call output%printf('v', 'Storing DIIS records on file.', fs='(/t3,a)')
+
 !
          diis%e_vectors = file_storer(trim(diis%name_) // '_e', &
                            diis%n_equations, diis%dimension_, delete=.true.)
@@ -294,6 +276,26 @@ contains
       call mem%alloc(diis%G, diis%dimension_, diis%dimension_)
 !
    end subroutine initialize_storers_diis_tool
+!
+!
+   subroutine finalize_storers_diis_tool(diis)
+!!
+!!    Cleanup storers 
+!!    Written by Eirik F. Kjønstad, Nov 2019 
+!!
+!!    Performs cleanup for the different storers. 
+!!    Cannot be done in the constructor. 
+!!
+      implicit none 
+!
+      class(diis_tool) :: diis
+!
+      call diis%e_vectors%finalize_storer()
+      call diis%x_vectors%finalize_storer()
+!
+      call mem%dealloc(diis%G, diis%dimension_, diis%dimension_)
+!
+   end subroutine finalize_storers_diis_tool
 !
 !
     subroutine update_diis_tool(diis, e, x)

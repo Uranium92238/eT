@@ -1,5 +1,5 @@
 system
-   name: 2 water molecules close
+   name: 2 H2O close
    charge: 0
    multiplicity: 1
 end system
@@ -27,9 +27,9 @@ active atoms
    hf: {1, 2, 3}
 end active atoms
 
-hf zop
+hf mean value
    quadrupole
-end hf zop
+end hf mean value
 
 geometry
 basis: aug-cc-pVDZ

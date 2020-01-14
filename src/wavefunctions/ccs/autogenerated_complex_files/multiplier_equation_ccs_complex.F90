@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,10 +20,16 @@
 submodule (ccs_class) multiplier_equation_ccs_complex
 !
 !!
-!!    Multiplier equation (CCS)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    Multiplier equation submodule
 !!
-!!    Equation related to the construction of CCS multipliers.
+!!    Routines for calculation of the multiplier equation,
+!!
+!!       t-bar^T A + eta = 0,
+!!
+!!    where t-bar is the multiplier vector, and
+!! 
+!!       A_mu,nu = < mu | exp(-T) [H, τ_nu] exp(T) | R >
+!!       eta_mu  = < R | exp(-T) [H, τ_mu] exp(T) | R >.
 !!
 !
    implicit none
@@ -43,8 +49,8 @@ contains
 !
 !     For now, do nothing.
 !
-      call output%printf('- No preparations for the ' // trim(wf%name_) // &
-                         ' multiplier equation.', pl='v', fs='(/t3,a)')
+      call output%printf('v', '- No preparations for the ' // trim(wf%name_) // &
+                         ' multiplier equation.', fs='(/t3,a)')
 !
    end subroutine prepare_for_multiplier_equation_ccs_complex
 !

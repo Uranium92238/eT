@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -24,6 +24,9 @@ module lowmem_cc2_class
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto and Alexander C. Paul, 2018
 !!
+!!    Version of CC2 that has an O(M^2) memory requirement - making it suitable 
+!!    to treat larger systems than the standard CC2 wavefunction.
+!!
 !
    use ccs_class
 !
@@ -31,8 +34,8 @@ module lowmem_cc2_class
 !
    type, extends(ccs) :: lowmem_cc2
 !
-      type(sequential_file) :: jacobian_b1_intermediate_vv
-      type(sequential_file) :: jacobian_b1_intermediate_oo
+      type(sequential_file) :: jacobian_a1_intermediate_vv
+      type(sequential_file) :: jacobian_a1_intermediate_oo
 !
    contains
 !
@@ -49,10 +52,9 @@ module lowmem_cc2_class
       procedure :: effective_jacobian_transformation  => effective_jacobian_transformation_lowmem_cc2
 !
       procedure :: prepare_for_jacobian               => prepare_for_jacobian_lowmem_cc2
-      procedure :: save_jacobian_b1_2_intermediate    => save_jacobian_b1_2_intermediate_lowmem_cc2
-      procedure :: save_jacobian_b1_3_intermediate    => save_jacobian_b1_3_intermediate_lowmem_cc2      
+      procedure :: save_jacobian_a1_2_intermediate    => save_jacobian_a1_2_intermediate_lowmem_cc2
+      procedure :: save_jacobian_a1_3_intermediate    => save_jacobian_a1_3_intermediate_lowmem_cc2
       procedure :: jacobian_cc2_a1                    => jacobian_cc2_a1_lowmem_cc2
-      procedure :: jacobian_cc2_b1                    => jacobian_cc2_b1_lowmem_cc2
 !
       procedure :: effective_jacobian_cc2_a1 => effective_jacobian_cc2_a1_lowmem_cc2
       procedure :: effective_jacobian_cc2_b1 => effective_jacobian_cc2_b1_lowmem_cc2
@@ -61,8 +63,9 @@ module lowmem_cc2_class
       procedure :: effective_jacobian_cc2_e1 => effective_jacobian_cc2_e1_lowmem_cc2
       procedure :: effective_jacobian_cc2_f1 => effective_jacobian_cc2_f1_lowmem_cc2
 !
-      procedure :: effective_jacobian_transpose_transformation => effective_jacobian_transpose_transformation_lowmem_cc2
-      procedure :: jacobian_transpose_ccs_b1 => jacobian_transpose_ccs_b1_lowmem_cc2
+      procedure :: effective_jacobian_transpose_transformation &
+               => effective_jacobian_transpose_transformation_lowmem_cc2
+!
       procedure :: jacobian_transpose_cc2_a1 => jacobian_transpose_cc2_a1_lowmem_cc2
       procedure :: jacobian_transpose_cc2_b1 => jacobian_transpose_cc2_b1_lowmem_cc2
       procedure :: effective_jacobian_transpose_cc2_a1   => effective_jacobian_transpose_cc2_a1_lowmem_cc2
@@ -95,7 +98,7 @@ module lowmem_cc2_class
 contains
 !
 !
-   function new_lowmem_cc2(system) result(wf)
+   function new_lowmem_cc2(system, template_wf) result(wf)
 !!
 !!    New lowmem CC2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -106,9 +109,13 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
+      class(wavefunction), intent(in) :: template_wf
+!
       wf%name_ = 'low memory cc2'
 !
       call wf%general_cc_preparations(system)
+      call wf%set_variables_from_template_wf(template_wf)
+      call wf%print_banner()
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
@@ -116,6 +123,8 @@ contains
       wf%need_g_abcd     = .false.
 !
       call wf%initialize_fock()
+!
+      call wf%print_amplitude_info()
 !
    end function new_lowmem_cc2
 !
@@ -153,8 +162,8 @@ contains
       real(dp), intent(in), optional :: w
 !
       if (present(w)) then
-         call output%printf('Calling Jacobian (a0) transform with energy: (f19.12)', &
-                            pl='debug', chars=[r_or_l], reals=[w])
+         call output%printf('debug', 'Calling Jacobian (a0) transform with &
+                            &energy: (f19.12)', chars=[r_or_l], reals=[w])
       else
 !
          call output%error_msg('w is missing in construct_Jacobian_transform for lowmem_cc2')

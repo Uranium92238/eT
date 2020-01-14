@@ -1,11 +1,11 @@
 system
-   name: hofhe
+   name: HOF He
    charge: 0
    multiplicity: 3
 end system
  
 print 
-   output print level: debug 
+   output print level: verbose 
 end print
 
 method
@@ -26,9 +26,9 @@ do
    ground state
 end do
 
-hf zop
+hf mean value
    dipole
-end hf zop
+end hf mean value
 
 geometry
 basis: cc-pVDZ

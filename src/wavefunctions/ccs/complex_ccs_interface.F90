@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -42,6 +42,32 @@
       class(ccs), intent(inout) :: wf
 !
    end subroutine make_ccs_complex_ccs
+!
+!
+   module subroutine cleanup_complex_ccs(wf)
+!!
+!!    Cleanup complex (CCS)
+!!    Written by Andreas Skeidsvoll, Jan 2020
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+   end subroutine cleanup_complex_ccs
+!
+!
+   module subroutine cleanup_ccs_complex_ccs(wf)
+!!
+!!    Cleanup CCS complex (CCS)
+!!    Written by Andreas Skeidsvoll, Jan 2020
+!!
+!!    Deallocates complex CCS variables.
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+   end subroutine cleanup_ccs_complex_ccs
 !
 !
    module subroutine construct_complex_time_derivative_ccs(wf, ddt_amplitudes_multipliers)

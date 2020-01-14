@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -85,8 +85,8 @@ use global_out, only: output
 !
    contains
 !
-      procedure :: read_p => read_p_asymmetric_lanczos_tool
-      procedure :: read_q => read_q_asymmetric_lanczos_tool
+      procedure :: read_p                    => read_p_asymmetric_lanczos_tool
+      procedure :: read_q                    => read_q_asymmetric_lanczos_tool
 !
       procedure :: calculate_alpha           => calculate_alpha_asymmetric_lanczos_tool
       procedure :: construct_s               => construct_s_asymmetric_lanczos_tool

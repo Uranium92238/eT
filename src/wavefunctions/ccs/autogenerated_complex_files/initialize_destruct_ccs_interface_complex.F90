@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -293,3 +293,17 @@
       class(ccs) :: wf
 !
    end subroutine initialize_fock_ccs_complex
+!
+!
+   module subroutine destruct_fock_ccs_complex(wf)
+!!
+!!    Destruct Fock
+!!    Written by Alexander C. Paul, Dec 2019
+!!
+!!    Destructs all Fock matrix blocks
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+   end subroutine destruct_fock_ccs_complex

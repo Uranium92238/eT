@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 submodule (ccsd_class) file_handling_ccsd
 !
 !!
-!!    File handling submodule (CCSD)
+!!    File handling submodule
 !!
 !!    Gathers routines that save wavefunction parameters to file,
 !!    and reads them from file, plus other routines related to the 

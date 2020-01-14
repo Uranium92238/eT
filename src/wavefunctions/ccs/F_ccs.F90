@@ -1,7 +1,26 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2020 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 submodule (ccs_class) F_ccs
 !
 !!
-!!    F-transformation submodule (ccs)
+!!    F-transformation submodule
 !!
 !!    Routines for the linear transform of
 !!    vectors by the F matrix 
@@ -383,7 +402,7 @@ contains
 !
          call add_1432_to_1234(-one, g_cajb, L_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call mem%dealloc(g_cajb, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+         call mem%dealloc(g_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
          call dgemm('T', 'N',                      &
                      wf%n_o,                       &

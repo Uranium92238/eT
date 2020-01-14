@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -200,11 +200,14 @@
 !!          by either reading the restart file or by calling the function 
 !!          read_n_excitation_energies
 !!
+!!    n_states: number of states found on file
+!!              Obtained by the number of existing records in the file storer
+!!
       implicit none 
 !
       class(ccs), intent(inout) :: wf
-      integer, intent(in) :: n_states ! Obtained by reading the restart file 
-      real(dp), dimension(n_states), intent(out) :: energies
+      integer, intent(in) :: n_states
+      real(dp), dimension(:), intent(out) :: energies
 !
    end subroutine read_excitation_energies_ccs
 !
@@ -219,6 +222,7 @@
       implicit none 
 !
       class(ccs), intent(inout) :: wf 
+!
    end function get_n_excitation_energies_on_file_ccs
 !
 !
@@ -237,6 +241,7 @@
       class(ccs) :: wf 
       character(len=*), intent(in) :: side 
       integer :: n_states
+!
    end function get_n_excited_states_on_file_ccs
 !
 !

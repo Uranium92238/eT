@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -43,6 +43,8 @@ module input_file_class
       procedure :: close_                                               => close_input_file
 !
       procedure :: check_for_errors                                     => check_for_errors_input_file
+      procedure :: print_to_output                                      => print_to_output_input_file
+!
       procedure :: requested_section                                    => requested_section_input_file
       procedure :: requested_keyword_in_section                         => requested_keyword_in_section_input_file
       procedure :: get_n_elements_for_keyword_in_section                => get_n_elements_for_keyword_in_section_input_file
@@ -121,9 +123,9 @@ contains
       type(section) :: calculations
       type(section) :: system 
       type(section) :: memory 
-      type(section) :: cc_zop 
-      type(section) :: cc_fop 
-      type(section) :: hf_zop
+      type(section) :: cc_mean_value 
+      type(section) :: cc_response
+      type(section) :: hf_mean_value
       type(section) :: cc_td
       type(section) :: method 
       type(section) :: solver_cholesky
@@ -146,6 +148,7 @@ contains
       type(section) :: pcm
       type(section) :: global_print
       type(section) :: frozen_orbitals
+      type(section) :: integrals
 !
 !     Set input file name, access and format 
 !
@@ -170,7 +173,7 @@ contains
                            'mlcc2']
 !
       method%name_    = 'method'
-      method%required = .true.
+      method%required = .false.
 !
       allocate(method%keywords(size(the_file%rf_wfs) &
                              + size(the_file%cc_wfs)))
@@ -185,39 +188,39 @@ contains
       calculations%keywords = [character(len=30) :: 'ground state',         &
                                                     'ground state geoopt',  &
                                                     'excited state',        &
-                                                    'zop',                  &
-                                                    'fop',                  &
+                                                    'response',             &
+                                                    'mean value',           &
                                                     'time dependent state', &
-                                                    'cholesky eri',         &
-                                                    'multipliers']
+                                                    'cholesky eri']
 !
       system%name_    = 'system'
       system%required = .true.
       system%keywords = [character(len=30) ::'name',  &
                            'cartesian gaussians',     &
-                           'pure gaussians',     &
+                           'pure gaussians',          &
                            'charge',                  &
                            'multiplicity']
 !
       memory%name_    = 'memory'
       memory%required = .false.
-      memory%keywords = [character(len=30) :: 'available']
+      memory%keywords = [character(len=30) :: 'available', &
+                                              'unit']
 !
-      hf_zop%name_    = 'hf zop'
-      hf_zop%required = .false.
-      hf_zop%keywords = [character(len=30) ::         &
-                           'dipole               ',   &
+      hf_mean_value%name_    = 'hf mean value'
+      hf_mean_value%required = .false.
+      hf_mean_value%keywords = [character(len=30) ::        &
+                           'dipole               ',         &
                            'quadrupole           ']
 !
-      cc_zop%name_    = 'cc zop'
-      cc_zop%required = .false.
-      cc_zop%keywords = [character(len=30) ::         &
-                           'dipole               ',   &
+      cc_mean_value%name_    = 'cc mean value'
+      cc_mean_value%required = .false.
+      cc_mean_value%keywords = [character(len=30) ::        &
+                           'dipole               ',         &
                            'quadrupole           ']
 !
-      cc_fop%name_    = 'cc fop'
-      cc_fop%required = .false.
-      cc_fop%keywords = [character(len=30) ::         &
+      cc_response%name_    = 'cc response'
+      cc_response%required = .false.
+      cc_response%keywords = [character(len=30) ::    &
                            'transition moments   ',   &
                            'frequencies          ',   &
                            'polarizabilities     ',   &
@@ -251,6 +254,10 @@ contains
                               'crop',                       &
                               'cumulative fock threshold',  &
                               'max iterations',             &
+                              'coulomb threshold',          &
+                              'exchange threshold',         &
+                              'integral precision',         &
+                              'integral cutoff',            &
                               'diis dimension',             &
                               'restart',                    &
                               'ao density guess',           &
@@ -331,9 +338,9 @@ contains
                                                              'energy output',         &
                                                              'dipole moment output',  &
                                                              'electric field output', &
-                                                             'density diag output',   &
                                                              'amplitudes output',     &
                                                              'multipliers output',    &
+                                                             'density matrix output', &
                                                              'integrator']
 !
       solver_fft_dipole_moment%name_    = 'solver fft dipole moment'
@@ -364,16 +371,22 @@ contains
 !
       active_atoms%name_    = 'active atoms'
       active_atoms%required = .false.
-      active_atoms%keywords = [character(len=30) ::       &
-                                 'selection type       ', &
-                                 'central atom         ', &
-                                 'hf                   ', &
-                                 'ccs                  ', &
-                                 'cc2                  ', &
-                                 'inactive basis       ', &
-                                 'hf basis             ', &
-                                 'ccs basis            ', &
-                                 'cc2 basis            ']
+      active_atoms%keywords = [character(len=30) :: &
+                              'selection type', &
+                              'central atom  ', &
+                              'hf            ', &
+                              'ccs           ', &
+                              'cc2           ', &
+                              'ccsd          ', &
+                              'cc3           ', &
+                              'ccsd(t)       ', &
+                              'inactive basis', &
+                              'hf basis      ', &
+                              'ccs basis     ', &
+                              'cc2 basis     ', &
+                              'ccsd basis    ', &
+                              'cc3 basis     ', &
+                              'ccsd(t) basis ']
 !
       mlcc%name_    = 'mlcc'
       mlcc%required = .false.
@@ -405,6 +418,7 @@ contains
       mlhf%keywords = [character(len=30) ::           &
                         'initial hf optimization',    &
                         'initial hf threshold',       &
+                        'print initial hf',           &
                         'cholesky threshold',         &
                         'project on minimal basis',   &
                         'cholesky virtuals']
@@ -417,7 +431,8 @@ contains
                                  'grid buffer',          &
                                  'plot cc density',      &
                                  'plot hf orbitals',     &
-                                 'plot hf density'    ]
+                                 'plot hf density',      &
+                                 'plot hf active density']
 !
       global_print%name_    = 'print'
       global_print%required = .false.
@@ -439,15 +454,21 @@ contains
                               'hf', &
                               'core']
 !
+      integrals%name_ = 'integrals'
+      integrals%required = .false.
+      integrals%keywords = [character(len=30) ::  &
+                              'cholesky storage', &
+                              'eri storage']
+!
 !     Gather all sections into the file's section array 
 !
       the_file%sections = [calculations,              &
                            system,                    &
                            memory,                    &
                            method,                    &
-                           hf_zop,                 &
-                           cc_zop,                    &
-                           cc_fop,                    &
+                           hf_mean_value,             &
+                           cc_mean_value,             &
+                           cc_response,               &
                            cc_td,                     &
                            solver_cholesky,           &
                            solver_scf,                &
@@ -464,11 +485,12 @@ contains
                            mlcc,                      &
                            cc,                        &
                            mm,                        &
-                           pcm,                    &
+                           pcm,                       &
                            mlhf,                      &
                            global_print,              &
                            visualization,             &
-                           frozen_orbitals]
+                           frozen_orbitals,           &
+                           integrals]
 !
       the_file%is_open = .false.
       the_file%unit_ = -1
@@ -567,10 +589,9 @@ contains
 !
             if (the_file%sections(k)%required) then 
 !
-               call output%printf('All calculations require the section "' &
-                                   // trim(the_file%sections(k)%name_) //  &
-                                  '". It appears to be missing.',          &
-                                  fs='(/t3,a)', pl='m')
+               call output%printf('m', 'All calculations require the section "' // &
+                                  trim(the_file%sections(k)%name_) // '". It &
+                                  &appears to be missing.', fs='(/t3,a)')
 !
                call output%error_msg('Something is wrong in the input file. See above.')
 ! 
@@ -629,9 +650,8 @@ contains
 !
             if (.not. recognized) then 
 !
-               call output%printf('Could not recognize section named "' &
-                                   // trim(adjustl(line(4 : 200))) //   &
-                                   '".', fs='(/t3,a)', pl='m')
+               call output%printf('m', 'Could not recognize section named "' //  &
+                                   trim(adjustl(line(4 : 200))) // '".', fs='(/t3,a)')
 !
                call the_file%print_sections()
 !
@@ -667,11 +687,11 @@ contains
 !
       integer :: k
 !
-      call output%printf('The valid input sections are:', pl='m', fs='(/t3,a/)')
+      call output%printf('m', 'The valid input sections are:', fs='(/t3,a/)')
 !
       do k = 1, size(the_file%sections)
 !
-         call output%printf('(a0)', chars=[trim(the_file%sections(k)%name_)], pl='m', fs='(t6,a)')
+         call output%printf('m', '(a0)', chars=[trim(the_file%sections(k)%name_)], fs='(t6,a)')
 !
       enddo
 !
@@ -728,9 +748,9 @@ contains
 !
             if (.not. recognized) then 
 !
-               call output%printf('Could not recognize keyword "' // trim(keyword) // &
-                                  '" in section "' // trim(the_section%name_) //      &
-                                  '".', pl='m', fs='(/t3,a)') 
+               call output%printf('m', 'Could not recognize keyword "' //  &
+                                  trim(keyword) // '" in section "' //  &
+                                  trim(the_section%name_) // '".', fs='(/t3,a)')
                                                          
 !
                call the_section%print_keywords()
@@ -747,11 +767,10 @@ contains
 !
          if (keywords_instances(k) .gt. 1) then 
 !
-         call output%printf('Found (i0) instances of the keyword "'  &
-                             // trim(the_section%keywords(k)) //     &
-                             '" in the section "'                    &
-                             // the_section%name_ // '".',           &
-                             ints=[keywords_instances(k)], pl='m', fs='(/t3,a)')
+         call output%printf('m', 'Found (i0) instances of the keyword "' //  &
+                            trim(the_section%keywords(k)) // '" in the section "' &
+                            // the_section%name_ // '".', &
+                            ints=[keywords_instances(k)], fs='(/t3,a)')
 !
             call output%error_msg('Something is wrong in the input file. See above.')
 !
@@ -1945,9 +1964,9 @@ contains
 !             
              if(abs(charge(current_atom)).lt.1.0d-8) then
 !             
-                call output%printf('Electrostatic Embedding QM/MM ', pl='m', fs='(/t6,a)')
-                call output%printf('Warning: You have put zero charge on atom = (i0)', &
-                                    ints=[current_atom], pl='m', fs='(t6,a)')
+                call output%printf('m', 'Electrostatic Embedding QM/MM ', fs='(/t6,a)')
+                call output%printf('m', 'Warning: You have put zero charge on &
+                                   &atom = (i0)', ints=[current_atom], fs='(t6,a)')
 !                
              endif
 !
@@ -1977,7 +1996,7 @@ contains
 !             
              if(abs(eta(current_atom)).lt.1.0d-8) then
 !             
-               call output%printf('Polarizable QM/FQ ', pl='m', fs='(/t6,a)')
+               call output%printf('m', 'Polarizable QM/FQ ', fs='(/t6,a)')
                call output%error_msg('You have put zero chemical hardness on atom: (i0)', &
                                       ints=[current_atom])
 !                
@@ -2106,6 +2125,49 @@ contains
       n_records = end_record - start_record - 1
 !
    end subroutine move_to_mm_geometry_input_file
+!
+!
+   subroutine print_to_output_input_file(the_file)
+!!
+!!    Print to output 
+!!    Written by Eirik F. Kjønstad, Jan 2020
+!!
+!!    Prints the input file - except for the geometry specification - to the output file. 
+!!
+      implicit none 
+!
+      class(input_file) :: the_file
+!
+      integer :: io_error
+!
+      character(len=200) :: line 
+!
+      call output%printf('m', ':: Input file', fs='(//t3,a)')
+      call output%print_separator('m', 16, '=', fs='(t3,a/)')
+!
+      call output%printf('m', 'Note: geometry section is excluded from this print', fs='(t6,a/)')
+!
+      rewind(the_file%unit_)
+!
+      do 
+!
+         read(the_file%unit_, '(a)', iostat=io_error) line 
+!
+         if (trim(adjustl(line)) == 'geometry') then 
+!
+            exit 
+!
+         elseif (io_error .ne. 0) then 
+!
+            call output%error_msg("The 'geometry' section appears to be missing in the input file.")
+!
+         endif
+!
+         call output%printf('m', line, fs='(t6,a)', ll=120)
+!  
+      enddo 
+!
+   end subroutine print_to_output_input_file
 !
 !
 end module input_file_class

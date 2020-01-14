@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 submodule (ccs_class) initialize_destruct_ccs_complex
 !
 !!
-!!    Initialize destruct submodule (CCS)
-!!    Set up by Andreas Skeidsvoll, Aug 2019
+!!    Initialize destruct submodule
 !!
 !!    Gathers routines that initialize and destruct the CCS type-bound variables.
 !!
@@ -77,7 +76,7 @@ contains
 !
       if (.not. allocated(wf%t1_complex)) call mem%alloc(wf%t1_complex, wf%n_v, wf%n_o)
 !
-      call zero_array_complex(wf%t1_complex, wf%n_t1) ! Hack, fix later, for integrals
+      call zero_array_complex(wf%t1_complex, wf%n_t1)
 !
    end subroutine initialize_t1_ccs_complex
 !
@@ -355,5 +354,24 @@ contains
       call wf%initialize_fock_ab_complex()
 !
    end subroutine initialize_fock_ccs_complex
+!
+!
+   module subroutine destruct_fock_ccs_complex(wf)
+!!
+!!    Destruct Fock
+!!    Written by Alexander C. Paul, Dec 2019
+!!
+!!    Destructs all Fock matrix blocks
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      call wf%destruct_fock_ij_complex()
+      call wf%destruct_fock_ia_complex()
+      call wf%destruct_fock_ai_complex()
+      call wf%destruct_fock_ab_complex()
+!
+   end subroutine destruct_fock_ccs_complex
 !
 end submodule initialize_destruct_ccs_complex

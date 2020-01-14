@@ -1,5 +1,5 @@
 system
-   name: 2 water molecules close
+   name: 2 H2O close
    charge: 0
    multiplicity: 1
 end system
@@ -16,6 +16,8 @@ solver scf
    algorithm: mo-scf-diis
    energy threshold:   1.0d-11
    gradient threshold: 1.0d-11
+   coulomb threshold:  1.0d-14
+   exchange threshold: 1.0d-14
 end solver scf
 
 method
@@ -33,7 +35,7 @@ active atoms
 end active atoms
 
 geometry
-   basis: aug-cc-pVDZ
+   basis: cc-pVDZ
 O         -0.57303        2.18995       -0.05256
 H          0.34769        2.48598        0.05049
 H         -1.07580        3.01947        0.02024

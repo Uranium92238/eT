@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2019 the authors of eT
+!  Copyright (C) 2016-2020 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -26,11 +26,12 @@ module gs_engine_class
 !
    use parameters
 !
-   use ccs_class, only: ccs
-   use global_in, only: input
-   use global_out, only: output
-   use memory_manager_class, only: mem
-   use timings_class, only: timings
+   use ccs_class,             only: ccs
+   use global_in,             only: input
+   use global_out,            only: output
+   use memory_manager_class,  only: mem
+   use timings_class,         only: timings
+   use task_list_class,       only: task_list
 !
    type, extends(abstract_engine) :: gs_engine 
 !
@@ -60,8 +61,6 @@ module gs_engine_class
 !
       procedure, nopass :: calculate_quadrupole_moment   => calculate_quadrupole_moment_gs_engine
 !
-      procedure, nopass :: do_cholesky                   => do_cholesky_gs_engine
-!
       procedure :: restart_handling                      => restart_handling_gs_engine
 !
       procedure :: do_visualization                      => do_visualization_gs_engine
@@ -79,17 +78,32 @@ module gs_engine_class
 contains
 !
 !
-   function new_gs_engine() result(engine)
+   function new_gs_engine(wf) result(engine)
 !!
 !!    New GS engine  
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none
 !
+!     Needed for defaults and sanity checks
+      class(ccs), intent(in)       :: wf
+!
       type(gs_engine) :: engine 
 !
-      engine%multipliers_algorithm = 'davidson'
       engine%gs_algorithm          = 'diis'
+!
+      if (wf%name_ .eq. 'cc2' .or. &
+          wf%name_ .eq. 'cc3' .or. &
+          wf%name_ .eq. 'low memory cc2' .or. &
+          wf%name_ .eq. 'mlcc2') then
+!
+         engine%multipliers_algorithm = 'diis'
+!
+      else
+!
+         engine%multipliers_algorithm = 'davidson'
+!
+      end if
 !
       engine%gs_restart            = .false.
       engine%multipliers_restart   = .false.
@@ -136,9 +150,7 @@ contains
       class(gs_engine) :: engine
       class(ccs)       :: wf
 !
-!     Cholesky decoposition of the electron repulsion integrals
-!
-      call engine%do_cholesky(wf)
+      call engine%tasks%print_('mo preparations')
 !
       call wf%mo_preparations() 
 !
@@ -197,21 +209,28 @@ contains
 !!
 !!    Should be overwritten by descendants.
 !!
+!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       class(gs_engine) :: engine
 !
       engine%name_       = 'Ground state coupled cluster engine'
-      engine%author      = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       engine%description = 'Calculates the ground state CC wavefunction | CC > = exp(T) | R >'
       engine%tag         = 'ground state'
 !
-      engine%tasks       = [character(len=150) ::                                                                    &
-                           'Cholesky decomposition of the ERI-matrix',                                               &
-                           'Calculation of the ground state amplitudes ('// &
-                           trim(engine%gs_algorithm)//'-algorithm)', &
-                           'Calculation of the ground state energy']
+!     Prepare the list of tasks
+!
+      engine%tasks = task_list()
+!
+      call engine%tasks%add(label='mo preparations',                             &
+                            description='Preparation of MO basis and integrals')
+!
+      call engine%tasks%add(label='gs solver',                                &
+                            description='Calculation of the ground state ('// &
+                            trim((engine%gs_algorithm))//' algorithm)')
 !
    end subroutine set_printables_gs_engine
 !
@@ -227,8 +246,9 @@ contains
 !!    After this routine, the wavefunction has the cluster amplitudes
 !!    stored in memory.
 !!
-      use diis_cc_gs_class
-      use newton_raphson_cc_gs_class
+      use diis_cc_gs_class,            only: diis_cc_gs
+      use newton_raphson_cc_gs_class,  only: newton_raphson_cc_gs
+      use string_utilities,            only: convert_to_uppercase
 !
       implicit none
 !
@@ -239,23 +259,25 @@ contains
       type(diis_cc_gs), allocatable :: diis_solver
       type(newton_raphson_cc_gs), allocatable :: newton_raphson_solver
 !
+      call engine%tasks%print_('gs solver')
+!
       if (trim(wf%name_) == 'mp2') then
 !
-         call wf%integrals%write_t1_cholesky(wf%t1)
+         call wf%integrals%update_t1_integrals(wf%t1)
+!
          call wf%calculate_energy()
 !
-         call output%printf(':: Summary of (a0) wavefunction energetics (a.u.)', &
-                              pl='minimal', fs='(/t3,a)', &
-                              chars=[convert_to_uppercase(wf%name_)])
+         call output%printf('m', ':: Summary of (a0) wavefunction energetics (a.u.)', &
+                            chars=[convert_to_uppercase(wf%name_)], fs='(/t3,a)')
 !
-         call output%printf('HF energy:                (f19.12)', pl='minimal', &
-                                                reals=[wf%hf_energy], fs='(/t6,a)')
+         call output%printf('m', 'HF energy:                (f19.12)', &
+                            reals=[wf%hf_energy], fs='(/t6,a)')
 !
-         call output%printf('MP2 correction:           (f19.12)', pl='minimal', &
-                                                reals=[ (wf%energy - wf%hf_energy) ], fs='(t6,a)')
+         call output%printf('m', 'MP2 correction:           (f19.12)', &
+                            reals=[ (wf%energy - wf%hf_energy) ], fs='(t6,a)')
 !
-         call output%printf('MP2 energy:               (f19.12)', pl='minimal', &
-                                                reals=[wf%energy], fs='(t6,a)')
+         call output%printf('m', 'MP2 energy:               (f19.12)', &
+                            reals=[wf%energy], fs='(t6,a)')
 !
       elseif (trim(engine%gs_algorithm) == 'diis') then
 !
@@ -291,8 +313,8 @@ contains
 !!    After this routine, the wavefunction has the cluster amplitudes
 !!    and the multipliers stored in memory.
 !!
-      use diis_cc_multipliers_class
-      use davidson_cc_multipliers_class
+      use diis_cc_multipliers_class,      only: diis_cc_multipliers
+      use davidson_cc_multipliers_class,  only: davidson_cc_multipliers
 !
       implicit none
 !
@@ -303,13 +325,16 @@ contains
       type(diis_cc_multipliers), allocatable     :: diis_solver
       type(davidson_cc_multipliers), allocatable :: davidson_solver
 !
+      call engine%tasks%print_('multipliers solver')
+!
       if (trim(engine%multipliers_algorithm) == 'davidson') then 
 !
          if (trim(wf%name_) == 'cc2' .or.            &
              trim(wf%name_) == 'low memory cc2' .or. &
              trim(wf%name_) == 'cc3') then
 !
-            call output%error_msg('Davidson not implemented for CC2, lowmem CC2, CC3.')
+            call output%error_msg('Davidson not implemented for (a0)', &
+                                  chars=[wf%name_])
 !
          end if
 !
@@ -422,33 +447,6 @@ contains
    end subroutine calculate_quadrupole_moment_gs_engine
 !
 !
-   subroutine do_cholesky_gs_engine(wf)
-!!
-!!    Do Cholesky
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
-!!
-!!    Cholesky decomposition of electronic repiulsion integrals
-!!
-      use eri_cd_class
-!
-      implicit none
-!
-      class(ccs), intent(inout) :: wf
-!
-      type(eri_cd) :: eri_chol_solver
-!
-!     Cholesky decoposition 
-!
-      eri_chol_solver = eri_cd(wf%system)
-      call eri_chol_solver%run(wf%system)
-!
-      call eri_chol_solver%diagonal_test(wf%system)
-!
-      call eri_chol_solver%cleanup(wf%system)
-!
-   end subroutine do_cholesky_gs_engine
-!
-!
    subroutine restart_handling_gs_engine(engine, wf)
 !!
 !!    Restart handling
@@ -496,12 +494,12 @@ contains
       class(gs_engine) :: engine
       class(ccs) :: wf 
 !
-      type(visualization) :: plotter
+      type(visualization), allocatable :: plotter
 !
       character(len=200) :: density_file_tag
       real(dp), dimension(:,:), allocatable :: density
 !
-      if (.not. engine%plot_density) return
+      call engine%tasks%print_('plotting')
 !
       if (.not. allocated(wf%density) ) &
          call output%error_msg("CC density not allocated")
