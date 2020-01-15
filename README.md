@@ -136,7 +136,7 @@ Go to this directory and use the `make` command to compile.
 cd build
 make
 ```
-Use the `-j n`, where `n` is the number of processors, to make the compilation run in parallel.
+Use `make -j n`, where `n` is the number of processors, to make the compilation run in parallel.
 
 If successful, the directory now contains the executable, `eT`, as well as a Python launch script 
 [eT_launch](https://gitlab.com/eT-program/eT/-/wikis/Using-eT/How-to-use-the-launch-script). 
