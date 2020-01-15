@@ -51,7 +51,7 @@ If you want to use polarizable continuum models in eT,
 you can link eT to the [PCMSolver](https://github.com/PCMSolver/pcmsolver) library.
 PCMSolver can be cloned from Github and must be compiled separately. 
 Instructions for downloading and compiling can be found [here](https://pcmsolver.readthedocs.io/en/stable/). 
-A version that compiles on Mac is available [here](https://github.com/eirik-kjonstad/pcmsolver).
+A version that compiles on Mac and passes all eT tests with array bound checks is available [here](https://github.com/eirik-kjonstad/pcmsolver).
 Note that PCMSolver requires [Zlib](https://www.zlib.net/) and [Boost](https://www.boost.org).
 
 
