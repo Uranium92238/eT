@@ -70,6 +70,7 @@ tar -xvzf eT-v1.0.0.tar.gz
 tar -xvjf eT-v1.0.0.tar.bz2
 tar -xvf eT-v1.0.0.tar
 ```
+Note that the archives do not include the runtest submodule required for testing.
 
 You can also download eT by opening a terminal and cloning the repository:
 ```shell
@@ -80,7 +81,8 @@ or
 git clone --recursive git@gitlab.com:eT-program/eT.git 
 ```
 The second option requires a user account on [Gitlab](https://gitlab.com/),
-and that you have set up a public/private [keypair](https://docs.gitlab.com/ee/ssh/).
+and that you have set up a public/private [keypair](https://docs.gitlab.com/ee/ssh/),
+but is the most convenient if you intend to contribute.
 
 **Note:**
 `--recursive` is optional, but recommended. 
@@ -95,8 +97,10 @@ git submodule update
 ```
 
 ## Configuration of eT
-After cloning, 
-you will have a directory called `eT`. 
+After downloading, 
+you will have a directory called `eT` or `eT-v1.0.0`,
+depending on how you did it. 
+We will refer to it as `eT` from now on.
 Go to this directory:
 ```shell
 cd eT
