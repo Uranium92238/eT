@@ -58,7 +58,20 @@ Note that PCMSolver requires [Zlib](https://www.zlib.net/) and [Boost](https://w
 
 # Installing eT
 ## Getting the eT source
-Download eT by opening a terminal and cloning the repository:
+The source code can be downloaded as a tarball from the 
+[releases](https://gitlab.com/eT-program/eT/-/releases) page. 
+Click the  `source code` dropdown menu and choose your favourite archive format.
+After downloading,
+your archive manager will probably offer to handle it. 
+You can also use the command line.
+```shell
+unzip eT-v1.0.0.zip
+tar -xvzf eT-v1.0.0.tar.gz
+tar -xvjf eT-v1.0.0.tar.bz2
+tar -xvf eT-v1.0.0.tar
+```
+
+You can also download eT by opening a terminal and cloning the repository:
 ```shell
 git clone --recursive https://gitlab.com/eT-program/eT.git 
 ```
