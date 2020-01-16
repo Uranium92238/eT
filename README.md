@@ -3,9 +3,11 @@
 2. Python 3 (3.5 or newer)
 3. Recent (2016-) GNU (gfortran, gcc, g++) or Intel compilers (ifort, icc, icpc) 
 4. BLAS and LAPACK libraries
-5. [Libint 2 library](https://github.com/evaleev/libint)
-and the dependencies [Eigen 3](http://eigen.tuxfamily.org/index.php?title=Main_Page) and [Boost](https://www.boost.org). 
-To compile Libint, follow the instructions below or consult the [Libint Wiki](https://github.com/evaleev/libint/wiki).
+5. [Libint 2 library](https://github.com/evaleev/libint) 
+with integrals for one-body operators and electron repulsion enabled.
+Libint has the dependencies [Eigen 3](http://eigen.tuxfamily.org/index.php?title=Main_Page) and [Boost](https://www.boost.org). 
+To compile Libint, follow the instructions below or consult the [Libint Wiki](https://github.com/evaleev/libint/wiki),
+or see below.
 
 ## Installing Libint
 Download the [Libint library for eT](https://www.etprogram.org/libint/libint-2.7.0-beta.1.tgz). 
