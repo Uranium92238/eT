@@ -3,9 +3,11 @@
 2. Python 3 (3.5 or newer)
 3. Recent (2016-) GNU (gfortran, gcc, g++) or Intel compilers (ifort, icc, icpc) 
 4. BLAS and LAPACK libraries
-5. [Libint 2 library](https://github.com/evaleev/libint)
-and the dependencies [Eigen 3](http://eigen.tuxfamily.org/index.php?title=Main_Page) and [Boost](https://www.boost.org). 
-To compile Libint, follow the instructions below or consult the [Libint Wiki](https://github.com/evaleev/libint/wiki).
+5. [Libint 2 library](https://github.com/evaleev/libint) 
+with integrals for one-body operators and electron repulsion enabled.
+Libint has the dependencies [Eigen 3](http://eigen.tuxfamily.org/index.php?title=Main_Page) and [Boost](https://www.boost.org). 
+To compile Libint, follow the instructions below or consult the [Libint Wiki](https://github.com/evaleev/libint/wiki),
+or see below.
 
 ## Installing Libint
 Download the [Libint library for eT](https://www.etprogram.org/libint/libint-2.7.0-beta.1.tgz). 
@@ -30,7 +32,7 @@ The install directory cannot be in the source directory.
 
 Note that when compiling with Intel, one should include the following flags:
 ```shell
--DCMAKE_CXX_COMPILER=icc -DCMAKE_CXX_COMPILER=icpc -DCMAKE_CXX_FLAGS=-std=c++11
+-DCMAKE_C_COMPILER=icc -DCMAKE_CXX_COMPILER=icpc -DCMAKE_CXX_FLAGS=-std=c++11
 ```
 Make sure the Libint configure step finds the correct compilers (as compiling Libint can take several hours). Compile and install:
 ```shell
@@ -51,14 +53,28 @@ If you want to use polarizable continuum models in eT,
 you can link eT to the [PCMSolver](https://github.com/PCMSolver/pcmsolver) library.
 PCMSolver can be cloned from Github and must be compiled separately. 
 Instructions for downloading and compiling can be found [here](https://pcmsolver.readthedocs.io/en/stable/). 
-A version that compiles on Mac is available [here](https://github.com/eirik-kjonstad/pcmsolver).
+A version that compiles on Mac and passes all eT tests with array bound checks is available [here](https://github.com/eirik-kjonstad/pcmsolver).
 Note that PCMSolver requires [Zlib](https://www.zlib.net/) and [Boost](https://www.boost.org).
 
 
 
 # Installing eT
 ## Getting the eT source
-Download eT by opening a terminal and cloning the repository:
+The source code can be downloaded as a tarball from the 
+[releases](https://gitlab.com/eT-program/eT/-/releases) page. 
+Click the  `source code` dropdown menu and choose your favourite archive format.
+After downloading,
+your archive manager will probably offer to handle it. 
+You can also use the command line.
+```shell
+unzip eT-v1.0.0.zip
+tar -xvzf eT-v1.0.0.tar.gz
+tar -xvjf eT-v1.0.0.tar.bz2
+tar -xvf eT-v1.0.0.tar
+```
+Note that the archives do not include the runtest submodule required for testing.
+
+You can also download eT by opening a terminal and cloning the repository:
 ```shell
 git clone --recursive https://gitlab.com/eT-program/eT.git 
 ```
@@ -67,7 +83,8 @@ or
 git clone --recursive git@gitlab.com:eT-program/eT.git 
 ```
 The second option requires a user account on [Gitlab](https://gitlab.com/),
-and that you have set up a public/private [keypair](https://docs.gitlab.com/ee/ssh/).
+and that you have set up a public/private [keypair](https://docs.gitlab.com/ee/ssh/),
+but is the most convenient if you intend to contribute.
 
 **Note:**
 `--recursive` is optional, but recommended. 
@@ -82,8 +99,10 @@ git submodule update
 ```
 
 ## Configuration of eT
-After cloning, 
-you will have a directory called `eT`. 
+After downloading, 
+you will have a directory called `eT` or `eT-v1.0.0`,
+depending on how you did it. 
+We will refer to it as `eT` from now on.
 Go to this directory:
 ```shell
 cd eT
@@ -136,7 +155,7 @@ Go to this directory and use the `make` command to compile.
 cd build
 make
 ```
-Use the `-j n`, where `n` is the number of processors, to make the compilation run in parallel.
+Use `make -j n`, where `n` is the number of processors, to make the compilation run in parallel.
 
 If successful, the directory now contains the executable, `eT`, as well as a Python launch script 
 [eT_launch](https://gitlab.com/eT-program/eT/-/wikis/Using-eT/How-to-use-the-launch-script). 
@@ -162,5 +181,5 @@ or copy the script to somewhere more convenient.
 See the [wiki](https://gitlab.com/eT-program/eT/-/wikis/home) 
 for more help or look in `eT/tests` for inspiration when making your own input file.
 For example, 
-`eT/tests/hf_energy/hf_energy.inp` is an input file for an Hartree-Fock calculation.
+`eT/tests/hf_energy/hf_energy.inp` is an input file for a Hartree-Fock calculation.
 
