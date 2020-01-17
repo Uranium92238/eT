@@ -197,12 +197,12 @@ contains
 !
 !     Excited state solutions
 !
-      call engine%do_excited_state(wf, engine%es_transformation)
+      call engine%do_excited_state(wf, engine%es_transformation, engine%es_restart)
 !
    end subroutine run_es_engine
 !
 !
-   subroutine do_excited_state_es_engine(engine, wf, transformation)
+   subroutine do_excited_state_es_engine(engine, wf, transformation, restart)
 !!
 !!    Do excited state
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -229,6 +229,8 @@ contains
 !
       character(len=*), intent(in) :: transformation
 !
+      logical, intent(in) :: restart 
+!
       class(asymmetric_lanczos_cc_es), allocatable :: cc_es_solver_asymmetric_lanczos
 
       class(abstract_cc_es), allocatable :: cc_es_solver
@@ -249,7 +251,7 @@ contains
 !
          if (engine%es_algorithm == 'diis') then
 !
-            cc_es_solver = diis_cc_es(transformation, wf, engine%es_restart)
+            cc_es_solver = diis_cc_es(transformation, wf, restart)
 
 ! 
          elseif (engine%es_algorithm == 'davidson') then
@@ -260,7 +262,7 @@ contains
 !
             end if
 !
-            cc_es_solver = davidson_cc_es(transformation, wf, engine%es_restart)
+            cc_es_solver = davidson_cc_es(transformation, wf, restart)
 !
          else
                call output%error_msg('Could not start excited state solver. It may be that the &
