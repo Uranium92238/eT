@@ -44,6 +44,11 @@ module response_engine_class
 !
       logical :: eom, lr 
 !
+!     Restart left or right vectors?
+!
+      logical :: es_restart_left
+      logical :: es_restart_right
+!
 !     Do transition moments and polarizabilities?
 !
       logical :: transition_moments
@@ -165,6 +170,8 @@ contains
       engine%gs_restart            = .false.
       engine%multipliers_restart   = .false.
       engine%es_restart            = .false.
+      engine%es_restart_left       = .false.
+      engine%es_restart_right      = .false.
 !
       engine%dipole_length         = .false.
 !
@@ -243,8 +250,13 @@ contains
 !
 !        Excited state solutions, left & right 
 !
-         call engine%do_excited_state(wf, 'right')
-         call engine%do_excited_state(wf, 'left')
+         call engine%do_excited_state(wf,                                                       &
+                                      transformation='right',                                   &
+                                      restart=(engine%es_restart .or. engine%es_restart_right))
+!
+         call engine%do_excited_state(wf,                                                       &
+                                      transformation='left',                                    &
+                                      restart=(engine%es_restart .or. engine%es_restart_left))
 !
 !        Biorthornormalize and look for duplicate states 
 !
@@ -735,6 +747,8 @@ contains
       integer :: n_polarizabilities, k, l
       integer, dimension(:), allocatable :: polarizabilities
 !
+      character(len=200) :: restart_string
+!
       if (input%requested_keyword_in_section('eom','cc response')) then 
 !
          engine%eom = .true.
@@ -858,7 +872,7 @@ contains
 !
       if (engine%eom .and. engine%lr) &
          call output%error_msg('can not run lr and eom in same calculation.')
-   !
+!
       if (.not. engine%eom .and. .not. engine%lr) &
          call output%error_msg('specify either eom or lr for response.')
 !
@@ -866,6 +880,31 @@ contains
 !
       if (.not. engine%dipole_length) &
             call output%error_msg('no operator selected in response calculation')
+!
+!     Check if the user wants to restart the right or left states in particular,
+!     and not do restart on both 
+!
+      if (input%requested_keyword_in_section('restart', 'solver cc es')) then 
+!
+         call input%get_keyword_in_section('restart',       &
+                                           'solver cc es',  &
+                                           restart_string)
+!
+         if (trim(restart_string) == 'right') then 
+!
+            engine%es_restart = .false. ! Turn off right & left restart 
+!
+            engine%es_restart_right = .true. ! Turn on right restart 
+!
+         elseif (trim(restart_string) == 'left') then 
+!
+            engine%es_restart = .false. ! Turn off right & left restart 
+!
+            engine%es_restart_left = .true. ! Turn on left restart 
+!
+         endif
+!
+      endif
 !
    end subroutine read_response_settings_response_engine
 !
