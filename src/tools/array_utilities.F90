@@ -37,6 +37,11 @@ module array_utilities
                    copy_real_to_complex
    end interface copy_
 !
+   interface sandwich
+      procedure :: sandwich_real, &
+                   sandwich_complex
+   end interface sandwich
+!
    interface scale_diagonal
       procedure :: scale_real_diagonal_by_real, &
                    scale_complex_diagonal_by_real, &
@@ -1081,9 +1086,9 @@ contains
    end subroutine get_abs_max_w_index
 !
 !
-   subroutine sandwich(X, A, B, n, left)
+   subroutine sandwich_real(X, A, B, n, left)
 !!
-!!    Sandwich
+!!    Sandwich real
 !!    Written by Eirik F. Kjønstad, 2018
 !!
 !!    Overwrites the n-by-n matrix X with a sandwich-ed X:
@@ -1202,7 +1207,133 @@ contains
 !
       call mem%dealloc(tmp, n, n)
 !
-   end subroutine sandwich
+   end subroutine sandwich_real
+!
+!
+   subroutine sandwich_complex(X, A, B, n, left)
+!!
+!!    Sandwich complex
+!!    Written by Andreas Skeidsvoll, Jan 2020
+!!
+!!    Overwrites the n-by-n matrix X with a sandwich-ed X:
+!!
+!!       X <- A^T X B
+!!
+!!    All matrices are n x n.
+!!
+!!    left (optional): if true, transpose the left factor, A (standard); 
+!!    if false, tranpose the right factor, B. 
+!!
+!!    Based on sandwich_real by Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+!
+      complex(dp), dimension(n, n), intent(in) :: A
+      complex(dp), dimension(n, n), intent(in) :: B
+!
+      complex(dp), dimension(n, n) :: X
+!
+      logical, optional, intent(in) :: left 
+!
+      complex(dp), dimension(:, :), allocatable :: tmp
+!
+      call mem%alloc(tmp, n, n)
+!
+      if (present(left)) then 
+!
+         if (left) then ! Transpose the left factor, X <- A^T X B
+!
+            call zgemm('N', 'N',      &
+                        n,            &
+                        n,            &
+                        n,            &
+                        one_complex,  &
+                        X,            &
+                        n,            &
+                        B,            &
+                        n,            &
+                        zero_complex, &
+                        tmp,          & ! tmp = X B
+                        n)
+!
+            call zgemm('T', 'N',      &
+                        n,            &
+                        n,            &
+                        n,            &
+                        one_complex,  &
+                        A,            &
+                        n,            &
+                        tmp,          &
+                        n,            &
+                        zero_complex, &
+                        X,            & ! X = A^T tmp = A^T X B
+                        n)
+!
+         else ! Transpose the right factor, X <- A X B^T
+!
+            call zgemm('N', 'T',      &
+                        n,            &
+                        n,            &
+                        n,            &
+                        one_complex,  &
+                        X,            &
+                        n,            &
+                        B,            &
+                        n,            &
+                        zero_complex, &
+                        tmp,          & ! tmp = X B^T
+                        n)
+!
+            call zgemm('N', 'N',      &
+                        n,            &
+                        n,            &
+                        n,            &
+                        one_complex,  &
+                        A,            &
+                        n,            &
+                        tmp,          &
+                        n,            &
+                        zero_complex, &
+                        X,            & ! X = A tmp = A X B^T
+                        n)
+!
+            endif
+!
+         else ! Transpose left factor (standard)
+!  
+            call zgemm('N', 'N',      &
+                        n,            &
+                        n,            &
+                        n,            &
+                        one_complex,  &
+                        X,            &
+                        n,            &
+                        B,            &
+                        n,            &
+                        zero_complex, &
+                        tmp,          & ! tmp = X B
+                        n)
+!
+            call zgemm('T', 'N',      &
+                        n,            &
+                        n,            &
+                        n,            &
+                        one_complex,  &
+                        A,            &
+                        n,            &
+                        tmp,          &
+                        n,            &
+                        zero_complex, &
+                        X,            & ! X = A^T tmp = A^T X B
+                        n)
+!
+         endif
+!
+      call mem%dealloc(tmp, n, n)
+!
+   end subroutine sandwich_complex
 !
 !
    subroutine symmetric_sandwich(Xr, X, A, m, n)
