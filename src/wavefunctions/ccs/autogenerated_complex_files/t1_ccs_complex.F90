@@ -56,7 +56,72 @@ contains
 !
       complex(dp), dimension(:,:), allocatable :: X, Y
 !
-      complex(dp), dimension(:,:), allocatable :: W ! W_sq = sum_r Z_sr Y_rq^T, intermediate
+      integer :: p, i, a
+!
+!     Construct the X and Y arrays
+!
+      call mem%alloc(X, wf%n_mo, wf%n_mo)
+      call mem%alloc(Y, wf%n_mo, wf%n_mo)
+!
+      call zero_array_complex(X, (wf%n_mo)**2)
+      call zero_array_complex(Y, (wf%n_mo)**2)
+!
+!$omp parallel do private(p)
+      do p = 1, wf%n_mo
+!
+         X(p, p) = one_complex
+         Y(p, p) = one_complex
+!
+      enddo
+!$omp end parallel do
+!
+!$omp parallel do private(i,a)
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            X(wf%n_o + a, i) = -wf%t1_complex(a, i)
+            Y(i, wf%n_o + a) = wf%t1_complex(a, i)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+!     Construct Z_pq = sum_sr X_ps Z_sr Y_qr
+!
+      call sandwich(Z_pq, X, Y, wf%n_mo, .false.)
+!
+      call mem%dealloc(X, wf%n_mo, wf%n_mo)
+      call mem%dealloc(Y, wf%n_mo, wf%n_mo)
+!
+   end subroutine t1_transform_ccs_complex
+!
+!
+   module subroutine t1_transpose_transform_ccs_complex(wf, Z_pq)
+!!
+!!    T1 transform transpose
+!!    Written by Andreas Skeidsvoll, Jan 2020
+!!
+!!    Assumes that Z is in the T1 basis and performs the transpose T1 transformation,
+!!
+!!       Z_pq <- sum_rs X_sp Z_sr Y_rq,    i.e.    Z <- X^T Z Y
+!!
+!!    where
+!!
+!!       X = I - t1
+!!       Y = I + t1^T
+!!
+!!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ
+!!    part, where it is equal to t_i^a.
+!!
+!!    Based on t1_transform_ccs_complex by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Z_pq
+!
+      complex(dp), dimension(:,:), allocatable :: X, Y
 !
       integer :: p, i, a
 !
@@ -88,41 +153,14 @@ contains
       enddo
 !$omp end parallel do
 !
-!     Construct intermediate W = Z Y^T and then use it to do transformation
+!     Construct Z_pq = sum_sr X_sp Z_sr Y_rq
 !
-      call mem%alloc(W, wf%n_mo, wf%n_mo)
-!
-      call zgemm('N', 'T', &
-                  wf%n_mo, &
-                  wf%n_mo, &
-                  wf%n_mo, &
-                  one_complex,     &
-                  Z_pq,    & ! Z_s_r
-                  wf%n_mo, &
-                  Y,       & ! Y_q_r
-                  wf%n_mo, &
-                  zero_complex,    &
-                  W,       & ! W_sq = sum_r Z_sr Y_rq
-                  wf%n_mo)
-!
-      call zgemm('N', 'N', &
-                  wf%n_mo, &
-                  wf%n_mo, &
-                  wf%n_mo, &
-                  one_complex,     &
-                  X,       &
-                  wf%n_mo, &
-                  W,       &
-                  wf%n_mo, &
-                  zero_complex,    &
-                  Z_pq,    & ! Z_pq = (X W)_pq = sum_s X_ps W_sq = sum_sr X_ps Z_sr Y_rq
-                  wf%n_mo)
+      call sandwich(Z_pq, X, Y, wf%n_mo, .true.)
 !
       call mem%dealloc(X, wf%n_mo, wf%n_mo)
       call mem%dealloc(Y, wf%n_mo, wf%n_mo)
-      call mem%dealloc(W, wf%n_mo, wf%n_mo)
 !
-   end subroutine t1_transform_ccs_complex
+   end subroutine t1_transpose_transform_ccs_complex
 !
 !
    module subroutine t1_transform_4_ccs_complex(wf, Z_tuvw, Z_pqrs, t1)
