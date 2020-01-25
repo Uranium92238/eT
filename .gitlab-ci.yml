@@ -18,6 +18,7 @@ build:
     - docker
   only:
     - master
+    - development
     - merge_requests
   artifacts:
     paths: 
@@ -32,4 +33,5 @@ run:
     - docker
   only:
     - master
+    - development
     - merge_requests
