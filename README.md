@@ -67,10 +67,10 @@ After downloading,
 your archive manager will probably offer to handle it. 
 You can also use the command line.
 ```shell
-unzip eT-v1.0.0.zip
-tar -xvzf eT-v1.0.0.tar.gz
-tar -xvjf eT-v1.0.0.tar.bz2
-tar -xvf eT-v1.0.0.tar
+unzip eT-vx.y.z.zip
+tar -xvzf eT-vx.y.z.tar.gz
+tar -xvjf eT-vx.y.z.tar.bz2
+tar -xvf eT-vx.y.z.tar
 ```
 Note that the archives do not include the runtest submodule required for testing.
 
@@ -100,7 +100,7 @@ git submodule update
 
 ## Configuration of eT
 After downloading, 
-you will have a directory called `eT` or `eT-v1.0.0`,
+you will have a directory called `eT` or something like `eT-v1.0.1`,
 depending on how you did it. 
 We will refer to it as `eT` from now on.
 Go to this directory:

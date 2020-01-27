@@ -33,6 +33,7 @@ module ccs_class
    use sequential_file_class, only : sequential_file
    use string_utilities, only : convert_to_uppercase
    use array_utilities, only : zero_array_complex
+   use array_utilities, only: sandwich
    use array_utilities, only : get_l2_norm, copy_and_scale, copy_and_scale_complex, copy_, our_zdotu
    use array_utilities, only : get_abs_max_w_index, get_n_lowest, get_n_highest
    use array_utilities, only: quicksort_with_index_descending, are_vectors_parallel
@@ -341,6 +342,9 @@ module ccs_class
 !
       procedure :: t1_transform                                  => t1_transform_ccs
       procedure :: t1_transform_complex                          => t1_transform_ccs_complex
+!
+      procedure :: t1_transpose_transform                        => t1_transpose_transform_ccs
+      procedure :: t1_transpose_transform_complex                => t1_transpose_transform_ccs_complex
 !
       procedure :: ao_to_t1_transformation                       => ao_to_t1_transformation_ccs
       procedure :: ao_to_t1_transformation_complex               => ao_to_t1_transformation_ccs_complex

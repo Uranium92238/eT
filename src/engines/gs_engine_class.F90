@@ -497,7 +497,7 @@ contains
       type(visualization), allocatable :: plotter
 !
       character(len=200) :: density_file_tag
-      real(dp), dimension(:,:), allocatable :: density
+      real(dp), dimension(:,:), allocatable :: mo_density, density
 !
       call engine%tasks%print_('plotting')
 !
@@ -508,15 +508,25 @@ contains
 !
       plotter = visualization(wf%system, wf%n_ao)
 !
+!     Transform the density matix from the t1 basis to the MO basis
+!
+      call mem%alloc(mo_density, wf%n_mo, wf%n_mo)
+!
+      call dcopy(wf%n_mo**2, wf%density, 1, mo_density, 1)
+!
+      call wf%t1_transpose_transform(mo_density)
+!
 !     D_alpha,beta = sum_pq  D_pq C_alpha,p C_beta,q
 !
       call mem%alloc(density, wf%n_ao, wf%n_ao)
 !
       call symmetric_sandwich_right_transposition(density,                 &
-                                                  wf%density,              &
+                                                  mo_density,              &
                                                   wf%orbital_coefficients, &
                                                   wf%n_ao,                 &
                                                   wf%n_mo)
+!
+      call mem%dealloc(mo_density, wf%n_mo, wf%n_mo)
 !
 !     Plot density
 !

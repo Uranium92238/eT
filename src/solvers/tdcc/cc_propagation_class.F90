@@ -644,13 +644,25 @@ contains
       class(cc_propagation) :: solver
       class(ccs) :: wf
 !
+      complex(dp), dimension(:,:), allocatable :: mo_density_complex
+!
+!     Transform the complex density matix from the t1 basis to the MO basis
+!
+      call mem%alloc(mo_density_complex, wf%n_mo, wf%n_mo)
+!
+      call zcopy(wf%n_mo**2, wf%density_complex, 1, mo_density_complex, 1)
+!
+      call wf%t1_transpose_transform_complex(mo_density_complex)
+!
 !     Write real part of density matrix to file
 !
-      call solver%density_matrix_real_file%write_(real(wf%density_complex), wf%n_mo*wf%n_mo)
+      call solver%density_matrix_real_file%write_(real(mo_density_complex), wf%n_mo*wf%n_mo)
 !
 !     Write imaginary part of density matrix to file
 !
-      call solver%density_matrix_imaginary_file%write_(aimag(wf%density_complex), wf%n_mo*wf%n_mo)
+      call solver%density_matrix_imaginary_file%write_(aimag(mo_density_complex), wf%n_mo*wf%n_mo)
+!
+      call mem%dealloc(mo_density_complex, wf%n_mo, wf%n_mo)
 !
    end subroutine write_density_matrix_to_file_cc_propagation
 !

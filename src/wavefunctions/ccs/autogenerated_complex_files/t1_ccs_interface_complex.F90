@@ -42,6 +42,33 @@
    end subroutine t1_transform_ccs_complex
 !
 !
+   module subroutine t1_transpose_transform_ccs_complex(wf, Z_pq)
+!!
+!!    T1 transform transpose
+!!    Written by Andreas Skeidsvoll, Jan 2020
+!!
+!!    Assumes that Z is in the T1 basis and performs the transpose T1 transformation,
+!!
+!!       Z_pq <- sum_rs X_sp Z_sr Y_rq,    i.e.    Z <- X^T Z Y
+!!
+!!    where
+!!
+!!       X = I - t1
+!!       Y = I + t1^T
+!!
+!!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ
+!!    part, where it is equal to t_i^a.
+!!
+!!    Based on t1_transform_ccs_complex by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Z_pq
+!
+   end subroutine t1_transpose_transform_ccs_complex
+!
+!
    module subroutine t1_transform_4_ccs_complex(wf, Z_tuvw, Z_pqrs, t1)
 !!
 !!    T1 transform 4 index arrays
