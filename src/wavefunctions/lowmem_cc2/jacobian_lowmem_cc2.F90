@@ -1039,7 +1039,7 @@ contains
       req1_i = (wf%integrals%n_J)*(wf%n_v)
       req1_k = (wf%integrals%n_J)*(wf%n_o)
 !
-      req2 = 2*(wf%n_o)*(wf%n_v)
+      req2 = (wf%n_o)*(wf%n_v) + (wf%n_v)**2
 !
       batch_i = batching_index(wf%n_o)
       batch_k = batching_index(wf%n_o)
