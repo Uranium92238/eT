@@ -6,8 +6,7 @@
 5. [Libint 2 library](https://github.com/evaleev/libint) 
 with integrals for one-body operators and electron repulsion enabled.
 Libint has the dependencies [Eigen 3](http://eigen.tuxfamily.org/index.php?title=Main_Page) and [Boost](https://www.boost.org). 
-To compile Libint, follow the instructions below or consult the [Libint Wiki](https://github.com/evaleev/libint/wiki),
-or see below.
+To compile Libint, follow the instructions below or consult the [Libint Wiki](https://github.com/evaleev/libint/wiki).
 
 ## Installing Libint
 Download the [Libint library for eT](https://www.etprogram.org/libint/libint-2.7.0-beta.1.tgz). 
