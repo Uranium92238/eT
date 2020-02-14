@@ -452,11 +452,16 @@ contains
       timer = timings('Jacobian doubles D1', pl='verbose')
       call timer%turn_on()
 !
+!     Reorder c_bicj to c_bjci
+!
+      call mem%alloc(c_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1432(c_bicj, c_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
 !     Prepare for batching over index a
 !
       rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
 !
-      rec1 = wf%n_v*wf%integrals%n_J + (wf%n_v**2)*(wf%n_o)
+      rec1 = wf%n_v*wf%integrals%n_J + 2*(wf%n_v**2)*(wf%n_o)
 !
       batch_a = batching_index(wf%n_v)
 !
@@ -483,11 +488,6 @@ contains
          call copy_and_scale(two, g_abjc, L_abjc, (wf%n_v**2)*wf%n_o*batch_a%length)
          call add_1432_to_1234(-one, g_abjc, L_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
 !
-!        Reorder c_bicj to c_bjci
-!
-         call mem%alloc(c_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-         call sort_1234_to_1432(c_bicj, c_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
          call mem%dealloc(g_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
 !
          call dgemm('N', 'N',                   &
@@ -504,9 +504,10 @@ contains
                      wf%n_v)
 !
          call mem%dealloc(L_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
-         call mem%dealloc(c_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       enddo ! End batching over a
+!
+      call mem%dealloc(c_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call timer%turn_off()
 !
