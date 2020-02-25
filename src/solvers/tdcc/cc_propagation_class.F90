@@ -194,8 +194,6 @@ contains
           .or. solver%dipole_moment_output &
           .or. solver%density_matrix_output) call wf%initialize_gs_density_complex()
 !
-      call solver%open_files()
-!
    end subroutine new_cc_propagation_cc_propagation
 !
 !
@@ -222,6 +220,8 @@ contains
       logical :: last_step
 !
       type(timings) :: step_timer
+!
+      call solver%open_files()
 !
 !     Create vector containing the amplitudes and multipliers
 !
@@ -328,6 +328,8 @@ contains
       call output%printf('m', 'Finished propagating for (f10.4) au', &
                          reals=[solver%tf], fs='(/t3,a)')
 !
+      call solver%close_files()
+!
    end subroutine run_cc_propagation
 !
 !
@@ -363,8 +365,6 @@ contains
       class(electric_field) :: field
 !
       call solver%print_summary(wf, field)
-!
-      call solver%close_files()
 !
 !     Initial state t1 and t1 transformed g_pqrs
 !
