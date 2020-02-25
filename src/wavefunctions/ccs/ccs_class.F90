@@ -676,7 +676,7 @@ contains
       wf%n_ao = template_wf%n_ao
       wf%n_mo = template_wf%n_mo
 !
-      wf%hf_energy = template_wf%energy
+      wf%hf_energy = template_wf%hf_energy
 !
 !     Set orbital coefficients and energies
 !
