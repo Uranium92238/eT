@@ -1193,7 +1193,7 @@ contains
 !
       call dscal(wf%n_ao**2, two, wf%ao_density, 1)
 !
-      call wf%construct_ao_G(wf%ao_density, wf%G_De_ao)
+      call wf%construct_ao_G(wf%ao_density, wf%G_De_ao, C_screening=.true.)
 !
       call wf%G_De_ao_file%open_('write', 'rewind')
       call wf%G_De_ao_file%write_(wf%G_De_ao, wf%n_ao**2)
