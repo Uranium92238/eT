@@ -224,13 +224,11 @@ module mlcc2_class
       procedure :: is_restart_safe                                   => is_restart_safe_mlcc2
       procedure :: write_cc_restart                                  => write_cc_restart_mlcc2
 !
+!     Initialize wavefunction
+!
+      procedure :: initialize                                        => initialize_mlcc2
+!
    end type mlcc2
-!
-   interface mlcc2
-!
-      procedure :: new_mlcc2
-!
-   end interface mlcc2
 !
    interface
 !
@@ -246,20 +244,18 @@ module mlcc2_class
 contains
 !
 !
-   function new_mlcc2(system, template_wf) result(wf)
+   subroutine initialize_mlcc2(wf, template_wf)
 !!
-!!    New mlcc2
+!!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Adapted by Sarai D. Folkestad from CCS constructer, 2019
 !!
       implicit none
 !
-      type(mlcc2) :: wf
+      class(mlcc2), intent(inout) :: wf
 !
-      class(molecular_system), target, intent(in) :: system 
-!
-      class(wavefunction) :: template_wf
+      class(wavefunction), intent(in) :: template_wf
 !
       wf%name_ = 'mlcc2'
 !
@@ -272,7 +268,7 @@ contains
 !
       wf%cholesky_orbital_threshold = 1.0d-2
 !
-      call wf%general_cc_preparations(system)
+      call wf%general_cc_preparations()
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
@@ -285,10 +281,7 @@ contains
 !
       call wf%initialize_fock()
 !
-      call wf%print_amplitude_info()
-!
-   end function new_mlcc2
-!
+   end subroutine initialize_mlcc2
 !
    subroutine print_amplitude_info_mlcc2(wf)
 !!

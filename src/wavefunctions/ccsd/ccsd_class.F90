@@ -247,6 +247,10 @@ module ccsd_class
       procedure :: construct_complex_time_derivative_amplitudes       => construct_complex_time_derivative_amplitudes_ccsd
       procedure :: construct_complex_time_derivative_multipliers      => construct_complex_time_derivative_multipliers_ccsd
 !
+!     Initialize wavefunction
+!
+      procedure :: initialize  => initialize_ccsd
+!
    end type ccsd
 !
 !
@@ -273,32 +277,23 @@ module ccsd_class
    end interface
 !
 !
-   interface ccsd 
-!
-      procedure :: new_ccsd 
-!
-   end interface ccsd 
-!
-!
 contains
 !
 !
-   function new_ccsd(system, template_wf) result(wf)
+   subroutine initialize_ccsd(wf, template_wf)
 !!
-!!    New CCSD
+!!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      type(ccsd) :: wf
+      class(ccsd), intent(inout) :: wf
 !
       class(wavefunction), intent(in) :: template_wf
 !
-      class(molecular_system), target, intent(in) :: system 
-!
       wf%name_ = 'ccsd'
 !
-      call wf%general_cc_preparations(system)
+      call wf%general_cc_preparations()
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
@@ -314,7 +309,7 @@ contains
 !
       call wf%print_amplitude_info()
 !
-   end function new_ccsd
+   end subroutine initialize_ccsd
 !
 !
    subroutine set_initial_amplitudes_guess_ccsd(wf)
