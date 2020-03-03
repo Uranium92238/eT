@@ -488,6 +488,10 @@ module ccs_class
       procedure :: construct_complex_time_derivative_amplitudes  => construct_complex_time_derivative_amplitudes_ccs
       procedure :: construct_complex_time_derivative_multipliers => construct_complex_time_derivative_multipliers_ccs
 !
+!     Initialize wavefunction
+!
+      procedure :: initialize                                    => initialize_ccs
+!
    end type ccs
 !
 !
@@ -523,33 +527,23 @@ module ccs_class
 !
    end interface
 !
-!
-   interface ccs 
-!
-      procedure :: new_ccs 
-!
-   end interface ccs
-!
-!
 contains
 !
 !
-   function new_ccs(system, template_wf) result(wf)
+   subroutine initialize_ccs(wf, template_wf)
 !!
-!!    New CCS
+!!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      type(ccs) :: wf
+      class(ccs), intent(inout) :: wf
 !
       class(wavefunction), intent(in) :: template_wf
 !
-      class(molecular_system), target, intent(in) :: system 
-!
       wf%name_ = 'ccs'
 !
-      call wf%general_cc_preparations(system)
+      call wf%general_cc_preparations()
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
@@ -562,10 +556,10 @@ contains
 !
       call wf%print_amplitude_info()
 !
-   end function new_ccs
+   end subroutine initialize_ccs
 !
 !
-   subroutine general_cc_preparations_ccs(wf, system)
+   subroutine general_cc_preparations_ccs(wf)
 !!
 !!    General CC preparations
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -573,10 +567,6 @@ contains
       implicit none
 !
       class(ccs) :: wf
-!
-      class(molecular_system), target, intent(in) :: system 
-!
-      wf%system   => system
 !
 !     Initialize CC files
 !
@@ -669,6 +659,8 @@ contains
       class(ccs) :: wf
 
       class(wavefunction), intent(in) :: template_wf
+!
+      wf%system => template_wf%system
 !
       wf%n_o = template_wf%n_o
       wf%n_v = template_wf%n_v

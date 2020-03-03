@@ -88,6 +88,10 @@ module cc2_class
       procedure :: normalization_for_jacobian_debug            => normalization_for_jacobian_debug_cc2
       procedure :: construct_omega2                            => construct_omega2_cc2
 !
+!     Initialize wavefunction
+!
+      procedure :: initialize                                  => initialize_cc2
+!
    end type cc2
 !
    interface
@@ -103,32 +107,23 @@ module cc2_class
    end interface
 !
 !
-   interface cc2
-!
-      procedure :: new_cc2
-!
-   end interface cc2
-!
-!
 contains
 !
 !
-   function new_cc2(system, template_wf) result(wf)
+   subroutine initialize_cc2(wf, template_wf)
 !!
-!!    New CC2
+!!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      type(cc2) :: wf
-!
-      class(molecular_system), target, intent(in) :: system
+      class(cc2), intent(inout) :: wf
 !
       class(wavefunction), intent(in) :: template_wf
 !
       wf%name_ = 'cc2'
 !
-      call wf%general_cc_preparations(system)
+      call wf%general_cc_preparations()
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
@@ -142,7 +137,7 @@ contains
 !
       call wf%print_amplitude_info()
 !
-   end function new_cc2
+   end subroutine initialize_cc2
 !
 !
    subroutine construct_t2_cc2(wf)

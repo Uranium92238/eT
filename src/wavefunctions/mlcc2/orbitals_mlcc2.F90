@@ -1316,7 +1316,8 @@ contains
 !
 !     1. Preparations (Note that cholesky decomposition is already done)
 !
-      ccs_wf = ccs(wf%system, wf)
+      allocate(ccs::ccs_wf)
+      call ccs_wf%initialize(wf)
 !
       call ccs_wf%mo_preparations()
 !

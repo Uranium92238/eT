@@ -64,21 +64,18 @@ module ccsdpt_class
       procedure :: print_gs_summary            => print_gs_summary_ccsdpt
 !
       procedure :: cleanup                     => cleanup_ccsdpt
+! 
+      procedure :: initialize                  => initialize_ccsdpt
 !
    end type ccsdpt
 !
-   interface ccsdpt
-!
-      procedure :: new_ccsdpt
-!
-   end interface ccsdpt
 !
 contains
 !
 !
-   function new_ccsdpt(system, template_wf) result(wf)
+   subroutine initialize_ccsdpt(wf, template_wf)
 !!
-!!    New CCSD(T)
+!!    Initialize
 !!    Written by Rolf H. Myhre, 2018
 !!
       use molecular_system_class, only: molecular_system
@@ -86,15 +83,13 @@ contains
 !
       implicit none
 !
-      type(ccsdpt) :: wf
-!
-      class(molecular_system), target, intent(in) :: system 
+      class(ccsdpt), intent(inout) :: wf
 !
       class(wavefunction), intent(in) :: template_wf
 !
       wf%name_ = 'ccsd(t)'
 !
-      call wf%general_cc_preparations(system)
+      call wf%general_cc_preparations()
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
@@ -109,7 +104,7 @@ contains
 !
       call wf%print_amplitude_info()
 !
-   end function new_ccsdpt
+   end subroutine initialize_ccsdpt
 !   
 !
    subroutine cleanup_ccsdpt(wf)

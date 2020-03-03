@@ -222,6 +222,10 @@ module cc3_class
       procedure :: construct_full_t3     => construct_full_t3_cc3
       procedure :: construct_full_tbar3  => construct_full_tbar3_cc3
 !
+!     Initialize wavefunction
+!
+      procedure :: initialize             => initialize_cc3
+!
    end type cc3
 !
 !
@@ -242,19 +246,12 @@ module cc3_class
    end interface
 !
 !
-   interface cc3
-!
-      procedure :: new_cc3 
-!
-   end interface cc3
-!
-!
 contains
 !
 !
-   function new_cc3(system, template_wf) result(wf)
+   subroutine initialize_cc3(wf, template_wf)
 !!
-!!    New CC3
+!!    Initialize
 !!    Written by Rolf H. Myhre, 2018
 !!
       use molecular_system_class, only: molecular_system!
@@ -262,15 +259,13 @@ contains
 !
       implicit none
 !
-      type(cc3) :: wf
-!
-      class(molecular_system), target, intent(in) :: system 
+      class(cc3), intent(inout) :: wf
 !
       class(wavefunction), intent(in) :: template_wf
 !
       wf%name_ = 'cc3'
 !
-      call wf%general_cc_preparations(system)
+      call wf%general_cc_preparations()
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
@@ -285,7 +280,7 @@ contains
 !
       call wf%print_amplitude_info()
 !
-   end function new_cc3
+   end subroutine initialize_cc3
 !
 !
    subroutine cleanup_cc3(wf)

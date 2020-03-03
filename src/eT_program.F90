@@ -288,41 +288,45 @@ subroutine cc_calculation(system, ref_wf)
 !
       case ('ccs')
 !
-         cc_wf = ccs(system, ref_wf)
+         allocate(ccs::cc_wf)
 !
       case ('cc2')
 !
-         cc_wf = cc2(system, ref_wf)
+         allocate(cc2::cc_wf)
 !
       case ('lowmem-cc2')
 !
-         cc_wf = lowmem_cc2(system, ref_wf)
+         allocate(lowmem_cc2::cc_wf)
 !
       case ('ccsd')
 !
-         cc_wf = ccsd(system, ref_wf)
+         allocate(ccsd::cc_wf)
 !
       case ('cc3')
 !
-         cc_wf = cc3(system, ref_wf)
+         allocate(cc3::cc_wf)
 !
       case ('ccsd(t)')
 !
-         cc_wf = ccsdpt(system, ref_wf)
+         allocate(ccsdpt::cc_wf)
 !
       case ('mp2')
 !
-         cc_wf = mp2(system, ref_wf)
+         allocate(mp2::cc_wf)
 !
       case ('mlcc2')
 !
-         cc_wf = mlcc2(system, ref_wf)
+         allocate(mlcc2::cc_wf)
 !
       case default
 !
          call output%error_msg('could not recognize CC method ' // trim(cc_wf_name) // '.')
 !
    end select
+!
+!  initialize wavefunction
+!
+   call cc_wf%initialize(ref_wf)
 !
    if (input%requested_keyword_in_section('response', 'do')) then
 !

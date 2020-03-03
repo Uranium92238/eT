@@ -36,6 +36,9 @@ module mp2_class
 !
       procedure :: calculate_energy           => calculate_energy_mp2
 !
+      procedure :: initialize                 => initialize_mp2
+!
+!
    end type mp2
 !
 !
@@ -45,35 +48,23 @@ module mp2_class
 !
    end interface
 !
-!
-   interface mp2
-!
-      procedure :: new_mp2
-!
-   end interface mp2
-!
-!
 contains
 !
 !
-   function new_mp2(system, template_wf) result(wf)
+   subroutine initialize_mp2(wf, template_wf)
 !!
-!!    New MP2
+!!    Initialize
 !!    Written by Andreas Skeidsvoll, 2018
 !!
       implicit none
 !
-      type(mp2) :: wf
-!
-      class(molecular_system), target, intent(in) :: system 
+      class(mp2), intent(inout) :: wf
 !
       class(wavefunction), intent(in) :: template_wf
 !
       wf%name_ = 'mp2'
 !
-      wf%system => system
-!
-      call wf%general_cc_preparations(system)
+      call wf%general_cc_preparations()
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
@@ -90,7 +81,7 @@ contains
 !
       call wf%print_amplitude_info()
 !
-   end function new_mp2
+   end subroutine initialize_mp2
 !
 !
 end module mp2_class
