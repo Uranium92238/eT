@@ -254,7 +254,6 @@ contains
 !!    Initialize
 !!    Written by Rolf H. Myhre, 2018
 !!
-      use molecular_system_class, only: molecular_system!
       use wavefunction_class, only : wavefunction
 !
       implicit none
