@@ -70,7 +70,7 @@ program eT_program
 !
       end subroutine reference_calculation
 !
-      subroutine cc_calculation(system, ref_wf)
+      subroutine cc_calculation(ref_wf)
 !
          use molecular_system_class, only: molecular_system
 !
@@ -78,7 +78,6 @@ program eT_program
 !
          implicit none
 !
-         type(molecular_system) :: system
          class(hf), intent(in)  :: ref_wf
 !
       end subroutine cc_calculation
@@ -143,7 +142,7 @@ program eT_program
       if (input%requested_cc_calculation()) then
 !
          call ref_wf%prepare_for_cc()
-         call cc_calculation(system, ref_wf)
+         call cc_calculation(ref_wf)
 !
       endif
 !
@@ -242,7 +241,7 @@ subroutine reference_calculation(system, ref_wf)
 end subroutine reference_calculation
 !
 !
-subroutine cc_calculation(system, ref_wf)
+subroutine cc_calculation(ref_wf)
 !!
 !! Coupled cluster calculation
 !! Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -251,8 +250,6 @@ subroutine cc_calculation(system, ref_wf)
 !!
    use global_in,  only: input
    use global_out, only: output 
-!
-   use molecular_system_class, only: molecular_system
 !
    use hf_class, only: hf 
 !
@@ -272,8 +269,6 @@ subroutine cc_calculation(system, ref_wf)
    use td_engine_class, only: td_engine
 !
    implicit none
-!
-   type(molecular_system) :: system
 !
    class(hf), intent(in)  :: ref_wf
 !
