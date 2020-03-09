@@ -33,7 +33,7 @@ submodule (cc3_class) batching_abc
 contains
 !
 !
-   module subroutine prepare_cc3_integrals_t3_abc_batch_cc3(wf)
+   module subroutine prepare_cc3_integrals_t3_abc_cc3(wf)
 !!
 !!    Prepare integral files t3 amplitudes in batches of a,b,c
 !!    Written by Alexander C. Paul, July 2019
@@ -125,10 +125,10 @@ contains
 !
       call wf%g_ljck_t_v%close_()
 !
-   end subroutine prepare_cc3_integrals_t3_abc_batch_cc3
+   end subroutine prepare_cc3_integrals_t3_abc_cc3
 !
 !
-   module subroutine prepare_cc3_integrals_R3_abc_batch_cc3(wf, R_ai)
+   module subroutine prepare_cc3_integrals_R3_abc_cc3(wf, R_ai)
 !!
 !!    Prepare integral files R3 amplitudes in batches of a,b,c
 !!    Written by Alexander C. Paul, July 2019
@@ -137,7 +137,7 @@ contains
 !!    g'_ljck = (lj'|ck) + (lj|ck') + (lj|c'k)   ordered as ljk,c
 !!
 !!    NB: The integrals (bd|ck) and (lj|ck) constructed in 
-!!        prepare_cc3_integrals_t3_abc_batch_cc3 are also needed
+!!        prepare_cc3_integrals_t3_abc_cc3 are also needed
 !!
 !!    Based on construct_c1_integrals_cc3 
 !!    written by Rolf H. Myhre and Alexander C. Paul
@@ -288,10 +288,10 @@ contains
       call wf%g_ljck_c1_v%close_()
       call wf%g_ljck_c1%close_()
 !
-   end subroutine prepare_cc3_integrals_R3_abc_batch_cc3
+   end subroutine prepare_cc3_integrals_R3_abc_cc3
 !
 !
-   module subroutine prepare_cc3_integrals_L3_abc_batch_cc3(wf)
+   module subroutine prepare_cc3_integrals_L3_abc_cc3(wf)
 !!
 !!    Prepare integral files for L3 amplitudes in batches of a,b,c
 !!    Written by Alexander C. Paul, July 2019
@@ -440,15 +440,15 @@ contains
 !
       call wf%L_jbkc_t_v%close_()
 !
-   end subroutine prepare_cc3_integrals_L3_abc_batch_cc3
+   end subroutine prepare_cc3_integrals_L3_abc_cc3
 !
 !
-   module subroutine omega_cc3_W_calc_abc_batch_cc3(wf, a, b, c,           &
-                                                   t_ijk, u_ijk, t_ijab,   &
-                                                   g_ljak, g_ljbk, g_ljck, &
-                                                   g_bdak, g_cdak, g_cdbk, &
-                                                   g_adbk, g_adck, g_bdck, &
-                                                   overwrite)
+   module subroutine omega_cc3_W_calc_abc_cc3(wf, a, b, c,            &
+                                              t_ijk, u_ijk, t_ijab,   &
+                                              g_ljak, g_ljbk, g_ljck, &
+                                              g_bdak, g_cdak, g_cdbk, &
+                                              g_adbk, g_adck, g_bdck, &
+                                              overwrite)
 !!
 !!    Omega CC3 intermediate W_ijk for fixed a,b,c
 !!    Written by Rolf H. Myhre and Alexander C. Paul July 2019
@@ -709,10 +709,10 @@ contains
 !
       call sort_123_to_231_and_add(u_ijk, t_ijk, wf%n_o, wf%n_o, wf%n_o)
 !
-   end subroutine omega_cc3_W_calc_abc_batch_cc3
+   end subroutine omega_cc3_W_calc_abc_cc3
 !
 !
-   module subroutine omega_cc3_eps_abc_batch_cc3(wf, a, b, c, t_ijk, omega)
+   module subroutine omega_cc3_eps_abc_cc3(wf, a, b, c, t_ijk, omega)
 !!
 !!    Omega CC3 epsilon denominator in batches of a,b,c
 !!    Written by Alexander C. Paul, July 2019    
@@ -777,15 +777,15 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine omega_cc3_eps_abc_batch_cc3
+   end subroutine omega_cc3_eps_abc_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_c3_calc_abc_batch_cc3(wf, a, b ,c, c_ia, c_ijab, &
-                                                                  c_ijk, u_ijk, v_ijk, F_kc, &
-                                                                  L_jakb, L_jakc, L_jbkc,    &
-                                                                  g_jlka, g_jlkb, g_jlkc,    &
-                                                                  g_dbka, g_dcka, g_dckb,    &
-                                                                  g_dakb, g_dakc, g_dbkc)
+   module subroutine jacobian_transpose_cc3_c3_calc_abc_cc3(wf, a, b ,c, c_ia, c_ijab, &
+                                                            c_ijk, u_ijk, v_ijk, F_kc, &
+                                                            L_jakb, L_jakc, L_jbkc,    &
+                                                            g_jlka, g_jlkb, g_jlkc,    &
+                                                            g_dbka, g_dcka, g_dckb,    &
+                                                            g_dakb, g_dakc, g_dbkc)
 !!
 !!    Calculate the L3 amplitudes for fixed indices a,b,c
 !!    Written by Alexander C. Paul, July 2019
@@ -1112,10 +1112,10 @@ contains
       call sort_123_to_213_and_add(v_ijk, u_ijk, wf%n_o, wf%n_o, wf%n_o)
       call add_two_231_min_213_min_132(u_ijk, c_ijk, wf%n_o)
 !
-   end subroutine jacobian_transpose_cc3_c3_calc_abc_batch_cc3
+   end subroutine jacobian_transpose_cc3_c3_calc_abc_cc3
 !
 !
-   module subroutine get_triples_cvs_projector_abc_batch_cc3(wf, projector_ijk)
+   module subroutine get_triples_cvs_projector_abc_cc3(wf, projector_ijk)
 !!
 !!    Get triples cvs projector for fixed a,b,c
 !!    Written by Alexander C. Paul and Rolf H. Myhre, September 2019
@@ -1153,7 +1153,7 @@ contains
          end do
       end do
 !
-   end subroutine get_triples_cvs_projector_abc_batch_cc3
+   end subroutine get_triples_cvs_projector_abc_cc3
 !
 !
 end submodule batching_abc

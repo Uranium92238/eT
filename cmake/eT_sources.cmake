@@ -227,7 +227,7 @@ set(eT_fortran_sources
    src/wavefunctions/cc3/jacobian_cc3.F90
    src/wavefunctions/cc3/prepare_jacobian_transform_cc3.F90
    src/wavefunctions/cc3/jacobian_transpose_cc3.F90
-   src/wavefunctions/cc3/cc3_batching_abc.F90
+   src/wavefunctions/cc3/abc_batching_cc3.F90
    src/wavefunctions/cc3/multiplier_equation_cc3.F90
    src/wavefunctions/cc3/initialize_destruct_cc3.F90
    src/wavefunctions/cc3/fop_cc3.F90

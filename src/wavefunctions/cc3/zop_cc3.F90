@@ -92,8 +92,8 @@ contains
 !
       class(cc3), intent(inout) :: wf
 !
-      call wf%prepare_cc3_integrals_t3_abc_batch
-      call wf%prepare_cc3_integrals_L3_abc_batch
+      call wf%prepare_cc3_integrals_t3_abc
+      call wf%prepare_cc3_integrals_L3_abc
 !
    end subroutine prepare_for_density_cc3
 !
@@ -372,7 +372,7 @@ contains
       if(cvs) then
 !
          call mem%alloc(projector_ijk, wf%n_o, wf%n_o, wf%n_o)
-         call wf%get_triples_cvs_projector_abc_batch(projector_ijk)
+         call wf%get_triples_cvs_projector_abc(projector_ijk)
 !
       end if
 !
@@ -603,46 +603,46 @@ contains
                         c_rel = c - batch_c%first + 1
 !
 !                       Construct t^abc_ijk for given a,b,c
-                        call wf%omega_cc3_W_calc_abc_batch(a, b, c,                       &
-                                                            t_ijk(:,:,:,thread_n),        &
-                                                            u_ijk(:,:,:,thread_n),        &
-                                                            t_ijab,                       &
-                                                            g_ljak_p(:,:,:,a_rel),        &
-                                                            g_ljbk_p(:,:,:,b_rel),        &
-                                                            g_ljck_p(:,:,:,c_rel),        &
-                                                            g_bdak_p(:,:,b_rel,a_rel),    &
-                                                            g_cdak_p(:,:,c_rel,a_rel),    &
-                                                            g_cdbk_p(:,:,c_rel,b_rel),    &
-                                                            g_adbk_p(:,:,a_rel,b_rel),    &
-                                                            g_adck_p(:,:,a_rel,c_rel),    &
-                                                            g_bdck_p(:,:,b_rel,c_rel))
+                        call wf%omega_cc3_W_calc_abc(a, b, c,                      &
+                                                     t_ijk(:,:,:,thread_n),        &
+                                                     u_ijk(:,:,:,thread_n),        &
+                                                     t_ijab,                       &
+                                                     g_ljak_p(:,:,:,a_rel),        &
+                                                     g_ljbk_p(:,:,:,b_rel),        &
+                                                     g_ljck_p(:,:,:,c_rel),        &
+                                                     g_bdak_p(:,:,b_rel,a_rel),    &
+                                                     g_cdak_p(:,:,c_rel,a_rel),    &
+                                                     g_cdbk_p(:,:,c_rel,b_rel),    &
+                                                     g_adbk_p(:,:,a_rel,b_rel),    &
+                                                     g_adck_p(:,:,a_rel,c_rel),    &
+                                                     g_bdck_p(:,:,b_rel,c_rel))
 !
-                        call wf%omega_cc3_eps_abc_batch(a, b, c, t_ijk(:,:,:,thread_n))
+                        call wf%omega_cc3_eps_abc(a, b, c, t_ijk(:,:,:,thread_n))
 !
 !                       c3_calc does not zero out the array
                         call zero_array(tbar_ijk(:,:,:,thread_n), wf%n_o**3)
 !
 !                       construct tbar3 for fixed a,b,c
-                        call wf%jacobian_transpose_cc3_c3_calc_abc_batch(a, b, c, tbar_ia,         &
-                                                                        tbar_ijab,                 &
-                                                                        tbar_ijk(:,:,:,thread_n),  &
-                                                                        u_ijk(:,:,:,thread_n),     &
-                                                                        v_ijk(:,:,:,thread_n),     &
-                                                                        wf%fock_ia,                &
-                                                                        L_jakb_p(:,:,a_rel,b_rel), &
-                                                                        L_jakc_p(:,:,a_rel,c_rel), &
-                                                                        L_jbkc_p(:,:,b_rel,c_rel), &
-                                                                        g_jlka_p(:,:,:,a_rel),     &
-                                                                        g_jlkb_p(:,:,:,b_rel),     &
-                                                                        g_jlkc_p(:,:,:,c_rel),     &
-                                                                        g_dbka_p(:,:,b_rel,a_rel), &
-                                                                        g_dcka_p(:,:,c_rel,a_rel), &
-                                                                        g_dckb_p(:,:,c_rel,b_rel), &
-                                                                        g_dakb_p(:,:,a_rel,b_rel), &
-                                                                        g_dakc_p(:,:,a_rel,c_rel), &
-                                                                        g_dbkc_p(:,:,b_rel,c_rel))
+                        call wf%jacobian_transpose_cc3_c3_calc_abc(a, b, c, tbar_ia,          &
+                                                                   tbar_ijab,                 &
+                                                                   tbar_ijk(:,:,:,thread_n),  &
+                                                                   u_ijk(:,:,:,thread_n),     &
+                                                                   v_ijk(:,:,:,thread_n),     &
+                                                                   wf%fock_ia,                &
+                                                                   L_jakb_p(:,:,a_rel,b_rel), &
+                                                                   L_jakc_p(:,:,a_rel,c_rel), &
+                                                                   L_jbkc_p(:,:,b_rel,c_rel), &
+                                                                   g_jlka_p(:,:,:,a_rel),     &
+                                                                   g_jlkb_p(:,:,:,b_rel),     &
+                                                                   g_jlkc_p(:,:,:,c_rel),     &
+                                                                   g_dbka_p(:,:,b_rel,a_rel), &
+                                                                   g_dcka_p(:,:,c_rel,a_rel), &
+                                                                   g_dckb_p(:,:,c_rel,b_rel), &
+                                                                   g_dakb_p(:,:,a_rel,b_rel), &
+                                                                   g_dakc_p(:,:,a_rel,c_rel), &
+                                                                   g_dbkc_p(:,:,b_rel,c_rel))
 !                       ! omega = 0
-                        call wf%omega_cc3_eps_abc_batch(a, b, c, tbar_ijk(:,:,:,thread_n), omega) 
+                        call wf%omega_cc3_eps_abc(a, b, c, tbar_ijk(:,:,:,thread_n), omega) 
 !
                         if (cvs) then
                            call entrywise_product(wf%n_o**3,tbar_ijk(:,:,:,thread_n), projector_ijk)
