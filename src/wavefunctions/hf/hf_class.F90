@@ -1494,7 +1494,7 @@ contains
       call mem%dealloc(metric, wf%n_mo, wf%n_mo)
       call mem%dealloc(work, 4*wf%n_mo)
 !
-      if (info .ne. 0) call output%error_msg('Error: could not solve Roothan-Hall equations.')
+      if (info .ne. 0) call output%error_msg('Could not solve Roothan-Hall equations.')
 !
 !     Transform back the solutions to original basis, C = P (P^T C) = P C'
 !

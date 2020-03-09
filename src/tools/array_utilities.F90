@@ -2510,6 +2510,68 @@ contains
    end function are_vectors_parallel
 !
 !
+   subroutine check_for_parallel_vectors(vectors, dim_, n_vectors,    &
+                                         n_non_parallel_vectors,     &
+                                         threshold, parallel)
+!!
+!!    Check for parallel vectors
+!!    written by Alexander Paul, Oct 2019
+!!
+!!    Checks for parallel vectors in a given array of vectors
+!!    returns the number of not parallel vectors and which vectors parallel
+!!
+!!    vectors:  array of vectors to be checked
+!!    parallel: parallel(p) will be true on out if vector p is parallel to a
+!!              previous vector for example, if there are three vectors and they
+!!              are all parallel, parallel will be [.false., .true., .true.] on output
+!!
+      implicit none
+!
+      integer, intent(in)  :: n_vectors
+      integer, intent(out) :: n_non_parallel_vectors
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_, n_vectors), intent(in) :: vectors
+!
+      real(dp), intent(in) :: threshold
+!
+      logical, dimension(n_vectors), intent(out), optional :: parallel
+!
+      logical, dimension(n_vectors) :: parallel_temp
+!
+      integer :: p, q
+!
+      n_non_parallel_vectors = n_vectors
+!
+      do p = 1, n_vectors
+!
+         parallel_temp(p) = .false.
+!
+         do q = 1, p-1
+!
+!        Skip if the vector q was already parallel to another p
+!
+            if (parallel_temp(q)) cycle
+!
+               if(are_vectors_parallel(vectors(:,p), vectors(:,q), dim_, threshold)) then
+!
+                  parallel_temp(p) = .true.
+!
+                  n_non_parallel_vectors = n_non_parallel_vectors - 1
+!
+               end if
+!
+         end do
+      end do
+!
+      if (present(parallel)) then
+         parallel = parallel_temp
+      end if
+!
+   end subroutine check_for_parallel_vectors
+!
+!
    subroutine entrywise_product_in_place(dim_, X, Y)
 !!
 !!    entrywise product in place
@@ -3037,7 +3099,7 @@ contains
    end function our_zdotu
 !
 !
-   module subroutine block_diagonalization(A,  n_total, n_blocks, block_dim, diagonal)
+   subroutine block_diagonalization(A,  n_total, n_blocks, block_dim, diagonal)
 !!
 !!    Block diagonalization
 !!    Written by Sarai D. Folkestad, Mar 2020
@@ -3055,29 +3117,29 @@ contains
 !
       real(dp), dimension(:), allocatable :: eigenvalues
 !
-      integer :: info, i, block, offset
+      integer :: info, i, block_, offset
 !
       offset = 1
 !
-      do block = 1, n_blocks
+      do block_ = 1, n_blocks
 !
-         if (block_dim(block) .gt. 0) then
+         if (block_dim(block_) .gt. 0) then
 !
 !           Diagonalize block
 !
-            call mem%alloc(work, 4*block_dim(block))
-            call mem%alloc(eigenvalues, block_dim(block))
+            call mem%alloc(work, 4*block_dim(block_))
+            call mem%alloc(eigenvalues, block_dim(block_))
 !
             call dsyev('V','U',              &
-                        block_dim(block),    &
+                        block_dim(block_),    &
                         A(offset, offset),   &
                         n_total,             &
                         eigenvalues,         &
                         work,                &
-                        4*block_dim(block),  &
+                        4*block_dim(block_),  &
                         info)
 !
-            call mem%dealloc(work, 4*block_dim(block))
+            call mem%dealloc(work, 4*block_dim(block_))
 !
             if (info .ne. 0) then
                call output%error_msg('Diagonalization of active fock matrix block failed.' // &
@@ -3086,21 +3148,21 @@ contains
 !
 !           Setting diagonal
 !
-            do i = 1, block_dim(block)
+            do i = 1, block_dim(block_)
 !
                diagonal(i + offset - 1) = eigenvalues(i)
 !
             enddo
 !
-            call mem%dealloc(eigenvalues, block_dim(block))
+            call mem%dealloc(eigenvalues, block_dim(block_))
 !
-         elseif (block_dim(block) .lt. 0) then
+         elseif (block_dim(block_) .lt. 0) then
 !
             call output%error_msg('block diagonalization attempted with negative dimension.')
 !
          endif
 !
-         offset = offset + block_dim(block)
+         offset = offset + block_dim(block_)
 !
       enddo
 !
@@ -3108,6 +3170,191 @@ contains
          call output%error_msg('dimensions do not add to n_total in block diagonalization')
 !
    end subroutine block_diagonalization
+!
+!
+   subroutine gram_schmidt_biorthonormalization(L, R, dim_, n_vectors, threshold)
+!!
+!!    Gram-Schmidt Biorthonormalization
+!!    written by Alexander C. Paul, Oct 2019
+!!
+!!    Routine to biorthonormalize two linear independent sets of vectors L and R
+!!    following Kohaupt, L., Rocky Mountain J. Math., 44, 1265, (2014)
+!!
+!!    NB: Order of the R vectors can change from input to output
+!!        The R vectors are ordered such that the corresponding L vector 
+!!        with non-zero overlap are at the same position
+!!
+!!    Only normalization is needed, 
+!!    if the L vectors are already biorthogonal to the R vectors
+!!
+!!    Otherwise we need to biorthonormalize:
+!!    The p-th vector is determined in terms of the previously biorthogonalized vectors q
+!!
+!!    Biorthogonal:  L'_p = L_p - sum_q < L_p, R"_q>  L"_q
+!!    Biorthonormal: L"_p = < L'_p, R_p >^(-1)  L'_p = < L'_p, R"_p >^(-1)  L'_p
+!!
+!!    Biorthonormal: R"_p = R_p - sum_q < R_p, L"_q >  R"_q
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_, n_vectors
+!
+      real(dp), dimension(dim_, n_vectors), intent(inout)  :: L, R
+!
+      real(dp), intent(in) :: threshold
+!
+      real(dp), dimension(:), allocatable :: overlap_lr
+!
+      real(dp) :: overlap_L_R, overlap_L_Rnorm, overlap_Lnorm_R, ddot, temp
+!
+      integer :: p, q, i
+      integer :: n_overlap_zero, max_overlap
+!
+      logical :: biorthonormalize
+!
+      call mem%alloc(overlap_lr, n_vectors)
+!
+      biorthonormalize = .false.
+!
+      do p = 1, n_vectors ! looping through the left vectors
+!
+         n_overlap_zero = 0
+         max_overlap = p
+!
+         call zero_array(overlap_lr, n_vectors)
+!
+!        We first check if the vector L_p is already biorthogonal to the vectors R
+!        then we only need to binormalize (biorthonormalize = .false.).
+!        Otherwise we need to biorthonormalize and the logical is set to .true.
+!        so that we don't run into the wrong branch of the if-statement
+!
+!        The first (p-1) vectors have already been biorthonormalized - start at q = p
+         do q = p, n_vectors ! right vectors
+!
+            overlap_lr(q) = ddot(dim_,      &
+                                 L(:,p), 1, &
+                                 R(:,q), 1)
+!
+            if(abs(overlap_lr(q)) .lt. threshold) then
+!
+               n_overlap_zero = n_overlap_zero + 1
+!
+            else if(abs(overlap_lr(q)) .gt. abs(overlap_lr(max_overlap))) then
+!
+!              save the index of the vector with non zero overlap
+!              in case only one overlap is non zero
+!
+               max_overlap = q
+!
+            end if
+!
+         end do
+!
+!        :: Binormalization/Biorthonormalization ::
+!        ------------------------------------------
+!
+         if ((.not. biorthonormalize) .and. &
+             (n_overlap_zero .eq. n_vectors-p)) then
+!
+!           :: Simple binormalization ::
+!
+!           only 1 right vector has significant overlap with the left vector    
+!
+            if(abs(overlap_lr(max_overlap)) .lt. threshold**2) then
+!
+               call output%printf('m', 'Overlap of (i0). left and right &
+                                 &vector less than threshold: (e8.3).', &
+                                  reals=[threshold**2], ints=[p])
+!
+               call output%error_msg('Trying to binormalize nonoverlapping vectors.')
+!
+            end if
+!
+            call dscal(dim_, &
+                       one/overlap_lr(max_overlap), &
+                       L(:,p), 1)
+!
+         else 
+!
+!           :: Actual biorthonormalization :: 
+!
+!           Make sure to not run into the other branch of the if statement
+            biorthonormalize = .true.
+!
+!           loop over already biorthonormalized vectors
+!
+            do q = 1, p - 1
+!
+!              Construct biorthogonal left vector:
+!                 L'_p = L_p - sum_q < L_p, R"_q>  L"_q
+!
+               overlap_L_Rnorm = ddot(dim_,      &
+                                      L(:,p), 1, &
+                                      R(:,q), 1)
+!
+               call daxpy(dim_,             &
+                          -overlap_L_Rnorm, &
+                          L(:,q), 1,        &
+                          L(:,p), 1)
+!
+!              Construct biorthonormal right vector:
+!                 R"_p = R_p - sum_q < R(p), L"_q >  R"_q
+!
+               overlap_Lnorm_R = ddot(dim_,               &
+                                     R(:,max_overlap), 1, &
+                                     L(:,q), 1)
+!
+               call daxpy(dim_,              &
+                          -overlap_Lnorm_R,  &
+                          R(:,q), 1,         &
+                          R(:,max_overlap), 1)
+!
+            end do
+!
+!           Binormalize the left to the right vector
+!
+            overlap_L_R = ddot(dim_,               &
+                               L(:,p), 1,          &
+                               R(:,max_overlap), 1)
+!
+!           Sanity check that the left and corresponding right vector are not orthogonal
+!
+            if(abs(overlap_L_R) .lt. threshold**2) then
+!
+               call output%printf('m', 'Overlap of (i0). left and right &
+                                 &vector less than threshold: (e8.3).', &
+                                  reals=[threshold**2], ints=[p])
+!
+               call output%error_msg('Trying to binormalize nonoverlapping vectors.')
+!
+            end if
+!
+            call dscal(dim_, one/overlap_L_R, L(:,p), 1)
+!
+         end if
+!
+!        Exchange R_p and R_max_overlap to achieve the correct ordering:
+!        < L_p, R_p > = 1
+!
+         if(p .ne. max_overlap) then
+!
+!$omp parallel do private(temp, q)
+            do i = 1, dim_
+!
+               temp   = R(i,p)
+               R(i,p) = R(i,max_overlap)
+               R(i,max_overlap) = temp
+!
+            end do
+!$omp end parallel do
+!
+         end if
+!
+      end do ! Loop over p (left vectors )
+!
+      call mem%dealloc(overlap_lr, n_vectors)
+!
+   end subroutine gram_schmidt_biorthonormalization   
 !
 !
 end module array_utilities

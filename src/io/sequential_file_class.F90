@@ -292,7 +292,7 @@ contains
       rewind(the_file%unit_, iostat=io_error, iomsg=io_msg)
 !
       if (io_error .ne. 0) then 
-         call output%error_msg('Error: could not rewind eT file '//trim(the_file%name_)//&
+         call output%error_msg('Could not rewind eT file '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
@@ -325,7 +325,7 @@ contains
          read(the_file%unit_, iostat=io_error, iomsg=io_msg) 
 !
          if (io_error .ne. 0) then 
-            call output%error_msg('Error: could not skip eT sequential file '//trim(the_file%name_)//&
+            call output%error_msg('Could not skip eT sequential file '//trim(the_file%name_)//&
                                  &'. Error message: '//trim(io_msg))
          endif
 !
