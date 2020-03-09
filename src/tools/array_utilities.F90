@@ -3037,4 +3037,77 @@ contains
    end function our_zdotu
 !
 !
+   module subroutine block_diagonalization(A,  n_total, n_blocks, block_dim, diagonal)
+!!
+!!    Block diagonalization
+!!    Written by Sarai D. Folkestad, Mar 2020
+!!
+!!
+      implicit none
+!
+      integer, intent(in) :: n_total, n_blocks
+      integer, dimension(n_blocks), intent(in) :: block_dim
+!
+      real(dp), dimension(n_total, n_total), intent(inout) :: A
+      real(dp), dimension(n_total), intent(out) :: diagonal
+!
+      real(dp), dimension(:), allocatable :: work
+!
+      real(dp), dimension(:), allocatable :: eigenvalues
+!
+      integer :: info, i, block, offset
+!
+      offset = 1
+!
+      do block = 1, n_blocks
+!
+         if (block_dim(block) .gt. 0) then
+!
+!           Diagonalize block
+!
+            call mem%alloc(work, 4*block_dim(block))
+            call mem%alloc(eigenvalues, block_dim(block))
+!
+            call dsyev('V','U',              &
+                        block_dim(block),    &
+                        A(offset, offset),   &
+                        n_total,             &
+                        eigenvalues,         &
+                        work,                &
+                        4*block_dim(block),  &
+                        info)
+!
+            call mem%dealloc(work, 4*block_dim(block))
+!
+            if (info .ne. 0) then
+               call output%error_msg('Diagonalization of active fock matrix block failed.' // &
+                                    ' "Dsyev" finished with info: (i0)', ints=[info])
+            end if
+!
+!           Setting diagonal
+!
+            do i = 1, block_dim(block)
+!
+               diagonal(i + offset - 1) = eigenvalues(i)
+!
+            enddo
+!
+            call mem%dealloc(eigenvalues, block_dim(block))
+!
+         elseif (block_dim(block) .lt. 0) then
+!
+            call output%error_msg('block diagonalization attempted with negative dimension.')
+!
+         endif
+!
+         offset = offset + block_dim(block)
+!
+      enddo
+!
+      if ((offset - 1) .ne. n_total) &
+         call output%error_msg('dimensions do not add to n_total in block diagonalization')
+!
+   end subroutine block_diagonalization
+!
+!
 end module array_utilities

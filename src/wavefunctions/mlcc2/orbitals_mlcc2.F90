@@ -288,19 +288,23 @@ contains
 !!    Construct block diagonal Fock MOs 
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!
-!!    This routine block-diagonalizes the occupied-occupied
+!!    This routine constructs the MOs which
+!!    block-diagonalize the occupied-occupied
 !!    and virutal-virtual blocks of the Fock matrix s.t.
 !!    the active-active, and inactive-inactive blocks are 
 !!    diagonal.
 !!   
 !!    Note that after this routine, the Fock matrix in wf 
-!!    corresponds to the old basis.
+!!    corresponds to the old basis but the MOs are updated.
 !!
+!
+      use array_utilities, only : block_diagonalization
+!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: F_oo, F_vv
+      real(dp), dimension(:,:), allocatable :: F_oo, F_vv, C_copy
 !
       call mem%alloc(F_oo, wf%n_o, wf%n_o)
       call mem%alloc(F_vv, wf%n_v, wf%n_v)
@@ -310,201 +314,101 @@ contains
 !
 !     Block diagonal occupied-occupied Fock
 !
-      call wf%construct_block_diagonal_fock_mos_2_level( wf%n_o, wf%n_cc2_o, F_oo, &
-                           wf%orbital_coefficients(:,1:wf%n_o), wf%orbital_energies(1:wf%n_o))
-
+      call block_diagonalization(F_oo, wf%n_o, 2, [integer::wf%n_cc2_o, wf%n_ccs_o], &
+                                    wf%orbital_energies(1:wf%n_o))
 !
 !     Block diagonal virtual-virtual Fock
 !
-      call wf%construct_block_diagonal_fock_mos_2_level( wf%n_v, wf%n_cc2_v, F_vv, &
-                           wf%orbital_coefficients(:,wf%n_o + 1 : wf%n_mo), wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
+      call block_diagonalization(F_vv, wf%n_v, 2, [integer::wf%n_cc2_v, wf%n_ccs_v], &
+                                    wf%orbital_energies(wf%n_o+1:wf%n_mo))
+!
+!     Transform blocks
+!
+      call mem%alloc(C_copy, wf%n_ao, wf%n_mo)
+      call dcopy(wf%n_mo*wf%n_ao, wf%orbital_coefficients, 1, C_copy, 1)
+      call zero_array(wf%orbital_coefficients, wf%n_mo*wf%n_ao)
+!
+!     1. Active occcupied
+!
+      if (wf%n_cc2_o .gt. 0) then
+!
+         call dgemm('N', 'N',                 &
+                     wf%n_ao,                 &
+                     wf%n_cc2_o,              &
+                     wf%n_cc2_o,              &
+                     one,                     &
+                     C_copy,                  &
+                     wf%n_ao,                 &
+                     F_oo,                    &
+                     wf%n_o,                  &
+                     one,                     &
+                     wf%orbital_coefficients, &
+                     wf%n_ao)
+!
+      endif
+!
+!     2. Inactive occupied
+!
+      if (wf%n_cc2_o .lt. wf%n_o) then
+!
+         call dgemm('N', 'N',                                     &
+                     wf%n_ao,                                     &
+                     wf%n_ccs_o,                                  &
+                     wf%n_ccs_o,                                  &
+                     one,                                         &
+                     C_copy(1, wf%n_cc2_o + 1),                   &
+                     wf%n_ao,                                     &
+                     F_oo(wf%n_cc2_o + 1, wf%n_cc2_o + 1),        &
+                     wf%n_o,                                      &
+                     one,                                         &
+                     wf%orbital_coefficients(1, wf%n_cc2_o + 1),  &
+                     wf%n_ao)
+      endif
+!
+!     3. Active virtual
+!
+      if (wf%n_cc2_v .gt. 0) then
+!
+         call dgemm('N', 'N',                                  &
+                     wf%n_ao,                                  &
+                     wf%n_cc2_v,                               &
+                     wf%n_cc2_v,                               &
+                     one,                                      &
+                     C_copy(1, wf%n_o + 1),                    &
+                     wf%n_ao,                                  &
+                     F_vv,                                     &
+                     wf%n_v,                                   &
+                     one,                                      &
+                     wf%orbital_coefficients(1, wf%n_o + 1),   &
+                     wf%n_ao)
+!
+      endif
+!
+!     4. Inactive virtual
+!
+      if (wf%n_cc2_v .lt. wf%n_v) then
+!
+         call dgemm('N', 'N',                                              &
+                     wf%n_ao,                                              &
+                     wf%n_ccs_v,                                           &
+                     wf%n_ccs_v,                                           &
+                     one,                                                  &
+                     C_copy(1, wf%n_o + wf%n_cc2_v + 1),                   &
+                     wf%n_ao,                                              &
+                     F_vv(wf%n_cc2_v + 1, wf%n_cc2_v + 1),                 &
+                     wf%n_v,                                               &
+                     one,                                                  &
+                     wf%orbital_coefficients(1, wf%n_o + wf%n_cc2_v + 1),  &
+                     wf%n_ao)
+!
+      endif
+!
+      call mem%dealloc(C_copy, wf%n_ao, wf%n_mo)
 !
       call mem%dealloc(F_oo, wf%n_o, wf%n_o)
       call mem%dealloc(F_vv, wf%n_v, wf%n_v)
 !
    end subroutine construct_block_diagonal_fock_orbitals_mlcc2
-!
-!
-   module subroutine construct_block_diagonal_fock_mos_2_level_mlcc2(wf, n_total, n_active, fock, mo_coeff, diagonal)
-!!
-!!    Construct Fock block diagonal 2 levels
-!!    Written by Sarai D. Folkestad, Feb 2019
-!!
-!!    Construct orbitals that block diagonalizes 
-!!    Fock matrix block for two levels (inactive/active)
-!!
-!!    'n_total' : Total dimmension of Fock matrix block
-!!
-!!    'n_active' : Dimension of active block of Fock matrix block
-!!
-!!    'fock' : Fock matrix block to block diagonalize
-!!
-!!    'mo_coef' : MO coefficients which are updated to 
-!!                the new basis which block diagonalizes Fock
-!!                matrix block
-!!
-!!    'diagonal' : Diagonal elements of Fock matrix after block
-!!                 diagonalization
-!!
-      implicit none
-!
-      class(mlcc2), intent(inout) :: wf
-!
-      integer, intent(in) :: n_total, n_active ! Total matrix dimension of block, and number of active orbitals
-!
-      real(dp), dimension(n_total, n_total), intent(inout) :: fock
-      real(dp), dimension(wf%n_ao, n_total), intent(inout) :: mo_coeff
-      real(dp), dimension(n_total), intent(out) :: diagonal
-!
-      real(dp), dimension(:), allocatable :: work
-      real(dp), dimension(:), allocatable :: orbital_energies
-      real(dp), dimension(:,:), allocatable :: C_active, C_inactive
-!
-      integer :: info, i, j
-!
-!     1. Active block     
-!
-      if (n_active .gt. 0) then
-!
-!        Diagonalize active block
-!
-         call mem%alloc(work, 4*n_active)
-         call mem%alloc(orbital_energies, n_active)
-!
-         call dsyev('V','U',           &
-                     n_active,         &
-                     fock,             &
-                     n_total,          &
-                     orbital_energies, &
-                     work,             &
-                     4*n_active,       &
-                     info)
-!
-         call mem%dealloc(work, 4*n_active)
-!
-         if (info .ne. 0) then
-            call output%error_msg('Diagonalization of active fock matrix block failed.' // &
-                                 ' "Dsyev" finished with info: (i0)', ints=[info])
-         end if
-!
-!        Setting diagonal (orbital energies)
-!
-         do i = 1, n_active
-!
-            diagonal(i) = orbital_energies(i)
-!
-         enddo
-!
-         call mem%dealloc(orbital_energies, n_active)
-!
-      endif
-!
-!     2. Inactive block
-!
-      if ((n_total - n_active) .gt. 0) then
-!
-!        Diagonalize inactive block
-!
-         call mem%alloc(work, 4*(n_total - n_active))
-         call mem%alloc(orbital_energies, (n_total - n_active))
-!
-         call dsyev('V','U',                                &
-                     (n_total - n_active),                  &
-                     fock(n_active + 1, n_active + 1),      &
-                     n_total,                               &
-                     orbital_energies,                      &
-                     work,                                  &
-                     4*(n_total - n_active),                &
-                     info)
-!
-         call mem%dealloc(work, 4*(n_total - n_active))
-!
-         if (info .ne. 0) then 
-            call output%error_msg('Diagonalization of inactive fock matrix block failed.' // &
-                                  ' "Dsyev" finished with info: (i0)', ints=[info])
-         end if
-!
-!        Setting diagonal (orbital energies)
-!
-         do i = 1, (n_total - n_active)
-!
-            diagonal(n_active + i) = orbital_energies(i)
-!
-         enddo
-!
-         call mem%dealloc(orbital_energies, (n_total - n_active))
-!
-      endif
-!
-!     Transform orbital coefficients
-!
-!     1. Active 
-!
-      if (n_active .gt. 0) then
-!
-         call mem%alloc(C_active, wf%n_ao, n_active)
-!
-         call dgemm('N', 'N',    &
-                     wf%n_ao,    &
-                     n_active,   &
-                     n_active,   &
-                     one,        &
-                     mo_coeff,   &
-                     wf%n_ao,    &
-                     fock,       &
-                     n_total,    &
-                     zero,       &
-                     C_active,   &
-                     wf%n_ao)
-!
-!$omp parallel do private(i, j)
-         do j = 1, n_active
-            do i = 1, wf%n_ao
-!
-              mo_coeff(i, j) = C_active(i, j)
-!
-            enddo
-         enddo
-!$omp end parallel do
-!
-         call mem%dealloc(C_active, wf%n_ao, n_active)
-!
-      endif
-!
-!     1. Inactive 
-!
-      if ((n_total - n_active) .gt. 0) then
-!
-         call mem%alloc(C_inactive, wf%n_ao, (n_total - n_active))
-!
-         call dgemm('N', 'N',                            &
-                     wf%n_ao,                            &
-                     (n_total - n_active),               &
-                     (n_total - n_active),               &
-                     one,                                &
-                     mo_coeff(1, n_active + 1),          &
-                     wf%n_ao,                            &
-                     fock(n_active + 1, n_active + 1),   &
-                     n_total,                            &
-                     zero,                               &
-                     C_inactive,                         &
-                     wf%n_ao)
-!
-!$omp parallel do private(i, j)
-         do j = 1, (n_total - n_active)
-            do i = 1, wf%n_ao
-!
-               mo_coeff(i, j + n_active) = C_inactive(i, j)
-!
-            enddo
-         enddo
-!$omp end parallel do
-!
-         call mem%dealloc(C_inactive, wf%n_ao, (n_total - n_active))
-!
-      endif    
-!
-   end subroutine construct_block_diagonal_fock_mos_2_level_mlcc2
 !
 !
    module subroutine construct_M_and_N_cnto_mlcc2(wf, R_ai, R_aibj, M, N, set_to_zero)
@@ -1470,12 +1374,16 @@ contains
                   wf%n_mo)
 !
       do i = 1, wf%n_mo
-         if (abs(I2(i,i) - 1.0d0) .gt. 1.0d-8) call output%error_msg(trim(wf%name_)//' orbitals are not normal')
+         if (abs(I2(i,i) - 1.0d0) .gt. 1.0d-8) then
+            print*, I
+            call output%error_msg(trim(wf%name_)//' orbitals are not normal')
+         endif
       enddo
 !
       do i = 1, wf%n_mo
          do j = 1, i-1
             if (abs(I2(i,j)) .gt. 1.0d-8) then
+            print*, I,J
             call output%error_msg(trim(wf%name_)//' orbitals are not orthogonal')
             endif
          enddo

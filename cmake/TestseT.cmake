@@ -195,9 +195,12 @@ add_eT_runtest(mlcc2_cholesky_right_cvs_es                  "eT;short;mlcc2;chol
 add_eT_runtest(mlcc2_cnto_right_es                          "eT;short;mlcc2;cnto")
 add_eT_runtest(mlcc2_cnto_left_es                           "eT;short;mlcc2;cnto")
 add_eT_runtest(mlcc2_full_fc_es                             "eT;short;mlcc2;cholesky;frozen core")
-add_eT_runtest(mlcc2_fc_es                             		"eT;short;mlcc2;cnto;frozen core")
+add_eT_runtest(mlcc2_fc_es                                  "eT;short;mlcc2;cnto;frozen core")
 add_eT_runtest(restart_mlcc2_cholesky_es                    "eT;short;mlcc2;cholesky;restart")
 add_eT_runtest(restart_mlcc2_cnto_es                        "eT;short;mlcc2;cnto;restart")
+#
+add_eT_runtest(mlccsd_cnto_full_gs                          "eT;short;mlccsd;cnto")
+add_eT_runtest(mlccsd_cnto_gs                               "eT;short;mlccsd;cnto")
 #
 if(ENABLE_PCMSOLVER)
    add_eT_runtest(hf_energy_pcm                             "eT;short;hf;sad;pcm;pcm_internal")

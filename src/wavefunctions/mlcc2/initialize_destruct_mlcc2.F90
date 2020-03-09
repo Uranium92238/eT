@@ -39,7 +39,7 @@ contains
 !
       class(mlcc2) :: wf
 !
-      if (.not. allocated(wf%u_aibj)) call mem%alloc(wf%u_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
+      call mem%alloc(wf%u_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
    end subroutine initialize_u_aibj_mlcc2
 !
@@ -99,7 +99,7 @@ contains
 !
       class(mlcc2) :: wf
 !
-      if (.not. allocated(wf%x2)) call mem%alloc(wf%x2, wf%n_x2)
+      call mem%alloc(wf%x2, wf%n_x2)
 !
    end subroutine initialize_x2_mlcc2
 !
@@ -113,7 +113,7 @@ contains
 !
       class(mlcc2) :: wf
 !
-      if (.not. allocated(wf%t2bar)) call mem%alloc(wf%t2bar, wf%n_x2)
+      call mem%alloc(wf%t2bar, wf%n_x2)
 !
    end subroutine initialize_t2bar_mlcc2
 !
@@ -155,7 +155,7 @@ contains
 !
       class(mlcc2) :: wf
 !
-      if (.not. allocated(wf%nto_states)) call mem%alloc(wf%nto_states, wf%n_nto_states)
+      call mem%alloc(wf%nto_states, wf%n_nto_states)
 !
    end subroutine initialize_nto_states_mlcc2
 !
@@ -169,7 +169,7 @@ contains
 !
       class(mlcc2) :: wf
 !
-      if (.not. allocated(wf%cnto_states)) call mem%alloc(wf%cnto_states, wf%n_cnto_states)
+      call mem%alloc(wf%cnto_states, wf%n_cnto_states)
 !
    end subroutine initialize_cnto_states_mlcc2
 !
