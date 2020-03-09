@@ -94,6 +94,8 @@ module input_file_class
       procedure :: get_required_integer8_keyword_in_section_input_file
       procedure :: get_required_dp_keyword_in_section_input_file
 !
+      procedure :: is_string_in_cs_list   => is_string_in_cs_list_input_file
+!
    end type input_file
 !
    interface input_file
@@ -170,7 +172,8 @@ contains
                            'ccsd',              &
                            'cc3',               &
                            'ccsd(t)',           &
-                           'mlcc2']
+                           'mlcc2',             &
+                           'mlccsd']
 !
       method%name_    = 'method'
       method%required = .false.
@@ -393,10 +396,13 @@ contains
       mlcc%keywords = [character(len=30) ::        &
                         'levels',                  &
                         'cc2 orbitals',            &
+                        'ccsd orbitals',           &
                         'cholesky threshold',      &
                         'cnto restart',            &
                         'cnto occupied cc2',       &
                         'cnto virtual cc2',        &
+                        'cnto occupied ccsd',      &
+                        'cnto virtual ccsd',       &
                         'cnto states',             &
                         'nto states',              &
                         'nto occupied cc2',        &
@@ -2168,6 +2174,82 @@ contains
       enddo 
 !
    end subroutine print_to_output_input_file
+!
+!
+   function is_string_in_cs_list_input_file(the_file, keyword, section, string) result(found)
+!!
+!!    Is string in comma separated list 
+!!    Written by Sarai D. Folkestad, 2019-2020
+!!
+!!    Determines if the 'string' is one of the keyword values in the comma separated 
+!!    list given with 'keyword' in the given 'section' of the input file.
+!!
+!!    Examples of such a keyword is 'levels' from the 'mlcc' section:
+!!
+!!       levels: ccs, cc2, ccsd 
+!!   
+!!    This function assumes that the keyword is requested. If it is not, a test should be performed
+!!    before the routine is called
+!! 
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: section
+      character(len=*), intent(in) :: keyword
+      character(len=*), intent(in) :: string
+!
+      logical :: found
+!
+      character(len=200) :: line
+      character(len=200) :: current_snippet
+!
+      integer :: i, current_cursor
+!
+      found = .false.
+!
+      call the_file%get_required_keyword_in_section(keyword, section, line)
+!
+      current_cursor = 1
+      current_snippet = repeat(' ', 200)
+!
+      do i = 1, len_trim(line)
+!
+         if (line(i:i) .ne. ',') then
+!
+            current_snippet(current_cursor:current_cursor) = line(i:i)
+!
+            current_cursor = current_cursor + 1
+!
+            if (i == len_trim(line)) then ! the end of the line
+!
+               if (trim(adjustl(current_snippet)) == string) then
+!
+                  found = .true.
+                  return
+!  
+               endif
+!
+            endif
+!
+         else ! We have found a comma
+!
+            current_cursor = 1 ! Reset cursor
+!
+            if (trim(adjustl(current_snippet)) == string) then
+!
+               found = .true.
+               return
+!  
+            endif
+!
+            current_snippet = repeat(' ', 200)
+!
+         endif
+!
+      enddo
+!
+   end function is_string_in_cs_list_input_file
 !
 !
 end module input_file_class

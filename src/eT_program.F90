@@ -261,6 +261,7 @@ subroutine cc_calculation(ref_wf)
    use ccsdpt_class, only: ccsdpt
    use mp2_class, only: mp2 
    use mlcc2_class, only: mlcc2
+   use mlccsd_class, only: mlccsd
 !
    use gs_engine_class, only: gs_engine
    use es_engine_class, only: es_engine
@@ -312,6 +313,10 @@ subroutine cc_calculation(ref_wf)
       case ('mlcc2')
 !
          allocate(mlcc2::cc_wf)
+!
+      case ('mlccsd')
+!
+         allocate(mlccsd::cc_wf)
 !
       case default
 !

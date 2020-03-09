@@ -75,13 +75,14 @@
 !!    Construct block diagonal Fock MOs 
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!
-!!    This routine block-diagonalizes the occupied-occupied
+!!    This routine constructs the MOs which
+!!    block-diagonalize the occupied-occupied
 !!    and virutal-virtual blocks of the Fock matrix s.t.
 !!    the active-active, and inactive-inactive blocks are 
 !!    diagonal.
 !!   
 !!    Note that after this routine, the Fock matrix in wf 
-!!    corresponds to the old basis.
+!!    corresponds to the old basis but the MOs are updated.
 !!
       implicit none
 !

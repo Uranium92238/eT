@@ -48,11 +48,6 @@ module mlcc2_class
 !
    type, extends(ccs) :: mlcc2
 !
-!     Requested levels
-!
-      logical :: do_ccs
-      logical :: do_cc2
-!
 !     Orbital indices for levels
 !
       integer :: n_ccs_o
@@ -99,8 +94,6 @@ module mlcc2_class
 !
    contains
 !
-      procedure :: print_amplitude_info                              => print_amplitude_info_mlcc2
-!
       procedure :: cleanup                                           => cleanup_mlcc2
 !
 !     Initializations and destructions
@@ -135,15 +128,16 @@ module mlcc2_class
       procedure :: get_cvs_projector                                 => get_cvs_projector_mlcc2
       procedure :: set_cvs_start_indices                             => set_cvs_start_indices_mlcc2
 !
-!     File handling
+!     Read input
 !
       procedure :: read_mlcc_settings                                => read_mlcc_settings_mlcc2
-      procedure, non_overridable :: read_orbital_settings            => read_orbital_settings_mlcc2
-      procedure, non_overridable :: read_cc2_orbital_settings        => read_cc2_orbital_settings_mlcc2
+      procedure :: read_orbital_settings                             => read_orbital_settings_mlcc2
 !
 !     Orbital routines
 !
       procedure :: mo_preparations                                   => mo_preparations_mlcc2
+      procedure :: general_mlcc_mo_preparations &
+                  => general_mlcc_mo_preparations_mlcc2
 !
       procedure :: print_orbital_space                               => print_orbital_space_mlcc2
       procedure :: check_orbital_space                               => check_orbital_space_mlcc2
@@ -155,8 +149,6 @@ module mlcc2_class
       procedure :: construct_cholesky_orbitals                       => construct_cholesky_orbitals_mlcc2
 !
       procedure :: construct_block_diagonal_fock_orbitals            => construct_block_diagonal_fock_orbitals_mlcc2
-!
-      procedure :: construct_block_diagonal_fock_mos_2_level         => construct_block_diagonal_fock_mos_2_level_mlcc2
 !
       procedure :: construct_cntos                                   => construct_cntos_mlcc2
       procedure :: construct_M_and_N_cnto                            => construct_M_and_N_cnto_mlcc2
@@ -283,22 +275,6 @@ contains
 !
    end subroutine initialize_mlcc2
 !
-   subroutine print_amplitude_info_mlcc2(wf)
-!!
-!!    Print amplitude info
-!!    Written by Sarai D. Folkestad, Dec 2019
-!!
-!!
-      implicit none
-!
-      class(mlcc2), intent(in) :: wf
-!
-      call wf%ccs%print_amplitude_info()  
-!
-   end subroutine print_amplitude_info_mlcc2
-!
-!
-!
    subroutine print_orbital_space_mlcc2(wf)
 !!
 !!    Print orbital space
@@ -344,65 +320,17 @@ contains
 !
       call input%get_required_keyword_in_section('cc2 orbitals', 'mlcc', wf%cc2_orbital_type)
 !
-!     Get general orbital specifications
+!     Read orbital settings
 !
-      call wf%read_orbital_settings(wf%cc2_orbital_type)
-!
-!     Read CC2 orbital specifications
-!
-      call wf%read_cc2_orbital_settings()
+      call wf%read_orbital_settings(wf%cc2_orbital_type, 'cc2', wf%n_cc2_o, wf%n_cc2_v)
 !
    end subroutine read_mlcc_settings_mlcc2
 !
 !
-   subroutine read_cc2_orbital_settings_mlcc2(wf)
-!!
-!!    Read CC2 orbital settings
-!!    Written by Sarai D. Folkestad, Apr 2019
-!!
-!!    Reads the CC2 specific orbital settings:
-!!
-!!       - reads the 'cc2 orbitals' keyword (requested keyword)
-!!
-!!    If CC2 orbitals are CNTOs or NTOs/Canonical:
-!!
-!!       - reads the number of occupied cntos and ntos (requested keyword for CNTO/NTO)
-!!       - reads the number of virtual cntos and canonical
-!!
-      implicit none
-!
-      class(mlcc2), intent(inout) :: wf
-!
-      if (trim(wf%cc2_orbital_type) == 'cnto-approx') then
-!
-         call input%get_required_keyword_in_section('cnto occupied cc2', 'mlcc', wf%n_cc2_o)
-!
-         wf%n_cc2_v = wf%n_cc2_o*(wf%n_v/wf%n_o)
-!
-         call input%get_keyword_in_section('cnto virtual cc2', 'mlcc', wf%n_cc2_v)
-!
-      elseif (trim(wf%cc2_orbital_type) == 'nto-canonical') then
-!
-         call input%get_required_keyword_in_section('nto occupied cc2', 'mlcc', wf%n_cc2_o)
-!
-         wf%n_cc2_v = wf%n_cc2_o*(wf%n_v/wf%n_o)
-!
-         call input%get_keyword_in_section('canonical virtual cc2', 'mlcc', wf%n_cc2_v)
-!
-      endif
-!
-   end subroutine read_cc2_orbital_settings_mlcc2
-!
-!
-   subroutine read_orbital_settings_mlcc2(wf, orbital_type)
+   subroutine read_orbital_settings_mlcc2(wf, orbital_type, level_string, n_level_o, n_level_v)
 !!
 !!    Read orbital settings
 !!    Written by Sarai D. Folkestad, Apr 2019
-!!
-!!    Reads the general, not the cc level specific,
-!!    settings for the given 'orbital_type'
-!!
-!!    The routine will also be used for mlccsd
 !!
 !!    CNTO settings:
 !!
@@ -417,11 +345,19 @@ contains
 !!
 !!       - 'cholesky threshold'
 !!
+!!    If orbitals are CNTOs or NTOs/Canonical:
+!!
+!!       - reads the number of occupied cntos and ntos (requested keyword for CNTO/NTO)
+!!       - reads the number of virtual cntos and canonical
+!!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
 !
       character(len=*), intent(in) :: orbital_type
+      character(len=*), intent(in) :: level_string
+!
+      integer, intent(out) :: n_level_o, n_level_v
 !
       if (trim(orbital_type) == 'cnto' .or. trim(orbital_type) == 'cnto-approx') then
 !
@@ -435,8 +371,18 @@ contains
                call output%error_msg('to construct CNTOs excitation vectors must be specified.')
 !
          call wf%initialize_cnto_states()
+!
          call input%get_array_for_keyword_in_section('cnto states', 'mlcc', &
-                  wf%n_cnto_states, wf%cnto_states)
+               wf%n_cnto_states, wf%cnto_states)
+!
+!
+         call input%get_required_keyword_in_section('cnto occupied ' // trim(level_string), &
+               'mlcc', n_level_o)
+!
+         n_level_v = n_level_o*(wf%n_v/wf%n_o)
+!
+         call input%get_keyword_in_section('cnto virtual ' // trim(level_string), 'mlcc', n_level_v)
+!
 !
       elseif (trim(orbital_type) == 'cholesky') then
 !
@@ -453,6 +399,14 @@ contains
          call wf%initialize_nto_states()
          call input%get_array_for_keyword_in_section('nto states', 'mlcc', &
                wf%n_nto_states, wf%nto_states)
+!
+         call input%get_required_keyword_in_section('nto occupied ' // trim(level_string), &
+               'mlcc', n_level_o)
+!
+         n_level_v = n_level_o*(wf%n_v/wf%n_o)
+!
+         call input%get_keyword_in_section('canonical virtual ' // trim(level_string), &
+               'mlcc', n_level_v)
 !
       elseif (trim(orbital_type) == 'cholesky-pao') then
 !
@@ -1025,6 +979,20 @@ contains
 !!    MO preparations
 !!    Written by Sarai D. Folkestad, Sep 2019
 !!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      call wf%general_mlcc_mo_preparations()
+!
+   end subroutine mo_preparations_mlcc2
+!
+!
+   subroutine general_mlcc_mo_preparations_mlcc2(wf)
+!!
+!!    General MLCC MO prepatations
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
 !!    Partitions the orbitals and
 !!    determines the number of amplitudes.
 !!
@@ -1039,7 +1007,7 @@ contains
 !!    and once after occupied-occupied and virtual-virtual 
 !!    Fock matrices are block diagonalized.
 !!
-!!
+!
       implicit none
 !
       class(mlcc2) :: wf
@@ -1106,7 +1074,7 @@ contains
       call wf%print_orbital_space()
       call wf%check_orbital_space()
 !
-   end subroutine mo_preparations_mlcc2
+   end subroutine general_mlcc_mo_preparations_mlcc2
 !
 !
    subroutine cleanup_mlcc2(wf)
@@ -1118,6 +1086,9 @@ contains
       implicit none
 !
       class(mlcc2) :: wf
+!
+      call output%printf('v', '- Cleaning up (a0) wavefunction', &
+                         chars=[trim(convert_to_uppercase(wf%name_))], fs='(/t3, a)')
 !
       call wf%destruct_amplitudes()
       call wf%destruct_multipliers()
@@ -1141,9 +1112,6 @@ contains
 !
       if (allocated(wf%l_files)) call wf%l_files%finalize_storer()
       if (allocated(wf%r_files)) call wf%r_files%finalize_storer()
-!
-      call output%printf('v', '- Cleaning up (a0) wavefunction', &
-                         chars=[trim(convert_to_uppercase(wf%name_))], fs='(/t3, a)')
 !
    end subroutine cleanup_mlcc2
 !
