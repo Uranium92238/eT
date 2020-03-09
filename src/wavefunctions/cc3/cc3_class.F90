@@ -92,17 +92,17 @@ module cc3_class
 !
 !     Preparation and cleanup routines
 !
-      procedure :: cleanup                   => cleanup_cc3
-      procedure :: delete_intermediate_files => delete_intermediate_files_cc3
+      procedure :: cleanup                              => cleanup_cc3
+      procedure :: delete_intermediate_files            => delete_intermediate_files_cc3
 !
 !     Routines related to omega
 !
-      procedure :: construct_omega     => construct_omega_cc3
+      procedure :: construct_omega                      => construct_omega_cc3
 !
-      procedure :: omega_cc3_a         => omega_cc3_a_cc3
-      procedure :: omega_cc3_integrals => omega_cc3_integrals_cc3
-      procedure :: omega_cc3_a_n6      => omega_cc3_a_n6_cc3
-      procedure :: omega_cc3_a_n7      => omega_cc3_a_n7_cc3
+      procedure :: omega_cc3_a                          => omega_cc3_a_cc3
+      procedure :: omega_cc3_integrals                  => omega_cc3_integrals_cc3
+      procedure :: omega_cc3_a_n6                       => omega_cc3_a_n6_cc3
+      procedure :: omega_cc3_a_n7                       => omega_cc3_a_n7_cc3
 !
 !     Routines used for prepare, both left and right
 !
@@ -116,111 +116,112 @@ module cc3_class
       procedure :: prepare_cc3_jacobian_trans_integrals => prepare_cc3_jacobian_trans_integrals_cc3
 !
 !     Routines for CVS
-      procedure :: get_cvs_projector                   => get_cvs_projector_cc3
-      procedure :: get_triples_cvs_projector_abc_batch => get_triples_cvs_projector_abc_batch_cc3
+      procedure :: get_cvs_projector                    => get_cvs_projector_cc3
+      procedure :: get_triples_cvs_projector_abc        => get_triples_cvs_projector_abc_cc3
 !
 !     Routines related to the jacobian
 !
-      procedure :: construct_Jacobian_transform      => construct_Jacobian_transform_cc3
+      procedure :: construct_Jacobian_transform         => construct_Jacobian_transform_cc3
 !
 !     Right hand side transformation
 !
-      procedure :: effective_jacobian_transformation => effective_jacobian_transformation_cc3
+      procedure :: effective_jacobian_transformation    => effective_jacobian_transformation_cc3
 !
-      procedure :: jacobian_cc3_t3_a2                => jacobian_cc3_t3_a2_cc3
-      procedure :: jacobian_cc3_t3_b2                => jacobian_cc3_t3_b2_cc3
-      procedure :: construct_c1_fock                 => construct_c1_fock_cc3
-      procedure :: jacobian_cc3_b2_fock              => jacobian_cc3_b2_fock_cc3
-      procedure :: jacobian_cc3_c3_a                 => jacobian_cc3_c3_a_cc3
-      procedure :: construct_c1_integrals            => construct_c1_integrals_cc3
+      procedure :: jacobian_cc3_t3_a2                   => jacobian_cc3_t3_a2_cc3
+      procedure :: jacobian_cc3_t3_b2                   => jacobian_cc3_t3_b2_cc3
+      procedure :: construct_c1_fock                    => construct_c1_fock_cc3
+      procedure :: jacobian_cc3_b2_fock                 => jacobian_cc3_b2_fock_cc3
+      procedure :: jacobian_cc3_c3_a                    => jacobian_cc3_c3_a_cc3
+      procedure :: construct_c1_integrals               => construct_c1_integrals_cc3
 !
 !     Routines related to the transpose of the jacobian
 !
       procedure :: effective_jacobian_transpose_transformation  &
-                                    => effective_jacobian_transpose_transformation_cc3
+                   => effective_jacobian_transpose_transformation_cc3
 !
-      procedure :: jacobian_transpose_cc3_t3_a1       => jacobian_transpose_cc3_t3_a1_cc3
-      procedure :: jacobian_transpose_cc3_t3_b1       => jacobian_transpose_cc3_t3_b1_cc3
-      procedure :: construct_x_ai_intermediate        => construct_x_ai_intermediate_cc3
-      procedure :: jacobian_transpose_cc3_c3_a        => jacobian_transpose_cc3_c3_a_cc3
-      procedure :: jacobian_transpose_cc3_c3_calc     => jacobian_transpose_cc3_c3_calc_cc3
-      procedure :: jacobian_transpose_cc3_a_n7        => jacobian_transpose_cc3_a_n7_cc3
-      procedure :: construct_y_intermediates          => construct_y_intermediates_cc3
-      procedure :: jacobian_transpose_cc3_c3_a1_y_o   => jacobian_transpose_cc3_c3_a1_y_o_cc3
-      procedure :: jacobian_transpose_cc3_c3_b1_y_v   => jacobian_transpose_cc3_c3_b1_y_v_cc3
+      procedure :: jacobian_transpose_cc3_t3_a1         => jacobian_transpose_cc3_t3_a1_cc3
+      procedure :: jacobian_transpose_cc3_t3_b1         => jacobian_transpose_cc3_t3_b1_cc3
+      procedure :: construct_x_ai_intermediate          => construct_x_ai_intermediate_cc3
+      procedure :: jacobian_transpose_cc3_c3_a          => jacobian_transpose_cc3_c3_a_cc3
+      procedure :: jacobian_transpose_cc3_c3_calc       => jacobian_transpose_cc3_c3_calc_cc3
+      procedure :: jacobian_transpose_cc3_a_n7          => jacobian_transpose_cc3_a_n7_cc3
+      procedure :: construct_y_intermediates            => construct_y_intermediates_cc3
+      procedure :: jacobian_transpose_cc3_c3_a1_y_o     => jacobian_transpose_cc3_c3_a1_y_o_cc3
+      procedure :: jacobian_transpose_cc3_c3_b1_y_v     => jacobian_transpose_cc3_c3_b1_y_v_cc3
 !
 !     Routines related to the multipliers
 !
-      procedure :: prepare_for_multiplier_equation    => prepare_for_multiplier_equation_cc3
-      procedure :: construct_multiplier_equation      => construct_multiplier_equation_cc3
-      procedure :: save_tbar_intermediates            => save_tbar_intermediates_cc3
+      procedure :: prepare_for_multiplier_equation      => prepare_for_multiplier_equation_cc3
+      procedure :: construct_multiplier_equation        => construct_multiplier_equation_cc3
+      procedure :: save_tbar_intermediates              => save_tbar_intermediates_cc3
 !
 !     Routines to construct triples amplitudes in batches of a,b,c
 !
-      procedure :: prepare_cc3_integrals_t3_abc_batch => prepare_cc3_integrals_t3_abc_batch_cc3
-      procedure :: prepare_cc3_integrals_R3_abc_batch => prepare_cc3_integrals_R3_abc_batch_cc3
-      procedure :: prepare_cc3_integrals_L3_abc_batch => prepare_cc3_integrals_L3_abc_batch_cc3
-      procedure :: omega_cc3_W_calc_abc_batch         => omega_cc3_W_calc_abc_batch_cc3
-      procedure :: omega_cc3_eps_abc_batch            => omega_cc3_eps_abc_batch_cc3
-      procedure :: jacobian_transpose_cc3_c3_calc_abc_batch &
-                                                      => jacobian_transpose_cc3_c3_calc_abc_batch_cc3
+      procedure :: prepare_cc3_integrals_t3_abc         => prepare_cc3_integrals_t3_abc_cc3
+      procedure :: prepare_cc3_integrals_R3_abc         => prepare_cc3_integrals_R3_abc_cc3
+      procedure :: prepare_cc3_integrals_L3_abc         => prepare_cc3_integrals_L3_abc_cc3
+      procedure :: omega_cc3_W_calc_abc                 => omega_cc3_W_calc_abc_cc3
+      procedure :: omega_cc3_eps_abc                    => omega_cc3_eps_abc_cc3
+      procedure :: jacobian_transpose_cc3_c3_calc_abc   => jacobian_transpose_cc3_c3_calc_abc_cc3
 !
 !     Routines related to density matrices
 !
-      procedure :: initialize_gs_density              => initialize_gs_density_cc3
-      procedure :: destruct_gs_density                => destruct_gs_density_cc3
+      procedure :: initialize_gs_density                => initialize_gs_density_cc3
+      procedure :: destruct_gs_density                  => destruct_gs_density_cc3
 !
-      procedure :: prepare_for_density                => prepare_for_density_cc3
-      procedure :: construct_gs_density               => construct_gs_density_cc3
-      procedure :: construct_left_transition_density  => construct_left_transition_density_cc3
-      procedure :: construct_right_transition_density => construct_right_transition_density_cc3
+      procedure :: prepare_for_density                  => prepare_for_density_cc3
+      procedure :: construct_gs_density                 => construct_gs_density_cc3
+      procedure :: construct_left_transition_density    => construct_left_transition_density_cc3
+      procedure :: construct_right_transition_density   => construct_right_transition_density_cc3
 !
-      procedure :: density_cc3_mu_ref_abc             => density_cc3_mu_ref_abc_cc3
-      procedure :: density_cc3_mu_ref_oo              => density_cc3_mu_ref_oo_cc3
-      procedure :: density_cc3_mu_ref_ijk             => density_cc3_mu_ref_ijk_cc3
-      procedure :: density_cc3_mu_ref_vv              => density_cc3_mu_ref_vv_cc3
-      procedure :: construct_y_intermediate_vo3       => construct_y_intermediate_vo3_cc3
+      procedure :: density_cc3_mu_ref_abc               => density_cc3_mu_ref_abc_cc3
+      procedure :: density_cc3_mu_ref_oo                => density_cc3_mu_ref_oo_cc3
+      procedure :: density_cc3_mu_ref_ijk               => density_cc3_mu_ref_ijk_cc3
+      procedure :: density_cc3_mu_ref_vv                => density_cc3_mu_ref_vv_cc3
+      procedure :: construct_y_intermediate_vo3         => construct_y_intermediate_vo3_cc3
 !
-      procedure :: density_cc3_mu_nu_ov               => density_cc3_mu_nu_ov_cc3
-      procedure :: density_cc3_mu_nu_oo_ov_vv         => density_cc3_mu_nu_oo_ov_vv_cc3
-      procedure :: density_cc3_mu3_nu2_ov             => density_cc3_mu3_nu2_ov_cc3
-      procedure :: density_cc3_mu_nu_ijk              => density_cc3_mu_nu_ijk_cc3
-      procedure :: density_cc3_mu_nu_abc              => density_cc3_mu_nu_abc_cc3
-      procedure :: density_cc3_mu_nu_ov_Z_term        => density_cc3_mu_nu_ov_Z_term_cc3
-      procedure :: density_cc3_mu_nu_vo               => density_cc3_mu_nu_vo_cc3
-      procedure :: construct_Z_intermediate           => construct_Z_intermediate_cc3
+      procedure :: density_cc3_mu_nu_ov                 => density_cc3_mu_nu_ov_cc3
+      procedure :: density_cc3_mu_nu_oo_ov_vv           => density_cc3_mu_nu_oo_ov_vv_cc3
+      procedure :: density_cc3_mu3_nu2_ov               => density_cc3_mu3_nu2_ov_cc3
+      procedure :: density_cc3_mu_nu_ijk                => density_cc3_mu_nu_ijk_cc3
+      procedure :: density_cc3_mu_nu_abc                => density_cc3_mu_nu_abc_cc3
+      procedure :: density_cc3_mu_nu_ov_Z_term          => density_cc3_mu_nu_ov_Z_term_cc3
+      procedure :: density_cc3_mu_nu_vo                 => density_cc3_mu_nu_vo_cc3
+      procedure :: construct_Z_intermediate             => construct_Z_intermediate_cc3
 !
 !     Routines related to the biorthonormalization
 !
-      procedure :: L_R_overlap                            => L_R_overlap_cc3
-      procedure :: L_R_overlap_triples                    => L_R_overlap_triples_cc3
+      procedure :: L_R_overlap                          => L_R_overlap_cc3
+      procedure :: L_R_overlap_triples                  => L_R_overlap_triples_cc3
 !
-      procedure :: scale_triples_biorthonormal_factor     => scale_triples_biorthonormal_factor_cc3
-      procedure :: scale_triples_biorthonormal_factor_abc => scale_triples_biorthonormal_factor_abc_cc3
+      procedure :: scale_triples_biorthonormal_factor   => scale_triples_biorthonormal_factor_cc3
+      procedure :: scale_triples_biorthonormal_factor_abc &
+                   => scale_triples_biorthonormal_factor_abc_cc3
 !
-      procedure :: biorthonormalize_L_and_R               => biorthonormalize_L_and_R_cc3
+      procedure :: biorthonormalize_L_and_R             => biorthonormalize_L_and_R_cc3
 !
 !     Routines for constructing the R-tdm in a noddy way
 !     only for debugging purposes
 !
-      procedure :: right_tdm_debug       => right_tdm_debug_cc3
-      procedure :: left_tdm_debug        => left_tdm_debug_cc3
+      procedure :: right_tdm_debug                      => right_tdm_debug_cc3
+      procedure :: left_tdm_debug                       => left_tdm_debug_cc3
 !
-      procedure :: debug_left_oo         => debug_left_oo_cc3
-      procedure :: debug_left_ov_N7      => debug_left_ov_N7_cc3
-      procedure :: debug_left_ov_N6      => debug_left_ov_N6_cc3
-      procedure :: debug_left_vv         => debug_left_vv_cc3
-      procedure :: debug_right_ov_t3     => debug_right_ov_t3_cc3
-      procedure :: debug_right_ov_Y_term => debug_right_ov_Y_term_cc3
-      procedure :: debug_right_oo        => debug_right_oo_cc3
-      procedure :: debug_right_vv        => debug_right_vv_cc3
-      procedure :: debug_right_ov_R3     => debug_right_ov_R3_cc3
-      procedure :: debug_right_vo        => debug_right_vo_cc3
+      procedure :: debug_left_oo                        => debug_left_oo_cc3
+      procedure :: debug_left_ov_N7                     => debug_left_ov_N7_cc3
+      procedure :: debug_left_ov_N6                     => debug_left_ov_N6_cc3
+      procedure :: debug_left_vv                        => debug_left_vv_cc3
+      procedure :: debug_right_ov_t3                    => debug_right_ov_t3_cc3
+      procedure :: debug_right_ov_Y_term                => debug_right_ov_Y_term_cc3
+      procedure :: debug_right_oo                       => debug_right_oo_cc3
+      procedure :: debug_right_vv                       => debug_right_vv_cc3
+      procedure :: debug_right_ov_R3                    => debug_right_ov_R3_cc3
+      procedure :: debug_right_vo                       => debug_right_vo_cc3
 !
 !     Construction of the full amplitudes
-      procedure :: construct_full_R3     => construct_full_R3_cc3
-      procedure :: construct_full_t3     => construct_full_t3_cc3
-      procedure :: construct_full_tbar3  => construct_full_tbar3_cc3
+!
+      procedure :: construct_full_R3                    => construct_full_R3_cc3
+      procedure :: construct_full_t3                    => construct_full_t3_cc3
+      procedure :: construct_full_tbar3                 => construct_full_tbar3_cc3
 !
 !     Initialize wavefunction
 !
@@ -237,7 +238,7 @@ module cc3_class
       include "prepare_jacobian_transform_cc3_interface.F90"
       include "jacobian_cc3_interface.F90"
       include "jacobian_transpose_cc3_interface.F90"
-      include "cc3_batching_abc_interface.F90"
+      include "abc_batching_cc3_interface.F90"
       include "zop_cc3_interface.F90"
       include "fop_cc3_interface.F90"
 !
@@ -285,7 +286,7 @@ contains
    subroutine cleanup_cc3(wf)
 !!
 !!    Cleanup
-!!    Written by Rolf H. Myhre, 2018
+!!    Written by Rolf H. Myhre and Alexander C. Paul, 2018
 !!
       implicit none
 !
