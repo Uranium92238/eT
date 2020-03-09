@@ -1114,7 +1114,7 @@ contains
       enddo
 !
       if (count_zero_eigenvalues .gt. 0)  &
-         call output%printf('m', 'Warning: T_o has (i0) zero eigenvalues', ints=[count_zero_eigenvalues])
+         call output%warning_msg('T_o has (i0) zero eigenvalues', ints=[count_zero_eigenvalues])
 !
       call mem%dealloc(eigenvalues, wf%n_o)
 !
@@ -1157,7 +1157,7 @@ contains
       enddo
 !
       if (count_zero_eigenvalues .gt. 0)  &
-         call output%warning_msg('Warning: T_v has (i0) zero eigenvalues', ints=[count_zero_eigenvalues])
+         call output%warning_msg('T_v has (i0) zero eigenvalues', ints=[count_zero_eigenvalues])
 !
       call mem%dealloc(eigenvalues, wf%n_v)
 !

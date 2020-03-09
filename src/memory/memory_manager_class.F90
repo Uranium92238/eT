@@ -1496,7 +1496,7 @@ contains
 !
       if (error .ne. 0) then
 !
-         call output%error_msg('Error: could not allocate array with #elements = (i0)', ints=[size_array])
+         call output%error_msg('Could not allocate array with #elements = (i0)', ints=[size_array])
 !
       endif
 !
@@ -1548,7 +1548,7 @@ contains
 !
       if (error .ne. 0) then
 !
-         call output%error_msg('Error: could not allocate array with #elements = (i0)', ints=[size_array])
+         call output%error_msg('Could not allocate array with #elements = (i0)', ints=[size_array])
 !
       endif
 !
@@ -1600,7 +1600,7 @@ contains
 !
       if (error .ne. 0) then
 !
-         call output%error_msg('Error: could not allocate array with #elements = (i0)', ints=[size_array])
+         call output%error_msg('Could not allocate array with #elements = (i0)', ints=[size_array])
 !
       endif
 !
@@ -1652,7 +1652,7 @@ contains
 !
       if (error .ne. 0) then
 !
-         call output%error_msg('Error: could not allocate array with #elements = (i0)', ints=[size_array])
+         call output%error_msg('Could not allocate array with #elements = (i0)', ints=[size_array])
 !
       endif
 !
@@ -1876,7 +1876,7 @@ contains
 !
       if (error .ne. 0) then
 !
-         call output%error_msg('Error: could not allocate array with #elements = (i0)', ints=[size_array])
+         call output%error_msg('Could not allocate array with #elements = (i0)', ints=[size_array])
 !
       endif
 !

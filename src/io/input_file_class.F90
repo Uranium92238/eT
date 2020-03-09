@@ -1971,8 +1971,8 @@ contains
              if(abs(charge(current_atom)).lt.1.0d-8) then
 !             
                 call output%printf('m', 'Electrostatic Embedding QM/MM ', fs='(/t6,a)')
-                call output%printf('m', 'Warning: You have put zero charge on &
-                                   &atom = (i0)', ints=[current_atom], fs='(t6,a)')
+                call output%warning_msg('You put zero charge on atom = (i0)', &
+                                         ints=[current_atom], fs='(t6,a)')
 !                
              endif
 !

@@ -204,7 +204,7 @@ contains
            form=the_file%format_, iostat=io_error, iomsg=io_msg)
 !
       if (io_error .ne. 0) then 
-         call output%error_msg('Error: could not open eT direct file '//trim(the_file%name_)//&
+         call output%error_msg('Could not open eT direct file '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
