@@ -224,7 +224,7 @@ contains
 !
       integer :: i, a
 !
-      call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
+      call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call dcopy((wf%n_v)**2*(wf%n_o)**2, t_aibj, 1, u_aibj, 1)
       call dscal((wf%n_v)**2*(wf%n_o)**2, two, u_aibj, 1)
@@ -245,7 +245,7 @@ contains
                   D_ov,          & ! D_bj
                   1)
 !
-      call mem%dealloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
+      call mem%dealloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !$omp parallel do private(a, i)
       do a = 1, wf%n_v
