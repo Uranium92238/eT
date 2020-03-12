@@ -1,4 +1,4 @@
-image: registry.gitlab.com/et-program/et/ubuntu-for-et-v4
+image: registry.gitlab.com/et-program/et/ubuntu-for-et:v5.0
 
 stages:
   - build
