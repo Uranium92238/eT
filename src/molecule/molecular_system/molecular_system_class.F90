@@ -281,6 +281,8 @@ contains
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use iso_c_binding
+!
       use shell_class, only: shell
 !
       implicit none
@@ -290,12 +292,12 @@ contains
       integer :: s 
 !
       integer :: n_s, i, j
-      integer(i6) :: k
+      integer(c_int) :: k
 !
-      integer(i6), dimension(:), allocatable :: n_shells_on_atoms
-      integer(i6), dimension(:), allocatable :: n_basis_in_shells
-      integer(i6), dimension(:), allocatable :: first_ao_in_shells
-      integer(i6), dimension(:), allocatable :: shell_numbers
+      integer(c_int), dimension(:), allocatable :: n_shells_on_atoms
+      integer(c_int), dimension(:), allocatable :: n_basis_in_shells
+      integer(c_int), dimension(:), allocatable :: first_ao_in_shells
+      integer(c_int), dimension(:), allocatable :: shell_numbers
 !
       real(dp), dimension(:,:), allocatable :: qm_coordinates
       real(dp), dimension(:), allocatable :: qm_charges

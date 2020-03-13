@@ -50,6 +50,7 @@ module mo_integral_tool_class
 !
    use memory_manager_class,  only : mem
    use direct_file_class,     only : direct_file
+   use direct_stream_file_class, only : direct_stream_file
    use timings_class,         only : timings
    use eri_cd_class,          only : eri_cd
    use batching_index_class,  only : batching_index
@@ -68,7 +69,7 @@ module mo_integral_tool_class
 !     Files to keep L_pq^J in MO and T1 bases 
 !
       type(direct_file) :: cholesky_mo
-      type(direct_file) :: cholesky_t1
+      type(direct_stream_file) :: cholesky_t1
 !
 !     Number of occupied, virtual, and number of MOs
 !
@@ -197,7 +198,7 @@ contains
       integrals%n_mo = n_o + n_v
 !
       integrals%cholesky_mo = direct_file('cholesky_mo_vectors', integrals%n_J)
-      integrals%cholesky_t1 = direct_file('cholesky_t1_vectors', integrals%n_J)
+      integrals%cholesky_t1 = direct_stream_file('cholesky_t1_vectors', integrals%n_J)
 !
 !     Default: Cholesky in memory, integral matrix in memory 
 !              depends on amount of memory and "need_g_abcd"
@@ -261,7 +262,7 @@ contains
       integrals%n_mo = integrals_template%n_o + integrals_template%n_v
 !
       integrals%cholesky_mo = direct_file(integrals_template%cholesky_mo%name_, integrals%n_J)
-      integrals%cholesky_t1 = direct_file('cholesky_t1_vectors', integrals%n_J)
+      integrals%cholesky_t1 = direct_stream_file('cholesky_t1_vectors', integrals%n_J)
 !
 !     Memory logicals - Cholesky in memory (or file)? ERI in memory (or file)?
 !
@@ -612,25 +613,23 @@ contains
 !!
       implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals
+      class(mo_integral_tool), intent(inout) :: integrals
 !
       integer, intent(in) :: first_p, last_p
       integer, intent(in) :: first_q, last_q
 !
       real(dp), dimension(integrals%n_J, last_p - first_p + 1, last_q - first_q + 1), intent(out) :: L_J_pq
 !
-      integer :: p, q, pq_rec
+      integer :: q
 !
       call integrals%cholesky_t1%open_('read')
 !
-      do q = 1, last_q - first_q + 1
-         do p = 1, last_p - first_p + 1
+      do q = first_q, last_q
 !
-            pq_rec = integrals%n_mo*(q + first_q - 2) + p + first_p - 1
+         call integrals%cholesky_t1%read_2(L_J_pq(:, :, q - first_q + 1),    &
+                                           integrals%n_mo*(q - 1) + first_p, &
+                                           integrals%n_mo*(q - 1) + last_p)
 !
-            call integrals%cholesky_t1%read_(L_J_pq(:, p, q), pq_rec)
-!
-         enddo
       enddo
 !
       call integrals%cholesky_t1%close_()
@@ -656,7 +655,7 @@ contains
                           last_p - first_p + 1, &
                           last_q - first_q + 1), intent(in) :: L_J_pq
 !
-      integer :: p, q, pq_rec, K  
+      integer :: p, q, K  
 !
       if (integrals%cholesky_mem) then 
 !
@@ -679,16 +678,11 @@ contains
          call integrals%cholesky_t1%open_('write')
 !
          do q = first_q, last_q
-            do p = first_p, last_p 
 !
-               pq_rec = integrals%n_mo*(q - 1) + p
+            call integrals%cholesky_t1%write_2(L_J_pq(:, :, q - first_q + 1),    &
+                                               integrals%n_mo*(q - 1) + first_p, &
+                                               integrals%n_mo*(q - 1) + last_p)
 !
-               call integrals%cholesky_t1%write_(L_J_pq(:,                 &
-                                                        p - first_p + 1,   &
-                                                        q - first_q + 1),  &
-                                                        pq_rec)
-!
-            enddo
          enddo
 !
          call integrals%cholesky_t1%close_()
@@ -834,7 +828,7 @@ contains
 !!
       implicit none 
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(inout) :: integrals 
 !
       integer, intent(in) :: first_p, last_p 
       integer, intent(in) :: first_q, last_q 
@@ -879,7 +873,7 @@ contains
 !!
       implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals
+      class(mo_integral_tool), intent(inout) :: integrals
 !
       integer, intent(in) :: first_p, last_p
       integer, intent(in) :: first_q, last_q
@@ -990,7 +984,7 @@ contains
 !!
       implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals
+      class(mo_integral_tool), intent(inout) :: integrals
 !
       integer, intent(in) :: first_p, last_p
       integer, intent(in) :: first_q, last_q
@@ -1474,7 +1468,7 @@ contains
 !!
       implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals
+      class(mo_integral_tool), intent(inout) :: integrals
 !
       integer, intent(in) :: first_i, last_i
       integer, intent(in) :: first_j, last_j
@@ -1544,7 +1538,7 @@ contains
 !!
       implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals
+      class(mo_integral_tool), intent(inout) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: c_ai
 !
@@ -1624,7 +1618,7 @@ contains
 !!
       implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals
+      class(mo_integral_tool), intent(inout) :: integrals
 !
       integer, intent(in) :: first_i, last_i
       integer, intent(in) :: first_a, last_a
@@ -1702,7 +1696,7 @@ contains
 !!
       implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals
+      class(mo_integral_tool), intent(inout) :: integrals
 !
       integer, intent(in) :: first_i, last_i
       integer, intent(in) :: first_a, last_a
@@ -2052,7 +2046,7 @@ contains
 !
       integer, parameter :: fraction_of_total_mem = 5
 !
-      integer(i15) :: required_mem, mem_real_eri, mem_available
+      integer(i64) :: required_mem, mem_real_eri, mem_available
 !
       if (.not. integrals%eri_t1_mem) call integrals%place_g_pqrs_t1_in_memory()
 !

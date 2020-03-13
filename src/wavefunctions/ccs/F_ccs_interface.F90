@@ -26,7 +26,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
    end subroutine F_transformation_ccs
@@ -41,7 +41,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
 !
@@ -73,7 +73,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
 !
@@ -92,7 +92,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
 !

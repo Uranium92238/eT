@@ -29,7 +29,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iajb
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_a, last_a
@@ -51,7 +51,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijkl
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
@@ -73,7 +73,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijka
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
@@ -95,7 +95,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijak
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
@@ -117,7 +117,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iajk
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
@@ -139,7 +139,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aijk
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
@@ -161,7 +161,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abij
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
@@ -183,7 +183,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aibj
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
@@ -205,7 +205,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aijb
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
@@ -227,7 +227,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iabj
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
@@ -249,7 +249,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijab
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
@@ -271,7 +271,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abci
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_c, last_c
@@ -293,7 +293,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abic
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_c, last_c
@@ -315,7 +315,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aibc
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_c, last_c
@@ -337,7 +337,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iabc
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_c, last_c
@@ -359,7 +359,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abcd
       integer, optional, intent(in) :: first_d, last_d
       integer, optional, intent(in) :: first_c, last_c

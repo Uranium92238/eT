@@ -139,7 +139,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(ccsd), intent(inout) :: wf
 !
 !     Incoming vector b
 !

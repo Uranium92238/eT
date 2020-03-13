@@ -1106,7 +1106,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       character(len=*), intent(in) :: r_or_l
 !

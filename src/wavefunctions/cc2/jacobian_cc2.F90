@@ -81,7 +81,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(cc2), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !

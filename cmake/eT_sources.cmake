@@ -32,14 +32,15 @@ set(eT_fortran_sources
    src/integrals/mo_integral_tool_class.F90
 #
    src/io/abstract_file_class.F90
+   src/io/abstract_stream_class.F90
    src/io/abstract_out_file_class.F90
    src/io/abstract_other_file_class.F90
+   src/io/direct_stream_file_class.F90
    src/io/direct_file_class.F90
    src/io/sequential_file_class.F90
    src/io/input_file_class.F90
    src/io/section_class.F90
    src/io/output_file_class.F90
-   src/io/io_utilities.F90
    src/io/global_out.F90
    src/io/global_in.F90
 #

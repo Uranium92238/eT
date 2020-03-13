@@ -30,7 +30,7 @@
 !!
       implicit none
 !
-      class(doubles), intent(in) :: wf
+      class(doubles), intent(inout) :: wf
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
 !
@@ -54,7 +54,7 @@
 !!
       implicit none
 !
-      class(doubles), intent(in) :: wf
+      class(doubles), intent(inout) :: wf
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
 !

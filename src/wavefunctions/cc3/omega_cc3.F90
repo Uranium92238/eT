@@ -315,7 +315,9 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call single_record_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_t, g_dbic)
+         call wf%g_bdck_t%read_interval(g_bdci, batch_i)
+         call wf%g_dbkc_t%read_interval(g_dbic, batch_i)
+!
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
 !
@@ -323,20 +325,26 @@ contains
 !
             call batch_j%determine_limits(j_batch)
 !
-            call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, &
-                                        wf%g_jlkc_t, g_jlic, wf%L_jbkc_t, L_jbic)
+            call wf%g_ljck_t%read_compound(g_ljci, batch_j, batch_i)
+            call wf%g_jlkc_t%read_compound(g_jlic, batch_j, batch_i)
+            call wf%L_jbkc_t%read_compound(L_jbic, batch_j, batch_i)
+!
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
             L_jbic_p => L_jbic
 !
             if (j_batch .ne. i_batch) then
 !
-               call single_record_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_t, g_dbjc)
+               call wf%g_bdck_t%read_interval(g_bdcj, batch_j)
+               call wf%g_dbkc_t%read_interval(g_dbjc, batch_j)
+!
                g_bdcj_p => g_bdcj
                g_dbjc_p => g_dbjc
 !
-               call compound_record_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, &
-                                          wf%g_jlkc_t, g_iljc, wf%L_jbkc_t, L_ibjc)
+               call wf%g_ljck_t%read_compound(g_licj, batch_i, batch_j)
+               call wf%g_jlkc_t%read_compound(g_iljc, batch_i, batch_j)
+               call wf%L_jbkc_t%read_compound(L_ibjc, batch_i, batch_j)
+!
                g_licj_p => g_licj
                g_iljc_p => g_iljc
                L_ibjc_p => L_ibjc
@@ -358,30 +366,40 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc)
+                  call wf%g_bdck_t%read_interval(g_bdck, batch_k)
+                  call wf%g_dbkc_t%read_interval(g_dbkc, batch_k)
+!
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
 !
-                  call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, &
-                                             wf%g_jlkc_t, g_klic, wf%L_jbkc_t, L_kbic)
+                  call wf%g_ljck_t%read_compound(g_lkci, batch_k, batch_i)
+                  call wf%g_jlkc_t%read_compound(g_klic, batch_k, batch_i)
+                  call wf%L_jbkc_t%read_compound(L_kbic, batch_k, batch_i)
+!
                   g_lkci_p => g_lkci
                   g_klic_p => g_klic
                   L_kbic_p => L_kbic
 !
-                  call compound_record_reader(batch_i, batch_k, wf%g_ljck_t, g_lick, &
-                                             wf%g_jlkc_t, g_ilkc, wf%L_jbkc_t, L_ibkc)
+                  call wf%g_ljck_t%read_compound(g_lick, batch_i, batch_k)
+                  call wf%g_jlkc_t%read_compound(g_ilkc, batch_i, batch_k)
+                  call wf%L_jbkc_t%read_compound(L_ibkc, batch_i, batch_k)
+!
                   g_lick_p => g_lick
                   g_ilkc_p => g_ilkc
                   L_ibkc_p => L_ibkc
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, &
-                                             wf%g_jlkc_t, g_kljc, wf%L_jbkc_t, L_kbjc)
+                  call wf%g_ljck_t%read_compound(g_lkcj, batch_k, batch_j)
+                  call wf%g_jlkc_t%read_compound(g_kljc, batch_k, batch_j)
+                  call wf%L_jbkc_t%read_compound(L_kbjc, batch_k, batch_j)
+!
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
                   L_kbjc_p => L_kbjc
 !
-                  call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck, &
-                                             wf%g_jlkc_t, g_jlkc, wf%L_jbkc_t, L_jbkc)
+                  call wf%g_ljck_t%read_compound(g_ljck, batch_j, batch_k)
+                  call wf%g_jlkc_t%read_compound(g_jlkc, batch_j, batch_k)
+                  call wf%L_jbkc_t%read_compound(L_jbkc, batch_j, batch_k)
+!
                   g_ljck_p => g_ljck
                   g_jlkc_p => g_jlkc
                   L_jbkc_p => L_jbkc
@@ -420,8 +438,10 @@ contains
                   g_ilkc_p => g_iljc
                   L_ibkc_p => L_ibjc
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, &
-                                             wf%g_jlkc_t, g_kljc, wf%L_jbkc_t, L_kbjc)
+                  call wf%g_ljck_t%read_compound(g_lkcj, batch_k, batch_j)
+                  call wf%g_jlkc_t%read_compound(g_kljc, batch_k, batch_j)
+                  call wf%L_jbkc_t%read_compound(L_kbjc, batch_k, batch_j)
+!
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
                   L_kbjc_p => L_kbjc
@@ -587,7 +607,7 @@ contains
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      wf%g_bdck_t = direct_file('g_bdck_t',wf%n_v**3)
+      wf%g_bdck_t = direct_stream_file('g_bdck_t',wf%n_v**3)
       call wf%g_bdck_t%open_('write')
 !
       do current_k_batch = 1,batch_k%num_batches
@@ -605,7 +625,7 @@ contains
 !
          call sort_1234_to_2134(g_pqrs,h_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_k%length)
 !
-         call single_record_writer(batch_k, wf%g_bdck_t, h_pqrs)
+         call wf%g_bdck_t%write_interval(h_pqrs, batch_k)
 !
          call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
@@ -618,7 +638,7 @@ contains
 !     (db|kc)
 !     Same batching
 !
-      wf%g_dbkc_t = direct_file('g_dbkc_t',wf%n_v**3)
+      wf%g_dbkc_t = direct_stream_file('g_dbkc_t',wf%n_v**3)
       call wf%g_dbkc_t%open_('write')
 !
       do current_k_batch = 1,batch_k%num_batches
@@ -636,7 +656,7 @@ contains
 !
          call sort_1234_to_2413(g_pqrs,h_pqrs,wf%n_v,wf%n_v,batch_k%length,wf%n_v)
 !
-         call single_record_writer(batch_k, wf%g_dbkc_t, h_pqrs)
+         call wf%g_dbkc_t%write_interval(h_pqrs, batch_k)
 !
          call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
@@ -653,7 +673,7 @@ contains
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      wf%g_ljck_t = direct_file('g_ljck_t',wf%n_v*wf%n_o)
+      wf%g_ljck_t = direct_stream_file('g_ljck_t',wf%n_v*wf%n_o)
       call wf%g_ljck_t%open_('write')
 !
       do current_k_batch = 1,batch_k%num_batches
@@ -671,7 +691,7 @@ contains
 !
          call sort_1234_to_1324(g_pqrs,h_pqrs,wf%n_o,wf%n_o,wf%n_v,batch_k%length)
 !
-         call compound_record_writer(wf%n_o, batch_k, wf%g_ljck_t, h_pqrs)
+         call wf%g_ljck_t%write_compound_full_batch(h_pqrs, wf%n_o, batch_k)
 !
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
          call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
@@ -683,7 +703,7 @@ contains
 !     (jl|kc)
 !     Same batching
 !
-      wf%g_jlkc_t = direct_file('g_jlkc_t',wf%n_v*wf%n_o)
+      wf%g_jlkc_t = direct_stream_file('g_jlkc_t',wf%n_v*wf%n_o)
       call wf%g_jlkc_t%open_('write')
 !
       do current_k_batch = 1,batch_k%num_batches
@@ -701,7 +721,7 @@ contains
 !
          call sort_1234_to_4213(g_pqrs, h_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
 !
-         call compound_record_writer(wf%n_o, batch_k, wf%g_jlkc_t, h_pqrs)
+         call wf%g_jlkc_t%write_compound_full_batch(h_pqrs, wf%n_o, batch_k)
 !
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
@@ -720,7 +740,7 @@ contains
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      wf%L_jbkc_t = direct_file('L_jbkc_t',wf%n_v**2)
+      wf%L_jbkc_t = direct_stream_file('L_jbkc_t',wf%n_v**2)
       call wf%L_jbkc_t%open_('write')
 !
       call batch_k%determine_limits(1)
@@ -752,7 +772,7 @@ contains
             enddo
          enddo
 !
-         call compound_record_writer(wf%n_o, batch_k, wf%L_jbkc_t, h_pqrs)
+         call wf%L_jbkc_t%write_compound_full_batch(h_pqrs, wf%n_o, batch_k)
 !
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
 !

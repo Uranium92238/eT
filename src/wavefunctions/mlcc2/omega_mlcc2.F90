@@ -93,7 +93,7 @@ contains
 !!
       implicit none
 !
-      class(mlcc2), intent(in) :: wf
+      class(mlcc2), intent(inout) :: wf
 !
       integer, intent(in) :: n_cc2_o, n_cc2_v, first_cc2_o, first_cc2_v, last_cc2_o, last_cc2_v
 !
@@ -196,7 +196,7 @@ contains
 !!
       implicit none
 !
-      class(mlcc2), intent(in) :: wf
+      class(mlcc2), intent(inout) :: wf
 
       integer, intent(in) :: n_cc2_o, n_cc2_v, first_cc2_o, first_cc2_v, last_cc2_o, last_cc2_v
 !

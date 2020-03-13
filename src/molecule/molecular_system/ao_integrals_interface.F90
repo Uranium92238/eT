@@ -235,8 +235,6 @@
       real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(out) :: mu_Y ! y component 
       real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(out) :: mu_Z ! z component
 !
-      integer(i6) :: s1_4, s2_4
-!
    end subroutine construct_ao_mu_wx_molecular_system
 !
 !

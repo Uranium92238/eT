@@ -170,7 +170,7 @@ contains
       implicit none
       real(dp) :: charges(*)
       real(dp) :: coordinates(*)
-      integer(i6) :: n_points
+      integer(c_int) :: n_points
 !
       call initialize_potential_c(charges,coordinates,n_points)
 !

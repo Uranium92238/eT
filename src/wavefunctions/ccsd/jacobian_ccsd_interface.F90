@@ -49,7 +49,7 @@
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(ccsd), intent(inout) :: wf
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
    end subroutine jacobian_transformation_ccsd
