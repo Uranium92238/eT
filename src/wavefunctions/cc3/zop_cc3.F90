@@ -471,7 +471,9 @@ contains
 !
          call batch_a%determine_limits(a_batch)
 !
-         call single_record_reader(batch_a, wf%g_ljck_t_v, g_ljak, wf%g_jlkc_t_v, g_jlka)
+         call wf%g_ljck_t_v%read_interval(g_ljak, batch_a)
+         call wf%g_jlkc_t_v%read_interval(g_jlka, batch_a)
+!
          g_ljak_p => g_ljak
          g_jlka_p => g_jlka
 !
@@ -479,21 +481,25 @@ contains
 !
             call batch_b%determine_limits(b_batch)
 !
-            call compound_record_reader(batch_b, batch_a, wf%g_bdck_t_v, g_bdak, &
-                                       wf%g_dbkc_t_v, g_dbka)
-            call compound_record_reader(batch_a, batch_b, wf%L_jbkc_t_v, L_jakb)
+            call wf%g_bdck_t_v%read_compound(g_bdak, batch_b, batch_a)
+            call wf%g_dbkc_t_v%read_compound(g_dbka, batch_b, batch_a)
+            call wf%L_jbkc_t_v%read_compound(L_jakb, batch_a, batch_b)
+!
             g_bdak_p => g_bdak
             g_dbka_p => g_dbka
             L_jakb_p => L_jakb
 !
             if (b_batch .ne. a_batch) then
 !
-               call single_record_reader(batch_b, wf%g_ljck_t_v, g_ljbk, wf%g_jlkc_t_v, g_jlkb)
+               call wf%g_ljck_t_v%read_interval(g_ljbk, batch_b)
+               call wf%g_jlkc_t_v%read_interval(g_jlkb, batch_b)
+!
                g_ljbk_p => g_ljbk
                g_jlkb_p => g_jlkb
 !
-               call compound_record_reader(batch_a, batch_b, wf%g_bdck_t_v, g_adbk, &
-                                          wf%g_dbkc_t_v, g_dakb)
+               call wf%g_bdck_t_v%read_compound(g_adbk, batch_a, batch_b)
+               call wf%g_dbkc_t_v%read_compound(g_dakb, batch_a, batch_b)
+!
                g_adbk_p => g_adbk
                g_dakb_p => g_dakb
 !
@@ -513,28 +519,36 @@ contains
 !
                if (c_batch .ne. b_batch) then ! c_batch != b_batch and c_batch != a_batch
 !
-                  call single_record_reader(batch_c, wf%g_ljck_t_v, g_ljck, wf%g_jlkc_t_v, g_jlkc)
+                  call wf%g_ljck_t_v%read_interval(g_ljck, batch_c)
+                  call wf%g_jlkc_t_v%read_interval(g_jlkc, batch_c)
+!
                   g_ljck_p => g_ljck
                   g_jlkc_p => g_jlkc
 !
-                  call compound_record_reader(batch_c, batch_a, wf%g_bdck_t_v, g_cdak, &
-                                             wf%g_dbkc_t_v, g_dcka)
+                  call wf%g_bdck_t_v%read_compound(g_cdak, batch_c, batch_a)
+                  call wf%g_dbkc_t_v%read_compound(g_dcka, batch_c, batch_a)
+!
                   g_cdak_p => g_cdak
                   g_dcka_p => g_dcka
 !
-                  call compound_record_reader(batch_a, batch_c, wf%g_bdck_t_v, g_adck, &
-                                             wf%g_dbkc_t_v, g_dakc, wf%L_jbkc_t_v, L_jakc)
+                  call wf%g_bdck_t_v%read_compound(g_adck, batch_a, batch_c)
+                  call wf%g_dbkc_t_v%read_compound(g_dakc, batch_a, batch_c)
+                  call wf%L_jbkc_t_v%read_compound(L_jakc, batch_a, batch_c)
+!
                   g_adck_p => g_adck
                   g_dakc_p => g_dakc
                   L_jakc_p => L_jakc
 !
-                  call compound_record_reader(batch_c, batch_b, wf%g_bdck_t_v, g_cdbk, &
-                                             wf%g_dbkc_t_v, g_dckb)
+                  call wf%g_bdck_t_v%read_compound(g_cdbk, batch_c, batch_b)
+                  call wf%g_dbkc_t_v%read_compound(g_dckb, batch_c, batch_b)
+!
                   g_cdbk_p => g_cdbk
                   g_dckb_p => g_dckb
 !
-                  call compound_record_reader(batch_b, batch_c, wf%g_bdck_t_v, g_bdck, &
-                                             wf%g_dbkc_t_v, g_dbkc, wf%L_jbkc_t_v, L_jbkc)
+                  call wf%g_bdck_t_v%read_compound(g_bdck, batch_b, batch_c)
+                  call wf%g_dbkc_t_v%read_compound(g_dbkc, batch_b, batch_c)
+                  call wf%L_jbkc_t_v%read_compound(L_jbkc, batch_b, batch_c)
+!
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
                   L_jbkc_p => L_jbkc
@@ -571,8 +585,10 @@ contains
                   L_jakc_p => L_jakb
 !
 !                 b == c, thus L_jbkc == L_jckb
-                  call compound_record_reader(batch_c, batch_b, wf%g_bdck_t_v, g_cdbk, &
-                                             wf%g_dbkc_t_v, g_dckb, wf%L_jbkc_t_v, L_jbkc)
+                  call wf%g_bdck_t_v%read_compound(g_cdbk, batch_c, batch_b)
+                  call wf%g_dbkc_t_v%read_compound(g_dckb, batch_c, batch_b)
+                  call wf%L_jbkc_t_v%read_compound(L_jbkc, batch_c, batch_b)
+!
                   g_cdbk_p => g_cdbk
                   g_dckb_P => g_dckb
 !
@@ -1106,7 +1122,8 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call single_record_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_t, g_dbic)
+         call wf%g_bdck_t%read_interval(g_bdci, batch_i)
+         call wf%g_dbkc_t%read_interval(g_dbic, batch_i)
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
 !
@@ -1114,9 +1131,9 @@ contains
 !
             call batch_j%determine_limits(j_batch)
 !
-            call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, &
-                                        wf%g_jlkc_t, g_jlic)
-            call compound_record_reader(batch_i, batch_j, wf%L_jbkc_t, L_ibjc)
+            call wf%g_ljck_t%read_compound(g_ljci, batch_j, batch_i)
+            call wf%g_jlkc_t%read_compound(g_jlic, batch_j, batch_i)
+            call wf%L_jbkc_t%read_compound(L_ibjc, batch_i, batch_j)
 !
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
@@ -1124,12 +1141,15 @@ contains
 !
             if (j_batch .ne. i_batch) then
 !
-               call single_record_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_t, g_dbjc)
+               call wf%g_bdck_t%read_interval(g_bdcj, batch_j)
+               call wf%g_dbkc_t%read_interval(g_dbjc, batch_j)
+!
                g_bdcj_p => g_bdcj
                g_dbjc_p => g_dbjc
 !
-               call compound_record_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, &
-                                           wf%g_jlkc_t, g_iljc)
+               call wf%g_ljck_t%read_compound(g_licj, batch_i, batch_j)
+               call wf%g_jlkc_t%read_compound(g_iljc, batch_i, batch_j)
+!
                g_licj_p => g_licj
                g_iljc_p => g_iljc
 !
@@ -1149,30 +1169,35 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc)
+                  call wf%g_bdck_t%read_interval(g_bdck, batch_k)
+                  call wf%g_dbkc_t%read_interval(g_dbkc, batch_k)
+!
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
 ! 
-                  call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, &
-                                              wf%g_jlkc_t, g_klic)
+                  call wf%g_ljck_t%read_compound(g_lkci, batch_k, batch_i)
+                  call wf%g_jlkc_t%read_compound(g_klic, batch_k, batch_i)
 !
                   g_lkci_p => g_lkci
                   g_klic_p => g_klic
 !
-                  call compound_record_reader(batch_i, batch_k, wf%g_ljck_t, g_lick, & 
-                                              wf%g_jlkc_t, g_ilkc, wf%L_jbkc_t, L_ibkc)
+                  call wf%g_ljck_t%read_compound(g_lick, batch_i, batch_k)
+                  call wf%g_jlkc_t%read_compound(g_ilkc, batch_i, batch_k)
+                  call wf%L_jbkc_t%read_compound(L_ibkc, batch_i, batch_k)
 !
                   g_lick_p => g_lick
                   g_ilkc_p => g_ilkc
                   L_ibkc_p => L_ibkc
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, &
-                                              wf%g_jlkc_t, g_kljc)
+                  call wf%g_ljck_t%read_compound(g_lkcj, batch_k, batch_j)
+                  call wf%g_jlkc_t%read_compound(g_kljc, batch_k, batch_j)
+!
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
 !
-                  call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck, & 
-                                             wf%g_jlkc_t, g_jlkc, wf%L_jbkc_t, L_jbkc)
+                  call wf%g_ljck_t%read_compound(g_ljck, batch_j, batch_k)
+                  call wf%g_jlkc_t%read_compound(g_jlkc, batch_j, batch_k)
+                  call wf%L_jbkc_t%read_compound(L_jbkc, batch_j, batch_k)
 !
                   g_ljck_p => g_ljck
                   g_jlkc_p => g_jlkc
@@ -1209,8 +1234,10 @@ contains
                   g_ilkc_p => g_iljc
                   L_ibkc_p => L_ibjc
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, &
-                                             wf%g_jlkc_t, g_kljc, wf%L_jbkc_t, L_jbkc)
+                  call wf%g_ljck_t%read_compound(g_lkcj, batch_k, batch_j)
+                  call wf%g_jlkc_t%read_compound(g_kljc, batch_k, batch_j)
+                  call wf%L_jbkc_t%read_compound(L_jbkc, batch_k, batch_j)
+!
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
 !
@@ -1381,10 +1408,10 @@ contains
 !
       if (present(keep_Y) .and. keep_Y) then
 !
-         wf%Y_clik_tbar = direct_file('Y_clik_tbar', wf%n_v*wf%n_o**2)
+         wf%Y_clik_tbar = direct_stream_file('Y_clik_tbar', wf%n_v*wf%n_o**2)
          call wf%Y_clik_tbar%open_('write')
 !
-         call single_record_writer(wf%n_o, wf%Y_clik_tbar, Y_clik)
+         call wf%Y_clik_tbar%write_4(Y_clik, 1, wf%n_o)
 !
          call wf%Y_clik_tbar%close_()
 !

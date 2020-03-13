@@ -148,7 +148,7 @@ contains
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
 !
       character(len=*), intent(in) :: r_or_l
 !

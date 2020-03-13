@@ -3082,7 +3082,7 @@ contains
       type(interval) :: A_interval, B_interval, C_interval, D_interval
 !
 !     Available memory
-      integer(i15) :: mem_available
+      integer(i64) :: mem_available
 !
       call cpu_time(s_build_vectors_time)
 !

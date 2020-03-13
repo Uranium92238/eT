@@ -802,8 +802,8 @@ contains
 !
       real(kind=4), dimension(:), intent(in) :: vector
 !
-      integer(i6) :: int1, int2
-      integer(i6) :: n_z_sp, n_y_sp, n_x_sp !Single precision 
+      integer(i32) :: int1, int2
+      integer(i32) :: n_z_sp, n_y_sp, n_x_sp !Single precision 
 !
       real(kind=4) :: min_z_sp, max_z_sp, min_y_sp, max_y_sp, min_x_sp, max_x_sp !Single precision
 !
@@ -813,9 +813,9 @@ contains
       int1 = 3 !Required integer that must always be 3
       int2 = 200 !Required integer that can be anything
 !
-      n_z_sp = int(n_z,i6)
-      n_y_sp = int(n_y,i6)
-      n_x_sp = int(n_x,i6)
+      n_z_sp = int(n_z,i32)
+      n_y_sp = int(n_y,i32)
+      n_x_sp = int(n_x,i32)
 !
       min_z_sp = real(min_z,4)
       max_z_sp = real(max_z,4)
@@ -865,8 +865,8 @@ contains
 !
       real(kind=4), dimension(:), intent(out) :: vector
 !
-      integer(i6) :: int1, int2
-      integer(i6) :: n_z_sp, n_y_sp, n_x_sp !Single precision 
+      integer(i32) :: int1, int2
+      integer(i32) :: n_z_sp, n_y_sp, n_x_sp !Single precision 
 !
       real(kind=4) :: min_z_sp, max_z_sp, min_y_sp, max_y_sp, min_x_sp, max_x_sp !Single precision
 !

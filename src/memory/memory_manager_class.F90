@@ -70,12 +70,12 @@ module memory_manager_class
 !
 !     The total amount of memory specified by user (standard: 8 GB)
 !
-      integer(i15), private :: total
+      integer(i64), private :: total
 !
 !     The amount of memory currently available, based on the arrays currently allocated
 !     (memory used by objects and local variables are not included in this estimate)
 !
-      integer(i15), private :: available
+      integer(i64), private :: available
 !
 !     Unit for memory, default is GB
 !
@@ -298,7 +298,7 @@ contains
 !
       class(memory_manager), intent(in) :: mem
 !
-      integer(i15) :: memory
+      integer(i64) :: memory
 !
       memory = mem%available
 !
@@ -317,7 +317,7 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: input_mem
+      integer(i64), intent(in) :: input_mem
 !
       logical, intent(in), optional :: all_digits
 !
@@ -1502,8 +1502,7 @@ contains
 !
 !     Update the available memory
 !
-!     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1))/8
       mem%available = mem%available - int_size*size_array
@@ -1554,8 +1553,7 @@ contains
 !
 !     Update the available memory
 !
-!     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1,1))/8
       mem%available = mem%available - int_size*size_array
@@ -1606,8 +1604,7 @@ contains
 !
 !     Update the available memory
 !
-!     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1,1,1))/8
       mem%available = mem%available - int_size*size_array
@@ -1658,8 +1655,7 @@ contains
 !
 !     Update the available memory
 !
-!     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1,1,1,1))/8
       mem%available = mem%available - int_size*size_array
@@ -1710,10 +1706,10 @@ contains
 !
 !     Update the available memory
 !
-!     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1))/8
+!
       mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_i_1_memory_manager
@@ -1753,8 +1749,7 @@ contains
 !
 !     Update the available memory
 !
-!     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1,1))/8
       mem%available = mem%available + int_size*size_array
@@ -1796,8 +1791,7 @@ contains
 !
 !     Update the available memory
 !
-!     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1,1,1))/8
       mem%available = mem%available + int_size*size_array
@@ -1839,8 +1833,7 @@ contains
 !
 !     Update the available memory
 !
-!     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1,1,1,1))/8
       mem%available = mem%available + int_size*size_array

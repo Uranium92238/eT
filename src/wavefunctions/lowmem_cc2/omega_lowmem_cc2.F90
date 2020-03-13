@@ -87,7 +87,7 @@ contains
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
@@ -217,7 +217,7 @@ contains
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
@@ -399,7 +399,7 @@ contains
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o

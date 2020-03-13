@@ -27,7 +27,6 @@ module mm_class
    use array_utilities
    use parameters
    use atomic_class
-   use io_utilities
    use memory_manager_class
 !
    implicit none

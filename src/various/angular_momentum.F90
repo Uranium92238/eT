@@ -25,7 +25,7 @@ module angular_momentum
 !!
 !!    Defines labels for angular momentum functions
 !!
-!!       In declarations:   "real(dp) :: foo", "integer(i15) :: foo_int", etc.
+!!       In declarations:   "real(dp) :: foo", "integer(i64) :: foo_int", etc.
 !!       In record-lengths: "recl=dp*200" (200 double precision numbers per record)
 !!
 !

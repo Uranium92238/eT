@@ -85,7 +85,7 @@ contains
 !!
       implicit none
 !
-      class(mlcc2), intent(in) :: wf
+      class(mlcc2), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout)   :: c
 !
@@ -235,7 +235,7 @@ contains
 !!
       implicit none
 !
-      class(mlcc2), intent(in) :: wf
+      class(mlcc2), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(out)   :: rho_ai

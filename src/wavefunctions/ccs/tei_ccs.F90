@@ -43,7 +43,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iajb
 !
@@ -113,7 +113,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijkl
 !
@@ -183,7 +183,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijka
 !
@@ -247,7 +247,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijak
 !
@@ -311,7 +311,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iajk
 !
@@ -375,7 +375,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aijk
 !
@@ -439,7 +439,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abij
 !
@@ -503,7 +503,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aibj
 !
@@ -573,7 +573,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aijb
 !
@@ -637,7 +637,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iabj
 !
@@ -701,7 +701,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijab
 !
@@ -769,7 +769,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abci
 !
@@ -837,7 +837,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abic
 !
@@ -905,7 +905,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aibc
 !
@@ -973,7 +973,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iabc
 !
@@ -1041,7 +1041,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abcd
 !

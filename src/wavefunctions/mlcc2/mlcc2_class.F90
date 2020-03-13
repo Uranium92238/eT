@@ -671,7 +671,7 @@ contains
 !!
       implicit none 
 !
-      class(mlcc2), intent(in) :: wf 
+      class(mlcc2), intent(inout) :: wf 
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation 
 !

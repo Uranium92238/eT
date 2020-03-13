@@ -1163,6 +1163,8 @@ contains
 !!
 !!    Implementation through LibInt interface
 !!
+      use iso_c_binding
+!
       implicit none 
 !       
 !     input variables
@@ -1180,7 +1182,7 @@ contains
 ! 
 !     stuff for libint
 ! 
-      integer(i6) :: n_variables_i6
+      integer(c_int) :: n_variables_c
       real(dp), dimension(1) :: fake_charge
 ! 
 !     internal variables
@@ -1240,11 +1242,11 @@ contains
 ! 
          if(multipole.eq.0) then 
 !
-            n_variables_i6 = int(size(charges),kind=i6)
+            n_variables_c = int(size(charges), kind=c_int)
 !            
             call initialize_potential_c(charges, &
                                         points_coord*angstrom_to_bohr, &
-                                        n_variables_i6)
+                                        n_variables_c)
             call wf%get_ao_v_wx(elec_fock)
 !            
          else if(multipole.ge.1) then 
@@ -1268,12 +1270,12 @@ contains
 !      
                call zero_array(fock_internal_ao,wf%n_ao*wf%n_ao)
 !               
-               n_variables_i6 = int(1,kind=i6)
+               n_variables_c = int(1, kind=c_int)
                fake_charge(1) = 1.0d0
 !               
                call initialize_potential_c(fake_charge, &
                                            points_coord(:,point)*angstrom_to_bohr, &
-                                           n_variables_i6)
+                                           n_variables_c)
                call wf%get_ao_v_wx(fock_internal_ao)
 !      
                property_points(point) = -one/two * ddot((wf%n_ao)**2,ao_density,1,fock_internal_ao,1)
