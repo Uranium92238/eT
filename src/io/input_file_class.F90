@@ -37,13 +37,22 @@ module input_file_class
       character(len=30), allocatable :: rf_wfs(:)
       character(len=30), allocatable :: cc_wfs(:)
 !
+      integer :: n_keyword_lines ! Number of lines excluding the geometry section
+      integer :: n_geometry_lines    ! Number of QM atoms 
+      integer :: n_mm_atom_lines ! Number of MM atoms
+!
+      character(len=200), dimension(:), allocatable :: input_  ! Array of the input 
+                                                               ! lines excluding geometry
+!
+      character(len=200), dimension(:), allocatable :: geometry    ! Array of the QM input geometry    
+      character(len=200), dimension(:), allocatable :: mm_geometry ! Array of the MM input geometry     
+!
    contains
 !
       procedure :: open_                                                => open_input_file
       procedure :: close_                                               => close_input_file
 !
       procedure :: check_for_errors                                     => check_for_errors_input_file
-      procedure :: print_to_output                                      => print_to_output_input_file
 !
       procedure :: requested_section                                    => requested_section_input_file
       procedure :: requested_keyword_in_section                         => requested_keyword_in_section_input_file
@@ -61,12 +70,10 @@ module input_file_class
       procedure :: requested_cc_calculation                             => requested_cc_calculation_input_file
 !
       procedure, private :: get_string_keyword_in_section_wo_safety     => get_string_keyword_in_section_wo_safety_input_file
-      procedure, private :: move_to_section                             => move_to_section_input_file
-      procedure, private :: move_to_mm_geometry                         => move_to_mm_geometry_input_file
+      procedure, private :: get_section_limits                          => get_section_limits_input_file
       procedure, private :: check_section_for_illegal_keywords          => check_section_for_illegal_keywords_input_file
       procedure, private :: check_for_illegal_sections                  => check_for_illegal_sections_input_file
       procedure, private :: print_sections                              => print_sections_input_file
-      procedure, private :: read_adjustl_lower                          => read_adjustl_lower_input_file
 !
       procedure, nopass, private :: string_is_comment                   => string_is_comment_input_file
       procedure, nopass, private :: extract_keyword_from_string         => extract_keyword_from_string_input_file
@@ -95,6 +102,11 @@ module input_file_class
       procedure :: get_required_dp_keyword_in_section_input_file
 !
       procedure :: is_string_in_cs_list   => is_string_in_cs_list_input_file
+!
+      procedure :: read_keywords_and_geometry => read_keywords_and_geometry_input_file
+!
+      procedure :: cleanup_geometry    => cleanup_geometry_input_file
+      procedure :: cleanup_keywords    => cleanup_keywords_input_file
 !
    end type input_file
 !
@@ -625,24 +637,18 @@ contains
 !
       class(input_file) :: the_file
 !
-      character(len=200) :: line
-!
-      integer :: n_elements, k
+      integer :: k, start_, end_, i
 !
       logical :: recognized 
-!  
-      rewind(the_file%unit_)
 !
-      line = the_file%read_adjustl_lower()
+      do i = 1, the_file%n_keyword_lines 
 !
-      do while (trim(line) /= 'end geometry' .and. trim(line) /= '--') 
-!
-         if (line(1 : 3) == 'end') then
+         if (the_file%input_(i)(1 : 3) == 'end') then
 !
 !           Located the end of a section -
 !           attempt to move to the beginning of that section => fails if inconsistent beginning and end
 !
-            call the_file%move_to_section(trim(adjustl(line(4 : 200))), n_elements)
+            call the_file%get_section_limits(trim(adjustl(the_file%input_(i)(4 : 200))), start_, end_)
 !
 !           Check whether section name is valid 
 !
@@ -650,14 +656,15 @@ contains
 !
             do k = 1, size(the_file%sections)
 !
-               if (trim(the_file%sections(k)%name_) == trim(adjustl(line(4 : 200)))) recognized = .true. 
+               if (trim(the_file%sections(k)%name_) == trim(adjustl(the_file%input_(i)(4 : 200)))) &
+                  recognized = .true. 
 !
             enddo
 !
             if (.not. recognized) then 
 !
                call output%printf('m', 'Could not recognize section named "' //  &
-                                   trim(adjustl(line(4 : 200))) // '".', fs='(/t3,a)')
+                                   trim(adjustl(the_file%input_(i)(4 : 200))) // '".', fs='(/t3,a)')
 !
                call the_file%print_sections()
 !
@@ -665,17 +672,7 @@ contains
 !
             endif 
 !
-!           Move to the end of the section again 
-!
-            do k = 1, n_elements + 1
-!
-               read(the_file%unit_, *) 
-!
-            enddo
-!
-         endif 
-!
-         line = the_file%read_adjustl_lower()
+         endif
 !
       enddo
 !
@@ -718,28 +715,26 @@ contains
 !
       class(section) :: the_section
 !
-      character(len=200) :: string, keyword 
+      character(len=200) :: keyword 
 !
       logical :: recognized 
 !
-      integer :: n_records, record, k
+      integer :: record, k, start_, end_
 !
       integer, dimension(:), allocatable :: keywords_instances
 !
       allocate(keywords_instances(size(the_section%keywords)))
       keywords_instances = 0
 !
-      call the_file%move_to_section(the_section%name_, n_records)
+      call the_file%get_section_limits(the_section%name_, start_, end_)
 !
-      do record = 1, n_records
+      do record = start_ + 1, end_ - 1
 !
          recognized = .false.
 !
-         read(the_file%unit_, '(a200)') string 
+         if (.not. the_file%string_is_comment(the_file%input_(record))) then 
 !
-         if (.not. the_file%string_is_comment(string)) then 
-!
-            call the_file%extract_keyword_from_string(string, keyword)
+            call the_file%extract_keyword_from_string(the_file%input_(record), keyword)
 !
             do k = 1, size(the_section%keywords)
 !
@@ -1215,31 +1210,30 @@ contains
 !
       character(len=200) :: keyword_value 
 !
-      integer :: n_records, record
+      integer :: record, start_, end_
 !
-      character(len=200) :: line, local_keyword
+      character(len=200) :: local_keyword
 !
 !     Move to the requested section & get the number of records in that section 
 !
-      call the_file%move_to_section(section, n_records)
+      call the_file%get_section_limits(section, start_, end_)
 !
 !     Loop through records within the section to locate & get the keyword value 
 !
-      do record = 1, n_records
+      do record = start_ + 1, end_ - 1
 !
-         read(the_file%unit_, '(a200)') line 
-!
-         if (the_file%string_is_comment(line)) then
+         if (the_file%string_is_comment(the_file%input_(record))) then
 !
             cycle
 !
          else  
 !
-            call the_file%extract_keyword_from_string(line, local_keyword)
+            call the_file%extract_keyword_from_string(the_file%input_(record), local_keyword)
 !
             if (trim(local_keyword) == keyword) then 
 !
-               call the_file%extract_keyword_value_from_string(line, keyword_value)
+               call the_file%extract_keyword_value_from_string(the_file%input_(record), &
+                  keyword_value)
                return
 !
             endif 
@@ -1392,9 +1386,9 @@ contains
       character(len=*), intent(in) :: keyword 
       character(len=*), intent(in) :: section  
 !
-      integer :: n_records, record
+      integer :: record, start_, end_
 !
-      character(len=200) :: line, local_keyword
+      character(len=200) :: local_keyword
 !
 !     Move to the requested section & get the number of records in that section 
 !
@@ -1405,21 +1399,19 @@ contains
 !
       endif
 !
-      call the_file%move_to_section(section, n_records)
+      call the_file%get_section_limits(section, start_, end_)
 !
 !     Loop through records within the section & try to locate the keyword 
 !
-      do record = 1, n_records
+      do record = start_ + 1, end_ - 1
 !
-         read(the_file%unit_, '(a200)') line 
-!
-         if (the_file%string_is_comment(line)) then
+         if (the_file%string_is_comment(the_file%input_(record))) then
 !
             cycle
 !
          else  
 !
-            call the_file%extract_keyword_from_string(line, local_keyword)
+            call the_file%extract_keyword_from_string(the_file%input_(record), local_keyword)
 !
             if (trim(local_keyword) == keyword) then 
 !
@@ -1439,7 +1431,7 @@ contains
    end function requested_keyword_in_section_input_file
 !
 !
-   logical function requested_section_input_file(the_file, section)
+   pure function requested_section_input_file(the_file, section) result(requested)
 !!
 !!    Requested section?
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -1452,120 +1444,24 @@ contains
 !
       character(len=*), intent(in) :: section 
 !
-      character(len=200) :: line 
+      logical :: requested
 !
-      requested_section_input_file = .false.
+      integer :: i
 !
-      rewind(the_file%unit_)
+      requested = .false.
 !
-      do 
+      do i = 1, the_file%n_keyword_lines
 !
-        line = the_file%read_adjustl_lower()
+         if (trim(the_file%input_(i)) == section) then 
 !
-         if (trim(line) == section) then 
-!
-            requested_section_input_file = .true.
+            requested = .true.
             return 
 !
          endif 
 !
-         if (trim(line) == 'geometry') then 
-!
-            requested_section_input_file = .false.
-            return 
-!
-         endif
-!
       enddo 
 !
    end function requested_section_input_file
-!
-!
-   subroutine move_to_section_input_file(the_file, string, n_records)
-!!
-!!    Move to section
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 / Mar 2019
-!!
-!!    Moves cursor to section given by string, and 
-!!    counts & returns the number of records in that section.
-!!
-      implicit none
-!
-      class(input_file), intent(in) :: the_file
-!
-      character(len=*), intent(in) :: string
-!
-      integer, intent(out) :: n_records
-!
-      character(len=200) :: line 
-!
-      integer :: start_record, end_record 
-!
-      integer :: n_beginnings, n_ends 
-!
-!     Find the number of instances of the section,
-!     stopping with an error if there are any inconsistencies 
-!
-      rewind(the_file%unit_)
-!
-      line = repeat(' ', 200)
-!
-      n_ends = 0
-      n_beginnings = 0
-!
-      do while (trim(line) /= 'end geometry')
-!
-         line = the_file%read_adjustl_lower()
-!
-         if (trim(line) == 'end ' // string) n_ends = n_ends + 1
-         if (trim(line) == string) n_beginnings = n_beginnings + 1      
-!
-      enddo    
-!
-      if (n_beginnings > 1) call output%error_msg('Tried to move to section "' // string // '" with more than one starting clause.')
-      if (n_ends > 1) call output%error_msg('Tried to move to section "' // string // '" with more than one ending clause.')
-      if (n_ends == 0 .and. n_beginnings == 0) call output%error_msg('Tried to move to non-existent section "' // string // '".')
-      if (n_ends < 1) call output%error_msg('Tried to move to section "' // string // '" with no end.')
-      if (n_beginnings < 1) call output%error_msg('Tried to move to section "' // string // '" with no beginning.')
-!
-!     Find the end of the section 
-!
-      rewind(the_file%unit_)
-!
-      line = the_file%read_adjustl_lower()
-!
-      end_record = 1
-!
-      do while (trim(line) /= 'end geometry' .and. trim(line) /= '--' .and. trim(line) /= 'end ' // string) 
-!
-         end_record = end_record + 1
-!
-         line = the_file%read_adjustl_lower()     
-!
-      enddo   
-!
-!     Find the beginning of the section;
-!     this also places the pointer in the correct position
-!
-      rewind(the_file%unit_)
-!
-      line = the_file%read_adjustl_lower()
-!
-      start_record = 1
-!
-      do while (trim(line) /= 'end geometry' .and. trim(line) /= string) 
-!
-         start_record = start_record + 1
-! 
-         line = the_file%read_adjustl_lower()       
-!
-      enddo
-!
-!     Set the number of records inside the section 
-!
-      n_records = end_record - start_record - 1
-!
-   end subroutine move_to_section_input_file
 !
 !
    function get_n_elements_for_keyword_in_section_input_file(the_file, keyword, section) result(n_elements)
@@ -1700,7 +1596,7 @@ contains
    end subroutine get_real_array_for_keyword_in_section_input_file
 !
 !
-   function get_n_atoms_input_file(the_file) result(n_atoms)
+   pure function get_n_atoms_input_file(the_file) result(n_atoms)
 !!
 !!    Get n atoms 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -1716,26 +1612,22 @@ contains
 !
 !     Local variables
 !
-      integer :: n_records, record
-!
-      character(len=200) :: string 
+      integer :: record
 !
       n_atoms = 0
 !
-      call the_file%move_to_section('geometry', n_records)
+      do record = 1, the_file%n_geometry_lines
 !
-      do record = 1, n_records
-!
-         string = the_file%read_adjustl_lower()
-!
-         if(string(1:6) /= 'basis:' .and. string(1:6) /= 'units:') n_atoms = n_atoms + 1
+         if (the_file%geometry(record)(1:6) .ne. 'basis:' &
+            .and. (the_file%geometry(record)(1:6) .ne. 'units:')) &
+            n_atoms = n_atoms + 1
 !
       enddo
 !
    end function  get_n_atoms_input_file
 !
 !
-   function get_mm_n_atoms_input_file(the_file) result(n_atoms)
+   pure function get_mm_n_atoms_input_file(the_file) result(n_atoms)
 !!
 !!    Get n atoms 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -1749,14 +1641,13 @@ contains
 !
       integer :: n_atoms
 !
-      n_atoms = 0
-!
-      call the_file%move_to_mm_geometry('--', n_atoms)
+      n_atoms = the_file%n_mm_atom_lines
 !
    end function  get_mm_n_atoms_input_file
 !
 !
-   subroutine get_geometry_input_file(the_file, n_atoms, symbols, positions, basis_sets, units_angstrom)
+   subroutine get_geometry_input_file(the_file, n_atoms, symbols, &
+                                       positions, basis_sets, units_angstrom)
 !!
 !!    Get geometry
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -1784,66 +1675,64 @@ contains
 !
 !     Local variables
 !
-      integer :: n_records, record, cursor, current_atom, i
+      integer :: cursor, current_atom, i
 !
-      integer :: not_atom ! Number of records in geometry section which are not atoms
+      integer :: start_
 !
       character(len=200) :: string, coordinate
       character(len=100) :: current_basis
 !
-      call the_file%move_to_section('geometry', n_records)
+      start_ = 1 ! Specifies the line of the first and required basis
 !
-      not_atom = 1
+!     Are units specified?
+!     Note that units can only be specified as the first line of the geometry
 !
-!     Determine coordinate units if specified
+      units_angstrom = .true. ! Default units are Angstrom
 !
-      string = the_file%read_adjustl_lower()
+      if (the_file%geometry(1)(1:6) == 'units:') then
 !
-      if(string(1:6) == 'units:') then
-!
-         string = trim(adjustl(string(7:200)))
+         string = (trim(adjustl(the_file%geometry(1)(7:200))))
 !
          if (string(1:4) == 'bohr') then
 !
             units_angstrom = .false.
 !
          elseif (string(1:8) /= 'angstrom') then 
-!
+!   
             call output%error_msg('units of atom coordinates must be either angstrom or bohr')
 !
          endif
 !
-         string = the_file%read_adjustl_lower()
-!
-         not_atom = 2
+         start_ = 2
 !
       endif
 !
-!     Set initial basis -> Error if not
+!     Error if next line is not a basis set line 
 !
-      if(string(1:6) /= 'basis:') call output%error_msg('did not find basis in geometry section.')
-      current_basis = trim(adjustl(string(7:200)))
+      if(the_file%geometry(start_)(1:6) /= 'basis:') &
+            call output%error_msg('did not find basis in geometry section.')
 !
-!     Loop through the rest of the geometry section to get atoms
+!     Loop through geometry
 !
       current_atom = 0
 !
-      do record = 1, n_records - not_atom
+      do i = start_, the_file%n_geometry_lines
 !
-         string = the_file%read_adjustl_lower()
+         if (the_file%geometry(i)(1:6) == 'units:') &
+         call output%error_msg('Units must be specified as the first line in the geometry section.')
 !
-         if(string(1:6) == 'basis:') then
-!
-            current_basis = trim(adjustl(string(7:200)))
+         if(the_file%geometry(i)(1:6) == 'basis:') then
+!  
+            current_basis = trim(adjustl(the_file%geometry(i)(7:200)))
 !
          else
 !
             current_atom = current_atom + 1
 !
             basis_sets(current_atom) = current_basis
-            symbols(current_atom)    = trim(string(1:2))
+            symbols(current_atom)    = trim(the_file%geometry(i)(1:2))
 !
-            string = string(3:200)
+            string = the_file%geometry(i)(3:200)
 !
             cursor = set_cursor_to_character(string)
 !
@@ -1905,25 +1794,21 @@ contains
 !
 !     Local variables
 !
-      integer :: n_records, record, cursor, current_atom, i
+      integer :: record, cursor, current_atom, i
 !
       character(len=200) :: string, coordinate, imolecule, charge_read, chi_read, eta_read
-!
-      call the_file%move_to_mm_geometry('--', n_records)
 !
 !     Loop through the rest of the geometry section to get atoms
 !
       current_atom = 0
 !
-      do record = 1, n_records 
-
-         string = the_file%read_adjustl_lower()
+      do record = 1, the_file%n_mm_atom_lines 
 !
          current_atom = current_atom + 1
 !
-         symbols(current_atom)    = trim(string(1:2))
+         symbols(current_atom)    = trim(the_file%mm_geometry(record)(1:2))
 !
-         string = string(3:200)
+         string = the_file%mm_geometry(record)(3:200)
 !
          cursor = set_cursor_to_character(string,'=')
 !
@@ -2023,159 +1908,6 @@ contains
    end subroutine get_mm_geometry_input_file
 !
 !
-   function read_adjustl_lower_input_file(the_file) result(line)
-!!
-!!    Read, adjustl and convert to lower case
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
-!!
-      implicit none
-!
-      class(input_file), intent(in) :: the_file
-!
-      character(len=200) :: line
-!  
-      read(the_file%unit_, '(a200)') line
-      line = adjustl(line)
-      call convert_to_lowercase(line)
-!
-   end function read_adjustl_lower_input_file
-!
-!
-   subroutine move_to_mm_geometry_input_file(the_file, string, n_records)
-!!
-!!    Move to MM geometry section
-!!    Written by Tommaso Giovannini, May 2019
-!!
-!!    Moves cursor to section given by string, and 
-!!    counts & returns the number of records in that section.
-!!
-      implicit none
-!
-      class(input_file), intent(in) :: the_file
-!
-      character(len=*), intent(in) :: string
-!
-      integer, intent(out) :: n_records
-!
-      character(len=200) :: line 
-!
-      integer :: start_record, end_record 
-!
-      integer :: n_beginnings, n_ends 
-!
-!     Find the number of instances of the section,
-!     stopping with an error if there are any inconsistencies 
-!
-      rewind(the_file%unit_)
-!
-      line = repeat(' ', 200)
-!
-      n_ends = 0
-      n_beginnings = 0
-!
-      do while (trim(line) /= 'end geometry')
-!
-         line = the_file%read_adjustl_lower()
-!
-         if (trim(line) == 'end geometry') n_ends = n_ends + 1
-         if (trim(line) == string) n_beginnings = n_beginnings + 1      
-!
-      enddo    
-!
-      if (n_beginnings > 1) call output%error_msg('Tried to move to section "' // string // &
-                                                & '" with more than one starting clause.')
-      if (n_ends > 1) call output%error_msg('Tried to move to section "' // string // &
-                                          & '" with more than one ending clause.')
-      if (n_ends == 0 .and. n_beginnings == 0) then
-         call output%error_msg('Tried to move to non-existent section "' // string // '".')
-      endif
-      if (n_ends < 1) call output%error_msg('Tried to move to section "' // string // '" with no end.')
-      if (n_beginnings < 1) call output%error_msg('Tried to move to section "' // string // &
-                                                & '" with no beginning.')
-!
-!     Find the end of the section 
-!
-      rewind(the_file%unit_)
-!
-      line = the_file%read_adjustl_lower()
-!
-      end_record = 1
-!
-      do while (trim(line) /= 'end geometry') 
-!
-         end_record = end_record + 1
-! 
-        line = the_file%read_adjustl_lower()     
-!
-      enddo   
-!
-!     Find the beginning of the section;
-!     this also places the pointer in the correct position
-!
-      rewind(the_file%unit_)
-!
-      line = the_file%read_adjustl_lower()
-!
-      start_record = 1
-!
-      do while (trim(line) /= 'end geometry' .and. trim(line) /= string) 
-!
-         start_record = start_record + 1
-! 
-         line = the_file%read_adjustl_lower()       
-!
-      enddo
-!
-!     Set the number of records inside the section 
-!
-      n_records = end_record - start_record - 1
-!
-   end subroutine move_to_mm_geometry_input_file
-!
-!
-   subroutine print_to_output_input_file(the_file)
-!!
-!!    Print to output 
-!!    Written by Eirik F. Kjønstad, Jan 2020
-!!
-!!    Prints the input file - except for the geometry specification - to the output file. 
-!!
-      implicit none 
-!
-      class(input_file) :: the_file
-!
-      integer :: io_error
-!
-      character(len=200) :: line 
-!
-      call output%printf('m', ':: Input file', fs='(//t3,a)')
-      call output%print_separator('m', 16, '=', fs='(t3,a/)')
-!
-      call output%printf('m', 'Note: geometry section is excluded from this print', fs='(t6,a/)')
-!
-      rewind(the_file%unit_)
-!
-      do 
-!
-         read(the_file%unit_, '(a)', iostat=io_error) line 
-!
-         if (trim(adjustl(line)) == 'geometry') then 
-!
-            exit 
-!
-         elseif (io_error .ne. 0) then 
-!
-            call output%error_msg("The 'geometry' section appears to be missing in the input file.")
-!
-         endif
-!
-         call output%printf('m', line, fs='(t6,a)', ll=120)
-!  
-      enddo 
-!
-   end subroutine print_to_output_input_file
-!
-!
    function is_string_in_cs_list_input_file(the_file, keyword, section, string) result(found)
 !!
 !!    Is string in comma separated list 
@@ -2250,6 +1982,263 @@ contains
       enddo
 !
    end function is_string_in_cs_list_input_file
+!
+!
+   subroutine read_keywords_and_geometry_input_file(the_file)
+!!
+!!    Read all
+!!    Written by sarai D. Folkestad, Mar 2020
+!!
+!!       Includes the former routine
+!!
+!!       print_to_output_input_file, witten by Eirik F. Kjønstad, Jan 2020
+!!
+!!    1) Prints the input file - except for the geometry specification - to the output file. 
+!!
+!!    2) Places input file in memory
+!!
+!!       Places the input file, excluding the geometry,
+!!       in to the array input_
+!!
+!!       Places the geometry, excluding the MM geometry,
+!!       in to the array geometry 
+!!
+!!       Places the MM geometry, if present,
+!!       in to the array mm_geometry 
+!!    
+!!    3) Checks for illegal keywords and sections in the input
+!!
+      implicit none
+!
+      class(input_file), intent(inout) :: the_file     
+!
+      character(len=200) :: line 
+!
+      integer :: i, io_error
+!
+      logical :: QM_atoms
+!
+      call output%printf('m', ':: Input file', fs='(//t3,a)')
+      call output%print_separator('m', 16, '=', fs='(t3,a/)')
+!
+      call output%printf('m', 'Note: geometry section is excluded from this print', fs='(t6,a/)')
+!
+      rewind(the_file%unit_)
+!
+      the_file%n_keyword_lines = 0
+!
+      do 
+!
+         read(the_file%unit_, '(a)', iostat=io_error) line 
+!
+         if (trim(adjustl(line)) == 'geometry') then 
+!
+            exit 
+!
+         elseif (io_error .ne. 0) then 
+!
+            call output%error_msg("The 'geometry' section appears to be missing in the input file.")
+!
+         endif
+!
+         call output%printf('m', line, fs='(t6,a)', ll=120)
+         the_file%n_keyword_lines = the_file%n_keyword_lines + 1
+!  
+      enddo 
+!
+!     Continue reading the geometry to count QM and MM atoms
+!
+      QM_atoms = .true.
+      the_file%n_geometry_lines = 0
+      the_file%n_mm_atom_lines = 0
+!
+      do 
+!
+         read(the_file%unit_, '(a)', iostat=io_error) line 
+!
+         if (trim(adjustl(line)) == 'end geometry') then 
+!
+            exit 
+!
+         endif
+!
+         if (trim(adjustl(line)) == '--') then ! QM and MM atoms separator
+!
+            QM_atoms = .false.
+            cycle
+!
+         endif
+!
+         if (QM_atoms) then
+!
+            the_file%n_geometry_lines = the_file%n_geometry_lines + 1
+!
+         else
+!
+            the_file%n_mm_atom_lines = the_file%n_mm_atom_lines + 1
+!
+         endif
+!  
+      enddo   
+!
+!     Place keyword lines in memory
+!
+      allocate(the_file%input_(the_file%n_keyword_lines))
+!
+      rewind(the_file%unit_)
+!
+      do i = 1, the_file%n_keyword_lines
+!
+         read(the_file%unit_, '(a)', iostat=io_error) line 
+!
+         line = adjustl(line)
+         call convert_to_lowercase(line)      
+!
+         the_file%input_(i) = line
+!  
+      enddo 
+!
+!     Place geometries in memory
+!
+      if (the_file%n_geometry_lines < 1) call output%error_msg('No QM atoms in geometry!')  
+!
+      allocate(the_file%geometry(the_file%n_geometry_lines))
+!
+      read(the_file%unit_, '(a)', iostat=io_error) line ! Reads 'geometry' line
+!
+!     QM geometry
+!
+      do i = 1, the_file%n_geometry_lines
+!
+         read(the_file%unit_, '(a)', iostat=io_error) line 
+!
+         line = adjustl(line)
+         call convert_to_lowercase(line)      
+!
+         the_file%geometry(i) = line
+!  
+      enddo 
+!
+!     MM geometry if present
+!
+      if (the_file%n_mm_atom_lines > 0) then
+!
+         read(the_file%unit_, '(a)', iostat=io_error) line ! Reads '--' line
+!
+         allocate(the_file%mm_geometry(the_file%n_mm_atom_lines))
+!
+         do i = 1, the_file%n_mm_atom_lines
+!
+            read(the_file%unit_, '(a)', iostat=io_error) line 
+!
+            line = adjustl(line)
+            call convert_to_lowercase(line)      
+!
+            the_file%mm_geometry(i) = line
+!  
+         enddo 
+      endif    
+!
+      call the_file%check_for_errors() ! Check for incorrect/missing keywords/sections
+!
+   end subroutine read_keywords_and_geometry_input_file
+!
+!
+   subroutine get_section_limits_input_file(the_file, string, start_, end_)
+!!
+!!    Move to section
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 / Mar 2019
+!!
+!!    Moves cursor to section given by string, and 
+!!    counts & returns the number of records in that section.
+!!
+      implicit none
+!
+      class(input_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: string
+!
+      integer, intent(out) :: start_, end_
+!
+      integer :: n_beginnings, n_ends, i
+!
+!     Find the number of instances of the section,
+!     stopping with an error if there are any inconsistencies 
+!
+      n_ends = 0
+      n_beginnings = 0
+!
+      do i = 1, the_file%n_keyword_lines !while (trim(line) /= 'end geometry')
+!
+         if (trim(the_file%input_(i)) == 'end ' // string) then
+!
+            n_ends = n_ends + 1
+            end_ = i
+!
+         endif
+
+         if (trim(the_file%input_(i)) == string) then
+!
+            n_beginnings = n_beginnings + 1 
+            start_ = i  
+!
+         endif
+!
+      enddo    
+!
+      if (n_beginnings > 1)                                 &
+         call output%error_msg('Tried to move to section "' &
+            // string // '" with more than one starting clause.')
+!
+      if (n_ends > 1)                                       &
+         call output%error_msg('Tried to move to section "' &
+            // string // '" with more than one ending clause.')
+!
+      if (n_ends == 0 .and. n_beginnings == 0)                             &
+         call output%error_msg('Tried to move to non-existent section "'   &
+            // string // '".')
+!
+      if (n_ends < 1) &
+         call output%error_msg('Tried to move to section "' // string // '" with no end.')
+!
+      if (n_beginnings < 1) &
+         call output%error_msg('Tried to move to section "' // string // '" with no beginning.')
+!
+   end subroutine get_section_limits_input_file
+!
+!
+   subroutine cleanup_geometry_input_file(the_file)
+!!
+!!    Cleanup geometries
+!!    Written by Sarai D. Folkestad, Mar 2020
+!!
+!!    Deallocates the geometry arrays
+!!
+      implicit none
+!
+      class(input_file), intent(inout) :: the_file
+!
+      deallocate(the_file%geometry)
+!
+      if (allocated(the_file%mm_geometry)) deallocate(the_file%mm_geometry)
+!
+   end subroutine cleanup_geometry_input_file
+!
+!
+   subroutine cleanup_keywords_input_file(the_file)
+!!
+!!    Cleanup keywords
+!!    Written by Sarai D. Folkestad, Mar 2020
+!!
+!!    Deallocates the keyword arrays
+!!
+      implicit none
+!
+      class(input_file), intent(inout) :: the_file
+!
+      deallocate(the_file%input_)
+!
+   end subroutine cleanup_keywords_input_file
 !
 !
 end module input_file_class
