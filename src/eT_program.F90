@@ -102,8 +102,8 @@ program eT_program
 !
    call print_program_banner()
 !
-   call input%print_to_output()  ! Print input file to output file 
-   call input%check_for_errors() ! Check for incorrect/missing keywords/sections
+   call input%read_keywords_and_geometry()
+   call input%close_()
 !
    n_threads = 1
 !
@@ -124,6 +124,10 @@ program eT_program
 !  Create molecular system 
 !
    system = molecular_system()
+!
+!  Cleanup geometry input
+!
+   call input%cleanup_geometry()
 !
 !  Cholesky decomposition of electron repulsion integrals (ERIs)
 !
@@ -170,8 +174,8 @@ program eT_program
    call output%printf('m', 'eT terminated successfully!', fs='(/t3,a)')
 !
    call output%close_()
-   call input%close_()
    call timing%close_()
+   call input%cleanup_keywords()
 !
 end program eT_program
 !
