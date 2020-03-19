@@ -1,3 +1,4 @@
+
 !
 !
 !  eT - a coupled cluster program
@@ -104,6 +105,7 @@ contains
          else
 !
             call wf%construct_ccs_cnto_transformation_matrices(T_o, T_v)
+            call wf%write_cnto_transformation_matrices(T_o, T_v)
 !
          endif
 !
@@ -119,6 +121,9 @@ contains
          call wf%construct_ccs_nto_transformation_matrix(T_o)
 !
          call wf%construct_mixed_nto_canonical_orbitals(T_o)
+!
+         wf%n_ccs_o = wf%n_o - wf%n_cc2_o
+         wf%n_ccs_v = wf%n_v - wf%n_cc2_v
 !
          call mem%dealloc(T_o, wf%n_o, wf%n_o)
 !
@@ -175,7 +180,7 @@ contains
 !!                      determine if we construct occuped 
 !!                      Cholesky orbitals only, or if we also 
 !!                      construct the virtual Cholesky orbitals
-!!                      DEFAULT: .false.
+!!                      default: .false.
 !!
       implicit none
 !
@@ -314,12 +319,12 @@ contains
 !
 !     Block diagonal occupied-occupied Fock
 !
-      call block_diagonalization(F_oo, wf%n_o, 2, [integer::wf%n_cc2_o, wf%n_ccs_o], &
+      call block_diagonalization(F_oo, wf%n_o, 2, [wf%n_cc2_o, wf%n_ccs_o], &
                                     wf%orbital_energies(1:wf%n_o))
 !
 !     Block diagonal virtual-virtual Fock
 !
-      call block_diagonalization(F_vv, wf%n_v, 2, [integer::wf%n_cc2_v, wf%n_ccs_v], &
+      call block_diagonalization(F_vv, wf%n_v, 2, [wf%n_cc2_v, wf%n_ccs_v], &
                                     wf%orbital_energies(wf%n_o+1:wf%n_mo))
 !
 !     Transform blocks
@@ -619,6 +624,38 @@ contains
    end subroutine read_cnto_transformation_matrices_mlcc2
 !
 !
+   module subroutine write_cnto_transformation_matrices_mlcc2(wf, T_o, T_v)
+!!
+!!    Write CNTO transformation matrices
+!!    Written by Sarai D. Folkestad, Jun 2019
+!!
+!!    Write CNTO transformation matrices.
+!!    Used to ensure restart
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
+      real(dp), dimension(wf%n_v, wf%n_v), intent(out) :: T_v
+!
+      type(sequential_file) :: transformation_o, transformation_v
+!
+      transformation_o = sequential_file('cnto_M_transformation', 'unformatted')
+      transformation_v = sequential_file('cnto_N_transformation', 'unformatted')
+!
+      call transformation_o%open_('write', 'rewind')
+      call transformation_v%open_('write', 'rewind')
+!
+      call transformation_o%write_(T_o, wf%n_o**2)
+      call transformation_v%write_(T_v, wf%n_v**2)
+!
+      call transformation_o%close_('keep')
+      call transformation_v%close_('keep')
+!
+   end subroutine write_cnto_transformation_matrices_mlcc2
+!
+!
    module subroutine construct_ccs_cnto_transformation_matrices_mlcc2(wf, T_o, T_v)
 !!
 !!    Construct CCS CNTO transformation matrices
@@ -648,8 +685,6 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: R_aibj_k
 !
       logical :: set_to_zero
-!
-      type(sequential_file) :: transformation_o, transformation_v
 !
       character(len=200) :: r_or_l
 !
@@ -693,20 +728,6 @@ contains
       call mem%dealloc(R_ai, wf%n_v, wf%n_o, n_cnto_states)
 !
       call wf%diagonalize_M_and_N(T_o, T_v)
-!
-!     Write eigenvectors of M and N 
-!
-      transformation_o = sequential_file('cnto_M_transformation', 'unformatted')
-      transformation_v = sequential_file('cnto_N_transformation', 'unformatted')
-!
-      call transformation_o%open_('write', 'rewind')
-      call transformation_v%open_('write', 'rewind')
-!
-      call transformation_o%write_(T_o, wf%n_o**2)
-      call transformation_v%write_(T_v, wf%n_v**2)
-!
-      call transformation_o%close_('keep')
-      call transformation_v%close_('keep')
 !
       call wf%integrals%cleanup()
 !
@@ -790,8 +811,6 @@ contains
       real(dp), dimension(:,:,:), allocatable   :: R_ai
 !
       logical :: set_to_zero
-!
-      type(sequential_file) :: transformation_o
 
       character(len=200) :: r_or_l
 !
@@ -850,16 +869,6 @@ contains
                                ' "Dsyev" finished with info: (i0)', ints=[info])
       end if
 !
-!     Write eigenvectors of M 
-!
-      transformation_o = sequential_file('cnto_M_transformation', 'unformatted')
-!
-      call transformation_o%open_('write', 'rewind')
-!
-      call transformation_o%write_(T_o, wf%n_o**2)
-!
-      call transformation_o%close_('keep')
-!
       call wf%integrals%cleanup()
 !
    end subroutine construct_ccs_nto_transformation_matrix_mlcc2
@@ -897,9 +906,6 @@ contains
                   one,                       &
                   wf%orbital_coefficients,   &
                   wf%n_ao)
-!
-      wf%n_ccs_o = wf%n_o - wf%n_cc2_o
-      wf%n_ccs_v = wf%n_v - wf%n_cc2_v
 !
       call mem%dealloc(MO_coeff, wf%n_ao, wf%n_mo)
 !
@@ -964,7 +970,7 @@ contains
 !
       call mem%alloc(PAO_coeff, wf%n_ao, n_active_aos)
 !
-      call wf%projected_atomic_orbitals(D, PAO_coeff, n_active_aos, first_ao)
+      call wf%project_atomic_orbitals(D, PAO_coeff, n_active_aos, first_ao)
 !
 !     3. Orthonormalize PAOs to get active virtual orbitals
 !
@@ -1019,7 +1025,7 @@ contains
 !
          call mem%alloc(PAO_coeff, wf%n_ao, wf%n_ao)
 !
-         call wf%projected_atomic_orbitals(D, PAO_coeff, wf%n_ao)
+         call wf%project_atomic_orbitals(D, PAO_coeff, wf%n_ao)
 !
 !        5. Orthonormalize PAOs to get inactive virtual orbitals
 !
@@ -1258,7 +1264,7 @@ contains
 !
 !     2. Excitation vectors
 !
-      n_es = ccs_wf%get_n_excitation_energies_on_file()
+      n_es = ccs_wf%n_singlet_states
 !
       if(n_es .lt. n_cnto_states) call output%error_msg('Requested too many CNTO/NTO states')
 !

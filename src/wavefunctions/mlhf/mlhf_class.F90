@@ -935,7 +935,7 @@ contains
       n_active_aos = last_hf_ao ! Because if there are CC active atoms, these are also HF active
 !
       call mem%alloc(C_pao_copy, wf%n_ao, n_active_aos)
-      call wf%projected_atomic_orbitals(wf%ao_density, C_pao_copy, n_active_aos)
+      call wf%project_atomic_orbitals(wf%ao_density, C_pao_copy, n_active_aos)
 !
       call mem%alloc(S_pao, n_active_aos, n_active_aos)
 !
@@ -976,7 +976,7 @@ contains
 !
 !     Project occupied and active virtual out of AOs
 !
-      call wf%projected_atomic_orbitals(D, C_pao_copy, wf%n_ao)
+      call wf%project_atomic_orbitals(D, C_pao_copy, wf%n_ao)
 !
       call mem%dealloc(D, wf%n_ao, wf%n_ao)
 !

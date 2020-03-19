@@ -125,7 +125,7 @@ module wavefunction_class
       procedure(gradient_function), deferred :: &
                construct_molecular_gradient        
 !
-      procedure :: projected_atomic_orbitals => projected_atomic_orbitals_wavefunction
+      procedure :: project_atomic_orbitals   => project_atomic_orbitals_wavefunction
       procedure :: get_orbital_overlap       => get_orbital_overlap_wavefunction
       procedure :: lowdin_orthonormalization => lowdin_orthonormalization_wavefunction
 !
@@ -837,12 +837,12 @@ contains
    end subroutine get_mo_h_wavefunction
 !
 !
-   subroutine projected_atomic_orbitals_wavefunction(wf, D, PAO_coeff, n_orbitals, first_ao)
+   subroutine project_atomic_orbitals_wavefunction(wf, D, PAO_coeff, n_orbitals, first_ao)
 !!
-!!    Projected atomic orbitals
+!!    Project atomic orbitals
 !!    Written by Linda Goletto and Sarai D. Folkestad, Jun 2019
 !!
-!!    Constructs the projected atomic orbitals (PAOs)
+!!    Projects the orbitals given by D out of the atomic orbitals (PAOs)
 !!
 !!       C^PAO = I - DS
 !!
@@ -915,7 +915,7 @@ contains
 !
       call mem%dealloc(S, wf%n_ao, wf%n_ao)
 !
-   end subroutine projected_atomic_orbitals_wavefunction
+   end subroutine project_atomic_orbitals_wavefunction
 !
 !
    subroutine get_orbital_overlap_wavefunction(wf, orbital_coeff, n_orbitals, S)

@@ -3131,12 +3131,12 @@ contains
             call mem%alloc(eigenvalues, block_dim(block_))
 !
             call dsyev('V','U',              &
-                        block_dim(block_),    &
+                        block_dim(block_),   &
                         A(offset, offset),   &
                         n_total,             &
                         eigenvalues,         &
                         work,                &
-                        4*block_dim(block_),  &
+                        4*block_dim(block_), &
                         info)
 !
             call mem%dealloc(work, 4*block_dim(block_))
@@ -3354,7 +3354,7 @@ contains
 !
       call mem%dealloc(overlap_lr, n_vectors)
 !
-   end subroutine gram_schmidt_biorthonormalization   
+   end subroutine gram_schmidt_biorthonormalization
 !
 !
 end module array_utilities

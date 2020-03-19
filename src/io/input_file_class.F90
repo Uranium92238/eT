@@ -418,8 +418,11 @@ contains
                         'cnto states',             &
                         'nto states',              &
                         'nto occupied cc2',        &
+                        'nto occupied ccsd',       &
                         'canonical virtual cc2',   &
-                        'print ccs calculation']
+                        'canonical virtual ccsd',  &
+                        'print ccs calculation',   &
+                        'print cc2 calculation']
 !
       cc%name_    = 'cc'
       cc%required = .false.
