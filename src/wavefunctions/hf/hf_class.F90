@@ -634,7 +634,7 @@ contains
                   index_in_shell = ao - wf%system%atoms(atom)%shells(shell)%first + 1
 !
                   call wf%system%atoms(atom)%shells(shell)%get_angular_momentum_label( &
-                                 l, index_in_shell, ang_mom, wf%system%cartesian_basis)
+                                 l, index_in_shell, ang_mom, wf%system%atoms(atom)%cartesian)
 !
 !                 Setup the string for printf to print the right number of reals
 !

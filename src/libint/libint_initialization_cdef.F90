@@ -28,22 +28,6 @@ interface
 !
    end subroutine set_coulomb_precision_c
 !
-   subroutine initialize_basis_c(basisset,filename,cartesian_gaussians_int) bind(C, name='initialize_basis')
-!
-      use iso_c_binding, only: c_char, c_long, c_int
-      implicit none
-!
-      character(kind = c_char) :: basisset(*)
-      character(kind = c_char) :: filename(*)
-      integer(c_int)    :: cartesian_gaussians_int
-!
-   end subroutine initialize_basis_c
-!
-   subroutine reset_basis_c() bind(C, name='reset_basis')
-!
-      implicit none
-!
-   end subroutine reset_basis_c
 !
    subroutine initialize_shell2atom_c() bind(C, name='initialize_shell2atom')
 !
@@ -51,14 +35,27 @@ interface
 !
    end subroutine initialize_shell2atom_c
 !
-   subroutine initialize_atoms_c(name) bind(C, name='initialize_atoms')
 !
-      use iso_c_binding, only: C_CHAR
+   subroutine export_geometry_and_basis_to_libint_c(nAtoms, &
+                                                    atomicNumbers, &
+                                                    atomicCoordinates, &
+                                                    basisSets, &
+                                                    maxLen, &
+                                                    cartesians) &
+              bind(C, name='export_geometry_and_basis_to_libint')
+!
+      use iso_c_binding, only: c_int, c_double, c_char
       implicit none
 !
-      character(kind = c_char) :: name(*)
+      integer(c_int), value                        :: nAtoms
+      integer(c_int), dimension(*), intent(in)     :: atomicNumbers
+      real(c_double), dimension(*), intent(in)     :: atomicCoordinates
+      character(c_char), dimension(*), intent(in)  :: basisSets
+      integer(c_int), value                        :: maxLen
+      integer(c_int), dimension(*), intent(in)     :: cartesians
 !
-   end subroutine initialize_atoms_c
+   end subroutine export_geometry_and_basis_to_libint_c
+!
 !
    subroutine initialize_libint_c() bind(C, name='initialize_libint')
 !
