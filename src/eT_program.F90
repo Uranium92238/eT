@@ -25,16 +25,16 @@ program eT_program
 !!
 !
    use kinds
-   use global_in 
+   use global_in
    use global_out
    use timings_class, only : timings, timing
    use memory_manager_class, only : mem, memory_manager
    use libint_initialization, only : initialize_libint, finalize_libint
    use molecular_system_class, only : molecular_system
 !
-   use hf_class, only: hf 
-   use uhf_class, only: uhf 
-   use mlhf_class, only: mlhf 
+   use hf_class, only: hf
+   use uhf_class, only: uhf
+   use mlhf_class, only: mlhf
 !
    use omp_lib
 !
@@ -42,9 +42,9 @@ program eT_program
 !
    integer :: n_threads
 !
-!  Molecular system object 
+!  Molecular system object
 !
-   type(molecular_system) :: system 
+   type(molecular_system) :: system
 !
 !  Timer object
 !
@@ -74,7 +74,7 @@ program eT_program
 !
          use molecular_system_class, only: molecular_system
 !
-         use hf_class, only: hf 
+         use hf_class, only: hf
 !
          implicit none
 !
@@ -121,19 +121,20 @@ program eT_program
 !
    call initialize_libint() ! Safe to use Libint from now on
 !
-!  Create molecular system 
+!  Create molecular system
 !
    system = molecular_system()
 !
-!  Cleanup geometry input
+!  Write xyz and deallocate geometry in input
 !
+   call system%write_xyz_file()
    call input%cleanup_geometry()
 !
 !  Cholesky decomposition of electron repulsion integrals (ERIs)
 !
    if (input%requested_cc_calculation() .or.                      &
        input%requested_keyword_in_section('cholesky eri', 'do'))  &
-         call do_eri_cholesky(system) 
+         call do_eri_cholesky(system)
 !
 !  Hartree-Fock calculation
 !
@@ -189,15 +190,15 @@ subroutine reference_calculation(system, ref_wf)
 !!
    use molecular_system_class, only: molecular_system
 !
-   use global_in,  only: input 
+   use global_in,  only: input
    use global_out, only: output
 !
-   use reference_engine_class, only: reference_engine 
-   use hf_geoopt_engine_class, only: hf_geoopt_engine 
+   use reference_engine_class, only: reference_engine
+   use hf_geoopt_engine_class, only: hf_geoopt_engine
 !
-   use hf_class, only: hf 
-   use uhf_class, only: uhf 
-   use mlhf_class, only: mlhf 
+   use hf_class, only: hf
+   use uhf_class, only: uhf
+   use mlhf_class, only: mlhf
 !
    implicit none
 !
@@ -230,15 +231,15 @@ subroutine reference_calculation(system, ref_wf)
 !
    endif
 !
-   if (input%requested_keyword_in_section('ground state geoopt', 'do')) then 
+   if (input%requested_keyword_in_section('ground state geoopt', 'do')) then
 !
       ref_engine = hf_geoopt_engine()
 !
-   else 
+   else
 !
       ref_engine = reference_engine()
 !
-   endif 
+   endif
 !
    call ref_engine%ignite(ref_wf)
 !
@@ -253,24 +254,24 @@ subroutine cc_calculation(ref_wf)
 !! Directs the coupled cluster calculation for eT
 !!
    use global_in,  only: input
-   use global_out, only: output 
+   use global_out, only: output
 !
-   use hf_class, only: hf 
+   use hf_class, only: hf
 !
-   use ccs_class, only: ccs 
-   use cc2_class, only: cc2 
+   use ccs_class, only: ccs
+   use cc2_class, only: cc2
    use lowmem_cc2_class, only: lowmem_cc2
    use ccsd_class, only: ccsd
    use cc3_class, only: cc3
    use ccsdpt_class, only: ccsdpt
-   use mp2_class, only: mp2 
+   use mp2_class, only: mp2
    use mlcc2_class, only: mlcc2
    use mlccsd_class, only: mlccsd
 !
    use gs_engine_class, only: gs_engine
    use es_engine_class, only: es_engine
-   use response_engine_class, only: response_engine 
-   use mean_value_engine_class, only: mean_value_engine 
+   use response_engine_class, only: response_engine
+   use mean_value_engine_class, only: mean_value_engine
    use td_engine_class, only: td_engine
 !
    implicit none
@@ -278,7 +279,7 @@ subroutine cc_calculation(ref_wf)
    class(hf), intent(in)  :: ref_wf
 !
    class(ccs), allocatable :: cc_wf
-   class(gs_engine), allocatable :: cc_engine 
+   class(gs_engine), allocatable :: cc_engine
 !
    character(len=30) :: cc_wf_name
 !
@@ -340,7 +341,7 @@ subroutine cc_calculation(ref_wf)
 !
       cc_engine = es_engine(cc_wf)
 !
-   elseif (input%requested_keyword_in_section('mean value', 'do')) then 
+   elseif (input%requested_keyword_in_section('mean value', 'do')) then
 !
       cc_engine = mean_value_engine(cc_wf)
 !
@@ -366,28 +367,28 @@ end subroutine cc_calculation
 !
 subroutine do_eri_cholesky(system)
 !!
-!! Do ERI Cholesky 
+!! Do ERI Cholesky
 !! Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019 and Dec 2019
-!! 
-!! Performs Cholesky decomposition of the atomic orbital (AO) electron repulsion 
-!! integrals. 
 !!
-   use eri_cd_class,             only: eri_cd 
+!! Performs Cholesky decomposition of the atomic orbital (AO) electron repulsion
+!! integrals.
+!!
+   use eri_cd_class,             only: eri_cd
    use molecular_system_class,   only: molecular_system
 !
-   implicit none 
+   implicit none
 !
    type(molecular_system), intent(inout) :: system
 !
-   type(eri_cd), allocatable :: eri_cholesky_solver 
+   type(eri_cd), allocatable :: eri_cholesky_solver
 !
    eri_cholesky_solver = eri_cd(system)
 !
-   call eri_cholesky_solver%run(system)               ! Do the Cholesky decomposition 
+   call eri_cholesky_solver%run(system)               ! Do the Cholesky decomposition
 !
    if (eri_cholesky_solver%construct_vectors) &
-      call eri_cholesky_solver%diagonal_test(system)  ! Determine the largest 
-                                                      ! deviation in the ERI matrix 
+      call eri_cholesky_solver%diagonal_test(system)  ! Determine the largest
+                                                      ! deviation in the ERI matrix
 !
    call eri_cholesky_solver%cleanup(system)
 !
@@ -402,14 +403,14 @@ subroutine set_global_print_levels()
 !! Reads and sets the global print levels for the output file
 !! and the timing file from input.
 !!
-   use global_out, only: output 
+   use global_out, only: output
    use global_in, only: input
    use timings_class, only : timing
 !
    character(len=200) :: print_level
 !
 !  Set default
-   print_level = 'normal' 
+   print_level = 'normal'
 !
 !  Overwrite print_level if keyword is present
    call input%get_keyword_in_section('output print level', 'print', print_level)
@@ -419,7 +420,7 @@ subroutine set_global_print_levels()
 !
 !  Repeat for timing file
 !  Set default
-   print_level = 'normal' 
+   print_level = 'normal'
 !
 !  Overwrite print_level if keyword is present
    call input%get_keyword_in_section('timing print level', 'print', print_level)
@@ -432,14 +433,14 @@ end subroutine set_global_print_levels
 !
 subroutine print_program_banner()
 !!
-!! Print program banner 
-!! Written by Eirik F. Kjønstad, 2019 
+!! Print program banner
+!! Written by Eirik F. Kjønstad, 2019
 !!
 !! Prints banner, author list, and list of contributors.
 !!
-   use global_out, only: output 
+   use global_out, only: output
 !
-   implicit none 
+   implicit none
 !
    call output%printf('m', 'eT - an electronic structure program ', fs='(///t22,a)')
 !

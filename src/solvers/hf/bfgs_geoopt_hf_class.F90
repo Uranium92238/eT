@@ -182,6 +182,7 @@ contains
 !        Update geometry to the one requested
 !
          call wf%system%set_geometry(geometry)
+         call wf%system%write_xyz_file(append=.true.)
 !
 !        Re-decompose the AO overlap 
 !

@@ -202,6 +202,8 @@ contains
 !
       wf%system => system
 !
+      wf%name_ = 'uhf'
+!
       wf%fractional_uniform_valence = fractional_uniform_valence
 !
       call wf%prepare()

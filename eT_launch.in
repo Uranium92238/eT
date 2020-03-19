@@ -61,6 +61,7 @@ parser.add_argument('--scratch', help="Specify scratch directory", type=str)
 parser.add_argument('-ks', '--keep-scratch', help="Do not delete scratch", action="store_true")
 parser.add_argument("--omp", help="Number of OpenMP threads", action=OMPaction, type=int)
 parser.add_argument('-nt', "--no-timing", help="Do not copy timing.out from scratch", action='store_true')
+parser.add_argument('-xyz', "--save-xyz", help="Copy any .xyz files from scratch", action='store_true')
 parser.add_argument('-v', "--verbose", help="Run some print statements", action='store_true')
 parser.add_argument('-bd', "--binary-dir", help="Specify location of eT executable", type=str)
 parser.add_argument('-basis', "--basis-path-dir", help="Specify location of the basis directory", type=str)
@@ -258,6 +259,14 @@ for i, (inpf,outf) in enumerate(zip(args.input_file, args.output_file)):
     shutil.copyfile(out_src,out_dest)
     if not args.no_timing:
         shutil.copyfile(time_src,time_dest)
+
+    #Copy .xyz files if desired
+    if args.save_xyz:
+        xyzfiles = [xyzfile for xyzfile in fnmatch.filter(os.listdir(scratch), '*.xyz')]
+        for xyzfile in xyzfiles:
+            xyzsrc = os.path.join(scratch, xyzfile)
+            xyzdest = os.path.join(cwd, xyzfile)
+            shutil.copyfile(xyzsrc, xyzdest)
 
     # Check if there are mo_coefficient.out files
     coeff_files = [coeff_file for coeff_file in fnmatch.filter \

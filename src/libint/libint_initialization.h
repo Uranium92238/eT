@@ -21,7 +21,7 @@
 // check if the correct shell ordering is set-up in libint
 // however throw an error
 
-// define the LIBINT_CGSHELL_ORDERING, which contains infromation about
+// define the LIBINT_CGSHELL_ORDERING, which contains information about
 // Gaussian shell ordering
 #include "libint2/config.h"
 #if LIBINT_CGSHELL_ORDERING != LIBINT_CGSHELL_ORDERING_STANDARD
@@ -31,22 +31,35 @@
 #ifdef __cplusplus
 // Are we compiling this with a C++ compiler? Add extern "C" { ... }
 extern "C" {
-#else
 #endif
 
 void initialize_libint();
+
 void finalize_libint();
+
 void initialize_coulomb();
-void initialize_atoms(char *name);
-void initialize_basis(char *basisset, char *filename, int *cartesian_gaussians_int);
-void reset_basis();
+
+void export_geometry_and_basis_to_libint(const int nAtoms,
+                                         const int *atomicNumbers,
+                                         const double *atomicCoordinates,
+                                         const char *basisSets,
+                                         const int maxLength,
+                                         const int *cartesians);
+
 void initialize_kinetic();
+
 void initialize_nuclear();
+
 void initialize_overlap();
+
 void initialize_dipole();
+
 void initialize_quadrupole();
+
 void set_coulomb_precision(double *prec);
+
 void initialize_potential(double *charges, double *coordinates, int *n_points);
+
 void initialize_shell2atom();
 
 #ifdef __cplusplus
