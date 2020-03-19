@@ -143,7 +143,11 @@ module mlcc2_class
       procedure :: check_orbital_space                               => check_orbital_space_mlcc2
       procedure :: check_orthonormality_of_MOs                       => check_orthonormality_of_MOs_mlcc2
 !
-      procedure :: read_cnto_transformation_matrices                 => read_cnto_transformation_matrices_mlcc2
+      procedure :: read_cnto_transformation_matrices &
+                     => read_cnto_transformation_matrices_mlcc2
+      procedure :: write_cnto_transformation_matrices &
+                     => write_cnto_transformation_matrices_mlcc2
+!
       procedure :: construct_ccs_cnto_transformation_matrices        => construct_ccs_cnto_transformation_matrices_mlcc2
 !
       procedure :: construct_cholesky_orbitals                       => construct_cholesky_orbitals_mlcc2

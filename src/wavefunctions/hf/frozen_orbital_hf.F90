@@ -382,7 +382,7 @@ contains
 !
       call mem%alloc(PAO_coeff, wf%n_ao, n_active_aos)
 !
-      call wf%projected_atomic_orbitals(D, PAO_coeff, n_active_aos, first_ao)
+      call wf%project_atomic_orbitals(D, PAO_coeff, n_active_aos, first_ao)
 !
       call mem%dealloc(D, wf%n_ao, wf%n_ao)
 !
@@ -491,7 +491,7 @@ contains
 !
 !     Project occupied and active virtual out of AOs
 !
-      call wf%projected_atomic_orbitals(D, PAO_coeff, wf%n_ao)
+      call wf%project_atomic_orbitals(D, PAO_coeff, wf%n_ao)
 !
       call mem%dealloc(D, wf%n_ao, wf%n_ao)
 !

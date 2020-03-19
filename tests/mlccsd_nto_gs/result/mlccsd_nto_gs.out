@@ -1,4 +1,6 @@
 
+
+
                      eT - an electronic structure program
 
   ------------------------------------------------------------------------
@@ -17,7 +19,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O-He
+        name: H2O He
         charge: 0
      end system
 
@@ -51,29 +53,28 @@
 
      solver cc es
         algorithm:          davidson
-        singlet states:     2
+        singlet states:     4
         residual threshold: 1.0d-11
         energy threshold:   1.0d-11
         left eigenvectors
      end solver cc es
 
      mlcc
-        levels: ccs, ccsd
-        ccsd orbitals: cnto-approx
-        cnto occupied ccsd: 6
-        cnto virtual ccsd: 23
-        cnto states: {1,2}
+        levels: ccsd, ccs
+        ccsd orbitals: nto-canonical
+        nto occupied ccsd: 2
+        nto states: {1,2,3,4}
      end mlcc
 
 
-  Running on 2 OMP thread(s)
+  Running on 8 OMP thread(s)
   Memory available for calculation: 8.000000 GB
 
 
   :: Molecular system specifications
   =====================================
 
-     Name:             h2o-he
+     Name:             h2o he
      Charge:           0
      Multiplicity:     1
      Coordinate units: angstrom
@@ -162,8 +163,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.16100
-     Total cpu time (sec):               0.27192
+     Total wall time (sec):              0.13500
+     Total cpu time (sec):               0.49455
 
 
   :: RHF wavefunction
@@ -231,15 +232,15 @@
      5           -78.843850846799     0.3301E-03     0.4131E-04
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
-     8           -78.843851693556     0.2356E-05     0.7052E-09
-     9           -78.843851693630     0.2071E-06     0.7385E-10
-    10           -78.843851693631     0.1594E-07     0.3837E-12
-    11           -78.843851693631     0.3322E-08     0.0000E+00
-    12           -78.843851693631     0.1197E-08     0.4263E-13
-    13           -78.843851693631     0.4264E-09     0.5684E-13
-    14           -78.843851693631     0.1280E-09     0.5684E-13
-    15           -78.843851693631     0.1479E-10     0.2842E-13
-    16           -78.843851693631     0.2908E-11     0.1421E-13
+     8           -78.843851693557     0.2356E-05     0.7053E-09
+     9           -78.843851693630     0.2071E-06     0.7378E-10
+    10           -78.843851693631     0.1594E-07     0.3411E-12
+    11           -78.843851693631     0.3322E-08     0.5684E-13
+    12           -78.843851693631     0.1197E-08     0.1421E-13
+    13           -78.843851693631     0.4264E-09     0.9948E-13
+    14           -78.843851693631     0.1280E-09     0.8527E-13
+    15           -78.843851693631     0.1479E-10     0.0000E+00
+    16           -78.843851693631     0.2908E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -265,8 +266,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.68600
-     Total cpu time (sec):               1.23343
+     Total wall time (sec):              0.52400
+     Total cpu time (sec):               2.35359
 
 
   :: MLCCSD wavefunction
@@ -302,10 +303,10 @@
   - Summary of CCS calculation for NTOs/CNTOs:
 
      Wall time for CCS ground calculation (sec):                   0.01
-     CPU time for CCS ground calculation (sec):                    0.02
+     CPU time for CCS ground calculation (sec):                    0.03
 
-     Wall time for CCS excited calculation (sec):                  0.09
-     CPU time for CCS excited calculation (sec):                   0.20
+     Wall time for CCS excited calculation (sec):                  0.12
+     CPU time for CCS excited calculation (sec):                   0.26
 
   - Settings for integral handling:
 
@@ -314,19 +315,16 @@
 
   - MLCCSD orbital partitioning:
 
-     Orbital type: cnto-approx
+     Orbital type: nto-canonical
 
-     Number occupied ccsd orbitals:    6
-     Number virtual ccsd orbitals:    23
+     Number occupied ccsd orbitals:    2
+     Number virtual ccsd orbitals:     6
 
      Number occupied cc2 orbitals:     0
      Number virtual cc2 orbitals:      0
 
-     Number occupied ccs orbitals:     0
-     Number virtual ccs orbitals:      0
-
-  Warning: no inactive orbitals in mlccsd calulation, recomended to run 
-           standard ccsd code.
+     Number occupied ccs orbitals:     4
+     Number virtual ccs orbitals:     17
 
 
   2) Calculation of the ground state (diis algorithm)
@@ -351,64 +349,57 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -79.084241931608     0.9391E-01     0.7908E+02
-    2           -79.092586666607     0.2720E-01     0.8345E-02
-    3           -79.099408028306     0.7507E-02     0.6821E-02
-    4           -79.100345871309     0.2095E-02     0.9378E-03
-    5           -79.100371860301     0.5154E-03     0.2599E-04
-    6           -79.100393801016     0.2313E-03     0.2194E-04
-    7           -79.100385611260     0.4933E-04     0.8190E-05
-    8           -79.100384217524     0.1180E-04     0.1394E-05
-    9           -79.100383621794     0.4135E-05     0.5957E-06
-   10           -79.100383427012     0.1779E-05     0.1948E-06
-   11           -79.100383466393     0.6705E-06     0.3938E-07
-   12           -79.100383474630     0.2989E-06     0.8237E-08
-   13           -79.100383487351     0.1028E-06     0.1272E-07
-   14           -79.100383481865     0.3056E-07     0.5487E-08
-   15           -79.100383481092     0.6508E-08     0.7730E-09
-   16           -79.100383481302     0.2112E-08     0.2109E-09
-   17           -79.100383481484     0.6588E-09     0.1819E-09
-   18           -79.100383481546     0.1594E-09     0.6158E-10
-   19           -79.100383481554     0.5326E-10     0.7901E-11
-   20           -79.100383481555     0.2008E-10     0.1208E-11
-   21           -79.100383481556     0.7516E-11     0.6679E-12
+    1           -78.874442714333     0.3020E-01     0.7887E+02
+    2           -78.878815314710     0.8739E-02     0.4373E-02
+    3           -78.880167609840     0.1901E-02     0.1352E-02
+    4           -78.880208622497     0.4169E-03     0.4101E-04
+    5           -78.880202858502     0.1001E-03     0.5764E-05
+    6           -78.880204176853     0.1698E-04     0.1318E-05
+    7           -78.880203794264     0.4214E-05     0.3826E-06
+    8           -78.880203806559     0.1368E-05     0.1229E-07
+    9           -78.880203793754     0.3257E-06     0.1281E-07
+   10           -78.880203799562     0.7834E-07     0.5809E-08
+   11           -78.880203800940     0.1721E-07     0.1377E-08
+   12           -78.880203800515     0.2524E-08     0.4246E-09
+   13           -78.880203800520     0.4405E-09     0.5187E-11
+   14           -78.880203800538     0.1397E-09     0.1801E-10
+   15           -78.880203800534     0.4522E-10     0.3936E-11
+   16           -78.880203800535     0.9481E-11     0.5116E-12
   ---------------------------------------------------------------
-  Convergence criterion met in 21 iterations!
+  Convergence criterion met in 16 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):   -79.100383481556
+     Final ground state energy (a.u.):   -78.880203800535
 
-     Correlation energy (a.u.):           -0.256531787925
+     Correlation energy (a.u.):           -0.036352106904
 
      Largest single amplitudes:
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        1      5        0.014740597524
-       14      4        0.009546856220
-        7      4       -0.008284826483
-       15      5        0.006124828873
-        4      5       -0.005606072698
-        6      2       -0.005476844297
-        2      4       -0.005318591701
-       13      5       -0.005269818337
-        5      6       -0.004933006906
-       11      6        0.003454309399
+        1      1       -0.018033283683
+        4      1        0.005000045973
+        5      2        0.004425151734
+       15      1       -0.004121105696
+       10      1       -0.003269108243
+        9      2       -0.002789143336
+        1      4        0.002452288355
+        2      6       -0.002308902585
+       11      2       -0.002162592182
+        6      4        0.002071850635
      ------------------------------------
 
-     T1 diagnostic (|T1|/sqrt(N_e)): 0.007226152112
+     T1 diagnostic (|T1|/sqrt(N_e)): 0.006038236951
 
   - Finished solving the MLCCSD ground state equations
 
-     Total wall time (sec):              0.65800
-     Total cpu time (sec):               1.39980
+     Total wall time (sec):              0.23100
+     Total cpu time (sec):               0.52693
 
   - Timings for the MLCCSD ground state calculation
 
-     Total wall time (sec):              0.82700
-     Total cpu time (sec):               1.73188
-
-  :: There was 1 warning during the execution of eT. ::
+     Total wall time (sec):              0.41500
+     Total cpu time (sec):               0.91963
 
   eT terminated successfully!

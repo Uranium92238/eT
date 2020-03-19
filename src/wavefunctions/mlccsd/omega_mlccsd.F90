@@ -83,8 +83,8 @@ contains
 !     Construct singles contributions
 !
       call wf%omega_cc2_a1(omega_ai, n_a_o, n_a_v, 1, 1, n_a_o, n_a_v)
-      call wf%omega_cc2_b1(omega_ai,n_a_o, n_a_v, 1, 1, n_a_o, n_a_v)
-      call wf%omega_cc2_c1(omega_ai,n_a_o, n_a_v, 1, 1)
+      call wf%omega_cc2_b1(omega_ai, n_a_o, n_a_v, 1, 1, n_a_o, n_a_v)
+      call wf%omega_cc2_c1(omega_ai, n_a_o, n_a_v, 1, 1)
 !
       call mem%alloc(x_aibj, n_a_v, n_a_o, n_a_v, n_a_o)
       call squareup(wf%x2, x_aibj, n_a_o*n_a_v)

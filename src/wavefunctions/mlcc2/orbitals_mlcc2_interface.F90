@@ -60,7 +60,7 @@
 !!                      determine if we construct occuped 
 !!                      Cholesky orbitals only, or if we also 
 !!                      construct the virtual Cholesky orbitals
-!!                      DEFAULT: .false.
+!!                      default: .false.
 !!
       implicit none
 !
@@ -89,38 +89,6 @@
       class(mlcc2), intent(inout) :: wf
 !
    end subroutine construct_block_diagonal_fock_orbitals_mlcc2
-!
-!
-   module subroutine construct_block_diagonal_fock_mos_2_level_mlcc2(wf, n_total, n_active, fock, mo_coeff, diagonal)
-!!
-!!    Construct Fock block diagonal 2 levels
-!!    Written by Sarai D. Folkestad, Feb 2019
-!!
-!!    Construct orbitals that block diagonalizes 
-!!    Fock matrix block for two levels (inactive/active)
-!!
-!!    'n_total' : Total dimmension of Fock matrix block
-!!
-!!    'n_active' : Dimension of active block of Fock matrix block
-!!
-!!    'fock' : Fock matrix block to block diagonalize
-!!
-!!    'mo_coef' : MO coefficients which are updated to 
-!!                the new basis which block diagonalizes Fock
-!!                matrix block
-!!
-!!    'diagonal' : Diagonal elements of Fock matrix after block
-!!                 diagonalization
-!!
-      implicit none
-!
-      class(mlcc2), intent(inout) :: wf
-      integer, intent(in) :: n_total, n_active ! Total matrix dimension of block, and number of active orbitals
-      real(dp), dimension(n_total, n_total), intent(inout) :: fock
-      real(dp), dimension(wf%n_ao, n_total), intent(inout) :: mo_coeff
-      real(dp), dimension(n_total), intent(out) :: diagonal
-!
-   end subroutine construct_block_diagonal_fock_mos_2_level_mlcc2
 !
 !
    module subroutine construct_M_and_N_cnto_mlcc2(wf, R_ai, R_aibj, M, N, set_to_zero)
@@ -182,6 +150,23 @@
       real(dp), dimension(wf%n_v, wf%n_v), intent(out) :: T_v
 !
    end subroutine read_cnto_transformation_matrices_mlcc2
+!
+!
+   module subroutine write_cnto_transformation_matrices_mlcc2(wf, T_o, T_v)
+!!
+!!    Write CNTO transformation matrices
+!!    Written by Sarai D. Folkestad, Jun 2019
+!!
+!!    Write CNTO transformation matrices.
+!!    Used to ensure restart
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+      real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
+      real(dp), dimension(wf%n_v, wf%n_v), intent(out) :: T_v
+!
+   end subroutine write_cnto_transformation_matrices_mlcc2
 !
 !
    module subroutine construct_ccs_cnto_transformation_matrices_mlcc2(wf, T_o, T_v)

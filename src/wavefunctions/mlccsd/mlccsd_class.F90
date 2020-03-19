@@ -100,6 +100,14 @@ module mlccsd_class
       procedure :: construct_block_diagonal_fock_orbitals &
                   => construct_block_diagonal_fock_orbitals_mlccsd
 !
+      procedure :: construct_cholesky_orbitals  => construct_cholesky_orbitals_mlccsd
+      procedure :: construct_paos               => construct_paos_mlccsd
+!      
+      procedure :: construct_cc2_cnto_transformation_matrices &
+                  => construct_cc2_cnto_transformation_matrices_mlccsd
+!
+      procedure :: cc2_calculation_for_cntos    => cc2_calculation_for_cntos_mlccsd
+!
 !     Omega
 !
       procedure :: construct_omega              => construct_omega_mlccsd
@@ -454,9 +462,7 @@ contains
 !
                   aibj = max(ai,bj)*(max(ai,bj)-3)/2 + ai + bj
 !
-                  x_aibj(a, i, b, j) &
-                  = x_aibj(a, i, b, j) &
-                           + wf%t2(aibj)
+                  x_aibj(a, i, b, j) = x_aibj(a, i, b, j) + wf%t2(aibj)
 !
                enddo
             enddo
@@ -607,17 +613,14 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: X_akdj
       real(dp), dimension(:,:,:,:), allocatable :: X_ckdj
 !
-      integer :: n_a_o, n_a_v, first_a_o, last_a_o, first_a_v, last_a_v ! Total active indices and 
-                                                                        ! offsets (CCSD + CC2)
+      integer :: n_a_o, n_a_v, last_a_o, last_a_v ! Total and last  active indices 
+!
       integer :: a, i, b, j
 !
       n_a_o = wf%n_ccsd_o + wf%n_cc2_o
       n_a_v = wf%n_ccsd_v + wf%n_cc2_v
 !
-      first_a_o = 1
       last_a_o  = n_a_o
-!
-      first_a_v = 1
       last_a_v  = n_a_v
 !
 !     Read Cholesky vectors L^J_ai and transform them from the MLCCSD
@@ -625,9 +628,10 @@ contains
 !
       call mem%alloc(L_J_ai, wf%integrals%n_J, n_a_v, n_a_o)
 !
-      call wf%integrals%read_cholesky_t1(L_J_ai,                    &
-                           first_a_v + wf%n_o, last_a_v + wf%n_o,   &
-                           first_a_o, last_a_o)
+      call wf%integrals%get_cholesky_t1(L_J_ai, &
+                           1 + wf%n_o,          &
+                           last_a_v + wf%n_o,   &
+                           1, last_a_o)
 !
       call mem%alloc(X_J_aj, wf%integrals%n_J, n_a_v, n_a_o)
 !
@@ -824,7 +828,7 @@ contains
             do j = 1, wf%n_o
                do b = 1, wf%n_v
 !
-                  correlation_energy = correlation_energy +                 &
+                  correlation_energy = correlation_energy + &
                                  (wf%t1(a,i))*(wf%t1(b,j))* &
                                  (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
 !

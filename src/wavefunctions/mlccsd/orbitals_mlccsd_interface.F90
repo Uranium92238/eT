@@ -25,9 +25,9 @@
 !!    This routine drives the orbital 
 !!    partitioning for MLCCSD
 !!
-!!    Based on which orbitals are requested on 
-!!    input, we construct this new orbital basis 
-!!    and sets:
+!!    Based on which orbital types are requested on 
+!!    input, we construct the new orbital basis 
+!!    and set:
 !!
 !!       - n_ccsd_o, n_ccsd_v, n_cc2_o, n_cc2_v, n_ccs_o, n_ccs_v
 !!
@@ -37,7 +37,7 @@
 !!
 !!       - first_ccs_o, last_ccs_o, first_ccs_v, last_ccs_v
 !!
-!!    NOTE: This routine shold always be 
+!!    NOTE: This routine should always be 
 !!    followed by a routine which block diagonalizes
 !!    the Fock matrix!
 !!
@@ -55,8 +55,8 @@
 !!
 !!    For an MLCCSD calculation with CC2, we must swap MO basis
 !!    to detemine the CC2 double amplitudes. This routine
-!!    constructs the transfromation matrices (occupied and virtual) 
-!!    of that transfromation.
+!!    constructs the transformation matrices (occupied and virtual) 
+!!    of that transformation.
 !!
 !!    The orthogonal transformation matrix
 !!    is defined as
@@ -102,7 +102,7 @@
 !!    the CC2 orbital basis, such that it corresponds to 
 !!    a block diagonal fock matrix, where the diagonal blocks 
 !!    corresponding to CC2 and CCSD orbitals are diagonal.
-!!    
+!!   
       implicit none
 !
       class(mlccsd), intent(inout) :: wf
@@ -110,34 +110,97 @@
    end subroutine construct_block_diagonal_fock_orbitals_mlccsd
 !
 !
-   module subroutine construct_block_diagonal_fock_mos_3_level_mlccsd(wf, n_total, n_l_1, &
-                                                                     n_l_2, fock, MO_coeff, diagonal)
+   module subroutine construct_cholesky_orbitals_mlccsd(wf, occupied_only)
 !!
-!!    Construct block diagonal fock 3 levels
+!!    Construct Cholesky orbitals
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!
-!!    Construct orbitals that block diagonalizes 
-!!    Fock matrix block for three levels (inactive/active)
+!!    Constructs Cholesky orbitals by
+!!    decomposing the HF AO density and the
+!!    HF virtual AO density
 !!
-!!    'n_total' : Total dimmension of Fock matrix block
+!!    See A. M. J. Sánchez de Merás, H. Koch, 
+!!    I. G. Cuesta, and L. Boman (J. Chem. Phys. 132, 204105 (2010))
+!!    for more information on active space generation
+!!    using Cholesky decomposition
 !!
-!!    'n_active' : Dimension of active block of Fock matrix block
-!!
-!!    'fock' : Fock matrix block to block diagonalize
-!!
-!!    'mo_coef' : MO coefficients which are updated to 
-!!                the new basis which block diagonalizes Fock
-!!                matrix block
-!!
-!!    'diagonal' : On exit the, diagonal elements of Fock matrix after block
-!!                 diagonalization
+!!    'occupied_only' : Optional argument that is used to 
+!!                      determine if we construct occuped 
+!!                      Cholesky orbitals only, or if we also 
+!!                      construct the virtual Cholesky orbitals
+!!                      DEFAULT: .false.
 !!
       implicit none
 !
       class(mlccsd), intent(inout) :: wf
-      integer, intent(in) :: n_total, n_l_1, n_l_2 ! Total matrix dimension of block, and number of active orbitals
-      real(dp), dimension(n_total, n_total), intent(inout) :: fock
-      real(dp), dimension(wf%n_ao, n_total), intent(inout) :: mo_coeff
-      real(dp), dimension(n_total), intent(out)            :: diagonal
+      logical, intent(in), optional :: occupied_only
 !
-   end subroutine construct_block_diagonal_fock_mos_3_level_mlccsd
+   end subroutine construct_cholesky_orbitals_mlccsd
+!
+!
+   module subroutine construct_paos_mlccsd(wf)
+!!
+!!    Construct PAOs
+!!    Written by Sarai D. Folkestad, Feb 2019
+!!
+!!    Construct projected atomic orbitals for
+!!    virtual orbitals.
+!!
+!!    1. Construct PAOs on active atoms
+!!
+!!    2. Orthonormalize these active virtual orbitals 
+!!
+!!    3. PAOs for the remaining system by projecting out
+!!       both occupied and active virtuals out of all  AOs
+!!
+!!    4. Orthonormalize these inactive virtual orbitals 
+!!
+      implicit none
+!
+      class(mlccsd), intent(inout) :: wf
+!
+   end subroutine construct_paos_mlccsd
+!
+!
+   module subroutine construct_cc2_cnto_transformation_matrices_mlccsd(wf, T_o, T_v)
+!!
+!!    Construct CC2 CNTO transformation matrices
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!       - Run CCS calculation
+!!
+!!       - Construct M and N for CNTOs 
+!!
+!!       - Diagonalize M and N
+!!
+!!       - Write transformation matrices to file
+!!
+      implicit none
+!
+      class(mlccsd) :: wf
+      real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
+      real(dp), dimension(wf%n_v, wf%n_v), intent(out) :: T_v
+!
+   end subroutine construct_cc2_cnto_transformation_matrices_mlccsd
+!
+!
+   module subroutine cc2_calculation_for_cntos_mlccsd(wf, transformation, n_cnto_states, &
+                                                            R_ai, R_aibj, cnto_states)
+!!
+!!    CC2 calculation for CNTOs
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!
+!!    Performs CC2 calculation for CNTO
+!!    construction.
+!!
+      implicit none
+!
+      class(mlccsd), intent(inout) :: wf
+      character(len=200), intent(in) :: transformation
+      integer, intent(in) :: n_cnto_states
+      real(dp), dimension(wf%n_v, wf%n_o, n_cnto_states), intent(out) :: R_ai
+      real(dp), dimension(wf%n_t1*(wf%n_t1+1)/2, n_cnto_states), intent(out) :: R_aibj
+      integer, dimension(n_cnto_states), intent(in) :: cnto_states
+!
+   end subroutine cc2_calculation_for_cntos_mlccsd
