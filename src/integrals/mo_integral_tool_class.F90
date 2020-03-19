@@ -626,9 +626,9 @@ contains
 !
       do q = first_q, last_q
 !
-         call integrals%cholesky_t1%read_2(L_J_pq(:, :, q - first_q + 1),    &
-                                           integrals%n_mo*(q - 1) + first_p, &
-                                           integrals%n_mo*(q - 1) + last_p)
+         call integrals%cholesky_t1%read_(L_J_pq(:, :, q - first_q + 1),    &
+                                          integrals%n_mo*(q - 1) + first_p, &
+                                          integrals%n_mo*(q - 1) + last_p)
 !
       enddo
 !
@@ -679,9 +679,9 @@ contains
 !
          do q = first_q, last_q
 !
-            call integrals%cholesky_t1%write_2(L_J_pq(:, :, q - first_q + 1),    &
-                                               integrals%n_mo*(q - 1) + first_p, &
-                                               integrals%n_mo*(q - 1) + last_p)
+            call integrals%cholesky_t1%write_(L_J_pq(:, :, q - first_q + 1),    &
+                                              integrals%n_mo*(q - 1) + first_p, &
+                                              integrals%n_mo*(q - 1) + last_p)
 !
          enddo
 !

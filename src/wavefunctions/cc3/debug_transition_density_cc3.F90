@@ -438,10 +438,10 @@ contains
       call wf%g_ljck_c%open_('read')
 !
       call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-      call wf%g_bdck_t%read_4(g_bdci, 1, wf%n_o)
+      call wf%g_bdck_t%read_(g_bdci, 1, wf%n_o)
 !
       call mem%alloc(g_bdci_c1, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-      call wf%g_bdck_c%read_4(g_bdci_c1, 1, wf%n_o)
+      call wf%g_bdck_c%read_(g_bdci_c1, 1, wf%n_o)
 !
       call zero_array(R_abcijk, (wf%n_v*wf%n_o)**3)
 !
@@ -507,10 +507,10 @@ contains
       call wf%g_bdck_c%close_()
 !
       call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call wf%g_ljck_t%read_4(g_ljci, 1, wf%n_o*wf%n_o)
+      call wf%g_ljck_t%read_(g_ljci, 1, wf%n_o*wf%n_o)
 !
       call mem%alloc(g_ljci_c1, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call wf%g_ljck_c%read_4(g_ljci_c1, 1, wf%n_o*wf%n_o)
+      call wf%g_ljck_c%read_(g_ljci_c1, 1, wf%n_o*wf%n_o)
 !
       do k = 1, wf%n_o
          do j = 1, wf%n_o
@@ -651,10 +651,10 @@ contains
       call wf%g_ljck_t%open_('read')
 !
       call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-      call wf%g_bdck_t%read_4(g_bdci, 1, wf%n_o)
+      call wf%g_bdck_t%read_(g_bdci, 1, wf%n_o)
 !
       call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call wf%g_ljck_t%read_4(g_ljci, 1, wf%n_o*wf%n_o)
+      call wf%g_ljck_t%read_(g_ljci, 1, wf%n_o*wf%n_o)
 !
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
 !
@@ -750,13 +750,13 @@ contains
       call wf%L_jbkc_t%open_('read')
 !
       call mem%alloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-      call wf%g_dbkc_t%read_4(g_dbic, 1, wf%n_o)
+      call wf%g_dbkc_t%read_(g_dbic, 1, wf%n_o)
 !
       call mem%alloc(g_jlic, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      call wf%g_jlkc_t%read_4(g_jlic, 1, wf%n_o*wf%n_o)
+      call wf%g_jlkc_t%read_(g_jlic, 1, wf%n_o*wf%n_o)
 !
       call mem%alloc(L_ibjc, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call wf%L_jbkc_t%read_4(L_ibjc, 1, wf%n_o*wf%n_o)
+      call wf%L_jbkc_t%read_(L_ibjc, 1, wf%n_o*wf%n_o)
 !
 !
       call zero_array(tbar_abcijk, (wf%n_v*wf%n_o)**3)

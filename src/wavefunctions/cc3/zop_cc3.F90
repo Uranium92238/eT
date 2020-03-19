@@ -1411,7 +1411,7 @@ contains
          wf%Y_clik_tbar = direct_stream_file('Y_clik_tbar', wf%n_v*wf%n_o**2)
          call wf%Y_clik_tbar%open_('write')
 !
-         call wf%Y_clik_tbar%write_4(Y_clik, 1, wf%n_o)
+         call wf%Y_clik_tbar%write_(Y_clik, 1, wf%n_o)
 !
          call wf%Y_clik_tbar%close_()
 !

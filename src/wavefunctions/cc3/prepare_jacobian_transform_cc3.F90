@@ -741,7 +741,7 @@ contains
       wf%X_ajil = direct_stream_file('X_ajil',wf%n_v*wf%n_o**2)
       call wf%X_ajil%open_('write')
 !
-      call wf%X_ajil%write_4(X_ajil, 1, wf%n_o)
+      call wf%X_ajil%write_(X_ajil, 1, wf%n_o)
 !
       call mem%dealloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
