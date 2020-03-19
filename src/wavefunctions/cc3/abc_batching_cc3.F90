@@ -274,14 +274,14 @@ contains
       call wf%g_ljck_c%open_('read')
 !
       call mem%alloc(g_pqrs, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call wf%g_ljck_c%read_4(g_pqrs, 1, wf%n_o*wf%n_o) ! g'_ljck ordered lcjk
+      call wf%g_ljck_c%read_(g_pqrs, 1, wf%n_o*wf%n_o) ! g'_ljck ordered lcjk
 !
       call mem%alloc(h_pqrs, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
       call sort_1234_to_1342(g_pqrs, h_pqrs, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%dealloc(g_pqrs, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call wf%g_ljck_c_v%write_4(h_pqrs, 1, wf%n_v)
+      call wf%g_ljck_c_v%write_(h_pqrs, 1, wf%n_v)
 !
       call mem%dealloc(h_pqrs, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !

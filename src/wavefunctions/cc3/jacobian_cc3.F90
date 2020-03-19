@@ -290,7 +290,7 @@ contains
 !
       call mem%alloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call wf%X_ajil%read_4(X_ajil, 1, wf%n_o)
+      call wf%X_ajil%read_(X_ajil, 1, wf%n_o)
 !
       call wf%X_ajil%close_()
 !

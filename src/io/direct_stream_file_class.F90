@@ -31,7 +31,7 @@ module direct_stream_file_class
 !!    where the number refers to the rank of the array.
 !!
 !
-   use kinds    
+   use kinds
    use abstract_stream_class, only : abstract_stream
    use global_out, only : output
 !
@@ -43,36 +43,67 @@ module direct_stream_file_class
 !
    contains
 !
-!     Read routines, many needed for gfortran workaround
+!     Read routines
 !
-      procedure :: read_1 => read_1_direct_stream_file
-      procedure :: read_2 => read_2_direct_stream_file
-      procedure :: read_3 => read_3_direct_stream_file
-      procedure :: read_4 => read_4_direct_stream_file
+!     Real double precision read
 !
-!     Generic interface makes ifort seg fault, so disabled for now
-!      generic :: read_ => read_1_direct_stream_file, &
-!                          read_2_direct_stream_file, &
-!                          read_3_direct_stream_file, &
-!                          read_4_direct_stream_file
+      procedure :: read_1_real_dp_direct_stream_file
+      procedure :: read_2_real_dp_direct_stream_file
+      procedure :: read_3_real_dp_direct_stream_file
+      procedure :: read_4_real_dp_direct_stream_file
+!
+!     Complex double precision read
+!
+      procedure :: read_1_complex_dp_direct_stream_file
+      procedure :: read_2_complex_dp_direct_stream_file
+      procedure :: read_3_complex_dp_direct_stream_file
+      procedure :: read_4_complex_dp_direct_stream_file
+!
+!     Read generic
+!
+      generic :: read_ => read_1_real_dp_direct_stream_file,&
+                          read_2_real_dp_direct_stream_file,&
+                          read_3_real_dp_direct_stream_file,&
+                          read_4_real_dp_direct_stream_file,&
+                          read_1_complex_dp_direct_stream_file,&
+                          read_2_complex_dp_direct_stream_file,&
+                          read_3_complex_dp_direct_stream_file,&
+                          read_4_complex_dp_direct_stream_file
+
+!
+!     Specialized read routines
 !
       procedure :: read_interval            => read_interval_direct_stream_file
       procedure :: read_compound_full_batch => read_compound_full_batch_direct_stream_file
       procedure :: read_compound_batch_full => read_compound_batch_full_direct_stream_file
       procedure :: read_compound            => read_compound_direct_stream_file
 !
-!     Write routines, many needed for gfortran workaround
+!     Write routines
 !
-      procedure :: write_1 => write_1_direct_stream_file
-      procedure :: write_2 => write_2_direct_stream_file
-      procedure :: write_3 => write_3_direct_stream_file
-      procedure :: write_4 => write_4_direct_stream_file
+!     Real double precision write
 !
-!     Generic interface makes ifort seg fault, so disabled for now
-!      generic :: write_ => write_1_direct_stream_file, &
-!                           write_2_direct_stream_file, &
-!                           write_3_direct_stream_file, &
-!                           write_4_direct_stream_file
+      procedure :: write_1_real_dp_direct_stream_file
+      procedure :: write_2_real_dp_direct_stream_file
+      procedure :: write_3_real_dp_direct_stream_file
+      procedure :: write_4_real_dp_direct_stream_file
+!
+!     complex double precision write
+!
+      procedure :: write_1_complex_dp_direct_stream_file
+      procedure :: write_2_complex_dp_direct_stream_file
+      procedure :: write_3_complex_dp_direct_stream_file
+      procedure :: write_4_complex_dp_direct_stream_file
+!
+!     Write generic
+!
+      generic :: write_ => write_1_real_dp_direct_stream_file,&
+                           write_2_real_dp_direct_stream_file,&
+                           write_3_real_dp_direct_stream_file,&
+                           write_4_real_dp_direct_stream_file,&
+                           write_1_complex_dp_direct_stream_file,&
+                           write_2_complex_dp_direct_stream_file,&
+                           write_3_complex_dp_direct_stream_file,&
+                           write_4_complex_dp_direct_stream_file
 !
       procedure :: write_interval            => write_interval_direct_stream_file
       procedure :: write_compound_full_batch => write_compound_full_batch_direct_stream_file
@@ -145,10 +176,10 @@ contains
 !
    subroutine destructor(the_file)
 !!
-!!    Destructor 
+!!    Destructor
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
-      implicit none 
+      implicit none
 !
       type(direct_stream_file) :: the_file
 !
@@ -160,26 +191,22 @@ contains
    end subroutine destructor
 !
 !
-   subroutine read_1_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine read_1_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
 !!
-!!    read direct stream
+!!    read 1 real dp
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
-!!    array :: array of class(*) to dump file contents in. 
-!!             See below in select_type construct for accecpted types.
-!!             GFortran does not currently accept c_loc of polymorphic types
+!!    array :: real double precision array
 !!
-!!    first_rec :: The first record to read
+!!    first_rec :: first record to read
 !!
-!!    last_rec  :: Optional, last record to read, default: first_rec
+!!    last_rec  :: last record to read
 !!
 !!    Calculates position to read in the underlying stream file based on
 !!    first_rec and record_length
 !!
 !!    Calculates number of bytes to read based on first_rec, last_rec and the_file%record_length
 !!
-      use iso_c_binding
-!
       implicit none
 !
       class(direct_stream_file), intent(in) :: the_file
@@ -187,7 +214,7 @@ contains
       integer, intent(in) :: first_rec
       integer, intent(in) :: last_rec
 !
-      class(*), dimension(:), contiguous :: array
+      real(dp), dimension((last_rec - first_rec + 1)*the_file%record_dim), intent(out) :: array
 !
       integer :: position_, read_length, records
 !
@@ -201,60 +228,75 @@ contains
       endif
 !
       if (records .ge. 1) then
-         read_length = the_file%record_length*records
+         read_length = the_file%record_dim*records
       else
          call output%error_msg('Last record (i0) less than first record (i0) &
                                &for read in file (a0)', &
                                chars=[trim(the_file%get_name())], ints=[first_rec, last_rec])
       endif
 !
-      select type(array)
-         type is (real(spr))
-            call the_file%read_c(c_loc(array), read_length, position_)
-         type is (real(dp))
-            call the_file%read_c(c_loc(array), read_length, position_)
-         type is (real(qp))
-            call the_file%read_c(c_loc(array), read_length, position_)
-         type is (complex(spr))
-            call the_file%read_c(c_loc(array), read_length, position_)
-         type is (complex(dp))
-            call the_file%read_c(c_loc(array), read_length, position_)
-         type is (complex(qp))
-            call the_file%read_c(c_loc(array), read_length, position_)
-         type is (integer(i8))
-            call the_file%read_c(c_loc(array), read_length, position_)
-         type is (integer(i16))
-            call the_file%read_c(c_loc(array), read_length, position_)
-         type is (integer(i32))
-            call the_file%read_c(c_loc(array), read_length, position_)
-         type is (integer(i64))
-            call the_file%read_c(c_loc(array), read_length, position_)
-         type is (logical)
-            call the_file%read_c(c_loc(array), read_length, position_)
-         class default
-            call output%error_msg('Tried to read type not implemented in file (a0)', &
-                                  chars=[the_file%get_name()])
-      end select
+      call the_file%read_real_dp(array, read_length, position_)
 !
-   end subroutine read_1_direct_stream_file
+   end subroutine read_1_real_dp_direct_stream_file
 !
 !
-!  The following read routines are only here because GFortran can't handle explicit shape,
-!  class(*) arrays. This will hopefully change in the future.
-!
-   subroutine read_2_direct_stream_file(the_file, array, first_rec, last_rec)
+!! Wrapper routines for read_1_real_dp_direct_stream_file
+!! that accepts rank 2, 3, and 4 arrays
 !!
-!!    read 2 direct stream
+!! Written by Rolf H. Myhre, Mar 20202
+!
+   subroutine read_2_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+      implicit none
+!
+      class(direct_stream_file), intent(in) :: the_file
+      integer, intent(in) :: first_rec, last_rec
+      real(dp), dimension(:,:), intent(out) :: array
+!
+      call the_file%read_1_real_dp_direct_stream_file(array, first_rec, last_rec)
+!
+   end subroutine read_2_real_dp_direct_stream_file
+!
+   subroutine read_3_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+      implicit none
+!
+      class(direct_stream_file), intent(in) :: the_file
+      integer, intent(in) :: first_rec, last_rec
+      real(dp), dimension(:,:,:), intent(out) :: array
+!
+      call the_file%read_1_real_dp_direct_stream_file(array, first_rec, last_rec)
+!
+   end subroutine read_3_real_dp_direct_stream_file
+!
+   subroutine read_4_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+      implicit none
+!
+      class(direct_stream_file), intent(in) :: the_file
+      integer, intent(in) :: first_rec, last_rec
+      real(dp), dimension(:,:,:,:), intent(out) :: array
+!
+      call the_file%read_1_real_dp_direct_stream_file(array, first_rec, last_rec)
+!
+   end subroutine read_4_real_dp_direct_stream_file
+!
+!
+   subroutine read_1_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+!!
+!!    read direct stream
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
-!!    GFortran workaround
+!!    array :: array of class(*) to dump file contents in.
+!!             See below in select_type construct for accecpted types.
+!!             GFortran does not currently accept c_loc of polymorphic types
 !!
-!!    Wrapper for read_1 that takes 2D arrays. 
-!!    Do not copy this structure!
+!!    first_rec :: The first record to read
 !!
-!
-      use iso_c_binding
-!
+!!    last_rec  :: Optional, last record to read, default: first_rec
+!!
+!!    Calculates position to read in the underlying stream file based on
+!!    first_rec and record_length
+!!
+!!    Calculates number of bytes to read based on first_rec, last_rec and the_file%record_length
+!!
       implicit none
 !
       class(direct_stream_file), intent(in) :: the_file
@@ -262,76 +304,69 @@ contains
       integer, intent(in) :: first_rec
       integer, intent(in) :: last_rec
 !
-      class(*), dimension(:,:), target, contiguous :: array
+      complex(dp), dimension((last_rec - first_rec + 1)*the_file%record_dim), intent(out) :: array
 !
-      class(*), dimension(:), pointer :: point
+      integer :: position_, read_length, records
 !
-      point(1:size(array)) => array
+      records = last_rec - first_rec + 1
 !
-      call the_file%read_1(point, first_rec, last_rec)
+      if (first_rec .ge. 1) then
+         position_ = (first_rec-1)*the_file%record_length + 1
+      else
+         call output%error_msg('Record (i0) less than 1 for read in file (a0)', &
+                               chars=[the_file%get_name()], ints=[first_rec])
+      endif
 !
-   end subroutine read_2_direct_stream_file
+      if (records .ge. 1) then
+         read_length = the_file%record_dim*records
+      else
+         call output%error_msg('Last record (i0) less than first record (i0) &
+                               &for read in file (a0)', &
+                               chars=[trim(the_file%get_name())], ints=[first_rec, last_rec])
+      endif
+!
+      call the_file%read_complex_dp(array, read_length, position_)
+!
+   end subroutine read_1_complex_dp_direct_stream_file
 !
 !
-   subroutine read_3_direct_stream_file(the_file, array, first_rec, last_rec)
+!! Wrapper routines for read_1_complex_dp_direct_stream_file
+!! that accepts rank 2, 3, and 4 arrays
 !!
-!!    read 3 direct stream
-!!    Written by Rolf H. Myhre, Feb. 2020
-!!
-!!    GFortran workaround
-!!    Wrapper for read_1 that takes 3D arrays. 
-!!    Do not copy this structure!
-!!
+!! Written by Rolf H. Myhre, Mar 20202
 !
-!
-      use iso_c_binding
-!
+   subroutine read_2_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
       implicit none
 !
       class(direct_stream_file), intent(in) :: the_file
+      integer, intent(in) :: first_rec, last_rec
+      complex(dp), dimension(:,:), intent(out) :: array
 !
-      integer, intent(in) :: first_rec
-      integer, intent(in) :: last_rec
+      call the_file%read_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
 !
-      class(*), dimension(:,:,:), target, contiguous :: array
+   end subroutine read_2_complex_dp_direct_stream_file
 !
-      class(*), dimension(:), pointer :: point
-!
-      point(1:size(array)) => array
-!
-      call the_file%read_1(point, first_rec, last_rec)
-!
-   end subroutine read_3_direct_stream_file
-!
-!
-   subroutine read_4_direct_stream_file(the_file, array, first_rec, last_rec)
-!!
-!!    read 4 direct stream
-!!    Written by Rolf H. Myhre, Feb. 2020
-!!
-!!    GFortran workaround
-!!    Wrapper for read_1 that takes 4D arrays. 
-!!    Do not copy this structure!
-!!
-!
-      use iso_c_binding
-!
+   subroutine read_3_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
       implicit none
 !
       class(direct_stream_file), intent(in) :: the_file
+      integer, intent(in) :: first_rec, last_rec
+      complex(dp), dimension(:,:,:), intent(out) :: array
 !
-      integer, intent(in) :: first_rec
-      integer, intent(in) :: last_rec
+      call the_file%read_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
 !
-      class(*), dimension(:,:,:,:), target, contiguous :: array
+   end subroutine read_3_complex_dp_direct_stream_file
 !
-      class(*), dimension(:), pointer :: point
+   subroutine read_4_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+      implicit none
 !
-      point(1:size(array)) => array
+      class(direct_stream_file), intent(in) :: the_file
+      integer, intent(in) :: first_rec, last_rec
+      complex(dp), dimension(:,:,:,:), intent(out) :: array
 !
-      call the_file%read_1(point, first_rec, last_rec)
+      call the_file%read_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
 !
-   end subroutine read_4_direct_stream_file
+   end subroutine read_4_complex_dp_direct_stream_file
 !
 !
    subroutine read_interval_direct_stream_file(the_file, array, batch_z)
@@ -339,12 +374,12 @@ contains
 !!    read interval direct stream
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
 !!
-!!    array :: real(dp) to dump file contents in. 
+!!    array :: real(dp) to dump file contents in.
 !!             Only real(dp) allowed until GFortran figures out explicit shape
 !!
-!!    batch_z :: batching index 
+!!    batch_z :: batching index
 !!
-!!    Wrapper for read_1 that calculates first and last record from 
+!!    Wrapper for read_1 that calculates first and last record from
 !!    a batching index
 !!
       use interval_class, only : interval
@@ -357,7 +392,7 @@ contains
 !
       real(dp), dimension(the_file%record_dim*batch_z%length) :: array
 !
-      call the_file%read_1(array, batch_z%first, batch_z%last)
+      call the_file%read_1_real_dp_direct_stream_file(array, batch_z%first, batch_z%last)
 !
    end subroutine read_interval_direct_stream_file
 !
@@ -367,13 +402,13 @@ contains
 !!    read compound full batch direct stream
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
 !!
-!!    array :: real(dp) to dump file contents in. 
+!!    array :: real(dp) to dump file contents in.
 !!             Only real(dp) allowed until GFortran figures out explicit shape
 !!
 !!    dim_y   :: integer, full dimension of first component of batching index
 !!    batch_z :: batching index
 !!
-!!    Wrapper for read_1 that loops over batch_z 
+!!    Wrapper for read_1 that loops over batch_z
 !!    and reads all compound records in dim_y
 !!
 !!    Similar to read_compound, but takes the full y dimension
@@ -390,7 +425,7 @@ contains
 !
       real(dp), dimension(the_file%record_dim*dim_y*batch_z%length) :: array
 !
-      call the_file%read_1(array, &
+      call the_file%read_1_real_dp_direct_stream_file(array, &
                            (batch_z%first-1)*dim_y + 1, &
                             batch_z%last*dim_y)
 !
@@ -408,11 +443,11 @@ contains
 !!    batch_y :: batching index
 !!    dim_z   :: integer, full dimension of second component of batching index
 !!
-!!    Wrapper for read_1 that loops over dim_z 
+!!    Wrapper for read_1 that loops over dim_z
 !!    and reads all compound records in batch_y
 !!
 !!    Note! There are very few safeguards in these routines and the compiler/runtime
-!!          won't tell you if you mess up. Make very sure that you're batching 
+!!          won't tell you if you mess up. Make very sure that you're batching
 !!          dimensions are correct.
 !!
 !!    Note! This routine assumes that array is allocated something like (: ,batch_y%max_length, :)
@@ -435,12 +470,12 @@ contains
 !     Check if we can do a single continuous write, else we have to loop
       if (batch_y%length .eq. batch_y%index_dimension) then
 !
-         call the_file%read_2(array, 1, batch_y%index_dimension*dim_z)
+         call the_file%read_1_real_dp_direct_stream_file(array, 1, batch_y%index_dimension*dim_z)
 !
       else
          do z = 1, dim_z
 !
-            call the_file%read_1(array(:, z), &
+            call the_file%read_1_real_dp_direct_stream_file(array(:, z), &
                                   batch_y%index_dimension*(z-1) + batch_y%first, &
                                   batch_y%index_dimension*(z-1) + batch_y%last)
          enddo
@@ -454,25 +489,17 @@ contains
 !!    read compound direct stream
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
 !!
-!!    array :: real(dp) to dump file contents in. 
+!!    array :: real(dp) to dump file contents in.
 !!             Only real(dp) allowed until GFortran figures out explicit shape
 !!
 !!    batch_y :: batching index
 !!    batch_z :: batching index
 !!
-!!    Wrapper for read_1 that loops over batch_z 
+!!    Wrapper for read_1_real_dp that loops over batch_z
 !!    and reads all compound records in batch y
 !!
 !!    This routine is useful for coumpund records were the record number
 !!    is calculated from two batched indexes
-!!
-!!    Note! There are very few safeguards in these routines and the compiler/runtime
-!!          won't tell you if you mess up. Make very sure that you're batching 
-!!          dimensions are correct.
-!!
-!!    Note! This routine assumes that array is allocated something like (: ,batch_y%max_length, :)
-!!          If array is reallocated in the batching loop and the second to last dimension
-!!          changes, the routine will fail!
 !!
       use batching_index_class, only : batching_index
 !
@@ -490,13 +517,13 @@ contains
 !     Check if we can do a single continuous read, else we have to loop
       if (batch_y%length .eq. batch_y%index_dimension) then
 !
-         call the_file%read_2(array, &
+         call the_file%read_1_real_dp_direct_stream_file(array, &
                               batch_y%index_dimension*(batch_z%first-1) + 1, &
                               batch_y%index_dimension*batch_z%last)
       else
          do z = batch_z%first, batch_z%last
 !
-            call the_file%read_1(array(:, z), &
+            call the_file%read_1_real_dp_direct_stream_file(array(:, z), &
                                  batch_y%index_dimension*(z-1) + batch_y%first, &
                                  batch_y%index_dimension*(z-1) + batch_y%last)
          enddo
@@ -505,26 +532,22 @@ contains
    end subroutine read_compound_direct_stream_file
 !
 !
-   subroutine write_1_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine write_1_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
 !!
-!!    write 1 direct stream
-!!    Written by Rolf H. Myhre, Feb. 2020
+!!    write 1 real dp
+!!    Written by Rolf H. Myhre, Mar. 2020
 !!
-!!    array :: array of class(*) to dump to file. 
-!!             See below in select_type construct for accecpted types.
-!!             GFortran does not currently accept c_loc of polymorphic types
+!!    array :: real double precision array
 !!
-!!    first_rec :: The first record to write
+!!    first_rec :: first record to read
 !!
-!!    last_rec  :: Optional, last record to write, default: first_rec
+!!    last_rec  :: last record to read
 !!
 !!    Calculates position to write in the underlying stream file based on
 !!    first_rec and record_length
 !!
 !!    Calculates number of bytes to write based on first_rec, last_rec and the_file%record_length
 !!
-      use iso_c_binding
-!
       implicit none
 !
       class(direct_stream_file), intent(in) :: the_file
@@ -532,7 +555,7 @@ contains
       integer, intent(in) :: first_rec
       integer, intent(in) :: last_rec
 !
-      class(*), dimension(:), contiguous :: array
+      real(dp), dimension((last_rec - first_rec + 1)*the_file%record_dim), intent(in) :: array
 !
       integer :: position_, write_length, records
 !
@@ -546,59 +569,70 @@ contains
       endif
 !
       if (records .ge. 1) then
-         write_length = the_file%record_length*records
+         write_length = the_file%record_dim*records
       else
          call output%error_msg('Last record (i0) less than first record (i0) &
                                &for read in file (a0)', &
                                chars=[the_file%get_name()], ints=[first_rec, last_rec])
       endif
 !
-      select type(array)
-         type is (real(spr))
-            call the_file%write_c(c_loc(array), write_length, position_)
-         type is (real(dp))
-            call the_file%write_c(c_loc(array), write_length, position_)
-         type is (real(qp))
-            call the_file%write_c(c_loc(array), write_length, position_)
-         type is (complex(spr))
-            call the_file%write_c(c_loc(array), write_length, position_)
-         type is (complex(dp))
-            call the_file%write_c(c_loc(array), write_length, position_)
-         type is (complex(qp))
-            call the_file%write_c(c_loc(array), write_length, position_)
-         type is (integer(i8))
-            call the_file%write_c(c_loc(array), write_length, position_)
-         type is (integer(i16))
-            call the_file%write_c(c_loc(array), write_length, position_)
-         type is (integer(i32))
-            call the_file%write_c(c_loc(array), write_length, position_)
-         type is (integer(i64))
-            call the_file%write_c(c_loc(array), write_length, position_)
-         type is (logical)
-            call the_file%write_c(c_loc(array), write_length, position_)
-         class default
-            call output%error_msg('Tried to write type not implemented for file (a0)', &
-                                  chars=[the_file%get_name()])
-      end select
+      call the_file%write_real_dp(array, write_length, position_)
 !
-   end subroutine write_1_direct_stream_file
+   end subroutine write_1_real_dp_direct_stream_file
 !
 !
-!  The following write routines are only here because GFortran can't handle explicit shape, 
-!  class(*) arrays. This will hopefully change in the future.
-!
-   subroutine write_2_direct_stream_file(the_file, array, first_rec, last_rec)
+!! Wrapper routines for write_1_real_dp_direct_stream_file
+!! that accepts rank 2, 3, and 4 arrays
 !!
-!!    write 2 direct stream
-!!    Written by Rolf H. Myhre, Feb. 2020
-!!
-!!    GFortran workaround
-!!    Wrapper for write_1 that takes 2D arrays. 
-!!    Do not copy this structure!
-!!
+!! Written by Rolf H. Myhre, Mar 20202
 !
-      use iso_c_binding
+   subroutine write_2_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+      implicit none
 !
+      class(direct_stream_file), intent(in) :: the_file
+      integer, intent(in) :: first_rec, last_rec
+      real(dp), dimension(:,:), intent(in) :: array
+!
+      call the_file%write_1_real_dp_direct_stream_file(array, first_rec, last_rec)
+   end subroutine write_2_real_dp_direct_stream_file
+!
+   subroutine write_3_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+      implicit none
+!
+      class(direct_stream_file), intent(in) :: the_file
+      integer, intent(in) :: first_rec, last_rec
+      real(dp), dimension(:,:,:), intent(in) :: array
+!
+      call the_file%write_1_real_dp_direct_stream_file(array, first_rec, last_rec)
+   end subroutine write_3_real_dp_direct_stream_file
+!
+   subroutine write_4_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+      implicit none
+!
+      class(direct_stream_file), intent(in) :: the_file
+      integer, intent(in) :: first_rec, last_rec
+      real(dp), dimension(:,:,:,:), intent(in) :: array
+!
+      call the_file%write_1_real_dp_direct_stream_file(array, first_rec, last_rec)
+   end subroutine write_4_real_dp_direct_stream_file
+!
+!
+   subroutine write_1_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+!!
+!!    write 1 complex dp
+!!    Written by Rolf H. Myhre, Mar. 2020
+!!
+!!    array :: complex double precision array
+!!
+!!    first_rec :: first record to read
+!!
+!!    last_rec  :: last record to read
+!!
+!!    Calculates position to write in the underlying stream file based on
+!!    first_rec and record_length
+!!
+!!    Calculates number of bytes to write based on first_rec, last_rec and the_file%record_length
+!!
       implicit none
 !
       class(direct_stream_file), intent(in) :: the_file
@@ -606,75 +640,66 @@ contains
       integer, intent(in) :: first_rec
       integer, intent(in) :: last_rec
 !
-      class(*), dimension(:,:), target, contiguous :: array
+      complex(dp), dimension((last_rec - first_rec + 1)*the_file%record_dim), intent(in) :: array
 !
-      class(*), dimension(:), pointer :: point
+      integer :: position_, write_length, records
 !
-      point(1:size(array)) => array
+      records = last_rec - first_rec + 1
 !
-      call the_file%write_1(point, first_rec, last_rec)
+      if (first_rec .ge. 1) then
+         position_ = (first_rec-1)*the_file%record_length + 1
+      else
+         call output%error_msg('Record (i0) less than 1 for write in file (a0)', &
+                               chars=[the_file%get_name()], ints=[first_rec])
+      endif
 !
-   end subroutine write_2_direct_stream_file
+      if (records .ge. 1) then
+         write_length = the_file%record_dim*records
+      else
+         call output%error_msg('Last record (i0) less than first record (i0) &
+                               &for read in file (a0)', &
+                               chars=[the_file%get_name()], ints=[first_rec, last_rec])
+      endif
+!
+      call the_file%write_complex_dp(array, write_length, position_)
+!
+   end subroutine write_1_complex_dp_direct_stream_file
 !
 !
-   subroutine write_3_direct_stream_file(the_file, array, first_rec, last_rec)
+!! Wrapper routines for write_1_complex_dp_direct_stream_file
+!! that accepts rank 2, 3, and 4 arrays
 !!
-!!    write 3 direct stream
-!!    Written by Rolf H. Myhre, Feb. 2020
-!!
-!!    GFortran workaround
-!!    Wrapper for write_1 that takes 3D arrays. 
-!!    Do not copy this structure!
-!!
+!! Written by Rolf H. Myhre, Mar 20202
 !
-      use iso_c_binding
-!
+   subroutine write_2_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
       implicit none
 !
       class(direct_stream_file), intent(in) :: the_file
+      integer, intent(in) :: first_rec, last_rec
+      complex(dp), dimension(:,:), intent(in) :: array
 !
-      integer, intent(in) :: first_rec
-      integer, intent(in) :: last_rec
+      call the_file%write_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
+   end subroutine write_2_complex_dp_direct_stream_file
 !
-      class(*), dimension(:,:,:), target, contiguous :: array
-!
-      class(*), dimension(:), pointer :: point
-!
-      point(1:size(array)) => array
-!
-      call the_file%write_1(point, first_rec, last_rec)
-!
-   end subroutine write_3_direct_stream_file
-!
-!
-   subroutine write_4_direct_stream_file(the_file, array, first_rec, last_rec)
-!!
-!!    write 4 direct stream
-!!    Written by Rolf H. Myhre, Feb. 2020
-!!
-!!    GFortran workaround
-!!    Wrapper for write_1 that takes 4D arrays. 
-!!    Do not copy this structure!
-!!
-!
-      use iso_c_binding
-!
+   subroutine write_3_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
       implicit none
 !
       class(direct_stream_file), intent(in) :: the_file
+      integer, intent(in) :: first_rec, last_rec
+      complex(dp), dimension(:,:,:), intent(in) :: array
 !
-      integer, intent(in) :: first_rec
-      integer, intent(in) :: last_rec
+      call the_file%write_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
+   end subroutine write_3_complex_dp_direct_stream_file
 !
-      class(*), dimension(:,:,:,:), target, contiguous :: array
+   subroutine write_4_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+      implicit none
 !
-      class(*), dimension(:), pointer :: point
+      class(direct_stream_file), intent(in) :: the_file
+      integer, intent(in) :: first_rec, last_rec
+      complex(dp), dimension(:,:,:,:), intent(in) :: array
 !
-      point(1:size(array)) => array
-!
-      call the_file%write_1(point, first_rec, last_rec)
-!
-   end subroutine write_4_direct_stream_file
+      call the_file%write_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
+   end subroutine write_4_complex_dp_direct_stream_file
 !
 !
    subroutine write_interval_direct_stream_file(the_file, array, batch_z)
@@ -685,9 +710,9 @@ contains
 !!    array :: real(dp) to dump to file
 !!             Only real(dp) allowed until GFortran figures out explicit shape
 !!
-!!    batch_z :: batching index 
+!!    batch_z :: batching index
 !!
-!!    Wrapper for write_1 that calculates first and last record from 
+!!    Wrapper for write_1_real_dp that calculates first and last record from
 !!    a batching index
 !!
       use interval_class, only : interval
@@ -700,7 +725,7 @@ contains
 !
       real(dp), dimension(the_file%record_dim*batch_z%length) :: array
 !
-      call the_file%write_1(array, batch_z%first, batch_z%last)
+      call the_file%write_1_real_dp_direct_stream_file(array, batch_z%first, batch_z%last)
 !
    end subroutine write_interval_direct_stream_file
 !
@@ -716,7 +741,7 @@ contains
 !!    dim_y   :: integer, full dimension of first component of batching index
 !!    batch_z :: batching index
 !!
-!!    Wrapper for write_1 that loops over batch_z 
+!!    Wrapper for write_1_real_dp that loops over batch_z
 !!    and writes all compound records in dim_y
 !!
 !!    Similar to write_compound above, but takes the full y dimension
@@ -733,9 +758,9 @@ contains
 !
       real(dp), dimension(the_file%record_dim*dim_y*batch_z%length) :: array
 !
-      call the_file%write_1(array, &
-                            (batch_z%first-1)*dim_y + 1, &
-                             batch_z%last*dim_y)
+      call the_file%write_1_real_dp_direct_stream_file(array, &
+                                                       (batch_z%first-1)*dim_y + 1, &
+                                                        batch_z%last*dim_y)
 !
    end subroutine write_compound_full_batch_direct_stream_file
 !
@@ -751,16 +776,8 @@ contains
 !!    batch_y :: batching index
 !!    dim_z   :: integer, full dimension of second component of batching index
 !!
-!!    Wrapper for write that loops over dim_z 
+!!    Wrapper for write_1_real_dp that loops over dim_z
 !!    and writes all compound records in batch_y
-!!
-!!    Note! There are very few safeguards in these routines and the compiler/runtime
-!!          won't tell you if you mess up. Make very sure that you're batching
-!!          dimensions are correct.
-!!
-!!    Note! This routine assumes that array is allocated something like (: ,batch_y%max_length, :)
-!!          If array is reallocated in the batching loop and the second to last dimension
-!!          changes, the routine will fail!
 !!
       use batching_index_class, only : batching_index
 !
@@ -778,12 +795,12 @@ contains
 !     Check if we can do a single continuous write, else we have to loop
       if (batch_y%length .eq. batch_y%index_dimension) then
 !
-         call the_file%write_2(array, 1, batch_y%index_dimension*dim_z)
+         call the_file%write_1_real_dp_direct_stream_file(array, 1, batch_y%index_dimension*dim_z)
 !
       else
          do z = 1, dim_z
 !
-            call the_file%write_1(array(:, z), &
+            call the_file%write_1_real_dp_direct_stream_file(array(:, z), &
                                   batch_y%index_dimension*(z-1) + batch_y%first, &
                                   batch_y%index_dimension*(z-1) + batch_y%last)
          enddo
@@ -797,25 +814,16 @@ contains
 !!    write compound direct stream
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
 !!
-!!    array :: real(dp) to dump to file
-!!             Only real(dp) allowed until GFortran figures out explicit shape
+!!    array :: real double precision array
 !!
 !!    batch_y :: batching index
 !!    batch_z :: batching index
 !!
-!!    Wrapper for write that loops over batch_z
+!!    Wrapper for write_1_real_dp that loops over batch_z
 !!    and writes all compound records in batch y
 !!
 !!    This routine is useful for coumpund records were the record number
 !!    is calculated from two batched indexes
-!!
-!!    Note! There are very few safeguards in these routines and the compiler/runtime
-!!          won't tell you if you mess up. Make very sure that you're batching
-!!          dimensions are correct.
-!!
-!!    Note! This routine assumes that array is allocated something like (: ,batch_y%max_length, :)
-!!          If array is reallocated in the batching loop and the second to last dimension
-!!          changes, the routine will fail!
 !!
       use batching_index_class, only : batching_index
 !
@@ -833,13 +841,13 @@ contains
 !     Check if we can do a single continuous write, else we have to loop
       if (batch_y%length .eq. batch_y%index_dimension) then
 !
-         call the_file%write_2(array, &
+         call the_file%write_1_real_dp_direct_stream_file(array, &
                                batch_y%index_dimension*(batch_z%first-1) + 1, &
                                batch_y%index_dimension*batch_z%last)
       else
          do z = batch_z%first, batch_z%last
 !
-            call the_file%write_1(array(:, z), &
+            call the_file%write_1_real_dp_direct_stream_file(array(:, z), &
                                   batch_y%index_dimension*(z-1) + batch_y%first, &
                                   batch_y%index_dimension*(z-1) + batch_y%last)
          enddo

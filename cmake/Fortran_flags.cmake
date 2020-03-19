@@ -25,7 +25,7 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
 # 
 #   Set standard flags 
 # 
-    set(CMAKE_Fortran_FLAGS "-fpp -O3 -W1 -xHost -no-wrap-margin")
+    set(CMAKE_Fortran_FLAGS "-fpp -O3 -W1 -xHost -no-wrap-margin -stand f08")
 # 
 #   Enable 64 bit flag if requested (default)
 # 

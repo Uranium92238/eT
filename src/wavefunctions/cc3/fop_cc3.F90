@@ -724,7 +724,7 @@ contains
       call wf%Y_clik_tbar%open_('read')
 !
       call mem%alloc(Y_alki, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      call wf%Y_clik_tbar%read_4(Y_alki, 1, wf%n_o)
+      call wf%Y_clik_tbar%read_(Y_alki, 1, wf%n_o)
 !
       call wf%Y_clik_tbar%close_()
 !
@@ -1428,7 +1428,7 @@ contains
       wf%Z_bcjk = direct_stream_file('Z_bcjk', wf%n_v**2)
       call wf%Z_bcjk%open_('write')
 !
-      call wf%Z_bcjk%write_4(Z_bcjk, 1, wf%n_o*wf%n_o)
+      call wf%Z_bcjk%write_(Z_bcjk, 1, wf%n_o*wf%n_o)
 !
       call wf%Z_bcjk%close_()
       call mem%dealloc(Z_bcjk, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -2466,7 +2466,7 @@ contains
       call mem%alloc(Z_bcjk, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call wf%Z_bcjk%open_('read')
 !
-      call wf%Z_bcjk%read_4(Z_bcjk, 1, wf%n_o*wf%n_o)
+      call wf%Z_bcjk%read_(Z_bcjk, 1, wf%n_o*wf%n_o)
 !
       call wf%Z_bcjk%close_()
 !

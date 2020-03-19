@@ -289,7 +289,7 @@ contains
 !
       call mem%alloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call wf%X_ajil%read_4(X_ajil, 1, wf%n_o)
+      call wf%X_ajil%read_(X_ajil, 1, wf%n_o)
 !
       call wf%X_ajil%close_()
 !
@@ -2414,7 +2414,7 @@ contains
 !
 !        read in g_ckle stored as cl#k#e
          do e = 1, wf%n_v
-            call wf%g_ckld_t%read_3(g_clke_p(:,:,:,e), (e-1)*wf%n_o + batch_k%first, &
+            call wf%g_ckld_t%read_(g_clke_p(:,:,:,e), (e-1)*wf%n_o + batch_k%first, &
                                                        (e-1)*wf%n_o + batch_k%last)
          enddo
 !        cl#ke -> ce#kl
@@ -2439,8 +2439,8 @@ contains
 !
 !        read in g_celk stored as cl#k#e
          do e = 1, wf%n_v
-            call wf%g_cdlk_t%read_3(g_clke_p(:,:,:,e), (e-1)*wf%n_o + batch_k%first, &
-                                                       (e-1)*wf%n_o + batch_k%last)
+            call wf%g_cdlk_t%read_(g_clke_p(:,:,:,e), (e-1)*wf%n_o + batch_k%first, &
+                                                      (e-1)*wf%n_o + batch_k%last)
          enddo
 !        cl#ke -> ce#kl
          call sort_1234_to_1432(g_clke_p, g_cekl_p, wf%n_v, wf%n_o, batch_k%length, wf%n_v) 
