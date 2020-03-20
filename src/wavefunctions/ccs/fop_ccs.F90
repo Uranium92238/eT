@@ -137,7 +137,7 @@ contains
       call zero_array(wf%right_transition_density, (wf%n_mo)**2)
 !
       call mem%alloc(R_k, wf%n_es_amplitudes)
-      call wf%read_excited_state(R_k, state, 'right')
+      call wf%read_excited_state(R_k, state, state, 'right')
 !
       call wf%density_ccs_mu_nu_oo(wf%right_transition_density, wf%t1bar, R_k)
       call wf%density_ccs_ref_mu_ov(wf%right_transition_density, R_k)
@@ -381,7 +381,7 @@ contains
       call L_TDM_timer%turn_on()
 !
       call mem%alloc(L_k, wf%n_es_amplitudes)
-      call wf%read_excited_state(L_k, state, 'left')
+      call wf%read_excited_state(L_k, state, state, 'left')
 !
       call zero_array(wf%left_transition_density, (wf%n_mo)**2)
 !
@@ -686,8 +686,8 @@ contains
       call mem%alloc(L, wf%n_es_amplitudes)
       call mem%alloc(R, wf%n_es_amplitudes)
 !
-      call wf%read_excited_state(L, state, 'left')
-      call wf%read_excited_state(R, state, 'right')
+      call wf%read_excited_state(L, state, state, 'left')
+      call wf%read_excited_state(R, state, state, 'right')
 !
 !     Left and right transition moments
 !

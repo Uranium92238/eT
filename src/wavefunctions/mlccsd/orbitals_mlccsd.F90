@@ -1224,7 +1224,10 @@ contains
 !
          if(n_es .lt. cnto_states(n)) call output%error_msg('Requested non-existent CNTO state')
 !
-         call cc2_wf%read_excited_state(R, cnto_states(n), transformation)   
+         call cc2_wf%read_excited_state(R,               &
+                                        cnto_states(n),  &
+                                        cnto_states(n),  &
+                                        transformation)   
 !
          call dcopy(cc2_wf%n_t1, R, 1, R_ai(1, 1,n), 1)
          call dcopy(cc2_wf%n_t2, R(cc2_wf%n_t1 + 1), 1, R_aibj(1,n), 1)

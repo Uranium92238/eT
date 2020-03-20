@@ -126,7 +126,7 @@
    end subroutine read_multipliers_ccs
 !
 !
-   module subroutine save_excited_state_ccs(wf, X, n, side)
+   module subroutine save_excited_state_ccs(wf, X, first, last, side)
 !!
 !!    Save excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019
@@ -142,14 +142,14 @@
       implicit none
 !
       class(ccs), intent(inout) :: wf 
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X 
-      integer, intent(in) :: n ! state number 
+      integer, intent(in) :: first, last ! first, last state number 
+      real(dp), dimension(wf%n_es_amplitudes, last - first + 1), intent(in) :: X 
       character(len=*), intent(in) :: side ! 'left' or 'right' 
 !
    end subroutine save_excited_state_ccs
 !
 !
-   module subroutine read_excited_state_ccs(wf, X, n, side)
+   module subroutine read_excited_state_ccs(wf, X, first, last, side)
 !!
 !!    Read excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019
@@ -163,8 +163,8 @@
       implicit none
 !
       class(ccs), intent(inout) :: wf 
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
-      integer, intent(in) :: n ! state number 
+      integer, intent(in) :: first, last ! first, last state number 
+      real(dp), dimension(wf%n_es_amplitudes, last - first + 1), intent(out) :: X 
       character(len=*), intent(in) :: side ! 'left' or 'right' 
 !
    end subroutine read_excited_state_ccs

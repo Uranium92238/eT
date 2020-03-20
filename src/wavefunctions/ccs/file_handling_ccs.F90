@@ -86,42 +86,23 @@ contains
 !
       if(trim(transformation) .eq. 'right') then
 !
-         wf%r_files = file_storer('r_', wf%n_es_amplitudes,       &
-                                         wf%n_singlet_states,     &
-                                         delete=.false.,          &
-                                         direct_=.false.)
+         wf%r_files = direct_stream_file('r_', wf%n_es_amplitudes)
 !
          wf%excitation_energies_file = sequential_file('excitation_energies')
-!
-         call wf%r_files%initialize_storer()
 !
       else if(trim(transformation) .eq. 'left') then
 !
-         wf%l_files = file_storer('l_', wf%n_es_amplitudes,       &
-                                         wf%n_singlet_states,     &
-                                         delete=.false.,          &
-                                         direct_=.false.)
+         wf%l_files = direct_stream_file('l_', wf%n_es_amplitudes)
 !
          wf%excitation_energies_file = sequential_file('excitation_energies')
-!
-         call wf%l_files%initialize_storer()
 !
       else if(trim(transformation) .eq. 'both') then 
 !
-         wf%r_files = file_storer('r_', wf%n_es_amplitudes,       &
-                                         wf%n_singlet_states,     &
-                                         delete=.false.,          &
-                                         direct_=.false.)
+         wf%r_files = direct_stream_file('r_', wf%n_es_amplitudes)
 !
-         wf%l_files = file_storer('l_', wf%n_es_amplitudes,       &
-                                         wf%n_singlet_states,     &
-                                         delete=.false.,          &
-                                         direct_=.false.)
+         wf%l_files = direct_stream_file('l_', wf%n_es_amplitudes)
 !
          wf%excitation_energies_file = sequential_file('excitation_energies')
-!
-         call wf%l_files%initialize_storer()
-         call wf%r_files%initialize_storer()
 !
       else
 !
@@ -232,36 +213,47 @@ contains
    end subroutine read_multipliers_ccs
 !
 !
-   module subroutine save_excited_state_ccs(wf, X, n, side)
+   module subroutine save_excited_state_ccs(wf, X, first, last, side)
 !!
 !!    Save excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019
 !!    modified by Alexander C. Paul, Oct 2019
+!!    modified by Eirik F. Kjønstad, Mar 2020
 !!
-!!    Saves an excited state to disk. 
-!!    Since the solvers  keep these vectors in full length, 
-!!    we save the vector in full length (n_es_amplitudes), 
+!!    Writes excited states in the columns of X to disk.
 !!
-!!    Uses file_storer to distinguish different states
+!!    first: first state to write
+!!    last:  last state to write
+!!    side:  'right' or 'left' depending on right or left excited states 
 !!
+!!    Modified by Eirik F. Kjønstad, Mar 2020: made changes for direct stream,
+!!                                             and added [first, last] range 
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X 
+      integer, intent(in) :: first, last ! first, last state number 
 !
-      integer, intent(in) :: n ! state number 
+      real(dp), dimension(wf%n_es_amplitudes, last - first + 1), intent(in) :: X 
 !
       character(len=*), intent(in) :: side ! 'left' or 'right' 
 !
       if (trim(side) .eq. 'right') then 
 !
-         call wf%r_files%set(x, n)
+         call wf%r_files%open_('write')
+!
+         call wf%r_files%write_(X, first, last)
+!
+         call wf%r_files%close_()
 !
       elseif (trim(side) .eq. 'left') then 
 !
-         call wf%l_files%set(x, n)
+         call wf%l_files%open_('write')
+!
+         call wf%l_files%write_(X, first, last)
+!
+         call wf%l_files%close_()
 !
       else
 !
@@ -273,34 +265,47 @@ contains
    end subroutine save_excited_state_ccs
 !
 !
-   module subroutine read_excited_state_ccs(wf, X, n, side)
+   module subroutine read_excited_state_ccs(wf, X, first, last, side)
 !!
 !!    Read excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019
 !!    modified by Alexander C. Paul, Oct 2019
+!!    modified by Eirik F. Kjønstad, Mar 2020
 !!
-!!    Reads an excited state from disk. Since this routine is used by 
-!!    solvers, it returns the vector in the full space.
+!!    Reads excited states from disk into the columns of X.
 !!
-!!    Uses file_storer to distinguish different states
+!!    first: first state to read
+!!    last:  last state to read
+!!    side:  'right' or 'left' depending on right or left excited states 
+!!
+!!    Modified by Eirik F. Kjønstad, Mar 2020: made changes for direct stream,
+!!                                             and added [first, last] range 
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
+      integer, intent(in) :: first, last ! first, last state number 
 !
-      integer, intent(in) :: n ! state number 
+      real(dp), dimension(wf%n_es_amplitudes, last - first + 1), intent(out) :: X 
 !
       character(len=*), intent(in) :: side ! 'left' or 'right' 
 !
       if (trim(side) .eq. 'right') then 
 !
-         call wf%r_files%get(x, n)
+         call wf%r_files%open_('read')
+!
+         call wf%r_files%read_(X, first, last)
+!
+         call wf%r_files%close_()
 !
       elseif (trim(side) .eq. 'left') then 
 !
-         call wf%l_files%get(x, n)
+         call wf%l_files%open_('read')
+!
+         call wf%l_files%read_(X, first, last)
+!
+         call wf%l_files%close_()
 !
       else
 !
@@ -445,11 +450,11 @@ contains
 !
       if (trim(side) .eq. 'right') then
 !
-         n_states = wf%r_files%get_n_existing_records()
+         n_states = wf%r_files%get_n_records()
 !
       else if (trim(side) .eq. 'left') then
 !
-         n_states = wf%l_files%get_n_existing_records()
+         n_states = wf%l_files%get_n_records()
 !
       else 
 !
@@ -459,7 +464,6 @@ contains
       end if
 !
    end function get_n_excited_states_on_file_ccs
-
 !
 !
    module subroutine save_tbar_intermediates_ccs(wf)

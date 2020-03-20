@@ -37,8 +37,6 @@ module memory_storer_class
 !
    type, extends(record_storer) :: memory_storer
 !
-      logical :: delete
-!
       real(dp), dimension(:,:), allocatable :: array ! records are stored in columns of this array 
 !
    contains
