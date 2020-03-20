@@ -128,7 +128,7 @@
 !!                      determine if we construct occuped 
 !!                      Cholesky orbitals only, or if we also 
 !!                      construct the virtual Cholesky orbitals
-!!                      DEFAULT: .false.
+!!                      Default: .false.
 !!
       implicit none
 !

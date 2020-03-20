@@ -56,6 +56,7 @@ module abstract_stream_class
       procedure :: delete_                 => delete_abstract_stream
 !
       procedure :: exists                  => exists_abstract_stream
+      procedure :: get_file_size           => get_file_size_abstract_stream
       procedure :: copy                    => copy_abstract_stream
 !
       procedure :: read_real_dp_scalar     => read_real_dp_scalar_abstract_stream
@@ -304,8 +305,7 @@ contains
    function exists_abstract_stream(the_file) result(it_exists)
 !!
 !!    File exists
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!    Moved to file by Rolf H. Myhre Nov. 2018
+!!    Written by Rolf H. Myhre Nov. 2019
 !!
 !!    Checks if file exists
 !!
@@ -329,6 +329,27 @@ contains
 !
 !
    end function exists_abstract_stream
+!
+!
+   function get_file_size_abstract_stream(the_file) result(file_size)
+!!
+!!    Get file Size
+!!    Written by Rolf H. Myhre, Mar. 2020
+!!
+!!    Returns the number of the last byte written
+!!
+!!    Returns -1 if the number can't be determined,
+!!    typically because the file does not exist.
+!!
+      implicit none
+!
+      class(abstract_stream), intent(inout) :: the_file
+!
+      integer :: file_size
+!
+      inquire(file=trim(the_file%name_), size=file_size )
+!
+   end function get_file_size_abstract_stream
 !
 !
    subroutine read_real_dp_scalar_abstract_stream(the_file, scalar, position_)
