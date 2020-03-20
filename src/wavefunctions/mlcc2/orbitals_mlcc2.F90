@@ -1,4 +1,3 @@
-
 !
 !
 !  eT - a coupled cluster program
@@ -636,8 +635,8 @@ contains
 !
       class(mlcc2) :: wf
 !
-      real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
-      real(dp), dimension(wf%n_v, wf%n_v), intent(out) :: T_v
+      real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: T_o
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: T_v
 !
       type(sequential_file) :: transformation_o, transformation_v
 !
