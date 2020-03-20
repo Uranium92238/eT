@@ -1273,7 +1273,10 @@ contains
 !
          if(n_es .lt. cnto_states(n)) call output%error_msg('Requested non-existent CNTO/NTO state')
 !
-         call ccs_wf%read_excited_state(R_ai(:,:,n), cnto_states(n), transformation)   
+         call ccs_wf%read_excited_state(R_ai(:,:,n),        &
+                                        cnto_states(n),     &
+                                        cnto_states(n),     &
+                                        transformation)   
 !
       enddo  
 !

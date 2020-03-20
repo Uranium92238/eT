@@ -281,7 +281,7 @@ contains
 !
       type(diis_tool), dimension(:), allocatable :: diis 
 !
-      integer :: iteration, state, n_solutions_on_file
+      integer :: iteration, state, n_solutions_on_file, n_solutions_to_read
 !
       character(len=3) :: string_state
 !
@@ -289,7 +289,6 @@ contains
 !
       real(dp), dimension(:), allocatable   :: eps
       real(dp), dimension(:,:), allocatable :: X, R
-      real(dp), dimension(:,:), allocatable :: X_sorted
 !
       real(dp) :: ddot
 !
@@ -350,19 +349,26 @@ contains
                             ints=[n_solutions_on_file], &
                             chars=[solver%restart_transformation])
 !
-         do state = 1, min(n_solutions_on_file,wf%n_singlet_states)
+!        Read and normalize states 
 !
-            call wf%read_excited_state(X(:,state), state, solver%restart_transformation)
+         n_solutions_to_read = min(n_solutions_on_file, wf%n_singlet_states)
 !
-!           Normalize X in case it has been changed by FOP
+         call wf%read_excited_state(X(:, 1:n_solutions_to_read),  &
+                                    1,                            &
+                                    n_solutions_to_read,          &
+                                    solver%restart_transformation)
+!
+         do state = 1, n_solutions_to_read
 !
             norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
             call dscal(wf%n_es_amplitudes, one/norm_X, X(:, state), 1)
 !
          enddo
 !
+!        Initialize energies and read energies from states that have been read 
+!
          solver%energies = zero
-         call wf%read_excitation_energies(n_solutions_on_file, solver%energies)
+         call wf%read_excitation_energies(n_solutions_to_read, solver%energies)
 !
       endif
 !
@@ -456,14 +462,14 @@ contains
 !
 !        Save excited states and excitation energies
 !
-         do state = 1, solver%n_singlet_states
+         call wf%save_excited_state(X,                         &
+                                    1,                         &
+                                    solver%n_singlet_states,   &
+                                    solver%transformation)
 !
-            call wf%save_excited_state(X(:,state), state, solver%transformation)
-!
-         enddo 
-!
-         call wf%save_excitation_energies(solver%n_singlet_states, &
-                           solver%energies, solver%transformation)
+         call wf%save_excitation_energies(solver%n_singlet_states,   &
+                                          solver%energies,           &
+                                          solver%transformation)
          prev_energies = solver%energies 
 !
          call output%print_separator('n', 47, '-')
@@ -491,12 +497,7 @@ contains
 !
          call quicksort_with_index_ascending(solver%energies, prev_state_numbers, solver%n_singlet_states)
 !
-         call mem%alloc(X_sorted, wf%n_es_amplitudes, solver%n_singlet_states)
-!
          do state = 1, solver%n_singlet_states
-!
-!           Need X_sorted because print_summary needs the vectors in the correct order
-            call dcopy(wf%n_es_amplitudes, X(:, prev_state_numbers(state)), 1, X_sorted(:, state), 1)
 !
             if(prev_state_numbers(state) .ne. state) then
 !
@@ -505,18 +506,19 @@ contains
 !
             end if
 !
-            call wf%save_excited_state(X_sorted(:, state), state, solver%transformation)
+            call wf%save_excited_state(X(:, prev_state_numbers(state)), &
+                                       state,                           &
+                                       state,                           &
+                                       solver%transformation)
 !
          enddo
 !
-         call mem%dealloc(prev_state_numbers, solver%n_singlet_states)
-!
          call output%printf('n', '- Stored converged states to file.', fs='(/t3,a)')
 !
-         call solver%print_summary(wf, X_sorted)
+         call solver%print_summary(wf, X, prev_state_numbers)
 !
-         call mem%dealloc(X_sorted, wf%n_es_amplitudes, solver%n_singlet_states)
-!
+         call mem%dealloc(prev_state_numbers, solver%n_singlet_states)
+
          call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
 !
          call wf%check_for_parallel_states(solver%transformation, solver%residual_threshold)

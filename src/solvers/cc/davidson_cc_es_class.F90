@@ -295,7 +295,7 @@ contains
 !
             call davidson%construct_solution(solution, n) 
 !
-            call wf%save_excited_state(solution, n, solver%transformation) 
+            call wf%save_excited_state(solution, n, n, solver%transformation) 
 !
             call davidson%construct_residual(residual, solution, n) 
 !
@@ -432,7 +432,7 @@ contains
 !
          do trial = 1, n_solutions_on_file
 !
-            call wf%read_excited_state(c, trial, solver%restart_transformation)
+            call wf%read_excited_state(c, trial, trial, solver%restart_transformation)
             call davidson%set_trial(c, trial)
 !
          enddo 

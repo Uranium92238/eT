@@ -128,7 +128,7 @@ contains
       call L_TDM_timer%turn_on()
 !
       call mem%alloc(L_k, wf%n_es_amplitudes)
-      call wf%read_excited_state(L_k, state, 'left')
+      call wf%read_excited_state(L_k, state, state, 'left')
 !
       call ccsd_timer%turn_on()
 !
@@ -318,7 +318,7 @@ contains
       call zero_array(wf%right_transition_density, (wf%n_mo)**2)
 !
       call mem%alloc(R_k, wf%n_es_amplitudes)
-      call wf%read_excited_state(R_k, state, 'right')
+      call wf%read_excited_state(R_k, state, state, 'right')
 !
       call mem%alloc(R_ai, wf%n_v, wf%n_o)
 !

@@ -104,7 +104,6 @@ contains
 !
       end if
 !
-!
       the_file%name_ = trim(new_name)
 !
    end subroutine set_name_abstract_stream
@@ -347,7 +346,7 @@ contains
 !
       integer :: file_size
 !
-      inquire(file=trim(the_file%name_), size=file_size )
+      inquire(file=trim(the_file%name_), size=file_size)
 !
    end function get_file_size_abstract_stream
 !

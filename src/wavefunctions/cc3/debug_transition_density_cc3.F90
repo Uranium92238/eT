@@ -72,7 +72,7 @@ contains
       call zero_array(l_tdm, wf%n_mo**2)
 !
       call mem%alloc(L_k, wf%n_es_amplitudes)
-      call wf%read_excited_state(L_k, state, 'left')
+      call wf%read_excited_state(L_k, state, state, 'left')
 !
 !     Allocate the singles part of the excitation vector
 !
@@ -215,7 +215,7 @@ contains
       call zero_array(r_tdm, (wf%n_mo)**2)
 !
       call mem%alloc(R_k, wf%n_es_amplitudes)
-      call wf%read_excited_state(R_k, state, 'right')
+      call wf%read_excited_state(R_k, state, state, 'right')
 !
       call mem%alloc(R_ai, wf%n_v, wf%n_o)
 !

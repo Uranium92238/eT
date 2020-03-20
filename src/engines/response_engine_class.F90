@@ -680,9 +680,12 @@ contains
 !
       call mem%alloc(minus_FR, wf%n_es_amplitudes, wf%n_singlet_states)
 !
-      do k = 1, wf%n_singlet_states
+      call wf%read_excited_state(minus_FR,            &
+                                 1,                   &
+                                 wf%n_singlet_states, &
+                                 'right')
 !
-         call wf%read_excited_state(minus_FR(:,k), k, 'right')
+      do k = 1, wf%n_singlet_states
 !
          call wf%F_transformation(minus_FR(:,k))
 !

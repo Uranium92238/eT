@@ -23,30 +23,26 @@ module file_storer_class
 !!    File storer class module
 !!    Written by Eirik F. Kjønstad, 2019
 !!
-!!    Currently only for unformatted fixed-length real(dp) arrays.
+!!    Currently only for fixed-length real(dp) arrays.
 !!
 !!    Mimics the functionality of direct access files by handling
 !!    the storage of a set of vectors (each vector corresponds to
-!!    a record). Stores records either in a direct file (when 
-!!    recl < approx. 2 GB) or in an array of sequential files 
-!!    (when recl > approx. 2GB)
+!!    a record). Uses a direct stream file.
 !!
 !
    use kinds
    use record_storer_class, only: record_storer
-   use sequential_file_class, only: sequential_file
-   use direct_file_class, only: direct_file
+   use direct_stream_file_class, only: direct_stream_file
    use memory_manager_class, only: mem
    use global_out, only: output
 !
    type, extends(record_storer) :: file_storer
 !
-      logical :: delete, direct_ 
+      logical :: delete 
 !
       logical, dimension(:), allocatable :: written_to_record
 !
-      type(direct_file), allocatable :: direct_file
-      type(sequential_file), dimension(:), allocatable :: sequential_files
+      type(direct_stream_file), allocatable :: direct_file
 !
    contains
 !
@@ -57,8 +53,6 @@ module file_storer_class
       procedure :: close_                 => close_file_storer
 !
       procedure :: delete_                => delete_file_storer
-!
-      procedure :: get_n_existing_records => get_n_existing_records_file_storer
 !
       final :: destructor
 !
@@ -78,7 +72,7 @@ module file_storer_class
 contains
 !
 !
-   function new_file_storer(name_, record_dim, n_records, delete, direct_) result(storer)
+   function new_file_storer(name_, record_dim, n_records, delete) result(storer)
 !!
 !!    File storer constructer
 !!    Writen by Eirik F. Kjønstad, 2019
@@ -95,11 +89,6 @@ contains
 !!    delete:     Delete the files where the records are stored
 !!                when the storer is deallocated.
 !!
-!!    direct:     (Optional) Whether to use a direct file. If not, the storer  
-!!                will use an array of sequential files. Default is direct==.true.  
-!!                for records that are shorter than 2 GB and .false. for records 
-!!                that are longer.
-!!
       implicit none
 !
       type(file_storer) :: storer
@@ -109,106 +98,19 @@ contains
       integer, intent(in) :: n_records
       logical, intent(in) :: delete
 !
-      logical, intent(in), optional :: direct_ 
-!
-      integer :: I
-      character(len=200) :: record_name
-!
-!     https://software.intel.com/en-us/fortran-compiler-developer-guide-and-reference-record-length
-!     recl limit: 2147483647 - minus the bytes for record overhead
-!
-      integer, parameter :: recl_limit = 2147000000 
-!
       storer%name_       = trim(name_)
       storer%record_dim  = record_dim
       storer%n_records   = n_records
       storer%delete      = delete
 !
-!     Use direct file or sequential file array? 
+!     Initialize file 
 !
-      if (present(direct_)) then 
-!
-         storer%direct_ = direct_
-!
-      else 
-!
-         if (record_dim*dp > recl_limit) then 
-!
-            storer%direct_ = .false.
-!
-         else 
-!
-            storer%direct_ = .true.
-!
-         endif
-!
-      endif
-!
-!     Initialize file(s) 
-!
-      if (.not. storer%direct_) then 
-!
-!        Use array of sequential files 
-!
-         call output%printf('v', 'Using sequential file array to store records &
-                            &using the prefix: ' // trim(storer%name_) // '.', fs='(/t3,a)')
-!
-         allocate(storer%sequential_files(storer%n_records))
-!
-         do I = 1, storer%n_records
-!
-            write(record_name, '(a, i3.3)') trim(storer%name_), I
-            storer%sequential_files(I) = sequential_file(record_name)
-!
-         enddo
-!
-      else 
-!
-!        Use one direct file 
-!
-         call output%printf('v', 'Using direct file to store records with name: ' &
+      call output%printf('v', 'Using direct stream file to store records with name: ' &
                             // trim(storer%name_) // '.', fs='(/t3,a)')
 !
-         storer%direct_file = direct_file(trim(storer%name_), storer%record_dim)
-!
-      endif
+      storer%direct_file = direct_stream_file(trim(storer%name_), storer%record_dim)
 !
    end function new_file_storer
-!
-!
-   function get_n_existing_records_file_storer(storer) result(n_existing_records)
-!!
-!!    Get n existing records 
-!!    Written by Rolf H. Myhre and Eirik F. Kjønstad, 2019
-!!
-      implicit none 
-!
-      class(file_storer) :: storer 
-!
-      integer :: I 
-!
-      integer :: n_existing_records
-!
-      if (storer%direct_) call output%error_msg('cannot ask for number of existing records '&
-                                             // 'for storer using direct access file.')
-!
-      call storer%open_()
-!  
-      n_existing_records = 0
-!
-      do I = 1, storer%n_records
-!
-         if (storer%sequential_files(I)%number_of_records() .ge. 1) then 
-!  
-            n_existing_records = n_existing_records + 1
-!
-         endif
-!
-      enddo
-!
-      call storer%close_()
-!
-   end function get_n_existing_records_file_storer
 !
 !
    subroutine get_file_storer(storer, x, n)
@@ -230,17 +132,7 @@ contains
 !
       record = storer%record_indices(n)
 !
-      if (storer%direct_) then 
-!
-         call storer%direct_file%read_(x, record)
-!
-      else 
-!
-         call storer%sequential_files(record)%open_('read', 'rewind')
-         call storer%sequential_files(record)%read_(x, storer%record_dim)
-         call storer%sequential_files(record)%close_()
-!
-      endif
+      call storer%direct_file%read_(x, record, record)
 !
    end subroutine get_file_storer
 !
@@ -264,17 +156,7 @@ contains
 !
       record = storer%record_indices(n)
 !
-      if (storer%direct_) then 
-!
-         call storer%direct_file%write_(x, record)
-!
-      else
-!
-         call storer%sequential_files(record)%open_('write', 'rewind')
-         call storer%sequential_files(record)%write_(x, storer%record_dim)
-         call storer%sequential_files(record)%close_()
-!
-      endif
+      call storer%direct_file%write_(x, record, record)
 !
       storer%written_to_record(record) = .true.
 !
@@ -292,21 +174,7 @@ contains
 !
       class(file_storer) :: storer
 !
-      integer :: I
-!
-      if (storer%direct_) then 
-!
-         call storer%direct_file%open_()
-!
-      else 
-!
-         do I = 1, storer%n_records
-!
-            call storer%sequential_files(I)%open_()
-!
-         enddo
-!
-      endif
+      call storer%direct_file%open_()
 !
    end subroutine open_file_storer
 !
@@ -322,21 +190,7 @@ contains
 !
       class(file_storer) :: storer
 !
-      integer :: I
-!
-      if (storer%direct_) then 
-!
-         call storer%direct_file%close_()
-!
-      else 
-!
-         do I = 1, storer%n_records
-!
-            call storer%sequential_files(I)%close_()
-!
-         enddo
-!
-      endif
+      call storer%direct_file%close_()
 !
    end subroutine close_file_storer
 !
@@ -352,23 +206,8 @@ contains
 !
       class(file_storer) :: storer
 !
-      integer :: I
-!
-      if (storer%direct_) then 
-!
-         if (any(storer%written_to_record)) &
-            call storer%direct_file%delete_()
-!
-      else 
-!
-         do I = 1, storer%n_records
-!
-            if (storer%written_to_record(I)) &
-               call storer%sequential_files(I)%delete_()
-!
-         enddo
-!
-      endif
+      if (any(storer%written_to_record)) &
+         call storer%direct_file%delete_()
 !
    end subroutine delete_file_storer
 !
@@ -407,9 +246,9 @@ contains
 !
       enddo
 !
-!     Open file if direct 
+!     Open file 
 !
-      if (storer%direct_) call storer%direct_file%open_('readwrite')
+      call storer%direct_file%open_('readwrite')
 !
    end subroutine initialize_storer_file_storer
 !
@@ -434,13 +273,9 @@ contains
 !
       call mem%dealloc(storer%record_indices, storer%n_records)
 !
-      if (storer%direct_) call storer%direct_file%close_('keep')
+      call storer%direct_file%close_('keep')
 !
-      if (storer%delete) then 
-!
-         call storer%delete_()
-!
-      endif
+      if (storer%delete) call storer%delete_()
 !
       call mem%dealloc(storer%written_to_record, storer%n_records)     
 !
@@ -456,15 +291,7 @@ contains
 !
       type(file_storer) :: storer
 !
-      if (storer%direct_) then 
-!
-         deallocate(storer%direct_file)
-!
-      else 
-!
-         deallocate(storer%sequential_files)
-!
-      endif
+      deallocate(storer%direct_file)
 !
    end subroutine destructor
 !

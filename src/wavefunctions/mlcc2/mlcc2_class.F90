@@ -1114,9 +1114,6 @@ contains
       call wf%destruct_nto_states()
       call wf%destruct_cnto_states()
 !
-      if (allocated(wf%l_files)) call wf%l_files%finalize_storer()
-      if (allocated(wf%r_files)) call wf%r_files%finalize_storer()
-!
    end subroutine cleanup_mlcc2
 !
    subroutine determine_n_x2_amplitudes_mlcc2(wf)

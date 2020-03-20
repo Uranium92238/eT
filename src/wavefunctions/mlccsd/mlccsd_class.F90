@@ -1031,9 +1031,6 @@ contains
       call wf%destruct_O_o()
       call wf%destruct_O_v()
 !
-      if (allocated(wf%l_files)) call wf%l_files%finalize_storer()
-      if (allocated(wf%r_files)) call wf%r_files%finalize_storer()
-!
    end subroutine cleanup_mlccsd
 !
 !

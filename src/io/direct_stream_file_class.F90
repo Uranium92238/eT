@@ -110,6 +110,8 @@ module direct_stream_file_class
       procedure :: write_compound_batch_full => write_compound_batch_full_direct_stream_file
       procedure :: write_compound            => write_compound_direct_stream_file
 !
+      procedure :: get_n_records             => get_n_records_direct_stream_file
+!
       final :: destructor
 !
    end type direct_stream_file
@@ -855,6 +857,39 @@ contains
 !
 !
    end subroutine write_compound_direct_stream_file
+!
+!
+   function get_n_records_direct_stream_file(the_file) result(n_records)
+!!
+!!    Get number of existing records 
+!!    Written by Eirik F. Kjønstad, Mar 2020
+!!
+!!    Returns the number of records on the file.
+!!
+      implicit none 
+!
+      class(direct_stream_file) :: the_file
+!
+      integer :: n_records
+!
+      integer :: file_size 
+!
+      file_size = the_file%get_file_size()
+!
+      if (file_size .eq. -1) then 
+!
+!        File size is -1 if get_file_size is not able to determine the size.
+!        Assume that the number of records is zero in this case.
+!
+         n_records = 0 
+!
+      else
+!
+         n_records = file_size/the_file%record_length
+!
+      endif 
+!
+   end function get_n_records_direct_stream_file
 !
 !
 end module direct_stream_file_class

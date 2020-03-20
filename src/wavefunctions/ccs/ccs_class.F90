@@ -30,6 +30,7 @@ module ccs_class
 !
    use reordering
 !
+   use direct_stream_file_class, only : direct_stream_file
    use sequential_file_class, only : sequential_file
    use string_utilities, only : convert_to_uppercase
    use array_utilities, only : zero_array_complex
@@ -40,7 +41,6 @@ module ccs_class
    use index_invert, only : invert_compound_index, invert_packed_index
    use batching_index_class, only : batching_index
    use timings_class, only : timings
-   use file_storer_class, only : file_storer
 !
    use hf_class, only : hf
 !
@@ -69,8 +69,8 @@ module ccs_class
       type(sequential_file) :: restart_file
       type(sequential_file) :: mlhf_inactive_fock_term_file
 !
-      type(file_storer), allocatable :: r_files
-      type(file_storer), allocatable :: l_files
+      type(direct_stream_file), allocatable :: r_files
+      type(direct_stream_file), allocatable :: l_files
 !
       type(mo_integral_tool) :: integrals
 !
@@ -727,9 +727,6 @@ contains
       call wf%integrals%cleanup()
 !
       call wf%destruct_core_MOs()
-!
-      if (allocated(wf%l_files)) call wf%l_files%finalize_storer()
-      if (allocated(wf%r_files)) call wf%r_files%finalize_storer()
 !
       call output%printf('v', '- Cleaning up ' // trim(wf%name_) // ' wavefunction', &
                          fs='(/t3,a)')
@@ -1901,9 +1898,10 @@ contains
 !
             call mem%alloc(R, wf%n_es_amplitudes, n_degeneracy)
 !
-            do p = 1, n_degeneracy
-               call wf%read_excited_state(R(:,p), current_state+p-1, trim(transformation))
-            end do
+            call wf%read_excited_state(R(:, 1:n_degeneracy),                  &
+                                       current_state,                         &
+                                       current_state + n_degeneracy - 1,      &
+                                       'right')
 !
             call mem%alloc(parallel, n_degeneracy)
 !
@@ -2008,9 +2006,10 @@ contains
 !
             call mem%alloc(R, wf%n_es_amplitudes, n_degeneracy)
 !
-            do p = 1, n_degeneracy
-               call wf%read_excited_state(R(:,p), current_state + p - 1, 'right')
-            end do
+            call wf%read_excited_state(R(:, 1:n_degeneracy),                  &
+                                       current_state,                         &
+                                       current_state + n_degeneracy - 1,      &
+                                       'right')
 !
             call mem%alloc(parallel, n_degeneracy)
 !
@@ -2045,9 +2044,10 @@ contains
 !
             call mem%alloc(L, wf%n_es_amplitudes, n_degeneracy)
 !
-            do p = 1, n_degeneracy
-               call wf%read_excited_state(L(:,p), current_state + p - 1, 'left')
-            end do
+            call wf%read_excited_state(L(:, 1:n_degeneracy),                  &
+                                       current_state,                         &
+                                       current_state + n_degeneracy - 1,      &
+                                       'left')
 !
             call check_for_parallel_vectors(L, wf%n_es_amplitudes, n_degeneracy,     &
                                             reduced_degeneracy_l,residual_threshold, &
@@ -2127,10 +2127,17 @@ contains
 !
                call dscal(wf%n_es_amplitudes, one/LT_R, L(:, state), 1)
 !
-               call wf%save_excited_state(L(:, state), current_state+state-1, 'left')
-               call wf%save_excited_state(R(:, state), current_state+state-1, 'right')
-!
             end do
+!
+            call wf%save_excited_state(L(:, 1:reduced_degeneracy_r),                &
+                                       current_state,                               &
+                                       current_state + reduced_degeneracy_r - 1,    &
+                                       'left')
+!
+            call wf%save_excited_state(R(:, 1:reduced_degeneracy_r),                &
+                                       current_state,                               &
+                                       current_state + reduced_degeneracy_r - 1,    &
+                                       'right')
 !
             call mem%dealloc(R, wf%n_es_amplitudes, n_degeneracy)
             call mem%dealloc(L, wf%n_es_amplitudes, n_degeneracy)
