@@ -142,17 +142,9 @@ contains
       call solver%read_settings()
       call solver%print_settings()
 !
-      call solver%initialize_energies()
-      solver%energies = zero
-!
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
       wf%n_singlet_states = solver%n_singlet_states
-!
-      call solver%initialize_start_vector_tool(wf)
-      call solver%initialize_projection_tool(wf)
-!
-      call solver%prepare_wf_for_excited_state(wf)
 !
 !     Determine whether to store records in memory or on file
 !
@@ -222,6 +214,11 @@ contains
 !
 !     :: Preparations ::
 !  
+      call solver%initialize_start_vector_tool(wf)
+      call solver%initialize_projection_tool(wf)
+!
+      call solver%prepare_wf_for_excited_state(wf)
+!
       lindep_threshold = min(solver%residual_threshold, 1.0d-11)
 !
       davidson = eigen_davidson_tool('cc_es_davidson',                           &
@@ -237,6 +234,9 @@ contains
 !
 !     :: Iterative loop :: 
 !
+      call solver%initialize_energies()
+      solver%energies = zero
+!
       call mem%alloc(converged, solver%n_singlet_states)
       call mem%alloc(converged_eigenvalue, solver%n_singlet_states)
       call mem%alloc(converged_residual, solver%n_singlet_states)
@@ -250,7 +250,16 @@ contains
       do while (.not. all(converged) .and. (iteration .le. solver%max_iterations))
 !
          iteration = iteration + 1
-         call davidson%iterate()
+!
+!        Reduced space preparations 
+!
+         if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+!
+         call davidson%update_reduced_dim()
+!
+         call davidson%orthonormalize_trial_vecs() 
+!
+!        Print iteration information 
 !
          call output%printf('n', 'Iteration:               (i4)', &
                             ints=[iteration], fs='(/t3,a)')

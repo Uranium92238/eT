@@ -52,6 +52,8 @@ module abstract_cc_es_class
    use es_cvs_start_vector_tool_class, only: es_cvs_start_vector_tool
    use es_ip_start_vector_tool_class, only: es_ip_start_vector_tool
 !
+   use precondition_tool_class, only: precondition_tool
+!
    use es_projection_tool_class, only : es_projection_tool
    use es_valence_projection_tool_class, only: es_valence_projection_tool
    use es_cvs_projection_tool_class, only: es_cvs_projection_tool
@@ -89,6 +91,7 @@ module abstract_cc_es_class
 !
       class(es_start_vector_tool), allocatable  :: start_vectors
       class(es_projection_tool), allocatable    :: projector
+      class(precondition_tool), allocatable     :: preconditioner 
 !
    contains
 !
