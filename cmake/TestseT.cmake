@@ -113,6 +113,8 @@ add_eT_runtest(cc2_lowmem_gs_energy                         "eT;short;lowmem-cc2
 add_eT_runtest(cc2_lowmem_frozen_core                       "eT;short;lowmem-cc2;es;gs;frozen core")
 add_eT_runtest(cc2_lowmem_right_es_energies                 "eT;short;lowmem-cc2;es;right")
 add_eT_runtest(cc2_lowmem_left_es_energies                  "eT;short;lowmem-cc2;es")
+add_eT_runtest(cc2_lowmem_right_nonlin_davidson             "eT;short;lowmem-cc2;es;non-linear davidson")
+add_eT_runtest(cc2_lowmem_right_diis_w_davidson_preconv     "eT;short;lowmem-cc2;es;diis;non-linear davidson")
 add_eT_runtest(restart_lowmem_cc2_es                        "eT;short;lowmem-cc2;es;restart")
 add_eT_runtest(restart_cc2_lowmem_from_ccs                  "eT;short;lowmem-cc2;es;restart")
 #
@@ -171,6 +173,7 @@ add_eT_runtest(cc3_dipole                                   "eT;short;cc3;gs;dip
 add_eT_runtest(cc3_frozen_core                              "eT;short;cc3;gs;es;frozen core")
 add_eT_runtest(cc3_right_es_energies                        "eT;short;cc3;es;right;diis")
 add_eT_runtest(cc3_right_cvs_es_energies                    "eT;short;cc3;es;right;cvs;diis")
+add_eT_runtest(cc3_cvs_right_diis_w_davidson_preconv        "eT;short;cc3;es;right;cvs;diis;non-linear davidson")
 add_eT_runtest(cc3_left_es_energies                         "eT;short;cc3;es;left;diis")
 add_eT_runtest(cc3_left_cvs_es_energies                     "eT;short;cc3;es;left;cvs;diis")
 add_eT_runtest(cc3_oscillator_strength_eom                  "eT;short;cc3;es;eom")

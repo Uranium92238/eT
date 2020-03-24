@@ -43,9 +43,13 @@ module eigen_davidson_tool_class
 !!
 !!          do while (.not. converged ...)
 !!    
-!!             I. Let the tool know a new iteration has begun 
+!!             I. Preparations of reduced space for iteration 
 !!
-!!             call davidson%iterate()
+!!             if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+!!
+!!             call davidson%update_reduced_dim()
+!!
+!!             call davidson%orthonormalize_trial_vecs() 
 !!
 !!             II. Read new trials, transform them, & store the result 
 !!
@@ -86,24 +90,37 @@ module eigen_davidson_tool_class
       real(dp), dimension(:), allocatable :: omega_re 
       real(dp), dimension(:), allocatable :: omega_im
 !
+      logical :: non_unit_metric                     ! If trial vectors are not orthonormal,
+                                                     ! then the metric is not the unit matrix 
+                                                     ! Default is false, but can be set to true
+                                                     ! in constructor
+!
+      real(dp), dimension(:,:), allocatable :: S_red ! Metric if non-orthonormal trial vectors 
+!
    contains 
 !
 !     Procedures a user of the tool may need to use (see ancestor also)
 !
-      procedure :: solve_reduced_problem              => solve_reduced_problem_eigen_davidson_tool
-      procedure :: construct_residual                 => construct_residual_eigen_davidson_tool
-      procedure :: construct_next_trial               => construct_next_trial_eigen_davidson_tool
+      procedure :: solve_reduced_problem          => solve_reduced_problem_eigen_davidson_tool
+      procedure :: construct_residual             => construct_residual_eigen_davidson_tool
+      procedure :: construct_next_trial           => construct_next_trial_eigen_davidson_tool
 !
 !     Other routines 
 !
-      procedure, private :: construct_re_residual     => construct_re_residual_eigen_davidson_tool
-      procedure, private :: construct_im_residual     => construct_im_residual_eigen_davidson_tool
+      procedure, private :: construct_re_residual => construct_re_residual_eigen_davidson_tool
+      procedure, private :: construct_im_residual => construct_im_residual_eigen_davidson_tool
 !  
-      procedure, private :: initialize_omega_re       => initialize_omega_re_eigen_davidson_tool
-      procedure, private :: initialize_omega_im       => initialize_omega_im_eigen_davidson_tool
+      procedure, private :: initialize_omega_re   => initialize_omega_re_eigen_davidson_tool
+      procedure, private :: initialize_omega_im   => initialize_omega_im_eigen_davidson_tool
 !  
-      procedure, private :: destruct_omega_re         => destruct_omega_re_eigen_davidson_tool
-      procedure, private :: destruct_omega_im         => destruct_omega_im_eigen_davidson_tool
+      procedure, private :: destruct_omega_re     => destruct_omega_re_eigen_davidson_tool
+      procedure, private :: destruct_omega_im     => destruct_omega_im_eigen_davidson_tool
+!  
+      procedure :: construct_reduced_metric           &
+                => construct_reduced_metric_eigen_davidson_tool
+!
+      procedure :: destruct_reduced_space_quantities  &
+                => destruct_reduced_space_quantities_eigen_davidson_tool
 !
       final :: destructor_eigen_davidson_tool 
 !
@@ -121,7 +138,7 @@ contains
 !
 !
    function new_eigen_davidson_tool(name_, n_parameters, n_solutions, &
-                        lindep_threshold, max_dim_red) result(davidson)
+                        lindep_threshold, max_dim_red, non_unit_metric) result(davidson)
 !!
 !!    New eigen Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -140,6 +157,10 @@ contains
 !!    max_dim_red:       Maximum dimension of the reduced space. When exceeding this dimensionality,
 !!                       the solutions are set as the basis for the new trial space. 
 !!
+!!    non_unit_metric:   (optional) Specifies that the metric can be non-unit (i.e., the trial 
+!!                       can be non-orthonormal). Default: false. Use only when there is a reason 
+!!                       to. Assumes that vectors are linearly independent. 
+!!
       implicit none 
 !
       type(eigen_davidson_tool) :: davidson 
@@ -149,6 +170,8 @@ contains
       integer, intent(in)  :: n_parameters, n_solutions, max_dim_red 
       real(dp), intent(in) :: lindep_threshold  
 !
+      logical, optional, intent(in) :: non_unit_metric
+!
       davidson%n_parameters = n_parameters
       davidson%n_solutions  = n_solutions
       davidson%max_dim_red  = max_dim_red
@@ -156,6 +179,9 @@ contains
       davidson%lindep_threshold = lindep_threshold  
 !
       davidson%name_ = trim(name_)
+!
+      davidson%non_unit_metric = .false.
+      if (present(non_unit_metric)) davidson%non_unit_metric = non_unit_metric
 !
       davidson%do_precondition   = .false. ! Switches to true if 'set_preconditioner' is called
 !
@@ -174,8 +200,7 @@ contains
 !
       type(eigen_davidson_tool), intent(inout) :: davidson 
 !
-      if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
-      if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
+      call davidson%destruct_reduced_space_quantities()
 !
       call davidson%destruct_omega_re()
       call davidson%destruct_omega_im()
@@ -259,6 +284,8 @@ contains
 !!    to zero (prepares the tool for the next task, which is the receiving of new residuals
 !!    to make another new set of trial vectors).
 !!
+      use array_utilities, only: invert
+!
       implicit none 
 !
       class(eigen_davidson_tool) :: davidson 
@@ -272,11 +299,12 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: X_red
       real(dp), dimension(:,:), allocatable :: A_red ! Safe copy to avoid BLAS overwrite
+      real(dp), dimension(:,:), allocatable :: S_red_inv 
 !
       integer :: info = 0, j = 0, i = 0, worksize
       real(dp)  :: dummy =0.0, optwork
 !
-!     Construct reduced space quantities
+!     Construct reduced space matrix A 
 !
       call davidson%construct_reduced_matrix()
 !
@@ -289,6 +317,35 @@ contains
 !
       call zero_array(X_red, davidson%dim_red**2)
       call dcopy(davidson%dim_red**2, davidson%A_red, 1, A_red, 1)
+!
+      if (davidson%non_unit_metric) then 
+!
+!        Construct reduced space metric S and invert it 
+!
+         call davidson%construct_reduced_metric()
+!
+         call mem%alloc(S_red_inv, davidson%dim_red, davidson%dim_red)
+         call invert(S_red_inv, davidson%S_red, davidson%dim_red)
+!
+!        To solve A X = w S X, we transform the system to (S^-1 A) X = w X
+!        by redefining the A matrix as S^-1 A.  
+!
+         call dgemm('N', 'N',             &
+                     davidson%dim_red,    &
+                     davidson%dim_red,    &
+                     davidson%dim_red,    &
+                     one,                 &
+                     S_red_inv,           &
+                     davidson%dim_red,    &
+                     davidson%A_red,      &
+                     davidson%dim_red,    &
+                     zero,                &
+                     A_red,               &
+                     davidson%dim_red)
+!
+         call mem%dealloc(S_red_inv, davidson%dim_red, davidson%dim_red)
+!
+      endif 
 !
       call mem%alloc(omega_re, davidson%dim_red)
       call mem%alloc(omega_im, davidson%dim_red)
@@ -353,14 +410,12 @@ contains
 !
 !$omp parallel do private(i, j) collapse(2)
       do j = 1, davidson%n_solutions
-!
          do i = 1, davidson%dim_red
 !
             davidson%X_red(i, j) = X_red(i, index_list(j))
             davidson%omega_im(j) = omega_im(index_list(j))
 !
          enddo
-!
       enddo
 !$omp end parallel do
 !
@@ -617,6 +672,149 @@ contains
       call mem%dealloc(trial, davidson%n_parameters)
 !
    end subroutine construct_next_trial_eigen_davidson_tool
+!
+!
+   subroutine construct_reduced_metric_eigen_davidson_tool(davidson)
+!!
+!!    Construct reduced metric 
+!!    Written by Eirik F. Kjønstad, Nov 2019
+!!
+!!    Constructs 
+!!
+!!       S_ij = c_i^T c_j     (davidson%S_red)
+!!
+!!    where {c_k} is the set of current trials. To avoid re-calculating 
+!!    contributions, the routine computes the new elements in S in every 
+!!    iteration and pads the existing S_red matrix.
+!!
+      implicit none 
+!
+      class(eigen_davidson_tool) :: davidson 
+!
+      real(dp), dimension(:), allocatable :: c_i, c_j 
+!
+      integer :: i, j 
+!
+      real(dp) :: ddot
+!
+      real(dp), dimension(:,:), allocatable :: prev_S_red
+!
+      if (davidson%dim_red == davidson%n_solutions) then 
+!
+!        Either first iteration or first iteration after resetting the space.
+!        Allocate and construct entire S matrix.
+!
+         call mem%alloc(davidson%S_red, davidson%dim_red, davidson%dim_red)
+!
+         call mem%alloc(c_i, davidson%n_parameters)
+         call mem%alloc(c_j, davidson%n_parameters)
+!
+         do i = 1, davidson%dim_red 
+!
+            call davidson%get_trial(c_i, i)
+!
+            do j = 1, i 
+!
+               call davidson%get_trial(c_j, j)
+!
+               davidson%S_red(i, j) = ddot(davidson%n_parameters, c_i, 1, c_j, 1)
+               davidson%S_red(j, i) = davidson%S_red(i, j)
+!
+            enddo 
+         enddo 
+!
+         call mem%dealloc(c_i, davidson%n_parameters)
+         call mem%dealloc(c_j, davidson%n_parameters)
+!
+      else 
+!
+!        Copy over the existing elements in S 
+!
+         call mem%alloc(prev_S_red, davidson%dim_red - davidson%n_new_trials, &
+                                    davidson%dim_red - davidson%n_new_trials)
+!
+         call dcopy((davidson%dim_red - davidson%n_new_trials)**2,   &
+                    davidson%S_red,                                  &
+                    1,                                               &
+                    prev_S_red,                                      &
+                    1)
+!
+         call mem%dealloc(davidson%S_red, davidson%dim_red - davidson%n_new_trials, &
+                                          davidson%dim_red - davidson%n_new_trials)
+!
+         call mem%alloc(davidson%S_red, davidson%dim_red, davidson%dim_red)
+!
+         do i = 1, davidson%dim_red - davidson%n_new_trials
+            do j = 1, davidson%dim_red - davidson%n_new_trials
+!
+               davidson%S_red(i, j) = prev_S_red(i, j)
+!
+            enddo
+         enddo 
+!
+         call mem%dealloc(prev_S_red, davidson%dim_red - davidson%n_new_trials, &
+                                      davidson%dim_red - davidson%n_new_trials)
+!
+!        Calculate the new elements in S 
+!
+         call mem%alloc(c_i, davidson%n_parameters)
+         call mem%alloc(c_j, davidson%n_parameters)
+!
+         do i = 1, davidson%dim_red 
+!
+            call davidson%get_trial(c_i, i)
+!
+            do j = 1, davidson%dim_red
+!
+               if (j .le. davidson%dim_red - davidson%n_new_trials) then
+!
+                  if (i .gt. davidson%dim_red - davidson%n_new_trials) then 
+!
+                     call davidson%get_trial(c_j, j)
+                     davidson%S_red(i, j) = ddot(davidson%n_parameters, c_i, 1, c_j, 1)
+                     davidson%S_red(j, i) = davidson%S_red(i, j)
+!
+                  endif
+!
+               elseif (j .gt. davidson%dim_red - davidson%n_new_trials) then
+!
+                  call davidson%get_trial(c_j, j)
+                  davidson%S_red(i, j) = ddot(davidson%n_parameters, c_i, 1, c_j, 1)
+                  davidson%S_red(j, i) = davidson%S_red(i, j)
+!
+               endif
+!
+            enddo 
+         enddo 
+!
+         call mem%dealloc(c_i, davidson%n_parameters)
+         call mem%dealloc(c_j, davidson%n_parameters)
+!
+      endif 
+!
+   end subroutine construct_reduced_metric_eigen_davidson_tool
+!
+!
+   subroutine destruct_reduced_space_quantities_eigen_davidson_tool(davidson)
+!!
+!!    Destruct reduced space quantities 
+!!    Written by Eirik F. Kjønstad, Jan 2020
+!!
+!!    Deallocates reduced space quantities, e.g. when re-setting the reduced space,
+!!    or upon destruction of the Davidson tool.
+!!
+      implicit none 
+!
+      class(eigen_davidson_tool) :: davidson
+!
+      if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, &
+         davidson%dim_red, davidson%dim_red)
+      if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, &
+         davidson%dim_red, davidson%n_solutions)
+      if (allocated(davidson%S_red)) &
+         call mem%dealloc(davidson%S_red, davidson%dim_red, davidson%dim_red)
+!
+   end subroutine destruct_reduced_space_quantities_eigen_davidson_tool
 !
 !
 end module eigen_davidson_tool_class

@@ -265,7 +265,14 @@ contains
       do while (.not. converged_residual .and. (iteration .le. solver%max_iterations))
 !
          iteration = iteration + 1       
-         call davidson%iterate()
+!
+!        Reduced space preparations 
+!
+         if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+!
+         call davidson%update_reduced_dim()
+!
+         call davidson%orthonormalize_trial_vecs() 
 !
 !        Transform new trial vector and write to file
 !

@@ -27,7 +27,7 @@ module mo_integral_tool_class
 !!    basis. The tool uses Cholesky vectors L_pq^J (in a given basis) to construct 
 !!    the electron repulsion integrals (in a given basis):
 !!
-!!       g_pqrs = sum_J L_pq^J L_rs^J 
+!!       g_pqrs = sum_J L_pq^J L_rs^J  
 !!
 !!    Interaction with the tool is mostly handled by basic functionality in the 
 !!    coupled cluster wavefunctions and engines/solvers. Developers will mostly need to 

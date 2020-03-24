@@ -44,9 +44,13 @@ module linear_davidson_tool_class
 !!
 !!          do while (.not. converged ...)
 !!    
-!!             I. Let the tool know a new iteration has begun 
+!!             I. Preparations of reduced space for iteration 
 !!
-!!             call davidson%iterate()
+!!             if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+!!
+!!             call davidson%update_reduced_dim()
+!!
+!!             call davidson%orthonormalize_trial_vecs() 
 !!
 !!             II. Read new trial, transform it, & store the result 
 !!
@@ -91,8 +95,6 @@ module linear_davidson_tool_class
 !
    contains 
 !
-!     Linear Davidson specific routines
-!
       procedure :: construct_next_trial               => construct_next_trial_linear_davidson_tool
       procedure :: construct_residual                 => construct_residual_linear_davidson_tool
       procedure :: solve_reduced_problem              => solve_reduced_problem_linear_davidson_tool
@@ -102,6 +104,8 @@ module linear_davidson_tool_class
       procedure, private :: general_preparations      => general_preparations_linear_davidson_tool
 !
       procedure :: set_trials_to_preconditioner_guess => set_trials_to_preconditioner_guess_linear_davidson
+!
+      procedure :: destruct_reduced_space_quantities  => destruct_reduced_space_quantities_linear_davidson_tool
 !
       final :: destructor_linear_davidson_tool
 !
@@ -583,6 +587,30 @@ contains
    end subroutine construct_next_trial_linear_davidson_tool
 !
 !
+   subroutine destruct_reduced_space_quantities_linear_davidson_tool(davidson)
+!!
+!!    Destruct reduced space quantities 
+!!    Written by Eirik F. Kjønstad, Jan 2020
+!!
+!!    Deallocates reduced space quantities, e.g. when re-setting the reduced space,
+!!    or upon destruction of the Davidson tool.
+!!
+      implicit none 
+!
+      class(linear_davidson_tool) :: davidson
+!
+      if (allocated(davidson%A_red)) &
+         call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
+!
+      if (allocated(davidson%X_red)) & 
+         call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
+!
+      if (allocated(davidson%F_red)) & 
+         call mem%dealloc(davidson%F_red, davidson%dim_red, davidson%n_rhs)
+!
+   end subroutine destruct_reduced_space_quantities_linear_davidson_tool
+!
+!
    subroutine destructor_linear_davidson_tool(davidson)
 !!
 !!    Destructor  
@@ -592,17 +620,7 @@ contains
 !
       type(linear_davidson_tool) :: davidson 
 !
-      if (allocated(davidson%A_red)) then
-         call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
-      end if
-!
-      if (allocated(davidson%X_red)) then 
-         call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
-      end if
-!
-      if (allocated(davidson%F_red)) then 
-         call mem%dealloc(davidson%F_red, davidson%dim_red, davidson%n_rhs)
-      end if
+      call davidson%destruct_reduced_space_quantities()
 !
       davidson%F => null()
 !

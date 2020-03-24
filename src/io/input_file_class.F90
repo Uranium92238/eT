@@ -305,23 +305,27 @@ contains
 !
       solver_cc_es%name_    = 'solver cc es'
       solver_cc_es%required = .false.
-      solver_cc_es%keywords = [character(len=30) ::      &
-                                 'algorithm',            &
-                                 'core excitation',      &
-                                 'ionization',           &
-                                 'energy threshold ',    &
-                                 'crop',                 &
-                                 'residual threshold',   &
-                                 'max iterations',       &
-                                 'restart',              &
-                                 'left eigenvectors',    &
-                                 'right eigenvectors',   &
-                                 'storage',              &
-                                 'singlet states',       &
-                                 'diis dimension',       &
-                                 'max micro iterations', &
-                                 'max reduced dimension',&
-                                 'chain length',         &
+      solver_cc_es%keywords = [character(len=30) ::            &
+                                 'algorithm',                  &
+                                 'core excitation',            &
+                                 'ionization',                 &
+                                 'energy threshold ',          &
+                                 'crop',                       &
+                                 'residual threshold',         &
+                                 'max iterations',             &
+                                 'restart',                    &
+                                 'left eigenvectors',          &
+                                 'right eigenvectors',         &
+                                 'storage',                    &
+                                 'singlet states',             &
+                                 'diis dimension',             &
+                                 'max micro iterations',       &
+                                 'max reduced dimension',      &
+                                 'davidson preconvergence',    &
+                                 'preconvergence threshold',   &
+                                 'max micro iterations',       &
+                                 'rel micro threshold',        &
+                                 'chain length',               &
                                  'lanczos normalization']
 !
       solver_cc_multipliers%name_    = 'solver cc multipliers'

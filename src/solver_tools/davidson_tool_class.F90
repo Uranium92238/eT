@@ -60,49 +60,44 @@ module davidson_tool_class
 !
 !     Procedures a user of the tool may need to use 
 !
-      procedure :: iterate                                     => iterate_davidson_tool 
-      procedure :: construct_solution                          => construct_solution_davidson_tool
-      procedure :: set_trial                                   => set_trial_davidson_tool 
-      procedure :: get_trial                                   => get_trial_davidson_tool 
-      procedure :: set_transform                               => set_transform_davidson_tool 
-      procedure :: get_transform                               => get_transform_davidson_tool 
-      procedure :: first_new_trial                             => first_new_trial_davidson_tool
-      procedure :: last_new_trial                              => last_new_trial_davidson_tool
+      procedure :: construct_solution   => construct_solution_davidson_tool
+      procedure :: set_trial            => set_trial_davidson_tool 
+      procedure :: get_trial            => get_trial_davidson_tool 
+      procedure :: set_transform        => set_transform_davidson_tool 
+      procedure :: get_transform        => get_transform_davidson_tool 
+      procedure :: first_new_trial      => first_new_trial_davidson_tool
+      procedure :: last_new_trial       => last_new_trial_davidson_tool
 !
-      procedure :: set_preconditioner                          => set_preconditioner_davidson_tool
+      procedure :: set_preconditioner   => set_preconditioner_davidson_tool
 !
-      procedure(solve_reduced_problem), deferred :: solve_reduced_problem
+      procedure :: red_dim_exceeds_max  => red_dim_exceeds_max_davidson_tool
+      procedure :: update_reduced_dim   => update_reduced_dim_davidson_tool
 !
 !     Other routines 
 !
-      procedure, non_overridable :: construct_AX               => construct_AX_davidson_tool
-      procedure, non_overridable :: construct_reduced_matrix   => construct_reduced_matrix_davidson_tool
+      procedure :: construct_AX                                &
+                => construct_AX_davidson_tool
 !
-      procedure :: orthonormalize_trial_vecs                   => orthonormalize_trial_vecs_davidson_tool
+      procedure :: construct_reduced_matrix                    &
+                => construct_reduced_matrix_davidson_tool
 !
-      procedure :: set_trials_to_solutions                     => set_trials_to_solutions_davidson_tool
+      procedure :: orthonormalize_trial_vecs                   &
+                => orthonormalize_trial_vecs_davidson_tool
 !
-      procedure :: initialize_trials_and_transforms            => initialize_trials_and_transforms_davidson_tool
-      procedure :: finalize_trials_and_transforms              => finalize_trials_and_transforms_davidson_tool
+      procedure :: set_trials_to_solutions                     &
+                => set_trials_to_solutions_davidson_tool
+!
+      procedure :: initialize_trials_and_transforms            &
+                => initialize_trials_and_transforms_davidson_tool
+!
+      procedure :: finalize_trials_and_transforms              &
+                => finalize_trials_and_transforms_davidson_tool
+!
+      procedure :: destruct_reduced_space_quantities           &
+                => destruct_reduced_space_quantities_davidson_tool
 !
    end type davidson_tool
 !
-!
-   abstract interface
-!
-!
-      subroutine solve_reduced_problem(davidson)
-!
-         import :: davidson_tool
-!
-         implicit none 
-!
-         class(davidson_tool) :: davidson 
-!
-      end subroutine solve_reduced_problem
-!
-!
-   end interface
 !
 contains
 !
@@ -129,7 +124,7 @@ contains
 !
       if (records_in_memory) then 
 !
-         call output%printf('m', 'Reduced space basis and transforms are stored &
+         call output%printf('n', 'Reduced space basis and transforms are stored &
                             &in memory.', fs='(/t6,a)')
 !
          davidson%trials = memory_storer(trim(davidson%name_) // '_trials', &
@@ -140,7 +135,7 @@ contains
 !
       else
 !
-         call output%printf('m', 'Reduced space basis and transforms are stored &
+         call output%printf('n', 'Reduced space basis and transforms are stored &
                             &on disk.', fs='(/t6,a)')
 !
          davidson%trials = file_storer(trim(davidson%name_) // '_trials', &
@@ -255,47 +250,6 @@ contains
       call davidson%transforms%get(rho, n)
 !
    end subroutine get_transform_davidson_tool
-!
-!
-   subroutine iterate_davidson_tool(davidson)
-!!
-!!    Iterate 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 
-!!
-!!    Updates the reduced space dimension. It should be called at 
-!!    the beginning of the iterative loop, after the initial set 
-!!    of trial vectors have been written:
-!!
-!!    do while (.not. converged ...)
-!!
-!!       iteration = iteration + 1
-!!       call davidson%iterate()
-!!
-!!       ... 
-!!
-!!    enddo
-!!
-!!    If the current reduced dimension exceeds the specified max_dim_red,
-!!    the solutions are set as existing trials, with the current set of trials 
-!!    obtained from residuals as additional new trials vectors.
-!!
-      implicit none 
-!
-      class(davidson_tool), intent(inout) :: davidson 
-!
-      if (davidson%dim_red + davidson%n_new_trials >= davidson%max_dim_red) then
-!
-         call davidson%set_trials_to_solutions()
-!
-      else 
-!
-         davidson%dim_red = davidson%dim_red + davidson%n_new_trials
-!
-      endif 
-!
-      call davidson%orthonormalize_trial_vecs()
-!
-   end subroutine iterate_davidson_tool
 !
 !
    function first_new_trial_davidson_tool(davidson) result(first)
@@ -534,16 +488,28 @@ contains
 !
 !        Pad previous A_red
 !
-         call mem%alloc(A_red_copy, davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
-         call copy_and_scale(one, davidson%A_red, A_red_copy, (davidson%dim_red - davidson%n_new_trials)**2)
+         call mem%alloc(A_red_copy,                               &
+                        davidson%dim_red - davidson%n_new_trials, &
+                        davidson%dim_red - davidson%n_new_trials)
 !
-         call mem%dealloc(davidson%A_red, davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
+         call dcopy((davidson%dim_red - davidson%n_new_trials)**2,   &
+                     davidson%A_red,                                 &
+                     1,                                              &
+                     A_red_copy,                                     &
+                     1)
+!
+         call mem%dealloc(davidson%A_red,                            &
+                          davidson%dim_red - davidson%n_new_trials,  &
+                          davidson%dim_red - davidson%n_new_trials)
 !
          call mem%alloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
 !
-         davidson%A_red(1:davidson%dim_red - davidson%n_new_trials, 1:davidson%dim_red - davidson%n_new_trials) = A_red_copy
+         davidson%A_red(1:davidson%dim_red - davidson%n_new_trials, &
+                        1:davidson%dim_red - davidson%n_new_trials) = A_red_copy
 !
-         call mem%dealloc(A_red_copy, davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
+         call mem%dealloc(A_red_copy,                                &
+                          davidson%dim_red - davidson%n_new_trials,  &
+                          davidson%dim_red - davidson%n_new_trials)
 !
          do i = 1, davidson%dim_red
 !
@@ -551,18 +517,18 @@ contains
 !           
             do j = 1, davidson%dim_red
 !
-               call davidson%get_transform(rho_j, j)
-!
                if (j .le. davidson%dim_red - davidson%n_new_trials) then
 !
                   if (i .gt. davidson%dim_red - davidson%n_new_trials) then 
 !
+                     call davidson%get_transform(rho_j, j)
                      davidson%A_red(i,j) = ddot(davidson%n_parameters, c_i, 1, rho_j, 1)
 !
                   endif
 !
                elseif (j .gt. davidson%dim_red - davidson%n_new_trials) then
 !
+                  call davidson%get_transform(rho_j, j)
                   davidson%A_red(i,j) = ddot(davidson%n_parameters, c_i, 1, rho_j, 1)
 !
                endif
@@ -717,17 +683,71 @@ contains
 !
       call mem%dealloc(X, davidson%n_parameters, davidson%n_solutions)
 !
-!     Delete A_red and X_red if they are there
+!     Deallocate reduced space quantities (if they are allocated)
+!
+      call davidson%destruct_reduced_space_quantities()
+!
+      davidson%dim_red = 0
+      davidson%n_new_trials = davidson%n_solutions
+!
+   end subroutine set_trials_to_solutions_davidson_tool
+!
+!
+   subroutine destruct_reduced_space_quantities_davidson_tool(davidson)
+!!
+!!    Destruct reduced space quantities 
+!!    Written by Eirik F. Kjønstad, Jan 2020
+!!
+!!    Deallocates reduced space quantities, e.g. when re-setting the reduced space,
+!!    or upon destruction of the Davidson tool.
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson
 !
       if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, &
          davidson%dim_red, davidson%dim_red)
       if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, &
          davidson%dim_red, davidson%n_solutions)
 !
-      davidson%dim_red = davidson%n_solutions
-      davidson%n_new_trials = davidson%n_solutions
+   end subroutine destruct_reduced_space_quantities_davidson_tool
 !
-   end subroutine set_trials_to_solutions_davidson_tool
+!
+   subroutine update_reduced_dim_davidson_tool(davidson)
+!!
+!!    Update reduced dim 
+!!    Written by Eirik F. Kjønstad, Mar 2020
+!!
+!!    Updates the reduced dimensionality:
+!!
+!!       dim_red = dim_red + n_new_trials
+!!
+      implicit none 
+!
+      class(davidson_tool), intent(inout) :: davidson 
+!
+      davidson%dim_red = davidson%dim_red + davidson%n_new_trials
+!
+   end subroutine update_reduced_dim_davidson_tool
+!
+!
+   function red_dim_exceeds_max_davidson_tool(davidson) result(exceeds_max)
+!!
+!!    Reduced dimension exceeds max 
+!!    Written by Eirik F. Kjønstad, Mar 2020 
+!!
+!!    Is the next reduced space dimensionality greater than or 
+!!    equal than the maximum? Then return true. Otherwise false.
+!!
+      implicit none 
+!
+      class(davidson_tool), intent(in) :: davidson 
+!
+      logical :: exceeds_max
+!
+      exceeds_max = (davidson%dim_red + davidson%n_new_trials .ge. davidson%max_dim_red)
+!
+   end function red_dim_exceeds_max_davidson_tool
 !
 !
 end module davidson_tool_class

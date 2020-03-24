@@ -70,11 +70,11 @@ module diis_cc_es_class
    use ccs_class, only: ccs
    use diis_tool_class, only: diis_tool
    use abstract_cc_es_class, only: abstract_cc_es
-   use precondition_tool_class, only: precondition_tool
    use es_valence_start_vector_tool_class, only: es_valence_start_vector_tool
    use es_valence_projection_tool_class, only: es_valence_projection_tool
    use array_utilities, only: quicksort_with_index_ascending, get_l2_norm
    use string_utilities, only: convert_to_uppercase
+   use precondition_tool_class, only: precondition_tool
 !
    implicit none
 !
@@ -82,9 +82,12 @@ module diis_cc_es_class
 !
       integer :: diis_dimension
 !
-      class(precondition_tool), allocatable :: preconditioner 
-!
       logical :: crop ! Standard DIIS if false; CROP variant of DIIS if true
+!
+      logical :: davidson_preconvergence     ! Perform non-linear Davidson first, then go over 
+                                             ! to DIIS to converge below the residual threshold 
+!
+      real(dp) :: preconvergence_threshold   ! Non-linear Davidson threshold
 !
    contains
 !     
@@ -94,6 +97,8 @@ module diis_cc_es_class
       procedure :: read_diis_settings              => read_diis_settings_diis_cc_es
 !
       procedure :: print_settings                  => print_settings_diis_cc_es
+!
+      procedure :: do_davidson_preconvergence      => do_davidson_preconvergence_diis_cc_es
 !
    end type diis_cc_es
 !
@@ -122,8 +127,6 @@ contains
 !
       logical, intent(in) :: restart
 !
-      real(dp), dimension(:), allocatable :: eps 
-!
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
       call solver%timer%turn_on()
 !
@@ -144,41 +147,26 @@ contains
 !
 !     Set defaults
 !
-      solver%n_singlet_states     = 0
-      solver%max_iterations       = 100
-      solver%eigenvalue_threshold = 1.0d-6
-      solver%residual_threshold   = 1.0d-6
-      solver%diis_dimension       = 20
-      solver%restart              = restart
-      solver%transformation       = trim(transformation)
-      solver%es_type              = 'valence'
-      solver%records_in_memory    = .false.
-      solver%storage              = 'disk'
-      solver%crop                 = .false.
+      solver%n_singlet_states          = 0
+      solver%max_iterations            = 100
+      solver%eigenvalue_threshold      = 1.0d-6
+      solver%residual_threshold        = 1.0d-6
+      solver%diis_dimension            = 20
+      solver%restart                   = restart
+      solver%transformation            = trim(transformation)
+      solver%es_type                   = 'valence'
+      solver%records_in_memory         = .false.
+      solver%storage                   = 'disk'
+      solver%crop                      = .false.
+      solver%davidson_preconvergence   = .false.
+      solver%preconvergence_threshold  = 1.0d-2
 !
       call solver%read_settings()
       call solver%print_settings()
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
-      call solver%initialize_energies()
-      solver%energies = zero
-!
       wf%n_singlet_states = solver%n_singlet_states
-!
-      call solver%initialize_start_vector_tool(wf)
-      call solver%initialize_projection_tool(wf)
-!
-      call solver%prepare_wf_for_excited_state(wf)
-!
-!     Initialize preconditioner 
-!
-      call mem%alloc(eps, wf%n_es_amplitudes)
-      call wf%get_es_orbital_differences(eps, wf%n_es_amplitudes)
-!
-      solver%preconditioner = precondition_tool(eps, wf%n_es_amplitudes)
-!
-      call mem%dealloc(eps, wf%n_es_amplitudes)
 !
 !     Determine whether to store records in memory or on file
 !
@@ -220,6 +208,16 @@ contains
 !
       endif
 !
+      if (solver%davidson_preconvergence) then 
+!
+         call output%printf('m', 'Enabled preconvergence using&
+                                 & the non-linear Davidson solver.', fs='(/t6,a)')
+!
+         call output%printf('m', 'Preconvergence threshold:   (e11.2)', &
+                                 reals=[solver%preconvergence_threshold], fs='(/t6,a)')
+!
+      endif
+!
    end subroutine print_settings_diis_cc_es
 !
 !
@@ -254,6 +252,16 @@ contains
          solver%crop = .true.
 !
       endif
+!
+      if (input%requested_keyword_in_section('davidson preconvergence', 'solver cc es')) then 
+!
+         solver%davidson_preconvergence = .true.
+!
+      endif
+!
+      call input%get_keyword_in_section('preconvergence threshold',  &
+                                        'solver cc es',              &
+                                        solver%preconvergence_threshold)
 !
    end subroutine read_diis_settings_diis_cc_es
 !
@@ -292,7 +300,33 @@ contains
 !
       real(dp) :: ddot
 !
+!     Prepare wavefunction for excited state, and possibly do Davidson preconvergence 
+!
+      call solver%prepare_wf_for_excited_state(wf)
+!
+      if (solver%davidson_preconvergence) then 
+!
+         call solver%do_davidson_preconvergence(wf)   ! Use Davidson to get first guesses 
+         solver%restart = .true.                      ! Restart from these guesses
+!
+      endif
+!
+!     Initialize solver tools 
+!
+      call mem%alloc(eps, wf%n_es_amplitudes)
+      call wf%get_es_orbital_differences(eps, wf%n_es_amplitudes)
+!
+      solver%preconditioner = precondition_tool(eps, wf%n_es_amplitudes)
+!
+      call mem%dealloc(eps, wf%n_es_amplitudes)
+!
+      call solver%initialize_start_vector_tool(wf)
+      call solver%initialize_projection_tool(wf)
+!
 !     Initialize energies, residual norms, and convergence arrays 
+!
+      call solver%initialize_energies()
+      solver%energies = zero
 !
       call mem%alloc(prev_energies, solver%n_singlet_states)
       call mem%alloc(residual_norms, solver%n_singlet_states)
@@ -326,9 +360,6 @@ contains
       enddo 
 !
 !     Make initial guess on the eigenvectors X = [X1 X2 X3 ...]
-!
-      call mem%alloc(eps, wf%n_es_amplitudes)
-      call wf%get_es_orbital_differences(eps, wf%n_es_amplitudes)
 !
       call mem%alloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
 !
@@ -536,7 +567,6 @@ contains
       call mem%dealloc(converged_residual, (solver%n_singlet_states))
       call mem%dealloc(converged_eigenvalue, (solver%n_singlet_states))
 !
-      call mem%dealloc(eps, wf%n_es_amplitudes)
       call mem%dealloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
       call mem%dealloc(R, wf%n_es_amplitudes, solver%n_singlet_states)
 !
@@ -549,6 +579,78 @@ contains
       call solver%preconditioner%destruct_precondition_vector()
 !
    end subroutine run_diis_cc_es
+!
+!
+   subroutine do_davidson_preconvergence_diis_cc_es(solver, wf)
+!!
+!!    Do Davidson preconvergence 
+!!    Written by Eirik F. Kjønstad, Jan 2020
+!!
+!!    Sets up non-linear Davidson solver and runs it to get first guesses
+!!    for the eigenstates. 
+!!
+      use nonlinear_davidson_cc_es_class, only: nonlinear_davidson_cc_es
+!
+      implicit none 
+!
+      class(diis_cc_es), intent(in) :: solver 
+!
+      class(ccs) :: wf 
+!
+      class(nonlinear_davidson_cc_es), allocatable :: davidson_solver 
+!
+      real(dp) :: relative_micro_residual_threshold
+      integer  :: max_dim_red, max_micro_iterations
+!
+      call output%printf('m', 'Running the non-linear Davidson solver to produce&
+                              & first guesses for the DIIS solver. When finished,&
+                              & the DIIS solver will restart from the preconverged&
+                              & solutions.', ffs='(/t3,a)')
+!
+!     Set some defaults 
+!
+      max_micro_iterations              = 100
+      max_dim_red                       = 100
+      relative_micro_residual_threshold = 1.0d-1
+!
+!     Read non-default values, if provided by user 
+!
+      call input%get_keyword_in_section('max reduced dimension',  &
+                                        'solver cc es',           &
+                                        max_dim_red)
+!
+      call input%get_keyword_in_section('max micro iterations',  &
+                                        'solver cc es',           &
+                                        max_micro_iterations)
+!
+      call input%get_keyword_in_section('rel micro threshold',    &
+                                        'solver cc es',           &
+                                        relative_micro_residual_threshold)
+!
+!     Allocate non-linear Davidson solver & run it
+!
+      davidson_solver = nonlinear_davidson_cc_es(solver%transformation,             &
+                                                 wf,                                &
+                                                 solver%restart,                    &  
+                                                 solver%preconvergence_threshold,   &
+                                                 solver%preconvergence_threshold,   &
+                                                 solver%max_iterations,             &
+                                                 relative_micro_residual_threshold, & 
+                                                 max_micro_iterations,              & 
+                                                 max_dim_red,                       & 
+                                                 solver%es_type,                    &
+                                                 solver%storage,                    &
+                                                 solver%n_singlet_states,           &
+                                                 prepare_wf=.false.)
+!
+      call davidson_solver%run(wf)
+!
+      call davidson_solver%cleanup(wf)
+!
+      call output%printf('m', 'Finished preconvergence! The DIIS solver will now restart&
+                              & from the preconverged solutions.', ffs='(/t3,a)')
+!
+   end subroutine do_davidson_preconvergence_diis_cc_es
 !
 !
 end module diis_cc_es_class

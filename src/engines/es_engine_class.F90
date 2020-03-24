@@ -219,6 +219,7 @@ contains
 !!
       use abstract_cc_es_class, only: abstract_cc_es
       use davidson_cc_es_class, only: davidson_cc_es
+      use nonlinear_davidson_cc_es_class, only: nonlinear_davidson_cc_es
       use diis_cc_es_class, only: diis_cc_es
       use asymmetric_lanczos_cc_es_class, only: asymmetric_lanczos_cc_es
 !
@@ -252,7 +253,6 @@ contains
          if (engine%es_algorithm == 'diis') then
 !
             cc_es_solver = diis_cc_es(transformation, wf, restart)
-
 ! 
          elseif (engine%es_algorithm == 'davidson') then
 !
@@ -264,8 +264,13 @@ contains
 !
             cc_es_solver = davidson_cc_es(transformation, wf, restart)
 !
-         else
-               call output%error_msg('Could not start excited state solver. It may be that the &
+         elseif (engine%es_algorithm == 'non-linear davidson') then 
+!
+            cc_es_solver = nonlinear_davidson_cc_es(transformation, wf, engine%es_restart)
+!
+         else 
+!
+            call output%error_msg('Could not start excited state solver. It may be that the &
                                     &algorithm is not implemented for the method specified.')
          endif
 !
@@ -282,7 +287,6 @@ contains
 !!    Set printables
 !!    Written by sarai D. Folkestad, May 2019
 !!
-!
       use string_utilities, only: convert_to_uppercase
 !
       implicit none

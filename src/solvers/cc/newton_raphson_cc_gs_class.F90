@@ -435,7 +435,13 @@ contains
          micro_iteration = micro_iteration + 1
          call micro_iteration_timer%turn_on()
 !
-         call davidson%iterate()
+!        Reduced space preparations 
+!
+         if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+!
+         call davidson%update_reduced_dim()
+!
+         call davidson%orthonormalize_trial_vecs() 
 !
 !        Transform new trial vectors and write to file
 !

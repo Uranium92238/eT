@@ -86,6 +86,7 @@ set(eT_fortran_sources
    src/solvers/cc/diis_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_linear_equations_class.F90
+   src/solvers/cc/nonlinear_davidson_cc_es_class.F90
    src/solvers/cc/davidson_cc_es_class.F90
    src/solvers/cc/abstract_cc_es_class.F90
    src/solvers/cc/newton_raphson_cc_gs_class.F90
