@@ -257,7 +257,8 @@ contains
                                     'batches             ',    &
                                     'qualified           ',    &
                                     'one center          ',    &
-                                    'no vectors          ']
+                                    'no vectors          ',    &
+                                    'mo screening']
 !
       solver_scf%name_    = 'solver scf'
       solver_scf%required = .false.

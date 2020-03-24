@@ -132,9 +132,7 @@ program eT_program
 !
 !  Cholesky decomposition of electron repulsion integrals (ERIs)
 !
-   if (input%requested_cc_calculation() .or.                      &
-       input%requested_keyword_in_section('cholesky eri', 'do'))  &
-         call do_eri_cholesky(system)
+   if (input%requested_keyword_in_section('cholesky eri', 'do')) call do_eri_cholesky(system) 
 !
 !  Hartree-Fock calculation
 !
@@ -384,13 +382,12 @@ subroutine do_eri_cholesky(system)
 !
    eri_cholesky_solver = eri_cd(system)
 !
-   call eri_cholesky_solver%run(system)               ! Do the Cholesky decomposition
+   call eri_cholesky_solver%run(system)
 !
-   if (eri_cholesky_solver%construct_vectors) &
-      call eri_cholesky_solver%diagonal_test(system)  ! Determine the largest
-                                                      ! deviation in the ERI matrix
+   call eri_cholesky_solver%diagonal_test(system)  ! Determine the largest 
+                                                   ! deviation in the ERI matrix 
 !
-   call eri_cholesky_solver%cleanup(system)
+   call eri_cholesky_solver%cleanup()
 !
 end subroutine do_eri_cholesky
 !

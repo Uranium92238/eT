@@ -65,6 +65,8 @@ module gs_engine_class
 !
       procedure :: do_visualization                      => do_visualization_gs_engine
 !
+      procedure, nopass :: do_cholesky                   => do_cholesky_gs_engine
+!
    end type gs_engine
 !
 !
@@ -150,6 +152,10 @@ contains
       class(gs_engine) :: engine
       class(ccs)       :: wf
 !
+      call engine%tasks%print_('cholesky')
+!
+      call engine%do_cholesky(wf)
+!
       call engine%tasks%print_('mo preparations')
 !
       call wf%mo_preparations() 
@@ -224,6 +230,10 @@ contains
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
+!
+      call engine%tasks%add(label='cholesky', &
+                            description='Cholesky decomposition of the electron &
+                                         &repulsion integrals')
 !
       call engine%tasks%add(label='mo preparations',                             &
                             description='Preparation of MO basis and integrals')
@@ -537,6 +547,73 @@ contains
       call mem%dealloc(density, wf%n_ao, wf%n_ao)
 !
    end subroutine do_visualization_gs_engine
+!
+!
+   subroutine do_cholesky_gs_engine(wf)
+!!
+!!    Do Cholesky 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Feb 2020
+!!
+!!    Performs Cholesky decomposition of the electron repulsion integral matrix.
+!!
+!!    For reduced space coupled cluster calculations (frozen HF or MLHF)
+!!    the MO screening can be used to reduce the number of Cholesky vectors,
+!!    as the accuracy of the integrals in the active MO basis, 
+!!    rather than the AO basis, is targeted. For details, see 
+!!    Folkestad, S. D., Kjønstad, E. F., and Koch, H., JCP, 150(19), 194112 (2019).
+!!
+!!
+      use eri_cd_class, only: eri_cd
+      use mo_integral_tool_class, only: mo_integral_tool
+!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      type(eri_cd), allocatable :: eri_cholesky_solver 
+!
+      logical :: do_MO_screening
+!
+      real(dp), dimension(:,:), allocatable, target :: screening_vector
+!
+      call output%printf('v', 'Doing Cholesky decomposition of the ERIs.')
+!
+      do_MO_screening = input%requested_keyword_in_section('mo screening', 'solver cholesky')
+!
+      eri_cholesky_solver = eri_cd(wf%system)
+!
+      if (do_MO_screening) then
+!
+         call output%printf('m', 'Using the MO screening for the Cholesky decomposition', &
+                        fs='(/t3,a)')
+!
+         call mem%alloc(screening_vector, wf%n_ao, wf%n_ao)
+         call wf%construct_MO_screening_for_cd(screening_vector)
+!
+         call eri_cholesky_solver%run(wf%system, screening_vector)   ! Do the Cholesky decomposition
+                                                                     ! using the MO screening
+!
+         call mem%dealloc(screening_vector, wf%n_ao, wf%n_ao) 
+!
+      else
+!
+         call eri_cholesky_solver%run(wf%system) ! Do the Cholesky decomposition 
+!
+      endif
+!
+      call eri_cholesky_solver%diagonal_test(wf%system)  ! Determine the largest 
+                                                         ! deviation in the ERI matrix 
+!
+      wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, eri_cholesky_solver%n_cholesky, wf%need_g_abcd)
+!
+      call wf%integrals%initialize_storage()
+!
+      call eri_cholesky_solver%construct_cholesky_mo_vectors(wf%system, wf%n_ao, wf%n_mo, &
+                                                   wf%orbital_coefficients, wf%integrals)
+!
+      call eri_cholesky_solver%cleanup()
+!
+   end subroutine do_cholesky_gs_engine
 !
 !
 end module gs_engine_class

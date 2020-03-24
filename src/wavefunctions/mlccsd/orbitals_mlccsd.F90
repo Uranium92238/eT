@@ -1165,8 +1165,8 @@ contains
 !
       type(cc2), allocatable :: cc2_wf
 !
-      type(diis_cc_gs) :: cc_gs_solver_diis
-      type(davidson_cc_es) :: cc_es_solver_davidson
+      type(diis_cc_gs), allocatable :: cc_gs_solver_diis
+      type(davidson_cc_es), allocatable :: cc_es_solver_davidson
 !
       type(timings) :: timer_gs, timer_es
 !
@@ -1186,6 +1186,9 @@ contains
 !
       call cc2_wf%mo_preparations()
 !
+      cc2_wf%integrals = mo_integral_tool(wf%integrals)
+      call cc2_wf%integrals%initialize_storage(wf%integrals)
+!
 !     1. Ground state
 !
       timer_gs = timings('Ground state CC2 calculation for CNTOs')
@@ -1194,7 +1197,6 @@ contains
       cc_gs_solver_diis = diis_cc_gs(cc2_wf, restart=.false.)
       call cc_gs_solver_diis%run(cc2_wf)
       call cc_gs_solver_diis%cleanup(cc2_wf)
-!
       call timer_gs%turn_off()
 !
 !     Excited states

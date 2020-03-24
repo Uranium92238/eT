@@ -147,7 +147,7 @@ contains
    end subroutine identity_array
 !
 !
-   logical function is_significant(x, n, threshold, screening)
+   pure logical function is_significant(x, n, threshold, screening)
 !!
 !!    Is significant
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
@@ -167,7 +167,7 @@ contains
 !
       real(dp), intent(in)  :: threshold
 !
-      integer :: i = 0
+      integer :: i
 !
       is_significant = .false.
 !

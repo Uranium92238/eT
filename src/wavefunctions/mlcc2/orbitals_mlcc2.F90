@@ -240,7 +240,8 @@ contains
 !
       mo_offset = 0
 !
-      call wf%construct_orbital_block_by_density_cd(D, wf%n_cc2_o, wf%cholesky_orbital_threshold, mo_offset, active_aos)
+      call wf%construct_orbital_block_by_density_cd(D, wf%n_cc2_o, wf%cholesky_orbital_threshold, &
+                                                      mo_offset, active_aos)
 !
 !     Construct inactive occupied orbitals
 !
@@ -728,8 +729,6 @@ contains
 !
       call wf%diagonalize_M_and_N(T_o, T_v)
 !
-      call wf%integrals%cleanup()
-!
    end subroutine construct_ccs_cnto_transformation_matrices_mlcc2
 !
 !
@@ -867,8 +866,6 @@ contains
          call output%error_msg('Diagonalization of M failed.' // &
                                ' "Dsyev" finished with info: (i0)', ints=[info])
       end if
-!
-      call wf%integrals%cleanup()
 !
    end subroutine construct_ccs_nto_transformation_matrix_mlcc2
 !
@@ -1230,6 +1227,9 @@ contains
 !
       call ccs_wf%mo_preparations()
 !
+      ccs_wf%integrals = mo_integral_tool(wf%integrals)
+      call ccs_wf%integrals%initialize_storage(wf%integrals)
+!
 !     1. Ground state
 !
       timer_gs = timings('Ground state CCS calculation for NTOs/CNTOs')
@@ -1256,12 +1256,7 @@ contains
 !
 !     Transfer information to mlcc wavefunction
 !
-!     1. Integrals
-!
-      wf%integrals = mo_integral_tool(ccs_wf%integrals)
-      call wf%integrals%initialize_storage(ccs_wf%integrals)
-!
-!     2. Excitation vectors
+!     1. Excitation vectors
 !
       n_es = ccs_wf%n_singlet_states
 !
@@ -1280,7 +1275,7 @@ contains
 !
       enddo  
 !
-!     3. Excitation energies (if requested)
+!     2. Excitation energies (if requested)
 !
       if (present(omega_ccs)) then  
 !
