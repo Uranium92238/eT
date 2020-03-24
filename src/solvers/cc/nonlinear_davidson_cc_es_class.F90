@@ -360,7 +360,7 @@ contains
       real(dp), dimension(:), allocatable :: prev_energies
       real(dp), dimension(:), allocatable :: residual_norms 
 !
-      integer :: n_solutions_on_file
+      integer :: n_solutions_on_file, n_solutions_to_read
       integer :: iteration, state
 !
       integer :: n_micro_iterations, n_transformations ! Information regarding micro iterations 
@@ -427,9 +427,14 @@ contains
          call output%printf('n', 'Requested restart - there are (i0) (a0) eigenvectors on file.', &
                               ints=[n_solutions_on_file], chars=[solver%restart_transformation])
 !
-         do state = 1, n_solutions_on_file
+         n_solutions_to_read = min(solver%n_singlet_states, n_solutions_on_file)
 !
-            call wf%read_excited_state(X(:,state), state, solver%restart_transformation)
+         call wf%read_excited_state(X,                   &
+                                    1,                   &
+                                    n_solutions_to_read, &
+                                    solver%restart_transformation)
+!
+         do state = 1, n_solutions_to_read
 !
 !           Normalize X in case it is not normalized
 !
@@ -439,8 +444,8 @@ contains
          enddo
 !
          solver%energies = zero
-         call wf%read_excitation_energies(n_solutions_on_file, &
-                                          solver%energies(1:n_solutions_on_file))
+         call wf%read_excitation_energies(n_solutions_to_read, &
+                                          solver%energies(1:n_solutions_to_read))
 !
       endif
 !
@@ -534,11 +539,10 @@ contains
 !
 !        Save excited states and excitation energies
 !
-         do state = 1, solver%n_singlet_states
-!
-            call wf%save_excited_state(X(:,state), state, solver%transformation)
-!
-         enddo 
+         call wf%save_excited_state(X,                         &
+                                    1,                         &
+                                    solver%n_singlet_states,   &
+                                    solver%transformation)
 !
          call wf%save_excitation_energies(solver%n_singlet_states,   &
                                           solver%energies,           &
