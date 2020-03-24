@@ -52,7 +52,6 @@ module mo_integral_tool_class
    use direct_file_class,     only : direct_file
    use direct_stream_file_class, only : direct_stream_file
    use timings_class,         only : timings
-   use eri_cd_class,          only : eri_cd
    use batching_index_class,  only : batching_index
 !
    use reordering
@@ -741,8 +740,8 @@ contains
         if (q_leq_p) then 
 !
 !$omp parallel do private(p,q,K)
-            do p = first_p, last_p  
-               do q = first_q, p 
+          do q = first_q, last_q 
+              do p = q, last_p  
                   do K = 1, integrals%n_J
 !
                      integrals%L_J_pq_mo(K, p, q) = L_J_pq(K,              &
@@ -782,10 +781,10 @@ contains
 !
          if (q_leq_p) then 
 !
-            do p = first_p, last_p 
-               do q = first_q, p
+            do q = first_q, last_q 
+               do p = first_p, q
 !
-                  pq_rec = p*(p-3)/2 + p + q
+                  pq_rec = q*(q-3)/2 + p + q
 !
                   call integrals%cholesky_mo%write_(L_J_pq(:,                 &
                                                            p - first_p + 1,   &
@@ -797,8 +796,8 @@ contains
 !
          else 
 !
-            do p = first_p, last_p 
-               do q = first_q, last_q
+            do q = first_q, last_q
+               do p = first_p, last_p
 !
                   pq_rec = max(p,q)*(max(p,q)-3)/2 + p + q
 !

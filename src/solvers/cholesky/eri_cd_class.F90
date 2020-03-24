@@ -110,8 +110,7 @@ module eri_cd_class
       integer :: max_qual 
       integer :: iteration
 !
-      logical :: one_center       
-      logical :: construct_vectors
+      logical :: one_center
 !
       type(sequential_file) :: diagonal_info_cauchy_schwarz
       type(sequential_file) :: Q
@@ -139,7 +138,8 @@ module eri_cd_class
 !     Screening
 !
       procedure :: construct_significant_diagonal         => construct_significant_diagonal_eri_cd
-      procedure :: construct_significant_diagonal_atomic  => construct_significant_diagonal_atomic_eri_cd  
+      procedure :: construct_significant_diagonal_atomic &
+                     => construct_significant_diagonal_atomic_eri_cd  
 !
 !     Determine Cholesky basis 
 !
@@ -150,24 +150,23 @@ module eri_cd_class
 !  
       procedure :: invert_Q                               => invert_Q_eri_cd
       procedure :: construct_S                            => construct_S_eri_cd
-      procedure :: construct_cholesky_vectors             => construct_cholesky_vectors_eri_cd
+      procedure :: construct_cholesky_mo_vectors          => construct_cholesky_mo_vectors_eri_cd
 !
 !     Read, write, and print
 !
       procedure :: read_settings                          => read_settings_eri_cd
       procedure :: print_banner                           => print_banner_eri_cd
       procedure :: print_settings                         => print_settings_eri_cd
-      procedure :: write_ao_cholesky_to_direct_file       => write_ao_cholesky_to_direct_file_cd_eri_solver
 !
 !     PCD utilities
 !
       procedure :: construct_diagonal_batches             => construct_diagonal_batches_eri_cd
-      procedure :: construct_diagonal_from_batch_bases    => construct_diagonal_from_batch_bases_eri_cd
+      procedure :: construct_diagonal_from_batch_bases &
+                     => construct_diagonal_from_batch_bases_eri_cd
 !
 !     Testing 
 !
       procedure :: diagonal_test                          => diagonal_test_eri_cd
-      procedure :: full_test_cholesky_vecs                => full_test_cholesky_vecs_cd_eri_solver
 !
    end type eri_cd
 !
@@ -205,7 +204,6 @@ contains
       solver%n_batches           = 1
 !
       solver%one_center          = .false.
-      solver%construct_vectors   = .true.
 !
       solver%n_cholesky          = 0
 !
@@ -256,7 +254,7 @@ contains
 !
       real(dp), dimension(solver%n_ao), optional :: screening_vector
 !
-      type(timings) :: det_basis_timer, invert_timer, build_timer
+      type(timings) :: det_basis_timer, invert_timer
 !
       det_basis_timer   = timings("Cholesky; time to determine auxiliary basis")
       invert_timer      = timings("Cholesky; time to construct (J|K), decompose, and invert")
@@ -318,24 +316,10 @@ contains
 !
       call invert_timer%turn_off()
 !
-!     If vectors are requested, construct L_wx_J and write them to file
-!
-      if (solver%construct_vectors) then
-!
-         build_timer = timings("Cholesky; time to build L_ab^J")
-         call build_timer%turn_on()
-!
-         call solver%construct_cholesky_vectors(system)
-!
-         call build_timer%turn_off()
-!
-      endif
-!
-!
    end subroutine run_eri_cd
 !
 !
-   subroutine cleanup_eri_cd(solver, system)
+   subroutine cleanup_eri_cd(solver)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -343,18 +327,6 @@ contains
       implicit none
 !
       class(eri_cd), intent(inout) :: solver
-!
-      type(molecular_system), intent(inout) :: system
-!
-      if (solver%construct_vectors) then 
-!
-         call solver%write_ao_cholesky_to_direct_file(system)
-         system%n_J = solver%n_cholesky
-!
-         call solver%cholesky_ao_vectors_info%delete_()
-         call solver%cholesky_ao_vectors%delete_()
-!
-      endif
 !
       call solver%timer%turn_off()
 !
@@ -387,7 +359,7 @@ contains
       class(eri_cd) :: solver
       class(molecular_system) :: system
 !
-      real(dp), dimension(solver%n_ao), optional :: screening_vector
+      real(dp), dimension(solver%n_ao*solver%n_ao), target, optional :: screening_vector
 !
 !     Local variables
 !
@@ -397,7 +369,10 @@ contains
 !
       integer, dimension(:), allocatable  :: ao_offsets
 !
-      real(dp), dimension(:), allocatable :: screening_vector_local, screening_vector_reduced
+      real(dp), dimension(:), allocatable, target :: screening_vector_local
+      real(dp), dimension(:,:), pointer :: screening_vector_local_pt
+!
+      real(dp), dimension(:), allocatable :: screening_vector_reduced
       real(dp), dimension(:), allocatable :: max_in_sp_diagonal
       real(dp), dimension(:), allocatable :: D_xy 
 !
@@ -417,15 +392,25 @@ contains
 !
 !     Prepare local screening vector
 !
-      call mem%alloc(screening_vector_local, solver%n_aop)
-!
       if (present(screening_vector)) then
 !
-         screening_vector_local = screening_vector
+         screening_vector_local_pt(1:solver%n_ao, 1:solver%n_ao) &
+            => screening_vector(1:solver%n_ao**2)
 !
       else
 !
-         screening_vector_local = one
+         call mem%alloc(screening_vector_local, solver%n_ao*solver%n_ao)
+!
+!$omp parallel do private (i)
+         do i = 1, solver%n_ao**2
+!
+               screening_vector_local(i) = one
+!
+         enddo
+!$omp end parallel do
+!
+         screening_vector_local_pt(1:solver%n_ao, 1:solver%n_ao) &
+            => screening_vector_local(1:solver%n_ao**2)
 !
       endif
 !
@@ -481,8 +466,8 @@ contains
 !
                K = K + 1
                D_AB_screen(K) = g_ABAB_p(x, y, x, y)&
-                           *screening_vector_local(x + A_interval%first - 1)&
-                           *screening_vector_local(y + B_interval%first - 1)
+                           *screening_vector_local_pt(x + A_interval%first - 1, &
+                                                   y + B_interval%first - 1)
 !
                D_AB(K) = g_ABAB_p(x, y, x, y)
 !
@@ -491,10 +476,9 @@ contains
 !
 !        Determine whether shell pair is significant
 !
-         sig_sp(I) = (is_significant(D_AB, (A_interval%length)*(B_interval%length), solver%threshold) .and. &
-                      is_significant(D_AB_screen, (A_interval%length)*(B_interval%length), solver%threshold))
+         sig_sp(I) = (is_significant(D_AB_screen, (A_interval%length)*(B_interval%length), solver%threshold))
 !
-         max_in_sp_diagonal(I) = get_abs_max(D_AB, (A_interval%length)*(B_interval%length))
+         max_in_sp_diagonal(I) = maxval(D_AB)
 !
       enddo
 !$omp end parallel do
@@ -502,7 +486,7 @@ contains
 !     Pre-screening for vector construction,
 !     that is, Cauchy-Schwarz for final Cholesky vectors.
 !
-      max_diagonal = get_abs_max(max_in_sp_diagonal, solver%n_sp)
+      max_diagonal = maxval(max_in_sp_diagonal)
 !
       call mem%dealloc(max_in_sp_diagonal, solver%n_sp)
 !
@@ -541,7 +525,8 @@ contains
 !
 !        Determine whether shell pair should be constructed
 !
-         construct_sp(I) = is_significant(construct_test, (A_interval%length)*(B_interval%length), min(solver%threshold,1.0d-8))
+         construct_sp(I) = is_significant(construct_test, &
+                           (A_interval%length)*(B_interval%length), min(solver%threshold,1.0d-8))
 !
       enddo
 !$omp end parallel do
@@ -675,8 +660,8 @@ contains
 !
                   D_xy(xy_packed + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
                   screening_vector_reduced(xy_packed + ao_offsets(I)) = &
-                                          screening_vector_local(x + A_interval%first - 1)*&
-                                          screening_vector_local(y + B_interval%first - 1)
+                                          screening_vector_local_pt(x + A_interval%first - 1, &
+                                                                 y + B_interval%first - 1)
                enddo
             enddo
 !
@@ -688,8 +673,8 @@ contains
                   xy = A_interval%length*(y - 1) + x
                   D_xy(xy + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
                   screening_vector_reduced(xy + ao_offsets(I)) = &
-                                      screening_vector_local(x + A_interval%first - 1)*&
-                                      screening_vector_local(y + B_interval%first - 1)
+                                      screening_vector_local_pt(x + A_interval%first - 1, &
+                                                             y + B_interval%first - 1)
 !
                enddo
             enddo
@@ -699,7 +684,8 @@ contains
       enddo
 !$omp end parallel do   
 !
-      call mem%dealloc(screening_vector_local, solver%n_aop)
+      if (.not. present(screening_vector)) &
+         call mem%dealloc(screening_vector_local, solver%n_ao*solver%n_ao)
       call mem%dealloc(sig_sp_index, n_sig_sp, 2) 
       call mem%dealloc(ao_offsets, n_sig_sp)
 !
@@ -764,7 +750,7 @@ contains
       class(eri_cd) :: solver
       class(molecular_system) :: system
 !
-      real(dp), dimension(solver%n_ao), optional :: screening_vector
+      real(dp), dimension(solver%n_ao*solver%n_ao), target, optional :: screening_vector
 !
       integer ::sp, n_sig_aop, n_sig_sp, current_sig_sp, n_construct_sp, n_construct_aop
 !
@@ -772,7 +758,9 @@ contains
 !
       integer, dimension(:), allocatable  :: ao_offsets
 !
-      real(dp), dimension(:), allocatable :: screening_vector_local, screening_vector_reduced, max_in_sp_diagonal
+      real(dp), dimension(:), allocatable, target :: screening_vector_local
+      real(dp), dimension(:,:), pointer :: screening_vector_local_pt
+      real(dp), dimension(:), allocatable :: screening_vector_reduced, max_in_sp_diagonal
       real(dp), dimension(:), allocatable :: D_xy 
 !
       real(dp), dimension(:,:,:,:), pointer :: g_ABAB_p
@@ -787,15 +775,27 @@ contains
 !
       real(dp) :: max_diagonal
 !
-      call mem%alloc(screening_vector_local, solver%n_aop)
+!     Prepare local screening vector
 !
       if (present(screening_vector)) then
 !
-         screening_vector_local = screening_vector
+         screening_vector_local_pt(1:solver%n_ao, 1:solver%n_ao) &
+            => screening_vector(1:solver%n_ao**2)
 !
       else
 !
-         screening_vector_local = one
+         call mem%alloc(screening_vector_local, solver%n_ao*solver%n_ao)
+!
+!$omp parallel do private (i)
+         do i = 1, solver%n_ao**2
+!
+               screening_vector_local(i) = one
+!
+         enddo
+!$omp end parallel do
+!
+         screening_vector_local_pt(1:solver%n_ao, 1:solver%n_ao) &
+            => screening_vector_local(1:solver%n_ao**2)
 !
       endif
 !
@@ -853,8 +853,8 @@ contains
 !
                   K = K + 1
                   D_AB_screen(K) = g_ABAB_p(x, y, x, y)&
-                              *screening_vector_local(x + A_interval%first - 1)&
-                              *screening_vector_local(y + B_interval%first - 1)
+                              *screening_vector_local_pt(x + A_interval%first - 1, &
+                                                      y + B_interval%first - 1)
 !  
                   D_AB(K) = g_ABAB_p(x, y, x, y)
 !
@@ -863,10 +863,11 @@ contains
 !
 !           Determine whether shell pair is significant
 !
-            sig_sp(I) = (is_significant(D_AB, (A_interval%length)*(B_interval%length), solver%threshold) .and. &
-                         is_significant(D_AB_screen, (A_interval%length)*(B_interval%length), solver%threshold))
+            sig_sp(I) = (is_significant(D_AB_screen, &
+                           (A_interval%length)*(B_interval%length), &
+                           solver%threshold))
 !
-            max_in_sp_diagonal(I) = get_abs_max(D_AB, (A_interval%length)*(B_interval%length))
+            max_in_sp_diagonal(I) = maxval(D_AB)
 !
          endif
 !
@@ -876,7 +877,7 @@ contains
 !     Pre-screening for vector construction,
 !     that is, Cauchy-Schwarz for final Cholesky vectors.
 !
-      max_diagonal = get_abs_max(max_in_sp_diagonal, solver%n_sp)
+      max_diagonal = maxval(max_in_sp_diagonal)
 !
       call mem%dealloc(max_in_sp_diagonal, solver%n_sp)
 !
@@ -915,7 +916,8 @@ contains
 !
 !        Determine whether shell pair should be constructed
 !
-         construct_sp(I) = is_significant(construct_test, (A_interval%length)*(B_interval%length), min(solver%threshold,1.0d-8))
+         construct_sp(I) = is_significant(construct_test, &
+                           (A_interval%length)*(B_interval%length), min(solver%threshold,1.0d-8))
 !
       enddo
 !$omp end parallel do
@@ -1048,8 +1050,8 @@ contains
 !
                   D_xy(xy_packed + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
                   screening_vector_reduced(xy_packed + ao_offsets(I)) = &
-                                          screening_vector_local(x + A_interval%first - 1)*&
-                                          screening_vector_local(y + B_interval%first - 1)
+                                          screening_vector_local_pt(x + A_interval%first - 1, &
+                                                                 y + B_interval%first - 1)
 !
                enddo
             enddo
@@ -1062,8 +1064,8 @@ contains
                   xy = A_interval%length*(y - 1) + x
                   D_xy(xy + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
                   screening_vector_reduced(xy + ao_offsets(I)) = &
-                                      screening_vector_local(x + A_interval%first - 1)*&
-                                      screening_vector_local(y + B_interval%first - 1)
+                                      screening_vector_local_pt(x + A_interval%first - 1, &
+                                                             y + B_interval%first - 1)
 !
                enddo
             enddo
@@ -1073,7 +1075,9 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(screening_vector_local, solver%n_aop)
+            if (.not. present(screening_vector)) &
+         call mem%dealloc(screening_vector_local, solver%n_ao*solver%n_ao)
+!
       call mem%dealloc(sig_sp_index, n_sig_sp, 2)
       call mem%dealloc(ao_offsets, n_sig_sp)
 !
@@ -2684,6 +2688,7 @@ contains
 !
       integer, dimension(:,:), pointer :: basis_aops_in_CD_sp_p                     ! basis ao pairs in shell pair CD
       integer, dimension(:,:), pointer :: basis_aops_in_AB_sp_p                     ! basis ao pairs in shell pair AB
+      integer, dimension(:,:), allocatable :: aops_in_basis
 !
       integer, dimension(:), allocatable :: keep_vectors
 !
@@ -2704,7 +2709,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
 !
-      integer :: info
+      integer :: info, max_n_basis_aops_in_sp
 !
 !     Logicals
 !
@@ -2744,7 +2749,8 @@ contains
          C_interval = system%shell_limits(C)
          D_interval = system%shell_limits(D)
 !
-         basis_aops_in_CD_sp_p(1 : basis_shell_info(CD_sp, 4), 1 : 3) => basis_aops_in_CD_sp(1 : basis_shell_info(CD_sp, 4)*3)
+         basis_aops_in_CD_sp_p(1 : basis_shell_info(CD_sp, 4), 1 : 3) => &
+               basis_aops_in_CD_sp(1 : basis_shell_info(CD_sp, 4)*3)
 !
 !        Determine which elements in the shell pair CD are elements of the basis
 !
@@ -2770,7 +2776,8 @@ contains
             A_interval = system%shell_limits(A)
             B_interval = system%shell_limits(B)
 !
-            basis_aops_in_AB_sp_p(1 : basis_shell_info(AB_sp, 4), 1 : 3) => basis_aops_in_AB_sp(1 : basis_shell_info(AB_sp, 4)*3)
+            basis_aops_in_AB_sp_p(1 : basis_shell_info(AB_sp, 4), 1 : 3) => &
+                  basis_aops_in_AB_sp(1 : basis_shell_info(AB_sp, 4)*3)
 !
 !           Determine which elements in the shell pair AB are elements of the basis
 !
@@ -2902,15 +2909,21 @@ contains
 !
          do sp_in_basis = 1, n_sp_in_basis
 !
-              if (AB == basis_shell_info_full(sp_in_basis, 3)) then
+              if (AB == basis_shell_info_full(sp_in_basis, 3)) then ! This shell pair is already
+                                                                    ! in the list, so must only 
+                                                                    ! increment n_aops_in_sp.
+!
                  found = .true.
                  basis_shell_info_full(sp_in_basis, 4) = basis_shell_info_full(sp_in_basis, 4) + 1
-                 exit
+!
+                 exit ! Loop over sp_in_basis
+!
               endif
 !
          enddo
 !
-         if(.not. found) then
+         if(.not. found) then ! First aop in this shell pair was found, 
+                              ! set [A, B, AB, n_aops_in_sp = 1]
 !
             n_sp_in_basis = n_sp_in_basis + 1
 !
@@ -2923,9 +2936,69 @@ contains
 !
       enddo
 !
+!     Copy into correctly shaped array
+!
       call mem%alloc(basis_shell_info, n_sp_in_basis, 4)
-      basis_shell_info(:, :) = basis_shell_info_full(1:n_sp_in_basis, :)
+!
+!$omp parallel do private (I, J) collapse(2)
+      do J = 1, 4
+         do I = 1, n_sp_in_basis
+
+            basis_shell_info(I, J) = basis_shell_info_full(I, J)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
       call mem%dealloc(basis_shell_info_full, solver%n_sp, 4)
+!
+!     Prepare array for RI-like expressions, either to construct Cholesky vectors
+!     or for RI-like implementations using the Cholesky basis
+!
+      max_n_basis_aops_in_sp = maxval(basis_shell_info(1:n_sp_in_basis,4))
+!
+      call mem%alloc(aops_in_basis, n_sp_in_basis, &
+                              3*max_n_basis_aops_in_sp)  ! [x, y] where x and y 
+                                                         ! are the indices of the 
+                                                         ! AOs in the shell they
+                                                         ! belong to.
+!
+     aops_in_basis = 0
+!
+    do AB_sp = 1, n_sp_in_basis
+!
+      A  = basis_shell_info(AB_sp, 1)
+      B  = basis_shell_info(AB_sp, 2)
+      AB = basis_shell_info(AB_sp, 3)
+!
+      A_interval = system%shell_limits(A)
+      B_interval = system%shell_limits(B)
+!
+!     Determine which elements in the shell pair AB are elements of the basis
+!
+      current_aop_in_sp = 0
+!
+      do I = 1, solver%n_cholesky
+         if (cholesky_basis_updated(I,3) == AB) then
+!
+            current_aop_in_sp = current_aop_in_sp + 1
+!
+            aops_in_basis(AB_sp, current_aop_in_sp) &
+               = cholesky_basis_updated(I,1) - A_interval%first + 1
+!
+            aops_in_basis(AB_sp, max_n_basis_aops_in_sp + current_aop_in_sp) &
+               = cholesky_basis_updated(I,2) - B_interval%first + 1
+!
+            aops_in_basis(AB_sp, 2*max_n_basis_aops_in_sp + current_aop_in_sp) &
+               = I
+!
+         endif
+      enddo 
+!
+      if (current_aop_in_sp .ne. basis_shell_info(AB_sp, 4)) &
+         call output%error_msg('something went wrong in construct_S.')
+!
+    enddo
 !
 !     Write basis_shell_data file containing
 !
@@ -2938,11 +3011,14 @@ contains
       call solver%cholesky_basis_file%write_(n_sp_in_basis)
       call solver%cholesky_basis_file%write_(basis_shell_info, 4*n_sp_in_basis)
       call solver%cholesky_basis_file%write_(cholesky_basis_updated, 3*n_vectors)
+      call solver%cholesky_basis_file%write_(max_n_basis_aops_in_sp)
+      call solver%cholesky_basis_file%write_(aops_in_basis, n_sp_in_basis*3*max_n_basis_aops_in_sp)
 !
       call solver%cholesky_basis_file%close_()
 !
       call mem%dealloc(basis_shell_info, n_sp_in_basis, 4)
       call mem%dealloc(cholesky_basis_updated, n_vectors, 3)
+      call mem%dealloc(aops_in_basis, n_sp_in_basis, 3*max_n_basis_aops_in_sp)
 !
       call cpu_time(e_build_basis_time)
 !
@@ -3017,786 +3093,7 @@ contains
    end subroutine invert_Q_eri_cd
 !
 !
-   subroutine construct_cholesky_vectors_eri_cd(solver, system)
-!!
-!!    Construct Cholesky vectors
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Constructs the Cholesky vectors 
-!!
-!!       L_xy_J = sum_K (Q^-1)_JK (K | xy)
-!!
-!!    and writes them to file
-!!
-      implicit none
-!
-      class(eri_cd) :: solver
-      type(molecular_system) :: system
-!
-!     Local variables
-!
-!     Integers
-!
-      integer :: A, B, AB_sp, C, D, CD_sp
-      integer :: w, x, y, z, wx, wx_packed
-      integer :: L, J, I
-      integer :: n_construct_sp, n_construct_aop
-      integer :: n_sp_in_basis, last_sp_included, sp_counter
-      integer :: current_aop_in_sp
-      integer :: n_AB_included, n_AB_included_current
-      integer :: rec_offset
-      integer :: size_AB, size_AB_current
-!
-!     Integer allocatable arrays
-!
-      integer, dimension(:,:), allocatable :: basis_shell_info                      ! Info on shells containing elements of the basis
-      integer, dimension(:,:), allocatable :: AB_info                               ! Info on offsets and shells for OMP-loop [offset, A, B]
-      integer, dimension(3*system%max_shell_size**2), target :: basis_aops_in_CD_sp ! Basis ao pairs in shell pair CD
-      integer, dimension(:,:), pointer :: basis_aops_in_CD_sp_p                     ! Basis ao pairs in shell pair CD
-      integer, dimension(:,:), allocatable :: cholesky_basis                        ! Info on cholesky basis
-!
-!     Reals
-!
-      real(dp) :: s_construct_time, e_construct_time, full_construct_time
-      real(dp) :: s_build_vectors_time
-!
-!     Real allocatable arrays
-!
-      real(dp), dimension(system%max_shell_size**4), target :: g_ABCD
-      real(dp), dimension(:,:,:,:), pointer :: g_ABCD_p
-
-      real(dp), dimension(:,:), allocatable :: g_wx_L
-      real(dp), dimension(:,:), allocatable :: L_wx_J
-      real(dp), dimension(:,:), allocatable :: aux_chol_inverse, aux_chol_inverse_transpose
-!
-!     Logicals
-!
-      logical :: done, found_size
-!
-!     Logical allocatable arrays
-!
-      logical, dimension(:), allocatable :: construct_sp
-!
-!     Intervals
-!
-      type(interval) :: A_interval, B_interval, C_interval, D_interval
-!
-!     Available memory
-      integer(i64) :: mem_available
-!
-      call cpu_time(s_build_vectors_time)
-!
-!     Read diagonal info
-!
-      call mem%alloc(construct_sp, solver%n_sp)
-!
-      call solver%diagonal_info_cauchy_schwarz%open_('read', 'rewind')
-!
-      call solver%diagonal_info_cauchy_schwarz%read_(n_construct_sp)
-      call solver%diagonal_info_cauchy_schwarz%read_(n_construct_aop)
-      call solver%diagonal_info_cauchy_schwarz%read_(construct_sp, solver%n_sp)
-!
-      call solver%diagonal_info_cauchy_schwarz%close_()
-!
-!     Read inverse of cholesky vectors of auxiliary overlap, L_JK^-1
-!
-      call solver%Q_inverse%open_('read', 'rewind')
-!
-      call mem%alloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
-      aux_chol_inverse = zero
-!
-      do I = 1, solver%n_cholesky
-!
-         call solver%Q_inverse%read_(aux_chol_inverse(1 + (i - 1) : solver%n_cholesky, i), &
-                                     solver%n_cholesky + 1 - i)
-!
-      enddo
-!
-      call solver%Q_inverse%close_()
-!
-!     Transpose L_JK^-1
-!
-      call mem%alloc(aux_chol_inverse_transpose, solver%n_cholesky, solver%n_cholesky)
-!
-      call transpose_(aux_chol_inverse, aux_chol_inverse_transpose, solver%n_cholesky)
-!
-      call mem%dealloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
-!
-!     Prepare file for AO Cholesky vectors
-!
-      solver%cholesky_ao_vectors = sequential_file('cholesky_ao')
-      call solver%cholesky_ao_vectors%open_('write', 'rewind')
-!
-      solver%cholesky_ao_vectors_info = sequential_file('cholesky_ao_batching_info')
-      call solver%cholesky_ao_vectors_info%open_('write', 'rewind')
-!
-      rec_offset = 0
-!
-!     Construct (K | yz) and do matrix multiplication
-!
-      done = .false.
-!
-      full_construct_time = zero
-!
-      do while (.not. done)
-!
-!        Determine size of batch
-!
-         sp_counter              = 0
-         last_sp_included        = 0
-         n_AB_included_current   = 0
-         size_AB_current         = 0
-!
-         found_size = .false.
-!
-         mem_available = mem%get_available()
-         do B = 1, solver%n_s
-            do A = B, solver%n_s
-!
-               sp_counter = sp_counter + 1
-!
-               A_interval = system%shell_limits(A)
-               B_interval = system%shell_limits(B)
-!
-               if (construct_sp(sp_counter)) then
-!
-                  size_AB_current = size_AB_current + get_size_sp(A_interval, B_interval)
-                  n_AB_included_current = n_AB_included_current + 1
-!
-                  if ((2*size_AB_current*(solver%n_cholesky)*dp + (solver%n_cholesky**2)*dp)*1.1d0 & 
-                       .ge. mem_available) then ! 10 percent buffer
-!
-                     if (.not. found_size) then
-!
-                        size_AB = size_AB_current - get_size_sp(A_interval, B_interval)
-!
-                        last_sp_included  = sp_counter - 1
-                        n_AB_included     = n_AB_included_current - 1
-!
-                        found_size = .true.
-!
-                     endif
-!
-                  endif
-!
-               endif
-!
-            enddo
-         enddo
-!
-         if (.not. found_size) then ! No batching
-!
-            size_AB          = size_AB_current
-            last_sp_included = sp_counter
-            n_AB_included    = n_AB_included_current
-!
-         endif
-!
-         call solver%cholesky_ao_vectors_info%write_(size_AB)
-!
-         call solver%cholesky_basis_file%open_('read','rewind')
-!
-         call solver%cholesky_basis_file%read_(n_sp_in_basis)
-!
-         call mem%alloc(basis_shell_info, n_sp_in_basis, 4)
-         call mem%alloc(cholesky_basis, solver%n_cholesky, 3)
-!
-         call solver%cholesky_basis_file%read_(basis_shell_info, 4*n_sp_in_basis)
-         call solver%cholesky_basis_file%read_(cholesky_basis, 3*solver%n_cholesky)
-!
-         call solver%cholesky_basis_file%close_()
-!
-         call mem%alloc(AB_info, n_AB_included, 3) ! [offset, A, B]
-         AB_info = zero
-!
-         sp_counter = 0
-         AB_sp = 0
-!
-         do B = 1, solver%n_s
-            do A = B, solver%n_s
-!
-               AB_sp = AB_sp + 1
-!
-               if (construct_sp(AB_sp) .and. AB_sp .le. last_sp_included) then
-!
-                  sp_counter = sp_counter + 1
-                  construct_sp(AB_sp) = .false.       ! So that this shell pair is not selected again
-!
-                  A_interval = system%shell_limits(A)
-                  B_interval = system%shell_limits(B)
-!
-                  if (sp_counter .lt. n_AB_included) AB_info(sp_counter + 1, 1) = AB_info(sp_counter, 1) &
-                                                                              + get_size_sp(A_interval, B_interval)
-!
-                  AB_info(sp_counter, 2) = A
-                  AB_info(sp_counter, 3) = B
-!
-               endif
-!
-            enddo
-         enddo
-!
-!        Construct g_J_yz = (J | yz)
-!
-         call mem%alloc(g_wx_L, size_AB, solver%n_cholesky)
-!
-!$omp parallel do &
-!$omp private(AB_sp, CD_sp, I, A, B, A_interval, &
-!$omp B_interval, C, D, C_interval, D_interval, &
-!$omp basis_aops_in_CD_sp, basis_aops_in_CD_sp_p, current_aop_in_sp, g_ABCD, g_ABCD_p, &
-!$omp w, x, y, z, wx, wx_packed, L, J) &
-!$omp shared(g_wx_L, AB_info, basis_shell_info, cholesky_basis) &
-!$omp schedule(guided)
-         do AB_sp = 1, n_AB_included
-!
-            A = AB_info(AB_sp, 2)
-            B = AB_info(AB_sp, 3)
-!
-            A_interval = system%shell_limits(A)
-            B_interval = system%shell_limits(B)
-!
-            do CD_sp = 1, n_sp_in_basis
-!
-               C = basis_shell_info(CD_sp, 1)
-               D = basis_shell_info(CD_sp, 2)
-!
-               C_interval = system%shell_limits(C)
-               D_interval = system%shell_limits(D)
-!
-               basis_aops_in_CD_sp_p(1 : basis_shell_info(CD_sp, 4), 1 : 3) => basis_aops_in_CD_sp(1 : basis_shell_info(CD_sp, 4)*3)
-!
-               current_aop_in_sp = 0
-!
-               do I = 1, solver%n_cholesky
-                  if (cholesky_basis(I,3) == basis_shell_info(CD_sp, 3)) then
-!
-                     current_aop_in_sp = current_aop_in_sp + 1
-!
-                     basis_aops_in_CD_sp_p(current_aop_in_sp, 1) = cholesky_basis(I,1) - C_interval%first + 1
-                     basis_aops_in_CD_sp_p(current_aop_in_sp, 2) = cholesky_basis(I,2) - D_interval%first + 1
-                     basis_aops_in_CD_sp_p(current_aop_in_sp, 3) = I
-!
-                  endif
-               enddo
-!
-               call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
-!
-               g_ABCD_p(1 : A_interval%length, 1 : B_interval%length, &
-                        1 : C_interval%length, 1 : D_interval%length) &
-                        => g_ABCD(1 : A_interval%length*B_interval%length*C_interval%length*D_interval%length)               
-!
-               if (A == B) then
-!
-                  do w = 1, A_interval%length
-                     do x = w, B_interval%length
-!
-                        wx_packed = (max(w,x)*(max(w,x)-3)/2) + w + x
-!
-                        do J = 1, basis_shell_info(CD_sp, 4)
-!
-                           y = basis_aops_in_CD_sp_p(J, 1)
-                           z = basis_aops_in_CD_sp_p(J, 2)
-                           L = basis_aops_in_CD_sp_p(J, 3)
-
-                           g_wx_L(wx_packed + AB_info(AB_sp, 1), L) = g_ABCD_p(w, x, y, z)
-!
-                        enddo
-                     enddo
-                  enddo
-!
-               else
-!
-                  do w = 1, A_interval%length
-                     do x = 1, B_interval%length
-                        do J = 1, basis_shell_info(CD_sp, 4)
-!
-                           y = basis_aops_in_CD_sp_p(J, 1)
-                           z = basis_aops_in_CD_sp_p(J, 2)
-                           L = basis_aops_in_CD_sp_p(J, 3)
-!
-                           wx = A_interval%length*(x-1) + w
-!
-                           g_wx_L(wx + AB_info(AB_sp, 1), L) = g_ABCD_p(w, x, y, z)
-!
-                        enddo
-                     enddo
-                  enddo
-!
-               endif
-!
-            enddo ! CD
-         enddo ! AB
-!$omp end parallel do
-!
-         call mem%dealloc(AB_info, n_AB_included, 3)
-!
-         call cpu_time(s_construct_time)
-!
-!        L_wx_J = sum_L (wx | L) (L | J)^-T 
-!
-         call mem%alloc(L_wx_J, size_AB, solver%n_cholesky)
-!
-         call dgemm('N', 'N',                      &
-                       size_AB,                    &
-                       solver%n_cholesky,          &
-                       solver%n_cholesky,          &
-                       one,                        &
-                       g_wx_L,                     & 
-                       size_AB,                    &
-                       aux_chol_inverse_transpose, & 
-                       solver%n_cholesky,          &
-                       zero,                       &
-                       L_wx_J,                     &
-                       size_AB)
-!
-         call mem%dealloc(g_wx_L, size_AB, solver%n_cholesky)
-!
-         call cpu_time(e_construct_time)
-         full_construct_time = full_construct_time + e_construct_time - s_construct_time
-!
-!        Write vectors to file
-!
-         call solver%cholesky_ao_vectors%write_(L_wx_J, size_AB*solver%n_cholesky)
-!
-         rec_offset = rec_offset + size_AB
-!
-         call mem%dealloc(L_wx_J, size_AB, solver%n_cholesky)
-!
-         done = .true.
-!
-         do I = 1, solver%n_sp
-            if (construct_sp(I)) then
-!
-               done = .false.
-               exit
-!
-            endif
-         enddo
-!
-         call mem%dealloc(cholesky_basis, solver%n_cholesky, 3)
-         call mem%dealloc(basis_shell_info, n_sp_in_basis, 4)
-!
-      enddo ! done
-!
-      call solver%cholesky_ao_vectors%close_()
-!
-      call solver%cholesky_ao_vectors_info%close_()
-!
-      call mem%dealloc(aux_chol_inverse_transpose, solver%n_cholesky, solver%n_cholesky)
-      call mem%dealloc(construct_sp, solver%n_sp)
-!
-   end subroutine construct_cholesky_vectors_eri_cd
-!
-!
-   subroutine diagonal_test_eri_cd(solver, system)
-!!
-!!    Cholesky vectors diagonal test
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Tests the decomposition by 
-!!
-!!       1. finding the largest element of (D_sig - D_approx)
-!!       2. finding the smallest (largest negative) element of (D_sig - D_approx)
-!!
-!!
-      implicit none
-!
-      class(eri_cd) :: solver
-!
-      type(molecular_system), intent(in) :: system
-!
-      real(dp), dimension(system%max_shell_size**4), target :: g_ABAB
-      real(dp), dimension(:,:,:,:), pointer :: g_ABAB_p
-!
-      real(dp), dimension(:), allocatable :: D_xy
-      real(dp), dimension(:,:), allocatable :: L_K_yz
-!
-      real(dp) :: ddot, max_diff, min_diff
-!
-      integer :: aop, n_construct_sp, n_construct_aop, i, size_AB, AB_offset, A, B, current_construct_sp
-      integer :: x, y, xy, xy_packed, sp
-!
-      integer :: io_stat
-!
-      integer, dimension(:), allocatable :: ao_offsets
-      integer, dimension(:,:), allocatable :: construct_sp_index
-!
-      logical, dimension(:), allocatable :: construct_sp
-!
-      type(interval) :: A_interval, B_interval
-!
-      type(timings), allocatable :: timer
-!
-      timer = timings('Diagonal test', pl='n')
-      call timer%turn_on()
-!
-!     Read diagonal information
-!
-      call mem%alloc(construct_sp, solver%n_sp)
-!
-      call solver%diagonal_info_cauchy_schwarz%open_('read', 'rewind')
-!
-      call solver%diagonal_info_cauchy_schwarz%read_(n_construct_sp)
-      call solver%diagonal_info_cauchy_schwarz%read_(n_construct_aop)
-      call solver%diagonal_info_cauchy_schwarz%read_(construct_sp, solver%n_sp)
-!
-      call solver%diagonal_info_cauchy_schwarz%close_()
-!
-!     Prepare for construction of diagonal
-!
-      sp = 0        ! Shell pair number
-!    
-      call mem%alloc(ao_offsets, n_construct_sp)
-      ao_offsets = 0
-!
-      current_construct_sp = 0
-!
-      call mem%alloc(construct_sp_index, n_construct_sp, 2)
-!
-      do B = 1, solver%n_s
-         do A = B, solver%n_s
-!
-            sp = sp + 1
-!
-            if (construct_sp(sp)) then
-!
-               current_construct_sp = current_construct_sp + 1
-!
-               A_interval = system%shell_limits(A)
-               B_interval = system%shell_limits(B)
-!     
-               construct_sp_index(current_construct_sp, 1) = A
-               construct_sp_index(current_construct_sp, 2) = B
-!
-               if (current_construct_sp .lt. n_construct_sp) then
-!
-                  ao_offsets(current_construct_sp + 1) = ao_offsets(current_construct_sp) + &
-                           get_size_sp(A_interval, B_interval)
-!
-               endif
-!
-            endif
-!
-         enddo
-      enddo
-!
-      call mem%dealloc(construct_sp, solver%n_sp)
-!
-!     Construct significant diagonal and screening vector
-!
-      call mem%alloc(D_xy, n_construct_aop)
-!
-!$omp parallel do &
-!$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_ABAB, g_ABAB_p) &
-!$omp shared(D_xy, ao_offsets) &
-!$omp schedule(guided)
-      do I = 1, n_construct_sp
-!
-         A = construct_sp_index(I, 1)
-         B = construct_sp_index(I, 2)
-!
-         A_interval = system%shell_limits(A)
-         B_interval = system%shell_limits(B)
-!
-         call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
-!
-         g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, 1 : A_interval%length, 1 : B_interval%length) &
-                        => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
-         if (A .eq. B) then
-!
-            do x = 1, A_interval%length
-               do y = x, B_interval%length
-!
-                  xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
-!
-                  D_xy(xy_packed + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
-!
-               enddo
-            enddo
-!
-         else ! A ≠ B
-!
-            do x = 1, (A_interval%length)
-               do y = 1, (B_interval%length)
-!
-                  xy = A_interval%length*(y - 1) + x
-                  D_xy(xy + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
-!
-               enddo
-            enddo
-!
-         endif
-!
-      enddo
-!$omp end parallel do   
-!
-      call mem%dealloc(construct_sp_index, n_construct_sp, 2)
-      call mem%dealloc(ao_offsets, n_construct_sp)
-!
-      call solver%cholesky_ao_vectors%open_('read', 'rewind')
-      call solver%cholesky_ao_vectors_info%open_('read', 'rewind')
-!
-      call solver%cholesky_ao_vectors_info%read_(size_AB, io_stat)
-!
-      AB_offset = 0
-!
-      do while (io_stat .ge. 0)
-!
-!        Calculate difference between actual and approximate diagonal
-!
-         call mem%alloc(L_K_yz, size_AB, solver%n_cholesky)
-!
-         call solver%cholesky_ao_vectors%read_(L_K_yz, solver%n_cholesky*size_AB)
-!
-         do i = 1, size_AB 
-!
-            D_xy(i + AB_offset) = D_xy(i + AB_offset) &
-                                - ddot(solver%n_cholesky, L_K_yz(i, 1), size_AB, L_K_yz(i, 1), size_AB)
-!
-         enddo
-!
-         call mem%dealloc(L_K_yz, solver%n_cholesky, size_AB)
-!
-         AB_offset = AB_offset + size_AB
-         call solver%cholesky_ao_vectors_info%read_(size_AB, io_stat)
-!
-      enddo
-!
-      call solver%cholesky_ao_vectors%close_()
-      call solver%cholesky_ao_vectors_info%close_()
-!
-!     Calculate maximal difference and minimal difference
-!
-      max_diff = get_abs_max(D_xy, n_construct_aop)
-!
-      min_diff =1.0d5
-!
-      do aop = 1, n_construct_aop
-         if (D_xy(aop) .lt. min_diff) min_diff = D_xy(aop)
-      enddo
-!
-      call mem%dealloc(D_xy, n_construct_aop)
-!
-      call output%printf('m', '- Testing the Cholesky decomposition &
-                         &decomposition electronic repulsion integrals:', &
-                         ll=100, fs='(/t2,a)')
-!
-      call output%printf('m', 'Maximal difference between approximate and &
-                         &actual diagonal: (e23.4)', reals=[max_diff], ll=100, fs='(/t6,a)')
-      call output%printf('m', 'Minimal element of difference between &
-                         &approximate and actual diagonal: (e12.4)', &
-                         reals=[min_diff], ll=100, fs='( t6,a)')
-!
-      call timer%turn_off()
-!
-   end subroutine diagonal_test_eri_cd
-!
-!
-   subroutine full_test_cholesky_vecs_cd_eri_solver(solver, system)
-!!
-!!    Full test Cholesky vectors 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad
-!!
-!!    Tests the entire ERI matrix. 
-!!    Note that this test is expensive (memory and computation)
-!!    and should only be used for very small systems.
-!!
-      implicit none
-!
-      class(eri_cd) :: solver
-!
-      type(molecular_system), intent(in) :: system
-!
-      logical, dimension(:), allocatable :: construct_sp
-!
-      integer ::  A, B, C, D, w, x, y, z, size_AB, AB_offset, J, I, xy
-      integer ::  sp, sig_aop_counter, n_construct_sp, n_construct_aop
-!
-      integer :: io_stat
-!
-      type(interval) :: A_interval, B_interval, C_interval, D_interval
-!
-      real(dp), dimension(:,:), allocatable :: L_xy
-      real(dp), dimension(:,:,:), allocatable :: L_xy_full
-      real(dp), dimension(:,:,:,:), allocatable :: g_wxyz, g_ABCD
-!
-      integer, dimension(:,:), allocatable :: index_full
-!
-!     Read significant sp info 
-!
-      call mem%alloc(construct_sp, solver%n_sp)
-!
-      call solver%diagonal_info_cauchy_schwarz%open_('read', 'rewind')
-!
-      call solver%diagonal_info_cauchy_schwarz%read_(n_construct_sp)
-      call solver%diagonal_info_cauchy_schwarz%read_(n_construct_aop)
-      call solver%diagonal_info_cauchy_schwarz%read_(construct_sp, solver%n_sp)
-!
-      call solver%diagonal_info_cauchy_schwarz%close_()
-!
-      call solver%cholesky_ao_vectors%open_('read', 'rewind')
-      call solver%cholesky_ao_vectors_info%open_('read', 'rewind')
-!
-      call mem%alloc(L_xy, n_construct_aop, solver%n_cholesky)
-      call mem%alloc(L_xy_full, solver%n_ao, solver%n_ao, solver%n_cholesky)
-!
-      L_xy = zero
-      L_xy_full = zero
-!
-      call solver%cholesky_ao_vectors_info%read_(size_AB, io_stat)
-!
-      AB_offset = 0
-!
-      do while (io_stat .ge. 0)
-!
-!       Calculate difference between actual and approximate diagonal
-!
-         do J = 1,solver%n_cholesky
-!
-            call solver%cholesky_ao_vectors%read_(L_xy(AB_offset:AB_offset+size_AB,J), size_AB)
-!
-         enddo
-!  
-         AB_offset = AB_offset + size_AB
-!
-         call solver%cholesky_ao_vectors_info%read_(size_AB, io_stat)
-!
-      enddo
-!
-      AB_offset = 0
-      sp        = 0 
-      sig_aop_counter = 0
-!
-      call mem%alloc(index_full, n_construct_aop, 2)
-!
-      do B = 1, solver%n_s
-!
-         B_interval = system%shell_limits(B)
-!
-         do A = B, solver%n_s
-!
-            A_interval = system%shell_limits(A)
-!
-            sp = sp + 1
-!
-            if (construct_sp(sp)) then
-!
-              if (A .ne. B) then 
-!
-                 do x = A_interval%first, A_interval%last
-                    do y = B_interval%first, B_interval%last
-! 
-                        sig_aop_counter = AB_offset + &
-                              A_interval%length*(y - B_interval%first) + x - A_interval%first + 1
-!
-                        index_full(sig_aop_counter, 1) = x
-                        index_full(sig_aop_counter, 2) = y
-! 
-                    enddo
-                 enddo
-!
-              else
-!
-                 do x = A_interval%first, A_interval%last
-                    do y = B_interval%first, B_interval%last
-!
-                           xy = (max(x - A_interval%first + 1,y - B_interval%first + 1)&
-                              *(max(x - A_interval%first + 1, y - B_interval%first + 1)-3)/2) &
-                              + x - A_interval%first + 1 + y - B_interval%first + 1
-!
-                           sig_aop_counter = AB_offset + xy
-
-                           index_full(sig_aop_counter, 1) = x
-                           index_full(sig_aop_counter, 2) = y
-! 
-                    enddo
-                 enddo
-!
-              endif
-!
-               AB_offset = AB_offset + get_size_sp(A_interval, B_interval)       
-!
-            endif
-!
-         enddo
-      enddo
-!
-      do i = 1, n_construct_aop
-!
-         L_xy_full(index_full(i, 1), index_full(i, 2), 1:solver%n_cholesky) = L_xy(i, 1:solver%n_cholesky)
-         L_xy_full(index_full(i, 2), index_full(i, 1), 1:solver%n_cholesky) = L_xy(i, 1:solver%n_cholesky)
-!
-      enddo
-!
-      call mem%dealloc(construct_sp, solver%n_sp)
-!
-      call mem%dealloc(L_xy, n_construct_aop, solver%n_cholesky)
-!
-      call mem%alloc(g_wxyz, solver%n_ao, solver%n_ao, solver%n_ao, solver%n_ao)
-!
-      g_wxyz = zero
-!
-      do A = 1, solver%n_s
-         do B = 1, solver%n_s
-            do C = 1, solver%n_s
-               do D = 1, solver%n_s
-!
-                  A_interval = system%shell_limits(A)
-                  B_interval = system%shell_limits(B)
-                  C_interval = system%shell_limits(C)
-                  D_interval = system%shell_limits(D)
-!
-                  call mem%alloc(g_ABCD, A_interval%length, B_interval%length, C_interval%length, D_interval%length) 
-!
-                  call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
-!
-                  do w = 1, A_interval%length
-                     do x = 1, B_interval%length
-                        do y = 1, C_interval%length
-                           do z = 1, D_interval%length 
-!
-                              g_wxyz(w + A_interval%first - 1, x + B_interval%first - 1,&
-                                     y + C_interval%first - 1, z + D_interval%first - 1) = g_ABCD(w, x, y, z)
-!
-                           enddo
-                        enddo
-                     enddo
-                  enddo
-!
-                  call mem%dealloc(g_ABCD, A_interval%length, B_interval%length, C_interval%length, D_interval%length)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-      call dgemm('N','T',              &
-                 solver%n_ao**2,       &
-                 solver%n_ao**2,       &
-                 solver%n_cholesky,    &
-                 -one,                 &
-                 L_xy_full,            &
-                 solver%n_ao**2,       &
-                 L_xy_full,            &
-                 solver%n_ao**2,       &
-                 one,                  &           
-                 g_wxyz,               &
-                 solver%n_ao**2)
-!
-      call output%printf('n', 'Maximal difference between approximate and &
-                         &actual ERI-matrix:  (e12.4)', &
-                         reals=[get_abs_max(g_wxyz, solver%n_ao**4)], ll=80, fs='(t6,a)')
-!
-      call mem%dealloc(g_wxyz, solver%n_ao, solver%n_ao, solver%n_ao, solver%n_ao)
-      call mem%dealloc(L_xy_full, solver%n_ao, solver%n_ao, solver%n_cholesky)
-!
-      call solver%cholesky_ao_vectors%close_()
-      call solver%cholesky_ao_vectors_info%close_()
-!
-   end subroutine  full_test_cholesky_vecs_cd_eri_solver
-!
-!
-   integer function get_size_sp(A_interval, B_interval)
+   pure function get_size_sp(A_interval, B_interval) result(size_sp)
 !!
 !!    Get size shell pair
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -3805,46 +3102,62 @@ contains
 !!
       implicit none
 !
-      type(interval) :: A_interval
-      type(interval) :: B_interval
+      type(interval), intent(in) :: A_interval
+      type(interval), intent(in) :: B_interval
+!
+      integer :: size_sp
 !
       if (A_interval%first == B_interval%first) then
 !
-         get_size_sp = A_interval%length*(A_interval%length + 1)/2
+         size_sp = A_interval%length*(A_interval%length + 1)/2
 !
       else
 !
-         get_size_sp = (A_interval%length)*(B_interval%length)
+         size_sp = (A_interval%length)*(B_interval%length)
 !
       endif
 !
    end function get_size_sp
 !
 !
-   integer function get_sp_from_shells(s1, s2, n_s)
+   pure function get_sp_from_shells(s1, s2, n_s) result(sp)
 !!
 !!    Get shell pair from shells,
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    OBS THIS WILL ONLY WORK IF s1 >= s2
-!!
       implicit none
 !
       integer, intent(in) :: s1, s2, n_s
+      integer :: sp
       integer :: A, B
 !
-      get_sp_from_shells = 1
+      sp = 1
 !
-      do B = 1, n_s
-         do A = B, n_s
+      if (s1 .ge. s2) then
 !
-            if (s1 == A .and. s2 == B)  return
+         do B = 1, n_s
+            do A = B, n_s
 !
-            get_sp_from_shells = get_sp_from_shells + 1
+               if (s1 == A .and. s2 == B)  return
 !
+               sp = sp + 1
+!
+            enddo
          enddo
-      enddo
-
+!
+      else
+!
+         do B = 1, n_s
+            do A = B, n_s
+!
+               if (s2 == A .and. s1 == B)  return
+!
+               sp = sp + 1
+!
+            enddo
+         enddo
+!
+      endif
 !
    end function get_sp_from_shells
 !
@@ -3873,8 +3186,7 @@ contains
       call input%get_keyword_in_section('batches', 'solver cholesky', solver%n_batches)
       call input%get_keyword_in_section('qualified', 'solver cholesky', solver%max_qual)
 !
-      if (input%requested_keyword_in_section('one center', 'solver cholesky')) solver%one_center = .true.
-      if (input%requested_keyword_in_section('no vectors', 'solver cholesky')) solver%construct_vectors = .false.
+      solver%one_center = input%requested_keyword_in_section('one center', 'solver cholesky')
 !
    end subroutine read_settings_eri_cd
 !
@@ -3926,17 +3238,24 @@ contains
    end subroutine print_settings_eri_cd
 !
 !
-   subroutine write_ao_cholesky_to_direct_file_cd_eri_solver(solver, system)
+   subroutine construct_cholesky_mo_vectors_eri_cd(solver, system, n_ao, n_mo, &
+                                                   orbital_coefficients, integrals)
 !!
-!!    Write AO Cholesky vectors to direct file
-!!    Written by Sarai D. Folkestad, Sep 2019
+!!    Construct Cholesky MO vectors
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Feb 2020
 !!
-!!    Rewrites the AO Cholesky vectors file to direct access
-!!    file with record length n_cholesky and record number
-!!    given by the packed index of the ao pair.
+!!    Constructs the Cholesky MO vectors
 !!
-!
+!!       L_Jpq = C_wpCxq (wx|K)[Q^{-T}]_KJ,
+!!
+!!    where C_wp are the orbital coefficients, 
+!!    and Q is the Cholesky factor of the overlap of the elements 
+!!    of the Cholesky basis, S.
+!!
+!!    Passes the Cholesky vectors to the integrals (mo_integral_tool)
+!!
       use array_utilities, only: zero_array
+      use mo_integral_tool_class, only: mo_integral_tool
 !
       implicit none
 !
@@ -3944,29 +3263,55 @@ contains
 !
       type(molecular_system) :: system
 !
-     real(dp), dimension(:,:), allocatable :: L_AB_J
-     real(dp), dimension(:), allocatable :: L_J
+      integer, intent(in) :: n_mo, n_ao
 !
-     integer :: A, B, sp, x, xy_packed_full
-     integer :: y, xy_packed, xy, y_full, x_full
-     integer :: n_construct_aop, n_construct_sp
+      real(dp), dimension(n_ao, n_mo), intent(in) :: orbital_coefficients
 !
-     type(interval) :: A_interval, B_interval
-!  
-     integer :: size_AB, current_size_AB, io_stat
+      type(mo_integral_tool), intent(inout) :: integrals
 !
-     logical, dimension(:), allocatable :: construct_sp 
+      integer :: A, B, C, D, K_sp, AB_sp
+      integer :: w, x, y, z
+      integer :: q, p
+      integer :: I, J
+      integer :: sp
+      integer :: n_construct_sp, n_construct_aop
+      integer :: n_sp_in_basis
 !
-      type(timings), allocatable :: timer
+      integer, dimension(:,:), allocatable :: basis_shell_info ! Info on shells containing elements of the basis
+      integer, dimension(:,:), allocatable :: cholesky_basis   ! Info on cholesky basis
+      integer, dimension(:,:), allocatable :: aops_in_basis
+      integer, dimension(:,:), allocatable   :: AB_info
 !
-      timer = timings('Write AO Cholesky to direct file', pl='n')
+      real(dp), dimension(system%max_shell_size**4), target :: g_ABCD
+      real(dp), dimension(:,:,:,:), pointer :: g_ABCD_p
+!
+      real(dp), dimension(:,:,:), allocatable :: g_wxK, g_pxK, g_xpK, g_qpK, g_qpK_red
+      real(dp), dimension(:,:,:), allocatable :: L_qpJ, L_Jqp
+      real(dp), dimension(:,:), allocatable :: aux_chol_inverse, aux_chol_inverse_transpose
+!
+!     Logical allocatable arrays
+!
+      logical, dimension(:), allocatable :: construct_sp
+!
+!     Intervals
+!
+      type(interval) :: A_interval, B_interval, C_interval, D_interval
+!
+      integer :: max_n_basis_aops_in_sp
+!
+!     Batching and memory handling
+!
+      integer :: req0, req1
+      integer :: current_p_batch
+!
+      type(batching_index) :: batch_p
+!
+      type(timings) :: timer
+!
+      timer = timings('Construct and write Cholesky vectors', pl='n')
       call timer%turn_on()
 !
-      system%ao_cholesky_file = direct_file('AO_cholesky_vectors', solver%n_cholesky)
-      call system%ao_cholesky_file%open_('write')
-!
-!     Read information about for which shell pairs 
-!     the AO Cholesky vectors were constructed (the rest screened out)
+!     Read diagonal info
 !
       call mem%alloc(construct_sp, solver%n_sp)
 !
@@ -3978,133 +3323,625 @@ contains
 !
       call solver%diagonal_info_cauchy_schwarz%close_()
 !
-!     Set Zeros for vectors that have not been constructed
+!     Read inverse of cholesky vectors of auxiliary overlap, Q^-1
 !
-      call mem%alloc(L_J, solver%n_cholesky)
-      call zero_array(L_J, solver%n_cholesky)
+      call solver%Q_inverse%open_('read', 'rewind')
+!
+      call mem%alloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
+      call zero_array(aux_chol_inverse, solver%n_cholesky**2)
+!
+      do I = 1, solver%n_cholesky
+!
+         call solver%Q_inverse%read_(aux_chol_inverse(1 + (i - 1) : solver%n_cholesky, i), &
+                                     solver%n_cholesky + 1 - i)
+!
+      enddo
+!
+      call solver%Q_inverse%close_()
+!
+!     Transpose Q^-1
+!
+      call mem%alloc(aux_chol_inverse_transpose, solver%n_cholesky, solver%n_cholesky)
+      call transpose_(aux_chol_inverse, aux_chol_inverse_transpose, solver%n_cholesky)
+      call mem%dealloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
+!
+!     Read Cholesky basis information
+!
+      call solver%cholesky_basis_file%open_('read','rewind')
+      call solver%cholesky_basis_file%read_(n_sp_in_basis)
+!
+      call mem%alloc(basis_shell_info, n_sp_in_basis, 4)
+      call mem%alloc(cholesky_basis, solver%n_cholesky, 3)
+!
+      call solver%cholesky_basis_file%read_(basis_shell_info, 4*n_sp_in_basis)
+      call solver%cholesky_basis_file%read_(cholesky_basis, 3*solver%n_cholesky)
+      call solver%cholesky_basis_file%read_(max_n_basis_aops_in_sp)
+!
+      call mem%alloc(aops_in_basis, n_sp_in_basis, 3*max_n_basis_aops_in_sp)
+!
+      call solver%cholesky_basis_file%read_(aops_in_basis, n_sp_in_basis*3*max_n_basis_aops_in_sp)
+!
+      call solver%cholesky_basis_file%close_()
+!
+!     Prepare for OMP 
+!
+      call mem%alloc(AB_info, n_construct_sp, 2) ! [A, B]
 !
       sp = 0
+      AB_sp = 0
 !
       do B = 1, solver%n_s
-!
-         B_interval = system%shell_limits(B)
-!
          do A = B, solver%n_s
 !
-            A_interval = system%shell_limits(A)
+            AB_sp = AB_sp + 1
 !
-            sp = sp + 1
+            if (construct_sp(AB_sp)) then
 !
-            if (.not. construct_sp(sp)) then
+               sp = sp + 1
 !
-               do x = A_interval%first, A_interval%last
-                  do y = B_interval%first, B_interval%last
-!  
-                     xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
-                     call system%AO_cholesky_file%write_(L_J, xy_packed)
+               AB_info(sp, 1) = A
+               AB_info(sp, 2) = B
 !
-                  enddo
-               enddo
             endif
 !
          enddo
       enddo
 !
-!     Read and write AO vectors
 !
-      call solver%cholesky_ao_vectors_info%open_('read', 'rewind')
-      call solver%cholesky_ao_vectors%open_('read', 'rewind')
+!     Prepare for batching
 !
-      call solver%cholesky_ao_vectors_info%read_(size_AB, io_stat)
+      req0 = n_ao**2*max_n_basis_aops_in_sp
+      req1 = max(2*n_ao*max_n_basis_aops_in_sp     &
+                  + n_mo*solver%n_cholesky,        &
+                 2*n_mo*solver%n_cholesky)
 !
-      do while (io_stat .ge. 0)
+      batch_p = batching_index(n_mo)
 !
-!        Read for the particular shell pair 
+      call mem%batch_setup(batch_p, req0, req1)
 !
-         call mem%alloc(L_AB_J, size_AB, solver%n_cholesky)
+!     Loop over the number of a batches
 !
-         call solver%cholesky_ao_vectors%read_(L_AB_J, size_AB*solver%n_cholesky)
+      do current_p_batch = 1, batch_p%num_batches
 !
-         current_size_AB = 0
-         sp = 0
+         call batch_p%determine_limits(current_p_batch)
 !
-         do B = 1, solver%n_s
+         call mem%alloc(g_qpK, n_mo, batch_p%length, solver%n_cholesky)
 !
-            B_interval = system%shell_limits(B)
+         do K_sp = 1, n_sp_in_basis
 !
-            do A = B, solver%n_s
+            call mem%alloc(g_wxK, n_ao, n_ao, basis_shell_info(K_sp,4))
+            call zero_array(g_wxK, n_ao**2*basis_shell_info(K_sp,4))
 !
+            C = basis_shell_info(K_sp, 1)
+            D = basis_shell_info(K_sp, 2)
+!
+            C_interval = system%shell_limits(C)
+            D_interval = system%shell_limits(D)            
+!
+!$omp parallel do private(AB_sp, A, B, A_interval, B_interval, g_ABCD, g_ABCD_p, w, x, J, y, z)
+            do AB_sp = 1, n_construct_sp
+!
+               A = AB_info(AB_sp, 1)
+               B = AB_info(AB_sp, 2)
+!
+               B_interval = system%shell_limits(B)
                A_interval = system%shell_limits(A)
 !
-               sp = sp + 1
+               call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
 !
-               if (construct_sp(sp)) then
+               g_ABCD_p(1 : A_interval%length, 1 : B_interval%length, &
+                        1 : C_interval%length, 1 : D_interval%length) &
+                        => g_ABCD(1 : A_interval%length &
+                                     *B_interval%length &
+                                     *C_interval%length &
+                                     *D_interval%length)  
 !
-                  if (current_size_AB .lt. size_AB) then
+               if (A == B) then
 !
-                     construct_sp(sp) = .false. ! This shell pair should not be used again.
+                  do w = A_interval%first, A_interval%last
+                     do x = B_interval%first, B_interval%last
+                        do J = 1, basis_shell_info(K_sp, 4)
 !
-                     if (A .ne. B) then 
-!
-                        do x = 1, A_interval%length
-                           do y = 1, B_interval%length
-!  
-                              x_full = x + A_interval%first - 1
-                              y_full = y + B_interval%first - 1
-!
-                              xy = A_interval%length*(y-1) + x    
-                              xy_packed_full = (max(x_full,y_full)*(max(x_full,y_full)-3)/2) + x_full + y_full
-                              L_J(:) = L_AB_J(xy + current_size_AB,:)
-!
-                              call system%AO_cholesky_file%write_(L_J, xy_packed_full)
-!  
-                           enddo
-                        enddo
-!
-                     else
-! 
-                        do x = 1, A_interval%length
-                           do y = 1, B_interval%length
-!  
-                              x_full = x + A_interval%first - 1
-                              y_full = y + B_interval%first - 1
-!
-                              xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
-                              xy_packed_full = (max(x_full,y_full)*(max(x_full,y_full)-3)/2) + x_full + y_full
-!  
-                              L_J(:) =  L_AB_J(xy_packed + current_size_AB,:)
-                              call system%AO_cholesky_file%write_(L_J, xy_packed_full)
-!  
-                           enddo
-                        enddo
+                           y = aops_in_basis(K_sp, J)
+                           z = aops_in_basis(K_sp, J + max_n_basis_aops_in_sp)
 
-                     endif
+                           g_wxK(w, x, J) = g_ABCD_p(w - A_interval%first + 1, &
+                                                     x - B_interval%first + 1, y, z)
 !
-                     current_size_AB = current_size_AB + get_size_sp(A_interval, B_interval)
+                        enddo
+                     enddo
+                  enddo
 !
-                  endif
+               else
+!
+                  do w = A_interval%first, A_interval%last
+                     do x = B_interval%first, B_interval%last
+                        do J = 1, basis_shell_info(K_sp, 4)
+!
+                           y = aops_in_basis(K_sp, J)
+                           z = aops_in_basis(K_sp, J + max_n_basis_aops_in_sp)
+
+                           g_wxK(w, x, J) = g_ABCD_p(w - A_interval%first + 1, &
+                                                     x - B_interval%first + 1, y, z)
+                           g_wxK(x, w, J) = g_ABCD_p(w - A_interval%first + 1, &
+                                                     x - B_interval%first + 1, y, z)
+!
+                        enddo
+                     enddo
+                  enddo
 !
                endif
 
+            enddo ! end loop over AB_sp
+!$omp end parallel do
+!
+!           Transform wx -> pq
+!
+            call mem%alloc(g_pxK, batch_p%length, n_ao, basis_shell_info(K_sp,4))
+!
+            call dgemm('T', 'N',                               &
+                        batch_p%length,                        &
+                        n_ao*basis_shell_info(K_sp,4),         &
+                        n_ao,                                  &
+                        one,                                   &
+                        orbital_coefficients(1,batch_p%first), & ! C_w_p
+                        n_ao,                                  &
+                        g_wxK,                                 & ! g_w_xK
+                        n_ao,                                  &
+                        zero,                                  &
+                        g_pxK,                                 &
+                        batch_p%length)
+!
+            call mem%dealloc(g_wxK, n_ao, n_ao, basis_shell_info(K_sp,4))
+!
+            call mem%alloc(g_xpK, n_ao, batch_p%length, basis_shell_info(K_sp,4))
+!
+            call sort_123_to_213(g_pxK, g_xpK, batch_p%length, n_ao, basis_shell_info(K_sp,4))
+!
+            call mem%dealloc(g_pxK, batch_p%length, n_ao, basis_shell_info(K_sp,4))
+!
+            call mem%alloc(g_qpK_red, n_mo, batch_p%length, basis_shell_info(K_sp,4))
+!
+            call dgemm('T', 'N',                                  &
+                        n_mo,                                     &
+                        batch_p%length*basis_shell_info(K_sp,4),  &
+                        n_ao,                                     &
+                        one,                                      &
+                        orbital_coefficients,                     & ! C_x_q
+                        n_ao,                                     &
+                        g_xpK,                                    &
+                        n_ao,                                     &
+                        zero,                                     &
+                        g_qpK_red,                                &
+                        n_mo)
+!
+            call mem%dealloc(g_xpK, n_ao, batch_p%length, basis_shell_info(K_sp,4))
+!
+!$omp parallel do private(p, q, J)
+            do J = 1, basis_shell_info(K_sp,4)
+               do p = 1, batch_p%length
+                  do q = 1, n_mo
+                  
+!
+                     g_qpK(q,p, aops_in_basis(K_sp, J + max_n_basis_aops_in_sp*2)) = g_qpK_red(q,p,J)
+!
+                  enddo
+               enddo
             enddo
-         enddo
+!$omp end parallel do
 !
-         call mem%dealloc(L_AB_J, size_AB, solver%n_cholesky)
+            call mem%dealloc(g_qpK_red, n_mo, batch_p%length, basis_shell_info(K_sp,4))
 !
-         call solver%cholesky_ao_vectors_info%read_(size_AB, io_stat)
+         enddo ! end loop over K_sp
+!
+         call mem%alloc(L_qpJ, n_mo, batch_p%length, solver%n_cholesky)
+!
+         call dgemm('N', 'N',                      &
+                     n_mo*batch_p%length,          &
+                     solver%n_cholesky,            &
+                     solver%n_cholesky,            &
+                     one,                          &
+                     g_qpK,                        &
+                     n_mo*batch_p%length,          &
+                     aux_chol_inverse_transpose,   &
+                     solver%n_cholesky,            &
+                     zero,                         &
+                     L_qpJ,                        &
+                     n_mo*batch_p%length)
+!
+         call mem%dealloc(g_qpK, n_mo, batch_p%length, solver%n_cholesky)
+!
+         call mem%alloc(L_Jqp, solver%n_cholesky, n_mo, batch_p%length)
+         call sort_123_to_312(L_qpJ, L_Jqp, n_mo, batch_p%length, solver%n_cholesky)
+         call mem%dealloc(L_qpJ, n_mo, batch_p%length, solver%n_cholesky)
+!
+         call integrals%set_cholesky_mo(L_Jqp,             &
+                                          1,               &
+                                          n_mo,            &
+                                          batch_p%first,   &
+                                          batch_p%last,    &
+                                          q_leq_p=.true.)
+!
+         call mem%dealloc(L_Jqp, solver%n_cholesky, n_mo, batch_p%length)
 !
       enddo
 !
-      call mem%dealloc(L_J, solver%n_cholesky)
-      call mem%dealloc(construct_sp, solver%n_sp)
-      call system%ao_cholesky_file%close_('keep')
+      call mem%dealloc(AB_info, n_construct_sp, 2) ! [A, B]
 !
-      call solver%cholesky_ao_vectors_info%close_()
-      call solver%cholesky_ao_vectors%close_()
+      call mem%dealloc(cholesky_basis, solver%n_cholesky, 3)
+      call mem%dealloc(basis_shell_info, n_sp_in_basis, 4)
+      call mem%dealloc(aops_in_basis, n_sp_in_basis, 3*max_n_basis_aops_in_sp)
+!
+      call mem%dealloc(aux_chol_inverse_transpose, solver%n_cholesky, solver%n_cholesky)
+      call mem%dealloc(construct_sp, solver%n_sp)
 !
       call timer%turn_off()
 !
-   end subroutine write_ao_cholesky_to_direct_file_cd_eri_solver
+   end subroutine construct_cholesky_mo_vectors_eri_cd
+!
+!
+   subroutine diagonal_test_eri_cd(solver, system)
+!!
+!!    Cholesky vectors diagonal test
+!!    Written by Sarai D. Folkestad, Feb 2020
+!!
+!!    Tests the decomposition by 
+!!
+!!       1. finding the largest element of (D_sig - D_approx)
+!!       2. finding the smallest (largest negative) element of (D_sig - D_approx)
+!!
+!
+      use array_utilities, only: zero_array
+!
+      implicit none
+!
+      class(eri_cd) :: solver
+!
+      type(molecular_system), intent(in) :: system
+!
+      real(dp), dimension(system%max_shell_size**4), target :: g_ABAB, g_ABCD
+      real(dp), dimension(:,:,:,:), pointer :: g_ABAB_p, g_ABCD_p
+!
+      real(dp), dimension(:), allocatable :: D_xy
+      real(dp), dimension(:,:), allocatable :: aux_chol_inverse, aux_chol_inverse_transpose
+      real(dp), dimension(:,:), allocatable :: g_wxK, L_wxJ
+!
+      real(dp) :: max_diff, min_diff
+!
+      integer :: aop, n_construct_sp, n_construct_aop, current_construct_sp
+      integer :: A, B, C, D
+      integer :: AB_sp
+      integer :: K, I, J
+      integer :: x, y, xy, xy_packed, sp
+      integer :: K_sp, w, wx, z
+      integer :: n_sp_in_basis
+!
+      integer, dimension(:), allocatable :: ao_offsets
+      integer, dimension(:,:), allocatable :: construct_sp_index
+!
+      logical, dimension(:), allocatable :: construct_sp
+!
+      integer, dimension(:,:), allocatable :: basis_shell_info ! Info on shells containing elements of the basis
+      integer, dimension(:,:), allocatable :: cholesky_basis   ! Info on cholesky basis
+      integer, dimension(:,:), allocatable :: aops_in_basis
+!
+      type(interval) :: A_interval, B_interval, C_interval, D_interval
+!
+      integer :: max_n_basis_aops_in_sp
+!
+!     Batching and memory handling
+!
+      integer :: req0, req1
+      integer :: current_J_batch
+!
+      type(batching_index) :: batch_J
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Diagonal test', pl='n')
+      call timer%turn_on()
+!
+!     Read diagonal info
+!
+      call mem%alloc(construct_sp, solver%n_sp)
+!
+      call solver%diagonal_info_cauchy_schwarz%open_('read', 'rewind')
+!
+      call solver%diagonal_info_cauchy_schwarz%read_(n_construct_sp)
+      call solver%diagonal_info_cauchy_schwarz%read_(n_construct_aop)
+      call solver%diagonal_info_cauchy_schwarz%read_(construct_sp, solver%n_sp)
+!
+      call solver%diagonal_info_cauchy_schwarz%close_()
+!
+!     Read inverse of cholesky vectors of auxiliary overlap, Q^-1
+!
+      call solver%Q_inverse%open_('read', 'rewind')
+!
+      call mem%alloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
+      call zero_array(aux_chol_inverse, solver%n_cholesky**2)
+!
+      do I = 1, solver%n_cholesky
+!
+         call solver%Q_inverse%read_(aux_chol_inverse(1 + (i - 1) : solver%n_cholesky, i), &
+                                     solver%n_cholesky + 1 - i)
+!
+      enddo
+!
+      call solver%Q_inverse%close_()
+!
+!     Transpose Q^-1
+!
+      call mem%alloc(aux_chol_inverse_transpose, solver%n_cholesky, solver%n_cholesky)
+      call transpose_(aux_chol_inverse, aux_chol_inverse_transpose, solver%n_cholesky)
+      call mem%dealloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
+!
+!     Read Cholesky basis information
+!
+      call solver%cholesky_basis_file%open_('read','rewind')
+      call solver%cholesky_basis_file%read_(n_sp_in_basis)
+!
+      call mem%alloc(basis_shell_info, n_sp_in_basis, 4)
+      call mem%alloc(cholesky_basis, solver%n_cholesky, 3)
+!
+      call solver%cholesky_basis_file%read_(basis_shell_info, 4*n_sp_in_basis)
+      call solver%cholesky_basis_file%read_(cholesky_basis, 3*solver%n_cholesky)
+      call solver%cholesky_basis_file%read_(max_n_basis_aops_in_sp)
+!
+      call mem%alloc(aops_in_basis, n_sp_in_basis, 3*max_n_basis_aops_in_sp)
+!
+      call solver%cholesky_basis_file%read_(aops_in_basis, n_sp_in_basis*3*max_n_basis_aops_in_sp)
+!
+      call solver%cholesky_basis_file%close_()
+!
+!     Prepare for construction of diagonal
+!
+      sp = 0        ! Shell pair number
+!    
+      call mem%alloc(ao_offsets, n_construct_sp)
+      ao_offsets = 0
+!
+      current_construct_sp = 0
+!
+      call mem%alloc(construct_sp_index, n_construct_sp, 2)
+!
+      do B = 1, solver%n_s
+         do A = B, solver%n_s
+!
+            sp = sp + 1
+!
+            if (construct_sp(sp)) then
+!
+               current_construct_sp = current_construct_sp + 1
+!
+               A_interval = system%shell_limits(A)
+               B_interval = system%shell_limits(B)
+!     
+               construct_sp_index(current_construct_sp, 1) = A
+               construct_sp_index(current_construct_sp, 2) = B
+!
+               if (current_construct_sp .lt. n_construct_sp) then
+!
+                  ao_offsets(current_construct_sp + 1) = ao_offsets(current_construct_sp) + &
+                           get_size_sp(A_interval, B_interval)
+!
+               endif
+!
+            endif
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(construct_sp, solver%n_sp)
+!
+!     Construct significant diagonal
+!
+      call mem%alloc(D_xy, n_construct_aop)
+!
+!$omp parallel do &
+!$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_ABAB, g_ABAB_p) &
+!$omp shared(D_xy, ao_offsets) &
+!$omp schedule(guided)
+      do AB_sp = 1, n_construct_sp
+!
+         A = construct_sp_index(AB_sp, 1)
+         B = construct_sp_index(AB_sp, 2)
+!
+         A_interval = system%shell_limits(A)
+         B_interval = system%shell_limits(B)
+!
+         call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+!
+         g_ABAB_p(1 : A_interval%length, &
+                  1 : B_interval%length, &
+                  1 : A_interval%length, &
+                  1 : B_interval%length) &
+                        => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
+!
+         if (A .eq. B) then
+!
+            do x = 1, A_interval%length
+               do y = x, B_interval%length
+!
+                  xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
+!
+                  D_xy(xy_packed + ao_offsets(AB_sp)) = g_ABAB_p(x, y, x, y)
+!
+               enddo
+            enddo
+!
+         else ! A ≠ B
+!
+            do x = 1, (A_interval%length)
+               do y = 1, (B_interval%length)
+!
+                  xy = A_interval%length*(y - 1) + x
+                  D_xy(xy + ao_offsets(AB_sp)) = g_ABAB_p(x, y, x, y)
+!
+               enddo
+            enddo
+!
+         endif
+!
+      enddo
+!$omp end parallel do   
+!
+!     Prepare for batching
+!
+      req0 = n_construct_aop*max_n_basis_aops_in_sp
+      req1 = n_construct_aop
+!
+      batch_J = batching_index(solver%n_cholesky)
+!
+      call mem%batch_setup(batch_J, req0, req1)
+!
+!     Loop over the number of a batches
+!
+      do current_J_batch = 1, batch_J%num_batches
+!
+         call batch_J%determine_limits(current_J_batch)
+!
+         call mem%alloc(L_wxJ, n_construct_aop, batch_J%length)
+         call zero_array(L_wxJ, n_construct_aop*batch_J%length)
+!
+         do K_sp = 1, n_sp_in_basis
+!
+            C = basis_shell_info(K_sp, 1)
+            D = basis_shell_info(K_sp, 2)
+!
+            C_interval = system%shell_limits(C)
+            D_interval = system%shell_limits(D)            
+!
+            call mem%alloc(g_wxK, n_construct_aop, basis_shell_info(K_sp,4))
+!
+!$omp parallel do private(AB_sp, A, B, A_interval, B_interval, g_ABCD, g_ABCD_p, w, x, J, y, z)
+            do AB_sp = 1, n_construct_sp
+!
+               A = construct_sp_index(AB_sp, 1)
+               B = construct_sp_index(AB_sp, 2)
+!  
+               A_interval = system%shell_limits(A)
+               B_interval = system%shell_limits(B)
+!
+               call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
+!
+               g_ABCD_p(1 : A_interval%length, 1 : B_interval%length, &
+                        1 : C_interval%length, 1 : D_interval%length) &
+                        => g_ABCD(1 : A_interval%length &
+                                     *B_interval%length &
+                                     *C_interval%length &
+                                     *D_interval%length)  
+!
+               if (A == B) then
+!
+                  do w = A_interval%first, A_interval%last
+                     do x = B_interval%first, B_interval%last
+                        do K = 1, basis_shell_info(K_sp, 4)
+!
+                           y = aops_in_basis(K_sp, K)
+                           z = aops_in_basis(K_sp, K + max_n_basis_aops_in_sp)
+!
+                           wx = (max(x - B_interval%first + 1, w - A_interval%first + 1)*&
+                                (max(x - B_interval%first + 1,w - A_interval%first + 1)-3)/2) &
+                              + x - B_interval%first + 1 + w - A_interval%first + 1
+!
+                           g_wxK(wx + ao_offsets(AB_sp), K) = &
+                                          g_ABCD_p(w - A_interval%first + 1, &
+                                                   x - B_interval%first + 1, y, z) 
+
+!
+                        enddo
+                     enddo
+                  enddo
+!
+               else
+!
+                  do w = A_interval%first, A_interval%last
+                     do x = B_interval%first, B_interval%last
+                        do K = 1, basis_shell_info(K_sp, 4)
+!
+                           y = aops_in_basis(K_sp, K)
+                           z = aops_in_basis(K_sp, K + max_n_basis_aops_in_sp)
+!
+                           wx = A_interval%length*(x - B_interval%first) + w - A_interval%first + 1
+!
+                           g_wxK(wx + ao_offsets(AB_sp), K) = &
+                                          g_ABCD_p(w - A_interval%first + 1, &
+                                                   x - B_interval%first + 1, y, z) 
+!
+                        enddo
+                     enddo
+                  enddo
+!
+               endif
+
+            enddo ! end loop over AB_sp
+!$omp end parallel do     
+!
+!$omp parallel do private(J, wx, K)
+            do J = 1, batch_J%length
+               do wx = 1, n_construct_aop
+                  do K = 1, basis_shell_info(K_sp, 4)
+
+                     L_wxJ(wx, J) = L_wxJ(wx, J) + g_wxK(wx,K) &
+                                       *aux_chol_inverse_transpose(aops_in_basis(K_sp, &
+                                          K + max_n_basis_aops_in_sp*2), J + batch_J%first - 1)
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+            call mem%dealloc(g_wxK, n_construct_aop, basis_shell_info(K_sp,4))                            
+!
+         enddo ! K_sp
+!
+!$omp parallel do private(wx, J)
+         do wx = 1, n_construct_aop
+            do J = 1, batch_J%length
+!
+                  D_xy(wx) = D_xy(wx) - L_wxJ(wx, J)**2
+!
+            enddo
+         enddo  
+!$omp end parallel do      
+!
+         call mem%dealloc(L_wxJ, n_construct_aop, batch_J%length)
+!
+      enddo ! J batch
+!
+      call mem%dealloc(construct_sp_index, n_construct_sp, 2)
+      call mem%dealloc(ao_offsets, n_construct_sp)
+!
+      call mem%dealloc(cholesky_basis, solver%n_cholesky, 3)
+      call mem%dealloc(basis_shell_info, n_sp_in_basis, 4)
+      call mem%dealloc(aops_in_basis, n_sp_in_basis, 3*max_n_basis_aops_in_sp)
+!
+      call mem%dealloc(aux_chol_inverse_transpose, solver%n_cholesky, solver%n_cholesky)
+!
+!     Calculate maximal difference and minimal difference
+!
+      max_diff = get_abs_max(D_xy, n_construct_aop)
+!
+      min_diff = 1.0d5
+!
+      do aop = 1, n_construct_aop
+         if (D_xy(aop) .lt. min_diff) min_diff = D_xy(aop)
+      enddo
+!
+      call mem%dealloc(D_xy, n_construct_aop)
+!
+      call output%printf('m', '- Testing the Cholesky decomposition &
+                         &decomposition electronic repulsion integrals:', &
+                         ll=100, fs='(/t2,a)')
+!
+      call output%printf('m', 'Maximal difference between approximate and &
+                         &actual diagonal: (e23.4)', reals=[max_diff], ll=100, fs='(/t6,a)')
+      call output%printf('m', 'Minimal element of difference between &
+                         &approximate and actual diagonal: (e12.4)', &
+                         reals=[min_diff], ll=100, fs='( t6,a)')
+!
+      call timer%turn_off()
+!
+   end subroutine diagonal_test_eri_cd
 !
 !
 end module eri_cd_class

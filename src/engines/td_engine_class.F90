@@ -186,6 +186,10 @@ contains
 !
       call engine%print_banner(wf)
 !
+      call engine%tasks%print_('cholesky')
+!
+      call engine%do_cholesky(wf)
+!
       call engine%tasks%print_('mo preparations')
 !
       call wf%mo_preparations()
@@ -369,6 +373,10 @@ contains
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
+!
+      call engine%tasks%add(label='cholesky', &
+                            description='Cholesky decomposition of the electron &
+                                         &repulsion integrals')
 !
       call engine%tasks%add(label='mo preparations',                             &
                             description='Preparation of MO basis and integrals')

@@ -75,10 +75,15 @@ contains
 !
       if (wf%name_ .eq. 'ccsd(t)' .or. &
           wf%name_ .eq. 'low memory cc2' .or. &
-          wf%name_ .eq. 'mlcc2' .or. &
+          wf%name_ .eq. 'mlccsd' .or. &
           wf%name_ .eq. 'mp2') then
 !
-         call output%error_msg("Zero order properties not implemented for (a0)", &
+         call output%error_msg("Mean value calculations not implemented for (a0)", &
+                               chars=[wf%name_])
+!
+      elseif (wf%name_ .eq. 'mlcc2') then
+!
+         call output%warning_msg("Mean value calculations not recomended for (a0)!", &
                                chars=[wf%name_])
 !
       end if
@@ -157,6 +162,10 @@ contains
       class(ccs)         :: wf
       class(mean_value_engine)  :: engine
 !
+      call engine%tasks%print_('cholesky')
+!
+      call engine%do_cholesky(wf)
+!
       call engine%tasks%print_('mo preparations')
 !
       call wf%mo_preparations()
@@ -201,13 +210,17 @@ contains
 !
       class(mean_value_engine) :: engine
 !
-      engine%name_ = 'Zeroth order coupled cluster properties engine'
+      engine%name_ = 'Mean value coupled cluster engine'
 !
-      engine%tag   = 'zeroth order properties'
+      engine%tag   = 'mean value'
 !
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
+!
+      call engine%tasks%add(label='cholesky', &
+                            description='Cholesky decomposition of the electron &
+                                         &repulsion integrals')
 !
       call engine%tasks%add(label='mo preparations',                             &
                             description='Preparation of MO basis and integrals')

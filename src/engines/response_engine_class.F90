@@ -133,9 +133,10 @@ contains
       if (wf%name_ .eq. 'ccsd(t)' .or. &
           wf%name_ .eq. 'mp2' .or.     &
           wf%name_ .eq. 'mlcc2' .or.   &
+          wf%name_ .eq. 'mlccsd' .or.   &
           wf%name_ .eq. 'low memory cc2') then
 !
-         call output%error_msg("First order properties not implemented for (a0)", &
+         call output%error_msg("Response properties not implemented for (a0)", &
                                chars=[wf%name_])
 !
       end if
@@ -211,6 +212,10 @@ contains
          call output%error_msg('Response not implemented for low memory cc2.')
 !
       end if
+!
+      call engine%tasks%print_('cholesky')
+!
+      call engine%do_cholesky(wf)
 !
       call engine%tasks%print_('mo preparations')
 !
@@ -1279,6 +1284,10 @@ contains
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
+!
+      call engine%tasks%add(label='cholesky', &
+                            description='Cholesky decomposition of the electron &
+                                         &repulsion integrals')
 !
       call engine%tasks%add(label='mo preparations',                             &
                             description='Preparation of MO basis and integrals')
