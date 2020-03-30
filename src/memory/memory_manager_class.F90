@@ -1,4 +1,3 @@
-
 !
 !  eT - a coupled cluster program
 !  Copyright (C) 2016-2020 the authors of eT
@@ -169,6 +168,10 @@ module memory_manager_class
 !
       procedure :: batch_setup_3_ident_memory_manager
       generic   :: batch_setup_ident => batch_setup_3_ident_memory_manager
+!
+!
+      procedure, nopass :: print_allocation_error   => print_allocation_error_memory_manager
+      procedure, nopass :: print_deallocation_error => print_deallocation_error_memory_manager
 !
 !     Read and print of settings 
 !
@@ -395,16 +398,16 @@ contains
       integer :: size_array ! Total size of array (M)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M), stat = error)
+      allocate(array(M), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -419,7 +422,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -445,16 +448,16 @@ contains
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N), stat = error)
+      allocate(array(M,N), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -469,7 +472,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -495,16 +498,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O), stat = error)
+      allocate(array(M,N,O), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -519,7 +522,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -545,16 +548,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O,P), stat = error)
+      allocate(array(M,N,O,P), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -569,7 +572,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -595,16 +598,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O,P,Q), stat = error)
+      allocate(array(M,N,O,P,Q), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -619,7 +622,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -645,16 +648,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q*R)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q*R
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O,P,Q,R), stat = error)
+      allocate(array(M,N,O,P,Q,R), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -669,7 +672,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -695,16 +698,16 @@ contains
       integer :: size_array ! Total size of array (M)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M), stat = error)
+      allocate(array(M), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -719,7 +722,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -745,16 +748,16 @@ contains
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N), stat = error)
+      allocate(array(M,N), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -769,7 +772,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -795,16 +798,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O), stat = error)
+      allocate(array(M,N,O), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -819,7 +822,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -845,16 +848,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O,P), stat = error)
+      allocate(array(M,N,O,P), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -869,7 +872,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -895,16 +898,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O,P,Q), stat = error)
+      allocate(array(M,N,O,P,Q), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -919,7 +922,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -945,16 +948,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q*R)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q*R
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O,P,Q,R), stat = error)
+      allocate(array(M,N,O,P,Q,R), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -969,7 +972,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -995,16 +998,16 @@ contains
       integer :: size_array ! Total size of array (M)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1036,16 +1039,16 @@ contains
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1077,16 +1080,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1118,16 +1121,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1159,16 +1162,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1200,16 +1203,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q*R)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q*R
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1241,16 +1244,16 @@ contains
       integer :: size_array ! Total size of array (M)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1282,16 +1285,16 @@ contains
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1323,16 +1326,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1364,16 +1367,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1405,16 +1408,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1446,16 +1449,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q*R)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q*R
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1488,16 +1491,16 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M), stat = error)
+      allocate(array(M), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('Could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1512,7 +1515,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -1539,16 +1542,16 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N), stat = error)
+      allocate(array(M,N), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('Could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1563,7 +1566,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -1590,16 +1593,16 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O), stat = error)
+      allocate(array(M,N,O), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('Could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1614,7 +1617,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -1641,16 +1644,16 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O,P), stat = error)
+      allocate(array(M,N,O,P), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('Could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1665,7 +1668,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -1692,16 +1695,16 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1735,16 +1738,16 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1777,16 +1780,16 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1819,16 +1822,16 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1861,16 +1864,16 @@ contains
       integer :: error = 0
       integer :: log_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M), stat = error)
+      allocate(array(M), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('Could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1885,7 +1888,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('user-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient.')
 !
       endif
 !
@@ -1912,16 +1915,16 @@ contains
       integer :: error = 0
       integer :: log_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1930,6 +1933,43 @@ contains
       mem%available = mem%available + log_size*size_array
 !
    end subroutine dealloc_l_1_memory_manager
+!
+!
+   subroutine print_allocation_error_memory_manager(size_array, error_msg)
+!!
+!!    Check allocation error
+!!    Written by Alexander C. Paul, March 2020
+!!
+      implicit none
+!
+      integer, intent(in) :: size_array
+      character (len=*), intent(in) :: error_msg
+!
+      call output%printf('m', error_msg, fs='(/t3,a)')
+      call output%printf('m', 'Note: Error message from gfortran might not be accurate.', &
+                          fs='(t3,a)')
+      call output%error_msg('Could not allocate array with #elements = (i0).', &
+                             ints=[size_array], ffs='(t3,a)')
+!
+   end subroutine print_allocation_error_memory_manager
+!
+!
+   subroutine print_deallocation_error_memory_manager(size_array, error_msg)
+!!
+!!    Check deallocation error
+!!    Written by Alexander C. Paul, March 2020
+!!
+      implicit none
+!
+      integer, intent(in) :: size_array
+      character (len=*), intent(in) :: error_msg
+!
+      call output%printf('m', error_msg)
+      call output%printf('m', 'Note: Error message from gfortran might not be accurate.')
+      call output%error_msg('Could not deallocate array with #elements = (i0).', &
+                             ints=[size_array])
+!
+   end subroutine print_deallocation_error_memory_manager
 !
 !
    subroutine read_settings_memory_manager(mem)
