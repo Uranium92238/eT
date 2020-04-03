@@ -61,23 +61,27 @@ module abstract_stream_class
 !
       procedure :: read_real_dp_scalar     => read_real_dp_scalar_abstract_stream
       procedure :: read_complex_dp_scalar  => read_complex_dp_scalar_abstract_stream
-      procedure :: read_int_32_dp_scalar   => read_int_32_scalar_abstract_stream
-      procedure :: read_int_64_dp_scalar   => read_int_64_scalar_abstract_stream
+      procedure :: read_int_32_scalar      => read_int_32_scalar_abstract_stream
+      procedure :: read_int_64_scalar      => read_int_64_scalar_abstract_stream
+      procedure :: read_log_scalar         => read_log_scalar_abstract_stream
 !
       procedure :: read_real_dp            => read_real_dp_abstract_stream
       procedure :: read_complex_dp         => read_complex_dp_abstract_stream
       procedure :: read_int_32             => read_int_32_abstract_stream
       procedure :: read_int_64             => read_int_64_abstract_stream
+      procedure :: read_log                => read_log_abstract_stream
 !
       procedure :: write_real_dp_scalar    => write_real_dp_scalar_abstract_stream
       procedure :: write_complex_dp_scalar => write_complex_dp_scalar_abstract_stream
-      procedure :: write_int_32_dp_scalar  => write_int_32_scalar_abstract_stream
-      procedure :: write_int_64_dp_scalar  => write_int_64_scalar_abstract_stream
+      procedure :: write_int_32_scalar     => write_int_32_scalar_abstract_stream
+      procedure :: write_int_64_scalar     => write_int_64_scalar_abstract_stream
+      procedure :: write_log_scalar        => write_log_scalar_abstract_stream
 !
       procedure :: write_real_dp           => write_real_dp_abstract_stream
       procedure :: write_complex_dp        => write_complex_dp_abstract_stream
       procedure :: write_int_32            => write_int_32_abstract_stream
       procedure :: write_int_64            => write_int_64_abstract_stream
+      procedure :: write_log               => write_log_abstract_stream
 !
    end type abstract_stream
 !
@@ -204,7 +208,7 @@ contains
 !
 !
 !     Check if new_action or new_position is present
-!     We let open handle the error if they is messed up
+!     We let open handle the error if they are messed up
 !
       action_ = 'readwrite'
       if(present(new_action)) then
@@ -356,11 +360,14 @@ contains
 !!    Read real dp scalar
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
 !!    scalar: real double precision scalar
 !!
-!!    pos_:  optional integer, position to read from in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -379,7 +386,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+      if(present(position_)) then
+!
+         read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+!
+      else
+!
+         read(the_file%unit_, iostat=io_status, iomsg=io_message) scalar
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -396,11 +411,14 @@ contains
 !!    Read complex dp scalar
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
 !!    scalar: complex double precision scalar
 !!
-!!    pos_:  optional integer, position to read from in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -419,7 +437,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+      if(present(position_)) then
+!
+         read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+!
+      else
+!
+         read(the_file%unit_, iostat=io_status, iomsg=io_message) scalar
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -436,11 +462,14 @@ contains
 !!    Read int 32 scalar
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
-!!    scalar: real 32 bit integer
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
 !!
-!!    pos_:  optional integer, position to read from in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    scalar: 32 bit integer
+!!
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -459,7 +488,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+      if(present(position_)) then
+!
+         read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+!
+      else
+!
+         read(the_file%unit_, iostat=io_status, iomsg=io_message) scalar
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -476,11 +513,14 @@ contains
 !!    Read int 64 scalar
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
-!!    scalar: real 64 bit integer
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
 !!
-!!    pos_:  optional integer, position to read from in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    scalar: 64 bit integer
+!!
+!!    position_: optional integer, position to read from in file
+!!               positions counted in bytes, starting at 1
+!!               default: current file pointer position
 !!
       implicit none
 !
@@ -499,7 +539,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+      if(present(position_)) then
+!
+         read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+!
+      else
+!
+         read(the_file%unit_, iostat=io_status, iomsg=io_message) scalar
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -511,18 +559,69 @@ contains
    end subroutine read_int_64_scalar_abstract_stream
 !
 !
+   subroutine read_log_scalar_abstract_stream(the_file, scalar, position_)
+!!
+!!    Read logical scalar
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Mar. 2020
+!!
+!!    scalar: logical
+!!
+!!    position_: optional integer, position to read from in file
+!!               positions counted in bytes, starting at 1
+!!               default: current file pointer position
+!!
+      implicit none
+!
+      class(abstract_stream), intent(in) :: the_file
+!
+      integer, intent(in), optional :: position_
+!
+      logical, intent(out) :: scalar
+!
+      integer::             io_status = 1
+      character(len=100) :: io_message
+!
+      if(.not. the_file%is_open) then
+!
+         call output%error_msg('Tried to read from file (a0), which is not open', &
+                               chars = [the_file%name_])
+      end if
+!
+      if(present(position_)) then
+!
+         read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+!
+      else
+!
+         read(the_file%unit_, iostat=io_status, iomsg=io_message) scalar
+!
+      end if
+!
+      if(io_status .ne. 0) then
+!
+         call output%error_msg('Failed to read from file (a0), status is (i0) and &
+                               &error message is (a0)', chars = [the_file%name_, io_message], &
+                               ints = [io_status])
+      end if
+!
+   end subroutine read_log_scalar_abstract_stream
+!
+!
    subroutine read_real_dp_abstract_stream(the_file, array, n, position_)
 !!
 !!    Read real dp
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
 !!    array: real double precision array of length n
 !!
 !!    n: length of array
 !!
-!!    pos_:  optional integer, position to read from in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -542,7 +641,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+      if(present(position_)) then
+!
+         read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+!
+      else
+!
+         read(the_file%unit_, iostat=io_status, iomsg=io_message) array
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -559,13 +666,16 @@ contains
 !!    Read complex dp
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
 !!    array: complex double precision array of length n
 !!
 !!    n: length of array
 !!
-!!    pos_:  optional integer, position to read from in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -585,7 +695,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+      if(present(position_)) then
+!
+         read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+!
+      else
+!
+         read(the_file%unit_, iostat=io_status, iomsg=io_message) array
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -602,13 +720,16 @@ contains
 !!    Read int 32
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
 !!    array: 32 bit integer array of length n
 !!
 !!    n: length of array
 !!
-!!    pos_:  optional integer, position to read from in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -628,7 +749,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+      if(present(position_)) then
+!
+         read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+!
+      else
+!
+         read(the_file%unit_, iostat=io_status, iomsg=io_message) array
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -645,13 +774,16 @@ contains
 !!    Read int 64
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
 !!    array: 64 bit integer array of length n
 !!
 !!    n: length of array
 !!
-!!    pos_:  optional integer, position to read from in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -671,7 +803,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+      if(present(position_)) then
+!
+         read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+!
+      else
+!
+         read(the_file%unit_, iostat=io_status, iomsg=io_message) array
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -683,16 +823,70 @@ contains
    end subroutine read_int_64_abstract_stream
 !
 !
+   subroutine read_log_abstract_stream(the_file, array, n, position_)
+!!
+!!    Read logicals
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Mar. 2020
+!!
+!!    array: array of logicals with length n
+!!
+!!    n: length of array
+!!
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
+!!
+      implicit none
+!
+      class(abstract_stream), intent(in) :: the_file
+!
+      integer, intent(in) :: n
+      integer, intent(in), optional :: position_
+!
+      logical, dimension(n), intent(out) :: array
+!
+      integer::             io_status = 1
+      character(len=100) :: io_message
+!
+      if(.not. the_file%is_open) then
+!
+         call output%error_msg('Tried to read from file (a0), which is not open', &
+                               chars = [the_file%name_])
+      end if
+!
+      if(present(position_)) then
+!
+         read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+!
+      else
+!
+         read(the_file%unit_, iostat=io_status, iomsg=io_message) array
+!
+      end if
+!
+      if(io_status .ne. 0) then
+!
+         call output%error_msg('Failed to read from file (a0), status is (i0) and &
+                               &error message is (a0)', chars = [the_file%name_, io_message], &
+                               ints = [io_status])
+      end if
+!
+   end subroutine read_log_abstract_stream
+!
+!
    subroutine write_real_dp_scalar_abstract_stream(the_file, scalar, position_)
 !!
 !!    write real dp scalar
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
 !!    scalar: real double precision scalar
 !!
-!!    pos_:  optional integer, position to write from in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -711,7 +905,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+      if(present(position_)) then
+!
+         write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+!
+      else
+!
+         write(the_file%unit_, iostat=io_status, iomsg=io_message) scalar
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -728,11 +930,14 @@ contains
 !!    write complex dp scalar
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
 !!    scalar: complex double precision scalar
 !!
-!!    pos_:  optional integer, position to write from in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -751,7 +956,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+      if(present(position_)) then
+!
+         write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+!
+      else
+!
+         write(the_file%unit_, iostat=io_status, iomsg=io_message) scalar
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -768,11 +981,14 @@ contains
 !!    write int 32 scalar
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
-!!    scalar: real 32 bit integer
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
 !!
-!!    pos_:  optional integer, position to write from in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    scalar: 32 bit integer
+!!
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -791,7 +1007,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+      if(present(position_)) then
+!
+         write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+!
+      else
+!
+         write(the_file%unit_, iostat=io_status, iomsg=io_message) scalar
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -808,11 +1032,14 @@ contains
 !!    write int 64 scalar
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
-!!    scalar: real 64 bit integer
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
 !!
-!!    pos_:  optional integer, position to write from in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    scalar: 64 bit integer
+!!
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -831,7 +1058,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+      if(present(position_)) then
+!
+         write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+!
+      else
+!
+         write(the_file%unit_, iostat=io_status, iomsg=io_message) scalar
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -843,18 +1078,69 @@ contains
    end subroutine write_int_64_scalar_abstract_stream
 !
 !
+   subroutine write_log_scalar_abstract_stream(the_file, scalar, position_)
+!!
+!!    write logical scalar
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Mar. 2020
+!!
+!!    scalar: logical
+!!
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
+!!
+      implicit none
+!
+      class(abstract_stream), intent(in) :: the_file
+!
+      integer, intent(in), optional :: position_
+!
+      logical, intent(in) :: scalar
+!
+      integer::             io_status = 1
+      character(len=100) :: io_message
+!
+      if(.not. the_file%is_open) then
+!
+         call output%error_msg('Tried to write from file (a0), which is not open', &
+                               chars = [the_file%name_])
+      end if
+!
+      if(present(position_)) then
+!
+         write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+!
+      else
+!
+         write(the_file%unit_, iostat=io_status, iomsg=io_message) scalar
+!
+      end if
+!
+      if(io_status .ne. 0) then
+!
+         call output%error_msg('Failed to write from file (a0), status is (i0) and &
+                               &error message is (a0)', chars = [the_file%name_, io_message], &
+                               ints = [io_status])
+      end if
+!
+   end subroutine write_log_scalar_abstract_stream
+!
+!
    subroutine write_real_dp_abstract_stream(the_file, array, n, position_)
 !!
 !!    Write real dp
 !!    Written by Rolf H. Myhre, Mar. 2020
 !!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
 !!    array: real double precision array of length n
 !!
 !!    n: length of array
 !!
-!!    pos_:  optional integer, position to write to in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -874,7 +1160,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+      if(present(position_)) then
+!
+         write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+!
+      else
+!
+         write(the_file%unit_, iostat=io_status, iomsg=io_message) array
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -891,13 +1185,16 @@ contains
 !!    Write complex dp
 !!    Written by Rolf H. Myhre, Mar. 2020
 !!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
 !!    array: complex double precision array of length n
 !!
 !!    n: length of array
 !!
-!!    pos_:  optional integer, position to write to in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -917,7 +1214,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+      if(present(position_)) then
+!
+         write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+!
+      else
+!
+         write(the_file%unit_, iostat=io_status, iomsg=io_message) array
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -934,13 +1239,16 @@ contains
 !!    Write int 32
 !!    Written by Rolf H. Myhre, Mar. 2020
 !!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
 !!    array: 32 bit integer array of length n
 !!
 !!    n: length of array
 !!
-!!    pos_:  optional integer, position to write to in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -960,7 +1268,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+      if(present(position_)) then
+!
+         write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+!
+      else
+!
+         write(the_file%unit_, iostat=io_status, iomsg=io_message) array
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -977,13 +1293,16 @@ contains
 !!    Write int 64
 !!    Written by Rolf H. Myhre, Mar. 2020
 !!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
 !!    array: 64 bit integer array of length n
 !!
 !!    n: length of array
 !!
-!!    pos_:  optional integer, position to write to in file
-!!           positions counted in bytes, starting at 1
-!!           default: current file pointer position
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
 !!
       implicit none
 !
@@ -1003,7 +1322,15 @@ contains
                                chars = [the_file%name_])
       end if
 !
-      write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+      if(present(position_)) then
+!
+         write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+!
+      else
+!
+         write(the_file%unit_, iostat=io_status, iomsg=io_message) array
+!
+      end if
 !
       if(io_status .ne. 0) then
 !
@@ -1013,6 +1340,57 @@ contains
       end if
 !
    end subroutine write_int_64_abstract_stream
+!
+!
+   subroutine write_log_abstract_stream(the_file, array, n, position_)
+!!
+!!    Write logical
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Mar. 2020
+!!
+!!    array: 64 bit integer array of length n
+!!
+!!    n: length of array
+!!
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
+!!
+      implicit none
+!
+      class(abstract_stream), intent(in) :: the_file
+!
+      integer, intent(in) :: n
+      integer, intent(in), optional :: position_
+!
+      logical, dimension(n), intent(in) :: array
+!
+      integer::             io_status = 1
+      character(len=100) :: io_message
+!
+      if(.not. the_file%is_open) then
+!
+         call output%error_msg('Tried to write to file (a0), which is not open', &
+                               chars = [the_file%name_])
+      end if
+!
+      if(present(position_)) then
+!
+         write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+!
+      else
+!
+         write(the_file%unit_, iostat=io_status, iomsg=io_message) array
+!
+      end if
+!
+      if(io_status .ne. 0) then
+!
+         call output%error_msg('Failed to write to file (a0), status is (i0) and &
+                               &error message is (a0)', chars = [the_file%name_, io_message], &
+                               ints = [io_status])
+      end if
+!
+   end subroutine write_log_abstract_stream
 !
 !
    subroutine copy_abstract_stream(the_file, filename)

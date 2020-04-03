@@ -61,13 +61,13 @@ module direct_stream_file_class
 !
 !     Read generic
 !
-      generic :: read_ => read_1_real_dp_direct_stream_file,&
-                          read_2_real_dp_direct_stream_file,&
-                          read_3_real_dp_direct_stream_file,&
-                          read_4_real_dp_direct_stream_file,&
-                          read_1_complex_dp_direct_stream_file,&
-                          read_2_complex_dp_direct_stream_file,&
-                          read_3_complex_dp_direct_stream_file,&
+      generic :: read_ => read_1_real_dp_direct_stream_file,    &
+                          read_2_real_dp_direct_stream_file,    &
+                          read_3_real_dp_direct_stream_file,    &
+                          read_4_real_dp_direct_stream_file,    &
+                          read_1_complex_dp_direct_stream_file, &
+                          read_2_complex_dp_direct_stream_file, &
+                          read_3_complex_dp_direct_stream_file, &
                           read_4_complex_dp_direct_stream_file
 
 !
@@ -96,14 +96,16 @@ module direct_stream_file_class
 !
 !     Write generic
 !
-      generic :: write_ => write_1_real_dp_direct_stream_file,&
-                           write_2_real_dp_direct_stream_file,&
-                           write_3_real_dp_direct_stream_file,&
-                           write_4_real_dp_direct_stream_file,&
-                           write_1_complex_dp_direct_stream_file,&
-                           write_2_complex_dp_direct_stream_file,&
-                           write_3_complex_dp_direct_stream_file,&
+      generic :: write_ => write_1_real_dp_direct_stream_file,    &
+                           write_2_real_dp_direct_stream_file,    &
+                           write_3_real_dp_direct_stream_file,    &
+                           write_4_real_dp_direct_stream_file,    &
+                           write_1_complex_dp_direct_stream_file, &
+                           write_2_complex_dp_direct_stream_file, &
+                           write_3_complex_dp_direct_stream_file, &
                            write_4_complex_dp_direct_stream_file
+!
+!     Specialized write routines
 !
       procedure :: write_interval            => write_interval_direct_stream_file
       procedure :: write_compound_full_batch => write_compound_full_batch_direct_stream_file
@@ -136,15 +138,13 @@ contains
 !!
       implicit none
 !
-      type(direct_stream_file), allocatable      :: the_file
+      type(direct_stream_file) :: the_file
 !
       character(len=*), intent(in)           :: name_
       integer, intent(in)                    :: rec_dim
 !
       integer, intent(in), optional          :: w_size
       character(len=*), intent(in), optional :: status_
-!
-      allocate(the_file)
 !
       if (present(w_size)) then
          if (w_size .gt. 0) then
@@ -187,7 +187,8 @@ contains
 !
       if (the_file%get_open()) then
          call output%error_msg('Destructor for file (a0) called &
-                               &while the file is still open', chars=[the_file%get_name()])
+                               &while the file is still open',  &
+                               chars=[the_file%get_name()])
       endif
 !
    end subroutine destructor
@@ -245,7 +246,7 @@ contains
 !! Wrapper routines for read_1_real_dp_direct_stream_file
 !! that accepts rank 2, 3, and 4 arrays
 !!
-!! Written by Rolf H. Myhre, Mar 20202
+!! Written by Rolf H. Myhre, Mar 2020
 !
    subroutine read_2_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
       implicit none
@@ -335,7 +336,7 @@ contains
 !! Wrapper routines for read_1_complex_dp_direct_stream_file
 !! that accepts rank 2, 3, and 4 arrays
 !!
-!! Written by Rolf H. Myhre, Mar 20202
+!! Written by Rolf H. Myhre, Mar 2020
 !
    subroutine read_2_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
       implicit none
@@ -586,7 +587,7 @@ contains
 !! Wrapper routines for write_1_real_dp_direct_stream_file
 !! that accepts rank 2, 3, and 4 arrays
 !!
-!! Written by Rolf H. Myhre, Mar 20202
+!! Written by Rolf H. Myhre, Mar 2020
 !
    subroutine write_2_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
       implicit none
@@ -671,7 +672,7 @@ contains
 !! Wrapper routines for write_1_complex_dp_direct_stream_file
 !! that accepts rank 2, 3, and 4 arrays
 !!
-!! Written by Rolf H. Myhre, Mar 20202
+!! Written by Rolf H. Myhre, Mar 2020
 !
    subroutine write_2_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
       implicit none
