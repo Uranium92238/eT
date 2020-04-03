@@ -208,6 +208,9 @@ add_eT_runtest(mlccsd_cnto_gs                               "eT;short;mlccsd;cnt
 add_eT_runtest(mlccsd_pao_gs                                "eT;short;mlccsd;pao")
 add_eT_runtest(mlccsd_cc2_cnto_gs                           "eT;short;mlccsd;cnto")
 add_eT_runtest(mlccsd_nto_gs                                "eT;short;mlccsd;nto")
+add_eT_runtest(mlccsd_cnto_full_es                          "eT;short;mlccsd;cnto")
+add_eT_runtest(mlccsd_cnto_es                               "eT;short;mlccsd;cnto")
+add_eT_runtest(mlccsd_pao_es                                "eT;short;mlccsd;pao")
 #
 if(ENABLE_PCMSOLVER)
    add_eT_runtest(hf_energy_pcm                             "eT;short;hf;sad;pcm;pcm_internal")

@@ -221,6 +221,10 @@ module mlcc2_class
       procedure :: is_restart_safe                                   => is_restart_safe_mlcc2
       procedure :: write_cc_restart                                  => write_cc_restart_mlcc2
 !
+!     Summary
+!
+      procedure :: print_X1_diagnostics                              => print_X1_diagnostics_mlcc2
+!
 !     Initialize wavefunction
 !
       procedure :: initialize                                        => initialize_mlcc2
@@ -1369,6 +1373,59 @@ contains
       call mem%dealloc(T, wf%n_mo, wf%n_mo)
 !
    end subroutine update_MO_fock_contributions_mlcc2
+!
+!
+   subroutine print_X1_diagnostics_mlcc2(wf, X, label)
+!!
+!!    Print X1 diagnostics
+!!    Written by Sarai D. Folkestad, Nov 2019       
+!!
+      implicit none
+!
+      class(mlcc2), intent(in) :: wf
+!     
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X
+!
+      character(len=1), intent(in) :: label
+!
+      real(dp), dimension(:), allocatable :: X_internal
+!
+      real(dp) :: internal_fraction
+!
+      integer :: a, i, ai, ai_full
+!
+      call wf%ccs%print_X1_diagnostics(X, label)
+!
+      call mem%alloc(X_internal, wf%n_cc2_v*wf%n_cc2_o)
+!
+      do i = 1, wf%n_cc2_o
+         do a = 1, wf%n_cc2_v
+!
+            ai = wf%n_cc2_v*(i-1) + a 
+            ai_full = wf%n_v*(i + wf%first_cc2_o - 2) + a + wf%first_cc2_v - 1
+!
+            X_internal(ai) = X(ai_full)
+!
+         enddo
+      enddo
+!
+      internal_fraction = get_l2_norm(X_internal, wf%n_cc2_v*wf%n_cc2_o)&
+                           /get_l2_norm(X,wf%n_es_amplitudes)
+!
+      call output%printf('n', 'MLCC diagnostics:', fs='(/t6,a)')
+!
+      call output%printf('n', '|(a0)1^internal|/|(a0)| =  (f19.12)', &
+            reals=[internal_fraction], chars=[label, label], fs='(/t6,a)')
+!
+      internal_fraction = get_l2_norm(X_internal, wf%n_cc2_v*wf%n_cc2_o)&
+                           /get_l2_norm(X(1:wf%n_t1), wf%n_t1)
+!
+      call output%printf('n', '|(a0)1^internal|/|(a0)1| = (f19.12)', &
+            reals=[internal_fraction], chars=[label, label], fs='(t6,a)')
+!
+      call mem%dealloc(X_internal, wf%n_cc2_v*wf%n_cc2_o)
+!
+   end subroutine print_X1_diagnostics_mlcc2
 !
 !
    subroutine update_MO_cholesky_vectors_mlcc2(wf, C_old)

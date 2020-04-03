@@ -53,36 +53,6 @@
    end subroutine get_roothan_hall_mo_gradient_hf
 !
 !
-   module subroutine get_mo_fock_hf(wf, F)
-!!
-!!    Get MO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Gets the MO Fock
-!!
-      implicit none
-!
-      class(hf), intent(in) :: wf
-      real(dp), dimension(:,:), intent(inout) :: F
-!
-   end subroutine get_mo_fock_hf
-!
-!
-   module subroutine set_mo_fock_hf(wf, F)
-!!
-!!    Set MO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Sets the MO Fock from input
-!!
-      implicit none
-!
-      class(hf), intent(in) :: wf
-      real(dp), dimension(:, :), intent(inout) :: F
-!
-   end subroutine set_mo_fock_hf
-!
-!
    module subroutine roothan_hall_update_orbitals_mo_hf(wf)
 !!
 !!    Roothan-Hall update of orbitals

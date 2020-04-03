@@ -83,6 +83,8 @@ module wavefunction_class
                                                             ! over frozen orbitals. Needed if 
                                                             ! PAO construction follows (e.g in mlcc)
                                                             ! other reducrtion of orbitals
+      real(dp), dimension(:,:), allocatable :: ao_fock
+      real(dp), dimension(:,:), allocatable :: mo_fock
 !
    contains
 !
@@ -100,6 +102,12 @@ module wavefunction_class
 !
       procedure :: initialize_frozen_CCT           => initialize_frozen_CCT_wavefunction
       procedure :: destruct_frozen_CCT             => destruct_frozen_CCT_wavefunction
+!
+      procedure :: initialize_ao_fock              => initialize_ao_fock_wavefunction
+      procedure :: destruct_ao_fock                => destruct_ao_fock_wavefunction
+!
+      procedure :: initialize_mo_fock              => initialize_mo_fock_wavefunction
+      procedure :: destruct_mo_fock                => destruct_mo_fock_wavefunction
 !
       procedure :: get_ao_x_wx                     => get_ao_x_wx_wavefunction
       procedure :: get_ao_x_wx_1der                => get_ao_x_wx_1der_wavefunction
@@ -136,6 +144,9 @@ module wavefunction_class
 !
       procedure :: initialize_mo_fock_frozen                   => initialize_mo_fock_frozen_wavefunction
       procedure :: destruct_mo_fock_frozen                     => destruct_mo_fock_frozen_wavefunction
+!
+      procedure :: get_mo_fock => get_mo_fock_wavefunction
+      procedure :: set_mo_fock => set_mo_fock_wavefunction
 !      
    end type wavefunction 
 !
@@ -1547,6 +1558,98 @@ contains
       if (allocated(wf%frozen_CCT)) call mem%dealloc(wf%frozen_CCT, wf%n_ao, wf%n_ao)
 !
    end subroutine destruct_frozen_CCT_wavefunction
+!
+!
+   subroutine initialize_ao_fock_wavefunction(wf)
+!!
+!!    Initialize AO Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      if (.not. allocated(wf%ao_fock)) call mem%alloc(wf%ao_fock, wf%n_ao, wf%n_ao)
+!
+   end subroutine initialize_ao_fock_wavefunction
+!
+!
+   subroutine destruct_ao_fock_wavefunction(wf)
+!!
+!!    Destruct AO Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      if (allocated(wf%ao_fock)) call mem%dealloc(wf%ao_fock, wf%n_ao, wf%n_ao)
+!
+   end subroutine destruct_ao_fock_wavefunction
+!
+!
+   subroutine initialize_mo_fock_wavefunction(wf)
+!!
+!!    Initialize MO Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      if (.not. allocated(wf%mo_fock)) call mem%alloc(wf%mo_fock, wf%n_mo, wf%n_mo)
+!
+   end subroutine initialize_mo_fock_wavefunction
+!
+!
+   subroutine destruct_mo_fock_wavefunction(wf)
+!!
+!!    Destruct MO Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      if (allocated(wf%mo_fock)) call mem%dealloc(wf%mo_fock, wf%n_mo, wf%n_mo)
+!
+   end subroutine destruct_mo_fock_wavefunction
+!
+!
+   subroutine get_mo_fock_wavefunction(wf, F)
+!!
+!!    Get MO Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Gets the MO Fock
+!!
+      implicit none
+!
+      class(wavefunction), intent(in) :: wf
+!
+      real(dp), dimension(:,:), intent(out) :: F
+!
+      call dcopy(wf%n_mo**2, wf%mo_fock, 1, F, 1)
+!
+   end subroutine get_mo_fock_wavefunction
+!
+!
+   subroutine set_mo_fock_wavefunction(wf, F)
+!!
+!!    Set MO Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Sets the MO Fock from input
+!!
+      implicit none
+!
+      class(wavefunction), intent(in) :: wf
+!
+      real(dp), dimension(:, :), intent(in) :: F
+!
+      call dcopy(wf%n_mo**2, F, 1, wf%mo_fock, 1)
+!
+   end subroutine set_mo_fock_wavefunction
 !
 !
 end module wavefunction_class

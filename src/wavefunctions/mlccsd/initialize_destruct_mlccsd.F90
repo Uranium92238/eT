@@ -187,7 +187,7 @@ contains
 !
     module subroutine initialize_O_o_mlccsd(wf)
 !!
-!!    Initialize O_o cc2
+!!    Initialize O_o
 !!    Written by Sarai D. Folkestad, Jan 2020
 !!
       implicit none
@@ -201,7 +201,7 @@ contains
 !
     module subroutine destruct_O_o_mlccsd(wf)
 !!
-!!    Destruct O_o cc2
+!!    Destruct O_o
 !!    Written by Sarai D. Folkestad, Jan 2020
 !!
       implicit none
@@ -216,7 +216,7 @@ contains
 !
     module subroutine initialize_O_v_mlccsd(wf)
 !!
-!!    Initialize O_v cc2
+!!    Initialize O_v 
 !!    Written by Sarai D. Folkestad, Jan 2020
 !!
       implicit none
@@ -230,7 +230,7 @@ contains
 !
     module subroutine destruct_O_v_mlccsd(wf)
 !!
-!!    Destruct O_v cc2
+!!    Destruct O_v
 !!    Written by Sarai D. Folkestad, Jan 2020
 !!
       implicit none

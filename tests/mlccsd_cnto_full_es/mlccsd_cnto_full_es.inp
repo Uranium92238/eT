@@ -4,7 +4,7 @@ system
 end system
 
 do
-   ground state
+   excited state
 end do
 
 memory
@@ -39,11 +39,11 @@ solver cc es
    right eigenvectors
 end solver cc es
 
-
 mlcc
-   levels: cc2, ccsd
-   ccsd orbitals: cnto
-   cnto occupied ccsd: 2
+   levels: ccs, ccsd
+   ccsd orbitals: cnto-approx
+   cnto occupied ccsd: 6
+   cnto virtual ccsd: 23
    cnto states: {1,2}
 end mlcc
 

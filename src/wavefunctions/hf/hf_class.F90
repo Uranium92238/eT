@@ -52,9 +52,6 @@ module hf_class
 !
       real(dp), dimension(:,:), allocatable :: ao_h
 !
-      real(dp), dimension(:,:), allocatable :: ao_fock
-      real(dp), dimension(:,:), allocatable :: mo_fock
-!
       real(dp) :: coulomb_threshold  = 1.0D-12   ! Screening threshold (Fock, Coulomb)
       real(dp) :: exchange_threshold = 1.0D-10   ! Screening threshold (Fock, exchange)
       real(dp) :: libint_epsilon     = 1.0D-20   ! Libint electron repulsion integral 
@@ -201,15 +198,11 @@ module hf_class
 !     Class variable initialize and destruct routines
 !
       procedure :: initialize_ao_density                       => initialize_ao_density_hf
-      procedure :: initialize_ao_fock                          => initialize_ao_fock_hf
-      procedure :: initialize_mo_fock                          => initialize_mo_fock_hf
       procedure :: initialize_ao_overlap                       => initialize_ao_overlap_hf
       procedure :: initialize_pivot_matrix_ao_overlap          => initialize_pivot_matrix_ao_overlap_hf
       procedure :: initialize_cholesky_ao_overlap              => initialize_cholesky_ao_overlap_hf
 !
       procedure :: destruct_ao_density                         => destruct_ao_density_hf
-      procedure :: destruct_ao_fock                            => destruct_ao_fock_hf
-      procedure :: destruct_mo_fock                            => destruct_mo_fock_hf
       procedure :: destruct_ao_overlap                         => destruct_ao_overlap_hf
       procedure :: destruct_pivot_matrix_ao_overlap            => destruct_pivot_matrix_ao_overlap_hf
       procedure :: destruct_cholesky_ao_overlap                => destruct_cholesky_ao_overlap_hf
@@ -272,21 +265,18 @@ module hf_class
 !
 !     MO-SCF routines
 !
-      procedure :: get_max_roothan_hall_mo_gradient         => get_max_roothan_hall_mo_gradient_hf
-!
-      procedure :: update_fock_and_energy_mo                => update_fock_and_energy_mo_hf
-      procedure :: get_roothan_hall_mo_gradient             => get_roothan_hall_mo_gradient_hf
-!
-      procedure :: get_mo_fock                              => get_mo_fock_hf
-      procedure :: set_mo_fock                              => set_mo_fock_hf
-!
-      procedure :: do_roothan_hall_mo                       => do_roothan_hall_mo_hf
-!
-      procedure :: initialize_W_mo_update                   => initialize_W_mo_update_hf
-      procedure :: destruct_W_mo_update                     => destruct_W_mo_update_hf
-!
-      procedure :: roothan_hall_update_orbitals_mo          => roothan_hall_update_orbitals_mo_hf
-      procedure :: prepare_for_roothan_hall_mo              => prepare_for_roothan_hall_mo_hf
+      procedure :: get_max_roothan_hall_mo_gradient            => get_max_roothan_hall_mo_gradient_hf
+!  
+      procedure :: update_fock_and_energy_mo                   => update_fock_and_energy_mo_hf
+      procedure :: get_roothan_hall_mo_gradient                => get_roothan_hall_mo_gradient_hf
+!  
+      procedure :: do_roothan_hall_mo                          => do_roothan_hall_mo_hf
+!  
+      procedure :: initialize_W_mo_update                      => initialize_W_mo_update_hf
+      procedure :: destruct_W_mo_update                        => destruct_W_mo_update_hf
+!  
+      procedure :: roothan_hall_update_orbitals_mo             => roothan_hall_update_orbitals_mo_hf
+      procedure :: prepare_for_roothan_hall_mo                 => prepare_for_roothan_hall_mo_hf
 !
    end type hf
 !
