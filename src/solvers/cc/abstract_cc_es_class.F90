@@ -271,7 +271,7 @@ contains
    end subroutine cleanup_abstract_cc_es
 !
 !
-   subroutine print_summary_abstract_cc_es(solver, wf, X, X_indices)
+   subroutine print_summary_abstract_cc_es(solver, wf, X, X_order)
 !!
 !!    Print summary 
 !!    Written by Eirik F. Kjønstad, Dec 2018
@@ -282,14 +282,14 @@ contains
 !!
 !!    X:         array with excited states stored in the columns
 !!
-!!    X_indices: optional index list giving the ordering of states from low 
+!!    X_order:   optional index list giving the ordering of states from low 
 !!               to high energy. Default is to assume that X is already 
 !!               ordered from low to high energies.
 !!
 !!    Warning: it is assumed on entry that the energies are already ordered according 
 !!             to energy. It is just the states that are not necessarily ordered.
 !!
-!!    Eirik F. Kjønstad, Mar 2020: added X_indices to avoid duplicate copy of states 
+!!    Eirik F. Kjønstad, Mar 2020: added X_order to avoid duplicate copy of states 
 !!                                 in DIIS solver.
 !!
       implicit none 
@@ -300,9 +300,9 @@ contains
 !
       real(dp), dimension(wf%n_es_amplitudes, solver%n_singlet_states), intent(in) :: X
 !
-      integer, dimension(solver%n_singlet_states), optional, intent(in) :: X_indices
+      integer, dimension(solver%n_singlet_states), optional, intent(in) :: X_order
 !
-      integer, dimension(:), allocatable :: X_indices_local
+      integer, dimension(:), allocatable :: X_order_local
 !
       integer :: state, state_index
 !
@@ -310,17 +310,17 @@ contains
 !
 !     Set up list that gives ordering of energies from low to high
 !
-      call mem%alloc(X_indices_local, solver%n_singlet_states)
+      call mem%alloc(X_order_local, solver%n_singlet_states)
 !
-      if (present(X_indices)) then 
+      if (present(X_order)) then 
 !
-         X_indices_local = X_indices
+         X_order_local = X_order
 !
       else 
 !
          do state = 1, solver%n_singlet_states
 !
-            X_indices_local(state) = state
+            X_order_local(state) = state
 !
          enddo
 !
@@ -334,23 +334,19 @@ contains
 !
       do state = 1, solver%n_singlet_states 
 !
-         state_index = X_indices_local(state) 
+         state_index = X_order_local(state) 
 !
          call output%printf('n', 'Electronic state nr. (i0)', ints=[state], fs='(/t6,a)')
 !
          call output%printf('n', 'Energy (Hartree):             (f19.12)', &
-                            reals=[solver%energies(state)], fs='(/t6,a)')
+                            reals=[solver%energies(state_index)], fs='(/t6,a)')
 !
-         call output%printf('n', 'Fraction singles (|(a0)1|/|(a0)|):  (f19.12)', & 
-                           reals=[get_l2_norm(X(1:wf%n_t1, state_index), wf%n_t1)&
-                           /get_l2_norm(X(:, state_index), &
-                            wf%n_es_amplitudes)], chars=[label, label], fs='(t6,a)')
-!
+         call wf%print_X1_diagnostics(X(:,state_index), label)
          call wf%print_dominant_x_amplitudes(X(1, state_index), label)
 !
       enddo 
 !
-      call mem%dealloc(X_indices_local, solver%n_singlet_states)
+      call mem%dealloc(X_order_local, solver%n_singlet_states)
 !
 !     Print excited state energies 
 !

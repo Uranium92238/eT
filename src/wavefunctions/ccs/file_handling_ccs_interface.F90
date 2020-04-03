@@ -131,13 +131,16 @@
 !!    Save excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019
 !!    modified by Alexander C. Paul, Oct 2019
+!!    modified by Eirik F. Kjønstad, Mar 2020
 !!
-!!    Saves an excited state to disk. 
-!!    Since the solvers  keep these vectors in full length, 
-!!    we save the vector in full length (n_es_amplitudes), 
+!!    Writes excited states in the columns of X to disk.
 !!
-!!    Uses file_storer to distinguish different states
+!!    first: first state to write
+!!    last:  last state to write
+!!    side:  'right' or 'left' depending on right or left excited states 
 !!
+!!    Modified by Eirik F. Kjønstad, Mar 2020: made changes for direct stream,
+!!                                             and added [first, last] range 
 !!
       implicit none
 !
@@ -154,11 +157,16 @@
 !!    Read excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019
 !!    modified by Alexander C. Paul, Oct 2019
+!!    modified by Eirik F. Kjønstad, Mar 2020
 !!
-!!    Reads an excited state from disk. Since this routine is used by 
-!!    solvers, it returns the vector in the full space.
+!!    Reads excited states from disk into the columns of X.
 !!
-!!    Uses file_storer to distinguish different states
+!!    first: first state to read
+!!    last:  last state to read
+!!    side:  'right' or 'left' depending on right or left excited states 
+!!
+!!    Modified by Eirik F. Kjønstad, Mar 2020: made changes for direct stream,
+!!                                             and added [first, last] range 
 !!
       implicit none
 !

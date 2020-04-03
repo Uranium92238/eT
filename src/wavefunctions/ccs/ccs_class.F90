@@ -212,6 +212,7 @@ module ccs_class
 !     Print summaries
 !
       procedure :: print_gs_summary                              => print_gs_summary_ccs
+      procedure :: print_X1_diagnostics                          => print_X1_diagnostics_ccs
 !
 !     Set/get procedures
 !
@@ -2052,6 +2053,30 @@ contains
    end subroutine print_gs_summary_ccs
 !
 !
+   subroutine print_X1_diagnostics_ccs(wf, X, label)
+!!
+!!    Get X1 diagnostics
+!!    Written by Eirik F. Kjønstad, Dec 2018   
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf     
+!
+      character(len=1), intent(in) :: label
+!     
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X
+!
+      real(dp) :: get_X1_diagnostics
+!
+      get_X1_diagnostics = get_l2_norm(X(1:wf%n_t1),wf%n_t1)&
+                           /get_l2_norm(X(1:wf%n_es_amplitudes),wf%n_es_amplitudes)
+!
+      call output%printf('n', 'Fraction singles (|(a0)1|/|(a0)|):  (f19.12)', &
+            reals=[get_X1_diagnostics], chars=[label, label], fs='(t6,a)')
+!
+   end subroutine print_X1_diagnostics_ccs
+!
+!
    subroutine construct_MO_screening_for_cd_ccs(wf, screening_vector)
 !!
 !!    Construct MO screening for CD
@@ -2073,7 +2098,6 @@ contains
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: screening_vector
 !
       integer :: x, p, y

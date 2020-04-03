@@ -249,4 +249,5 @@ set(eT_fortran_sources
    src/wavefunctions/mlccsd/initialize_destruct_mlccsd.F90
    src/wavefunctions/mlccsd/file_handling_mlccsd.F90
    src/wavefunctions/mlccsd/set_get_mlccsd.F90
+   src/wavefunctions/mlccsd/jacobian_mlccsd.F90
 )

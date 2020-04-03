@@ -4,7 +4,7 @@ system
 end system
 
 do
-   ground state
+   excited state
 end do
 
 memory
@@ -40,11 +40,15 @@ solver cc es
 end solver cc es
 
 
+active atoms
+   selection type: list
+   ccsd: {3}
+end active atoms
+
 mlcc
    levels: cc2, ccsd
-   ccsd orbitals: cnto
-   cnto occupied ccsd: 2
-   cnto states: {1,2}
+   ccsd orbitals: cholesky-pao
+   cholesky threshold: 1.0d-1
 end mlcc
 
 geometry

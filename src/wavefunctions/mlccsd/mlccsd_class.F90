@@ -76,6 +76,20 @@ module mlccsd_class
                                                         ! which transforms between MLCCSD basis 
                                                         ! and basis for CC2 amplitude determination
 !
+!     Intermediates for Jacobian transformation
+!
+      type(sequential_file) :: jacobian_c2_intermediate_oovo_1
+      type(sequential_file) :: jacobian_c2_intermediate_oovo_2
+      type(sequential_file) :: jacobian_d2_intermediate
+      type(sequential_file) :: jacobian_e2_intermediate
+      type(sequential_file) :: jacobian_g2_intermediate_vovo
+      type(sequential_file) :: jacobian_g2_intermediate_vv
+      type(sequential_file) :: jacobian_g2_intermediate_oo
+      type(sequential_file) :: jacobian_h2_intermediate_vovo_1
+      type(sequential_file) :: jacobian_h2_intermediate_vovo_2
+      type(sequential_file) :: jacobian_j2_intermediate_oooo
+      type(sequential_file) :: jacobian_j2_intermediate_oovv
+!
    contains
 !
 !     Read settings
@@ -134,12 +148,60 @@ module mlccsd_class
       procedure :: form_newton_raphson_t_estimate &
                   => form_newton_raphson_t_estimate_mlccsd
 !
+!     Jacobian transformation
+!
+      procedure :: jacobian_transformation    => jacobian_transformation_mlccsd
+!
+      procedure :: jacobian_ccsd_d2_1  => jacobian_ccsd_d2_1_mlccsd
+      procedure :: jacobian_ccsd_d2_2  => jacobian_ccsd_d2_2_mlccsd
+      procedure :: jacobian_ccsd_d2_3  => jacobian_ccsd_d2_3_mlccsd
+      procedure :: jacobian_ccsd_d2_4  => jacobian_ccsd_d2_4_mlccsd
+      procedure :: jacobian_ccsd_d2_5  => jacobian_ccsd_d2_5_mlccsd
+      procedure :: jacobian_ccsd_d2    => jacobian_ccsd_d2_mlccsd
+!
+      procedure :: jacobian_ccsd_c2_1  => jacobian_ccsd_c2_1_mlccsd
+      procedure :: jacobian_ccsd_c2_2  => jacobian_ccsd_c2_2_mlccsd
+      procedure :: jacobian_ccsd_c2_3  => jacobian_ccsd_c2_3_mlccsd
+      procedure :: jacobian_ccsd_c2_4  => jacobian_ccsd_c2_4_mlccsd
+      procedure :: jacobian_ccsd_c2    => jacobian_ccsd_c2_mlccsd
+!
+      procedure :: jacobian_ccsd_b2    => jacobian_ccsd_b2_mlccsd
+      procedure :: jacobian_cc2_b2     => jacobian_cc2_b2_mlccsd
+!
+      procedure :: jacobian_ccsd_e2    => jacobian_ccsd_e2_mlccsd
+      procedure :: jacobian_ccsd_f2    => jacobian_ccsd_f2_mlccsd
+      procedure :: jacobian_ccsd_g2    => jacobian_ccsd_g2_mlccsd
+      procedure :: jacobian_ccsd_h2    => jacobian_ccsd_h2_mlccsd
+!
+      procedure :: jacobian_ccsd_i2    => jacobian_ccsd_i2_mlccsd
+      procedure :: jacobian_ccsd_i2_1  => jacobian_ccsd_i2_1_mlccsd
+      procedure :: jacobian_ccsd_i2_2  => jacobian_ccsd_i2_2_mlccsd
+!
+      procedure :: jacobian_ccsd_k2    => jacobian_ccsd_k2_mlccsd
+      procedure :: jacobian_ccsd_j2    => jacobian_ccsd_j2_mlccsd
+!
+      procedure :: prepare_for_jacobian => prepare_for_jacobian_mlccsd
+!
+      procedure :: save_jacobian_c2_intermediates  => save_jacobian_c2_intermediates_mlccsd
+      procedure :: save_jacobian_d2_intermediate   => save_jacobian_d2_intermediate_mlccsd
+      procedure :: save_jacobian_e2_intermediate   => save_jacobian_e2_intermediate_mlccsd
+      procedure :: save_jacobian_g2_intermediates  => save_jacobian_g2_intermediates_mlccsd
+      procedure :: save_jacobian_h2_intermediates  => save_jacobian_h2_intermediates_mlccsd
+      procedure :: save_jacobian_j2_intermediates  => save_jacobian_j2_intermediates_mlccsd
+!  
+!     Excited state
+!
+      procedure :: print_X1_diagnostics       =>  print_X1_diagnostics_mlccsd
+      procedure :: get_es_orbital_differences =>  get_es_orbital_differences_mlccsd
+!
 !     Initialize/destruct
 !
       procedure :: initialize_u_aibj            => initialize_u_aibj_mlccsd
       procedure :: destruct_u_aibj              => destruct_u_aibj_mlccsd
+!
       procedure :: initialize_t2                => initialize_t2_mlccsd
       procedure :: destruct_t2                  => destruct_t2_mlccsd
+!
       procedure :: initialize_amplitudes        => initialize_amplitudes_mlccsd
       procedure :: destruct_amplitudes          => destruct_amplitudes_mlccsd
 !
@@ -160,7 +222,6 @@ module mlccsd_class
       procedure :: destruct_O_o                 => destruct_O_o_mlccsd
       procedure :: initialize_O_v               => initialize_O_v_mlccsd
       procedure :: destruct_O_v                 => destruct_O_v_mlccsd
-!
 !
 !     Read/save
 !
@@ -184,6 +245,7 @@ module mlccsd_class
       include "./initialize_destruct_mlccsd_interface.F90"
       include "./file_handling_mlccsd_interface.F90"
       include "./set_get_mlccsd_interface.F90"
+      include "./jacobian_mlccsd_interface.F90"
 !
    end interface 
 !
@@ -202,6 +264,13 @@ contains
       class(mlccsd), intent(inout) :: wf 
 !
       class(wavefunction), intent(in) :: template_wf
+!
+!     If we have a CC2 level, we will set the AO fock matrix from the template wavefunction.
+!     The AO fock is currently only constructed for the reference wavefunctions.
+!     Therefore we will stop if template_wf is not MLHF or RHF.
+!
+      if (trim(template_wf%name_) .ne. 'rhf' .and. trim(template_wf%name_) .ne. 'mlhf') &
+         call output%error_msg('in initialization of the MLCCSD wavefunction.')
 !
       wf%name_ = 'mlccsd'
 !
@@ -229,14 +298,20 @@ contains
 !
       wf%n_t1 = (wf%n_o)*(wf%n_v)
 !
+      call wf%initialize_fock()
+!
       if (wf%do_cc2) then
 !
          call wf%initialize_orbital_energies_cc2()
          call wf%initialize_orbital_coefficients_cc2()
 !
-      endif
+         call wf%initialize_ao_fock()
 !
-      call wf%initialize_fock()
+         call dcopy(wf%n_ao**2, template_wf%ao_fock, 1, wf%ao_fock, 1)                                                 
+!                               
+         call wf%initialize_mo_fock()
+!
+      endif
 !
    end subroutine initialize_mlccsd
 !
@@ -1031,7 +1106,122 @@ contains
       call wf%destruct_O_o()
       call wf%destruct_O_v()
 !
+      call wf%destruct_mo_fock()
+      call wf%destruct_ao_fock()
+!
    end subroutine cleanup_mlccsd
+!
+!
+   subroutine get_es_orbital_differences_mlccsd(wf, orbital_differences, N)
+!!
+!!    Get orbital differences 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2019
+!!
+      implicit none
+!
+      class(mlccsd), intent(in) :: wf
+!
+      integer, intent(in) :: N 
+      real(dp), dimension(N), intent(inout) :: orbital_differences
+!
+      integer :: a, i, ai, b, j, bj, aibj
+!
+!$omp parallel do schedule(static) private(a, i, ai) collapse(2)
+         do i = 1, wf%n_o
+            do a = 1, wf%n_v
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            orbital_differences(ai) = wf%orbital_energies(a + wf%n_o) - wf%orbital_energies(i)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) collapse(2)
+      do j = 1, wf%n_cc2_o + wf%n_ccsd_o
+         do b = 1, wf%n_cc2_v + wf%n_ccsd_v
+!
+            bj = (wf%n_cc2_v + wf%n_ccsd_v)*(j-1) + b 
+!
+            do i = 1, wf%n_cc2_o + wf%n_ccsd_o
+               do a = 1, wf%n_cc2_v + wf%n_ccsd_v
+!
+                  ai = (wf%n_cc2_v + wf%n_ccsd_v)*(i - 1) + a
+!
+                  if (ai .ge. bj) then
+!
+                     aibj = (ai*(ai-3)/2) + ai + bj
+!
+                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) =                      &
+                                                      wf%orbital_energies(a + wf%n_o)     &
+                                                      - wf%orbital_energies(i)            &
+                                                      + wf%orbital_energies(b + wf%n_o)   &
+                                                      - wf%orbital_energies(j)
+!
+                  endif
+!
+               enddo
+            enddo  
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine get_es_orbital_differences_mlccsd
+!
+!
+   subroutine print_X1_diagnostics_mlccsd(wf, X, label)
+!!
+!!    Print X1 diagnostics
+!!    Written by Sarai D. Folkestad, Nov 2019        
+!!
+      implicit none
+!
+      class(mlccsd), intent(in) :: wf
+!     
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X
+!
+      character(len=1), intent(in) :: label
+!
+      real(dp), dimension(:), allocatable :: X_internal
+!
+      real(dp) :: internal_fraction
+!
+      integer :: a, i, ai, ai_full
+!
+      call wf%ccs%print_X1_diagnostics(X, label)
+!
+      call mem%alloc(X_internal, wf%n_ccsd_v*wf%n_ccsd_o)
+!
+      do i = 1, wf%n_ccsd_o
+         do a = 1, wf%n_ccsd_v
+!
+            ai = wf%n_ccsd_v*(i - 1) + a 
+            ai_full = wf%n_v*(i - 1) + a
+!
+            X_internal(ai) = X(ai_full)
+!
+         enddo
+      enddo
+!
+      internal_fraction = get_l2_norm(X_internal, wf%n_ccsd_v*wf%n_ccsd_o)&
+                           /get_l2_norm(X,wf%n_es_amplitudes)
+!
+      call output%printf('n', 'MLCC diagnostics:', fs='(/t6,a)')
+!
+      call output%printf('n', '|(a0)1^internal|/|(a0)| =  (f19.12)', &
+            reals=[internal_fraction], chars=[label, label], fs='(/t6,a)')
+!
+      internal_fraction = get_l2_norm(X_internal, wf%n_ccsd_v*wf%n_ccsd_o)&
+                           /get_l2_norm(X(1:wf%n_t1), wf%n_t1)
+!
+      call output%printf('n', '|(a0)1^internal|/|(a0)1| = (f19.12)', &
+            reals=[internal_fraction], chars=[label, label], fs='(t6,a)')
+!
+      call mem%dealloc(X_internal, wf%n_ccsd_v*wf%n_ccsd_o)
+!
+   end subroutine print_X1_diagnostics_mlccsd
 !
 !
 end module mlccsd_class

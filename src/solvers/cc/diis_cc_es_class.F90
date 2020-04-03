@@ -285,7 +285,7 @@ contains
       real(dp), dimension(:), allocatable :: prev_energies
       real(dp), dimension(:), allocatable :: residual_norms 
 !
-      integer, dimension(:), allocatable :: prev_state_numbers
+      integer, dimension(:), allocatable :: X_order
 !
       type(diis_tool), dimension(:), allocatable :: diis 
 !
@@ -522,22 +522,22 @@ contains
          call output%printf('n', '- Resorting roots according to excitation energy.', &
                             fs='(/t3,a)')
 !
-!        Sort roots and store the original state number in prev_state_numbers
+!        Sort roots and store the original state number in X_order
 !
-         call mem%alloc(prev_state_numbers, solver%n_singlet_states)
+         call mem%alloc(X_order, solver%n_singlet_states)
 !
-         call quicksort_with_index_ascending(solver%energies, prev_state_numbers, solver%n_singlet_states)
+         call quicksort_with_index_ascending(solver%energies, X_order, solver%n_singlet_states)
 !
          do state = 1, solver%n_singlet_states
 !
-            if(prev_state_numbers(state) .ne. state) then
+            if(X_order(state) .ne. state) then
 !
                call output%printf('v', 'Root number (i0) renamed to state (i0)' &
-                                  &, ints=[prev_state_numbers(state), state], fs='(t5,a)')
+                                  &, ints=[X_order(state), state], fs='(t5,a)')
 !
             end if
 !
-            call wf%save_excited_state(X(:, prev_state_numbers(state)), &
+            call wf%save_excited_state(X(:, X_order(state)), &
                                        state,                           &
                                        state,                           &
                                        solver%transformation)
@@ -546,9 +546,9 @@ contains
 !
          call output%printf('n', '- Stored converged states to file.', fs='(/t3,a)')
 !
-         call solver%print_summary(wf, X, prev_state_numbers)
+         call solver%print_summary(wf, X, X_order)
 !
-         call mem%dealloc(prev_state_numbers, solver%n_singlet_states)
+         call mem%dealloc(X_order, solver%n_singlet_states)
 
          call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
 !

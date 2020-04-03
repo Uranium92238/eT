@@ -62,7 +62,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = timings('Construct omega mlccsd', pl='n')
+      timer = timings('Construct Omega MLCCSD', pl='n')
       call timer%turn_on()
 !
       call zero_array(omega, wf%n_gs_amplitudes)
@@ -138,13 +138,13 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_aibj
 !
-      type(timings) :: mlccsd_a2_timer
+      type(timings) :: timer
 !
       integer :: n_a_o, n_a_v
 !
-      mlccsd_a2_timer = timings('omega mlccsd a2', pl='v')
+      timer = timings('Omega MLCCSD a2', pl='v')
 !      
-      call mlccsd_a2_timer%turn_on()
+      call timer%turn_on()
 !
       n_a_o = wf%n_cc2_o + wf%n_ccsd_o
       n_a_v = wf%n_cc2_v + wf%n_ccsd_v
@@ -161,7 +161,7 @@ contains
 
       call mem%dealloc(g_aibj, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-      call mlccsd_a2_timer%turn_off()
+      call timer%turn_off()
 !
    end subroutine omega_ccsd_a2_mlccsd
 !
@@ -242,13 +242,13 @@ contains
       type(batching_index) :: batch_a
       type(batching_index) :: batch_b
 !
-      type(timings) :: mlccsd_b2_timer, mlccsd_b2_integral_timer
+      type(timings) :: timer, integral_timer
 !
       integer :: n_a_o, n_a_v
 !
-      mlccsd_b2_timer = timings('omega mlccsd b2', pl='v')
-      call mlccsd_b2_timer%turn_on()
-      mlccsd_b2_integral_timer = timings('omega mlccsd b2 g_abcd', pl='v')
+      timer = timings('Omega MLCCSD B2', pl='v')
+      call timer%turn_on()
+      integral_timer = timings('Omega MLCCSD B2 g_abcd', pl='v')
 !
       n_a_o = wf%n_cc2_o + wf%n_ccsd_o
       n_a_v = wf%n_cc2_v + wf%n_ccsd_v
@@ -285,7 +285,7 @@ contains
 !
             call mem%alloc(g_acbd, batch_a%length, n_a_v, batch_b%length, n_a_v)
 !
-            call mlccsd_b2_integral_timer%turn_on()
+            call integral_timer%turn_on()
 !
             call wf%get_vvvv(g_acbd,                        &
                               batch_a%first, batch_a%last,  &
@@ -293,7 +293,7 @@ contains
                               batch_b%first, batch_b%last,  &
                               1, n_a_v)
 !
-            call mlccsd_b2_integral_timer%freeze()
+            call integral_timer%freeze()
 !
             if (current_b_batch .eq. current_a_batch) then
 !
@@ -582,8 +582,8 @@ contains
          enddo ! End batching over b
       enddo ! End batching over a
 !
-      call mlccsd_b2_timer%turn_off()
-      call mlccsd_b2_integral_timer%turn_off()
+      call timer%turn_off()
+      call integral_timer%turn_off()
 !
    end subroutine omega_ccsd_b2_mlccsd
 !
@@ -629,14 +629,14 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: omega_abij
 !
-      type(timings) :: mlccsd_c2_timer
+      type(timings) :: timer
 !
       integer :: c, d, i, j, a, b, k, l
 !
       integer :: n_a_o, n_a_v
 !
-      mlccsd_c2_timer = timings('omega mlccsd c2', pl='v')
-      call mlccsd_c2_timer%turn_on()
+      timer = timings('Omega MLCCSD C2', pl='v')
+      call timer%turn_on()
 !
       n_a_o = wf%n_cc2_o + wf%n_ccsd_o
       n_a_v = wf%n_cc2_v + wf%n_ccsd_v
@@ -754,7 +754,7 @@ contains
 !
       call mem%dealloc(omega_abij, wf%n_ccsd_v, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o)
 !
-      call mlccsd_c2_timer%turn_off()
+      call timer%turn_off()
 !
    end subroutine omega_ccsd_c2_mlccsd
 !
@@ -821,12 +821,12 @@ contains
 !
       type(batching_index) :: batch_a
 !
-      type(timings) :: mlccsd_d2_timer
+      type(timings) :: timer
 !
       integer :: n_a_o, n_a_v
 !
-      mlccsd_d2_timer = timings('omega mlccsd d2', pl='v')
-      call mlccsd_d2_timer%turn_on()
+      timer = timings('Omega MLCCSD D2', pl='v')
+      call timer%turn_on()
 !
       n_a_o = wf%n_cc2_o + wf%n_ccsd_o
       n_a_v = wf%n_cc2_v + wf%n_ccsd_v
@@ -1079,7 +1079,7 @@ contains
 !
       call mem%dealloc(omega2_aibj, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-      call mlccsd_d2_timer%turn_off()
+      call timer%turn_off()
 !
    end subroutine omega_ccsd_d2_mlccsd
 !
@@ -1131,14 +1131,14 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: Z_aikc 
       real(dp), dimension(:,:,:,:), allocatable :: g_aikc 
 !
-      type(timings) :: mlccsd_e2_timer
+      type(timings) :: timer
 !
       integer :: a, i, d, l
 !
       integer :: n_a_o, n_a_v
 !
-      mlccsd_e2_timer = timings('omega mlccsd e2', pl='v')
-      call mlccsd_e2_timer%turn_on()
+      timer = timings('Omega MLCCSD E2', pl='v')
+      call timer%turn_on()
 !
       n_a_o = wf%n_cc2_o + wf%n_ccsd_o
       n_a_v = wf%n_cc2_v + wf%n_ccsd_v
@@ -1251,7 +1251,7 @@ contains
 !
       call mem%dealloc(omega2_aibj, (wf%n_ccsd_v), (wf%n_ccsd_o), (wf%n_ccsd_v), (wf%n_ccsd_o))
 !
-      call mlccsd_e2_timer%turn_off()
+      call timer%turn_off()
 !
    end subroutine omega_ccsd_e2_mlccsd
 !
@@ -1298,14 +1298,14 @@ contains
       real(dp), dimension(:,:), allocatable :: X_bc         
       real(dp), dimension(:,:), allocatable :: Y_kj 
 !
-      type(timings) :: mlccsd_f2_timer 
+      type(timings) :: timer 
 !
       integer :: k, l, d, b, c, a, i, j
 !
       integer :: n_a_o, n_a_v
 !
-      mlccsd_f2_timer = timings('omega mlccsd f2', pl='v')
-      call mlccsd_f2_timer%turn_on()
+      timer = timings('Omega MLCCSD F2', pl='v')
+      call timer%turn_on()
 !
       n_a_o = wf%n_cc2_o + wf%n_ccsd_o
       n_a_v = wf%n_cc2_v + wf%n_ccsd_v
@@ -1503,7 +1503,7 @@ contains
 !
       call mem%dealloc(omega2_bjai, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-      call mlccsd_f2_timer%turn_off()
+      call timer%turn_off()
 !
    end subroutine omega_ccsd_f2_mlccsd
 !

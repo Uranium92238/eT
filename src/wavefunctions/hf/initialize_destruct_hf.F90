@@ -45,34 +45,6 @@ contains
    end subroutine initialize_ao_density_hf
 !
 !
-   module subroutine initialize_ao_fock_hf(wf)
-!!
-!!    Initialize AO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (.not. allocated(wf%ao_fock)) call mem%alloc(wf%ao_fock, wf%n_ao, wf%n_ao)
-!
-   end subroutine initialize_ao_fock_hf
-!
-!
-   module subroutine initialize_mo_fock_hf(wf)
-!!
-!!    Initialize MO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (.not. allocated(wf%mo_fock)) call mem%alloc(wf%mo_fock, wf%n_mo, wf%n_mo)
-!
-   end subroutine initialize_mo_fock_hf
-!
-!
    module subroutine initialize_ao_overlap_hf(wf)
 !!
 !!    Initialize AO overlap
@@ -201,34 +173,6 @@ contains
       if (allocated(wf%ao_density)) call mem%dealloc(wf%ao_density, wf%n_ao, wf%n_ao)
 !
    end subroutine destruct_ao_density_hf
-!
-!
-   module subroutine destruct_ao_fock_hf(wf)
-!!
-!!    Destruct AO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (allocated(wf%ao_fock)) call mem%dealloc(wf%ao_fock, wf%n_ao, wf%n_ao)
-!
-   end subroutine destruct_ao_fock_hf
-!
-!
-   module subroutine destruct_mo_fock_hf(wf)
-!!
-!!    Destruct MO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (allocated(wf%mo_fock)) call mem%dealloc(wf%mo_fock, wf%n_mo, wf%n_mo)
-!
-   end subroutine destruct_mo_fock_hf
 !
 !
    module subroutine destruct_pivot_matrix_ao_overlap_hf(wf)

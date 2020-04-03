@@ -29,30 +29,6 @@
    end subroutine initialize_ao_density_hf
 !
 !
-   module subroutine initialize_ao_fock_hf(wf)
-!!
-!!    Initialize AO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_ao_fock_hf
-!
-!
-   module subroutine initialize_mo_fock_hf(wf)
-!!
-!!    Initialize MO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_mo_fock_hf
-!
-!
    module subroutine initialize_ao_overlap_hf(wf)
 !!
 !!    Initialize AO overlap
@@ -159,30 +135,6 @@
       class(hf) :: wf
 !
    end subroutine destruct_ao_density_hf
-!
-!
-   module subroutine destruct_ao_fock_hf(wf)
-!!
-!!    Destruct AO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_ao_fock_hf
-!
-!
-   module subroutine destruct_mo_fock_hf(wf)
-!!
-!!    Destruct MO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_mo_fock_hf
 !
 !
    module subroutine destruct_pivot_matrix_ao_overlap_hf(wf)
