@@ -1518,6 +1518,7 @@ contains
       endif
 !
       the_file%is_open = .false.
+      the_file%status_ = 'new'
 !
    end subroutine delete_abstract_stream
 !
