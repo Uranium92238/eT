@@ -1167,8 +1167,6 @@ contains
 !
       call wf%destruct_frozen_CCT()
 !
-      call wf%G_De_ao_file%delete_
-!
    end subroutine cleanup_mlhf
 !
 !
