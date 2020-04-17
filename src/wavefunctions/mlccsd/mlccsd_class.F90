@@ -194,6 +194,11 @@ module mlccsd_class
       procedure :: print_X1_diagnostics       =>  print_X1_diagnostics_mlccsd
       procedure :: get_es_orbital_differences =>  get_es_orbital_differences_mlccsd
 !
+!     CVS
+!
+      procedure :: get_cvs_projector         => get_cvs_projector_mlccsd
+      procedure :: set_cvs_start_indices     => set_cvs_start_indices_mlccsd
+!
 !     Initialize/destruct
 !
       procedure :: initialize_u_aibj            => initialize_u_aibj_mlccsd
@@ -1222,6 +1227,98 @@ contains
       call mem%dealloc(X_internal, wf%n_ccsd_v*wf%n_ccsd_o)
 !
    end subroutine print_X1_diagnostics_mlccsd
+!
+!
+   subroutine get_cvs_projector_mlccsd(wf, projector, n_cores, core_MOs)
+!!
+!!    Get CVS projector
+!!    Written by Sarai D. Folkestad, Oct 2018
+!!
+      implicit none
+!
+      class(mlccsd), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
+!
+      integer, intent(in) :: n_cores
+!
+      integer, dimension(n_cores), intent(in) :: core_MOs
+!
+      integer :: core, i, a, ai, j, b, bj, aibj, n_a_o, n_a_v
+!
+      call zero_array(projector, wf%n_es_amplitudes)
+!
+      do core = 1, n_cores
+!
+         i = core_MOs(core)
+!
+         if (i  .gt. wf%n_ccsd_o) then 
+            call output%error_msg('Core orbital (i0) is not CCSD orbital', ints=[i])
+         end if
+!
+!$omp parallel do private (a, ai)
+         do a = 1, wf%n_v
+!
+           ai = wf%n_v*(i - 1) + a
+           projector(ai) = one
+!
+         enddo
+!$omp end parallel do
+!
+   n_a_o = wf%n_ccsd_o + wf%n_cc2_o
+   n_a_v = wf%n_ccsd_v + wf%n_cc2_v
+!
+!$omp parallel do private (a, ai, j, b, bj, aibj)
+         do a = 1, n_a_v
+!
+            ai = n_a_v*(i - 1) + a
+!
+            do j = 1, n_a_o 
+               do b = 1, n_a_v
+!
+                  bj = n_a_v*(j - 1) + b
+!
+                  aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
+!                  
+                  projector(aibj + wf%n_o*wf%n_v) = one
+!
+               enddo
+            enddo
+        enddo
+!$omp end parallel do
+!
+     enddo
+!
+   end subroutine get_cvs_projector_mlccsd
+!
+!
+   subroutine set_cvs_start_indices_mlccsd(wf, start_indices)
+!!
+!!    Set CVS start indices
+!!    Written by Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(mlccsd), intent(in) :: wf
+!
+      integer, dimension(wf%n_singlet_states)  :: start_indices
+!
+!     Local variables
+!
+      integer ::  mo
+!
+!     Sanity check on core MOs -> Are they in active space?
+!
+      do mo = 1, wf%n_core_MOs
+!
+         if (wf%core_MOs(mo) .gt. wf%n_ccsd_o) &
+            call output%error_msg('Active MO not in active space for MLCCSD calculation.')
+!
+      enddo
+!
+      call wf%ccs%set_cvs_start_indices(start_indices)
+!
+   end subroutine set_cvs_start_indices_mlccsd
 !
 !
 end module mlccsd_class
