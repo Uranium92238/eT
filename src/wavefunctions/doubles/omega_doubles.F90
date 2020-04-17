@@ -53,13 +53,13 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_abjc, u_bjci
 !
-      real(dp), dimension(:,:), allocatable :: omega_ai
+      real(dp), dimension(:,:), allocatable :: omega_ia
 !
       type(batching_index) :: batch_a
 !
       integer :: req0, req1
 !
-      integer :: a, i, current_a_batch
+      integer :: current_a_batch
 !
       type(timings) :: timer 
 !  
@@ -71,6 +71,9 @@ contains
 !     Reorder u_bicj to u_bjci
 !
       call sort_1234_to_1432(u, u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(omega_ia, wf%n_o, wf%n_v)
+      call zero_array(omega_ia, wf%n_t1)
 !
       req0 = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
       req1 = (wf%n_v)**2*(wf%n_o) + (wf%n_v)*(wf%integrals%n_J)
@@ -91,39 +94,28 @@ contains
                            1, wf%n_o,                   &
                            1, wf%n_v)
 !
-         call mem%alloc(omega_ai, batch_a%length, wf%n_o)
-!
-         call dgemm('N','N',               &
-                     batch_a%length,       &
-                     wf%n_o,               &
-                     (wf%n_o)*(wf%n_v)**2, &
-                     one,                  &
-                     g_abjc,               & ! g_a_bjc
-                     batch_a%length,       &
-                     u_bjci,               & ! u_bjc_i
-                     (wf%n_o)*(wf%n_v)**2, &
-                     zero,                 &
-                     omega_ai,             &
-                     batch_a%length)
+         call dgemm('T','T',                    &
+                     wf%n_o,                    &
+                     batch_a%length,            &
+                     (wf%n_o)*(wf%n_v)**2,      &
+                     one,                       &
+                     u_bjci,                    & ! u_bjc_i
+                     (wf%n_o)*(wf%n_v)**2,      &
+                     g_abjc,                    & ! g_a_bjc
+                     batch_a%length,            &
+                     one,                       &
+                     omega_ia(:,batch_a%first), & ! omega_ia
+                     wf%n_o)
 !
          call mem%dealloc(g_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
-!
-!$omp parallel do private(i, a)
-         do i = 1, wf%n_o
-            do a = 1, batch_a%length
-!
-               omega(a + batch_a%first - 1, i) = omega(a + batch_a%first - 1, i) &
-                                                + omega_ai(a, i)
-!
-            enddo
-         enddo
-!$omp end parallel do
-!
-         call mem%dealloc(omega_ai, batch_a%length, wf%n_o)
 !
       enddo ! batch_a
 !
       call mem%dealloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call add_21_to_12(one, omega_ia, omega, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(omega_ia, wf%n_o, wf%n_v)
 !
       call timer%turn_off()
 !
