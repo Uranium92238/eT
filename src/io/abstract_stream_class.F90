@@ -59,29 +59,29 @@ module abstract_stream_class
       procedure :: get_file_size           => get_file_size_abstract_stream
       procedure :: copy                    => copy_abstract_stream
 !
-      procedure :: read_real_dp_scalar     => read_real_dp_scalar_abstract_stream
-      procedure :: read_complex_dp_scalar  => read_complex_dp_scalar_abstract_stream
-      procedure :: read_int_32_scalar      => read_int_32_scalar_abstract_stream
-      procedure :: read_int_64_scalar      => read_int_64_scalar_abstract_stream
-      procedure :: read_log_scalar         => read_log_scalar_abstract_stream
+      procedure :: read_0_real_dp_abstract_stream
+      procedure :: read_0_complex_dp_abstract_stream
+      procedure :: read_0_int_32_abstract_stream
+      procedure :: read_0_int_64_abstract_stream
+      procedure :: read_0_log_abstract_stream
 !
-      procedure :: read_real_dp            => read_real_dp_abstract_stream
-      procedure :: read_complex_dp         => read_complex_dp_abstract_stream
-      procedure :: read_int_32             => read_int_32_abstract_stream
-      procedure :: read_int_64             => read_int_64_abstract_stream
-      procedure :: read_log                => read_log_abstract_stream
+      procedure :: read_1_real_dp_abstract_stream
+      procedure :: read_1_complex_dp_abstract_stream
+      procedure :: read_1_int_32_abstract_stream
+      procedure :: read_1_int_64_abstract_stream
+      procedure :: read_1_log_abstract_stream
 !
-      procedure :: write_real_dp_scalar    => write_real_dp_scalar_abstract_stream
-      procedure :: write_complex_dp_scalar => write_complex_dp_scalar_abstract_stream
-      procedure :: write_int_32_scalar     => write_int_32_scalar_abstract_stream
-      procedure :: write_int_64_scalar     => write_int_64_scalar_abstract_stream
-      procedure :: write_log_scalar        => write_log_scalar_abstract_stream
+      procedure :: write_0_real_dp_abstract_stream
+      procedure :: write_0_complex_dp_abstract_stream
+      procedure :: write_0_int_32_abstract_stream
+      procedure :: write_0_int_64_abstract_stream
+      procedure :: write_0_log_abstract_stream
 !
-      procedure :: write_real_dp           => write_real_dp_abstract_stream
-      procedure :: write_complex_dp        => write_complex_dp_abstract_stream
-      procedure :: write_int_32            => write_int_32_abstract_stream
-      procedure :: write_int_64            => write_int_64_abstract_stream
-      procedure :: write_log               => write_log_abstract_stream
+      procedure :: write_1_real_dp_abstract_stream
+      procedure :: write_1_complex_dp_abstract_stream
+      procedure :: write_1_int_32_abstract_stream
+      procedure :: write_1_int_64_abstract_stream
+      procedure :: write_1_log_abstract_stream
 !
    end type abstract_stream
 !
@@ -355,9 +355,9 @@ contains
    end function get_file_size_abstract_stream
 !
 !
-   subroutine read_real_dp_scalar_abstract_stream(the_file, scalar, position_)
+   subroutine read_0_real_dp_abstract_stream(the_file, scalar, position_)
 !!
-!!    Read real dp scalar
+!!    write rank 0 real dp
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -403,12 +403,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine read_real_dp_scalar_abstract_stream
+   end subroutine read_0_real_dp_abstract_stream
 !
 !
-   subroutine read_complex_dp_scalar_abstract_stream(the_file, scalar, position_)
+   subroutine read_0_complex_dp_abstract_stream(the_file, scalar, position_)
 !!
-!!    Read complex dp scalar
+!!    write rank 0 complex dp
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -454,12 +454,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine read_complex_dp_scalar_abstract_stream
+   end subroutine read_0_complex_dp_abstract_stream
 !
 !
-   subroutine read_int_32_scalar_abstract_stream(the_file, scalar, position_)
+   subroutine read_0_int_32_abstract_stream(the_file, scalar, position_)
 !!
-!!    Read int 32 scalar
+!!    write rank 0 int 32
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -505,12 +505,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine read_int_32_scalar_abstract_stream
+   end subroutine read_0_int_32_abstract_stream
 !
 !
-   subroutine read_int_64_scalar_abstract_stream(the_file, scalar, position_)
+   subroutine read_0_int_64_abstract_stream(the_file, scalar, position_)
 !!
-!!    Read int 64 scalar
+!!    write rank 0 int 64
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -556,12 +556,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine read_int_64_scalar_abstract_stream
+   end subroutine read_0_int_64_abstract_stream
 !
 !
-   subroutine read_log_scalar_abstract_stream(the_file, scalar, position_)
+   subroutine read_0_log_abstract_stream(the_file, scalar, position_)
 !!
-!!    Read logical scalar
+!!    write rank 0 logical
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Mar. 2020
 !!
 !!    scalar: logical
@@ -604,12 +604,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine read_log_scalar_abstract_stream
+   end subroutine read_0_log_abstract_stream
 !
 !
-   subroutine read_real_dp_abstract_stream(the_file, array, n, position_)
+   subroutine read_1_real_dp_abstract_stream(the_file, array, n, position_)
 !!
-!!    Read real dp
+!!    write rank 1 real dp
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -658,12 +658,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine read_real_dp_abstract_stream
+   end subroutine read_1_real_dp_abstract_stream
 !
 !
-   subroutine read_complex_dp_abstract_stream(the_file, array, n, position_)
+   subroutine read_1_complex_dp_abstract_stream(the_file, array, n, position_)
 !!
-!!    Read complex dp
+!!    write rank 1 complex dp
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -712,12 +712,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine read_complex_dp_abstract_stream
+   end subroutine read_1_complex_dp_abstract_stream
 !
 !
-   subroutine read_int_32_abstract_stream(the_file, array, n, position_)
+   subroutine read_1_int_32_abstract_stream(the_file, array, n, position_)
 !!
-!!    Read int 32
+!!    write rank 1 int 32
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -766,12 +766,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine read_int_32_abstract_stream
+   end subroutine read_1_int_32_abstract_stream
 !
 !
-   subroutine read_int_64_abstract_stream(the_file, array, n, position_)
+   subroutine read_1_int_64_abstract_stream(the_file, array, n, position_)
 !!
-!!    Read int 64
+!!    write rank 1 int 64
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -820,12 +820,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine read_int_64_abstract_stream
+   end subroutine read_1_int_64_abstract_stream
 !
 !
-   subroutine read_log_abstract_stream(the_file, array, n, position_)
+   subroutine read_1_log_abstract_stream(the_file, array, n, position_)
 !!
-!!    Read logicals
+!!    write rank 1 logical
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Mar. 2020
 !!
 !!    array: array of logicals with length n
@@ -871,12 +871,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine read_log_abstract_stream
+   end subroutine read_1_log_abstract_stream
 !
 !
-   subroutine write_real_dp_scalar_abstract_stream(the_file, scalar, position_)
+   subroutine write_0_real_dp_abstract_stream(the_file, scalar, position_)
 !!
-!!    write real dp scalar
+!!    write rank 0 real dp
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -922,12 +922,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine write_real_dp_scalar_abstract_stream
+   end subroutine write_0_real_dp_abstract_stream
 !
 !
-   subroutine write_complex_dp_scalar_abstract_stream(the_file, scalar, position_)
+   subroutine write_0_complex_dp_abstract_stream(the_file, scalar, position_)
 !!
-!!    write complex dp scalar
+!!    write rank 0 complex dp
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -973,12 +973,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine write_complex_dp_scalar_abstract_stream
+   end subroutine write_0_complex_dp_abstract_stream
 !
 !
-   subroutine write_int_32_scalar_abstract_stream(the_file, scalar, position_)
+   subroutine write_0_int_32_abstract_stream(the_file, scalar, position_)
 !!
-!!    write int 32 scalar
+!!    write rank 0 int 32
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -1024,12 +1024,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine write_int_32_scalar_abstract_stream
+   end subroutine write_0_int_32_abstract_stream
 !
 !
-   subroutine write_int_64_scalar_abstract_stream(the_file, scalar, position_)
+   subroutine write_0_int_64_abstract_stream(the_file, scalar, position_)
 !!
-!!    write int 64 scalar
+!!    write rank 0 int 64
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -1075,12 +1075,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine write_int_64_scalar_abstract_stream
+   end subroutine write_0_int_64_abstract_stream
 !
 !
-   subroutine write_log_scalar_abstract_stream(the_file, scalar, position_)
+   subroutine write_0_log_abstract_stream(the_file, scalar, position_)
 !!
-!!    write logical scalar
+!!    write rank 0 logical
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Mar. 2020
 !!
 !!    scalar: logical
@@ -1123,12 +1123,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine write_log_scalar_abstract_stream
+   end subroutine write_0_log_abstract_stream
 !
 !
-   subroutine write_real_dp_abstract_stream(the_file, array, n, position_)
+   subroutine write_1_real_dp_abstract_stream(the_file, array, n, position_)
 !!
-!!    Write real dp
+!!    write rank 1 real dp
 !!    Written by Rolf H. Myhre, Mar. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -1177,12 +1177,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine write_real_dp_abstract_stream
+   end subroutine write_1_real_dp_abstract_stream
 !
 !
-   subroutine write_complex_dp_abstract_stream(the_file, array, n, position_)
+   subroutine write_1_complex_dp_abstract_stream(the_file, array, n, position_)
 !!
-!!    Write complex dp
+!!    write rank 1 complex dp
 !!    Written by Rolf H. Myhre, Mar. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -1231,12 +1231,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine write_complex_dp_abstract_stream
+   end subroutine write_1_complex_dp_abstract_stream
 !
 !
-   subroutine write_int_32_abstract_stream(the_file, array, n, position_)
+   subroutine write_1_int_32_abstract_stream(the_file, array, n, position_)
 !!
-!!    Write int 32
+!!    write rank 1 int 32
 !!    Written by Rolf H. Myhre, Mar. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -1285,12 +1285,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine write_int_32_abstract_stream
+   end subroutine write_1_int_32_abstract_stream
 !
 !
-   subroutine write_int_64_abstract_stream(the_file, array, n, position_)
+   subroutine write_1_int_64_abstract_stream(the_file, array, n, position_)
 !!
-!!    Write int 64
+!!    write rank 1 int 64
 !!    Written by Rolf H. Myhre, Mar. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -1339,12 +1339,12 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine write_int_64_abstract_stream
+   end subroutine write_1_int_64_abstract_stream
 !
 !
-   subroutine write_log_abstract_stream(the_file, array, n, position_)
+   subroutine write_1_log_abstract_stream(the_file, array, n, position_)
 !!
-!!    Write logical
+!!    write rank 1 logical
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Mar. 2020
 !!
 !!    array: 64 bit integer array of length n
@@ -1390,7 +1390,7 @@ contains
                                ints = [io_status])
       end if
 !
-   end subroutine write_log_abstract_stream
+   end subroutine write_1_log_abstract_stream
 !
 !
    subroutine copy_abstract_stream(the_file, filename)

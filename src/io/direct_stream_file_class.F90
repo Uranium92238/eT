@@ -238,7 +238,7 @@ contains
                                chars=[trim(the_file%get_name())], ints=[first_rec, last_rec])
       endif
 !
-      call the_file%read_real_dp(array, read_length, position_)
+      call the_file%read_1_real_dp_abstract_stream(array, read_length, position_)
 !
    end subroutine read_1_real_dp_direct_stream_file
 !
@@ -328,7 +328,7 @@ contains
                                chars=[trim(the_file%get_name())], ints=[first_rec, last_rec])
       endif
 !
-      call the_file%read_complex_dp(array, read_length, position_)
+      call the_file%read_1_complex_dp_abstract_stream(array, read_length, position_)
 !
    end subroutine read_1_complex_dp_direct_stream_file
 !
@@ -579,7 +579,7 @@ contains
                                chars=[the_file%get_name()], ints=[first_rec, last_rec])
       endif
 !
-      call the_file%write_real_dp(array, write_length, position_)
+      call the_file%write_1_real_dp_abstract_stream(array, write_length, position_)
 !
    end subroutine write_1_real_dp_direct_stream_file
 !
@@ -664,7 +664,7 @@ contains
                                chars=[the_file%get_name()], ints=[first_rec, last_rec])
       endif
 !
-      call the_file%write_complex_dp(array, write_length, position_)
+      call the_file%write_1_complex_dp_abstract_stream(array, write_length, position_)
 !
    end subroutine write_1_complex_dp_direct_stream_file
 !
