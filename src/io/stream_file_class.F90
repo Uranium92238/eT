@@ -39,104 +39,129 @@ module stream_file_class
 !
 !     Real double precision read
 !
+      procedure :: read_0_real_dp_stream_file
+      procedure :: read_1_real_dp_stream_file
       procedure :: read_2_real_dp_stream_file
       procedure :: read_3_real_dp_stream_file
       procedure :: read_4_real_dp_stream_file
 !
 !     Complex double precision read
 !
+      procedure :: read_0_complex_dp_stream_file
+      procedure :: read_1_complex_dp_stream_file
       procedure :: read_2_complex_dp_stream_file
       procedure :: read_3_complex_dp_stream_file
       procedure :: read_4_complex_dp_stream_file
 !
 !     32-bit integer read
 !
+      procedure :: read_0_int_32_stream_file
+      procedure :: read_1_int_32_stream_file
       procedure :: read_2_int_32_stream_file
       procedure :: read_3_int_32_stream_file
       procedure :: read_4_int_32_stream_file
 !
 !     64-bit integer read
 !
+      procedure :: read_0_int_64_stream_file
+      procedure :: read_1_int_64_stream_file
       procedure :: read_2_int_64_stream_file
       procedure :: read_3_int_64_stream_file
       procedure :: read_4_int_64_stream_file
 !
+!     Logical read
+!
+      procedure :: read_0_log_stream_file
+      procedure :: read_1_log_stream_file
+!
 !     Read generic
 !
-      generic :: read_ => read_real_dp_scalar,           &
-                          read_real_dp,                  &
+      generic :: read_ => read_0_real_dp_stream_file,    &
+                          read_1_real_dp_stream_file,    &
                           read_2_real_dp_stream_file,    &
                           read_3_real_dp_stream_file,    &
                           read_4_real_dp_stream_file,    &
-                          read_complex_dp_scalar,        &
-                          read_complex_dp,               &
+                          read_0_complex_dp_stream_file, &
+                          read_1_complex_dp_stream_file, &
                           read_2_complex_dp_stream_file, &
                           read_3_complex_dp_stream_file, &
                           read_4_complex_dp_stream_file, &
-                          read_int_32_scalar,            &
-                          read_int_32,                   &
+                          read_0_int_32_stream_file,     &
+                          read_1_int_32_stream_file,     &
                           read_2_int_32_stream_file,     &
                           read_3_int_32_stream_file,     &
                           read_4_int_32_stream_file,     &
-                          read_int_64_scalar,            &
-                          read_int_64,                   &
+                          read_0_int_64_stream_file,     &
+                          read_1_int_64_stream_file,     &
                           read_2_int_64_stream_file,     &
                           read_3_int_64_stream_file,     &
                           read_4_int_64_stream_file,     &
-                          read_log_scalar,               &
-                          read_log
+                          read_0_log_stream_file,        &
+                          read_1_log_stream_file
 !
 !     Write routines
 !
-!
 !     Real double precision write
 !
+      procedure :: write_0_real_dp_stream_file
+      procedure :: write_1_real_dp_stream_file
       procedure :: write_2_real_dp_stream_file
       procedure :: write_3_real_dp_stream_file
       procedure :: write_4_real_dp_stream_file
 !
 !     Complex double precision write
 !
+      procedure :: write_0_complex_dp_stream_file
+      procedure :: write_1_complex_dp_stream_file
       procedure :: write_2_complex_dp_stream_file
       procedure :: write_3_complex_dp_stream_file
       procedure :: write_4_complex_dp_stream_file
 !
-!     32-bit integer read
+!     32-bit integer write
 !
+      procedure :: write_0_int_32_stream_file
+      procedure :: write_1_int_32_stream_file
       procedure :: write_2_int_32_stream_file
       procedure :: write_3_int_32_stream_file
       procedure :: write_4_int_32_stream_file
 !
-!     64-bit integer read
+!     64-bit integer write
 !
+      procedure :: write_0_int_64_stream_file
+      procedure :: write_1_int_64_stream_file
       procedure :: write_2_int_64_stream_file
       procedure :: write_3_int_64_stream_file
       procedure :: write_4_int_64_stream_file
 !
-!     Write generic
+!     Logical write
 !
-      generic :: write_ => write_real_dp_scalar,            &
-                           write_real_dp,                   &
-                           write_2_real_dp_stream_file,     &
-                           write_3_real_dp_stream_file,     &
-                           write_4_real_dp_stream_file,     &
-                           write_complex_dp_scalar,         &
-                           write_complex_dp,                &
-                           write_2_complex_dp_stream_file,  &
-                           write_3_complex_dp_stream_file,  &
-                           write_4_complex_dp_stream_file,  &
-                           write_int_32_scalar,             &
-                           write_int_32,                    &
-                           write_2_int_32_stream_file,      &
-                           write_3_int_32_stream_file,      &
-                           write_4_int_32_stream_file,      &
-                           write_int_64_scalar,             &
-                           write_int_64,                    &
-                           write_2_int_64_stream_file,      &
-                           write_3_int_64_stream_file,      &
-                           write_4_int_64_stream_file,      &
-                           write_log_scalar,                &
-                           write_log
+      procedure :: write_0_log_stream_file
+      procedure :: write_1_log_stream_file
+!
+!     write generic
+!
+      generic :: write_ => write_0_real_dp_stream_file,    &
+                           write_1_real_dp_stream_file,    &
+                           write_2_real_dp_stream_file,    &
+                           write_3_real_dp_stream_file,    &
+                           write_4_real_dp_stream_file,    &
+                           write_0_complex_dp_stream_file, &
+                           write_1_complex_dp_stream_file, &
+                           write_2_complex_dp_stream_file, &
+                           write_3_complex_dp_stream_file, &
+                           write_4_complex_dp_stream_file, &
+                           write_0_int_32_stream_file,     &
+                           write_1_int_32_stream_file,     &
+                           write_2_int_32_stream_file,     &
+                           write_3_int_32_stream_file,     &
+                           write_4_int_32_stream_file,     &
+                           write_0_int_64_stream_file,     &
+                           write_1_int_64_stream_file,     &
+                           write_2_int_64_stream_file,     &
+                           write_3_int_64_stream_file,     &
+                           write_4_int_64_stream_file,     &
+                           write_0_log_stream_file,        &
+                           write_1_log_stream_file
 !
       final :: destructor
 !
@@ -192,15 +217,63 @@ contains
    end subroutine destructor
 !
 !!
-!! Wrapper routines for read_real_dp_abstract_stream
-!! that accept rank 2, 3, and 4 arrays
+!! Wrapper routines for read_x_real_dp_abstract_stream
+!! that accept scalars and rank 1, 2, 3, and 4 arrays
+!!
+!! The wrapper for scalars and rank 1 are needed because ifort does not permit 
+!! a generic procedure pointer to a routine of the parent class
 !!
 !! see documentation below
 !!
 !
+   subroutine read_0_real_dp_stream_file(the_file, scalar, position_)
+!!
+!!    Read rank 0 real dp
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Mar 2020
+!!
+!!    scalar: real double precision scalar
+!!
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
+!!
+      implicit none
+!
+      class(stream_file), intent(in) :: the_file
+      real(dp), intent(out)          :: scalar
+      integer, intent(in), optional  :: position_
+!
+      call the_file%read_0_real_dp_abstract_stream(scalar, position_)
+!
+   end subroutine read_0_real_dp_stream_file
+!
+   subroutine read_1_real_dp_stream_file(the_file, array, n, position_)
+!!
+!!    Read rank 1 real dp
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Mar 2020
+!!
+!!    array: real double precision array of length n
+!!
+!!    n: total length of array (Number of elements)
+!!
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
+!!
+      implicit none
+!
+      class(stream_file), intent(in)      :: the_file
+      integer, intent(in)                 :: n
+      real(dp), dimension(n), intent(out) :: array
+      integer, intent(in), optional       :: position_
+!
+      call the_file%read_1_real_dp_abstract_stream(array, n, position_)
+!
+   end subroutine read_1_real_dp_stream_file
+!
    subroutine read_2_real_dp_stream_file(the_file, array, n, position_)
 !!
-!!    Read 2 real dp
+!!    Read rank 2 real dp
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Mar 2020
 !!
 !!    array: real double precision array of length n and rank 2
@@ -214,178 +287,320 @@ contains
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
-      real(dp), dimension(:,:), intent(inout) :: array
-      integer, intent(in), optional :: position_
+      class(stream_file), intent(in)        :: the_file
+      real(dp), dimension(:,:), intent(out) :: array
+      integer, intent(in)                   :: n
+      integer, intent(in), optional         :: position_
 !
-      call the_file%read_real_dp(array, n, position_)
+      call the_file%read_1_real_dp_stream_file(array, n, position_)
 !
    end subroutine read_2_real_dp_stream_file
-!
 !
    subroutine read_3_real_dp_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
-      real(dp), dimension(:,:,:), intent(inout) :: array
-      integer, intent(in), optional :: position_
+      class(stream_file), intent(in)          :: the_file
+      real(dp), dimension(:,:,:), intent(out) :: array
+      integer, intent(in)                     :: n
+      integer, intent(in), optional           :: position_
 !
-      call the_file%read_real_dp(array, n, position_)
+      call the_file%read_1_real_dp_stream_file(array, n, position_)
 !
    end subroutine read_3_real_dp_stream_file
-!
 !
    subroutine read_4_real_dp_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
-      real(dp), dimension(:,:,:,:), intent(inout) :: array
-      integer, intent(in), optional :: position_
+      class(stream_file), intent(in)            :: the_file
+      real(dp), dimension(:,:,:,:), intent(out) :: array
+      integer, intent(in)                       :: n
+      integer, intent(in), optional             :: position_
 !
-      call the_file%read_real_dp(array, n, position_)
+      call the_file%read_1_real_dp_stream_file(array, n, position_)
 !
    end subroutine read_4_real_dp_stream_file
 !
-!  Complex arrays
+!  Complex
+!
+   subroutine read_0_complex_dp_stream_file(the_file, scalar, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in) :: the_file
+      complex(dp), intent(out)       :: scalar
+      integer, intent(in), optional  :: position_
+!
+      call the_file%read_0_complex_dp_abstract_stream(scalar, position_)
+!
+   end subroutine read_0_complex_dp_stream_file
+!
+   subroutine read_1_complex_dp_stream_file(the_file, array, n, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in)         :: the_file
+      integer, intent(in)                    :: n
+      complex(dp), dimension(n), intent(out) :: array
+      integer, intent(in), optional          :: position_
+!
+      call the_file%read_1_complex_dp_abstract_stream(array, n, position_)
+!
+   end subroutine read_1_complex_dp_stream_file
 !
    subroutine read_2_complex_dp_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
-      complex(dp), dimension(:,:), intent(inout) :: array
-      integer, intent(in), optional :: position_
+      class(stream_file), intent(in)           :: the_file
+      complex(dp), dimension(:,:), intent(out) :: array
+      integer, intent(in)                      :: n
+      integer, intent(in), optional            :: position_
 !
-      call the_file%read_complex_dp(array, n, position_)
+      call the_file%read_1_complex_dp_stream_file(array, n, position_)
 !
    end subroutine read_2_complex_dp_stream_file
-!
 !
    subroutine read_3_complex_dp_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
-      complex(dp), dimension(:,:,:), intent(inout) :: array
-      integer, intent(in), optional :: position_
+      class(stream_file), intent(in)             :: the_file
+      complex(dp), dimension(:,:,:), intent(out) :: array
+      integer, intent(in)                        :: n
+      integer, intent(in), optional              :: position_
 !
-      call the_file%read_complex_dp(array, n, position_)
+      call the_file%read_1_complex_dp_stream_file(array, n, position_)
 !
    end subroutine read_3_complex_dp_stream_file
-!
 !
    subroutine read_4_complex_dp_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
-      complex(dp), dimension(:,:,:,:), intent(inout) :: array
-      integer, intent(in), optional :: position_
+      class(stream_file), intent(in)               :: the_file
+      complex(dp), dimension(:,:,:,:), intent(out) :: array
+      integer, intent(in)                          :: n
+      integer, intent(in), optional                :: position_
 !
-      call the_file%read_complex_dp(array, n, position_)
+      call the_file%read_1_complex_dp_stream_file(array, n, position_)
 !
    end subroutine read_4_complex_dp_stream_file
 !
-!  64-bit integer arrays
+!  64-bit integers
+!
+   subroutine read_0_int_64_stream_file(the_file, scalar, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in) :: the_file
+      integer(i64), intent(out)      :: scalar
+      integer, intent(in), optional  :: position_
+!
+      call the_file%read_0_int_64_abstract_stream(scalar, position_)
+!
+   end subroutine read_0_int_64_stream_file
+!
+   subroutine read_1_int_64_stream_file(the_file, array, n, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in)          :: the_file
+      integer, intent(in)                     :: n
+      integer(i64), dimension(n), intent(out) :: array
+      integer, intent(in), optional           :: position_
+!
+      call the_file%read_1_int_64_abstract_stream(array, n, position_)
+!
+   end subroutine read_1_int_64_stream_file
 !
    subroutine read_2_int_64_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
-      integer(i64), dimension(:,:), intent(inout) :: array
-      integer, intent(in), optional :: position_
+      class(stream_file), intent(in)            :: the_file
+      integer(i64), dimension(:,:), intent(out) :: array
+      integer, intent(in)                       :: n
+      integer, intent(in), optional             :: position_
 !
-      call the_file%read_int_64(array, n, position_)
+      call the_file%read_1_int_64_stream_file(array, n, position_)
 !
    end subroutine read_2_int_64_stream_file
-!
 !
    subroutine read_3_int_64_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
-      integer(i64), dimension(:,:,:), intent(inout) :: array
-      integer, intent(in), optional :: position_
+      class(stream_file), intent(in)              :: the_file
+      integer(i64), dimension(:,:,:), intent(out) :: array
+      integer, intent(in)                         :: n
+      integer, intent(in), optional               :: position_
 !
-      call the_file%read_int_64(array, n, position_)
+      call the_file%read_1_int_64_stream_file(array, n, position_)
 !
    end subroutine read_3_int_64_stream_file
-!
 !
    subroutine read_4_int_64_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
-      integer(i64), dimension(:,:,:,:), intent(inout) :: array
-      integer, intent(in), optional :: position_
+      class(stream_file), intent(in)                :: the_file
+      integer(i64), dimension(:,:,:,:), intent(out) :: array
+      integer, intent(in)                           :: n
+      integer, intent(in), optional                 :: position_
 !
-      call the_file%read_int_64(array, n, position_)
+      call the_file%read_1_int_64_stream_file(array, n, position_)
 !
    end subroutine read_4_int_64_stream_file 
 !
-!  32-bit integer arrays
+!  32-bit integers
+!
+   subroutine read_0_int_32_stream_file(the_file, scalar, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in) :: the_file
+      integer(i32), intent(out)      :: scalar
+      integer, intent(in), optional  :: position_
+!
+      call the_file%read_0_int_32_abstract_stream(scalar, position_)
+!
+   end subroutine read_0_int_32_stream_file
+!
+   subroutine read_1_int_32_stream_file(the_file, array, n, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in)          :: the_file
+      integer, intent(in)                     :: n
+      integer(i32), dimension(n), intent(out) :: array
+      integer, intent(in), optional           :: position_
+!
+      call the_file%read_1_int_32_abstract_stream(array, n, position_)
+!
+   end subroutine read_1_int_32_stream_file
 !
    subroutine read_2_int_32_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
-      integer(i32), dimension(:,:), intent(inout) :: array
-      integer, intent(in), optional :: position_
+      class(stream_file), intent(in)            :: the_file
+      integer(i32), dimension(:,:), intent(out) :: array
+      integer, intent(in)                       :: n
+      integer, intent(in), optional             :: position_
 !
-      call the_file%read_int_32(array, n, position_)
+      call the_file%read_1_int_32_stream_file(array, n, position_)
 !
    end subroutine read_2_int_32_stream_file
-!
 !
    subroutine read_3_int_32_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
-      integer(i32), dimension(:,:,:), intent(inout) :: array
-      integer, intent(in), optional :: position_
+      class(stream_file), intent(in)              :: the_file
+      integer(i32), dimension(:,:,:), intent(out) :: array
+      integer, intent(in)                         :: n
+      integer, intent(in), optional               :: position_
 !
-      call the_file%read_int_32(array, n, position_)
+      call the_file%read_1_int_32_stream_file(array, n, position_)
 !
    end subroutine read_3_int_32_stream_file
-!
 !
    subroutine read_4_int_32_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
-      integer(i32), dimension(:,:,:,:), intent(inout) :: array
-      integer, intent(in), optional :: position_
+      class(stream_file), intent(in)                :: the_file
+      integer(i32), dimension(:,:,:,:), intent(out) :: array
+      integer, intent(in)                           :: n
+      integer, intent(in), optional                 :: position_
 !
-      call the_file%read_int_32(array, n, position_)
+      call the_file%read_1_int_32_stream_file(array, n, position_)
 !
    end subroutine read_4_int_32_stream_file
 !
+!  Logicals
+!
+   subroutine read_0_log_stream_file(the_file, scalar, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in) :: the_file
+      logical, intent(out)           :: scalar
+      integer, intent(in), optional  :: position_
+!
+      call the_file%read_0_log_abstract_stream(scalar, position_)
+!
+   end subroutine read_0_log_stream_file
+!
+   subroutine read_1_log_stream_file(the_file, array, n, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in)     :: the_file
+      integer, intent(in)                :: n
+      logical, dimension(n), intent(out) :: array
+      integer, intent(in), optional      :: position_
+!
+      call the_file%read_1_log_abstract_stream(array, n, position_)
+!
+   end subroutine read_1_log_stream_file
+!
 !!
 !! Wrapper routines for write_real_dp_abstract_stream
-!! that accept rank 2, 3, and 4 arrays
+!! that accept scalars and rank 1, 2, 3, and 4 arrays
+!!
+!! The wrapper for scalars and rank 1 are needed because ifort does not permit 
+!! a generic procedure pointer to a routine of the parent class
 !!
 !! see documentation below
 !!
+!
+   subroutine write_0_real_dp_stream_file(the_file, scalar, position_)
+!!
+!!    write rank 0 real dp
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Mar 2020
+!!
+!!    scalar: real double precision scalar
+!!
+!!    position_:  optional integer, position to write to in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
+!!
+      implicit none
+!
+      class(stream_file), intent(in) :: the_file
+      real(dp), intent(in)           :: scalar
+      integer, intent(in), optional  :: position_
+!
+      call the_file%write_0_real_dp_abstract_stream(scalar, position_)
+!
+   end subroutine write_0_real_dp_stream_file
+!
+   subroutine write_1_real_dp_stream_file(the_file, array, n, position_)
+!!
+!!    write rank 1 real dp
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Mar 2020
+!!
+!!    array: real double precision array of length n
+!!
+!!    n: total length of array (Number of elements)
+!!
+!!    position_:  optional integer, position to write to in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
+!!
+      implicit none
+!
+      class(stream_file), intent(in)     :: the_file
+      integer, intent(in)                :: n
+      real(dp), dimension(n), intent(in) :: array
+      integer, intent(in), optional      :: position_
+!
+      call the_file%write_1_real_dp_abstract_stream(array, n, position_)
+!
+   end subroutine write_1_real_dp_stream_file
 !
    subroutine write_2_real_dp_stream_file(the_file, array, n, position_)
 !!
@@ -396,76 +611,98 @@ contains
 !!
 !!    n: total length of array (Number of elements)
 !!
-!!    position_:  optional integer, position to read from in file
+!!    position_:  optional integer, position to write to in file
 !!                positions counted in bytes, starting at 1
 !!                default: current file pointer position
 !!
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
+      class(stream_file), intent(in)       :: the_file
       real(dp), dimension(:,:), intent(in) :: array
-      integer, intent(in), optional :: position_
+      integer, intent(in)                  :: n
+      integer, intent(in), optional        :: position_
 !
-      call the_file%write_real_dp(array, n, position_)
+      call the_file%write_1_real_dp_stream_file(array, n, position_)
 !
    end subroutine write_2_real_dp_stream_file
-!
 !
    subroutine write_3_real_dp_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
+      class(stream_file), intent(in)         :: the_file
       real(dp), dimension(:,:,:), intent(in) :: array
-      integer, intent(in), optional :: position_
+      integer, intent(in)                    :: n
+      integer, intent(in), optional          :: position_
 !
-      call the_file%write_real_dp(array, n, position_)
+      call the_file%write_1_real_dp_stream_file(array, n, position_)
 !
    end subroutine write_3_real_dp_stream_file
-!
 !
    subroutine write_4_real_dp_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
+      class(stream_file), intent(in)           :: the_file
       real(dp), dimension(:,:,:,:), intent(in) :: array
-      integer, intent(in), optional :: position_
+      integer, intent(in)                      :: n
+      integer, intent(in), optional            :: position_
 !
-      call the_file%write_real_dp(array, n, position_)
+      call the_file%write_1_real_dp_stream_file(array, n, position_)
 !
    end subroutine write_4_real_dp_stream_file
 !
-!  Complex arrays
+!  Complex
+!
+   subroutine write_0_complex_dp_stream_file(the_file, scalar, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in) :: the_file
+      complex(dp), intent(in)        :: scalar
+      integer, intent(in), optional  :: position_
+!
+      call the_file%write_0_complex_dp_abstract_stream(scalar, position_)
+!
+   end subroutine write_0_complex_dp_stream_file
+!
+   subroutine write_1_complex_dp_stream_file(the_file, array, n, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in)        :: the_file
+      integer, intent(in)                   :: n
+      complex(dp), dimension(n), intent(in) :: array
+      integer, intent(in), optional         :: position_
+!
+      call the_file%write_1_complex_dp_abstract_stream(array, n, position_)
+!
+   end subroutine write_1_complex_dp_stream_file
 !
    subroutine write_2_complex_dp_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
+      class(stream_file), intent(in)          :: the_file
       complex(dp), dimension(:,:), intent(in) :: array
-      integer, intent(in), optional :: position_
+      integer, intent(in)                     :: n
+      integer, intent(in), optional           :: position_
 !
-      call the_file%write_complex_dp(array, n, position_)
+      call the_file%write_1_complex_dp_stream_file(array, n, position_)
 !
    end subroutine write_2_complex_dp_stream_file
-!
 !
    subroutine write_3_complex_dp_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
+      class(stream_file), intent(in)            :: the_file
       complex(dp), dimension(:,:,:), intent(in) :: array
-      integer, intent(in), optional :: position_
+      integer, intent(in)                       :: n
+      integer, intent(in), optional             :: position_
 !
-      call the_file%write_complex_dp(array, n, position_)
+      call the_file%write_1_complex_dp_stream_file(array, n, position_)
 !
    end subroutine write_3_complex_dp_stream_file
 !
@@ -474,100 +711,173 @@ contains
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
+      class(stream_file), intent(in)              :: the_file
       complex(dp), dimension(:,:,:,:), intent(in) :: array
-      integer, intent(in), optional :: position_
+      integer, intent(in)                         :: n
+      integer, intent(in), optional               :: position_
 !
-      call the_file%write_complex_dp(array, n, position_)
+      call the_file%write_1_complex_dp_stream_file(array, n, position_)
 !
    end subroutine write_4_complex_dp_stream_file
 !
-!  64-bit integer arrays
+!  64-bit integer
+!
+   subroutine write_0_int_64_stream_file(the_file, scalar, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in) :: the_file
+      integer(i64), intent(in)       :: scalar
+      integer, intent(in), optional  :: position_
+!
+      call the_file%write_0_int_64_abstract_stream(scalar, position_)
+!
+   end subroutine write_0_int_64_stream_file
+!
+   subroutine write_1_int_64_stream_file(the_file, array, n, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in)         :: the_file
+      integer, intent(in)                    :: n
+      integer(i64), dimension(n), intent(in) :: array
+      integer, intent(in), optional          :: position_
+!
+      call the_file%write_1_int_64_abstract_stream(array, n, position_)
+!
+   end subroutine write_1_int_64_stream_file
 !
    subroutine write_2_int_64_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
+      class(stream_file), intent(in)           :: the_file
       integer(i64), dimension(:,:), intent(in) :: array
-      integer, intent(in), optional :: position_
+      integer, intent(in)                      :: n
+      integer, intent(in), optional            :: position_
 !
-      call the_file%write_int_64(array, n, position_)
+      call the_file%write_1_int_64_stream_file(array, n, position_)
 !
    end subroutine write_2_int_64_stream_file
-!
 !
    subroutine write_3_int_64_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
+      class(stream_file), intent(in)             :: the_file
       integer(i64), dimension(:,:,:), intent(in) :: array
-      integer, intent(in), optional :: position_
+      integer, intent(in)                        :: n
+      integer, intent(in), optional              :: position_
 !
-      call the_file%write_int_64(array, n, position_)
+      call the_file%write_1_int_64_stream_file(array, n, position_)
 !
    end subroutine write_3_int_64_stream_file
-!
 !
    subroutine write_4_int_64_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
+      class(stream_file), intent(in)               :: the_file
       integer(i64), dimension(:,:,:,:), intent(in) :: array
-      integer, intent(in), optional :: position_
+      integer, intent(in)                          :: n
+      integer, intent(in), optional                :: position_
 !
-      call the_file%write_int_64(array, n, position_)
+      call the_file%write_1_int_64_stream_file(array, n, position_)
 !
    end subroutine write_4_int_64_stream_file 
 !
-!  32-bit integer arrays
+!  32-bit integer
+!
+   subroutine write_0_int_32_stream_file(the_file, scalar, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in) :: the_file
+      integer(i32), intent(in)       :: scalar
+      integer, intent(in), optional  :: position_
+!
+      call the_file%write_0_int_32_abstract_stream(scalar, position_)
+!
+   end subroutine write_0_int_32_stream_file
+!
+   subroutine write_1_int_32_stream_file(the_file, array, n, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in)         :: the_file
+      integer, intent(in)                    :: n
+      integer(i32), dimension(n), intent(in) :: array
+      integer, intent(in), optional          :: position_
+!
+      call the_file%write_1_int_32_abstract_stream(array, n, position_)
+!
+   end subroutine write_1_int_32_stream_file
 !
    subroutine write_2_int_32_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
+      class(stream_file), intent(in)           :: the_file
       integer(i32), dimension(:,:), intent(in) :: array
-      integer, intent(in), optional :: position_
+      integer, intent(in)                      :: n
+      integer, intent(in), optional            :: position_
 !
-      call the_file%write_int_32(array, n, position_)
+      call the_file%write_1_int_32_stream_file(array, n, position_)
 !
    end subroutine write_2_int_32_stream_file
-!
 !
    subroutine write_3_int_32_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
+      class(stream_file), intent(in)             :: the_file
       integer(i32), dimension(:,:,:), intent(in) :: array
-      integer, intent(in), optional :: position_
+      integer, intent(in)                        :: n
+      integer, intent(in), optional              :: position_
 !
-      call the_file%write_int_32(array, n, position_)
+      call the_file%write_1_int_32_stream_file(array, n, position_)
 !
    end subroutine write_3_int_32_stream_file
-!
 !
    subroutine write_4_int_32_stream_file(the_file, array, n, position_)
 !
       implicit none
 !
-      class(stream_file), intent(in) :: the_file
-      integer, intent(in) :: n
+      class(stream_file), intent(in)               :: the_file
       integer(i32), dimension(:,:,:,:), intent(in) :: array
-      integer, intent(in), optional :: position_
+      integer, intent(in)                          :: n
+      integer, intent(in), optional                :: position_
 !
-      call the_file%write_int_32(array, n, position_)
+      call the_file%write_1_int_32_stream_file(array, n, position_)
 !
    end subroutine write_4_int_32_stream_file
+!
+!  Logicals
+!
+   subroutine write_0_log_stream_file(the_file, scalar, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in) :: the_file
+      logical, intent(in)            :: scalar
+      integer, intent(in), optional  :: position_
+!
+      call the_file%write_0_log_abstract_stream(scalar, position_)
+!
+   end subroutine write_0_log_stream_file
+!
+   subroutine write_1_log_stream_file(the_file, array, n, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in)    :: the_file
+      integer, intent(in)               :: n
+      logical, dimension(n), intent(in) :: array
+      integer, intent(in), optional     :: position_
+!
+      call the_file%write_1_log_abstract_stream(array, n, position_)
+!
+   end subroutine write_1_log_stream_file
 !
 !
 end module stream_file_class
