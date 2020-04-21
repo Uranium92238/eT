@@ -3260,11 +3260,11 @@ contains
 !
 !           only 1 right vector has significant overlap with the left vector    
 !
-            if(abs(overlap_lr(max_overlap)) .lt. threshold**2) then
+            if(abs(overlap_lr(max_overlap)) .lt. threshold) then
 !
                call output%printf('m', 'Overlap of (i0). left and right &
                                  &vector less than threshold: (e8.3).', &
-                                  reals=[threshold**2], ints=[p])
+                                  reals=[threshold], ints=[p])
 !
                call output%error_msg('Trying to binormalize nonoverlapping vectors.')
 !
@@ -3319,11 +3319,11 @@ contains
 !
 !           Sanity check that the left and corresponding right vector are not orthogonal
 !
-            if(abs(overlap_L_R) .lt. threshold**2) then
+            if(abs(overlap_L_R) .lt. threshold) then
 !
                call output%printf('m', 'Overlap of (i0). left and right &
                                  &vector less than threshold: (e8.3).', &
-                                  reals=[threshold**2], ints=[p])
+                                  reals=[threshold], ints=[p])
 !
                call output%error_msg('Trying to binormalize nonoverlapping vectors.')
 !
