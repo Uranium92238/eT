@@ -447,7 +447,7 @@ contains
 !
       type(timings), allocatable :: timer
 !
-      integer :: rec0, rec1
+      integer :: req0, req1
 !
       timer = timings('Jacobian doubles D1', pl='verbose')
       call timer%turn_on()
@@ -459,13 +459,13 @@ contains
 !
 !     Prepare for batching over index a
 !
-      rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
+      req0 = wf%n_o*wf%integrals%n_J*wf%n_v
 !
-      rec1 = wf%n_v*wf%integrals%n_J + 2*(wf%n_v**2)*(wf%n_o)
+      req1 = wf%n_v*wf%integrals%n_J + 2*(wf%n_v**2)*(wf%n_o)
 !
       batch_a = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_a, rec0, rec1)
+      call mem%batch_setup(batch_a, req0, req1)
 !
       do current_a_batch = 1, batch_a%num_batches
 !
@@ -528,10 +528,8 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)          :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o)      :: rho_aibj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_aikj
-      real(dp), dimension(:,:,:,:), allocatable :: g_aijk
+      real(dp), dimension(:,:,:,:), allocatable :: g_kjai
       real(dp), dimension(:,:,:,:), allocatable :: g_aibc
-      real(dp), dimension(:,:,:,:), allocatable :: rho_baij
 !
       integer :: current_b_batch
 !
@@ -539,59 +537,45 @@ contains
 !
       type(timings), allocatable :: timer
 !
-      integer :: rec0, rec1
+      integer :: req0, req1
 !
       timer = timings('Jacobian doubles A2', pl='verbose')
       call timer%turn_on()
 !
 !     :: Term 1. - sum_k g_aikj c_bk ::
 !
-!     Calculate g_aikj
+!     rho_bjai =- c_bk g_kjai 
 !
-      call mem%alloc(g_aikj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call mem%alloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%get_vooo(g_aikj)
+      call wf%get_oovo(g_kjai)
 !
-!     Reorder g_aikj to g_aijk
-!
-      call mem%alloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-!
-      call sort_1234_to_1243(g_aikj, g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-!
-      call mem%dealloc(g_aikj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-!
-      call mem%alloc(rho_baij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call dgemm('N', 'T',              &
+      call dgemm('N', 'N',              &
                   wf%n_v,               &
                   (wf%n_v)*(wf%n_o)**2, &
                   wf%n_o,               &
                   -one,                 &
                   c_ai,                 & ! c_b,k
                   wf%n_v,               &
-                  g_aijk,               & ! g_aij,k
-                  (wf%n_v)*(wf%n_o)**2, &
-                  zero,                 &
-                  rho_baij,             & ! rho_b,aij
+                  g_kjai,               & ! g_k,jai
+                  wf%n_o,               &
+                  one,                  &
+                  rho_aibj,             & ! rho_b,jai -> will be (ai,bj)-symmetrized 
                   wf%n_v)
 !
-      call mem%dealloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-!
-      call add_3124_to_1234(one, rho_baij, rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(rho_baij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
 !     :: Term 2. rho_aibj =+ sum_c g_aibc c_cj ::
 !
 !     We do the matrix multiplication as g_aib_c c_cj, batching over b.
 !
-      rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
+      req0 = wf%n_o*wf%integrals%n_J*wf%n_v
 !
-      rec1 = wf%n_v*wf%integrals%n_J + (wf%n_v**2)*(wf%n_o)
+      req1 = wf%n_v*wf%integrals%n_J + (wf%n_v**2)*(wf%n_o)
 !
       batch_b = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_b, rec0, rec1)
+      call mem%batch_setup(batch_b, req0, req1)
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -631,5 +615,6 @@ contains
       call timer%turn_off()
 !
    end subroutine jacobian_doubles_a2_doubles
+!
 !
 end submodule jacobian_doubles
