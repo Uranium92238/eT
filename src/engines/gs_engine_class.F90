@@ -63,7 +63,7 @@ module gs_engine_class
 !
       procedure :: restart_handling                      => restart_handling_gs_engine
 !
-      procedure :: do_visualization                      => do_visualization_gs_engine
+      procedure, nopass :: do_visualization              => do_visualization_gs_engine
 !
       procedure, nopass :: do_cholesky                   => do_cholesky_gs_engine
 !
@@ -487,10 +487,13 @@ contains
    end subroutine restart_handling_gs_engine
 !
 !
-   subroutine do_visualization_gs_engine(engine, wf)
+   subroutine do_visualization_gs_engine(wf, plotter, t1_density, tag)
 !!
 !!    Do visualization
 !!    Written by Tor S. Haugland, Nov 2019
+!!
+!!    Modified by Alexander C. Paul, April 2020
+!!    generalized to receive density as input parameter.
 !!
 !!    Writes the electron density to file.
 !!
@@ -501,36 +504,29 @@ contains
 !
       implicit none
 !
-      class(gs_engine) :: engine
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
-      type(visualization), allocatable :: plotter
+      type(visualization), intent(inout) :: plotter
 !
-      character(len=200) :: density_file_tag
-      real(dp), dimension(:,:), allocatable :: mo_density, density
+      real(dp), dimension(wf%n_mo,wf%n_mo), intent(in) :: t1_density
 !
-      call engine%tasks%print_('plotting')
+      character(len=*), intent(in) :: tag
 !
-      if (.not. allocated(wf%density) ) &
-         call output%error_msg("CC density not allocated")
-!
-!     Initialize the plotter
-!
-      plotter = visualization(wf%system, wf%n_ao)
+      real(dp), dimension(:,:), allocatable :: mo_density, ao_density
 !
 !     Transform the density matix from the t1 basis to the MO basis
 !
       call mem%alloc(mo_density, wf%n_mo, wf%n_mo)
 !
-      call dcopy(wf%n_mo**2, wf%density, 1, mo_density, 1)
+      call dcopy(wf%n_mo**2, t1_density, 1, mo_density, 1)
 !
       call wf%t1_transpose_transform(mo_density)
 !
 !     D_alpha,beta = sum_pq  D_pq C_alpha,p C_beta,q
 !
-      call mem%alloc(density, wf%n_ao, wf%n_ao)
+      call mem%alloc(ao_density, wf%n_ao, wf%n_ao)
 !
-      call symmetric_sandwich_right_transposition(density,                 &
+      call symmetric_sandwich_right_transposition(ao_density,              &
                                                   mo_density,              &
                                                   wf%orbital_coefficients, &
                                                   wf%n_ao,                 &
@@ -540,11 +536,9 @@ contains
 !
 !     Plot density
 !
-      density_file_tag = 'cc_gs_density'
+      call plotter%plot_density(wf%system, ao_density, trim(tag))
 !
-      call plotter%plot_density(wf%system, density, density_file_tag)
-!
-      call mem%dealloc(density, wf%n_ao, wf%n_ao)
+      call mem%dealloc(ao_density, wf%n_ao, wf%n_ao)
 !
    end subroutine do_visualization_gs_engine
 !
