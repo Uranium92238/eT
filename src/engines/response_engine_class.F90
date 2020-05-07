@@ -80,12 +80,18 @@ module response_engine_class
 !
       logical :: dipole_length
 !
+!     Plotting
+!
+      logical :: plot_tdm
+      integer :: n_states_to_plot
+      integer, dimension(:), allocatable :: states_to_plot
+!
    contains
 !
       procedure :: run                              => run_response_engine
 !
       procedure :: read_settings                    => read_settings_response_engine
-      procedure :: read_response_settings                => read_response_settings_response_engine
+      procedure :: read_response_settings           => read_response_settings_response_engine
 !
       procedure, nopass :: get_thresholds           => get_thresholds_response_engine
 !
@@ -168,13 +174,16 @@ contains
       engine%compute_polarizability = .false.
       engine%compute_t_response     = .false.
 !
-      engine%gs_restart            = .false.
-      engine%multipliers_restart   = .false.
-      engine%es_restart            = .false.
-      engine%es_restart_left       = .false.
-      engine%es_restart_right      = .false.
+      engine%gs_restart             = .false.
+      engine%multipliers_restart    = .false.
+      engine%es_restart             = .false.
+      engine%es_restart_left        = .false.
+      engine%es_restart_right       = .false.
 !
-      engine%dipole_length         = .false.
+      engine%dipole_length          = .false.
+!
+      engine%plot_density           = .false.
+      engine%plot_tdm               = .false.
 !
       call engine%read_settings()
 !
@@ -914,6 +923,44 @@ contains
 !
       endif
 !
+!     Plotting of transition densities
+!
+      engine%plot_density = &
+               input%requested_keyword_in_section('plot cc density', 'visualization')
+!
+      engine%plot_tdm = &
+               input%requested_keyword_in_section('plot transition densities', 'visualization')
+!
+      if (engine%plot_tdm) then
+!
+         if (input%requested_keyword_in_section('states to plot', 'visualization')) then
+!
+            engine%n_states_to_plot = input%get_n_elements_for_keyword_in_section(&
+                                      'states to plot', 'visualization')
+!
+            call mem%alloc(engine%states_to_plot, engine%n_states_to_plot)
+!
+            call input%get_array_for_keyword_in_section('states to plot',         &
+                                                        'visualization',          &
+                                                         engine%n_states_to_plot, &
+                                                         engine%states_to_plot)
+!
+         else
+!
+            call input%get_required_keyword_in_section('singlet states',   &
+                                                       'solver cc es',     &
+                                                        engine%n_states_to_plot)
+!
+            call mem%alloc(engine%states_to_plot, engine%n_states_to_plot)
+!
+            do k = 1, engine%n_states_to_plot
+               engine%states_to_plot(k) = k
+            end do
+!
+         end if
+!
+      end if
+!
    end subroutine read_response_settings_response_engine
 !
 !
@@ -1014,6 +1061,8 @@ contains
 !!    Computes the EOM dipole transition moments using transition densities 
 !!    and dipole moment integrals. 
 !!
+      use visualization_class, only: visualization
+!
       implicit none
 !
       class(response_engine) :: engine
@@ -1035,6 +1084,8 @@ contains
 !
       type(timings) :: EOM_timer
 !
+      type(visualization), allocatable :: visualizer
+!
       call engine%tasks%print_('transition moments')
 !
       EOM_timer = timings('Total time to calculate EOM transition moments.')
@@ -1044,6 +1095,19 @@ contains
       call wf%prepare_for_density()
       call wf%initialize_gs_density()
       call wf%construct_gs_density()
+!
+      if (engine%plot_density .or. engine%plot_tdm) then
+!
+!        Initialize the visualization tool
+!
+         call engine%tasks%print_('plotting')
+         visualizer = visualization(wf%system, wf%n_ao)
+!
+      endif
+!
+      if (engine%plot_density) &
+            call engine%do_visualization(wf, visualizer, wf%density, 'cc_gs_density')
+!
       call wf%initialize_transition_densities()
 !
       call output%printf('m', ':: EOM properties calculation', fs='(/t3,a)')
@@ -1129,6 +1193,17 @@ contains
             call output%printf('debug', 'Trace right transition density: (f15.12)', &
                                reals=[trace_r_tdm], fs='(t6,a/)')
 !
+            if (engine%plot_tdm) then
+               if (any(engine%states_to_plot .eq. state)) then
+!
+                  call engine%do_visualization(wf, visualizer, &
+                                               wf%right_transition_density, name_right)
+                  call engine%do_visualization(wf, visualizer, &
+                                               wf%left_transition_density, name_left)
+!
+               end if
+            end if
+!
          enddo
 !
          call mem%dealloc(operator, wf%n_mo, wf%n_mo, 3)
@@ -1139,6 +1214,8 @@ contains
       call wf%destruct_gs_density()
 !
       call EOM_timer%turn_off()
+!
+      if (engine%plot_tdm) call mem%dealloc(engine%states_to_plot, engine%n_states_to_plot)
 !
    end subroutine do_eom_transition_moments_response_engine
 !
@@ -1315,10 +1392,14 @@ contains
 !
       if (engine%polarizabilities) then
 !
-         call engine%tasks%add(label='polarizabilities',                         &
-                           description='Calculation of the '//trim(response_type)//' polarizabilities')
+         call engine%tasks%add(label='polarizabilities',          &
+                               description='Calculation of the '  &
+                               //trim(response_type)// ' polarizabilities')
 !
       endif
+!
+      if (engine%plot_density) &
+            call engine%tasks%add(label='plotting', description='Construct and plot densities')
 !
       engine%description = 'Calculates dipole transition moments and oscillator strengths between &
                            &the ground state and the excited states.'

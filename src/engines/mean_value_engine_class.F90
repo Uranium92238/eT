@@ -103,12 +103,12 @@ contains
 !
       end if
 !
-      engine%dipole                 = .false.
-      engine%quadrupole             = .false.
-      engine%plot_density           = .false.
+      engine%dipole               = .false.
+      engine%quadrupole           = .false.
+      engine%plot_density         = .false.
 !
-      engine%gs_restart            = .false.
-      engine%multipliers_restart   = .false.
+      engine%gs_restart           = .false.
+      engine%multipliers_restart  = .false.
 !
       call engine%read_settings()
 !
@@ -157,10 +157,14 @@ contains
 !!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use visualization_class, only: visualization
+!
       implicit none
 !
-      class(ccs)         :: wf
-      class(mean_value_engine)  :: engine
+      class(ccs)               :: wf
+      class(mean_value_engine) :: engine
+!
+      type(visualization), allocatable :: visualizer
 !
       call engine%tasks%print_('cholesky')
 !
@@ -190,7 +194,12 @@ contains
 !
       if (engine%plot_density) then
 !
-         call engine%do_visualization(wf)
+         call engine%tasks%print_('plotting')
+!
+!        Initialize the visualization tool
+!
+         visualizer = visualization(wf%system, wf%n_ao)
+         call engine%do_visualization(wf, visualizer, wf%density, 'cc_gs_density')
 !
       endif
 !
@@ -238,8 +247,7 @@ contains
                             description='Calculation of ground state properties')
 !
       if (engine%plot_density) &
-      call engine%tasks%add(label='plotting',                                 &
-                            description='Plot density')
+         call engine%tasks%add(label='plotting', description='Plot ground state density')
 !
       engine%description  = 'Calculates the time-independent expectation value of&
                             & one-electron operators A, < A > = < Λ | A | CC >.'

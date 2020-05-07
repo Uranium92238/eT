@@ -452,13 +452,15 @@ contains
 !
       visualization%name_    = 'visualization'
       visualization%required = .false.
-      visualization%keywords = [character(len=30) ::     &
-                                 'grid spacing',         &
-                                 'grid buffer',          &
-                                 'plot cc density',      &
-                                 'plot hf orbitals',     &
-                                 'plot hf density',      &
-                                 'plot hf active density']
+      visualization%keywords = [character(len=30) ::          &
+                                 'grid spacing',              &
+                                 'grid buffer',               &
+                                 'plot cc density',           &
+                                 'plot hf orbitals',          &
+                                 'plot hf density',           &
+                                 'plot hf active density',    &
+                                 'plot transition densities', &
+                                 'states to plot']
 !
       global_print%name_    = 'print'
       global_print%required = .false.

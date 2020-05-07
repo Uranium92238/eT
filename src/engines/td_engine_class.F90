@@ -58,7 +58,7 @@ module td_engine_class
       procedure :: do_fft_dipole_moment  => do_fft_dipole_moment_td_engine
       procedure :: do_fft_electric_field => do_fft_electric_field_td_engine
 !
-      procedure :: do_visualization      => do_visualization_td_engine
+      procedure :: do_td_visualization   => do_td_visualization_td_engine
 !
       procedure :: set_printables        => set_printables_td_engine
 !
@@ -220,7 +220,7 @@ contains
 !
 !     Plot density matrices
 !
-      if (engine%plot_density) call engine%do_visualization(wf)
+      if (engine%plot_density) call engine%do_td_visualization(wf)
 !
 !     Deallocate complex arrays
 !
@@ -420,7 +420,7 @@ contains
    end subroutine set_printables_td_engine
 !
 !
-   subroutine do_visualization_td_engine(engine, wf)
+   subroutine do_td_visualization_td_engine(engine, wf)
 !!
 !!    Do visualization
 !!    Written by Andreas Skeidsvoll, Dec 2019
@@ -529,7 +529,7 @@ contains
       call mem%dealloc(mo_density, wf%n_mo, wf%n_mo)
       call mem%dealloc(density, wf%n_ao, wf%n_ao)
 !
-   end subroutine do_visualization_td_engine
+   end subroutine do_td_visualization_td_engine
 !
 !
 end module td_engine_class
