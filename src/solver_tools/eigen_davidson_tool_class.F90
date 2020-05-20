@@ -274,7 +274,8 @@ contains
       real(dp), dimension(:,:), allocatable :: A_red ! Safe copy to avoid BLAS overwrite
 !
       integer :: info = 0, j = 0, i = 0, worksize
-      real(dp)  :: dummy =0.0, optwork
+      real(dp) :: dummy = 0.0
+      real(dp), dimension(1) :: optwork
 !
 !     Construct reduced space quantities
 !
@@ -309,7 +310,7 @@ contains
                   -1,                 &
                   info)
 !
-      worksize = int(optwork+0.01)
+      worksize = ceiling( optwork(1) )
 !
       call mem%alloc(work, worksize)
 !      
