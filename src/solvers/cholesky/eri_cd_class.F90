@@ -2248,17 +2248,17 @@ contains
 !
                   cholesky_tmp(1, :) = cholesky_new(qual_aop(qual_max(current_qual), 3), 1 : current_qual - 1)
 !
-                  call dgemm('N', 'T',                      &
-                           n_sig_aop,                       &
-                           1,                               &
-                           current_qual - 1,                &
-                           -one,                            &
-                           cholesky_new,                    &
-                           n_sig_aop,                       &
-                           cholesky_tmp,                    &
-                           1,                               &
-                           one,                             &
-                           cholesky_new(1, current_qual),   &
+                  call dgemm('N', 'T',                               &
+                           n_sig_aop,                                &
+                           1,                                        &
+                           current_qual - 1,                         &
+                           -one,                                     &
+                           cholesky_new,                             &
+                           n_sig_aop,                                &
+                           cholesky_tmp,                             &
+                           1,                                        &
+                           one,                                      &
+                           cholesky_new(1:n_sig_aop, current_qual),  &
                            n_sig_aop)
 !
                   call mem%dealloc(cholesky_tmp, 1, current_qual - 1)
