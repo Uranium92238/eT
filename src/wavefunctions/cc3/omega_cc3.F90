@@ -634,7 +634,6 @@ contains
 !
       call wf%g_bdck_t%close_()
 !
-!
 !     (db|kc)
 !     Same batching
 !
@@ -664,7 +663,6 @@ contains
       enddo
 !
       call wf%g_dbkc_t%close_()
-!
 !
 !     (lj|ck)
 !
@@ -730,7 +728,6 @@ contains
 !
       call wf%g_jlkc_t%close_()
 !
-!
 !     (jb|kc)
 !
       call mem%alloc(v2_help,wf%n_v,wf%n_v)
@@ -794,16 +791,16 @@ contains
                                         L_jbic, L_kbic, L_kbjc,    &
                                         L_ibjc, L_ibkc, L_jbkc)
 !!
-!!    omega_cc3_a_n6
+!!    omega cc3 n6 terms
 !!
 !!    Calculate the triples contribution to omega1 and
 !!    the Fock contribution to omega2 scaling as n^6
 !!
 !!    Written by Rolf H. Myhre, January 2019
 !!
-!!    omega^a_i += sum_bcjk (t^abc_ijk - t^cba_ijk)*L_jbkc
+!!    omega^a_i += sum_bcjk (t^abc_ijk - t^cba_ijk) L_jbkc
 !!    
-!!    omega^ab_ij += P^{ab}_{ij}sum_ck (t^abc_ijk - t^cba_ijk)*F_kc
+!!    omega^ab_ij += P^{ab}_{ij}sum_ck (t^abc_ijk - t^cba_ijk) F_kc
 !!
       implicit none
 !
@@ -826,13 +823,12 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_ibkc
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbkc
 !
-!
 !     Construct u_abc = t_abc - t_cba
 !     Zero if i == k, but this is never true
 !
       call construct_123_minus_321(t_abc, u_abc, wf%n_v)
 !
-!     omega_ai += sum_bc (t^abc - t^cba)*L_jbkc
+!     omega_ai += sum_bc (t^abc - t^cba) L_jbkc
 !
       call dgemv('N', &
                  wf%n_v, &
@@ -846,7 +842,7 @@ contains
                  omega1(:,i), &
                  1)
 !
-!     omega_abij += sum_c (t^abc - t^cba)*F_kc
+!     omega_abij += sum_c (t^abc - t^cba) F_kc
 !
       call dgemv('N', &
                  wf%n_v**2, &
@@ -860,8 +856,7 @@ contains
                  omega2(:,:,i,j), &
                  1)
 !
-!
-!     omega_ak += sum_cb (t^cba - t^abc)*L_jbic
+!     omega_ak += sum_cb (t^cba - t^abc) L_jbic
 !
       call dgemv('N', &
                  wf%n_v, &
@@ -875,7 +870,7 @@ contains
                  omega1(:,k), &
                  1)
 !
-!     omega_abkj += sum_c (t^cba - t^abc)*F_ic
+!     omega_abkj += sum_c (t^cba - t^abc) F_ic
 !
       call dgemv('N', &
                  wf%n_v**2, &
@@ -897,7 +892,7 @@ contains
 !
          call construct_132_minus_312(t_abc, u_abc, wf%n_v)
 !
-!        omega_ai += sum_cb (t^acb - t^cab)*L_kbjc
+!        omega_ai += sum_cb (t^acb - t^cab) L_kbjc
 !
          call dgemv('N', &
                     wf%n_v, &
@@ -911,7 +906,7 @@ contains
                     omega1(:,i), &
                     1)
 !
-!        omega_abji += sum_c (t^acb - t^cab)*F_jc
+!        omega_abik += sum_c (t^acb - t^cab) F_jc
 !
          call dgemv('N', &
                     wf%n_v**2, &
@@ -925,8 +920,7 @@ contains
                     omega2(:,:,i,k), &
                     1)
 !
-!
-!           omega_aj += sum_cb (t^cab - t^acb)*L_kbic
+!           omega_aj += sum_cb (t^cab - t^acb) L_kbic
 !
             call dgemv('N', &
                        wf%n_v, &
@@ -940,7 +934,7 @@ contains
                        omega1(:,j), &
                        1)
 !
-!           omega_abjk += sum_c (t^cab - t^acb)*F_ic
+!           omega_abjk += sum_c (t^cab - t^acb) F_ic
 !
             call dgemv('N', &
                        wf%n_v**2, &
@@ -954,13 +948,12 @@ contains
                        omega2(:,:,j,k), &
                        1)
 !
-!
 !        Construct u_abc = t_bac - t_bca
 !        This is zero if j == k
 !
          call construct_213_minus_231(t_abc, u_abc, wf%n_v)
 !
-!        omega_aj += sum_cb (t^bac - t^bca)*L_ibkc
+!        omega_aj += sum_cb (t^bac - t^bca) L_ibkc
 !
          call dgemv('N', &
                     wf%n_v, &
@@ -974,7 +967,7 @@ contains
                     omega1(:,j), &
                     1)
 !
-!        omega_abij += sum_c (t^bac - t^bca)*F_kc
+!        omega_abji += sum_c (t^bac - t^bca) F_kc
 !
          call dgemv('N', &
                     wf%n_v**2, &
@@ -987,7 +980,6 @@ contains
                     one, &
                     omega2(:,:,j,i), &
                     1)
-!
 !
 !        omega_ak += sum_cb (t^bca - t^bac)*L_ibjc
 !
@@ -1003,7 +995,7 @@ contains
                     omega1(:,k), &
                     1)
 !
-!        omega_abki += sum_c (t^bca - t^bac)*F_jc
+!        omega_abki += sum_c (t^bca - t^bac) F_jc
 !
          call dgemv('N', &
                     wf%n_v**2, &
@@ -1027,15 +1019,15 @@ contains
                                         g_dbic, g_dbjc, g_dbkc, &
                                         g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
 !!
-!!    omega_cc3_a_n7
+!!    omega cc3 n7 terms
 !!
 !!    Written by Rolf H. Myhre, January 2019
 !!
 !!    Calculate the triples contribution to omega2. Scaling as n^7
 !!
-!!    omega_abli -= P^ab_li sum_cjk(2t^bac_ijk - t^bca_ijk - t^cab_ijk)*g_jlkc
+!!    omega_ablj -= P^ab_lj sum_cik(2t^abc_ijk - t^cba_ijk - t^acb_ijk) g_ilkc
 !!
-!!    omega_adij -= P^ad_ij sum_bck(2t^abc_ijk - t^cba_ijk - t^acb_ijk)*g_dbkc
+!!    omega_adij += P^ad_ij sum_bck(2t^abc_ijk - t^cba_ijk - t^acb_ijk) g_dbkc
 !!
       implicit none
 !
@@ -1060,11 +1052,11 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_ilkc
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_jlkc
 !
-!     construct u_abc = 2*t_abc - t_acb - t_cba
+!     construct u_abc = 2t_abc - t_acb - t_cba
 !
       call construct_123_min_132_min_321(t_abc, u_abc, wf%n_v)
 !
-!     omega_adij += sum_bc (2*t_abc - t_acb - t_cba)*g_dbkc
+!     omega_adij += sum_bc (2t_abc - t_acb - t_cba) g_dbkc
 !
       call dgemm('N','N', &
                  wf%n_v, &
@@ -1079,8 +1071,7 @@ contains
                  omega2(:,:,i,j), &
                  wf%n_v)
 !
-!
-!     omega_ablj += sum_c (2*t_abc - t_acb - t_cba)*g_ilkc
+!     omega_ablj += sum_c (2t_abc - t_acb - t_cba) g_ilkc
 !
       call dgemm('N','N', &
                  wf%n_v**2, &
@@ -1098,11 +1089,11 @@ contains
 !
       if (j .ne. i) then
 !
-!        resort to u_bac = 2*t_bac - t_bca - t_cab
+!        resort to u_bac = 2t_bac - t_bca - t_cab
 !      
          call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
 !      
-!        omega_adji += sum_bc (2*t_bac - t_bca - t_cab)*g_dbkc
+!        omega_adji += sum_bc (2t_bac - t_bca - t_cab) g_dbkc
 !      
          call dgemm('N','N', &
                     wf%n_v, &
@@ -1117,7 +1108,7 @@ contains
                     omega2(:,:,j,i), &
                     wf%n_v)
 !      
-!        omega_abli += sum_c (2*t_bac - t_bca - t_cab)*g_jlkc
+!        omega_abli += sum_c (2t_bac - t_bca - t_cab) g_jlkc
 !      
          call dgemm('N','N', &
                     wf%n_v**2, &
@@ -1134,12 +1125,11 @@ contains
 !
       end if ! j .ne. i
 !
-!
-!     construct u_cba = 2*t_cba - t_abc - t_bca
+!     construct u_cba = 2t_cba - t_abc - t_bca
 !
       call construct_321_min_231_min_123(t_abc, u_abc, wf%n_v)
 !
-!     omega_adkj += sum_bc (2*t_cba - t_abc - t_bca)*g_dbic
+!     omega_adkj += sum_bc (2t_cba - t_abc - t_bca) g_dbic
 !
       call dgemm('N','N', &
                  wf%n_v, &
@@ -1154,7 +1144,7 @@ contains
                  omega2(:,:,k,j), &
                  wf%n_v)
 !
-!     omega_ablj += sum_c (2*t_cba - t_abc - t_bca)*g_klic
+!     omega_ablj += sum_c (2t_cba - t_abc - t_bca) g_klic
 !
       call dgemm('N','N', &
                  wf%n_v**2, &
@@ -1169,15 +1159,13 @@ contains
                  omega2(:,:,:,j), &
                  wf%n_v**2)
 !
-!
       if (j .ne. k) then
 !
-!        resort to u_cab = 2*t_cab - t_acb - t_bac
+!        resort to u_cab = 2t_cab - t_acb - t_bac
 !
          call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
 !
-!
-!        omega_adjk += sum_bc (2*t_cab - t_acb - t_bac)*g_dbic
+!        omega_adjk += sum_bc (2t_cab - t_acb - t_bac) g_dbic
 !
          call dgemm('N','N', &
                     wf%n_v, &
@@ -1192,7 +1180,7 @@ contains
                     omega2(:,:,j,k), &
                     wf%n_v)
 !
-!        omega_ablk += sum_c (2*t_cab - t_acb - t_bac)*g_jlic
+!        omega_ablk += sum_c (2t_cab - t_acb - t_bac) g_jlic
 !
          call dgemm('N','N', &
                     wf%n_v**2, &
@@ -1207,14 +1195,13 @@ contains
                     omega2(:,:,:,k), &
                     wf%n_v**2)
 !
-!
          if (j .ne. i) then
 !
-!        construct u_acb = 2*t_acb - t_abc - t_cab
+!        construct u_acb = 2t_acb - t_abc - t_cab
 !
             call construct_132_min_123_min_312(t_abc, u_abc, wf%n_v)
 !
-!           omega_adik += sum_bc (2*t_acb - t_abc - t_cab)*g_dbjc
+!           omega_adik += sum_bc (2t_acb - t_abc - t_cab) g_dbjc
 !
             call dgemm('N','N', &
                        wf%n_v, &
@@ -1229,8 +1216,7 @@ contains
                        omega2(:,:,i,k), &
                        wf%n_v)
 !
-!
-!              omega_ablk += sum_c (2*t_acb - t_abc - t_cab)*g_iljc
+!              omega_ablk += sum_c (2t_acb - t_abc - t_cab) g_iljc
 !
                call dgemm('N','N', &
                           wf%n_v**2, &
@@ -1245,12 +1231,11 @@ contains
                           omega2(:,:,:,k), &
                           wf%n_v**2)
 !
-!
-!           resort to u_abc = 2*t_bca - t_bac - t_cba
+!           resort to u_abc = 2t_bca - t_bac - t_cba
 !
             call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
 !
-!           omega_adki += sum_bc (2*t_bca - t_bac - t_cba)*g_dbjc
+!           omega_adki += sum_bc (2t_bca - t_bac - t_cba) g_dbjc
 !
             call dgemm('N','N', &
                        wf%n_v, &
@@ -1265,7 +1250,7 @@ contains
                        omega2(:,:,k,i), &
                        wf%n_v)
 !
-!           omega_abli += sum_c (2*t_bca - t_bac - t_cba)*g_kljc
+!           omega_abli += sum_c (2t_bca - t_bac - t_cba) g_kljc
 !
             call dgemm('N','N', &
                        wf%n_v**2, &
@@ -1282,7 +1267,6 @@ contains
 !
          end if ! j .ne. i
       end if ! k .ne. j
-!
 !
    end subroutine omega_cc3_a_n7_cc3
 !
