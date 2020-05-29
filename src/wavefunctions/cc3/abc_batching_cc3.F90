@@ -296,8 +296,8 @@ contains
 !!    Prepare integral files for L3 amplitudes in batches of a,b,c
 !!    Written by Alexander C. Paul, July 2019
 !!
-!!    (db|kc) ordered as dk,bc
-!!    (jl|kc) ordered as ljk,c
+!!    (db|kc) ordered as kd,bc
+!!    (jl|kc) ordered as jkl,c
 !!    L_jbkc  ordered as jk,bc
 !!
 !!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
