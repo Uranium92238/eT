@@ -21,37 +21,37 @@
      system
        name: H2O
      end system
- 
+
      do
        excited state
      end do
- 
+
      method
        hf
        lowmem-cc2
      end method
- 
+
      solver cholesky
        threshold: 1.0d-11
      end solver cholesky
- 
+
      solver scf
        energy threshold:   1.0d-11
        gradient threshold: 1.0d-11
      end solver scf
- 
+
      solver cc gs
        omega threshold:  1.0d-11
        energy threshold: 1.0d-11
      end solver cc gs
- 
+
      solver cc es
        algorithm:          non-linear davidson
        singlet states:     8
-       residual threshold: 1.0d-11
-       energy threshold:   1.0d-11
+       residual threshold: 1.0d-10
+       energy threshold:   1.0d-10
      end solver cc es
- 
+
 
   Running on 2 OMP thread(s)
   Memory available for calculation: 8.000000 GB
@@ -93,61 +93,6 @@
         2 H      4.489825923662     2.972325238015     0.000000000000        2
         3 H      2.045786790814     3.814481509116    -1.509125857502        3
      ==============================================================================
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
-
-  Performs a Cholesky decomposition of the two-electron electronic repulsion 
-  integrals in the atomic orbital basis,
-
-  (ab|cd) = sum_J L_ab^J L_cd^J.
-
-  Once the Cholesky basis has been determined, the vectors L^J are constructed 
-  and stored to disk. These may either be used directly, or be transformed 
-  to the MO basis for use in post-HF calculations. For more information, 
-  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
-
-  - Cholesky decomposition settings:
-
-     Target threshold is:   0.10E-10
-     Span factor:           0.10E-01
-     Max qual:                  1000
-
-  - Cholesky decomposition system details:
-
-     Total number of AOs:                    24
-     Total number of shell pairs:            78
-     Total number of AO pairs:              300
-
-     Significant shell pairs:                78
-     Significant AO pairs:                  300
-
-     Construct shell pairs:                  78
-     Construct AO pairs:                    300
-
-  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
-  -------------------------------------------------------------------------------------------------------
-     1               285 /      71       0.47383E+01         151             30              8550
-     2               217 /      59       0.47048E-01         236             99             21483
-     3               140 /      46       0.43027E-03         164            159             22260
-     4                97 /      31       0.36747E-05         120            229             22213
-     5                12 /       8       0.35637E-07          53            271              3252
-     6                 0 /       0       0.24142E-09           9            279                 0
-  -------------------------------------------------------------------------------------------------------
-
-  - Summary of Cholesky decomposition of electronic repulsion integrals:
-
-     Final number of Cholesky vectors: 279
-
- - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
-
-     Maximal difference between approximate and actual diagonal:              0.2123E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1110E-14
-
-  - Finished decomposing the ERIs.
-
-     Total wall time (sec):              0.09859
-     Total cpu time (sec):               0.15883
 
 
   :: RHF wavefunction
@@ -215,14 +160,14 @@
      5           -76.025035861617     0.1576E-03     0.1619E-04
      6           -76.025036231032     0.3045E-04     0.3694E-06
      7           -76.025036241563     0.1832E-05     0.1053E-07
-     8           -76.025036241596     0.1527E-06     0.3324E-10
-     9           -76.025036241597     0.5016E-07     0.7958E-12
-    10           -76.025036241597     0.1200E-07     0.7105E-13
-    11           -76.025036241597     0.1345E-08     0.9948E-13
-    12           -76.025036241597     0.1576E-09     0.2132E-12
-    13           -76.025036241597     0.5025E-10     0.8527E-13
-    14           -76.025036241597     0.1109E-10     0.4263E-13
-    15           -76.025036241597     0.1250E-11     0.4263E-13
+     8           -76.025036241596     0.1527E-06     0.3325E-10
+     9           -76.025036241597     0.5016E-07     0.9095E-12
+    10           -76.025036241597     0.1200E-07     0.1421E-13
+    11           -76.025036241597     0.1345E-08     0.0000E+00
+    12           -76.025036241597     0.1576E-09     0.1421E-13
+    13           -76.025036241597     0.5025E-10     0.0000E+00
+    14           -76.025036241597     0.1109E-10     0.2842E-13
+    15           -76.025036241597     0.1250E-11     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -246,8 +191,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.27351
-     Total cpu time (sec):               0.54951
+     Total wall time (sec):              0.45173
+     Total cpu time (sec):               0.85206
 
 
   :: LOW MEMORY CC2 wavefunction
@@ -276,20 +221,79 @@
   This is a LOW MEMORY CC2 excited state calculation.
   The following tasks will be performed:
 
-     1) Preparation of MO basis and integrals
-     2) Calculation of the ground state (diis algorithm)
-     3) Calculation of the excited state (non-linear davidson algorithm)
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
+     4) Calculation of the excited state (non-linear davidson algorithm)
 
 
-  1) Preparation of MO basis and integrals
+  1) Cholesky decomposition of the electron repulsion integrals
+
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-10
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition system details:
+
+     Total number of AOs:                    24
+     Total number of shell pairs:            78
+     Total number of AO pairs:              300
+
+     Significant shell pairs:                78
+     Significant AO pairs:                  300
+
+     Construct shell pairs:                  78
+     Construct AO pairs:                    300
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               285 /      71       0.47383E+01         151             30              8550
+     2               217 /      59       0.47048E-01         236             99             21483
+     3               140 /      46       0.43027E-03         164            159             22260
+     4                97 /      31       0.36747E-05         120            229             22213
+     5                12 /       8       0.35637E-07          53            271              3252
+     6                 0 /       0       0.24142E-09           9            279                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 279
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.2123E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.1837E-14
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
 
+  - Finished decomposing the ERIs.
 
-  2) Calculation of the ground state (diis algorithm)
+     Total wall time (sec):              0.15805
+     Total cpu time (sec):               0.31805
+
+
+  2) Preparation of MO basis and integrals
+
+
+  3) Calculation of the ground state (diis algorithm)
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -322,7 +326,7 @@
     9           -76.230297137514     0.1408E-08     0.3389E-10
    10           -76.230297137525     0.1401E-09     0.1060E-10
    11           -76.230297137525     0.2253E-10     0.5826E-12
-   12           -76.230297137525     0.2285E-11     0.1847E-12
+   12           -76.230297137525     0.2286E-11     0.1847E-12
   ---------------------------------------------------------------
   Convergence criterion met in 12 iterations!
 
@@ -336,15 +340,15 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        1      4        0.008717979708
+        1      4       -0.008717979708
        13      3       -0.007398311090
         2      3        0.006036511999
-       14      4       -0.005035157293
-        7      3        0.004665111822
+       14      4        0.005035157293
+        7      3       -0.004665111822
         5      2        0.004082727106
         6      5        0.003544674850
        10      5       -0.003292616645
-        1      2       -0.003193347561
+        1      2        0.003193347561
         9      4       -0.002808643038
      ------------------------------------
 
@@ -352,11 +356,11 @@
 
   - Finished solving the LOW MEMORY CC2 ground state equations
 
-     Total wall time (sec):              0.01981
-     Total cpu time (sec):               0.03982
+     Total wall time (sec):              0.04238
+     Total cpu time (sec):               0.08238
 
 
-  3) Calculation of the excited state (non-linear davidson algorithm)
+  4) Calculation of the excited state (non-linear davidson algorithm)
      Calculating right vectors
 
    - Non-linear Davidson coupled cluster excited state solver
@@ -374,8 +378,8 @@
      Calculation type:    valence
      Excitation vectors:  right
 
-     Energy threshold:                0.10E-10
-     Residual threshold:              0.10E-10
+     Energy threshold:                0.10E-09
+     Residual threshold:              0.10E-09
 
      Number of singlet states:               8
      Max number of iterations:             100
@@ -397,8 +401,14 @@
    7       0.830678258407      0.1054E+00        0.8307E+00
    8       0.872243522524      0.1305E+00        0.8722E+00
   ------------------------------------------------------------
-  Number of micro-iterations: 3
-  Number of transformations:  12
+
+     Starting on microiterations
+
+     Reduced space basis and transforms are stored on disk.
+
+     Number of micro iterations: 3
+     Number of transformations:  12
+
 
   Macro iteration: 2
 
@@ -413,8 +423,14 @@
    7       0.804281312413      0.1506E-01        0.2640E-01
    8       0.834451666885      0.2096E-01        0.3779E-01
   ------------------------------------------------------------
-  Number of micro-iterations: 3
-  Number of transformations:  11
+
+     Starting on microiterations
+
+     Reduced space basis and transforms are stored on disk.
+
+     Number of micro iterations: 3
+     Number of transformations:  11
+
 
   Macro iteration: 3
 
@@ -429,8 +445,14 @@
    7       0.805846965625      0.1855E-02        0.1566E-02
    8       0.836598995075      0.2274E-02        0.2147E-02
   ------------------------------------------------------------
-  Number of micro-iterations: 3
-  Number of transformations:  12
+
+     Starting on microiterations
+
+     Reduced space basis and transforms are stored on disk.
+
+     Number of micro iterations: 3
+     Number of transformations:  12
+
 
   Macro iteration: 4
 
@@ -445,8 +467,14 @@
    7       0.805776148645      0.2608E-03        0.7082E-04
    8       0.836493357993      0.2123E-03        0.1056E-03
   ------------------------------------------------------------
-  Number of micro-iterations: 3
-  Number of transformations:  11
+
+     Starting on microiterations
+
+     Reduced space basis and transforms are stored on disk.
+
+     Number of micro iterations: 3
+     Number of transformations:  11
+
 
   Macro iteration: 5
 
@@ -461,8 +489,14 @@
    7       0.805779343539      0.1448E-04        0.3195E-05
    8       0.836498476780      0.2171E-04        0.5119E-05
   ------------------------------------------------------------
-  Number of micro-iterations: 3
-  Number of transformations:  12
+
+     Starting on microiterations
+
+     Reduced space basis and transforms are stored on disk.
+
+     Number of micro iterations: 3
+     Number of transformations:  12
+
 
   Macro iteration: 6
 
@@ -477,8 +511,14 @@
    7       0.805779225065      0.7761E-06        0.1185E-06
    8       0.836498250722      0.2090E-05        0.2261E-06
   ------------------------------------------------------------
-  Number of micro-iterations: 3
-  Number of transformations:  14
+
+     Starting on microiterations
+
+     Reduced space basis and transforms are stored on disk.
+
+     Number of micro iterations: 3
+     Number of transformations:  14
+
 
   Macro iteration: 7
 
@@ -493,8 +533,14 @@
    7       0.805779228462      0.5015E-07        0.3397E-08
    8       0.836498258034      0.1863E-06        0.7312E-08
   ------------------------------------------------------------
-  Number of micro-iterations: 4
-  Number of transformations:  10
+
+     Starting on microiterations
+
+     Reduced space basis and transforms are stored on disk.
+
+     Number of micro iterations: 4
+     Number of transformations:  10
+
 
   Macro iteration: 8
 
@@ -509,53 +555,71 @@
    7       0.805779228473      0.1090E-07        0.1058E-10
    8       0.836498257881      0.6837E-08        0.1526E-09
   ------------------------------------------------------------
-  Number of micro-iterations: 3
-  Number of transformations:  12
+
+     Starting on microiterations
+
+     Reduced space basis and transforms are stored on disk.
+
+     Number of micro iterations: 3
+     Number of transformations:  12
+
 
   Macro iteration: 9
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1       0.293220969372      0.9140E-09        0.5108E-11
-   2       0.367474512523      0.1389E-08        0.1375E-10
+   1       0.293220969372      0.9140E-09        0.5109E-11
+   2       0.367474512523      0.1389E-08        0.1376E-10
    3       0.381243768931      0.1055E-09        0.9794E-11
    4       0.456801087009      0.1003E-08        0.1936E-10
-   5       0.548684465850      0.3054E-09        0.1386E-11
-   6       0.657552697769      0.7600E-09        0.2209E-10
-   7       0.805779228457      0.4852E-09        0.1588E-10
+   5       0.548684465850      0.3054E-09        0.1387E-11
+   6       0.657552697769      0.7600E-09        0.2210E-10
+   7       0.805779228457      0.4856E-09        0.1588E-10
    8       0.836498257865      0.9612E-09        0.1662E-10
   ------------------------------------------------------------
-  Number of micro-iterations: 3
-  Number of transformations:  13
+
+     Starting on microiterations
+
+     Reduced space basis and transforms are stored on disk.
+
+     Number of micro iterations: 3
+     Number of transformations:  13
+
 
   Macro iteration: 10
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1       0.293220969371      0.6553E-11        0.9084E-12
-   2       0.367474512523      0.1096E-10        0.3482E-12
-   3       0.381243768930      0.9703E-10        0.4753E-12
-   4       0.456801087009      0.6755E-11        0.1170E-12
-   5       0.548684465851      0.1008E-09        0.3731E-12
+   1       0.293220969371      0.6558E-11        0.9082E-12
+   2       0.367474512523      0.1216E-10        0.3487E-12
+   3       0.381243768930      0.9703E-10        0.4755E-12
+   4       0.456801087009      0.6514E-11        0.1116E-12
+   5       0.548684465851      0.1039E-09        0.3693E-12
    6       0.657552697764      0.7393E-10        0.4420E-11
-   7       0.805779228458      0.5250E-10        0.1374E-11
-   8       0.836498257868      0.6756E-10        0.2863E-11
+   7       0.805779228458      0.3594E-10        0.1337E-11
+   8       0.836498257868      0.6756E-10        0.2862E-11
   ------------------------------------------------------------
-  Number of micro-iterations: 4
-  Number of transformations:  11
+
+     Starting on microiterations
+
+     Reduced space basis and transforms are stored on disk.
+
+     Number of micro iterations: 3
+     Number of transformations:  9
+
 
   Macro iteration: 11
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1       0.293220969371      0.6390E-11        0.4241E-13
-   2       0.367474512523      0.5834E-12        0.2143E-13
-   3       0.381243768930      0.8878E-11        0.4263E-13
-   4       0.456801087009      0.4052E-11        0.7438E-14
-   5       0.548684465851      0.2304E-11        0.4186E-13
-   6       0.657552697764      0.8014E-11        0.6561E-13
-   7       0.805779228458      0.3094E-11        0.1470E-12
-   8       0.836498257867      0.8106E-11        0.2509E-12
+   1       0.293220969371      0.6393E-11        0.4186E-13
+   2       0.367474512523      0.7726E-12        0.2259E-13
+   3       0.381243768930      0.8879E-11        0.4285E-13
+   4       0.456801087009      0.4520E-11        0.0000E+00
+   5       0.548684465851      0.2770E-11        0.4785E-13
+   6       0.657552697764      0.8015E-11        0.6595E-13
+   7       0.805779228458      0.3950E-11        0.1100E-12
+   8       0.836498257867      0.8106E-11        0.2495E-12
   ------------------------------------------------------------
   Convergence criterion met in 11 iterations!
 
@@ -570,16 +634,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      5       -0.994016987608
-        4      5        0.096374767026
+        1      5        0.994016987608
+        4      5       -0.096374767027
         5      5       -0.036359242966
        11      5        0.028679142459
         9      5        0.014236017136
-       15      4       -0.007389583978
-       14      5       -0.007376774757
-       18      5        0.007313247174
-        8      3       -0.006338812512
-       16      3        0.006257918125
+       15      4        0.007389583978
+       14      5        0.007376774757
+       18      5       -0.007313247174
+        8      3        0.006338812512
+       16      3       -0.006257918125
      ------------------------------------
 
      Electronic state nr. 2
@@ -592,15 +656,15 @@
         a       i         R(a,i)
      -----------------------------------
         2      5        0.986966342358
-        3      5        0.138968335867
-        7      5       -0.078834691721
+        3      5       -0.138968335867
+        7      5        0.078834691721
        13      5        0.017299182745
-        8      2       -0.005087289820
+        8      2        0.005087289820
         6      3       -0.004455971468
        12      5        0.003375580154
        10      3       -0.002517879652
-       19      5       -0.002003967571
-       16      2       -0.001632882574
+       19      5        0.002003967571
+       16      2        0.001632882574
      ------------------------------------
 
      Electronic state nr. 3
@@ -614,13 +678,13 @@
      -----------------------------------
         1      4       -0.991896061064
         4      4        0.079110826960
-        2      3        0.058701125593
+        2      3       -0.058701125593
         1      2       -0.047291566529
-        6      5        0.034531692723
+        6      5       -0.034531692723
         3      3        0.029292274596
-       11      4        0.028714351226
+       11      4       -0.028714351226
         7      3       -0.019787949875
-        9      4        0.019183459014
+        9      4       -0.019183459015
         4      2        0.015059230604
      ------------------------------------
 
@@ -633,15 +697,15 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        2      4        0.990263296480
+        2      4       -0.990263296480
         3      4        0.095338970348
         7      4       -0.080240284522
         1      3       -0.040934780065
         4      3        0.035537146376
         8      5       -0.016279669447
-        2      2        0.014817889754
-        9      3       -0.009125916183
-       13      4        0.009071766080
+        2      2       -0.014817889754
+        9      3        0.009125916183
+       13      4       -0.009071766080
        14      3       -0.008438425790
      ------------------------------------
 
@@ -656,12 +720,12 @@
      -----------------------------------
         1      3       -0.993932269055
         4      3        0.070773365648
-        2      4       -0.049668991349
-        5      3       -0.039994510465
-        3      4        0.035581319559
-        2      2        0.024493487208
-       11      3        0.021940977108
-        9      3        0.017062459945
+        2      4        0.049668991348
+        5      3        0.039994510466
+        3      4        0.035581319560
+        2      2       -0.024493487208
+       11      3       -0.021940977108
+        9      3       -0.017062459945
        14      3       -0.010650498612
         8      5        0.010032841047
      ------------------------------------
@@ -678,12 +742,12 @@
         2      3        0.983997885368
         6      5       -0.105728556573
         5      4       -0.086620296379
-        4      4        0.067111983419
-        1      4        0.056017669340
-        3      3        0.054108835469
-        7      3       -0.027948302872
+        4      4       -0.067111983419
+        1      4       -0.056017669340
+        3      3       -0.054108835469
+        7      3        0.027948302872
        11      2       -0.018681955768
-        1      2        0.018540992310
+        1      2       -0.018540992310
         9      2       -0.016582719602
      ------------------------------------
 
@@ -696,16 +760,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        3      5       -0.990902208575
+        3      5        0.990902208575
         2      5        0.121749945456
-       13      5       -0.046825499111
-        7      5        0.030126942611
-        8      2        0.008467297025
-        6      3        0.008393425202
-       12      5       -0.004644963942
-       10      3        0.004613958693
-        8      4       -0.001408331816
-       16      2        0.001040317003
+       13      5       -0.046825499110
+        7      5       -0.030126942610
+        8      2       -0.008467297025
+        6      3        0.008393425201
+       12      5       -0.004644963943
+       10      3        0.004613958694
+        8      4        0.001408331816
+       16      2       -0.001040317003
      ------------------------------------
 
      Electronic state nr. 8
@@ -717,16 +781,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        4      5        0.992743049174
-        1      5        0.080535631554
+        4      5       -0.992743049174
+        1      5       -0.080535631554
         5      5       -0.063578870265
-       14      5       -0.029980213068
-        8      3       -0.029942108125
+       14      5        0.029980213068
+        8      3        0.029942108125
         9      5       -0.023120855636
        10      4        0.018232146163
-       18      5        0.017730877006
-       17      5        0.015939720869
-       15      4       -0.014992140081
+       18      5       -0.017730877006
+       17      5       -0.015939720869
+       15      4        0.014992140081
      ------------------------------------
 
      - Electronic excitation energies:
@@ -740,7 +804,7 @@
         3                  0.381243768930       10.374171364083
         4                  0.456801087009       12.430190712951
         5                  0.548684465851       14.930464803445
-        6                  0.657552697764       17.892920287358
+        6                  0.657552697764       17.892920287359
         7                  0.805779228458       21.926369632465
         8                  0.836498257867       22.762276999889
      ---------------------------------------------------------------
@@ -748,12 +812,14 @@
 
   - Finished solving the LOW MEMORY CC2 excited state equations (right)
 
-     Total wall time (sec):              0.59742
-     Total cpu time (sec):               1.19337
+     Total wall time (sec):              1.15950
+     Total cpu time (sec):               2.31947
 
   - Timings for the LOW MEMORY CC2 excited state calculation
 
-     Total wall time (sec):              0.61983
-     Total cpu time (sec):               1.23978
+     Total wall time (sec):              1.36026
+     Total cpu time (sec):               2.72022
+
+     Peak memory usage during the execution of eT: 5.849592 MB
 
   eT terminated successfully!

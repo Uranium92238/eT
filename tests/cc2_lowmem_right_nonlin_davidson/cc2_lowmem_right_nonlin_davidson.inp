@@ -28,8 +28,8 @@ end solver cc gs
 solver cc es
   algorithm:          non-linear davidson
   singlet states:     8
-  residual threshold: 1.0d-11
-  energy threshold:   1.0d-11
+  residual threshold: 1.0d-10
+  energy threshold:   1.0d-10
 end solver cc es
 
 geometry
