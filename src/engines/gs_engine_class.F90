@@ -289,25 +289,34 @@ contains
          call output%printf('m', 'MP2 energy:               (f19.12)', &
                             reals=[wf%energy], fs='(t6,a)')
 !
-      elseif (trim(engine%gs_algorithm) == 'diis') then
+      else
 !
-         diis_solver = diis_cc_gs(wf, engine%gs_restart)
-         call diis_solver%run(wf)
-         call diis_solver%cleanup(wf)
+         if (trim(engine%gs_algorithm) == 'diis') then
 !
-      elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
+            diis_solver = diis_cc_gs(wf, engine%gs_restart)
+            call diis_solver%run(wf)
+            call diis_solver%cleanup(wf)
 !
-            if (trim(wf%name_) == 'cc2') then
+         elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
 !
-                call output%error_msg('Newton-Raphson not implemented for CC2')
+               if (trim(wf%name_) == 'cc2') then
 !
-            end if
+                  call output%error_msg('Newton-Raphson not implemented for CC2')
 !
-         newton_raphson_solver = newton_raphson_cc_gs(wf, engine%gs_restart)
-         call newton_raphson_solver%run(wf)
-         call newton_raphson_solver%cleanup(wf)
+               end if
 !
-      endif 
+            newton_raphson_solver = newton_raphson_cc_gs(wf, engine%gs_restart)
+            call newton_raphson_solver%run(wf)
+            call newton_raphson_solver%cleanup(wf)
+!
+         else 
+!
+            call output%error_msg('(a0) is not a valid ground state algorithm.', &
+                                  chars=[engine%gs_algorithm])
+!
+         endif 
+!
+      endif
 !
    end subroutine do_ground_state_gs_engine
 !
