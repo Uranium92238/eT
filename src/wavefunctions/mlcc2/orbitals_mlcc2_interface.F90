@@ -98,7 +98,7 @@
 !!
 !!    Constructs the M and N matrices,
 !!
-!!       M_ij += ( sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibj R_ajbl )
+!!       M_ij += ( sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibl R_ajbl )
 !!       N_ab += ( sum_i R_ai R_bi + 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
 !!
 !!    Used to construct CNTOs.
@@ -329,3 +329,57 @@
       class(mlcc2) :: wf
 !
    end subroutine check_orthonormality_of_MOs_mlcc2
+!
+!
+   module subroutine add_doubles_M_and_N_cnto_mlcc2(wf, M, N, doubles_file)
+!!
+!!    Add doubles M and N CNTO 
+!!    Written by Sarai D. Folkestad, Feb 2020
+!!
+!!    The CNTO matrices are defined as
+!!
+!!       M_ij = ( sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibl R_ajbl )
+!!       N_ab = ( sum_i R_ai R_bi + 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
+!!
+!!    In this routine the doubles part 
+!!
+!!       M_ij += ( 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibl R_ajbl )
+!!       N_ab += ( 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
+!!
+!!    is added for the R_aibj on doubles_file
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+      type(direct_stream_file) :: doubles_file
+      real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: M
+      real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: N
+!
+   end subroutine add_doubles_M_and_N_cnto_mlcc2
+!
+!
+   module subroutine construct_M_and_N_singles_cnto_mlcc2(wf, R_ai, M, N, set_to_zero)
+!!
+!!    Construct M and N
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Constructs the M and N matrices,
+!!
+!!       M_ij = ( sum_a R_ai R_aj )
+!!       N_ab = ( sum_i R_ai R_bi )
+!!
+!!    Used to construct CNTOs.
+!!
+!!    'set_to_zero' : determines if M and N are set to zero initially. This makes it possible for 
+!!    the routine ton be used to add to M and N if we are using more than one excitation vector 
+!!    to generate the CNTOs.
+!!
+      implicit none
+!
+      class(mlcc2), intent(inout) :: wf
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+      real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: M
+      real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: N
+      logical, intent(in) :: set_to_zero
+!
+   end subroutine construct_M_and_N_singles_cnto_mlcc2

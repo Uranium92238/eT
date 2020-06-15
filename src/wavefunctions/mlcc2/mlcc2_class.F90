@@ -156,7 +156,9 @@ module mlcc2_class
 !
       procedure :: construct_cntos                                   => construct_cntos_mlcc2
       procedure :: construct_M_and_N_cnto                            => construct_M_and_N_cnto_mlcc2
+      procedure :: construct_M_and_N_singles_cnto                    => construct_M_and_N_singles_cnto_mlcc2
       procedure :: ccs_calculation_for_cntos                         => ccs_calculation_for_cntos_mlcc2
+      procedure :: add_doubles_M_and_N_cnto                          => add_doubles_M_and_N_cnto_mlcc2
 !
       procedure :: construct_M_nto                                   => construct_M_nto_mlcc2
       procedure :: construct_ccs_nto_transformation_matrix           => construct_ccs_nto_transformation_matrix_mlcc2

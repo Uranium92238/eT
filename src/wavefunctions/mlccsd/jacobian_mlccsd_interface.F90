@@ -149,8 +149,9 @@
       implicit none
 !
       class(mlccsd) :: wf
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                                        :: c_ai
-      real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o), intent(inout) :: rho_aibj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+      real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, &
+                              wf%n_ccsd_v, wf%n_ccsd_o), intent(inout) :: rho_aibj
 !
      end subroutine jacobian_ccsd_c2_2_mlccsd
 !
@@ -173,9 +174,11 @@
       implicit none
 !
       class(mlccsd) :: wf
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                                        :: c_ai
-      real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o), intent(inout) :: rho_aibj
-      real(dp), dimension(wf%n_ccsd_o + wf%n_cc2_o, wf%n_ccsd_o, wf%n_ccsd_o + wf%n_cc2_o, wf%n_v), intent(in) :: g_ljkc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+      real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, &
+                  wf%n_ccsd_v, wf%n_ccsd_o), intent(inout) :: rho_aibj
+      real(dp), dimension(wf%n_ccsd_o + wf%n_cc2_o, wf%n_ccsd_o, &
+                  wf%n_ccsd_o + wf%n_cc2_o, wf%n_v), intent(in) :: g_ljkc
 !
      end subroutine jacobian_ccsd_c2_3_mlccsd
 !
@@ -198,9 +201,11 @@
       implicit none
 !
       class(mlccsd) :: wf
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                                        :: c_ai
-      real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o), intent(inout) :: rho_aibj
-      real(dp), dimension(wf%n_ccsd_o + wf%n_cc2_o, wf%n_ccsd_o, wf%n_v, wf%n_o), intent(in) :: L_ljck
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+      real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, &
+                  wf%n_ccsd_v, wf%n_ccsd_o), intent(inout) :: rho_aibj
+      real(dp), dimension(wf%n_ccsd_o + wf%n_cc2_o, &
+                  wf%n_ccsd_o, wf%n_v, wf%n_o), intent(in) :: L_ljck
 !
      end subroutine jacobian_ccsd_c2_4_mlccsd
 !
@@ -276,9 +281,11 @@
 !
       class(mlccsd) :: wf
       type(batching_index), intent(in) :: batch_b
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                                        :: c_ai
-      real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, batch_b%length, wf%n_ccsd_o), intent(inout) :: rho_aibj
-      real(dp), dimension(wf%n_ccsd_o + wf%n_cc2_o, wf%n_ccsd_v + wf%n_cc2_v, batch_b%length, wf%n_v), intent(in) :: g_kcbd
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+      real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, &
+                           batch_b%length, wf%n_ccsd_o), intent(inout) :: rho_aibj
+      real(dp), dimension(wf%n_ccsd_o + wf%n_cc2_o, &
+                  wf%n_ccsd_v + wf%n_cc2_v, batch_b%length, wf%n_v), intent(in) :: g_kcbd
 !
    end subroutine jacobian_ccsd_d2_3_mlccsd
 !
@@ -296,9 +303,11 @@
 !
       class(mlccsd) :: wf
       type(batching_index), intent(in) :: batch_b
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                                        :: c_ai
-      real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, batch_b%length, wf%n_ccsd_o), intent(inout) :: rho_aibj
-      real(dp), dimension(wf%n_ccsd_v + wf%n_cc2_v,wf%n_ccsd_o + wf%n_cc2_o, batch_b%length, wf%n_v), intent(in) :: L_ckbd
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+      real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, &
+                  batch_b%length, wf%n_ccsd_o), intent(inout) :: rho_aibj
+      real(dp), dimension(wf%n_ccsd_v + wf%n_cc2_v, &
+                  wf%n_ccsd_o + wf%n_cc2_o, batch_b%length, wf%n_v), intent(in) :: L_ckbd
 !
    end subroutine jacobian_ccsd_d2_4_mlccsd
 !
@@ -316,9 +325,11 @@
 !
       class(mlccsd) :: wf
       type(batching_index), intent(in) :: batch_b
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                                           :: c_ai
-      real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, batch_b%length, wf%n_ccsd_o), intent(inout) :: rho_aibj
-      real(dp), dimension(wf%n_v, wf%n_o, batch_b%length, wf%n_ccsd_v + wf%n_cc2_v), intent(in) :: L_ckbd
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+      real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, &
+                  batch_b%length, wf%n_ccsd_o), intent(inout) :: rho_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, batch_b%length, &
+                  wf%n_ccsd_v + wf%n_cc2_v), intent(in) :: L_ckbd
 !
    end subroutine jacobian_ccsd_d2_5_mlccsd
 !
@@ -664,7 +675,7 @@
 !!
 !!       X_db = sum_ckl L_kcld x_lk^bc 
 !!
-!!       X_lj = sum_cdl L_kcld x_kj^ck
+!!       X_lj = sum_cdl L_kcld x_kj^cd
 !!
 !!       Index restrictions: b, j are CCSD indices,  
 !!       l, d, k and c are CC2 + CCSD indices.
