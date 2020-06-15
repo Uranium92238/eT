@@ -423,13 +423,13 @@ contains
 !!
 !!    Constructs the M and N matrices,
 !!
-!!       M_ij += ( sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibj R_ajbl )
+!!       M_ij += ( sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibl R_ajbl )
 !!       N_ab += ( sum_i R_ai R_bi + 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
 !!
 !!    Used to construct CNTOs.
 !!
 !!    set_to_zero determines if M and N are set to zero initially. This makes it possible for 
-!!    the routine ton be used to add to M and N if we are using more than one excitation vector 
+!!    the routine to be used to add to M and N if we are using more than one excitation vector 
 !!    to generate the CNTOs.
 !!
       implicit none
@@ -446,43 +446,42 @@ contains
 !
       integer :: a, i
 !
-      if (set_to_zero) then
+      real(dp) :: zero_or_one
 !
-         call zero_array(M, wf%n_o**2)
-         call zero_array(N, wf%n_v**2)
+      zero_or_one = one
 !
-      endif
+      if (set_to_zero) zero_or_one = zero
 !
 !     1. Singles contribution
 !
 !     M_ij += sum_a R_ai R_aj
 !
-      call dgemm('T', 'N', &
-                  wf%n_o,  &
-                  wf%n_o,  &
-                  wf%n_v,  &
-                  one,     &
-                  R_ai,    & ! R_ai
-                  wf%n_v,  &
-                  R_ai,    & ! R_aj
-                  wf%n_v,  &
-                  one,     &
-                  M,       & ! M_ij
+      call dgemm('T', 'N',       &
+                  wf%n_o,        &
+                  wf%n_o,        &
+                  wf%n_v,        &
+                  one,           &
+                  R_ai,          & ! R_ai
+                  wf%n_v,        &
+                  R_ai,          & ! R_aj
+                  wf%n_v,        &
+                  zero_or_one,   &
+                  M,             & ! M_ij
                   wf%n_o)
 !
 !     N_ab += sum_i R_ai R_aj
 !
-      call dgemm('N', 'T', &
-                  wf%n_v,  &
-                  wf%n_v,  &
-                  wf%n_o,  &
-                  one,     &
-                  R_ai,    & ! R_ai
-                  wf%n_v,  &
-                  R_ai,    & ! R_bi
-                  wf%n_v,  &
-                  one,     &
-                  N,       & ! N_ab
+      call dgemm('N', 'T',       &
+                  wf%n_v,        &
+                  wf%n_v,        &
+                  wf%n_o,        &
+                  one,           &
+                  R_ai,          & ! R_ai
+                  wf%n_v,        &
+                  R_ai,          & ! R_bi
+                  wf%n_v,        &
+                  zero_or_one,   &
+                  N,             & ! N_ab
                   wf%n_v)
 !
 !     2. Doubles contribution
@@ -682,11 +681,17 @@ contains
       real(dp), dimension(:), allocatable       :: omega_ccs ! CCS excitation energies
       real(dp), dimension(:,:), allocatable     :: R_ai_k
       real(dp), dimension(:,:,:), allocatable   :: R_ai
-      real(dp), dimension(:,:,:,:), allocatable :: R_aibj_k
 !
       logical :: set_to_zero
 !
       character(len=200) :: r_or_l
+!
+      type(direct_stream_file) :: doubles_file
+!
+      type(timings) :: timer
+!
+      timer = timings('Construct CNTO matrices')
+      call timer%turn_on()
 !
       n_cnto_states = size(wf%cnto_states)
 !
@@ -703,20 +708,24 @@ contains
 !
       set_to_zero = .true.
 !
+!     Prepare file
+!
+      doubles_file = direct_stream_file('approximate_doubles', wf%n_v*wf%n_o**2)
+!
       call mem%alloc(R_ai_k, wf%n_v, wf%n_o)
-      call mem%alloc(R_aibj_k, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !   
       do k = 1, n_cnto_states
 !
          call dcopy(wf%n_t1, R_ai(1,1,k), 1, R_ai_k, 1)
 !
 !        Construct approximate double excitation vector
-! 
-         call wf%approximate_double_excitation_vectors(R_ai_k, R_aibj_k, omega_ccs(k))
+!
+         call wf%approximate_double_excitation_vectors(R_ai_k, omega_ccs(k), doubles_file)
 !
 !        Add contribution to M and N
 !
-         call wf%construct_M_and_N_cnto(R_ai_k, R_aibj_k, T_o, T_v, set_to_zero)
+         call wf%construct_M_and_N_singles_cnto(R_ai_k, T_o, T_v, set_to_zero)
+         call wf%add_doubles_M_and_N_cnto(T_o, T_v, doubles_file)
 !
          set_to_zero = .false.
 !
@@ -724,7 +733,6 @@ contains
 !
       call mem%dealloc(omega_ccs, n_cnto_states)
       call mem%dealloc(R_ai_k, wf%n_v, wf%n_o)
-      call mem%dealloc(R_aibj_k, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(R_ai, wf%n_v, wf%n_o, n_cnto_states)
 !
       call wf%diagonalize_M_and_N(T_o, T_v)
@@ -743,9 +751,8 @@ contains
 !!
 !!    Used to construct occupied NTOs.
 !!
-!!    set_to_zero determines if M and N are set to zero initially. This is used such that 
-!!    the routine can be used to add to M and N if we are using more than one excitation vector 
-!!    to generate the CNTOs.
+!!    set_to_zero determines if contributions are added to, or overwrites M and N. 
+!!
 !!
       implicit none
 !
@@ -757,27 +764,27 @@ contains
 !
       logical, intent(in) :: set_to_zero
 !
-      if (set_to_zero) then
+      real(dp) :: zero_or_one
 !
-         call zero_array(M, wf%n_o**2)
+      zero_or_one = one
 !
-      endif
+      if (set_to_zero) zero_or_one = zero
 !
 !     1. Singles contribution
 !
 !     M_ij += sum_a R_ai R_aj
 !
-      call dgemm('T', 'N', &
-                  wf%n_o,  &
-                  wf%n_o,  &
-                  wf%n_v,  &
-                  one,     &
-                  R_ai,    & ! R_ai
-                  wf%n_v,  &
-                  R_ai,    & ! R_aj
-                  wf%n_v,  &
-                  one,     &
-                  M,       & ! M_ij
+      call dgemm('T', 'N',       &
+                  wf%n_o,        &
+                  wf%n_o,        &
+                  wf%n_v,        &
+                  one,           &
+                  R_ai,          & ! R_ai
+                  wf%n_v,        &
+                  R_ai,          & ! R_aj
+                  wf%n_v,        &
+                  zero_or_one,   &
+                  M,             & ! M_ij
                   wf%n_o)
 !
    end subroutine construct_M_nto_mlcc2
@@ -1377,16 +1384,14 @@ contains
                   wf%n_mo)
 !
       do i = 1, wf%n_mo
-         if (abs(I2(i,i) - 1.0d0) .gt. 1.0d-8) then
-            print*, I
+         if (abs(I2(i,i) - 1.0d0) .gt. 1.0d-6) then
             call output%error_msg(trim(wf%name_)//' orbitals are not normal')
          endif
       enddo
 !
       do i = 1, wf%n_mo
          do j = 1, i-1
-            if (abs(I2(i,j)) .gt. 1.0d-8) then
-            print*, I,J
+            if (abs(I2(i,j)) .gt. 1.0d-6) then
             call output%error_msg(trim(wf%name_)//' orbitals are not orthogonal')
             endif
          enddo
@@ -1396,6 +1401,208 @@ contains
       call mem%dealloc(I2, wf%n_mo, wf%n_mo)
 
    end subroutine check_orthonormality_of_MOs_mlcc2
+!
+!
+   module subroutine add_doubles_M_and_N_cnto_mlcc2(wf, M, N, doubles_file)
+!!
+!!    Add doubles M and N CNTO 
+!!    Written by Sarai D. Folkestad, Feb 2020
+!!
+!!    The CNTO matrices are defined as
+!!
+!!       M_ij = ( sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibl R_ajbl )
+!!       N_ab = ( sum_i R_ai R_bi + 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
+!!
+!!    In this routine the doubles part 
+!!
+!!       M_ij += ( 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibl R_ajbl )
+!!       N_ab += ( 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
+!!
+!!    is added for the R_aibj on doubles_file
+!!
+!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      type(direct_stream_file) :: doubles_file
+!
+      real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: M
+      real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: N
+!
+      type(batching_index) :: batch_a, batch_c
+!
+      integer :: current_a_batch, current_c_batch
+      integer :: req0, req1_a, req1_c, req2
+!
+      integer :: a, i
+!
+      real(dp), dimension(:,:,:,:), allocatable :: R_ibja, R_kdlc
+!
+      call doubles_file%open_('read')
+!
+      req0 = 0
+!
+      req1_a = wf%n_o**2*wf%n_v
+!
+      req1_c = req1_a
+!
+      req2 = 0
+!
+!     Initialize batching variables
+!
+      batch_a = batching_index(wf%n_v)
+      batch_c = batching_index(wf%n_v)
+
+      call mem%batch_setup(batch_a, batch_c, req0, req1_a, req1_c, req2)
+!
+
+      call mem%alloc(R_ibja, wf%n_o, wf%n_v, wf%n_o, batch_a%max_length)
+      call mem%alloc(R_kdlc, wf%n_o, wf%n_v, wf%n_o, batch_c%max_length)
+!
+      do current_a_batch = 1, batch_a%num_batches
+!
+         call batch_a%determine_limits(current_a_batch)
+!
+         call doubles_file%read_(R_ibja(:,:,:,1:batch_a%length), batch_a%first, batch_a%last)
+!
+!        M_ij = 1/2 (1 + delta_ai,bk delta_i,j) R_jbka R_ibka
+!
+         call dgemm('N', 'T',                      &
+                     wf%n_o,                       &
+                     wf%n_o,                       &
+                     wf%n_v*wf%n_o*batch_a%length, &
+                     half,                         &
+                     R_ibja,                       &
+                     wf%n_o,                       &
+                     R_ibja,                       &
+                     wf%n_o,                       &
+                     one,                          &
+                     M,                            &
+                     wf%n_o)
+!
+!$omp parallel do private (i, a)
+         do i = 1, wf%n_o
+            do a = 1, batch_a%length
+!
+               M(i,i) = M(i,i) + half*R_ibja(i, a + batch_a%first - 1, i, a)**2
+!
+            enddo
+         enddo
+!$omp end parallel do
+!
+         do current_c_batch = 1, batch_c%num_batches
+!
+            call batch_c%determine_limits(current_c_batch)
+!
+            call doubles_file%read_(R_kdlc(:,:,:,1:batch_c%length), batch_c%first, batch_c%last)
+!
+!           N_ac += 1/2 sum_dkl(1 + delta_ak,dl delta_a,c) R_akdl R_ckdl
+!
+            call dgemm('T', 'N',                         &
+                        batch_a%length,                  &
+                        batch_c%length,                  &
+                        wf%n_o**2*wf%n_v,                &
+                        half,                            &
+                        R_ibja,                          &
+                        wf%n_o**2*wf%n_v,                &
+                        R_kdlc,                          &
+                        wf%n_o**2*wf%n_v,                &
+                        one,                             &
+                        N(batch_a%first, batch_c%first), &
+                        wf%n_v)
+!
+         enddo
+!
+!$omp parallel do private (a, i)
+         do a = 1, batch_a%length
+            do i = 1, wf%n_o           
+!
+               N(a + batch_a%first - 1, a + batch_a%first - 1) &
+                  = N(a + batch_a%first - 1, a + batch_a%first - 1) &
+                     + half*R_ibja(i, a + batch_a%first - 1, i, a)**2
+!
+            enddo
+         enddo
+!$omp end parallel do
+!
+      enddo
+!
+!
+      call mem%dealloc(R_kdlc, wf%n_o, wf%n_v, wf%n_o, batch_c%max_length)
+      call mem%dealloc(R_ibja, wf%n_o, wf%n_v, wf%n_o, batch_a%max_length)
+!
+      call doubles_file%close_('keep')
+!
+   end subroutine add_doubles_M_and_N_cnto_mlcc2
+!
+!
+   module subroutine construct_M_and_N_singles_cnto_mlcc2(wf, R_ai, M, N, set_to_zero)
+!!
+!!    Construct M and N
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Constructs the M and N matrices,
+!!
+!!       M_ij = ( sum_a R_ai R_aj )
+!!       N_ab = ( sum_i R_ai R_bi )
+!!
+!!    Used to construct CNTOs.
+!!
+!!    set_to_zero determines if contributions are added to, or overwrites M and N. 
+!!
+!!
+      implicit none
+!
+      class(mlcc2), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+      real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: M
+      real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: N
+!
+      logical, intent(in) :: set_to_zero
+!
+      real(dp) :: zero_or_one
+!
+      zero_or_one = one
+!
+      if (set_to_zero) zero_or_one = zero
+!
+!     1. Singles contribution
+!
+!     M_ij += sum_a R_ai R_aj
+!
+      call dgemm('T', 'N',       &
+                  wf%n_o,        &
+                  wf%n_o,        &
+                  wf%n_v,        &
+                  one,           &
+                  R_ai,          & ! R_ai
+                  wf%n_v,        &
+                  R_ai,          & ! R_aj
+                  wf%n_v,        &
+                  zero_or_one,   &
+                  M,             & ! M_ij
+                  wf%n_o)
+!
+!     N_ab += sum_i R_ai R_aj
+!
+      call dgemm('N', 'T',       &
+                  wf%n_v,        &
+                  wf%n_v,        &
+                  wf%n_o,        &
+                  one,           &
+                  R_ai,          & ! R_ai
+                  wf%n_v,        &
+                  R_ai,          & ! R_bi
+                  wf%n_v,        &
+                  zero_or_one,   &
+                  N,             & ! N_ab
+                  wf%n_v)
+!
+   end subroutine construct_M_and_N_singles_cnto_mlcc2
+!
 !
 end submodule orbitals_mlcc2
 

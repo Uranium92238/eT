@@ -424,7 +424,8 @@ module ccs_class
       procedure :: prepare_for_density                           => prepare_for_density_ccs
       procedure :: prepare_for_density_complex                   => prepare_for_density_ccs_complex
 !
-      procedure :: approximate_double_excitation_vectors         => approximate_double_excitation_vectors_ccs
+      procedure :: approximate_double_excitation_vectors &
+                   => approximate_double_excitation_vectors_ccs
 !
 !     Frozen core
 !
@@ -1368,195 +1369,585 @@ contains
    end subroutine get_ip_projector_ccs
 !
 !
-   subroutine approximate_double_excitation_vectors_ccs(wf, R_ai, R_aibj, omega)
+   subroutine approximate_double_excitation_vectors_ccs(wf, R_ai, omega, file_)
 !!
 !!    Construct approximate double excitation vectors
 !!    Sarai D. Folkestad, May 2019
 !!
 !!    Approximate double excitation vectors:
 !!
-!!       R_aibj = 1/Δ_aibj * (P_ai,bj(sum_c R_ci g_bjac - sum_k R_bk g_kjai))/(-ε_aibj + ω^CCS) 
-!!              = 1/Δ_aibj * X_aibj/(-ε_aibj + ω^CCS)
+!!       R_aibj = 1/(1 + delta_aibj) * (P_ai,bj(sum_c R_ci g_bjac 
+!!                                              - sum_k R_bk g_kjai))/(-eps_aibj + omega^CCS) 
+!!              = 1/(1 + delta_aibj) * X_aibj/(-eps_aibj + omega^CCS)
 !!
 !!    Used for CNTOs from CCS. 
 !!
 !!    For further information see Baudin, P. and Kristensen, K., J. Chem. Phys. 2017, 146, 214114
 !!
-!!    OBS! Renormalizes R !
+!!    Note: Renormalizes R !
+!!    Note: Integrals are in MO basis not T1 basis
 !!
-!!    OBS! Integrals are in MO basis not T1 basis
+!!    Routine is organized in the following way:
 !!
+!!    1. Construct (term 1)
+!!
+!!       P_aibj (- sum_k R_bk g_kjai)/(-eps_aibj + omega^CCS)/(1 + delta_ai,bj)
+!!
+!!    2. Add (term 2)
+!!
+!!       P_ai,bj(sum_c R_ci g_bjac)/(-eps_aibj + omega^CCS)/(1+delta_ai,bj) 
+!!
+!!       and calculate norm of doubles part
+!!       
+!!    3. Normalize full excitation vector (R_ai, R_aibj)
+!!
+!!    Steps 1-3 are done in batching loops over a and b,
+!!    but note that the same batching structure (sizes and numbers of batches)
+!!    are used for all three loops using the maximal memory requirement.
+!! 
+!
+      use reordering, only : add_to_packed, sort_12_to_21
+      use direct_stream_file_class, only: direct_stream_file
+      use array_utilities, only : scale_diagonal
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(out) :: R_aibj
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)               :: R_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: R_ai
 !
       real(dp), intent(in) :: omega
 !
-      real(dp), dimension(:,:,:), allocatable :: L_Jai, L_Jkj, L_Jac
-      real(dp), dimension(:,:,:), allocatable :: X_Jai
+      type(batching_index) :: batch_a, batch_b
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_kjai
+      type(direct_stream_file), intent(inout) :: file_ ! record length o^2v
+!
+      real(dp), dimension(:,:,:), allocatable :: L_Jai, L_Jbj, L_Jkj, L_kjJ, L_Jac, L_Jbc
+      real(dp), dimension(:,:,:), allocatable :: X_Jai, X_Jbj, X_aiJ, X_bjJ
+!
+      real(dp), dimension(:,:,:,:), allocatable          :: R_aibj, R_bjai
+      real(dp), dimension(:,:,:,:), allocatable          :: R_ibj_a, R_aibj_old, R_aibj_batch
+!
       real(dp), dimension(:), allocatable :: R_aibj_packed
 !
-      integer :: current_c_batch, req0, req1
+      integer :: current_a_batch, current_b_batch
+      integer :: req0, req1_a, req1_b, req2
+      integer :: a, i, b, j
 !
-      type(batching_index) :: batch_c
+      real(dp) :: ddot, R_norm, R_s_norm_sq, R_d_norm_sq
 !
-      real(dp) :: R_d_norm_sq, R_s_norm_sq, R_norm, ddot
+      type(sequential_file) :: file_temp_1, file_temp_2
 !
-      integer :: a, b, i, j
-!
-!     Read Cholesky vectors in MO basis
-!
-      call mem%alloc(L_Jai, wf%integrals%n_J, wf%n_v, wf%n_o)
-      call mem%alloc(L_Jkj, wf%integrals%n_J, wf%n_o, wf%n_o)
-!
-      call wf%integrals%get_cholesky_mo(L_Jai, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
-      call wf%integrals%get_cholesky_mo(L_Jkj, 1, wf%n_o, 1, wf%n_o)
-!
-!     Construct g_kjai integrals in MO basis
-!
-      call mem%alloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-!
-      call dgemm('T', 'N',            &
-                 (wf%n_o**2),         &
-                 (wf%n_v)*(wf%n_o),   &
-                 wf%integrals%n_J,    &
-                 one,                 &
-                 L_Jkj,               &
-                 wf%integrals%n_J,    &
-                 L_Jai,               &
-                 wf%integrals%n_J,    &
-                 zero,                &
-                 g_kjai,              &
-                 (wf%n_o**2))
-!
-      call mem%dealloc(L_Jkj, wf%integrals%n_J, wf%n_o, wf%n_o)
-!
-!     - sum_k R_bk g_kjai
-!
-      call dgemm('N', 'N',                &
-                  wf%n_v,                 &
-                  (wf%n_o**2)*(wf%n_v),   &
-                  wf%n_o,                 &
-                  -one,                   &
-                  R_ai,                   & ! R_bk
-                  wf%n_v,                 &
-                  g_kjai,                 &
-                  wf%n_o,                 &
-                  zero,                   &
-                  R_aibj,                 & ! R_bjai but we will symmetrize anyhow
-                  wf%n_v)
-!
-      call mem%dealloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%alloc(X_Jai, wf%integrals%n_J, wf%n_v, wf%n_o)
-      call zero_array(X_Jai, (wf%integrals%n_J)*(wf%n_v)*(wf%n_o))
+!     Prepare for batching
 !
       req0 = 0
-      req1 = (wf%n_v)*(wf%integrals%n_J)
 !
-      batch_c = batching_index(wf%n_v)
+      req1_a = max(2*wf%n_o*wf%integrals%n_J, & ! X_ai_J + L_ai_J  (term 1)
+                  wf%n_v*wf%integrals%n_J + wf%n_o*wf%integrals%n_J, & ! X_ai_J + L_ac_J term 2)
+                  wf%n_o**2*wf%n_v) ! R_aibj no batching on b
 !
-      call mem%batch_setup(batch_c, req0, req1)
+      req1_b = req1_a ! Not exactly true but we want equal batches of a and b
 !
-      do current_c_batch = 1, batch_c%num_batches
+      req2 = 2*(wf%n_o**2) ! R_aibj
 !
-         call batch_c%determine_limits(current_c_batch)
+      batch_a = batching_index(wf%n_v)
+      batch_b = batching_index(wf%n_v)
 !
-         call mem%alloc(L_Jac, wf%integrals%n_J, wf%n_v, batch_c%length)
+      call mem%batch_setup(batch_a, batch_b, req0, req1_a, req1_b, req2)
 !
-         call wf%integrals%get_cholesky_mo(L_Jac, wf%n_o + 1, wf%n_mo, wf%n_o + batch_c%first, wf%n_o + batch_c%last)
+!     Initialize temporary files
 !
-!        X_ai_J = sum_c R_ci L_ac_J
+      file_temp_1 = sequential_file('approximate_doubles_temp_1')
+      file_temp_2 = sequential_file('approximate_doubles_temp_2')
+!
+!     :: Construct term 1 and store in file_temp_1
+!
+!        P_aibj (- sum_k R_bk g_kjai)/(-eps_aibj + omega^CCS)/(1 + delta_ai,bj)
+!
+      call file_temp_1%open_('readwrite', 'rewind')
+!
+      call mem%alloc(L_Jkj, wf%integrals%n_J, wf%n_o, wf%n_o)
+      call wf%integrals%get_cholesky_mo(L_Jkj, 1, wf%n_o, 1, wf%n_o)
+!
+      call mem%alloc(L_kjJ, wf%n_o, wf%n_o, wf%integrals%n_J)
+      call sort_123_to_231(L_Jkj, L_kjJ, wf%integrals%n_J, wf%n_o, wf%n_o)
+      call mem%dealloc(L_Jkj, wf%integrals%n_J, wf%n_o, wf%n_o)
+!
+      do current_a_batch = 1, batch_a%num_batches
+!
+         call batch_a%determine_limits(current_a_batch)
+!
+         call mem%alloc(L_Jai, wf%integrals%n_J, batch_a%length, wf%n_o)
+         call wf%integrals%get_cholesky_mo(L_Jai, wf%n_o + batch_a%first, &
+                                             wf%n_o + batch_a%last, 1, wf%n_o)
+!
+         call mem%alloc(X_aiJ, batch_a%length, wf%n_o, wf%integrals%n_J)
 !
          call dgemm('N', 'N',                   &
-                     wf%n_v*(wf%integrals%n_J), &
+                     batch_a%length,            &
+                     wf%n_o*wf%integrals%n_J,   &
                      wf%n_o,                    &
-                     batch_c%length,            &
                      one,                       &
-                     L_Jac,                     &
-                     wf%n_v*(wf%integrals%n_J), &
-                     R_ai(batch_c%first, 1),    & ! R_ci
+                     R_ai(batch_a%first,1),     &
                      wf%n_v,                    &
-                     one,                       &
-                     X_Jai,                     &
-                     wf%n_v*(wf%integrals%n_J))
+                     L_kjJ,                     &
+                     wf%n_o,                    &
+                     zero,                      &
+                     X_aiJ,                     &
+                     batch_a%length)
 !
-         call mem%dealloc(L_Jac, wf%integrals%n_J, wf%n_v, batch_c%length)
+         do current_b_batch = 1, batch_b%num_batches 
 !
-      enddo
+            if (current_b_batch == current_a_batch) cycle
 !
-!     sum_J X_ai_J L_bj_J
+            call batch_b%determine_limits(current_b_batch)
 !
-      call dgemm('T', 'N',             &
-                  (wf%n_v)*(wf%n_o),   &
-                  (wf%n_v)*(wf%n_o),   &
-                  wf%integrals%n_J,    &
-                  one,                 &
-                  X_Jai,               &
-                  wf%integrals%n_J,    &
-                  L_Jai,               & ! L_Jbj
-                  wf%integrals%n_J,    &
-                  one,                 &
-                  R_aibj,              &
-                  (wf%n_v)*(wf%n_o))
-
+            call mem%alloc(X_bjJ, batch_b%length, wf%n_o, wf%integrals%n_J)
 !
-      call mem%dealloc(L_Jai, wf%integrals%n_J, wf%n_v, wf%n_o)
-      call mem%dealloc(X_Jai, wf%integrals%n_J, wf%n_v, wf%n_o)
+            call dgemm('N', 'N',                   &
+                        batch_b%length,            &
+                        wf%n_o*wf%integrals%n_J,   &
+                        wf%n_o,                    &
+                        one,                       &
+                        R_ai(batch_b%first,1),     &
+                        wf%n_v,                    &
+                        L_kjJ,                     &
+                        wf%n_o,                    &
+                        zero,                      &
+                        X_bjJ,                     &
+                        batch_b%length)
 !
-!     Symmetrize
+            call mem%alloc(R_bjai, batch_b%length, wf%n_o, batch_a%length, wf%n_o)
 !
-      call symmetric_sum(R_aibj, wf%n_o*wf%n_v)
+            call dgemm('N', 'N', &
+                        batch_b%length*wf%n_o,  &
+                        batch_a%length*wf%n_o,  &
+                        wf%integrals%n_J,       &
+                        -one,                   &
+                        X_bjJ,                  &
+                        batch_b%length*wf%n_o,  &
+                        L_Jai,                  &
+                        wf%integrals%n_J,       &
+                        zero,                   &
+                        R_bjai,                 &
+                        batch_b%length*wf%n_o)
 !
-!     Binormalization factor
+            call mem%dealloc(X_bjJ, batch_b%length, wf%n_o, wf%integrals%n_J)
 !
-!$omp parallel do private(a, i)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
+            call mem%alloc(R_aibj, batch_a%length, wf%n_o, batch_b%length, wf%n_o)
 !
-            R_aibj(a, i, a, i) = half*R_aibj(a, i, a, i)
+            call sort_1234_to_3412(R_bjai, R_aibj, batch_b%length, wf%n_o, batch_a%length, wf%n_o)
 !
-         enddo
-      enddo
-!$omp end parallel do
+            call mem%dealloc(R_bjai, batch_b%length, wf%n_o, batch_a%length, wf%n_o) 
 !
-!     Divide by orbital differences and CCS excitation energy
+            call mem%alloc(L_Jbj, wf%integrals%n_J, batch_b%length, wf%n_o)
+            call wf%integrals%get_cholesky_mo(L_Jbj, wf%n_o + batch_b%first, &
+                                                     wf%n_o + batch_b%last,  &
+                                                     1, wf%n_o)
+!
+            call dgemm('N', 'N', &
+                        batch_a%length*wf%n_o,  &
+                        batch_b%length*wf%n_o,  &
+                        wf%integrals%n_J,       &
+                        -one,                   &
+                        X_aiJ,                  &
+                        batch_a%length*wf%n_o,  &
+                        L_Jbj,                  &
+                        wf%integrals%n_J,       &
+                        one,                    &
+                        R_aibj,                 &
+                        batch_a%length*wf%n_o)
+!
+            call mem%dealloc(L_Jbj, wf%integrals%n_J, batch_b%length, wf%n_o)      
+!
+!           Divide by orbital differences and CCS excitation energy
 !
 !$omp parallel do private(a, i, b, j)
-      do j = 1, wf%n_o
-         do b = 1, wf%n_v
-            do i = 1, wf%n_o
-               do a = 1, wf%n_v
+            do j = 1, wf%n_o
+               do b = 1, batch_b%length
+                  do i = 1, wf%n_o
+                     do a = 1, batch_a%length
 !
-                  R_aibj(a, i, b, j) = R_aibj(a, i, b, j)/(- wf%orbital_energies(a + wf%n_o) - &
-                                                            wf%orbital_energies(b + wf%n_o) + &
-                                                            wf%orbital_energies(i) + wf%orbital_energies(j) + omega)
+                        R_aibj(a, i, b, j) = R_aibj(a, i, b, j)/&
+                                    (- wf%orbital_energies(batch_a%first - 1 + a + wf%n_o) &
+                                     - wf%orbital_energies(batch_b%first - 1 + b + wf%n_o) &
+                                     + wf%orbital_energies(i) + wf%orbital_energies(j) + omega)
 !
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+!           Write contribution to file
+!
+            call file_temp_1%write_(R_aibj, batch_b%length*(wf%n_o**2)*batch_a%length)
+!
+            call mem%dealloc(R_aibj, batch_a%length, wf%n_o, batch_b%length, wf%n_o)
+!
+         enddo
+!
+!        Calculate a = b block
+!
+         call mem%alloc(R_aibj, batch_a%length, wf%n_o, batch_a%length, wf%n_o)
+!
+         call dgemm('N', 'N', &
+                     batch_a%length*wf%n_o,  &
+                     batch_a%length*wf%n_o,  &
+                     wf%integrals%n_J,       &
+                     -one,                   &
+                     X_aiJ,                  &
+                     batch_a%length*wf%n_o,  &
+                     L_Jai,                  &
+                     wf%integrals%n_J,       &
+                     zero,                   &
+                     R_aibj,                 &
+                     batch_a%length*wf%n_o)
+!
+         call mem%dealloc(L_Jai, wf%integrals%n_J, batch_a%length, wf%n_o)
+         call mem%dealloc(X_aiJ, batch_a%length, wf%n_o, wf%integrals%n_J)
+!
+!        Symmetrize
+!
+         call symmetric_sum(R_aibj, wf%n_o*batch_a%length)
+!
+!        Binormalization factor
+!
+         call scale_diagonal(half, R_aibj, batch_a%length*wf%n_o)
+!
+!        Divide by orbital differences and CCS excitation energy
+!
+!$omp parallel do private(a, i, b, j)
+         do j = 1, wf%n_o
+            do b = 1, batch_a%length
+               do i = 1, wf%n_o
+                  do a = 1, batch_a%length
+!
+                     R_aibj(a, i, b, j) = R_aibj(a, i, b, j)/&
+                                 (- wf%orbital_energies(batch_a%first - 1 + a + wf%n_o) &
+                                  - wf%orbital_energies(batch_a%first - 1 + b + wf%n_o) &
+                                  + wf%orbital_energies(i) + wf%orbital_energies(j) + omega)
+!
+                  enddo
                enddo
             enddo
          enddo
-      enddo
 !$omp end parallel do
 !
-!     Normalize full excitation vector with singles and doubles part.
+!        Write contribution to file
 !
-      call mem%alloc(R_aibj_packed, wf%n_o*wf%n_v*(wf%n_o*wf%n_v+1)/2)
-      call packin(R_aibj_packed, R_aibj, wf%n_o*wf%n_v)
+         call file_temp_1%write_(R_aibj, (batch_a%length**2)*(wf%n_o**2))
 !
-      R_d_norm_sq = ddot(wf%n_o*wf%n_v*(wf%n_o*wf%n_v+1)/2, R_aibj_packed, 1, R_aibj_packed, 1)
+         call mem%dealloc(R_aibj, batch_a%length, wf%n_o, batch_a%length, wf%n_o)
+!
+      enddo
+!
+      call mem%dealloc(L_kjJ, wf%n_o, wf%n_o, wf%integrals%n_J)
+!
+!     Prepare files
+!
+      call file_temp_1%rewind_()
+      call file_temp_2%open_('readwrite', 'rewind')
+!
+!     ::  Add term 2, store R_aibj in file_temp_2, and calculate norm of doubles part
+!
+!        += P_ai,bj(sum_c R_ci g_bjac)/(-eps_aibj + omega^CCS)/(1+delta_ai,bj) 
+!
+!     Accumulate dot product of double vectors for subsequent normalization
+!
+      R_d_norm_sq = 0
+!
+      do current_a_batch = 1, batch_a%num_batches
+!
+         call batch_a%determine_limits(current_a_batch)
+!
+         call mem%alloc(L_Jac, wf%integrals%n_J, batch_a%length, wf%n_v)
+         call wf%integrals%get_cholesky_mo(L_Jac,                                         &
+                                          batch_a%first + wf%n_o, batch_a%last + wf%n_o,  &
+                                          1 + wf%n_o, wf%n_mo)
+!
+         call mem%alloc(X_Jai, wf%integrals%n_J, batch_a%length, wf%n_o) 
+!
+!        X_ai_J = sum_c R_ci L_ac_J
+!
+         call dgemm('N', 'N',                            &
+                     batch_a%length*(wf%integrals%n_J),  &
+                     wf%n_o,                             &
+                     wf%n_v,                             &
+                     one,                                &
+                     L_Jac,                              & ! L_Ja_c
+                     batch_a%length*(wf%integrals%n_J),  &
+                     R_ai,                               & ! R_c_i
+                     wf%n_v,                             &
+                     zero,                               &
+                     X_Jai,                              &
+                     batch_a%length*(wf%integrals%n_J))
+!
+         call mem%dealloc(L_Jac, wf%integrals%n_J, batch_a%length, wf%n_v)
+!
+         call mem%alloc(L_Jai, wf%integrals%n_J, batch_a%length, wf%n_o)
+         call wf%integrals%get_cholesky_mo(L_Jai, batch_a%first + wf%n_o, &
+                                             batch_a%last + wf%n_o, 1, wf%n_o)
+!
+         do current_b_batch = 1, batch_b%num_batches
+!
+            if (current_b_batch == current_a_batch) cycle
+!
+            call batch_b%determine_limits(current_b_batch)
+!
+            call mem%alloc(R_aibj, batch_a%length, wf%n_o, batch_b%length, wf%n_o)
+!
+            call mem%alloc(L_Jbj, wf%integrals%n_J, batch_b%length, wf%n_o)
+            call wf%integrals%get_cholesky_mo(L_Jbj, batch_b%first + wf%n_o, &
+                                                batch_b%last + wf%n_o, 1, wf%n_o)
+!
+            call dgemm('T', 'N',                &
+                        batch_a%length*wf%n_o,  &       
+                        batch_b%length*wf%n_o,  &  
+                        wf%integrals%n_J,       &
+                        one,                    &
+                        X_Jai,                  & ! X_J_ai  
+                        wf%integrals%n_J,       &
+                        L_Jbj,                  & 
+                        wf%integrals%n_J,       &
+                        zero,                   &
+                        R_aibj,                 &
+                        batch_a%length*wf%n_o)
+!
+            call mem%dealloc(L_Jbj, wf%integrals%n_J, batch_b%length, wf%n_o)
+!
+            call mem%alloc(L_Jbc, wf%integrals%n_J, batch_b%length, wf%n_v)
+            call wf%integrals%get_cholesky_mo(L_Jbc,                                         &
+                                             batch_b%first + wf%n_o, batch_b%last + wf%n_o,  &
+                                             1 + wf%n_o, wf%n_mo)
+!
+            call mem%alloc(X_Jbj, wf%integrals%n_J, batch_b%length, wf%n_o) 
+!
+!           X_bj_J = sum_c R_cj L_bc_J
+!
+            call dgemm('N', 'N',                            &
+                        batch_b%length*(wf%integrals%n_J),  &
+                        wf%n_o,                             &
+                        wf%n_v,                             &
+                        one,                                &
+                        L_Jbc,                              & ! L_Jb_c
+                        batch_b%length*(wf%integrals%n_J),  &
+                        R_ai,                               & ! R_c_j
+                        wf%n_v,                             &
+                        zero,                               &
+                        X_Jbj,                              &
+                        batch_b%length*(wf%integrals%n_J))
+!
+            call mem%dealloc(L_Jbc, wf%integrals%n_J, batch_b%length, wf%n_v) 
+!
+            call dgemm('T', 'N',                &
+                        batch_a%length*wf%n_o,  &       
+                        batch_b%length*wf%n_o,  &  
+                        wf%integrals%n_J,       &
+                        one,                    &
+                        L_Jai,                  & ! L_J_ai
+                        wf%integrals%n_J,       &
+                        X_Jbj,                  & ! X_J_bj
+                        wf%integrals%n_J,       &
+                        one,                    &
+                        R_aibj,                 &
+                        batch_a%length*wf%n_o)
+!
+!
+            call mem%dealloc(X_Jbj, wf%integrals%n_J, batch_b%length, wf%n_o)                      
+!
+!           Divide by orbital differences and CCS excitation energy
+!
+!$omp parallel do private(a, i, b, j)
+            do j = 1, wf%n_o
+               do b = 1, batch_b%length
+                  do i = 1, wf%n_o
+                     do a = 1, batch_a%length
+!
+                        R_aibj(a, i, b, j) = R_aibj(a, i, b, j)/&
+                                    (- wf%orbital_energies(batch_a%first - 1 + a + wf%n_o) &
+                                     - wf%orbital_energies(batch_b%first - 1 + b + wf%n_o) &
+                                     + wf%orbital_energies(i) + wf%orbital_energies(j) + omega)
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+            call mem%alloc(R_aibj_old, batch_a%length, wf%n_o, batch_b%length, wf%n_o)
+            call file_temp_1%read_(R_aibj_old, (batch_a%length)*(batch_b%length)*(wf%n_o**2))
+!
+            call daxpy((batch_a%length)*(batch_b%length)*(wf%n_o**2), one, R_aibj_old, 1, R_aibj, 1)
+            call mem%dealloc(R_aibj_old, batch_a%length, wf%n_o, batch_b%length, wf%n_o)
+!
+!           Add norm
+!
+            R_d_norm_sq = R_d_norm_sq + half*ddot(batch_a%length*(wf%n_o**2)*batch_b%length, &
+                                             R_aibj, 1, R_aibj, 1)
+!
+!           Write file
+!
+            call file_temp_2%write_(R_aibj, batch_a%length*(wf%n_o**2)*batch_b%length)
+!
+            call mem%dealloc(R_aibj, batch_a%length, wf%n_o, batch_b%length, wf%n_o)
+!
+         enddo
+!
+!        Calculate a = b block
+!
+         call mem%alloc(R_aibj, batch_a%length, wf%n_o, batch_a%length, wf%n_o)
+!
+         call dgemm('T', 'N',                &
+                     batch_a%length*wf%n_o,  &       
+                     batch_a%length*wf%n_o,  &  
+                     wf%integrals%n_J,       &
+                     one,                    &
+                     L_Jai,                  & 
+                     wf%integrals%n_J,       &
+                     X_Jai,                  & ! X_J_bj
+                     wf%integrals%n_J,       &
+                     zero,                   &
+                     R_aibj,                 &
+                     batch_a%length*wf%n_o)
+!    
+         call mem%dealloc(X_Jai, wf%integrals%n_J, batch_a%length, wf%n_o)
+         call mem%dealloc(L_Jai, wf%integrals%n_J, batch_a%length, wf%n_o)
+!
+!        Symmetrize
+!
+         call symmetric_sum(R_aibj, wf%n_o*batch_a%length)
+!
+!        Binormalization factor
+!
+         call scale_diagonal(half, R_aibj, batch_a%length*wf%n_o)
+!
+!        Divide by orbital differences and CCS excitation energy
+!
+!$omp parallel do private(a, i, b, j)
+         do j = 1, wf%n_o
+            do b = 1, batch_a%length
+               do i = 1, wf%n_o
+                  do a = 1, batch_a%length
+!
+                     R_aibj(a, i, b, j) = R_aibj(a, i, b, j)/&
+                                 (- wf%orbital_energies(batch_a%first - 1 + a + wf%n_o) &
+                                  - wf%orbital_energies(batch_a%first - 1 + b + wf%n_o) &
+                                  + wf%orbital_energies(i) + wf%orbital_energies(j) + omega)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+!
+         call mem%alloc(R_aibj_old, batch_a%length, wf%n_o, batch_a%length, wf%n_o)
+         call file_temp_1%read_(R_aibj_old, (batch_a%length**2)*(wf%n_o**2))
+!
+         call daxpy((batch_a%length**2)*(wf%n_o**2), one, R_aibj_old, 1, R_aibj, 1)
+         call mem%dealloc(R_aibj_old, batch_a%length, wf%n_o, batch_a%length, wf%n_o)
+!
+!        Pack in 
+!
+         call mem%alloc(R_aibj_packed, batch_a%length*wf%n_o*(batch_a%length*wf%n_o + 1)/2)
+!
+         call packin(R_aibj_packed, R_aibj, batch_a%length*wf%n_o)
+!
+!        Add norm
+!
+         R_d_norm_sq = R_d_norm_sq + ddot(batch_a%length*wf%n_o*(batch_a%length*wf%n_o + 1)/2, &
+                                          R_aibj_packed, 1, R_aibj_packed, 1)
+!
+         call mem%dealloc(R_aibj_packed, batch_a%length*wf%n_o*(batch_a%length*wf%n_o + 1)/2)
+!
+!        Write file
+!
+         call file_temp_2%write_(R_aibj, (batch_a%length**2)*(wf%n_o**2))
+!
+         call mem%dealloc(R_aibj, batch_a%length, wf%n_o, batch_a%length, wf%n_o)
+!
+      enddo
+!
+!     Prepare files
+!
+      call file_temp_1%close_('delete')
+      call file_temp_2%rewind_()
+      call file_%open_('write')
+!
+!     :: Normalization
+!
+!        Determine norm and rescale
+!
       R_s_norm_sq = ddot(wf%n_o*wf%n_v, R_ai, 1, R_ai, 1)
-!
       R_norm = sqrt(R_s_norm_sq + R_d_norm_sq)
 !
       call dscal(wf%n_o*wf%n_v, one/R_norm, R_ai, 1)
-      call dscal((wf%n_o*wf%n_v)**2, one/R_norm, R_aibj, 1)
 !
-      call mem%dealloc(R_aibj_packed, wf%n_o*wf%n_v*(wf%n_o*wf%n_v+1)/2)
+         call mem%alloc(R_ibj_a, wf%n_o, wf%n_v, wf%n_o, batch_a%max_length)
+!
+      do current_a_batch = 1, batch_a%num_batches
+!
+         call batch_a%determine_limits(current_a_batch)
+!
+         do current_b_batch = 1, batch_b%num_batches 
+!
+            if (current_b_batch == current_a_batch) cycle
+!
+            call batch_b%determine_limits(current_b_batch)
+!
+            call mem%alloc(R_aibj_batch, batch_a%length, wf%n_o, batch_b%length, wf%n_o)
+!
+            call file_temp_2%read_(R_aibj_batch, batch_a%length*(wf%n_o**2)*batch_b%length)
+            call dscal(batch_a%length*(wf%n_o**2)*batch_b%length, one/R_norm, R_aibj_batch, 1)
+!
+!$omp parallel do private(a, i, b, j)
+            do a = 1, batch_a%length
+               do j = 1, wf%n_o
+                  do b = 1, batch_b%length
+                     do i = 1, wf%n_o
+!
+                        R_ibj_a(i, batch_b%first - 1 + b, j, a) = R_aibj_batch(a, i, b, j)
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+            call mem%dealloc(R_aibj_batch, batch_a%length, wf%n_o, batch_b%length, wf%n_o)
+!
+         enddo
+!
+         call mem%alloc(R_aibj_batch, batch_a%length, wf%n_o, batch_a%length, wf%n_o)
+!
+         call file_temp_2%read_(R_aibj_batch, (batch_a%length**2)*(wf%n_o**2))
+!
+         call dscal((batch_a%length**2)*(wf%n_o**2), one/R_norm, R_aibj_batch, 1)
+!
+!$omp parallel do private(a, i, b, j)
+            do a = 1, batch_a%length
+               do j = 1, wf%n_o
+                  do b = 1, batch_a%length
+                     do i = 1, wf%n_o
+!
+                        R_ibj_a(i, batch_a%first - 1 + b, j, a) = R_aibj_batch(a, i, b, j)
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+         call mem%dealloc(R_aibj_batch, batch_a%length, wf%n_o, batch_a%length, wf%n_o)
+!  
+         call file_%write_(R_ibj_a, batch_a%first, batch_a%last)
+!
+      enddo
+
+      call mem%dealloc(R_ibj_a, wf%n_o, wf%n_v, wf%n_o, batch_a%max_length)
+!
+      call file_temp_2%close_('delete')
+      call file_%close_('keep')
 !
    end subroutine approximate_double_excitation_vectors_ccs
 !
