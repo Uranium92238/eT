@@ -76,6 +76,10 @@ module memory_manager_class
 !
       integer(i64), private :: available
 !
+!     Maximum amount of memory used at the same time
+!
+      integer(i64), private :: max_used
+!
 !     Unit for memory, default is GB
 !
       character(len=2), private :: units
@@ -169,6 +173,7 @@ module memory_manager_class
       procedure :: batch_setup_3_ident_memory_manager
       generic   :: batch_setup_ident => batch_setup_3_ident_memory_manager
 !
+      procedure :: update_memory_after_alloc        => update_memory_after_alloc_memory_manager
 !
       procedure, nopass :: print_allocation_error   => print_allocation_error_memory_manager
       procedure, nopass :: print_deallocation_error => print_deallocation_error_memory_manager
@@ -178,8 +183,9 @@ module memory_manager_class
       procedure :: read_settings     => read_settings_memory_manager
       procedure :: print_settings    => print_settings_memory_manager
 !
-!     Get and print of available memory 
+!     Get and print of memory 
 !
+      procedure :: print_max_used                  => print_max_used_memory_manager
       procedure :: print_available                 => print_available_memory_manager
       procedure :: get_available                   => get_available_memory_manager
       procedure, nopass :: get_memory_as_character => get_memory_as_character_memory_manager
@@ -246,6 +252,7 @@ contains
       endif
 !
       mem%available = mem%total
+      mem%max_used = mem%total - mem%available
 !
       call mem%print_settings()
 !
@@ -379,6 +386,22 @@ contains
    end subroutine print_available_memory_manager
 !
 !
+   subroutine print_max_used_memory_manager(mem)
+!!
+!!    Print maximum used memory 
+!!    Written by Alexander C. Paul, May 2020
+!!
+      implicit none 
+!
+      class(memory_manager), intent(in) :: mem 
+!
+
+      call output%printf('n', 'Peak memory usage during the execution of eT: (a0)', &
+                         chars=[mem%get_memory_as_character(mem%max_used)], fs='(/t6,a)')
+!
+   end subroutine print_max_used_memory_manager
+!
+!
    subroutine alloc_r_1_memory_manager(mem, array, M)
 !!
 !!    Alloc (memory manager)
@@ -415,16 +438,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, dp)
 !
    end subroutine alloc_r_1_memory_manager
 !
@@ -465,16 +479,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, dp)
 !
    end subroutine alloc_r_2_memory_manager
 !
@@ -515,16 +520,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, dp)
 !
    end subroutine alloc_r_3_memory_manager
 !
@@ -565,16 +561,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, dp)
 !
    end subroutine alloc_r_4_memory_manager
 !
@@ -615,16 +602,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, dp)
 !
    end subroutine alloc_r_5_memory_manager
 !
@@ -665,16 +643,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, dp)
 !
    end subroutine alloc_r_6_memory_manager
 !
@@ -715,16 +684,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - 2*dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, 2*dp)
 !
    end subroutine alloc_c_1_memory_manager
 !
@@ -765,16 +725,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - 2*dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, 2*dp)
 !
    end subroutine alloc_c_2_memory_manager
 !
@@ -815,16 +766,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - 2*dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, 2*dp)
 !
    end subroutine alloc_c_3_memory_manager
 !
@@ -865,16 +807,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - 2*dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, 2*dp)
 !
    end subroutine alloc_c_4_memory_manager
 !
@@ -915,16 +848,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - 2*dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, 2*dp)
 !
    end subroutine alloc_c_5_memory_manager
 !
@@ -965,16 +889,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - 2*dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, 2*dp)
 !
    end subroutine alloc_c_6_memory_manager
 !
@@ -1504,20 +1419,10 @@ contains
       endif
 !
 !     Update the available memory
-!
 !     Check integer size
 !
       int_size = storage_size(array(1))/8
-      mem%available = mem%available - int_size*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, int_size)
 !
    end subroutine alloc_i_1_memory_manager
 !
@@ -1555,20 +1460,10 @@ contains
       endif
 !
 !     Update the available memory
-!
 !     Check integer size
 !
       int_size = storage_size(array(1,1))/8
-      mem%available = mem%available - int_size*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, int_size)
 !
    end subroutine alloc_i_2_memory_manager
 !
@@ -1606,20 +1501,10 @@ contains
       endif
 !
 !     Update the available memory
-!
 !     Check integer size
 !
       int_size = storage_size(array(1,1,1))/8
-      mem%available = mem%available - int_size*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, int_size)
 !
    end subroutine alloc_i_3_memory_manager
 !
@@ -1657,20 +1542,10 @@ contains
       endif
 !
 !     Update the available memory
-!
 !     Check integer size
 !
       int_size = storage_size(array(1,1,1,1))/8
-      mem%available = mem%available - int_size*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, int_size)
 !
    end subroutine alloc_i_4_memory_manager
 !
@@ -1708,11 +1583,9 @@ contains
       endif
 !
 !     Update the available memory
-!
 !     Check integer size
 !
       int_size = storage_size(array(1))/8
-!
       mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_i_1_memory_manager
@@ -1751,7 +1624,6 @@ contains
       endif
 !
 !     Update the available memory
-!
 !     Check integer size
 !
       int_size = storage_size(array(1,1))/8
@@ -1793,7 +1665,6 @@ contains
       endif
 !
 !     Update the available memory
-!
 !     Check integer size
 !
       int_size = storage_size(array(1,1,1))/8
@@ -1835,7 +1706,6 @@ contains
       endif
 !
 !     Update the available memory
-!
 !     Check integer size
 !
       int_size = storage_size(array(1,1,1,1))/8
@@ -1877,20 +1747,10 @@ contains
       endif
 !
 !     Update the available memory
-!
 !     Figure out how big a logical is.
 !
       log_size = storage_size(array(1))/8
-      mem%available = mem%available - log_size*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('User-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, log_size)
 !
    end subroutine alloc_l_1_memory_manager
 !
@@ -1970,6 +1830,40 @@ contains
                              ints=[size_array])
 !
    end subroutine print_deallocation_error_memory_manager
+!
+!
+   subroutine update_memory_after_alloc_memory_manager(mem, size_array, size_type)
+!!
+!!    Update memory after allocation
+!!    Written by Alexander C. Paul, May 2020
+!!
+!!    size_array: total size of the array allocated
+!!    size_type : storage size of one element of the array in Byte
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      integer, intent(in) :: size_array, size_type
+!
+!     Update available memory
+!
+      mem%available = mem%available - size_array*size_type
+!
+!     Check if there is no more memory (defined as being no more memory
+!     left of what was specified by user as available)
+!
+      if (mem%available .lt. 0) then
+!
+         call output%error_msg('User-specified memory insufficient.')
+!
+      endif
+!
+!     Update max used memory if needed
+      if (mem%max_used < (mem%total - mem%available)) &
+          mem%max_used =  mem%total - mem%available
+!
+   end subroutine update_memory_after_alloc_memory_manager
 !
 !
    subroutine read_settings_memory_manager(mem)
