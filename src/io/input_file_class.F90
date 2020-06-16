@@ -416,6 +416,7 @@ contains
                         'ccsd orbitals',           &
                         'cholesky threshold',      &
                         'cnto restart',            &
+                        'orbital restart',         &
                         'cnto occupied cc2',       &
                         'cnto virtual cc2',        &
                         'cnto occupied ccsd',      &

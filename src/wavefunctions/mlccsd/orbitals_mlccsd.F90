@@ -354,7 +354,7 @@ contains
 !!    corresponding to CC2 and CCSD orbitals are diagonal.
 !!   
 !
-      use array_utilities, only : block_diagonalization
+      use array_utilities, only : block_diagonalize_symmetric
 ! 
       implicit none
 !
@@ -377,11 +377,11 @@ contains
 !
 !     Block diagonal occupied-occupied Fock
 !
-      call block_diagonalization(F_oo, wf%n_o, 3, &
+      call block_diagonalize_symmetric(F_oo, wf%n_o, 3, &
                                  [wf%n_ccsd_o, wf%n_cc2_o, wf%n_ccs_o], &
                                  wf%orbital_energies(1:wf%n_o))
 !
-      call block_diagonalization(F_vv, wf%n_v, 3, &
+      call block_diagonalize_symmetric(F_vv, wf%n_v, 3, &
                                  [wf%n_ccsd_v, wf%n_cc2_v, wf%n_ccs_v], &
                                  wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
 !
@@ -508,13 +508,13 @@ contains
 !
 !        Block diagonal occupied-occupied Fock
 !
-         call block_diagonalization(F_oo, wf%n_o, 2, &
+         call block_diagonalize_symmetric(F_oo, wf%n_o, 2, &
                                     [wf%n_ccsd_o + wf%n_cc2_o, wf%n_ccs_o], &
                                     wf%orbital_energies_cc2(1:wf%n_o))
 !
 !        Block diagonal virtual-virtual Fock
 !
-         call block_diagonalization(F_vv, wf%n_v, 2, &
+         call block_diagonalize_symmetric(F_vv, wf%n_v, 2, &
                                     [wf%n_ccsd_v + wf%n_cc2_v, wf%n_ccs_v], &
                                     wf%orbital_energies_cc2(wf%n_o+1:wf%n_mo))
 !

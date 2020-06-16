@@ -33,7 +33,8 @@
    end subroutine construct_omega_mlcc2
 !
 !
-   module subroutine omega_cc2_a1_mlcc2(wf, omega, n_cc2_o, n_cc2_v, first_cc2_o, first_cc2_v, last_cc2_o, last_cc2_v)
+   module subroutine omega_cc2_a1_mlcc2(wf, omega, n_cc2_o, n_cc2_v, first_cc2_o, &
+                                       first_cc2_v, last_cc2_o, last_cc2_v)
 !!
 !!    Omega MLCC2 A1 term
 !!    Adapted by Sarai D. Folkestad, Jan 2019

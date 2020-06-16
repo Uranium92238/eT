@@ -4,7 +4,6 @@ system
 end system
 
 do
-   ground state
    excited state
 end do
 
@@ -40,10 +39,14 @@ solver cc es
    right eigenvectors
 end solver cc es
 
+active atoms
+   selection type: list
+   cc2: {3}
+end active atoms
+
 mlcc
-   cc2 orbitals: cnto-approx
-   cnto occupied cc2: 2
-   cnto states: {1,2,3,4}
+   levels: ccs, cc2
+   cc2 orbitals: cholesky-pao
 end mlcc
 
 geometry

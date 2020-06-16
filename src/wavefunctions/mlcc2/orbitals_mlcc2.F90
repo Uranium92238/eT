@@ -303,7 +303,7 @@ contains
 !!    corresponds to the old basis but the MOs are updated.
 !!
 !
-      use array_utilities, only : block_diagonalization
+      use array_utilities, only : block_diagonalize_symmetric
 !
       implicit none
 !
@@ -319,12 +319,12 @@ contains
 !
 !     Block diagonal occupied-occupied Fock
 !
-      call block_diagonalization(F_oo, wf%n_o, 2, [wf%n_cc2_o, wf%n_ccs_o], &
+      call block_diagonalize_symmetric(F_oo, wf%n_o, 2, [wf%n_cc2_o, wf%n_ccs_o], &
                                     wf%orbital_energies(1:wf%n_o))
 !
 !     Block diagonal virtual-virtual Fock
 !
-      call block_diagonalization(F_vv, wf%n_v, 2, [wf%n_cc2_v, wf%n_ccs_v], &
+      call block_diagonalize_symmetric(F_vv, wf%n_v, 2, [wf%n_cc2_v, wf%n_ccs_v], &
                                     wf%orbital_energies(wf%n_o+1:wf%n_mo))
 !
 !     Transform blocks
@@ -803,15 +803,17 @@ contains
 !!
 !!       - Write transformation matrix to file
 !!
+!
+      use array_utilities, only: diagonalize_symmetric
+!
       implicit none
 !
       class(mlcc2) :: wf
 !
       real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
 !
-      integer :: k, info, n_nto_states
+      integer :: k, n_nto_states
 !
-      real(dp), dimension(:), allocatable       :: work, eigenvalues
       real(dp), dimension(:,:), allocatable     :: R_ai_k
       real(dp), dimension(:,:,:), allocatable   :: R_ai
 !
@@ -854,25 +856,7 @@ contains
 !
       call dscal(wf%n_o**2, -one, T_o, 1)
 !
-      call mem%alloc(work, 4*wf%n_o)
-      call mem%alloc(eigenvalues, wf%n_o)
-!
-      call dsyev('V','U',        &
-                  wf%n_o,        &
-                  T_o,           &
-                  wf%n_o,        &
-                  eigenvalues,   &
-                  work,          &
-                  4*wf%n_o,      &
-                  info)
-!
-      call mem%dealloc(work, 4*wf%n_o)
-      call mem%dealloc(eigenvalues, wf%n_o)
-!
-      if (info .ne. 0) then 
-         call output%error_msg('Diagonalization of M failed.' // &
-                               ' "Dsyev" finished with info: (i0)', ints=[info])
-      end if
+      call diagonalize_symmetric(T_o, wf%n_o)
 !
    end subroutine construct_ccs_nto_transformation_matrix_mlcc2
 !
@@ -1068,6 +1052,9 @@ contains
 !!
 !!    Diagonalizes the M and N CNTO matrices.
 !!
+!
+      use array_utilities, only: diagonalize_symmetric
+!
       implicit none
 !
       class(mlcc2) :: wf
@@ -1075,9 +1062,9 @@ contains
       real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: T_o
       real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: T_v
 !
-      real(dp), dimension(:), allocatable       :: work, eigenvalues
+      real(dp), dimension(:), allocatable :: eigenvalues
 !
-      integer :: info, i, work_size
+      integer :: i
 !
       integer :: count_zero_eigenvalues
 !
@@ -1086,33 +1073,8 @@ contains
       call dscal(wf%n_o**2, -one, T_o, 1)
       call dscal(wf%n_v**2, -one, T_v, 1)
 !
-      call mem%alloc(work, 1)
       call mem%alloc(eigenvalues, wf%n_o)
-!
-      call dsyev('V','U',        &
-                  wf%n_o,        &
-                  T_o,           &
-                  wf%n_o,        &
-                  eigenvalues,   &
-                  work,          &
-                  -1,            &
-                  info)
-!
-      work_size = int(work(1))
-!
-      call mem%dealloc(work, 1)
-      call mem%alloc(work, work_size)
-!
-      call dsyev('V','U',        &
-                  wf%n_o,        &
-                  T_o,           &
-                  wf%n_o,        &
-                  eigenvalues,   &
-                  work,          &
-                  work_size,      &
-                  info)
-!
-      call mem%dealloc(work, work_size)
+      call diagonalize_symmetric(T_o, wf%n_o, eigenvalues)
 !
       count_zero_eigenvalues = 0
 !
@@ -1127,35 +1089,8 @@ contains
 !
       call mem%dealloc(eigenvalues, wf%n_o)
 !
-      if (info .ne. 0) call output%error_msg('Diagonalization of M failed')
-!
-      call mem%alloc(work, 1)
       call mem%alloc(eigenvalues, wf%n_v)
-!
-      call dsyev('V','U',        &
-                  wf%n_v,        &
-                  T_v,           &
-                  wf%n_v,        &
-                  eigenvalues,   &
-                  work,          &
-                  -1,            &
-                  info)
-!
-      work_size = int(work(1))
-!
-      call mem%dealloc(work, 1)
-      call mem%alloc(work, work_size)
-!
-      call dsyev('V','U',        &
-                  wf%n_v,        &
-                  T_v,           &
-                  wf%n_v,        &
-                  eigenvalues,   &
-                  work,          &
-                  work_size,     &
-                  info)
-!
-      call mem%dealloc(work, work_size)
+      call diagonalize_symmetric(T_v, wf%n_v, eigenvalues)
 !
       count_zero_eigenvalues = 0
 !
@@ -1169,11 +1104,6 @@ contains
          call output%warning_msg('T_v has (i0) zero eigenvalues', ints=[count_zero_eigenvalues])
 !
       call mem%dealloc(eigenvalues, wf%n_v)
-!
-      if (info .ne. 0) then
-         call output%error_msg('Diagonalization of N failed. ' // &
-                               ' "Dsyev" finished with info: (i0)', ints=[info])
-      end if
 !
    end subroutine diagonalize_M_and_N_mlcc2
 !
