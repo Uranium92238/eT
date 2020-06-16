@@ -1946,11 +1946,11 @@ contains
 !
       integer, intent(in), optional :: element_size
 !
-      integer :: req0_tot
-      integer :: req1_min
-      integer :: req_min
+      integer(i64):: req0_tot
+      integer(i64):: req1_min
+      integer(i64):: req_min
 !
-      integer :: req_tot
+      integer(i64):: req_tot
 !
       integer :: e_size
 !
@@ -1965,8 +1965,8 @@ contains
          e_size = element_size
       endif
 !
-      req0_tot = req0*e_size
-      req1_min = req1*e_size
+      req0_tot = int(req0*e_size, kind=i64)
+      req1_min = int(req1*e_size, kind=i64)
 !
       req_min = req0_tot + req1_min
       req_tot = req0_tot + req1_min*batch_p%index_dimension
@@ -1982,9 +1982,9 @@ contains
 !
 !        Not enough memory for a batch
 !
-         call output%printf('m', 'Need at least (i0) B but only have (a0)', &
-                            ints=[req_min], &
-                            chars=[mem%get_memory_as_character(mem%available, .true.)])
+         call output%printf('m', 'Need at least (a0) B but only have (a0)', &
+                              chars=[mem%get_memory_as_character(req_min, .true.), &
+                              mem%get_memory_as_character(mem%available, .true.)])
          call output%error_msg('Not enough memory for a batch.')
 !
       else
@@ -2051,14 +2051,14 @@ contains
 !
       logical :: figured_out
 !
-      integer :: req0_tot
-      integer :: req1_p_min
-      integer :: req1_q_min 
-      integer :: req2_min
-      integer :: req_min
-      integer :: req_tot 
+      integer(i64):: req0_tot
+      integer(i64):: req1_p_min
+      integer(i64):: req1_q_min 
+      integer(i64):: req2_min
+      integer(i64):: req_min
+      integer(i64):: req_tot 
 !
-      integer :: p_elements, q_elements
+      integer(i64):: p_elements, q_elements
 !
       integer :: e_size
 !
@@ -2073,16 +2073,17 @@ contains
          e_size = element_size
       endif
 !
-      req0_tot   = req0*e_size
-      req1_p_min = req1_p*e_size
-      req1_q_min = req1_q*e_size
-      req2_min = req2*e_size
+      req0_tot   = int(req0*e_size, kind=i64)
+      req1_p_min = int(req1_p*e_size, kind=i64)
+      req1_q_min = int(req1_q*e_size, kind=i64)
+      req2_min   = int(req2*e_size, kind=i64)
 !
       req_min = req0_tot + req1_p_min + req1_q_min + req2_min
 !
-      req_tot = req0_tot + req1_p_min*(batch_p%index_dimension) &
-                         + req1_q_min*(batch_q%index_dimension) &
-                         + req2_min*(batch_p%index_dimension)*(batch_q%index_dimension)
+      req_tot = req0_tot + req1_p_min*int(batch_p%index_dimension, kind=i64)  &
+                         + req1_q_min*int(batch_q%index_dimension, kind=i64)  &
+                         + req2_min*int(batch_p%index_dimension, kind=i64)    &
+                           *int(batch_q%index_dimension, kind=i64)
 !
       if (req_tot .lt. mem%available) then
 !
@@ -2098,9 +2099,9 @@ contains
 !
 !        Not enough memory for a batch
 !
-         call output%printf('m', 'Need at least (i0) B but only have (a0)', &
-                            ints=[req_min], &
-                            chars=[mem%get_memory_as_character(mem%available, .true.)])
+         call output%printf('m', 'Need at least (a0) B but only have (a0)', &
+                              chars=[mem%get_memory_as_character(req_min, .true.), &
+                              mem%get_memory_as_character(mem%available, .true.)])
          call output%error_msg('Not enough memory for a batch.')
 !
       else
@@ -2115,9 +2116,9 @@ contains
          q_elements = 1
 !
          figured_out = .false.
-         do while (.not. figured_out                              &
-                     .and. p_elements .lt. batch_p%index_dimension &
-                     .and. q_elements .lt. batch_q%index_dimension)
+         do while (.not. figured_out                                    &
+                     .and. int(p_elements) .lt. batch_p%index_dimension &
+                     .and. int(q_elements) .lt. batch_q%index_dimension)
 !
             if (((p_elements+1)*(q_elements+1)*req2_min &
                   + (p_elements+1)*req1_p_min          &
@@ -2180,8 +2181,8 @@ contains
 !
          endif
 !
-         batch_p%max_length = p_elements
-         batch_q%max_length = q_elements
+         batch_p%max_length = int(p_elements)
+         batch_q%max_length = int(q_elements)
 !
 !        Figure out how many batches
 !
@@ -2264,28 +2265,30 @@ contains
 !
       integer, intent(in), optional :: element_size
 !
-      integer :: req0_tot
+      integer(i64):: req0_tot
 !
-      integer :: req1_p_min
-      integer :: req1_q_min 
-      integer :: req1_r_min
+      integer(i64):: req1_p_min
+      integer(i64):: req1_q_min 
+      integer(i64):: req1_r_min
 ! 
-      integer :: req2_pq_min
-      integer :: req2_pr_min
-      integer :: req2_qr_min
+      integer(i64):: req2_pq_min
+      integer(i64):: req2_pr_min
+      integer(i64):: req2_qr_min
 !
-      integer :: req3_min
+      integer(i64):: req3_min
 !
-      integer :: req_min
-      integer :: req_tot 
+      integer(i64):: req_min
+      integer(i64):: req_tot 
 !
-      integer :: p_elements, q_elements, r_elements
+      integer(i64):: p_elements, q_elements, r_elements
 !
       logical :: found_batch_size, p_incremented, q_incremented, r_incremented
 !
       integer :: e_size
 !
-      if ((.not. batch_p%initialized) .or. (.not. batch_q%initialized) .or. (.not. batch_r%initialized)) then
+      if ((.not. batch_p%initialized)        &
+            .or. (.not. batch_q%initialized) &
+            .or. (.not. batch_r%initialized)) then
 !
          call output%error_msg('batch_setup_3 called on uninitialized batch')
 !
@@ -2296,28 +2299,33 @@ contains
          e_size = element_size
       endif
 !
-      req0_tot   = req0*e_size
+      req0_tot   = int(req0*e_size, kind=i64)
 !
-      req1_p_min = req1_p*e_size
-      req1_q_min = req1_q*e_size
-      req1_r_min = req1_r*e_size
+      req1_p_min = int(req1_p*e_size, kind=i64)
+      req1_q_min = int(req1_q*e_size, kind=i64)
+      req1_r_min = int(req1_r*e_size, kind=i64)
 !
-      req2_pq_min = req2_pq*e_size
-      req2_pr_min = req2_pr*e_size
-      req2_qr_min = req2_qr*e_size
+      req2_pq_min = int(req2_pq*e_size, kind=i64)
+      req2_pr_min = int(req2_pr*e_size, kind=i64)
+      req2_qr_min = int(req2_qr*e_size, kind=i64)
 !
-      req3_min = req3*e_size
+      req3_min = int(req3*e_size, kind=i64)
 !
       req_min = req0_tot + req1_p_min + req1_q_min + req1_r_min &
                            + req2_pq_min + req2_pr_min + req2_qr_min + req3_min
 !
-      req_tot = req0_tot + req1_p_min*(batch_p%index_dimension) &
-                         + req1_q_min*(batch_q%index_dimension) &
-                         + req1_r_min*(batch_r%index_dimension) &
-                         + req2_pq_min*(batch_p%index_dimension)*(batch_q%index_dimension) &
-                         + req2_pr_min*(batch_p%index_dimension)*(batch_r%index_dimension) &
-                         + req2_qr_min*(batch_q%index_dimension)*(batch_r%index_dimension) &
-                         + req3_min*(batch_p%index_dimension)*(batch_q%index_dimension)*(batch_r%index_dimension)
+      req_tot = req0_tot + req1_p_min*int(batch_p%index_dimension, kind=i64)  &
+                         + req1_q_min*int(batch_q%index_dimension, kind=i64)  &
+                         + req1_r_min*int(batch_r%index_dimension, kind=i64)  &
+                         + req2_pq_min*int(batch_p%index_dimension, kind=i64) &
+                           *int(batch_q%index_dimension, kind=i64)            &
+                         + req2_pr_min*int(batch_p%index_dimension, kind=i64) &
+                           *int(batch_r%index_dimension, kind=i64)            &
+                         + req2_qr_min*int(batch_q%index_dimension, kind=i64) &
+                           *int(batch_r%index_dimension, kind=i64)            &
+                         + req3_min*int(batch_p%index_dimension, kind=i64)    &
+                           *int(batch_q%index_dimension, kind=i64)            &
+                           *int(batch_r%index_dimension, kind=i64)
 !
       if (req_tot .lt. mem%available) then
 !
@@ -2336,9 +2344,9 @@ contains
 !
 !        Not enough memory for a batch
 !
-         call output%printf('m', 'Need at least (i0) B but only have (a0)', &
-                            ints=[req_min], &
-                            chars=[trim(mem%get_memory_as_character(mem%available, .true.))])
+         call output%printf('m', 'Need at least (a0) B but only have (a0)', &
+                              chars=[mem%get_memory_as_character(req_min, .true.), &
+                              mem%get_memory_as_character(mem%available, .true.)])
          call output%error_msg('Not enough memory for a batch')
 !
       else
@@ -2357,21 +2365,21 @@ contains
 !
          do while (.not. found_batch_size .and. (p_incremented .or. q_incremented .or. r_incremented))
 !
-            if ((p_elements) .lt. batch_p%index_dimension) then
+            if (int(p_elements) .lt. batch_p%index_dimension) then
                p_elements = p_elements + 1
                p_incremented = .true.
             else
                p_incremented = .false.
             endif
 !
-            if ((q_elements) .lt. batch_q%index_dimension) then
+            if (int(q_elements) .lt. batch_q%index_dimension) then
                q_elements = q_elements + 1
                q_incremented = .true.
             else
                q_incremented = .false.
             endif
 !
-            if ((r_elements) .lt. batch_r%index_dimension) then
+            if (int(r_elements) .lt. batch_r%index_dimension) then
                r_elements = r_elements + 1
                r_incremented = .true.
             else
@@ -2396,9 +2404,9 @@ contains
 !
          enddo
 !
-         batch_p%max_length = p_elements
-         batch_q%max_length = q_elements
-         batch_r%max_length = r_elements
+         batch_p%max_length = int(p_elements)
+         batch_q%max_length = int(q_elements)
+         batch_r%max_length = int(r_elements)
 !
 !        Figure out how many batches
 !
@@ -2475,16 +2483,16 @@ contains
       integer, intent(in), optional :: element_size
       real(dp), intent(in), optional :: buffer_size
 !
-      integer :: req0_tot
+      integer(i64):: req0_tot
 !
-      integer :: req1_min
-      integer :: req2_min
-      integer :: req3_min
+      integer(i64):: req1_min
+      integer(i64):: req2_min
+      integer(i64):: req3_min
 !
-      integer :: req_min
-      integer :: req_tot 
+      integer(i64):: req_min
+      integer(i64):: req_tot 
 !
-      integer :: elements
+      integer(i64):: elements
 !
       logical :: found_batch_size, incremented
 !
@@ -2514,18 +2522,18 @@ contains
 !
       endif
 !
-      req0_tot   = (req0 + int(req0*buff))*e_size
-      req1_min   = (req1 + int(req1*buff))*e_size
-      req2_min   = (req2 + int(req2*buff))*e_size
-      req3_min   = (req3 + int(req3*buff))*e_size
+      req0_tot   = int((req0 + int(req0*buff))*e_size, kind=i64)
+      req1_min   = int((req1 + int(req1*buff))*e_size, kind=i64)
+      req2_min   = int((req2 + int(req2*buff))*e_size, kind=i64)
+      req3_min   = int((req3 + int(req3*buff))*e_size, kind=i64)
 !
 !     Minimal required memory for batches of size 1
       req_min = req0_tot + 3*req1_min + 6*req2_min + 6*req3_min
 !
 !     Required memory to hold complete arrays in mem (no batching)
-      req_tot = req0_tot + req1_min*(batch_p%index_dimension)     &
-                         + req2_min*(batch_p%index_dimension)**2  &
-                         + req3_min*(batch_p%index_dimension)**3
+      req_tot = req0_tot + req1_min*int(batch_p%index_dimension, kind=int64)     &
+                         + req2_min*int(batch_p%index_dimension, kind=int64)**2  &
+                         + req3_min*int(batch_p%index_dimension, kind=int64)**3
 !
       if (req_tot .lt. mem%available) then
 !
@@ -2544,9 +2552,9 @@ contains
 !
 !        Not enough memory for a batch
 !
-         call output%printf('m', 'Need at least (i0) B but only have (a0)', &
-                            ints=[req_min], &
-                            chars=[mem%get_memory_as_character(mem%available, .true.)])
+         call output%printf('m', 'Need at least (a0) B but only have (a0)', &
+                              chars=[mem%get_memory_as_character(req_min, .true.), &
+                              mem%get_memory_as_character(mem%available, .true.)])
          call output%error_msg('Not enough memory for a batch')
 !
       else
@@ -2559,7 +2567,7 @@ contains
 !
          do while (.not. found_batch_size .and. incremented)
 !
-            if ((elements) .lt. batch_p%index_dimension) then
+            if (int(elements) .lt. batch_p%index_dimension) then
                elements = elements + 1
                incremented = .true.
             else
@@ -2579,9 +2587,9 @@ contains
 !
          enddo
 !
-         batch_p%max_length = elements         
-         batch_q%max_length = elements        
-         batch_r%max_length = elements         
+         batch_p%max_length = int(elements)         
+         batch_q%max_length = int(elements)        
+         batch_r%max_length = int(elements)         
 !
 !        Figure out how many batches
 !

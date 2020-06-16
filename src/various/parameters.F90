@@ -83,4 +83,6 @@ module parameters
    real(dp), parameter :: Hartree_to_kcalmol = 627.509474D0       ! 2019 wikipedia
    real(dp), parameter :: au_to_debye        = 2.541746473D0      ! 2018 CODATA
 !
+   integer, parameter :: int32_mo_limit = 215
+!
 end module parameters
