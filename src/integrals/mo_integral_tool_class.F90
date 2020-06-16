@@ -451,7 +451,7 @@ contains
 !
       class(mo_integral_tool) :: integrals
 !
-      integer :: required_mem
+      integer(i64) :: required_mem
 !
       integer, parameter :: fraction_of_total_mem = 5
 !
@@ -459,9 +459,9 @@ contains
 !
       is_room = .false.
 !
-      required_mem = (integrals%n_mo)**4
+      required_mem = int((integrals%n_mo**4), kind=i64)*dp
 !
-      if (required_mem*dp .lt. mem%get_available()/fraction_of_total_mem) is_room = .true.
+      if (required_mem .lt. mem%get_available()/fraction_of_total_mem) is_room = .true.
 !
    end function room_for_g_pqrs_t1_mo_integral_tool
 !
@@ -479,7 +479,7 @@ contains
 !
       class(mo_integral_tool) :: integrals
 !
-      integer :: required_mem
+      integer(i64) :: required_mem
 !
       integer, parameter :: fraction_of_total_mem = 5
 !
@@ -487,9 +487,9 @@ contains
 !
       is_room = .false.
 !
-      required_mem = 2*(integrals%n_J)*(integrals%n_mo)**2
+      required_mem = int(2*(integrals%n_J)*(integrals%n_mo)**2, kind=i64)*dp
 !
-      if (required_mem*dp .lt. mem%get_available()/fraction_of_total_mem) is_room = .true.
+      if (required_mem .lt. mem%get_available()/fraction_of_total_mem) is_room = .true.
 !
    end function room_for_cholesky_mo_integral_tool
 !
