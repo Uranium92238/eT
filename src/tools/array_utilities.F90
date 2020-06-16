@@ -3099,10 +3099,23 @@ contains
    end function our_zdotu
 !
 !
-   subroutine block_diagonalization(A,  n_total, n_blocks, block_dim, diagonal)
+   subroutine block_diagonalize_symmetric(A,  n_total, n_blocks, block_dim, diagonal)
 !!
-!!    Block diagonalization
+!!    Block diagonalize symmetric
 !!    Written by Sarai D. Folkestad, Mar 2020
+!!
+!!    Block diagonalizes the symmetric matrix A (an n_total x n_total matrix)
+!!
+!!    n_blocks : The number of blocks
+!!
+!!    block_dim : array of dimensions for the blocks
+!!                Elements sum up to n_total
+!!
+!!    doagonal : Contains the diagonal elements of the 
+!!               matrix A after block diagonalization
+!!
+!!    This routine uses the convention that eigenvectors are flipped
+!!    such that the largest element of the eigenvectors are positive.
 !!
 !!
       implicit none
@@ -3117,7 +3130,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: eigenvalues
 !
-      integer :: info, i, block_, offset
+      integer :: info, i, block_, offset, index_max
 !
       offset = 1
 !
@@ -3139,10 +3152,24 @@ contains
                         4*block_dim(block_), &
                         info)
 !
+!           Convention for eigenvectors of block, maximum element is positive
+!
+            do i = offset, offset + block_dim(block_) - 1
+!
+               index_max = maxloc(abs(A(offset : offset + block_dim(block_) - 1, i)), dim=1)
+               index_max = index_max + offset - 1
+!
+               if (A(index_max, i) .lt. zero) &
+                  call dscal(block_dim(block_), &
+                            -one,               &
+                            A(offset : offset + block_dim(block_) - 1, i), 1)
+!
+            enddo
+!
             call mem%dealloc(work, 4*block_dim(block_))
 !
             if (info .ne. 0) then
-               call output%error_msg('Diagonalization of active fock matrix block failed.' // &
+               call output%error_msg('Diagonalization of block failed.' // &
                                     ' "Dsyev" finished with info: (i0)', ints=[info])
             end if
 !
@@ -3169,7 +3196,7 @@ contains
       if ((offset - 1) .ne. n_total) &
          call output%error_msg('dimensions do not add to n_total in block diagonalization')
 !
-   end subroutine block_diagonalization
+   end subroutine block_diagonalize_symmetric
 !
 !
    subroutine gram_schmidt_biorthonormalization(L, R, dim_, n_vectors, threshold)
@@ -3356,5 +3383,44 @@ contains
 !
    end subroutine gram_schmidt_biorthonormalization
 !
+!
+   subroutine diagonalize_symmetric(A, dim_, diagonal)
+!!
+!!    Diagonalize symmetric
+!!    Written by Sarai D. Folkestad, Jun 2020
+!!
+!!    Diagonalizes the symmetric matrix A (an dim_ x dim_ matrix)
+!!
+!!    diagonal : Contains the diagonal elements of the 
+!!               matrix A after block diagonalization
+!!
+!!    This routine uses the convention that eigenvectors are flipped
+!!    such that the largest element of the eigenvectors are positive.
+!!
+!!    This is a wrapper using the block_diagonalization routine
+!!    which in turn uses the lapack dsyeev routine
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_, dim_), intent(inout)   :: A
+      real(dp), dimension(dim_), optional, intent(out) :: diagonal
+!
+      real(dp), dimension(:), allocatable :: eigenvalues
+!
+      if (present(diagonal)) then
+!
+         call block_diagonalize_symmetric(A,  dim_, 1, [dim_], diagonal)
+!
+      else
+!
+         call mem%alloc(eigenvalues, dim_)
+         call block_diagonalize_symmetric(A,  dim_, 1, [dim_], eigenvalues)
+         call mem%dealloc(eigenvalues, dim_)
+!
+      endif
+!
+   end subroutine diagonalize_symmetric
 !
 end module array_utilities

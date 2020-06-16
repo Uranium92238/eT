@@ -4,7 +4,6 @@ system
 end system
 
 do
-   ground state
    excited state
 end do
 
@@ -17,6 +16,7 @@ solver cholesky
 end solver cholesky
 
 solver scf
+   restart
    algorithm:          scf-diis
    energy threshold:   1.0d-12
    gradient threshold: 1.0d-12
@@ -28,22 +28,29 @@ method
 end method
 
 solver cc gs
-   omega threshold:  1.0d-12
-   energy threshold: 1.0d-12
+   restart
+   omega threshold:  1.0d-10
+   energy threshold: 1.0d-10
 end solver cc gs
 
 solver cc es
+   restart
    algorithm:          davidson
    singlet states:     4
-   residual threshold: 1.0d-12
-   energy threshold:   1.0d-12
+   residual threshold: 1.0d-10
+   energy threshold:   1.0d-10
    right eigenvectors
 end solver cc es
 
+active atoms
+   selection type: list
+   cc2: {3}
+end active atoms
+
 mlcc
-   cc2 orbitals: cnto-approx
-   cnto occupied cc2: 2
-   cnto states: {1,2,3,4}
+   levels: ccs, cc2
+   cc2 orbitals: cholesky-pao
+   orbital restart
 end mlcc
 
 geometry

@@ -202,6 +202,7 @@ add_eT_runtest(mlcc2_full_fc_es                             "eT;short;mlcc2;chol
 add_eT_runtest(mlcc2_fc_es                                  "eT;short;mlcc2;cnto;frozen core")
 add_eT_runtest(restart_mlcc2_cholesky_es                    "eT;short;mlcc2;cholesky;restart")
 add_eT_runtest(restart_mlcc2_cnto_es                        "eT;short;mlcc2;cnto;restart")
+add_eT_runtest(restart_orbitals_mlcc2_cholesky_pao          "eT;short;mlcc2;cholesky-pao;restart")
 #
 add_eT_runtest(mlccsd_cnto_full_gs                          "eT;short;mlccsd;cnto")
 add_eT_runtest(mlccsd_cnto_gs                               "eT;short;mlccsd;cnto")
@@ -213,7 +214,9 @@ add_eT_runtest(mlccsd_cnto_es                               "eT;short;mlccsd;cnt
 add_eT_runtest(mlccsd_pao_es                                "eT;short;mlccsd;pao")
 add_eT_runtest(mlccsd_pao_full_cvs                          "eT;short;mlccsd;pao")
 add_eT_runtest(mlccsd_pao_cvs                               "eT;short;mlccsd;pao")
-
+add_eT_runtest(restart_mlccsd_cholesky_pao_es               "eT;short;mlccsd;cholesky-pao;restart")
+add_eT_runtest(restart_orbitals_mlccsd_cholesky_pao         "eT;short;mlccsd;cholesky-pao;restart")
+add_eT_runtest(restart_orbitals_mlccsd_cc2_cholesky_pao     "eT;short;mlccsd;cholesky-pao;restart")
 #
 if(ENABLE_PCMSOLVER)
    add_eT_runtest(hf_energy_pcm                             "eT;short;hf;sad;pcm;pcm_internal")

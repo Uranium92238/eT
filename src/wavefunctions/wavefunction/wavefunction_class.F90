@@ -1013,7 +1013,12 @@ contains
 !!    Linear dependence is removed by screening on the eigenvalues
 !!    with a threshold of 1.0 * 10^-6
 !!
-      use array_utilities, only: copy_and_scale
+!!    Modified by SDF May 2020,
+!!
+!!    Added flip of orbitals.
+!!    Diagonalization using wrapper.
+!!
+      use array_utilities, only: copy_and_scale, diagonalize_symmetric
 !
       implicit none
 !
@@ -1025,10 +1030,10 @@ contains
       real(dp), dimension(wf%n_ao, n_orbitals), intent(in)     :: orbital_coeff
       real(dp), dimension(n_orbitals, n_orbitals), intent(inout)  :: S
 !
-      real(dp), dimension(:), allocatable :: eigenvalues, work, inv_sqrt_eig
+      real(dp), dimension(:), allocatable :: eigenvalues, inv_sqrt_eig
       real(dp), dimension(:,:), allocatable :: orbital_coeff_copy
 !
-      integer :: i, info
+      integer :: i
 !
       real(dp), parameter :: threshold = 1.0d-6 ! Threshold for linear dependency. 
 !
@@ -1036,20 +1041,8 @@ contains
 !
       call mem%alloc(eigenvalues, n_orbitals)
 !
-      call mem%alloc(work, 4*n_orbitals)
-!
       call dscal(n_orbitals**2, -one, S, 1)
-!
-      call dsyev('V', 'L',       &
-               n_orbitals,       &
-               S,                &
-               n_orbitals,       &
-               eigenvalues,      &
-               work,             &
-               4*n_orbitals,     &
-               info)
-!
-      call mem%dealloc(work, 4*n_orbitals)
+      call diagonalize_symmetric(S, n_orbitals, eigenvalues)
 !
 !     Find the rank of S
 !
