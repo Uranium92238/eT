@@ -167,6 +167,7 @@ program eT_program
    call system%cleanup()
 !
    call mem%check_for_leak()
+   call mem%print_max_used()
 !
    call output%check_for_warnings()
 !
