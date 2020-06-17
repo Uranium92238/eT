@@ -63,6 +63,12 @@ if(ENABLE_PCMSOLVER)
    include_directories(${PCMSolver_INCLUDE_DIR})
 endif()
 
+
+if(NOT ENABLE_64BIT_INTEGERS)
+   add_definitions(-DHAS_32BIT_INTEGERS)
+   message(STATUS "32bit integers ENABLED")
+endif()
+
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Libint2_H_DIR})

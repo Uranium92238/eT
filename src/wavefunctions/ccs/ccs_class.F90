@@ -671,6 +671,10 @@ contains
       wf%n_ao = template_wf%n_ao
       wf%n_mo = template_wf%n_mo
 !
+#ifdef HAS_32BIT_INTEGERS  
+      if (wf%n_mo .gt. int32_mo_limit) call output%error_msg('too many MOs for 32bit integer')
+#endif
+!
       wf%hf_energy = template_wf%hf_energy
 !
 !     Set orbital coefficients and energies
