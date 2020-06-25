@@ -475,7 +475,7 @@ contains
 !
    end subroutine density_doubles_mu_nu_vo_doubles
 !
-   module subroutine construct_eom_etaX_doubles(wf, X, csiX, etaX)
+   module subroutine construct_eom_etaX_doubles(wf, X, xiX, etaX)
 !!
 !!    Construct EOM etaX
 !!    Written by Sarai D. Folkestad, May 2019
@@ -489,12 +489,12 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: xiX
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
       call wf%construct_etaX(X, etaX)
 !
-      call wf%etaX_eom_a(etaX, csiX)
+      call wf%etaX_eom_a(etaX, xiX)
 !
       call wf%etaX_eom_doubles_a1(X, etaX(1:wf%n_t1))
 !
@@ -844,9 +844,9 @@ contains
    end subroutine etaX_doubles_b2_doubles
 !
 !
-   module subroutine construct_csiX_doubles(wf, X, csiX)
+   module subroutine construct_xiX_doubles(wf, X, xiX)
 !!
-!!    Construct csiX
+!!    Construct xiX
 !!    Written by Josefine H. Andersen, 2019
 !!
 !!    Adapted by Sarai D. Folkestad
@@ -861,22 +861,22 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: xiX
 !
-      real(dp), dimension(:,:), allocatable :: csiX_ai
-      real(dp), dimension(:,:,:,:), allocatable :: csiX_aibj
+      real(dp), dimension(:,:), allocatable :: xiX_ai
+      real(dp), dimension(:,:,:,:), allocatable :: xiX_aibj
 !
       integer :: a, i, ai
 !
-      call zero_array(csiX, wf%n_es_amplitudes)
+      call zero_array(xiX, wf%n_es_amplitudes)
 !
-!     csiX_ai
+!     xiX_ai
 !
-      call mem%alloc(csiX_ai, wf%n_v, wf%n_o)
-      call zero_array(csiX_ai, (wf%n_o*wf%n_v))
+      call mem%alloc(xiX_ai, wf%n_v, wf%n_o)
+      call zero_array(xiX_ai, (wf%n_o*wf%n_v))
 !
-      call wf%csiX_ccs_a1(X, csiX_ai)
-      call wf%csiX_doubles_a1(X, csiX_ai)
+      call wf%xiX_ccs_a1(X, xiX_ai)
+      call wf%xiX_doubles_a1(X, xiX_ai)
 !
 !$omp parallel do private (a, i, ai)
       do i = 1, wf%n_o
@@ -884,44 +884,44 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !        
-            csiX(ai) = csiX_ai(a,i) 
+            xiX(ai) = xiX_ai(a,i) 
 !
          enddo
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(csiX_ai, wf%n_v, wf%n_o)
+      call mem%dealloc(xiX_ai, wf%n_v, wf%n_o)
 !
-!     csiX_aibj
+!     xiX_aibj
 !      
-      call mem%alloc(csiX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(csiX_aibj, (wf%n_o*wf%n_v)**2)
+      call mem%alloc(xiX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call zero_array(xiX_aibj, (wf%n_o*wf%n_v)**2)
 !
-      call wf%csiX_doubles_a2(X, csiX_aibj)
+      call wf%xiX_doubles_a2(X, xiX_aibj)
 !
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
-            csiX_aibj(a, i, a, i) = half*csiX_aibj(a, i, a, i)
+            xiX_aibj(a, i, a, i) = half*xiX_aibj(a, i, a, i)
 !
          enddo
       enddo
 !
-      call symmetrize_and_add_to_packed(csiX(wf%n_t1 + 1 : wf%n_es_amplitudes), csiX_aibj, (wf%n_v)*(wf%n_o))
+      call symmetrize_and_add_to_packed(xiX(wf%n_t1 + 1 : wf%n_es_amplitudes), xiX_aibj, (wf%n_v)*(wf%n_o))
 !
-      call mem%dealloc(csiX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(xiX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine construct_csiX_doubles
+   end subroutine construct_xiX_doubles
 !
 !
-   module subroutine csiX_doubles_a1_doubles(wf, X, csiX_ai)
+   module subroutine xiX_doubles_a1_doubles(wf, X, xiX_ai)
 !!
-!!    csiX CCSD A1
+!!    xiX CCSD A1
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2010
 !!
-!!    Constructs the A1 term of csiX
+!!    Constructs the A1 term of xiX
 !!
 !!       A1 = sum_ck u_aick X_kc,
 !!    
@@ -933,7 +933,7 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: csiX_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: xiX_ai
 !      
       real(dp), dimension(:,:,:,:), allocatable   :: u_aick
       real(dp), dimension(:,:,:,:), allocatable   :: t_aick
@@ -981,23 +981,23 @@ contains
                   X_ck,              &
                   (wf%n_o)*(wf%n_v), &
                   one,               &
-                  csiX_ai,           &
+                  xiX_ai,           &
                   (wf%n_o)*(wf%n_v))
 !
       call mem%dealloc(u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(X_ck, wf%n_v, wf%n_o)
 !
-   end subroutine csiX_doubles_a1_doubles
+   end subroutine xiX_doubles_a1_doubles
 !
 !
-   module subroutine csiX_doubles_a2_doubles(wf, X, csiX_aibj)
+   module subroutine xiX_doubles_a2_doubles(wf, X, xiX_aibj)
 !!
-!!    CsiX CCSD A2
+!!    xiX CCSD A2
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folekstad
 !!
-!!    Construct csiX A2 contribution:
+!!    Construct xiX A2 contribution:
 !!
 !!       A2 = sum_c t_aicj X_bc - sum_k t_aibk X_kj
 !!
@@ -1007,7 +1007,7 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: csiX_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: xiX_aibj
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_cjai
 !
@@ -1043,7 +1043,7 @@ contains
                  t_cjai,             &
                  wf%n_v,             &
                  one,                &
-                 csiX_aibj,          & ! csiX_bjai but it does not matter since we will symmetrize anyhow
+                 xiX_aibj,           & ! xiX_bjai but it does not matter since we will symmetrize anyhow
                  wf%n_v)
 !         
       call mem%dealloc(X_bc, wf%n_v, wf%n_v)
@@ -1072,13 +1072,13 @@ contains
                  X_kj,                 &
                  wf%n_o,               &
                  one,                  &
-                 csiX_aibj,            &
+                 xiX_aibj,            &
                  wf%n_o*(wf%n_v)**2)
 !
       call mem%dealloc(X_kj, wf%n_o, wf%n_o)
       call mem%dealloc(t_cjai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine csiX_doubles_a2_doubles
+   end subroutine xiX_doubles_a2_doubles
 !
 !
    module subroutine etaX_eom_doubles_a1_doubles(wf, X, etaX_ai)
@@ -1215,7 +1215,7 @@ contains
    end subroutine etaX_eom_doubles_a1_doubles
 !
 !
-   module subroutine etaX_eom_a_doubles(wf, etaX, csiX)
+   module subroutine etaX_eom_a_doubles(wf, etaX, xiX)
 !!
 !!    Get eom contribution
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -1229,7 +1229,7 @@ contains
       class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: xiX
 !
       real(dp) :: X_cc
       real(dp) :: ddot
@@ -1241,7 +1241,7 @@ contains
       call dcopy(wf%n_t1, wf%t1bar, 1, multipliers(1:wf%n_t1), 1)
       call dcopy(wf%n_t2, wf%t2bar, 1, multipliers(wf%n_t1 + 1: wf%n_es_amplitudes), 1)
 !
-      X_cc = ddot(wf%n_es_amplitudes, multipliers, 1, csiX, 1)
+      X_cc = ddot(wf%n_es_amplitudes, multipliers, 1, xiX, 1)
 !
       call daxpy(wf%n_es_amplitudes, -X_cc, multipliers, 1, etaX, 1)
 !

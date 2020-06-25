@@ -47,7 +47,7 @@
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       complex(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
 !
    end subroutine jacobian_transpose_transformation_ccs_complex
@@ -86,7 +86,7 @@
 !!    
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
       complex(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       complex(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_ai
 !

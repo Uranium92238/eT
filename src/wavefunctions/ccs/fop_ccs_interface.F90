@@ -189,7 +189,7 @@
    end subroutine construct_left_transition_density_ccs
 !
 !
-   module subroutine construct_eom_etaX_ccs(wf, X, csiX, etaX)
+   module subroutine construct_eom_etaX_ccs(wf, X, xiX, etaX)
 !!
 !!    Construct EOM etaX
 !!    Written by Sarai D. Folkestad, May 2019
@@ -201,7 +201,7 @@
 !
       class(ccs), intent(in) :: wf
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: xiX
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
    end subroutine construct_eom_etaX_ccs
@@ -267,9 +267,9 @@
    end subroutine etaX_ccs_b1_ccs
 !
 !
-   module subroutine construct_csiX_ccs(wf, X, csiX)
+   module subroutine construct_xiX_ccs(wf, X, xiX)
 !!
-!!    Construct csiX
+!!    Construct xiX
 !!    Written by Josefine H. Andersen, 2019
 !!
 !!    Adapted by Sarai D. Folkestad
@@ -282,17 +282,17 @@
 !
       class(ccs), intent(in) :: wf
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: xiX
 !
-   end subroutine construct_csiX_ccs
+   end subroutine construct_xiX_ccs
 !
 !
-   module subroutine csiX_ccs_a1_ccs(wf, X, csiX_ai)
+   module subroutine xiX_ccs_a1_ccs(wf, X, xiX_ai)
 !!
-!!    Construct csiX A1 
+!!    Construct xiX A1 
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
-!!    Adds the A1 term to csiX:
+!!    Adds the A1 term to xiX:
 !! 
 !!       xi^X_ai += X_ai
 !!
@@ -300,12 +300,12 @@
 !
       class(ccs), intent(in) :: wf
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: csiX_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: xiX_ai
 !
-   end subroutine csiX_ccs_a1_ccs
+   end subroutine xiX_ccs_a1_ccs
 !
 !
-   module subroutine etaX_eom_a_ccs(wf, etaX, csiX)
+   module subroutine etaX_eom_a_ccs(wf, etaX, xiX)
 !!
 !!    EtaX EOM A
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -318,17 +318,17 @@
 !
       class(ccs), intent(in) :: wf
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: xiX
 !
    end subroutine etaX_eom_a_ccs
 !
 !
-   module subroutine calculate_lr_transition_strength_ccs(wf, S, etaX, csiX, state, T_l, T_r, M)
+   module subroutine calculate_lr_transition_strength_ccs(wf, S, etaX, xiX, state, T_l, T_r, M)
 !!
 !!    Calculate LR transition strength
 !!    Written by Josefine H. Andersen, February 2019
 !!
-!!    Given etaX and csiX, this routine calculates the left and right transition 
+!!    Given etaX and xiX, this routine calculates the left and right transition 
 !!    moments T_l and T_r for the state number "state" and the transition strength 
 !!    S = T_l * T_r.
 !! 
@@ -342,7 +342,7 @@
       class(ccs), intent(inout) :: wf
       real(dp), intent(inout) :: S
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: xiX
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: M
       real(dp), intent(out) :: T_l, T_r
       integer, intent(in)   :: state

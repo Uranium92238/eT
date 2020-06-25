@@ -104,7 +104,7 @@
 !!    Used to construct CNTOs.
 !!
 !!    set_to_zero determines if M and N are set to zero initially. This makes it possible for 
-!!    the routine ton be used to add to M and N if we are using more than one excitation vector 
+!!    the routine to be used to add to M and N if we are using more than one excitation vector 
 !!    to generate the CNTOs.
 !!
       implicit none
@@ -202,9 +202,8 @@
 !!
 !!    Used to construct occupied NTOs.
 !!
-!!    set_to_zero determines if M and N are set to zero initially. This is used such that 
-!!    the routine can be used to add to M and N if we are using more than one excitation vector 
-!!    to generate the CNTOs.
+!!    set_to_zero determines if contributions are added to, or overwrites M and N. 
+!!
 !!
       implicit none
 !
@@ -370,9 +369,8 @@
 !!
 !!    Used to construct CNTOs.
 !!
-!!    'set_to_zero' : determines if M and N are set to zero initially. This makes it possible for 
-!!    the routine ton be used to add to M and N if we are using more than one excitation vector 
-!!    to generate the CNTOs.
+!!    set_to_zero determines if contributions are added to, or overwrites M and N. 
+!!
 !!
       implicit none
 !

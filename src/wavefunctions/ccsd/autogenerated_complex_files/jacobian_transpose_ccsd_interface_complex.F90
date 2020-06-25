@@ -47,7 +47,7 @@
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(ccsd), intent(inout) :: wf
       complex(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
 !
    end subroutine jacobian_transpose_transformation_ccsd_complex

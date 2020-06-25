@@ -506,7 +506,7 @@ contains
       call zero_array_complex(sigma_ajbi, wf%n_t1**2)
 !
       req0 = (wf%n_v)*(wf%n_o)*(wf%integrals%n_J)
-      req1 = (wf%n_v)*(wf%integrals%n_J) + (wf%n_o)*(wf%n_v)**2
+      req1 = max((wf%n_v)*(wf%integrals%n_J) + (wf%n_o)*(wf%n_v)**2, 2*(wf%n_o)*(wf%n_v)**2)
 !
       batch_c = batching_index(wf%n_v)
 !

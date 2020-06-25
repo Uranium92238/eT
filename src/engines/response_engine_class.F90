@@ -66,10 +66,10 @@ module response_engine_class
                                                          ! in compute_polarizability
 !
 !     etaX_mu = < HF | e-T X eT | mu >
-!     csiX_mu = < mu | e-T X eT | HF >
+!     xiX_mu = < mu | e-T X eT | HF >
 !
       real(dp), dimension(:,:), allocatable :: etaX ! columns correspond to components of X
-      real(dp), dimension(:,:), allocatable :: csiX ! columns correspond to components of X
+      real(dp), dimension(:,:), allocatable :: xiX  ! columns correspond to components of X
 !
 !     File arrays to store vectors needed for linear response 
 !
@@ -102,7 +102,7 @@ module response_engine_class
       procedure :: do_eom_transition_moments        => do_eom_transition_moments_response_engine
       procedure :: do_lr_transition_moments         => do_lr_transition_moments_response_engine
 !
-      procedure :: construct_etaX_and_csiX          => construct_etaX_and_csiX_response_engine
+      procedure :: construct_etaX_and_xiX           => construct_etaX_and_xiX_response_engine
       procedure :: determine_M_vectors              => determine_M_vectors_response_engine
       procedure :: determine_amplitude_response     => determine_amplitude_response_response_engine 
       procedure :: calculate_polarizabilities       => calculate_polarizabilities_response_engine
@@ -240,16 +240,16 @@ contains
 !
       call engine%do_multipliers(wf)
 !
-!     Construct etaX and csiX if they are going to be needed 
+!     Construct etaX and xiX if they are going to be needed 
 !
       if (engine%polarizabilities .or. &
             (engine%lr .and. engine%transition_moments)) then 
 !
-         call mem%alloc(engine%csiX, wf%n_es_amplitudes, 3)
+         call mem%alloc(engine%xiX, wf%n_es_amplitudes, 3)
          call mem%alloc(engine%etaX, wf%n_es_amplitudes, 3)
 !
-         call engine%construct_etaX_and_csiX(wf) ! etaX_mu = < Lambda | [X-bar, τ_mu] | HF >
-                                                 ! csiX_mu = < mu | X-bar | HF >         
+         call engine%construct_etaX_and_xiX(wf) ! etaX_mu = < Lambda | [X-bar, τ_mu] | HF >
+                                                ! xiX_mu = < mu | X-bar | HF >         
 !
       endif 
 !
@@ -307,11 +307,11 @@ contains
 !
       endif 
 !
-!     Deallocate csi and eta if they were constructed
+!     Deallocate xi and eta if they were constructed
       if (engine%polarizabilities .or. &
             (engine%lr .and. engine%transition_moments)) then 
 !
-         call mem%dealloc(engine%csiX, wf%n_es_amplitudes, 3)
+         call mem%dealloc(engine%xiX, wf%n_es_amplitudes, 3)
          call mem%dealloc(engine%etaX, wf%n_es_amplitudes, 3)
 !
       endif 
@@ -323,15 +323,15 @@ contains
    end subroutine run_response_engine
 !
 !
-   subroutine construct_etaX_and_csiX_response_engine(engine, wf)
+   subroutine construct_etaX_and_xiX_response_engine(engine, wf)
 !!
-!!    Construct etaX and csiX 
+!!    Construct etaX and xiX 
 !!    Written by Eirik F. Kjønstad, Nov 2019
 !!
 !!    Allocates and constructs the vectors
 !!
 !!       etaX_mu = < Lambda | [X-bar, τ_mu] | HF > (+ EOM correction)
-!!       csiX_mu = < mu | X-bar | HF >,
+!!       xiX_mu = < mu | X-bar | HF >,
 !!
 !!    where
 !!
@@ -355,11 +355,11 @@ contains
       call wf%construct_mu(X)
 !
 !     Construct the right-hand-side vector for operator X,
-!     i.e. csiX_mu = < mu | X-bar | HF >.
+!     i.e. xiX_mu = < mu | X-bar | HF >.
 !
       do k = 1, 3
 !
-         call wf%construct_csiX(X(:,:,k), engine%csiX(:,k))
+         call wf%construct_xiX(X(:,:,k), engine%xiX(:,k))
 !
       enddo 
 !
@@ -370,7 +370,7 @@ contains
 !
          if (engine%eom) then 
 !
-            call wf%construct_eom_etaX(X(:,:,k), engine%csiX(:,k), engine%etaX(:,k))
+            call wf%construct_eom_etaX(X(:,:,k), engine%xiX(:,k), engine%etaX(:,k))
 !
          else ! LR  
 !
@@ -382,7 +382,7 @@ contains
 !
       call mem%dealloc(X, wf%n_mo, wf%n_mo, 3)
 !
-   end subroutine construct_etaX_and_csiX_response_engine
+   end subroutine construct_etaX_and_xiX_response_engine
 !
 !
    subroutine calculate_polarizabilities_response_engine(engine, wf)
@@ -404,7 +404,7 @@ contains
 !!    vectors (t^X, t^Y)  needed for the polarizability components 
 !!    have been converged. These are solutions to the equations 
 !!
-!!       (A - omega_k I) t^X(omega_k) = -csi^X
+!!       (A - omega_k I) t^X(omega_k) = -xi^X
 !!
 !!    Currently, X and Y are components of the dipole operator. 
 !!
@@ -557,7 +557,7 @@ contains
 !!
 !!    These responses are solutions of the equations 
 !!
-!!       (A - omega_k I) t^X(omega_k) = -csi^X
+!!       (A - omega_k I) t^X(omega_k) = -xi^X
 !!
 !!    The amplitude response t^X(+- omega_k) are stored to file. In particular, 
 !!    these are stored in a sequential file array: 
@@ -619,7 +619,7 @@ contains
          if (.not. engine%compute_t_response(k)) cycle ! skip; kth component not needed
                                                        ! for requested polarizability calculations! 
 !
-         call copy_and_scale(-one, engine%csiX(:,k), rhs, wf%n_es_amplitudes)
+         call copy_and_scale(-one, engine%xiX(:,k), rhs, wf%n_es_amplitudes)
 !
          do sign = 1, 2
 !
@@ -977,7 +977,7 @@ contains
 !!         transition moments in response theory
 !!
 !!       - Calls wavefunction routine that computes the moments and strengths from 
-!!         the etaX, csiX and M vectors. 
+!!         the etaX, xiX and M vectors. 
 !!
 !!       - Calls routine to print the transition moments / strengths to output
 !!
@@ -1030,7 +1030,7 @@ contains
 !
             call wf%calculate_lr_transition_strength(transition_strength(component),      &
                                                      engine%etaX(:,component),            &
-                                                     engine%csiX(:,component),            &
+                                                     engine%xiX(:,component),            &
                                                      state,                               &
                                                      transition_moment_left(component),   &
                                                      transition_moment_right(component),  &

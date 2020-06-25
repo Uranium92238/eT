@@ -76,16 +76,16 @@
                                         L_jbic, L_kbic, L_kbjc,    &
                                         L_ibjc, L_ibkc, L_jbkc)
 !!
-!!    omega_cc3_a_n6
+!!    omega cc3 n6 terms
 !!
 !!    Calculate the triples contribution to omega1 and
 !!    the Fock contribution to omega2 scaling as n^6
 !!
 !!    Written by Rolf H. Myhre, January 2019
 !!
-!!    omega^a_i += sum_bcjk (t^abc_ijk - t^cba_ijk)*L_jbkc
+!!    omega^a_i += sum_bcjk (t^abc_ijk - t^cba_ijk) L_jbkc
 !!    
-!!    omega^ab_ij += P^{ab}_{ij}sum_ck (t^abc_ijk - t^cba_ijk)*F_kc
+!!    omega^ab_ij += P^{ab}_{ij}sum_ck (t^abc_ijk - t^cba_ijk) F_kc
 !!
       implicit none
 !
@@ -110,15 +110,15 @@
                                         g_dbic, g_dbjc, g_dbkc, &
                                         g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
 !!
-!!    omega_cc3_a_n7
+!!    omega cc3 n7 terms
 !!
 !!    Written by Rolf H. Myhre, January 2019
 !!
 !!    Calculate the triples contribution to omega2. Scaling as n^7
 !!
-!!    omega_abli -= P^ab_li sum_cjk(2t^bac_ijk - t^bca_ijk - t^cab_ijk)*g_jlkc
+!!    omega_ablj -= P^ab_lj sum_cik(2t^abc_ijk - t^cba_ijk - t^acb_ijk) g_ilkc
 !!
-!!    omega_adij -= P^ad_ij sum_bck(2t^abc_ijk - t^cba_ijk - t^acb_ijk)*g_dbkc
+!!    omega_adij += P^ad_ij sum_bck(2t^abc_ijk - t^cba_ijk - t^acb_ijk) g_dbkc
 !!
       implicit none
 !

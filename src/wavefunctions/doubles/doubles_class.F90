@@ -148,10 +148,10 @@ module doubles_class
       procedure :: etaX_doubles_a2                       => etaX_doubles_a2_doubles
       procedure :: etaX_doubles_b2                       => etaX_doubles_b2_doubles
 !
-      procedure :: construct_csiX                        => construct_csiX_doubles
+      procedure :: construct_xiX                         => construct_xiX_doubles
 !
-      procedure :: csiX_doubles_a1                       => csiX_doubles_a1_doubles
-      procedure :: csiX_doubles_a2                       => csiX_doubles_a2_doubles
+      procedure :: xiX_doubles_a1                        => xiX_doubles_a1_doubles
+      procedure :: xiX_doubles_a2                        => xiX_doubles_a2_doubles
       procedure :: etaX_eom_doubles_a1                   => etaX_eom_doubles_a1_doubles
 !
 !     Procedures related to time dependency
