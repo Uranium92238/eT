@@ -326,8 +326,8 @@ module ccs_class
       procedure :: construct_eom_etaX                            => construct_eom_etaX_ccs
       procedure :: etaX_ccs_a1                                   => etaX_ccs_a1_ccs
       procedure :: etaX_ccs_b1                                   => etaX_ccs_b1_ccs
-      procedure :: construct_csiX                                => construct_csiX_ccs
-      procedure :: csiX_ccs_a1                                   => csiX_ccs_a1_ccs
+      procedure :: construct_xiX                                 => construct_xiX_ccs
+      procedure :: xiX_ccs_a1                                    => xiX_ccs_a1_ccs
       procedure :: etaX_eom_a                                    => etaX_eom_a_ccs
       procedure :: calculate_lr_transition_strength              => calculate_lr_transition_strength_ccs
 !
@@ -424,8 +424,7 @@ module ccs_class
       procedure :: prepare_for_density                           => prepare_for_density_ccs
       procedure :: prepare_for_density_complex                   => prepare_for_density_ccs_complex
 !
-      procedure :: approximate_double_excitation_vectors &
-                   => approximate_double_excitation_vectors_ccs
+      procedure :: approximate_double_excitation_vectors         => approximate_double_excitation_vectors_ccs
 !
 !     Frozen core
 !

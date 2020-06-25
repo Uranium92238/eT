@@ -68,7 +68,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       complex(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
 !
@@ -101,7 +101,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       complex(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: eta
 !

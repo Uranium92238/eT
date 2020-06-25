@@ -232,31 +232,65 @@ contains
 !
       integer :: a, i, b, j
 !
-      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      integer :: req0, req1_i, req1_j, req2
 !
-      call wf%get_ovov_complex(g_iajb)
+      integer :: current_i_batch, current_j_batch
+!
+      type(batching_index) :: batch_i, batch_j
+!
+      req0 = 0
+!
+      req1_i = (wf%n_v)*(wf%integrals%n_J)
+      req1_j = (wf%n_v)*(wf%integrals%n_J)
+!
+      req2 = (wf%n_v**2)
+!
+      batch_i = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+!
+      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
 !
       omp_correlation_energy = zero_complex
 !
-!$omp parallel do private(a,i,j,b) reduction(+:omp_correlation_energy)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
+      do current_i_batch = 1, batch_i%num_batches
 !
-                  omp_correlation_energy = omp_correlation_energy &
-                                        + (wf%t1_complex(a,i))*(wf%t1_complex(b,j)) &
-                                        * (two_complex*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
+         call batch_i%determine_limits(current_i_batch)
 !
+         do current_j_batch = 1, batch_j%num_batches
+!
+            call batch_j%determine_limits(current_j_batch)
+!
+            call mem%alloc(g_iajb, batch_i%length, wf%n_v, batch_j%length, wf%n_v)
+!
+            call wf%get_ovov_complex(g_iajb, &
+                              batch_i%first, batch_i%last, &
+                              1, wf%n_v, &
+                              batch_j%first, batch_j%last, &
+                              1, wf%n_v)
+!
+!$omp parallel do private(b,i,j,a) reduction(+:omp_correlation_energy)
+            do b = 1, wf%n_v
+               do i = 1, batch_i%length
+                  do j = 1, batch_j%length
+                     do a = 1, wf%n_v
+!
+                        omp_correlation_energy = omp_correlation_energy +     &
+                                              wf%t1_complex(a, i + batch_i%first - 1) &
+                                             *wf%t1_complex(b, j + batch_j%first - 1) &
+                                             *(two_complex*g_iajb(i, a, j, b)-g_iajb(i, b, j, a))
+!
+                     enddo
+                  enddo
                enddo
             enddo
-         enddo
-      enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+            call mem%dealloc(g_iajb, batch_i%length, wf%n_v, batch_j%length, wf%n_v)
 !
-      wf%correlation_energy_complex = omp_correlation_energy 
+         enddo
+      enddo
+!
+      wf%correlation_energy_complex = omp_correlation_energy
 !
       wf%energy_complex = wf%hf_energy + wf%correlation_energy_complex
 !
