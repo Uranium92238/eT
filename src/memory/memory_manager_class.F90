@@ -305,7 +305,7 @@ contains
    end function get_available_memory_manager
 !
 !
-   function get_memory_as_character_memory_manager(input_mem, all_digits) result(memory)
+   pure function get_memory_as_character_memory_manager(input_mem, all_digits) result(memory)
 !!
 !!    Get available memory as character
 !!    Written by Alexander C. Paul, Oct 2019
@@ -2026,6 +2026,7 @@ contains
       integer(i15) :: req_tot
 !
       integer :: e_size
+      character(len=17), allocatable :: reqChar
 !
       if (.not. batch_p%initialized) then
 !
@@ -2055,9 +2056,10 @@ contains
 !
 !        Not enough memory for a batch
 !
+!        Hack because intel flips out if we put two functions in chars=[]
+         reqChar = mem%get_memory_as_character(req_min, .true.) 
          call output%printf('m', 'Need at least (a0) but only have (a0)', &
-                            chars=[mem%get_memory_as_character(req_min, .true.), & 
-                                   mem%get_memory_as_character(mem%available, .true.)])
+                            chars=[reqChar, mem%get_memory_as_character(mem%available, .true.)])
          call output%error_msg('Not enough memory for a batch.')
 !
       else
@@ -2134,6 +2136,7 @@ contains
       integer(i15) :: p_elements, q_elements
 !
       integer :: e_size
+      character(len=17), allocatable :: reqChar
 !
       if ((.not. batch_p%initialized) .or. (.not. batch_q%initialized)) then
 !
@@ -2172,9 +2175,10 @@ contains
 !
 !        Not enough memory for a batch
 !
+!        Hack because intel flips out if we put two functions in chars=[]
+         reqChar = mem%get_memory_as_character(req_min, .true.) 
          call output%printf('m', 'Need at least (a0) but only have (a0)', &
-                            chars=[mem%get_memory_as_character(req_min, .true.), &
-                                   mem%get_memory_as_character(mem%available, .true.)])
+                            chars=[reqChar, mem%get_memory_as_character(mem%available, .true.)])
          call output%error_msg('Not enough memory for a batch.')
 !
       else
@@ -2358,6 +2362,7 @@ contains
       logical :: found_batch_size, p_incremented, q_incremented, r_incremented
 !
       integer :: e_size
+      character(len=17), allocatable :: reqChar
 !
       if ((.not. batch_p%initialized) .or. (.not. batch_q%initialized) .or. (.not. batch_r%initialized)) then
 !
@@ -2415,9 +2420,10 @@ contains
 !
 !        Not enough memory for a batch
 !
+!        Hack because intel flips out if we put two functions in chars=[]
+         reqChar = mem%get_memory_as_character(req_min, .true.) 
          call output%printf('m', 'Need at least (a0) but only have (a0)', &
-                            chars=[mem%get_memory_as_character(req_min, .true.), &
-                                   mem%get_memory_as_character(mem%available, .true.)])
+                            chars=[reqChar, mem%get_memory_as_character(mem%available, .true.)])
          call output%error_msg('Not enough memory for a batch')
 !
       else
@@ -2499,7 +2505,7 @@ contains
 !
 !
    subroutine batch_setup_3_ident_memory_manager(mem, batch_p, batch_q, batch_r, &
-                                                 req0, req1, req2, req3, buffer_size, element_size)
+                                                 req0, req1, req2, req3, element_size)
 !!
 !!    Setup batching 
 !!    This is setup for three batch indices
@@ -2522,8 +2528,6 @@ contains
 !!    req3: required memory for 1 triple (e.g. rqp) of the 3 idenctical indices
 !!          scales cubically with batch size
 !!          total req3 is 6*req3 due to permutations of the indices (pqr,qpr,rqp,prq,qrp,rpq)
-!!
-!!    buffer_size: overwrite the default buffer size of 10%
 !!
 !!    element_size: memory per element, default is double precision
 !!
@@ -2552,7 +2556,6 @@ contains
       integer, intent(in) :: req3
 !
       integer, intent(in), optional :: element_size
-      real(dp), intent(in), optional :: buffer_size
 !
       integer(i15):: req0_tot
 !
@@ -2568,7 +2571,7 @@ contains
       logical:: found_batch_size, incremented
 !
       integer :: e_size
-      real(dp) :: buff
+      character(len=17), allocatable :: reqChar
 !
       if ((.not. batch_p%initialized) .or. (.not. batch_q%initialized) .or. (.not. batch_r%initialized)) then
 !
@@ -2581,11 +2584,6 @@ contains
          e_size = element_size
       endif
 !
-      buff = zero
-      if(present(buffer_size)) then
-         buff = buffer_size
-      endif
-!
       if (batch_p%index_dimension .ne. batch_q%index_dimension .or. &
           batch_p%index_dimension .ne. batch_r%index_dimension) then
 !
@@ -2593,10 +2591,10 @@ contains
 !
       endif
 !
-      req0_tot   = int((req0 + int(req0*buff))*e_size, kind=i15)
-      req1_min   = int((req1 + int(req1*buff))*e_size, kind=i15)
-      req2_min   = int((req2 + int(req2*buff))*e_size, kind=i15)
-      req3_min   = int((req3 + int(req3*buff))*e_size, kind=i15)
+      req0_tot   = int((req0 + req0)*e_size, kind=i15)
+      req1_min   = int((req1 + req1)*e_size, kind=i15)
+      req2_min   = int((req2 + req2)*e_size, kind=i15)
+      req3_min   = int((req3 + req3)*e_size, kind=i15)
 !
 !     Minimal required memory for batches of size 1
       req_min = req0_tot + 3*req1_min + 6*req2_min + 6*req3_min
@@ -2623,9 +2621,10 @@ contains
 !
 !        Not enough memory for a batch
 !
+!        Hack because intel flips out if we put two functions in chars=[]
+         reqChar = mem%get_memory_as_character(req_min, .true.) 
          call output%printf('m', 'Need at least (a0) but only have (a0)', &
-                            chars=[mem%get_memory_as_character(req_min, .true.), &
-                                   mem%get_memory_as_character(mem%available, .true.)])
+                            chars=[reqChar, mem%get_memory_as_character(mem%available, .true.)])
          call output%error_msg('Not enough memory for a batch')
 !
       else

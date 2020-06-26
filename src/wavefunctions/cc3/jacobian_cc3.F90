@@ -394,7 +394,7 @@ contains
       batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                                 req_0, req_1, req_2, req_3, buffer_size = zero)
+                                 req_0, req_1, req_2, req_3)
 !
 !     Allocate integral arrays
 !
@@ -760,7 +760,7 @@ contains
       req_3 = 0
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                           req_0, req_1, req_2, req_3, buffer_size = zero)
+                           req_0, req_1, req_2, req_3)
 !
 !     Allocate integral arrays
 !
