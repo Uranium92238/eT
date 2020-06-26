@@ -1071,7 +1071,7 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: x
 !
-      character(len=1) :: tag
+      character(len=*) :: tag
 !
       call wf%print_dominant_x1(x(1:wf%n_t1),tag)
 !
@@ -1094,7 +1094,7 @@ contains
       class(ccs), intent(in) :: wf
 !
       real(dp), dimension(wf%n_t1), intent(in) :: x1
-      character(len=1), intent(in)                :: tag
+      character(len=*), intent(in)             :: tag
 !
       real(dp), dimension(:), allocatable :: abs_x1
 !
@@ -1122,7 +1122,7 @@ contains
 !
       call output%printf('m', 'Largest single amplitudes:', fs='(/t6,a)')
       call output%print_separator('m', 35, '-', fs='(t6,a)')
-      call output%printf('m', 'a       i         ' // tag // '(a,i)', fs='(t9,a)')
+      call output%printf('m', 'a       i         (a0)(a,i)', fs='(t9,a)',chars=[tag])
       call output%print_separator('m', 35, '-', fs='(t6,a)')
 !
       do elm = 1, n_elements
