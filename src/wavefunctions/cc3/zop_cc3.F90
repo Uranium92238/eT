@@ -393,7 +393,7 @@ contains
       batch_c = batching_index(wf%n_v)
 !
       call mem%batch_setup_ident(batch_a, batch_b, batch_c, &
-                           req_0, req_1, req_2, req_3, buffer_size = zero)
+                           req_0, req_1, req_2, req_3)
 !
 !     Allocate integral arrays for T3-amplitudes
 !
@@ -1018,7 +1018,7 @@ contains
       batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                           req_0, req_1, req_2, req_3, buffer_size = zero)
+                           req_0, req_1, req_2, req_3)
 !
 !     Allocate integral arrays
 !
