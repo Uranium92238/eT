@@ -2098,7 +2098,7 @@ contains
 !
       else if (req_min .gt. mem%available) then
 !
-!        Hack because intel flips out if we put to functions in chars=[]
+!        Hack because intel flips out if we put two functions in chars=[]
          reqChar = mem%get_memory_as_character(req_min, .true.)
          call output%printf('m', 'Need at least (a0) but only have (a0)', &
                             chars=[reqChar, mem%get_memory_as_character(mem%available, .true.)])
@@ -2343,7 +2343,7 @@ contains
 !
       else if (req_min .gt. mem%available) then
 !
-!        Hack because intel flips out if we put to functions in chars=[]
+!        Hack because intel flips out if we put two functions in chars=[]
          reqChar = mem%get_memory_as_character(req_min, .true.) 
          call output%printf('m', 'Need at least (a0) but only have (a0)', &
                             chars=[reqChar, mem%get_memory_as_character(mem%available, .true.)])
