@@ -342,7 +342,7 @@ contains
       batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                           req_0, req_1, req_2, req_3, buffer_size = zero)
+                           req_0, req_1, req_2, req_3)
 !
 !     Allocate integral arrays and assign pointers.
 !     Without pointers we'll have to use three times as much
