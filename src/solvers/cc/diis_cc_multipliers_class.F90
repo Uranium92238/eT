@@ -396,7 +396,7 @@ contains
 !
       call output%printf('m', '- DIIS CC multipliers solver summary:', fs='(/t3,a)')
 !
-      call wf%print_dominant_x_amplitudes(X, 'r')
+      call wf%print_dominant_x_amplitudes(X, 'tbar')
 !
    end subroutine print_summary_diis_cc_multipliers
 !
