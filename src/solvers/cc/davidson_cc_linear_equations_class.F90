@@ -242,10 +242,10 @@ contains
 !
 !     :: Initialize solver tool and set preconditioner and start vectors ::
 !
-      davidson = linear_davidson_tool('davidson_t_response',         &
-                                       wf%n_gs_amplitudes,           &
-                                       solver%residual_threshold,    &
-                                       solver%max_dim_red, G, n_rhs, &
+      davidson = linear_davidson_tool('davidson_t_response',                        &
+                                       wf%n_gs_amplitudes,                          &
+                                       min(1.0d-11, solver%residual_threshold),     &
+                                       solver%max_dim_red, G, n_rhs,                &
                                        frequencies, n_frequencies)
 !
       call davidson%initialize_trials_and_transforms(solver%records_in_memory)

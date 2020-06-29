@@ -399,8 +399,11 @@ contains
       call mem%alloc(minus_omega, wf%n_gs_amplitudes)
       call copy_and_scale(-one, omega, minus_omega, wf%n_gs_amplitudes)
 !
-      davidson = linear_davidson_tool('cc_gs_newton_raphson', wf%n_gs_amplitudes, &
-         solver%micro_residual_threshold, solver%max_micro_dim_red, minus_omega, 1)
+      davidson = linear_davidson_tool('cc_gs_newton_raphson',                          &
+                                       wf%n_gs_amplitudes,                             &
+                                       min(1.0d-11, solver%micro_residual_threshold),  &
+                                       solver%max_micro_dim_red,                       &
+                                       minus_omega, 1)
 !
       call davidson%initialize_trials_and_transforms(solver%records_in_memory)
 !
