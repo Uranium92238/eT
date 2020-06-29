@@ -220,9 +220,10 @@ contains
 !
       call dscal(wf%n_gs_amplitudes, -one, eta, 1)
 !
-      davidson = linear_davidson_tool('multipliers', wf%n_gs_amplitudes,   &
-                                       solver%residual_threshold,          &
-                                       solver%max_dim_red,                 &
+      davidson = linear_davidson_tool('multipliers',                             &
+                                       wf%n_gs_amplitudes,                       &
+                                       min(1.0d-11, solver%residual_threshold),  &
+                                       solver%max_dim_red,                       &
                                        eta, 1)
 !
       call davidson%initialize_trials_and_transforms(solver%records_in_memory)
