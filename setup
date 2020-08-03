@@ -10,7 +10,15 @@ import os
 import sys
 import subprocess
 import shutil
-from argparse import ArgumentParser
+from argparse import ArgumentParser, HelpFormatter
+
+class SmartFormatter(HelpFormatter):
+
+    def _split_lines(self, text, width):
+        if text.startswith('R|'):
+            return text[2:].splitlines() + [''] 
+        # this is the RawTextHelpFormatter._split_lines
+        return HelpFormatter._split_lines(self, text, width) + ['']
 
 if sys.version < '3.5':
     print('requires python version >= 3.5')
@@ -21,7 +29,7 @@ default_path = os.path.join(root_dir, 'build')
 
 
 def input_parser():
-    parser = ArgumentParser()
+    parser = ArgumentParser(formatter_class=SmartFormatter)
 
     parser.add_argument('build_dir',
                         help="Build directory",
@@ -39,7 +47,7 @@ def input_parser():
 
     intgroup = parser.add_mutually_exclusive_group()
     intgroup.add_argument('--int64',
-                          help="enable 64-bit integers",
+                          help="enable 64-bit integers (default)",
                           action='store_true',
                           default=True)
     intgroup.add_argument('--int32',
@@ -58,18 +66,18 @@ def input_parser():
                         help='C compiler')
 
     parser.add_argument('-rcheck', '--runtime-checks',
-                        help="Add runtime checks flag to Fortran compiler",
+                        help="Add runtime checks flag to Fortran compiler (debug)",
                         action='store_true',
                         default=False)
     parser.add_argument('-fbatch', '--forced-batching',
                         help=("Performs batching everywhere "
-                              "regardless of memory (expert)"),
+                              "regardless of memory (debug)"),
                         action='store_true',
                         default=False)
 
     ompgroup = parser.add_mutually_exclusive_group()
     ompgroup.add_argument('--omp',
-                          help="enable OpenMP parallelization",
+                          help="enable OpenMP parallelization (default)",
                           action='store_true',
                           default=True)
     ompgroup.add_argument('--no-omp',
@@ -78,6 +86,7 @@ def input_parser():
                           default=False)
 
     parser.add_argument('--blas-type',
+                        help="Specify BLAS type to search for.",
                         choices=['ATLAS',
                                  'MKL',
                                  'ACML',
@@ -88,13 +97,25 @@ def input_parser():
                         default=None)
 
     parser.add_argument('-F-flags', '--extra-F-flags',
-                        help="additional Fortran flags")
+                        help="R|Additional compiler dependent Fortran flags.\n"
+                             "Note: specify flags as an explicit string starting\n"
+                             "with whitespace to avoid confusion with setup flags.\n"
+                             "Example: \" -fcoarray=lib\"")
     parser.add_argument('-CXX-flags', '--extra-CXX-flags',
-                        help="additional C++ flags")
+                        help="R|Additional compiler dependent C++ flags.\n"
+                             "Note: specify flags as an explicit string starting\n"
+                             "with whitespace to avoid confusion with setup flags.\n"
+                             "Example: \" -Ofast\"")
     parser.add_argument('-cmake-flags', '--extra-cmake-flags',
-                        help="additional CMake flags")
+                        help="R|Additional CMake flags.\n"
+                             "Note: specify flags as an explicit string starting\n"
+                             "with whitespace to avoid confusion with setup flags.\n"
+                             "Example: \" -GNinja\"")
     parser.add_argument('-linker-flags', '--extra-linker-flags',
-                        help="additional linker flags")
+                        help="R|Additional compiler dependent linker flags.\n"
+                             "Note: specify flags as an explicit string starting\n"
+                             "with whitespace to avoid confusion with setup flags.\n"
+                             "Example: \" -lcaf_mpi\"")
 
     # Link to optional libraries
     parser.add_argument('--pcm',
