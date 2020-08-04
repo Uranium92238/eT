@@ -51,9 +51,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_abjc, u_bjci
-!
-      real(dp), dimension(:,:), allocatable :: omega_ia
+      real(dp), dimension(:,:,:), allocatable :: L_Jcj, L_Jab, L_aJb, X_Jbi
 !
       type(batching_index) :: batch_a
 !
@@ -66,17 +64,32 @@ contains
       timer = timings('omega doubles a1', pl='verbose')
       call timer%turn_on()
 !
-      call mem%alloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     Using L_Jjc_t1 =  L_Jjc_mo = L_Jcj_mo
 !
-!     Reorder u_bicj to u_bjci
+      call mem%alloc(L_Jcj, wf%integrals%n_J, wf%n_v, wf%n_o)
+      call wf%integrals%get_cholesky_mo(L_Jcj, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
 !
-      call sort_1234_to_1432(u, u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     X_Jbi = u_bicj L_Jcj
 !
-      call mem%alloc(omega_ia, wf%n_o, wf%n_v)
-      call zero_array(omega_ia, wf%n_t1)
+      call mem%alloc(X_Jbi, wf%integrals%n_J, wf%n_v, wf%n_o)
 !
-      req0 = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
-      req1 = (wf%n_v)**2*(wf%n_o) + (wf%n_v)*(wf%integrals%n_J)
+      call dgemm('N', 'N',          &
+                  wf%integrals%n_J, &
+                  wf%n_o*wf%n_v,    &
+                  wf%n_o*wf%n_v,    &
+                  one,              &
+                  L_Jcj,            &
+                  wf%integrals%n_J, &
+                  wf%u_aibj,        & ! u_cjbi
+                  wf%n_o*wf%n_v,    &
+                  zero,             &
+                  X_Jbi,            &
+                  wf%integrals%n_J)
+!
+      call mem%dealloc(L_Jcj, wf%integrals%n_J, wf%n_v, wf%n_o)
+!
+      req0 = 0
+      req1 = 2*(wf%n_v)*(wf%integrals%n_J)
 !
       batch_a = batching_index(wf%n_v)
 !
@@ -86,36 +99,34 @@ contains
 !
          call batch_a%determine_limits(current_a_batch)
 !
-         call mem%alloc(g_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+         call mem%alloc(L_Jab, wf%integrals%n_J, batch_a%length, wf%n_v)
+         call wf%integrals%get_cholesky_t1(L_Jab,                 &
+                                          wf%n_o + batch_a%first, &
+                                          wf%n_o + batch_a%last,  &
+                                          wf%n_o + 1, wf%n_mo)
 !
-         call wf%get_vvov(g_abjc,                       &
-                           batch_a%first, batch_a%last, &
-                           1, wf%n_v,                   &
-                           1, wf%n_o,                   &
-                           1, wf%n_v)
+         call mem%alloc(L_aJb, batch_a%length, wf%integrals%n_J, wf%n_v)
+         call sort_123_to_213(L_Jab, L_aJb, wf%integrals%n_J, batch_a%length, wf%n_v)
+         call mem%dealloc(L_Jab, wf%integrals%n_J, batch_a%length, wf%n_v)
 !
-         call dgemm('T','T',                    &
+         call dgemm('N','N',                    &
+                     batch_a%length,            &
                      wf%n_o,                    &
-                     batch_a%length,            &
-                     (wf%n_o)*(wf%n_v)**2,      &
+                     wf%integrals%n_J*wf%n_v,   &
                      one,                       &
-                     u_bjci,                    & ! u_bjc_i
-                     (wf%n_o)*(wf%n_v)**2,      &
-                     g_abjc,                    & ! g_a_bjc
+                     L_aJb,                     & 
                      batch_a%length,            &
+                     X_Jbi,                     & 
+                     wf%integrals%n_J*wf%n_v,   &
                      one,                       &
-                     omega_ia(:,batch_a%first), & ! omega_ia
-                     wf%n_o)
+                     omega(batch_a%first,1),    & 
+                     wf%n_v)
 !
-         call mem%dealloc(g_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+         call mem%dealloc(L_aJb, batch_a%length, wf%integrals%n_J, wf%n_v)
 !
       enddo ! batch_a
 !
-      call mem%dealloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call add_21_to_12(one, omega_ia, omega, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(omega_ia, wf%n_o, wf%n_v)
+      call mem%dealloc(X_Jbi, wf%integrals%n_J, wf%n_v, wf%n_o)
 !
       call timer%turn_off()
 !
