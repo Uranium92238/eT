@@ -1129,7 +1129,8 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: L_ldkc 
       real(dp), dimension(:,:,:,:), allocatable :: u_aild 
       real(dp), dimension(:,:,:,:), allocatable :: Z_aikc 
-      real(dp), dimension(:,:,:,:), allocatable :: g_aikc 
+      real(dp), dimension(:,:,:), allocatable   :: L_J_kc, L_J_ai ! Cholesky vectors, term 1
+      real(dp), dimension(:,:,:), allocatable   :: X_bj_J         ! Intermediate, term 1
 !
       type(timings) :: timer
 !
@@ -1217,37 +1218,57 @@ contains
 !
       call mem%dealloc(Z_aikc,  wf%n_ccsd_v, wf%n_ccsd_o, n_a_o, n_a_v)
 !
-      call mem%alloc(g_aikc, wf%n_ccsd_v, wf%n_ccsd_o, n_a_o, n_a_v)
+!     u_jk^bc g_aikc = L_ai^J (u_bjkc L_kc^J) = L_ai^J X_bj^J
 !
-      call wf%get_voov(g_aikc,              &
-                        1, wf%n_ccsd_v,  &
-                        1, wf%n_ccsd_o,  &
-                        1, n_a_o,           &
-                        1, n_a_v)
+!     X_bj_J = u_bjkc L_J_kc
 !
-!     Calculate the D2.1 term, sum_ck u_jk^bc g_aikc = sum_ck g_aikc(ai,kc) u_aild(bj,kc)
+      call mem%alloc(L_J_kc, wf%integrals%n_J, n_a_o, n_a_v)
+      call wf%integrals%get_cholesky_t1(L_J_kc, 1, n_a_o, wf%n_o + 1, wf%n_o + n_a_v)
 !
-      call dgemm('N','T',                       &
+      call mem%alloc(X_bj_J, wf%n_ccsd_v, wf%n_ccsd_o, wf%integrals%n_J)
+!
+      call dgemm('N', 'T',                      &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
-                  (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
+                  wf%integrals%n_J,             &
                   (n_a_o)*(n_a_v),              &
                   one,                          &
-                  g_aikc,                       &
+                  u_aild,                       & ! u_bj,kc
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
-                  u_aild,                       & ! u_bjck
+                  L_J_kc,                       &
+                  wf%integrals%n_J,             &
+                  zero,                         &
+                  X_bj_J,                       &
+                  (wf%n_ccsd_o)*(wf%n_ccsd_v))
+!
+      call mem%dealloc(L_J_kc, wf%integrals%n_J, n_a_o, n_a_v)
+!
+      call mem%alloc(L_J_ai, wf%integrals%n_J, wf%n_ccsd_v, wf%n_ccsd_o)
+      call wf%integrals%get_cholesky_t1(L_J_ai, wf%n_o + 1, wf%n_o + wf%n_ccsd_v, 1, wf%n_ccsd_o)
+!
+!     omega2_aibj =+ L_J_ai X_bj_J
+!
+      call dgemm('T', 'T',                      &
+                  (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
+                  (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
+                  wf%integrals%n_J,             &
+                  one,                          &
+                  L_J_ai,                       &
+                  wf%integrals%n_J,             &
+                  X_bj_J,                       &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
                   one,                          &
                   omega2_aibj,                  &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v))
 !
+      call mem%dealloc(X_bj_J, wf%n_ccsd_v, wf%n_ccsd_o, wf%integrals%n_J)
+      call mem%dealloc(L_J_ai, wf%integrals%n_J, wf%n_ccsd_v, wf%n_ccsd_o)
       call mem%dealloc(u_aild,  wf%n_ccsd_v, wf%n_ccsd_o, n_a_v, n_a_o)
-      call mem%dealloc(g_aikc, wf%n_ccsd_v, wf%n_ccsd_o, n_a_o, n_a_v)
 !
 !     Add the D2.1 term to the omega vector
 !
       call symmetric_sum(omega2_aibj, (wf%n_ccsd_o)*(wf%n_ccsd_v))
 !
-      call daxpy(((wf%n_ccsd_o)*(wf%n_ccsd_v))**2, one, omega2_aibj,1, omega_aibj, 1)
+      call daxpy(((wf%n_ccsd_o)*(wf%n_ccsd_v))**2, one, omega2_aibj, 1, omega_aibj, 1)
 !
       call mem%dealloc(omega2_aibj, (wf%n_ccsd_v), (wf%n_ccsd_o), (wf%n_ccsd_v), (wf%n_ccsd_o))
 !

@@ -930,11 +930,12 @@ contains
       real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
       real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_ldkc ! g_ldkc
-      real(dp), dimension(:,:,:,:), allocatable :: L_ldkc ! L_ldkc = 2 * g_ldkc - g_lckd
-      real(dp), dimension(:,:,:,:), allocatable :: u_aild ! u_il^ad = 2 * t_il^ad - t_li^ad
-      real(dp), dimension(:,:,:,:), allocatable :: Z_aikc ! An intermediate, see below
-      real(dp), dimension(:,:,:,:), allocatable :: g_aikc ! g_aikc
+      real(dp), dimension(:,:,:,:), allocatable :: g_ldkc         ! g_ldkc
+      real(dp), dimension(:,:,:,:), allocatable :: L_ldkc         ! L_ldkc = 2 * g_ldkc - g_lckd
+      real(dp), dimension(:,:,:,:), allocatable :: u_aild         ! u_il^ad = 2 * t_il^ad - t_li^ad
+      real(dp), dimension(:,:,:,:), allocatable :: Z_aikc         ! An intermediate, see below
+      real(dp), dimension(:,:,:), allocatable   :: L_J_kc, L_J_ai ! Cholesky vectors, term 1
+      real(dp), dimension(:,:,:), allocatable   :: X_bj_J         ! Intermediate, term 1
 !
       type(timings) :: ccsd_d2_timer
 !
@@ -1006,26 +1007,51 @@ contains
 !
 !     :: Calculate the D2.1 term of omega ::
 !
-      call mem%alloc(g_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call wf%get_voov(g_aikc)
+!     u_jk^bc g_aikc = L_ai^J (u_bjkc L_kc^J) = L_ai^J X_bj^J
 !
-!     Calculate the D2.1 term, sum_ck u_jk^bc g_aikc = sum_ck g_aikc(ai,kc) u_aild(bj,kc)
+!     X_bj_J = u_bjkc L_J_kc
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  g_aikc,            &
-                  (wf%n_o)*(wf%n_v), &
-                  u_aild,            &
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  omega_aibj,        &
+      call mem%alloc(L_J_kc, wf%integrals%n_J, wf%n_o, wf%n_v)
+      call wf%integrals%get_cholesky_t1(L_J_kc, 1, wf%n_o, wf%n_o + 1, wf%n_mo)
+!
+      call mem%alloc(X_bj_J, wf%n_v, wf%n_o, wf%integrals%n_J)
+!
+      call dgemm('N', 'T',             &
+                  (wf%n_o)*(wf%n_v),   &
+                  wf%integrals%n_J,    &
+                  (wf%n_o)*(wf%n_v),   &
+                  one,                 &
+                  u_aild,              & ! u_bj,kc
+                  (wf%n_o)*(wf%n_v),   &
+                  L_J_kc,              &
+                  wf%integrals%n_J,    &
+                  zero,                &
+                  X_bj_J,              &
                   (wf%n_o)*(wf%n_v))
 !
+      call mem%dealloc(L_J_kc, wf%integrals%n_J, wf%n_o, wf%n_v)
+!
+      call mem%alloc(L_J_ai, wf%integrals%n_J, wf%n_v, wf%n_o)
+      call wf%integrals%get_cholesky_t1(L_J_ai, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
+!
+!     omega_aibj =+ L_J_ai X_bj_J
+!
+      call dgemm('T', 'T',             &
+                  (wf%n_o)*(wf%n_v),   &
+                  (wf%n_o)*(wf%n_v),   &
+                  wf%integrals%n_J,    &
+                  one,                 &
+                  L_J_ai,              &
+                  wf%integrals%n_J,    &
+                  X_bj_J,              &
+                  (wf%n_o)*(wf%n_v),   &
+                  one,                 &
+                  omega_aibj,          &
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(X_bj_J, wf%n_v, wf%n_o, wf%integrals%n_J)
+      call mem%dealloc(L_J_ai, wf%integrals%n_J, wf%n_v, wf%n_o)
       call mem%dealloc(u_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call mem%dealloc(g_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
       call ccsd_d2_timer%turn_off()
 !
