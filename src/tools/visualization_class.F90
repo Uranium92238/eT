@@ -365,6 +365,8 @@ contains
          enddo
 !$omp end parallel do
 !
+      call mem%dealloc(mos_on_grid_dp, plotter%n_x, plotter%n_y, plotter%n_z, n_mo)
+!
       else
 !
 !     In case of no omp:
