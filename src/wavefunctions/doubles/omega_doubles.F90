@@ -80,7 +80,7 @@ contains
                   one,              &
                   L_Jcj,            &
                   wf%integrals%n_J, &
-                  wf%u_aibj,        & ! u_cjbi
+                  u,                & ! u_cjbi
                   wf%n_o*wf%n_v,    &
                   zero,             &
                   X_Jbi,            &
