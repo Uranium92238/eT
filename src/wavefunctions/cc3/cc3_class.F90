@@ -52,13 +52,6 @@ module cc3_class
       type(direct_stream_file) :: g_bdck_c
       type(direct_stream_file) :: g_ljck_c
 !
-!     Left Jacobian integral files
-!
-      type(direct_stream_file) :: g_becd_t
-      type(direct_stream_file) :: g_mjlk_t
-      type(direct_stream_file) :: g_ckld_t
-      type(direct_stream_file) :: g_cdlk_t
-!
 !     Jacobian intermediates files
 !
       type(direct_stream_file) :: g_lbkc_t
@@ -111,8 +104,6 @@ module cc3_class
       procedure :: construct_x_intermediates            => construct_x_intermediates_cc3
       procedure :: sort_x_to_abid_and_write             => sort_x_to_abid_and_write_cc3
 !
-      procedure :: prepare_cc3_jacobian_trans_integrals => prepare_cc3_jacobian_trans_integrals_cc3
-!
 !     Routines for CVS
       procedure :: get_cvs_projector                    => get_cvs_projector_cc3
       procedure :: get_triples_cvs_projector_abc        => get_triples_cvs_projector_abc_cc3
@@ -145,7 +136,7 @@ module cc3_class
       procedure :: jacobian_transpose_cc3_a_n7          => jacobian_transpose_cc3_a_n7_cc3
       procedure :: construct_y_intermediates            => construct_y_intermediates_cc3
       procedure :: jacobian_transpose_cc3_c3_a1_y_o     => jacobian_transpose_cc3_c3_a1_y_o_cc3
-      procedure :: jacobian_transpose_cc3_c3_b1_y_v     => jacobian_transpose_cc3_c3_b1_y_v_cc3
+      procedure :: jacobian_transpose_cc3_c3_a1_y_v     => jacobian_transpose_cc3_c3_a1_y_v_cc3
 !
 !     Routines related to the multipliers
 !
@@ -337,12 +328,8 @@ contains
       end if
 !
 !     Delete additional files for jacobian transpose transformation
-      if (wf%g_becd_t%exists()) then
+      if (wf%Y_bcek%exists()) then
 !
-         call wf%g_becd_t%delete_
-         call wf%g_mjlk_t%delete_
-         call wf%g_ckld_t%delete_
-         call wf%g_cdlk_t%delete_
          call wf%Y_bcek%delete_
 !
       end if

@@ -52,10 +52,10 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      type(timings), allocatable :: timer
+      type(timings), allocatable :: prep_timer
 !
-      timer = timings('Prepare for Jacobian CCSD transformation', pl='normal')
-      call timer%turn_on()
+      prep_timer = timings("Time preparing for CCSD Jacobian", pl='normal')
+      call prep_timer%turn_on()
 !
       call wf%save_jacobian_a1_intermediates()
       call wf%save_jacobian_c2_intermediates()
@@ -65,7 +65,7 @@ contains
       call wf%save_jacobian_h2_intermediates()
       call wf%save_jacobian_j2_intermediate()
 !
-      call timer%turn_off()
+      call prep_timer%turn_off()
 !
    end subroutine prepare_for_jacobian_ccsd
 !

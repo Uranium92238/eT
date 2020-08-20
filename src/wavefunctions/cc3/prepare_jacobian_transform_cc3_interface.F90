@@ -45,24 +45,6 @@
    end subroutine prepare_for_jacobian_transpose_cc3
 !
 !
-   module subroutine prepare_cc3_jacobian_trans_integrals_cc3(wf)
-!!
-!!    Jacobian transpose transformation prepare integral files
-!!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
-!!
-!!    Construct integrals needed in CC3 jacobian transpose and store on disk
-!!    (be|cd) ordered as bce,d
-!!    (mj|lk) ordered as mjk,l
-!!    (ck|ld) ordered as cl,kd
-!!    (cd|lk) ordered as cl,kd
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-   end subroutine prepare_cc3_jacobian_trans_integrals_cc3
-!
-!
    module subroutine prepare_cc3_g_lbkc_t_file_cc3(wf)
 !!
 !!    Prepare ovov-integral 

@@ -31,7 +31,7 @@ submodule (ccsd_class) jacobian_transpose_ccsd
 !!
 !!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
 !!
-!!    Transfered to the current eT program from the first version
+!!    Transferred to the current eT program from the first version
 !!    of eT by Andreas Skeidsvoll and Sarai D. Folkestad, 2018.
 !!
 !
@@ -52,7 +52,7 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      type(timings) :: timer
+      type(timings) :: prep_timer
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_vovo
 !
@@ -60,8 +60,8 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: L_ooov
       real(dp), dimension(:,:,:,:), allocatable :: L_vovo
 !
-      timer = timings('Prepare for Jacobian Transpose', pl='normal')
-      call timer%turn_on()
+      prep_timer = timings("Time preparing for CCSD Jacobian transpose", pl='normal')
+      call prep_timer%turn_on()
 !
 !     Form t_vovo
 !
@@ -118,7 +118,7 @@ contains
       call mem%dealloc(t_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(L_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call timer%turn_off()
+      call prep_timer%turn_off()
 !
    end subroutine prepare_for_jacobian_transpose_ccsd
 !
