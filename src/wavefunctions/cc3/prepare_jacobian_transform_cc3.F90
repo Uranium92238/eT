@@ -31,7 +31,6 @@ submodule (cc3_class) prepare_jacobian_transform
 !!
 !!    Also contains the routine setting up the integral files 
 !!    for the transpose transformation:
-!!    g_vvvv ordered 1324
 !!    g_oooo ordered 1243
 !!    g_voov ordered 1324 
 !!    g_vvoo ordered 1342
@@ -54,20 +53,15 @@ contains
 !
       type(timings) :: prep_timer      
 !
-      prep_timer = timings("Time preparing for Jacobian")
-      call prep_timer%turn_on()
-!
       call output%printf('v', 'Preparing for (a0) right excited state equations', &
                          chars=[trim(wf%name_)], fs='(/t3,a)')
 !
+      call wf%ccsd%prepare_for_jacobian()
+!
+      prep_timer = timings("Time preparing for CC3 Jacobian", pl='normal')
+      call prep_timer%turn_on()
+!
       call wf%prepare_cc3_jacobian_intermediates()
-      call wf%save_jacobian_a1_intermediates()
-      call wf%save_jacobian_c2_intermediates()
-      call wf%save_jacobian_d2_intermediate()
-      call wf%save_jacobian_e2_intermediate()
-      call wf%save_jacobian_g2_intermediates()
-      call wf%save_jacobian_h2_intermediates()
-      call wf%save_jacobian_j2_intermediate()
 !
       call prep_timer%turn_off()
 !
@@ -89,206 +83,19 @@ contains
 !
       type(timings) :: prep_timer
 !
-      prep_timer = timings("Time preparing for Jacobian", pl='normal')
-      call prep_timer%turn_on()
-!
       call output%printf('v', 'Preparing for (a0) left excited state equations' &
                          &, chars=[trim(wf%name_)], fs='(/t3,a)')
 !
       call wf%ccsd%prepare_for_jacobian_transpose()
 !
+      prep_timer = timings("Time preparing for CC3 Jacobian transpose", pl='normal')
+      call prep_timer%turn_on()
+!
       call wf%prepare_cc3_jacobian_intermediates()
-      call wf%prepare_cc3_jacobian_trans_integrals()
 !
       call prep_timer%turn_off()
 !
    end subroutine prepare_for_jacobian_transpose_cc3
-!
-!
-   module subroutine prepare_cc3_jacobian_trans_integrals_cc3(wf)
-!!
-!!    Jacobian transpose transformation prepare integral files
-!!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
-!!
-!!    Construct integrals needed in CC3 jacobian transpose and store on disk
-!!    (be|cd) ordered as bce,d
-!!    (mj|lk) ordered as mjk,l
-!!    (ck|ld) ordered as cl,kd
-!!    (cd|lk) ordered as cl,kd
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_pqrs ! Array for constructed integrals
-      real(dp), dimension(:,:,:,:), allocatable :: h_pqrs ! Array for sorted integrals
-!
-      type(batching_index) :: batch_d, batch_l
-!
-      integer :: req_0, req_d, req_l
-      integer :: d_batch, l_batch
-!
-!     (be|cd) stored as bce#d
-!
-      call wf%get_g_pqrs_required(req_0, req_d, wf%n_v, wf%n_v, wf%n_v, 1)
-      req_d = req_d + 2*wf%n_v**3
-!
-      batch_d = batching_index(wf%n_v)
-!
-      call mem%batch_setup(batch_d,req_0,req_d)
-      call batch_d%determine_limits(1)
-!
-      call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_d%length)
-      call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_d%length)
-!
-      wf%g_becd_t = direct_stream_file('g_becd_t',wf%n_v**3)
-      call wf%g_becd_t%open_('write')
-!
-      do d_batch = 1,batch_d%num_batches
-!
-         call batch_d%determine_limits(d_batch)
-!
-         call wf%get_vvvv(g_pqrs,   &
-                          1,wf%n_v, &
-                          1,wf%n_v, &
-                          1,wf%n_v, &
-                          batch_d%first,batch_d%last)
-!
-         call sort_1234_to_1324(g_pqrs, h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_d%length)
-!
-         call wf%g_becd_t%write_interval(h_pqrs, batch_d)
-!
-      enddo
-!
-      call wf%g_becd_t%close_()
-!
-      call batch_d%determine_limits(1)
-      call mem%dealloc(g_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_d%length)
-      call mem%dealloc(h_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_d%length)
-!
-!
-!     (mj|lk) stored as mjk#l
-!
-      call wf%get_g_pqrs_required(req_0,req_l,wf%n_o,wf%n_o,1,wf%n_o)
-      req_l = req_l + 2*wf%n_o**3
-!
-      batch_l = batching_index(wf%n_o)
-!
-      call mem%batch_setup(batch_l,req_0,req_l)
-      call batch_l%determine_limits(1)
-!
-      call mem%alloc(h_pqrs, wf%n_o, wf%n_o, wf%n_o, batch_l%length)
-!
-      wf%g_mjlk_t = direct_stream_file('g_mjlk_t',wf%n_o**3)
-      call wf%g_mjlk_t%open_('write')
-!
-      do l_batch = 1,batch_l%num_batches
-!
-         call batch_l%determine_limits(l_batch)
-!
-         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, batch_l%length, wf%n_o)
-!
-         call wf%get_oooo(g_pqrs,   &
-                          1,wf%n_o, &
-                          1,wf%n_o, &
-                          batch_l%first,batch_l%last, &
-                          1,wf%n_o)
-!
-         call sort_1234_to_1243(g_pqrs, h_pqrs, wf%n_o, wf%n_o, batch_l%length, wf%n_o)
-!
-         call wf%g_mjlk_t%write_interval(h_pqrs, batch_l)
-!
-         call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_l%length, wf%n_o)
-!
-      enddo
-!
-      call wf%g_mjlk_t%close_()
-!
-      call batch_l%determine_limits(1)
-      call mem%dealloc(h_pqrs,wf%n_o,wf%n_o,wf%n_o,batch_l%length)
-!
-!
-!     (ck|ld) !stored as cl#k#d
-!
-      call wf%get_g_pqrs_required(req_0, req_d, wf%n_v, wf%n_o, wf%n_o, 1)
-      req_d = req_d + wf%n_v*wf%n_o**2
-!
-      batch_d = batching_index(wf%n_v)
-!
-      call mem%batch_setup(batch_d,req_0,req_d)
-      call batch_d%determine_limits(1)
-!
-      call mem%alloc(g_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_d%length) 
-      call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_d%length) 
-!
-      wf%g_ckld_t = direct_stream_file('g_ckld_t',wf%n_v*wf%n_o)
-      call wf%g_ckld_t%open_('write')
-!
-      do d_batch = 1,batch_d%num_batches
-!
-         call batch_d%determine_limits(d_batch)
-!
-         call wf%get_voov(g_pqrs,   &
-                          1,wf%n_v, &
-                          1,wf%n_o, &
-                          1,wf%n_o, &
-                          batch_d%first,batch_d%last)
-!
-         call sort_1234_to_1324(g_pqrs, h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
-         call wf%g_ckld_t%write_compound_full_batch(h_pqrs, wf%n_o, batch_d)
-!
-      enddo
-!
-      call wf%g_ckld_t%close_()
-!
-      call batch_d%determine_limits(1)
-      call mem%dealloc(g_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_d%length) 
-      call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_d%length) 
-!
-!
-!     (cd|lk) !stored as cl#k#d
-!
-      call wf%get_g_pqrs_required(req_0, req_d, wf%n_v, 1, wf%n_o, wf%n_o)
-      req_d = req_d + 2*wf%n_v*wf%n_o**2
-!
-      batch_d = batching_index(wf%n_v)
-!
-      call mem%batch_setup(batch_d,req_0,req_d)
-      call batch_d%determine_limits(1)
-!
-      call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
-!
-      wf%g_cdlk_t = direct_stream_file('g_cdlk_t',wf%n_v*wf%n_o)
-      call wf%g_cdlk_t%open_('write')
-!
-!     Going to batch over both d and k, so both are used as records, store as cl#k#d
-!
-      do d_batch = 1,batch_d%num_batches
-!
-         call batch_d%determine_limits(d_batch)
-!
-         call mem%alloc(g_pqrs, wf%n_v, batch_d%length, wf%n_o, wf%n_o)
-!
-         call wf%get_vvoo(g_pqrs,                     &
-                          1,wf%n_v,                   &
-                          batch_d%first,batch_d%last, &
-                          1,wf%n_o,                   &
-                          1,wf%n_o)
-!
-         call sort_1234_to_1342(g_pqrs, h_pqrs, wf%n_v, batch_d%length, wf%n_o, wf%n_o) !sort to clkd
-!
-         call wf%g_cdlk_t%write_compound_full_batch(h_pqrs, wf%n_o, batch_d)
-!
-         call mem%dealloc(g_pqrs, wf%n_v, batch_d%length, wf%n_o, wf%n_o)
-!
-      enddo
-!
-      call wf%g_cdlk_t%close_()
-!
-      call batch_d%determine_limits(1)
-      call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
-!
-   end subroutine prepare_cc3_jacobian_trans_integrals_cc3
 !
 !
    module subroutine prepare_cc3_g_lbkc_t_file_cc3(wf)
@@ -340,7 +147,8 @@ contains
                           batch_k%first,batch_k%last, &
                           1,wf%n_v)
 !
-         call sort_1234_to_2413(g_pqrs , h_pqrs , wf%n_o , wf%n_v , batch_k%length , wf%n_v) ! sort to bclk
+!        sort to bclk
+         call sort_1234_to_2413(g_pqrs , h_pqrs , wf%n_o , wf%n_v , batch_k%length , wf%n_v) 
 !
          call wf%g_lbkc_t%write_interval(h_pqrs, batch_k)
 !

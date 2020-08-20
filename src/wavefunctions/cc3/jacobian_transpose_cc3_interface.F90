@@ -262,8 +262,8 @@
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
 !!    sigma_1 += sum_mjk Y_cmjk * g_mjlk
-!!    sigma_1 += sum_cmj g_mjcd * Y_cmjk
-!!    sigma_1 += sum_cmk g_leck * Y_cmjk
+!!    sigma_1 += sum_cmj Y_cmjk * g_mjcd
+!!    sigma_1 += sum_cmk Y_cmjk * g_mdck
 !!   
       implicit none
 !
@@ -274,18 +274,18 @@
    end subroutine jacobian_transpose_cc3_c3_a1_y_o_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_c3_b1_y_v_cc3(wf, sigma_ai)
+   module subroutine jacobian_transpose_cc3_c3_a1_y_v_cc3(wf, sigma_ai)
 !!
 !!    Jacobian transpose contribution Y_vvvo
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    sigma_1 += sum_bec g_becd * X_bcek
-!!    sigma_1 += sum_cek X_bcek * g_leck
-!!    sigma_1 += sum_bek X_bcek * g_lkbe
+!!    sigma_dk += sum_bec Y_bcek * g_becd
+!!    sigma_cl += sum_bek Y_bcek * g_lkbe
+!!    sigma_bl += sum_cek Y_bcek * g_leck
 !!
       implicit none
 !
       class(cc3) :: wf
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
 !
-   end subroutine jacobian_transpose_cc3_c3_b1_y_v_cc3
+   end subroutine jacobian_transpose_cc3_c3_a1_y_v_cc3

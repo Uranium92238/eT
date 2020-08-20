@@ -1,5 +1,5 @@
 #Making a gitignore
-build/
+build*
 documentation/docs/
 *sublime*
 *.swp
