@@ -157,7 +157,8 @@ contains
 !!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      use visualization_class, only: visualization
+      use visualization_class,  only: visualization
+      use memory_manager_class, only: mem
 !
       implicit none
 !
@@ -165,6 +166,8 @@ contains
       class(mean_value_engine) :: engine
 !
       type(visualization), allocatable :: visualizer
+!
+      real(dp), dimension(:,:), allocatable :: c_D_ct
 !
       call engine%tasks%print_('cholesky')
 !
@@ -194,12 +197,15 @@ contains
 !
       if (engine%plot_density) then
 !
-         call engine%tasks%print_('plotting')
-!
-!        Initialize the visualization tool
+!        Transform the density to AO basis and plot
 !
          visualizer = visualization(wf%system, wf%n_ao)
-         call engine%do_visualization(wf, visualizer, wf%density, 'cc_gs_density')
+         call mem%alloc(c_D_ct, wf%n_ao, wf%n_ao)
+!
+         call wf%add_t1_terms_and_transform(wf%density, c_D_ct)
+         call visualizer%plot_density(wf%system, c_D_ct, 'cc_gs_density')
+!
+         call mem%dealloc(c_D_ct, wf%n_ao, wf%n_ao)
 !
       endif
 !

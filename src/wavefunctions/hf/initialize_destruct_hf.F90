@@ -87,7 +87,7 @@ contains
    end subroutine initialize_cholesky_ao_overlap_hf
 !
 !
-   module subroutine initialize_sp_eri_schwarz_hf(wf)
+   module subroutine initialize_shp_eri_schwarz_hf(wf)
 !!
 !!    Initialize shell pair eri schwarz
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -96,13 +96,13 @@ contains
 !
       class(hf) :: wf
 !
-      if (.not. allocated(wf%sp_eri_schwarz)) &
-         call mem%alloc(wf%sp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2, 2)
+      if (.not. allocated(wf%shp_eri_schwarz)) &
+         call mem%alloc(wf%shp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2, 2)
 !
-   end subroutine initialize_sp_eri_schwarz_hf
+   end subroutine initialize_shp_eri_schwarz_hf
 !
 !
-   module subroutine destruct_sp_eri_schwarz_hf(wf)
+   module subroutine destruct_shp_eri_schwarz_hf(wf)
 !!
 !!    Destruct shell pair eri schwarz
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -111,13 +111,13 @@ contains
 !
       class(hf) :: wf
 !
-      if (allocated(wf%sp_eri_schwarz)) &
-         call mem%dealloc(wf%sp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2, 2)
+      if (allocated(wf%shp_eri_schwarz)) &
+         call mem%dealloc(wf%shp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2, 2)
 !
-   end subroutine destruct_sp_eri_schwarz_hf
+   end subroutine destruct_shp_eri_schwarz_hf
 !
 !
-   module subroutine initialize_sp_eri_schwarz_list_hf(wf)
+   module subroutine initialize_shp_eri_schwarz_list_hf(wf)
 !!
 !!    Initialize shell pair eri schwarz list
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -126,13 +126,13 @@ contains
 !
       class(hf) :: wf
 !
-      if (.not. allocated(wf%sp_eri_schwarz_list)) &
-         call mem%alloc(wf%sp_eri_schwarz_list,wf%system%n_s*(wf%system%n_s + 1)/2, 3)
+      if (.not. allocated(wf%shp_eri_schwarz_list)) &
+         call mem%alloc(wf%shp_eri_schwarz_list,wf%system%n_s*(wf%system%n_s + 1)/2, 3)
 !
-   end subroutine initialize_sp_eri_schwarz_list_hf
+   end subroutine initialize_shp_eri_schwarz_list_hf
 !
 !
-   module subroutine destruct_sp_eri_schwarz_list_hf(wf)
+   module subroutine destruct_shp_eri_schwarz_list_hf(wf)
 !!
 !!    Destruct shell pair eri schwarz list
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -141,10 +141,10 @@ contains
 !
       class(hf) :: wf
 !
-      if (allocated(wf%sp_eri_schwarz_list)) &
-         call mem%dealloc(wf%sp_eri_schwarz_list, wf%system%n_s*(wf%system%n_s + 1)/2, 3)
+      if (allocated(wf%shp_eri_schwarz_list)) &
+         call mem%dealloc(wf%shp_eri_schwarz_list, wf%system%n_s*(wf%system%n_s + 1)/2, 3)
 !
-   end subroutine destruct_sp_eri_schwarz_list_hf
+   end subroutine destruct_shp_eri_schwarz_list_hf
 !
 !
    module subroutine destruct_ao_overlap_hf(wf)

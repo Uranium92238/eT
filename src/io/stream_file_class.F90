@@ -45,6 +45,11 @@ module stream_file_class
       procedure :: read_3_real_dp_stream_file
       procedure :: read_4_real_dp_stream_file
 !
+!     Real single precision read
+!
+      procedure :: read_0_real_sp_stream_file
+      procedure :: read_1_real_sp_stream_file
+!
 !     Complex double precision read
 !
       procedure :: read_0_complex_dp_stream_file
@@ -81,6 +86,8 @@ module stream_file_class
                           read_2_real_dp_stream_file,    &
                           read_3_real_dp_stream_file,    &
                           read_4_real_dp_stream_file,    &
+                          read_0_real_sp_stream_file,    &
+                          read_1_real_sp_stream_file,    &
                           read_0_complex_dp_stream_file, &
                           read_1_complex_dp_stream_file, &
                           read_2_complex_dp_stream_file, &
@@ -108,6 +115,11 @@ module stream_file_class
       procedure :: write_2_real_dp_stream_file
       procedure :: write_3_real_dp_stream_file
       procedure :: write_4_real_dp_stream_file
+!
+!     Real single precision write
+!
+      procedure :: write_0_real_sp_stream_file
+      procedure :: write_1_real_sp_stream_file
 !
 !     Complex double precision write
 !
@@ -145,6 +157,8 @@ module stream_file_class
                            write_2_real_dp_stream_file,    &
                            write_3_real_dp_stream_file,    &
                            write_4_real_dp_stream_file,    &
+                           write_0_real_sp_stream_file,    &
+                           write_1_real_sp_stream_file,    &
                            write_0_complex_dp_stream_file, &
                            write_1_complex_dp_stream_file, &
                            write_2_complex_dp_stream_file, &
@@ -321,6 +335,33 @@ contains
       call the_file%read_1_real_dp_stream_file(array, n, position_)
 !
    end subroutine read_4_real_dp_stream_file
+!
+!  Real single precision
+!
+   subroutine read_0_real_sp_stream_file(the_file, scalar, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in) :: the_file
+      real(sp), intent(out)          :: scalar
+      integer, intent(in), optional  :: position_
+!
+      call the_file%read_0_real_sp_abstract_stream(scalar, position_)
+!
+   end subroutine read_0_real_sp_stream_file
+!
+   subroutine read_1_real_sp_stream_file(the_file, array, n, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in)      :: the_file
+      integer, intent(in)                 :: n
+      real(sp), dimension(n), intent(out) :: array
+      integer, intent(in), optional       :: position_
+!
+      call the_file%read_1_real_sp_abstract_stream(array, n, position_)
+!
+   end subroutine read_1_real_sp_stream_file
 !
 !  Complex
 !
@@ -652,6 +693,33 @@ contains
       call the_file%write_1_real_dp_stream_file(array, n, position_)
 !
    end subroutine write_4_real_dp_stream_file
+!
+!  Real single precision
+!
+   subroutine write_0_real_sp_stream_file(the_file, scalar, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in) :: the_file
+      real(sp), intent(in)           :: scalar
+      integer, intent(in), optional  :: position_
+!
+      call the_file%write_0_real_sp_abstract_stream(scalar, position_)
+!
+   end subroutine write_0_real_sp_stream_file
+!
+   subroutine write_1_real_sp_stream_file(the_file, array, n, position_)
+!
+      implicit none
+!
+      class(stream_file), intent(in)     :: the_file
+      integer, intent(in)                :: n
+      real(sp), dimension(n), intent(in) :: array
+      integer, intent(in), optional      :: position_
+!
+      call the_file%write_1_real_sp_abstract_stream(array, n, position_)
+!
+   end subroutine write_1_real_sp_stream_file
 !
 !  Complex
 !

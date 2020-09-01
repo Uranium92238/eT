@@ -197,7 +197,7 @@ contains
 !
 !        Update Cauchy Schwarz screening list 
 !
-         call wf%construct_sp_eri_schwarz()
+         call wf%construct_shp_eri_schwarz()
 !
       endif
 !

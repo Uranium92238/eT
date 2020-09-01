@@ -33,7 +33,7 @@ module kinds
 !
    implicit none
 !
-   integer, parameter :: spr = real32
+   integer, parameter :: sp  = real32
    integer, parameter :: dp  = real64
    integer, parameter :: qp  = real128
    integer, parameter :: i64 = int64

@@ -924,6 +924,10 @@ contains
       endif
 !
 !     Plotting of transition densities
+!     plot_density   - logical to enable plotting of the gs density
+!     plot_tdm       - logical to enable plotting of tranistion densities
+!     states_to_plot - list of integers containing states of which 
+!                      the transition densities shall be plotted (default all states)
 !
       engine%plot_density = &
                input%requested_keyword_in_section('plot cc density', 'visualization')
@@ -1066,11 +1070,12 @@ contains
       implicit none
 !
       class(response_engine) :: engine
-      class(ccs)        :: wf
+      class(ccs)             :: wf
 !
       logical, dimension(wf%n_singlet_states), intent(in) :: skip_states
 !
       real(dp), dimension(:,:,:), allocatable :: operator
+      real(dp), dimension(:,:),   allocatable :: c_D_ct
 !
       real(dp), dimension(3) :: transition_strength, transition_moment_left, transition_moment_right
 !
@@ -1079,8 +1084,8 @@ contains
       real(dp) :: trace_r_tdm, trace_l_tdm
       integer :: p
 !
-      type(sequential_file) :: left_file, right_file
-      character(len=15)     :: name_left, name_right
+      type(sequential_file) :: density_file
+      character(len=15)     :: file_name
 !
       type(timings) :: EOM_timer
 !
@@ -1095,18 +1100,6 @@ contains
       call wf%prepare_for_density()
       call wf%initialize_gs_density()
       call wf%construct_gs_density()
-!
-      if (engine%plot_density .or. engine%plot_tdm) then
-!
-!        Initialize the visualization tool
-!
-         call engine%tasks%print_('plotting')
-         visualizer = visualization(wf%system, wf%n_ao)
-!
-      endif
-!
-      if (engine%plot_density) &
-            call engine%do_visualization(wf, visualizer, wf%density, 'cc_gs_density')
 !
       call wf%initialize_transition_densities()
 !
@@ -1136,26 +1129,25 @@ contains
 !
             end if
 !
+!           Construct right tdm and write to file
+!
             call wf%construct_right_transition_density(state)
+!
+            write(file_name, '(a, i3.3)') 'right_tdm_', state
+            density_file = sequential_file(trim(file_name))
+            call density_file%open_('write')
+            call density_file%write_(wf%right_transition_density, wf%n_mo**2)
+            call density_file%close_()
+!
+!           Construct left tdm and write to file
 !
             call wf%construct_left_transition_density(state)
 !
-!           Initialize and write the files to store the transition densities
-!
-            write(name_left, '(a, i3.3)') 'left_tdm_', state
-            write(name_right, '(a, i3.3)') 'right_tdm_', state
-!
-            left_file  = sequential_file(trim(name_left))
-            right_file = sequential_file(trim(name_right))
-!
-            call left_file%open_('write')
-            call right_file%open_('write')
-!
-            call left_file%write_(wf%left_transition_density, wf%n_mo**2)
-            call right_file%write_(wf%right_transition_density, wf%n_mo**2)
-!
-            call left_file%close_()
-            call right_file%close_()
+            write(file_name, '(a, i3.3)') 'left_tdm_', state
+            density_file  = sequential_file(trim(file_name))
+            call density_file%open_('write')
+            call density_file%write_(wf%left_transition_density, wf%n_mo**2)
+            call density_file%close_()
 !
             do component = 1, 3
 !
@@ -1193,22 +1185,60 @@ contains
             call output%printf('debug', 'Trace right transition density: (f15.12)', &
                                reals=[trace_r_tdm], fs='(t6,a/)')
 !
-            if (engine%plot_tdm) then
-               if (any(engine%states_to_plot .eq. state)) then
-!
-                  call engine%do_visualization(wf, visualizer, &
-                                               wf%right_transition_density, name_right)
-                  call engine%do_visualization(wf, visualizer, &
-                                               wf%left_transition_density, name_left)
-!
-               end if
-            end if
-!
          enddo
 !
          call mem%dealloc(operator, wf%n_mo, wf%n_mo, 3)
 !
       endif
+!
+      if (engine%plot_density .or. engine%plot_tdm) then
+!
+         call engine%tasks%print_('plotting')
+!
+         visualizer = visualization(wf%system, wf%n_ao)
+!
+         call mem%alloc(c_D_ct, wf%n_ao, wf%n_ao)
+!
+         if (engine%plot_density) then
+!
+            call wf%add_t1_terms_and_transform(wf%density, c_D_ct)
+            call visualizer%plot_density(wf%system, c_D_ct, 'cc_gs_density')
+!
+         end if
+!
+         if (engine%plot_tdm) then
+!
+            do p = 1, engine%n_states_to_plot
+!
+               state = engine%states_to_plot(p)
+!
+               write(file_name, '(a, i3.3)') 'right_tdm_', state
+               density_file  = sequential_file(trim(file_name))
+               call density_file%open_('read')
+               call density_file%read_(wf%right_transition_density, wf%n_mo**2)
+!
+               call wf%add_t1_terms_and_transform(wf%right_transition_density, c_D_ct)
+               call visualizer%plot_density(wf%system, c_D_ct, file_name)
+!
+               call density_file%close_()
+!
+               write(file_name, '(a, i3.3)') 'left_tdm_', state
+               density_file  = sequential_file(trim(file_name))
+               call density_file%open_('read')
+               call density_file%read_(wf%left_transition_density, wf%n_mo**2)
+!
+               call wf%add_t1_terms_and_transform(wf%left_transition_density, c_D_ct)
+               call visualizer%plot_density(wf%system, c_D_ct, file_name)
+!
+               call density_file%close_
+!            
+            end do
+!
+         end if
+!         
+         call mem%dealloc(c_D_ct, wf%n_ao, wf%n_ao)
+!
+      end if
 !
       call wf%destruct_transition_densities()
       call wf%destruct_gs_density()
@@ -1344,7 +1374,7 @@ contains
 !
       character(len=5) :: response_type
 !
-      engine%name_       = 'Coupled cluster response engine'
+      engine%name_ = 'Coupled cluster response engine'
 !
       engine%tag = 'response'
 !
@@ -1398,8 +1428,11 @@ contains
 !
       endif
 !
-      if (engine%plot_density) &
-            call engine%tasks%add(label='plotting', description='Construct and plot densities')
+      if (engine%plot_density .or. engine%plot_tdm) then
+!
+         call engine%tasks%add(label='plotting', description='Visualization of CC densities')
+!
+      end if
 !
       engine%description = 'Calculates dipole transition moments and oscillator strengths between &
                            &the ground state and the excited states.'

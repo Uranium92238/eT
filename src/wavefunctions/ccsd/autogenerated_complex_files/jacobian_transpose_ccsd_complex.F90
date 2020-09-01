@@ -659,7 +659,7 @@ contains
 !
       rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
 !
-      rec1 = wf%n_v*wf%integrals%n_J + wf%n_v**2*wf%n_o
+      rec1 = max(wf%n_v*wf%integrals%n_J + wf%n_v**2*wf%n_o, 2*wf%n_v**2*wf%n_o)
 !
       batch_d = batching_index(wf%n_v)
       call mem%batch_setup(batch_d, rec0, rec1)
@@ -746,7 +746,7 @@ contains
 !     Prepare batching over index d
 !
       rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
-      rec1 = (wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
+      rec1 = max(wf%n_v*wf%integrals%n_J + wf%n_v**2*wf%n_o, 2*wf%n_v**2*wf%n_o)
 !
       batch_d = batching_index(wf%n_v)
       call mem%batch_setup(batch_d, rec0, rec1)
@@ -1120,7 +1120,7 @@ contains
 !     Prepare for batching over d
 !
       rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
-      rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
+      rec1 = max(wf%n_v*wf%integrals%n_J + wf%n_v**2*wf%n_o, 2*wf%n_v**2*wf%n_o)
 !
       batch_d = batching_index(wf%n_v)
       call mem%batch_setup(batch_d, rec0, rec1)
@@ -1290,7 +1290,7 @@ contains
 !     Prepare batching over index e
 !
       rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
-      rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
+      rec1 = max(wf%n_v*wf%integrals%n_J + wf%n_v**2*wf%n_o, 2*wf%n_v**2*wf%n_o)
 !
 !     Initialize batching variable
 !

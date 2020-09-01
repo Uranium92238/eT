@@ -216,11 +216,11 @@ contains
       integer :: thread = 0, n_threads = 1
       logical :: local_cumulative
 !
-      real(dp), dimension(:,:), allocatable :: F, sp_density_schwarz
+      real(dp), dimension(:,:), allocatable :: F, shp_density_schwarz
 !
       real(dp) :: coulomb_thr, exchange_thr, precision_thr    ! Actual thresholds
 !
-      integer :: n_sig_sp
+      integer :: n_sig_shp
 !
       real(dp) :: max_D_schwarz, max_eri_schwarz
 !
@@ -258,15 +258,15 @@ contains
 !     Compute number of significant ERI shell pairs (the Fock construction
 !     only loops over these shell pairs) and the maximum element
 !
-      call wf%get_n_sig_eri_sp(n_sig_sp)
-      max_eri_schwarz = get_abs_max(wf%sp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2)
+      call wf%get_n_sig_eri_shp(n_sig_shp)
+      max_eri_schwarz = get_abs_max(wf%shp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2)
 !
 !     Construct the Coulomb two electron part of the Fock matrix, using the screening vectors
 !     and parallellizing over available threads (each gets its own copy of the Fock matrix)
 !
-      call mem%alloc(sp_density_schwarz, wf%system%n_s, wf%system%n_s)
-      call wf%construct_sp_density_schwarz(sp_density_schwarz, D)
-      max_D_schwarz = get_abs_max(sp_density_schwarz, wf%system%n_s**2)
+      call mem%alloc(shp_density_schwarz, wf%system%n_s, wf%system%n_s)
+      call wf%construct_shp_density_schwarz(shp_density_schwarz, D)
+      max_D_schwarz = get_abs_max(shp_density_schwarz, wf%system%n_s**2)
 !
 !$      n_threads = omp_get_max_threads()
 !
@@ -274,8 +274,8 @@ contains
       F = zero
 !
       call wf%construct_coulomb_ao_G(F, D, n_threads, max_D_schwarz, max_eri_schwarz,         &
-                                                sp_density_schwarz,                           &
-                                                n_sig_sp, coulomb_thr, precision_thr,         &
+                                                shp_density_schwarz,                          &
+                                                n_sig_shp, coulomb_thr, precision_thr,         &
                                                 wf%system%shell_limits)
 !
 !     Construct the Coulomb two electron part of the Fock matrix, using the screening vectors
@@ -284,15 +284,14 @@ contains
       call mem%alloc(scaled_D_sigma, wf%n_ao, wf%n_ao)
       scaled_D_sigma = two*D_sigma
 !
-      call wf%construct_sp_density_schwarz(sp_density_schwarz, scaled_D_sigma)
-      max_D_schwarz = get_abs_max(sp_density_schwarz, wf%system%n_s**2)
+      call wf%construct_shp_density_schwarz(shp_density_schwarz, scaled_D_sigma)
+      max_D_schwarz = get_abs_max(shp_density_schwarz, wf%system%n_s**2)
 !
-      call wf%construct_exchange_ao_G(F, scaled_D_sigma, n_threads, max_D_schwarz, max_eri_schwarz, &
-                                                   sp_density_schwarz,   &
-                                                   n_sig_sp, exchange_thr, precision_thr,                 &
-                                                   wf%system%shell_limits)
+      call wf%construct_exchange_ao_G(F, scaled_D_sigma, n_threads, max_D_schwarz,    &
+                                      max_eri_schwarz, shp_density_schwarz, n_sig_shp, &
+                                      exchange_thr, precision_thr, wf%system%shell_limits)
 !
-      call mem%dealloc(sp_density_schwarz, wf%system%n_s, wf%system%n_s)
+      call mem%dealloc(shp_density_schwarz, wf%system%n_s, wf%system%n_s)
       call mem%dealloc(scaled_D_sigma, wf%n_ao, wf%n_ao)
 !
 !     Add the accumulated Fock matrix F into the correct Fock matrix

@@ -42,12 +42,14 @@
    end subroutine t1_transform_ccs_complex
 !
 !
-   module subroutine t1_transpose_transform_ccs_complex(wf, Z_pq)
+   module subroutine add_t1_terms_ccs_complex(wf, Z_pq)
 !!
-!!    T1 transform transpose
+!!    Add t1 terms
 !!    Written by Andreas Skeidsvoll, Jan 2020
 !!
-!!    Assumes that Z is in the T1 basis and performs the transpose T1 transformation,
+!!    Here, Z is assumed to be the density matrix with no T1 contributions on input
+!!    - the so-called T1-transformed density matrix.
+!!    The routine adds the missing T1 contributions to Z:
 !!
 !!       Z_pq <- sum_rs X_sp Z_sr Y_rq,    i.e.    Z <- X^T Z Y
 !!
@@ -56,8 +58,8 @@
 !!       X = I - t1
 !!       Y = I + t1^T
 !!
-!!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ
-!!    part, where it is equal to t_i^a.
+!!    t1 is a full MO matrix whose only non-zero block is the vir-occ part,
+!!    where it is equal to t_i^a.
 !!
 !!    Based on t1_transform_ccs_complex by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
@@ -66,7 +68,7 @@
       class(ccs), intent(in) :: wf
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Z_pq
 !
-   end subroutine t1_transpose_transform_ccs_complex
+   end subroutine add_t1_terms_ccs_complex
 !
 !
    module subroutine t1_transform_4_ccs_complex(wf, Z_tuvw, Z_pqrs, t1)
@@ -95,3 +97,24 @@
       complex(dp), dimension(wf%n_v, wf%n_o), intent(in) :: t1
 !
    end subroutine t1_transform_4_ccs_complex
+!
+!
+   module subroutine add_t1_terms_and_transform_ccs_complex(wf, Z_pq, Z_out)
+!!
+!!    Add t1 terms and ao transform
+!!    Written by Tor S. Haugland, Nov 2019 (as do_visualization)
+!!
+!!    Here Z, on input, is assumed to be the density matrix with no T1 contributions 
+!!    - the so-called T1-transformed density matrix.
+!!    The routine adds the missing T1 contributions to Z 
+!!    and transforms it to the AO basis
+!!
+!!    Renamed and moved here, by Alexander C. Paul, May 2020
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(in)  :: Z_pq
+      complex(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: Z_out
+!
+   end  subroutine add_t1_terms_and_transform_ccs_complex

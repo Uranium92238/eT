@@ -209,10 +209,10 @@ contains
 !
 !     Construct screening vectors
 !
-      call wf%initialize_sp_eri_schwarz()
-      call wf%initialize_sp_eri_schwarz_list()
+      call wf%initialize_shp_eri_schwarz()
+      call wf%initialize_shp_eri_schwarz_list()
 !
-      call wf%construct_sp_eri_schwarz()
+      call wf%construct_shp_eri_schwarz()
 !
       call wf%initialize_ao_h()
       call wf%get_ao_h_wx(wf%ao_h)
@@ -1149,8 +1149,8 @@ contains
       call wf%destruct_ao_density()
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
-      call wf%destruct_sp_eri_schwarz()
-      call wf%destruct_sp_eri_schwarz_list()
+      call wf%destruct_shp_eri_schwarz()
+      call wf%destruct_shp_eri_schwarz_list()
       call wf%destruct_ao_h()
 !
       call wf%destruct_W_mo_update()
