@@ -652,7 +652,7 @@ contains
 !
       call zcopy(wf%n_mo**2, wf%density_complex, 1, mo_density_complex, 1)
 !
-      call wf%t1_transpose_transform_complex(mo_density_complex)
+      call wf%add_t1_terms_complex(mo_density_complex)
 !
 !     Write real part of density matrix to file
 !

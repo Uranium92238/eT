@@ -60,24 +60,28 @@ module abstract_stream_class
       procedure :: copy                    => copy_abstract_stream
 !
       procedure :: read_0_real_dp_abstract_stream
+      procedure :: read_0_real_sp_abstract_stream
       procedure :: read_0_complex_dp_abstract_stream
       procedure :: read_0_int_32_abstract_stream
       procedure :: read_0_int_64_abstract_stream
       procedure :: read_0_log_abstract_stream
 !
       procedure :: read_1_real_dp_abstract_stream
+      procedure :: read_1_real_sp_abstract_stream
       procedure :: read_1_complex_dp_abstract_stream
       procedure :: read_1_int_32_abstract_stream
       procedure :: read_1_int_64_abstract_stream
       procedure :: read_1_log_abstract_stream
 !
       procedure :: write_0_real_dp_abstract_stream
+      procedure :: write_0_real_sp_abstract_stream
       procedure :: write_0_complex_dp_abstract_stream
       procedure :: write_0_int_32_abstract_stream
       procedure :: write_0_int_64_abstract_stream
       procedure :: write_0_log_abstract_stream
 !
       procedure :: write_1_real_dp_abstract_stream
+      procedure :: write_1_real_sp_abstract_stream
       procedure :: write_1_complex_dp_abstract_stream
       procedure :: write_1_int_32_abstract_stream
       procedure :: write_1_int_64_abstract_stream
@@ -357,7 +361,7 @@ contains
 !
    subroutine read_0_real_dp_abstract_stream(the_file, scalar, position_)
 !!
-!!    write rank 0 real dp
+!!    read rank 0 real dp
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -406,9 +410,60 @@ contains
    end subroutine read_0_real_dp_abstract_stream
 !
 !
+   subroutine read_0_real_sp_abstract_stream(the_file, scalar, position_)
+!!
+!!    Read rank 0 real(sp)
+!!    Written by Rolf H. Myhre, Feb. 2020
+!!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
+!!    scalar:     real(sp)
+!!
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
+!!
+      implicit none
+!
+      class(abstract_stream), intent(in) :: the_file
+!
+      integer, intent(in), optional :: position_
+!
+      real(sp), intent(out) :: scalar
+!
+      integer::             io_status = 1
+      character(len=100) :: io_message
+!
+      if(.not. the_file%is_open) then
+!
+         call output%error_msg('Tried to read from file (a0), which is not open', &
+                               chars = [the_file%name_])
+      end if
+!
+      if(present(position_)) then
+!
+         read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+!
+      else
+!
+         read(the_file%unit_, iostat=io_status, iomsg=io_message) scalar
+!
+      end if
+!
+      if(io_status .ne. 0) then
+!
+         call output%error_msg('Failed to read from file (a0), status is (i0) and &
+                               &error message is (a0)', chars = [the_file%name_, io_message], &
+                               ints = [io_status])
+      end if
+!
+   end subroutine read_0_real_sp_abstract_stream
+!
+!
    subroutine read_0_complex_dp_abstract_stream(the_file, scalar, position_)
 !!
-!!    write rank 0 complex dp
+!!    read rank 0 complex dp
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -459,7 +514,7 @@ contains
 !
    subroutine read_0_int_32_abstract_stream(the_file, scalar, position_)
 !!
-!!    write rank 0 int 32
+!!    read rank 0 int 32
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -510,7 +565,7 @@ contains
 !
    subroutine read_0_int_64_abstract_stream(the_file, scalar, position_)
 !!
-!!    write rank 0 int 64
+!!    read rank 0 int 64
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -561,7 +616,7 @@ contains
 !
    subroutine read_0_log_abstract_stream(the_file, scalar, position_)
 !!
-!!    write rank 0 logical
+!!    read rank 0 logical
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Mar. 2020
 !!
 !!    scalar: logical
@@ -609,7 +664,7 @@ contains
 !
    subroutine read_1_real_dp_abstract_stream(the_file, array, n, position_)
 !!
-!!    write rank 1 real dp
+!!    read rank 1 real dp
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -661,9 +716,63 @@ contains
    end subroutine read_1_real_dp_abstract_stream
 !
 !
+   subroutine read_1_real_sp_abstract_stream(the_file, array, n, position_)
+!!
+!!    Read rank 1 real(sp)
+!!    Written by Rolf H. Myhre, Feb. 2020
+!!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
+!!    array: real(sp) array of length n
+!!
+!!    n: length of array
+!!
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
+!!
+      implicit none
+!
+      class(abstract_stream), intent(in) :: the_file
+!
+      integer, intent(in) :: n
+      integer, intent(in), optional :: position_
+!
+      real(sp), dimension(n), intent(out) :: array
+!
+      integer::             io_status = 1
+      character(len=100) :: io_message
+!
+      if(.not. the_file%is_open) then
+!
+         call output%error_msg('Tried to read from file (a0), which is not open', &
+                               chars = [the_file%name_])
+      end if
+!
+      if(present(position_)) then
+!
+         read(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+!
+      else
+!
+         read(the_file%unit_, iostat=io_status, iomsg=io_message) array
+!
+      end if
+!
+      if(io_status .ne. 0) then
+!
+         call output%error_msg('Failed to read from file (a0), status is (i0) and &
+                               &error message is (a0)', chars = [the_file%name_, io_message], &
+                               ints = [io_status])
+      end if
+!
+   end subroutine read_1_real_sp_abstract_stream
+!
+!
    subroutine read_1_complex_dp_abstract_stream(the_file, array, n, position_)
 !!
-!!    write rank 1 complex dp
+!!    read rank 1 complex dp
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -717,7 +826,7 @@ contains
 !
    subroutine read_1_int_32_abstract_stream(the_file, array, n, position_)
 !!
-!!    write rank 1 int 32
+!!    read rank 1 int 32
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -771,7 +880,7 @@ contains
 !
    subroutine read_1_int_64_abstract_stream(the_file, array, n, position_)
 !!
-!!    write rank 1 int 64
+!!    read rank 1 int 64
 !!    Written by Rolf H. Myhre, Feb. 2020
 !!
 !!    Modified by Alexander C. Paul, Mar. 2020
@@ -825,7 +934,7 @@ contains
 !
    subroutine read_1_log_abstract_stream(the_file, array, n, position_)
 !!
-!!    write rank 1 logical
+!!    read rank 1 logical
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Mar. 2020
 !!
 !!    array: array of logicals with length n
@@ -923,6 +1032,57 @@ contains
       end if
 !
    end subroutine write_0_real_dp_abstract_stream
+!
+!
+   subroutine write_0_real_sp_abstract_stream(the_file, scalar, position_)
+!!
+!!    write rank 0 real(sp)
+!!    Written by Rolf H. Myhre, Feb. 2020
+!!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
+!!    scalar: real(sp) scalar
+!!
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
+!!
+      implicit none
+!
+      class(abstract_stream), intent(in) :: the_file
+!
+      integer, intent(in), optional :: position_
+!
+      real(sp), intent(in) :: scalar
+!
+      integer::             io_status = 1
+      character(len=100) :: io_message
+!
+      if(.not. the_file%is_open) then
+!
+         call output%error_msg('Tried to write from file (a0), which is not open', &
+                               chars = [the_file%name_])
+      end if
+!
+      if(present(position_)) then
+!
+         write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+!
+      else
+!
+         write(the_file%unit_, iostat=io_status, iomsg=io_message) scalar
+!
+      end if
+!
+      if(io_status .ne. 0) then
+!
+         call output%error_msg('Failed to write from file (a0), status is (i0) and &
+                               &error message is (a0)', chars = [the_file%name_, io_message], &
+                               ints = [io_status])
+      end if
+!
+   end subroutine write_0_real_sp_abstract_stream
 !
 !
    subroutine write_0_complex_dp_abstract_stream(the_file, scalar, position_)
@@ -1178,6 +1338,60 @@ contains
       end if
 !
    end subroutine write_1_real_dp_abstract_stream
+!
+!
+   subroutine write_1_real_sp_abstract_stream(the_file, array, n, position_)
+!!
+!!    write rank 1 real(sp)
+!!    Written by Rolf H. Myhre, Mar. 2020
+!!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
+!!    array: real(sp) array of length n
+!!
+!!    n: length of array
+!!
+!!    position_:  optional integer, position to read from in file
+!!                positions counted in bytes, starting at 1
+!!                default: current file pointer position
+!!
+      implicit none
+!
+      class(abstract_stream), intent(in) :: the_file
+!
+      integer, intent(in) :: n
+      integer, intent(in), optional :: position_
+!
+      real(sp), dimension(n), intent(in) :: array
+!
+      integer::             io_status = 1
+      character(len=100) :: io_message
+!
+      if(.not. the_file%is_open) then
+!
+         call output%error_msg('Tried to write to file (a0), which is not open', &
+                               chars = [the_file%name_])
+      end if
+!
+      if(present(position_)) then
+!
+         write(the_file%unit_, pos=position_, iostat=io_status, iomsg=io_message) array
+!
+      else
+!
+         write(the_file%unit_, iostat=io_status, iomsg=io_message) array
+!
+      end if
+!
+      if(io_status .ne. 0) then
+!
+         call output%error_msg('Failed to write to file (a0), status is (i0) and &
+                               &error message is (a0)', chars = [the_file%name_, io_message], &
+                               ints = [io_status])
+      end if
+!
+   end subroutine write_1_real_sp_abstract_stream
 !
 !
    subroutine write_1_complex_dp_abstract_stream(the_file, array, n, position_)

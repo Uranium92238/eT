@@ -95,7 +95,7 @@
 !
 !
    module subroutine construct_ao_G_thread_terms_hf(wf, F, D, n_threads, max_D_schwarz,   &
-                                          max_eri_schwarz, sp_density_schwarz, n_sig_sp,  &
+                                          max_eri_schwarz, shp_density_schwarz, n_sig_shp,  &
                                           coulomb_thr, exchange_thr, precision_thr, shells)
 !!
 !!    Construct AO G
@@ -117,19 +117,19 @@
       implicit none
 !
       class(hf), intent(in) :: wf
-      integer, intent(in) :: n_threads, n_sig_sp
+      integer, intent(in) :: n_threads, n_sig_shp
       type(interval), dimension(wf%system%n_s), intent(in) :: shells
       real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz 
       real(dp), intent(in) :: coulomb_thr, exchange_thr, precision_thr
-      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: sp_density_schwarz
+      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: shp_density_schwarz
 !
    end subroutine construct_ao_G_thread_terms_hf
 !
 !
    module subroutine construct_ao_G_thread_terms_mo_screened_hf(wf, F, D, n_threads, max_D_schwarz,   &
-                                          max_eri_schwarz, sp_density_schwarz, n_sig_sp,  &
+                                          max_eri_schwarz, shp_density_schwarz, n_sig_shp,  &
                                           coulomb_thr, exchange_thr, precision_thr, shells)
 !!
 !!    Construct AO G MO screened
@@ -165,20 +165,20 @@
       implicit none
 !
       class(hf), intent(in) :: wf
-      integer, intent(in) :: n_threads, n_sig_sp
+      integer, intent(in) :: n_threads, n_sig_shp
       type(interval), dimension(wf%system%n_s), intent(in) :: shells
       real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz 
       real(dp), intent(in) :: coulomb_thr, exchange_thr, precision_thr
-      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: sp_density_schwarz
+      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: shp_density_schwarz
 !
    end subroutine construct_ao_G_thread_terms_mo_screened_hf
 !
 !
    module subroutine construct_coulomb_ao_G_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
-                                                   sp_density_schwarz, &
-                                                   n_sig_sp, coulomb_thr, precision_thr, shells)
+                                                   shp_density_schwarz, &
+                                                   n_sig_shp, coulomb_thr, precision_thr, shells)
 !!
 !!    AO Fock Coulomb construction loop
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -196,19 +196,19 @@
       implicit none
 !
       class(hf), intent(in) :: wf
-      integer, intent(in) :: n_threads,  n_sig_sp
+      integer, intent(in) :: n_threads,  n_sig_shp
       type(interval), dimension(wf%system%n_s), intent(in) :: shells
       real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, precision_thr
-      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in)               :: sp_density_schwarz
+      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in)               :: shp_density_schwarz
 !
    end subroutine construct_coulomb_ao_G_hf
 !
 !
    module subroutine construct_exchange_ao_G_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz, &
-                                          sp_density_schwarz, &
-                                           n_sig_sp, exchange_thr, precision_thr, shells)
+                                          shp_density_schwarz, &
+                                           n_sig_shp, exchange_thr, precision_thr, shells)
 !!
 !!    AO Fock exchange construction loop
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -226,17 +226,17 @@
       implicit none
 !
       class(hf), intent(in) :: wf
-      integer, intent(in) :: n_threads,  n_sig_sp
+      integer, intent(in) :: n_threads,  n_sig_shp
       type(interval), dimension(wf%system%n_s), intent(in) :: shells
       real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, exchange_thr, precision_thr
-      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: sp_density_schwarz
+      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: shp_density_schwarz
 !
    end subroutine construct_exchange_ao_G_hf
 !
 !
-   module subroutine construct_sp_eri_schwarz_hf(wf)
+   module subroutine construct_shp_eri_schwarz_hf(wf)
 !!
 !!    Construct shell-pair electronic-repulsion-integral Schwarz vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -249,10 +249,10 @@
 !
       class(hf) :: wf
 !
-   end subroutine construct_sp_eri_schwarz_hf
+   end subroutine construct_shp_eri_schwarz_hf
 !
 !
-   module subroutine construct_sp_density_schwarz_hf(wf, sp_density_schwarz, D)
+   module subroutine construct_shp_density_schwarz_hf(wf, shp_density_schwarz, D)
 !!
 !!    Construct shell-pair density schwarz vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
@@ -264,13 +264,13 @@
       implicit none
 !
       class(hf) :: wf
-      real(dp), dimension(wf%system%n_s, wf%system%n_s) :: sp_density_schwarz
+      real(dp), dimension(wf%system%n_s, wf%system%n_s) :: shp_density_schwarz
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
 !
-   end subroutine construct_sp_density_schwarz_hf
+   end subroutine construct_shp_density_schwarz_hf
 !
 !
-   module subroutine get_n_sig_eri_sp_hf(wf, n_sig_sp)
+   module subroutine get_n_sig_eri_shp_hf(wf, n_sig_shp)
 !!
 !!    Get number of significant ERI shell-pairs
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
@@ -283,9 +283,9 @@
       implicit none
 !
       class(hf), intent(in) :: wf
-      integer, intent(inout) :: n_sig_sp
+      integer, intent(inout) :: n_sig_shp
 !
-   end subroutine get_n_sig_eri_sp_hf
+   end subroutine get_n_sig_eri_shp_hf
 !
 !
    module subroutine construct_ao_G_1der_hf(wf, G_ao, D_ao)

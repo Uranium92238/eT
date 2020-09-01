@@ -239,10 +239,10 @@ contains
       wf%orbital_energies_file = sequential_file('orbital_energies')
       wf%restart_file = sequential_file('scf_restart_file')
 !
-      call wf%initialize_sp_eri_schwarz() 
-      call wf%initialize_sp_eri_schwarz_list()
+      call wf%initialize_shp_eri_schwarz() 
+      call wf%initialize_shp_eri_schwarz_list()
 !
-      call wf%construct_sp_eri_schwarz()
+      call wf%construct_shp_eri_schwarz()
 !
       if (wf%system%mm_calculation) call wf%prepare_qmmm()
       if(wf%system%pcm_calculation) call wf%initialize_pcm_matrices()
@@ -935,8 +935,8 @@ contains
       call wf%destruct_ao_density()
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
-      call wf%destruct_sp_eri_schwarz()
-      call wf%destruct_sp_eri_schwarz_list()
+      call wf%destruct_shp_eri_schwarz()
+      call wf%destruct_shp_eri_schwarz_list()
       call wf%destruct_ao_h()
 !
       call wf%destruct_W_mo_update()

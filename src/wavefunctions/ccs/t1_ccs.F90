@@ -96,12 +96,14 @@ contains
    end subroutine t1_transform_ccs
 !
 !
-   module subroutine t1_transpose_transform_ccs(wf, Z_pq)
+   module subroutine add_t1_terms_ccs(wf, Z_pq)
 !!
-!!    T1 transform transpose
+!!    Add t1 terms
 !!    Written by Andreas Skeidsvoll, Jan 2020
 !!
-!!    Assumes that Z is in the T1 basis and performs the transpose T1 transformation,
+!!    Here, Z is assumed to be the density matrix with no T1 contributions on input
+!!    - the so-called T1-transformed density matrix.
+!!    The routine adds the missing T1 contributions to Z:
 !!
 !!       Z_pq <- sum_rs X_sp Z_sr Y_rq,    i.e.    Z <- X^T Z Y
 !!
@@ -110,8 +112,8 @@ contains
 !!       X = I - t1
 !!       Y = I + t1^T
 !!
-!!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ
-!!    part, where it is equal to t_i^a.
+!!    t1 is a full MO matrix whose only non-zero block is the vir-occ part,
+!!    where it is equal to t_i^a.
 !!
 !!    Based on t1_transform_ccs by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
@@ -160,7 +162,7 @@ contains
       call mem%dealloc(X, wf%n_mo, wf%n_mo)
       call mem%dealloc(Y, wf%n_mo, wf%n_mo)
 !
-   end subroutine t1_transpose_transform_ccs
+   end subroutine add_t1_terms_ccs
 !
 !
    module subroutine t1_transform_4_ccs(wf, Z_tuvw, Z_pqrs, t1)
@@ -290,6 +292,103 @@ contains
       call mem%dealloc(Y, wf%n_mo, wf%n_mo)
 !
    end subroutine t1_transform_4_ccs
+!
+!
+   module subroutine ao_to_t1_transformation_ccs(wf, x_wx, y_pq)
+!!
+!!    AO to T1 transformation 
+!!    Written by Eirik F. Kjønstad, 2019 
+!!
+!!    Takes in an AO array and returns the T1-transformed array: 
+!!
+!!    x_wx (in)   array in the AO basis (w and x are AO indices)
+!!    y_pq (out)  array in the T1-transformed basis (p and q are MO indices) 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)  :: x_wx 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: y_pq 
+!
+      call wf%mo_transform(x_wx, y_pq)
+      call wf%t1_transform(y_pq)
+!
+   end subroutine ao_to_t1_transformation_ccs
+!
+!
+   module subroutine ao_to_t1_transformation_ccs_complex(wf, x_wx, y_pq)
+!!
+!!    AO to T1 transformation 
+!!    Written by Eirik F. Kjønstad, 2019 
+!!
+!!    Takes in an AO array and returns the T1-transformed array: 
+!!
+!!    x_wx (in)   array in the AO basis (w and x are AO indices)
+!!    y_pq (out)  array in the T1-transformed basis (p and q are MO indices) 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)  :: x_wx
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: y_pq
+!
+      real(dp), dimension(:,:), allocatable :: y_pq_real
+!
+      call mem%alloc(y_pq_real, wf%n_mo, wf%n_mo)
+!
+      call wf%mo_transform(x_wx, y_pq_real)
+!
+      y_pq = cmplx(y_pq_real, zero, dp)
+!
+      call mem%dealloc(y_pq_real, wf%n_mo, wf%n_mo)
+!
+      call wf%t1_transform_complex(y_pq)
+!
+   end subroutine ao_to_t1_transformation_ccs_complex
+!
+!
+   module subroutine add_t1_terms_and_transform_ccs(wf, Z_pq, Z_out)
+!!
+!!    Add t1 terms and transform
+!!    Written by Tor S. Haugland, Nov 2019 (as do_visualization)
+!!
+!!    Here Z, on input, is assumed to be the density matrix with no T1 contributions 
+!!    - the so-called T1-transformed density matrix.
+!!    The routine adds the missing T1 contributions to Z and transforms it
+!!    with the AO coefficients to obtain a density as needed by the visualization tool.
+!!
+!!       Z_alpha,beta = (sum_pq  Z_pq C_alpha,p C_beta,q) 
+!!
+!!    Renamed and moved here, by Alexander C. Paul, May 2020
+!!
+      use array_utilities, only: symmetric_sandwich_right_transposition
+!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in)  :: Z_pq
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: Z_out
+!
+      real(dp), dimension(:,:), allocatable :: Z_mo
+!
+      call mem%alloc(Z_mo, wf%n_mo, wf%n_mo)
+!
+      call dcopy(wf%n_mo**2, Z_pq, 1, Z_mo, 1)
+!
+      call wf%add_t1_terms(Z_mo)
+!
+!     D_alpha,beta = sum_pq  D_pq C_alpha,p C_beta,q
+!
+      call symmetric_sandwich_right_transposition(Z_out, Z_mo,              &
+                                                  wf%orbital_coefficients, &
+                                                  wf%n_ao, wf%n_mo)
+!
+      call mem%dealloc(Z_mo, wf%n_mo, wf%n_mo)
+!
+   end  subroutine add_t1_terms_and_transform_ccs
 !
 !
 end submodule t1_ccs

@@ -58,8 +58,8 @@ module hf_class
                                                  ! precision given approximately by sqrt(epsilon)
       real(dp) :: integral_cutoff    = 1.0D-10   ! Default: sqrt(epsilon) 
 !
-      real(dp), dimension(:,:), allocatable :: sp_eri_schwarz      ! Screening for (wx | yz)
-      integer,  dimension(:,:), allocatable :: sp_eri_schwarz_list ! Indices for screening 
+      real(dp), dimension(:,:), allocatable :: shp_eri_schwarz      ! Screening for (wx | yz)
+      integer,  dimension(:,:), allocatable :: shp_eri_schwarz_list ! Indices for screening 
 !
       real(dp), dimension(:,:), allocatable :: W_mo_update ! Eigenvectors for 
                                                            ! Roothan-Hall in MO basis
@@ -184,7 +184,7 @@ module hf_class
       procedure :: set_ao_density_to_sad                       => set_ao_density_to_sad_hf
       procedure :: set_ao_density_to_core_guess                => set_ao_density_to_core_guess_hf
       procedure :: get_n_electrons_in_density                  => get_n_electrons_in_density_hf
-      procedure :: construct_sp_density_schwarz                => construct_sp_density_schwarz_hf
+      procedure :: construct_shp_density_schwarz               => construct_shp_density_schwarz_hf
 !
 !     MO orbital related routines
 !
@@ -219,14 +219,14 @@ module hf_class
 !
 !     Integral related routines
 !
-      procedure :: initialize_sp_eri_schwarz                   => initialize_sp_eri_schwarz_hf
-      procedure :: destruct_sp_eri_schwarz                     => destruct_sp_eri_schwarz_hf
+      procedure :: initialize_shp_eri_schwarz                  => initialize_shp_eri_schwarz_hf
+      procedure :: destruct_shp_eri_schwarz                    => destruct_shp_eri_schwarz_hf
 !
-      procedure :: initialize_sp_eri_schwarz_list              => initialize_sp_eri_schwarz_list_hf
-      procedure :: destruct_sp_eri_schwarz_list                => destruct_sp_eri_schwarz_list_hf
+      procedure :: initialize_shp_eri_schwarz_list             => initialize_shp_eri_schwarz_list_hf
+      procedure :: destruct_shp_eri_schwarz_list               => destruct_shp_eri_schwarz_list_hf
 !
-      procedure :: construct_sp_eri_schwarz                    => construct_sp_eri_schwarz_hf
-      procedure :: get_n_sig_eri_sp                            => get_n_sig_eri_sp_hf
+      procedure :: construct_shp_eri_schwarz                   => construct_shp_eri_schwarz_hf
+      procedure :: get_n_sig_eri_shp                           => get_n_sig_eri_shp_hf
 !
       procedure :: set_n_mo                                    => set_n_mo_hf
 !
@@ -791,8 +791,8 @@ contains
       call wf%destruct_ao_density()
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
-      call wf%destruct_sp_eri_schwarz()
-      call wf%destruct_sp_eri_schwarz_list()
+      call wf%destruct_shp_eri_schwarz()
+      call wf%destruct_shp_eri_schwarz_list()
       call wf%destruct_ao_h()
 !
       call wf%destruct_W_mo_update()
@@ -2071,10 +2071,10 @@ contains
 !
       wf%restart_file = sequential_file('scf_restart_file')
 !
-      call wf%initialize_sp_eri_schwarz()
-      call wf%initialize_sp_eri_schwarz_list()
+      call wf%initialize_shp_eri_schwarz()
+      call wf%initialize_shp_eri_schwarz_list()
 !
-      call wf%construct_sp_eri_schwarz()
+      call wf%construct_shp_eri_schwarz()
 !
       if (wf%system%mm_calculation) call wf%prepare_qmmm()
       if (wf%system%pcm_calculation) call wf%initialize_pcm_matrices()

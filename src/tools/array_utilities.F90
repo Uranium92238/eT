@@ -42,6 +42,13 @@ module array_utilities
                    sandwich_complex
    end interface sandwich
 !
+   interface symmetric_sandwich_right_transposition
+      procedure :: symmetric_sandwich_right_transposition_real, &
+                   symmetric_sandwich_right_transposition_complex, &
+                   symmetric_sandwich_right_transposition_complex_between_real, &
+                   symmetric_sandwich_right_transposition_replace
+   end interface symmetric_sandwich_right_transposition
+!
    interface scale_diagonal
       procedure :: scale_real_diagonal_by_real, &
                    scale_complex_diagonal_by_real, &
@@ -1173,9 +1180,9 @@ contains
                         X,       & ! X = A tmp = A X B^T
                         n)
 !
-            endif
+         endif
 !
-         else ! Transpose left factor (standard)
+      else ! Transpose left factor (standard)
 !  
             call dgemm('N', 'N', &
                         n,       &
@@ -1203,7 +1210,7 @@ contains
                         X,       & ! X = A^T tmp = A^T X B
                         n)
 !
-         endif
+      endif
 !
       call mem%dealloc(tmp, n, n)
 !
@@ -1389,7 +1396,7 @@ contains
    end subroutine symmetric_sandwich
 !
 !
-   subroutine symmetric_sandwich_right_transposition(Xr, X, A, m, n)
+   subroutine symmetric_sandwich_right_transposition_real(Xr, X, A, m, n)
 !!
 !!    Symmetric sandwich right transposition
 !!    Written by Eirik F. Kjønstad, 2018
@@ -1399,15 +1406,13 @@ contains
 !!
 !!       Xr = A X A^T
 !!
-!!
       implicit none
 !
       integer, intent(in) :: m, n
 !
-      real(dp), dimension(m, n), intent(in) :: A
-!
-      real(dp), dimension(n, n) :: X
-      real(dp), dimension(m, m) :: Xr
+      real(dp), dimension(m, n), intent(in)  :: A
+      real(dp), dimension(n, n), intent(in)  :: X
+      real(dp), dimension(m, m), intent(out) :: Xr
 !
       real(dp), dimension(:, :), allocatable :: tmp
 !
@@ -1441,7 +1446,116 @@ contains
 !
       call mem%dealloc(tmp, n, m)
 !
-   end subroutine symmetric_sandwich_right_transposition
+   end subroutine symmetric_sandwich_right_transposition_real
+!
+!
+   subroutine symmetric_sandwich_right_transposition_complex_between_real(Xr, X, A, m, n)
+!!
+!!    Symmetric sandwich right transposition
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the similarity transformation
+!!    wrt the matrix A^T
+!!
+!!       Xr = A X A^T
+!!
+!!    Modified by Andreas S. Skeidsvoll, Jul 2020
+!!    To be used with real A and complex X matrices.
+!!
+      implicit none
+!
+      integer, intent(in) :: m, n
+!
+      real(dp), dimension(m, n), intent(in)  :: A
+      complex(dp), dimension(n, n), intent(in)  :: X
+      complex(dp), dimension(m, m), intent(out) :: Xr
+!
+      complex(dp), dimension(:, :), allocatable :: tmp
+!
+      call mem%alloc(tmp, n, m)
+!
+      call zgemm('N', 'T',            &
+                  n,                  &
+                  m,                  &
+                  n,                  &
+                  one_complex,        &
+                  X,                  &
+                  n,                  &
+                  cmplx(A, zero, dp), &
+                  m,                  &
+                  zero_complex,       &
+                  tmp,                & ! tmp = X A^T
+                  n)
+!
+      call zgemm('N', 'N',            &
+                  m,                  &
+                  m,                  &
+                  n,                  &
+                  one_complex,        &
+                  cmplx(A, zero, dp), &
+                  m,                  &
+                  tmp,                &
+                  n,                  &
+                  zero_complex,       &
+                  Xr,                 & ! X = A tmp = A X A^T 
+                  m)
+!
+      call mem%dealloc(tmp, n, m)
+!
+   end subroutine symmetric_sandwich_right_transposition_complex_between_real
+!
+!
+   subroutine symmetric_sandwich_right_transposition_complex(Xr, X, A, m, n)
+!!
+!!    Symmetric sandwich right transposition
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the similarity transformation
+!!    wrt the matrix A^T
+!!
+!!       Xr = A X A^T
+!!
+      implicit none
+!
+      integer, intent(in) :: m, n
+!
+      complex(dp), dimension(m, n), intent(in)  :: A
+      complex(dp), dimension(n, n), intent(in)  :: X
+      complex(dp), dimension(m, m), intent(out) :: Xr
+!
+      complex(dp), dimension(:, :), allocatable :: tmp
+!
+      call mem%alloc(tmp, n, m)
+!
+      call zgemm('N', 'T',      &
+                  n,            &
+                  m,            &
+                  n,            &
+                  one_complex,  &
+                  X,            &
+                  n,            &
+                  A,            &
+                  m,            &
+                  zero_complex, &
+                  tmp,          & ! tmp = X A^T
+                  n)
+!
+      call zgemm('N', 'N',      &
+                  m,            &
+                  m,            &
+                  n,            &
+                  one_complex,  &
+                  A,            &
+                  m,            &
+                  tmp,          &
+                  n,            &
+                  zero_complex, &
+                  Xr,           & ! X = A tmp = A X A^T 
+                  m)
+!
+      call mem%dealloc(tmp, n, m)
+!
+   end subroutine symmetric_sandwich_right_transposition_complex
 !
 !
    subroutine symmetric_sandwich_right_transposition_replace(X, A, m)

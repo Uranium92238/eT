@@ -297,18 +297,6 @@ contains
    end subroutine destruct_gs_density_ccs_complex
 !
 !
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
    module subroutine initialize_core_MOs_ccs_complex(wf)
 !!
 !!    Initialize core MOs

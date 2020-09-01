@@ -343,8 +343,10 @@ module ccs_class
       procedure :: t1_transform                                  => t1_transform_ccs
       procedure :: t1_transform_complex                          => t1_transform_ccs_complex
 !
-      procedure :: t1_transpose_transform                        => t1_transpose_transform_ccs
-      procedure :: t1_transpose_transform_complex                => t1_transpose_transform_ccs_complex
+      procedure :: add_t1_terms                                  => add_t1_terms_ccs
+      procedure :: add_t1_terms_complex                          => add_t1_terms_ccs_complex
+      procedure :: add_t1_terms_and_transform                 => add_t1_terms_and_transform_ccs
+      procedure :: add_t1_terms_and_transform_complex         => add_t1_terms_and_transform_ccs_complex
 !
       procedure :: ao_to_t1_transformation                       => ao_to_t1_transformation_ccs
       procedure :: ao_to_t1_transformation_complex               => ao_to_t1_transformation_ccs_complex

@@ -101,7 +101,9 @@ excluded_procedures = ['initialize_transition_densities_ccs',
                        'initialize_right_excitation_energies_ccs',
                        'destruct_right_excitation_energies_ccs',
                        'initialize_left_excitation_energies_ccs',
-                       'destruct_left_excitation_energies_ccs']
+                       'destruct_left_excitation_energies_ccs',
+                       'ao_to_t1_transformation_ccs',
+                       'ao_to_t1_transformation_ccs_complex']
 #
 #  Parameter listing section
 #
@@ -403,7 +405,12 @@ for directory_name in wavefunction_complexified_submodules:
                             and search(r'\b'+procedure_name+r'\b',
                                        line_without_comments)):
 #
+#                          Remove commented lines after a skipped subroutine
+#
                            line = next(lines)
+                           while (line.strip() == '!'):
+                               line = next(lines)
+#
                            line_without_comments = (line.partition('!')[0]
                                                     .strip())
                            break
