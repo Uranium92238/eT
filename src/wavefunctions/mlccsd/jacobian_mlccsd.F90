@@ -461,10 +461,9 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                         :: c_ai
       real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o) :: rho_aibj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: x_caij   
+      real(dp), dimension(:,:,:,:), allocatable :: x_cjai   
       real(dp), dimension(:,:,:,:), allocatable :: x_aibk   
-      real(dp), dimension(:,:,:,:), allocatable :: Y_kaij   
-      real(dp), dimension(:,:,:,:), allocatable :: rho_baij 
+      real(dp), dimension(:,:,:,:), allocatable :: Y_kjai  
 !
       real(dp), dimension(:,:), allocatable :: Y_kj         
 !
@@ -484,20 +483,22 @@ contains
 !
 !     Order the amplitudes as x_ca_ij = x_ij^ac
 !
-      call mem%alloc(x_caij, n_a_v, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o)
+      call mem%alloc(x_cjai, n_a_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-!$omp parallel do private (a, i, c, j, ai, cj, aicj) collapse(3)
-      do j = 1, wf%n_ccsd_o
-         do i = 1, wf%n_ccsd_o
-            do a = 1, wf%n_ccsd_v
+!$omp parallel do private (a, i, c, j, ai, cj, aicj) collapse(2)
+      do i = 1, wf%n_ccsd_o
+         do a = 1, wf%n_ccsd_v
+!
+            ai = n_a_v*(i - 1) + a
+!
+            do j = 1, wf%n_ccsd_o
                do c = 1, n_a_v
 !
-                  ai = n_a_v*(i - 1) + a
                   cj = n_a_v*(j - 1) + c
 !
                   aicj = max(ai, cj)*(max(ai,cj) - 3)/2 + ai + cj
 !
-                  x_caij(c, a, i, j) = wf%x2(aicj)
+                  x_cjai(c, j, a, i) = wf%x2(aicj)
 !
                enddo
             enddo
@@ -507,7 +508,7 @@ contains
 !
 !     Form the intermediate Y_k_aij = sum_c F_k_c x_c_aij
 !
-      call mem%alloc(Y_kaij, wf%n_o, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o)
+      call mem%alloc(Y_kjai, wf%n_o, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
       call dgemm('N', 'N',                            &
                   wf%n_o,                             &
@@ -516,17 +517,15 @@ contains
                   one,                                &
                   wf%fock_ia,                         & ! F_k,c
                   wf%n_o,                             &
-                  x_caij,                             & ! t_c,aij
+                  x_cjai,                             & ! x_c_jai
                   n_a_v,                              &
                   zero,                               &
-                  Y_kaij,                             &
+                  Y_kjai,                             &
                   wf%n_o)
 !
-      call mem%dealloc(x_caij, n_a_v, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o)
+      call mem%dealloc(x_cjai, n_a_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
 !     Form rho_b_aij = sum_k c_ai(b,k) X_k_aij(k,aij)
-!
-      call mem%alloc(rho_baij, wf%n_ccsd_v, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o)
 !
       call dgemm('N', 'N',                         &
                   wf%n_ccsd_v,                     &
@@ -535,20 +534,13 @@ contains
                   -one,                            &
                   c_ai,                            & ! c_bk
                   wf%n_v,                          &
-                  Y_kaij,                          & 
+                  Y_kjai,                          & 
                   wf%n_o,                          &
                   zero,                            &
-                  rho_baij,                        &
-                  wf%n_ccsd_v)
+                  rho_aibj,                        & ! Will symmetrize later
+                  wf%n_ccsd_v)  
 !
-      call mem%dealloc(Y_kaij, wf%n_o, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o)
-!
-!     Add rho_ba_ij(ba,ij) to rho_aibj(ai,bj)
-!
-      call add_3124_to_1234(one, rho_baij, rho_aibj, &
-                                 wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
-!
-      call mem%dealloc(rho_baij, wf%n_ccsd_v, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o)
+      call mem%dealloc(Y_kjai, wf%n_o, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o)
 !
 !     :: Term 2. - sum_kc F_kc x_ik^ab c_cj ::
 !
