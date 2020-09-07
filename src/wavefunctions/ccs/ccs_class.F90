@@ -31,6 +31,7 @@ module ccs_class
    use reordering
 !
    use direct_stream_file_class, only : direct_stream_file
+   use stream_file_class, only: stream_file
    use sequential_file_class, only : sequential_file
    use string_utilities, only : convert_to_uppercase
    use array_utilities, only : zero_array_complex
@@ -64,13 +65,12 @@ module ccs_class
 !
       logical :: need_g_abcd
 !
-      type(sequential_file) :: t_file, tbar_file
+      type(stream_file)     :: t_file, tbar_file
       type(sequential_file) :: excitation_energies_file
       type(sequential_file) :: restart_file
       type(sequential_file) :: mlhf_inactive_fock_term_file
 !
-      type(direct_stream_file), allocatable :: r_files
-      type(direct_stream_file), allocatable :: l_files
+      type(stream_file), dimension(:), allocatable :: l_files, r_files
 !
       type(mo_integral_tool) :: integrals
 !
@@ -193,6 +193,8 @@ module ccs_class
       procedure :: read_cvs_settings                             => read_cvs_settings_ccs
 !
       procedure :: read_singles_vector                           => read_singles_vector_ccs
+      procedure :: save_singles_vector                           => save_singles_vector_ccs
+!
       procedure :: save_amplitudes                               => save_amplitudes_ccs
       procedure :: read_amplitudes                               => read_amplitudes_ccs
       procedure :: save_multipliers                              => save_multipliers_ccs

@@ -111,6 +111,12 @@ module doubles_class
       procedure :: destruct_u_aibj                       => destruct_u_aibj_doubles
       procedure :: destruct_u_aibj_complex               => destruct_u_aibj_doubles_complex
 !
+!     File handling procedures
+!
+      procedure :: read_doubles_vector                   => read_doubles_vector_doubles
+      procedure :: save_doubles_vector                   => save_doubles_vector_doubles
+      procedure :: read_singles_doubles_vector           => read_singles_doubles_vector_doubles
+!
 !     Projectors for excited and ionized states
 !
       procedure :: get_cvs_projector                     => get_cvs_projector_doubles

@@ -29,18 +29,6 @@
    end subroutine save_amplitudes_ccsd
 !
 !
-   module subroutine save_multipliers_ccsd(wf)
-!!
-!!    Save multipliers
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
-!!
-      implicit none
-!
-      class(ccsd), intent(inout) :: wf 
-!
-   end subroutine save_multipliers_ccsd
-!
-!
    module subroutine read_amplitudes_ccsd(wf)
 !!
 !!    Read amplitudes
@@ -51,6 +39,18 @@
       class(ccsd), intent(inout) :: wf
 !
    end subroutine read_amplitudes_ccsd
+!
+!
+   module subroutine save_multipliers_ccsd(wf)
+!!
+!!    Save multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf 
+!
+   end subroutine save_multipliers_ccsd
 !
 !
    module subroutine read_multipliers_ccsd(wf)

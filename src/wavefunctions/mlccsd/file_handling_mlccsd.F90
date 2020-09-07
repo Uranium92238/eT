@@ -61,20 +61,25 @@ contains
 !
       class(mlccsd), intent(inout) :: wf
 !
-      integer :: records
+      logical :: doubles_present
 !
       call wf%t_file%open_('read', 'rewind')
 !
-!     Check if doubles exist then read
-!     Sinlges in first record, doubles in second
+!     Check if doubles exist depending on the size of the stream file
 !
-      records = wf%t_file%number_of_records()
+      if (wf%t_file%get_file_size() == dp*(wf%n_t1 + wf%n_t2)) then
 !
-      call wf%t_file%rewind_()
+         doubles_present = .true.
 !
-      call wf%t_file%read_(wf%t1, wf%n_t1)
+      else 
 !
-      if (records .gt. 1) then
+         doubles_present = .false.
+!
+      end if
+!
+      call wf%t_file%read_(wf%t1, wf%n_t1, 1)
+!
+      if (doubles_present) then
 !
          call wf%t_file%read_(wf%t2, wf%n_t2)
 !

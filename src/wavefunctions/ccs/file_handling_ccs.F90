@@ -55,8 +55,8 @@ contains
 !!
       class(ccs) :: wf 
 !
-      wf%t_file = sequential_file('t')
-      wf%tbar_file = sequential_file('tbar')
+      wf%t_file = stream_file('t')
+      wf%tbar_file = stream_file('tbar')
 !
    end subroutine initialize_ground_state_files_ccs
 !
@@ -78,33 +78,46 @@ contains
    module subroutine initialize_excited_state_files_ccs(wf, transformation)
 !!
 !!    Initialize files for excited state vectors and energies
-!!    Written by Alexander C. Paul, Oct 2019 
+!!    Written by Alexander C. Paul, Oct 2019
+!!
+!!    Modified by Alexander C. Paul, May 2020: array of stream files
 !!
       class(ccs), intent(inout) :: wf
 !
       character(len=*), intent(in) :: transformation
 !
-      if(trim(transformation) .eq. 'right') then
+      character(len=5) :: file_name
+      integer :: state
 !
-         wf%r_files = direct_stream_file('r_', wf%n_es_amplitudes)
+      if(trim(transformation) .eq. 'right' .or. trim(transformation) .eq. 'both') then
 !
-         wf%excitation_energies_file = sequential_file('excitation_energies')
+         allocate(wf%r_files(wf%n_singlet_states))
 !
-      else if(trim(transformation) .eq. 'left') then
+         do state = 1, wf%n_singlet_states
 !
-         wf%l_files = direct_stream_file('l_', wf%n_es_amplitudes)
+            write(file_name,'(a,i3.3)') 'r_', state
+            wf%r_files(state) = stream_file(trim(file_name))
 !
-         wf%excitation_energies_file = sequential_file('excitation_energies')
+         end do
 !
-      else if(trim(transformation) .eq. 'both') then 
+      end if
 !
-         wf%r_files = direct_stream_file('r_', wf%n_es_amplitudes)
+      if(trim(transformation) .eq. 'left' .or. trim(transformation) .eq. 'both') then
 !
-         wf%l_files = direct_stream_file('l_', wf%n_es_amplitudes)
+         allocate(wf%l_files(wf%n_singlet_states))
 !
-         wf%excitation_energies_file = sequential_file('excitation_energies')
+         do state = 1, wf%n_singlet_states
 !
-      else
+            write(file_name,'(a,i3.3)') 'l_', state
+            wf%l_files(state) = stream_file(trim(file_name))
+!
+         end do
+!
+      end if
+!
+      if(trim(transformation) .ne. 'left' .and.  &
+         trim(transformation) .ne. 'right'.and.  &
+         trim(transformation) .ne. 'both') then
 !
          call output%error_msg('Tried to initialize files for excited states &
                               & but argument ' // trim(transformation) //    &
@@ -115,30 +128,48 @@ contains
    end subroutine initialize_excited_state_files_ccs
 !
 !
-   module subroutine read_singles_vector_ccs(wf, X, file_)
+   module subroutine read_singles_vector_ccs(wf, file_, vector)
 !!
-!!    Read singles vector X from a file
+!!    Read singles vector
 !!    Written by Alexander C. Paul, Oct 2019 
-!!
-!!    Files are written with the singles part in the first record
-!!    and the doubles part in the second. 
-!!    Thus, read wf%n_o*wf%n_v elements.
 !!
       implicit none 
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_t1), intent(out) :: X 
+      type(stream_file), intent(inout) :: file_
 !
-      type(sequential_file), intent(inout) :: file_
+      real(dp), dimension(wf%n_t1), intent(out) :: vector 
 !
       call file_%open_('read', 'rewind')
 !
-      call file_%read_(X, wf%n_t1)
+      call file_%read_(vector, wf%n_t1)
 !
       call file_%close_()
 !
    end subroutine read_singles_vector_ccs
+!
+!
+   module subroutine save_singles_vector_ccs(wf, file_, vector)
+!!
+!!    Save singles vector
+!!    Written by Alexander C. Paul, Oct 2019 
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf
+!
+      type(stream_file), intent(inout) :: file_
+!
+      real(dp), dimension(wf%n_t1), intent(in) :: vector 
+!
+      call file_%open_('write', 'rewind')
+!
+      call file_%write_(vector, wf%n_t1)
+!
+      call file_%close_()
+!
+   end subroutine save_singles_vector_ccs
 !
 !
    module subroutine save_amplitudes_ccs(wf)
@@ -150,11 +181,7 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      call wf%t_file%open_('write', 'rewind')
-!
-      call wf%t_file%write_(wf%t1, wf%n_t1)
-!
-      call wf%t_file%close_()
+      call wf%save_singles_vector(wf%t_file, wf%t1)
 !
    end subroutine save_amplitudes_ccs
 !
@@ -168,11 +195,7 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      call wf%t_file%open_('read', 'rewind')
-!
-      call wf%t_file%read_(wf%t1, wf%n_t1)
-!
-      call wf%t_file%close_()
+      call wf%read_singles_vector(wf%t_file, wf%t1)
 !
    end subroutine read_amplitudes_ccs
 !
@@ -186,11 +209,7 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      call wf%tbar_file%open_('write', 'rewind')
-!
-      call wf%tbar_file%write_(wf%t1bar, wf%n_t1)
-!
-      call wf%tbar_file%close_()
+      call wf%save_singles_vector(wf%tbar_file, wf%t1bar)
 !
    end subroutine save_multipliers_ccs
 !
@@ -204,11 +223,7 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      call wf%tbar_file%open_('read', 'rewind')
-!
-      call wf%tbar_file%read_(wf%t1bar, wf%n_t1)
-!
-      call wf%tbar_file%close_()
+      call wf%read_singles_vector(wf%tbar_file, wf%t1bar)
 !
    end subroutine read_multipliers_ccs
 !
@@ -217,8 +232,8 @@ contains
 !!
 !!    Save excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019
-!!    modified by Alexander C. Paul, Oct 2019
-!!    modified by Eirik F. Kjønstad, Mar 2020
+!!    Modified by Alexander C. Paul, Oct 2019
+!!    Modified by Eirik F. Kjønstad, Mar 2020
 !!
 !!    Writes excited states in the columns of X to disk.
 !!
@@ -228,6 +243,8 @@ contains
 !!
 !!    Modified by Eirik F. Kjønstad, Mar 2020: made changes for direct stream,
 !!                                             and added [first, last] range 
+!!    Modified by Alexander C. Paul, May 2020: introduced array of stream files
+!!    for the excited states
 !!
       implicit none
 !
@@ -235,30 +252,36 @@ contains
 !
       integer, intent(in) :: first, last ! first, last state number 
 !
-      real(dp), dimension(wf%n_es_amplitudes, last - first + 1), intent(in) :: X 
+      real(dp), dimension(wf%n_es_amplitudes, first:last), intent(in) :: X 
 !
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
+      character(len=*), intent(in) :: side ! 'left' or 'right'
+!
+      integer :: state
 !
       if (trim(side) .eq. 'right') then 
 !
-         call wf%r_files%open_('write')
+         do state = first, last
 !
-         call wf%r_files%write_(X, first, last)
+            call wf%r_files(state)%open_('write', 'rewind')
+            call wf%r_files(state)%write_(X(:,state), wf%n_es_amplitudes)
+            call wf%r_files(state)%close_()
 !
-         call wf%r_files%close_()
+         end do
 !
       elseif (trim(side) .eq. 'left') then 
 !
-         call wf%l_files%open_('write')
+         do state = first, last
 !
-         call wf%l_files%write_(X, first, last)
+            call wf%l_files(state)%open_('write', 'rewind')
+            call wf%l_files(state)%write_(X(:,state), wf%n_es_amplitudes)
+            call wf%l_files(state)%close_()
 !
-         call wf%l_files%close_()
+         end do
 !
       else
 !
          call output%error_msg('Tried to save an excited state, &
-                              & but argument side not recognized: ' // side)
+                               &but argument side not recognized: ' // side)
 !
       endif
 !
@@ -280,6 +303,8 @@ contains
 !!
 !!    Modified by Eirik F. Kjønstad, Mar 2020: made changes for direct stream,
 !!                                             and added [first, last] range 
+!!    Modified by Alexander C. Paul, May 2020: introduced array of stream files
+!!    for the excited states
 !!
       implicit none
 !
@@ -287,29 +312,36 @@ contains
 !
       integer, intent(in) :: first, last ! first, last state number 
 !
-      real(dp), dimension(wf%n_es_amplitudes, last - first + 1), intent(out) :: X 
+      real(dp), dimension(wf%n_es_amplitudes, first:last), intent(out) :: X 
 !
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
+      character(len=*), intent(in) :: side ! 'left' or 'right'
+!
+      integer :: state
 !
       if (trim(side) .eq. 'right') then 
 !
-         call wf%r_files%open_('read')
+         do state = first, last
 !
-         call wf%r_files%read_(X, first, last)
+            call wf%r_files(state)%open_('read', 'rewind')
+            call wf%r_files(state)%read_(X(:,state), wf%n_es_amplitudes)
+            call wf%r_files(state)%close_()
 !
-         call wf%r_files%close_()
+         end do
 !
       elseif (trim(side) .eq. 'left') then 
 !
-         call wf%l_files%open_('read')
+         do state = first, last
 !
-         call wf%l_files%read_(X, first, last)
+            call wf%l_files(state)%open_('read', 'rewind')
+            call wf%l_files(state)%read_(X(:,state), wf%n_es_amplitudes)
+            call wf%l_files(state)%close_()
 !
-         call wf%l_files%close_()
+         end do
 !
       else
 !
-         call output%error_msg('Tried to read an excited state, but argument side not recognized: ' // side)
+         call output%error_msg('Tried to read an excited state, &
+                               &but argument side not recognized: ' // side)
 !
       endif
 !
@@ -433,10 +465,11 @@ contains
 !!    Get number of excited states on file 
 !!    Written by Eirik F. Kjønstad, Mar 2019 
 !!
-!!    Figures out the number of excited states on file, 
-!!    using the r1 and l1 files. This should be sufficient for 
-!!    all coupled cluster models (i.e., it is most likely  
-!!    unneccessary to overwrite this routine in descendants)
+!!    Determines number of excitation vector files.
+!!
+!!    Modified by Alexander C. Paul, May 2020: 
+!!    Inquires which files exists starting at wf%n_singlet_states going backwards
+!!    As before, it is assumed that the states 1 to n_states are on file.
 !!
       implicit none
 !
@@ -446,20 +479,36 @@ contains
 !
       integer :: n_states
 !
-      n_states = 0
+      character(len=5) :: file_name
+!
+      logical :: it_exists
 !
       if (trim(side) .eq. 'right') then
 !
-         n_states = wf%r_files%get_n_records()
+         do n_states = wf%n_singlet_states, 1, -1
+!
+            write(file_name, '(a,i3.3)') 'r_', n_states
+            inquire(file=file_name, exist=it_exists)
+!
+            if (it_exists) exit
+!
+         end do
 !
       else if (trim(side) .eq. 'left') then
 !
-         n_states = wf%l_files%get_n_records()
+         do n_states = wf%n_singlet_states, 1, -1
 !
+            write(file_name, '(a,i3.3)') 'l_', n_states
+            inquire(file=file_name, exist=it_exists)
+!
+            if (it_exists) exit
+!
+         end do
+
       else 
 !
          call output%error_msg('Tried to compute number of excited states. &
-                              & Unrecognized _side_: ' // side)
+                               &Unrecognized _side_: ' // side)
 !
       end if
 !

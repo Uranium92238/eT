@@ -52,7 +52,9 @@
    module subroutine initialize_excited_state_files_ccs(wf, transformation)
 !!
 !!    Initialize files for excited state vectors and energies
-!!    Written by Alexander C. Paul, Oct 2019 
+!!    Written by Alexander C. Paul, Oct 2019
+!!
+!!    Modified by Alexander C. Paul, May 2020: array of stream files
 !!
       class(ccs), intent(inout) :: wf
       character(len=*), intent(in) :: transformation
@@ -60,22 +62,32 @@
    end subroutine initialize_excited_state_files_ccs
 !
 !
-   module subroutine read_singles_vector_ccs(wf, X, file_)
+   module subroutine read_singles_vector_ccs(wf, file_, vector)
 !!
-!!    Read singles vector X from a file
+!!    Read singles vector
 !!    Written by Alexander C. Paul, Oct 2019 
-!!
-!!    Files are written with the singles part in the first record
-!!    and the doubles part in the second. 
-!!    Thus, read wf%n_o*wf%n_v elements.
 !!
       implicit none 
 !
-      class(ccs), intent(inout) :: wf 
-      real(dp), dimension(wf%n_t1), intent(out) :: X 
-      type(sequential_file), intent(inout) :: file_
+      class(ccs), intent(inout) :: wf
+      type(stream_file), intent(inout) :: file_
+      real(dp), dimension(wf%n_t1), intent(out) :: vector 
 !
    end subroutine read_singles_vector_ccs
+!
+!
+   module subroutine save_singles_vector_ccs(wf, file_, vector)
+!!
+!!    Save singles vector
+!!    Written by Alexander C. Paul, Oct 2019 
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf
+      type(stream_file), intent(inout) :: file_
+      real(dp), dimension(wf%n_t1), intent(in) :: vector 
+!
+   end subroutine save_singles_vector_ccs
 !
 !
    module subroutine save_amplitudes_ccs(wf)
@@ -130,8 +142,8 @@
 !!
 !!    Save excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019
-!!    modified by Alexander C. Paul, Oct 2019
-!!    modified by Eirik F. Kjønstad, Mar 2020
+!!    Modified by Alexander C. Paul, Oct 2019
+!!    Modified by Eirik F. Kjønstad, Mar 2020
 !!
 !!    Writes excited states in the columns of X to disk.
 !!
@@ -141,13 +153,15 @@
 !!
 !!    Modified by Eirik F. Kjønstad, Mar 2020: made changes for direct stream,
 !!                                             and added [first, last] range 
+!!    Modified by Alexander C. Paul, May 2020: introduced array of stream files
+!!    for the excited states
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf 
       integer, intent(in) :: first, last ! first, last state number 
-      real(dp), dimension(wf%n_es_amplitudes, last - first + 1), intent(in) :: X 
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
+      real(dp), dimension(wf%n_es_amplitudes, first:last), intent(in) :: X 
+      character(len=*), intent(in) :: side ! 'left' or 'right'
 !
    end subroutine save_excited_state_ccs
 !
@@ -167,13 +181,15 @@
 !!
 !!    Modified by Eirik F. Kjønstad, Mar 2020: made changes for direct stream,
 !!                                             and added [first, last] range 
+!!    Modified by Alexander C. Paul, May 2020: introduced array of stream files
+!!    for the excited states
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf 
       integer, intent(in) :: first, last ! first, last state number 
-      real(dp), dimension(wf%n_es_amplitudes, last - first + 1), intent(out) :: X 
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
+      real(dp), dimension(wf%n_es_amplitudes, first:last), intent(out) :: X 
+      character(len=*), intent(in) :: side ! 'left' or 'right'
 !
    end subroutine read_excited_state_ccs
 !
@@ -239,10 +255,11 @@
 !!    Get number of excited states on file 
 !!    Written by Eirik F. Kjønstad, Mar 2019 
 !!
-!!    Figures out the number of excited states on file, 
-!!    using the r1 and l1 files. This should be sufficient for 
-!!    all coupled cluster models (i.e., it is most likely  
-!!    unneccessary to overwrite this routine in descendants)
+!!    Determines number of excitation vector files.
+!!
+!!    Modified by Alexander C. Paul, May 2020: 
+!!    Inquires which files exists starting at wf%n_singlet_states going backwards
+!!    As before, it is assumed that the states 1 to n_states are on file.
 !!
       implicit none
 !
