@@ -17,23 +17,46 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine read_doubles_vector_doubles(wf, X, file_)
+   module subroutine read_doubles_vector_doubles(wf, file_, vector)
 !!
-!!    Read doubles vector X in a file
+!!    Read doubles vector
 !!    Written by Alexander C. Paul, Oct 2019
 !!
-!!    NB: Currently only works for t and tbar-file
-!!        Because the excited states use sequential_file_array which
-!!        does not support several records yet.
+      implicit none 
+!
+      class(doubles), intent(inout) :: wf
+      type(stream_file), intent(inout) :: file_
+      real(dp), dimension(wf%n_t2), intent(out) :: vector
+!
+   end subroutine read_doubles_vector_doubles
+!
+!
+   module subroutine save_doubles_vector_doubles(wf, file_, vector)
 !!
-!!    Files are written with the singles part in the first record
-!!    and the doubles part in the second. Thus, skip first record
-!!    and read second.
+!!    Save doubles vector
+!!    Written by Alexander C. Paul, Oct 2019 
 !!
       implicit none 
 !
       class(doubles), intent(inout) :: wf 
-      real(dp), dimension(wf%n_t2), intent(out) :: X 
-      type(sequential_file) :: file_
+      type(stream_file), intent(inout) :: file_
+      real(dp), dimension(wf%n_t2), intent(in) :: vector 
 !
-   end subroutine read_doubles_vector_doubles
+   end subroutine save_doubles_vector_doubles
+!
+!
+   module subroutine read_singles_doubles_vector_doubles(wf, file_, X_singles, X_doubles)
+!!
+!!    Read singles and doubles vector
+!!    Written by Alexander C. Paul, May 2020
+!!
+!!    Reads singles part, checks if doubles exist and reads them as well
+!!
+      implicit none
+!
+      class(doubles), intent(inout) :: wf
+      type(stream_file), intent(inout) :: file_
+      real(dp), dimension(wf%n_t1), intent(out) :: X_singles
+      real(dp), dimension(wf%n_t2), intent(out) :: X_doubles
+!
+   end subroutine read_singles_doubles_vector_doubles
