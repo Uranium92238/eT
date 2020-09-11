@@ -376,11 +376,12 @@ contains
 !
       if (.not. solver%converged) then
 !
-      call output%print_separator('n', 63,'-')
-!
-      call output%error_msg('Was not able to converge the equations in the given number of maximum iterations.')
+         call output%print_separator('n', 63,'-')
+         call output%error_msg('Was not able to converge the equations in the given number of maximum iterations.')
 !
       endif
+!
+      call wf%flip_final_orbitals()
 !
       call solver%diis%finalize_storers()
 !

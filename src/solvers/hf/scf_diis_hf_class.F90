@@ -461,6 +461,8 @@ contains
 !
       endif
 !
+      call wf%flip_final_orbitals()
+!
       call diis%finalize_storers()
       call solver%timer%turn_off()
 !

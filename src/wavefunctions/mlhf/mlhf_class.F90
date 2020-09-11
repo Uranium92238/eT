@@ -591,7 +591,8 @@ contains
 !
 !        Standard Roothan-Hall step to generate idempotent density
 !
-         call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies) ! F => C
+         call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, &
+                                    wf%orbital_energies) ! F => C
          call wf%update_ao_density() ! C => D
 !
       endif

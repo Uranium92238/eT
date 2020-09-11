@@ -278,6 +278,8 @@ module hf_class
       procedure :: roothan_hall_update_orbitals_mo             => roothan_hall_update_orbitals_mo_hf
       procedure :: prepare_for_roothan_hall_mo                 => prepare_for_roothan_hall_mo_hf
 !
+      procedure :: flip_final_orbitals                         => flip_final_orbitals_hf
+!
    end type hf
 !
    interface
@@ -1387,6 +1389,7 @@ contains
 !!
 !!       F_mo = C'^T P^T F P C'
 !!
+!!
       implicit none
 !
       class(hf) :: wf
@@ -1400,11 +1403,7 @@ contains
       real(dp), dimension(:,:), allocatable :: ao_fock
       real(dp), dimension(:,:), allocatable :: FP
 !
-      real(dp), dimension(:,:), allocatable :: prev_C
-!
-      real(dp) :: ddot, orbital_dotprod
-!
-      integer :: info, p
+      integer :: info
 !
       type(timings), allocatable :: timer 
 !
@@ -1488,9 +1487,6 @@ contains
 !
 !     Transform back the solutions to original basis, C = P (P^T C) = P C'
 !
-      call mem%alloc(prev_C, wf%n_ao, wf%n_mo)
-      call dcopy(wf%n_ao*wf%n_mo, C, 1, prev_C, 1)
-!
       call dgemm('N','N',                       &
                   wf%n_ao,                      &
                   wf%n_mo,                      &
@@ -1505,26 +1501,6 @@ contains
                   wf%n_ao)
 !
       call mem%dealloc(ao_fock, wf%n_mo, wf%n_mo)
-!
-!     Test for orbitals that were approximately sign-flipped by dsygv,
-!     resetting them if this is the case (this changes the orbitals
-!     minimally, thus preserving the sweetness of whatever CC guess
-!     is on file).
-!
-      do p = 1, wf%n_mo
-!
-         orbital_dotprod = ddot(wf%n_ao, prev_C(1, p), 1, C(1, p), 1)&
-                          /ddot(wf%n_ao, C(1, p), 1, C(1, p), 1)
-!
-         if (orbital_dotprod .lt. zero) then
-!
-            call dscal(wf%n_ao, -one, C(:, p), 1)
-!
-         endif
-!
-      enddo
-!
-      call mem%dealloc(prev_C, wf%n_ao, wf%n_mo)
 !
       call timer%turn_off()
 !
@@ -2044,7 +2020,7 @@ contains
 !     (not the case for the standard atomic superposition density)
 !
       call wf%roothan_hall_update_orbitals() ! F => C
-      call wf%update_ao_density()            ! C => D
+      call wf%update_ao_density() ! C => D
 !
    end subroutine prepare_for_roothan_hall_hf
 !
@@ -2313,6 +2289,51 @@ contains
          call output%warning_msg('no active density for CC to plot in HF, no plots produced.')
 !
    end subroutine read_frozen_orbitals_settings_hf
+!
+!
+   subroutine flip_final_orbitals_hf(wf)
+!!
+!!    Flip final orbitals
+!!    Written by Sarai D. Folkestad, Apr 2020
+!!
+!!    Ensures that orbitals will have the same
+!!    signs each time HF converged.
+!!
+!!    Finds the first element of each MO with magnitude larger than
+!!    0.01 and flips it if it is < 0
+!!
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+      integer :: p, w
+!
+      do p = 1, wf%n_mo
+!
+         do w = 1, wf%n_ao
+!
+            if (abs(wf%orbital_coefficients(w,p)) .gt. 1.0d-2) then
+!  
+!              Found the first significant contribution to MO p
+!
+               if (wf%orbital_coefficients(w,p) .lt. 0.0d0) then
+!
+!                 First contribution is negative, so we flip MO p
+!
+                  call dscal(wf%n_ao, -one, wf%orbital_coefficients(1,p), 1)
+!
+               endif
+!
+               exit
+!
+            endif
+!
+         enddo
+!
+      enddo
+!
+   end subroutine flip_final_orbitals_hf
 !
 !
 end module hf_class

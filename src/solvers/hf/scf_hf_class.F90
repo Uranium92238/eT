@@ -309,6 +309,8 @@ contains
 !
       endif
 !
+      call wf%flip_final_orbitals()
+!
       call solver%timer%turn_off()
 !
    end subroutine run_scf_hf

@@ -60,6 +60,7 @@
 !!
 !!    Update orbitals after a Roothan-Hall step in the MO basis
 !!
+!!
       implicit none
 !
       class(hf) :: wf
