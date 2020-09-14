@@ -47,7 +47,7 @@ f = [
                num_lines=5,
                abs_tolerance=1.0e-10,
                mask=[3]),
-    get_filter(string='Oscillator strength [a.u.]:',
+    get_filter(string='Oscillator strength:',
                abs_tolerance=1.0e-10)
 ]
 

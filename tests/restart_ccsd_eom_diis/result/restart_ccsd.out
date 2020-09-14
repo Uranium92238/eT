@@ -115,62 +115,6 @@
         4 He     0.188972612457    -0.037794522491    14.229637717975        4
      ==============================================================================
 
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
-
-  Performs a Cholesky decomposition of the two-electron electronic repulsion 
-  integrals in the atomic orbital basis,
-
-  (ab|cd) = sum_J L_ab^J L_cd^J.
-
-  Once the Cholesky basis has been determined, the vectors L^J are constructed 
-  and stored to disk. These may either be used directly, or be transformed 
-  to the MO basis for use in post-HF calculations. For more information, 
-  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
-
-  - Cholesky decomposition settings:
-
-     Target threshold is:   0.10E-11
-     Span factor:           0.10E-01
-     Max qual:                  1000
-
-  - Cholesky decomposition system details:
-
-     Total number of AOs:                    29
-     Total number of shell pairs:           120
-     Total number of AO pairs:              435
-
-     Significant shell pairs:               118
-     Significant AO pairs:                  431
-
-     Construct shell pairs:                 120
-     Construct AO pairs:                    435
-
-  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
-  -------------------------------------------------------------------------------------------------------
-     1               406 /     108       0.47383E+01         147             42             17052
-     2               319 /      93       0.47165E-01         234            111             35409
-     3               250 /      76       0.46944E-03         178            183             45750
-     4               187 /      55       0.38270E-05         145            265             49555
-     5                87 /      25       0.38106E-07          78            324             28188
-     6                21 /       3       0.37202E-09          43            349              7329
-     7                 0 /       0       0.36652E-11           7            354                 0
-  -------------------------------------------------------------------------------------------------------
-
-  - Summary of Cholesky decomposition of electronic repulsion integrals:
-
-     Final number of Cholesky vectors: 354
-
- - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
-
-     Maximal difference between approximate and actual diagonal:              0.7161E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1110E-14
-
-  - Finished decomposing the ERIs.
-
-     Total wall time (sec):              0.10600
-     Total cpu time (sec):               0.16808
-
 
   :: RHF wavefunction
   ======================
@@ -223,7 +167,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.2906E-11     0.7884E+02
+     1           -78.843851693631     0.2911E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -252,8 +196,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.01400
-     Total cpu time (sec):               0.02466
+     Total wall time (sec):              0.04640
+     Total cpu time (sec):               0.06398
 
 
   :: CCSD wavefunction
@@ -285,22 +229,82 @@
   This is a CCSD response calculation.
   The following tasks will be performed:
 
-     1) Preparation of MO basis and integrals
-     2) Calculation of the ground state (diis algorithm)
-     3) Calculation of the multipliers (diis algorithm)
-     4) Calculation of the excited state (diis algorithm)
-     5) Calculation of the transition moments (EOM)
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
+     4) Calculation of the multipliers (diis algorithm)
+     5) Calculation of the excited state (diis algorithm)
+     6) Calculation of the transition moments (EOM)
 
 
-  1) Preparation of MO basis and integrals
+  1) Cholesky decomposition of the electron repulsion integrals
+
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-11
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition system details:
+
+     Total number of AOs:                    29
+     Total number of shell pairs:           120
+     Total number of AO pairs:              435
+
+     Significant shell pairs:               118
+     Significant AO pairs:                  431
+
+     Construct shell pairs:                 120
+     Construct AO pairs:                    435
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               406 /     108       0.47383E+01         147             42             17052
+     2               319 /      93       0.47165E-01         234            111             35409
+     3               250 /      76       0.46944E-03         178            183             45750
+     4               187 /      55       0.38270E-05         145            265             49555
+     5                87 /      25       0.38106E-07          78            324             28188
+     6                21 /       3       0.37202E-09          43            349              7329
+     7                 0 /       0       0.36652E-11           7            354                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 354
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.7161E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       True
 
+  - Finished decomposing the ERIs.
 
-  2) Calculation of the ground state (diis algorithm)
+     Total wall time (sec):              0.37763
+     Total cpu time (sec):               0.74469
+
+
+  2) Preparation of MO basis and integrals
+
+
+  3) Calculation of the ground state (diis algorithm)
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -341,14 +345,14 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        1      5       -0.014740597524
-       14      4        0.009546856220
-        7      4       -0.008284826483
-       15      5        0.006124828873
-        4      5       -0.005606072698
-        6      2       -0.005476844297
-        2      4       -0.005318591701
-       13      5       -0.005269818337
+        1      5        0.014740597524
+       14      4       -0.009546856220
+        7      4        0.008284826483
+       15      5       -0.006124828873
+        4      5        0.005606072698
+        6      2        0.005476844297
+        2      4        0.005318591701
+       13      5        0.005269818337
         5      6        0.004933006906
        11      6       -0.003454309399
      ------------------------------------
@@ -373,11 +377,11 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.02200
-     Total cpu time (sec):               0.05265
+     Total wall time (sec):              0.02268
+     Total cpu time (sec):               0.04668
 
 
-  3) Calculation of the multipliers (diis algorithm)
+  4) Calculation of the multipliers (diis algorithm)
 
    - DIIS coupled cluster multipliers solver
   ---------------------------------------------
@@ -421,7 +425,7 @@
    18          0.1116E-10
    19          0.5169E-11
    20          0.2850E-11
-   21          0.9105E-12
+   21          0.9104E-12
   ----------------------------
   Convergence criterion met in 21 iterations!
 
@@ -429,43 +433,43 @@
 
      Largest single amplitudes:
      -----------------------------------
-        a       i         r(a,i)
+        a       i         tbar(a,i)
      -----------------------------------
-        1      5       -0.022790118897
-       14      4        0.015907507091
-        7      4       -0.014297181947
-        4      5       -0.011712306720
-       15      5        0.010007216961
-        6      2       -0.009083547621
-       13      5       -0.008770531160
-        2      4       -0.006954460294
+        1      5        0.022790118897
+       14      4       -0.015907507091
+        7      4        0.014297181947
+        4      5        0.011712306720
+       15      5       -0.010007216961
+        6      2        0.009083547621
+       13      5        0.008770531160
+        2      4        0.006954460294
         5      6        0.006820250278
-        3      4       -0.006765159553
+        3      4        0.006765159553
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
-        a      i       b      j         r(ai,bj)
+        a      i       b      j         tbar(ai,bj)
      --------------------------------------------------
         5      6       5      6       -0.092500754790
         2      4       2      4       -0.092085328213
         6      5       5      6        0.089666625590
-        2      4       5      6        0.083792278099
+        2      4       5      6       -0.083792278099
         9      3       9      3       -0.082167759498
-        2      4       6      5       -0.077164163662
+        2      4       6      5        0.077164163662
         2      4       1      5       -0.076342716082
-        7      4       5      6       -0.071424572152
+        7      4       5      6        0.071424572152
         3      4       3      4       -0.071282985174
         6      5       6      5       -0.068075967747
      --------------------------------------------------
 
   - Finished solving the ccsd multipliers equations
 
-     Total wall time (sec):              0.22200
-     Total cpu time (sec):               0.38727
+     Total wall time (sec):              0.19266
+     Total cpu time (sec):               0.38244
 
 
-  4) Calculation of the excited state (diis algorithm)
+  5) Calculation of the excited state (diis algorithm)
      Calculating right vectors
 
    - DIIS coupled cluster excited state solver
@@ -798,35 +802,35 @@
      -----------------------------------
         1      6        0.964249868485
         4      6        0.121847295825
-        6      6        0.036249387510
+        6      6       -0.036249387510
        13      6       -0.030061485952
         1      3       -0.011074241439
        22      6        0.008603353606
        19      5       -0.007863834135
         1      5        0.007857920534
        10      6        0.007675079118
-        9      6        0.007427820492
+        9      6       -0.007427820492
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        2      4       1      6        0.100746791318
-        1      5       1      6        0.085612058156
+        2      4       1      6       -0.100746791318
+        1      5       1      6       -0.085612058156
         1      6       5      6       -0.066933008110
         1      2       1      6       -0.063267573163
-        1      4       2      6        0.061512599150
-        3      4       1      6        0.054854109240
+        1      4       2      6       -0.061512599150
+        3      4       1      6       -0.054854109240
         6      5       1      6        0.046260935197
-        4      5       1      6        0.038260256938
-        7      4       1      6       -0.032958804244
-        4      4       2      6        0.032734134559
+        4      5       1      6       -0.038260256938
+        7      4       1      6        0.032958804244
+        4      4       2      6       -0.032734134559
      --------------------------------------------------
 
      Electronic state nr. 2
 
-     Energy (Hartree):                  0.312716698779
+     Energy (Hartree):                  0.356085057592
      Fraction singles (|R1|/|R|):       0.974191508731
 
      Largest single amplitudes:
@@ -839,31 +843,31 @@
        14      6        0.020845095882
         2      3       -0.011040706130
        12      6       -0.005883373005
-        8      2        0.005692890963
+        8      2       -0.005692890963
         2      5        0.005144277712
-        5      4        0.004935182404
-       11      4        0.003612992496
+        5      4       -0.004935182404
+       11      4       -0.003612992496
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        2      4       2      6        0.110664929270
-        1      5       2      6        0.079354628531
+        2      4       2      6       -0.110664929270
+        1      5       2      6       -0.079354628531
         2      6       5      6       -0.060325722580
-        2      5       1      6        0.050061414586
-        3      4       2      6        0.047564612586
-        1      4       1      6        0.045251222953
+        2      5       1      6       -0.050061414586
+        3      4       2      6       -0.047564612586
+        1      4       1      6       -0.045251222953
         1      2       2      6       -0.045012448109
-        4      5       2      6        0.039742197636
+        4      5       2      6       -0.039742197636
         6      5       2      6        0.038941412498
-        3      5       1      6        0.034289057215
+        3      5       1      6       -0.034289057215
      --------------------------------------------------
 
      Electronic state nr. 3
 
-     Energy (Hartree):                  0.356085057592
+     Energy (Hartree):                  0.312716698779
      Fraction singles (|R1|/|R|):       0.977805372200
 
      Largest single amplitudes:
@@ -873,12 +877,12 @@
         1      5        0.957314847871
         2      4       -0.137091155508
         4      5        0.090812850216
-        1      2        0.071675967622
+        1      2       -0.071675967622
         3      4       -0.054796039253
-        5      6        0.040602500552
+        5      6       -0.040602500552
        13      5       -0.029458132227
         7      4        0.025825254324
-        4      2        0.021074995286
+        4      2       -0.021074995286
        10      5        0.013972713306
      ------------------------------------
 
@@ -886,16 +890,16 @@
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        2      4       1      5        0.082435001503
-        1      5       1      5        0.081686786865
+        2      4       1      5       -0.082435001503
+        1      5       1      5       -0.081686786865
         1      5       6      5        0.054811008558
-        1      4       2      5        0.048159897951
-        1      5       4      5        0.042695435568
-        3      4       1      5        0.039841925825
+        1      4       2      5       -0.048159897951
+        1      5       4      5       -0.042695435568
+        3      4       1      5       -0.039841925825
         1      5       5      6       -0.039669396138
-        2      5       3      5        0.037629696694
+        2      5       3      5       -0.037629696694
         1      2       3      4        0.032609865471
-        4      4       2      5        0.031072898992
+        4      4       2      5       -0.031072898992
      --------------------------------------------------
 
      - Electronic excitation energies:
@@ -912,11 +916,11 @@
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              0.88800
-     Total cpu time (sec):               1.72707
+     Total wall time (sec):              0.59334
+     Total cpu time (sec):               1.18109
 
 
-  4) Calculation of the excited state (diis algorithm)
+  5) Calculation of the excited state (diis algorithm)
      Calculating left vectors
 
    - DIIS coupled cluster excited state solver
@@ -1190,7 +1194,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4514E-11
+     1      0.247194255572       0.4515E-11
      2      0.356085057582       0.1555E-08
      3      0.312716698780       0.9358E-10
   -----------------------------------------------
@@ -1199,8 +1203,8 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4514E-11
-     2      0.356085057590       0.5057E-09
+     1      0.247194255572       0.4515E-11
+     2      0.356085057589       0.5057E-09
      3      0.312716698779       0.3042E-10
   -----------------------------------------------
 
@@ -1208,7 +1212,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4514E-11
+     1      0.247194255572       0.4515E-11
      2      0.356085057579       0.1965E-09
      3      0.312716698780       0.1124E-10
   -----------------------------------------------
@@ -1217,8 +1221,8 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4514E-11
-     2      0.356085057594       0.6402E-10
+     1      0.247194255572       0.4515E-11
+     2      0.356085057594       0.6403E-10
      3      0.312716698779       0.3982E-11
   -----------------------------------------------
 
@@ -1226,7 +1230,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4514E-11
+     1      0.247194255572       0.4515E-11
      2      0.356085057592       0.1715E-10
      3      0.312716698779       0.3982E-11
   -----------------------------------------------
@@ -1235,7 +1239,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4514E-11
+     1      0.247194255572       0.4515E-11
      2      0.356085057593       0.3735E-11
      3      0.312716698779       0.3982E-11
   -----------------------------------------------
@@ -1258,35 +1262,35 @@
      -----------------------------------
         1      6        0.934321066335
         4      6        0.114002382605
-        6      6        0.032814400825
+        6      6       -0.032814400825
        13      6       -0.027947643733
         1      3       -0.010930020792
         1      5        0.007879253273
        22      6        0.007408446952
        10      6        0.006944886702
        19      5       -0.006882560536
-        9      6        0.006676723237
+        9      6       -0.006676723237
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         L(ai,bj)
      --------------------------------------------------
-        2      4       1      6        0.171079645375
+        2      4       1      6       -0.171079645375
         6      5       1      6        0.100212340581
-        3      4       1      6        0.099658455493
-        1      5       1      6        0.089486547885
-        4      5       1      6        0.079266906023
+        3      4       1      6       -0.099658455493
+        1      5       1      6       -0.089486547885
+        4      5       1      6       -0.079266906023
         1      6       5      6       -0.071510175858
-        7      4       1      6       -0.068318341917
+        7      4       1      6        0.068318341917
         1      2       1      6       -0.065029437021
-        4      4       2      6        0.055727685952
-        3      5       2      6        0.042559408816
+        4      4       2      6       -0.055727685952
+        3      5       2      6       -0.042559408816
      --------------------------------------------------
 
      Electronic state nr. 2
 
-     Energy (Hartree):                  0.312716698779
+     Energy (Hartree):                  0.356085057593
      Fraction singles (|L1|/|L|):       0.947346929585
 
      Largest single amplitudes:
@@ -1299,31 +1303,31 @@
        14      6        0.019343770379
         2      3       -0.010988929730
        12      6       -0.005562563577
-        8      2        0.005268480761
+        8      2       -0.005268480761
         2      5        0.005150490901
-        5      4        0.004776593204
-       11      4        0.003612608696
+        5      4       -0.004776593204
+       11      4       -0.003612608696
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         L(ai,bj)
      --------------------------------------------------
-        1      5       2      6        0.127019523011
-        2      4       2      6        0.118729473864
-        3      4       2      6        0.091137477755
+        1      5       2      6       -0.127019523011
+        2      4       2      6       -0.118729473864
+        3      4       2      6       -0.091137477755
         6      5       2      6        0.082397334662
-        7      4       2      6       -0.081191332740
+        7      4       2      6        0.081191332740
         1      2       2      6       -0.072465986378
-        4      5       2      6        0.072390631931
+        4      5       2      6       -0.072390631931
         2      6       5      6       -0.065336366667
-        3      5       1      6        0.053276119555
-        4      4       1      6        0.048446470294
+        3      5       1      6       -0.053276119555
+        4      4       1      6       -0.048446470294
      --------------------------------------------------
 
      Electronic state nr. 3
 
-     Energy (Hartree):                  0.356085057593
+     Energy (Hartree):                  0.312716698779
      Fraction singles (|L1|/|L|):       0.938777046182
 
      Largest single amplitudes:
@@ -1333,12 +1337,12 @@
         1      5        0.920088349284
         2      4       -0.130880085864
         4      5        0.082954102261
-        1      2        0.066949838484
+        1      2       -0.066949838484
         3      4       -0.051783287686
-        5      6        0.035952688612
+        5      6       -0.035952688612
        13      5       -0.027083554109
         7      4        0.022267567555
-        4      2        0.019543419769
+        4      2       -0.019543419769
        10      5        0.012292234036
      ------------------------------------
 
@@ -1346,14 +1350,14 @@
      --------------------------------------------------
         a      i       b      j         L(ai,bj)
      --------------------------------------------------
-        1      5       1      5        0.160292538733
-        2      4       1      5        0.141010853922
-        3      4       1      5        0.088409690094
+        1      5       1      5       -0.160292538733
+        2      4       1      5       -0.141010853922
+        3      4       1      5       -0.088409690094
         1      5       5      6       -0.085732644499
-        4      4       2      5        0.059886875058
+        4      4       2      5       -0.059886875058
         1      5       6      5        0.058600304295
-        2      5       2      5        0.056836923109
-        7      4       1      5       -0.051021542268
+        2      5       2      5       -0.056836923109
+        7      4       1      5        0.051021542268
         1      2       3      4        0.050766399787
         1      2       2      4        0.050263933721
      --------------------------------------------------
@@ -1372,11 +1376,11 @@
 
   - Finished solving the CCSD excited state equations (left)
 
-     Total wall time (sec):              0.90000
-     Total cpu time (sec):               1.59411
+     Total wall time (sec):              0.75424
+     Total cpu time (sec):               1.50577
 
 
-  5) Calculation of the transition moments (EOM)
+  6) Calculation of the transition moments (EOM)
 
   :: EOM properties calculation
 
@@ -1393,11 +1397,11 @@
      --------------------------------------------------------------------------
      Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
      --------------------------------------------------------------------------
-     X          -0.0004665158     -0.0008903044            0.0000004153
-     Y          -0.0027022345     -0.0052703759            0.0000142418
-     Z           0.2024326697      0.3970439121            0.0803746591
+     X           0.0004665158      0.0008903044            0.0000004153
+     Y           0.0027022345      0.0052703759            0.0000142418
+     Z          -0.2024326697     -0.3970439121            0.0803746591
      --------------------------------------------------------------------------
-     Oscillator strength [a.u.]:      0.013247851457
+     Oscillator strength:      0.013247851457
 
      State 2:
      ----------
@@ -1410,11 +1414,11 @@
      --------------------------------------------------------------------------
      Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
      --------------------------------------------------------------------------
-     X          -0.0080987108     -0.0154960656            0.0001254982
-     Y           0.0000397230      0.0000465890            0.0000000019
-     Z           0.0000783294      0.0001426371            0.0000000112
+     X           0.0080987108      0.0154960656            0.0001254982
+     Y          -0.0000397230     -0.0000465890            0.0000000019
+     Z          -0.0000783294     -0.0001426371            0.0000000112
      --------------------------------------------------------------------------
-     Oscillator strength [a.u.]:      0.000026166294
+     Oscillator strength:      0.000026166294
 
      State 3:
      ----------
@@ -1427,15 +1431,17 @@
      --------------------------------------------------------------------------
      Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
      --------------------------------------------------------------------------
-     X          -0.0007530611     -0.0014776867            0.0000011128
-     Y           0.4685892776      0.9219121145            0.4319981317
-     Z          -0.0045071524     -0.0088103669            0.0000397097
+     X           0.0007530611      0.0014776867            0.0000011128
+     Y          -0.4685892776     -0.9219121145            0.4319981317
+     Z           0.0045071524      0.0088103669            0.0000397097
      --------------------------------------------------------------------------
-     Oscillator strength [a.u.]:      0.102561743915
+     Oscillator strength:      0.102561743915
 
   - Timings for the CCSD response calculation
 
-     Total wall time (sec):              2.04300
-     Total cpu time (sec):               3.77682
+     Total wall time (sec):              1.94553
+     Total cpu time (sec):               3.86966
+
+     Peak memory usage during the execution of eT: 16.307080 MB
 
   eT terminated successfully!
