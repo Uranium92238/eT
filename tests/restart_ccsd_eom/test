@@ -32,7 +32,7 @@ f2 = [
                abs_tolerance=1.0e-10),
     get_filter(string='Convergence criterion met in',
                abs_tolerance=1.0e-10),
-    get_filter(string='Oscillator strength [a.u.]:',
+    get_filter(string='Oscillator strength:',
                abs_tolerance=1.0e-10)
 ]
 

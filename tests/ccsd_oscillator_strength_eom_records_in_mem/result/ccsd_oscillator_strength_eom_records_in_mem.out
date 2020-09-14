@@ -107,61 +107,6 @@
         4 He     0.188972612457     0.188972612457    14.172945934238        4
      ==============================================================================
 
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
-
-  Performs a Cholesky decomposition of the two-electron electronic repulsion 
-  integrals in the atomic orbital basis,
-
-  (ab|cd) = sum_J L_ab^J L_cd^J.
-
-  Once the Cholesky basis has been determined, the vectors L^J are constructed 
-  and stored to disk. These may either be used directly, or be transformed 
-  to the MO basis for use in post-HF calculations. For more information, 
-  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
-
-  - Cholesky decomposition settings:
-
-     Target threshold is:   0.10E-10
-     Span factor:           0.10E-01
-     Max qual:                  1000
-
-  - Cholesky decomposition system details:
-
-     Total number of AOs:                    38
-     Total number of shell pairs:           171
-     Total number of AO pairs:              741
-
-     Significant shell pairs:               161
-     Significant AO pairs:                  697
-
-     Construct shell pairs:                 171
-     Construct AO pairs:                    741
-
-  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
-  -------------------------------------------------------------------------------------------------------
-     1               671 /     150       0.53537E+01         194             49             32879
-     2               524 /     128       0.52718E-01         398            155             81220
-     3               484 /     114       0.52421E-03         303            243            117612
-     4               362 /      92       0.51415E-05         311            362            131044
-     5               232 /      54       0.50229E-07         225            475            110200
-     6                 0 /       0       0.50128E-09         127            550                 0
-  -------------------------------------------------------------------------------------------------------
-
-  - Summary of Cholesky decomposition of electronic repulsion integrals:
-
-     Final number of Cholesky vectors: 550
-
- - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
-
-     Maximal difference between approximate and actual diagonal:              0.9471E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.1554E-14
-
-  - Finished decomposing the ERIs.
-
-     Total wall time (sec):              0.29100
-     Total cpu time (sec):               0.48639
-
 
   :: RHF wavefunction
   ======================
@@ -223,22 +168,22 @@
   ---------------------------------------------------------------
      1          -177.452460025510     0.7565E-01     0.1775E+03
      2          -177.479057956533     0.1346E-01     0.2660E-01
-     3          -177.480054154998     0.4309E-02     0.9962E-03
+     3          -177.480054154999     0.4309E-02     0.9962E-03
      4          -177.480180562238     0.1844E-02     0.1264E-03
      5          -177.480194220839     0.3631E-03     0.1366E-04
      6          -177.480195441222     0.7394E-04     0.1220E-05
      7          -177.480195516819     0.2206E-04     0.7560E-07
      8          -177.480195527024     0.5084E-05     0.1021E-07
-     9          -177.480195527847     0.1218E-05     0.8232E-09
-    10          -177.480195527874     0.2531E-06     0.2652E-10
+     9          -177.480195527847     0.1218E-05     0.8233E-09
+    10          -177.480195527874     0.2531E-06     0.2655E-10
     11          -177.480195527875     0.4375E-07     0.1222E-11
-    12          -177.480195527875     0.9241E-08     0.2842E-13
-    13          -177.480195527875     0.4370E-08     0.2842E-13
-    14          -177.480195527875     0.1744E-08     0.1421E-12
-    15          -177.480195527875     0.3643E-09     0.1421E-12
-    16          -177.480195527875     0.1712E-09     0.8527E-13
+    12          -177.480195527875     0.9241E-08     0.1705E-12
+    13          -177.480195527875     0.4370E-08     0.1705E-12
+    14          -177.480195527875     0.1744E-08     0.1990E-12
+    15          -177.480195527875     0.3643E-09     0.2842E-13
+    16          -177.480195527875     0.1712E-09     0.3126E-12
     17          -177.480195527875     0.5855E-10     0.2274E-12
-    18          -177.480195527875     0.5046E-11     0.5684E-13
+    18          -177.480195527875     0.5043E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -258,7 +203,7 @@
    4  -1.204308976031  14   1.106279200333  24   2.107888307849  34   3.962304853878
    5  -0.911949983661  15   1.130688493503  25   2.500306219284  35   4.000653348396
    6  -0.866287973463  16   1.195338322958  26   2.529687453714  36   4.553980959887
-   7  -0.832614061196  17   1.332576309251  27   2.529802664165  37   4.580686751359
+   7  -0.832614061197  17   1.332576309251  27   2.529802664165  37   4.580686751359
    8  -0.790123932097  18   1.427802958738  28   2.601526974778  38   5.083719172632
    9  -0.497908722170  19   1.453664008356  29   2.725866593376
   10  -0.439606471484  20   1.485675098613  30   2.888341323819
@@ -266,8 +211,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.18200
-     Total cpu time (sec):               2.15134
+     Total wall time (sec):              1.83895
+     Total cpu time (sec):               3.63482
 
 
   :: CCSD wavefunction
@@ -299,22 +244,81 @@
   This is a CCSD response calculation.
   The following tasks will be performed:
 
-     1) Preparation of MO basis and integrals
-     2) Calculation of the ground state (diis algorithm)
-     3) Calculation of the multipliers (davidson algorithm)
-     4) Calculation of the excited state (davidson algorithm)
-     5) Calculation of the transition moments (EOM)
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
+     4) Calculation of the multipliers (davidson algorithm)
+     5) Calculation of the excited state (davidson algorithm)
+     6) Calculation of the transition moments (EOM)
 
 
-  1) Preparation of MO basis and integrals
+  1) Cholesky decomposition of the electron repulsion integrals
+
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-10
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition system details:
+
+     Total number of AOs:                    38
+     Total number of shell pairs:           171
+     Total number of AO pairs:              741
+
+     Significant shell pairs:               161
+     Significant AO pairs:                  697
+
+     Construct shell pairs:                 171
+     Construct AO pairs:                    741
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               671 /     150       0.53537E+01         194             49             32879
+     2               524 /     128       0.52718E-01         398            155             81220
+     3               484 /     114       0.52421E-03         303            243            117612
+     4               362 /      92       0.51415E-05         311            362            131044
+     5               232 /      54       0.50229E-07         225            475            110200
+     6                 0 /       0       0.50128E-09         127            550                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 550
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.9471E-11
+     Minimal element of difference between approximate and actual diagonal:  -0.1270E-14
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       True
 
+  - Finished decomposing the ERIs.
 
-  2) Calculation of the ground state (diis algorithm)
+     Total wall time (sec):              0.67178
+     Total cpu time (sec):               1.31329
+
+
+  2) Preparation of MO basis and integrals
+
+
+  3) Calculation of the ground state (diis algorithm)
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -336,9 +340,9 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -177.877001409678     0.1168E+00     0.1779E+03
+    1          -177.877001409677     0.1168E+00     0.1779E+03
     2          -177.886677470622     0.3120E-01     0.9676E-02
-    3          -177.894835530804     0.8696E-02     0.8158E-02
+    3          -177.894835530803     0.8696E-02     0.8158E-02
     4          -177.896138458912     0.2772E-02     0.1303E-02
     5          -177.895996892340     0.9633E-03     0.1416E-03
     6          -177.895989294977     0.4209E-03     0.7597E-05
@@ -351,13 +355,13 @@
    13          -177.895980290896     0.2798E-06     0.1364E-07
    14          -177.895980297510     0.1025E-06     0.6614E-08
    15          -177.895980299218     0.2911E-07     0.1708E-08
-   16          -177.895980298867     0.8897E-08     0.3515E-09
+   16          -177.895980298866     0.8897E-08     0.3515E-09
    17          -177.895980298711     0.2774E-08     0.1558E-09
-   18          -177.895980298610     0.8305E-09     0.1012E-09
+   18          -177.895980298609     0.8305E-09     0.1012E-09
    19          -177.895980298572     0.3203E-09     0.3786E-10
-   20          -177.895980298568     0.1026E-09     0.4292E-11
+   20          -177.895980298567     0.1026E-09     0.4292E-11
    21          -177.895980298568     0.3742E-10     0.8242E-12
-   22          -177.895980298570     0.1594E-10     0.1364E-11
+   22          -177.895980298569     0.1594E-10     0.1364E-11
    23          -177.895980298570     0.9386E-11     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 23 iterations!
@@ -372,16 +376,16 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        1      9       -0.020651636310
+        1      9        0.020651636310
         3      9        0.009706732908
-        4      7       -0.006068718374
+        4      7        0.006068718374
        14      9       -0.005941010435
-        5      6       -0.004942153767
+        5      6        0.004942153767
        14      6       -0.004895171179
-        4     10       -0.004671533330
+        4     10        0.004671533330
        10      7        0.004165868970
-        6      9       -0.004156331764
-       22      8        0.004124452262
+        6      9        0.004156331764
+       22      8       -0.004124452262
      ------------------------------------
 
      Largest double amplitudes:
@@ -390,7 +394,7 @@
      --------------------------------------------------
         1      9       1      9       -0.041651517349
         3      9       3      9       -0.038277257591
-        1      9       3      9        0.032355810187
+        1      9       3      9       -0.032355810187
         4     10       4     10       -0.031405794810
        16      5      16      5       -0.031169179229
        17      5      17      5       -0.031146442905
@@ -404,11 +408,11 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.13800
-     Total cpu time (sec):               4.17488
+     Total wall time (sec):              1.09352
+     Total cpu time (sec):               2.18948
 
 
-  3) Calculation of the multipliers (davidson algorithm)
+  4) Calculation of the multipliers (davidson algorithm)
 
    - Davidson coupled cluster multipliers solver
   -------------------------------------------------
@@ -457,43 +461,43 @@
 
      Largest single amplitudes:
      -----------------------------------
-        a       i         t(a,i)
+        a       i         tbar(a,i)
      -----------------------------------
-        1      9       -0.029646992279
+        1      9        0.029646992279
         3      9        0.014755436675
        14      9       -0.010760413664
        14      6       -0.008752717972
-        4      7       -0.008523553420
-        5      6       -0.007827835742
-       22      8        0.007464592418
-        6      9       -0.007308533179
-        4     10       -0.007005592080
+        4      7        0.008523553420
+        5      6        0.007827835742
+       22      8       -0.007464592418
+        6      9        0.007308533179
+        4     10        0.007005592080
         9      8       -0.006942220637
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
-        a      i       b      j         t(ai,bj)
+        a      i       b      j         tbar(ai,bj)
      --------------------------------------------------
         1      9       1      9       -0.079106600826
         3      9       3      9       -0.073265261744
         4     10       4     10       -0.062400215002
        16      5      16      5       -0.061891347282
        17      5      17      5       -0.061846092494
-        1      9       3      9        0.061771798249
+        1      9       3      9       -0.061771798249
         2      8       2      8       -0.058800453495
-        5      8       4     10       -0.055766556911
+        5      8       4     10        0.055766556911
         8      5       8      5       -0.055363216797
         6      9       4     10        0.052190751148
      --------------------------------------------------
 
   - Finished solving the CCSD multipliers equations
 
-     Total wall time (sec):               0.85000
-     Total cpu time (sec):                1.69869
+     Total wall time (sec):               0.51261
+     Total cpu time (sec):                1.02459
 
 
-  4) Calculation of the excited state (davidson algorithm)
+  5) Calculation of the excited state (davidson algorithm)
      Calculating right vectors
 
    - Davidson coupled cluster excited state solver
@@ -687,7 +691,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001063    0.000000000000     0.1318E-08   0.3810E-11
+     1   0.204566001063    0.000000000000     0.1318E-08   0.3809E-11
   ------------------------------------------------------------------------
 
   Iteration:                 22
@@ -695,7 +699,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001064    0.000000000000     0.3588E-09   0.1790E-11
+     1   0.204566001064    0.000000000000     0.3588E-09   0.1792E-11
   ------------------------------------------------------------------------
 
   Iteration:                 23
@@ -703,7 +707,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.1010E-09   0.1497E-11
+     1   0.204566001066    0.000000000000     0.1010E-09   0.1496E-11
   ------------------------------------------------------------------------
 
   Iteration:                 24
@@ -711,7 +715,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.2675E-10   0.1431E-12
+     1   0.204566001066    0.000000000000     0.2675E-10   0.1437E-12
   ------------------------------------------------------------------------
 
   Iteration:                 25
@@ -719,7 +723,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.7213E-11   0.6961E-13
+     1   0.204566001066    0.000000000000     0.7214E-11   0.7011E-13
   ------------------------------------------------------------------------
   Convergence criterion met in 25 iterations!
 
@@ -735,31 +739,31 @@
         a       i         R(a,i)
      -----------------------------------
         1     10       -0.960302407235
-        3     10        0.136219055709
-        2     10        0.045809047287
+        3     10       -0.136219055709
+        2     10       -0.045809047287
         1      7       -0.045498210856
-       13     10       -0.024180057759
+       13     10        0.024180057759
         6     10        0.023627378746
-       12     10       -0.022421109306
-        3      7        0.017619844818
-        2      7        0.012994462408
-        1      5        0.011620781983
+       12     10        0.022421109306
+        3      7       -0.017619844818
+        2      7       -0.012994462408
+        1      5       -0.011620781983
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        1      9       1     10       -0.112676520246
+        1      9       1     10        0.112676520246
         3      9       1     10        0.066312173335
-        1      6       1     10       -0.064260638269
-        1     10       4     10       -0.037629620096
+        1      6       1     10        0.064260638269
+        1     10       4     10        0.037629620096
         1      4       1     10        0.036591326805
         3      6       1     10        0.034417643976
-        1      7       2      8       -0.033164233562
+        1      7       2      8        0.033164233562
         1      8       1     10        0.030712077738
-        4      7       1     10       -0.028539418989
-        1      7       4     10       -0.028106421136
+        4      7       1     10        0.028539418989
+        1      7       4     10        0.028106421136
      --------------------------------------------------
 
      - Electronic excitation energies:
@@ -774,11 +778,11 @@
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              0.89600
-     Total cpu time (sec):               1.85092
+     Total wall time (sec):              0.48335
+     Total cpu time (sec):               0.96728
 
 
-  4) Calculation of the excited state (davidson algorithm)
+  5) Calculation of the excited state (davidson algorithm)
      Calculating left vectors
 
    - Davidson coupled cluster excited state solver
@@ -988,7 +992,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001065    0.000000000000     0.1358E-09   0.2280E-11
+     1   0.204566001065    0.000000000000     0.1358E-09   0.2281E-11
   ------------------------------------------------------------------------
 
   Iteration:                 24
@@ -1004,7 +1008,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.9170E-11   0.6106E-13
+     1   0.204566001066    0.000000000000     0.9170E-11   0.6267E-13
   ------------------------------------------------------------------------
   Convergence criterion met in 25 iterations!
 
@@ -1020,15 +1024,15 @@
         a       i         L(a,i)
      -----------------------------------
         1     10       -0.928856378561
-        3     10        0.127109170645
+        3     10       -0.127109170645
         1      7       -0.044655054077
-        2     10        0.044020600864
-       13     10       -0.022765151104
+        2     10       -0.044020600864
+       13     10        0.022765151103
         6     10        0.021000167834
-       12     10       -0.020684251957
-        3      7        0.017525011611
-        2      7        0.012533148032
-        1      5        0.011466156421
+       12     10        0.020684251957
+        3      7       -0.017525011611
+        2      7       -0.012533148032
+        1      5       -0.011466156421
      ------------------------------------
 
      Largest double amplitudes:
@@ -1036,12 +1040,12 @@
         a      i       b      j         L(ai,bj)
      --------------------------------------------------
         3      9       1     10        0.118873613050
-        1      9       1     10       -0.110113614954
-        1      7       2      8       -0.076829391741
-        1      6       1     10       -0.066602965347
+        1      9       1     10        0.110113614954
+        1      7       2      8        0.076829391741
+        1      6       1     10        0.066602965347
         3      6       1     10        0.064648562835
         1      7       5      8       -0.057297803051
-        3      4       1     10       -0.044999920803
+        3      4       1     10        0.044999920803
         2      9       1     10        0.043842233262
         7      8       1     10       -0.042266683210
         2      6       1      7        0.041330749776
@@ -1053,17 +1057,17 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.204566001066        5.566524421563
+        1                  0.204566001066        5.566524421564
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CCSD excited state equations (left)
 
-     Total wall time (sec):              0.96700
-     Total cpu time (sec):               1.92063
+     Total wall time (sec):              0.57827
+     Total cpu time (sec):               1.15426
 
 
-  5) Calculation of the transition moments (EOM)
+  6) Calculation of the transition moments (EOM)
 
   :: EOM properties calculation
 
@@ -1080,15 +1084,17 @@
      --------------------------------------------------------------------------
      Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
      --------------------------------------------------------------------------
-     X           0.0049658034      0.0095695320            0.0000475204
-     Y           0.0021940008      0.0042315603            0.0000092840
-     Z          -0.1002975782     -0.1953886002            0.0195970034
+     X          -0.0049658034     -0.0095695320            0.0000475204
+     Y          -0.0021940008     -0.0042315603            0.0000092840
+     Z           0.1002975782      0.1953886002            0.0195970034
      --------------------------------------------------------------------------
-     Oscillator strength [a.u.]:      0.002680333920
+     Oscillator strength:      0.002680333920
 
   - Timings for the CCSD response calculation
 
-     Total wall time (sec):              3.87500
-     Total cpu time (sec):               9.68372
+     Total wall time (sec):              3.34332
+     Total cpu time (sec):               6.65672
+
+     Peak memory usage during the execution of eT: 106.517048 MB
 
   eT terminated successfully!

@@ -1354,7 +1354,7 @@ contains
 !
       call output%print_separator('m', 74, '-', fs='(t6,a)')
 !
-      call output%printf('m', 'Oscillator strength [a.u.]: (f19.12)', &
+      call output%printf('m', 'Oscillator strength: (f19.12)', &
                          reals=[(two/three)*excitation_energy*sum_strength], fs='(t6,a)')
 !
    end subroutine print_transition_moment_summary_response_engine
