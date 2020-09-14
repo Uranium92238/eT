@@ -1,6 +1,6 @@
 # Prerequisites
 1. [CMake](https://cmake.org/) (3.7 or newer)
-2. Python 3 (3.5 or newer)
+2. Python 3 (3.6 or newer)
 3. Recent (2016-) GNU (gfortran, gcc, g++) or Intel compilers (ifort, icc, icpc) 
 4. BLAS and LAPACK libraries
 5. [Libint 2 library](https://github.com/evaleev/libint) 
