@@ -286,6 +286,7 @@ for i, (inpf, outf) in enumerate(zip(args.input_file, args.output_file)):
     if args.save_xyz:
         xyzfiles = scratch.glob('*.xyz')
         for xyzfile in xyzfiles:
+            xyzfile = xyzfile.name
             xyzsrc = scratch / xyzfile
             xyzdest = cwd / xyzfile
             shutil.copyfile(xyzsrc, xyzdest)
@@ -293,6 +294,7 @@ for i, (inpf, outf) in enumerate(zip(args.input_file, args.output_file)):
     # Check if there are mo_coefficient.out files
     coeff_files = scratch.glob('*mo_coefficients.out')
     for coeff_file in coeff_files:
+        coeff_file = coeff_file.name
         mo_coeff_src = scratch / coeff_file
         mo_coeff_name = f"{out_name}_{coeff_file}"
         mo_coeff_dest = cwd / mo_coeff_name
@@ -301,8 +303,9 @@ for i, (inpf, outf) in enumerate(zip(args.input_file, args.output_file)):
     # Check if there are any .plt files
     pltfiles = scratch.glob('*.plt')
     for pltfile in pltfiles:
+        pltfile = pltfile.name
         pltsrc = scratch / pltfile
-        pltname = str(pltfile).replace('eT', out_name)
+        pltname = str(pltfile).replace('eT', f"{out_name}")
         pltdest = cwd / pltname
         shutil.copyfile(pltsrc, pltdest)
 
