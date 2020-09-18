@@ -40,30 +40,33 @@ import argparse
 import subprocess
 
 # directories excluded from search
-excluded_dir = [
-   Path("tools/linked_list")
-]
+excluded_dir = [Path("tools/linked_list")]
 
 # get the current repository root directory. If not found, just set empty
-repo_dir = subprocess.Popen(
-    ['git', 'rev-parse', '--show-toplevel'],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.DEVNULL).communicate()[0].rstrip().decode('utf-8')
+repo_dir = (
+    subprocess.Popen(
+        ["git", "rev-parse", "--show-toplevel"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+    )
+    .communicate()[0]
+    .rstrip()
+    .decode("utf-8")
+)
 repo_dir = Path(repo_dir)
 src_dir = Path("src")
 
-if sys.version < '3.6':
-    print('requires python version >= 3.6')
+if sys.version < "3.6":
+    print("requires python version >= 3.6")
     sys.exit(1)
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('dir_name', help="directory to check", nargs="?",
-                        default="")
-    parser.add_argument("-cd", "--curr_dir",
-                        help="check in the current directory.",
-                        action="store_true")
+    parser.add_argument("dir_name", help="directory to check", nargs="?", default="")
+    parser.add_argument(
+        "-cd", "--curr_dir", help="check in the current directory.", action="store_true"
+    )
     args = parser.parse_args()
 
     #  Use the current working directory or the src_dir of the repository
@@ -80,12 +83,13 @@ class bcolors:
     """
     Class for colors in shell
     """
-    file_form = '\033[94m'
-    no_dealloc = '\033[92m'
-    warning = '\033[91m'
-    reset = '\033[0m'
-    bold = '\033[1m'
-    underline = '\033[4m'
+
+    file_form = "\033[94m"
+    no_dealloc = "\033[92m"
+    warning = "\033[91m"
+    reset = "\033[0m"
+    bold = "\033[1m"
+    underline = "\033[4m"
 
     def color(self, *formats):
         tmp = ""
@@ -123,30 +127,33 @@ class alloc_scan:
                 self.line_num += 1
 
             if self.__out:
-                self.__out = (f"\n {bcolors.warning}Wrong deallocation"
-                              f"{bcolors.reset}{self.__out}")
+                self.__out = (
+                    f"\n {bcolors.warning}Wrong deallocation"
+                    f"{bcolors.reset}{self.__out}"
+                )
 
             if self.__alloc_list:
-                self.__out += (f"\n {bcolors.warning}Not deallocated"
-                               f"{bcolors.reset}")
+                self.__out += f"\n {bcolors.warning}Not deallocated" f"{bcolors.reset}"
                 for allocated in self.__alloc_list:
                     self.__out += f"\n{indent}{allocated.get_idx}"
 
             if self.__out:
-                print(f"{bcolors.file_form + bcolors.underline}"
-                      f"{file_name}{bcolors.reset}\n{self.__out}\n")
+                print(
+                    f"{bcolors.file_form + bcolors.underline}"
+                    f"{file_name}{bcolors.reset}\n{self.__out}\n"
+                )
 
     def __check_comment(self):
         """
         Check if current line is a comment. If true, skip to the next line
         """
-        match = re.search(r'^ *!', self.line)
+        match = re.search(r"^ *!", self.line)
         if not match:
-            match = re.search(r'\bif', self.line)
+            match = re.search(r"\bif", self.line)
             if match:
                 self.inside_if += 1
             else:
-                match = re.search(r'\bend *if\b', self.line)
+                match = re.search(r"\bend *if\b", self.line)
                 self.inside_if -= 1
             self.__check_alloc(self.line)
         return
@@ -155,7 +162,7 @@ class alloc_scan:
         """
         Check if line contais mem%allocate or mem%deallocate.
         """
-        match = re.search(r'call mem%((?:de)?alloc)\((.*?)\)', self.line)
+        match = re.search(r"call mem%((?:de)?alloc)\((.*?)\)", self.line)
         if match:
             curr_array = array_type(self.line_num, match.group(2).split(","))
             if match.group(1) == "dealloc":
@@ -194,9 +201,11 @@ class array_type:
     def get_idx(self):
         tmp = ""
         for (idx, line) in zip(self.indexes, self.line):
-            tmp += (f"{bcolors.bold}{self.name}({' '.join(idx)})"
-                    f"{bcolors.reset} in line {bcolors.warning}{line}"
-                    f"{bcolors.reset}")
+            tmp += (
+                f"{bcolors.bold}{self.name}({' '.join(idx)})"
+                f"{bcolors.reset} in line {bcolors.warning}{line}"
+                f"{bcolors.reset}"
+            )
         return tmp
 
     def append_idx(self, idx: list):
@@ -207,14 +216,16 @@ class array_type:
             self.indexes.remove(curr_idx.indexes[0])
             return ""
         except ValueError:
-            return (f"\n{indent}{self.get_idx()} deallocated as"
-                    f"\n{indent}{curr_idx.get_idx()}\n")
+            return (
+                f"\n{indent}{self.get_idx()} deallocated as"
+                f"\n{indent}{curr_idx.get_idx()}\n"
+            )
 
 
 def check_alloc(dir_name: str, ext: str = ".F90"):
     dir_name = Path(dir_name)
     ex_dirs = set([j for i in excluded_dir for j in dir_name.rglob(f"*{i}*")])
-    file_names = set(dir_name.rglob('*'))-ex_dirs
+    file_names = set(dir_name.rglob("*")) - ex_dirs
     for file_name in file_names:
         curr_ext = file_name.suffix
         if curr_ext == ext:
