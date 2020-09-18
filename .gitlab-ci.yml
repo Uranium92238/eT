@@ -1,11 +1,25 @@
 image: registry.gitlab.com/et-program/et/ubuntu-for-et:v5.0
 
 stages:
+  - pystyle
   - build
   - run
 
+pystyle:
+  stage: pystyle
+  image: python:3-buster
+  needs: []
+  script:
+    - pip install black
+    - black --check .
+  only:
+    - master
+    - development
+    - merge_requests
+
 build:
   stage: build
+  needs: []
   script:
     - whoami
     - cmake --version
@@ -26,6 +40,7 @@ build:
 
 run:
   stage: run
+  needs: ["build"]
   script:
     - cd build
     - ctest

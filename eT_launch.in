@@ -31,8 +31,8 @@ import sys
 import glob
 import subprocess
 
-if sys.version < '3.6':
-    sys.exit('requires python version >= 3.6')
+if sys.version < "3.6":
+    sys.exit("requires python version >= 3.6")
 
 
 # Kill if given negative number of OMP threads
@@ -47,8 +47,17 @@ def list_restart_files(restart_dir):
     # This only returns the names, not the Paths
     restart_dir = Path(restart_dir)
     # Determine what files are present
-    regexs = ['*restart_file', 'orbital_*', 'excitation_energies', 't',
-              'tbar', 'r_*', 'l_*', 'G_De_ao', 'mlhf_inactive_fock_term']
+    regexs = [
+        "*restart_file",
+        "orbital_*",
+        "excitation_energies",
+        "t",
+        "tbar",
+        "r_*",
+        "l_*",
+        "G_De_ao",
+        "mlhf_inactive_fock_term",
+    ]
     rfiles = []
     for regex in regexs:
         rfiles += [i.name for i in restart_dir.glob(regex)]
@@ -57,100 +66,130 @@ def list_restart_files(restart_dir):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('input_file', help="eT input file(s)", nargs='*',
-                    default=glob.glob("*.inp"), metavar="input file")
-parser.add_argument('-of', '--output-file', help="eT output file(s)",
-                    nargs='*', default=[None])
-parser.add_argument('--scratch', help="Specify scratch directory",
-                    type=str)
-parser.add_argument('-ks', '--keep-scratch', help="Do not delete scratch",
-                    action="store_true")
-parser.add_argument("--omp", help="Number of OpenMP threads", action=OMPaction,
-                    type=int)
-parser.add_argument('-nt', "--no-timing",
-                    help="Do not copy timing.out from scratch",
-                    action='store_true')
-parser.add_argument('-xyz', "--save-xyz",
-                    help="Copy any .xyz files from scratch",
-                    action='store_true')
-parser.add_argument('-v', "--verbose",
-                    help="Run some print statements", action='store_true')
-parser.add_argument('-bd', "--binary-dir",
-                    help="Specify location of eT executable", type=str)
-parser.add_argument('-basis', "--basis-path-dir",
-                    help="Specify location of the basis directory", type=str)
-parser.add_argument('-pcm', "--pcm-input-file",
-                    help="Specify PCMSolver Input File", type=str)
-parser.add_argument('-i-err', '--ignore-errors',
-                    help="Continue with default behaviour if errors detected",
-                    action='store_true')
+parser.add_argument(
+    "input_file",
+    help="eT input file(s)",
+    nargs="*",
+    default=glob.glob("*.inp"),
+    metavar="input file",
+)
+parser.add_argument(
+    "-of", "--output-file", help="eT output file(s)", nargs="*", default=[None]
+)
+parser.add_argument("--scratch", help="Specify scratch directory", type=str)
+parser.add_argument(
+    "-ks", "--keep-scratch", help="Do not delete scratch", action="store_true"
+)
+parser.add_argument(
+    "--omp", help="Number of OpenMP threads", action=OMPaction, type=int
+)
+parser.add_argument(
+    "-nt",
+    "--no-timing",
+    help="Do not copy timing.out from scratch",
+    action="store_true",
+)
+parser.add_argument(
+    "-xyz", "--save-xyz", help="Copy any .xyz files from scratch", action="store_true"
+)
+parser.add_argument(
+    "-v", "--verbose", help="Run some print statements", action="store_true"
+)
+parser.add_argument(
+    "-bd", "--binary-dir", help="Specify location of eT executable", type=str
+)
+parser.add_argument(
+    "-basis",
+    "--basis-path-dir",
+    help="Specify location of the basis directory",
+    type=str,
+)
+parser.add_argument(
+    "-pcm", "--pcm-input-file", help="Specify PCMSolver Input File", type=str
+)
+parser.add_argument(
+    "-i-err",
+    "--ignore-errors",
+    help="Continue with default behaviour if errors detected",
+    action="store_true",
+)
 
-parser.add_argument('-save', '--save-restart-dir',
-                    help="Directory to save restart files",
-                    type=str, nargs='?', default='off')
-parser.add_argument('-load', '--load-restart-dir',
-                    help="Directory(ies) to get restart files",
-                    type=str, nargs='+', default=[None])
+parser.add_argument(
+    "-save",
+    "--save-restart-dir",
+    help="Directory to save restart files",
+    type=str,
+    nargs="?",
+    default="off",
+)
+parser.add_argument(
+    "-load",
+    "--load-restart-dir",
+    help="Directory(ies) to get restart files",
+    type=str,
+    nargs="+",
+    default=[None],
+)
 
 args = parser.parse_args()
 
 something_wrong = False
 
 # Check if any input files were found
-if (not args.input_file):
-    sys.exit('Could not find any input files')
+if not args.input_file:
+    sys.exit("Could not find any input files")
 
 # Check that output file makes sense or set default
-if (args.output_file[0]):
-    if (len(args.output_file) != len(args.input_file)):
-        parser.error('Number of output files must be same as input files')
+if args.output_file[0]:
+    if len(args.output_file) != len(args.input_file):
+        parser.error("Number of output files must be same as input files")
 else:
-    args.output_file = args.output_file*len(args.input_file)
+    args.output_file = args.output_file * len(args.input_file)
 
-if (len(args.load_restart_dir) < len(args.input_file)):
+if len(args.load_restart_dir) < len(args.input_file):
     n = len(args.input_file) - len(args.load_restart_dir)
-    args.load_restart_dir = args.load_restart_dir + n*[None]
-elif (len(args.load_restart_dir) > len(args.input_file)):
+    args.load_restart_dir = args.load_restart_dir + n * [None]
+elif len(args.load_restart_dir) > len(args.input_file):
     parser.error(
-        'Number of restart load directories greater than number of input files'
+        "Number of restart load directories greater than number of input files"
     )
 
 
 cwd = Path.cwd()  # Get current directory
 
 # Set the binary directory
-if (args.binary_dir):
+if args.binary_dir:
     eT_dir = Path(args.binary_dir).resolve()
 else:
-    eT_dir = '${CMAKE_BINARY_DIR}'  # Default binary directory set by CMake
+    eT_dir = "${CMAKE_BINARY_DIR}"  # Default binary directory set by CMake
 eT_dir = Path(eT_dir).resolve()  # Use absolute path
 
-if (args.verbose):
+if args.verbose:
     print(f"Will use executable from {eT_dir}.")
 
 # Set the Libint basis directory
-if (args.basis_path_dir):
+if args.basis_path_dir:
     ldd_dir = Path(args.basis_path_dir).resolve()
-    environ['LIBINT_DATA_PATH'] = str(ldd_dir)  # Cast to str needed
-elif 'LIBINT_DATA_PATH' not in environ:
-    ldd_dir = Path('${CMAKE_SOURCE_DIR}') / 'ao_basis'
-    environ['LIBINT_DATA_PATH'] = str(ldd_dir)
+    environ["LIBINT_DATA_PATH"] = str(ldd_dir)  # Cast to str needed
+elif "LIBINT_DATA_PATH" not in environ:
+    ldd_dir = Path("${CMAKE_SOURCE_DIR}") / "ao_basis"
+    environ["LIBINT_DATA_PATH"] = str(ldd_dir)
 
-if (args.verbose):
+if args.verbose:
     print(f"LIBINT_DATA_PATH (basis set folder) set to {ldd_dir}")
 
 # Set the PCMSolver input location
 # ([file].pcm specified in input continuum section)
-if (args.pcm_input_file):
+if args.pcm_input_file:
     pcm_input_file = Path(args.pcm_input_file).resolve()
-    PCMSolver_GOPCM = Path('${PCMSolver_INCLUDE_DIR}').resolve().parent
-    PCMSolver_GOPCM = PCMSolver_GOPCM / 'bin' / 'go_pcm.py'
+    PCMSolver_GOPCM = Path("${PCMSolver_INCLUDE_DIR}").resolve().parent
+    PCMSolver_GOPCM = PCMSolver_GOPCM / "bin" / "go_pcm.py"
 
-    if (args.verbose):
+    if args.verbose:
         print(f"PCM inputfile:{pcm_input_file}")
         print(f"Go PCM {PCMSolver_GOPCM}")
 
-executable = eT_dir / 'eT'
+executable = eT_dir / "eT"
 
 if not executable.is_file():
     print(f"{executable} is not a file")
@@ -162,15 +201,15 @@ if args.scratch:
     scratch = Path(args.scratch).resolve()
     scratch.mkdir(parents=True, exist_ok=True)
 else:
-    tmpscratch = getenv('eT_SCRATCH')
+    tmpscratch = getenv("eT_SCRATCH")
     scratch = Path(tempfile.mkdtemp(dir=tmpscratch))
 
-if (args.save_restart_dir != 'off'):
-    if (args.save_restart_dir):
+if args.save_restart_dir != "off":
+    if args.save_restart_dir:
         save_dir = Path(args.save_restart_dir).resolve()
     else:
-        env_save = getenv('eT_SAVE')
-        if (env_save):
+        env_save = getenv("eT_SAVE")
+        if env_save:
             save_dir = Path(env_save)
         else:
             save_dir = cwd
@@ -178,13 +217,13 @@ if (args.save_restart_dir != 'off'):
 
 # Set OMP_NUM_THREADS in environment
 if args.omp:
-    environ['OMP_NUM_THREADS'] = str(args.omp)
-    environ['MKL_NUM_THREADS'] = str(args.omp)
+    environ["OMP_NUM_THREADS"] = str(args.omp)
+    environ["MKL_NUM_THREADS"] = str(args.omp)
 
-omps = getenv('OMP_NUM_THREADS')
-if (not omps):
-    omps = 'dynamic number of'
-mkls = getenv('MKL_NUM_THREADS')
+omps = getenv("OMP_NUM_THREADS")
+if not omps:
+    omps = "dynamic number of"
+mkls = getenv("MKL_NUM_THREADS")
 
 for i, (inpf, outf) in enumerate(zip(args.input_file, args.output_file)):
 
@@ -194,11 +233,11 @@ for i, (inpf, outf) in enumerate(zip(args.input_file, args.output_file)):
     if outf:
         output_file = Path(outf)
     else:
-        output_file = inpf.with_suffix('.out')
+        output_file = inpf.with_suffix(".out")
     out_name = output_file.with_suffix("")
-    time_file = output_file.with_suffix('.timing.out')
+    time_file = output_file.with_suffix(".timing.out")
 
-    if (args.verbose):
+    if args.verbose:
         print()
         print(f"Input file:{inpf} Output file:{output_file}")
 
@@ -206,23 +245,23 @@ for i, (inpf, outf) in enumerate(zip(args.input_file, args.output_file)):
     inp_src = inpf.resolve()
     out_dest = cwd / output_file
     time_dest = cwd / time_file
-    inp_dest = scratch / 'eT.inp'
-    out_src = scratch / 'eT.out'
-    time_src = scratch / 'timing.out'
-    if (args.pcm_input_file):
+    inp_dest = scratch / "eT.inp"
+    out_src = scratch / "eT.out"
+    time_src = scratch / "timing.out"
+    if args.pcm_input_file:
         pcm_src = pcm_input_file.resolve()
-        pcm_dest = scratch / 'pcmsolver.inp'
+        pcm_dest = scratch / "pcmsolver.inp"
 
     # Copy files
     shutil.copyfile(inp_src, inp_dest)
-    if (args.pcm_input_file):
+    if args.pcm_input_file:
         shutil.copyfile(pcm_src, pcm_dest)
 
-    if (args.load_restart_dir[i]):
+    if args.load_restart_dir[i]:
         load_dir = Path(args.load_restart_dir[i]).resolve()
         loadfiles = list_restart_files(load_dir)
 
-        if (args.verbose):
+        if args.verbose:
             print(f"Copying restart files to {load_dir}")
 
         for loadfile in loadfiles:
@@ -232,49 +271,51 @@ for i, (inpf, outf) in enumerate(zip(args.input_file, args.output_file)):
 
     chdir(scratch)  # Now in scratch
 
-    if (args.verbose):
+    if args.verbose:
         print(f"Ready to run eT in {scratch} with {omps} threads")
 
     # preprocess for PCMSolver external file
     # have to use subprocess to get the module loading right
-    if (args.pcm_input_file):
-        PCMSolver_libpy = '${PCMSolver_PYMOD}'
-        environ["PYTHONPATH"] = PCMSolver_libpy+':$PYTHONPATH'
+    if args.pcm_input_file:
+        PCMSolver_libpy = "${PCMSolver_PYMOD}"
+        environ["PYTHONPATH"] = PCMSolver_libpy + ":$PYTHONPATH"
 
-        pcmprocess = subprocess.run('python3 ' + str(PCMSolver_GOPCM) +
-                                    ' --inp pcmsolver.inp',
-                                    shell=True,
-                                    stderr=subprocess.PIPE,
-                                    stdout=subprocess.PIPE)
-        pcmerror = (pcmprocess.stdout.decode('utf8') +
-                    pcmprocess.stderr.decode('utf8'))
+        pcmprocess = subprocess.run(
+            "python3 " + str(PCMSolver_GOPCM) + " --inp pcmsolver.inp",
+            shell=True,
+            stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+        )
+        pcmerror = pcmprocess.stdout.decode("utf8") + pcmprocess.stderr.decode("utf8")
 
-        if (pcmerror != ''):
-            if (not args.ignore_errors):
+        if pcmerror != "":
+            if not args.ignore_errors:
                 something_wrong = True
             print()
             print(f"Error message for pcm input file {pcm_input_file} :")
             print(pcmerror)
 
-        if (something_wrong):
+        if something_wrong:
             print("Stopping now")
             break
 
     # Run eT
-    p = subprocess.run(str(executable),  # Make sure everything is a str
-                       shell=True,
-                       stderr=subprocess.PIPE)
+    p = subprocess.run(
+        str(executable),  # Make sure everything is a str
+        shell=True,
+        stderr=subprocess.PIPE,
+    )
 
-    s = p.stderr.decode('utf8')
+    s = p.stderr.decode("utf8")
 
-    if (s != ''):
-        if (not args.ignore_errors):
+    if s != "":
+        if not args.ignore_errors:
             something_wrong = True
         print()
         print(f"Error message for input file {inpf} :")
         print(s)
 
-    if (args.verbose):
+    if args.verbose:
         print(f"Copying output to {out_dest}")
 
     # Copy files back
@@ -284,7 +325,7 @@ for i, (inpf, outf) in enumerate(zip(args.input_file, args.output_file)):
 
     # Copy .xyz files if desired
     if args.save_xyz:
-        xyzfiles = scratch.glob('*.xyz')
+        xyzfiles = scratch.glob("*.xyz")
         for xyzfile in xyzfiles:
             xyzfile = xyzfile.name
             xyzsrc = scratch / xyzfile
@@ -292,7 +333,7 @@ for i, (inpf, outf) in enumerate(zip(args.input_file, args.output_file)):
             shutil.copyfile(xyzsrc, xyzdest)
 
     # Check if there are mo_coefficient.out files
-    coeff_files = scratch.glob('*mo_coefficients.out')
+    coeff_files = scratch.glob("*mo_coefficients.out")
     for coeff_file in coeff_files:
         coeff_file = coeff_file.name
         mo_coeff_src = scratch / coeff_file
@@ -301,20 +342,20 @@ for i, (inpf, outf) in enumerate(zip(args.input_file, args.output_file)):
         shutil.copyfile(mo_coeff_src, mo_coeff_dest)
 
     # Check if there are any .plt files
-    pltfiles = scratch.glob('*.plt')
+    pltfiles = scratch.glob("*.plt")
     for pltfile in pltfiles:
         pltfile = pltfile.name
         pltsrc = scratch / pltfile
-        pltname = str(pltfile).replace('eT', f"{out_name}")
+        pltname = str(pltfile).replace("eT", f"{out_name}")
         pltdest = cwd / pltname
         shutil.copyfile(pltsrc, pltdest)
 
     # Save restart files somewhere if requested
-    if(args.save_restart_dir != 'off'):
+    if args.save_restart_dir != "off":
         current_save_dir = save_dir / f"{inp_name}_restart_files"
         current_save_dir.mkdir(parents=True, exist_ok=True)
 
-        if (args.verbose):
+        if args.verbose:
             print(f"Copying restart files to {current_save_dir}")
 
         savefiles = list_restart_files(scratch)
@@ -326,17 +367,17 @@ for i, (inpf, outf) in enumerate(zip(args.input_file, args.output_file)):
 
     chdir(cwd)  # Now in work
 
-    if (something_wrong):
+    if something_wrong:
         print("Stopping now")
         break
 
 
 # Delete scratch
-if (not args.keep_scratch and not something_wrong):
-    if (args.verbose):
+if not args.keep_scratch and not something_wrong:
+    if args.verbose:
         print()
         print("Deleting scratch")
     shutil.rmtree(scratch)
 
-if (something_wrong):
-    raise Exception('Error message from eT')
+if something_wrong:
+    raise Exception("Error message from eT")
