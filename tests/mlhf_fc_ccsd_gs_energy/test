@@ -15,18 +15,17 @@ from runtest import version_info, get_filter, cli, run
 # this tells runtest how to run your code
 from runtest_config import configure
 
+
+# functions to get the filters
+from filters import get_gs_filter
+
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
 
 # construct filter(s)
-f = [
-# total mlhf energy
-    get_filter(string='Total energy:',
-               abs_tolerance=1.0e-10),
-# gs ccsd energy
-    get_filter(string='Final ground state energy (a.u.):',
-               abs_tolerance=1.0e-10),
-]
+threshold = 1.0e-10
+
+f = get_gs_filter(threshold)
 
 # invoke the command line interface parser which returns options
 options = cli()

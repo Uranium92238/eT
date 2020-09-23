@@ -15,40 +15,19 @@ from runtest import version_info, get_filter, cli, run
 # this tells runtest how to run your code
 from runtest_config import configure
 
+# functions to get the filters
+from filters import get_hf_filter, get_dipole_filter
+
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
 
 # construct filter(s)
-f = [
-# total energy
-    get_filter(string='Total energy:',
-               abs_tolerance=1.0e-10),
-# active energy
-    get_filter(string='Active energy:',
-               abs_tolerance=1.0e-10),
-# active-inactive energy
-    get_filter(string='Active-inactive energy:',
-               abs_tolerance=1.0e-10),
-# inactive energy
-    get_filter(string='Inactive energy:',
-               abs_tolerance=1.0e-10),
-# non-idempotent SAD 
-    get_filter(string='Energy of initial guess:',
-               abs_tolerance=1.0e-10),
-# idempotent SAD
-    get_filter(from_string='Iteration       Energy (a.u.)      Max(grad.) ',
-               num_lines=3,
-               abs_tolerance=1.0e-10,
-               mask=[2]),
-# dipole components
-    get_filter(string=' x: ',
-               abs_tolerance=1.0e-10),
-    get_filter(string=' y: ',
-               abs_tolerance=1.0e-10),
-    get_filter(string=' z: ',
-               abs_tolerance=1.0e-10)
-]
+threshold = 1.0e-10
 
+f = get_hf_filter(threshold)
+
+g = get_dipole_filter(threshold)
+f.extend(g)
 # invoke the command line interface parser which returns options
 options = cli()
 
