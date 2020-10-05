@@ -89,6 +89,7 @@ contains
 !
          plotter = visualization(wf%system, wf%n_ao)
 !
+         call plotter%initialize(wf%system)
          call mem%alloc(D, wf%n_ao, wf%n_ao)
 !
          call dgemm('N', 'T',                   &
@@ -109,6 +110,7 @@ contains
          call plotter%plot_density(wf%system, D, label)
 !
          call mem%dealloc(D, wf%n_ao, wf%n_ao)
+         call plotter%cleanup()
 !
       endif
 !

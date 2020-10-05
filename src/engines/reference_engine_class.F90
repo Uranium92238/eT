@@ -451,6 +451,7 @@ contains
 !     Initialize the plotter
 !
       plotter = visualization(wf%system, wf%n_ao)
+      call plotter%initialize(wf%system)
 !
       if (engine%plot_orbitals) then
 !
@@ -469,6 +470,8 @@ contains
          call density_plotting_timer%turn_off()
 !
       endif
+!
+      call plotter%cleanup()
 !
    end subroutine do_visualization_reference_engine
 !

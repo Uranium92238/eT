@@ -455,6 +455,7 @@ contains
 !     Initialize the plotter
 !
       plotter = visualization(wf%system, wf%n_ao)
+      call plotter%initialize(wf%system)
 !
       call mem%alloc(mo_density, wf%n_mo, wf%n_mo)
       call mem%alloc(density, wf%n_ao, wf%n_ao)
@@ -528,6 +529,8 @@ contains
 !
       call mem%dealloc(mo_density, wf%n_mo, wf%n_mo)
       call mem%dealloc(density, wf%n_ao, wf%n_ao)
+!
+      call plotter%cleanup()
 !
    end subroutine do_td_visualization_td_engine
 !
