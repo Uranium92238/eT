@@ -1197,6 +1197,7 @@ contains
 !
          visualizer = visualization(wf%system, wf%n_ao)
 !
+         call visualizer%initialize(wf%system)
          call mem%alloc(c_D_ct, wf%n_ao, wf%n_ao)
 !
          if (engine%plot_density) then
@@ -1237,6 +1238,7 @@ contains
          end if
 !         
          call mem%dealloc(c_D_ct, wf%n_ao, wf%n_ao)
+         call visualizer%cleanup()
 !
       end if
 !

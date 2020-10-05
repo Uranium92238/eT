@@ -87,7 +87,8 @@ module visualization_class
       procedure, private :: evaluate_density_on_grid     => evaluate_density_on_grid_visualization
       procedure, private :: place_grid_in_memory         => place_grid_in_memory_visualization
 !
-      final :: destructor_visualization
+      procedure :: initialize                            => initialize_visualization
+      procedure :: cleanup                               => cleanup_visualization
 !
    end type visualization
 !
@@ -133,18 +134,32 @@ contains
 !
       call system%set_basis_info()
 !
-!     Evaluate aos on grid if we can keep it in memory
-!
-     if (plotter%n_ao*plotter%n_grid_points*dp .lt. mem%get_available()/2) then
-!
-        plotter%grid_in_memory = .true.
-        call mem%alloc(plotter%aos_on_grid, plotter%n_ao, plotter%n_grid_points)
-!
-        call plotter%place_grid_in_memory(system)
-!
-     endif
-!
    end function new_visualization
+!
+!
+   subroutine initialize_visualization(plotter, system)
+!!
+!!    Initialize
+!!    Written by Andreas S. Skeidsvoll, Sep 2020
+!!
+!!    Allocates and fills an array with the AOs evaluated on the grid, if the
+!!    array can be held in memory.
+!!
+      implicit none 
+!
+      class(visualization), intent(inout) :: plotter
+      type(molecular_system), intent(inout) :: system
+!
+      if (plotter%n_ao*plotter%n_grid_points*dp .lt. mem%get_available()/2) then
+!
+         plotter%grid_in_memory = .true.
+         call mem%alloc(plotter%aos_on_grid, plotter%n_ao, plotter%n_grid_points)
+!
+         call plotter%place_grid_in_memory(system)
+!
+      endif
+!
+   end subroutine initialize_visualization
 !
 !
   subroutine set_up_grid_visualization(plotter, system)
@@ -732,19 +747,23 @@ contains
    end subroutine place_grid_in_memory_visualization
 !
 !
-   subroutine destructor_visualization(plotter)
+   subroutine cleanup_visualization(plotter)
 !!
-!!    Destructor  
-!!    Written by Sarai D. Folkestad, Nov 2019 
+!!    Cleanup  
+!!    Written by Sarai D. Folkestad, Nov 2019
+!!
+!!    Modified by Andreas S. Skeidsvoll, Sep 2020
+!!    Changed from destructor to cleanup routine, in order to comply with
+!!    Fortran standards.
 !!
       implicit none 
 !
-      type(visualization) :: plotter
+      class(visualization), intent(inout) :: plotter
 !
       if (plotter%grid_in_memory) call mem%dealloc(plotter%aos_on_grid, &
                                        plotter%n_ao, plotter%n_grid_points)
 !
-   end subroutine destructor_visualization
+   end subroutine cleanup_visualization
 !
 !
 end module visualization_class
