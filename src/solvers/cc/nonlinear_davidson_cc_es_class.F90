@@ -654,14 +654,24 @@ contains
 !
       real(dp) :: micro_residual_threshold
 !
+      real(dp), parameter :: default_lindep_threshold = 1.0d-11
+!
       call output%printf('n', 'Starting on microiterations', fs='(/t6,a)')
 !
 !     The residual threshold in the microiterations is taken to be proportional to the maximum 
 !     residual norm in the current macroiteration
 !
       micro_residual_threshold = solver%relative_micro_residual_threshold*maxval(residual_norms) 
+      lindep_threshold         = min(default_lindep_threshold, micro_residual_threshold)
 !
-      lindep_threshold         = 1.0d-11
+      if (lindep_threshold .lt. default_lindep_threshold) then
+!
+         call output%warning_msg('Linear dependence threshold was set to (e9.2), which is below &
+                                 &the default value of (e9.2). May lead to instabilities. Consider &
+                                 &loosening and/or relative micro threshold.', &
+                                 reals=[lindep_threshold, default_lindep_threshold])
+!
+      endif
 !
 !     Initialize Davidson tool 
 !

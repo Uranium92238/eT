@@ -119,6 +119,9 @@ module eigen_davidson_tool_class
       procedure :: construct_reduced_metric           &
                 => construct_reduced_metric_eigen_davidson_tool
 !
+      procedure :: construct_reduced_submetric        &
+                => construct_reduced_submetric_eigen_davidson_tool
+!
       procedure :: destruct_reduced_space_quantities  &
                 => destruct_reduced_space_quantities_eigen_davidson_tool
 !
@@ -557,8 +560,8 @@ contains
 !
       call mem%alloc(X_im, davidson%n_parameters)  
 !
-      call davidson%construct_solution(X_im, n + 1) ! set X_im
-      call davidson%construct_AX(R, n)       ! set R = A X_re 
+      call davidson%construct_solution(X_im, n + 1)   ! set X_im
+      call davidson%construct_AX(R, n)                ! set R = A X_re 
 !
       call daxpy(davidson%n_parameters, - davidson%omega_re(n), X_re, 1, R, 1) 
       call daxpy(davidson%n_parameters, davidson%omega_im(n), X_im, 1, R, 1) 
@@ -678,7 +681,7 @@ contains
    subroutine construct_reduced_metric_eigen_davidson_tool(davidson)
 !!
 !!    Construct reduced metric 
-!!    Written by Eirik F. Kjønstad, Nov 2019
+!!    Written by Eirik F. Kjønstad, Nov 2019 and Mar 2020
 !!
 !!    Constructs 
 !!
@@ -692,108 +695,143 @@ contains
 !
       class(eigen_davidson_tool) :: davidson 
 !
-      real(dp), dimension(:), allocatable :: c_i, c_j 
+      real(dp), dimension(:,:), allocatable :: S_red_copy
 !
-      integer :: i, j 
+      integer :: req_0, req_1_i, req_1_j, req_2
+!
+      type(batching_index), allocatable :: batch_i, batch_j 
+!
+      integer :: prev_dim_red
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Davidson: time to construct reduced metric', 'v')
+      call timer%turn_on()
+!
+!     Will batch over reduced space indices, i and j for trials
+!
+      req_0   = 0
+      req_1_i = davidson%trials%required_to_load_record()
+      req_1_j = req_1_i
+      req_2   = 0
+!
+      if (davidson%dim_red .eq. davidson%n_solutions) then 
+!
+!        First iteration or reset of space: calculate all elements
+!
+         call mem%alloc(davidson%S_red, davidson%dim_red, davidson%dim_red)
+!
+         batch_i = batching_index(davidson%dim_red)
+         batch_j = batching_index(davidson%dim_red)
+!
+         call mem%batch_setup(batch_i, batch_j, req_0, req_1_i, req_1_j, req_2)
+!
+         call davidson%construct_reduced_submetric(batch_i, batch_j)
+!
+      else
+!
+!        Not first iteration: calculate new elements only
+!
+!        Transfer previously calculated elements and 
+!        extend the dimensionality of the reduced matrix 
+!
+         prev_dim_red = davidson%dim_red - davidson%n_new_trials
+!
+         call mem%alloc(S_red_copy, prev_dim_red, prev_dim_red)
+!
+         call dcopy(prev_dim_red**2, davidson%S_red, 1, S_red_copy, 1)
+!
+         call mem%dealloc(davidson%S_red, prev_dim_red, prev_dim_red)
+!
+         call mem%alloc(davidson%S_red, davidson%dim_red, davidson%dim_red)
+!
+         davidson%S_red(1:prev_dim_red, 1:prev_dim_red) = S_red_copy
+!
+         call mem%dealloc(S_red_copy, prev_dim_red, prev_dim_red)
+!
+!        Compute the new blocks in the reduced matrix 
+!
+!        i index new, j index all 
+!
+         batch_i = batching_index(dimension_=davidson%n_new_trials, &
+                                  offset=prev_dim_red)
+!
+         batch_j = batching_index(dimension_=davidson%dim_red, &
+                                  offset=0)
+!
+         call mem%batch_setup(batch_i, batch_j, req_0, req_1_i, req_1_j, req_2)
+!
+         call davidson%construct_reduced_submetric(batch_i, batch_j)
+!
+      endif
+!
+      call timer%turn_off()
+!
+   end subroutine construct_reduced_metric_eigen_davidson_tool
+!
+!
+   subroutine construct_reduced_submetric_eigen_davidson_tool(davidson, batch_i, batch_j)
+!!
+!!    Construct reduced submetric 
+!!    Written by Eirik F. Kjønstad, Mar 2020
+!!
+!!    Constructs parts of the reduced metric S_ij based on the prepared 
+!!    batching indices batch_i and batch_j.
+!!
+      implicit none 
+!
+      class(eigen_davidson_tool), intent(inout) :: davidson 
+!
+      type(batching_index), intent(inout) :: batch_i, batch_j
+!
+      integer :: current_i_batch, current_j_batch, i, j
+!
+      real(dp), dimension(:,:), pointer, contiguous :: c_i, c_j 
+!
+      type(interval), allocatable :: j_interval
 !
       real(dp) :: ddot
 !
-      real(dp), dimension(:,:), allocatable :: prev_S_red
+      call davidson%trials%prepare_records([batch_i, batch_j])
 !
-      if (davidson%dim_red == davidson%n_solutions) then 
+      do current_i_batch = 1, batch_i%num_batches
 !
-!        Either first iteration or first iteration after resetting the space.
-!        Allocate and construct entire S matrix.
+         call batch_i%determine_limits(current_i_batch)
 !
-         call mem%alloc(davidson%S_red, davidson%dim_red, davidson%dim_red)
+         call davidson%trials%load(c_i, batch_i, 1)
 !
-         call mem%alloc(c_i, davidson%n_parameters)
-         call mem%alloc(c_j, davidson%n_parameters)
+         do current_j_batch = 1, batch_j%num_batches
 !
-         do i = 1, davidson%dim_red 
+            call batch_j%determine_limits(current_j_batch)
 !
-            call davidson%get_trial(c_i, i)
+            if (batch_j%first .gt. batch_i%last) cycle ! Nothing to calculate; 
+                                                       ! go to next batch of j 
 !
-            do j = 1, i 
+            j_interval = interval(first=batch_j%first, &
+                                  last=min(batch_i%last, batch_j%last))
 !
-               call davidson%get_trial(c_j, j)
+            call davidson%trials%load(c_j, j_interval, 2)
 !
-               davidson%S_red(i, j) = ddot(davidson%n_parameters, c_i, 1, c_j, 1)
-               davidson%S_red(j, i) = davidson%S_red(i, j)
+            do i = batch_i%first, batch_i%last
+               do j = j_interval%first, min(batch_j%last, i) 
 !
-            enddo 
-         enddo 
+                  davidson%S_red(i, j) = ddot(davidson%n_parameters,             &
+                                              c_i(:, i - batch_i%first + 1),     &
+                                              1,                                 &
+                                              c_j(:, j - j_interval%first + 1),  &
+                                              1)
 !
-         call mem%dealloc(c_i, davidson%n_parameters)
-         call mem%dealloc(c_j, davidson%n_parameters)
-!
-      else 
-!
-!        Copy over the existing elements in S 
-!
-         call mem%alloc(prev_S_red, davidson%dim_red - davidson%n_new_trials, &
-                                    davidson%dim_red - davidson%n_new_trials)
-!
-         call dcopy((davidson%dim_red - davidson%n_new_trials)**2,   &
-                    davidson%S_red,                                  &
-                    1,                                               &
-                    prev_S_red,                                      &
-                    1)
-!
-         call mem%dealloc(davidson%S_red, davidson%dim_red - davidson%n_new_trials, &
-                                          davidson%dim_red - davidson%n_new_trials)
-!
-         call mem%alloc(davidson%S_red, davidson%dim_red, davidson%dim_red)
-!
-         do i = 1, davidson%dim_red - davidson%n_new_trials
-            do j = 1, davidson%dim_red - davidson%n_new_trials
-!
-               davidson%S_red(i, j) = prev_S_red(i, j)
-!
-            enddo
-         enddo 
-!
-         call mem%dealloc(prev_S_red, davidson%dim_red - davidson%n_new_trials, &
-                                      davidson%dim_red - davidson%n_new_trials)
-!
-!        Calculate the new elements in S 
-!
-         call mem%alloc(c_i, davidson%n_parameters)
-         call mem%alloc(c_j, davidson%n_parameters)
-!
-         do i = 1, davidson%dim_red 
-!
-            call davidson%get_trial(c_i, i)
-!
-            do j = 1, davidson%dim_red
-!
-               if (j .le. davidson%dim_red - davidson%n_new_trials) then
-!
-                  if (i .gt. davidson%dim_red - davidson%n_new_trials) then 
-!
-                     call davidson%get_trial(c_j, j)
-                     davidson%S_red(i, j) = ddot(davidson%n_parameters, c_i, 1, c_j, 1)
-                     davidson%S_red(j, i) = davidson%S_red(i, j)
-!
-                  endif
-!
-               elseif (j .gt. davidson%dim_red - davidson%n_new_trials) then
-!
-                  call davidson%get_trial(c_j, j)
-                  davidson%S_red(i, j) = ddot(davidson%n_parameters, c_i, 1, c_j, 1)
                   davidson%S_red(j, i) = davidson%S_red(i, j)
 !
-               endif
+               enddo
+            enddo
 !
-            enddo 
-         enddo 
+         enddo ! end of j batches 
+      enddo ! end of i batches 
 !
-         call mem%dealloc(c_i, davidson%n_parameters)
-         call mem%dealloc(c_j, davidson%n_parameters)
+      call davidson%trials%free_records()
 !
-      endif 
-!
-   end subroutine construct_reduced_metric_eigen_davidson_tool
+   end subroutine construct_reduced_submetric_eigen_davidson_tool
 !
 !
    subroutine destruct_reduced_space_quantities_eigen_davidson_tool(davidson)

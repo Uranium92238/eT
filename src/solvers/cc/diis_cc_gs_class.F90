@@ -316,8 +316,8 @@ contains
 !
             call output%print_separator('n', 63,'-')
 !
-           call output%printf('n', 'Convergence criterion met in (i0) iterations!', &
-                              ints=[iteration], fs='(t3,a)')
+            call output%printf('n', 'Convergence criterion met in (i0) iterations!', &
+                               ints=[iteration], fs='(t3,a)')
 !
             if (.not. converged_energy) then 
 !

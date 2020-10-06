@@ -112,9 +112,7 @@ set(eT_fortran_sources
    src/tools/fftpack/fftpack_auxiliary_routines.F90
    src/tools/fftpack/fftpack_complex_forward_1d.F90
    src/tools/fftpack/fftpack_complex_initialization_routines.F90
-   src/tools/record_storer/record_storer_class.F90
-   src/tools/record_storer/memory_storer_class.F90
-   src/tools/record_storer/file_storer_class.F90
+   src/tools/record_storer_class.F90
    src/tools/string_utilities.F90
    src/tools/visualization_class.F90
    src/tools/task_list_class.F90
