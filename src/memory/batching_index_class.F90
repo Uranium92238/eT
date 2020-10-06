@@ -75,6 +75,10 @@ module batching_index_class
 !
       integer :: index_dimension ! Full length of index (e.g., typically n_vir for virtual index)
 !
+!     Offset to add when calculating batch limits 
+!
+      integer :: offset 
+!
 !     Logical for sanity check
 !
       logical :: initialized = .false.
@@ -84,13 +88,21 @@ module batching_index_class
 !     Routine that sets the batch dependent variables,
 !     first, last and length, based on which batch it is
 !
-      procedure :: determine_limits => determine_limits_batching_index
+      procedure :: determine_limits    => determine_limits_batching_index
 !
 !     Debug option:
 !     Forced batching routine called by memory manager to ensure 
 !     batching regardless of available memory. Batch size is randomly generated.
 !
-      procedure :: force_batch => force_batch_batching_index
+      procedure :: force_batch         => force_batch_batching_index
+!
+!     Make sure that the batching index does not batch (num batches: 0)
+!
+      procedure :: do_not_batch        => do_not_batch_batching_index
+!
+!     Make sure that the batching index does a single batch (num batches: 1)
+!
+      procedure :: do_single_batch     => do_single_batch_batching_index
 !
    end type batching_index
 !
@@ -105,27 +117,41 @@ module batching_index_class
 contains
 !
 !
-   function new_batching_index(dimension) result(batch_p)
+   function new_batching_index(dimension_, offset) result(batch_p)
 !!
 !!    New batching index 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!    Modified by Eirik F. Kjønstad, Mar 2020
 !!
 !!    Note: every batching index must be initialized!
-!!    The 'dimension' variable specifies the total length of the
-!!    batching index, e.g. the number of virtuals for a virtual index.
+!!
+!!    dimension_: the total length of the index, e.g. the number of virtual 
+!!                orbitals "n_v" for a virtual index "a". 
+!!
+!!    offset:     (optional) offset for the index; e.g., if we have an 
+!!                MO index p that is restricted to virtual orbitals, we can 
+!!                set dimension_ to "n_v" and the offset to "n_o" (so that the
+!!                index can take the values n_o + 1, n_o + 2, ..., n_o + n_v). 
+!!                Default is offset=0.
+!!
+!!    Eirik F. Kjønstad, Mar 2020: added offset.
 !!
       implicit none
 !
       type(batching_index) :: batch_p
 !
-      integer, intent(in) :: dimension
+      integer, intent(in)           :: dimension_
+      integer, intent(in), optional :: offset 
 !
-      batch_p%index_dimension = dimension
+      batch_p%index_dimension = dimension_
 !
       batch_p%initialized = .true.
 !
       batch_p%max_length  = 0
       batch_p%num_batches = 0
+!
+      batch_p%offset = 0
+      if (present(offset)) batch_p%offset = offset
 !
    end function new_batching_index
 !
@@ -134,10 +160,13 @@ contains
 !!
 !!    Determine limits
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!    Modified by Eirik F. Kjønstad, Mar 2020
 !!
 !!    Given the batch number, this routine determine the first and
 !!    and last values, for the index, as well as the length of the
 !!    current batching interval.
+!!
+!!    Eirik F. Kjønstad, Mar 2020: added offset.
 !!
       implicit none
 !
@@ -155,8 +184,10 @@ contains
 !
 !     Determine limits of batch, q = first, first + 1, ..., last
 !
-      batch_p%first = 1 + (batch_number-1)*(batch_p%max_length)
-      batch_p%last  = min((batch_p%max_length)+(batch_number-1)*(batch_p%max_length), batch_p%index_dimension)
+      batch_p%first = batch_p%offset + 1 + (batch_number-1)*(batch_p%max_length)
+      batch_p%last  = batch_p%offset + &
+                        min((batch_p%max_length)+(batch_number-1)*(batch_p%max_length), &
+                            batch_p%index_dimension)
 !
 !     Calculate the length of the batch
 !
@@ -178,15 +209,53 @@ contains
 !
       call random_number(some_number_between_0_and_1)
 ! 
-      batch_p%max_length = 1 + floor((batch_p%index_dimension - 1)*some_number_between_0_and_1) ! 1, 2, 3, ..., index_dimension - 1
+!     1, 2, 3, ..., index_dimension - 1
+      batch_p%max_length = 1 + floor((batch_p%index_dimension - 1)*some_number_between_0_and_1) 
+!
       batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
 !
-      call output%printf('m', 'Forced batch of index with dimension: (i0). &
-                         &Number of batches: (i0), Max length of batch: (i0)', &
-                         ints=[batch_p%index_dimension, batch_p%num_batches, &
+      call output%printf('debug', 'Forced batch of index with dimension: (i0). &
+                         &Number of batches: (i0), Max length of batch: (i0)',   &
+                         ints=[batch_p%index_dimension, batch_p%num_batches,     &
                          batch_p%max_length], ll=90)
 !
    end subroutine force_batch_batching_index
+!
+!
+   subroutine do_not_batch_batching_index(batch_p)
+!!
+!!    Do not batch 
+!!    Written by Eirik F. Kjønstad, Apr 2020
+!!
+!!    Does initialization needed for performing no batching,
+!!    i.e. setting the number of batches to 0.
+!!
+      implicit none 
+!
+      class(batching_index), intent(inout) :: batch_p
+!
+      batch_p%max_length  = 0
+      batch_p%num_batches = 0
+!
+   end subroutine do_not_batch_batching_index
+!
+!
+   subroutine do_single_batch_batching_index(batch_p)
+!!
+!!    Do single batch 
+!!    Written by Eirik F. Kjønstad, Apr 2020 
+!!
+!!    Does initialization needed to do one batch with entire range, 
+!!    i.e. settings the number of batches to 1.
+!!
+      implicit none 
+!
+      class(batching_index), intent(inout) :: batch_p 
+!
+      batch_p%max_length  = batch_p%index_dimension
+      batch_p%num_batches = 1      
+!
+   end subroutine do_single_batch_batching_index
 !
 !
 end module batching_index_class

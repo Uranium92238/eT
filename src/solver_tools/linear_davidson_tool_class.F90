@@ -324,7 +324,7 @@ contains
                                           shift=davidson%frequencies(i),   &
                                           prefactor=one)
 !
-         call davidson%set_trial(c, i)
+         call davidson%trials%copy_record_in(c, i)
 !
       enddo
 !
@@ -350,35 +350,87 @@ contains
 !
       class(linear_davidson_tool) :: davidson
 !
-      real(dp), dimension(:), allocatable :: c_i
+      real(dp), dimension(:,:), allocatable :: F_red_copy
 !
-      integer :: i, k
+      real(dp), dimension(:,:), pointer, contiguous :: c
 !
-      real(dp) :: ddot
+      integer :: current_i_batch, req_0, req_1, prev_dim_red
 !
-!     Construct reduced vector
+      type(batching_index), allocatable :: batch_i 
 !
-      if (allocated(davidson%F_red)) call mem%dealloc(davidson%F_red, &
-                                                      davidson%dim_red - davidson%n_new_trials, &
-                                                      davidson%n_rhs) 
+      type(timings), allocatable :: timer 
 !
-      call mem%alloc(davidson%F_red, davidson%dim_red, davidson%n_rhs)
+      timer = timings('Davidson: time to construct reduced gradient', 'v')
+      call timer%turn_on()
 !
-      call mem%alloc(c_i, davidson%n_parameters)
+!     Prepare reduced F by allocating over copying previously calculated elements 
 !
-      do i = 1, davidson%dim_red 
+      prev_dim_red = davidson%dim_red - davidson%n_new_trials
 !
-         call davidson%get_trial(c_i, i)
+      if (prev_dim_red .eq. 0) then 
 !
-         do k = 1, davidson%n_rhs 
+!        First iteration; allocate reduced space gradient 
 !
-            davidson%F_red(i,k) = ddot(davidson%n_parameters, c_i, 1, davidson%F(:,k), 1)
+         call mem%alloc(davidson%F_red, davidson%dim_red, davidson%n_rhs)
 !
-         enddo
+         davidson%F_red = zero
+!
+      else
+!
+!        Not first iteration. Copy over previously calculated elements.
+!
+         call mem%alloc(F_red_copy, prev_dim_red, davidson%n_rhs)
+!
+         call dcopy(prev_dim_red*davidson%n_rhs, davidson%F_red, 1, F_red_copy, 1)
+!
+         call mem%dealloc(davidson%F_red, prev_dim_red, davidson%n_rhs)
+!
+         call mem%alloc(davidson%F_red, davidson%dim_red, davidson%n_rhs)
+!
+         davidson%F_red = zero
+!
+         davidson%F_red(1:prev_dim_red, 1:davidson%n_rhs) = F_red_copy
+!
+         call mem%dealloc(F_red_copy, prev_dim_red, davidson%n_rhs)
+!
+      endif
+!
+!     Set up batching of trial vectors to compute new elements to the gradient 
+!
+      req_0 = 0
+      req_1 = davidson%trials%required_to_load_record()
+!
+      batch_i = batching_index(dimension_=davidson%n_new_trials, &
+                               offset=prev_dim_red)
+!
+      call mem%batch_setup(batch_i, req_0, req_1)
+!
+      call davidson%trials%prepare_records([batch_i])
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+         call davidson%trials%load(c, batch_i)
+!
+         call dgemm('T', 'N',                            &
+                     batch_i%length,                     &
+                     davidson%n_rhs,                     &
+                     davidson%n_parameters,              &
+                     one,                                &
+                     c,                                  & ! c_alpha,i 
+                     davidson%n_parameters,              &
+                     davidson%F,                         & ! F_alpha,k
+                     davidson%n_parameters,              &
+                     one,                                &
+                     davidson%F_red(batch_i%first, 1),   & ! Fred_i,k
+                     davidson%dim_red)
 !
       enddo
 !
-      call mem%dealloc(c_i, davidson%n_parameters)
+      call davidson%trials%free_records()
+!
+      call timer%turn_off()
 !
    end subroutine construct_reduced_gradient_linear_davidson_tool
 !
@@ -580,7 +632,7 @@ contains
 !     Add to trial space 
 !
       davidson%n_new_trials = davidson%n_new_trials + 1
-      call davidson%set_trial(trial, davidson%dim_red + davidson%n_new_trials)
+      call davidson%trials%copy_record_in(trial, davidson%dim_red + davidson%n_new_trials)
 !
       call mem%dealloc(trial, davidson%n_parameters)
 !

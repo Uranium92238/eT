@@ -219,7 +219,7 @@ contains
 !
       call solver%prepare_wf_for_excited_state(wf)
 !
-      lindep_threshold = min(solver%residual_threshold, 1.0d-11)
+      lindep_threshold = min(1.0d-11, solver%residual_threshold)
 !
       davidson = eigen_davidson_tool('cc_es_davidson',                           &
                                        wf%n_es_amplitudes,                       &

@@ -235,7 +235,8 @@ contains
       else
          call output%error_msg('Last record (i0) less than first record (i0) &
                                &for read in file (a0)', &
-                               chars=[trim(the_file%get_name())], ints=[first_rec, last_rec])
+                               chars=[trim(the_file%get_name())], &
+                               ints=[last_rec, first_rec])
       endif
 !
       call the_file%read_1_real_dp_abstract_stream(array, read_length, position_)
@@ -325,7 +326,8 @@ contains
       else
          call output%error_msg('Last record (i0) less than first record (i0) &
                                &for read in file (a0)', &
-                               chars=[trim(the_file%get_name())], ints=[first_rec, last_rec])
+                               chars=[trim(the_file%get_name())], &
+                               ints=[last_rec, first_rec])
       endif
 !
       call the_file%read_1_complex_dp_abstract_stream(array, read_length, position_)
@@ -862,7 +864,7 @@ contains
 !
    function get_n_records_direct_stream_file(the_file) result(n_records)
 !!
-!!    Get number of existing records 
+!!    Get number of records 
 !!    Written by Eirik F. Kjønstad, Mar 2020
 !!
 !!    Returns the number of records on the file.

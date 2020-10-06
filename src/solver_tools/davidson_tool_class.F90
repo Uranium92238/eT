@@ -27,13 +27,13 @@ module davidson_tool_class
    use parameters
 !
    use record_storer_class, only: record_storer
-   use memory_storer_class, only: memory_storer
-   use file_storer_class, only: file_storer
    use memory_manager_class, only: mem 
    use global_out, only: output
    use array_utilities, only: get_l2_norm, copy_and_scale, zero_array
    use precondition_tool_class, only: precondition_tool
-!
+   use batching_index_class, only: batching_index
+   use timings_class, only: timings 
+   use interval_class, only: interval
 !
    type, abstract :: davidson_tool
 !
@@ -60,7 +60,6 @@ module davidson_tool_class
 !
 !     Procedures a user of the tool may need to use 
 !
-      procedure :: construct_solution   => construct_solution_davidson_tool
       procedure :: set_trial            => set_trial_davidson_tool 
       procedure :: get_trial            => get_trial_davidson_tool 
       procedure :: set_transform        => set_transform_davidson_tool 
@@ -75,11 +74,20 @@ module davidson_tool_class
 !
 !     Other routines 
 !
+      procedure :: construct_solution                          &
+                => construct_solution_davidson_tool
+!
       procedure :: construct_AX                                &
                 => construct_AX_davidson_tool
 !
+      procedure :: construct_full_space_vector                 &
+                => construct_full_space_vector_davidson_tool
+!
       procedure :: construct_reduced_matrix                    &
                 => construct_reduced_matrix_davidson_tool
+!
+      procedure :: construct_reduced_submatrix                 &
+                => construct_reduced_submatrix_davidson_tool
 !
       procedure :: orthonormalize_trial_vecs                   &
                 => orthonormalize_trial_vecs_davidson_tool
@@ -122,31 +130,17 @@ contains
 !
       logical, intent(in) :: records_in_memory
 !
-      if (records_in_memory) then 
+      davidson%trials = record_storer(trim(davidson%name_) // '_trials',            &
+                                      davidson%n_parameters,                        &
+                                      davidson%max_dim_red + davidson%n_solutions,  &
+                                      records_in_memory,                            &
+                                      delete=.true.)
 !
-         call output%printf('n', 'Reduced space basis and transforms are stored &
-                            &in memory.', fs='(/t6,a)')
-!
-         davidson%trials = memory_storer(trim(davidson%name_) // '_trials', &
-                     davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions)   
-!
-         davidson%transforms = memory_storer(trim(davidson%name_) // '_transforms', &
-                     davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions) 
-!
-      else
-!
-         call output%printf('n', 'Reduced space basis and transforms are stored &
-                            &on disk.', fs='(/t6,a)')
-!
-         davidson%trials = file_storer(trim(davidson%name_) // '_trials', &
-                     davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions, &
-                     delete=.true.)   
-!
-         davidson%transforms = file_storer(trim(davidson%name_) // '_transforms', &
-                     davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions, &
-                     delete=.true.)   
-!
-      endif 
+      davidson%transforms = record_storer(trim(davidson%name_) // '_transforms',       &
+                                          davidson%n_parameters,                       &
+                                          davidson%max_dim_red + davidson%n_solutions, &
+                                          records_in_memory,                           &
+                                          delete=.true.)
 !
       call davidson%trials%initialize_storer()
       call davidson%transforms%initialize_storer()
@@ -187,7 +181,7 @@ contains
 !
       real(dp), dimension(davidson%n_parameters), intent(in) :: c 
 !
-      call davidson%trials%set(c, n)
+      call davidson%trials%copy_record_in(c, n)
 !
    end subroutine set_trial_davidson_tool
 !
@@ -207,7 +201,7 @@ contains
 !
       real(dp), dimension(davidson%n_parameters), intent(out) :: c 
 !
-      call davidson%trials%get(c, n)
+      call davidson%trials%copy_record_out(c, n)
 !
    end subroutine get_trial_davidson_tool
 !
@@ -227,7 +221,7 @@ contains
 !
       real(dp), dimension(davidson%n_parameters), intent(in) :: rho 
 !
-      call davidson%transforms%set(rho, n)
+      call davidson%transforms%copy_record_in(rho, n)
 !
    end subroutine set_transform_davidson_tool
 !
@@ -247,7 +241,7 @@ contains
 !
       real(dp), dimension(davidson%n_parameters), intent(out) :: rho 
 !
-      call davidson%transforms%get(rho, n)
+      call davidson%transforms%copy_record_out(rho, n)
 !
    end subroutine get_transform_davidson_tool
 !
@@ -306,7 +300,7 @@ contains
 !
       integer, intent(in) :: n
 !
-      call davidson%trials%get(c, n)
+      call davidson%trials%copy_record_out(c, n)
 !
    end subroutine read_trial_davidson_tool
 !
@@ -326,7 +320,7 @@ contains
 !
       integer, intent(in) :: n
 !
-      call davidson%trials%set(c, n)
+      call davidson%trials%copy_record_in(c, n)
 !
    end subroutine write_trial_davidson_tool
 !
@@ -334,215 +328,349 @@ contains
    subroutine orthonormalize_trial_vecs_davidson_tool(davidson)
 !!
 !!    Orthonormalize trial vecs  
-!!    Written by Eirik F. Kjønstad, Oct 2019 
+!!    Written by Eirik F. Kjønstad, Oct 2019 and Mar 2020
 !!
-!!    Orthonormalizes the full set of trial vectors using the 
-!!    modified Gram-Schmidt procedure, see e.g. Iterative Methods 
-!!    for Sparse Linear Systems, 2nd ed., Yousef Saad.
+!!    Orthonormalizes the new trial vectors against the existing 
+!!    trial vectors using the modified Gram-Schmidt (MGS) procedure.
 !!
       implicit none 
 !
       class(davidson_tool), intent(inout) :: davidson 
 !
-      real(dp), dimension(:), allocatable :: c_i, c_j
+      real(dp), dimension(:,:), pointer, contiguous :: c_i, c_j 
 !
       real(dp) :: norm_c_j, r_ji, ddot 
 !
-      integer :: i, j
+      integer :: i, j, k, req_0, req_1_i, req_1_j, req_2
 !
-      call output%printf('v', 'Orthonormalizing trial vectors.', fs='(/t3,a)')
+      integer :: n_trials, n_new_trials, n_old_trials
 !
-      call mem%alloc(c_i, davidson%n_parameters)
-      call mem%alloc(c_j, davidson%n_parameters)
+      integer :: current_i_batch, current_j_batch
 !
-!     First orthonormalization of new trials 
+      type(batching_index), allocatable :: batch_i, batch_j
 !
-      do j = davidson%first_new_trial(), davidson%last_new_trial() 
+      type(interval), allocatable :: i_interval 
 !
-         call davidson%get_trial(c_j, j)
+      integer, parameter :: n_orthonormalizations = 2
 !
-         do i = 1, j - 1
+      type(timings), allocatable :: timer 
 !
-            call davidson%get_trial(c_i, i)
+      timer = timings('Davidson: orthonormalization of new trial vectors', 'v')
+      call timer%turn_on()
 !
-            r_ji = ddot(davidson%n_parameters, c_j, 1, c_i, 1)
-            call daxpy(davidson%n_parameters, -r_ji, c_i, 1, c_j, 1)
+!     Batch setup over trial vectors
 !
-         enddo
+      req_0   = 0
+      req_1_i = davidson%trials%required_to_load_record()
+      req_1_j = davidson%trials%required_to_load_record()
+      req_2   = 0
 !
-         norm_c_j = sqrt(ddot(davidson%n_parameters, c_j, 1, c_j, 1))
+      n_trials     = davidson%last_new_trial() 
+      n_new_trials = davidson%last_new_trial() - davidson%first_new_trial() + 1
+      n_old_trials = n_trials - n_new_trials
 !
-         if (norm_c_j < davidson%lindep_threshold) then 
+      if ((n_new_trials + &
+           min(n_old_trials, 1))*(davidson%n_parameters)*dp .lt. mem%get_available()) then 
 !
-            call output%error_msg('detected linear dependence in trial space in davidson_tool.')
+!        Can keep all new vectors and at least one old vector 
+!        => hold all new vectors (j) & batch over old vectors (i)
+!
+         call output%printf('debug', 'Davidson orthogonalization: &
+                                     &batching over old vectors')
+!
+         batch_j = batching_index(n_new_trials,             &
+                                  offset=n_old_trials)
+!
+         call batch_j%do_single_batch()
+!
+         batch_i = batching_index(dimension_=n_old_trials,  &
+                                  offset=0)
+!
+         if (batch_i%index_dimension .eq. 0) then 
+!
+!           No old vectors; no batches over i 
+!
+            call batch_i%do_not_batch()
+!
+         else
+! 
+!           Set up batching over old vectors i 
+!
+            req_0 = req_1_j * n_new_trials
+            call mem%batch_setup(batch_i, req_0, req_1_i)
 !
          endif
 !
-         call dscal(davidson%n_parameters, one/norm_c_j, c_j, 1)
+      else 
 !
-         call davidson%set_trial(c_j, j)
+!        Cannot hold all new and a single old vector 
+!        => batch over both new (j) and old vectors (i)        
 !
-      enddo
+         call output%printf('debug', 'Davidson orthogonalization: &
+                                     &batching over old and new vectors')
 !
-!     Second orthonormalization to avoid accumulation of noise
+         batch_i = batching_index(dimension_=n_trials,   &
+                                  offset=0)
 !
-      do j = davidson%first_new_trial(), davidson%last_new_trial() 
+         batch_j = batching_index(n_new_trials,          &
+                                  offset=n_old_trials)
 !
-         call davidson%get_trial(c_j, j)
+         call mem%batch_setup(batch_i, batch_j, req_0, req_1_i, req_1_j, req_2)
 !
-         do i = 1, j - 1
+      endif 
 !
-            call davidson%get_trial(c_i, i)
+      call davidson%trials%prepare_records([batch_j, batch_i])
 !
-            r_ji = ddot(davidson%n_parameters, c_j, 1, c_i, 1)
-            call daxpy(davidson%n_parameters, -r_ji, c_i, 1, c_j, 1)
+!     Modified Gram-Schmidt loops 
 !
-         enddo
+      do k = 1, n_orthonormalizations
 !
-         norm_c_j = sqrt(ddot(davidson%n_parameters, c_j, 1, c_j, 1))
+         do current_j_batch = 1, batch_j%num_batches
 !
-         if (norm_c_j < davidson%lindep_threshold) then 
+            call batch_j%determine_limits(current_j_batch)
 !
-             call output%error_msg('detected linear dependence in trial space in davidson_tool.')
+            call davidson%trials%load(c_j, batch_j, 1)
 !
-         endif
+!           Remove components along vectors i < batch of j 
 !
-         call dscal(davidson%n_parameters, one/norm_c_j, c_j, 1)
+            do current_i_batch = 1, batch_i%num_batches
 !
-         call davidson%set_trial(c_j, j)
+               call batch_i%determine_limits(current_i_batch)
 !
-      enddo
+!              Load only i vectors that are needed for the j batch 
 !
-      call mem%dealloc(c_i, davidson%n_parameters)
-      call mem%dealloc(c_j, davidson%n_parameters)
+               i_interval = interval(first=batch_i%first, &
+                                     last=min(batch_i%last, batch_j%first - 1))
+!
+               if (i_interval%length .lt. 1) cycle ! No i vectors to load; 
+                                                   ! go to next i batch 
+!
+               call davidson%trials%load(c_i, i_interval, 2)
+!
+!              Remove i components along j vectors 
+!
+               do j = batch_j%first, batch_j%last
+                  do i = i_interval%first, i_interval%last
+!
+                     r_ji = ddot(davidson%n_parameters,              &
+                                 c_j(:, j - batch_j%first + 1),      &
+                                 1,                                  &
+                                 c_i(:, i - i_interval%first + 1),   &
+                                 1)                  
+!
+                     call daxpy(davidson%n_parameters,               &
+                                -r_ji,                               &
+                                c_i(:, i - i_interval%first + 1),    &
+                                1,                                   &
+                                c_j(:, j - batch_j%first + 1),       &
+                                1)
+!
+                  enddo
+               enddo
+            enddo ! end of i batches 
+!
+!           Remove components within the j batch and normalize 
+!
+            do j = 1, batch_j%length
+!
+               do i = 1, j - 1
+!
+                  r_ji = ddot(davidson%n_parameters,              &
+                              c_j(:, j),                          &
+                              1,                                  &
+                              c_j(:, i),                          &
+                              1)                  
+!
+                  call daxpy(davidson%n_parameters,               &
+                             -r_ji,                               &
+                             c_j(:, i),                           &
+                             1,                                   &
+                             c_j(:, j),                           &
+                             1)
+!
+               enddo 
+!
+               norm_c_j = get_l2_norm(c_j(:, j), davidson%n_parameters)
+!
+               if (norm_c_j < davidson%lindep_threshold) &
+                  call output%error_msg('detected linear dependence &
+                                           &in Davidson trial space.')
+!
+               call dscal(davidson%n_parameters, one/norm_c_j, c_j(:, j), 1)
+!
+            enddo
+!
+!           Make sure the normalized batch of j vectors are stored
+!
+            call davidson%trials%store(c_j, batch_j)
+!
+         enddo ! end of j batches 
+      enddo ! end of normalization loops
+!
+      call davidson%trials%free_records()
+!
+      call timer%turn_off()
 !
    end subroutine orthonormalize_trial_vecs_davidson_tool
 !
 !
-   subroutine construct_reduced_matrix_davidson_tool(davidson, entire)
+   subroutine construct_reduced_matrix_davidson_tool(davidson)
 !!
 !!    Construct reduced matrix
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018 - Mar 2020
 !!
 !!    Constructs the reduced matrix 
 !!
-!!       A_red_ij = c_i^T * A c_j
-!!                = c_i^T * rho_j,
-!!      
-!!    by reading the trial vectors c_i and transformed vectors rho_j from file and writes
-!!    to file.
+!!       A_ij = c_i^T A c_j
+!!            = c_i^T rho_j.
+!!
+!!    Elements computed in previous iterations are not recomputed.
 !!
       implicit none
 !
       class(davidson_tool), intent(inout) :: davidson
 !
-      logical, optional, intent(in) :: entire ! Construct the entire matrix 
-!
-      real(dp) :: ddot
-!
-      logical :: entire_local
-!
       real(dp), dimension(:,:), allocatable :: A_red_copy
 !
-      real(dp), dimension(:), allocatable :: c_i, rho_j
+      integer :: req_0, req_1_i, req_1_j, req_2
 !
-      integer :: i, j
+      type(batching_index), allocatable :: batch_i, batch_j 
 !
-      if (present(entire)) then
+      integer :: prev_dim_red
 !
-         entire_local = entire
+      type(timings), allocatable :: timer 
 !
-      else
+      timer = timings('Davidson: time to construct reduced matrix', 'v')
+      call timer%turn_on()
 !
-         entire_local = .false.
+!     Will batch over reduced space indices, i for trials and j for transforms 
+!     Required is always the same:
 !
-      endif
+      req_0   = 0
+      req_1_i = davidson%trials%required_to_load_record()
+      req_1_j = davidson%transforms%required_to_load_record()
+      req_2   = 0
 !
-!     Allocate c and rho
+      if (davidson%dim_red .eq. davidson%n_solutions) then 
 !
-      call mem%alloc(c_i, davidson%n_parameters)
-      call mem%alloc(rho_j, davidson%n_parameters)
-!
-!     Construct reduced matrix: A_red_ij = c_i^T * A * c_j = c_i^T * rho_j
-!
-      if (davidson%dim_red .eq. davidson%n_solutions .or. entire_local) then ! First iteration
-!
-!        Make the entire reduced matrix
+!        First iteration or reset of space: calculate all elements
 !
          call mem%alloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
 !
-         do i = 1, davidson%dim_red
+         batch_i = batching_index(davidson%dim_red)
+         batch_j = batching_index(davidson%dim_red)
 !
-            call davidson%get_trial(c_i, i)
+         call mem%batch_setup(batch_i, batch_j, req_0, req_1_i, req_1_j, req_2)
 !
-            do j = 1, davidson%dim_red
-!
-               call davidson%get_transform(rho_j, j)
-!
-               davidson%A_red(i,j) = ddot(davidson%n_parameters, c_i, 1, rho_j, 1)
-!
-            enddo
-         enddo
+         call davidson%construct_reduced_submatrix(batch_i, batch_j)
 !
       else
 !
-!        Pad previous A_red
+!        Not first iteration: calculate new elements only
 !
-         call mem%alloc(A_red_copy,                               &
-                        davidson%dim_red - davidson%n_new_trials, &
-                        davidson%dim_red - davidson%n_new_trials)
+!        Transfer previously calculated elements and 
+!        extend the dimensionality of the reduced matrix 
 !
-         call dcopy((davidson%dim_red - davidson%n_new_trials)**2,   &
-                     davidson%A_red,                                 &
-                     1,                                              &
-                     A_red_copy,                                     &
-                     1)
+         prev_dim_red = davidson%dim_red - davidson%n_new_trials
 !
-         call mem%dealloc(davidson%A_red,                            &
-                          davidson%dim_red - davidson%n_new_trials,  &
-                          davidson%dim_red - davidson%n_new_trials)
+         call mem%alloc(A_red_copy, prev_dim_red, prev_dim_red)
+!
+         call dcopy(prev_dim_red**2, davidson%A_red, 1, A_red_copy, 1)
+!
+         call mem%dealloc(davidson%A_red, prev_dim_red, prev_dim_red)
 !
          call mem%alloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
 !
-         davidson%A_red(1:davidson%dim_red - davidson%n_new_trials, &
-                        1:davidson%dim_red - davidson%n_new_trials) = A_red_copy
+         davidson%A_red(1:prev_dim_red, 1:prev_dim_red) = A_red_copy
 !
-         call mem%dealloc(A_red_copy,                                &
-                          davidson%dim_red - davidson%n_new_trials,  &
-                          davidson%dim_red - davidson%n_new_trials)
+         call mem%dealloc(A_red_copy, prev_dim_red, prev_dim_red)
 !
-         do i = 1, davidson%dim_red
+!        Compute the new blocks in the reduced matrix 
 !
-            call davidson%get_trial(c_i, i)
-!           
-            do j = 1, davidson%dim_red
+!        i index new, j index all 
 !
-               if (j .le. davidson%dim_red - davidson%n_new_trials) then
+         batch_i = batching_index(dimension_=davidson%n_new_trials, &
+                                  offset=prev_dim_red)
 !
-                  if (i .gt. davidson%dim_red - davidson%n_new_trials) then 
+         batch_j = batching_index(dimension_=davidson%dim_red, &
+                                  offset=0)
 !
-                     call davidson%get_transform(rho_j, j)
-                     davidson%A_red(i,j) = ddot(davidson%n_parameters, c_i, 1, rho_j, 1)
+         call mem%batch_setup(batch_i, batch_j, req_0, req_1_i, req_1_j, req_2)
 !
-                  endif
+         call davidson%construct_reduced_submatrix(batch_i, batch_j)
 !
-               elseif (j .gt. davidson%dim_red - davidson%n_new_trials) then
+!        i index old, j index new 
 !
-                  call davidson%get_transform(rho_j, j)
-                  davidson%A_red(i,j) = ddot(davidson%n_parameters, c_i, 1, rho_j, 1)
+         batch_i = batching_index(dimension_=prev_dim_red, &
+                                  offset=0)
 !
-               endif
+         batch_j = batching_index(dimension_=davidson%n_new_trials, &
+                                  offset=prev_dim_red)
 !
-            enddo
+         call mem%batch_setup(batch_i, batch_j, req_0, req_1_i, req_1_j, req_2)
 !
-         enddo
+         call davidson%construct_reduced_submatrix(batch_i, batch_j)
 !
       endif
 !
-      call mem%dealloc(c_i, davidson%n_parameters)
-      call mem%dealloc(rho_j, davidson%n_parameters)
+      call timer%turn_off()
 !
    end subroutine construct_reduced_matrix_davidson_tool
+!
+!
+   subroutine construct_reduced_submatrix_davidson_tool(davidson, batch_i, batch_j)
+!!
+!!    Construct reduced submatrix 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018-2020
+!!
+!!    Constructs parts of the reduced matrix A_ij based on the prepared 
+!!    batching indices batch_i and batch_j.
+!!
+      implicit none 
+!
+      class(davidson_tool), intent(inout) :: davidson 
+!
+      type(batching_index), intent(inout) :: batch_i, batch_j
+!
+      integer :: current_i_batch, current_j_batch
+!
+      real(dp), dimension(:,:), pointer, contiguous :: c, rho 
+!
+      call davidson%trials%prepare_records([batch_i])
+      call davidson%transforms%prepare_records([batch_j])
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+         call davidson%trials%load(c, batch_i)
+!
+         do current_j_batch = 1, batch_j%num_batches
+!
+            call batch_j%determine_limits(current_j_batch)
+!
+            call davidson%transforms%load(rho, batch_j)
+!
+            call dgemm('T', 'N',                                        &
+                        batch_i%length,                                 &
+                        batch_j%length,                                 &
+                        davidson%n_parameters,                          &
+                        one,                                            &
+                        c,                                              &
+                        davidson%n_parameters,                          &
+                        rho,                                            &
+                        davidson%n_parameters,                          &
+                        zero,                                           &
+                        davidson%A_red(batch_i%first, batch_j%first),   &
+                        davidson%dim_red)
+!
+         enddo ! end of j batches 
+      enddo ! end of i batches 
+!
+      call davidson%trials%free_records()
+      call davidson%transforms%free_records()
+!
+   end subroutine construct_reduced_submatrix_davidson_tool
 !
 !
    subroutine construct_solution_davidson_tool(davidson, X, n)
@@ -564,25 +692,78 @@ contains
 !
       real(dp), dimension(davidson%n_parameters), intent(out) :: X
 !
-      real(dp), dimension(:), allocatable :: c_i
-!
-      integer :: i
-!
-      call zero_array(X, davidson%n_parameters)
-!
-      call mem%alloc(c_i, davidson%n_parameters)
-!
-      do i = 1, davidson%dim_red
-! 
-         call davidson%get_trial(c_i, i)
-!
-         call daxpy(davidson%n_parameters, davidson%X_red(i, n), c_i, 1, X, 1)
-!
-      enddo    
-!
-      call mem%dealloc(c_i, davidson%n_parameters)
+      call davidson%construct_full_space_vector(davidson%trials, X, n)
 !
    end subroutine construct_solution_davidson_tool
+!
+!
+   subroutine construct_full_space_vector_davidson_tool(davidson, y_vectors, y, n)
+!!
+!!    Construct full space vector 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
+!!
+!!    Constructs 
+!!
+!!       X_n = sum_i y_i (X_red_n)_i,
+!!
+!!    i.e. the current nth full space vector.
+!!
+!!    y_vectors is a storer containing the full space y vectors. 
+!!
+!!    This is typically the trials or transforms, in which case this 
+!!    constructs the full space X_n and A X_n. 
+!!
+      implicit none
+!
+      class(davidson_tool), intent(inout) :: davidson
+!
+      class(record_storer) :: y_vectors
+!
+      integer, intent(in) :: n
+!
+      real(dp), dimension(davidson%n_parameters), intent(out) :: y
+!
+      real(dp), dimension(:,:), pointer, contiguous :: y_i
+!
+      integer :: current_i_batch, req_0, req_1
+!
+      type(batching_index), allocatable :: batch_i 
+!
+      req_0 = 0
+      req_1 = y_vectors%required_to_load_record()
+!
+      batch_i = batching_index(davidson%dim_red)
+!
+      call mem%batch_setup(batch_i, req_0, req_1)
+!
+      call zero_array(y, davidson%n_parameters)
+!
+      call y_vectors%prepare_records([batch_i])
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+         call y_vectors%load(y_i, batch_i)
+!
+         call dgemm('N', 'N',                            &
+                     davidson%n_parameters,              &
+                     1,                                  &
+                     batch_i%length,                     &
+                     one,                                &
+                     y_i,                                & ! y_alpha,i
+                     davidson%n_parameters,              &
+                     davidson%X_red(batch_i%first,n),    & ! Xred_i,n 
+                     davidson%dim_red,                   &
+                     one,                                &
+                     y,                                  & ! y_alpha,n
+                     davidson%n_parameters)
+!
+      enddo
+!
+      call y_vectors%free_records()
+!
+   end subroutine construct_full_space_vector_davidson_tool
 !
 !
    subroutine construct_AX_davidson_tool(davidson, AX, n)
@@ -604,23 +785,7 @@ contains
 !
       real(dp), dimension(davidson%n_parameters), intent(out) :: AX
 !
-      real(dp), dimension(:), allocatable :: rho_i
-!
-      integer :: i
-!
-      call zero_array(AX, davidson%n_parameters)
-!
-      call mem%alloc(rho_i, davidson%n_parameters)
-!   
-      do i = 1, davidson%dim_red
-! 
-         call davidson%get_transform(rho_i, i)
-!
-         call daxpy(davidson%n_parameters, davidson%X_red(i, n), rho_i, 1, AX, 1)
-!
-      enddo    
-!
-      call mem%dealloc(rho_i, davidson%n_parameters)
+      call davidson%construct_full_space_vector(davidson%transforms, AX, n)
 !
    end subroutine construct_AX_davidson_tool
 !
@@ -675,11 +840,7 @@ contains
 !
       enddo
 !
-      do solution = 1, davidson%n_solutions
-!
-         call davidson%set_trial(X(:,solution), solution)
-!
-      enddo
+      call davidson%trials%copy_record_in(X, interval(1, davidson%n_solutions))
 !
       call mem%dealloc(X, davidson%n_parameters, davidson%n_solutions)
 !

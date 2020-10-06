@@ -159,7 +159,7 @@ module mo_integral_tool_class
    interface mo_integral_tool 
 !
       procedure :: new_mo_integral_tool
-      procedure :: new_mo_integral_tool_from_template
+      procedure :: new_mo_integral_tool_copy
 !
    end interface mo_integral_tool
 !
@@ -236,9 +236,9 @@ contains
    end function new_mo_integral_tool
 !
 !
-   function new_mo_integral_tool_from_template(integrals_template) result(integrals)
+   function new_mo_integral_tool_copy(integrals_copy) result(integrals)
 !!
-!!    New MO integral tool from template
+!!    New MO integral tool copy
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    Initializes the integral tool. Note that the integral tool
@@ -253,20 +253,20 @@ contains
 !
       type(mo_integral_tool) :: integrals
 !
-      type(mo_integral_tool) :: integrals_template
+      type(mo_integral_tool) :: integrals_copy
 !
-      integrals%n_J  = integrals_template%n_J
-      integrals%n_o  = integrals_template%n_o
-      integrals%n_v  = integrals_template%n_v
-      integrals%n_mo = integrals_template%n_o + integrals_template%n_v
+      integrals%n_J  = integrals_copy%n_J
+      integrals%n_o  = integrals_copy%n_o
+      integrals%n_v  = integrals_copy%n_v
+      integrals%n_mo = integrals_copy%n_o + integrals_copy%n_v
 !
-      integrals%cholesky_mo = direct_file(integrals_template%cholesky_mo%name_, integrals%n_J)
+      integrals%cholesky_mo = direct_file(integrals_copy%cholesky_mo%name_, integrals%n_J)
       integrals%cholesky_t1 = direct_stream_file('cholesky_t1_vectors', integrals%n_J)
 !
 !     Memory logicals - Cholesky in memory (or file)? ERI in memory (or file)?
 !
-      integrals%cholesky_mem = integrals_template%cholesky_mem
-      integrals%eri_t1_mem   = integrals_template%eri_t1_mem
+      integrals%cholesky_mem = integrals_copy%cholesky_mem
+      integrals%eri_t1_mem   = integrals_copy%eri_t1_mem
 !
       integrals%eri_t1_complex_placed_in_mem = .false. ! Switches to true when complex integrals are 
                                                        ! placed in memory 
@@ -275,7 +275,7 @@ contains
 !
       call integrals%print_settings()
 !
-   end function new_mo_integral_tool_from_template
+   end function new_mo_integral_tool_copy
 !
 !
    subroutine print_settings_mo_integral_tool(integrals)

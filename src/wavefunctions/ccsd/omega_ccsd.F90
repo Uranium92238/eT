@@ -201,7 +201,8 @@ contains
 !
       if (batch_a%num_batches /= batch_b%num_batches) then ! Should not happen, but just to be safe 
 !
-        call output%error_msg('Expected same-sized batches in omega_ccsd_a2 but something went wrong in mem%batch_setup.')
+        call output%error_msg('Expected same-sized batches in omega_ccsd_a2 &
+                              &but something went wrong in mem%batch_setup.')
 !
       endif 
 !
