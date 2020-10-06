@@ -163,12 +163,12 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.7161E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1110E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.8882E-15
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.10600
-     Total cpu time (sec):               0.17345
+     Total wall time (sec):              0.15400
+     Total cpu time (sec):               0.25295
 
 
   :: RHF wavefunction
@@ -233,18 +233,18 @@
      2           -78.828675852657     0.7128E-01     0.3207E-01
      3           -78.843428154462     0.8290E-02     0.1475E-01
      4           -78.843809541675     0.2414E-02     0.3814E-03
-     5           -78.843850846800     0.3301E-03     0.4131E-04
+     5           -78.843850846799     0.3301E-03     0.4131E-04
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
-     8           -78.843851693557     0.2356E-05     0.7054E-09
-     9           -78.843851693630     0.2071E-06     0.7374E-10
-    10           -78.843851693631     0.1594E-07     0.4263E-12
-    11           -78.843851693631     0.3322E-08     0.4263E-13
-    12           -78.843851693631     0.1197E-08     0.7105E-13
-    13           -78.843851693631     0.4264E-09     0.4263E-13
-    14           -78.843851693631     0.1280E-09     0.1421E-13
-    15           -78.843851693631     0.1479E-10     0.2842E-13
-    16           -78.843851693631     0.2909E-11     0.4263E-13
+     8           -78.843851693557     0.2356E-05     0.7053E-09
+     9           -78.843851693630     0.2071E-06     0.7381E-10
+    10           -78.843851693631     0.1594E-07     0.4121E-12
+    11           -78.843851693631     0.3322E-08     0.1421E-13
+    12           -78.843851693631     0.1197E-08     0.5684E-13
+    13           -78.843851693631     0.4264E-09     0.0000E+00
+    14           -78.843851693631     0.1280E-09     0.7105E-13
+    15           -78.843851693631     0.1479E-10     0.7105E-13
+    16           -78.843851693631     0.2908E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -270,8 +270,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.45800
-     Total cpu time (sec):               0.77696
+     Total wall time (sec):              0.73604
+     Total cpu time (sec):               1.46188
 
 
   :: CC3 wavefunction
@@ -351,7 +351,7 @@
     9           -79.104388634767     0.4082E-05     0.4571E-06
    10           -79.104388457645     0.1665E-05     0.1771E-06
    11           -79.104388531274     0.6368E-06     0.7363E-07
-   12           -79.104388534800     0.2615E-06     0.3526E-08
+   12           -79.104388534799     0.2615E-06     0.3526E-08
    13           -79.104388539782     0.9950E-07     0.4982E-08
    14           -79.104388532668     0.3238E-07     0.7114E-08
    15           -79.104388532456     0.8372E-08     0.2118E-09
@@ -406,8 +406,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              1.46700
-     Total cpu time (sec):               4.25627
+     Total wall time (sec):              0.61645
+     Total cpu time (sec):               1.23232
 
 
   3) Calculation of the multipliers (diis algorithm)
@@ -494,8 +494,8 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              2.53400
-     Total cpu time (sec):               7.52627
+     Total wall time (sec):              0.87513
+     Total cpu time (sec):               1.75109
 
 
   4) Calculation of the excited state (diis algorithm)
@@ -725,7 +725,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1     19.695814453423       0.5268E-11
+     1     19.695814453423       0.5266E-11
   -----------------------------------------------
   Convergence criterion met in 29 iterations!
 
@@ -784,8 +784,8 @@
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              1.83900
-     Total cpu time (sec):               5.43013
+     Total wall time (sec):              0.72715
+     Total cpu time (sec):               1.45033
 
 
   4) Calculation of the excited state (diis algorithm)
@@ -1022,7 +1022,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1     19.695814453423       0.3199E-11
+     1     19.695814453423       0.3196E-11
   -----------------------------------------------
   Convergence criterion met in 30 iterations!
 
@@ -1081,8 +1081,8 @@
 
   - Finished solving the CC3 excited state equations (left)
 
-     Total wall time (sec):              1.62800
-     Total cpu time (sec):               4.54119
+     Total wall time (sec):              0.63437
+     Total cpu time (sec):               1.26620
 
 
   5) Calculation of the transition moments (EOM)
@@ -1102,15 +1102,15 @@
      --------------------------------------------------------------------------
      Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
      --------------------------------------------------------------------------
-     X          -0.0000508826     -0.0001088670            0.0000000055
-     Y           0.0272174115      0.0579158509            0.0015763195
-     Z          -0.0004503820     -0.0009608782            0.0000004328
+     X          -0.0000508934     -0.0001092484            0.0000000056
+     Y           0.0272231727      0.0580857060            0.0015812772
+     Z          -0.0004504773     -0.0009627021            0.0000004337
      --------------------------------------------------------------------------
-     Oscillator strength [a.u.]:      0.020703686680
+     Oscillator strength [a.u.]:      0.020768795667
 
   - Timings for the CC3 response calculation
 
-     Total wall time (sec):              7.95800
-     Total cpu time (sec):              22.83571
+     Total wall time (sec):              3.23608
+     Total cpu time (sec):               6.37289
 
   eT terminated successfully!

@@ -166,12 +166,12 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.7161E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1110E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.8882E-15
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.10600
-     Total cpu time (sec):               0.16832
+     Total wall time (sec):              0.15579
+     Total cpu time (sec):               0.28069
 
 
   :: RHF wavefunction
@@ -225,7 +225,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.2914E-11     0.7884E+02
+     1           -78.843851693631     0.2905E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -254,8 +254,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.01300
-     Total cpu time (sec):               0.02347
+     Total wall time (sec):              0.02039
+     Total cpu time (sec):               0.04035
 
 
   :: CC3 wavefunction
@@ -339,12 +339,12 @@
    11           -79.104388532224     0.4035E-07     0.4535E-09
    12           -79.104388533185     0.1777E-07     0.9612E-09
    13           -79.104388533059     0.7492E-08     0.1264E-09
-   14           -79.104388533083     0.2705E-08     0.2397E-10
+   14           -79.104388533083     0.2705E-08     0.2399E-10
    15           -79.104388533058     0.7926E-09     0.2511E-10
    16           -79.104388533040     0.2763E-09     0.1755E-10
    17           -79.104388533033     0.8530E-10     0.6992E-11
    18           -79.104388533032     0.2556E-10     0.8669E-12
-   19           -79.104388533032     0.7089E-11     0.1563E-12
+   19           -79.104388533032     0.7088E-11     0.1563E-12
   ---------------------------------------------------------------
   Convergence criterion met in 19 iterations!
 
@@ -390,8 +390,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              1.36300
-     Total cpu time (sec):               3.86077
+     Total wall time (sec):              0.57924
+     Total cpu time (sec):               1.15896
 
 
   3) Calculation of the multipliers (diis algorithm)
@@ -477,8 +477,8 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              2.12600
-     Total cpu time (sec):               6.04274
+     Total wall time (sec):              0.87562
+     Total cpu time (sec):               1.74611
 
 
   4) Calculation of the excited state (diis algorithm)
@@ -741,8 +741,8 @@
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              3.13600
-     Total cpu time (sec):               9.83656
+     Total wall time (sec):              1.10518
+     Total cpu time (sec):               2.20757
 
 
   4) Calculation of the excited state (diis algorithm)
@@ -1006,14 +1006,14 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.247341124690        6.730494822566
+        1                  0.247341124690        6.730494822567
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CC3 excited state equations (left)
 
-     Total wall time (sec):              2.73600
-     Total cpu time (sec):               7.84388
+     Total wall time (sec):              1.12001
+     Total cpu time (sec):               2.23953
 
 
   5) Calculation of the transition moments (EOM)
@@ -1033,15 +1033,15 @@
      --------------------------------------------------------------------------
      Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
      --------------------------------------------------------------------------
-     X          -0.0004561302     -0.0008832529            0.0000004029
-     Y          -0.0026793434     -0.0051324267            0.0000137515
-     Z           0.2011751280      0.3907735045            0.0786139098
+     X          -0.0004557875     -0.0008884628            0.0000004050
+     Y          -0.0026773303     -0.0051509350            0.0000137908
+     Z           0.2010239816      0.3913975106            0.0786802860
      --------------------------------------------------------------------------
-     Oscillator strength [a.u.]:      0.012965302556
+     Oscillator strength [a.u.]:      0.012976254400
 
   - Timings for the CC3 response calculation
 
-     Total wall time (sec):              9.99400
-     Total cpu time (sec):              29.14511
+     Total wall time (sec):              4.16376
+     Total cpu time (sec):               8.23039
 
   eT terminated successfully!
