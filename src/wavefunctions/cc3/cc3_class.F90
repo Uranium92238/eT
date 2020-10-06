@@ -195,9 +195,6 @@ module cc3_class
       procedure :: L_R_overlap                            => L_R_overlap_cc3
       procedure :: L_R_overlap_triples                    => L_R_overlap_triples_cc3
 !
-      procedure :: scale_triples_biorthonormal_factor     => scale_triples_biorthonormal_factor_cc3
-      procedure :: scale_triples_biorthonormal_factor_abc => scale_triples_biorthonormal_factor_abc_cc3
-!
       procedure :: biorthonormalize_L_and_R               => biorthonormalize_L_and_R_cc3
 !
 !     Routines for constructing the R-tdm in a noddy way
@@ -1020,8 +1017,6 @@ contains
 !
                         call wf%divide_by_orbital_differences(i, j, k, R_abc, omega_R)
 !
-                        call wf%scale_triples_biorthonormal_factor(i, j, k, R_abc)
-!
 !                       c3_calc does not zero out the array
                         call zero_array(L_abc, wf%n_v**3)
 !
@@ -1144,114 +1139,6 @@ contains
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
    end subroutine L_R_overlap_triples_cc3
-!
-!
-   subroutine scale_triples_biorthonormal_factor_cc3(wf, i, j, k, R_abc)
-!!
-!!    Scale triples amplitudes by biorthonormal factor
-!!    Written by Alexander C. Paul, August 2019
-!!
-!!    Removing the restrictions on the sum over the triples excitations
-!!    introduces a factor similar to (1+delta_ai,bj) in the doubles.
-!!    Usually this factor cancles but it is e.g. needed in EOM-CC3.
-!!
-!!       sum_{ai >= bj >= ck} = 1/6 sum_aibjck (1 + delta_ai,bj 
-!!                                                + delta_ai,ck
-!!                                                + delta_bj,ck
-!!                                                + 2 delta_ai,bj delta_ai,ck)
-!!
-!!    This routine scales an array of amplitudes (for single i,j,k)
-!!    with the expression in paranthesis
-!!    NB:
-!!    k can only be equal to i if i == j == k, for which R_abc = 0
-!!
-      implicit none
-!
-      class(cc3), intent(in) :: wf
-!
-      integer, intent(in) :: i, j, k
-!
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout) :: R_abc
-!
-      integer :: a, b
-!
-      if (i .eq. j .and. i .ne. k) then ! i == j, i != k
-!
-         do b = 1, wf%n_v
-            do a = 1, wf%n_v
-!
-               R_abc(a,a,b) = two*R_abc(a,a,b)
-!
-            enddo
-         enddo
-!
-      else if (j .eq. k .and. i .ne. k) then ! i != j, j == k
-!
-         do b = 1, wf%n_v
-            do a = 1, wf%n_v
-!
-               R_abc(a,b,b) = two*R_abc(a,b,b)
-!
-            enddo 
-         enddo
-!
-      end if
-!
-   end subroutine scale_triples_biorthonormal_factor_cc3
-!
-!
-   subroutine scale_triples_biorthonormal_factor_abc_cc3(wf, a, b, c, R_ijk)
-!!
-!!    Scale triples by biorthonormal factor (batching in the virtuals)
-!!    Written by Alexander C. Paul, August 2019
-!!
-!!    Removing the restrictions on the sum over the triples excitations
-!!    introduces a factor similar to (1+delta_ai,bj) in the doubles.
-!!    Usually this factor cancles but it is e.g. needed in EOM-CC3.
-!!
-!!       sum_{ai >= bj >= ck} = 1/6 sum_aibjck (1 + delta_ai,bj 
-!!                                                + delta_ai,ck
-!!                                                + delta_bj,ck
-!!                                                + 2 delta_ai,bj delta_ai,ck)
-!!
-!!    This routine scales an array of amplitudes (for single a,b,c)
-!!    with the expression in paranthesis
-!!    NB:
-!!    c can only be equal to a if a == b == c for which R_ijk = 0
-!!
-      implicit none
-!
-      class(cc3), intent(in) :: wf
-!
-      integer, intent(in) :: a, b, c
-!
-      real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(inout) :: R_ijk
-!
-      integer :: i, j
-!
-      if (a .eq. b .and. a .ne. c) then
-!
-         do j = 1, wf%n_o
-            do i = 1, wf%n_o
-!
-               R_ijk(i,i,j) = two*R_ijk(i,i,j)
-!
-            enddo
-         enddo
-!
-      else if (b .eq. c .and. a .ne. c) then
-!
-         do j = 1, wf%n_o
-            do i = 1, wf%n_o
-!
-               R_ijk(i,j,j) = two*R_ijk(i,j,j)
-!
-            enddo 
-         enddo
-!
-      end if
-!
-   end subroutine scale_triples_biorthonormal_factor_abc_cc3
 !
 !
    subroutine get_cvs_projector_cc3(wf, projector, n_cores, core_MOs)
