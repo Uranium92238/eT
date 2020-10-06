@@ -171,15 +171,15 @@
      5           -78.843850846799     0.3301E-03     0.4131E-04
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
-     8           -78.843851693557     0.2356E-05     0.7054E-09
-     9           -78.843851693630     0.2071E-06     0.7380E-10
-    10           -78.843851693631     0.1594E-07     0.3695E-12
-    11           -78.843851693631     0.3322E-08     0.2842E-13
-    12           -78.843851693631     0.1197E-08     0.4263E-13
-    13           -78.843851693631     0.4264E-09     0.1421E-13
-    14           -78.843851693631     0.1280E-09     0.5684E-13
-    15           -78.843851693631     0.1479E-10     0.7105E-13
-    16           -78.843851693631     0.2907E-11     0.5684E-13
+     8           -78.843851693557     0.2356E-05     0.7053E-09
+     9           -78.843851693630     0.2071E-06     0.7374E-10
+    10           -78.843851693631     0.1594E-07     0.4832E-12
+    11           -78.843851693631     0.3322E-08     0.8527E-13
+    12           -78.843851693631     0.1197E-08     0.1421E-13
+    13           -78.843851693631     0.4264E-09     0.7105E-13
+    14           -78.843851693631     0.1280E-09     0.2842E-13
+    15           -78.843851693631     0.1479E-10     0.0000E+00
+    16           -78.843851693631     0.2905E-11     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -205,8 +205,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.62846
-     Total cpu time (sec):               1.21134
+     Total wall time (sec):              0.55164
+     Total cpu time (sec):               1.06524
 
 
   :: CC3 wavefunction
@@ -305,8 +305,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.19747
-     Total cpu time (sec):               0.39333
+     Total wall time (sec):              0.17671
+     Total cpu time (sec):               0.35261
 
 
   2) Preparation of MO basis and integrals
@@ -348,12 +348,12 @@
    12           -79.104388534799     0.2615E-06     0.3526E-08
    13           -79.104388539782     0.9950E-07     0.4982E-08
    14           -79.104388532667     0.3238E-07     0.7114E-08
-   15           -79.104388532456     0.8372E-08     0.2118E-09
+   15           -79.104388532455     0.8372E-08     0.2118E-09
    16           -79.104388532882     0.2052E-08     0.4269E-09
    17           -79.104388532982     0.6454E-09     0.9983E-10
    18           -79.104388533024     0.1406E-09     0.4209E-10
    19           -79.104388533030     0.4351E-10     0.5272E-11
-   20           -79.104388533032     0.1632E-10     0.1918E-11
+   20           -79.104388533031     0.1632E-10     0.1918E-11
    21           -79.104388533032     0.5182E-11     0.8100E-12
   ---------------------------------------------------------------
   Convergence criterion met in 21 iterations!
@@ -400,8 +400,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              0.54611
-     Total cpu time (sec):               1.09410
+     Total wall time (sec):              0.49934
+     Total cpu time (sec):               0.99923
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -488,8 +488,8 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              0.79197
-     Total cpu time (sec):               1.58395
+     Total wall time (sec):              0.73951
+     Total cpu time (sec):               1.47945
 
 
   5) Calculation of the excited state (diis algorithm)
@@ -771,8 +771,8 @@
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              1.05183
-     Total cpu time (sec):               2.10331
+     Total wall time (sec):              0.95761
+     Total cpu time (sec):               1.91353
 
 
   5) Calculation of the excited state (diis algorithm)
@@ -1054,8 +1054,8 @@
 
   - Finished solving the CC3 excited state equations (left)
 
-     Total wall time (sec):              0.96235
-     Total cpu time (sec):               1.92631
+     Total wall time (sec):              0.90401
+     Total cpu time (sec):               1.80746
 
 
   6) Calculation of the transition moments (EOM)
@@ -1075,16 +1075,16 @@
      --------------------------------------------------------------------------
      Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
      --------------------------------------------------------------------------
-     X           0.0004561302      0.0008832529            0.0000004029
-     Y           0.0026793434      0.0051324267            0.0000137515
-     Z          -0.2011751280     -0.3907735045            0.0786139098
+     X           0.0004557875      0.0008884628            0.0000004050
+     Y           0.0026773303      0.0051509350            0.0000137908
+     Z          -0.2010239816     -0.3913975106            0.0786802860
      --------------------------------------------------------------------------
-     Oscillator strength:      0.012965302556
+     Oscillator strength:      0.012976254400
 
   - Timings for the CC3 response calculation
 
-     Total wall time (sec):              3.83854
-     Total cpu time (sec):               7.67780
+     Total wall time (sec):              3.53925
+     Total cpu time (sec):               7.07835
 
      Peak memory usage during the execution of eT: 16.013152 MB
 

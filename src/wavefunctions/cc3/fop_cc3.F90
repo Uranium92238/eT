@@ -1310,8 +1310,6 @@ contains
 !
                         call wf%divide_by_orbital_differences(i, j, k, R_abc, omega)
 !
-                        call wf%scale_triples_biorthonormal_factor(i, j, k, R_abc)
-!
                         call wf%density_cc3_mu_ref_vv(i, j, k, density_vv, R_abc, &
                                                       u_abc, tbar_abc, v_abc)
 !
@@ -2251,9 +2249,6 @@ contains
                                                      overwrite = .false.) ! overwrite R_abc ! Do not overwrite R_ijk
 !
                         call wf%omega_cc3_eps_abc(a, b, c, R_ijk(:,:,:,thread_n), omega)
-!
-                        call wf%scale_triples_biorthonormal_factor_abc(a, b, c, &
-                                                                       R_ijk(:,:,:,thread_n))
 !
                         if (wf%cvs) then
                            call entrywise_product(wf%n_o**3, R_ijk(:,:,:,thread_n), projector_ijk)
