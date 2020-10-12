@@ -201,6 +201,7 @@ module ccs_class
       procedure :: read_multipliers                              => read_multipliers_ccs
       procedure :: save_excited_state                            => save_excited_state_ccs
       procedure :: read_excited_state                            => read_excited_state_ccs
+      procedure :: read_excitation_vector_file                   => read_excitation_vector_file_ccs
       procedure :: save_excitation_energies                      => save_excitation_energies_ccs
       procedure :: read_excitation_energies                      => read_excitation_energies_ccs
 !
@@ -829,8 +830,6 @@ contains
 !
       call wf%restart_file%write_(wf%n_o)
       call wf%restart_file%write_(wf%n_v)
-      call wf%restart_file%write_(wf%n_gs_amplitudes)
-      call wf%restart_file%write_(wf%n_es_amplitudes)
 !
       call wf%restart_file%close_()
 !
@@ -855,7 +854,7 @@ contains
    end subroutine construct_molecular_gradient_ccs
 !
 !
-   subroutine is_restart_safe_ccs(wf, task)
+   subroutine is_restart_safe_ccs(wf)
 !!
 !!    Is restart safe?
 !!    Written by Eirik F. Kjønstad, Mar 2019 
@@ -864,16 +863,12 @@ contains
 !
       class(ccs) :: wf 
 !
-      character(len=*), intent(in) :: task 
-!
-      integer :: n_o, n_v, n_gs_amplitudes, n_es_amplitudes
+      integer :: n_o, n_v
 !
       call wf%restart_file%open_('read', 'rewind')
 !
       call wf%restart_file%read_(n_o)
       call wf%restart_file%read_(n_v)
-      call wf%restart_file%read_(n_gs_amplitudes)
-      call wf%restart_file%read_(n_es_amplitudes)
 !
       call wf%restart_file%close_()
 !
@@ -881,25 +876,7 @@ contains
                                                    'of occupied orbitals.')
 !
       if (n_v .ne. wf%n_v) call output%error_msg('attempted to restart from inconsistent number ' // &
-                                                   'of virtual orbitals.')
-!
-      if (trim(task) == 'ground state') then 
-!
-         if (n_gs_amplitudes .ne. wf%n_gs_amplitudes) &
-            call output%error_msg('attempted to restart from inconsistent number ' // &
-                                    'of ground state amplitudes.')    
-!
-      elseif (trim(task) == 'excited state') then    
-!
-         if (n_es_amplitudes .ne. wf%n_es_amplitudes) &
-            call output%error_msg('attempted to restart from inconsistent number ' // &
-                                    'of excited state amplitudes.')     
-!
-      else
-!
-         call output%error_msg('attempted to restart, but the task was not recognized: ' // task)
-!
-      endif   
+                                                   'of virtual orbitals.')  
 !
    end subroutine is_restart_safe_ccs
 !

@@ -362,10 +362,7 @@ contains
 !
       else
 !
-         if (engine%gs_restart .or. engine%multipliers_restart) &
-                                 call wf%is_restart_safe('ground state')
-!
-         if (engine%es_restart) call wf%is_restart_safe('excited state')
+         call wf%is_restart_safe
 !
       endif
 !

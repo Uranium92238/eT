@@ -735,7 +735,7 @@ contains
    end subroutine get_ao_q_wx_wavefunction
 !
 !
-   subroutine is_restart_safe_wavefunction(wf, task)
+   subroutine is_restart_safe_wavefunction(wf)
 !!
 !!    Is restart safe?
 !!    Written by Eirik F. Kjønstad, Mar 2019 
@@ -744,10 +744,8 @@ contains
 !
       class(wavefunction) :: wf 
 !
-      character(len=*), intent(in) :: task 
-!
-      call output%error_msg('Cannot restart for task ' // trim(task) &
-                           // ' from abstract wavefunction ' // trim(wf%name_))
+      call output%error_msg('Cannot restart for task from abstract wavefunction (a0)', &
+                             chars=[trim(wf%name_)])
 !
    end subroutine is_restart_safe_wavefunction
 !

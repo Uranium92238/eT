@@ -57,7 +57,18 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      call wf%read_singles_doubles_vector(wf%t_file, wf%t1, wf%t2)
+      call wf%read_singles_vector(wf%t_file, wf%t1)
+!
+      if (wf%t_file%get_file_size() == dp*wf%n_gs_amplitudes) then
+!
+         call wf%read_doubles_vector(wf%t_file, wf%t2)
+!
+      else
+!
+         call wf%integrals%update_t1_integrals(wf%t1)
+         call wf%set_t2_to_cc2_guess
+!
+      end if
 !
    end subroutine read_amplitudes_ccsd
 !
@@ -86,7 +97,17 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      call wf%read_singles_doubles_vector(wf%tbar_file, wf%t1bar, wf%t2bar)
+      call wf%read_singles_vector(wf%tbar_file, wf%t1bar)
+!
+      if (wf%tbar_file%get_file_size() == dp*wf%n_gs_amplitudes) then
+!
+         call wf%read_doubles_vector(wf%tbar_file, wf%t2bar)
+!
+      else
+!
+         call zero_array(wf%t2bar, wf%n_t2)
+!
+      end if
 !
    end subroutine read_multipliers_ccsd
 !

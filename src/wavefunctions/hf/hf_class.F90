@@ -342,7 +342,7 @@ contains
    end subroutine read_for_scf_restart_hf
 !
 !
-   subroutine is_restart_safe_hf(wf, task)
+   subroutine is_restart_safe_hf(wf)
 !!
 !!    Is restart safe?
 !!    Written by Eirik F. Kjønstad, Mar 2019
@@ -350,8 +350,6 @@ contains
       implicit none
 !
       class(hf) :: wf
-!
-      character(len=*), intent(in) :: task
 !
       integer :: n_ao, n_densities, n_electrons
 !
@@ -364,19 +362,18 @@ contains
       call wf%restart_file%close_
 !
       if (n_ao .ne. wf%n_ao) then
-         call output%error_msg('attempted to restart HF with an inconsistent number ' // &
-                               'of atomic orbitals for task ' // trim(task))
+         call output%error_msg('Attempted to restart HF with an inconsistent number ' // &
+                               'of atomic orbitals.')
       endif
 !
       if (n_densities .ne. wf%n_densities) then
-         call output%error_msg('attempted to restart HF with an inconsistent number ' // &
-                               'of atomic densities (likely a HF/UHF inconsistency) for task ' // &
-                               trim(task))
+         call output%error_msg('Attempted to restart HF with an inconsistent number ' // &
+                               'of atomic densities (likely a HF/UHF inconsistency).')
       endif
 !
       if (n_electrons .ne. wf%system%get_n_electrons()) then
-         call output%error_msg('attempted to restart HF with an inconsistent number ' // &
-                               'of electrons for task ' // trim(task))
+         call output%error_msg('Attempted to restart HF with an inconsistent number ' // &
+                               'of electrons.')
       endif
 !
    end subroutine is_restart_safe_hf

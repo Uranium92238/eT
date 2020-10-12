@@ -216,7 +216,7 @@ module ccsd_class
 !     Other procedures
 !
       procedure :: set_initial_amplitudes_guess               => set_initial_amplitudes_guess_ccsd
-      procedure :: set_t2_to_mp2_guess                        => set_t2_to_mp2_guess_ccsd
+      procedure :: set_t2_to_cc2_guess                        => set_t2_to_cc2_guess_ccsd
 !
       procedure :: read_amplitudes                            => read_amplitudes_ccsd
       procedure :: save_amplitudes                            => save_amplitudes_ccsd
@@ -328,19 +328,21 @@ contains
 !
       call zero_array(wf%t1, wf%n_o*wf%n_v)
 !
-      call wf%set_t2_to_mp2_guess()
+      call wf%set_t2_to_cc2_guess()
 !
    end subroutine set_initial_amplitudes_guess_ccsd
 !
 !
-   subroutine set_t2_to_mp2_guess_ccsd(wf)
+   subroutine set_t2_to_cc2_guess_ccsd(wf)
 !!
 !!    Set t2 amplitudes guess
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
 !!    Sets the doubles amplitudes to the MP2 guess:
 !!
-!!       t_aibj = - g_aibj/ε_aibj
+!!       t_aibj = - g_aibj/epsilon_aibj
+!!
+!!    Note that update_t1_integrals has to be called before this routine.
 !!
       implicit none
 !
@@ -352,11 +354,7 @@ contains
       integer :: a, b, i, j, ai, bj, aibj, b_end
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call wf%integrals%construct_g_pqrs_mo(g_aibj,                  &
-                                            wf%n_o+1, wf%n_o+wf%n_v, &
-                                            1, wf%n_o,               &
-                                            wf%n_o+1, wf%n_o+wf%n_v, &
-                                            1, wf%n_o)
+      call wf%get_vovo(g_aibj)
 !
 !$omp parallel do schedule(guided) collapse(2) &
 !$omp private(a, i, b, j, ai, bj, aibj, b_end, eps_ai)
@@ -392,7 +390,7 @@ contains
 !
       call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine set_t2_to_mp2_guess_ccsd
+   end subroutine set_t2_to_cc2_guess_ccsd
 !
 !
    subroutine get_gs_orbital_differences_ccsd(wf, orbital_differences, N)

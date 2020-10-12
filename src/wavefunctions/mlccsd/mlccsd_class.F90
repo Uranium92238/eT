@@ -140,7 +140,7 @@ module mlccsd_class
 !
       procedure :: calculate_energy             => calculate_energy_mlccsd
       procedure :: set_initial_amplitudes_guess => set_initial_amplitudes_guess_mlccsd
-      procedure :: set_t2_to_mp2_guess          => set_t2_to_mp2_guess_mlccsd
+      procedure :: set_t2_to_cc2_guess          => set_t2_to_cc2_guess_mlccsd
 !
       procedure :: get_amplitudes               => get_amplitudes_mlccsd
       procedure :: set_amplitudes               => set_amplitudes_mlccsd
@@ -997,12 +997,12 @@ contains
 !
       call zero_array(wf%t1, wf%n_t1)
 !
-      call wf%set_t2_to_mp2_guess()
+      call wf%set_t2_to_cc2_guess()
 !
    end subroutine set_initial_amplitudes_guess_mlccsd
 !
 !
-   subroutine set_t2_to_mp2_guess_mlccsd(wf)
+   subroutine set_t2_to_cc2_guess_mlccsd(wf)
 !!
 !!    Set t2 amplitudes guess
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
@@ -1057,7 +1057,7 @@ contains
 !
       call mem%dealloc(g_aibj, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-   end subroutine set_t2_to_mp2_guess_mlccsd
+   end subroutine set_t2_to_cc2_guess_mlccsd
 !
 !
    subroutine form_newton_raphson_t_estimate_mlccsd(wf, t, dt)
@@ -1360,7 +1360,7 @@ contains
    end subroutine set_cvs_start_indices_mlccsd
 !
 !
-   subroutine is_restart_safe_mlccsd(wf, task)
+   subroutine is_restart_safe_mlccsd(wf)
 !!
 !!    Is restart safe?
 !!    Written by Eirik F. Kjønstad, Mar 2019 
@@ -1374,11 +1374,9 @@ contains
 !!
       implicit none 
 !
-      class(mlccsd) :: wf 
+      class(mlccsd) :: wf
 !
-      character(len=*), intent(in) :: task 
-!
-      integer :: n_o, n_v, n_gs_amplitudes, n_es_amplitudes
+      integer :: n_o, n_v
       integer :: n_ccsd_o, n_ccsd_v, n_cc2_o, n_cc2_v, n_ccs_o, n_ccs_v
 !
       character(len=200) :: ccsd_orbital_type, cc2_orbital_type
@@ -1387,8 +1385,6 @@ contains
 !
       call wf%restart_file%read_(n_o)
       call wf%restart_file%read_(n_v)
-      call wf%restart_file%read_(n_gs_amplitudes)
-      call wf%restart_file%read_(n_es_amplitudes)
 !
       if (n_o .ne. wf%n_o) &
          call output%error_msg('attempted to restart from &
@@ -1440,25 +1436,7 @@ contains
          call output%error_msg('attempted to restart from inconsistent ' // &
                                                    'number of ccsd virtual orbitals.')
 !
-      call wf%restart_file%close_()
-!
-      if (trim(task) == 'ground state') then 
-!
-         if (n_gs_amplitudes .ne. wf%n_gs_amplitudes) &
-            call output%error_msg('attempted to restart from inconsistent number ' // &
-                                    'of ground state amplitudes.')    
-!
-      elseif (trim(task) == 'excited state') then    
-!
-         if (n_es_amplitudes .ne. wf%n_es_amplitudes) &
-            call output%error_msg('attempted to restart from inconsistent number ' // &
-                                    'of excited state amplitudes.')     
-!
-      else
-!
-         call output%error_msg('attempted to restart, but the task was not recognized: ' // task)
-!
-      endif   
+      call wf%restart_file%close_() 
 !
    end subroutine is_restart_safe_mlccsd
 !
@@ -1482,8 +1460,6 @@ contains
 !
       call wf%restart_file%write_(wf%n_o)
       call wf%restart_file%write_(wf%n_v)
-      call wf%restart_file%write_(wf%n_gs_amplitudes)
-      call wf%restart_file%write_(wf%n_es_amplitudes)
       call wf%restart_file%write_(wf%cc2_orbital_type)
       call wf%restart_file%write_(wf%ccsd_orbital_type)
       call wf%restart_file%write_(wf%n_ccs_o)
@@ -1557,7 +1533,7 @@ contains
 !
       call wf%restart_file%open_('read', 'rewind')
 !
-      call wf%restart_file%skip(6)
+      call wf%restart_file%skip(4)
 !
       call wf%restart_file%read_(wf%n_ccs_o)
       call wf%restart_file%read_(wf%n_ccs_v)

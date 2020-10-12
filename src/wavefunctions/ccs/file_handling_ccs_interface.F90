@@ -182,16 +182,30 @@
 !!    Modified by Eirik F. Kjønstad, Mar 2020: made changes for direct stream,
 !!                                             and added [first, last] range 
 !!    Modified by Alexander C. Paul, May 2020: introduced array of stream files
-!!    for the excited states
+!!    for the excited states.
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf 
       integer, intent(in) :: first, last ! first, last state number 
-      real(dp), dimension(wf%n_es_amplitudes, first:last), intent(out) :: X 
+      real(dp), dimension(wf%n_es_amplitudes, first:last), intent(out) :: X
       character(len=*), intent(in) :: side ! 'left' or 'right'
 !
    end subroutine read_excited_state_ccs
+!
+!
+   module subroutine read_excitation_vector_file_ccs(wf, file_, vector)
+!!
+!!    Read excitation vector file 
+!!    Written by Alexander C. Paul, Sep 2020
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf 
+      type(stream_file), intent(inout) :: file_
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
+!
+   end subroutine read_excitation_vector_file_ccs
 !
 !
    module subroutine save_excitation_energies_ccs(wf, n_states, energies, r_or_l)
