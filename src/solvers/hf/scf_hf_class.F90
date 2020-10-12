@@ -185,7 +185,7 @@ contains
          call output%printf('m', '- Requested restart. Reading orbitals from file', &
                             fs='(/t3,a)')
 !
-         call wf%is_restart_safe('ground state')
+         call wf%is_restart_safe
          call wf%read_for_scf_restart()
 !
       else 

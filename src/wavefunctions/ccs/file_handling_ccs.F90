@@ -304,7 +304,7 @@ contains
 !!    Modified by Eirik F. Kjønstad, Mar 2020: made changes for direct stream,
 !!                                             and added [first, last] range 
 !!    Modified by Alexander C. Paul, May 2020: introduced array of stream files
-!!    for the excited states
+!!    for the excited states.
 !!
       implicit none
 !
@@ -312,7 +312,7 @@ contains
 !
       integer, intent(in) :: first, last ! first, last state number 
 !
-      real(dp), dimension(wf%n_es_amplitudes, first:last), intent(out) :: X 
+      real(dp), dimension(wf%n_es_amplitudes, first:last), intent(out) :: X
 !
       character(len=*), intent(in) :: side ! 'left' or 'right'
 !
@@ -322,9 +322,7 @@ contains
 !
          do state = first, last
 !
-            call wf%r_files(state)%open_('read', 'rewind')
-            call wf%r_files(state)%read_(X(:,state), wf%n_es_amplitudes)
-            call wf%r_files(state)%close_()
+            call wf%read_excitation_vector_file(wf%r_files(state), X(:,state))
 !
          end do
 !
@@ -332,9 +330,7 @@ contains
 !
          do state = first, last
 !
-            call wf%l_files(state)%open_('read', 'rewind')
-            call wf%l_files(state)%read_(X(:,state), wf%n_es_amplitudes)
-            call wf%l_files(state)%close_()
+            call wf%read_excitation_vector_file(wf%l_files(state), X(:,state))
 !
          end do
 !
@@ -346,6 +342,41 @@ contains
       endif
 !
    end subroutine read_excited_state_ccs
+!
+!
+   module subroutine read_excitation_vector_file_ccs(wf, file_, vector)
+!!
+!!    Read excitation vector file 
+!!    Written by Alexander C. Paul, Sep 2020
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf 
+!
+      type(stream_file), intent(inout) :: file_
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
+!
+      integer :: file_size
+!
+      call file_%open_('read', 'rewind')
+!
+      file_size = file_%get_file_size()
+!
+      if (file_size >= dp*wf%n_es_amplitudes) then
+!
+         call file_%read_(vector, wf%n_es_amplitudes)
+!
+      else
+!
+         call output%error_msg('Excited state file, (a0), contains less than (i0) amplitudes', &
+                                chars=[file_%get_name()], ints=[wf%n_es_amplitudes])
+!
+      end if
+!
+      call file_%close_
+!
+   end subroutine read_excitation_vector_file_ccs
 !
 !
    module subroutine save_excitation_energies_ccs(wf, n_states, energies, r_or_l)

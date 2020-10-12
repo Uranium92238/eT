@@ -92,6 +92,7 @@ add_eT_runtest(ccs_eom_diis_parallel_states                 "eT;short;ccs;es;eom
 add_eT_runtest(ccs_td_rk4                                   "eT;short;ccs;complex;td")
 add_eT_runtest(restart_ccs_es                               "eT;short;ccs;es;restart")
 add_eT_runtest(restart_ccs_eom                              "eT;short;ccs;eom;restart")
+add_eT_runtest(restart_ccs_from_ccsd                        "eT;short;ccs;eom;restart")
 #
 add_eT_runtest(cc2_gs_energy                                "eT;short;cc2;gs")
 add_eT_runtest(cc2_gs_MO_screening                          "eT;short;cc2;gs;cholesky;mo screening")
@@ -161,6 +162,7 @@ add_eT_runtest(ccsd_td_gl6                                  "eT;short;ccsd;compl
 add_eT_runtest(restart_ccsd_es                              "eT;short;ccsd;es;restart")
 add_eT_runtest(restart_ccsd_eom                             "eT;short;ccsd;eom;restart")
 add_eT_runtest(restart_ccsd_2_states_from_1                 "eT;short;ccsd;eom;restart")
+add_eT_runtest(restart_ccsd_from_ccs                        "eT;short;ccsd;eom;restart")
 add_eT_runtest(restart_ccsd_eom_diis                        "eT;short;ccsd;eom;restart")
 add_eT_runtest(restart_right_ccsd_oscillator_strength_eom   "eT;short;ccsd;es;eom;restart")
 add_eT_runtest(mlhf_ccsd_gs_energy                          "eT;short;mlhf;ccsd;pao")

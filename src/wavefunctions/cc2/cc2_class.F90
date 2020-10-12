@@ -73,10 +73,6 @@ module cc2_class
       procedure :: destruct_amplitudes                         => destruct_amplitudes_cc2 
       procedure :: destruct_multipliers                        => destruct_multipliers_cc2 
 !
-!     Restart
-!
-      procedure :: is_restart_safe                             => is_restart_safe_cc2
-!
 !     Ground state density 
 !
       procedure :: prepare_for_density                         => prepare_for_density_cc2
@@ -362,62 +358,6 @@ contains
 !$omp end parallel do
 !
    end subroutine get_es_orbital_differences_cc2
-!
-!
-   subroutine is_restart_safe_cc2(wf, task)
-!!
-!!    Is restart safe?
-!!    Written by Eirik F. Kjønstad, Mar 2019 
-!!
-      implicit none 
-!
-      class(cc2) :: wf 
-!
-      character(len=*), intent(in) :: task 
-!
-      integer :: n_o, n_v, n_gs_amplitudes, n_es_amplitudes
-!
-      call wf%restart_file%open_('read', 'rewind')
-!
-      call wf%restart_file%read_(n_o)
-      call wf%restart_file%read_(n_v)
-      call wf%restart_file%read_(n_gs_amplitudes)
-      call wf%restart_file%read_(n_es_amplitudes)
-!
-      call wf%restart_file%close_()
-!
-      if (n_o .ne. wf%n_o) call output%error_msg('attempted to restart from inconsistent number ' // &
-                                                   'of occupied orbitals.')
-!
-      if (n_v .ne. wf%n_v) call output%error_msg('attempted to restart from inconsistent number ' // &
-                                                   'of virtual orbitals.')
-!
-      if (trim(task) == 'ground state') then 
-!
-         if (n_gs_amplitudes .ne. wf%n_gs_amplitudes) &
-            call output%error_msg('attempted to restart from inconsistent number ' // &
-                                    'of ground state amplitudes.')    
-!
-      elseif (trim(task) == 'excited state') then    
-!
-         if (n_es_amplitudes .eq. wf%n_t1) then 
-!
-!           OK! We allow restart from CCS-like models (e.g. CC2 lowmem or CCS itself) in (highmem) CC2.
-!           
-         elseif (n_es_amplitudes .ne. wf%n_es_amplitudes) then
-!
-            call output%error_msg('attempted to restart from inconsistent number ' // &
-                                    'of excited state amplitudes.')     
-!
-         endif
-!
-      else
-!
-         call output%error_msg('attempted to restart, but the task was not recognized: ' // task)
-!
-      endif   
-!
-   end subroutine is_restart_safe_cc2
 !
 !
 end module cc2_class

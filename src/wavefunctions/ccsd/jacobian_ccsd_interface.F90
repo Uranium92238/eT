@@ -213,9 +213,6 @@
 !!                   + sum_ck L_bj,kc * c_ai,ck
 !!                   - sum_ck ( g_kc,bj * c_ak,ci + g_ki,bc * c_ak,cj )
 !!
-!!    Batch over c to construct  g_ki_bc
-!!
-!!
       implicit none
 !
       class(ccsd) :: wf
@@ -285,7 +282,6 @@
 !!
 !!    Save jacobian d2 intermediate
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2019
-!!
 !!
 !!    Constructs the intermediate 
 !!

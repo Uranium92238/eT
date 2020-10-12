@@ -32,30 +32,6 @@ submodule (doubles_class) file_handling_doubles
 !
 contains
 !
-   module subroutine read_doubles_vector_doubles(wf, file_, vector)
-!!
-!!    Read doubles vector
-!!    Written by Alexander C. Paul, Oct 2019
-!!
-      implicit none 
-!
-      class(doubles), intent(inout) :: wf
-!
-      type(stream_file), intent(inout) :: file_
-!
-      real(dp), dimension(wf%n_t2), intent(out) :: vector
-!
-      call file_%open_('read')
-!
-!     The first n_t1 dp numbers are the singles vector,
-!     so the first byte of the doubles vector is at n_t1*dp + 1
-!
-      call file_%read_(vector, wf%n_t2, wf%n_t1*dp + 1)
-!
-      call file_%close_()
-!
-   end subroutine read_doubles_vector_doubles
-!
 !
    module subroutine save_doubles_vector_doubles(wf, file_, vector)
 !!
@@ -82,41 +58,69 @@ contains
    end subroutine save_doubles_vector_doubles
 !
 !
-   module subroutine read_singles_doubles_vector_doubles(wf, file_, X_singles, X_doubles)
+   module subroutine read_doubles_vector_doubles(wf, file_, vector)
 !!
-!!    Read singles and doubles vector
-!!    Written by Alexander C. Paul, May 2020
+!!    Read doubles vector
+!!    Written by Alexander C. Paul, Oct 2019
 !!
-!!    Reads singles part, checks if doubles exist and reads them as well
-!!
-      implicit none
+      implicit none 
 !
       class(doubles), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
-      real(dp), dimension(wf%n_t1), intent(out) :: X_singles
-      real(dp), dimension(wf%n_t2), intent(out) :: X_doubles
+      real(dp), dimension(wf%n_t2), intent(out) :: vector
 !
-      call file_%open_('read', 'rewind')
+      call file_%open_('read')
 !
-      call file_%read_(X_singles, wf%n_t1)
+!     The first n_t1 dp numbers are the singles vector,
+!     so the first byte of the doubles vector is at n_t1*dp + 1
 !
-!     Check if doubles exist depending on the size of the stream file
-!
-      if (file_%get_file_size() == dp*(wf%n_t1 + wf%n_t2)) then
-!
-         call file_%read_(X_doubles, wf%n_t2, wf%n_t1*dp + 1)
-!
-      else
-!
-         call zero_array(X_doubles, wf%n_t2)
-!
-      end if
+      call file_%read_(vector, wf%n_t2, wf%n_t1*dp + 1)
 !
       call file_%close_()
 !
-   end subroutine read_singles_doubles_vector_doubles
+   end subroutine read_doubles_vector_doubles
+!
+!
+   module subroutine read_excitation_vector_file_doubles(wf, file_, vector)
+!!
+!!    Read excitation vector file 
+!!    Written by Alexander C. Paul, Sep 2020
+!!
+      implicit none
+!
+      class(doubles), intent(in) :: wf 
+!
+      type(stream_file), intent(inout) :: file_
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
+!
+      integer :: file_size
+!
+      call file_%open_('read', 'rewind')
+!
+      file_size = file_%get_file_size()
+!
+      if (file_size == dp*wf%n_es_amplitudes) then
+!
+         call file_%read_(vector, wf%n_es_amplitudes)
+!
+      else if (file_size == dp*wf%n_t1) then
+!
+         call zero_array(vector, wf%n_es_amplitudes)
+         call file_%read_(vector, wf%n_t1)
+!
+      else
+!
+         call output%error_msg('File size of (a0) not recognized', &
+                                chars=[file_%get_name()])
+!
+      end if
+!
+      call file_%close_
+!
+   end subroutine read_excitation_vector_file_doubles
 !
 !
 end submodule file_handling_doubles 

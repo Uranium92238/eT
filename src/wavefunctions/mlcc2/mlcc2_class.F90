@@ -1195,7 +1195,7 @@ contains
    end subroutine determine_n_gs_amplitudes_mlcc2
 !
 !
-   subroutine is_restart_safe_mlcc2(wf, task)
+   subroutine is_restart_safe_mlcc2(wf)
 !!
 !!    Is restart safe?
 !!    Written by Eirik F. Kjønstad, Mar 2019 
@@ -1211,9 +1211,7 @@ contains
 !
       class(mlcc2) :: wf 
 !
-      character(len=*), intent(in) :: task 
-!
-      integer :: n_o, n_v, n_gs_amplitudes, n_es_amplitudes
+      integer :: n_o, n_v
       integer :: n_cc2_o, n_cc2_v, n_ccs_o, n_ccs_v
 !
       character(len=200) :: cc2_orbital_type
@@ -1222,8 +1220,6 @@ contains
 !
       call wf%restart_file%read_(n_o)
       call wf%restart_file%read_(n_v)
-      call wf%restart_file%read_(n_gs_amplitudes)
-      call wf%restart_file%read_(n_es_amplitudes)
 !
       if (n_o .ne. wf%n_o) &
         call output%error_msg('attempted to restart from &
@@ -1236,7 +1232,7 @@ contains
 !
       if (trim(cc2_orbital_type) .ne. trim(wf%cc2_orbital_type)) &
          call output%error_msg('attempted MLCC restart ' // &
-         'with inconsistent orbital type.')
+                               'with inconsistent orbital type.')
 !
       call wf%restart_file%read_(n_ccs_o)
       call wf%restart_file%read_(n_ccs_v)
@@ -1245,39 +1241,21 @@ contains
 !
       if (n_ccs_o .ne. wf%n_ccs_o) &
          call output%error_msg('attempted to restart from inconsistent ' // &
-                                                   'number of ccs occupied orbitals.')
+                               'number of ccs occupied orbitals.')
 !
       if (n_ccs_v .ne. wf%n_ccs_v) &
          call output%error_msg('attempted to restart from inconsistent ' // &
-                                                   'number of ccs virtual orbitals.')
+                               'number of ccs virtual orbitals.')
 !
       if (n_cc2_o .ne. wf%n_cc2_o) &
          call output%error_msg('attempted to restart from inconsistent ' // &
-                                                   'number of cc2 occupied orbitals.')
+                               'number of cc2 occupied orbitals.')
 !
       if (n_cc2_v .ne. wf%n_cc2_v) &
          call output%error_msg('attempted to restart from inconsistent ' // &
-                                                   'number of cc2 virtual orbitals.')
+                               'number of cc2 virtual orbitals.')
 !
-      call wf%restart_file%close_()
-!
-      if (trim(task) == 'ground state') then 
-!
-         if (n_gs_amplitudes .ne. wf%n_gs_amplitudes) &
-            call output%error_msg('attempted to restart from inconsistent number ' // &
-                                    'of ground state amplitudes.')    
-!
-      elseif (trim(task) == 'excited state') then    
-!
-         if (n_es_amplitudes .ne. wf%n_es_amplitudes) &
-            call output%error_msg('attempted to restart from inconsistent number ' // &
-                                    'of excited state amplitudes.')     
-!
-      else
-!
-         call output%error_msg('attempted to restart, but the task was not recognized: ' // task)
-!
-      endif   
+      call wf%restart_file%close_() 
 !
    end subroutine is_restart_safe_mlcc2
 !
@@ -1301,8 +1279,6 @@ contains
 !
       call wf%restart_file%write_(wf%n_o)
       call wf%restart_file%write_(wf%n_v)
-      call wf%restart_file%write_(wf%n_gs_amplitudes)
-      call wf%restart_file%write_(wf%n_es_amplitudes)
       call wf%restart_file%write_(wf%cc2_orbital_type)
       call wf%restart_file%write_(wf%n_ccs_o)
       call wf%restart_file%write_(wf%n_ccs_v)
@@ -1680,7 +1656,7 @@ contains
 !
       call wf%restart_file%open_('read', 'rewind')
 !
-      call wf%restart_file%skip(5)
+      call wf%restart_file%skip(3)
 !
       call wf%restart_file%read_(wf%n_ccs_o)
       call wf%restart_file%read_(wf%n_ccs_v)

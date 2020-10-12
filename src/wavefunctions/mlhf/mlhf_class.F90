@@ -1381,7 +1381,7 @@ contains
    end subroutine construct_active_mos_mlhf
 !
 !
-   subroutine is_restart_safe_mlhf(wf, task)
+   subroutine is_restart_safe_mlhf(wf)
 !!
 !!    Is restart safe?
 !!    Written by Eirik F. Kjønstad, Linda Goletto
@@ -1390,8 +1390,6 @@ contains
       implicit none
 !
       class(mlhf) :: wf
-!
-      character(len=*), intent(in) :: task
 !
       integer :: n_ao, n_densities, i, n_active_atoms, n_active_spaces, n_electrons
       integer, dimension(:), allocatable :: active_atoms
@@ -1415,32 +1413,35 @@ contains
 !
       if (n_ao .ne. wf%n_ao) then
          call output%error_msg('attempted to restart MLHF ' // &
-                           'with an inconsistent number of atomic orbitals for task ' // trim(task))
+                               'with an inconsistent number of atomic orbitals.')
       endif
 !
       if (n_densities .ne. wf%n_densities) then
          call output%error_msg('attempted to restart MLHF with an inconsistent number ' // &
-            'of atomic densities (likely a HF/UHF inconsistency) for task ' // trim(task))
+                               'of atomic densities (likely a HF/UHF inconsistency).')
       endif
 !
       if (n_electrons .ne. wf%system%get_n_electrons()) then
          call output%error_msg('attempted to restart MLHF with an inconsistent number ' // &
-                               'of electrons for task ' // trim(task))
+                               'of electrons.')
       endif
 !
       if (n_active_atoms .ne. wf%system%active_atom_spaces(n_active_spaces)%last_atom) then
-         call output%error_msg('attempted to restart MLHF with an inconsistent number ' // &
-            'of active atoms for task ' // trim(task))
+         call output%error_msg('attempted to restart MLHF with an ' // &
+                               'inconsistent number of active atoms.')
       endif
 !
       call mem%alloc(active_atoms, n_active_atoms)
 !
       do i = 1, n_active_atoms
+!
          call wf%restart_file%read_(active_atoms(i))
+!
          if (active_atoms(i) .ne. wf%system%atoms(i)%input_number) then
                      call output%error_msg('attempted to restart MLHF ' // &
-                     'with inconsistent active atoms for task ' // trim(task))
+                                           'with inconsistent active atoms.')
          endif
+!
       enddo
 !
       call mem%dealloc(active_atoms, n_active_atoms)

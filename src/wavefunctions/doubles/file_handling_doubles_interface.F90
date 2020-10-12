@@ -17,20 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine read_doubles_vector_doubles(wf, file_, vector)
-!!
-!!    Read doubles vector
-!!    Written by Alexander C. Paul, Oct 2019
-!!
-      implicit none 
-!
-      class(doubles), intent(inout) :: wf
-      type(stream_file), intent(inout) :: file_
-      real(dp), dimension(wf%n_t2), intent(out) :: vector
-!
-   end subroutine read_doubles_vector_doubles
-!
-!
    module subroutine save_doubles_vector_doubles(wf, file_, vector)
 !!
 !!    Save doubles vector
@@ -45,18 +31,29 @@
    end subroutine save_doubles_vector_doubles
 !
 !
-   module subroutine read_singles_doubles_vector_doubles(wf, file_, X_singles, X_doubles)
+   module subroutine read_doubles_vector_doubles(wf, file_, vector)
 !!
-!!    Read singles and doubles vector
-!!    Written by Alexander C. Paul, May 2020
+!!    Read doubles vector
+!!    Written by Alexander C. Paul, Oct 2019
 !!
-!!    Reads singles part, checks if doubles exist and reads them as well
-!!
-      implicit none
+      implicit none 
 !
       class(doubles), intent(inout) :: wf
       type(stream_file), intent(inout) :: file_
-      real(dp), dimension(wf%n_t1), intent(out) :: X_singles
-      real(dp), dimension(wf%n_t2), intent(out) :: X_doubles
+      real(dp), dimension(wf%n_t2), intent(out) :: vector
 !
-   end subroutine read_singles_doubles_vector_doubles
+   end subroutine read_doubles_vector_doubles
+!
+!
+   module subroutine read_excitation_vector_file_doubles(wf, file_, vector)
+!!
+!!    Read excitation vector file 
+!!    Written by Alexander C. Paul, Sep 2020
+!!
+      implicit none
+!
+      class(doubles), intent(in) :: wf 
+      type(stream_file), intent(inout) :: file_
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
+!
+   end subroutine read_excitation_vector_file_doubles
