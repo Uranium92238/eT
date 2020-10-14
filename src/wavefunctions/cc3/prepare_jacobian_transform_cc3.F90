@@ -122,15 +122,15 @@ contains
 !
 !     (lb|kc)  ! stored as bcl#k
 !
-      call wf%get_g_pqrs_required(req_0,req_k,wf%n_o,wf%n_v,1,wf%n_v)
-      req_k = req_k + 2*wf%n_v**2*wf%n_o
+      req_0 = 0
+      req_k = 2*wf%n_v**2*wf%n_o
+      call wf%eri%get_eri_t1_mem('ovov', req_0, req_k, wf%n_o, wf%n_v, 1, wf%n_v)
 !
       batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_k,req_0,req_k)
-      call batch_k%determine_limits(1)
-!
-      call mem%alloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
+      call mem%alloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%max_length)
+      call mem%alloc(g_pqrs, wf%n_o , wf%n_v , batch_k%max_length , wf%n_v)
 !
       wf%g_lbkc_t = direct_stream_file('g_lbkc_t',wf%n_o*wf%n_v**2)
       call wf%g_lbkc_t%open_('write')
@@ -139,25 +139,16 @@ contains
 !
          call batch_k%determine_limits(k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_o , wf%n_v , batch_k%length , wf%n_v)
+         call wf%eri%get_eri_t1('ovov', g_pqrs, first_r=batch_k%first, last_r=batch_k%last)
 !
-         call wf%get_ovov(g_pqrs,   &
-                          1,wf%n_o, &
-                          1,wf%n_v, &
-                          batch_k%first,batch_k%last, &
-                          1,wf%n_v)
-!
-!        sort to bclk
-         call sort_1234_to_2413(g_pqrs , h_pqrs , wf%n_o , wf%n_v , batch_k%length , wf%n_v) 
+         call sort_1234_to_2413(g_pqrs, h_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v) ! sort to bclk
 !
          call wf%g_lbkc_t%write_interval(h_pqrs, batch_k)
 !
-         call mem%dealloc(g_pqrs, wf%n_o , wf%n_v , batch_k%length , wf%n_v)
-!
       enddo
 !
-      call batch_k%determine_limits(1)
-      call mem%dealloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
+      call mem%dealloc(g_pqrs, wf%n_o , wf%n_v , batch_k%max_length , wf%n_v)
+      call mem%dealloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%max_length)
 !
       call wf%g_lbkc_t%close_()
 !

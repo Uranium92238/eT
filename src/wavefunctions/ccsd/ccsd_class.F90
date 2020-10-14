@@ -354,7 +354,7 @@ contains
       integer :: a, b, i, j, ai, bj, aibj, b_end
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call wf%get_vovo(g_aibj)
+      call wf%eri%get_eri_mo('vovo', g_aibj)
 !
 !$omp parallel do schedule(guided) collapse(2) &
 !$omp private(a, i, b, j, ai, bj, aibj, b_end, eps_ai)

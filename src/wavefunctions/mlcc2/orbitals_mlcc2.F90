@@ -1164,8 +1164,9 @@ contains
 !
       call ccs_wf%mo_preparations()
 !
-      ccs_wf%integrals = mo_integral_tool(wf%integrals)
-      call ccs_wf%integrals%initialize_storage(wf%integrals)
+      ccs_wf%eri = t1_eri_tool(wf%eri)
+      call ccs_wf%eri%initialize()
+      call ccs_wf%eri%copy_from_t1(wf%eri)
 !
 !     1. Ground state
 !
@@ -1177,8 +1178,6 @@ contains
       call cc_gs_solver_diis%cleanup(ccs_wf)
 !
       call timer_gs%turn_off()
-!
-      call ccs_wf%integrals%update_t1_integrals(ccs_wf%t1)
 !
 !     Excited states
 !

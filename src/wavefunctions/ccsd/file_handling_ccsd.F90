@@ -65,7 +65,7 @@ contains
 !
       else
 !
-         call wf%integrals%update_t1_integrals(wf%t1)
+         call wf%eri%update_t1_integrals(wf%t1)
          call wf%set_t2_to_cc2_guess
 !
       end if

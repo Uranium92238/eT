@@ -578,7 +578,7 @@ contains
       else
          call output%error_msg('Last record (i0) less than first record (i0) &
                                &for read in file (a0)', &
-                               chars=[the_file%get_name()], ints=[first_rec, last_rec])
+                               chars=[the_file%get_name()], ints=[last_rec, first_rec])
       endif
 !
       call the_file%write_1_real_dp_abstract_stream(array, write_length, position_)
@@ -663,7 +663,7 @@ contains
       else
          call output%error_msg('Last record (i0) less than first record (i0) &
                                &for read in file (a0)', &
-                               chars=[the_file%get_name()], ints=[first_rec, last_rec])
+                               chars=[the_file%get_name()], ints=[last_rec, first_rec])
       endif
 !
       call the_file%write_1_complex_dp_abstract_stream(array, write_length, position_)

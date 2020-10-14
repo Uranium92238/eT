@@ -590,9 +590,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_pqrs ! Array for constructed integrals
       real(dp), dimension(:,:,:,:), allocatable :: h_pqrs ! Array for sorted integrals
-      real(dp), dimension(:,:), allocatable     :: v2_help ! Help array for constructing L_jbkc
 !
-      integer :: k, j
       type(batching_index) :: batch_k
 !
       integer :: req_0, req_k
@@ -602,10 +600,13 @@ contains
 !
 !     (bd|ck)
 !
-      req_0 = wf%integrals%n_J*wf%n_v**2
-      req_k = 2*wf%n_v**3 + wf%integrals%n_J*wf%n_v
+      req_0 = 0
+      req_k = wf%n_v**3
+      call wf%eri%get_eri_t1_mem('vvvo', req_0, req_k, wf%n_v, wf%n_v, wf%n_v, 1, qp=.true.)
 !
       call mem%batch_setup(batch_k,req_0,req_k)
+!
+      call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
 !
       wf%g_bdck_t = direct_stream_file('g_bdck_t',wf%n_v**3)
       call wf%g_bdck_t%open_('write')
@@ -614,28 +615,24 @@ contains
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+         call wf%eri%get_eri_t1('vvvo', g_pqrs, &
+                                first_s=batch_k%first, last_s=batch_k%last, qp=.true.)
 !
-         call wf%get_vvvo(g_pqrs, &
-                           1,wf%n_v, &
-                           1,wf%n_v, &
-                           1,wf%n_v, &
-                           batch_k%first,batch_k%last)
-!
-         call sort_1234_to_2134(g_pqrs,h_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_k%length)
-!
-         call wf%g_bdck_t%write_interval(h_pqrs, batch_k)
-!
-         call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+         call wf%g_bdck_t%write_interval(g_pqrs, batch_k)
 !
       enddo
 !
       call wf%g_bdck_t%close_()
+      call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
 !
 !     (db|kc)
-!     Same batching
+!
+      req_0 = 0
+      req_k = wf%n_v**3
+      call wf%eri%get_eri_t1_mem('vvov', req_0, req_k, wf%n_v, wf%n_v, 1, wf%n_v)
+!
+      call mem%alloc(g_pqrs, wf%n_v, wf%n_v, batch_k%max_length, wf%n_v)
+      call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
 !
       wf%g_dbkc_t = direct_stream_file('g_dbkc_t',wf%n_v**3)
       call wf%g_dbkc_t%open_('write')
@@ -644,144 +641,114 @@ contains
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
-         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-!
-         call wf%get_vvov(g_pqrs, &
-                           1,wf%n_v, &
-                           1,wf%n_v, &
-                           batch_k%first,batch_k%last, &
-                           1,wf%n_v)
+         call wf%eri%get_eri_t1('vvov', g_pqrs, first_r=batch_k%first, last_r=batch_k%last)
 !
          call sort_1234_to_2413(g_pqrs,h_pqrs,wf%n_v,wf%n_v,batch_k%length,wf%n_v)
 !
          call wf%g_dbkc_t%write_interval(h_pqrs, batch_k)
 !
-         call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
-         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-!
       enddo
 !
       call wf%g_dbkc_t%close_()
 !
+      call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
+      call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, batch_k%max_length, wf%n_v)
+!
 !     (lj|ck)
 !
-      req_0 = wf%integrals%n_J*wf%n_o**2
-      req_k = 2*wf%n_o**2*wf%n_v + wf%integrals%n_J*wf%n_v
+      req_0 = 0
+      req_k = 2*wf%n_o**2*wf%n_v
+      call wf%eri%get_eri_t1_mem('oovo', req_0, req_k, wf%n_o, wf%n_o, wf%n_v, 1)
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
       wf%g_ljck_t = direct_stream_file('g_ljck_t',wf%n_v*wf%n_o)
       call wf%g_ljck_t%open_('write')
 !
+      call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%max_length)
+      call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o ,batch_k%max_length)
+!
       do current_k_batch = 1,batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
-         call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o ,batch_k%length)
+         call wf%eri%get_eri_t1('oovo', g_pqrs, first_s=batch_k%first,last_s=batch_k%last)
 !
-         call wf%get_oovo(g_pqrs, &
-                           1,wf%n_o, &
-                           1,wf%n_o, &
-                           1,wf%n_v, &
-                           batch_k%first,batch_k%last)
-!
-         call sort_1234_to_1324(g_pqrs,h_pqrs,wf%n_o,wf%n_o,wf%n_v,batch_k%length)
+         call sort_1234_to_1324(g_pqrs, h_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
 !
          call wf%g_ljck_t%write_compound_full_batch(h_pqrs, wf%n_o, batch_k)
 !
-         call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
-         call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
-!
       enddo
+!
+      call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%max_length)
+      call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%max_length)
 !
       call wf%g_ljck_t%close_()
 !
 !     (jl|kc)
-!     Same batching
+!
+      req_0 = 0
+      req_k = 2*wf%n_o**2*wf%n_v
+      call wf%eri%get_eri_t1_mem('ooov', req_0, req_k, wf%n_o, wf%n_o, 1, wf%n_v)
+!
+      call mem%batch_setup(batch_k,req_0,req_k)
 !
       wf%g_jlkc_t = direct_stream_file('g_jlkc_t',wf%n_v*wf%n_o)
       call wf%g_jlkc_t%open_('write')
+!
+      call mem%alloc(g_pqrs, wf%n_o, wf%n_o, batch_k%max_length, wf%n_v)
+      call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%max_length)
 !
       do current_k_batch = 1,batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
-         call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
-!
-         call wf%get_ooov(g_pqrs, &
-                           1,wf%n_o, &
-                           1,wf%n_o, &
-                           batch_k%first,batch_k%last, &
-                           1,wf%n_v)
+         call wf%eri%get_eri_t1('ooov', g_pqrs, first_r=batch_k%first, last_r=batch_k%last)
 !
          call sort_1234_to_4213(g_pqrs, h_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
 !
          call wf%g_jlkc_t%write_compound_full_batch(h_pqrs, wf%n_o, batch_k)
 !
-         call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
-         call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
-!
       enddo
+!
+      call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_k%max_length, wf%n_v)
+      call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%max_length)
 !
       call wf%g_jlkc_t%close_()
 !
 !     (jb|kc)
 !
-      call mem%alloc(v2_help,wf%n_v,wf%n_v)
-!
-      req_0 = wf%integrals%n_J*wf%n_o*wf%n_v
-      req_k = 2*wf%n_v**2*wf%n_o + wf%integrals%n_J*wf%n_v
+      req_0 = 0
+      req_k = 2*wf%n_v**2*wf%n_o
+      call wf%eri%get_eri_t1_mem('ovov', req_0, req_k, wf%n_o, wf%n_v, 1, wf%n_v)
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
       wf%L_jbkc_t = direct_stream_file('L_jbkc_t',wf%n_v**2)
       call wf%L_jbkc_t%open_('write')
 !
-      call batch_k%determine_limits(1)
-      call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+      call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%max_length)
+      call mem%alloc(g_pqrs, wf%n_o, wf%n_v, batch_k%max_length, wf%n_v)
 !
       do current_k_batch = 1,batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
+         call wf%eri%get_eri_t1('ovov', g_pqrs, first_r=batch_k%first, last_r=batch_k%last)
 !
-         call wf%get_ovov(g_pqrs, &
-                           1,wf%n_o, &
-                           1,wf%n_v, &
-                           batch_k%first,batch_k%last, &
-                           1,wf%n_v)
-!
-         call sort_1234_to_2413(g_pqrs,h_pqrs,wf%n_o,wf%n_v,batch_k%length,wf%n_v)
-!
-         do k = 1,batch_k%length
-            do j = 1,wf%n_o
-!
-               call sort_12_to_21(h_pqrs(:,:,j,k), v2_help, wf%n_v, wf%n_v)
-!
-               call dscal(wf%n_v**2, two, h_pqrs(:,:,j,k), 1)
-!
-               call daxpy(wf%n_v**2, -one, v2_help, 1, h_pqrs(:,:,j,k), 1)
-!
-            enddo
-         enddo
+         call sort_1234_to_1432(g_pqrs, h_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
+         call dscal(wf%n_v**2*wf%n_o*batch_k%length, two, g_pqrs, 1)
+         call daxpy(wf%n_v**2*wf%n_o*batch_k%length, -one, h_pqrs, 1, g_pqrs, 1)
+         call sort_1234_to_2413(g_pqrs, h_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
 !
          call wf%L_jbkc_t%write_compound_full_batch(h_pqrs, wf%n_o, batch_k)
 !
-         call mem%dealloc(g_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
-!
       enddo
 !
-      call batch_k%determine_limits(1)
-      call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
-!
-      call mem%dealloc(v2_help, wf%n_v, wf%n_v)
+      call mem%dealloc(g_pqrs, wf%n_o, wf%n_v, batch_k%max_length, wf%n_v)
+      call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%max_length)
 !
       call wf%L_jbkc_t%close_()
-!
 !
    end subroutine omega_cc3_integrals_cc3
 !

@@ -68,7 +68,7 @@ contains
       call wf%get_amplitudes(t_copy)
       call wf%set_amplitudes(t(1:wf%n_gs_amplitudes))
 !
-      call wf%integrals%update_t1_integrals(wf%t1)
+      call wf%eri%update_t1_integrals(wf%t1)
 !
       wf%x2 = t(wf%n_gs_amplitudes+1:wf%n_es_amplitudes)
 !

@@ -1186,8 +1186,9 @@ contains
 !
       call cc2_wf%mo_preparations()
 !
-      cc2_wf%integrals = mo_integral_tool(wf%integrals)
-      call cc2_wf%integrals%initialize_storage(wf%integrals)
+      cc2_wf%eri = t1_eri_tool(wf%eri)
+      call cc2_wf%eri%initialize()
+      call cc2_wf%eri%copy_from_t1(wf%eri)
 !
 !     1. Ground state
 !

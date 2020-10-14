@@ -271,7 +271,7 @@ contains
 !
       if (trim(wf%name_) == 'mp2') then
 !
-         call wf%integrals%update_t1_integrals(wf%t1)
+         call wf%eri%set_t1_to_mo()
 !
          call wf%calculate_energy()
 !
@@ -509,7 +509,7 @@ contains
 !!
 !!
       use eri_cd_class, only: eri_cd
-      use mo_integral_tool_class, only: mo_integral_tool
+      use t1_eri_tool_class, only: t1_eri_tool
 !
       implicit none 
 !
@@ -549,12 +549,12 @@ contains
       call eri_cholesky_solver%diagonal_test(wf%system)  ! Determine the largest 
                                                          ! deviation in the ERI matrix 
 !
-      wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, eri_cholesky_solver%n_cholesky, wf%need_g_abcd)
+      wf%eri = t1_eri_tool(wf%n_o, wf%n_v, eri_cholesky_solver%n_cholesky, wf%need_g_abcd)
 !
-      call wf%integrals%initialize_storage()
+      call wf%eri%initialize()
 !
       call eri_cholesky_solver%construct_cholesky_mo_vectors(wf%system, wf%n_ao, wf%n_mo, &
-                                                   wf%orbital_coefficients, wf%integrals)
+                                                             wf%orbital_coefficients, wf%eri)
 !
       call eri_cholesky_solver%cleanup()
 !

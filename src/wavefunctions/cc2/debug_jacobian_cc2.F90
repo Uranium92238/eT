@@ -76,7 +76,7 @@ contains
 !
 !     Prepare T1 integrals and Fock 
 !
-      call wf%integrals%update_t1_integrals(wf%t1)
+      call wf%eri%update_t1_integrals(wf%t1)
 !
       call wf%construct_fock()
 !

@@ -20,17 +20,17 @@
 module eri_cd_class
 !
 !!
-!!    Cholesky decomposition (CD) of electronic 
+!!    Cholesky decomposition (CD) of electronic
 !!    repulsion integrals (ERI) solver class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!    Files updated by Rolf H. Myhre, September 2019
 !!
 !!    Handles the Cholesky decomposition of the ERIs
-!!    
+!!
 !!       g_wxyz = (wx|yz) = sum_J L_wx_J L_yz_J
 !!
-!!    by first determining the Cholesky basis, i.e., 
-!!    the decomposition pivots and then constructing the 
+!!    by first determining the Cholesky basis, i.e.,
+!!    the decomposition pivots and then constructing the
 !!    vectors.
 !!
 !!    After the basis is determined, the overlap
@@ -44,18 +44,18 @@ module eri_cd_class
 !!
 !!    and the factors Q are inverted.
 !!
-!!    Finally the Cholesky vectors are constructed 
-!!    as 
+!!    Finally the Cholesky vectors are constructed
+!!    as
 !!
 !!       L_wx_J = sum_K (wx|K)[Q^-T]_KJ.
 !!
-!!    For a more detailed description see 
+!!    For a more detailed description see
 !!
 !!       Folkestad, S. D., Kjønstad, E. F., and Koch, H.,
 !!       JCP, 150(19), 194112 (2019).
 !!
 !!    There are options for one-center Cholesky decomposition
-!!    method specific Cholesky decomposition or partitioned 
+!!    method specific Cholesky decomposition or partitioned
 !!    Cholesky decomposition (PCD).
 !!
 !
@@ -73,10 +73,10 @@ module eri_cd_class
    use array_utilities, only : quicksort_with_index_descending
    use array_utilities, only : get_n_highest
 !
-   use array_utilities, only : get_abs_max, is_significant, reduce_array_int, reduce_vector, transpose_
+   use array_utilities, only : get_abs_max, is_significant, transpose_
+   use array_utilities, only : reduce_array_int, reduce_vector
 !
    use sequential_file_class, only : sequential_file
-   use direct_file_class, only : direct_file
 !
    use cholesky_array_list_class, only : cholesky_array_list
 !
@@ -87,27 +87,32 @@ module eri_cd_class
 !
    implicit none
 !
-!  Definition of the ERI-CD class 
+!  Definition of the ERI-CD class
 !
    type :: eri_cd
 !
-      character(len=100) :: name_ = 'Cholesky decomposition of electronic repulsion integrals solver'
+      character(len=100) :: name_ = 'Cholesky decomposition of electronic &
+                                    &repulsion integrals solver'
 
-      character(len=500) :: description1 = 'Performs a Cholesky decomposition of the two-electron &
-                                            &electronic repulsion integrals in the atomic orbital basis,'
+      character(len=500) :: description1 = 'Performs a Cholesky decomposition &
+                                           &of the two-electron electronic repulsion integrals &
+                                           &in the atomic orbital basis,'
 
       character(len=500) :: description2 = '(ab|cd) = sum_J L_ab^J L_cd^J.'
 
-      character(len=500) :: description3 = 'Once the Cholesky basis has been determined, the vectors &
-                                            &L^J are constructed and stored to disk. These may either be &
-                                            &used directly, or be transformed to the MO basis for use in &
-                                            &post-HF calculations. For more information, see &
-                                            &S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)'
+      character(len=500) :: description3 = 'Once the Cholesky basis has been determined, &
+                                            &the vectors L^J are constructed and stored to disk. &
+                                            &These may either be used directly, &
+                                            &or be transformed to the MO basis &
+                                            &for use in post-HF calculations. &
+                                            &For more information, &
+                                            &see S. D. Folkestad, E. F. Kjønstad &
+                                            &and H. Koch, JCP, 150(19), (2019)'
 !
       real(dp) :: threshold
-      real(dp) :: span     
+      real(dp) :: span
 !
-      integer :: max_qual 
+      integer :: max_qual
       integer :: iteration
 !
       logical :: one_center
@@ -115,12 +120,8 @@ module eri_cd_class
       type(sequential_file) :: diagonal_info_cauchy_schwarz
       type(sequential_file) :: Q
       type(sequential_file) :: Q_inverse
-      type(sequential_file) :: cholesky_ao_vectors
-      type(sequential_file) :: cholesky_ao_vectors_info
       type(sequential_file) :: diagonal_info_target
       type(sequential_file) :: cholesky_basis_file
-!
-      type(direct_file) :: cholesky_mo_vectors
 !
       integer :: n_cholesky
       integer :: n_shp_in_basis
@@ -137,45 +138,47 @@ module eri_cd_class
 !
 !     Screening
 !
-      procedure :: construct_significant_diagonal         => construct_significant_diagonal_eri_cd
+      procedure :: construct_significant_diagonal        &
+                => construct_significant_diagonal_eri_cd
       procedure :: construct_significant_diagonal_atomic &
-                     => construct_significant_diagonal_atomic_eri_cd  
+                => construct_significant_diagonal_atomic_eri_cd
 !
-!     Determine Cholesky basis 
+!     Determine Cholesky basis
 !
-      procedure :: determine_cholesky_basis               => determine_cholesky_basis_eri_cd
-      procedure :: determine_cholesky_basis_PCD           => determine_cholesky_basis_PCD_eri_cd
+      procedure :: determine_cholesky_basis      => determine_cholesky_basis_eri_cd
+      procedure :: determine_cholesky_basis_PCD  => determine_cholesky_basis_PCD_eri_cd
 !
 !     Construct vectors
-!  
-      procedure :: invert_Q                               => invert_Q_eri_cd
-      procedure :: construct_S                            => construct_S_eri_cd
-      procedure :: construct_cholesky_mo_vectors          => construct_cholesky_mo_vectors_eri_cd
+!
+      procedure :: invert_Q                      => invert_Q_eri_cd
+      procedure :: construct_S                   => construct_S_eri_cd
+      procedure :: construct_cholesky_mo_vectors => construct_cholesky_mo_vectors_eri_cd
 !
 !     Read, write, and print
 !
-      procedure :: read_settings                          => read_settings_eri_cd
-      procedure :: print_banner                           => print_banner_eri_cd
-      procedure :: print_settings                         => print_settings_eri_cd
+      procedure :: read_settings                 => read_settings_eri_cd
+      procedure :: print_banner                  => print_banner_eri_cd
+      procedure :: print_settings                => print_settings_eri_cd
 !
 !     PCD utilities
 !
-      procedure :: construct_diagonal_batches             => construct_diagonal_batches_eri_cd
+      procedure :: construct_diagonal_batches          &
+                => construct_diagonal_batches_eri_cd
       procedure :: construct_diagonal_from_batch_bases &
-                     => construct_diagonal_from_batch_bases_eri_cd
+                => construct_diagonal_from_batch_bases_eri_cd
 !
-!     Testing 
+!     Testing
 !
-      procedure :: diagonal_test                          => diagonal_test_eri_cd
+      procedure :: diagonal_test                 => diagonal_test_eri_cd
 !
    end type eri_cd
 !
 !
-   interface eri_cd 
+   interface eri_cd
 !
       procedure :: new_eri_cd
 !
-   end interface eri_cd 
+   end interface eri_cd
 !
 !
 contains
@@ -217,10 +220,10 @@ contains
 !     Initialize files
 !
       solver%diagonal_info_cauchy_schwarz = sequential_file('cauchy_schwarz_diagonal_eri')
-!      
+!
       solver%Q = sequential_file('Q_eri')
       solver%Q_inverse = sequential_file('Q_inverse_eri')
-!      
+!
       solver%diagonal_info_target = sequential_file('target_diagonal_eri')
       solver%cholesky_basis_file = sequential_file('basis_shell_info')
 !
@@ -229,7 +232,7 @@ contains
 !
 !     Additional prints
 !
-      call output%printf('m', '- Cholesky decomposition system details:', fs='(/t3, a)')      
+      call output%printf('m', '- Cholesky decomposition system details:', fs='(/t3, a)')
 !
       call output%printf('m', 'Total number of AOs:         (i13)', &
                          ints=[system%get_n_aos()], fs='(/t6,a)')
@@ -272,19 +275,19 @@ contains
 !
             call solver%construct_significant_diagonal_atomic(system, screening_vector)
 !
-         else 
+         else
 !
             call solver%construct_significant_diagonal_atomic(system)
 !
          endif
 !
-      else 
+      else
 !
          if (present(screening_vector)) then
 !
             call solver%construct_significant_diagonal(system, screening_vector)
 !
-         else 
+         else
 !
             call solver%construct_significant_diagonal(system)
 !
@@ -321,7 +324,7 @@ contains
 !
    subroutine cleanup_eri_cd(solver)
 !!
-!!    Cleanup 
+!!    Cleanup
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -347,10 +350,10 @@ contains
 !!
 !!    Constructs two screened diagonals
 !!
-!!       1. Screened diagonal for decomposition D_wx <= T   or   D_wx * V_w * V_x <= T 
+!!       1. Screened diagonal for decomposition D_wx <= T   or   D_wx * V_w * V_x <= T
 !!          The latter if optional screening vector is present
 !!
-!!       2. Screened diagonal for construction of cholesky vectros  sqrt( D_wx * D_max ) <= T  
+!!       2. Screened diagonal for construction of cholesky vectros  sqrt( D_wx * D_max ) <= T
 !!
 !!    Writes all information to files target_diagonal and construct_diagonal
 !!
@@ -374,7 +377,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: screening_vector_reduced
       real(dp), dimension(:), allocatable :: max_in_shp_diagonal
-      real(dp), dimension(:), allocatable :: D_xy 
+      real(dp), dimension(:), allocatable :: D_xy
 !
       real(dp), dimension(:,:,:,:), pointer :: g_ABAB_p
 !
@@ -586,9 +589,9 @@ contains
                          ints=[n_construct_aop], fs='(t6, a)')
 !
 !     Prepare for construction of diagonal and screening vector
-!     Make index lists such that the diagonal construction 
+!     Make index lists such that the diagonal construction
 !     may be omp-parallelized
-!     
+!
       call mem%alloc(ao_offsets, n_sig_shp)
       ao_offsets = 0
 !
@@ -682,11 +685,11 @@ contains
          endif
 !
       enddo
-!$omp end parallel do   
+!$omp end parallel do
 !
       if (.not. present(screening_vector)) &
          call mem%dealloc(screening_vector_local, solver%n_ao*solver%n_ao)
-      call mem%dealloc(sig_shp_index, n_sig_shp, 2) 
+      call mem%dealloc(sig_shp_index, n_sig_shp, 2)
       call mem%dealloc(ao_offsets, n_sig_shp)
 !
 !     Write info file for target diagonal containing
@@ -732,16 +735,16 @@ contains
 !!    Construct significant diagonal atomic
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Constructs the significant diagonal for the given decomposition threshold within 
-!!    the one-center approximation. Screening vector is optional argument for 
+!!    Constructs the significant diagonal for the given decomposition threshold within
+!!    the one-center approximation. Screening vector is an optional argument for
 !!    additional screening.
 !!
 !!    Constructs two screened diagonals
 !!
-!!       1. Screened diagonal for decomposition D_wx <= T   or   D_wx * V_w * V_x <= T 
+!!       1. Screened diagonal for decomposition D_wx <= T   or   D_wx * V_w * V_x <= T
 !!          The latter if optional screening vector is present
 !!
-!!       2. Screened diagonal for construction of cholesky vectros  sqrt( D_wx * D_max ) <= T  
+!!       2. Screened diagonal for construction of cholesky vectors sqrt( D_wx * D_max ) <= T
 !!
 !!    Writes all information to files target_diagonal and construct_diagonal
 !!
@@ -761,7 +764,7 @@ contains
       real(dp), dimension(:), allocatable, target :: screening_vector_local
       real(dp), dimension(:,:), pointer :: screening_vector_local_pt
       real(dp), dimension(:), allocatable :: screening_vector_reduced, max_in_shp_diagonal
-      real(dp), dimension(:), allocatable :: D_xy 
+      real(dp), dimension(:), allocatable :: D_xy
 !
       real(dp), dimension(:,:,:,:), pointer :: g_ABAB_p
       real(dp), dimension(system%max_shell_size**4), target :: g_ABAB
@@ -855,7 +858,7 @@ contains
                   D_AB_screen(K) = g_ABAB_p(x, y, x, y)&
                               *screening_vector_local_pt(x + A_interval%first - 1, &
                                                       y + B_interval%first - 1)
-!  
+!
                   D_AB(K) = g_ABAB_p(x, y, x, y)
 !
                enddo
@@ -975,9 +978,9 @@ contains
                          ints=[n_construct_aop], fs='(t6, a)')
 !
 !     Prepare for construction of diagonal and screening vector
-!     Make index lists such that the diagonal construction 
+!     Make index lists such that the diagonal construction
 !     may be omp-parallelized
-!    
+!
       call mem%alloc(ao_offsets, n_sig_shp)
       ao_offsets = 0
 !
@@ -1123,11 +1126,11 @@ contains
 !!    Construct diagonal batches
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Divides the significant diagonal into batches and prepares for 
+!!    Divides the significant diagonal into batches and prepares for
 !!    partitioned decomposition
 !!
       implicit none
-!  
+!
       class(eri_cd) :: solver
 !
       type(molecular_system) :: system
@@ -1195,7 +1198,7 @@ contains
 !
                shp = shp + 1
 !
-               if (sig_shp(shp)) then 
+               if (sig_shp(shp)) then
 !
                   A_interval = system%shell_limits(A)
                   B_interval = system%shell_limits(B)
@@ -1207,7 +1210,7 @@ contains
                      sig_shp_batch(shp) = .true.
                      n_sig_shp_batch = n_sig_shp_batch + 1
 !
-                     if (xy_last .gt. batch_last) then 
+                     if (xy_last .gt. batch_last) then
 !
                         batch_last = xy_last
 !
@@ -1220,7 +1223,7 @@ contains
                endif
 !
             enddo
-         enddo     
+         enddo
 !
          current_batch_size = batch_last - batch_first + 1
 !
@@ -1261,7 +1264,7 @@ contains
          call mem%dealloc(D_batch, current_batch_size)
          call mem%dealloc(screening_vector_batch, current_batch_size)
 !
-         batch_first = batch_last + 1  
+         batch_first = batch_last + 1
          batch_last  = batch_size*(batch + 1)
 !
          if ((batch + 1) == solver%n_batches) batch_last = n_sig_aop
@@ -1322,13 +1325,13 @@ contains
 !
       do batch = 1, solver%n_batches
 !
-         n_cholesky_total    = n_cholesky_total + n_cholesky_batches(batch) 
-         n_shp_in_basis_total = n_shp_in_basis_total + n_shp_in_basis_batches(batch) 
+         n_cholesky_total    = n_cholesky_total + n_cholesky_batches(batch)
+         n_shp_in_basis_total = n_shp_in_basis_total + n_shp_in_basis_batches(batch)
 !
       enddo
 !
-!     Read and paste together basis information 
-!     from the different batches 
+!     Read and paste together basis information
+!     from the different batches
 !
       call mem%alloc(alpha, n_cholesky_total)
       call mem%alloc(beta, n_cholesky_total)
@@ -1345,22 +1348,22 @@ contains
       do batch = 1, solver%n_batches
 !
 !        Basis_shell_data file order:
-!  
-!           1. number of shps in basis 
+!
+!           1. number of shps in basis
 !           2. basis_shell_info
 !           3. cholesky_basis
-         
+
          write(temp_name, '(a11, i4.4)') 'basis_info_', batch
          batch_file = sequential_file(trim(temp_name))
-!  
+!
          call batch_file%open_('read', 'rewind')
 !
          call mem%alloc(basis_shell_info, n_shp_in_basis_batches(batch), 4)
          call mem%alloc(cholesky_basis, n_cholesky_batches(batch), 3)
 !
-         call batch_file%read_blank()  
-         call batch_file%read_(basis_shell_info, n_shp_in_basis_batches(batch)*4)  
-         call batch_file%read_(cholesky_basis, n_cholesky_batches(batch)*3)  
+         call batch_file%read_blank()
+         call batch_file%read_(basis_shell_info, n_shp_in_basis_batches(batch)*4)
+         call batch_file%read_(cholesky_basis, n_cholesky_batches(batch)*3)
 !
          call batch_file%close_()
 !
@@ -1389,7 +1392,7 @@ contains
 !
       enddo
 !
-!     Sort the arrays according to an alphabeta and an AB ordering 
+!     Sort the arrays according to an alphabeta and an AB ordering
 !     from smallest to largest
 !
       call mem%alloc(index_AB, n_shp_in_basis_total)
@@ -1440,7 +1443,7 @@ contains
       call mem%dealloc(index_AB, n_shp_in_basis_total)
 !
 !     Construct significant shell pair logical array,
-!     and count the number of significant AO and shell pairs 
+!     and count the number of significant AO and shell pairs
 !
       call mem%alloc(sig_shp, solver%n_shp)
 !
@@ -1451,13 +1454,13 @@ contains
 !
       I = 1
       shp = 0
-!    
+!
       do B_shell = 1, solver%n_s
          do A_shell = B_shell, solver%n_s
 !
             shp = shp + 1
 !
-            if (shp == sorted_AB(I)) then 
+            if (shp == sorted_AB(I)) then
 !
                A_interval = system%shell_limits(A_shell)
                B_interval = system%shell_limits(B_shell)
@@ -1517,7 +1520,7 @@ contains
                A_interval = system%shell_limits(A_shell)
                B_interval = system%shell_limits(B_shell)
 !
-               if (sig_shp(shp)) then 
+               if (sig_shp(shp)) then
 !
                   count_sig = count_sig + 1
 !
@@ -1550,7 +1553,7 @@ contains
          A_interval = system%shell_limits(sorted_A(I))
          B_interval = system%shell_limits(sorted_B(I))
 !
-         do aop = 1, n_basis_aop_in_AB_total 
+         do aop = 1, n_basis_aop_in_AB_total
 !
             alpha_in_A = sorted_alpha(aop + n_basis_aop_in_AB_offset) - A_interval%first + 1
             beta_in_B  = sorted_beta(aop + n_basis_aop_in_AB_offset) - B_interval%first + 1
@@ -1567,13 +1570,13 @@ contains
 !
             D(alpha_beta_in_AB + alpha_beta_offset(count_sig)) = &
                                     D_old(alpha_beta_in_AB + alpha_beta_offset_old(count_sig))
-!        
+!
             screening_vector(alpha_beta_in_AB + alpha_beta_offset(count_sig)) = &
                                     screening_vector_old(alpha_beta_in_AB + alpha_beta_offset_old(count_sig))
 !
          enddo
 !
-         n_basis_aop_in_AB_offset = n_basis_aop_in_AB_offset + n_basis_aop_in_AB_total 
+         n_basis_aop_in_AB_offset = n_basis_aop_in_AB_offset + n_basis_aop_in_AB_total
 !
       enddo
 !
@@ -1658,7 +1661,7 @@ contains
 !
       call output%printf('n', '- Decomposing batched diagonal', fs='(/t3,a)')
 !
-      do batch = 1, solver%n_batches 
+      do batch = 1, solver%n_batches
 !
          call output%printf('n', 'Batch (i0):', ints=[batch], fs='(/t3,a)')
 !
@@ -1727,26 +1730,45 @@ contains
 !
 !     Integer allocatable arrays
 !
-      integer, dimension(:), allocatable :: sig_shp_to_first_sig_aop         ! Maps significant shell pair to first ao pair
-      integer, dimension(:), allocatable :: new_sig_shp_to_first_sig_aop     ! Maps significant shell pair to first ao pair
-      integer, dimension(:), allocatable :: sorted_max_sig_shp               ! Index array for sorting shell pairs according to their maximum values
-      integer, dimension(:), allocatable :: sorted_qual_aop_in_shp_indices   ! Index array for sorting the qualified ao pairs in shell pair
-      integer, dimension(:), allocatable :: n_qual_aop_in_prev_shps          ! Offsets for omp-loop, number of qualified ao pairs in preceding shell pair
-      integer, dimension(:), allocatable :: qual_max                        ! Index list containing order in which qualified diagonals are selected in decomposition
-      integer, dimension(:), allocatable :: sig_shp_to_previous_sig_shp       ! Maps significant shell pair indices to significant shell pair indices of last iteration, used for reduction
-!      
-      integer, dimension(:,:), allocatable :: sig_shp_to_shells              ! Maps significant shell pair to shells
-      integer, dimension(:,:), allocatable :: new_sig_shp_to_shells          ! Maps significant shell pair to shells   
-      integer, dimension(:,:), allocatable :: sig_aop_to_aos                ! Maps significant ao pair to aos
-      integer, dimension(:,:), allocatable :: new_sig_aop_to_aos            ! Maps significant ao pair to aos      
-      integer, dimension(:,:), allocatable :: qual_shp                       ! List of qualified shell pairs
-      integer, dimension(:,:), allocatable :: qual_shp_copy                  ! List of qualified shell pairs, copy used to reduce size
-      integer, dimension(:,:), allocatable :: qual_aop                      ! List of qualified ao pairs
-      integer, dimension(:,:), allocatable :: qual_aop_copy                 ! List of qualified ao pairs, copy used to reduce size
-      integer, dimension(:,:), allocatable :: cholesky_basis                ! ao and ao pair indices of the elements of the cholesky basis
-      integer, dimension(:,:), allocatable :: cholesky_basis_new            ! ao and ao pair indices of the elements of the cholesky basis, written to file at end of routine
-      integer, dimension(:,:), allocatable :: basis_shell_info_full         ! Info on shells containing elements of the basis
-      integer, dimension(:,:), allocatable :: basis_shell_info              ! Info on shells containing elements of the basis, written to file at end of routine
+!     Map significant shell pair to first ao pair
+      integer, dimension(:), allocatable :: sig_shp_to_first_sig_aop
+!     Map significant shell pair to first ao pair
+      integer, dimension(:), allocatable :: new_sig_shp_to_first_sig_aop
+!     Index array for sorting shell pairs according to their maximum values
+      integer, dimension(:), allocatable :: sorted_max_sig_shp
+!     Index array for sorting the qualified ao pairs in shell pair
+      integer, dimension(:), allocatable :: sorted_qual_aop_in_shp_indices
+!     Offsets for omp-loop, number of qualified ao pairs in preceding shell pair
+      integer, dimension(:), allocatable :: n_qual_aop_in_prev_shps
+!     Index list containing order in which qualified diagonals are selected in decomposition
+      integer, dimension(:), allocatable :: qual_max
+!     Map significant shell pair indices to significant shell pair indices of last iteration
+      integer, dimension(:), allocatable :: sig_shp_to_previous_sig_shp
+!
+!     Maps significant shell pair to shells
+      integer, dimension(:,:), allocatable :: sig_shp_to_shells
+!     Maps significant shell pair to shells
+      integer, dimension(:,:), allocatable :: new_sig_shp_to_shells
+!     Maps significant ao pair to aos
+      integer, dimension(:,:), allocatable :: sig_aop_to_aos
+!     Maps significant ao pair to aos
+      integer, dimension(:,:), allocatable :: new_sig_aop_to_aos
+!     List of qualified shell pairs
+      integer, dimension(:,:), allocatable :: qual_shp
+!     List of qualified shell pairs, copy used to reduce size
+      integer, dimension(:,:), allocatable :: qual_shp_copy
+!     List of qualified ao pairs
+      integer, dimension(:,:), allocatable :: qual_aop
+!     List of qualified ao pairs, copy used to reduce size
+      integer, dimension(:,:), allocatable :: qual_aop_copy
+!     ao and ao pair indices of the elements of the cholesky basis
+      integer, dimension(:,:), allocatable :: cholesky_basis
+!     ao and ao pair indices of the elements of the cholesky basis, written to file at the end
+      integer, dimension(:,:), allocatable :: cholesky_basis_new
+!     Info on shells containing elements of the basis
+      integer, dimension(:,:), allocatable :: basis_shell_info_full
+!     Info on shells containing elements of the basis, written to file at end of routine
+      integer, dimension(:,:), allocatable :: basis_shell_info
 !
 !     Logicals
 !
@@ -1769,19 +1791,30 @@ contains
 !
 !     Real allocatable arrays
 !
-      real(dp), dimension(:), allocatable :: D_xy                             ! Array for eri diagonal elements
-      real(dp), dimension(:), allocatable :: D_xy_new                         ! Array for eri diagonal elements, used for reduction
-      real(dp), dimension(:), allocatable :: approx_diagonal_accumulative     ! Array for accumulating approximate diagonal
-      real(dp), dimension(:), allocatable :: max_in_sig_shp                    ! Maximum in each significant shell pair
-      real(dp), dimension(:), allocatable :: sorted_qual_aop_in_shp            ! Sorted qualified ao pair in shell pair
-      real(dp), dimension(:), allocatable :: screening_vector                 ! Screening vector for diagonal
-      real(dp), dimension(:), allocatable :: screening_vector_new             ! Screening vector for diagonal, used for reduction
-!      
-      real(dp), dimension(:,:), allocatable :: g_wxyz                         ! Array for eri
-      real(dp), dimension(:,:), allocatable :: cholesky_tmp                   ! Array used for dgemm, reordered copy of cholesky vectors of current batch of qualified
+!     Array for eri diagonal elements
+      real(dp), dimension(:), allocatable :: D_xy
+!     Array for eri diagonal elements, used for reduction
+      real(dp), dimension(:), allocatable :: D_xy_new
+!     Array for accumulating approximate diagonal
+      real(dp), dimension(:), allocatable :: approx_diagonal_accumulative
+!     Maximum in each significant shell pair
+      real(dp), dimension(:), allocatable :: max_in_sig_shp
+!     Sorted qualified ao pair in shell pair
+      real(dp), dimension(:), allocatable :: sorted_qual_aop_in_shp
+!     Screening vector for diagonal
+      real(dp), dimension(:), allocatable :: screening_vector
+!     Screening vector for diagonal, used for reduction
+      real(dp), dimension(:), allocatable :: screening_vector_new
 !
-      real(dp), dimension(system%max_shell_size**4), target :: g_ABCD         ! Array for eri for shell pairs AB and CD
-      real(dp), dimension(:,:,:,:), pointer :: g_ABCD_p                       ! Pointer for eri for shell pairs AB and CD
+!     Array for eri
+      real(dp), dimension(:,:), allocatable :: g_wxyz
+!     Array used for dgemm, reordered copy of cholesky vectors of current batch of qualified
+      real(dp), dimension(:,:), allocatable :: cholesky_tmp
+!
+!     Array for eri for shell pairs AB and CD
+      real(dp), dimension(system%max_shell_size**4), target :: g_ABCD
+!     Pointer for eri for shell pairs AB and CD
+      real(dp), dimension(:,:,:,:), pointer :: g_ABCD_p
 !
 !     Real pointers
 !
@@ -1917,7 +1950,7 @@ contains
 !
       do while (.not. done)
 !
-         write_warning = .true. ! Logical used to ensure warning of 
+         write_warning = .true. ! Logical used to ensure warning of
 !                                 significant negative diagonal only appears once per iteration
 !
          solver%iteration = solver%iteration + 1
@@ -2211,7 +2244,7 @@ contains
             current_qual = current_qual + 1
 !
             qual_max(current_qual) = 1
-            xy_max = qual_aop(1, 3) 
+            xy_max = qual_aop(1, 3)
             D_max = D_xy(xy_max) - approx_diagonal_accumulative(xy_max)
 !
             do qual = 1, n_qual_aop
@@ -2306,7 +2339,7 @@ contains
                      D_xy(xy) = zero
                      approx_diagonal_accumulative(xy) = zero
 !
-                  elseif ((D_xy(xy) - approx_diagonal_accumulative(xy))*screening_vector(xy) & 
+                  elseif ((D_xy(xy) - approx_diagonal_accumulative(xy))*screening_vector(xy) &
                           .lt. solver%threshold .or. &
                          (D_xy(xy) - approx_diagonal_accumulative(xy)) .lt. solver%threshold) then
 !
@@ -2656,7 +2689,7 @@ contains
 !!    Construct S
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Constructs the overlap matrix (J|K) of the auxiliary basis 
+!!    Constructs the overlap matrix (J|K) of the auxiliary basis
 !!    and Cholesky decomposes it.
 !!
       implicit none
@@ -2678,16 +2711,22 @@ contains
 !
 !     Integer allocatable arrays
 !
-      integer, dimension(:,:), allocatable :: basis_shell_info                      ! Info on shells containing elements of the basis
-      integer, dimension(:,:), allocatable :: basis_shell_info_full                 ! Info on shells containing elements of the basis
-      integer, dimension(:,:), allocatable :: cholesky_basis                        ! ao and ao pair indices of the elements of the cholesky basis
-      integer, dimension(:,:), allocatable :: cholesky_basis_updated                ! ao and ao pair indices of the elements of the cholesky basis    
-!  
-      integer, dimension(3*system%max_shell_size**2), target :: basis_aops_in_CD_shp ! basis ao pairs in shell pair CD
-      integer, dimension(3*system%max_shell_size**2), target :: basis_aops_in_AB_shp ! basis ao pairs in shell pair AB
+!     Info on shells containing elements of the basis
+      integer, dimension(:,:), allocatable :: basis_shell_info
+      integer, dimension(:,:), allocatable :: basis_shell_info_full
+!     ao and ao pair indices of the elements of the cholesky basis
+      integer, dimension(:,:), allocatable :: cholesky_basis
+      integer, dimension(:,:), allocatable :: cholesky_basis_updated
 !
-      integer, dimension(:,:), pointer :: basis_aops_in_CD_shp_p                     ! basis ao pairs in shell pair CD
-      integer, dimension(:,:), pointer :: basis_aops_in_AB_shp_p                     ! basis ao pairs in shell pair AB
+!     basis ao pairs in shell pair CD
+      integer, dimension(3*system%max_shell_size**2), target :: basis_aops_in_CD_shp
+!     basis ao pairs in shell pair AB
+      integer, dimension(3*system%max_shell_size**2), target :: basis_aops_in_AB_shp
+!
+!     basis ao pairs in shell pair CD
+      integer, dimension(:,:), pointer :: basis_aops_in_CD_shp_p
+!     basis ao pairs in shell pair AB
+      integer, dimension(:,:), pointer :: basis_aops_in_AB_shp_p
       integer, dimension(:,:), allocatable :: aops_in_basis
 !
       integer, dimension(:), allocatable :: keep_vectors
@@ -2910,7 +2949,7 @@ contains
          do shp_in_basis = 1, n_shp_in_basis
 !
               if (AB == basis_shell_info_full(shp_in_basis, 3)) then ! This shell pair is already
-                                                                    ! in the list, so must only 
+                                                                    ! in the list, so must only
                                                                     ! increment n_aops_in_shp.
 !
                  found = .true.
@@ -2922,7 +2961,7 @@ contains
 !
          enddo
 !
-         if(.not. found) then ! First aop in this shell pair was found, 
+         if(.not. found) then ! First aop in this shell pair was found,
                               ! set [A, B, AB, n_aops_in_shp = 1]
 !
             n_shp_in_basis = n_shp_in_basis + 1
@@ -2958,10 +2997,10 @@ contains
       max_n_basis_aops_in_shp = maxval(basis_shell_info(1:n_shp_in_basis,4))
 !
       call mem%alloc(aops_in_basis, n_shp_in_basis, &
-                              3*max_n_basis_aops_in_shp)  ! [x, y] where x and y 
-                                                         ! are the indices of the 
-                                                         ! AOs in the shell they
-                                                         ! belong to.
+                              3*max_n_basis_aops_in_shp)  ! [x, y] where x and y
+                                                          ! are the indices of the
+                                                          ! AOs in the shell they
+                                                          ! belong to.
 !
      aops_in_basis = 0
 !
@@ -2993,7 +3032,7 @@ contains
                = I
 !
          endif
-      enddo 
+      enddo
 !
       if (current_aop_in_shp .ne. basis_shell_info(AB_shp, 4)) &
          call output%error_msg('something went wrong in construct_S.')
@@ -3060,7 +3099,7 @@ contains
 !
       call dtrtri('l','n', solver%n_cholesky, cholesky_inverse, solver%n_cholesky, info)
 !
-      if (info /= 0) then 
+      if (info /= 0) then
          call output%error_msg('Matrix inversion failed.' // &
                                ' "Dtrtri" finished with info: (i0)', ints=[info])
       end if
@@ -3179,7 +3218,7 @@ contains
 !!
       implicit none
 !
-      class(eri_cd) :: solver 
+      class(eri_cd) :: solver
 !
       call input%get_keyword_in_section('threshold', 'solver cholesky', solver%threshold)
       call input%get_keyword_in_section('span', 'solver cholesky', solver%span)
@@ -3228,12 +3267,12 @@ contains
       call output%printf('m', 'Max qual:            (i10)', &
                          ints=[solver%max_qual], fs='(t6, a)')
 !
-      if (solver%one_center) then 
+      if (solver%one_center) then
 !
          call output%printf('m', 'Doing one-center Cholesky decomposition (1C-CD).', &
                             fs='(/t6, a)')
-!      
-      endif 
+!
+      endif
 !
    end subroutine print_settings_eri_cd
 !
@@ -3248,14 +3287,14 @@ contains
 !!
 !!       L_Jpq = C_wpCxq (wx|K)[Q^{-T}]_KJ,
 !!
-!!    where C_wp are the orbital coefficients, 
-!!    and Q is the Cholesky factor of the overlap of the elements 
+!!    where C_wp are the orbital coefficients,
+!!    and Q is the Cholesky factor of the overlap of the elements
 !!    of the Cholesky basis, S.
 !!
-!!    Passes the Cholesky vectors to the integrals (mo_integral_tool)
+!!    Passes the Cholesky vectors to the integrals (eri_tool)
 !!
       use array_utilities, only: zero_array
-      use mo_integral_tool_class, only: mo_integral_tool
+      use mo_eri_tool_class, only: mo_eri_tool
 !
       implicit none
 !
@@ -3267,7 +3306,7 @@ contains
 !
       real(dp), dimension(n_ao, n_mo), intent(in) :: orbital_coefficients
 !
-      type(mo_integral_tool), intent(inout) :: integrals
+      class(mo_eri_tool), intent(inout) :: integrals
 !
       integer :: A, B, C, D, K_shp, AB_shp
       integer :: w, x, y, z
@@ -3363,7 +3402,7 @@ contains
 !
       call solver%cholesky_basis_file%close_()
 !
-!     Prepare for OMP 
+!     Prepare for OMP
 !
       call mem%alloc(AB_info, n_construct_shp, 2) ! [A, B]
 !
@@ -3416,7 +3455,7 @@ contains
             D = basis_shell_info(K_shp, 2)
 !
             C_interval = system%shell_limits(C)
-            D_interval = system%shell_limits(D)            
+            D_interval = system%shell_limits(D)
 !
 !$omp parallel do private(AB_shp, A, B, A_interval, B_interval, g_ABCD, g_ABCD_p, w, x, J, y, z)
             do AB_shp = 1, n_construct_shp
@@ -3434,7 +3473,7 @@ contains
                         => g_ABCD(1 : A_interval%length &
                                      *B_interval%length &
                                      *C_interval%length &
-                                     *D_interval%length)  
+                                     *D_interval%length)
 !
                if (A == B) then
 !
@@ -3521,7 +3560,7 @@ contains
             do J = 1, basis_shell_info(K_shp,4)
                do p = 1, batch_p%length
                   do q = 1, n_mo
-                  
+
 !
                      g_qpK(q,p, aops_in_basis(K_shp, J + max_n_basis_aops_in_shp*2)) = g_qpK_red(q,p,J)
 !
@@ -3559,8 +3598,7 @@ contains
                                           1,               &
                                           n_mo,            &
                                           batch_p%first,   &
-                                          batch_p%last,    &
-                                          q_leq_p=.true.)
+                                          batch_p%last)
 !
          call mem%dealloc(L_Jqp, solver%n_cholesky, n_mo, batch_p%length)
 !
@@ -3585,7 +3623,7 @@ contains
 !!    Cholesky vectors diagonal test
 !!    Written by Sarai D. Folkestad, Feb 2020
 !!
-!!    Tests the decomposition by 
+!!    Tests the decomposition by
 !!
 !!       1. finding the largest element of (D_sig - D_approx)
 !!       2. finding the smallest (largest negative) element of (D_sig - D_approx)
@@ -3696,7 +3734,7 @@ contains
 !     Prepare for construction of diagonal
 !
       shp = 0        ! Shell pair number
-!    
+!
       call mem%alloc(ao_offsets, n_construct_shp)
       ao_offsets = 0
 !
@@ -3715,7 +3753,7 @@ contains
 !
                A_interval = system%shell_limits(A)
                B_interval = system%shell_limits(B)
-!     
+!
                construct_shp_index(current_construct_shp, 1) = A
                construct_shp_index(current_construct_shp, 2) = B
 !
@@ -3783,7 +3821,7 @@ contains
          endif
 !
       enddo
-!$omp end parallel do   
+!$omp end parallel do
 !
 !     Prepare for batching
 !
@@ -3809,7 +3847,7 @@ contains
             D = basis_shell_info(K_shp, 2)
 !
             C_interval = system%shell_limits(C)
-            D_interval = system%shell_limits(D)            
+            D_interval = system%shell_limits(D)
 !
             call mem%alloc(g_wxK, n_construct_aop, basis_shell_info(K_shp,4))
 !
@@ -3818,7 +3856,7 @@ contains
 !
                A = construct_shp_index(AB_shp, 1)
                B = construct_shp_index(AB_shp, 2)
-!  
+!
                A_interval = system%shell_limits(A)
                B_interval = system%shell_limits(B)
 !
@@ -3829,7 +3867,7 @@ contains
                         => g_ABCD(1 : A_interval%length &
                                      *B_interval%length &
                                      *C_interval%length &
-                                     *D_interval%length)  
+                                     *D_interval%length)
 !
                if (A == B) then
 !
@@ -3846,7 +3884,7 @@ contains
 !
                            g_wxK(wx + ao_offsets(AB_shp), K) = &
                                           g_ABCD_p(w - A_interval%first + 1, &
-                                                   x - B_interval%first + 1, y, z) 
+                                                   x - B_interval%first + 1, y, z)
 
 !
                         enddo
@@ -3866,16 +3904,15 @@ contains
 !
                            g_wxK(wx + ao_offsets(AB_shp), K) = &
                                           g_ABCD_p(w - A_interval%first + 1, &
-                                                   x - B_interval%first + 1, y, z) 
+                                                   x - B_interval%first + 1, y, z)
 !
                         enddo
                      enddo
                   enddo
 !
                endif
-
             enddo ! end loop over AB_shp
-!$omp end parallel do     
+!$omp end parallel do
 !
 !$omp parallel do private(J, wx, K)
             do J = 1, batch_J%length
@@ -3890,7 +3927,7 @@ contains
             enddo
 !$omp end parallel do
 !
-            call mem%dealloc(g_wxK, n_construct_aop, basis_shell_info(K_shp,4))                            
+            call mem%dealloc(g_wxK, n_construct_aop, basis_shell_info(K_shp,4))
 !
          enddo ! K_shp
 !
@@ -3901,8 +3938,8 @@ contains
                   D_xy(wx) = D_xy(wx) - L_wxJ(wx, J)**2
 !
             enddo
-         enddo  
-!$omp end parallel do      
+         enddo
+!$omp end parallel do
 !
          call mem%dealloc(L_wxJ, n_construct_aop, batch_J%length)
 !

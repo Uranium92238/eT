@@ -92,8 +92,8 @@ contains
 !
       req0 = 0
 !
-      req1_i = (wf%integrals%n_J)*(wf%n_o)
-      req1_k = (wf%integrals%n_J)*(wf%n_o)
+      req1_i = (wf%eri_complex%n_J)*(wf%n_o)
+      req1_k = (wf%eri_complex%n_J)*(wf%n_o)
 !
       req2 =  (wf%n_o**2)
 !
@@ -112,11 +112,11 @@ contains
 !
             call mem%alloc(g_ijkl, batch_i%length, wf%n_o, batch_k%length, wf%n_o)
 !
-            call wf%get_oooo_complex(g_ijkl,                        &
-                              batch_i%first, batch_i%last,  &
-                              1, wf%n_o,                    &
-                              batch_k%first, batch_k%last,  &
-                              1, wf%n_o)
+            call wf%eri_complex%get_eri_t1('oooo', g_ijkl,               &
+                                   batch_i%first, batch_i%last,  &
+                                   1, wf%n_o,                    &
+                                   batch_k%first, batch_k%last,  &
+                                   1, wf%n_o)
 !
 !$omp parallel do private(i,j,k)
             do j = 1, wf%n_o
@@ -145,8 +145,8 @@ contains
 !
       req0 = 0
 !
-      req1_i = (wf%integrals%n_J)*(wf%n_v)
-      req1_j = (wf%integrals%n_J)*(wf%n_v)
+      req1_i = (wf%eri_complex%n_J)*(wf%n_v)
+      req1_j = (wf%eri_complex%n_J)*(wf%n_v)
 !
       req2 =  2*wf%n_o*wf%n_v
 !
@@ -168,17 +168,15 @@ contains
             call mem%alloc(g_iajj, batch_i%length, wf%n_v, batch_j%length, batch_j%length)
             call mem%alloc(g_ijja, batch_i%length, batch_j%length, batch_j%length, wf%n_v)
 !
-            call wf%get_ovoo_complex(g_iajj,                        &
-                              batch_i%first, batch_i%last,  &
-                              1, wf%n_v,                    &
-                              batch_j%first, batch_j%last,  &
-                              batch_j%first, batch_j%last)
+            call wf%eri_complex%get_eri_t1('ovoo', g_iajj, batch_i%first, batch_i%last, &
+                                                   1, wf%n_v,                   &
+                                                   batch_j%first, batch_j%last, &
+                                                   batch_j%first, batch_j%last)
 !
-            call wf%get_ooov_complex(g_ijja,                        &
-                              batch_i%first, batch_i%last,  &
-                              batch_j%first, batch_j%last,  &
-                              batch_j%first, batch_j%last,  &
-                              1, wf%n_v)
+            call wf%eri_complex%get_eri_t1('ooov', g_ijja, batch_i%first, batch_i%last, &
+                                                   batch_j%first, batch_j%last, &
+                                                   batch_j%first, batch_j%last, &
+                                                   1, wf%n_v)
 !
 !$omp parallel do private (a, i, j)
             do a = 1, wf%n_v
@@ -202,16 +200,14 @@ contains
             call mem%alloc(g_aijj, wf%n_v, batch_i%length, batch_j%length, batch_j%length)
             call mem%alloc(g_ajji, wf%n_v, batch_j%length, batch_j%length, batch_i%length)
 !
-            call wf%get_vooo_complex(g_aijj,                        &
-                              1, wf%n_v,                    &
-                              batch_i%first, batch_i%last,  &
-                              batch_j%first, batch_j%last,  &
+            call wf%eri_complex%get_eri_t1('vooo', g_aijj, 1, wf%n_v, &
+                              batch_i%first, batch_i%last,    &
+                              batch_j%first, batch_j%last,    &
                               batch_j%first, batch_j%last)
 !
-            call wf%get_vooo_complex(g_ajji,                        &
-                              1, wf%n_v,                    &
-                              batch_j%first, batch_j%last,  &
-                              batch_j%first, batch_j%last,  &
+            call wf%eri_complex%get_eri_t1('vooo', g_ajji, 1, wf%n_v, &
+                              batch_j%first, batch_j%last,    &
+                              batch_j%first, batch_j%last,    &
                               batch_i%first, batch_i%last)
 !
 !$omp parallel do private(i, a, j)
@@ -240,8 +236,8 @@ contains
 !
       req0 = 0
 !
-      req1_i = (wf%integrals%n_J)*(wf%n_v)
-      req1_a = (wf%integrals%n_J)*(wf%n_v)
+      req1_i = (wf%eri_complex%n_J)*(wf%n_v)
+      req1_a = (wf%eri_complex%n_J)*(wf%n_v)
 !
       req2 =  2*wf%n_o*wf%n_v
 !
@@ -260,19 +256,19 @@ contains
 !
             call mem%alloc(g_abii, batch_a%length, wf%n_v, batch_i%length, batch_i%length)
 !
-            call wf%get_vvoo_complex(g_abii,                        &
-                              batch_a%first, batch_a%last,  &
-                              1, wf%n_v,                    &
-                              batch_i%first, batch_i%last,  &
-                              batch_i%first, batch_i%last)
+            call wf%eri_complex%get_eri_t1('vvoo', g_abii,              &
+                                   batch_a%first, batch_a%last, &
+                                   1, wf%n_v,                   &
+                                   batch_i%first, batch_i%last, &
+                                   batch_i%first, batch_i%last)
 !
             call mem%alloc(g_aiib, batch_a%length, batch_i%length, batch_i%length, wf%n_v)
 !
-            call wf%get_voov_complex(g_aiib,                        &
-                              batch_a%first, batch_a%last,  &
-                              batch_i%first, batch_i%last,  &
-                              batch_i%first, batch_i%last,  &
-                              1, wf%n_v)
+            call wf%eri_complex%get_eri_t1('voov', g_aiib,              &
+                                   batch_a%first, batch_a%last, &
+                                   batch_i%first, batch_i%last, &
+                                   batch_i%first, batch_i%last, &
+                                   1, wf%n_v)
 !
 !$omp parallel do private (a, b, i)
             do a = 1, batch_a%length

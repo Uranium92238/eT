@@ -71,34 +71,6 @@
    end subroutine add_t1_terms_ccs
 !
 !
-   module subroutine t1_transform_4_ccs(wf, Z_tuvw, Z_pqrs, t1)
-!!
-!!    T1 transform 4 index arrays
-!!    Written by Andreas Skeidsvoll, Apr 2019
-!!
-!!    Assumes that Z is in the MO basis and performs the T1 transformation,
-!!
-!!       Z_pqrs = sum_tuvw X_pt Y_qu X_rm Y_sn Z_tuvw,
-!!
-!!    where
-!!
-!!       X = I - t1
-!!       Y = I + t1^T
-!!
-!!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ
-!!    part, where it is equal to t_i^a.
-!!    NB: needs place for an additional 2*wf%n_mo**4 + wf%n_t1 in memory.
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-      real(dp), dimension(wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo), intent(in) :: Z_tuvw
-      real(dp), dimension(wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo), intent(out) :: Z_pqrs
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: t1
-!
-   end subroutine t1_transform_4_ccs
-!
-!
    module subroutine ao_to_t1_transformation_ccs(wf, x_wx, y_pq)
 !!
 !!    AO to T1 transformation 

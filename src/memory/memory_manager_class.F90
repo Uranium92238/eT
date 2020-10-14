@@ -94,76 +94,84 @@ module memory_manager_class
 !
       procedure :: alloc_r_1_memory_manager
       procedure :: alloc_r_2_memory_manager
-      procedure :: alloc_p_r_2_memory_manager
       procedure :: alloc_r_3_memory_manager
       procedure :: alloc_r_4_memory_manager
       procedure :: alloc_r_5_memory_manager
       procedure :: alloc_r_6_memory_manager
+      procedure :: alloc_r_2_p_memory_manager
+      procedure :: alloc_r_3_p_memory_manager
       procedure :: alloc_c_1_memory_manager
       procedure :: alloc_c_2_memory_manager
       procedure :: alloc_c_3_memory_manager
       procedure :: alloc_c_4_memory_manager
       procedure :: alloc_c_5_memory_manager
       procedure :: alloc_c_6_memory_manager
+      procedure :: alloc_c_3_p_memory_manager
       procedure :: alloc_i_1_memory_manager
       procedure :: alloc_i_2_memory_manager
       procedure :: alloc_i_3_memory_manager
       procedure :: alloc_i_4_memory_manager
       procedure :: alloc_l_1_memory_manager
-      generic   :: alloc             => alloc_r_1_memory_manager, &
-                                        alloc_r_2_memory_manager, &
-                                        alloc_p_r_2_memory_manager, &
-                                        alloc_r_3_memory_manager, &
-                                        alloc_r_4_memory_manager, &
-                                        alloc_r_5_memory_manager, &
-                                        alloc_r_6_memory_manager, &
-                                        alloc_c_1_memory_manager, &
-                                        alloc_c_2_memory_manager, &
-                                        alloc_c_3_memory_manager, &
-                                        alloc_c_4_memory_manager, &
-                                        alloc_c_5_memory_manager, &
-                                        alloc_c_6_memory_manager, &
-                                        alloc_i_1_memory_manager, &
-                                        alloc_i_2_memory_manager, &
-                                        alloc_i_3_memory_manager, &
-                                        alloc_i_4_memory_manager, &
+      generic   :: alloc             => alloc_r_1_memory_manager,   &
+                                        alloc_r_2_memory_manager,   &
+                                        alloc_r_3_memory_manager,   &
+                                        alloc_r_4_memory_manager,   &
+                                        alloc_r_5_memory_manager,   &
+                                        alloc_r_6_memory_manager,   &
+                                        alloc_r_2_p_memory_manager, &
+                                        alloc_r_3_p_memory_manager, &
+                                        alloc_c_1_memory_manager,   &
+                                        alloc_c_2_memory_manager,   &
+                                        alloc_c_3_memory_manager,   &
+                                        alloc_c_4_memory_manager,   &
+                                        alloc_c_5_memory_manager,   &
+                                        alloc_c_6_memory_manager,   &
+                                        alloc_c_3_p_memory_manager, &
+                                        alloc_i_1_memory_manager,   &
+                                        alloc_i_2_memory_manager,   &
+                                        alloc_i_3_memory_manager,   &
+                                        alloc_i_4_memory_manager,   &
                                         alloc_l_1_memory_manager
 !
       procedure :: dealloc_r_1_memory_manager
       procedure :: dealloc_r_2_memory_manager
-      procedure :: dealloc_p_r_2_memory_manager
       procedure :: dealloc_r_3_memory_manager
       procedure :: dealloc_r_4_memory_manager
       procedure :: dealloc_r_5_memory_manager
       procedure :: dealloc_r_6_memory_manager
+      procedure :: dealloc_r_2_p_memory_manager
+      procedure :: dealloc_r_3_p_memory_manager
       procedure :: dealloc_c_1_memory_manager
       procedure :: dealloc_c_2_memory_manager
       procedure :: dealloc_c_3_memory_manager
       procedure :: dealloc_c_4_memory_manager
       procedure :: dealloc_c_5_memory_manager
       procedure :: dealloc_c_6_memory_manager
+      procedure :: dealloc_c_3_p_memory_manager
       procedure :: dealloc_i_1_memory_manager
       procedure :: dealloc_i_2_memory_manager
       procedure :: dealloc_i_3_memory_manager
       procedure :: dealloc_i_4_memory_manager
       procedure :: dealloc_l_1_memory_manager
-      generic   :: dealloc           => dealloc_r_1_memory_manager, &
-                                        dealloc_r_2_memory_manager, &
-                                        dealloc_p_r_2_memory_manager, &
-                                        dealloc_r_3_memory_manager, &
-                                        dealloc_r_4_memory_manager, &
-                                        dealloc_r_5_memory_manager, &
-                                        dealloc_r_6_memory_manager, &
-                                        dealloc_c_1_memory_manager, &
-                                        dealloc_c_2_memory_manager, &
-                                        dealloc_c_3_memory_manager, &
-                                        dealloc_c_4_memory_manager, &
-                                        dealloc_c_5_memory_manager, &
-                                        dealloc_c_6_memory_manager, &
-                                        dealloc_i_1_memory_manager, &
-                                        dealloc_i_2_memory_manager, &
-                                        dealloc_i_3_memory_manager, &
-                                        dealloc_i_4_memory_manager, &
+      generic   :: dealloc           => dealloc_r_1_memory_manager,   &
+                                        dealloc_r_2_memory_manager,   &
+                                        dealloc_r_3_memory_manager,   &
+                                        dealloc_r_4_memory_manager,   &
+                                        dealloc_r_5_memory_manager,   &
+                                        dealloc_r_6_memory_manager,   &
+                                        dealloc_r_2_p_memory_manager, &
+                                        dealloc_r_3_p_memory_manager, &
+                                        dealloc_c_1_memory_manager,   &
+                                        dealloc_c_2_memory_manager,   &
+                                        dealloc_c_3_memory_manager,   &
+                                        dealloc_c_4_memory_manager,   &
+                                        dealloc_c_5_memory_manager,   &
+                                        dealloc_c_6_memory_manager,   &
+                                        dealloc_c_3_p_memory_manager, &
+                                        dealloc_i_1_memory_manager,   &
+                                        dealloc_i_2_memory_manager,   &
+                                        dealloc_i_3_memory_manager,   &
+                                        dealloc_i_4_memory_manager,   &
                                         dealloc_l_1_memory_manager
 !
 !     Routines for determining the number of batches
@@ -171,8 +179,9 @@ module memory_manager_class
       procedure :: batch_setup_1_memory_manager
       procedure :: batch_setup_2_memory_manager
       procedure :: batch_setup_3_memory_manager
-      generic   :: batch_setup       => batch_setup_1_memory_manager, batch_setup_2_memory_manager, &
-                                          batch_setup_3_memory_manager
+      generic   :: batch_setup       => batch_setup_1_memory_manager, &
+                                        batch_setup_2_memory_manager, &
+                                        batch_setup_3_memory_manager
 !
       procedure :: batch_setup_3_ident_memory_manager
       generic   :: batch_setup_ident => batch_setup_3_ident_memory_manager
@@ -303,7 +312,7 @@ contains
    end subroutine check_for_leak_memory_manager
 !
 !
-   function get_available_memory_manager(mem) result(memory)
+   pure function get_available_memory_manager(mem) result(memory)
 !!
 !!    Get available  
 !!    Written by Eirik F. Kjønstad, Jan 2019 
@@ -488,61 +497,6 @@ contains
    end subroutine alloc_r_2_memory_manager
 !
 !
-   subroutine alloc_p_r_2_memory_manager(mem, array, M, N)
-!!
-!!    Alloc (memory manager)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
-!!
-!!    Allocates a two dimensional double precision pointer and updates the available
-!!    memory accordingly.
-!!
-      implicit none
-!
-      class(memory_manager) :: mem
-!
-      real(dp), dimension(:,:), pointer, contiguous :: array
-!
-      integer, intent(in) :: M, N ! First and second dimension of array that is being allocated
-!
-      integer :: size_array ! Total size of array (M*N)
-      integer :: error = 0
-!
-      character(len=100) :: error_msg
-!
-!     Error if pointer is already associated
-!
-      if (associated(array)) &
-         call output%error_msg('Tried to allocate associated pointer.')
-!
-      size_array = M*N
-!
-!     Allocate array and check whether allocation was successful
-!
-      allocate(array(M,N), stat = error, errmsg = error_msg)
-!
-      if (error .ne. 0) then
-         call mem%print_allocation_error(size_array, error_msg)
-      endif
-!
-!     Update the available memory
-!
-!     The 'double precision' type (see types.F90) is typically 8 bytes,
-!     though it might differ due to its definition in terms of precision.
-!
-      mem%available = mem%available - dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
-!
-   end subroutine alloc_p_r_2_memory_manager
-!
-!
    subroutine alloc_r_3_memory_manager(mem, array, M, N, O)
 !!
 !!    Alloc (memory manager)
@@ -705,6 +659,96 @@ contains
       call mem%update_memory_after_alloc(size_array, dp)
 !
    end subroutine alloc_r_6_memory_manager
+!
+!
+   subroutine alloc_r_2_p_memory_manager(mem, point, M, N)
+!!
+!!    Alloc r 2 pointer
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+!!    Allocates a two dimensional double precision array pointer
+!!    and updates the available memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      real(dp), dimension(:,:), pointer, contiguous :: point
+!
+      integer, intent(in) :: M, N ! First and second dimension of array
+!
+      integer :: size_array ! Total size of array (M*N)
+      integer :: error = 0
+!
+      character(len=100) :: error_msg
+!
+      if(associated(point)) then
+         call output%error_msg('Tried to allocate associated pointer')
+      endif
+!
+      size_array = M*N
+!
+!     Allocate array and check whether allocation was successful
+!
+      allocate(point(M,N), stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_allocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!
+!     The 'double precision' type (see types.F90) is typically 8 bytes,
+!     though it might differ due to its definition in terms of precision.
+!
+      call mem%update_memory_after_alloc(size_array, dp)
+!
+   end subroutine alloc_r_2_p_memory_manager
+!
+!
+   subroutine alloc_r_3_p_memory_manager(mem, point, M, N, O)
+!!
+!!    Alloc r 3 pointer
+!!    Written by Rolf H. Myhre, Jun. 2020
+!!
+!!    Allocates a three dimensional double precision array pointer
+!!    and updates the available memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      real(dp), dimension(:,:,:), pointer :: point
+!
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array 
+!
+      integer :: size_array ! Total size of array (M*N*O)
+      integer :: error = 0
+!
+      character(len=100) :: error_msg
+!
+      if(associated(point)) then
+         call output%error_msg('Tried to allocate associated pointer')
+      endif
+!
+      size_array = M*N*O
+!
+!     Allocate pointer and check whether allocation was successful
+!
+      allocate(point(M,N,O), stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_allocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!
+!     The 'double precision' type (see types.F90) is typically 8 bytes,
+!     though it might differ due to its definition in terms of precision.
+!
+      call mem%update_memory_after_alloc(size_array, dp)
+!
+   end subroutine alloc_r_3_p_memory_manager
 !
 !
    subroutine alloc_c_1_memory_manager(mem, array, M)
@@ -953,6 +997,51 @@ contains
    end subroutine alloc_c_6_memory_manager
 !
 !
+   subroutine alloc_c_3_p_memory_manager(mem, point, M, N, O)
+!!
+!!    Alloc c 3 pointer
+!!    Written by Rolf H. Myhre, Jun. 2020
+!!
+!!    Allocates a three dimensional double precision array pointer
+!!    and updates the available memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      complex(dp), dimension(:,:,:), pointer :: point
+!
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array 
+!
+      integer :: size_array ! Total size of array (M*N*O)
+      integer :: error = 0
+!
+      character(len=100) :: error_msg
+!
+      size_array = M*N*O
+!
+      if(associated(point)) then
+         call output%error_msg('Tried to allocate associated pointer')
+      endif
+!
+!     Allocate pointer and check whether allocation was successful
+!
+      allocate(point(M,N,O), stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_allocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!
+!     The 'double precision' type (see types.F90) is typically 8 bytes,
+!     though it might differ due to its definition in terms of precision.
+!
+      call mem%update_memory_after_alloc(size_array, 2*dp)
+!
+   end subroutine alloc_c_3_p_memory_manager
+!
+!
    subroutine dealloc_r_1_memory_manager(mem, array, M)
 !!
 !!    Dealloc (memory manager)
@@ -1033,47 +1122,6 @@ contains
       mem%available = mem%available + dp*size_array
 !
    end subroutine dealloc_r_2_memory_manager
-!
-!
-   subroutine dealloc_p_r_2_memory_manager(mem, array, M, N)
-!!
-!!    Dealloc (memory manager)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
-!!
-!!    Deallocates a two dimensional double precision pointer and updates the available
-!!    memory accordingly.
-!!
-      implicit none
-!
-      class(memory_manager) :: mem
-!
-      real(dp), dimension(:,:), pointer, contiguous :: array
-!
-      integer, intent(in) :: M, N ! First and second dimension of array 
-!
-      integer :: size_array ! Total size of array (M*N)
-      integer :: error = 0
-!
-      character(len=100) :: error_msg
-!
-      size_array = M*N
-!
-!     Deallocate array and check whether deallocation was successful
-!
-      deallocate(array, stat = error, errmsg = error_msg)
-!
-      if (error .ne. 0) then
-         call mem%print_deallocation_error(size_array, error_msg)
-      endif
-!
-!     Update the available memory
-!
-!     The 'double precision' type (see types.F90) is typically 8 bytes,
-!     though it might differ due to its definition in terms of precision.
-!
-      mem%available = mem%available + dp*size_array
-!
-   end subroutine dealloc_p_r_2_memory_manager
 !
 !
    subroutine dealloc_r_3_memory_manager(mem, array, M, N, O)
@@ -1238,6 +1286,88 @@ contains
       mem%available = mem%available + dp*size_array
 !
    end subroutine dealloc_r_6_memory_manager
+!
+!
+   subroutine dealloc_r_2_p_memory_manager(mem, point, M, N)
+!!
+!!    Dealloc r 2 pointer
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+!!    Deallocates a two dimensional double precision array pointer 
+!!    and updates the available memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      real(dp), dimension(:,:), pointer :: point
+!
+      integer, intent(in) :: M, N ! First and second dimension of array 
+!
+      integer :: size_array ! Total size of array (M*N)
+      integer :: error = 0
+!
+      character(len=100) :: error_msg
+!
+      size_array = M*N
+!
+!     Deallocate array and check whether deallocation was successful
+!
+      deallocate(point, stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_deallocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!
+!     The 'double precision' type (see types.F90) is typically 8 bytes,
+!     though it might differ due to its definition in terms of precision.
+!
+      mem%available = mem%available + dp*size_array
+!
+   end subroutine dealloc_r_2_p_memory_manager
+!
+!
+   subroutine dealloc_r_3_p_memory_manager(mem, point, M, N, O)
+!!
+!!    Dealloc r 3 pointer
+!!    Written by Rolf H. Myhre, January 2019
+!!
+!!    Deallocates a three dimensional double precision array pointer 
+!!    and updates the available memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      real(dp), dimension(:,:,:), pointer :: point
+!
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array
+!
+      integer :: size_array ! Total size of array (M*N*O)
+      integer :: error = 0
+!
+      character(len=100) :: error_msg
+!
+      size_array = M*N*O
+!
+!     Deallocate pointer and check whether deallocation was successful
+!
+      deallocate(point, stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_deallocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!
+!     The 'double precision' type (see types.F90) is typically 8 bytes,
+!     though it might differ due to its definition in terms of precision.
+!
+      mem%available = mem%available + dp*size_array
+!
+   end subroutine dealloc_r_3_p_memory_manager
 !
 !
    subroutine dealloc_c_1_memory_manager(mem, array, M)
@@ -1484,6 +1614,47 @@ contains
       mem%available = mem%available + 2*dp*size_array
 !
    end subroutine dealloc_c_6_memory_manager
+!
+!
+   subroutine dealloc_c_3_p_memory_manager(mem, point, M, N, O)
+!!
+!!    Dealloc c 3 pointer
+!!    Written by Rolf H. Myhre, January 2019
+!!
+!!    Deallocates a three dimensional double precision pointer 
+!!    and updates the available memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      complex(dp), dimension(:,:,:), pointer :: point
+!
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array
+!
+      integer :: size_array ! Total size of array (M*N*O)
+      integer :: error = 0
+!
+      character(len=100) :: error_msg
+!
+      size_array = M*N*O
+!
+!     Deallocate pointer and check whether deallocation was successful
+!
+      deallocate(point, stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_deallocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!
+!     The 'double precision' type (see types.F90) is typically 8 bytes,
+!     though it might differ due to its definition in terms of precision.
+!
+      mem%available = mem%available + 2*dp*size_array
+!
+   end subroutine dealloc_c_3_p_memory_manager
 !
 !
    subroutine alloc_i_1_memory_manager(mem, array, M)

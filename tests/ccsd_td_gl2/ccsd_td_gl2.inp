@@ -16,6 +16,11 @@ memory
    available: 8
 end memory
 
+integrals
+   mo eri in memory
+   t1 eri in memory
+end integrals
+
 solver cholesky
    threshold: 1.0d-12
 end solver cholesky

@@ -424,7 +424,7 @@ contains
 !
       call mem%alloc(g_ljkc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
-      call wf%get_ooov(g_ljkc)
+      call wf%eri%get_eri_t1('ooov', g_ljkc)
 !
       call mem%alloc(X_ljki, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
@@ -665,9 +665,9 @@ contains
 !
 !     Initialize batching variable
 !
-      req0 = (wf%n_o**2)*(wf%n_v**2) + wf%n_v*wf%n_o*wf%integrals%n_J
-      req1 = wf%n_v**2*wf%n_o          &
-            + wf%n_v*wf%integrals%n_J  &
+      req0 = (wf%n_o**2)*(wf%n_v**2) + wf%n_v*wf%n_o*wf%eri%n_J
+      req1 = wf%n_v**2*wf%n_o                         &
+            + wf%n_v*wf%eri%n_J                       &
             + max(2*(wf%n_o**3),                      &
                   (wf%n_o**3) + (wf%n_o**2)*(wf%n_v), &
                   2*(wf%n_o)*(wf%n_v**2),             &
@@ -689,11 +689,7 @@ contains
 !
          call mem%alloc(g_bdkc, batch_b%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%get_vvov(g_bdkc,                        &
-                           batch_b%first, batch_b%last,  &
-                           1, wf%n_v,                    &
-                           1, wf%n_o,                    &
-                           1, wf%n_v)
+         call wf%eri%get_eri_t1('vvov', g_bdkc, first_p=batch_b%first, last_p=batch_b%last)
 !
 !        :: Term 2. - sum_kcd g_kcbd t_kj^ad c_ci ::
 !
@@ -1102,7 +1098,7 @@ contains
 !
       call mem%alloc(g_kcld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%get_ovov(g_kcld)
+      call wf%eri%get_eri_t1('ovov', g_kcld)
 !
 !     Construct L_ckdl reordered as L_dlck
 !
@@ -1470,7 +1466,7 @@ contains
 !
       call mem%alloc(g_bjkc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%get_voov(g_bjkc)
+      call wf%eri%get_eri_t1('voov', g_bjkc)
 !
 !     rho_bjai =- g_bjkc c_akci = g_bj,kc c_kc,ai
 !
@@ -1502,7 +1498,7 @@ contains
 !
       call mem%alloc(g_bckj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call wf%get_vvoo(g_bckj)
+      call wf%eri%get_eri_t1('vvoo', g_bckj)
 !
       call add_3124_to_1234(-one, g_bckj, L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1616,7 +1612,7 @@ contains
 !
       call mem%alloc(g_kcld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%get_ovov(g_kcld)
+      call wf%eri%get_eri_t1('ovov', g_kcld)
 !
       call mem%alloc(g_klcd, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
 !
@@ -1691,7 +1687,7 @@ contains
 !
       call mem%alloc(g_kilj, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
-      call wf%get_oooo(g_kilj)
+      call wf%eri%get_eri_t1('oooo', g_kilj)
 !
       call mem%alloc(g_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
@@ -1756,7 +1752,7 @@ contains
 !     Form g_ljkc
 !
       call mem%alloc(g_ljkc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-      call wf%get_ooov(g_ljkc)
+      call wf%eri%get_eri_t1('ooov', g_ljkc)
 !
 !     Square up (t_ak_ci = t_ki^ac)
 !
@@ -1916,8 +1912,8 @@ contains
 !
 !     Initialize batching variable
 !
-      req0 = wf%n_v*wf%n_o*wf%integrals%n_J
-      req1 = wf%n_v*wf%integrals%n_J + 2*(wf%n_o)*(wf%n_v)**2 + 2*(wf%n_o)**3
+      req0 = wf%n_v*wf%n_o*wf%eri%n_J
+      req1 = wf%n_v*wf%eri%n_J + 2*(wf%n_o)*(wf%n_v)**2 + 2*(wf%n_o)**3
 !
       batch_b = batching_index(wf%n_v)
       call mem%batch_setup(batch_b, req0, req1)
@@ -1934,11 +1930,7 @@ contains
 !
          call mem%alloc(g_bdkc, batch_b%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%get_vvov(g_bdkc,                        &
-                           batch_b%first, batch_b%last,  &
-                           1, wf%n_v,                    &
-                           1, wf%n_o,                    &
-                           1, wf%n_v)
+         call wf%eri%get_eri_t1('vvov', g_bdkc, first_p=batch_b%first, last_p=batch_b%last)
 !
 !        Reorder g_bd_kc to g_cd_kb (= g_kcbd), i.e. 1234 to 4231
 !
@@ -2025,7 +2017,7 @@ contains
       call timer%turn_on()
 !
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%get_ovov(g_ldkc)
+      call wf%eri%get_eri_t1('ovov', g_ldkc)
 !
       call mem%alloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -2113,7 +2105,7 @@ contains
       call timer%turn_on()
 !
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%get_ovov(g_ldkc)
+      call wf%eri%get_eri_t1('ovov', g_ldkc)
 !
       call mem%alloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -2203,7 +2195,7 @@ contains
       call squareup_and_sort_1234_to_1423(wf%t2, t_aikc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(g_kcld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%get_ovov(g_kcld)
+      call wf%eri%get_eri_t1('ovov', g_kcld)
 !
 !     Y_aild = t_ciak g_kcld
 !
@@ -2301,7 +2293,7 @@ contains
       call timer%turn_on()
 !
       call mem%alloc(g_kcld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%get_ovov(g_kcld)
+      call wf%eri%get_eri_t1('ovov', g_kcld)
 !
       call mem%alloc(g_klcd, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
 !

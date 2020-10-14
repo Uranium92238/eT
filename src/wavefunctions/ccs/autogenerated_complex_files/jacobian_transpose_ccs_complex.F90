@@ -198,8 +198,8 @@ contains
 !
       req0 = 0
 !
-      req1_a = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
-      req1_j = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
+      req1_a = max((wf%eri_complex%n_J)*(wf%n_v),(wf%eri_complex%n_J)*(wf%n_o))
+      req1_j = max((wf%eri_complex%n_J)*(wf%n_v),(wf%eri_complex%n_J)*(wf%n_o))
 !
       req2 = (wf%n_o)*(wf%n_v)*2
 !
@@ -218,21 +218,15 @@ contains
 !
             call mem%alloc(L_bjia, wf%n_v, batch_j%length, wf%n_o, batch_a%length)
 !
-            call wf%get_voov_complex(L_bjia,                        &
-                              1, wf%n_v,                    &
-                              batch_j%first, batch_j%last,  &
-                              1, wf%n_o,                    &
-                              batch_a%first, batch_a%last)
+            call wf%eri_complex%get_eri_t1('voov', L_bjia, 1, wf%n_v, batch_j%first, batch_j%last, &
+                                                   1, wf%n_o, batch_a%first, batch_a%last)
 !
             call zscal((wf%n_v)*(wf%n_o)*(batch_a%length)*(batch_j%length), two_complex, L_bjia, 1)
 !
             call mem%alloc(g_baij, wf%n_v, batch_a%length, wf%n_o, batch_j%length)
 !
-            call wf%get_vvoo_complex(g_baij,                     &
-                           1, wf%n_v,                    &
-                           batch_a%first, batch_a%last,  &
-                           1, wf%n_o,                    &
-                           batch_j%first, batch_j%last)
+            call wf%eri_complex%get_eri_t1('vvoo', g_baij, 1, wf%n_v, batch_a%first, batch_a%last, &
+                                                   1, wf%n_o, batch_j%first, batch_j%last)
 !
             call add_1432_to_1234(-one_complex, g_baij, L_bjia, wf%n_v, batch_j%length, wf%n_o, batch_a%length)
 !

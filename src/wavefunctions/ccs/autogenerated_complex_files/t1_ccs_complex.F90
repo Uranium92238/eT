@@ -165,135 +165,6 @@ contains
    end subroutine add_t1_terms_ccs_complex
 !
 !
-   module subroutine t1_transform_4_ccs_complex(wf, Z_tuvw, Z_pqrs, t1)
-!!
-!!    T1 transform 4 index arrays
-!!    Written by Andreas Skeidsvoll, Apr 2019
-!!
-!!    Assumes that Z is in the MO basis and performs the T1 transformation,
-!!
-!!       Z_pqrs = sum_tuvw X_pt Y_qu X_rm Y_sn Z_tuvw,
-!!
-!!    where
-!!
-!!       X = I - t1
-!!       Y = I + t1^T
-!!
-!!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ
-!!    part, where it is equal to t_i^a.
-!!    NB: needs place for an additional 2*wf%n_mo**4 + wf%n_t1 in memory.
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-      complex(dp), dimension(wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo), intent(in) :: Z_tuvw
-      complex(dp), dimension(wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo), intent(out) :: Z_pqrs
-      complex(dp), dimension(wf%n_v, wf%n_o), intent(in) :: t1
-!
-      complex(dp), dimension(:,:), allocatable :: X, Y
-      complex(dp), dimension(:,:,:,:), allocatable :: Z_tuvs, Z_puvs, Z_vspu, Z_vspq
-!
-      integer :: p, a, i
-!
-      call mem%alloc(X, wf%n_mo, wf%n_mo)
-      call mem%alloc(Y, wf%n_mo, wf%n_mo)
-!
-      X = zero_complex
-      Y = zero_complex
-!
-      do p = 1, wf%n_mo
-!
-         X(p, p) = one_complex
-         Y(p, p) = one_complex
-!
-      enddo
-!
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            X(wf%n_o + a, i) = -t1(a, i)
-            Y(i, wf%n_o + a) = t1(a, i)
-!
-         enddo
-      enddo
-!
-      call mem%alloc(Z_tuvs, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call zgemm('N', 'T',   &
-                 wf%n_mo**3, &
-                 wf%n_mo,    &
-                 wf%n_mo,    &
-                 one_complex,        &
-                 Z_tuvw,     &
-                 wf%n_mo**3, &
-                 Y,          &
-                 wf%n_mo,    &
-                 zero_complex,       &
-                 Z_tuvs,     &
-                 wf%n_mo**3)
-!
-      call mem%alloc(Z_puvs, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call zgemm('N', 'N',   &
-                 wf%n_mo,    &
-                 wf%n_mo**3, &
-                 wf%n_mo,    &
-                 one_complex,        &
-                 X,          &
-                 wf%n_mo,    &
-                 Z_tuvs,     &
-                 wf%n_mo,    &
-                 zero_complex,       &
-                 Z_puvs,     &
-                 wf%n_mo)
-!
-      call mem%dealloc(Z_tuvs, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call mem%alloc(Z_vspu, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call sort_1234_to_3412(Z_puvs, Z_vspu, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call mem%dealloc(Z_puvs, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call mem%alloc(Z_vspq, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call zgemm('N', 'T',   &
-                 wf%n_mo**3, &
-                 wf%n_mo,    &
-                 wf%n_mo,    &
-                 one_complex,        &
-                 Z_vspu,     &
-                 wf%n_mo**3, &
-                 Y,          &
-                 wf%n_mo,    &
-                 zero_complex,       &
-                 Z_vspq,     &
-                 wf%n_mo**3)
-!
-      call mem%dealloc(Z_vspu, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-!     Z_rspq = Z_pqrs because of particle permutation symmetry
-!
-      call zgemm('N', 'N',   &
-                 wf%n_mo,    &
-                 wf%n_mo**3, &
-                 wf%n_mo,    &
-                 one_complex,        &
-                 X,          &
-                 wf%n_mo,    &
-                 Z_vspq,     &
-                 wf%n_mo,    &
-                 zero_complex,       &
-                 Z_pqrs,     &
-                 wf%n_mo)
-!
-      call mem%dealloc(Z_vspq, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-      call mem%dealloc(X, wf%n_mo, wf%n_mo)
-      call mem%dealloc(Y, wf%n_mo, wf%n_mo)
-!
-   end subroutine t1_transform_4_ccs_complex
-!
-!
    module subroutine add_t1_terms_and_transform_ccs_complex(wf, Z_pq, Z_out)
 !!
 !!    Add t1 terms and transform
@@ -304,7 +175,7 @@ contains
 !!    The routine adds the missing T1 contributions to Z and transforms it
 !!    with the AO coefficients to obtain a density as needed by the visualization tool.
 !!
-!!       D_alpha,beta = (sum_pq  D_pq C_alpha,p C_beta,q) 
+!!       Z_alpha,beta = (sum_pq  Z_pq C_alpha,p C_beta,q) 
 !!
 !!    Renamed and moved here, by Alexander C. Paul, May 2020
 !!

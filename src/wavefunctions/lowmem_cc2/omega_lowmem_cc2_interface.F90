@@ -42,7 +42,7 @@
 !!
 !!    Calculates the A1 term,
 !!
-!!       A1: sum_ckd u_bj_ci * g_abjc,
+!!       A1: sum_cjb u_bj_ci * g_abjc,
 !!
 !!    with 
 !!       

@@ -154,20 +154,21 @@ contains
 !
       call wf%initialize_amplitudes()
 !
+      call wf%eri%set_t1_to_mo()
+      call wf%eri%place_g_mo_in_memory()
+!
       if (solver%restart) then
 !
          call wf%read_amplitudes()
 !
-         call wf%integrals%update_t1_integrals(wf%t1)
-! 
       else
-!
-         call wf%integrals%update_t1_integrals(wf%t1)
 !
          call wf%set_initial_amplitudes_guess()
 !
       endif
 !
+      call wf%eri%update_t1_integrals(wf%t1)
+! 
 !     Determine whether to store records in memory or on file
 !
       if (trim(solver%storage) == 'memory') then 
@@ -322,7 +323,7 @@ contains
 !           Update the Cholesky (and electron repulsion integrals, if in memory) 
 !           to new T1 amplitudes 
 !
-            call wf%integrals%update_t1_integrals(wf%t1)
+            call wf%eri%update_t1_integrals(wf%t1)
 !
          endif 
 !

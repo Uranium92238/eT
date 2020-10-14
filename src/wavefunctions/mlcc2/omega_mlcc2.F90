@@ -117,34 +117,34 @@ contains
 !
 !     Using L_Jjc_t1 =  L_Jjc_mo = L_Jcj_mo
 !
-      call mem%alloc(L_Jcj, wf%integrals%n_J, n_cc2_v, n_cc2_o)
-      call wf%integrals%get_cholesky_mo(L_Jcj,              &
-                                       wf%n_o + first_cc2_v,&
-                                       wf%n_o + last_cc2_v, &
-                                       first_cc2_o,         &
-                                       last_cc2_o)
+      call mem%alloc(L_Jcj, wf%eri%n_J, n_cc2_v, n_cc2_o)
+      call wf%eri%get_cholesky_mo(L_Jcj,                &
+                                  wf%n_o + first_cc2_v, &
+                                  wf%n_o + last_cc2_v,  &
+                                  first_cc2_o,          &
+                                  last_cc2_o)
 !
 !     X_Jbi = u_bicj L_Jcj
 !
-      call mem%alloc(X_Jbi, wf%integrals%n_J, n_cc2_v, n_cc2_o)
+      call mem%alloc(X_Jbi, wf%eri%n_J, n_cc2_v, n_cc2_o)
 !
-      call dgemm('N', 'N',          &
-                  wf%integrals%n_J, &
-                  n_cc2_o*n_cc2_v,  &
-                  n_cc2_o*n_cc2_v,  &
-                  one,              &
-                  L_Jcj,            &
-                  wf%integrals%n_J, &
-                  wf%u_aibj,        & ! u_cjbi
-                  n_cc2_o*n_cc2_v,  &
-                  zero,             &
-                  X_Jbi,            &
-                  wf%integrals%n_J)
+      call dgemm('N', 'N',         &
+                  wf%eri%n_J,      &
+                  n_cc2_o*n_cc2_v, &
+                  n_cc2_o*n_cc2_v, &
+                  one,             &
+                  L_Jcj,           &
+                  wf%eri%n_J,      &
+                  wf%u_aibj,       & ! u_cjbi
+                  n_cc2_o*n_cc2_v, &
+                  zero,            &
+                  X_Jbi,           &
+                  wf%eri%n_J)
 !
-      call mem%dealloc(L_Jcj, wf%integrals%n_J, n_cc2_v, n_cc2_o)
+      call mem%dealloc(L_Jcj, wf%eri%n_J, n_cc2_v, n_cc2_o)
 !
       req0 = 0
-      req1 = 2*(n_cc2_v)*(wf%integrals%n_J)
+      req1 = 2*(n_cc2_v)*(wf%eri%n_J)
 !
       batch_a = batching_index(wf%n_v)
 !
@@ -154,35 +154,35 @@ contains
 !
          call batch_a%determine_limits(current_a_batch)
 !
-         call mem%alloc(L_Jab, wf%integrals%n_J, batch_a%length, n_cc2_v)
-         call wf%integrals%get_cholesky_t1(L_Jab,                 &
+         call mem%alloc(L_Jab, wf%eri%n_J, batch_a%length, n_cc2_v)
+         call wf%eri%get_cholesky_t1(L_Jab,                       &
                                           wf%n_o + batch_a%first, &
                                           wf%n_o + batch_a%last,  & 
                                           wf%n_o + first_cc2_v,   &
                                           wf%n_o + last_cc2_v)
 !
-         call mem%alloc(L_aJb, batch_a%length, wf%integrals%n_J, n_cc2_v)
-         call sort_123_to_213(L_Jab, L_aJb, wf%integrals%n_J, batch_a%length, n_cc2_v)
-         call mem%dealloc(L_Jab, wf%integrals%n_J, batch_a%length, n_cc2_v)
+         call mem%alloc(L_aJb, batch_a%length, wf%eri%n_J, n_cc2_v)
+         call sort_123_to_213(L_Jab, L_aJb, wf%eri%n_J, batch_a%length, n_cc2_v)
+         call mem%dealloc(L_Jab, wf%eri%n_J, batch_a%length, n_cc2_v)
 !
-         call dgemm('N','N',                          &
-                     batch_a%length,                  &
-                     n_cc2_o,                         &
-                     wf%integrals%n_J*n_cc2_v,        &
-                     one,                             &
-                     L_aJb,                           & 
-                     batch_a%length,                  &
-                     X_Jbi,                           & 
-                     wf%integrals%n_J*n_cc2_v,        &
-                     one,                             &
-                     omega(batch_a%first,first_cc2_o),& 
+         call dgemm('N','N',                           &
+                     batch_a%length,                   &
+                     n_cc2_o,                          &
+                     wf%eri%n_J*n_cc2_v,               &
+                     one,                              &
+                     L_aJb,                            & 
+                     batch_a%length,                   &
+                     X_Jbi,                            & 
+                     wf%eri%n_J*n_cc2_v,               &
+                     one,                              &
+                     omega(batch_a%first,first_cc2_o), & 
                      wf%n_v)
 !
-         call mem%dealloc(L_aJb, batch_a%length, wf%integrals%n_J, n_cc2_v)
+         call mem%dealloc(L_aJb, batch_a%length, wf%eri%n_J, n_cc2_v)
 !
       enddo ! batch_a
 !
-      call mem%dealloc(X_Jbi, wf%integrals%n_J, n_cc2_v, n_cc2_o)
+      call mem%dealloc(X_Jbi, wf%eri%n_J, n_cc2_v, n_cc2_o)
 !
       call timer%turn_off()
 !
@@ -226,11 +226,8 @@ contains
 !
       call mem%alloc(g_kbji, n_cc2_o, n_cc2_v, n_cc2_o, wf%n_o)
 !
-      call wf%get_ovoo(g_kbji, &
-                       first_cc2_o, last_cc2_o, &
-                       first_cc2_v, last_cc2_v, &
-                       first_cc2_o, last_cc2_o, &
-                       1, wf%n_o)
+      call wf%eri%get_eri_t1('ovoo', g_kbji, first_cc2_o, last_cc2_o, first_cc2_v, last_cc2_v, &
+                                             first_cc2_o, last_cc2_o, 1, wf%n_o)
 !
       call mem%alloc(g_jbki, n_cc2_o, n_cc2_v, n_cc2_o, wf%n_o)
 !
@@ -366,11 +363,10 @@ contains
 !
       call mem%alloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
-      call wf%get_vovo(g_aibj, &
-                        wf%first_cc2_v, wf%last_cc2_v, &
-                        wf%first_cc2_o, wf%last_cc2_o, &
-                        wf%first_cc2_v, wf%last_cc2_v, &
-                        wf%first_cc2_o, wf%last_cc2_o)
+      call wf%eri%get_eri_t1('vovo', g_aibj, wf%first_cc2_v, wf%last_cc2_v, &
+                                             wf%first_cc2_o, wf%last_cc2_o, &
+                                             wf%first_cc2_v, wf%last_cc2_v, &
+                                             wf%first_cc2_o, wf%last_cc2_o)
 !
       call packin(omega2, g_aibj, wf%n_cc2_v*wf%n_cc2_o)
 !

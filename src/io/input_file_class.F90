@@ -487,6 +487,8 @@ contains
       integrals%required = .false.
       integrals%keywords = [character(len=30) ::  &
                               'cholesky storage', &
+                              'mo eri in memory', &
+                              't1 eri in memory', &
                               'eri storage']
 !
 !     Gather all sections into the file's section array

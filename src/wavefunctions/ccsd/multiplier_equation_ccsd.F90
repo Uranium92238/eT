@@ -89,7 +89,7 @@ contains
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%get_ovov(g_iajb)
+      call wf%eri%get_eri_t1('ovov', g_iajb)
 !
       call mem%alloc(eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(eta_aibj, (wf%n_o*wf%n_v)**2)

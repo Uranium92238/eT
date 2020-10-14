@@ -1,4 +1,4 @@
-!
+!construct_c1_integrals
 !
 !  eT - a coupled cluster program
 !  Copyright (C) 2016-2020 the authors of eT
@@ -174,9 +174,7 @@ module mlcc2_class
       procedure :: orbital_partitioning                              => orbital_partitioning_mlcc2
       procedure :: diagonalize_M_and_N                               => diagonalize_M_and_N_mlcc2
 !
-      procedure :: contruct_mo_basis_transformation                  => contruct_mo_basis_transformation_mlcc2
       procedure :: update_MO_fock_contributions                      => update_MO_fock_contributions_mlcc2
-      procedure :: update_MO_cholesky_vectors                        => update_MO_cholesky_vectors_mlcc2
 !
 !     Ground state routines
 !
@@ -508,7 +506,7 @@ contains
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%get_ovov(g_iajb)
+      call wf%eri%get_eri_t1('ovov', g_iajb, 1, wf%n_o, 1, wf%n_v, 1, wf%n_o, 1, wf%n_v)
 !
       correlation_energy = zero 
 !
@@ -534,17 +532,17 @@ contains
       call mem%alloc(g_iajb, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v)
       call mem%alloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
-      call wf%get_ovov(g_iajb, &
-                        wf%first_cc2_o, wf%last_cc2_o, &
-                        wf%first_cc2_v, wf%last_cc2_v, &
-                        wf%first_cc2_o, wf%last_cc2_o, &
-                        wf%first_cc2_v, wf%last_cc2_v)
+      call wf%eri%get_eri_t1('ovov', g_iajb,                &
+                             wf%first_cc2_o, wf%last_cc2_o, &
+                             wf%first_cc2_v, wf%last_cc2_v, &
+                             wf%first_cc2_o, wf%last_cc2_o, &
+                             wf%first_cc2_v, wf%last_cc2_v)
 !
-      call wf%get_vovo(g_aibj, &
-                        wf%first_cc2_v, wf%last_cc2_v, &
-                        wf%first_cc2_o, wf%last_cc2_o, &
-                        wf%first_cc2_v, wf%last_cc2_v, &
-                        wf%first_cc2_o, wf%last_cc2_o)
+      call wf%eri%get_eri_t1('vovo', g_aibj,                &
+                             wf%first_cc2_v, wf%last_cc2_v, &
+                             wf%first_cc2_o, wf%last_cc2_o, &
+                             wf%first_cc2_v, wf%last_cc2_v, &
+                             wf%first_cc2_o, wf%last_cc2_o)
 !
 !$omp parallel do private(a,i,b,j) reduction(+:correlation_energy)
       do b = 1, wf%n_cc2_v
@@ -720,11 +718,11 @@ contains
 !
       call mem%alloc(g_iajb, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v)
 !      
-      call wf%get_ovov(g_iajb,                           &
-                        wf%first_cc2_o, wf%last_cc2_o,   &
-                        wf%first_cc2_v, wf%last_cc2_v,   &
-                        wf%first_cc2_o, wf%last_cc2_o,   &
-                        wf%first_cc2_v, wf%last_cc2_v)
+      call wf%eri%get_eri_t1('ovov', g_iajb,                &
+                             wf%first_cc2_o, wf%last_cc2_o, &
+                             wf%first_cc2_v, wf%last_cc2_v, &
+                             wf%first_cc2_o, wf%last_cc2_o, &
+                             wf%first_cc2_v, wf%last_cc2_v)
 !
 !     t2bar += η_aibj
 !
@@ -810,11 +808,10 @@ contains
       call mem%alloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)  
       call mem%alloc(s_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)  
 !
-      call wf%get_vovo(g_aibj,                           &
-                        wf%first_cc2_v, wf%last_cc2_v,   &
-                        wf%first_cc2_o, wf%last_cc2_o,   &
-                        wf%first_cc2_v, wf%last_cc2_v,   &
-                        wf%first_cc2_o, wf%last_cc2_o)
+      call wf%eri%get_eri_t1('vovo', g_aibj, wf%first_cc2_v, wf%last_cc2_v, &
+                                             wf%first_cc2_o, wf%last_cc2_o, &
+                                             wf%first_cc2_v, wf%last_cc2_v, &
+                                             wf%first_cc2_o, wf%last_cc2_o)
 !
 !$omp parallel do private(a, i, b, j)
       do b = 1, wf%n_cc2_v 
@@ -868,11 +865,11 @@ contains
 !
       call mem%alloc(g_iajb, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v)
 !
-      call wf%get_ovov(g_iajb,                           &
-                        wf%first_cc2_o, wf%last_cc2_o,   &
-                        wf%first_cc2_v, wf%last_cc2_v,   &
-                        wf%first_cc2_o, wf%last_cc2_o,   &
-                        wf%first_cc2_v, wf%last_cc2_v)
+      call wf%eri%get_eri_t1('ovov', g_iajb,                &
+                             wf%first_cc2_o, wf%last_cc2_o, &
+                             wf%first_cc2_v, wf%last_cc2_v, &
+                             wf%first_cc2_o, wf%last_cc2_o, &
+                             wf%first_cc2_v, wf%last_cc2_v)
 !
 !     t2bar += η_aibj
 !
@@ -1049,6 +1046,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: canonical_orbitals
       real(dp), dimension(:,:), allocatable :: partitioning_orbitals
+      real(dp), dimension(:,:), allocatable :: T
 !
       type(sequential_file) :: orbital_coefficients_file, orbital_energies_file
 !
@@ -1061,7 +1059,9 @@ contains
 !
       call wf%orbital_partitioning()
 !
-      call wf%update_MO_cholesky_vectors(canonical_orbitals)
+      call mem%alloc(T, wf%n_mo, wf%n_mo)
+      call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, canonical_orbitals, T)
+      call wf%eri%update_cholesky_mo(T)
 !
       call wf%determine_n_x2_amplitudes()
       call wf%determine_n_gs_amplitudes()
@@ -1076,9 +1076,7 @@ contains
       call mem%dealloc(canonical_orbitals, wf%n_ao, wf%n_mo)
 !
       call wf%initialize_t1()
-      call zero_array(wf%t1, wf%n_t1)
-!
-      call wf%integrals%update_t1_integrals(wf%t1)
+      call wf%eri%set_t1_to_mo()
 !
       call wf%construct_fock()
       call wf%destruct_t1()
@@ -1091,7 +1089,9 @@ contains
 !     Construct MLCC orbital basis
 !
       call wf%construct_block_diagonal_fock_orbitals()
-      call wf%update_MO_cholesky_vectors(partitioning_orbitals)
+      call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, partitioning_orbitals, T)
+      call wf%eri%update_cholesky_mo(T)
+      call mem%dealloc(T, wf%n_mo, wf%n_mo)
 !
 !     Frozen fock terms transformed from the basis of orbital partitioning to 
 !     the MLCC basis
@@ -1146,7 +1146,7 @@ contains
       call wf%destruct_mo_fock_frozen()
       call wf%destruct_frozen_CCT()
 !
-      call wf%integrals%cleanup()
+      call wf%eri%cleanup()
 !
       call wf%destruct_nto_states()
       call wf%destruct_cnto_states()
@@ -1290,77 +1290,6 @@ contains
    end subroutine write_cc_restart_mlcc2
 !
 !
-   subroutine contruct_mo_basis_transformation_mlcc2(wf, C1, C2, T)
-!!
-!!    Construct MO basis transformation 
-!!    Written by Sarai D. Folekstad, Nov 2019
-!!
-!!    Constructs a transformation matrix 'T' which
-!!    takes a matrix from one molecular orbital basis
-!!    to another. 
-!!
-!!    'C1' : coefficients of the MO basis we end up in
-!!
-!!    'C2' : coefficients of the MO basis we start out with 
-!!
-!!    The transformation matrix is defined as
-!!
-!!       T = C1^T S C2
-!!    
-!!    where S is the AO overlap matrix.
-!!
-      implicit none
-!
-      class(mlcc2), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_mo), intent(in) :: C1, C2
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: T
-!
-      real(dp), dimension(:,:), allocatable :: S, X
-!
-      call mem%alloc(S, wf%n_ao, wf%n_ao)
-      call wf%get_ao_s_wx(S)
-!
-!     X = C1^T S
-!
-      call mem%alloc(X, wf%n_mo, wf%n_ao)
-!
-      call dgemm('T', 'N', &
-                  wf%n_mo, &
-                  wf%n_ao, &
-                  wf%n_ao, &
-                  one,     &
-                  C1,      &
-                  wf%n_ao, &
-                  S,       &
-                  wf%n_ao, &
-                  zero,    &
-                  X,       &
-                  wf%n_mo)
-!
-      call mem%dealloc(S, wf%n_ao, wf%n_ao)
-!
-!     T = X C2
-!
-      call dgemm('N', 'N', &
-                  wf%n_mo, &
-                  wf%n_mo, &
-                  wf%n_ao, &
-                  one,     &
-                  X,       &
-                  wf%n_mo, &
-                  C2,      &
-                  wf%n_ao, &
-                  zero,    &
-                  T,       &
-                  wf%n_mo)
-!
-      call mem%dealloc(X, wf%n_mo, wf%n_ao)
-!
-   end subroutine contruct_mo_basis_transformation_mlcc2
-!
-!
    subroutine update_MO_fock_contributions_mlcc2(wf, C_old)
 !!
 !!    Updates MO Fock contributions 
@@ -1445,177 +1374,6 @@ contains
    end subroutine print_X1_diagnostics_mlcc2
 !
 !
-   subroutine update_MO_cholesky_vectors_mlcc2(wf, C_old)
-!!
-!!    Updates MO Cholesky vectors 
-!!    Written by Sarai D. Folkestad, Nov 2019
-!!
-!!    Updates the MO basis of the Cholesky vectors
-!!
-!!
-!!       L'^J = T L^J T^T   
-!!
-!
-      implicit none
-!
-      class(mlcc2) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_mo), intent(in) :: C_old
-!
-      real(dp), dimension(:,:), allocatable :: T
-      real(dp), dimension(:,:,:), allocatable :: L_Jpq, L_Jps, L_Jrs, L_Jsr, L_Jsp
-!
-!     Batching and memory handling variables
-!
-      integer :: req0, req1_q, req1_s, rec2
-!
-      integer :: current_s_batch
-      integer :: current_q_batch    
-!
-      type(batching_index) :: batch_s
-      type(batching_index) :: batch_q
-!
-      type(sequential_file) :: temp_L_Jpq_file
-!
-      call mem%alloc(T, wf%n_mo, wf%n_mo)
-!
-      call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, C_old, T)
-!
-!     Transform vectors in batches
-!
-      req0 = 0
-!
-      req1_s = wf%integrals%n_J*wf%n_mo*2
-      req1_q = wf%integrals%n_J*wf%n_mo
-!
-      rec2 = 0
-!
-!     Initialize batching variables
-!
-      batch_s = batching_index(wf%n_mo)
-      batch_q = batching_index(wf%n_mo)
-!
-      call mem%batch_setup(batch_s, batch_q, req0, req1_s, req1_q, rec2)
-!
-!     Are we batching over s?
-!
-!        - Prepare file with L_Jpq
-!
-      if (batch_s%num_batches .gt. 1) then
-!
-         temp_L_Jpq_file = sequential_file('temp_L_Jpq', 'unformatted')
-         call temp_L_Jpq_file%open_('write', 'rewind')
-!
-         do current_q_batch = 1, batch_q%num_batches   
-!
-            call batch_q%determine_limits(current_q_batch)
-!
-            call mem%alloc(L_Jpq, wf%integrals%n_J, wf%n_mo, batch_q%length)
-!
-            call wf%integrals%get_cholesky_mo(L_Jpq,        &
-                                                1, wf%n_mo, &
-                                                batch_q%first, batch_q%last)  
-!
-            call temp_L_Jpq_file%write_(L_Jpq, (wf%integrals%n_J)*(wf%n_mo)*(batch_q%length))
-!
-            call mem%dealloc(L_Jpq, wf%integrals%n_J, wf%n_mo, batch_q%length)
-!
-         enddo      
-!
-         call temp_L_Jpq_file%close_()
-         call temp_L_Jpq_file%open_('read', 'rewind')
-!
-      endif
-!
-!     Start looping over a-batches
-!
-      do current_s_batch = 1, batch_s%num_batches
-!
-         if (batch_s%num_batches .ne. 1) call temp_L_Jpq_file%rewind_()
-!
-         call batch_s%determine_limits(current_s_batch)
-!
-         call mem%alloc(L_Jps, wf%integrals%n_J, wf%n_mo, batch_s%length)
-         call zero_array(L_Jps, (wf%integrals%n_J)*(wf%n_mo)*(batch_s%length))
-!
-         do current_q_batch = 1, batch_q%num_batches   
-!
-            call batch_q%determine_limits(current_q_batch)
-!
-            call mem%alloc(L_Jpq, wf%integrals%n_J, wf%n_mo, batch_q%length)
-!
-            if (batch_s%num_batches .eq. 1) then
-!
-               call wf%integrals%get_cholesky_mo(L_Jpq,     &
-                                                1, wf%n_mo, &
-                                                batch_q%first, batch_q%last)
-!
-            else
-!
-               call temp_L_Jpq_file%read_(L_Jpq, (wf%integrals%n_J)*(wf%n_mo)*(batch_q%length))
-!
-            endif
-!
-            call dgemm('N', 'T',                         &
-                        (wf%n_mo)*(wf%integrals%n_J),    &
-                        batch_s%length,                  &
-                        batch_q%length,                  &
-                        one,                             &
-                        L_Jpq,                           &
-                        (wf%n_mo)*(wf%integrals%n_J),    &
-                        T(batch_s%first, batch_q%first), &
-                        wf%n_mo,                         &
-                        one,                             &
-                        L_Jps,                           &
-                        (wf%n_mo)*(wf%integrals%n_J))
-!
-            call mem%dealloc(L_Jpq, wf%integrals%n_J, wf%n_mo, batch_q%length)
-!
-         enddo
-!
-         call mem%alloc(L_Jsp, wf%integrals%n_J, batch_s%length, wf%n_mo)
-         call sort_123_to_132(L_Jps, L_Jsp, wf%integrals%n_J, wf%n_mo, batch_s%length)     
-         call mem%dealloc(L_Jps, wf%integrals%n_J, wf%n_mo, batch_s%length)
-!
-         call mem%alloc(L_Jsr, wf%integrals%n_J, batch_s%length, wf%n_mo)
-!
-         call dgemm('N', 'T',                               &
-                     (batch_s%length)*(wf%integrals%n_J),   &
-                     wf%n_mo,                               &
-                     wf%n_mo,                               &
-                     one,                                   &
-                     L_Jsp,                                 &
-                     (batch_s%length)*(wf%integrals%n_J),   &
-                     T,                                     &
-                     wf%n_mo,                               &
-                     zero,                                  &
-                     L_Jsr,                                 &
-                     (batch_s%length)*(wf%integrals%n_J))
-!
-         call mem%dealloc(L_Jsp, wf%integrals%n_J, batch_s%length, wf%n_mo)
-!
-         call mem%alloc(L_Jrs, wf%integrals%n_J, wf%n_mo, batch_s%length)
-         call sort_123_to_132(L_Jsr, L_Jrs, wf%integrals%n_J, batch_s%length, wf%n_mo)
-         call mem%dealloc(L_Jsr, wf%integrals%n_J, batch_s%length, wf%n_mo)           
-!
-         call wf%integrals%set_cholesky_mo(L_Jrs,          &
-                                          1,               &
-                                          wf%n_mo,         &
-                                          batch_s%first,   &
-                                          batch_s%last,    &
-                                          q_leq_p=.true.)
-!
-         call mem%dealloc(L_Jrs, wf%integrals%n_J, wf%n_mo, batch_s%length)
-!
-      enddo   
-!
-      if (batch_s%num_batches .gt. 1) call temp_L_Jpq_file%delete_()
-!
-      call mem%dealloc(T, wf%n_mo, wf%n_mo)
-!
-   end subroutine update_MO_cholesky_vectors_mlcc2
-!
-!
    subroutine mo_preparations_from_restart_mlcc2(wf)
 !!
 !!    General MO prepatations from restart
@@ -1630,6 +1388,7 @@ contains
       class(mlcc2) :: wf
 !
       real(dp), dimension(:,:), allocatable :: canonical_orbitals
+      real(dp), dimension(:,:), allocatable :: T
 !
       type(sequential_file) :: orbital_coefficients_file, orbital_energies_file
 !
@@ -1682,7 +1441,10 @@ contains
       wf%last_ccs_o = wf%n_o
       wf%last_ccs_v = wf%n_v
 !
-      call wf%update_MO_cholesky_vectors(canonical_orbitals)
+      call mem%alloc(T, wf%n_mo, wf%n_mo)
+      call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, canonical_orbitals, T)
+      call wf%eri%update_cholesky_mo(T)
+      call mem%dealloc(T, wf%n_mo, wf%n_mo)
 !
       call wf%determine_n_x2_amplitudes()
       call wf%determine_n_gs_amplitudes()
@@ -1699,4 +1461,3 @@ contains
    end subroutine mo_preparations_from_restart_mlcc2
 !
 end module mlcc2_class
-! 

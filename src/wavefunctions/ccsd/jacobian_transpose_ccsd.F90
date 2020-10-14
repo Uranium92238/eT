@@ -75,7 +75,7 @@ contains
 !     g_ooov used in f1 and L_ooov used in e1
 !
       call mem%alloc(g_ooov, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-      call wf%get_ooov(g_ooov)
+      call wf%eri%get_eri_t1('ooov', g_ooov)
 !
       call wf%save_jacobian_transpose_f1_intermediates(t_vovo, g_ooov)
 !
@@ -95,7 +95,7 @@ contains
 !     Construct g_ovov and make g2 and i2 intermediates
 !
       call mem%alloc(g_ovov, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%get_ovov(g_ovov)
+      call wf%eri%get_eri_t1('ovov', g_ovov)
 !
       call wf%save_jacobian_transpose_g2_intermediates(t_vovo, g_ovov)
       call wf%save_jacobian_transpose_i2_intermediates(t_vovo, g_ovov)
@@ -597,7 +597,7 @@ contains
 !
       call mem%alloc(g_mlia, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
-      call wf%get_ooov(g_mlia)
+      call wf%eri%get_eri_t1('ooov', g_mlia)
 !
 !     Form L_aiml = L_mlia = 2 * g_mlia - g_mail
 !                          = 2 * g_mlia - g_ilma
@@ -657,9 +657,9 @@ contains
 !
 !     Prepare batching over index a
 !
-      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
+      rec0 = wf%n_v*wf%n_o*wf%eri%n_J
 !
-      rec1 = max(wf%n_v*wf%integrals%n_J + wf%n_v**2*wf%n_o, 2*wf%n_v**2*wf%n_o)
+      rec1 = wf%n_v*wf%eri%n_J + wf%n_v**2*wf%n_o
 !
       batch_d = batching_index(wf%n_v)
       call mem%batch_setup(batch_d, rec0, rec1)
@@ -670,45 +670,37 @@ contains
 !
          call mem%alloc(g_dale, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
 !
-            call wf%get_vvov(g_dale,      &
-                           batch_d%first, &
-                           batch_d%last,  &
-                           1,             &
-                           wf%n_v,        &
-                           1,             &
-                           wf%n_o,        &
-                           1,             &
-                           wf%n_v)
+         call wf%eri%get_eri_t1('vvov', g_dale, first_p=batch_d%first, last_p=batch_d%last)
 !
 !        Form  L_aeld = L_dale = 2 * g_dale - g_dela
 !                              = 2 * g_dale(d,a,l,e) - g_dale(d,e,l,a)
 !
-            call mem%alloc(L_aeld, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
-            call zero_array(L_aeld, wf%n_o*wf%n_v**2*batch_d%length)
+         call mem%alloc(L_aeld, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
+         call zero_array(L_aeld, wf%n_o*wf%n_v**2*batch_d%length)
 !
-            call add_4132_to_1234(two, g_dale, L_aeld, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
+         call add_4132_to_1234(two, g_dale, L_aeld, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
 !
-            call add_4231_to_1234(-one, g_dale, L_aeld, wf%n_v,  wf%n_v, wf%n_o, batch_d%length)
+         call add_4231_to_1234(-one, g_dale, L_aeld, wf%n_v,  wf%n_v, wf%n_o, batch_d%length)
 !
-            call mem%dealloc(g_dale, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
+         call mem%dealloc(g_dale, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
 !
-!           Add sum_ckdle b_ckdi L_dale t_kl^ce
-!               = sum_eld L_a_eld X_eld_i
+!        Add sum_ckdle b_ckdi L_dale t_kl^ce
+!            = sum_eld L_a_eld X_eld_i
 !
-            call dgemm('N','N',                             &
-                        wf%n_v,                             &
-                        wf%n_o,                             &
-                        (wf%n_o)*(wf%n_v)*batch_d%length,   &
-                        one,                                &
-                        L_aeld,                             & ! L_a_eld
-                        wf%n_v,                             &
-                        X_eldi(1, 1, batch_d%first, 1),     & ! X_eld_i
-                        (wf%n_o)*(wf%n_v**2),               &
-                        one,                                &
-                        sigma_ai,                           &
-                        wf%n_v)
+         call dgemm('N','N',                             &
+                     wf%n_v,                             &
+                     wf%n_o,                             &
+                     (wf%n_o)*(wf%n_v)*batch_d%length,   &
+                     one,                                &
+                     L_aeld,                             & ! L_a_eld
+                     wf%n_v,                             &
+                     X_eldi(1, 1, batch_d%first, 1),     & ! X_eld_i
+                     (wf%n_o)*(wf%n_v**2),               &
+                     one,                                &
+                     sigma_ai,                           &
+                     wf%n_v)
 !
-            call mem%dealloc(L_aeld, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
+         call mem%dealloc(L_aeld, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
 !
       enddo ! End of batches over a
 !
@@ -745,8 +737,8 @@ contains
 !
 !     Prepare batching over index d
 !
-      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
-      rec1 = max(wf%n_v*wf%integrals%n_J + wf%n_v**2*wf%n_o, 2*wf%n_v**2*wf%n_o)
+      rec0 = wf%n_v*wf%n_o*wf%eri%n_J
+      rec1 = (wf%n_v**2)*(wf%n_o) + wf%n_v*wf%eri%n_J
 !
       batch_d = batching_index(wf%n_v)
       call mem%batch_setup(batch_d, rec0, rec1)
@@ -761,15 +753,7 @@ contains
 !
          call mem%alloc(g_deia, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%get_vvov(g_deia,         &
-                           batch_d%first, &
-                           batch_d%last,  &
-                           1,             &
-                           wf%n_v,        &
-                           1,             &
-                           wf%n_o,        &
-                           1,             &
-                           wf%n_v)
+         call wf%eri%get_eri_t1('vvov', g_deia, first_p=batch_d%first, last_p=batch_d%last)
 !
 !        Form L_aied = L_deia = 2 * g_deia - g_daie
 !                             = 2 * g_deia(d,e,i,a) - g_deia(d,a,i,e)
@@ -1037,7 +1021,7 @@ contains
 !
       call mem%alloc(g_mkla, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
-      call wf%get_ooov(g_mkla)
+      call wf%eri%get_eri_t1('ooov', g_mkla)
 !
       call mem%alloc(g_amkl, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
@@ -1119,8 +1103,8 @@ contains
 !
 !     Prepare for batching over d
 !
-      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
-      rec1 = max(wf%n_v*wf%integrals%n_J + wf%n_v**2*wf%n_o, 2*wf%n_v**2*wf%n_o)
+      rec0 = wf%n_v*wf%n_o*wf%eri%n_J
+      rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%eri%n_J
 !
       batch_d = batching_index(wf%n_v)
       call mem%batch_setup(batch_d, rec0, rec1)
@@ -1133,15 +1117,7 @@ contains
 !
          call mem%alloc(g_icde, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
 !
-         call wf%get_ovvv(g_icde,         &
-                           1,             &
-                           wf%n_o,        &
-                           1,             &
-                           wf%n_v,        &
-                           batch_d%first, &
-                           batch_d%last,  &
-                           1,             &
-                           wf%n_v)
+         call wf%eri%get_eri_t1('ovvv', g_icde, first_r=batch_d%first, last_r=batch_d%last)
 !
 !        Reorder to g_id_ce = g_ic_de
 !
@@ -1289,8 +1265,8 @@ contains
 !
 !     Prepare batching over index e
 !
-      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
-      rec1 = max(wf%n_v*wf%integrals%n_J + wf%n_v**2*wf%n_o, 2*wf%n_v**2*wf%n_o)
+      rec0 = wf%n_v*wf%n_o*wf%eri%n_J
+      rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%eri%n_J
 !
 !     Initialize batching variable
 !
@@ -1309,15 +1285,7 @@ contains
 !
          call mem%alloc(g_kade, wf%n_o, wf%n_v, wf%n_v, batch_e%length)
 !
-         call wf%get_ovvv(g_kade,         &
-                           1,             &
-                           wf%n_o,        &
-                           1,             &
-                           wf%n_v,        &
-                           1,             &
-                           wf%n_v,        &
-                           batch_e%first, &
-                           batch_e%last)
+         call wf%eri%get_eri_t1('ovvv', g_kade, first_s=batch_e%first, last_s=batch_e%last)
 !
 !        Reorder to g_akde = g_kade
 !
@@ -1378,8 +1346,8 @@ contains
 !
 !     Prepare batching over a
 !
-      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
-      rec1 = (wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
+      rec0 = wf%n_v*wf%n_o*wf%eri%n_J
+      rec1 = (wf%n_v**2)*(wf%n_o) + wf%n_v*wf%eri%n_J
 !
 !     Initialize batching variable
 !
@@ -1398,15 +1366,7 @@ contains
 !
          call mem%alloc(g_keda, wf%n_o, wf%n_v, wf%n_v, batch_a%length)
 !
-         call wf%get_ovvv(g_keda,         &
-                           1,             &
-                           wf%n_o,        &
-                           1,             &
-                           wf%n_v,        &
-                           1,             &
-                           wf%n_v,        &
-                           batch_a%first, &
-                           batch_a%last)
+         call wf%eri%get_eri_t1('ovvv', g_keda, first_s=batch_a%first, last_s=batch_a%last)
 !
          call dgemm('T','N',                    &
                      batch_a%length,            &
@@ -1555,7 +1515,7 @@ contains
 !
       call mem%alloc(g_ckjb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call wf%get_voov(g_ckjb)
+      call wf%eri%get_eri_t1('voov', g_ckjb)
 !
 !     Reorder to g_ckbj = g_ckjb
 !
@@ -1586,8 +1546,8 @@ contains
 !
       call zero_array(g_ckbj, (wf%n_o*wf%n_v)**2) ! g_cbjk reordered
 !
-      rec0 = wf%n_o**2*wf%integrals%n_J
-      rec1 = wf%n_v*wf%integrals%n_J  + (wf%n_o**2)*(wf%n_v)
+      rec0 = wf%n_o**2*wf%eri%n_J
+      rec1 = wf%n_v*wf%eri%n_J  + (wf%n_o**2)*(wf%n_v)
 !
 !     Initialize batching variable
 !
@@ -1606,15 +1566,8 @@ contains
 !
          call mem%alloc(g_cbjk_restricted, wf%n_v, batch_b%length, wf%n_o, wf%n_o)
 !
-         call wf%get_vvoo(g_cbjk_restricted, &
-                           1,                &
-                           wf%n_v,           &
-                           batch_b%first,    &
-                           batch_b%last,     &
-                           1,                &
-                           wf%n_o,           &
-                           1,                &
-                           wf%n_o)
+         call wf%eri%get_eri_t1('vvoo', g_cbjk_restricted, &
+                                first_q=batch_b%first, last_q=batch_b%last)
 !
 !        Place in reordered full space vector and deallocate restricted vector
 !
@@ -1706,7 +1659,7 @@ contains
 !
       call mem%alloc(g_ibck, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
-      call wf%get_ovvo(g_ibck)
+      call wf%eri%get_eri_t1('ovvo', g_ibck)
 !
 !     Calculate and add - sum_ck b_ajck g_ibck = - sum_ck b_aj_ck g_ib_ck^T(c,k,i,b)
 !
@@ -1738,8 +1691,8 @@ contains
       call mem%alloc(g_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(g_ckbi, (wf%n_o*wf%n_v)**2)
 !
-      rec0 = wf%n_o**2*wf%integrals%n_J
-      rec1 = wf%n_v*wf%integrals%n_J  + (wf%n_o**2)*(wf%n_v)
+      rec0 = wf%n_o**2*wf%eri%n_J
+      rec1 = wf%n_v*wf%eri%n_J  + (wf%n_o**2)*(wf%n_v)
 !
 !     Initialize batching variable
 !
@@ -1758,15 +1711,7 @@ contains
 !
          call mem%alloc(g_cbik, wf%n_v, batch_b%length, wf%n_o, wf%n_o)
 !
-         call wf%get_vvoo(g_cbik,         &
-                           1,             &
-                           wf%n_v,        &
-                           batch_b%first, &
-                           batch_b%last,  &
-                           1,             &
-                           wf%n_o,        &
-                           1,             &
-                           wf%n_o)
+         call wf%eri%get_eri_t1('vvoo', g_cbik, first_q=batch_b%first, last_q=batch_b%last)
 !
 !        Place in reordered integral g_ckbi = g_cbik
 !
@@ -2178,7 +2123,7 @@ contains
 !
       call mem%alloc(g_jbid, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%get_ovov(g_jbid)
+      call wf%eri%get_eri_t1('ovov', g_jbid)
 !
 !     Form L_dibj = L_jbid = 2 * g_jbid - g_jdib
 !                          = 2 * g_jbid(j,b,i,d) - g_jbid(j,d,i,b)
@@ -2613,7 +2558,7 @@ contains
 !
       call mem%alloc(g_ikjl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
-      call wf%get_oooo(g_ikjl)
+      call wf%eri%get_eri_t1('oooo', g_ikjl)
 !
 !     Reorder to g_klij = g_ikjl
 !
@@ -2648,8 +2593,8 @@ contains
 !     Prepare batching over a and b
 !
       rec0 = 0
-      rec1_a = wf%n_v*wf%integrals%n_J
-      rec1_b = wf%n_v*wf%integrals%n_J
+      rec1_a = wf%n_v*wf%eri%n_J
+      rec1_b = wf%n_v*wf%eri%n_J
       rec2 = 2*wf%n_v**2 + wf%n_o**2
 !
 !     Initialize batching indices
@@ -2679,15 +2624,11 @@ contains
 !
             call mem%alloc(g_cadb, wf%n_v, batch_a%length, wf%n_v, batch_b%length)
 !
-            call wf%get_vvvv(g_cadb,         &
-                              1,             &
-                              wf%n_v,        &
-                              batch_a%first, &
-                              batch_a%last,  &
-                              1,             &
-                              wf%n_v,        &
-                              batch_b%first, &
-                              batch_b%last)
+            call wf%eri%get_eri_t1('vvvv', g_cadb,              &
+                                   1, wf%n_v,                   &
+                                   batch_a%first, batch_a%last, &
+                                   1, wf%n_v,                   &
+                                   batch_b%first, batch_b%last)
 !
 !           Reorder to g_abcd = g_cadb
 !
@@ -2896,7 +2837,7 @@ contains
 !
       call mem%alloc(g_kalb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%get_ovov(g_kalb)
+      call wf%eri%get_eri_t1('ovov', g_kalb)
 !
 !     Reorder to g_abkl = g_kalb
 !

@@ -68,7 +68,7 @@ contains
       call wf%get_amplitudes(t_copy)
       call wf%set_amplitudes(t)
 !
-      call wf%integrals%update_t1_integrals(wf%t1)
+      call wf%eri%update_t1_integrals(wf%t1)
 !
       call wf%construct_fock()
       call wf%construct_omega(omega)
@@ -224,7 +224,7 @@ contains
          call zero_array(e, wf%n_es_amplitudes)
          e(nu) = one
 !
-         call wf%integrals%update_t1_integrals(wf%t1)
+         call wf%eri%update_t1_integrals(wf%t1)
 !
          call wf%construct_fock()
 !

@@ -65,7 +65,7 @@ contains
       eps = wf%orbital_energies
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call wf%get_vovo(g_aibj)
+      call wf%eri%get_eri_t1('vovo', g_aibj, 1, wf%n_v, 1, wf%n_o, 1, wf%n_v, 1, wf%n_o)
 !
       call mem%alloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !

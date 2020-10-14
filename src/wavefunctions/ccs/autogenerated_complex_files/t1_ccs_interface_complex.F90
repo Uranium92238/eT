@@ -71,43 +71,17 @@
    end subroutine add_t1_terms_ccs_complex
 !
 !
-   module subroutine t1_transform_4_ccs_complex(wf, Z_tuvw, Z_pqrs, t1)
-!!
-!!    T1 transform 4 index arrays
-!!    Written by Andreas Skeidsvoll, Apr 2019
-!!
-!!    Assumes that Z is in the MO basis and performs the T1 transformation,
-!!
-!!       Z_pqrs = sum_tuvw X_pt Y_qu X_rm Y_sn Z_tuvw,
-!!
-!!    where
-!!
-!!       X = I - t1
-!!       Y = I + t1^T
-!!
-!!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ
-!!    part, where it is equal to t_i^a.
-!!    NB: needs place for an additional 2*wf%n_mo**4 + wf%n_t1 in memory.
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-      complex(dp), dimension(wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo), intent(in) :: Z_tuvw
-      complex(dp), dimension(wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo), intent(out) :: Z_pqrs
-      complex(dp), dimension(wf%n_v, wf%n_o), intent(in) :: t1
-!
-   end subroutine t1_transform_4_ccs_complex
-!
-!
    module subroutine add_t1_terms_and_transform_ccs_complex(wf, Z_pq, Z_out)
 !!
-!!    Add t1 terms and ao transform
+!!    Add t1 terms and transform
 !!    Written by Tor S. Haugland, Nov 2019 (as do_visualization)
 !!
 !!    Here Z, on input, is assumed to be the density matrix with no T1 contributions 
 !!    - the so-called T1-transformed density matrix.
-!!    The routine adds the missing T1 contributions to Z 
-!!    and transforms it to the AO basis
+!!    The routine adds the missing T1 contributions to Z and transforms it
+!!    with the AO coefficients to obtain a density as needed by the visualization tool.
+!!
+!!       Z_alpha,beta = (sum_pq  Z_pq C_alpha,p C_beta,q) 
 !!
 !!    Renamed and moved here, by Alexander C. Paul, May 2020
 !!

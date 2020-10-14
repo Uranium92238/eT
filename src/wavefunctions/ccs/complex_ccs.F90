@@ -101,7 +101,11 @@ contains
          call wf%destruct_gs_density()
       endif
 !
-      call wf%integrals%make_eri_complex()
+      wf%eri_complex = t1_eri_tool_c(wf%eri)
+      call wf%eri_complex%initialize()
+      call wf%eri_complex%copy_from_real_t1(wf%eri)
+!
+      call wf%eri%cleanup()
 !
    end subroutine make_ccs_complex_ccs
 !
@@ -158,6 +162,8 @@ contains
       if (allocated(wf%density_complex)) then
          call wf%destruct_gs_density_complex()
       endif
+!
+      call wf%eri_complex%cleanup()
 !
    end subroutine cleanup_ccs_complex_ccs
 !

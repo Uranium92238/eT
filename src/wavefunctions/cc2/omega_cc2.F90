@@ -94,7 +94,7 @@ contains
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%get_vovo(g_aibj)
+      call wf%eri%get_eri_t1('vovo', g_aibj)
 !
       call packin(omega2, g_aibj, wf%n_v*wf%n_o)
 !

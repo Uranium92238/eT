@@ -1236,9 +1236,6 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_pqrs ! Array for constructed integrals
       real(dp), dimension(:,:,:,:), allocatable :: h_pqrs ! Array for sorted integrals
 !
-      real(dp), dimension(:,:,:), allocatable :: L_J_ck_c1              ! c1 transformed Cholesky vector
-      real(dp), dimension(:,:,:), allocatable :: L_J_ck, L_J_bd, L_J_lj ! Cholesky vectors
-!
       type(batching_index) :: batch_k
 !
       integer :: req_0, req_k
@@ -1248,12 +1245,13 @@ contains
 !
 !     g'_bdck = (b'd|ck) + (bd|c'k) + (bd|ck')
 !
-      req_0 = 2*(wf%n_v)**2*(wf%integrals%n_J) + (wf%n_v)*(wf%n_o)*(wf%integrals%n_J)
-      req_k = max((wf%integrals%n_J)*(wf%n_v) + (wf%n_v)**3, 2*(wf%n_v)**3)
-!
-      call mem%alloc(L_J_bd, wf%integrals%n_J, wf%n_v, wf%n_v)
+      req_0 = 0
+      req_k = wf%n_v**3
+      call wf%eri%get_eri_c1_mem('vvvo', req_0, req_0, req_0, req_k, req_0, req_k, &
+                                 wf%n_v, wf%n_v, wf%n_v, 1, qp=.true.)
 !
       call mem%batch_setup(batch_k, req_0, req_k)
+      call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
 !
       wf%g_bdck_c = direct_stream_file('g_bdck_c', wf%n_v**3)
       call wf%g_bdck_c%open_('write')
@@ -1262,101 +1260,28 @@ contains
 !
          call batch_k%determine_limits(k_batch)
 !
-!        :: Term 1: g_b'dck += sum_J L_J_b'd L_J_ck ::
+         call wf%eri%get_eri_c1('vvvo', g_pqrs, c_ai, &
+                                first_s=batch_k%first, last_s=batch_k%last, qp=.true.)
 !
-!        here L_J_bd is used for the c1-transformed cholesky vector
-         call wf%integrals%construct_cholesky_ab_c1(L_J_bd, c_ai, 1, wf%n_v, 1, wf%n_v)
-!
-         call mem%alloc(L_J_ck, wf%integrals%n_J, wf%n_v, batch_k%length)
-         call wf%integrals%get_cholesky_t1(L_J_ck, wf%n_o + 1, wf%n_o + wf%n_v, batch_k%first, batch_k%last)
-!
-         call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-!
-         call dgemm('T', 'N',                   &
-                     (wf%n_v)**2,               &
-                     (wf%n_v)*(batch_k%length), &
-                     wf%integrals%n_J,          &
-                     one,                       &
-                     L_J_bd,                    & ! L_bd_J  b is c1-transformed
-                     wf%integrals%n_J,          &
-                     L_J_ck,                    & ! L_J_ck
-                     wf%integrals%n_J,          &
-                     zero,                      &
-                     g_pqrs,                    & ! (b'd|ck)
-                     (wf%n_v)**2)
-!
-         call mem%dealloc(L_J_ck, wf%integrals%n_J, wf%n_v, batch_k%length)
-!
-!        :: Term 2: g_bdc'k += sum_J L_J_bd L_J_c'k_c1 ::
-!
-         call mem%alloc(L_J_ck_c1, wf%integrals%n_J, wf%n_v, batch_k%length)
-         call wf%integrals%construct_cholesky_ai_a_c1(L_J_ck_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
-!
-         call wf%integrals%get_cholesky_t1(L_J_bd, wf%n_o + 1, wf%n_o + wf%n_v, wf%n_o + 1, wf%n_o + wf%n_v)
-!
-         call dgemm('T', 'N',                   &
-                     (wf%n_v)**2,               &
-                     (wf%n_v)*(batch_k%length), &
-                     wf%integrals%n_J,          &
-                     one,                       &
-                     L_J_bd,                    & ! L_bd_J
-                     wf%integrals%n_J,          &
-                     L_J_ck_c1,                 & ! L_J_ck  c is c1-transformed
-                     wf%integrals%n_J,          &
-                     one,                       &
-                     g_pqrs,                    & ! (bd|c'k)
-                     (wf%n_v)**2)
-!
-!        :: Term 3: g_bdck' += sum_J L_bd_J L_ck_J_c1 ::
-!
-         call wf%integrals%construct_cholesky_ai_i_c1(L_J_ck_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
-!
-         call dgemm('T', 'N',                   &
-                     (wf%n_v)**2,               &
-                     (wf%n_v)*(batch_k%length), &
-                     wf%integrals%n_J,          &
-                     one,                       &
-                     L_J_bd,                    & ! L_bd_J
-                     wf%integrals%n_J,          &
-                     L_J_ck_c1,                 & ! L_J_ck  k is c1-transformed
-                     wf%integrals%n_J,          &
-                     one,                       &
-                     g_pqrs,                    & ! (bd|ck')
-                     (wf%n_v)**2)
-!
-         call mem%dealloc(L_J_ck_c1, wf%integrals%n_J, wf%n_v, batch_k%length)
-!
-!        Sort from g_pqrs = (b'd|ck) + (bd|c'k) + (bd|ck') to h_pqrs ordered as dbck
-!
-         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length) ! order dbck
-!
-         call sort_1234_to_2134(g_pqrs, h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-!
-         call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-!
-!        Write to file
-!
-         call wf%g_bdck_c%write_interval(h_pqrs, batch_k)
-!
-         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+         call wf%g_bdck_c%write_interval(g_pqrs, batch_k)
 !
       enddo ! batch_k
 !
-      call mem%dealloc(L_J_bd, wf%integrals%n_J, wf%n_v, wf%n_v)
-!
       call wf%g_bdck_c%close_()
 !
+      call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
 !
 !     g'_ljck = (lj'|ck) + (lj|ck') + (lj|c'k) ordered as lc,jk
 !
+      req_0 = 0
+      req_k = wf%n_o**2*wf%n_v
+      call wf%eri%get_eri_c1_mem('oovo', req_0, req_0, req_0, req_k, req_0, req_k, &
+                                 wf%n_o, wf%n_o, wf%n_v, 1)
 !
-      req_0 = max((wf%integrals%n_J)*(wf%n_v)**2, &
-                  2*(wf%integrals%n_J)*(wf%n_o)**2 + (wf%integrals%n_J)*(wf%n_v)*(wf%n_o))
-      req_k = max(2*(wf%n_v)*(wf%n_o)**2, (wf%n_v)*(wf%n_o)**2 + (wf%integrals%n_J)*(wf%n_v))
-!
-      call mem%alloc(L_J_lj, wf%integrals%n_J, wf%n_o, wf%n_o)
 !
       call mem%batch_setup(batch_k,req_0,req_k)
+      call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%max_length)
+      call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%max_length)
 !
       wf%g_ljck_c = direct_stream_file('g_ljck_c', wf%n_v*wf%n_o)
       call wf%g_ljck_c%open_('write')
@@ -1365,84 +1290,16 @@ contains
 !
          call batch_k%determine_limits(k_batch)
 !
-!        :: Term 1: g_lj'ck = sum_J L_J_jl_c1 L_J_ck ::
-!
-         call wf%integrals%construct_cholesky_ij_c1(L_J_lj, c_ai, 1, wf%n_o, 1, wf%n_o)
-!
-         call mem%alloc(L_J_ck, wf%integrals%n_J, wf%n_v, batch_k%length)
-         call wf%integrals%get_cholesky_t1(L_J_ck, wf%n_o + 1, wf%n_o + wf%n_v, batch_k%first, batch_k%last)
-!
-         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
-!
-         call dgemm('T', 'N',                   &
-                     (wf%n_o)**2,               &
-                     (wf%n_v)*(batch_k%length), &
-                     wf%integrals%n_J,          &
-                     one,                       &
-                     L_J_lj,                    & ! L_lj_J  j is c1-transformed
-                     wf%integrals%n_J,          &
-                     L_J_ck,                    & ! L_J_ck
-                     wf%integrals%n_J,          &
-                     zero,                      &
-                     g_pqrs,                    & ! (lj'|ck)
-                     (wf%n_o)**2)
-!
-         call mem%dealloc(L_J_ck, wf%integrals%n_J, wf%n_v, batch_k%length)
-!
-!        :: Term 2: g_ljck' = sum_J L_J_lj L_J_ck_c1 ::
-!
-         call mem%alloc(L_J_ck_c1, wf%integrals%n_J, wf%n_v, batch_k%length)
-         call wf%integrals%construct_cholesky_ai_i_c1(L_J_ck_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
-!
-         call wf%integrals%get_cholesky_t1(L_J_lj, 1, wf%n_o, 1, wf%n_o)
-!
-         call dgemm('T', 'N',                   &
-                     (wf%n_o)**2,               &
-                     (wf%n_v)*(batch_k%length), &
-                     wf%integrals%n_J,          &
-                     one,                       &
-                     L_J_lj,                    & ! L_lj_J
-                     wf%integrals%n_J,          &
-                     L_J_ck_c1,                 & ! L_J_ck  k is c1_transformed
-                     wf%integrals%n_J,          &
-                     one,                       &
-                     g_pqrs,                    & ! (lj|ck')
-                     (wf%n_o)**2)
-!
-!        :: Term 3: g_bdck' = sum_J L_bd_J L_ck_J_c1 ::
-!
-         call wf%integrals%construct_cholesky_ai_a_c1(L_J_ck_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
-!
-         call dgemm('T', 'N',                   &
-                     (wf%n_o)**2,               &
-                     (wf%n_v)*(batch_k%length), &
-                     wf%integrals%n_J,          &
-                     one,                       &
-                     L_J_lj,                    & ! L_lj_J
-                     wf%integrals%n_J,          &
-                     L_J_ck_c1,                 & ! L_J_ck  c is c1_transformed
-                     wf%integrals%n_J,          &
-                     one,                       &
-                     g_pqrs,                    & ! (lj|c'k)
-                     (wf%n_o)**2)
-!
-         call mem%dealloc(L_J_ck_c1, wf%integrals%n_J, wf%n_v, batch_k%length)
-!
-!        Sort from g_pqrs = (lj'|ck) + (lj|ck') + (lj|c'k) to h_pqrs
-!
-         call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length) ! lcjk
+         call wf%eri%get_eri_c1('oovo', g_pqrs, c_ai, first_s=batch_k%first, last_s=batch_k%last)
 !
          call sort_1234_to_1324(g_pqrs,h_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
 !
-         call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
-!
          call wf%g_ljck_c%write_compound_full_batch(h_pqrs, wf%n_o, batch_k)
-!
-         call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
 !
       enddo ! batch_k
 !
-      call mem%dealloc(L_J_lj, wf%integrals%n_J, wf%n_o, wf%n_o)
+      call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%max_length)
+      call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%max_length)
 !
       call wf%g_ljck_c%close_()
 !
@@ -1466,42 +1323,17 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(out) :: F_ia_c1
 !
-      real(dp), dimension(:,:,:), allocatable :: L_J_ia
-      real(dp), dimension(:,:,:), allocatable :: L_J_jk_c1
-!
       real(dp), dimension(:,:,:,:), allocatable :: g_iajk
 !
       integer :: i, a, j
 !
       call zero_array(F_ia_c1, wf%n_v*wf%n_o)
 !
-!     Construct the integrals from the Cholesky Vectors
-!
-      call mem%alloc(L_J_ia, wf%integrals%n_J, wf%n_o, wf%n_v)
-!
-      call wf%integrals%get_cholesky_t1(L_J_ia, 1, wf%n_o, wf%n_o + 1, wf%n_o + wf%n_v)
-!
-      call mem%alloc(L_J_jk_c1, wf%integrals%n_J, wf%n_o, wf%n_o)
-!
-      call wf%integrals%construct_cholesky_ij_c1(L_J_jk_c1, c_ai, 1, wf%n_o, 1, wf%n_o)
+!     Construct the g_ovoo_c1
 !
       call mem%alloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call dgemm('T', 'N',             &
-                  (wf%n_v)*(wf%n_o),   &
-                  (wf%n_o)**2,         &
-                  wf%integrals%n_J,    &
-                  one,                 &
-                  L_J_ia,              & ! L_ia_J
-                  wf%integrals%n_J,    &
-                  L_J_jk_c1,           & ! L_J_jk'
-                  wf%integrals%n_J,    &
-                  zero,                &
-                  g_iajk,              & ! (ia|jk')
-                  (wf%n_v)*(wf%n_o))
-!
-      call mem%dealloc(L_J_jk_c1, wf%integrals%n_J, wf%n_o, wf%n_o)
-      call mem%dealloc(L_J_ia, wf%integrals%n_J, wf%n_o, wf%n_v)
+      call wf%eri%get_eri_c1('ovoo', g_iajk, c_ai)
 !
 !     Add contributions and resort to F_ia_c1(a,i)
 !
