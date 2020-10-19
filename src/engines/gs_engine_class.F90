@@ -90,9 +90,10 @@ contains
 !
       type(gs_engine) :: engine 
 !
-      engine%gs_algorithm          = 'diis'
+      engine%gs_algorithm = 'diis'
 !
-      if (wf%name_ .eq. 'cc2' .or. &
+      if (wf%name_ .eq. 'ccs' .or. &
+          wf%name_ .eq. 'cc2' .or. &
           wf%name_ .eq. 'cc3' .or. &
           wf%name_ .eq. 'low memory cc2' .or. &
           wf%name_ .eq. 'mlcc2') then
@@ -105,8 +106,8 @@ contains
 !
       end if
 !
-      engine%gs_restart            = .false.
-      engine%multipliers_restart   = .false.
+      engine%gs_restart          = .false.
+      engine%multipliers_restart = .false.
 !
       call engine%read_settings()
 !

@@ -94,7 +94,8 @@ contains
          engine%multipliers_algorithm = 'diis'
          engine%es_algorithm          = 'diis'
 !
-      else if (wf%name_ .eq. 'cc2' .or. &
+      else if (wf%name_ .eq. 'ccs' .or. &
+               wf%name_ .eq. 'cc2' .or. &
                wf%name_ .eq. 'mlcc2') then
 !
          engine%multipliers_algorithm = 'diis'

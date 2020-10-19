@@ -17,8 +17,8 @@ end solver cholesky
 
 solver scf
    restart
-   energy threshold:   1.0d-11
-   gradient threshold: 1.0d-11
+   energy threshold:   1.0d-12
+   gradient threshold: 1.0d-12
 end solver scf
 
 method
@@ -31,6 +31,11 @@ solver cc gs
    omega threshold:  1.0d-11
    energy threshold: 1.0d-11
 end solver cc gs
+
+solver cc multipliers
+   algorithm: davidson
+   threshold: 1.0d-11
+end solver cc multipliers
 
 solver cc es
    restart

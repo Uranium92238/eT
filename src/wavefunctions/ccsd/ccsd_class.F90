@@ -216,6 +216,7 @@ module ccsd_class
 !     Other procedures
 !
       procedure :: set_initial_amplitudes_guess               => set_initial_amplitudes_guess_ccsd
+      procedure :: set_initial_multipliers_guess              => set_initial_multipliers_guess_ccsd
       procedure :: set_t2_to_cc2_guess                        => set_t2_to_cc2_guess_ccsd
 !
       procedure :: read_amplitudes                            => read_amplitudes_ccsd
@@ -312,25 +313,122 @@ contains
    end subroutine initialize_ccsd
 !
 !
-   subroutine set_initial_amplitudes_guess_ccsd(wf)
+   subroutine set_initial_amplitudes_guess_ccsd(wf, restart)
 !!
 !!    Set initial amplitudes guess
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-!!    Sets the cluster amplitudes to the MP2 guess, i.e. 
-!!
-!!       t_ai   = zero 
-!!       t_aibj = - g_aibj / epsilon_aibj
+!!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
       implicit none
 !
-      class(ccsd) :: wf
+      class(ccsd), intent(inout) :: wf
 !
-      call zero_array(wf%t1, wf%n_o*wf%n_v)
+      logical, intent(in)        :: restart
 !
-      call wf%set_t2_to_cc2_guess()
+      integer :: n_amplitudes_read
+!
+      if (.not. restart) then
+!
+         call zero_array(wf%t1, wf%n_t1)
+!
+         call wf%eri%update_t1_integrals(wf%t1)
+!
+         call wf%set_t2_to_cc2_guess()
+!
+      else 
+!
+         if (wf%t_file%exists()) then 
+!
+            call output%printf('m', 'Requested restart. Reading in solution from file.', &
+                          fs='(/t3,a)')
+!
+            call wf%read_amplitudes(n_amplitudes_read)
+!
+            if(n_amplitudes_read == wf%n_gs_amplitudes) then
+!
+               call wf%eri%update_t1_integrals(wf%t1)
+!
+            else if (n_amplitudes_read == wf%n_t1) then
+!
+               call zero_array(wf%t1, wf%n_t1)
+!
+               call wf%eri%update_t1_integrals(wf%t1)
+!
+               call wf%set_t2_to_cc2_guess()
+!
+            else
+!
+               call output%error_msg('Did not recognize number of t-amplitudes on file &
+                                     &expected (i0) or (i0) found (i0)', &
+                                     ints=[wf%n_gs_amplitudes, wf%n_t1, n_amplitudes_read])
+!
+            end if
+!
+         else
+!
+            call zero_array(wf%t1, wf%n_t1)
+!
+            call wf%eri%update_t1_integrals(wf%t1)
+!
+            call wf%set_t2_to_cc2_guess()
+!
+         end if
+!
+      end if
 !
    end subroutine set_initial_amplitudes_guess_ccsd
+!
+!
+   subroutine set_initial_multipliers_guess_ccsd(wf, restart)
+!!
+!!    Set initial multipliers guess
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+!
+      logical, intent(in)  :: restart
+!
+      integer  :: n_multipliers_read
+!
+      if (.not. restart) then
+!
+         call copy_and_scale(one, wf%t1, wf%t1bar, wf%n_t1)
+         call construct_packed_contravariant(wf%t2, wf%t2bar, wf%n_v ,wf%n_o)
+!
+      else 
+!
+         if (wf%tbar_file%exists()) then 
+!
+            call output%printf('m', 'Requested restart. Reading multipliers from file.', &
+                              fs='(/t3,a)')
+!
+            call wf%read_multipliers(n_multipliers_read)
+!
+            if (n_multipliers_read == wf%n_t1) then
+!
+               call construct_packed_contravariant(wf%t2, wf%t2bar, wf%n_v ,wf%n_o)
+!
+            else if(.not. (n_multipliers_read == wf%n_gs_amplitudes)) then
+!
+               call output%error_msg('Did not recognize number of multipliers on file &
+                                     &expected (i0) or (i0) found (i0)', &
+                                     ints=[wf%n_gs_amplitudes, wf%n_t1, n_multipliers_read])
+!
+            end if
+!
+         else
+!
+            call copy_and_scale(one, wf%t1, wf%t1bar, wf%n_t1)
+            call construct_packed_contravariant(wf%t2, wf%t2bar, wf%n_v ,wf%n_o)
+!
+         end if
+!
+      end if
+!
+   end subroutine set_initial_multipliers_guess_ccsd
 !
 !
    subroutine set_t2_to_cc2_guess_ccsd(wf)

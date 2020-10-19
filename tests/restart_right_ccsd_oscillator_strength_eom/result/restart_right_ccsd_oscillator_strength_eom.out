@@ -158,7 +158,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -177.480195527875     0.5041E-11     0.1775E+03
+     1          -177.480195527875     0.5040E-11     0.1775E+03
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -181,16 +181,16 @@
    4  -1.204308976031  14   1.106279200333  24   2.107888307849  34   3.962304853878
    5  -0.911949983661  15   1.130688493503  25   2.500306219284  35   4.000653348396
    6  -0.866287973463  16   1.195338322958  26   2.529687453714  36   4.553980959887
-   7  -0.832614061196  17   1.332576309251  27   2.529802664165  37   4.580686751359
-   8  -0.790123932097  18   1.427802958738  28   2.601526974778  38   5.083719172632
+   7  -0.832614061197  17   1.332576309251  27   2.529802664165  37   4.580686751359
+   8  -0.790123932097  18   1.427802958738  28   2.601526974779  38   5.083719172632
    9  -0.497908722170  19   1.453664008356  29   2.725866593376
   10  -0.439606471484  20   1.485675098613  30   2.888341323819
   -----------------------------------------------------------------------------------
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.09854
-     Total cpu time (sec):               0.14744
+     Total wall time (sec):              0.07875
+     Total cpu time (sec):               0.12975
 
 
   :: CCSD wavefunction
@@ -289,8 +289,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.67080
-     Total cpu time (sec):               1.30783
+     Total wall time (sec):              0.66508
+     Total cpu time (sec):               1.29787
 
 
   2) Preparation of MO basis and integrals
@@ -369,8 +369,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.05108
-     Total cpu time (sec):               0.10303
+     Total wall time (sec):              0.05112
+     Total cpu time (sec):               0.10311
 
 
   4) Calculation of the multipliers (davidson algorithm)
@@ -388,35 +388,32 @@
      Residual threshold:        0.10E-10
      Max number of iterations:       100
 
-     Reduced space basis and transforms are stored on disk.
-
   Iteration     Residual norm
   ---------------------------
-    1             0.3184E+00
-    2             0.7430E-01
-    3             0.1833E-01
-    4             0.8154E-02
-    5             0.2544E-02
-    6             0.1025E-02
-    7             0.2886E-03
-    8             0.7249E-04
-    9             0.2172E-04
-   10             0.9186E-05
-   11             0.4807E-05
-   12             0.1913E-05
-   13             0.6161E-06
-   14             0.1752E-06
-   15             0.4543E-07
-   16             0.1257E-07
-   17             0.3602E-08
-   18             0.1158E-08
-   19             0.3097E-09
-   20             0.9058E-10
-   21             0.3022E-10
-   22             0.8237E-11
+    1             0.4855E-01
+    2             0.1222E-01
+    3             0.2595E-02
+    4             0.1809E-02
+    5             0.5186E-03
+    6             0.1639E-03
+    7             0.4304E-04
+    8             0.1141E-04
+    9             0.3933E-05
+   10             0.2240E-05
+   11             0.9962E-06
+   12             0.2804E-06
+   13             0.9298E-07
+   14             0.2758E-07
+   15             0.7670E-08
+   16             0.2052E-08
+   17             0.6176E-09
+   18             0.1691E-09
+   19             0.4902E-10
+   20             0.1407E-10
+   21             0.4176E-11
   ---------------------------
 
-  Convergence criterion met in 22 iterations!
+  Convergence criterion met in 21 iterations!
 
   - Davidson CC multipliers solver summary:
 
@@ -424,8 +421,8 @@
      -----------------------------------
         a       i         tbar(a,i)
      -----------------------------------
-        1      9        0.029646992279
-        3      9        0.014755436675
+        1      9        0.029646992281
+        3      9        0.014755436674
        14      9       -0.010760413664
        14      6       -0.008752717972
         4      7        0.008523553420
@@ -440,7 +437,7 @@
      --------------------------------------------------
         a      i       b      j         tbar(ai,bj)
      --------------------------------------------------
-        1      9       1      9       -0.079106600826
+        1      9       1      9       -0.079106600825
         3      9       3      9       -0.073265261744
         4     10       4     10       -0.062400215002
        16      5      16      5       -0.061891347282
@@ -454,8 +451,8 @@
 
   - Finished solving the CCSD multipliers equations
 
-     Total wall time (sec):               0.57098
-     Total cpu time (sec):                1.14237
+     Total wall time (sec):               0.45633
+     Total cpu time (sec):                0.91233
 
 
   5) Calculation of the excited state (davidson algorithm)
@@ -484,8 +481,6 @@
      Max number of iterations:             100
 
      Max reduced space dimension:          100
-
-     Reduced space basis and transforms are stored on disk.
 
   Requested restart - restarting 1 right eigenvectors from file.
 
@@ -551,8 +546,8 @@
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              0.02598
-     Total cpu time (sec):               0.04995
+     Total wall time (sec):              0.02418
+     Total cpu time (sec):               0.04818
 
 
   5) Calculation of the excited state (davidson algorithm)
@@ -581,8 +576,6 @@
      Max number of iterations:             100
 
      Max reduced space dimension:          100
-
-     Reduced space basis and transforms are stored on disk.
 
   Iteration:                  1
   Reduced space dimension:    1
@@ -773,7 +766,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.3419E-10   0.4248E-12
+     1   0.204566001066    0.000000000000     0.3419E-10   0.4242E-12
   ------------------------------------------------------------------------
 
   Iteration:                 25
@@ -781,7 +774,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.9170E-11   0.6226E-13
+     1   0.204566001066    0.000000000000     0.9170E-11   0.6231E-13
   ------------------------------------------------------------------------
   Convergence criterion met in 25 iterations!
 
@@ -830,14 +823,14 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.204566001066        5.566524421564
+        1                  0.204566001066        5.566524421563
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CCSD excited state equations (left)
 
-     Total wall time (sec):              0.63555
-     Total cpu time (sec):               1.27129
+     Total wall time (sec):              0.54495
+     Total cpu time (sec):               1.09290
 
 
   6) Calculation of the transition moments (EOM)
@@ -865,8 +858,8 @@
 
   - Timings for the CCSD response calculation
 
-     Total wall time (sec):              1.95759
-     Total cpu time (sec):               3.88167
+     Total wall time (sec):              1.74461
+     Total cpu time (sec):               3.45734
 
      Peak memory usage during the execution of eT: 44.720552 MB
 

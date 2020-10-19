@@ -189,7 +189,7 @@ contains
 !
       integer :: iteration 
 !
-      real(dp) :: residual_norm, ddot, norm_trial
+      real(dp) :: residual_norm
 !
       call wf%prepare_for_multiplier_equation()
 !
@@ -220,10 +220,10 @@ contains
 !
       call dscal(wf%n_gs_amplitudes, -one, eta, 1)
 !
-      davidson = linear_davidson_tool('multipliers',                             &
-                                       wf%n_gs_amplitudes,                       &
-                                       min(1.0d-11, solver%residual_threshold),  &
-                                       solver%max_dim_red,                       &
+      davidson = linear_davidson_tool('multipliers',                                  &
+                                       wf%n_gs_amplitudes,                            &
+                                       min(1.0d-11, tenth*solver%residual_threshold), &
+                                       solver%max_dim_red,                            &
                                        eta, 1)
 !
       call davidson%initialize_trials_and_transforms(solver%records_in_memory)
@@ -235,25 +235,9 @@ contains
 !
 !     :: Set start vector / initial guess ::
 !
-      if (solver%restart) then ! Read multiplier vector from file
-!
-         call output%printf('m', 'Requested restart. Reading multipliers from file.', &
-                            fs='(/t3,a)')
-!
-         call wf%read_multipliers()
-!
-         call wf%get_multipliers(multipliers)
-!
-         norm_trial = sqrt(ddot(wf%n_gs_amplitudes, multipliers, 1, multipliers, 1))
-         call dscal(wf%n_gs_amplitudes, one/norm_trial, multipliers, 1)
-!
-         call davidson%set_trial(multipliers, 1)
-!
-      else ! Use - eta_mu / eps_mu as first trial 
-!
-         call davidson%set_trials_to_preconditioner_guess()
-!
-      endif 
+      call wf%set_initial_multipliers_guess(solver%restart)
+      call wf%get_multipliers(multipliers)
+      call davidson%set_trial(multipliers, 1)
 !
 !     :: Iterative loop ::
 !

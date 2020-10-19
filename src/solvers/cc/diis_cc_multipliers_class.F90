@@ -256,20 +256,8 @@ contains
 !
       call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
 !
-      if (solver%restart) then 
-!
-         call output%printf('m', 'Requested restart. Reading multipliers from file.', &
-                            fs='(/t3,a)')
-!
-         call wf%read_multipliers()
-         call wf%get_multipliers(multipliers) 
-!
-      else
-!
-         multipliers = zero
-         call wf%set_multipliers(multipliers)
-!
-      endif
+      call wf%set_initial_multipliers_guess(solver%restart)
+      call wf%get_multipliers(multipliers) 
 !
       converged_residual = .false.
 !

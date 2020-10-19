@@ -48,27 +48,28 @@ contains
    end subroutine save_amplitudes_ccsd
 !
 !
-   module subroutine read_amplitudes_ccsd(wf)
+   module subroutine read_amplitudes_ccsd(wf, read_n)
 !!
 !!    Read amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Adapted to return the number of read amplitdues if requested 
+!!    by Alexander C. Paul, Oct 2020
 !!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
 !
-      call wf%read_singles_vector(wf%t_file, wf%t1)
+      integer, intent(out), optional :: read_n
 !
-      if (wf%t_file%get_file_size() == dp*wf%n_gs_amplitudes) then
+      integer :: n
 !
-         call wf%read_doubles_vector(wf%t_file, wf%t2)
+      n = 0
 !
-      else
+      call wf%read_singles_vector(wf%t_file, wf%t1, n)
 !
-         call wf%eri%update_t1_integrals(wf%t1)
-         call wf%set_t2_to_cc2_guess
+      call wf%read_doubles_vector(wf%t_file, wf%t2, n)
 !
-      end if
+      if (present(read_n)) read_n = n
 !
    end subroutine read_amplitudes_ccsd
 !
@@ -88,26 +89,32 @@ contains
    end subroutine save_multipliers_ccsd
 !
 !
-   module subroutine read_multipliers_ccsd(wf)
+   module subroutine read_multipliers_ccsd(wf, read_n)
 !!
 !!    Read multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
+!!    Adapted to return the number of read multipliers if requested 
+!!    by Alexander C. Paul, Oct 2020
+!!
+!!    read_n: optionally returns the number of amplitudes read. 
+!!            This is especially useful e.g. in CCSD to provide a start guess 
+!!            for the doubles if only singles were found on file.
 !!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
 !
-      call wf%read_singles_vector(wf%tbar_file, wf%t1bar)
+      integer, intent(out), optional :: read_n
 !
-      if (wf%tbar_file%get_file_size() == dp*wf%n_gs_amplitudes) then
+      integer :: n
 !
-         call wf%read_doubles_vector(wf%tbar_file, wf%t2bar)
+      n = 0
 !
-      else
+      call wf%read_singles_vector(wf%tbar_file, wf%t1bar, n)
 !
-         call zero_array(wf%t2bar, wf%n_t2)
+      call wf%read_doubles_vector(wf%tbar_file, wf%t2bar, n)
 !
-      end if
+      if (present(read_n)) read_n = n
 !
    end subroutine read_multipliers_ccsd
 !

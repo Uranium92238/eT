@@ -529,6 +529,11 @@ module reordering
                    packin_anti_complex
    end interface packin_anti
 !
+   interface construct_packed_contravariant
+      procedure :: construct_packed_contravariant_real, &
+                   construct_packed_contravariant_complex
+   end interface construct_packed_contravariant
+!
 !
 contains
 !
@@ -7752,6 +7757,102 @@ contains
       enddo
 !
    end subroutine packin_anti_complex
+!
+!
+   subroutine construct_packed_contravariant_real(x, y, dim_p, dim_q)
+!!
+!!    Construct packed contravariant
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Aug 2020
+!!
+!!    Constructs
+!!       Y_pqrs = (2 X_pqrs - X_rqps) for packed arrays X and Y
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      real(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(in)    :: x
+      real(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(inout) :: y
+!
+      integer :: p, q, r, s, pq, rs, pqrs, p_end, rq, ps, rqps
+!
+!$omp parallel do schedule(static) collapse(2) private(s,r,q,p,pq,rs,pqrs)
+      do s = 1, dim_q
+         do r = 1, dim_p
+            do q = 1, s
+!
+               if (s .ne. q) then
+                  p_end = dim_p
+               else
+                  p_end = r
+               end if
+!
+               do p = 1, p_end
+!
+                  pq = dim_p*(q-1)+p
+                  rs = dim_p*(s-1)+r
+                  rq = dim_p*(q-1)+r
+                  ps = dim_p*(s-1)+p
+                  pqrs = rs*(rs-3)/2 + pq + rs
+                  rqps = max(rq,ps)*(max(rq,ps)-3)/2 + rq + ps
+!
+                  y(pqrs) = (two*x(pqrs) - x(rqps))
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine construct_packed_contravariant_real
+   !
+!
+   subroutine construct_packed_contravariant_complex(x, y, dim_p, dim_q)
+!!
+!!    Construct packed contravariant
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Aug 2020
+!!
+!!    Constructs
+!!       Y_pqrs = (2 X_pqrs - X_rqps) for packed arrays X and Y
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      complex(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(in)    :: x
+      complex(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(inout) :: y
+!
+      integer :: p, q, r, s, pq, rs, pqrs, p_end, rq, ps, rqps
+!
+!$omp parallel do schedule(static) collapse(2) private(s,r,q,p,pq,rs,pqrs)
+      do s = 1, dim_q
+         do r = 1, dim_p
+            do q = 1, s
+!
+               if (s .ne. q) then
+                  p_end = dim_p
+               else
+                  p_end = r
+               end if
+!
+               do p = 1, p_end
+!
+                  pq = dim_p*(q-1)+p
+                  rs = dim_p*(s-1)+r
+                  rq = dim_p*(q-1)+r
+                  ps = dim_p*(s-1)+p
+                  pqrs = rs*(rs-3)/2 + pq + rs
+                  rqps = max(rq,ps)*(max(rq,ps)-3)/2 + rq + ps
+!
+                  y(pqrs) = (two*x(pqrs) - x(rqps))
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine construct_packed_contravariant_complex
 !
 !
 end module reordering

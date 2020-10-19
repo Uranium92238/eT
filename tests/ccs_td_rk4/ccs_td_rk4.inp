@@ -22,8 +22,8 @@ end solver cholesky
 
 solver scf
   algorithm:          scf-diis
-  energy threshold:   1.0d-10
-  gradient threshold: 1.0d-10
+  energy threshold:   1.0d-12
+  gradient threshold: 1.0d-12
 end solver scf
 
 solver cc gs
