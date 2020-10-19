@@ -26,16 +26,19 @@ module sequential_file_class
 !!
 !
    use kinds    
-   use abstract_other_file_class, only : abstract_other_file
+   use abstract_file_class, only : abstract_file
    use global_out, only : output
 !
-   type, extends(abstract_other_file) :: sequential_file
+   type, extends(abstract_file) :: sequential_file
 !
    contains
 !
 !     Open, skip and rewind
 !
       procedure, public :: open_   => open_sequential_file
+      procedure, public :: close_  => close_sequential_file
+      procedure, public :: delete_ => delete_sequential_file
+      procedure, public :: copy    => copy_sequential_file
       procedure, public :: rewind_ => rewind_sequential_file
       procedure, public :: skip    => skip_sequential_file
 !
@@ -132,8 +135,6 @@ module sequential_file_class
                                     read_l_1_sequential_file,   &
                                     read_char_sequential_file
 !
-      procedure, public :: number_of_records => number_of_records_sequential_file
-!
       final :: destructor
 !
 !
@@ -150,7 +151,7 @@ contains
 !
    function new_sequential_file(name_, format_) result(the_file)
 !!
-!!    Sequential file constructer
+!!    new sequential file
 !!    Writen by Rolf H. Myhre, May 2019
 !!
 !!    rec_dim is number of words in each record
@@ -187,7 +188,7 @@ contains
 !
    subroutine open_sequential_file(the_file, file_action, position_)
 !!
-!!    Open eT sequential file
+!!    Open
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -233,49 +234,202 @@ contains
    end subroutine open_sequential_file
 !
 !
-   function number_of_records_sequential_file(the_file) result(n_lines)
+   subroutine close_sequential_file(the_file, new_destiny)
 !!
-!!    Number of records 
-!!    Written by Eirik F. Kjønstad, 2019 
+!!    Close
+!!    Written by Rolf H. Myhre Nov. 2019
 !!
-!!    Returns the number of records in the file. 
+!!    Destiny: Optional character string that decides whether to keep
+!!             or delete. Default: keep
 !!
-!!    Works by doing empty reads until end-of-file is reached, 
-!!    giving back the number of successful reads. 
+      implicit none
+!
+      class(sequential_file), intent(inout) :: the_file
+!
+      character(len=*), intent(in), optional :: new_destiny
+!
+      integer              :: io_status
+      character(len = 100) :: io_message
+      character(len = 10)  :: destiny
+!
+!
+!     Check if the file is open
+!
+      if(.not. the_file%is_open) then
+         call output%error_msg('Trying to close (a0), but it is already closed.', &
+                                chars=[the_file%name_])
+      end if
+!
+!
+!     Check if destiny is present
+!     We let close handle the error if destiny is messed up
+!
+      if(.not. present(new_destiny)) then
+         destiny = 'keep'
+      else
+         destiny = new_destiny
+      end if
+!
+!
+!     Things seems fine, close the file
+!
+      close(the_file%unit_, status = destiny, iostat = io_status, iomsg = io_message)
+!
+!
+!     Was it fine?
+!
+      if(io_status .ne. 0) then
+!
+         call output%error_msg('Failed to close file (a0), status is (i0) and &
+                               &error message is (a0)', &
+                               chars = [character(len=255)::the_file%name_, io_message], &
+                               ints = [io_status])
+      end if
+!
+!
+      the_file%is_open = .false.
+      the_file%unit_ = 1
+      the_file%action_ = 'unknown'
+!
+   end subroutine close_sequential_file
+!
+!
+   subroutine delete_sequential_file(the_file)
 !!
-      implicit none 
+!!    Delete
+!!    Written by Rolf H. Myhre, Aug 2019
+!!
+      implicit none
 !
       class(sequential_file) :: the_file
 !
-      integer :: n_lines 
+      integer              :: io_error
+      character(len=100)   :: io_msg
 !
-      integer :: io_stat 
+      if(the_file%is_open) then
 !
-!     Check if the file is open
-      if (.not. the_file%is_open) then
+         close(the_file%unit_, iostat=io_error, iomsg=io_msg, status='delete')
 !
-         call output%error_msg(trim('in number_of_records '//the_file%name_)//' is not open')
+         if (io_error .ne. 0) then
+            call output%error_msg('could not delete eT file '//trim(the_file%name_)//&
+                                 &'. Error message: '//trim(io_msg))
+         endif
+!
+      else
+!
+!        Open the file with unformatted stream access
+!        Stream doesn't care about format and records and neither do we
+         open(newunit=the_file%unit_, file=the_file%name_, access='stream', &
+              form='unformatted', action='write', status='old', &
+              iostat=io_error, iomsg=io_msg)
+!
+         if (io_error .ne. 0) then
+            call output%error_msg('could not delete eT file '//trim(the_file%name_)//&
+                                 &'. Error message: '//trim(io_msg))
+         endif
+!
+         close(the_file%unit_, iostat=io_error, iomsg=io_msg, status='delete')
+!
+         if (io_error .ne. 0) then
+            call output%error_msg('could not delete eT file '//trim(the_file%name_)//&
+                                 &'. Error message: '//trim(io_msg))
+         endif
 !
       endif
 !
-      call the_file%rewind_() ! Make sure the file is rewinded
+      the_file%is_open = .false.
 !
-      n_lines = -1
-      io_stat = 0
+   end subroutine delete_sequential_file
 !
-      do while (io_stat .eq. 0)
 !
-         n_lines = n_lines + 1
-         call the_file%read_blank(io_stat)
+   subroutine copy_sequential_file(the_file, filename)
+!!
+!!    Copy 
+!!    Written by Alexander C. Paul and Rolf H. Myhre, September 2019
+!!
+!!    Very similar to abstract copy, but with access to output
+!!
+      implicit none
 !
-      enddo 
+      class(sequential_file) :: the_file
 !
-   end function number_of_records_sequential_file
+      character(*), intent(in) :: filename
+!
+      integer              :: copy_unit
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+!     Character to hold a byte
+      character :: byte
+!
+!     Check that file is closed
+      if(the_file%is_open) then 
+!
+         call output%error_msg(the_file%name_//' is not closed in copy.')
+!
+      endif
+!
+!     Open the file with stream unformatted access
+      open(newunit=the_file%unit_, file=the_file%name_, access='stream', &
+           form='unformatted', action='read', status='old', & 
+           iostat=io_error, iomsg=io_msg)
+!
+      if(io_error .ne. 0) then 
+!
+         call output%error_msg('Failed to open '//trim(the_file%name_)//' in copy.'//&
+                              &' io_msg: '//trim(io_msg))
+!
+      endif
+!
+!     Open a new file
+      open(newunit=copy_unit, file=trim(filename), access='stream', &
+           form='unformatted', action='write', status='new', &
+           iostat=io_error, iomsg=io_msg)
+!
+      if(io_error .ne. 0) then 
+!
+         call output%error_msg('Failed to open '//trim(filename)//' in copy.'//&
+                              &' io_msg: '//trim(io_msg))
+!
+      endif
+!
+!
+!     Read byte by byte and write it to the new file
+!
+      do
+!
+         read(the_file%unit_, end=200) byte !Read until end of file, then go to 200
+         write(copy_unit) byte             !Write whatever you just read
+!
+      enddo
+      200 continue !End of file reached, should be done
+!
+!     Close the files
+      close(copy_unit, status='keep', iostat=io_error, iomsg=io_msg)
+!
+      if(io_error .ne. 0) then 
+!
+         call output%error_msg('Failed to close '//trim(filename)//' in copy.'//&
+                              &' io_msg: '//trim(io_msg))
+!
+      endif
+!
+      close(the_file%unit_, status='keep', iostat=io_error, iomsg=io_msg)
+!
+      if(io_error .ne. 0) then 
+!
+         call output%error_msg('Failed to close '//trim(the_file%name_)//' in copy.'//&
+                              &' io_msg: '//trim(io_msg))
+!
+      endif
+!
+   end subroutine copy_sequential_file
 !
 !
    subroutine rewind_sequential_file(the_file)
 !!
-!!    Rewind the sequential file
+!!    Rewind
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -304,7 +458,7 @@ contains
 !
    subroutine skip_sequential_file(the_file, jump)
 !!
-!!    Skip sequential file
+!!    Skip
 !!    Written by Rolf H. Myhre, May 2019
 !!    Skip jump number of lines. Default: 1
 !!
@@ -339,7 +493,7 @@ contains
 !
    subroutine write_blank_sequential_file(the_file)
 !!
-!!    Sequential file write, blank line
+!!    write blank
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
