@@ -19,13 +19,13 @@ memory
 end memory
 
 solver cholesky
-   threshold: 1.0d-11
+   threshold: 1.0d-12
 end solver cholesky
 
 solver scf
    algorithm: scf-diis
-   energy threshold: 1.0d-11
-   gradient threshold: 1.0d-11
+   energy threshold: 1.0d-12
+   gradient threshold: 1.0d-12
 end solver scf
 
 solver cc gs
@@ -34,6 +34,7 @@ end solver cc gs
 
 solver cc multipliers
    threshold: 1.0d-11
+   algorithm: davidson
 end solver cc multipliers
 
 solver cc es

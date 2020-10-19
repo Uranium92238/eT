@@ -240,7 +240,7 @@ contains
 !! see documentation below
 !!
 !
-   subroutine read_0_real_dp_stream_file(the_file, scalar, position_)
+   subroutine read_0_real_dp_stream_file(the_file, scalar, position_, status_)
 !!
 !!    Read rank 0 real dp
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Mar 2020
@@ -251,17 +251,21 @@ contains
 !!                positions counted in bytes, starting at 1
 !!                default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
       implicit none
 !
       class(stream_file), intent(in) :: the_file
       real(dp), intent(out)          :: scalar
       integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
-      call the_file%read_0_real_dp_abstract_stream(scalar, position_)
+      call the_file%read_0_real_dp_abstract_stream(scalar, position_, status_)
 !
    end subroutine read_0_real_dp_stream_file
 !
-   subroutine read_1_real_dp_stream_file(the_file, array, n, position_)
+   subroutine read_1_real_dp_stream_file(the_file, array, n, position_, status_)
 !!
 !!    Read rank 1 real dp
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Mar 2020
@@ -274,18 +278,22 @@ contains
 !!                positions counted in bytes, starting at 1
 !!                default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
       implicit none
 !
       class(stream_file), intent(in)      :: the_file
       integer, intent(in)                 :: n
       real(dp), dimension(n), intent(out) :: array
       integer, intent(in), optional       :: position_
+      integer, intent(out), optional      :: status_
 !
-      call the_file%read_1_real_dp_abstract_stream(array, n, position_)
+      call the_file%read_1_real_dp_abstract_stream(array, n, position_, status_)
 !
    end subroutine read_1_real_dp_stream_file
 !
-   subroutine read_2_real_dp_stream_file(the_file, array, n, position_)
+   subroutine read_2_real_dp_stream_file(the_file, array, n, position_, status_)
 !!
 !!    Read rank 2 real dp
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Mar 2020
@@ -298,6 +306,9 @@ contains
 !!                positions counted in bytes, starting at 1
 !!                default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
 !
       implicit none
 !
@@ -305,12 +316,13 @@ contains
       real(dp), dimension(:,:), intent(out) :: array
       integer, intent(in)                   :: n
       integer, intent(in), optional         :: position_
+      integer, intent(out), optional        :: status_
 !
-      call the_file%read_1_real_dp_stream_file(array, n, position_)
+      call the_file%read_1_real_dp_stream_file(array, n, position_, status_)
 !
    end subroutine read_2_real_dp_stream_file
 !
-   subroutine read_3_real_dp_stream_file(the_file, array, n, position_)
+   subroutine read_3_real_dp_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -318,12 +330,13 @@ contains
       real(dp), dimension(:,:,:), intent(out) :: array
       integer, intent(in)                     :: n
       integer, intent(in), optional           :: position_
+      integer, intent(out), optional          :: status_
 !
-      call the_file%read_1_real_dp_stream_file(array, n, position_)
+      call the_file%read_1_real_dp_stream_file(array, n, position_, status_)
 !
    end subroutine read_3_real_dp_stream_file
 !
-   subroutine read_4_real_dp_stream_file(the_file, array, n, position_)
+   subroutine read_4_real_dp_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -331,26 +344,28 @@ contains
       real(dp), dimension(:,:,:,:), intent(out) :: array
       integer, intent(in)                       :: n
       integer, intent(in), optional             :: position_
+      integer, intent(out), optional            :: status_
 !
-      call the_file%read_1_real_dp_stream_file(array, n, position_)
+      call the_file%read_1_real_dp_stream_file(array, n, position_, status_)
 !
    end subroutine read_4_real_dp_stream_file
 !
 !  Real single precision
 !
-   subroutine read_0_real_sp_stream_file(the_file, scalar, position_)
+   subroutine read_0_real_sp_stream_file(the_file, scalar, position_, status_)
 !
       implicit none
 !
       class(stream_file), intent(in) :: the_file
       real(sp), intent(out)          :: scalar
       integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
-      call the_file%read_0_real_sp_abstract_stream(scalar, position_)
+      call the_file%read_0_real_sp_abstract_stream(scalar, position_, status_)
 !
    end subroutine read_0_real_sp_stream_file
 !
-   subroutine read_1_real_sp_stream_file(the_file, array, n, position_)
+   subroutine read_1_real_sp_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -358,26 +373,28 @@ contains
       integer, intent(in)                 :: n
       real(sp), dimension(n), intent(out) :: array
       integer, intent(in), optional       :: position_
+      integer, intent(out), optional      :: status_
 !
-      call the_file%read_1_real_sp_abstract_stream(array, n, position_)
+      call the_file%read_1_real_sp_abstract_stream(array, n, position_, status_)
 !
    end subroutine read_1_real_sp_stream_file
 !
 !  Complex
 !
-   subroutine read_0_complex_dp_stream_file(the_file, scalar, position_)
+   subroutine read_0_complex_dp_stream_file(the_file, scalar, position_, status_)
 !
       implicit none
 !
       class(stream_file), intent(in) :: the_file
       complex(dp), intent(out)       :: scalar
       integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
-      call the_file%read_0_complex_dp_abstract_stream(scalar, position_)
+      call the_file%read_0_complex_dp_abstract_stream(scalar, position_, status_)
 !
    end subroutine read_0_complex_dp_stream_file
 !
-   subroutine read_1_complex_dp_stream_file(the_file, array, n, position_)
+   subroutine read_1_complex_dp_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -385,12 +402,13 @@ contains
       integer, intent(in)                    :: n
       complex(dp), dimension(n), intent(out) :: array
       integer, intent(in), optional          :: position_
+      integer, intent(out), optional         :: status_
 !
-      call the_file%read_1_complex_dp_abstract_stream(array, n, position_)
+      call the_file%read_1_complex_dp_abstract_stream(array, n, position_, status_)
 !
    end subroutine read_1_complex_dp_stream_file
 !
-   subroutine read_2_complex_dp_stream_file(the_file, array, n, position_)
+   subroutine read_2_complex_dp_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -398,12 +416,13 @@ contains
       complex(dp), dimension(:,:), intent(out) :: array
       integer, intent(in)                      :: n
       integer, intent(in), optional            :: position_
+      integer, intent(out), optional           :: status_
 !
-      call the_file%read_1_complex_dp_stream_file(array, n, position_)
+      call the_file%read_1_complex_dp_stream_file(array, n, position_, status_)
 !
    end subroutine read_2_complex_dp_stream_file
 !
-   subroutine read_3_complex_dp_stream_file(the_file, array, n, position_)
+   subroutine read_3_complex_dp_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -411,12 +430,13 @@ contains
       complex(dp), dimension(:,:,:), intent(out) :: array
       integer, intent(in)                        :: n
       integer, intent(in), optional              :: position_
+      integer, intent(out), optional             :: status_
 !
-      call the_file%read_1_complex_dp_stream_file(array, n, position_)
+      call the_file%read_1_complex_dp_stream_file(array, n, position_, status_)
 !
    end subroutine read_3_complex_dp_stream_file
 !
-   subroutine read_4_complex_dp_stream_file(the_file, array, n, position_)
+   subroutine read_4_complex_dp_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -424,26 +444,28 @@ contains
       complex(dp), dimension(:,:,:,:), intent(out) :: array
       integer, intent(in)                          :: n
       integer, intent(in), optional                :: position_
+      integer, intent(out), optional               :: status_
 !
-      call the_file%read_1_complex_dp_stream_file(array, n, position_)
+      call the_file%read_1_complex_dp_stream_file(array, n, position_, status_)
 !
    end subroutine read_4_complex_dp_stream_file
 !
 !  64-bit integers
 !
-   subroutine read_0_int_64_stream_file(the_file, scalar, position_)
+   subroutine read_0_int_64_stream_file(the_file, scalar, position_, status_)
 !
       implicit none
 !
       class(stream_file), intent(in) :: the_file
       integer(i64), intent(out)      :: scalar
       integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
-      call the_file%read_0_int_64_abstract_stream(scalar, position_)
+      call the_file%read_0_int_64_abstract_stream(scalar, position_, status_)
 !
    end subroutine read_0_int_64_stream_file
 !
-   subroutine read_1_int_64_stream_file(the_file, array, n, position_)
+   subroutine read_1_int_64_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -451,12 +473,13 @@ contains
       integer, intent(in)                     :: n
       integer(i64), dimension(n), intent(out) :: array
       integer, intent(in), optional           :: position_
+      integer, intent(out), optional          :: status_
 !
-      call the_file%read_1_int_64_abstract_stream(array, n, position_)
+      call the_file%read_1_int_64_abstract_stream(array, n, position_, status_)
 !
    end subroutine read_1_int_64_stream_file
 !
-   subroutine read_2_int_64_stream_file(the_file, array, n, position_)
+   subroutine read_2_int_64_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -464,12 +487,13 @@ contains
       integer(i64), dimension(:,:), intent(out) :: array
       integer, intent(in)                       :: n
       integer, intent(in), optional             :: position_
+      integer, intent(out), optional            :: status_
 !
-      call the_file%read_1_int_64_stream_file(array, n, position_)
+      call the_file%read_1_int_64_stream_file(array, n, position_, status_)
 !
    end subroutine read_2_int_64_stream_file
 !
-   subroutine read_3_int_64_stream_file(the_file, array, n, position_)
+   subroutine read_3_int_64_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -477,12 +501,13 @@ contains
       integer(i64), dimension(:,:,:), intent(out) :: array
       integer, intent(in)                         :: n
       integer, intent(in), optional               :: position_
+      integer, intent(out), optional              :: status_
 !
-      call the_file%read_1_int_64_stream_file(array, n, position_)
+      call the_file%read_1_int_64_stream_file(array, n, position_, status_)
 !
    end subroutine read_3_int_64_stream_file
 !
-   subroutine read_4_int_64_stream_file(the_file, array, n, position_)
+   subroutine read_4_int_64_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -490,26 +515,28 @@ contains
       integer(i64), dimension(:,:,:,:), intent(out) :: array
       integer, intent(in)                           :: n
       integer, intent(in), optional                 :: position_
+      integer, intent(out), optional                :: status_
 !
-      call the_file%read_1_int_64_stream_file(array, n, position_)
+      call the_file%read_1_int_64_stream_file(array, n, position_, status_)
 !
    end subroutine read_4_int_64_stream_file 
 !
 !  32-bit integers
 !
-   subroutine read_0_int_32_stream_file(the_file, scalar, position_)
+   subroutine read_0_int_32_stream_file(the_file, scalar, position_, status_)
 !
       implicit none
 !
       class(stream_file), intent(in) :: the_file
       integer(i32), intent(out)      :: scalar
       integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
-      call the_file%read_0_int_32_abstract_stream(scalar, position_)
+      call the_file%read_0_int_32_abstract_stream(scalar, position_, status_)
 !
    end subroutine read_0_int_32_stream_file
 !
-   subroutine read_1_int_32_stream_file(the_file, array, n, position_)
+   subroutine read_1_int_32_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -517,12 +544,13 @@ contains
       integer, intent(in)                     :: n
       integer(i32), dimension(n), intent(out) :: array
       integer, intent(in), optional           :: position_
+      integer, intent(out), optional          :: status_
 !
-      call the_file%read_1_int_32_abstract_stream(array, n, position_)
+      call the_file%read_1_int_32_abstract_stream(array, n, position_, status_)
 !
    end subroutine read_1_int_32_stream_file
 !
-   subroutine read_2_int_32_stream_file(the_file, array, n, position_)
+   subroutine read_2_int_32_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -530,12 +558,13 @@ contains
       integer(i32), dimension(:,:), intent(out) :: array
       integer, intent(in)                       :: n
       integer, intent(in), optional             :: position_
+      integer, intent(out), optional            :: status_
 !
-      call the_file%read_1_int_32_stream_file(array, n, position_)
+      call the_file%read_1_int_32_stream_file(array, n, position_, status_)
 !
    end subroutine read_2_int_32_stream_file
 !
-   subroutine read_3_int_32_stream_file(the_file, array, n, position_)
+   subroutine read_3_int_32_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -543,12 +572,13 @@ contains
       integer(i32), dimension(:,:,:), intent(out) :: array
       integer, intent(in)                         :: n
       integer, intent(in), optional               :: position_
+      integer, intent(out), optional              :: status_
 !
-      call the_file%read_1_int_32_stream_file(array, n, position_)
+      call the_file%read_1_int_32_stream_file(array, n, position_, status_)
 !
    end subroutine read_3_int_32_stream_file
 !
-   subroutine read_4_int_32_stream_file(the_file, array, n, position_)
+   subroutine read_4_int_32_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -556,26 +586,28 @@ contains
       integer(i32), dimension(:,:,:,:), intent(out) :: array
       integer, intent(in)                           :: n
       integer, intent(in), optional                 :: position_
+      integer, intent(out), optional                :: status_
 !
-      call the_file%read_1_int_32_stream_file(array, n, position_)
+      call the_file%read_1_int_32_stream_file(array, n, position_, status_)
 !
    end subroutine read_4_int_32_stream_file
 !
 !  Logicals
 !
-   subroutine read_0_log_stream_file(the_file, scalar, position_)
+   subroutine read_0_log_stream_file(the_file, scalar, position_, status_)
 !
       implicit none
 !
       class(stream_file), intent(in) :: the_file
       logical, intent(out)           :: scalar
       integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
-      call the_file%read_0_log_abstract_stream(scalar, position_)
+      call the_file%read_0_log_abstract_stream(scalar, position_, status_)
 !
    end subroutine read_0_log_stream_file
 !
-   subroutine read_1_log_stream_file(the_file, array, n, position_)
+   subroutine read_1_log_stream_file(the_file, array, n, position_, status_)
 !
       implicit none
 !
@@ -583,8 +615,9 @@ contains
       integer, intent(in)                :: n
       logical, dimension(n), intent(out) :: array
       integer, intent(in), optional      :: position_
+      integer, intent(out), optional     :: status_
 !
-      call the_file%read_1_log_abstract_stream(array, n, position_)
+      call the_file%read_1_log_abstract_stream(array, n, position_, status_)
 !
    end subroutine read_1_log_stream_file
 !

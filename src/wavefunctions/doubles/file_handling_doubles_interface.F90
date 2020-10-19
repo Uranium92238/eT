@@ -17,10 +17,33 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
+   module subroutine read_doubles_vector_doubles(wf, file_, vector, read_n)
+!!
+!!    Read doubles vector
+!!    Written by Alexander C. Paul, Oct 2019
+!!
+!!    File format:
+!!    n_t1, t1, n_t2, t2
+!!
+!!    read_n: optionally returns the number of amplitudes read.
+!!
+      implicit none 
+!
+      class(doubles), intent(inout) :: wf
+      type(stream_file), intent(inout) :: file_
+      real(dp), dimension(wf%n_t2), intent(out) :: vector
+      integer, intent(inout), optional :: read_n
+!
+   end subroutine read_doubles_vector_doubles
+!
+!
    module subroutine save_doubles_vector_doubles(wf, file_, vector)
 !!
 !!    Save doubles vector
-!!    Written by Alexander C. Paul, Oct 2019 
+!!    Written by Alexander C. Paul, Oct 2019
+!!
+!!    File format:
+!!    n_t1, t1, n_t2, t2
 !!
       implicit none 
 !
@@ -29,20 +52,6 @@
       real(dp), dimension(wf%n_t2), intent(in) :: vector 
 !
    end subroutine save_doubles_vector_doubles
-!
-!
-   module subroutine read_doubles_vector_doubles(wf, file_, vector)
-!!
-!!    Read doubles vector
-!!    Written by Alexander C. Paul, Oct 2019
-!!
-      implicit none 
-!
-      class(doubles), intent(inout) :: wf
-      type(stream_file), intent(inout) :: file_
-      real(dp), dimension(wf%n_t2), intent(out) :: vector
-!
-   end subroutine read_doubles_vector_doubles
 !
 !
    module subroutine read_excitation_vector_file_doubles(wf, file_, vector)

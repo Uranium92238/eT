@@ -1076,6 +1076,7 @@ contains
       call mem%dealloc(canonical_orbitals, wf%n_ao, wf%n_mo)
 !
       call wf%initialize_t1()
+      call zero_array(wf%t1, wf%n_t1)
       call wf%eri%set_t1_to_mo()
 !
       call wf%construct_fock()

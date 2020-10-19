@@ -62,16 +62,19 @@
    end subroutine initialize_excited_state_files_ccs
 !
 !
-   module subroutine read_singles_vector_ccs(wf, file_, vector)
+   module subroutine read_singles_vector_ccs(wf, file_, vector, read_n)
 !!
 !!    Read singles vector
 !!    Written by Alexander C. Paul, Oct 2019 
+!!
+!!    read_n: optionally returns the number of amplitudes read.
 !!
       implicit none 
 !
       class(ccs), intent(inout) :: wf
       type(stream_file), intent(inout) :: file_
-      real(dp), dimension(wf%n_t1), intent(out) :: vector 
+      real(dp), dimension(wf%n_t1), intent(out) :: vector
+      integer, intent(inout), optional :: read_n
 !
    end subroutine read_singles_vector_ccs
 !
@@ -102,14 +105,21 @@
    end subroutine save_amplitudes_ccs
 !
 !
-   module subroutine read_amplitudes_ccs(wf)
+   module subroutine read_amplitudes_ccs(wf, read_n)
 !!
 !!    Read amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Adapted to return the number of read amplitdues if requested 
+!!    by Alexander C. Paul, Oct 2020
+!!
+!!    read_n: returns the number of amplitudes read. 
+!!            This is especially useful e.g. in CCSD to provide a start guess 
+!!            for the doubles if only singles were found on file.
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf
+      integer, intent(out), optional :: read_n
 !
    end subroutine read_amplitudes_ccs
 !
@@ -126,14 +136,21 @@
    end subroutine save_multipliers_ccs
 !
 !
-   module subroutine read_multipliers_ccs(wf)
+   module subroutine read_multipliers_ccs(wf, read_n)
 !!
 !!    Read multipliers 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Adapted to return the number of read multipliers if requested 
+!!    by Alexander C. Paul, Oct 2020
+!!
+!!    read_n: optionally returns the number of amplitudes read. 
+!!            This is especially useful e.g. in CCSD to provide a start guess 
+!!            for the doubles if only singles were found on file.
 !!
       implicit none 
 !
       class(ccs), intent(inout) :: wf 
+      integer, intent(out), optional :: read_n
 !
    end subroutine read_multipliers_ccs
 !

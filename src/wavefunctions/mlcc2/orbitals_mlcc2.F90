@@ -326,6 +326,7 @@ contains
 !
       call block_diagonalize_symmetric(F_vv, wf%n_v, 2, [wf%n_cc2_v, wf%n_ccs_v], &
                                     wf%orbital_energies(wf%n_o+1:wf%n_mo))
+
 !
 !     Transform blocks
 !

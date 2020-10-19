@@ -232,6 +232,8 @@ module mlccsd_class
 !
       procedure :: read_amplitudes              => read_amplitudes_mlccsd
       procedure :: save_amplitudes              => save_amplitudes_mlccsd
+      procedure :: read_doubles_vector          => read_doubles_vector_mlccsd
+      procedure :: save_doubles_vector          => save_doubles_vector_mlccsd
 !
 !     Cleanup 
 !
@@ -986,18 +988,68 @@ contains
    end subroutine calculate_energy_mlccsd
 !
 !
-   subroutine set_initial_amplitudes_guess_mlccsd(wf)
+   subroutine set_initial_amplitudes_guess_mlccsd(wf, restart)
 !!
 !!    Set initial amplitudes guess
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
       implicit none
 !
-      class(mlccsd) :: wf
+      class(mlccsd), intent(inout) :: wf
 !
-      call zero_array(wf%t1, wf%n_t1)
+      logical, intent(in)        :: restart
 !
-      call wf%set_t2_to_cc2_guess()
+      integer :: n_amplitudes_read
+!
+      if (.not. restart) then
+!
+         call zero_array(wf%t1, wf%n_t1)
+!
+         call wf%eri%update_t1_integrals(wf%t1)
+!
+         call wf%set_t2_to_cc2_guess()
+!
+      else 
+!
+         if (wf%t_file%exists()) then 
+!
+            call output%printf('m', 'Requested restart. Reading in solution from file.', &
+                          fs='(/t3,a)')
+!
+            call wf%read_amplitudes(n_amplitudes_read)
+!
+            if(n_amplitudes_read == wf%n_gs_amplitudes) then
+!
+               call wf%eri%update_t1_integrals(wf%t1)
+!
+            else if (n_amplitudes_read == wf%n_t1) then
+!
+               call zero_array(wf%t1, wf%n_t1)
+!
+               call wf%eri%update_t1_integrals(wf%t1)
+!
+               call wf%set_t2_to_cc2_guess()
+!
+            else
+!
+               call output%error_msg('Did not recognize number of t-amplitudes on file &
+                                     &expected (i0) or (i0) found (i0)', &
+                                     ints=[wf%n_gs_amplitudes, wf%n_t1, n_amplitudes_read])
+!
+            end if
+!
+         else
+!
+            call zero_array(wf%t1, wf%n_t1)
+!
+            call wf%eri%update_t1_integrals(wf%t1)
+!
+            call wf%set_t2_to_cc2_guess()
+!
+         end if
+!
+      end if
 !
    end subroutine set_initial_amplitudes_guess_mlccsd
 !

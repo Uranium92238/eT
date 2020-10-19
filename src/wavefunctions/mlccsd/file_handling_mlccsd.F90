@@ -35,25 +35,6 @@ contains
 !
    module subroutine save_amplitudes_mlccsd(wf)
 !!
-!!    Save amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-      implicit none
-!
-      class(mlccsd), intent(inout) :: wf
-!
-      call wf%t_file%open_('write', 'rewind')
-!
-      call wf%t_file%write_(wf%t1, wf%n_t1)
-      call wf%t_file%write_(wf%t2, wf%n_t2)
-!
-      call wf%t_file%close_()
-!
-   end subroutine save_amplitudes_mlccsd
-!
-!
-   module subroutine read_amplitudes_mlccsd(wf)
-!!
 !!    Read amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
@@ -61,37 +42,110 @@ contains
 !
       class(mlccsd), intent(inout) :: wf
 !
-      logical :: doubles_present
+      call wf%save_singles_vector(wf%t_file, wf%t1)
+      call wf%save_doubles_vector(wf%t_file, wf%t2)
 !
-      call wf%t_file%open_('read', 'rewind')
+   end subroutine save_amplitudes_mlccsd
 !
-!     Check if doubles exist depending on the size of the stream file
 !
-      if (wf%t_file%get_file_size() == dp*(wf%n_t1 + wf%n_t2)) then
+   module subroutine read_amplitudes_mlccsd(wf, read_n)
+!!
+!!    Read amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Adapted to return the number of read amplitdues if requested 
+!!    by Alexander C. Paul, Oct 2020
+!!
+!!    read_n: returns the number of amplitudes read. 
+!!            This is especially useful e.g. in CCSD to provide a start guess 
+!!            for the doubles if only singles were found on file.
+!!
+      implicit none
 !
-         doubles_present = .true.
+      class(mlccsd), intent(inout) :: wf
 !
-      else 
+      integer, intent(out), optional :: read_n
 !
-         doubles_present = .false.
+      integer :: n
 !
-      end if
+      n = 0
 !
-      call wf%t_file%read_(wf%t1, wf%n_t1, 1)
+      call wf%read_singles_vector(wf%t_file, wf%t1, n)
 !
-      if (doubles_present) then
+      call wf%read_doubles_vector(wf%t_file, wf%t2, n)
 !
-         call wf%t_file%read_(wf%t2, wf%n_t2)
-!
-      else
-!
-         call zero_array(wf%t2, wf%n_t2)
-!
-      end if
-!
-      call wf%t_file%close_()
+      if (present(read_n)) read_n = n
 !
    end subroutine read_amplitudes_mlccsd
+!
+!
+   module subroutine read_doubles_vector_mlccsd(wf, file_, vector, read_n)
+!!
+!!    Read doubles vector
+!!    Written by Alexander C. Paul, Oct 2019
+!!
+!!    File format:
+!!    n_t1, t1, n_t2, t2
+!!
+!!    read_n: optionally returns the number of amplitudes read.
+!!
+      implicit none 
+!
+      class(mlccsd), intent(inout) :: wf
+!
+      type(stream_file), intent(inout) :: file_
+!
+      real(dp), dimension(wf%n_t2), intent(out) :: vector
+!
+      integer, intent(inout), optional :: read_n
+!
+      integer :: n_t2, iostat
+!
+      call file_%open_('read')
+!
+      call file_%read_(n_t2, int_size + wf%n_t1*dp + 1, iostat)
+!
+      if (.not. is_iostat_end(iostat)) then
+!
+         if (n_t2 .ne. wf%n_t2) then
+            call output%error_msg('Wrong number of doubles amplitudes in (a0)', &
+                                 chars=[file_%get_name()])
+         end if
+!
+         call file_%read_(vector, wf%n_t2)
+!
+         if (present(read_n)) read_n = read_n + n_t2
+!
+      end if
+!
+      call file_%close_()
+!
+   end subroutine read_doubles_vector_mlccsd
+!
+!
+   module subroutine save_doubles_vector_mlccsd(wf, file_, vector)
+!!
+!!    Save doubles vector
+!!    Written by Alexander C. Paul, Oct 2019
+!!
+!!    File format:
+!!    n_t1, t1, n_t2, t2
+!!
+      implicit none 
+!
+      class(mlccsd), intent(inout) :: wf 
+!
+      type(stream_file), intent(inout) :: file_
+!
+      real(dp), dimension(wf%n_t2), intent(in) :: vector 
+!
+      call file_%open_('write')
+!
+      call file_%write_(wf%n_t2, int_size + wf%n_t1*dp + 1)
+      call file_%write_(vector, wf%n_t2)
+!
+      call file_%close_()
+!
+   end subroutine save_doubles_vector_mlccsd
 !
 !
 end submodule file_handling_mlccsd

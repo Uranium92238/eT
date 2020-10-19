@@ -35,6 +35,7 @@ solver cc es
 end solver cc es
 
 solver cc multipliers
+  algorithm: davidson
   threshold: 1.0d-11
 end solver cc multipliers
 

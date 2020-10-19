@@ -415,6 +415,7 @@ module ccs_class
       procedure :: is_restart_safe                               => is_restart_safe_ccs
 !
       procedure :: set_initial_amplitudes_guess                  => set_initial_amplitudes_guess_ccs
+      procedure :: set_initial_multipliers_guess                 => set_initial_multipliers_guess_ccs
       procedure :: set_ip_start_indices                          => set_ip_start_indices_ccs
       procedure :: get_ip_projector                              => get_ip_projector_ccs
       procedure :: get_t1_diagnostic                             => get_t1_diagnostic_ccs
@@ -826,18 +827,78 @@ contains
    end subroutine is_restart_safe_ccs
 !
 !
-   subroutine set_initial_amplitudes_guess_ccs(wf)
+   subroutine set_initial_amplitudes_guess_ccs(wf, restart)
 !!
 !!    Set initial amplitudes guess
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(inout) :: wf
+      logical, intent(in)       :: restart
 !
-      call zero_array(wf%t1, wf%n_t1)
+      if (.not. restart) then
+!
+         call zero_array(wf%t1, wf%n_t1)
+!
+      else 
+!
+         if (wf%t_file%exists()) then 
+!
+            call output%printf('m', 'Requested restart. Reading in solution from file.', &
+                               fs='(/t3,a)')
+!
+            call wf%read_amplitudes()
+!
+         else
+!
+            call zero_array(wf%t1, wf%n_t1)
+!
+         end if
+!
+      end if
+!
+      call wf%eri%update_t1_integrals(wf%t1)
 !
    end subroutine set_initial_amplitudes_guess_ccs
+!
+!
+   subroutine set_initial_multipliers_guess_ccs(wf, restart)
+!!
+!!    Set initial multipliers guess
+!!    Written by Alexander C. Paul , Oct 2020
+!!
+      use array_utilities, only: copy_and_scale
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      logical, intent(in) :: restart
+!
+      if (.not. restart) then
+!
+         call copy_and_scale(one, wf%t1, wf%t1bar, wf%n_t1)
+!
+      else 
+!
+         if (wf%tbar_file%exists()) then 
+!
+            call output%printf('m', 'Requested restart. Reading multipliers from file.', &
+                              fs='(/t3,a)')
+!
+            call wf%read_multipliers()
+!
+         else
+!
+            call copy_and_scale(one, wf%t1, wf%t1bar, wf%n_t1)
+!
+         end if
+!
+      end if
+!
+   end subroutine set_initial_multipliers_guess_ccs
 !
 !
    subroutine get_gs_orbital_differences_ccs(wf, orbital_differences, N)

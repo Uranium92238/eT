@@ -157,17 +157,7 @@ contains
       call wf%eri%set_t1_to_mo()
       call wf%eri%place_g_mo_in_memory()
 !
-      if (solver%restart) then
-!
-         call wf%read_amplitudes()
-!
-      else
-!
-         call wf%set_initial_amplitudes_guess()
-!
-      endif
-!
-      call wf%eri%update_t1_integrals(wf%t1)
+      call wf%set_initial_amplitudes_guess(solver%restart)
 ! 
 !     Determine whether to store records in memory or on file
 !

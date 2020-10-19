@@ -38,7 +38,7 @@ solver cc gs
 end solver cc gs
 
 solver cc multipliers
-   threshold: 1.0d-12
+   threshold: 1.0d-11
 end solver cc multipliers
 
 solver cc es

@@ -44,20 +44,25 @@ module abstract_stream_class
 !
    contains
 !
-      procedure :: set_name                => set_name_abstract_stream
-      procedure :: get_name                => get_name_abstract_stream
+      procedure :: set_name         => set_name_abstract_stream
+      procedure :: get_name         => get_name_abstract_stream
+! 
+      procedure :: set_status       => set_status_abstract_stream
+! 
+      procedure :: get_open         => get_open_abstract_stream
+! 
+      procedure :: open_            => open_abstract_stream
+      procedure :: close_           => close_abstract_stream
+      procedure :: delete_          => delete_abstract_stream
+! 
+      procedure :: exists           => exists_abstract_stream
+      procedure :: get_file_size    => get_file_size_abstract_stream
+      procedure :: copy             => copy_abstract_stream
 !
-      procedure :: set_status              => set_status_abstract_stream
-!
-      procedure :: get_open                => get_open_abstract_stream
-!
-      procedure :: open_                   => open_abstract_stream
-      procedure :: close_                  => close_abstract_stream
-      procedure :: delete_                 => delete_abstract_stream
-!
-      procedure :: exists                  => exists_abstract_stream
-      procedure :: get_file_size           => get_file_size_abstract_stream
-      procedure :: copy                    => copy_abstract_stream
+!     Error handling
+      procedure :: check_io_status  => check_io_status_abstract_stream
+      procedure :: should_be_open   => should_be_open_abstract_stream
+      procedure :: should_be_closed => should_be_closed_abstract_stream
 !
       procedure :: read_0_real_dp_abstract_stream
       procedure :: read_0_real_sp_abstract_stream
@@ -158,7 +163,6 @@ contains
 !
       end if
 !
-!
    end subroutine set_status_abstract_stream
 !
 !
@@ -204,12 +208,7 @@ contains
       character(len=10) :: action_
       character(len=10) :: position_
 !
-      if(the_file%is_open) then
-!
-         call output%error_msg('Trying to open (a0), but it is already open.', &
-                                chars=[the_file%name_])
-      end if
-!
+      call the_file%should_be_closed('open')
 !
 !     Check if new_action or new_position is present
 !     We let open handle the error if they are messed up
@@ -224,18 +223,11 @@ contains
          position_ = new_position
       end if
 !
-!
       open(newunit = the_file%unit_, file=trim(the_file%name_), access = 'stream', &
            form = 'unformatted', action = action_, status = the_file%status_, &
            position = position_, iostat = io_status, iomsg = io_message)
 !
-!
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to open file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'open')
 !
       the_file%is_open = .true.
       the_file%status_ = 'old'
@@ -263,14 +255,7 @@ contains
       character(len = 100) :: io_message
       character(len = 10)  :: destiny
 !
-!
-!     Check if the file is open
-!
-      if(.not. the_file%is_open) then
-         call output%error_msg('Trying to close (a0), but it is already closed.', &
-                                chars=[the_file%name_])
-      end if
-!
+      call the_file%should_be_open('close')
 !
 !     Check if destiny is present
 !     We let close handle the error if destiny is messed up
@@ -281,21 +266,13 @@ contains
          destiny = new_destiny
       end if
 !
-!
 !     Things seems fine, close the file
 !
       close(the_file%unit_, status = destiny, iostat = io_status, iomsg = io_message)
 !
-!
 !     Was it fine?
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to close file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
-!
+      call the_file%check_io_status(io_status, trim(io_message), 'close')
 !
       the_file%is_open = .false.
       the_file%unit_ = 1
@@ -359,7 +336,7 @@ contains
    end function get_file_size_abstract_stream
 !
 !
-   subroutine read_0_real_dp_abstract_stream(the_file, scalar, position_)
+   subroutine read_0_real_dp_abstract_stream(the_file, scalar, position_, status_)
 !!
 !!    read rank 0 real dp
 !!    Written by Rolf H. Myhre, Feb. 2020
@@ -373,16 +350,22 @@ contains
 !!                positions counted in bytes, starting at 1
 !!                default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
       implicit none
 !
       class(abstract_stream), intent(in) :: the_file
 !
-      integer, intent(in), optional :: position_
+      integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
       real(dp), intent(out) :: scalar
 !
-      integer::             io_status = 1
+      integer ::            io_status = 1
       character(len=100) :: io_message
+!
+      call the_file%should_be_open('read from')
 !
       if(.not. the_file%is_open) then
 !
@@ -400,17 +383,12 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to read from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
 !
    end subroutine read_0_real_dp_abstract_stream
 !
 !
-   subroutine read_0_real_sp_abstract_stream(the_file, scalar, position_)
+   subroutine read_0_real_sp_abstract_stream(the_file, scalar, position_, status_)
 !!
 !!    Read rank 0 real(sp)
 !!    Written by Rolf H. Myhre, Feb. 2020
@@ -424,22 +402,22 @@ contains
 !!                positions counted in bytes, starting at 1
 !!                default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
       implicit none
 !
       class(abstract_stream), intent(in) :: the_file
 !
-      integer, intent(in), optional :: position_
+      integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
       real(sp), intent(out) :: scalar
 !
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to read from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('read from')
 !
       if(present(position_)) then
 !
@@ -451,17 +429,12 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to read from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
 !
    end subroutine read_0_real_sp_abstract_stream
 !
 !
-   subroutine read_0_complex_dp_abstract_stream(the_file, scalar, position_)
+   subroutine read_0_complex_dp_abstract_stream(the_file, scalar, position_, status_)
 !!
 !!    read rank 0 complex dp
 !!    Written by Rolf H. Myhre, Feb. 2020
@@ -475,22 +448,22 @@ contains
 !!                positions counted in bytes, starting at 1
 !!                default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
       implicit none
 !
       class(abstract_stream), intent(in) :: the_file
 !
       integer, intent(in), optional :: position_
+      integer, intent(out), optional :: status_
 !
       complex(dp), intent(out) :: scalar
 !
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to read from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('read from')
 !
       if(present(position_)) then
 !
@@ -502,17 +475,12 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to read from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
 !
    end subroutine read_0_complex_dp_abstract_stream
 !
 !
-   subroutine read_0_int_32_abstract_stream(the_file, scalar, position_)
+   subroutine read_0_int_32_abstract_stream(the_file, scalar, position_, status_)
 !!
 !!    read rank 0 int 32
 !!    Written by Rolf H. Myhre, Feb. 2020
@@ -526,22 +494,22 @@ contains
 !!                positions counted in bytes, starting at 1
 !!                default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
       implicit none
 !
       class(abstract_stream), intent(in) :: the_file
 !
-      integer, intent(in), optional :: position_
+      integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
       integer(i32), intent(out) :: scalar
 !
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to read from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('read from')
 !
       if(present(position_)) then
 !
@@ -553,17 +521,12 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to read from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
 !
    end subroutine read_0_int_32_abstract_stream
 !
 !
-   subroutine read_0_int_64_abstract_stream(the_file, scalar, position_)
+   subroutine read_0_int_64_abstract_stream(the_file, scalar, position_, status_)
 !!
 !!    read rank 0 int 64
 !!    Written by Rolf H. Myhre, Feb. 2020
@@ -577,22 +540,22 @@ contains
 !!               positions counted in bytes, starting at 1
 !!               default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
       implicit none
 !
       class(abstract_stream), intent(in) :: the_file
 !
-      integer, intent(in), optional :: position_
+      integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
       integer(i64), intent(out) :: scalar
 !
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to read from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('read from')
 !
       if(present(position_)) then
 !
@@ -604,17 +567,12 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to read from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
 !
    end subroutine read_0_int_64_abstract_stream
 !
 !
-   subroutine read_0_log_abstract_stream(the_file, scalar, position_)
+   subroutine read_0_log_abstract_stream(the_file, scalar, position_, status_)
 !!
 !!    read rank 0 logical
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Mar. 2020
@@ -625,22 +583,22 @@ contains
 !!               positions counted in bytes, starting at 1
 !!               default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
       implicit none
 !
       class(abstract_stream), intent(in) :: the_file
 !
-      integer, intent(in), optional :: position_
+      integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
       logical, intent(out) :: scalar
 !
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to read from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('read from')
 !
       if(present(position_)) then
 !
@@ -652,17 +610,12 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to read from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
 !
    end subroutine read_0_log_abstract_stream
 !
 !
-   subroutine read_1_real_dp_abstract_stream(the_file, array, n, position_)
+   subroutine read_1_real_dp_abstract_stream(the_file, array, n, position_, status_)
 !!
 !!    read rank 1 real dp
 !!    Written by Rolf H. Myhre, Feb. 2020
@@ -678,23 +631,23 @@ contains
 !!                positions counted in bytes, starting at 1
 !!                default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
       implicit none
 !
       class(abstract_stream), intent(in) :: the_file
 !
       integer, intent(in) :: n
-      integer, intent(in), optional :: position_
+      integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
       real(dp), dimension(n), intent(out) :: array
 !
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to read from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('read from')
 !
       if(present(position_)) then
 !
@@ -706,17 +659,12 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to read from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
 !
    end subroutine read_1_real_dp_abstract_stream
 !
 !
-   subroutine read_1_real_sp_abstract_stream(the_file, array, n, position_)
+   subroutine read_1_real_sp_abstract_stream(the_file, array, n, position_, status_)
 !!
 !!    Read rank 1 real(sp)
 !!    Written by Rolf H. Myhre, Feb. 2020
@@ -732,23 +680,23 @@ contains
 !!                positions counted in bytes, starting at 1
 !!                default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
       implicit none
 !
       class(abstract_stream), intent(in) :: the_file
 !
       integer, intent(in) :: n
-      integer, intent(in), optional :: position_
+      integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
       real(sp), dimension(n), intent(out) :: array
 !
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to read from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('read from')
 !
       if(present(position_)) then
 !
@@ -760,17 +708,12 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to read from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
 !
    end subroutine read_1_real_sp_abstract_stream
 !
 !
-   subroutine read_1_complex_dp_abstract_stream(the_file, array, n, position_)
+   subroutine read_1_complex_dp_abstract_stream(the_file, array, n, position_, status_)
 !!
 !!    read rank 1 complex dp
 !!    Written by Rolf H. Myhre, Feb. 2020
@@ -786,23 +729,23 @@ contains
 !!                positions counted in bytes, starting at 1
 !!                default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
       implicit none
 !
       class(abstract_stream), intent(in) :: the_file
 !
       integer, intent(in) :: n
-      integer, intent(in), optional :: position_
+      integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
       complex(dp), dimension(n), intent(out) :: array
 !
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to read from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('read from')
 !
       if(present(position_)) then
 !
@@ -814,17 +757,12 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to read from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
 !
    end subroutine read_1_complex_dp_abstract_stream
 !
 !
-   subroutine read_1_int_32_abstract_stream(the_file, array, n, position_)
+   subroutine read_1_int_32_abstract_stream(the_file, array, n, position_, status_)
 !!
 !!    read rank 1 int 32
 !!    Written by Rolf H. Myhre, Feb. 2020
@@ -840,23 +778,23 @@ contains
 !!                positions counted in bytes, starting at 1
 !!                default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
       implicit none
 !
       class(abstract_stream), intent(in) :: the_file
 !
       integer, intent(in) :: n
-      integer, intent(in), optional :: position_
+      integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
       integer(i32), dimension(n), intent(out) :: array
 !
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to read from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('read from')
 !
       if(present(position_)) then
 !
@@ -868,17 +806,12 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to read from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
 !
    end subroutine read_1_int_32_abstract_stream
 !
 !
-   subroutine read_1_int_64_abstract_stream(the_file, array, n, position_)
+   subroutine read_1_int_64_abstract_stream(the_file, array, n, position_, status_)
 !!
 !!    read rank 1 int 64
 !!    Written by Rolf H. Myhre, Feb. 2020
@@ -894,23 +827,23 @@ contains
 !!                positions counted in bytes, starting at 1
 !!                default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
       implicit none
 !
       class(abstract_stream), intent(in) :: the_file
 !
       integer, intent(in) :: n
-      integer, intent(in), optional :: position_
+      integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
       integer(i64), dimension(n), intent(out) :: array
 !
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to read from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('read from')
 !
       if(present(position_)) then
 !
@@ -922,17 +855,12 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to read from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
 !
    end subroutine read_1_int_64_abstract_stream
 !
 !
-   subroutine read_1_log_abstract_stream(the_file, array, n, position_)
+   subroutine read_1_log_abstract_stream(the_file, array, n, position_, status_)
 !!
 !!    read rank 1 logical
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Mar. 2020
@@ -945,23 +873,23 @@ contains
 !!                positions counted in bytes, starting at 1
 !!                default: current file pointer position
 !!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
       implicit none
 !
       class(abstract_stream), intent(in) :: the_file
 !
       integer, intent(in) :: n
-      integer, intent(in), optional :: position_
+      integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
 !
       logical, dimension(n), intent(out) :: array
 !
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to read from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('read from')
 !
       if(present(position_)) then
 !
@@ -973,12 +901,7 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to read from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
 !
    end subroutine read_1_log_abstract_stream
 !
@@ -1008,11 +931,7 @@ contains
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to write from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('write to')
 !
       if(present(position_)) then
 !
@@ -1024,12 +943,7 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to write from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'write to')
 !
    end subroutine write_0_real_dp_abstract_stream
 !
@@ -1059,11 +973,7 @@ contains
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to write from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('write to')
 !
       if(present(position_)) then
 !
@@ -1075,12 +985,7 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to write from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'write to')
 !
    end subroutine write_0_real_sp_abstract_stream
 !
@@ -1110,11 +1015,7 @@ contains
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to write from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('write to')
 !
       if(present(position_)) then
 !
@@ -1126,12 +1027,7 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to write from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'write to')
 !
    end subroutine write_0_complex_dp_abstract_stream
 !
@@ -1161,11 +1057,7 @@ contains
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to write from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('write to')
 !
       if(present(position_)) then
 !
@@ -1177,12 +1069,7 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to write from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'write to')
 !
    end subroutine write_0_int_32_abstract_stream
 !
@@ -1212,11 +1099,7 @@ contains
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to write from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('write to')
 !
       if(present(position_)) then
 !
@@ -1228,12 +1111,7 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to write from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'write to')
 !
    end subroutine write_0_int_64_abstract_stream
 !
@@ -1260,11 +1138,7 @@ contains
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to write from file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('write to')
 !
       if(present(position_)) then
 !
@@ -1276,12 +1150,7 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to write from file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'write to')
 !
    end subroutine write_0_log_abstract_stream
 !
@@ -1314,11 +1183,7 @@ contains
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to write to file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('write to')
 !
       if(present(position_)) then
 !
@@ -1330,12 +1195,7 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to write to file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'write to')
 !
    end subroutine write_1_real_dp_abstract_stream
 !
@@ -1368,11 +1228,7 @@ contains
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to write to file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('write to')
 !
       if(present(position_)) then
 !
@@ -1384,12 +1240,7 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to write to file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'write to')
 !
    end subroutine write_1_real_sp_abstract_stream
 !
@@ -1422,11 +1273,7 @@ contains
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to write to file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('write to')
 !
       if(present(position_)) then
 !
@@ -1438,12 +1285,7 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to write to file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'write to')
 !
    end subroutine write_1_complex_dp_abstract_stream
 !
@@ -1476,11 +1318,7 @@ contains
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to write to file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('write to')
 !
       if(present(position_)) then
 !
@@ -1492,12 +1330,7 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to write to file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'write to')
 !
    end subroutine write_1_int_32_abstract_stream
 !
@@ -1530,11 +1363,7 @@ contains
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to write to file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('write to')
 !
       if(present(position_)) then
 !
@@ -1546,12 +1375,7 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to write to file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'write to')
 !
    end subroutine write_1_int_64_abstract_stream
 !
@@ -1581,11 +1405,7 @@ contains
       integer::             io_status = 1
       character(len=100) :: io_message
 !
-      if(.not. the_file%is_open) then
-!
-         call output%error_msg('Tried to write to file (a0), which is not open', &
-                               chars = [the_file%name_])
-      end if
+      call the_file%should_be_open('write to')
 !
       if(present(position_)) then
 !
@@ -1597,12 +1417,7 @@ contains
 !
       end if
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to write to file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [the_file%name_, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'write to')
 !
    end subroutine write_1_log_abstract_stream
 !
@@ -1635,13 +1450,7 @@ contains
            form='unformatted', action='write', status='new', &
            iostat=io_status, iomsg=io_message)
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to open file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [filename, io_message], &
-                               ints = [io_status])
-      end if
-!
+      call the_file%check_io_status(io_status, trim(io_message), 'open')
 !
 !     Check if the file is open
 !
@@ -1659,7 +1468,6 @@ contains
 !
       endif
 !
-!
 !     Read byte by byte and write it to the new file
 !
       do
@@ -1673,12 +1481,7 @@ contains
 !     Close the files
       close(copy_unit, status='keep', iostat=io_status, iomsg=io_message)
 !
-      if(io_status .ne. 0) then
-!
-         call output%error_msg('Failed to close file (a0), status is (i0) and &
-                               &error message is (a0)', chars = [filename, io_message], &
-                               ints = [io_status])
-      end if
+      call the_file%check_io_status(io_status, trim(io_message), 'close')
 !
       if(was_closed) then
          call the_file%close_()
@@ -1697,37 +1500,22 @@ contains
 !
       class(abstract_stream) :: the_file
 !
-      integer              :: io_error
-      character(len=100)   :: io_msg
+      integer            :: io_status
+      character(len=100) :: io_message
 !
       if(the_file%is_open) then
 !
-         close(the_file%unit_, iostat=io_error, iomsg=io_msg, status='delete')
+         close(the_file%unit_, iostat=io_status, iomsg=io_message, status='delete')
 !
-         if (io_error .ne. 0) then
-            call output%error_msg('could not delete eT file '//trim(the_file%name_)//&
-                                 &'. Error message: '//trim(io_msg))
-         endif
+         call the_file%check_io_status(io_status, trim(io_message), 'delete')
 !
       else
 !
-!        Open the file with unformatted stream access
-!        Stream doesn't care about format and records and neither do we
-         open(newunit=the_file%unit_, file=the_file%name_, access='stream', &
-              form='unformatted', action='write', status='old', &
-              iostat=io_error, iomsg=io_msg)
+         call the_file%open_('write')
 !
-         if (io_error .ne. 0) then
-            call output%error_msg('could not delete eT file '//trim(the_file%name_)//&
-                                 &'. Error message: '//trim(io_msg))
-         endif
+         close(the_file%unit_, iostat=io_status, iomsg=io_message, status='delete')
 !
-         close(the_file%unit_, iostat=io_error, iomsg=io_msg, status='delete')
-!
-         if (io_error .ne. 0) then
-            call output%error_msg('could not delete eT file '//trim(the_file%name_)//&
-                                 &'. Error message: '//trim(io_msg))
-         endif
+         call the_file%check_io_status(io_status, trim(io_message), 'delete')
 !
       endif
 !
@@ -1735,6 +1523,91 @@ contains
       the_file%status_ = 'new'
 !
    end subroutine delete_abstract_stream
+!
+!
+   subroutine check_io_status_abstract_stream(the_file, io_status, io_message, task, status_)
+!!
+!!    Check io status
+!!    Written by Alexander C. Paul, Oct 2020
+!!
+!!    Checks IO status and prints error message according to task and io_message
+!!
+!!    task: string specifying which task is checked: open, close, read from, write to
+!!
+!!    status_: Optionally returns the io_status to be handled outside
+!!             e.g. for checking if the end of file was reached.
+!!
+      implicit none
+!
+      class(abstract_stream), intent(in) :: the_file
+!
+      integer, intent(in) :: io_status
+!
+      character(len=*), intent(in) :: io_message
+      character(len=*), intent(in) :: task
+!
+      integer, intent(out), optional :: status_
+!
+      if(present(status_) .and. io_status .le. 0) then
+!
+         status_ = io_status
+!
+      else if(io_status .ne. 0) then
+!
+         call output%error_msg('Failed to '// task // ' file (a0), status is &
+                               &(i0) and error message is ' // io_message,   &
+                               chars = [the_file%name_], ints = [io_status])
+      endif
+!
+   end subroutine check_io_status_abstract_stream
+!
+!
+   subroutine should_be_open_abstract_stream(the_file, task)
+!!
+!!    Should be open
+!!    Written by Alexander C. Paul, Oct 2020
+!!
+!!    Checks if file is open and returns error if not
+!!
+!!    task: task for which an open file is expected (close, read, write)
+!!
+      implicit none
+!
+      class(abstract_stream), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: task
+!
+      if(.not. the_file%is_open) then
+!
+         call output%error_msg('Trying to ' // task // ' file (a0), which is closed.', &
+                                chars=[the_file%name_])
+      end if
+!
+   end subroutine should_be_open_abstract_stream
+!
+!
+   subroutine should_be_closed_abstract_stream(the_file, task)
+!!
+!!    Should be closed
+!!    Written by Alexander C. Paul, Oct 2020
+!!
+!!    Checks if file is open and returns error if not
+!!
+!!    task: task for which an open file is expected (close, read, write)
+!!
+      implicit none
+!
+      class(abstract_stream), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: task
+!
+      if(the_file%is_open) then
+!
+         call output%error_msg('Trying to ' // task // ' file (a0), which is open.', &
+                                chars=[the_file%name_])
+      end if
+!
+   end subroutine should_be_closed_abstract_stream
 !
 !
 end module abstract_stream_class

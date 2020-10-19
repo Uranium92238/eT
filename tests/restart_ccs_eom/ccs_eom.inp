@@ -16,8 +16,8 @@ solver cholesky
 end solver cholesky
 
 solver scf
-   energy threshold:   1.0d-11
-   gradient threshold: 1.0d-11
+   energy threshold:   1.0d-12
+   gradient threshold: 1.0d-12
 end solver scf
 
 method
