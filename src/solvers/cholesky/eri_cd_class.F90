@@ -1702,8 +1702,8 @@ contains
 !
       class(molecular_system), intent(in) :: system
 !
-      type(sequential_file), intent(in) :: diagonal_info
-      type(sequential_file), intent(in) :: basis_info
+      type(sequential_file), intent(inout) :: diagonal_info
+      type(sequential_file), intent(inout) :: basis_info
 !
 !     Local variables
 !
