@@ -90,6 +90,7 @@ add_eT_runtest(ccs_lr_polarizability_transition_moments     "eT;short;ccs;es;lr"
 add_eT_runtest(ccs_oscillator_strength_eom                  "eT;short;ccs;es;eom")
 add_eT_runtest(ccs_eom_diis_parallel_states                 "eT;short;ccs;es;eom;diis;parallel states")
 add_eT_runtest(ccs_td_rk4                                   "eT;short;ccs;complex;td")
+add_eT_runtest(ccs_right_lt_lindep                          "eT;short;ccs;es")
 add_eT_runtest(restart_ccs_es                               "eT;short;ccs;es;restart")
 add_eT_runtest(restart_ccs_eom                              "eT;short;ccs;eom;restart")
 add_eT_runtest(restart_ccs_from_ccsd                        "eT;short;ccs;eom;restart")

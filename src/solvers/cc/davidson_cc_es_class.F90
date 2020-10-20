@@ -101,6 +101,9 @@ contains
 !!    New Davidson CC ES 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    Modified by Andreas S. Skeidsvoll, Oct 2020
+!!    Added max_dim_red and n_singlet_states consistency checks.
+!!
       implicit none
 !
       type(davidson_cc_es) :: solver
@@ -140,9 +143,39 @@ contains
       solver%storage              = 'disk'
 !
       call solver%read_settings()
+!
+!     Value of max_dim_red is set greater than or equal to 10*n_singlet_states
+!     (if value is not specified in input), and less than or equal to number of
+!     excited state amplitudes (always).
+!
+      if (.not. input%requested_keyword_in_section('max reduced dimension', 'solver cc es')) &
+         solver%max_dim_red = max(solver%max_dim_red, 10*solver%n_singlet_states)
+!
+      if (solver%max_dim_red .gt. wf%n_es_amplitudes) then
+!
+         solver%max_dim_red = wf%n_es_amplitudes
+!
+         if (input%requested_keyword_in_section('max reduced dimension', 'solver cc es')) then
+!
+            call output%warning_msg('specified maximum reduced dimension exceeds the number ' // &
+                                    'of independent solutions. It has been changed to the '   // &
+                                    'number of excited state amplitudes.')
+!
+         endif
+!
+      endif
+!
       call solver%print_settings()
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
+!
+      if (solver%n_singlet_states .gt. wf%n_es_amplitudes) &
+         call output%error_msg('specified number of excitations exceeds the number of ' // &
+                               'independent solutions.')
+!
+      if (solver%n_singlet_states .gt. solver%max_dim_red) &
+         call output%error_msg('number of excitations exceeds the specified maximum ' // &
+                               'reduced dimension.')
 !
       wf%n_singlet_states = solver%n_singlet_states
 !
@@ -197,6 +230,7 @@ contains
       logical, dimension(:), allocatable :: converged
       logical, dimension(:), allocatable :: converged_eigenvalue
       logical, dimension(:), allocatable :: converged_residual
+      logical, dimension(:), allocatable :: residual_lt_lindep
 !
       integer :: iteration, trial, n, state
 !
@@ -219,7 +253,7 @@ contains
 !
       call solver%prepare_wf_for_excited_state(wf)
 !
-      lindep_threshold = min(1.0d-11, solver%residual_threshold)
+      lindep_threshold = min(1.0d-11, 0.1d0*solver%residual_threshold)
 !
       davidson = eigen_davidson_tool('cc_es_davidson',                           &
                                        wf%n_es_amplitudes,                       &
@@ -240,10 +274,12 @@ contains
       call mem%alloc(converged, solver%n_singlet_states)
       call mem%alloc(converged_eigenvalue, solver%n_singlet_states)
       call mem%alloc(converged_residual, solver%n_singlet_states)
+      call mem%alloc(residual_lt_lindep, solver%n_singlet_states)
 !
       converged            = .false. 
       converged_eigenvalue = .false. 
       converged_residual   = .false. 
+      residual_lt_lindep   = .false.
 !
       iteration = 0
 !
@@ -321,9 +357,11 @@ contains
             converged(n) = converged_residual(n) .and. converged_eigenvalue(n) .or. &
                            converged_residual(n) .and. iteration == 1
 !
+            residual_lt_lindep(n) = (residual_norm <= lindep_threshold)
+!
             if (.not. converged(n)) then 
 !
-               if (residual_norm <= lindep_threshold) then 
+               if (residual_lt_lindep(n)) then 
 !
                   call output%warning_msg('Residual norm for root (i0) smaller than linear ' // &
                                           'dependence threshold, but energy and residual  '  // &
@@ -367,6 +405,15 @@ contains
                                &iteration. ' // 'Energy convergence therefore &
                                &not tested in this calculation.')
 !
+         elseif (all(residual_lt_lindep)) then
+!
+            converged = .true.
+            call output%printf('m', 'Note: all residuals are converged and &
+                               &have norms that are smaller than linear &
+                               &dependence threshold. ' // 'Energy &
+                               &convergence therefore not tested in this &
+                               &calculation.')
+!
          endif
 !
       enddo ! End of iterative loop
@@ -402,6 +449,7 @@ contains
       call mem%dealloc(converged, solver%n_singlet_states)
       call mem%dealloc(converged_eigenvalue, solver%n_singlet_states)
       call mem%dealloc(converged_residual, solver%n_singlet_states)
+      call mem%dealloc(residual_lt_lindep, solver%n_singlet_states)
 !
    end subroutine run_davidson_cc_es
 !
