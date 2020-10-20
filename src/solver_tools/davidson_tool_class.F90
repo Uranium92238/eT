@@ -906,7 +906,7 @@ contains
 !
       logical :: exceeds_max
 !
-      exceeds_max = (davidson%dim_red + davidson%n_new_trials .ge. davidson%max_dim_red)
+      exceeds_max = (davidson%dim_red + davidson%n_new_trials .gt. davidson%max_dim_red)
 !
    end function red_dim_exceeds_max_davidson_tool
 !
