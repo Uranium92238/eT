@@ -319,6 +319,8 @@ contains
 !
          prev_energy = energy 
 !
+         call wf%save_amplitudes()
+!
          call macro_iteration_timer%turn_off()
          call macro_iteration_timer%reset()
 !

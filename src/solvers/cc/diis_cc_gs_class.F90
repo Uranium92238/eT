@@ -339,8 +339,6 @@ contains
 !
          endif
 !
-!        Save amplitudes
-!
          call wf%save_amplitudes()
 !
          call iteration_timer%turn_off()         
