@@ -16,7 +16,7 @@ from runtest import version_info, get_filter, cli, run
 from runtest_config import configure
 
 # functions to get the filters
-from filters import get_eom_filter
+from filters import get_es_filter
                
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
@@ -24,9 +24,10 @@ assert version_info.major == 2
 # construct filter(s)
 n_states = 3   
 threshold = 1.0e-10
+convergence = True
 restart = True 
                
-f = get_eom_filter(n_states, threshold, restart=restart)
+f = get_es_filter(n_states, threshold, convergence, restart)
 
 # invoke the command line interface parser which returns options
 options = cli()
@@ -42,7 +43,7 @@ ierr = 0
 #  - We can also provide a second filter list e.g. g to check both 
 #    output files for different things
 #
-for inp in ['ccsd.inp']:
+for inp in ['ccsd_left.inp']:
     #
     # the run function runs the code with extra arguments
     # keep the scratch in the tests folder in build
@@ -50,15 +51,17 @@ for inp in ['ccsd.inp']:
     ierr += run(options,
                 configure,
                 input_files=inp,
-                extra_args='-ks --scratch ./scratch',
+                extra_args='-save .',
                 filters={'out': f}) 
 
 # reset ierr: helpful if the first calculation is supposed to crash
 # e.g. if the calculations has to little iterations to converge
 ierr = 0
 #
+#  Run CC3 calculation with the same filter list f
+#  We could also provide a different filter list g
 #
-for inp in ['restart_ccs.inp']:
+for inp in ['restart_ccsd_right.inp']:
     #
     # the run function runs the code and filters the outputs
     # don't provide -ks to delete scratch after succesful run
@@ -66,7 +69,7 @@ for inp in ['restart_ccs.inp']:
     ierr += run(options,
                 configure,
                 input_files=inp,
-                extra_args='--scratch ./scratch',
+                extra_args='-load ./ccsd_left_restart_files',
                 filters={'out': f})
 
 sys.exit(ierr)

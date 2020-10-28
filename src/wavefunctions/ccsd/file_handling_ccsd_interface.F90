@@ -36,6 +36,10 @@
 !!    Adapted to return the number of read amplitdues if requested 
 !!    by Alexander C. Paul, Oct 2020
 !!
+!!    read_n: optionally returns the number of amplitudes read. 
+!!            This is especially useful e.g. in CCSD to provide a start guess 
+!!            for the doubles if only singles were found on file.
+!!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
@@ -63,7 +67,7 @@
 !!    Adapted to return the number of read multipliers if requested 
 !!    by Alexander C. Paul, Oct 2020
 !!
-!!    read_n: optionally returns the number of amplitudes read. 
+!!    read_n: optionally returns the number of mutliplers read. 
 !!            This is especially useful e.g. in CCSD to provide a start guess 
 !!            for the doubles if only singles were found on file.
 !!

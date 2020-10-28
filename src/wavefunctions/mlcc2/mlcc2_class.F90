@@ -226,6 +226,12 @@ module mlcc2_class
 !
       procedure :: is_restart_safe                                   => is_restart_safe_mlcc2
       procedure :: write_cc_restart                                  => write_cc_restart_mlcc2
+      
+      procedure :: read_doubles_vector                               => read_doubles_vector_mlcc2
+      procedure :: save_doubles_vector                               => save_doubles_vector_mlcc2
+      procedure :: read_excitation_vector_file                       => read_excitation_vector_file_mlcc2
+      procedure :: save_excitation_vector_on_file                    => save_excitation_vector_on_file_mlcc2
+      procedure :: get_restart_vector                                => get_restart_vector_mlcc2
 !
 !     Summary
 !
@@ -240,6 +246,7 @@ module mlcc2_class
    interface
 !
       include "./orbitals_mlcc2_interface.F90"
+      include "./file_handling_mlcc2_interface.F90"
       include "./omega_mlcc2_interface.F90"
       include "./jacobian_mlcc2_interface.F90"
       include "./jacobian_transpose_mlcc2_interface.F90"
@@ -1200,9 +1207,6 @@ contains
 !!
 !!    Is restart safe?
 !!    Written by Eirik F. Kjønstad, Mar 2019 
-!!
-!!    'task' : Which type of restart we are considering.
-!!             can be either 'ground state' or 'excited state'
 !!
 !!    Modified by Sarai D. Folkestad, Nov 2019
 !!    

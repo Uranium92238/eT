@@ -15,7 +15,6 @@ from runtest import version_info, get_filter, cli, run
 # this tells runtest how to run your code
 from runtest_config import configure
 
-
 # functions to get the filters
 from filters import get_gs_filter
 

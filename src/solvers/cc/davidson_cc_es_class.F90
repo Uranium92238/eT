@@ -80,8 +80,6 @@ module davidson_cc_es_class
       procedure :: read_davidson_settings            => read_davidson_settings_davidson_cc_es
 !
       procedure :: print_settings                    => print_settings_davidson_cc_es
-!
-      procedure :: set_start_vectors                 => set_start_vectors_davidson_cc_es
 !       
    end type davidson_cc_es
 !
@@ -113,19 +111,20 @@ contains
 !
       logical, intent(in) :: restart
 !
-      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
+      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state (' &
+                     // trim(transformation) //')')
       call solver%timer%turn_on()
 !
       solver%name_ = 'Davidson coupled cluster excited state solver'
       solver%tag   = 'Davidson'
 !
       solver%description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
-               & the right or left eigenvectors of the Jacobian matrix, A. The eigenvalue &
-               & problem is solved in a reduced space, the dimension of which is &
-               & expanded until the convergence criteria are met.'
+               &the right or left eigenvectors of the Jacobian matrix, A. The eigenvalue &
+               &problem is solved in a reduced space, the dimension of which is &
+               &expanded until the convergence criteria are met.'
 !
       solver%description2 = 'A complete description of the algorithm can be found in &
-                                 & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
+                            &E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
       call solver%print_banner()
 !
@@ -211,7 +210,7 @@ contains
       call solver%print_es_settings()
 !
       call output%printf('m', 'Max reduced space dimension:  (i11)', &
-                         ints=[solver%max_dim_red], fs='(/t6,a)')
+                         ints=[solver%max_dim_red], fs='(/t6,a/)')
 !
    end subroutine print_settings_davidson_cc_es
 !
@@ -264,12 +263,23 @@ contains
       call davidson%initialize_trials_and_transforms(solver%records_in_memory)
 !
       call solver%set_precondition_vector(wf, davidson)
-      call solver%set_start_vectors(wf, davidson)
 !
-!     :: Iterative loop :: 
+!     :: Set start vectors and handle restart ::
 !
       call solver%initialize_energies()
-      solver%energies = zero
+!
+      call mem%alloc(c, wf%n_es_amplitudes)
+!
+      do trial = 1, solver%n_singlet_states
+!
+         call solver%set_initial_guesses(wf, c, trial, trial)
+         call davidson%set_trial(c, trial)
+!
+      enddo
+!
+      call mem%dealloc(c, wf%n_es_amplitudes)
+!
+!     :: Iterative loop :: 
 !
       call mem%alloc(converged, solver%n_singlet_states)
       call mem%alloc(converged_eigenvalue, solver%n_singlet_states)
@@ -340,7 +350,7 @@ contains
 !
             call davidson%construct_solution(solution, n) 
 !
-            call wf%save_excited_state(solution, n, n, solver%transformation) 
+            call wf%save_excited_state(solution, n, n, solver%transformation, solver%energies(n)) 
 !
             call davidson%construct_residual(residual, solution, n) 
 !
@@ -394,7 +404,6 @@ contains
 !        Update energies and save them
 !
          solver%energies = davidson%omega_re
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
 !
 !        Special case when residuals converge in first iteration, e.g. on restart
 !        => Exit without testing energy convergence 
@@ -422,10 +431,12 @@ contains
 !
       if (.not. all(converged)) then
 !
-         call output%error_msg("Did not converge in the max number of " // & 
-                                 "iterations in run_davidson_cc_es.")
+         call output%error_msg("Did not converge in the max number of &
+                               &iterations in run_davidson_cc_es.")
 !
       else 
+!
+         call wf%set_excitation_energies(solver%energies, solver%transformation)
 !
          call output%printf('m', 'Convergence criterion met in (i0) iterations!', &
                             ints=[iteration], fs='(t3,a)')
@@ -452,74 +463,6 @@ contains
       call mem%dealloc(residual_lt_lindep, solver%n_singlet_states)
 !
    end subroutine run_davidson_cc_es
-!
-!
-   subroutine set_start_vectors_davidson_cc_es(solver, wf, davidson)
-!!
-!!    Set start vectors 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-!!    Sets initial trial vectors either from Koopman guess or from vectors given on input.
-!!
-      implicit none
-!
-      class(davidson_cc_es) :: solver
-!
-      class(ccs) :: wf
-!
-      class(eigen_davidson_tool) :: davidson
-!
-      real(dp), dimension(:), allocatable :: c
-!
-      integer :: trial, n_solutions_on_file
-!
-      if (solver%restart) then 
-!
-!        Read the solutions from file & set as initial trial vectors 
-!
-         call solver%determine_restart_transformation(wf) ! Read right or left?
-         n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
-!
-         call output%printf('m', 'Requested restart - restarting (i0) (a0) &
-                           &eigenvectors from file.', fs='(/t3,a)', &
-                            ints=[n_solutions_on_file], &
-                            chars=[solver%restart_transformation])
-!
-         call mem%alloc(c, wf%n_es_amplitudes)
-!
-         do trial = 1, n_solutions_on_file
-!
-            call wf%read_excited_state(c, trial, trial, solver%restart_transformation)
-            call davidson%set_trial(c, trial)
-!
-         enddo 
-!
-         call mem%dealloc(c, wf%n_es_amplitudes)
-!
-      else
-!
-         n_solutions_on_file = 0
-!
-      endif 
-!
-!     Sets whatever remains using the start vector tool 
-!
-      if (n_solutions_on_file .lt. solver%n_singlet_states) then 
-!
-         call mem%alloc(c, wf%n_es_amplitudes)
-!
-         do trial = n_solutions_on_file + 1, solver%n_singlet_states
-!
-            call solver%start_vectors%get(c, trial)
-            call davidson%set_trial(c, trial)
-!
-         enddo 
-!
-         call mem%dealloc(c, wf%n_es_amplitudes)
-!     
-      endif
-!
-   end subroutine set_start_vectors_davidson_cc_es
 !
 !
    subroutine set_precondition_vector_davidson_cc_es(wf, davidson)

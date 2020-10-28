@@ -107,13 +107,13 @@ module abstract_cc_es_class
 !
       procedure :: prepare_wf_for_excited_state     => prepare_wf_for_excited_state_abstract_cc_es
 !
-      procedure :: determine_restart_transformation => determine_restart_transformation_abstract_cc_es 
-!
       procedure :: initialize_start_vector_tool     => initialize_start_vector_tool_abstract_cc_es
       procedure :: initialize_projection_tool       => initialize_projection_tool_abstract_cc_es
 !
       procedure :: initialize_energies              => initialize_energies_abstract_cc_es
       procedure :: destruct_energies                => destruct_energies_abstract_cc_es
+!
+      procedure :: set_initial_guesses              => set_initial_guesses_abstract_cc_es
 !
    end type abstract_cc_es
 !
@@ -379,95 +379,31 @@ contains
 !!
       implicit none
 !
-      class(abstract_cc_es), intent(in)   :: solver 
-      class(ccs), intent(inout)           :: wf
+      class(abstract_cc_es), intent(in) :: solver 
+      class(ccs), intent(inout)         :: wf
+!
+      call wf%initialize_excited_state_files
 !
       if (solver%transformation == 'right') then 
 !
-         call wf%initialize_excited_state_files('right')
+         call wf%initialize_right_excitation_energies
          call wf%prepare_for_jacobian()
 !
       else if (solver%transformation == 'left') then 
 !
-         call wf%initialize_excited_state_files('left')
+         call wf%initialize_left_excitation_energies
          call wf%prepare_for_jacobian_transpose()
 !
       else if (solver%transformation == 'both') then 
 !
-         call wf%initialize_excited_state_files('both')
-         call wf%prepare_for_jacobian()
-         call wf%prepare_for_jacobian_transpose()
-!
-      else if (solver%transformation == 'both') then 
-!
+         call wf%initialize_right_excitation_energies
+         call wf%initialize_left_excitation_energies
          call wf%prepare_for_jacobian()
          call wf%prepare_for_jacobian_transpose()
 !
       end if
 !
    end subroutine prepare_wf_for_excited_state_abstract_cc_es
-!
-!
-   subroutine determine_restart_transformation_abstract_cc_es(solver, wf)
-!!
-!!    Determine number of states on file 
-!!    Written by Eirik F. Kjønstad, June 2019
-!!
-      implicit none 
-!
-      class(abstract_cc_es), intent(inout) :: solver
-!
-      class(ccs), intent(in) :: wf 
-!
-      integer :: n_left_vectors_on_file, n_right_vectors_on_file
-!
-      if (solver%transformation == 'right') then 
-!
-!        Dirty hack to disable right restart from left for now !!!!!
-         n_right_vectors_on_file = wf%get_n_excited_states_on_file('right')
-         n_left_vectors_on_file = 0
-!
-         if (n_right_vectors_on_file > 0) then 
-!
-            solver%restart_transformation = 'right'
-!
-         elseif (n_right_vectors_on_file == 0 .and. n_left_vectors_on_file > 0) then 
-!
-            solver%restart_transformation = 'left'
-!
-         else
-!
-            call output%error_msg('Could not restart excited state calculation.')
-!
-         endif 
-!
-      elseif (solver%transformation == 'left') then
-!
-!        Dirty hack to disable left restart from right for now !!!!!
-         n_left_vectors_on_file = wf%get_n_excited_states_on_file('left')
-         n_right_vectors_on_file = 0
-!
-         if (n_left_vectors_on_file > 0) then 
-!
-            solver%restart_transformation = 'left'
-!
-         elseif (n_left_vectors_on_file == 0 .and. n_right_vectors_on_file > 0) then 
-!
-            solver%restart_transformation = 'right'
-!
-         else
-!
-            call output%error_msg('Could not restart excited state calculation.')
-!
-         endif          
-!
-      else 
-!
-         call output%error_msg('Could not restart excited state calculation.')
-!
-      endif  
-!
-   end subroutine determine_restart_transformation_abstract_cc_es
 !
 !
    subroutine initialize_start_vector_tool_abstract_cc_es(solver, wf) 
@@ -533,6 +469,35 @@ contains
       endif
 !
    end subroutine initialize_projection_tool_abstract_cc_es
+!
+!
+   module subroutine set_initial_guesses_abstract_cc_es(solver, wf, X, first, last)
+!!
+!!    Set initial guesses
+!!    Written by Alexander C. Paul, Oct 2020
+!!
+      implicit none
+!
+      class(abstract_cc_es) :: solver
+!
+      class(ccs) :: wf
+!
+      integer, intent(in) :: first, last
+!
+      real(dp), dimension(wf%n_es_amplitudes,first:last), intent(out) :: X
+!
+      integer :: state
+!
+      do state = first, last
+!
+         call solver%start_vectors%get(wf, state, X(:,state),  &
+                                       solver%energies(state), &
+                                       solver%transformation,  &
+                                       solver%restart)
+!
+      enddo 
+!
+   end subroutine set_initial_guesses_abstract_cc_es
 !
 !
 end module abstract_cc_es_class

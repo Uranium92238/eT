@@ -1,10 +1,10 @@
 system
-   name: HOF He
+   name: H2O He
    charge: 0
 end system
 
 do
-   response
+   excited state
 end do
 
 method
@@ -12,40 +12,36 @@ method
    ccsd
 end method
 
-cc response
-   eom
-   dipole length
-   transition moments
-end cc response
+memory
+   available: 8
+end memory
 
 solver scf
-   restart
+   algorithm:          scf-diis
+   energy threshold:   1.0d-11
    gradient threshold: 1.0d-11
 end solver scf
 
 solver cholesky
-   threshold: 1.0d-11
+   threshold: 1.0d-12
 end solver cholesky
 
 solver cc gs
-   restart
-   omega threshold: 1.0d-11
+   omega threshold:  1.0d-11
+   energy threshold: 1.0d-11
 end solver cc gs
 
-solver cc multipliers
-   threshold: 1.0d-11
-end solver cc multipliers
-
 solver cc es
-   restart
+   singlet states:     3
    residual threshold: 1.0d-11
-   singlet states: 1
+   energy threshold:   1.0d-11
+   left eigenvectors
 end solver cc es
 
 geometry
 basis: cc-pVDZ
  H          0.86681        0.60144        5.00000
- F         -0.86681        0.60144        5.00000
+ H         -0.86681        0.60144        5.00000
  O          0.00000       -0.07579        5.00000
- He         0.1000         0.1000         7.5000
+ He         0.10000       -0.02000        7.53000
 end geometry

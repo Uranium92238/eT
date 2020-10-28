@@ -1197,6 +1197,8 @@ contains
 !
       n_es = ccs_wf%n_singlet_states
 !
+      call mem%alloc(all_omega_ccs, n_es)
+!
       if(n_es .lt. n_cnto_states) call output%error_msg('Requested too many CNTO/NTO states')
 !
 !     Return only the excitation vectors in cnto_states
@@ -1208,19 +1210,14 @@ contains
          call ccs_wf%read_excited_state(R_ai(:,:,n),        &
                                         cnto_states(n),     &
                                         cnto_states(n),     &
-                                        transformation)   
+                                        transformation,     &
+                                        all_omega_ccs(n))   
 !
       enddo  
 !
 !     2. Excitation energies (if requested)
 !
       if (present(omega_ccs)) then  
-!
-         call mem%alloc(all_omega_ccs, n_es)
-!
-!        Read CCS excitaion energies
-!
-         call wf%read_excitation_energies(n_es, all_omega_ccs)
 !
 !        Return only the excitation energies in cnto_states
 !
@@ -1230,9 +1227,9 @@ contains
 !
          enddo  
 !
-         call mem%dealloc(all_omega_ccs, n_es)
-!
       endif
+!
+      call mem%dealloc(all_omega_ccs, n_es)
 !
 !     Cleanup and print
 !

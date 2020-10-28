@@ -116,6 +116,8 @@ module doubles_class
       procedure :: read_doubles_vector                   => read_doubles_vector_doubles
       procedure :: save_doubles_vector                   => save_doubles_vector_doubles
       procedure :: read_excitation_vector_file           => read_excitation_vector_file_doubles
+      procedure :: save_excitation_vector_on_file        => save_excitation_vector_on_file_doubles
+      procedure :: get_restart_vector                    => get_restart_vector_doubles
 !
 !     Projectors for excited and ionized states
 !
