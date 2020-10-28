@@ -316,7 +316,7 @@ contains
                          ints=[solver%max_micro_iterations], fs='(t6,a)')
 !
       call output%printf('m', 'Relative micro threshold:     (e11.2)', &
-                         reals=[solver%relative_micro_residual_threshold], fs='(t6,a)')
+                         reals=[solver%relative_micro_residual_threshold], fs='(t6,a/)')
 !
    end subroutine print_settings_nonlinear_davidson_cc_es
 !
@@ -360,17 +360,15 @@ contains
       real(dp), dimension(:), allocatable :: prev_energies
       real(dp), dimension(:), allocatable :: residual_norms 
 !
-      integer :: n_solutions_on_file, n_solutions_to_read
       integer :: iteration, state
 !
       integer :: n_micro_iterations, n_transformations ! Information regarding micro iterations 
 !
       real(dp) :: ddot
 !
-!     Current guess of solutions and temporary norm variable
+!     Current guess of solutions
 !     (columns stores the different states, i.e. X(:,k) is the guess for X_k)
 !
-      real(dp) :: norm_X
       real(dp), dimension(:,:), allocatable :: X
 !
 !     Associated residuals, R(:,k) = A(omega_k) X(:,k) - omega_k X(:,k)
@@ -410,44 +408,7 @@ contains
       call mem%alloc(R, wf%n_es_amplitudes, solver%n_singlet_states)
       call mem%alloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
 !
-      do state = 1, solver%n_singlet_states
-!
-         call solver%start_vectors%get(X(:,state), state)
-!
-      enddo 
-!
-!     Overwrite some or all of the initial guesses if restart is requested 
-!
-      if (solver%restart) then 
-!
-         call solver%determine_restart_transformation(wf) ! Read right or left?
-!
-         n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
-!
-         call output%printf('n', 'Requested restart - there are (i0) (a0) eigenvectors on file.', &
-                              ints=[n_solutions_on_file], chars=[solver%restart_transformation])
-!
-         n_solutions_to_read = min(solver%n_singlet_states, n_solutions_on_file)
-!
-         call wf%read_excited_state(X,                   &
-                                    1,                   &
-                                    n_solutions_to_read, &
-                                    solver%restart_transformation)
-!
-         do state = 1, n_solutions_to_read
-!
-!           Normalize X in case it is not normalized
-!
-            norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
-            call dscal(wf%n_es_amplitudes, one/norm_X, X(:, state), 1)
-!
-         enddo
-!
-         solver%energies = zero
-         call wf%read_excitation_energies(n_solutions_to_read, &
-                                          solver%energies(1:n_solutions_to_read))
-!
-      endif
+      call solver%set_initial_guesses(wf, X, 1, wf%n_singlet_states)
 !
 !     Enter iterative loop
 !
@@ -539,14 +500,11 @@ contains
 !
 !        Save excited states and excitation energies
 !
-         call wf%save_excited_state(X,                         &
-                                    1,                         &
-                                    solver%n_singlet_states,   &
-                                    solver%transformation)
-!
-         call wf%save_excitation_energies(solver%n_singlet_states,   &
-                                          solver%energies,           &
-                                          solver%transformation)
+         call wf%save_excited_state(X,                       &
+                                    1,                       &
+                                    solver%n_singlet_states, &
+                                    solver%transformation,   &
+                                    solver%energies)
 !
          call dcopy(solver%n_singlet_states, solver%energies, 1, prev_energies, 1)
 !
@@ -555,6 +513,8 @@ contains
       if (.not. all(converged)) &
          call output%error_msg('Unable to converge equations in the given maximum number&
                               & of macro iterations. Try to increase the value.')
+!
+      call wf%set_excitation_energies(solver%energies, solver%transformation)
 !
       call mem%dealloc(R, wf%n_es_amplitudes, solver%n_singlet_states)
       call mem%dealloc(X, wf%n_es_amplitudes, solver%n_singlet_states)

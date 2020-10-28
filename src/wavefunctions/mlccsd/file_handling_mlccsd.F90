@@ -42,8 +42,13 @@ contains
 !
       class(mlccsd), intent(inout) :: wf
 !
+      call wf%t_file%open_('write', 'rewind')
+!
+      call wf%t_file%write_(wf%energy)
       call wf%save_singles_vector(wf%t_file, wf%t1)
-      call wf%save_doubles_vector(wf%t_file, wf%t2)
+      call wf%save_doubles_vector(wf%t_file, wf%t2, wf%n_t2)
+!
+      call wf%t_file%close_
 !
    end subroutine save_amplitudes_mlccsd
 !
@@ -69,83 +74,122 @@ contains
 !
       n = 0
 !
-      call wf%read_singles_vector(wf%t_file, wf%t1, n)
+      call wf%t_file%open_('read', 'rewind')
 !
-      call wf%read_doubles_vector(wf%t_file, wf%t2, n)
+      call wf%read_singles_vector(wf%t_file, wf%t1, n)
+      call wf%read_doubles_vector(wf%t_file, wf%t2, wf%n_t2, n)
+!
+      call wf%t_file%close_
 !
       if (present(read_n)) read_n = n
 !
    end subroutine read_amplitudes_mlccsd
 !
 !
-   module subroutine read_doubles_vector_mlccsd(wf, file_, vector, read_n)
+   module subroutine read_excitation_vector_file_mlccsd(wf, file_, vector, energy, read_n)
 !!
-!!    Read doubles vector
-!!    Written by Alexander C. Paul, Oct 2019
+!!    Read excitation vector file 
+!!    Written by Alexander C. Paul, Sep 2020
 !!
-!!    File format:
-!!    n_t1, t1, n_t2, t2
+!!    Reads excitation vector from file structured as follows:
+!!    excitation_energy, n_t1, X1
 !!
-!!    read_n: optionally returns the number of amplitudes read.
+!!    read_n: optionally returns the number of amplitudes read
 !!
-      implicit none 
-!
-      class(mlccsd), intent(inout) :: wf
-!
-      type(stream_file), intent(inout) :: file_
-!
-      real(dp), dimension(wf%n_t2), intent(out) :: vector
-!
-      integer, intent(inout), optional :: read_n
-!
-      integer :: n_t2, iostat
-!
-      call file_%open_('read')
-!
-      call file_%read_(n_t2, int_size + wf%n_t1*dp + 1, iostat)
-!
-      if (.not. is_iostat_end(iostat)) then
-!
-         if (n_t2 .ne. wf%n_t2) then
-            call output%error_msg('Wrong number of doubles amplitudes in (a0)', &
-                                 chars=[file_%get_name()])
-         end if
-!
-         call file_%read_(vector, wf%n_t2)
-!
-         if (present(read_n)) read_n = read_n + n_t2
-!
-      end if
-!
-      call file_%close_()
-!
-   end subroutine read_doubles_vector_mlccsd
-!
-!
-   module subroutine save_doubles_vector_mlccsd(wf, file_, vector)
-!!
-!!    Save doubles vector
-!!    Written by Alexander C. Paul, Oct 2019
-!!
-!!    File format:
-!!    n_t1, t1, n_t2, t2
-!!
-      implicit none 
+      implicit none
 !
       class(mlccsd), intent(inout) :: wf 
 !
       type(stream_file), intent(inout) :: file_
 !
-      real(dp), dimension(wf%n_t2), intent(in) :: vector 
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
 !
-      call file_%open_('write')
+      real(dp), intent(out) :: energy
 !
-      call file_%write_(wf%n_t2, int_size + wf%n_t1*dp + 1)
-      call file_%write_(vector, wf%n_t2)
+      integer, intent(inout), optional :: read_n
+      integer :: n
 !
-      call file_%close_()
+      n = 0
 !
-   end subroutine save_doubles_vector_mlccsd
+      call file_%open_('read', 'rewind')
+!
+      call file_%read_(energy)
+      call wf%read_singles_vector(file_, vector, n)
+      call wf%read_doubles_vector(file_, vector(wf%n_t1+1:), wf%n_x2, n)
+!
+      call file_%close_
+!
+      if (present(read_n)) read_n = n
+!
+   end subroutine read_excitation_vector_file_mlccsd
+!
+!
+   module subroutine save_excitation_vector_on_file_mlccsd(wf, file_, vector, energy)
+!!
+!!    Save excitation vector on file 
+!!    Written by Alexander C. Paul, Sep 2020
+!!
+!!    Writes excitation vector o file structured as follows:
+!!    excitation_energy, n_t1, X1
+!!
+      implicit none
+!
+      class(mlccsd), intent(inout) :: wf 
+!
+      type(stream_file), intent(inout) :: file_
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: vector
+!
+      real(dp), intent(in) :: energy
+!
+      call file_%open_('write', 'rewind')
+!
+      call file_%write_(energy)
+      call wf%save_singles_vector(file_, vector)
+      call wf%save_doubles_vector(file_, vector(wf%n_t1+1:), wf%n_x2)
+!
+      call file_%close_
+!
+   end subroutine save_excitation_vector_on_file_mlccsd
+!
+!
+   module subroutine get_restart_vector_mlccsd(wf, file_, vector, energy)
+!!
+!!    Get restart vector
+!!    Written by Alexander C. Paul, Sep 2020
+!!
+!!    Gets start vector and energy from file
+!!    We set the doubles part to 0 if only singles amplitudes
+!!    were found on file, 
+!!
+      implicit none
+!
+      class(mlccsd), intent(inout) :: wf 
+!
+      type(stream_file), intent(inout) :: file_
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
+!
+      real(dp), intent(out) :: energy
+!
+      integer :: n_amplitudes_read
+!
+      call wf%read_excitation_vector_file(file_, vector, energy, n_amplitudes_read)
+!
+      if (n_amplitudes_read == wf%n_t1) then
+!
+         call zero_array(vector(wf%n_t1+1:wf%n_es_amplitudes), wf%n_x2)
+!
+      else if (n_amplitudes_read /= wf%n_es_amplitudes) then
+!
+         call output%error_msg('Did not recognize number of amplitudes in (a0) &
+                               &expected (i0) or (i0) but found (i0) amplitudes.', &
+                               ints=[wf%n_es_amplitudes, wf%n_t1, n_amplitudes_read], &
+                               chars=[file_%get_name()])
+!
+      end if
+!
+   end subroutine get_restart_vector_mlccsd
 !
 !
 end submodule file_handling_mlccsd

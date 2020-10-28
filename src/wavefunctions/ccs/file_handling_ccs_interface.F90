@@ -49,7 +49,7 @@
    end subroutine initialize_cc_files_ccs
 !
 !
-   module subroutine initialize_excited_state_files_ccs(wf, transformation)
+   module subroutine initialize_excited_state_files_ccs(wf)
 !!
 !!    Initialize files for excited state vectors and energies
 !!    Written by Alexander C. Paul, Oct 2019
@@ -57,7 +57,6 @@
 !!    Modified by Alexander C. Paul, May 2020: array of stream files
 !!
       class(ccs), intent(inout) :: wf
-      character(len=*), intent(in) :: transformation
 !
    end subroutine initialize_excited_state_files_ccs
 !
@@ -67,14 +66,14 @@
 !!    Read singles vector
 !!    Written by Alexander C. Paul, Oct 2019 
 !!
-!!    read_n: optionally returns the number of amplitudes read.
+!!    read_n: optionally adds the number of amplitudes read to read_n
 !!
       implicit none 
 !
       class(ccs), intent(inout) :: wf
       type(stream_file), intent(inout) :: file_
       real(dp), dimension(wf%n_t1), intent(out) :: vector
-      integer, intent(inout), optional :: read_n
+      integer, intent(inout) :: read_n
 !
    end subroutine read_singles_vector_ccs
 !
@@ -98,6 +97,8 @@
 !!    Save amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
+!!    File format: energy n_t1, t1
+!!
       implicit none
 !
       class(ccs), intent(inout) :: wf 
@@ -112,7 +113,7 @@
 !!    Adapted to return the number of read amplitdues if requested 
 !!    by Alexander C. Paul, Oct 2020
 !!
-!!    read_n: returns the number of amplitudes read. 
+!!    read_n: optionally returns the number of amplitudes read. 
 !!            This is especially useful e.g. in CCSD to provide a start guess 
 !!            for the doubles if only singles were found on file.
 !!
@@ -129,6 +130,8 @@
 !!    Save multipliers 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
+!!    File format: energy n_t1, t1bar
+!!
       implicit none
 !
       class(ccs), intent(inout) :: wf 
@@ -143,7 +146,7 @@
 !!    Adapted to return the number of read multipliers if requested 
 !!    by Alexander C. Paul, Oct 2020
 !!
-!!    read_n: optionally returns the number of amplitudes read. 
+!!    read_n: optionally returns the number of multipliers read. 
 !!            This is especially useful e.g. in CCSD to provide a start guess 
 !!            for the doubles if only singles were found on file.
 !!
@@ -155,7 +158,7 @@
    end subroutine read_multipliers_ccs
 !
 !
-   module subroutine save_excited_state_ccs(wf, X, first, last, side)
+   module subroutine save_excited_state_ccs(wf, X, first, last, side, energies)
 !!
 !!    Save excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019
@@ -179,11 +182,30 @@
       integer, intent(in) :: first, last ! first, last state number 
       real(dp), dimension(wf%n_es_amplitudes, first:last), intent(in) :: X 
       character(len=*), intent(in) :: side ! 'left' or 'right'
+      real(dp), dimension(first:last), optional, intent(in) :: energies
 !
    end subroutine save_excited_state_ccs
 !
 !
-   module subroutine read_excited_state_ccs(wf, X, first, last, side)
+   module subroutine save_excitation_vector_on_file_ccs(wf, file_, vector, energy)
+!!
+!!    Save excitation vector on file 
+!!    Written by Alexander C. Paul, Sep 2020
+!!
+!!    Writes excitation vector o file structured as follows:
+!!    excitation_energy, n_t1, X1
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf 
+      type(stream_file), intent(inout) :: file_
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: vector
+      real(dp), intent(in) :: energy
+!
+   end subroutine save_excitation_vector_on_file_ccs
+!
+!
+   module subroutine read_excited_state_ccs(wf, X, first, last, side, energies)
 !!
 !!    Read excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019
@@ -200,105 +222,79 @@
 !!                                             and added [first, last] range 
 !!    Modified by Alexander C. Paul, May 2020: introduced array of stream files
 !!    for the excited states.
+!!    Modified by Alexander C. Paul, Sep 2020: Files now contain energy and n_es
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf 
       integer, intent(in) :: first, last ! first, last state number 
       real(dp), dimension(wf%n_es_amplitudes, first:last), intent(out) :: X
+      real(dp), dimension(first:last), optional,           intent(out) :: energies
       character(len=*), intent(in) :: side ! 'left' or 'right'
 !
    end subroutine read_excited_state_ccs
 !
 !
-   module subroutine read_excitation_vector_file_ccs(wf, file_, vector)
+   module subroutine read_excitation_vector_file_ccs(wf, file_, vector, energy, read_n)
 !!
 !!    Read excitation vector file 
 !!    Written by Alexander C. Paul, Sep 2020
 !!
+!!    Reads excitation vector from file structured as follows:
+!!    excitation_energy, n_t1, X1
+!!
+!!    read_n: optionally returns the number of amplitudes read
+!!
       implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(inout) :: wf 
       type(stream_file), intent(inout) :: file_
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
+      real(dp), intent(out) :: energy
+      integer, intent(inout), optional :: read_n
 !
    end subroutine read_excitation_vector_file_ccs
 !
 !
-   module subroutine save_excitation_energies_ccs(wf, n_states, energies, r_or_l)
+   module subroutine check_and_get_restart_vector_ccs(wf, vector, energy, n, side, found)
 !!
-!!    Save excitation energies 
-!!    Written by Sarai D. Folkestad, Mar 2019 
+!!    Check and get restart vector
+!!    Written by Alexander C. Paul, Sep 2020
 !!
-!!    Saves 'n_states' excitation energies to disk & in memory. 
+!!    Inquires if the nth file of "side" exists and
+!!    returns the corresponding vector if the file exists.
+!!    Otherwise checks the "other side" and tries to read it.
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
+      real(dp), intent(out) :: energy
+      logical,  intent(out) :: found
+      integer,          intent(in) :: n
+      character(len=*), intent(in) :: side
+!
+   end subroutine check_and_get_restart_vector_ccs
+!
+!
+   module subroutine get_restart_vector_ccs(wf, file_, vector, energy)
+!!
+!!    Get restart vector
+!!    Written by Alexander C. Paul, Sep 2020
+!!
+!!    Gets start vector and energy from file
+!!
+!!    Only a wrapper in CCS but overwritten for doubles
+!!    to handle the restart from a pure singles vector.
 !!
       implicit none
-!
-      class(ccs), intent(inout) :: wf
-      integer, intent(in) :: n_states ! number of states
-      real(dp), dimension(n_states), intent(in) :: energies
-      character(len=*), intent(in) :: r_or_l 
-!
-   end subroutine save_excitation_energies_ccs
-!
-!
-   module subroutine read_excitation_energies_ccs(wf, n_states, energies)
-!!
-!!    Read excitation energies 
-!!    Written by Sarai D. Folkestad, Mar 2019 
-!!
-!!    Reads excitation energies from file
-!!
-!!    Note: "n_states" gives the dimension of the array "energies".
-!!          It should match the actual number of states on file,
-!!          given by the first record, "n_states" before the routine is called
-!!          by either reading the restart file or by calling the function 
-!!          read_n_excitation_energies
-!!
-!!    n_states: number of states found on file
-!!              Obtained by the number of existing records in the file storer
-!!
-      implicit none 
-!
-      class(ccs), intent(inout) :: wf
-      integer, intent(in) :: n_states
-      real(dp), dimension(:), intent(out) :: energies
-!
-   end subroutine read_excitation_energies_ccs
-!
-!
-   integer module function get_n_excitation_energies_on_file_ccs(wf)
-!!
-!!    Read n excitation energies 
-!!    Written by Sarai D. Folkestad, Mar 2019 
-!!
-!!    Reads and returns the number of excitation energies on file
-!!
-      implicit none 
 !
       class(ccs), intent(inout) :: wf 
+      type(stream_file), intent(inout) :: file_
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
+      real(dp), intent(out) :: energy
 !
-   end function get_n_excitation_energies_on_file_ccs
-!
-!
-   module function get_n_excited_states_on_file_ccs(wf, side) result(n_states)
-!!
-!!    Get number of excited states on file 
-!!    Written by Eirik F. Kjønstad, Mar 2019 
-!!
-!!    Determines number of excitation vector files.
-!!
-!!    Modified by Alexander C. Paul, May 2020: 
-!!    Inquires which files exists starting at wf%n_singlet_states going backwards
-!!    As before, it is assumed that the states 1 to n_states are on file.
-!!
-      implicit none
-!
-      class(ccs) :: wf 
-      character(len=*), intent(in) :: side 
-      integer :: n_states
-!
-   end function get_n_excited_states_on_file_ccs
+   end subroutine get_restart_vector_ccs
 !
 !
    module subroutine save_tbar_intermediates_ccs(wf)

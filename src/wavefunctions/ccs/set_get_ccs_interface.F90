@@ -83,3 +83,17 @@
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_pq
 !
    end subroutine set_fock_ccs
+!
+!
+   module subroutine set_excitation_energies_ccs(wf, energies, side)
+!!
+!!    Set excitation energies
+!!    Written by Alexander C. Paul, Sep 2020
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+      real(dp), dimension(wf%n_singlet_states), intent(in) :: energies
+      character(len=*), intent(in) :: side
+!
+   end subroutine set_excitation_energies_ccs

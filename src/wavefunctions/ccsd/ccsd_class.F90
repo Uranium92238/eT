@@ -359,7 +359,7 @@ contains
             else
 !
                call output%error_msg('Did not recognize number of t-amplitudes on file &
-                                     &expected (i0) or (i0) found (i0)', &
+                                     &expected (i0) or (i0) found (i0) amplitudes.', &
                                      ints=[wf%n_gs_amplitudes, wf%n_t1, n_amplitudes_read])
 !
             end if

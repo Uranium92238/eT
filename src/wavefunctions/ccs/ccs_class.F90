@@ -53,6 +53,7 @@ module ccs_class
       integer :: n_gs_amplitudes
       integer :: n_es_amplitudes
       integer :: n_t1
+!
       integer :: n_singlet_states
       integer :: n_bath_orbitals
 !
@@ -67,7 +68,6 @@ module ccs_class
       logical :: need_g_abcd
 !
       type(stream_file)     :: t_file, tbar_file
-      type(sequential_file) :: excitation_energies_file
       type(sequential_file) :: restart_file
       type(sequential_file) :: mlhf_inactive_fock_term_file
 !
@@ -204,15 +204,13 @@ module ccs_class
       procedure :: save_excited_state                            => save_excited_state_ccs
       procedure :: read_excited_state                            => read_excited_state_ccs
       procedure :: read_excitation_vector_file                   => read_excitation_vector_file_ccs
-      procedure :: save_excitation_energies                      => save_excitation_energies_ccs
-      procedure :: read_excitation_energies                      => read_excitation_energies_ccs
+      procedure :: save_excitation_vector_on_file                => save_excitation_vector_on_file_ccs
+      procedure :: check_and_get_restart_vector                  => check_and_get_restart_vector_ccs
+      procedure :: get_restart_vector                            => get_restart_vector_ccs
 !
       procedure :: write_cc_restart                              => write_cc_restart_ccs
 !
       procedure :: save_tbar_intermediates                       => save_tbar_intermediates_ccs
-!
-      procedure :: get_n_excited_states_on_file                  => get_n_excited_states_on_file_ccs
-      procedure :: get_n_excitation_energies_on_file             => get_n_excitation_energies_on_file_ccs
 !
 !     Print summaries
 !
@@ -238,6 +236,8 @@ module ccs_class
 !
       procedure :: get_gs_orbital_differences                    => get_gs_orbital_differences_ccs
       procedure :: get_es_orbital_differences                    => get_gs_orbital_differences_ccs
+!
+      procedure :: set_excitation_energies                       => set_excitation_energies_ccs
 !
 !     Procedures related to the Fock matrix
 !
@@ -2080,8 +2080,8 @@ contains
                          - wf%right_excitation_energies(state)) &
                          .gt. threshold)) then
 !
-               call output%error_msg('Different degree of degeneracy in the   &
-               &    left excited states compared to the right excited states')
+               call output%error_msg('Different degree of degeneracy in the &
+               & left excited states compared to the right excited states')
 !
             end if
 !
@@ -2474,8 +2474,10 @@ contains
 !
             counter = counter + 1
 !
-            call wf%save_excited_state(R(:,counter), state, state,'right')
-            call wf%save_excited_state(L(:,counter), state, state,'left')
+            call wf%save_excited_state(R(:,counter), state, state,'right', &
+                                       wf%right_excitation_energies(state))
+            call wf%save_excited_state(L(:,counter), state, state,'left', &
+                                       wf%left_excitation_energies(state))
 !
          end do
 !

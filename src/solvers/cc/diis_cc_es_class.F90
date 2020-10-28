@@ -200,21 +200,21 @@ contains
       call solver%print_es_settings()
 !
       call output%printf('m', 'DIIS dimension:               (i11)', &
-                         ints=[solver%diis_dimension], fs='(/t6,a)')
+                         ints=[solver%diis_dimension], fs='(/t6,a/)')
 !
       if (solver%crop) then 
 !
-         call output%printf('m', 'Enabled CROP in the DIIS algorithm.', fs='(/t6,a)')
+         call output%printf('m', 'Enabled CROP in the DIIS algorithm.', fs='(t6,a/)')
 !
       endif
 !
       if (solver%davidson_preconvergence) then 
 !
          call output%printf('m', 'Enabled preconvergence using&
-                                 & the non-linear Davidson solver.', fs='(/t6,a)')
+                                 & the non-linear Davidson solver.', fs='(t6,a)')
 !
          call output%printf('m', 'Preconvergence threshold:   (e11.2)', &
-                                 reals=[solver%preconvergence_threshold], fs='(/t6,a)')
+                                 reals=[solver%preconvergence_threshold], fs='(/t6,a/)')
 !
       endif
 !
@@ -289,7 +289,7 @@ contains
 !
       type(diis_tool), dimension(:), allocatable :: diis 
 !
-      integer :: iteration, state, n_solutions_on_file, n_solutions_to_read
+      integer :: iteration, state
 !
       character(len=3) :: string_state
 !
@@ -325,9 +325,6 @@ contains
 !
 !     Initialize energies, residual norms, and convergence arrays 
 !
-      call solver%initialize_energies()
-      solver%energies = zero
-!
       call mem%alloc(prev_energies, solver%n_singlet_states)
       call mem%alloc(residual_norms, solver%n_singlet_states)
 !
@@ -361,47 +358,11 @@ contains
 !
 !     Make initial guess on the eigenvectors X = [X1 X2 X3 ...]
 !
+      call solver%initialize_energies()
+!
       call mem%alloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
 !
-      do state = 1, solver%n_singlet_states
-!
-         call solver%start_vectors%get(X(:,state), state)
-!
-      enddo 
-!
-      if (solver%restart) then ! Overwrite all or some of the orbital differences 
-!
-         call solver%determine_restart_transformation(wf) ! Read right or left?
-!
-         n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
-!
-         call output%printf('m', 'Requested restart - restarting (i0) (a0) &
-                           &eigenvectors from file.', fs='(/t3,a)', &
-                            ints=[n_solutions_on_file], &
-                            chars=[solver%restart_transformation])
-!
-!        Read and normalize states 
-!
-         n_solutions_to_read = min(n_solutions_on_file, wf%n_singlet_states)
-!
-         call wf%read_excited_state(X(:, 1:n_solutions_to_read),  &
-                                    1,                            &
-                                    n_solutions_to_read,          &
-                                    solver%restart_transformation)
-!
-         do state = 1, n_solutions_to_read
-!
-            norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
-            call dscal(wf%n_es_amplitudes, one/norm_X, X(:, state), 1)
-!
-         enddo
-!
-!        Initialize energies and read energies from states that have been read 
-!
-         solver%energies = zero
-         call wf%read_excitation_energies(n_solutions_to_read, solver%energies)
-!
-      endif
+      call solver%set_initial_guesses(wf, X, 1, wf%n_singlet_states)
 !
 !     Enter iterative loop
 !
@@ -493,14 +454,12 @@ contains
 !
 !        Save excited states and excitation energies
 !
-         call wf%save_excited_state(X,                         &
-                                    1,                         &
-                                    solver%n_singlet_states,   &
-                                    solver%transformation)
+         call wf%save_excited_state(X,                       &
+                                    1,                       &
+                                    solver%n_singlet_states, &
+                                    solver%transformation,   &
+                                    solver%energies)
 !
-         call wf%save_excitation_energies(solver%n_singlet_states,   &
-                                          solver%energies,           &
-                                          solver%transformation)
          prev_energies = solver%energies 
 !
          call output%print_separator('n', 47, '-')
@@ -538,9 +497,10 @@ contains
             end if
 !
             call wf%save_excited_state(X(:, X_order(state)), &
-                                       state,                           &
-                                       state,                           &
-                                       solver%transformation)
+                                       state,                &
+                                       state,                &
+                                       solver%transformation,&
+                                       solver%energies(state))
 !
          enddo
 !
@@ -549,8 +509,8 @@ contains
          call solver%print_summary(wf, X, X_order)
 !
          call mem%dealloc(X_order, solver%n_singlet_states)
-
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
+!
+         call wf%set_excitation_energies(solver%energies, solver%transformation)
 !
          call wf%check_for_parallel_states(solver%transformation, solver%residual_threshold)
 !

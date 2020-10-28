@@ -223,32 +223,33 @@ module mlccsd_class
                   => destruct_orbital_energies_cc2_mlccsd
 !
 !
-      procedure :: initialize_O_o               => initialize_O_o_mlccsd
-      procedure :: destruct_O_o                 => destruct_O_o_mlccsd
-      procedure :: initialize_O_v               => initialize_O_v_mlccsd
-      procedure :: destruct_O_v                 => destruct_O_v_mlccsd
+      procedure :: initialize_O_o                 => initialize_O_o_mlccsd
+      procedure :: destruct_O_o                   => destruct_O_o_mlccsd
+      procedure :: initialize_O_v                 => initialize_O_v_mlccsd
+      procedure :: destruct_O_v                   => destruct_O_v_mlccsd
 !
 !     Read/save
 !
-      procedure :: read_amplitudes              => read_amplitudes_mlccsd
-      procedure :: save_amplitudes              => save_amplitudes_mlccsd
-      procedure :: read_doubles_vector          => read_doubles_vector_mlccsd
-      procedure :: save_doubles_vector          => save_doubles_vector_mlccsd
+      procedure :: read_amplitudes                => read_amplitudes_mlccsd
+      procedure :: save_amplitudes                => save_amplitudes_mlccsd
+      procedure :: read_excitation_vector_file    => read_excitation_vector_file_mlccsd
+      procedure :: save_excitation_vector_on_file => save_excitation_vector_on_file_mlccsd
+      procedure :: get_restart_vector             => get_restart_vector_mlccsd
 !
 !     Cleanup 
 !
-      procedure :: cleanup                      => cleanup_mlccsd
+      procedure :: cleanup                        => cleanup_mlccsd
 !
 !     Initialize
 !
-      procedure :: initialize                   => initialize_mlccsd
+      procedure :: initialize                     => initialize_mlccsd
 !
 !     Restart 
 !
-      procedure :: is_restart_safe              => is_restart_safe_mlccsd
-      procedure :: write_cc_restart             => write_cc_restart_mlccsd
+      procedure :: is_restart_safe                => is_restart_safe_mlccsd
+      procedure :: write_cc_restart               => write_cc_restart_mlccsd
 !
-      procedure :: mo_preparations_from_restart => mo_preparations_from_restart_mlccsd
+      procedure :: mo_preparations_from_restart   => mo_preparations_from_restart_mlccsd
 !
    end type mlccsd
 !
@@ -1413,9 +1414,6 @@ contains
 !!
 !!    Is restart safe?
 !!    Written by Eirik F. Kjønstad, Mar 2019 
-!!
-!!    'task' : Which type of restart we are considering.
-!!             can be either 'ground state' or 'excited state'
 !!
 !!    Modified by Sarai D. Folkestad, May 2020
 !!    

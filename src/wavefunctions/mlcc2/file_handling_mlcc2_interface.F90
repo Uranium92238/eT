@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine read_doubles_vector_doubles(wf, file_, vector, expected_n, read_n)
+   module subroutine read_doubles_vector_mlcc2(wf, file_, vector, expected_n, read_n)
 !!
 !!    Read doubles vector
 !!    Written by Alexander C. Paul, Oct 2019
@@ -29,58 +29,56 @@
 !!
       implicit none 
 !
-      class(doubles), intent(inout) :: wf
+      class(mlcc2), intent(inout) :: wf
       type(stream_file), intent(inout) :: file_
       integer, intent(in) :: expected_n
       real(dp), dimension(expected_n), intent(out) :: vector
       integer, intent(inout) :: read_n
 !
-   end subroutine read_doubles_vector_doubles
+   end subroutine read_doubles_vector_mlcc2
 !
 !
-   module subroutine save_doubles_vector_doubles(wf, file_, vector, n)
+   module subroutine save_doubles_vector_mlcc2(wf, file_, vector, n)
 !!
 !!    Save doubles vector
 !!    Written by Alexander C. Paul, Oct 2019
 !!
-!!    File format: energy, n_t1, t1, n_t2, t2
+!!    File format: energy, n_t1, t1, n_x2, t2
 !!
       implicit none 
 !
-      class(doubles), intent(inout) :: wf 
+      class(mlcc2), intent(inout) :: wf 
       type(stream_file), intent(inout) :: file_
       integer, intent(in) :: n
-      real(dp), dimension(n), intent(in) :: vector
+      real(dp), dimension(n), intent(in) :: vector 
 !
-   end subroutine save_doubles_vector_doubles
+   end subroutine save_doubles_vector_mlcc2
 !
 !
-   module subroutine read_excitation_vector_file_doubles(wf, file_, vector, energy, read_n)
+   module subroutine read_excitation_vector_file_mlcc2(wf, file_, vector, energy, read_n)
 !!
 !!    Read excitation vector file 
 !!    Written by Alexander C. Paul, Sep 2020
 !!
 !!    Reads excitation vector from file structured as follows:
-!!    excitation_energy, n_t1, X1, n_t2, X2
+!!    excitation_energy, n_t1, X1
 !!
-!!    read_n: optionally returns the number of amplitudes read. 
-!!            This is especially useful e.g. in CCSD to provide a start guess 
-!!            for the doubles if only singles were found on file.
+!!    read_n: optionally adds the number of amplitudes read to read_n
 !!
       implicit none
 !
-      class(doubles), intent(inout) :: wf 
+      class(mlcc2), intent(inout) :: wf 
       type(stream_file), intent(inout) :: file_
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
       real(dp), intent(out) :: energy
       integer, intent(inout), optional :: read_n
 !
-   end subroutine read_excitation_vector_file_doubles
+   end subroutine read_excitation_vector_file_mlcc2
 !
 !
-   module subroutine save_excitation_vector_on_file_doubles(wf, file_, vector, energy)
+   module subroutine save_excitation_vector_on_file_mlcc2(wf, file_, vector, energy)
 !!
-!!    Save excitation vector file 
+!!    Save excitation vector on file 
 !!    Written by Alexander C. Paul, Sep 2020
 !!
 !!    Writes excitation vector o file structured as follows:
@@ -88,15 +86,15 @@
 !!
       implicit none
 !
-      class(doubles), intent(inout) :: wf 
+      class(mlcc2), intent(inout) :: wf 
       type(stream_file), intent(inout) :: file_
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: vector
       real(dp), intent(in) :: energy
 !
-   end subroutine save_excitation_vector_on_file_doubles
+   end subroutine save_excitation_vector_on_file_mlcc2
 !
 !
-   module subroutine get_restart_vector_doubles(wf, file_, vector, energy)
+   module subroutine get_restart_vector_mlcc2(wf, file_, vector, energy)
 !!
 !!    Get restart vector
 !!    Written by Alexander C. Paul, Sep 2020
@@ -107,9 +105,9 @@
 !!
       implicit none
 !
-      class(doubles), intent(inout) :: wf 
+      class(mlcc2), intent(inout) :: wf 
       type(stream_file), intent(inout) :: file_
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
       real(dp), intent(out) :: energy
 !
-   end subroutine get_restart_vector_doubles
+   end subroutine get_restart_vector_mlcc2

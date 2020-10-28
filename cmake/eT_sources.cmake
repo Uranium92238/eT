@@ -236,6 +236,7 @@ set(eT_fortran_sources
 #
    src/wavefunctions/mlcc2/mlcc2_class.F90
    src/wavefunctions/mlcc2/orbitals_mlcc2.F90
+   src/wavefunctions/mlcc2/file_handling_mlcc2.F90
    src/wavefunctions/mlcc2/omega_mlcc2.F90
    src/wavefunctions/mlcc2/jacobian_mlcc2.F90
    src/wavefunctions/mlcc2/jacobian_transpose_mlcc2.F90

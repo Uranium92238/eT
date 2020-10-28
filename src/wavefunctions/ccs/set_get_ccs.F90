@@ -145,4 +145,39 @@ contains
    end subroutine set_fock_ccs
 !
 !
+   module subroutine set_excitation_energies_ccs(wf, energies, side)
+!!
+!!    Set excitation energies
+!!    Written by Alexander C. Paul, Sep 2020
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_singlet_states), intent(in) :: energies
+      character(len=*), intent(in) :: side
+!
+      if (trim(side) .eq. 'right') then 
+!
+         call dcopy(wf%n_singlet_states, energies, 1, &
+                    wf%right_excitation_energies, 1)
+!
+      elseif (trim(side) .eq. 'left') then 
+!
+         call dcopy(wf%n_singlet_states, energies, 1, &
+                    wf%left_excitation_energies, 1)
+!
+      elseif (trim(side) .eq. 'both') then 
+!
+         call dcopy(wf%n_singlet_states, energies, 1, &
+                    wf%left_excitation_energies, 1)
+!
+         call dcopy(wf%n_singlet_states, energies, 1, &
+                    wf%right_excitation_energies, 1)
+!
+      endif
+!
+   end subroutine set_excitation_energies_ccs
+!
+!
 end submodule set_get_ccs
