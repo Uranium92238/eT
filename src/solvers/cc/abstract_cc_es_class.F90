@@ -471,7 +471,7 @@ contains
    end subroutine initialize_projection_tool_abstract_cc_es
 !
 !
-   module subroutine set_initial_guesses_abstract_cc_es(solver, wf, X, first, last)
+   subroutine set_initial_guesses_abstract_cc_es(solver, wf, X, first, last)
 !!
 !!    Set initial guesses
 !!    Written by Alexander C. Paul, Oct 2020
