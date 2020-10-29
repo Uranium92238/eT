@@ -70,7 +70,8 @@
    end subroutine construct_cholesky_orbitals_mlcc2
 !
 !
-   module subroutine construct_block_diagonal_fock_orbitals_mlcc2(wf)
+   module subroutine construct_block_diagonal_fock_orbitals_mlcc2(wf, n_levels, n_occupied_list, &
+                                          n_virtual_list, orbital_coefficients, orbital_energies) 
 !!
 !!    Construct block diagonal Fock MOs 
 !!    Written by Sarai D. Folkestad, Feb 2019
@@ -87,6 +88,10 @@
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
+      integer, intent(in) :: n_levels
+      integer, dimension(n_levels), intent(in) :: n_occupied_list, n_virtual_list
+      real(dp), dimension(wf%n_ao, wf%n_mo), intent(inout) :: orbital_coefficients
+      real(dp), dimension(wf%n_mo), intent(inout) :: orbital_energies
 !
    end subroutine construct_block_diagonal_fock_orbitals_mlcc2
 !
@@ -381,3 +386,18 @@
       logical, intent(in) :: set_to_zero
 !
    end subroutine construct_M_and_N_singles_cnto_mlcc2
+!
+!
+   module subroutine construct_semicanonical_mlcc_orbitals_mlcc2(wf)
+!!
+!!    Construct semicanonical orbitals
+!!    Written by Sarai D. Folkestad
+!!
+!!    Wrapper to construct orbitals that block diagonalizes the fock matrix
+!!    for the different orbitals
+!!
+      implicit none
+!
+      class(mlcc2), intent(inout) :: wf
+!
+   end subroutine construct_semicanonical_mlcc_orbitals_mlcc2

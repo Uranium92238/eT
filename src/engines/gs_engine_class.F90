@@ -39,7 +39,6 @@ module gs_engine_class
 !
       character(len=200) :: gs_algorithm
 !
-      logical :: restart
       logical :: gs_restart
       logical :: multipliers_restart
 !
@@ -60,8 +59,6 @@ module gs_engine_class
       procedure, nopass :: calculate_dipole_moment       => calculate_dipole_moment_gs_engine
 !
       procedure, nopass :: calculate_quadrupole_moment   => calculate_quadrupole_moment_gs_engine
-!
-      procedure :: restart_handling                      => restart_handling_gs_engine
 !
       procedure, nopass :: do_cholesky                   => do_cholesky_gs_engine
 !
@@ -111,8 +108,6 @@ contains
 !
       call engine%read_settings()
 !
-      engine%restart = engine%gs_restart .or. engine%multipliers_restart
-!
       call engine%set_printables()
 !
       engine%timer = timings(trim(engine%name_))
@@ -159,8 +154,6 @@ contains
 !
       call wf%mo_preparations() 
 !
-      call engine%restart_handling(wf)
-!
 !     Determine ground state
 !
       call engine%do_ground_state(wf)
@@ -200,6 +193,12 @@ contains
 !
       engine%multipliers_restart = &
                input%requested_keyword_in_section('restart', 'solver cc multipliers')
+!
+!     global restart
+      if (input%requested_keyword_in_section('restart', 'do')) then 
+         engine%gs_restart = .true.
+         engine%multipliers_restart = .true.
+      end if
 !
       engine%plot_density = &
                input%requested_keyword_in_section('plot cc density', 'visualization')
@@ -463,36 +462,6 @@ contains
       total = electronic + nuclear
 !
    end subroutine calculate_quadrupole_moment_gs_engine
-!
-!
-   subroutine restart_handling_gs_engine(engine, wf)
-!!
-!!    Restart handling
-!!    Written by Sarai D. Folkestad, Nov 2019
-!!
-!!    Writes the restart information 
-!!    if restart is not requested.
-!!
-!!    If restart is requested performs safety 
-!!    checks for restart
-!!
-      implicit none
-!
-      class(gs_engine), intent(in) :: engine
-      class(ccs), intent(in) :: wf
-!
-      if (.not. engine%restart) then
-!
-         call wf%write_cc_restart()
-!
-      else
-!
-         if (engine%gs_restart .or. engine%multipliers_restart) &
-               call wf%is_restart_safe
-!
-      endif
-!
-   end subroutine restart_handling_gs_engine
 !
 !
    subroutine do_cholesky_gs_engine(wf)

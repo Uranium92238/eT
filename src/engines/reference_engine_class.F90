@@ -105,8 +105,6 @@ contains
 !
       call engine%read_settings()
 !
-      call engine%set_printables()
-!
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
 !
@@ -121,7 +119,11 @@ contains
       implicit none 
 !
       class(reference_engine) :: engine 
-      class(hf)        :: wf 
+      class(hf) :: wf 
+!
+!     Overwrite restart if the corresponding files don't exist
+      if (engine%restart) engine%restart = wf%is_restart_possible()
+      call engine%set_printables()
 !
       call engine%print_banner(wf)
       call engine%run(wf)
@@ -138,7 +140,7 @@ contains
       implicit none 
 !
       class(reference_engine)    :: engine 
-      class(hf)                  :: wf 
+      class(hf)                  :: wf
 !
       if (.not. engine%restart .and. (trim(engine%ao_density_guess) == 'sad')) then
 !
@@ -198,6 +200,11 @@ contains
 !
       if (input%requested_keyword_in_section('plot hf density', 'visualization')) then 
          engine%plot_density = .true.
+      end if
+!
+!     Global restart
+      if (input%requested_keyword_in_section('restart', 'do')) then 
+         engine%restart = .true.
       end if
 !
       call engine%read_mean_value_settings()

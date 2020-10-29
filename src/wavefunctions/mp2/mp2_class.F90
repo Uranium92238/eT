@@ -73,8 +73,6 @@ contains
       wf%n_es_amplitudes = wf%n_t1
       wf%need_g_abcd     = .false.
 !
-      call wf%write_cc_restart()
-!
       call wf%initialize_fock()
       call wf%initialize_amplitudes()
       call zero_array(wf%t1, wf%n_o*wf%n_v)

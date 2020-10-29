@@ -4,42 +4,38 @@ system
 end system
 
 do
-   restart
-   response
+   excited state
 end do
+
+memory
+   available: 8
+end memory
 
 method
    hf
-   cc3
+   ccsd
 end method
 
-cc response
-   eom
-   dipole length
-   transition moments
-end cc response
+solver cholesky
+   threshold: 1.0d-12
+end solver cholesky
 
 solver scf
+   algorithm:          scf-diis
+   energy threshold:   1.0d-11
    gradient threshold: 1.0d-11
 end solver scf
 
-solver cholesky
-   threshold: 1.0d-11
-end solver cholesky
-
 solver cc gs
-   omega threshold: 1.0d-11
+   omega threshold:  1.0d-11
+   energy threshold: 1.0d-11
 end solver cc gs
 
-solver cc multipliers
-   threshold: 1.0d-11
-   algorithm: diis
-end solver cc multipliers
-
 solver cc es
+   singlet states:     1
    residual threshold: 1.0d-11
-   singlet states: 1
-   algorithm: diis
+   energy threshold:   1.0d-11
+   left eigenvectors
 end solver cc es
 
 geometry

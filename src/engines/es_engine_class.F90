@@ -46,12 +46,10 @@ module es_engine_class
 !
       procedure :: read_settings             => read_settings_es_engine
       procedure :: read_es_settings          => read_es_settings_es_engine
-!
+! 
       procedure :: do_excited_state          => do_excited_state_es_engine
 !
       procedure :: set_printables            => set_printables_es_engine
-!
-      procedure :: restart_handling          => restart_handling_es_engine
 !
    end type es_engine
 !
@@ -117,10 +115,6 @@ contains
 !
       call engine%read_settings()
 !
-      engine%restart =  engine%gs_restart .or. &
-                        engine%multipliers_restart .or. &
-                        engine%es_restart
-!
       call engine%set_printables()
 !
       engine%timer = timings(trim(engine%name_))
@@ -173,6 +167,9 @@ contains
 !
       engine%es_restart = input%requested_keyword_in_section('restart', 'solver cc es')
 !
+!     global restart
+      if (input%requested_keyword_in_section('restart', 'do')) engine%es_restart = .true.
+!
    end subroutine read_es_settings_es_engine
 !
 !
@@ -193,8 +190,6 @@ contains
       call engine%tasks%print_('mo preparations')
 !
       call wf%mo_preparations()
-!
-      call engine%restart_handling(wf)
 !
 !     Ground state solution
 !
@@ -339,35 +334,6 @@ contains
       engine%description  = 'Calculates the coupled cluster excitation vectors and excitation energies'
 !
    end subroutine set_printables_es_engine
-!
-!
-   subroutine restart_handling_es_engine(engine, wf)
-!!
-!!    Restart handling
-!!    Written by Sarai D. Folkestad, Nov 2019
-!!
-!!    Writes the restart information 
-!!    if restart is not requested.
-!!
-!!    If restart is requested performs safety 
-!!    checks for restart
-!!
-      implicit none
-!
-      class(es_engine), intent(in) :: engine
-      class(ccs), intent(in) :: wf
-!
-      if (.not. engine%restart) then
-!
-         call wf%write_cc_restart()
-!
-      else
-!
-         call wf%is_restart_safe
-!
-      endif
-!
-   end subroutine restart_handling_es_engine
 !
 !
 end module es_engine_class

@@ -104,3 +104,37 @@
       real(dp), intent(out) :: energy
 !
    end subroutine get_restart_vector_mlccsd
+!
+!
+   module subroutine save_mlcc_orbitals_mlccsd(wf)
+!!
+!!    Save MLCC orbitals
+!!    Written by Sarai D. Folkestad
+!!
+!!    File format:
+!!
+!!    1: n_ccs_o, n_ccs_v, n_cc2_o, n_cc2_v, n_ccsd_o, n_ccsd_v, orbitals 
+!!    2: orbital energies
+!!
+      implicit none 
+!
+      class(mlccsd), intent(inout) :: wf 
+!
+   end subroutine save_mlcc_orbitals_mlccsd
+!
+!
+   module subroutine read_mlcc_orbitals_mlccsd(wf)
+!!
+!!    Read MLCC orbitals
+!!    Written by Sarai D. Folkestad
+!!
+!!    File format:
+!!
+!!    1: n_ccs_o, n_ccs_v, n_cc2_o, n_cc2_v, n_ccsd_o, n_ccsd_v, orbitals 
+!!    2: orbital energies
+!!
+      implicit none 
+!
+      class(mlccsd), intent(inout) :: wf 
+!
+   end subroutine read_mlcc_orbitals_mlccsd

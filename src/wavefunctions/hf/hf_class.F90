@@ -123,6 +123,7 @@ module hf_class
       procedure :: is_restart_safe                             => is_restart_safe_hf
       procedure :: write_scf_restart                           => write_scf_restart_hf
       procedure :: write_orbital_information                   => write_orbital_information_hf
+      procedure :: is_restart_possible                         => is_restart_possible_hf
 !
 !     Preparation and cleanup routines
 !
@@ -377,6 +378,26 @@ contains
       endif
 !
    end subroutine is_restart_safe_hf
+!
+!
+   function is_restart_possible_hf(wf) result(restart_is_possible)
+!!
+!!    Is restart possible
+!!    Written by Alexander C. Paul, Okt 2020
+!!
+!!    Checks if restart files exist
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      logical :: restart_is_possible
+!
+      restart_is_possible = (wf%restart_file%exists() &
+                       .and. wf%orbital_coefficients_file%exists() &
+                       .and. wf%orbital_energies_file%exists())
+!
+   end function is_restart_possible_hf
 !
 !
    subroutine print_energy_hf(wf)

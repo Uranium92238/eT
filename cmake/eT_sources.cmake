@@ -242,6 +242,7 @@ set(eT_fortran_sources
    src/wavefunctions/mlcc2/jacobian_transpose_mlcc2.F90
    src/wavefunctions/mlcc2/initialize_destruct_mlcc2.F90
    src/wavefunctions/mlcc2/debug_jacobian_mlcc2.F90
+   src/wavefunctions/mlcc2/file_handling_mlcc2.F90
 #
    src/wavefunctions/mlccsd/mlccsd_class.F90
    src/wavefunctions/mlccsd/orbitals_mlccsd.F90

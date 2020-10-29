@@ -288,7 +288,8 @@ contains
    end subroutine construct_cholesky_orbitals_mlcc2
 !
 !
-   module subroutine construct_block_diagonal_fock_orbitals_mlcc2(wf)
+   module subroutine construct_block_diagonal_fock_orbitals_mlcc2(wf, n_levels, n_occupied_list, &
+                                          n_virtual_list, orbital_coefficients, orbital_energies) 
 !!
 !!    Construct block diagonal Fock MOs 
 !!    Written by Sarai D. Folkestad, Feb 2019
@@ -309,7 +310,16 @@ contains
 !
       class(mlcc2), intent(inout) :: wf
 !
+      integer, intent(in) :: n_levels
+!
+      integer, dimension(n_levels), intent(in) :: n_occupied_list, n_virtual_list
+!
+      real(dp), dimension(wf%n_ao, wf%n_mo), intent(inout) :: orbital_coefficients
+      real(dp), dimension(wf%n_mo), intent(inout) :: orbital_energies
+!
       real(dp), dimension(:,:), allocatable :: F_oo, F_vv, C_copy
+!
+      integer :: i, offset
 !
       call mem%alloc(F_oo, wf%n_o, wf%n_o)
       call mem%alloc(F_vv, wf%n_v, wf%n_v)
@@ -319,98 +329,68 @@ contains
 !
 !     Block diagonal occupied-occupied Fock
 !
-      call block_diagonalize_symmetric(F_oo, wf%n_o, 2, [wf%n_cc2_o, wf%n_ccs_o], &
-                                    wf%orbital_energies(1:wf%n_o))
+      call block_diagonalize_symmetric(F_oo, wf%n_o, n_levels, n_occupied_list, &
+                                       orbital_energies(1:wf%n_o))
 !
 !     Block diagonal virtual-virtual Fock
 !
-      call block_diagonalize_symmetric(F_vv, wf%n_v, 2, [wf%n_cc2_v, wf%n_ccs_v], &
-                                    wf%orbital_energies(wf%n_o+1:wf%n_mo))
-
+      call block_diagonalize_symmetric(F_vv, wf%n_v, n_levels, n_virtual_list, &
+                                    orbital_energies(wf%n_o+1:wf%n_mo))
 !
 !     Transform blocks
 !
       call mem%alloc(C_copy, wf%n_ao, wf%n_mo)
-      call dcopy(wf%n_mo*wf%n_ao, wf%orbital_coefficients, 1, C_copy, 1)
-      call zero_array(wf%orbital_coefficients, wf%n_mo*wf%n_ao)
+      call dcopy(wf%n_mo*wf%n_ao, orbital_coefficients, 1, C_copy, 1)
 !
-!     1. Active occcupied
+      call zero_array(orbital_coefficients, wf%n_mo*wf%n_ao)
 !
-      if (wf%n_cc2_o .gt. 0) then
+      offset = 1
 !
-         call dgemm('N', 'N',                 &
-                     wf%n_ao,                 &
-                     wf%n_cc2_o,              &
-                     wf%n_cc2_o,              &
-                     one,                     &
-                     C_copy,                  &
-                     wf%n_ao,                 &
-                     F_oo,                    &
-                     wf%n_o,                  &
-                     one,                     &
-                     wf%orbital_coefficients, &
-                     wf%n_ao)
+      do i = 1, n_levels
 !
-      endif
+         if (n_occupied_list(i) == 0 ) cycle
 !
-!     2. Inactive occupied
+         call dgemm('N', 'N',                      &
+                  wf%n_ao,                         &
+                  n_occupied_list(i),              &
+                  n_occupied_list(i),              &
+                  one,                             &
+                  C_copy(1, offset),               &
+                  wf%n_ao,                         &
+                  F_oo(offset, offset),            &
+                  wf%n_o,                          &
+                  one,                             &
+                  orbital_coefficients(1, offset), &
+                  wf%n_ao)
 !
-      if (wf%n_cc2_o .lt. wf%n_o) then
+         offset = offset + n_occupied_list(i)
 !
-         call dgemm('N', 'N',                                     &
-                     wf%n_ao,                                     &
-                     wf%n_ccs_o,                                  &
-                     wf%n_ccs_o,                                  &
-                     one,                                         &
-                     C_copy(1, wf%n_cc2_o + 1),                   &
-                     wf%n_ao,                                     &
-                     F_oo(wf%n_cc2_o + 1, wf%n_cc2_o + 1),        &
-                     wf%n_o,                                      &
-                     one,                                         &
-                     wf%orbital_coefficients(1, wf%n_cc2_o + 1),  &
-                     wf%n_ao)
-      endif
+      enddo
 !
-!     3. Active virtual
+      offset = 1
 !
-      if (wf%n_cc2_v .gt. 0) then
+      do i = 1, n_levels
 !
-         call dgemm('N', 'N',                                  &
-                     wf%n_ao,                                  &
-                     wf%n_cc2_v,                               &
-                     wf%n_cc2_v,                               &
-                     one,                                      &
-                     C_copy(1, wf%n_o + 1),                    &
-                     wf%n_ao,                                  &
-                     F_vv,                                     &
-                     wf%n_v,                                   &
-                     one,                                      &
-                     wf%orbital_coefficients(1, wf%n_o + 1),   &
-                     wf%n_ao)
+         if (n_virtual_list(i) == 0 ) cycle
 !
-      endif
+         call dgemm('N', 'N',                               &
+                  wf%n_ao,                                  &
+                  n_virtual_list(i),                        &
+                  n_virtual_list(i),                        &
+                  one,                                      &
+                  C_copy(1, offset + wf%n_o),               &
+                  wf%n_ao,                                  &
+                  F_vv(offset, offset),                     &
+                  wf%n_v,                                   &
+                  one,                                      &
+                  orbital_coefficients(1, offset + wf%n_o), &
+                  wf%n_ao)
 !
-!     4. Inactive virtual
+         offset = offset + n_virtual_list(i)
 !
-      if (wf%n_cc2_v .lt. wf%n_v) then
-!
-         call dgemm('N', 'N',                                              &
-                     wf%n_ao,                                              &
-                     wf%n_ccs_v,                                           &
-                     wf%n_ccs_v,                                           &
-                     one,                                                  &
-                     C_copy(1, wf%n_o + wf%n_cc2_v + 1),                   &
-                     wf%n_ao,                                              &
-                     F_vv(wf%n_cc2_v + 1, wf%n_cc2_v + 1),                 &
-                     wf%n_v,                                               &
-                     one,                                                  &
-                     wf%orbital_coefficients(1, wf%n_o + wf%n_cc2_v + 1),  &
-                     wf%n_ao)
-!
-      endif
+      enddo
 !
       call mem%dealloc(C_copy, wf%n_ao, wf%n_mo)
-!
       call mem%dealloc(F_oo, wf%n_o, wf%n_o)
       call mem%dealloc(F_vv, wf%n_v, wf%n_v)
 !
@@ -607,19 +587,14 @@ contains
       real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
       real(dp), dimension(wf%n_v, wf%n_v), intent(out) :: T_v
 !
-      type(sequential_file) :: transformation_o, transformation_v
+      call wf%T_cnto_o_file%open_('read', 'rewind')
+      call wf%T_cnto_v_file%open_('read', 'rewind')
 !
-      transformation_o = sequential_file('cnto_M_transformation', 'unformatted')
-      transformation_v = sequential_file('cnto_N_transformation', 'unformatted')
+      call wf%T_cnto_o_file%read_(T_o, wf%n_o**2)
+      call wf%T_cnto_v_file%read_(T_v, wf%n_v**2)
 !
-      call transformation_o%open_('read', 'rewind')
-      call transformation_v%open_('read', 'rewind')
-!
-      call transformation_o%read_(T_o, wf%n_o**2)
-      call transformation_v%read_(T_v, wf%n_v**2)
-!
-      call transformation_o%close_('keep')
-      call transformation_v%close_('keep')
+      call wf%T_cnto_o_file%close_('keep')
+      call wf%T_cnto_v_file%close_('keep')
 !
    end subroutine read_cnto_transformation_matrices_mlcc2
 !
@@ -639,19 +614,14 @@ contains
       real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: T_o
       real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: T_v
 !
-      type(sequential_file) :: transformation_o, transformation_v
+      call wf%T_cnto_o_file%open_('write', 'rewind')
+      call wf%T_cnto_v_file%open_('write', 'rewind')
 !
-      transformation_o = sequential_file('cnto_M_transformation', 'unformatted')
-      transformation_v = sequential_file('cnto_N_transformation', 'unformatted')
+      call wf%T_cnto_o_file%write_(T_o, wf%n_o**2)
+      call wf%T_cnto_v_file%write_(T_v, wf%n_v**2)
 !
-      call transformation_o%open_('write', 'rewind')
-      call transformation_v%open_('write', 'rewind')
-!
-      call transformation_o%write_(T_o, wf%n_o**2)
-      call transformation_v%write_(T_v, wf%n_v**2)
-!
-      call transformation_o%close_('keep')
-      call transformation_v%close_('keep')
+      call wf%T_cnto_o_file%close_('keep')
+      call wf%T_cnto_v_file%close_('keep')
 !
    end subroutine write_cnto_transformation_matrices_mlcc2
 !
@@ -1529,6 +1499,29 @@ contains
                   wf%n_v)
 !
    end subroutine construct_M_and_N_singles_cnto_mlcc2
+!
+!
+   module subroutine construct_semicanonical_mlcc_orbitals_mlcc2(wf)
+!!
+!!    Construct semicanonical orbitals
+!!    Written by Sarai D. Folkestad
+!!
+!!    Wrapper to construct orbitals that block diagonalizes the fock matrix
+!!    for the different orbitals
+!!
+      implicit none
+!
+      class(mlcc2), intent(inout) :: wf
+!
+      integer :: n_levels
+!
+      n_levels = 2
+!
+      call wf%construct_block_diagonal_fock_orbitals(n_levels, [wf%n_cc2_o, wf%n_ccs_o],   &
+                                          [wf%n_cc2_v, wf%n_ccs_v], wf%orbital_coefficients, &
+                                          wf%orbital_energies) 
+!
+   end subroutine construct_semicanonical_mlcc_orbitals_mlcc2
 !
 !
 end submodule orbitals_mlcc2

@@ -43,6 +43,7 @@ module mlcc2_class
 !!
 !
    use ccs_class
+   use stream_file_class, only: stream_file
 !
    implicit none
 !
@@ -93,6 +94,12 @@ module mlcc2_class
 !
       type(sequential_file) :: jacobian_a1_intermediate_vv
       type(sequential_file) :: jacobian_a1_intermediate_oo
+!
+      type(stream_file) :: orbital_coefficients_mlcc_file
+      type(stream_file) :: orbital_energies_mlcc_file
+!
+      type(stream_file) :: T_cnto_o_file
+      type(stream_file) :: T_cnto_v_file
 !
    contains
 !
@@ -176,6 +183,9 @@ module mlcc2_class
 !
       procedure :: update_MO_fock_contributions                      => update_MO_fock_contributions_mlcc2
 !
+      procedure :: construct_semicanonical_mlcc_orbitals &
+                => construct_semicanonical_mlcc_orbitals_mlcc2
+!
 !     Ground state routines
 !
       procedure :: calculate_energy                                  => calculate_energy_mlcc2
@@ -224,9 +234,6 @@ module mlcc2_class
 !
 !     Restart
 !
-      procedure :: is_restart_safe                                   => is_restart_safe_mlcc2
-      procedure :: write_cc_restart                                  => write_cc_restart_mlcc2
-      
       procedure :: read_doubles_vector                               => read_doubles_vector_mlcc2
       procedure :: save_doubles_vector                               => save_doubles_vector_mlcc2
       procedure :: read_excitation_vector_file                       => read_excitation_vector_file_mlcc2
@@ -240,6 +247,11 @@ module mlcc2_class
 !     Initialize wavefunction
 !
       procedure :: initialize                                        => initialize_mlcc2
+!
+!     File handling
+!
+      procedure :: save_mlcc_orbitals                                => save_mlcc_orbitals_mlcc2
+      procedure :: read_mlcc_orbitals                                => read_mlcc_orbitals_mlcc2
 !
    end type mlcc2
 !
@@ -300,6 +312,16 @@ contains
 !
       call wf%initialize_fock()
 !
+      wf%orbital_coefficients_mlcc_file = stream_file('orbitals_mlcc2')
+      wf%orbital_energies_mlcc_file = stream_file('orbital_energies_mlcc2')
+!
+      if (trim(wf%cc2_orbital_type) == 'cnto' .or. trim(wf%cc2_orbital_type) == 'cnto-approx') then
+!
+         wf%T_cnto_o_file = stream_file('cnto_M_transformation')
+         wf%T_cnto_v_file = stream_file('cnto_N_transformation')
+!
+      endif
+!
    end subroutine initialize_mlcc2
 !
 !
@@ -346,7 +368,8 @@ contains
       if (.not. input%requested_section('mlcc')) &
          call output%error_msg('cannot do mlcc calculation without mlcc section in eT.inp')
 !
-      wf%restart_orbitals = input%requested_keyword_in_section('orbital restart', 'mlcc')
+      wf%restart_orbitals = input%requested_keyword_in_section('orbital restart', 'mlcc') .or. &
+                            input%requested_keyword_in_section('restart', 'do')
 !
       call input%get_required_keyword_in_section('cc2 orbitals', 'mlcc', wf%cc2_orbital_type)
 !
@@ -393,7 +416,8 @@ contains
 !
          wf%cnto_restart = .false.
 !
-         if (input%requested_keyword_in_section('cnto restart', 'mlcc')) wf%cnto_restart = .true.
+         if (input%requested_keyword_in_section('cnto restart', 'mlcc') .or. &
+            input%requested_keyword_in_section('restart', 'do')) wf%cnto_restart = .true.
 !
          wf%n_cnto_states = input%get_n_elements_for_keyword_in_section('cnto states', 'mlcc')
 !
@@ -1012,6 +1036,16 @@ contains
 !
       class(mlcc2) :: wf
 !
+      if (wf%restart_orbitals .and.                               &
+         ((.not. wf%orbital_coefficients_mlcc_file%exists()) .or. &
+         (.not. wf%orbital_energies_mlcc_file%exists())))         &
+               wf%restart_orbitals = .false.
+!
+      if (wf%cnto_restart .and.                       &
+            ((.not. wf%T_cnto_o_file%exists()) .or.   &
+             (.not. wf%T_cnto_v_file%exists())))      &
+                  wf%cnto_restart = .false.
+!
       if (wf%restart_orbitals) then
 !
          call wf%mo_preparations_from_restart()
@@ -1055,8 +1089,6 @@ contains
       real(dp), dimension(:,:), allocatable :: partitioning_orbitals
       real(dp), dimension(:,:), allocatable :: T
 !
-      type(sequential_file) :: orbital_coefficients_file, orbital_energies_file
-!
 !      Keep canonical orbitals (for transformation of frozen MO fock terms)
 !
       call mem%alloc(canonical_orbitals, wf%n_ao, wf%n_mo)
@@ -1096,7 +1128,8 @@ contains
 !
 !     Construct MLCC orbital basis
 !
-      call wf%construct_block_diagonal_fock_orbitals()
+      call wf%construct_semicanonical_mlcc_orbitals()
+!
       call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, partitioning_orbitals, T)
       call wf%eri%update_cholesky_mo(T)
       call mem%dealloc(T, wf%n_mo, wf%n_mo)
@@ -1111,17 +1144,7 @@ contains
 !
 !     Print MLCC orbital coefficients to file
 !
-      orbital_coefficients_file = sequential_file('orbital_coefficients_mlcc')
-      call orbital_coefficients_file%open_('write', 'rewind')
-      call orbital_coefficients_file%write_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
-      call orbital_coefficients_file%close_('keep')
-!
-!     Print MLCC orbital energies to file
-!
-      orbital_energies_file = sequential_file('orbital_energies_mlcc')
-      call orbital_energies_file%open_('write', 'rewind')
-      call orbital_energies_file%write_(wf%orbital_energies, wf%n_mo)
-      call orbital_energies_file%close_('keep')
+      call wf%save_mlcc_orbitals()
 !
    end subroutine general_mlcc_mo_preparations_mlcc2
 !
@@ -1201,98 +1224,6 @@ contains
       wf%n_gs_amplitudes = wf%n_t1
 !
    end subroutine determine_n_gs_amplitudes_mlcc2
-!
-!
-   subroutine is_restart_safe_mlcc2(wf)
-!!
-!!    Is restart safe?
-!!    Written by Eirik F. Kjønstad, Mar 2019 
-!!
-!!    Modified by Sarai D. Folkestad, Nov 2019
-!!    
-!!    Modified for MLCC
-!!
-      implicit none 
-!
-      class(mlcc2) :: wf 
-!
-      integer :: n_o, n_v
-      integer :: n_cc2_o, n_cc2_v, n_ccs_o, n_ccs_v
-!
-      character(len=200) :: cc2_orbital_type
-!
-      call wf%restart_file%open_('read', 'rewind')
-!
-      call wf%restart_file%read_(n_o)
-      call wf%restart_file%read_(n_v)
-!
-      if (n_o .ne. wf%n_o) &
-        call output%error_msg('attempted to restart from &
-            &inconsistent number of occupied orbitals.')
-!
-      if (n_v .ne. wf%n_v) &
-         call output%error_msg('attempted to restart from inconsistent number of virtual orbitals.')
-!
-      call wf%restart_file%read_(cc2_orbital_type) 
-!
-      if (trim(cc2_orbital_type) .ne. trim(wf%cc2_orbital_type)) &
-         call output%error_msg('attempted MLCC restart ' // &
-                               'with inconsistent orbital type.')
-!
-      call wf%restart_file%read_(n_ccs_o)
-      call wf%restart_file%read_(n_ccs_v)
-      call wf%restart_file%read_(n_cc2_o)
-      call wf%restart_file%read_(n_cc2_v)
-!
-      if (n_ccs_o .ne. wf%n_ccs_o) &
-         call output%error_msg('attempted to restart from inconsistent ' // &
-                               'number of ccs occupied orbitals.')
-!
-      if (n_ccs_v .ne. wf%n_ccs_v) &
-         call output%error_msg('attempted to restart from inconsistent ' // &
-                               'number of ccs virtual orbitals.')
-!
-      if (n_cc2_o .ne. wf%n_cc2_o) &
-         call output%error_msg('attempted to restart from inconsistent ' // &
-                               'number of cc2 occupied orbitals.')
-!
-      if (n_cc2_v .ne. wf%n_cc2_v) &
-         call output%error_msg('attempted to restart from inconsistent ' // &
-                               'number of cc2 virtual orbitals.')
-!
-      call wf%restart_file%close_() 
-!
-   end subroutine is_restart_safe_mlcc2
-!
-!
-   subroutine write_cc_restart_mlcc2(wf)
-!!
-!!    Write CC restart file
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
-!!
-!!    Modified by Sarai D. Folkestad, Nov 2019
-!!    
-!!    Modified for MLCC
-!!
-      implicit none
-!
-      class(mlcc2) :: wf 
-!
-!     Write information to restart file 
-!
-      call wf%restart_file%open_('write', 'rewind')
-!
-      call wf%restart_file%write_(wf%n_o)
-      call wf%restart_file%write_(wf%n_v)
-      call wf%restart_file%write_(wf%cc2_orbital_type)
-      call wf%restart_file%write_(wf%n_ccs_o)
-      call wf%restart_file%write_(wf%n_ccs_v)
-      call wf%restart_file%write_(wf%n_cc2_o)
-      call wf%restart_file%write_(wf%n_cc2_v)
-!
-      call wf%restart_file%close_()
-!
-   end subroutine write_cc_restart_mlcc2
 !
 !
    subroutine update_MO_fock_contributions_mlcc2(wf, C_old)
@@ -1395,42 +1326,18 @@ contains
       real(dp), dimension(:,:), allocatable :: canonical_orbitals
       real(dp), dimension(:,:), allocatable :: T
 !
-      type(sequential_file) :: orbital_coefficients_file, orbital_energies_file
+      call output%warning_msg('Number of orbitals in active and inactive spaces read &
+                              &from orbital_coefficients_mlcc. Make sure restarted &
+                              &calculation and restart files are consistent!')
 !
-!      Keep canonical orbitals (for transformation of frozen MO fock terms)
+!     Keep canonical orbitals (for transformation of frozen MO fock terms)
 !
       call mem%alloc(canonical_orbitals, wf%n_ao, wf%n_mo)
       call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, canonical_orbitals, 1)
 !
-!     Read MLCC orbital coefficients from file
-!
-      orbital_coefficients_file = sequential_file('orbital_coefficients_mlcc')
-      call orbital_coefficients_file%open_('read', 'rewind')
-      call orbital_coefficients_file%read_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
-      call orbital_coefficients_file%close_('keep')
-!
-!     Read MLCC orbital energies to file
-!
-      orbital_energies_file = sequential_file('orbital_energies_mlcc')
-      call orbital_energies_file%open_('read', 'rewind')
-      call orbital_energies_file%read_(wf%orbital_energies, wf%n_mo)
-      call orbital_energies_file%close_('keep')
-!
 !     Read partitionings from restart file
 !
-      call wf%restart_file%open_('read', 'rewind')
-!
-      call wf%restart_file%skip(3)
-!
-      call wf%restart_file%read_(wf%n_ccs_o)
-      call wf%restart_file%read_(wf%n_ccs_v)
-      call wf%restart_file%read_(wf%n_cc2_o)
-      call wf%restart_file%read_(wf%n_cc2_v)
-!
-      call wf%restart_file%close_('keep')
-!
-      call output%warning_msg('Number of orbitals in active and inactive spaces read from &
-         &cc_restart_file. Make sure restarted calculation and restart files are consistent!')
+      call wf%read_mlcc_orbitals()
 !
 !     Set orbital partitioning specifications
 !

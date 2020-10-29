@@ -162,6 +162,7 @@ add_eT_runtest(ccsd_td_gl4                                  "eT;short;ccsd;compl
 add_eT_runtest(ccsd_td_gl6                                  "eT;short;ccsd;complex;td")
 add_eT_runtest(restart_ccsd_es                              "eT;short;ccsd;es;restart")
 add_eT_runtest(restart_ccsd_eom                             "eT;short;ccsd;eom;restart")
+add_eT_runtest(restart_ccsd_eom_from_left                   "eT;short;ccsd;eom;restart")
 add_eT_runtest(restart_ccsd_2_states_from_1                 "eT;short;ccsd;eom;restart")
 add_eT_runtest(restart_ccsd_from_ccs                        "eT;short;ccsd;eom;es;restart")
 add_eT_runtest(restart_ccsd_right_from_left                 "eT;short;ccsd;es;restart")

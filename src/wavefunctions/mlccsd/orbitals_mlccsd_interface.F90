@@ -84,32 +84,6 @@
    end subroutine construct_mlccsd_basis_transformation_matrix_mlccsd
 !
 !
-   module subroutine construct_block_diagonal_fock_orbitals_mlccsd(wf)
-!!
-!!    Construct block diagonal Fock MOs 
-!!    Written by Sarai D. Folkestad, Feb 2019
-!!
-!!    This routine constructs the MOs which
-!!    block-diagonalize the occupied-occupied
-!!    and virutal-virtual blocks of the Fock matrix s.t.
-!!    the active-active, and inactive-inactive blocks are 
-!!    diagonal.
-!!   
-!!    Note that after this routine, the Fock matrix in wf 
-!!    corresponds to the old basis but the MOs are updated.
-!!
-!!    In the case of do_cc2 = .true. we must also update
-!!    the CC2 orbital basis, such that it corresponds to 
-!!    a block diagonal fock matrix, where the diagonal blocks 
-!!    corresponding to CC2 and CCSD orbitals are diagonal.
-!!   
-      implicit none
-!
-      class(mlccsd), intent(inout) :: wf
-!
-   end subroutine construct_block_diagonal_fock_orbitals_mlccsd
-!
-!
    module subroutine construct_cholesky_orbitals_mlccsd(wf, occupied_only)
 !!
 !!    Construct Cholesky orbitals
@@ -204,3 +178,30 @@
       integer, dimension(n_cnto_states), intent(in) :: cnto_states
 !
    end subroutine cc2_calculation_for_cntos_mlccsd
+!
+!
+   module subroutine construct_semicanonical_mlcc_orbitals_mlccsd(wf)
+!!
+!!    Construct semicanonical orbitals
+!!    Written by Sarai D. Folkestad
+!!
+!!    Wrapper to construct orbitals that block diagonalizes the fock matrix
+!!    for the different orbitals
+!!
+      implicit none
+!
+      class(mlccsd), intent(inout) :: wf
+!
+   end subroutine construct_semicanonical_mlcc_orbitals_mlccsd
+!
+!
+   module subroutine construct_orbitals_cc2_mlccsd(wf)
+!!
+!!    Construct orbitals cc2
+!!    Written by Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(mlccsd), intent(inout) :: wf
+!
+   end subroutine construct_orbitals_cc2_mlccsd
