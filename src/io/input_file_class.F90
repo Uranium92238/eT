@@ -206,7 +206,8 @@ contains
                                                     'response',             &
                                                     'mean value',           &
                                                     'time dependent state', &
-                                                    'cholesky eri']
+                                                    'cholesky eri',         &
+                                                    'restart']
 !
       system%name_    = 'system'
       system%required = .true.

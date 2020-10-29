@@ -188,11 +188,6 @@ contains
 !
       call engine%read_settings()
 !
-!
-      engine%restart =  engine%gs_restart .or. &
-                        engine%multipliers_restart .or. &
-                        engine%es_restart
-!
       call engine%set_printables()
 !
       engine%timer = timings(trim(engine%name_))
@@ -230,8 +225,6 @@ contains
       call engine%tasks%print_('mo preparations')
 !
       call wf%mo_preparations()
-!
-      call engine%restart_handling(wf)
 !
 !     Ground state solution
 !

@@ -68,8 +68,6 @@ module ccs_class
       logical :: need_g_abcd
 !
       type(stream_file)     :: t_file, tbar_file
-      type(sequential_file) :: restart_file
-      type(sequential_file) :: mlhf_inactive_fock_term_file
 !
       type(stream_file), dimension(:), allocatable :: l_files, r_files
 !
@@ -187,7 +185,6 @@ module ccs_class
 !
       procedure :: read_hf                                       => read_hf_ccs
       procedure :: initialize_files                              => initialize_files_ccs
-      procedure :: initialize_cc_files                           => initialize_cc_files_ccs
       procedure :: initialize_ground_state_files                 => initialize_ground_state_files_ccs
       procedure :: initialize_excited_state_files                => initialize_excited_state_files_ccs
 !
@@ -207,8 +204,6 @@ module ccs_class
       procedure :: save_excitation_vector_on_file                => save_excitation_vector_on_file_ccs
       procedure :: check_and_get_restart_vector                  => check_and_get_restart_vector_ccs
       procedure :: get_restart_vector                            => get_restart_vector_ccs
-!
-      procedure :: write_cc_restart                              => write_cc_restart_ccs
 !
       procedure :: save_tbar_intermediates                       => save_tbar_intermediates_ccs
 !
@@ -260,12 +255,12 @@ module ccs_class
 !
 !     Routines related to the F transformation 
 !
-      procedure :: F_transformation                            => F_transformation_ccs
+      procedure :: F_transformation                              => F_transformation_ccs
 !
-      procedure :: F_ccs_a1_0                                  => F_ccs_a1_0_ccs
-      procedure :: F_ccs_a1_1                                  => F_ccs_a1_1_ccs
-      procedure :: F_ccs_b1_1                                  => F_ccs_b1_1_ccs
-      procedure :: F_ccs_c1_1                                  => F_ccs_c1_1_ccs
+      procedure :: F_ccs_a1_0                                    => F_ccs_a1_0_ccs
+      procedure :: F_ccs_a1_1                                    => F_ccs_a1_1_ccs
+      procedure :: F_ccs_b1_1                                    => F_ccs_b1_1_ccs
+      procedure :: F_ccs_c1_1                                    => F_ccs_c1_1_ccs
 !
 !     Procedures related to the multiplier equation vector
 !
@@ -350,8 +345,8 @@ module ccs_class
 !
       procedure :: add_t1_terms                                  => add_t1_terms_ccs
       procedure :: add_t1_terms_complex                          => add_t1_terms_ccs_complex
-      procedure :: add_t1_terms_and_transform                 => add_t1_terms_and_transform_ccs
-      procedure :: add_t1_terms_and_transform_complex         => add_t1_terms_and_transform_ccs_complex
+      procedure :: add_t1_terms_and_transform                    => add_t1_terms_and_transform_ccs
+      procedure :: add_t1_terms_and_transform_complex            => add_t1_terms_and_transform_ccs_complex
 !
       procedure :: ao_to_t1_transformation                       => ao_to_t1_transformation_ccs
       procedure :: ao_to_t1_transformation_complex               => ao_to_t1_transformation_ccs_complex
@@ -382,16 +377,13 @@ module ccs_class
 !
 !     Frozen core
 !
-      procedure :: construct_t1_frozen_fock_terms  &
-                => construct_t1_frozen_fock_terms_ccs
-      procedure :: construct_t1_frozen_fock_terms_complex &
-                => construct_t1_frozen_fock_terms_ccs_complex
+      procedure :: construct_t1_frozen_fock_terms                => construct_t1_frozen_fock_terms_ccs
+      procedure :: construct_t1_frozen_fock_terms_complex        => construct_t1_frozen_fock_terms_ccs_complex
 !
 !     MO preparations
 !
       procedure :: mo_preparations                               => mo_preparations_ccs
-      procedure :: construct_MO_screening_for_cd &
-                  => construct_MO_screening_for_cd_ccs
+      procedure :: construct_MO_screening_for_cd                 => construct_MO_screening_for_cd_ccs
 !   
 !     Debug 
 !
@@ -409,10 +401,7 @@ module ccs_class
 !
       procedure :: cleanup                                       => cleanup_ccs
       procedure :: general_cc_preparations                       => general_cc_preparations_ccs
-      procedure :: set_variables_from_template_wf  &
-                => set_variables_from_template_wf_ccs
-!
-      procedure :: is_restart_safe                               => is_restart_safe_ccs
+      procedure :: set_variables_from_template_wf                => set_variables_from_template_wf_ccs
 !
       procedure :: set_initial_amplitudes_guess                  => set_initial_amplitudes_guess_ccs
       procedure :: set_initial_multipliers_guess                 => set_initial_multipliers_guess_ccs
@@ -761,27 +750,6 @@ contains
    end subroutine read_hf_ccs
 !
 !
-   subroutine write_cc_restart_ccs(wf)
-!!
-!!    Write CC restart file
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf 
-!
-!     Write information to restart file 
-!
-      call wf%restart_file%open_('write', 'rewind')
-!
-      call wf%restart_file%write_(wf%n_o)
-      call wf%restart_file%write_(wf%n_v)
-!
-      call wf%restart_file%close_()
-!
-   end subroutine write_cc_restart_ccs
-!
-!
    subroutine construct_molecular_gradient_ccs(wf, E_qk)
 !!
 !!    Construct molecular gradient 
@@ -798,33 +766,6 @@ contains
       call output%error_msg('Molecular gradient not implemented for ' // trim(wf%name_))
 !
    end subroutine construct_molecular_gradient_ccs
-!
-!
-   subroutine is_restart_safe_ccs(wf)
-!!
-!!    Is restart safe?
-!!    Written by Eirik F. Kjønstad, Mar 2019 
-!!
-      implicit none 
-!
-      class(ccs) :: wf 
-!
-      integer :: n_o, n_v
-!
-      call wf%restart_file%open_('read', 'rewind')
-!
-      call wf%restart_file%read_(n_o)
-      call wf%restart_file%read_(n_v)
-!
-      call wf%restart_file%close_()
-!
-      if (n_o .ne. wf%n_o) call output%error_msg('attempted to restart from inconsistent number ' // &
-                                                   'of occupied orbitals.')
-!
-      if (n_v .ne. wf%n_v) call output%error_msg('attempted to restart from inconsistent number ' // &
-                                                   'of virtual orbitals.')  
-!
-   end subroutine is_restart_safe_ccs
 !
 !
    subroutine set_initial_amplitudes_guess_ccs(wf, restart)

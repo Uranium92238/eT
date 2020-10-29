@@ -334,280 +334,6 @@ contains
    end subroutine construct_mlccsd_basis_transformation_matrix_mlccsd
 !
 !
-   module subroutine construct_block_diagonal_fock_orbitals_mlccsd(wf)
-!!
-!!    Construct block diagonal Fock MOs 
-!!    Written by Sarai D. Folkestad, Feb 2019
-!!
-!!    This routine constructs the MOs which
-!!    block-diagonalize the occupied-occupied
-!!    and virutal-virtual blocks of the Fock matrix s.t.
-!!    the active-active, and inactive-inactive blocks are 
-!!    diagonal.
-!!   
-!!    Note that after this routine, the Fock matrix in wf 
-!!    corresponds to the old basis but the MOs are updated.
-!!
-!!    In the case of do_cc2 = .true. we must also update
-!!    the CC2 orbital basis, such that it corresponds to 
-!!    a block diagonal fock matrix, where the diagonal blocks 
-!!    corresponding to CC2 and CCSD orbitals are diagonal.
-!!   
-!
-      use array_utilities, only : block_diagonalize_symmetric
-! 
-      implicit none
-!
-      class(mlccsd), intent(inout) :: wf
-!
-      real(dp), dimension(:,:), allocatable :: F_oo, F_vv, C_copy
-!
-      call mem%alloc(F_oo, wf%n_o, wf%n_o)
-      call mem%alloc(F_vv, wf%n_v, wf%n_v)
-!
-      call dcopy(wf%n_o**2, wf%fock_ij, 1, F_oo, 1)
-      call dcopy(wf%n_v**2, wf%fock_ab, 1, F_vv, 1)
-!
-      if (wf%do_cc2) then
-!
-         call dcopy(wf%n_mo*wf%n_ao, wf%orbital_coefficients, 1, wf%orbital_coefficients_cc2, 1)
-         call dcopy(wf%n_mo, wf%orbital_energies, 1, wf%orbital_energies_cc2, 1)
-!
-      endif
-!
-!     Block diagonal occupied-occupied Fock
-!
-      call block_diagonalize_symmetric(F_oo, wf%n_o, 3, &
-                                 [wf%n_ccsd_o, wf%n_cc2_o, wf%n_ccs_o], &
-                                 wf%orbital_energies(1:wf%n_o))
-!
-      call block_diagonalize_symmetric(F_vv, wf%n_v, 3, &
-                                 [wf%n_ccsd_v, wf%n_cc2_v, wf%n_ccs_v], &
-                                 wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
-!
-!     Transform blocks
-!
-      call mem%alloc(C_copy, wf%n_ao, wf%n_mo)
-      call dcopy(wf%n_mo*wf%n_ao, wf%orbital_coefficients, 1, C_copy, 1)
-      call zero_array(wf%orbital_coefficients, wf%n_mo*wf%n_ao)
-!
-!     1. CCSD occcupied
-!
-      if (wf%n_ccsd_o .gt. 0) then
-!
-         call dgemm('N', 'N',                 &
-                     wf%n_ao,                 &
-                     wf%n_ccsd_o,             &
-                     wf%n_ccsd_o,             &
-                     one,                     &
-                     C_copy,                  &
-                     wf%n_ao,                 &
-                     F_oo,                    &
-                     wf%n_o,                  &
-                     one,                     &
-                     wf%orbital_coefficients, &
-                     wf%n_ao)
-!
-      endif
-!
-!     2. CC2 occcupied
-!
-      if (wf%n_cc2_o .gt. 0) then
-!
-         call dgemm('N', 'N',                                     &
-                     wf%n_ao,                                     &
-                     wf%n_cc2_o,                                  &
-                     wf%n_cc2_o,                                  &
-                     one,                                         &
-                     C_copy(1, wf%n_ccsd_o + 1),                  &
-                     wf%n_ao,                                     &
-                     F_oo(wf%n_ccsd_o + 1, wf%n_ccsd_o + 1),      &
-                     wf%n_o,                                      &
-                     one,                                         &
-                     wf%orbital_coefficients(1, wf%n_ccsd_o + 1), &
-                     wf%n_ao)
-      endif
-!
-!     3. CCS occupied
-!
-      if ((wf%n_ccsd_o + wf%n_cc2_o) .lt. wf%n_o) then
-!
-         call dgemm('N', 'N',                                                          &
-                     wf%n_ao,                                                          &
-                     wf%n_ccs_o,                                                       &
-                     wf%n_ccs_o,                                                       &
-                     one,                                                              &
-                     C_copy(1, wf%n_ccsd_o + wf%n_cc2_o + 1),                          &
-                     wf%n_ao,                                                          &
-                     F_oo(wf%n_ccsd_o + wf%n_cc2_o + 1, wf%n_ccsd_o + wf%n_cc2_o + 1), &
-                     wf%n_o,                                                           &
-                     one,                                                              &
-                     wf%orbital_coefficients(1, wf%n_ccsd_o + wf%n_cc2_o + 1),         &
-                     wf%n_ao)
-      endif
-!
-!     4. CCSD virtual
-!
-      if (wf%n_ccsd_v .gt. 0) then
-!
-         call dgemm('N', 'N',                               &
-                     wf%n_ao,                               &
-                     wf%n_ccsd_v,                           &
-                     wf%n_ccsd_v,                           &
-                     one,                                   &
-                     C_copy(1, wf%n_o + 1),                 &
-                     wf%n_ao,                               &
-                     F_vv,                                  &
-                     wf%n_v,                                &
-                     one,                                   &
-                     wf%orbital_coefficients(1, wf%n_o + 1),&
-                     wf%n_ao)
-!
-      endif
-!
-!     5. CC2 virtual
-!
-      if (wf%n_cc2_v .gt. 0) then
-!
-         call dgemm('N', 'N',                                              &
-                     wf%n_ao,                                              &
-                     wf%n_cc2_v,                                           &
-                     wf%n_cc2_v,                                           &
-                     one,                                                  &
-                     C_copy(1, wf%n_o + wf%n_ccsd_v + 1),                  &
-                     wf%n_ao,                                              &
-                     F_vv(wf%n_ccsd_v + 1, wf%n_ccsd_v + 1),               &
-                     wf%n_v,                                               &
-                     one,                                                  &
-                     wf%orbital_coefficients(1, wf%n_o + wf%n_ccsd_v + 1), &
-                     wf%n_ao)
-      endif
-!
-!     6. CCS virtual
-!
-      if ((wf%n_ccsd_v + wf%n_cc2_v) .lt. wf%n_v) then
-!
-         call dgemm('N', 'N',                                                           &
-                     wf%n_ao,                                                           &
-                     wf%n_ccs_v,                                                        &
-                     wf%n_ccs_v,                                                        &
-                     one,                                                               &
-                     C_copy(1, wf%n_o + wf%n_ccsd_v + wf%n_cc2_v + 1),                  &
-                     wf%n_ao,                                                           &
-                     F_vv(wf%n_ccsd_v + wf%n_cc2_v + 1, wf%n_ccsd_v + wf%n_cc2_v + 1),  &
-                     wf%n_v,                                                            &
-                     one,                                                               &
-                     wf%orbital_coefficients(1, wf%n_o + wf%n_ccsd_v + wf%n_cc2_v + 1), &
-                     wf%n_ao)
-      endif
-!
-      if (wf%do_cc2) then
-!  
-         call dcopy(wf%n_o**2, wf%fock_ij, 1, F_oo, 1)
-         call dcopy(wf%n_v**2, wf%fock_ab, 1, F_vv, 1)
-!
-!        Block diagonal occupied-occupied Fock
-!
-         call block_diagonalize_symmetric(F_oo, wf%n_o, 2, &
-                                    [wf%n_ccsd_o + wf%n_cc2_o, wf%n_ccs_o], &
-                                    wf%orbital_energies_cc2(1:wf%n_o))
-!
-!        Block diagonal virtual-virtual Fock
-!
-         call block_diagonalize_symmetric(F_vv, wf%n_v, 2, &
-                                    [wf%n_ccsd_v + wf%n_cc2_v, wf%n_ccs_v], &
-                                    wf%orbital_energies_cc2(wf%n_o+1:wf%n_mo))
-!
-!        Transform blocks
-!
-         call dcopy(wf%n_mo*wf%n_ao, wf%orbital_coefficients_cc2, 1, C_copy, 1)
-         call zero_array(wf%orbital_coefficients_cc2, wf%n_mo*wf%n_ao)
-!
-!        1. Active occcupied
-!
-         if ((wf%n_cc2_o + wf%n_ccsd_o) .gt. 0) then
-!
-            call dgemm('N', 'N',                      &
-                        wf%n_ao,                      &
-                        wf%n_cc2_o + wf%n_ccsd_o,     &
-                        wf%n_cc2_o + wf%n_ccsd_o,     &
-                        one,                          &
-                        C_copy,                       &
-                        wf%n_ao,                      &
-                        F_oo,                         &
-                        wf%n_o,                       &
-                        one,                          &
-                        wf%orbital_coefficients_cc2,  &
-                        wf%n_ao)
-!
-         endif
-!
-!        2. Inactive occupied
-!
-         if ((wf%n_cc2_o + wf%n_ccsd_o) .lt. wf%n_o) then
-!
-            call dgemm('N', 'N',                                                          &
-                        wf%n_ao,                                                          &
-                        wf%n_ccs_o,                                                       &
-                        wf%n_ccs_o,                                                       &
-                        one,                                                              &
-                        C_copy(1, wf%n_ccsd_o + wf%n_cc2_o + 1),                          &
-                        wf%n_ao,                                                          &
-                        F_oo(wf%n_ccsd_o + wf%n_cc2_o + 1, wf%n_ccsd_o + wf%n_cc2_o + 1), &
-                        wf%n_o,                                                           &
-                        one,                                                              &
-                        wf%orbital_coefficients_cc2(1, wf%n_ccsd_o + wf%n_cc2_o + 1),     &
-                        wf%n_ao)
-         endif
-!
-!        3. Active virtual
-!
-         if (wf%n_ccsd_v + wf%n_cc2_v .gt. 0) then
-!
-            call dgemm('N', 'N',                                     &
-                        wf%n_ao,                                     &
-                        wf%n_ccsd_v + wf%n_cc2_v,                    &
-                        wf%n_ccsd_v + wf%n_cc2_v,                    &
-                        one,                                         &
-                        C_copy(1, wf%n_o + 1),                       &
-                        wf%n_ao,                                     &
-                        F_vv,                                        &
-                        wf%n_v,                                      &
-                        one,                                         &
-                        wf%orbital_coefficients_cc2(1, wf%n_o + 1),  &
-                        wf%n_ao)
-!
-         endif
-!
-!        4. Inactive virtual
-!
-         if ((wf%n_ccsd_v + wf%n_cc2_v) .lt. wf%n_v) then
-!
-            call dgemm('N', 'N',                                                                &
-                        wf%n_ao,                                                                &
-                        wf%n_ccs_v,                                                             &
-                        wf%n_ccs_v,                                                             &
-                        one,                                                                    &
-                        C_copy(1, wf%n_o + wf%n_ccsd_v + wf%n_cc2_v + 1),                       &
-                        wf%n_ao,                                                                &
-                        F_vv(wf%n_ccsd_v + wf%n_cc2_v + 1, wf%n_ccsd_v + wf%n_cc2_v + 1),       &
-                        wf%n_v,                                                                 &
-                        one,                                                                    &
-                        wf%orbital_coefficients_cc2(1, wf%n_o + wf%n_ccsd_v + wf%n_cc2_v + 1),  &
-                        wf%n_ao)
-!
-         endif
-!
-      endif
-!
-      call mem%dealloc(C_copy, wf%n_ao, wf%n_mo)
-!
-      call mem%dealloc(F_oo, wf%n_o, wf%n_o)
-      call mem%dealloc(F_vv, wf%n_v, wf%n_v)
-!
-   end subroutine construct_block_diagonal_fock_orbitals_mlccsd
-!
-!
    module subroutine construct_cholesky_orbitals_mlccsd(wf, occupied_only)
 !!
 !!    Construct Cholesky orbitals
@@ -1259,6 +985,67 @@ contains
                          reals=[timer_es%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cc2_calculation_for_cntos_mlccsd
+!
+!
+   module subroutine construct_semicanonical_mlcc_orbitals_mlccsd(wf)
+!!
+!!    Construct semicanonical orbitals
+!!    Written by Sarai D. Folkestad
+!!
+!!    Wrapper to construct orbitals that block diagonalizes the fock matrix
+!!    for the different orbitals
+!!
+      implicit none
+!
+      class(mlccsd), intent(inout) :: wf
+!
+      integer :: n_levels
+!
+      n_levels = 3
+!
+      call wf%construct_block_diagonal_fock_orbitals(n_levels,                    &
+                                          [wf%n_ccsd_o, wf%n_cc2_o, wf%n_ccs_o],  &
+                                          [wf%n_ccsd_v, wf%n_cc2_v, wf%n_ccs_v],  &
+                                          wf%orbital_coefficients,                &
+                                          wf%orbital_energies) 
+!
+   end subroutine construct_semicanonical_mlcc_orbitals_mlccsd
+!
+!
+   module subroutine construct_orbitals_cc2_mlccsd(wf)
+!!
+!!    Construct orbitals cc2
+!!    Written by Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(mlccsd), intent(inout) :: wf
+!
+      integer :: n_levels
+!
+      n_levels = 2
+!
+      call wf%initialize_t1()
+      call zero_array(wf%t1, wf%n_t1)
+      call wf%eri%set_t1_to_mo()
+!
+      call wf%construct_fock()
+      call wf%destruct_t1()
+
+      call dcopy(wf%n_mo*wf%n_ao, wf%orbital_coefficients, 1, wf%orbital_coefficients_cc2, 1)
+!
+      call wf%construct_block_diagonal_fock_orbitals(n_levels,                   &
+                                       [wf%n_ccsd_o + wf%n_cc2_o, wf%n_ccs_o],   &
+                                       [wf%n_ccsd_v + wf%n_cc2_v, wf%n_ccs_v],   &
+                                       wf%orbital_coefficients_cc2,              &
+                                       wf%orbital_energies_cc2) 
+!
+      call wf%initialize_O_o()
+      call wf%initialize_O_v()
+!
+      call wf%construct_mlccsd_basis_transformation_matrix()
+!
+   end subroutine construct_orbitals_cc2_mlccsd
 !
 !
 end submodule orbitals_mlccsd

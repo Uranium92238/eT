@@ -64,7 +64,6 @@ module mlhf_class
 !
    type, extends(hf) :: mlhf
 !
-      type(sequential_file) :: inactive_energy_file
       type(sequential_file) :: mlhf_inactive_fock_term_file
       type(sequential_file) :: G_De_ao_file
 !
@@ -91,6 +90,7 @@ module mlhf_class
 !
       procedure :: append_orbital_info_to_restart           => append_orbital_info_to_restart_mlhf
       procedure :: is_restart_safe                          => is_restart_safe_mlhf
+      procedure :: is_restart_possible                      => is_restart_possible_mlhf
       procedure :: read_for_scf_restart                     => read_for_scf_restart_mlhf
       procedure :: read_for_scf_restart_mo                  => read_for_scf_restart_mlhf
 !
@@ -1449,6 +1449,28 @@ contains
       call wf%restart_file%close_
 !
    end subroutine is_restart_safe_mlhf
+!
+!
+   function is_restart_possible_mlhf(wf) result(restart_is_possible)
+!!
+!!    Is restart possible
+!!    Written by Alexander C. Paul, Okt 2020
+!!
+!!    Checks if restart files exist
+!!
+      implicit none
+!
+      class(mlhf) :: wf
+!
+      logical :: restart_is_possible
+!
+      restart_is_possible = (wf%restart_file%exists() &
+                       .and. wf%orbital_coefficients_file%exists() &
+                       .and. wf%orbital_energies_file%exists() &
+                       .and. wf%G_De_ao_file%exists() &
+                       .and. wf%mlhf_inactive_fock_term_file%exists())
+! 
+   end function is_restart_possible_mlhf
 !
 !
    subroutine read_for_scf_restart_mlhf(wf)

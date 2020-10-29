@@ -39,16 +39,6 @@
    end subroutine initialize_ground_state_files_ccs
 !
 !
-   module subroutine initialize_cc_files_ccs(wf)
-!!
-!!    Initialize singles files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
-!!
-      class(ccs) :: wf 
-!
-   end subroutine initialize_cc_files_ccs
-!
-!
    module subroutine initialize_excited_state_files_ccs(wf)
 !!
 !!    Initialize files for excited state vectors and energies

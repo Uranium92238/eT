@@ -42,7 +42,6 @@ contains
 !!
       class(ccs) :: wf 
 !
-      call wf%initialize_cc_files()
       call wf%initialize_ground_state_files()
 !
    end subroutine initialize_files_ccs
@@ -59,18 +58,6 @@ contains
       wf%tbar_file = stream_file('tbar')
 !
    end subroutine initialize_ground_state_files_ccs
-!
-!
-   module subroutine initialize_cc_files_ccs(wf)
-!!
-!!    Initialize singles files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
-!!
-      class(ccs) :: wf 
-!
-      wf%restart_file = sequential_file('cc_restart_file')
-!
-   end subroutine initialize_cc_files_ccs
 !
 !
    module subroutine initialize_excited_state_files_ccs(wf)

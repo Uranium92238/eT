@@ -192,4 +192,74 @@ contains
    end subroutine get_restart_vector_mlccsd
 !
 !
+   module subroutine save_mlcc_orbitals_mlccsd(wf)
+!!
+!!    Save MLCC orbitals
+!!    Written by Sarai D. Folkestad
+!!
+!!    File format:
+!!
+!!    1: n_ccs_o, n_ccs_v, n_cc2_o, n_cc2_v, n_ccsd_o, n_ccsd_v, orbitals 
+!!    2: orbital energies
+!!
+      implicit none 
+!
+      class(mlccsd), intent(inout) :: wf 
+!
+      call wf%orbital_coefficients_mlcc_file%open_('write','rewind')
+!
+      call wf%orbital_coefficients_mlcc_file%write_(wf%n_ccs_o)
+      call wf%orbital_coefficients_mlcc_file%write_(wf%n_ccs_v)
+      call wf%orbital_coefficients_mlcc_file%write_(wf%n_cc2_o)
+      call wf%orbital_coefficients_mlcc_file%write_(wf%n_cc2_v)
+      call wf%orbital_coefficients_mlcc_file%write_(wf%n_ccsd_o)
+      call wf%orbital_coefficients_mlcc_file%write_(wf%n_ccsd_v)
+!
+      call wf%orbital_coefficients_mlcc_file%write_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
+      call wf%orbital_coefficients_mlcc_file%close_('keep')
+!
+!     Print MLCC orbital energies to file
+!
+      call wf%orbital_energies_mlcc_file%open_('write', 'rewind')
+      call wf%orbital_energies_mlcc_file%write_(wf%orbital_energies, wf%n_mo)
+      call wf%orbital_energies_mlcc_file%close_('keep')
+!
+   end subroutine save_mlcc_orbitals_mlccsd
+!
+!
+   module subroutine read_mlcc_orbitals_mlccsd(wf)
+!!
+!!    Read MLCC orbitals
+!!    Written by Sarai D. Folkestad
+!!
+!!    File format:
+!!
+!!    1: n_ccs_o, n_ccs_v, n_cc2_o, n_cc2_v, n_ccsd_o, n_ccsd_v, orbitals 
+!!    2: orbital energies
+!!
+      implicit none 
+!
+      class(mlccsd), intent(inout) :: wf 
+!
+      call wf%orbital_coefficients_mlcc_file%open_('read','rewind')
+!
+      call wf%orbital_coefficients_mlcc_file%read_(wf%n_ccs_o)
+      call wf%orbital_coefficients_mlcc_file%read_(wf%n_ccs_v)
+      call wf%orbital_coefficients_mlcc_file%read_(wf%n_cc2_o)
+      call wf%orbital_coefficients_mlcc_file%read_(wf%n_cc2_v) 
+      call wf%orbital_coefficients_mlcc_file%read_(wf%n_ccsd_o)
+      call wf%orbital_coefficients_mlcc_file%read_(wf%n_ccsd_v)
+!
+      call wf%orbital_coefficients_mlcc_file%read_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
+      call wf%orbital_coefficients_mlcc_file%close_('keep')
+!
+!     Print MLCC orbital energies to file
+!
+      call wf%orbital_energies_mlcc_file%open_('read', 'rewind')
+      call wf%orbital_energies_mlcc_file%read_(wf%orbital_energies, wf%n_mo)
+      call wf%orbital_energies_mlcc_file%close_('keep')
+!
+   end subroutine read_mlcc_orbitals_mlccsd
+!
+!
 end submodule file_handling_mlccsd

@@ -4,6 +4,7 @@ system
 end system
 
 do
+   restart
    response
 end do
 
@@ -19,7 +20,6 @@ solver scf
    algorithm:          scf-diis
    energy threshold:   1.0d-11
    gradient threshold: 1.0d-11
-   restart
 end solver scf
 
 method
@@ -36,13 +36,11 @@ end cc response
 solver cc gs
    omega threshold:  1.0d-11
    energy threshold: 1.0d-11
-   restart
 end solver cc gs
 
 solver cc multipliers
    threshold: 1.0d-11
    algorithm: diis
-   restart
 end solver cc multipliers
 
 solver cc es
@@ -50,7 +48,6 @@ solver cc es
    singlet states:     1
    residual threshold: 1.0d-11
    energy threshold:   1.0d-11
-   restart
 end solver cc es
 
 geometry

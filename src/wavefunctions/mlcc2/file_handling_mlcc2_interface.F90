@@ -55,6 +55,40 @@
    end subroutine save_doubles_vector_mlcc2
 !
 !
+   module subroutine save_mlcc_orbitals_mlcc2(wf)
+!!
+!!    Save MLCC orbitals
+!!    Written by Sarai D. Folkestad
+!!
+!!    File format:
+!!
+!!    1: n_ccs_o, n_ccs_v, n_cc2_o, n_cc2_v, orbitals 
+!!    2: orbital energies
+!!
+      implicit none 
+!
+      class(mlcc2), intent(inout) :: wf 
+!
+   end subroutine save_mlcc_orbitals_mlcc2
+!
+!
+   module subroutine read_mlcc_orbitals_mlcc2(wf)
+!!
+!!    Read MLCC orbitals
+!!    Written by Sarai D. Folkestad
+!!
+!!    File format:
+!!
+!!    1: n_ccs_o, n_ccs_v, n_cc2_o, n_cc2_v, orbitals 
+!!    2: orbital energies
+!!
+      implicit none 
+!
+      class(mlcc2), intent(inout) :: wf 
+!
+   end subroutine read_mlcc_orbitals_mlcc2
+!
+!
    module subroutine read_excitation_vector_file_mlcc2(wf, file_, vector, energy, read_n)
 !!
 !!    Read excitation vector file 
