@@ -123,7 +123,8 @@ set(eT_fortran_sources
    src/various/continuous_output_coefficients.F90
    src/various/kinds.F90
    src/various/parameters.F90
-   src/various/angular_momentum.F90 
+   src/various/angular_momentum.F90
+   src/various/warning_suppressor.F90 
 #
    src/wavefunctions/wavefunction/wavefunction_class.F90
 

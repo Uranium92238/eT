@@ -899,6 +899,8 @@ contains
 !!    w: Excitation energy. Only used for debug prints for CCS, CCSD etc.
 !!       but is passed to the effective_jacobian_transform for lowmem_CC2 and CC3
 !!
+      use warning_suppressor
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -909,10 +911,8 @@ contains
 !
       real(dp), intent(in), optional :: w
 !
-      if (present(w)) then
-         call output%printf('debug', 'Calling Jacobian (a0) transform with &
-                            &energy: (f19.12)', chars=[r_or_l], reals=[w])
-      endif
+!     Suppress unused variable compiler warning for 'w'
+      call do_nothing(w) 
 !
 !     Compute the transformed matrix
       if (r_or_l .eq. "right") then
