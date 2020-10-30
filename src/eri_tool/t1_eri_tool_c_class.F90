@@ -376,7 +376,7 @@ contains
 !
       class(t1_eri_tool_c) :: eri
 !
-      call eri%read_general_settings(eri%mo_eri_mem)
+      call eri%read_general_settings(eri%t1_eri_mem)
 !
       if (input%requested_keyword_in_section('t1 eri in memory', 'integrals')) then
 !
