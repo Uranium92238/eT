@@ -16,6 +16,7 @@ pystyle:
     - master
     - development
     - merge_requests
+    - release/1.1
 
 build:
   stage: build
@@ -34,7 +35,7 @@ build:
     - master
     - development
     - merge_requests
-    - release/*
+    - release/1.1
   artifacts:
     paths: 
       - build/
@@ -51,4 +52,4 @@ run:
     - master
     - development
     - merge_requests
-    - release/*
+    - release/1.1
