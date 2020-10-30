@@ -16,7 +16,7 @@ pystyle:
     - master
     - development
     - merge_requests
-    - release/1.1
+    - /^release\/\d+\.\d+$/
 
 build:
   stage: build
@@ -35,7 +35,7 @@ build:
     - master
     - development
     - merge_requests
-    - release/1.1
+    - /^release\/\d+\.\d+$/
   artifacts:
     paths: 
       - build/
@@ -52,4 +52,4 @@ run:
     - master
     - development
     - merge_requests
-    - release/1.1
+    - /^release\/\d+\.\d+$/
