@@ -105,9 +105,6 @@ contains
 !
       call engine%read_settings()
 !
-      engine%timer = timings(trim(engine%name_))
-      call engine%timer%turn_on()
-!
    end function new_reference_engine
 !
 !
@@ -124,6 +121,9 @@ contains
 !     Overwrite restart if the corresponding files don't exist
       if (engine%restart) engine%restart = wf%is_restart_possible()
       call engine%set_printables()
+!
+      engine%timer = timings(trim(engine%name_))
+      call engine%timer%turn_on()
 !
       call engine%print_banner(wf)
       call engine%run(wf)
