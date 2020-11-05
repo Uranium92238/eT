@@ -24,7 +24,7 @@ program eT_program
 !!  Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2019
 !!
 !
-   use kinds
+   use parameters
    use global_in
    use global_out
    use timings_class, only : timings, timing
@@ -105,11 +105,18 @@ program eT_program
    call input%read_keywords_and_geometry()
    call input%close_()
 !
+   call output%printf('m', "This is eT version (i0).(i0).(i0)", &
+                      ints=[major_version, minor_version, patch_version])
+!
    n_threads = 1
 !
 !$   n_threads = omp_get_max_threads()
 !
-   call output%printf('m', 'Running on (i0) OMP thread(s)', ints=[n_threads], fs='(/t3,a)')
+   if (n_threads .eq. 1) then
+      call output%printf('m', 'Running on (i0) OMP thread', ints=[n_threads], fs='(/t3,a)')
+   else
+      call output%printf('m', 'Running on (i0) OMP threads', ints=[n_threads], fs='(/t3,a)')
+   endif
 !
 !  Set print level in output and timing files
 !
@@ -436,11 +443,13 @@ subroutine print_program_banner()
 !!
 !! Prints banner, author list, and list of contributors.
 !!
+   use parameters
    use global_out, only: output
 !
    implicit none
 !
-   call output%printf('m', 'eT - an electronic structure program ', fs='(///t22,a)')
+   call output%printf('m', 'eT (i0).(i0) - an electronic structure program ', &
+                      ints=[major_version, minor_version], fs='(///t22,a)')
 !
    call output%print_separator('m',72,'-', fs='(/t3,a)')
 !

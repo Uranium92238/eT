@@ -31,6 +31,12 @@ module parameters
 !
    implicit none
 !
+!  Version
+!
+   integer, parameter :: major_version = 1
+   integer, parameter :: minor_version = 1
+   integer, parameter :: patch_version = 0
+!
 !  Integers 
 !
    real(dp), parameter :: zero  =  0.0D0
