@@ -245,6 +245,11 @@ contains
 !  
       real(dp) :: lindep_threshold
 !
+      type(timings) :: construct_new_trial, davidson_solver
+!
+      davidson_solver = timings("Davidson: CC ES iteration time", pl="n")
+      construct_new_trial = timings("Davidson: construct new trial", pl="v")
+!
 !     :: Preparations ::
 !  
       call solver%initialize_start_vector_tool(wf)
@@ -294,6 +299,8 @@ contains
       iteration = 0
 !
       do while (.not. all(converged) .and. (iteration .le. solver%max_iterations))
+!
+         call davidson_solver%turn_on()
 !
          iteration = iteration + 1
 !
@@ -346,6 +353,8 @@ contains
          converged_residual   = .true.
          converged_eigenvalue = .true.
 !
+         call construct_new_trial%turn_on()
+!
          do n = 1, solver%n_singlet_states
 !
             call davidson%construct_solution(solution, n) 
@@ -396,6 +405,8 @@ contains
 !
          enddo ! Done constructing new trials from residuals
 !
+         call construct_new_trial%turn_off()
+!
          call output%print_separator('n', 72,'-')
 !
          call mem%dealloc(residual, wf%n_es_amplitudes)
@@ -424,6 +435,8 @@ contains
                                &calculation.')
 !
          endif
+!
+         call davidson_solver%turn_off()
 !
       enddo ! End of iterative loop
 !
