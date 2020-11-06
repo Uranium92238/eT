@@ -139,8 +139,8 @@ contains
 !
       solver%diis_dimension      = 8 
       solver%max_iterations      = 100
-      solver%energy_threshold    = 1.0d-6
-      solver%omega_threshold     = 1.0d-6
+      solver%energy_threshold    = 1.0d-5
+      solver%omega_threshold     = 1.0d-5
       solver%restart             = restart
       solver%storage             = 'disk'
       solver%crop                = .false.

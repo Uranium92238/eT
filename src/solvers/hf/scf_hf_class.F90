@@ -88,8 +88,8 @@ contains
 !
       solver%max_iterations      = 100
       solver%ao_density_guess    = 'SAD'
-      solver%energy_threshold    = 1.0D-6
-      solver%gradient_threshold  = 1.0D-6
+      solver%energy_threshold    = 1.0D-7
+      solver%gradient_threshold  = 1.0D-7
       solver%restart             = restart
 !
 !     Read settings (thresholds, etc.)

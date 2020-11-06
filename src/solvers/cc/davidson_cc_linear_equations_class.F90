@@ -127,7 +127,7 @@ contains
 !     Set default settings
 !
       solver%max_iterations      = 100
-      solver%residual_threshold  = 1.0d-6
+      solver%residual_threshold  = 1.0d-3
       solver%restart             = .false.
       solver%max_dim_red         = 100
       solver%records_in_memory   = .false.

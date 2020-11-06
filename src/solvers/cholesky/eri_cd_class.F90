@@ -199,8 +199,8 @@ contains
 !
 !     Set defaults
 !
-      solver%threshold           = 1.0D-8
-      solver%span                = 1.0D-2
+      solver%threshold           = 1.0d-4
+      solver%span                = 1.0d-2
 !
       solver%max_qual            = 1000
       solver%iteration           = 0
@@ -3209,7 +3209,7 @@ contains
 !!     Read input if it is present:
 !!
 !!        solver cholesky
-!!           threshold: 1.0d-8
+!!           threshold: 1.0d-5
 !!           span: 1.0d-2
 !!           qualified: 1000
 !!           one center
