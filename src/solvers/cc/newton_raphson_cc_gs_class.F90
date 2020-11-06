@@ -138,8 +138,8 @@ contains
       solver%diis_dimension                     = 8
       solver%max_micro_iterations               = 100
       solver%relative_micro_residual_threshold  = 1.0d-2
-      solver%energy_threshold                   = 1.0d-6
-      solver%omega_threshold                    = 1.0d-6
+      solver%energy_threshold                   = 1.0d-5
+      solver%omega_threshold                    = 1.0d-5
       solver%restart                            = restart
       solver%max_micro_dim_red                  = 50
       solver%storage                            = 'disk'

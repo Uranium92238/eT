@@ -132,8 +132,8 @@ contains
 !
       solver%n_singlet_states     = 0
       solver%max_iterations       = 100
-      solver%eigenvalue_threshold = 1.0d-6
-      solver%residual_threshold   = 1.0d-6
+      solver%eigenvalue_threshold = 1.0d-3
+      solver%residual_threshold   = 1.0d-3
       solver%restart              = restart
       solver%max_dim_red          = 100 
       solver%transformation       = trim(transformation)
