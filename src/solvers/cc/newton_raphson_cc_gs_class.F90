@@ -398,7 +398,7 @@ contains
                                        solver%max_micro_dim_red,                       &
                                        minus_omega, 1)
 !
-      call davidson%initialize_trials_and_transforms(solver%records_in_memory)
+      call davidson%initialize(solver%records_in_memory)
 !
       call davidson%set_preconditioner(preconditioner)
       call mem%dealloc(preconditioner, wf%n_gs_amplitudes)
@@ -458,7 +458,7 @@ contains
          if (residual_norm >= solver%micro_residual_threshold) then 
 !
             converged_residual = .false.
-            call davidson%construct_next_trial(residual, 1)
+            call davidson%add_new_trial(residual, 1)
 !
          endif 
 !
@@ -483,7 +483,7 @@ contains
       endif
 !
       call davidson%construct_solution(dt, 1)
-      call davidson%finalize_trials_and_transforms()
+      call davidson%cleanup()
 !
       final_iteration = micro_iteration
 !

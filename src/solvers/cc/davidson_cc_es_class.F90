@@ -261,7 +261,7 @@ contains
                                        lindep_threshold,                         &
                                        solver%max_dim_red)
 !
-      call davidson%initialize_trials_and_transforms(solver%records_in_memory)
+      call davidson%initialize(solver%records_in_memory)
 !
       call solver%set_precondition_vector(wf, davidson)
       call solver%set_start_vectors(wf, davidson)
@@ -370,7 +370,7 @@ contains
 !
                else
 !
-                  call davidson%construct_next_trial(residual, n)
+                  call davidson%add_new_trial(residual, n)
 !
                endif
 !
@@ -444,7 +444,7 @@ contains
 !
       endif
 !
-      call davidson%finalize_trials_and_transforms()
+      call davidson%cleanup()
 !
       call mem%dealloc(converged, solver%n_singlet_states)
       call mem%dealloc(converged_eigenvalue, solver%n_singlet_states)

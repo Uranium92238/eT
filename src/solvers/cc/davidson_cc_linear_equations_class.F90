@@ -246,9 +246,11 @@ contains
                                        wf%n_gs_amplitudes,                          &
                                        min(1.0d-11, solver%residual_threshold),     &
                                        solver%max_dim_red, G, n_rhs,                &
-                                       frequencies, n_frequencies)
+                                       n_frequencies)
 !
-      call davidson%initialize_trials_and_transforms(solver%records_in_memory)
+      call davidson%initialize(solver%records_in_memory)
+!
+      call davidson%set_frequencies(frequencies)
 !
       call solver%set_precondition_vector(wf, davidson)
 !
@@ -316,7 +318,7 @@ contains
             if (residual_norm > solver%residual_threshold) then 
 !
                converged_residual = .false.
-               call davidson%construct_next_trial(residual, root)
+               call davidson%add_new_trial(residual, root)
 !
             endif
 !
@@ -359,7 +361,7 @@ contains
 !
       endif
 !
-      call davidson%finalize_trials_and_transforms()
+      call davidson%cleanup()
 !
    end subroutine run_davidson_cc_linear_equations
 !

@@ -39,6 +39,9 @@ module davidson_tool_class
 !
       character(len=40) :: name_ 
 !
+      real(dp), dimension(:), allocatable :: omega_re ! omega = frequency or energy;
+      real(dp), dimension(:), allocatable :: omega_im ! see eigen Davidson and linear Davidson tools
+!
       real(dp), dimension(:,:), allocatable :: A_red
       real(dp), dimension(:,:), allocatable :: X_red
 !
@@ -62,6 +65,7 @@ module davidson_tool_class
 !
       procedure :: set_trial            => set_trial_davidson_tool 
       procedure :: get_trial            => get_trial_davidson_tool 
+      procedure :: add_new_trial        => add_new_trial_davidson_tool
       procedure :: set_transform        => set_transform_davidson_tool 
       procedure :: get_transform        => get_transform_davidson_tool 
       procedure :: first_new_trial      => first_new_trial_davidson_tool
@@ -95,11 +99,11 @@ module davidson_tool_class
       procedure :: set_trials_to_solutions                     &
                 => set_trials_to_solutions_davidson_tool
 !
-      procedure :: initialize_trials_and_transforms            &
-                => initialize_trials_and_transforms_davidson_tool
+      procedure :: initialize                                  &
+                => initialize_davidson_tool
 !
-      procedure :: finalize_trials_and_transforms              &
-                => finalize_trials_and_transforms_davidson_tool
+      procedure :: cleanup                                     &
+                => cleanup_davidson_tool
 !
       procedure :: destruct_reduced_space_quantities           &
                 => destruct_reduced_space_quantities_davidson_tool
@@ -110,19 +114,18 @@ module davidson_tool_class
 contains
 !
 !
-   subroutine initialize_trials_and_transforms_davidson_tool(davidson, records_in_memory)
+   subroutine initialize_davidson_tool(davidson, records_in_memory)
 !!
-!!    Initialize trials and transforms  
+!!    Initialize 
 !!    Written by Eirik F. Kjønstad, Nov 2019 
 !!
-!!    Initializes the storers for trials and transforms.
+!!    Initializes the storers for trials and transforms and allocates the frequencies/energies
 !!
 !!    records_in_memory: if true,  trials and transforms are stored in memory 
 !!                       if false, trials and transforms are stored on disk 
 !!
 !!    Trial vectors c define the subspace. Transforms refer to the transformed 
-!!    trial vectors, i.e. rho = A c, if A is the linear transformation of 
-!!    the linear equation. 
+!!    trial vectors, i.e. rho = A c, where A is the linear transformation.
 !!
       implicit none 
 !
@@ -145,16 +148,22 @@ contains
       call davidson%trials%initialize_storer()
       call davidson%transforms%initialize_storer()
 !
-   end subroutine initialize_trials_and_transforms_davidson_tool
+      call mem%alloc(davidson%omega_re, davidson%n_solutions)
+      call mem%alloc(davidson%omega_im, davidson%n_solutions)
+!
+      call zero_array(davidson%omega_re, davidson%n_solutions)
+      call zero_array(davidson%omega_im, davidson%n_solutions)
+!
+   end subroutine initialize_davidson_tool
 !
 !
-   subroutine finalize_trials_and_transforms_davidson_tool(davidson)
+   subroutine cleanup_davidson_tool(davidson)
 !!
-!!    Finalize trials and transforms 
+!!    Cleanup 
 !!    Written by Eirik F. Kjønstad, Nov 2019 
 !!
-!!    Finalizes the storers. This means for files that they are closed 
-!!    and deleted.
+!!    Cleanup of variables (and associated memory and/or files) 
+!!    initialized in the 'initialize' routine.
 !!
       implicit none 
 !
@@ -163,7 +172,10 @@ contains
       call davidson%trials%finalize_storer()
       call davidson%transforms%finalize_storer()
 !
-   end subroutine finalize_trials_and_transforms_davidson_tool
+      call mem%dealloc(davidson%omega_re, davidson%n_solutions)
+      call mem%dealloc(davidson%omega_im, davidson%n_solutions)
+!
+   end subroutine cleanup_davidson_tool
 !
 !
    subroutine set_trial_davidson_tool(davidson, c, n)
@@ -280,6 +292,49 @@ contains
       last = davidson%dim_red
 !  
    end function last_new_trial_davidson_tool
+!
+!
+   subroutine add_new_trial_davidson_tool(davidson, R, n)
+!!
+!!    Add new trial  
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
+!!
+!!    R is the nth residual 
+!!
+!!    Preconditions R, normalizes it, and adds it to the trial space
+!!    
+      implicit none 
+!
+      class(davidson_tool) :: davidson 
+!
+      real(dp), dimension(davidson%n_parameters), intent(in) :: R
+!
+      integer, intent(in) :: n 
+!
+      real(dp) :: norm_trial
+      real(dp), dimension(:), allocatable :: trial 
+!
+!     Precondition & normalize R
+!
+      call mem%alloc(trial, davidson%n_parameters)
+      call dcopy(davidson%n_parameters, R, 1, trial, 1)
+!
+      if (davidson%do_precondition) &
+         call davidson%preconditioner%do_(trial,                        &
+                                          shift=davidson%omega_re(n),   &
+                                          prefactor=-one)
+!
+      norm_trial = get_l2_norm(trial, davidson%n_parameters)
+      call dscal(davidson%n_parameters, one/norm_trial, trial, 1)
+!
+!     Add it to the trial space 
+!
+      davidson%n_new_trials = davidson%n_new_trials + 1
+      call davidson%set_trial(trial, davidson%dim_red + davidson%n_new_trials)
+!
+      call mem%dealloc(trial, davidson%n_parameters)
+!
+   end subroutine add_new_trial_davidson_tool
 !
 !
    subroutine read_trial_davidson_tool(davidson, c, n)
@@ -866,10 +921,11 @@ contains
 !
       class(davidson_tool) :: davidson
 !
-      if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, &
-         davidson%dim_red, davidson%dim_red)
-      if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, &
-         davidson%dim_red, davidson%n_solutions)
+      if (allocated(davidson%A_red)) &
+         call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
+!
+      if (allocated(davidson%X_red)) &
+         call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
 !
    end subroutine destruct_reduced_space_quantities_davidson_tool
 !
