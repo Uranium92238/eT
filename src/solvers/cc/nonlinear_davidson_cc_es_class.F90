@@ -642,7 +642,7 @@ contains
                                      solver%max_dim_red,       &
                                      non_unit_metric=.true.)
 !
-      call davidson%initialize_trials_and_transforms(solver%records_in_memory)      
+      call davidson%initialize(solver%records_in_memory)      
 !
       call mem%alloc(eps, wf%n_es_amplitudes)
 !
@@ -738,7 +738,7 @@ contains
                   trial = trial + 1
 !
                   trial_to_state(trial) = state 
-                  call davidson%construct_next_trial(residual, state)
+                  call davidson%add_new_trial(residual, state)
 !
                endif
 !
@@ -818,7 +818,7 @@ contains
       call mem%dealloc(micro_residual_norms, solver%n_singlet_states)
       call mem%dealloc(trial_to_state, solver%n_singlet_states)
 !
-      call davidson%finalize_trials_and_transforms()
+      call davidson%cleanup()
 !
       call mem%dealloc(converged, solver%n_singlet_states)
 !

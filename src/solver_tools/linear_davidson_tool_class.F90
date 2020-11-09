@@ -68,7 +68,7 @@ module linear_davidson_tool_class
 !!                
 !!             ...
 !!
-!!             if (residual_norm >= thr) call davidson%construct_next_trial(R)
+!!             if (residual_norm >= thr) call davidson%add_new_trial(R)
 !!
 !!          enddo ! end of iterative loop 
 !!
@@ -91,17 +91,17 @@ module linear_davidson_tool_class
       real(dp), dimension(:,:), pointer :: F 
 !
       integer :: n_rhs
-      real(dp), dimension(:), allocatable :: frequencies
 !
    contains 
 !
-      procedure :: construct_next_trial               => construct_next_trial_linear_davidson_tool
       procedure :: construct_residual                 => construct_residual_linear_davidson_tool
       procedure :: solve_reduced_problem              => solve_reduced_problem_linear_davidson_tool
 !
       procedure :: construct_reduced_gradient         => construct_reduced_gradient_linear_davidson_tool
 !
       procedure, private :: general_preparations      => general_preparations_linear_davidson_tool
+!
+      procedure :: set_frequencies                    => set_frequencies_linear_davidson_tool
 !
       procedure :: set_trials_to_preconditioner_guess => set_trials_to_preconditioner_guess_linear_davidson
 !
@@ -124,7 +124,7 @@ contains
 !
 !
    function new_linear_davidson_tool_one_rhs(name_, n_parameters, lindep_threshold, &
-            max_dim_red, F, n_equations, frequencies) result(davidson)
+                                             max_dim_red, F, n_equations) result(davidson)
 !!
 !!    New linear Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -153,9 +153,6 @@ contains
 !!    
 !!    n_equations:       Number of equations / number of solutions. 
 !!
-!!    frequencies:       (Optional) Array of frequencies with length equal to n_equations. 
-!!                       Default is an array of zeros. 
-!!
       implicit none 
 !
       type(linear_davidson_tool) :: davidson 
@@ -163,8 +160,6 @@ contains
       character(len=*), intent(in) :: name_
 !
       integer, intent(in) :: n_parameters, max_dim_red, n_equations
-!
-      real(dp), dimension(n_equations), intent(in), optional :: frequencies
 !
       real(dp), dimension(n_parameters), target, intent(in) :: F 
 !
@@ -175,27 +170,15 @@ contains
       call davidson%general_preparations(name_, n_parameters, n_equations, &
                            lindep_threshold, max_dim_red, 1)
 !
-!     Set F and frequencies 
+!     Set F 
 !
       davidson%F(1:n_parameters, 1:davidson%n_rhs) => F(1:n_parameters)
-!
-      allocate(davidson%frequencies(davidson%n_solutions))
-!
-      if (present(frequencies)) then 
-!
-         davidson%frequencies = frequencies
-!
-      else 
-!
-         call zero_array(davidson%frequencies, davidson%n_solutions)
-!
-      endif
 !
    end function new_linear_davidson_tool_one_rhs
 !
 !
    function new_linear_davidson_tool_multiple_rhs(name_, n_parameters, lindep_threshold, &
-            max_dim_red, F, n_rhs, frequencies, n_frequencies) result(davidson)
+                                             max_dim_red, F, n_rhs, n_frequencies) result(davidson)
 !!
 !!    New linear Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -218,8 +201,6 @@ contains
 !!                                                   
 !!    n_equations:       Number of equations / number of solutions. 
 !!
-!!    frequencies:       Array of frequencies with length equal to n_frequencies.
-!!
       implicit none 
 !
       type(linear_davidson_tool) :: davidson 
@@ -227,8 +208,6 @@ contains
       character(len=*), intent(in) :: name_
 !
       integer, intent(in) :: n_parameters, max_dim_red, n_rhs, n_frequencies
-!
-      real(dp), dimension(n_frequencies), intent(in) :: frequencies
 !
       real(dp), dimension(n_parameters, n_rhs), target, intent(in) :: F 
 !
@@ -239,13 +218,9 @@ contains
       call davidson%general_preparations(name_, n_parameters, n_frequencies, &
                               lindep_threshold, max_dim_red, n_rhs)
 !
-!     Set F and frequencies 
+!     Set F  
 !
       davidson%F(1:n_parameters, 1:n_rhs) => F
-!
-      allocate(davidson%frequencies(davidson%n_solutions))
-!
-      davidson%frequencies = frequencies
 !
    end function new_linear_davidson_tool_multiple_rhs
 !
@@ -288,6 +263,22 @@ contains
    end subroutine general_preparations_linear_davidson_tool
 !
 !
+   subroutine set_frequencies_linear_davidson_tool(davidson, frequencies)
+!!
+!!    Set frequencies
+!!    Written by Eirik F. Kjønstad, 2020
+!!
+      implicit none 
+!
+      class(linear_davidson_tool), intent(inout) :: davidson 
+!
+      real(dp), dimension(davidson%n_solutions), intent(in) :: frequencies
+!
+      call dcopy(davidson%n_solutions, frequencies, 1, davidson%omega_re, 1)
+!
+   end subroutine set_frequencies_linear_davidson_tool
+!
+!
    subroutine set_trials_to_preconditioner_guess_linear_davidson(davidson)
 !!
 !!    Set trials to precondtioner guess 
@@ -321,7 +312,7 @@ contains
          endif 
 !
          call davidson%preconditioner%do_(c,                               &
-                                          shift=davidson%frequencies(i),   &
+                                          shift=davidson%omega_re(i),   &
                                           prefactor=one)
 !
          call davidson%trials%copy_record_in(c, i)
@@ -504,7 +495,7 @@ contains
          do i = 1, davidson%dim_red
             do j = 1, davidson%dim_red
 !
-               M_k(i,j) = davidson%A_red(i,j) - delta(i,j)*davidson%frequencies(k)
+               M_k(i,j) = davidson%A_red(i,j) - delta(i,j)*davidson%omega_re(k)
 !
             enddo
          enddo
@@ -576,7 +567,7 @@ contains
       call davidson%construct_solution(X, n) ! X = X_n
       call davidson%construct_AX(R, n) ! R = A X_n 
 !
-      call daxpy(davidson%n_parameters, -davidson%frequencies(n), X, 1, R, 1) ! R = (A - freq_n) X_n
+      call daxpy(davidson%n_parameters, -davidson%omega_re(n), X, 1, R, 1) ! R = (A - freq_n) X_n
 !
       call mem%dealloc(X, davidson%n_parameters)
 !
@@ -591,52 +582,6 @@ contains
       endif 
 !
    end subroutine construct_residual_linear_davidson_tool
-!
-!
-   subroutine construct_next_trial_linear_davidson_tool(davidson, R, n)
-!!
-!!    Construct next trial  
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
-!!
-!!    R:     nth residual, (A - freq) X - F
-!!    n:     State number
-!!
-!!    Preconditions the residual and adds it to the trial space. 
-!!    
-      implicit none 
-!
-      class(linear_davidson_tool) :: davidson 
-!
-      real(dp), dimension(davidson%n_parameters), intent(in) :: R 
-!
-      integer, intent(in) :: n 
-!
-      real(dp) :: norm_trial
-      real(dp), dimension(:), allocatable :: trial 
-!
-!     Precondition 
-!
-      call mem%alloc(trial, davidson%n_parameters)
-      call dcopy(davidson%n_parameters, R, 1, trial, 1)
-!
-      if (davidson%do_precondition) &
-            call davidson%preconditioner%do_(trial,                           &
-                                             shift=davidson%frequencies(n),   &
-                                             prefactor=-one)
-!
-!     Renormalize 
-!
-      norm_trial = get_l2_norm(trial, davidson%n_parameters)
-      call dscal(davidson%n_parameters, one/norm_trial, trial, 1)
-!
-!     Add to trial space 
-!
-      davidson%n_new_trials = davidson%n_new_trials + 1
-      call davidson%trials%copy_record_in(trial, davidson%dim_red + davidson%n_new_trials)
-!
-      call mem%dealloc(trial, davidson%n_parameters)
-!
-   end subroutine construct_next_trial_linear_davidson_tool
 !
 !
    subroutine destruct_reduced_space_quantities_linear_davidson_tool(davidson)

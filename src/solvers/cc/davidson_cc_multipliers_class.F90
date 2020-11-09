@@ -226,7 +226,7 @@ contains
                                        solver%max_dim_red,                            &
                                        eta, 1)
 !
-      call davidson%initialize_trials_and_transforms(solver%records_in_memory)
+      call davidson%initialize(solver%records_in_memory)
 !
       call solver%set_precondition_vector(wf, davidson) 
 !
@@ -287,7 +287,7 @@ contains
          if (residual_norm >= solver%residual_threshold) then 
 !
             converged_residual = .false.
-            call davidson%construct_next_trial(residual, 1)
+            call davidson%add_new_trial(residual, 1)
 !
          endif 
 !
@@ -327,7 +327,7 @@ contains
 !
       call mem%dealloc(eta, wf%n_gs_amplitudes)
       call mem%dealloc(multipliers, wf%n_gs_amplitudes)
-      call davidson%finalize_trials_and_transforms()
+      call davidson%cleanup()
 !
    end subroutine run_davidson_cc_multipliers
 !
