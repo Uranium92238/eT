@@ -23,7 +23,7 @@ module periodic_table
 !!    Periodic table module
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!    Extended from Z=20 to Z=118 by Susi Lehtola, 2020
-  !!
+!!
 !
    use kinds
 !
@@ -31,7 +31,7 @@ module periodic_table
 !
    integer, parameter :: size_periodic_table = 118
    character(len=2), dimension(size_periodic_table) :: atomic_symbol = &
-        ['H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
+        [ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
         & 'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
         & 'Sc', 'Ti', 'V ', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',&
         & 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y ', 'Zr',&
