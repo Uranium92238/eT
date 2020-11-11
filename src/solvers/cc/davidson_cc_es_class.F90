@@ -245,9 +245,9 @@ contains
 !  
       real(dp) :: lindep_threshold
 !
-      type(timings) :: construct_new_trial, davidson_solver
+      type(timings) :: construct_new_trial, iteration_time
 !
-      davidson_solver = timings("Davidson: CC ES iteration time", pl="n")
+      iteration_time = timings("Davidson: CC ES iteration time", pl="n")
       construct_new_trial = timings("Davidson: construct new trial", pl="v")
 !
 !     :: Preparations ::
@@ -300,7 +300,7 @@ contains
 !
       do while (.not. all(converged) .and. (iteration .le. solver%max_iterations))
 !
-         call davidson_solver%turn_on()
+         call iteration_time%turn_on()
 !
          iteration = iteration + 1
 !
@@ -436,7 +436,8 @@ contains
 !
          endif
 !
-         call davidson_solver%turn_off()
+         call iteration_time%turn_off()
+         call iteration_time%reset()
 !
       enddo ! End of iterative loop
 !

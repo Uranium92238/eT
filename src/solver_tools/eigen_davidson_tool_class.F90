@@ -310,7 +310,7 @@ contains
 !
       type(timings) :: solve_reduced
 !
-      solve_reduced = timings("Davidson: solve reduced prolem", pl='v')
+      solve_reduced = timings("Davidson: solve reduced problem", pl='v')
 !
       call solve_reduced%turn_on()
 !
