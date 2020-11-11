@@ -471,12 +471,16 @@ subroutine print_program_banner()
                            'T. Moitra, '        // &
                            'R. H. Myhre, '      // &
                            'A. C. Paul, '       // &
+                           'S. Roet, '          // &
                            'M. Scavino, '       // &
                            'A. Skeidsvoll, '    // &
                            'Å. H. Tveten',         &
-                           ffs='(t4,a)', fs='(t4,a)', ll=70)
+                           ffs='(t4,a)', fs='(t4,a)', ll=68)
 !
    call output%print_separator('m',72,'-', fs='(t3,a)')
+!
+   call output%printf('m', 'J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713', &
+                      fs='(t4,a)')
 !
 end subroutine print_program_banner
 !
