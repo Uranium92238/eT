@@ -127,11 +127,14 @@ contains
 !!    Get name
 !!    Written by Rolf H. Myhre Feb. 2020
 !!
+!!    Modified by Alexander C. Paul, Nov 2020
+!!    changed to (len=:) for intel
+!!
       implicit none
 !
       class(abstract_stream), intent(in) :: the_file
 !
-      character(len=255), allocatable :: name_
+      character(len=:), allocatable :: name_
 !
       name_ = trim(the_file%name_)
 !

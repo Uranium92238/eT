@@ -153,14 +153,22 @@ contains
    end subroutine save_excitation_vector_on_file_mlccsd
 !
 !
-   module subroutine get_restart_vector_mlccsd(wf, file_, vector, energy)
+   module subroutine get_restart_vector_mlccsd(wf, file_, vector, energy, &
+                                              restart_from, restart_to)
 !!
 !!    Get restart vector
 !!    Written by Alexander C. Paul, Sep 2020
 !!
-!!    Gets start vector and energy from file
-!!    We set the doubles part to 0 if only singles amplitudes
-!!    were found on file, 
+!!    Gets start vector and energy from file and
+!!    handles the basis transformations according to:
+!!
+!!    restart from "right" to "left"
+!!    L^a_i = 2R^a_i
+!!    L^ab_ij = 4R^ab_ij - 2R^ba_ij
+!!
+!!    restart from "left" to "right"
+!!    R^a_i = 1/2 L^a_i
+!!    R^ab_ij = 1/6 (2L^ab_ij + L^ba_ij)
 !!
       implicit none
 !
@@ -172,7 +180,15 @@ contains
 !
       real(dp), intent(out) :: energy
 !
-      integer :: n_amplitudes_read
+      character(len=*), intent(in) :: restart_from, restart_to
+!
+      real(dp), dimension(:), allocatable :: temp
+!
+      real(dp) :: alpha
+      integer  :: n_amplitudes_read, n_v, n_o
+!
+      n_o = wf%n_cc2_o + wf%n_ccsd_o
+      n_v = wf%n_cc2_v + wf%n_ccsd_v
 !
       call wf%read_excitation_vector_file(file_, vector, energy, n_amplitudes_read)
 !
@@ -180,10 +196,40 @@ contains
 !
          call zero_array(vector(wf%n_t1+1:wf%n_es_amplitudes), wf%n_x2)
 !
-      else if (n_amplitudes_read /= wf%n_es_amplitudes) then
+      else if (n_amplitudes_read == wf%n_es_amplitudes) then
+!
+!        Handle restart "left" from "right" and "right" from "left"
+         if (restart_from /= restart_to) then
+!
+            call mem%alloc(temp, wf%n_x2)
+            alpha = one
+!
+            if (restart_from == 'left' .and. restart_to == 'right') then
+!
+!              2R^ab_ij - R^ba_ij
+               alpha = two
+               call construct_packed_contravariant(vector(wf%n_t1+1:wf%n_es_amplitudes), & 
+                                                   temp, n_v, n_o)
+!
+            else if (restart_from == 'right' .and. restart_to == 'left') then
+!
+!              1/3 (2L^ab_ij + L^ba_ij)
+               alpha = half
+               call construct_packed_covariant(vector(wf%n_t1+1:wf%n_es_amplitudes), & 
+                                               temp, n_v, n_o)
+!
+            end if
+!
+            call dscal(wf%n_t1, alpha, vector, 1)
+            call copy_and_scale(alpha, temp, vector(wf%n_t1+1:wf%n_es_amplitudes), wf%n_x2)
+            call mem%dealloc(temp, wf%n_x2)
+!
+         end if
+!
+      else
 !
          call output%error_msg('Did not recognize number of amplitudes in (a0) &
-                               &expected (i0) or (i0) but found (i0) amplitudes.', &
+                               &expected (i0) or (i0) found (i0) amplitudes.', &
                                ints=[wf%n_es_amplitudes, wf%n_t1, n_amplitudes_read], &
                                chars=[file_%get_name()])
 !

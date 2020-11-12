@@ -87,14 +87,22 @@
    end subroutine save_excitation_vector_on_file_mlccsd
 !
 !
-   module subroutine get_restart_vector_mlccsd(wf, file_, vector, energy)
+   module subroutine get_restart_vector_mlccsd(wf, file_, vector, energy, &
+                                              restart_from, restart_to)
 !!
 !!    Get restart vector
 !!    Written by Alexander C. Paul, Sep 2020
 !!
-!!    Gets start vector and energy from file
-!!    We set the doubles part to 0 if only singles amplitudes
-!!    were found on file, 
+!!    Gets start vector and energy from file and
+!!    handles the basis transformations according to:
+!!
+!!    restart from "right" to "left"
+!!    L^a_i = 2R^a_i
+!!    L^ab_ij = 4R^ab_ij - 2R^ba_ij
+!!
+!!    restart from "left" to "right"
+!!    R^a_i = 1/2 L^a_i
+!!    R^ab_ij = 1/6 (2L^ab_ij + L^ba_ij)
 !!
       implicit none
 !
@@ -102,6 +110,7 @@
       type(stream_file), intent(inout) :: file_
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
       real(dp), intent(out) :: energy
+      character(len=*), intent(in) :: restart_from, restart_to
 !
    end subroutine get_restart_vector_mlccsd
 !
