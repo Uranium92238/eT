@@ -460,23 +460,29 @@ contains
       real(dp), intent(out) :: energy
       logical,  intent(out) :: found
 !
-      integer,          intent(in) :: n
-      character(len=*), intent(in) :: side
+      integer,          intent(in)  :: n
+      character(len=*), intent(in)  :: side
+      character(len=:), allocatable :: file_name
 !
       found = .false.
+!
+!     File_name cannot be uninitialized
+      file_name = wf%r_files(n)%get_name()
 !
       if (trim(side) == 'right') then
 !
          if (wf%r_files(n)%exists()) then
 !
-            call wf%get_restart_vector(wf%r_files(n), vector, energy)
+            call wf%get_restart_vector(wf%r_files(n), vector, energy, 'right', 'right')
             found = .true.
 !
          else
 !           
             if (wf%l_files(n)%exists()) then
 !
-               call wf%get_restart_vector(wf%l_files(n), vector, energy)
+               call wf%get_restart_vector(wf%l_files(n), vector, energy, &
+                                          'left', 'right')
+               file_name = wf%l_files(n)%get_name()
                found = .true.
 !
             end if
@@ -487,14 +493,15 @@ contains
 !
          if (wf%l_files(n)%exists()) then
 !
-            call wf%get_restart_vector(wf%l_files(n), vector, energy)
+            call wf%get_restart_vector(wf%l_files(n), vector, energy, 'left', 'left')
+            file_name = wf%l_files(n)%get_name()
             found = .true.
 !
          else
 !
             if (wf%r_files(n)%exists()) then
 !
-               call wf%get_restart_vector(wf%r_files(n), vector, energy)
+               call wf%get_restart_vector(wf%r_files(n), vector, energy, 'right', 'left')
                found = .true.
 !
             end if
@@ -508,18 +515,29 @@ contains
 !
       end if
 !
+      if (found) then
+!
+         call output%printf('n', 'Restarting '// trim(side) //' vector (i0) from file (a0).', &
+                           ints=[n], chars=[trim(file_name)], fs='(t6,a)')
+!
+      end if
+!
    end subroutine check_and_get_restart_vector_ccs
 !
 !
-   module subroutine get_restart_vector_ccs(wf, file_, vector, energy)
+   module subroutine get_restart_vector_ccs(wf, file_, vector, energy, restart_from, restart_to)
 !!
 !!    Get restart vector
 !!    Written by Alexander C. Paul, Sep 2020
 !!
-!!    Gets start vector and energy from file
+!!    Gets start vector and energy from file and
+!!    handles the basis transformations according to:
 !!
-!!    Only a wrapper in CCS but overwritten for doubles
-!!    to handle the restart from a pure singles vector.
+!!    restart from "right" to "left"
+!!    L^a_i = 2R^a_i
+!!
+!!    restart from "left" to "right"
+!!    R^a_i = 1/2 L^a_i
 !!
       implicit none
 !
@@ -531,7 +549,23 @@ contains
 !
       real(dp), intent(out) :: energy
 !
-      call wf%read_excitation_vector_file(file_, vector, energy)
+      character(len=*), intent(in) :: restart_from, restart_to
+!
+      if (restart_to == restart_from) then
+!
+         call wf%read_excitation_vector_file(file_, vector, energy)
+!
+      else if (restart_from == 'left' .and. restart_to == 'right') then
+!
+         call wf%read_excitation_vector_file(file_, vector, energy)
+         call dscal(wf%n_es_amplitudes, two, vector, 1)
+!
+      else if (restart_from == 'right' .and. restart_to == 'left') then
+!
+         call wf%read_excitation_vector_file(file_, vector, energy)
+         call dscal(wf%n_es_amplitudes, half, vector, 1)
+!
+      end if
 !
    end subroutine get_restart_vector_ccs
 !
@@ -541,13 +575,14 @@ contains
 !!    Save tbar intermediates multiplier equation
 !!    Written by Alexander C. Paul, Aug 2019
 !!
+      use warning_suppressor
+!
       implicit none
 !
       class(ccs) :: wf
 !
-!     For now, do nothing.
-!
-      call output%printf('v', 'No intermediates to save in (a0)', chars=[trim(wf%name_)])
+!     Suppress unused variable compiler warning for wf
+      call do_nothing(wf) 
 !
    end subroutine save_tbar_intermediates_ccs
 !

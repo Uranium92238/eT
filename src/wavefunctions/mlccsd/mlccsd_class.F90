@@ -232,14 +232,14 @@ module mlccsd_class
 !
 !     Read/save
 !
-      procedure :: read_amplitudes              => read_amplitudes_mlccsd
-      procedure :: save_amplitudes              => save_amplitudes_mlccsd
+      procedure :: read_amplitudes                => read_amplitudes_mlccsd
+      procedure :: save_amplitudes                => save_amplitudes_mlccsd
       procedure :: read_excitation_vector_file    => read_excitation_vector_file_mlccsd
       procedure :: save_excitation_vector_on_file => save_excitation_vector_on_file_mlccsd
       procedure :: get_restart_vector             => get_restart_vector_mlccsd
 !
-      procedure :: save_mlcc_orbitals           => save_mlcc_orbitals_mlccsd
-      procedure :: read_mlcc_orbitals           => read_mlcc_orbitals_mlccsd
+      procedure :: save_mlcc_orbitals             => save_mlcc_orbitals_mlccsd
+      procedure :: read_mlcc_orbitals             => read_mlcc_orbitals_mlccsd
 !
 !     Cleanup 
 !
