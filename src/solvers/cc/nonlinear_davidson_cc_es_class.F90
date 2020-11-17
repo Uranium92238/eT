@@ -77,7 +77,8 @@ module nonlinear_davidson_cc_es_class
    use array_utilities, only: get_l2_norm, zero_array
    use memory_manager_class, only: mem
    use eigen_davidson_tool_class, only: eigen_davidson_tool
-   use abstract_cc_es_class, only: abstract_cc_es
+   use abstract_cc_es_class, only: abstract_cc_es!
+   use convergence_tool_class, only: convergence_tool 
 !
    implicit none
 !
@@ -166,8 +167,6 @@ contains
       solver%n_singlet_states                   = 0
       solver%max_iterations                     = 100
       solver%max_micro_iterations               = 100
-      solver%eigenvalue_threshold               = 1.0d-3
-      solver%residual_threshold                 = 1.0d-3
       solver%relative_micro_residual_threshold  = 1.0d-1
       solver%restart                            = restart
       solver%max_dim_red                        = 100 
@@ -177,7 +176,14 @@ contains
       solver%storage                            = 'disk'
       solver%prepare_wf                         = .true.
 !
+!     Initialize convergence checker with default threshols
+!
+      solver%convergence_checker = convergence_tool(energy_threshold   = 1.0d-3,   &
+                                                    residual_threshold = 1.0d-3,   &
+                                                    energy_convergence = .false.)
+!
       call solver%read_settings()
+!
       call solver%print_settings()
 !
       if (solver%n_singlet_states == 0) &
@@ -217,7 +223,8 @@ contains
                                                         es_type,                             &
                                                         storage,                             &
                                                         n_singlet_states,                    &
-                                                        prepare_wf) result(solver)
+                                                        prepare_wf,                          &
+                                                        energy_convergence) result(solver)
 !!
 !!    New non-linear Davidson for DIIS preconvergence 
 !!    Written by Eirik F. Kjønstad, Jan 2020 
@@ -242,7 +249,7 @@ contains
 !
       character(len=*), intent(in) :: es_type, storage, transformation  
 !
-      logical, intent(in) :: restart, prepare_wf 
+      logical, intent(in) :: restart, prepare_wf, energy_convergence
 !
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) &
                         // ' excited state (' // trim(transformation) //')', pl='normal')
@@ -266,8 +273,6 @@ contains
       solver%n_singlet_states                   = n_singlet_states
       solver%max_iterations                     = max_iterations
       solver%max_micro_iterations               = max_micro_iterations
-      solver%eigenvalue_threshold               = energy_threshold
-      solver%residual_threshold                 = residual_threshold
       solver%relative_micro_residual_threshold  = relative_micro_residual_threshold
       solver%restart                            = restart
       solver%max_dim_red                        = max_dim_red 
@@ -275,6 +280,8 @@ contains
       solver%es_type                            = trim(es_type)
       solver%storage                            = trim(storage)
       solver%prepare_wf                         = prepare_wf
+!
+      solver%convergence_checker = convergence_tool(energy_threshold, residual_threshold, energy_convergence)
 !
       call solver%print_settings()
 !
@@ -352,8 +359,6 @@ contains
 !     Convergence logical arrays, one component for each state 
 !
       logical, dimension(:), allocatable :: converged
-      logical, dimension(:), allocatable :: converged_eigenvalue
-      logical, dimension(:), allocatable :: converged_residual
 !
 !     Previous energies, current residuals, one component for each state 
 !
@@ -396,12 +401,8 @@ contains
       call zero_array(residual_norms, solver%n_singlet_states)
 !
       call mem%alloc(converged, solver%n_singlet_states)
-      call mem%alloc(converged_residual, solver%n_singlet_states)
-      call mem%alloc(converged_eigenvalue, solver%n_singlet_states)
 !
       converged            = .false.
-      converged_residual   = .false.
-      converged_eigenvalue = .false.
 !
 !     Make initial guess on the eigenvectors X = [X1 X2 X3 ...]
 !
@@ -445,17 +446,10 @@ contains
 !
             residual_norms(state) = get_l2_norm(R(:,state), wf%n_es_amplitudes)
 !
-!           Test the convergence of residual and energy 
+!           Test the convergence
 !
-            converged_residual(state) = residual_norms(state) .lt. solver%residual_threshold
-!
-            converged_eigenvalue(state) = abs(solver%energies(state) - prev_energies(state)) &
-                                     .lt. solver%eigenvalue_threshold
-
-!
-            converged(state) = (converged_eigenvalue(state) .and. converged_residual(state)) &
-                          .or. (converged_residual(state) .and. iteration .eq. 1)
-
+            converged(state) = solver%convergence_checker%has_converged(residual_norms(state),&
+                                               solver%energies(state) - prev_energies(state), iteration) 
 !
 !           Print current residual and energy for the state 
 !
@@ -522,8 +516,6 @@ contains
       call mem%dealloc(residual_norms, solver%n_singlet_states)
 !
       call mem%dealloc(converged, solver%n_singlet_states)
-      call mem%dealloc(converged_residual, solver%n_singlet_states)
-      call mem%dealloc(converged_eigenvalue, solver%n_singlet_states)
 !
    end subroutine run_nonlinear_davidson_cc_es
 !

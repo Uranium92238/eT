@@ -1587,10 +1587,11 @@ contains
                         ao_density_guess=ao_density_guess,              &
                         energy_threshold=wf%full_space_hf_threshold,    &
                         max_iterations=max_iterations,                  &
-                        gradient_threshold=wf%full_space_hf_threshold,  &
+                        residual_threshold=wf%full_space_hf_threshold,  &
                         storage=storage,                                &
                         cumulative_threshold=1.0d-2,                    &
-                        crop=.false.)
+                        crop=.false.,                                   &
+                        energy_convergence=.false.)
 !
       call full_space_solver%run(full_space_wf)
 !

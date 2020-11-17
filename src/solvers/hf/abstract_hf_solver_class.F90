@@ -25,9 +25,10 @@ module abstract_hf_solver_class
    use global_in,  only : input
    use global_out, only : output
 !
-   use hf_class,              only : hf
-   use memory_manager_class,  only : mem
-   use timings_class,         only : timings
+   use hf_class,                        only : hf
+   use memory_manager_class,            only : mem
+   use timings_class,                   only : timings
+   use abstract_convergence_tool_class, only : abstract_convergence_tool 
 !
    use parameters   
 !
@@ -39,9 +40,6 @@ module abstract_hf_solver_class
       character(len=100) :: tag
       character(len=400) :: description
 !
-      real(dp) :: energy_threshold  
-      real(dp) :: gradient_threshold
-!
       integer :: max_iterations
 !  
       character(len=200) :: ao_density_guess
@@ -50,14 +48,16 @@ module abstract_hf_solver_class
 !
       type(timings), allocatable :: timer 
 !
+      logical :: energy_convergence
+!  
+      class(abstract_convergence_tool), allocatable :: convergence_checker
+!
    contains 
 !
       procedure :: print_banner             => print_banner_abstract_hf_solver
 !
       procedure :: read_settings            => read_settings_abstract_hf_solver
       procedure :: read_hf_solver_settings  => read_hf_solver_settings_abstract_hf_solver
-!
-      procedure :: print_hf_solver_settings => print_hf_solver_settings_hf_solver
 !
       procedure, nopass :: run_single_ao    => run_single_ao_abstract_hf_solver 
 !
@@ -97,24 +97,6 @@ contains
    end subroutine run_single_ao_abstract_hf_solver
 !
 !
-   subroutine print_hf_solver_settings_hf_solver(solver)
-!!
-!!    Print HF solver settings    
-!!    Written by Eirik F. Kjønstad, Sep 2018 
-!!
-      implicit none 
-!
-      class(abstract_hf_solver) :: solver 
-!
-      call output%printf('m', 'Energy threshold:             (e11.4)', &
-                         reals=[solver%energy_threshold], fs='(/t6,a)')
-!
-      call output%printf('m', 'Gradient threshold:           (e11.4)', &
-                         reals=[solver%gradient_threshold], fs='(t6,a)')
-!
-   end subroutine print_hf_solver_settings_hf_solver
-!
-!
    subroutine read_settings_abstract_hf_solver(solver)
 !!
 !!    Read settings 
@@ -143,8 +125,22 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      call input%get_keyword_in_section('energy threshold', 'solver scf', solver%energy_threshold)
-      call input%get_keyword_in_section('gradient threshold', 'solver scf', solver%gradient_threshold)
+      real(dp) :: energy_threshold, gradient_threshold
+!!
+      if (input%requested_keyword_in_section('energy threshold', 'solver scf')) then
+!
+         call input%get_keyword_in_section('energy threshold', 'solver scf', energy_threshold)
+         call solver%convergence_checker%set_energy_threshold(energy_threshold)
+!
+      endif
+!
+      if (input%requested_keyword_in_section('gradient threshold', 'solver scf')) then
+!
+         call input%get_keyword_in_section('gradient threshold', 'solver scf', gradient_threshold)
+         call solver%convergence_checker%set_residual_threshold(gradient_threshold)
+!
+      endif
+!
       call input%get_keyword_in_section('max iterations', 'solver scf', solver%max_iterations)
       call input%get_keyword_in_section('ao density guess', 'solver scf', solver%ao_density_guess)
 !
@@ -166,5 +162,6 @@ contains
       call output%printf('n', '(a0)', ffs='(/t3,a)',  chars=[trim(solver%description)])
 !
    end subroutine print_banner_abstract_hf_solver
+!
 !
 end module abstract_hf_solver_class

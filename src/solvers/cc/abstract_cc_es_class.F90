@@ -59,6 +59,8 @@ module abstract_cc_es_class
    use es_cvs_projection_tool_class, only: es_cvs_projection_tool
    use es_ip_projection_tool_class, only: es_ip_projection_tool
 !
+   use abstract_convergence_tool_class, only: abstract_convergence_tool 
+!
    implicit none
 !
    type, abstract :: abstract_cc_es
@@ -71,8 +73,7 @@ module abstract_cc_es_class
 !
       integer :: max_iterations
 !
-      real(dp) :: eigenvalue_threshold  
-      real(dp) :: residual_threshold  
+      class(abstract_convergence_tool), allocatable :: convergence_checker
 !
       character(len=200) :: storage 
       logical :: records_in_memory 
@@ -197,8 +198,22 @@ contains
 !
       class(abstract_cc_es) :: solver 
 !
-      call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
-      call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
+      real(dp) :: eigenvalue_threshold, residual_threshold
+!
+      if (input%requested_keyword_in_section('energy threshold', 'solver cc es')) then
+!
+         call input%get_keyword_in_section('energy threshold', 'solver cc es', eigenvalue_threshold)
+         call solver%convergence_checker%set_energy_threshold(eigenvalue_threshold)
+!
+      endif
+!
+      if (input%requested_keyword_in_section('residual threshold', 'solver cc es')) then
+!
+         call input%get_keyword_in_section('residual threshold', 'solver cc es', residual_threshold)
+         call solver%convergence_checker%set_residual_threshold(residual_threshold)
+!
+      endif
+!
       call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
 !               
       call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
@@ -231,10 +246,7 @@ contains
       call output%printf('m', 'Excitation vectors:  (a0)', &
                          chars=[trim(solver%transformation)], fs='(t6,a)')
 !
-      call output%printf('m', 'Energy threshold:             (e11.2)', &
-                         reals=[solver%eigenvalue_threshold], fs='(/t6,a)')
-      call output%printf('m', 'Residual threshold:           (e11.2)', &
-                         reals=[solver%residual_threshold], fs='(t6,a)')
+      call solver%convergence_checker%print_settings()
 !
       call output%printf('m', 'Number of singlet states:     (i11)', &
                          ints=[solver%n_singlet_states], fs='(/t6,a)')

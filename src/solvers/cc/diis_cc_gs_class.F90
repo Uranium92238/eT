@@ -52,16 +52,18 @@ module diis_cc_gs_class
 !
    use parameters
 !
-   use global_in, only : input
-   use global_out, only : output
+   use global_in,    only : input
+   use global_out,   only : output
 !
-   use string_utilities, only : convert_to_uppercase
-   use array_utilities, only : get_l2_norm
-   use memory_manager_class, only : mem
-   use ccs_class, only : ccs
-   use diis_tool_class, only : diis_tool
-   use timings_class, only : timings
-   use precondition_tool_class, only : precondition_tool
+   use string_utilities,                  only : convert_to_uppercase
+   use array_utilities,                   only : get_l2_norm
+   use memory_manager_class,              only : mem
+   use ccs_class,                         only : ccs
+   use diis_tool_class,                   only : diis_tool
+   use timings_class,                     only : timings
+   use precondition_tool_class,           only : precondition_tool
+   use abstract_convergence_tool_class,   only : abstract_convergence_tool
+   use convergence_tool_class,            only : convergence_tool
 !
    implicit none
 !
@@ -78,9 +80,6 @@ module diis_cc_gs_class
 !
       integer :: max_iterations 
 !
-      real(dp) :: energy_threshold
-      real(dp) :: omega_threshold 
-!
       logical :: crop ! Standard DIIS if false; CROP variant of DIIS if true
 !
       character(len=200) :: storage 
@@ -89,6 +88,8 @@ module diis_cc_gs_class
       type(timings) :: timer
 !
       class(precondition_tool), allocatable :: preconditioner 
+!
+      class(abstract_convergence_tool), allocatable :: convergence_checker
 !
    contains
 !     
@@ -139,15 +140,20 @@ contains
 !
       solver%diis_dimension      = 8 
       solver%max_iterations      = 100
-      solver%energy_threshold    = 1.0d-5
-      solver%omega_threshold     = 1.0d-5
       solver%restart             = restart
       solver%storage             = 'disk'
       solver%crop                = .false.
 !
+!     Initialize convergence checker with default threshols
+!
+      solver%convergence_checker = convergence_tool(energy_threshold   = 1.0d-5,   &
+                                                    residual_threshold = 1.0d-5,   &
+                                                    energy_convergence = .false.)
+!
 !     Read & print settings (thresholds, etc.)
 !
       call solver%read_settings()
+!      
       call solver%print_settings()
 !
 !     Set the amplitudes to the initial guess or read if restart
@@ -199,10 +205,7 @@ contains
 !
       call output%printf('m', '- DIIS CC ground state solver settings:', fs='(/t3,a)')
 !
-      call output%printf('m', 'Omega threshold:          (e9.2)', &
-                         reals=[solver%omega_threshold], fs='(/t6, a)')
-      call output%printf('m', 'Energy threshold:         (e9.2)', &
-                         reals=[solver%energy_threshold], fs='(t6, a)')
+      call solver%convergence_checker%print_settings()
 !
       call output%printf('m', 'DIIS dimension:           (i9)', &
                          ints=[solver%diis_dimension], fs='(/t6, a)')
@@ -234,8 +237,6 @@ contains
       type(diis_tool) :: diis
 !
       logical :: converged
-      logical :: converged_energy
-      logical :: converged_omega
 !
       real(dp) :: energy, prev_energy
       real(dp) :: omega_norm
@@ -259,8 +260,6 @@ contains
       call mem%alloc(amplitudes, wf%n_gs_amplitudes)
 !
       converged          = .false.
-      converged_energy   = .false.
-      converged_omega    = .false.
 !
       call output%printf('n', 'Iteration    Energy (a.u.)        |omega|       &
                          &Delta E (a.u.) ', fs='(/t3,a)')
@@ -291,14 +290,7 @@ contains
                             ints=[iteration], reals=[wf%energy, omega_norm, &
                             abs(wf%energy-prev_energy)], fs='(t3, a)')
 !
-!        Test for convergence & prepare for next iteration if not yet converged
-!
-         converged_energy   = abs(energy-prev_energy) .lt. solver%energy_threshold
-         converged_omega    = omega_norm              .lt. solver%omega_threshold
-!
-         converged = converged_omega .and. converged_energy
-!
-         if (iteration .eq. 1 .and. converged_omega) converged = .true. ! Exception to the rule
+         converged = solver%convergence_checker%has_converged(omega_norm, wf%energy-prev_energy, iteration)
 !
          if (converged) then
 !
@@ -306,15 +298,6 @@ contains
 !
             call output%printf('n', 'Convergence criterion met in (i0) iterations!', &
                                ints=[iteration], fs='(t3,a)')
-!
-            if (.not. converged_energy) then 
-!
-!
-               call output%printf('n', 'Note: the omega vector converged in the &
-                                  &first iteration,  so the energy convergence &
-                                  &has not been tested!', ffs='(/t3,a)')
-!
-            endif
 !
          else
 !
@@ -419,8 +402,22 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      call input%get_keyword_in_section('omega threshold', 'solver cc gs', solver%omega_threshold)
-      call input%get_keyword_in_section('energy threshold', 'solver cc gs', solver%energy_threshold)
+      real(dp) :: energy_threshold, omega_threshold
+!
+      if (input%requested_keyword_in_section('energy threshold', 'solver cc gs')) then
+!
+         call input%get_keyword_in_section('energy threshold', 'solver cc gs', energy_threshold)
+         call solver%convergence_checker%set_energy_threshold(energy_threshold)
+!
+      endif
+!
+      if (input%requested_keyword_in_section('omega threshold', 'solver cc gs')) then
+!
+         call input%get_keyword_in_section('omega threshold', 'solver cc gs', omega_threshold)
+         call solver%convergence_checker%set_residual_threshold(omega_threshold)
+!
+      endif
+!      
       call input%get_keyword_in_section('diis dimension', 'solver cc gs', solver%diis_dimension)
       call input%get_keyword_in_section('max iterations', 'solver cc gs', solver%max_iterations)
 !
