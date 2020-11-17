@@ -373,12 +373,13 @@ contains
 !
 !        Prepare and run solver
 !
-         sad_solver = scf_hf(wf=sad_wf,                       &
-                           restart=.false.,                   &
-                           ao_density_guess=ao_density_guess, &
-                           energy_threshold=energy_threshold, &
-                           max_iterations=max_iterations,     &
-                           gradient_threshold=gradient_threshold)
+         sad_solver = scf_hf(wf=sad_wf,                           &
+                           restart=.false.,                       &
+                           ao_density_guess=ao_density_guess,     &
+                           energy_threshold=energy_threshold,     &
+                           max_iterations=max_iterations,         &
+                           residual_threshold=gradient_threshold, &
+                           energy_convergence=.false.)
 !
          call sad_solver%run(sad_wf)
 !
