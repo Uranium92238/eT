@@ -35,7 +35,7 @@ set(CMAKE_MODULE_PATH
 
 # Set options with standard values 
 
-option(ENABLE_64BIT_INTEGERS  "Enable 64-bit integers"      	                           ON)
+option(ENABLE_64BIT_INTEGERS  "Enable 64-bit integers"                                   ON)
 option(ENABLE_AUTO_BLAS       "Enable CMake to autodetect BLAS"                          ON)
 option(ENABLE_AUTO_LAPACK     "Enable CMake to autodetect LAPACK"                        ON)
 option(ENABLE_OMP             "Enable OpenMP parallelization"                            ON)
@@ -115,8 +115,9 @@ set(eT_CXX_sources
         )
 
 add_executable(eT ${eT_fortran_sources} ${eT_CXX_sources})
+add_library(get_compilation_info ${CMAKE_BINARY_DIR}/get_compilation_info.F90)
 
-target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} ${PCMSolver_LIBRARY} ${EXTRA_LINKER_FLAGS})
+target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} ${PCMSolver_LIBRARY} ${EXTRA_LINKER_FLAGS} get_compilation_info)
 
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
 
@@ -137,4 +138,7 @@ file(COPY ${CMAKE_SOURCE_DIR}/eT_launch
      DESTINATION ${CMAKE_BINARY_DIR} 
      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ WORLD_READ)
 file(REMOVE  ${CMAKE_SOURCE_DIR}/eT_launch)
+
+include(CompilationInfo)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/get_compilation_info.in ${CMAKE_BINARY_DIR}/get_compilation_info.F90)
 
