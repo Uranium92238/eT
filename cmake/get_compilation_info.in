@@ -1,0 +1,153 @@
+pure subroutine get_username(string)
+   character(len=*), intent(out) :: string
+   string = "@USER_NAME@"
+end subroutine get_username
+
+pure subroutine get_hostname(string)
+   character(len=*), intent(out) :: string
+   string = "@HOST_NAME@"
+end subroutine get_hostname
+
+pure subroutine get_fortran_compiler(string)
+   character(len=*), intent(out) :: string
+   string = "@CMAKE_Fortran_COMPILER_ID@ @CMAKE_Fortran_COMPILER_VERSION@"
+end subroutine get_fortran_compiler
+
+pure subroutine get_c_compiler(string)
+   character(len=*), intent(out) :: string
+   string = "@CMAKE_C_COMPILER_ID@ @CMAKE_C_COMPILER_VERSION@"
+end subroutine get_c_compiler
+
+pure subroutine get_cxx_compiler(string)
+   character(len=*), intent(out) :: string
+   string = "@CMAKE_CXX_COMPILER_ID@ @CMAKE_CXX_COMPILER_VERSION@"
+end subroutine get_cxx_compiler
+
+pure subroutine get_omp(string)
+   character(len=*), intent(out) :: string
+   string = "@ENABLE_OMP@"
+end subroutine get_omp
+
+pure subroutine get_int64(string)
+   character(len=*), intent(out) :: string
+   string = "@ENABLE_64BIT_INTEGERS@"
+end subroutine get_int64
+
+pure subroutine get_pcm(string)
+   character(len=*), intent(out) :: string
+   string = "@ENABLE_PCMSOLVER@"
+end subroutine get_pcm
+
+pure subroutine get_forced_batching(string)
+   character(len=*), intent(out) :: string
+   string = "@ENABLE_FORCED_BATCHING@"
+end subroutine get_forced_batching
+
+pure subroutine get_runtime_check(string)
+   character(len=*), intent(out) :: string
+   string = "@ENABLE_RUNTIME_CHECKS@"
+end subroutine get_runtime_check
+
+pure subroutine get_blas_type(string)
+   character(len=*), intent(out) :: string
+   string = "@BLAS_TYPE@"
+end subroutine get_blas_type
+
+pure subroutine get_lapack_type(string)
+   character(len=*), intent(out) :: string
+   string = "@LAPACK_TYPE@"
+end subroutine get_lapack_type
+
+pure subroutine get_git_branch(string)
+   character(len=*), intent(out) :: string
+   string = "@BRANCH_NAME@"
+   if(trim(string) .eq. "HEAD") string = "detached HEAD"
+end subroutine get_git_branch
+
+pure subroutine get_git_hash(string)
+   character(len=*), intent(out) :: string
+   string = "@GIT_HASH@"
+end subroutine get_git_hash
+
+pure subroutine get_configuration_time(string)
+   !CMake is not willing to give us the time zone, 
+   !so we have to figure it out on our own
+   character(len=*), intent(out) :: string
+   character(len=20) :: ourtime, utctime
+   character(len=1)  :: plusminus
+   character(len=2)  :: hourstring, minstring
+
+   integer :: ouryear,  utcyear
+   integer :: ourmonth, utcmonth
+   integer :: ourday,   utcday
+   integer :: ourhour,  utchour, diffhour
+   integer :: ourmin,   utcmin,  diffmin
+   integer :: dayshift
+
+   ourtime = "@OURTIME@"
+   utctime = "@UTCTIME@"
+
+   read(ourtime(1:4),"(i4)") ouryear
+   read(utctime(1:4),"(i4)") utcyear
+
+   read(ourtime(6:7),"(i2)") ourmonth
+   read(utctime(6:7),"(i2)") utcmonth
+
+   read(ourtime(9:10),"(i2)") ourday
+   read(utctime(9:10),"(i2)") utcday
+
+   if(ouryear .ne. utcyear) then
+      dayshift = ouryear - utcyear
+   elseif(ourmonth .ne. utcmonth) then
+      dayshift = ourmonth - utcmonth
+   elseif(ourday .ne. utcday) then
+      dayshift = ourday - utcday
+   else
+      dayshift = 0
+   endif
+
+   read(ourtime(12:13),"(i2)") ourhour
+   read(utctime(12:13),"(i2)") utchour
+   diffhour = ourhour - utchour + 24*dayshift
+
+   read(ourtime(15:16),"(i2)") ourmin
+   read(utctime(15:16),"(i2)") utcmin
+   diffmin = ourmin - utcmin
+
+   if(diffmin .lt. 0 .and. diffhour .gt. 0) then
+      diffhour = diffhour - 1
+      diffmin = diffmin + 60
+   elseif(diffmin .gt. 0 .and. diffhour .lt. 0) then
+      diffhour = diffhour + 1
+      diffmin = diffmin - 60
+   endif
+
+   if(diffhour .eq. 0) then
+      if(diffmin .ge. 0) then
+         plusminus = "+"
+      else
+         plusminus = "-"
+      endif
+   else
+      if(diffhour .ge. 0) then
+         plusminus = "+"
+      else
+         plusminus = "-"
+      endif
+   endif
+
+   if(abs(diffhour)/10 .gt. 0) then
+      write(hourstring, "(i2)") abs(diffhour)
+   else
+      write(hourstring, "(a,i1)") "0", abs(diffhour)
+   endif
+
+   if(abs(diffmin)/10 .gt. 0) then
+      write(minstring, "(i2)") abs(diffmin)
+   else
+      write(minstring, "(a,i1)") "0", abs(diffmin)
+   endif
+
+   write(string,"(a,a,a,a,a,a)") trim(ourtime), " UTC ", plusminus, hourstring, ":", minstring
+end subroutine get_configuration_time
+
