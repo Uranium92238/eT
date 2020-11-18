@@ -220,10 +220,7 @@ contains
       integer :: i, j
 !
       integer :: ab, cd
-      integer :: ai, aj, bj, bi, ci, cj, dj, di
       integer :: ij
-!
-      integer :: aibj, biaj, cidj, dicj 
 !
       real(dp) :: diag_factor
 !
@@ -304,7 +301,7 @@ contains
 !
 !              Reorder g_ca_db to g_abcd and t_cidj to t_cdij
 !
-!$omp parallel do private(a,b,c,d,ab,cd,diag_factor)
+!$omp parallel do private(a, b, c, d, ab, cd, diag_factor)
                do c = 1, n_a_v
                   do d = 1, c
 !
@@ -332,7 +329,7 @@ contains
                enddo
 !$omp end parallel do
 !
-!$omp parallel do private(i,j,c,d,ij,cd,ci,cj,di,dj,cidj,dicj)
+!$omp parallel do private(i, j, c, d, ij, cd)
               do i = 1, wf%n_ccsd_o
                  do j = 1, i
 !
@@ -398,7 +395,7 @@ contains
               call mem%dealloc(t_p_cdij, n_v_packed, n_o_packed)
               call mem%dealloc(t_m_cdij, n_v_packed, n_o_packed)
 !
-!$omp parallel do private(i, j, a, b, ij, ai, aj, bj, bi, ab, aibj, biaj)
+!$omp parallel do private(i, j, a, b, ij, ab)
                do i = 1, wf%n_ccsd_o
                   do j = 1, i
 !
@@ -445,7 +442,7 @@ contains
                call mem%alloc(t_p_cdij, n_v_packed, n_o_packed)
                call mem%alloc(t_m_cdij, n_v_packed, n_o_packed)
 !
-!$omp parallel do private(a,b,c,d,ab,cd,diag_factor)
+!$omp parallel do private(a, b, c, d, ab, cd, diag_factor)
                do c = 1, n_a_v
                   do d = 1, c
 !
@@ -471,7 +468,7 @@ contains
                enddo
 !$omp end parallel do
 !
-!$omp parallel do schedule(static) private(c,d,i,j,cd,ij,ci,cj,di,dj,cidj,dicj)
+!$omp parallel do schedule(static) private(c, d, i, j, cd, ij)
                do i = 1, wf%n_ccsd_o
                   do j = 1, i
 !
@@ -538,7 +535,7 @@ contains
                call mem%dealloc(t_p_cdij, n_v_packed, n_o_packed)
                call mem%dealloc(t_m_cdij, n_v_packed, n_o_packed)
 !
-!$omp parallel do private(i, j, a, b, ij, ai, aj, bj, bi, ab, aibj, biaj)
+!$omp parallel do private(i, j, a, b, ij, ab)
                do i = 1, wf%n_ccsd_o
                   do j = 1, i
 !
