@@ -261,8 +261,8 @@
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
       real(dp), intent(out) :: energy
       logical,  intent(out) :: found
-      integer,          intent(in) :: n
-      character(len=*), intent(in) :: side
+      integer,          intent(in)  :: n
+      character(len=*), intent(in)  :: side
 !
    end subroutine check_and_get_restart_vector_ccs
 !
