@@ -174,337 +174,377 @@ contains
 !
 !     Set method section
 !
-      the_file%rf_wfs = [character(len=30) :: 'hf','uhf','mlhf']
-!
-      the_file%cc_wfs = [character(len=30) ::   &
-                           'ccs',               &
-                           'mp2',               &
-                           'cc2',               &
-                           'lowmem-cc2',        &
-                           'ccsd',              &
-                           'cc3',               &
-                           'ccsd(t)',           &
-                           'mlcc2',             &
-                           'mlccsd']
-!
       method%name_    = 'method'
       method%required = .false.
+!
+      the_file%rf_wfs = [character(len=30) :: &
+                        'hf',  &
+                        'uhf', &
+                        'mlhf']
+!
+      the_file%cc_wfs = [character(len=30) :: &
+                        'ccs',                &
+                        'mp2',                &
+                        'cc2',                &
+                        'lowmem-cc2',         &
+                        'ccsd',               &
+                        'cc3',                &
+                        'ccsd(t)',            &
+                        'mlcc2',              &
+                        'mlccsd']
 !
       allocate(method%keywords(size(the_file%rf_wfs) &
                              + size(the_file%cc_wfs)))
 !
       method%keywords = [the_file%rf_wfs, the_file%cc_wfs]
 !
-!     Set other sections
-!
-      calculations%name_    = 'do'
-      calculations%required = .true.
-!
-      calculations%keywords = [character(len=30) :: 'ground state',         &
-                                                    'ground state geoopt',  &
-                                                    'excited state',        &
-                                                    'response',             &
-                                                    'mean value',           &
-                                                    'time dependent state', &
-                                                    'cholesky eri',         &
-                                                    'restart']
-!
-      system%name_    = 'system'
-      system%required = .true.
-      system%keywords = [character(len=30) ::'name',  &
-                           'cartesian gaussians',     &
-                           'pure gaussians',          &
-                           'charge',                  &
-                           'multiplicity']
-!
-      memory%name_    = 'memory'
-      memory%required = .false.
-      memory%keywords = [character(len=30) :: 'available', &
-                                              'unit']
-!
-      hf_mean_value%name_    = 'hf mean value'
-      hf_mean_value%required = .false.
-      hf_mean_value%keywords = [character(len=30) ::        &
-                           'dipole               ',         &
-                           'quadrupole           ']
-!
-      cc_mean_value%name_    = 'cc mean value'
-      cc_mean_value%required = .false.
-      cc_mean_value%keywords = [character(len=30) ::        &
-                           'dipole               ',         &
-                           'quadrupole           ']
-!
-      cc_response%name_    = 'cc response'
-      cc_response%required = .false.
-      cc_response%keywords = [character(len=30) ::    &
-                           'transition moments   ',   &
-                           'frequencies          ',   &
-                           'polarizabilities     ',   &
-                           'dipole length        ',   &
-                           'lr                   ',   &
-                           'eom                  ']
-!
-      cc_td%name_    = 'cc td'
-      cc_td%required = .false.
-      cc_td%keywords = [character(len=30) :: 'propagation',       &
-                                             'fft dipole moment', &
-                                             'fft electric field' ]
-!
-      solver_cholesky%name_    = 'solver cholesky'
-      solver_cholesky%required = .false.
-      solver_cholesky%keywords = [character(len=30) ::         &
-                                    'threshold           ',    &
-                                    'span                ',    &
-                                    'batches             ',    &
-                                    'qualified           ',    &
-                                    'one center          ',    &
-                                    'no vectors          ',    &
-                                    'mo screening']
-!
-      solver_scf%name_    = 'solver scf'
-      solver_scf%required = .false.
-      solver_scf%keywords = [character(len=30) ::           &
-                              'algorithm',                  &
-                              'energy threshold',           &
-                              'gradient threshold',         &
-                              'storage',                    &
-                              'crop',                       &
-                              'cumulative fock threshold',  &
-                              'max iterations',             &
-                              'coulomb threshold',          &
-                              'exchange threshold',         &
-                              'integral precision',         &
-                              'integral cutoff',            &
-                              'diis dimension',             &
-                              'restart',                    &
-                              'ao density guess',           &
-                              'print orbitals']
-!
-      solver_scf_geoopt%name_    = 'solver scf geoopt'
-      solver_scf_geoopt%required = .false.
-      solver_scf_geoopt%keywords = [character(len=30) ::    &
-                                    'algorithm',            &
-                                     'max step',            &
-                                     'energy threshold',    &
-                                     'gradient threshold',  &
-                                     'max iterations',      &
-                                     'restart']
-!
-      solver_cc_gs%name_    = 'solver cc gs'
-      solver_cc_gs%required = .false.
-!
-      solver_cc_gs%keywords = [character(len=30) ::      &
-                                 'algorithm',            &
-                                 'energy threshold',     &
-                                 'omega threshold',      &
-                                 'crop',                 &
-                                 'max micro iterations', &
-                                 'rel micro threshold',  &
-                                 'storage',              &
-                                 'max iterations',       &
-                                 'diis dimension',       &
-                                 'restart' ]
-!
-      solver_cc_es%name_    = 'solver cc es'
-      solver_cc_es%required = .false.
-      solver_cc_es%keywords = [character(len=30) ::            &
-                                 'algorithm',                  &
-                                 'core excitation',            &
-                                 'ionization',                 &
-                                 'energy threshold ',          &
-                                 'crop',                       &
-                                 'residual threshold',         &
-                                 'max iterations',             &
-                                 'restart',                    &
-                                 'left eigenvectors',          &
-                                 'right eigenvectors',         &
-                                 'storage',                    &
-                                 'singlet states',             &
-                                 'diis dimension',             &
-                                 'max micro iterations',       &
-                                 'max reduced dimension',      &
-                                 'davidson preconvergence',    &
-                                 'preconvergence threshold',   &
-                                 'max micro iterations',       &
-                                 'rel micro threshold',        &
-                                 'chain length',               &
-                                 'lanczos normalization']
-!
-      solver_cc_multipliers%name_    = 'solver cc multipliers'
-      solver_cc_multipliers%required = .false.
-      solver_cc_multipliers%keywords = [character(len=30) ::         &
-                                          'algorithm',               &
-                                          'threshold',               &
-                                          'storage',                 &
-                                          'crop',                    &
-                                          'diis dimension',          &
-                                          'restart',                 &
-                                          'max reduced dimension',   &
-                                          'max iterations']
-!
-      solver_cc_response%name_    = 'solver cc response'
-      solver_cc_response%required = .false.
-      solver_cc_response%keywords = [character(len=30) ::            &
-                                          'threshold            ',   &
-                                          'storage              ',   &
-                                          'max iterations       ']
-!
-      solver_cc_propagation%name_    = 'solver cc propagation'
-      solver_cc_propagation%required = .false.
-      solver_cc_propagation%keywords = [character(len=30) :: 'initial time',          &
-                                                             'final time',            &
-                                                             'time step',             &
-                                                             'steps between output',  &
-                                                             'implicit threshold',    &
-                                                             'energy output',         &
-                                                             'dipole moment output',  &
-                                                             'electric field output', &
-                                                             'amplitudes output',     &
-                                                             'multipliers output',    &
-                                                             'density matrix output', &
-                                                             'integrator']
-!
-      solver_fft_dipole_moment%name_    = 'solver fft dipole moment'
-      solver_fft_dipole_moment%required = .false.
-      solver_fft_dipole_moment%keywords = [character(len=30) :: 'initial time', &
-                                                                'final time',   &
-                                                                'time step']
-!
-      solver_fft_electric_field%name_    = 'solver fft electric field'
-      solver_fft_electric_field%required = .false.
-      solver_fft_electric_field%keywords = [character(len=30) :: 'initial time', &
-                                                                 'final time',   &
-                                                                 'time step']
-!
-      electric_field%name_    = 'electric field'
-      electric_field%required = .false.
-      electric_field%keywords = [character(len=30) :: 'envelope',                  &
-                                                      'x polarization',            &
-                                                      'y polarization',            &
-                                                      'z polarization',            &
-                                                      'central time',              &
-                                                      'width',                     &
-                                                      'central angular frequency', &
-                                                      'peak strength',             &
-                                                      'phase shift',               &
-                                                      'repetition',                &
-                                                      'separation']
+!     Set other sections in alphabetical order
 !
       active_atoms%name_    = 'active atoms'
       active_atoms%required = .false.
       active_atoms%keywords = [character(len=30) :: &
-                              'selection type', &
-                              'central atom  ', &
-                              'hf            ', &
-                              'ccs           ', &
-                              'cc2           ', &
-                              'ccsd          ', &
-                              'cc3           ', &
-                              'ccsd(t)       ', &
-                              'inactive basis', &
-                              'hf basis      ', &
-                              'ccs basis     ', &
-                              'cc2 basis     ', &
-                              'ccsd basis    ', &
-                              'cc3 basis     ', &
+                              'selection type',     &
+                              'central atom',       &
+                              'hf',                 &
+                              'ccs',                &
+                              'cc2',                &
+                              'ccsd',               &
+                              'cc3',                &
+                              'ccsd(t)',            &
+                              'inactive basis',     &
+                              'hf basis',           &
+                              'ccs basis',          &
+                              'cc2 basis',          &
+                              'ccsd basis',         &
+                              'cc3 basis',          &
                               'ccsd(t) basis ']
 !
-      mlcc%name_    = 'mlcc'
-      mlcc%required = .false.
-      mlcc%keywords = [character(len=30) ::        &
-                        'levels',                  &
-                        'cc2 orbitals',            &
-                        'ccsd orbitals',           &
-                        'cholesky threshold',      &
-                        'cnto restart',            &
-                        'orbital restart',         &
-                        'cnto occupied cc2',       &
-                        'cnto virtual cc2',        &
-                        'cnto occupied ccsd',      &
-                        'cnto virtual ccsd',       &
-                        'cnto states',             &
-                        'nto states',              &
-                        'nto occupied cc2',        &
-                        'nto occupied ccsd',       &
-                        'canonical virtual cc2',   &
-                        'canonical virtual ccsd',  &
-                        'print ccs calculation',   &
-                        'print cc2 calculation']
 !
       cc%name_    = 'cc'
       cc%required = .false.
       cc%keywords = [character(len=30) :: 'bath orbital']
 !
-      mm%name_    = 'molecular mechanics'
-      mm%required = .false.
-      mm%keywords = [character(len=30) :: &
-                     'forcefield', &
-                     'algorithm ']
 !
-      mlhf%name_    = 'multilevel hf'
-      mlhf%required = .false.
-      mlhf%keywords = [character(len=30) ::           &
-                        'initial hf optimization',    &
-                        'initial hf threshold',       &
-                        'print initial hf',           &
-                        'cholesky threshold',         &
-                        'project on minimal basis',   &
-                        'cholesky virtuals']
+      cc_mean_value%name_    = 'cc mean value'
+      cc_mean_value%required = .false.
+      cc_mean_value%keywords = [character(len=30) :: &
+                               'dipole',             &
+                               'quadrupole']
 !
 !
-      visualization%name_    = 'visualization'
-      visualization%required = .false.
-      visualization%keywords = [character(len=30) ::          &
-                                 'grid spacing',              &
-                                 'grid buffer',               &
-                                 'plot cc density',           &
-                                 'plot hf orbitals',          &
-                                 'plot hf density',           &
-                                 'plot hf active density',    &
-                                 'plot transition densities', &
-                                 'states to plot']
+      cc_response%name_    = 'cc response'
+      cc_response%required = .false.
+      cc_response%keywords = [character(len=30) :: &
+                             'transition moments', &
+                             'frequencies',        &
+                             'polarizabilities',   &
+                             'dipole length',      &
+                             'lr',                 &
+                             'eom']
 !
-      global_print%name_    = 'print'
-      global_print%required = .false.
-      global_print%keywords = [character(len=30) :: &
-                              'output print level ', &
-                              'timing print level ']
 !
-      pcm%name_    = 'pcm'
-      pcm%required = .false.
-      pcm%keywords = [character(len=30) :: &
-                              'solvent',            &
-                              'input',              &
-                              'tesserae area',      &
-                              'solver type']
+      cc_td%name_    = 'cc td'
+      cc_td%required = .false.
+      cc_td%keywords = [character(len=30) :: &
+                       'propagation',        &
+                       'fft dipole moment',  &
+                       'fft electric field']
+!
+!
+      calculations%name_    = 'do'
+      calculations%required = .true.
+      calculations%keywords = [character(len=30) ::   &
+                              'ground state',         &
+                              'ground state geoopt',  &
+                              'excited state',        &
+                              'response',             &
+                              'mean value',           &
+                              'time dependent state', &
+                              'cholesky eri',         &
+                              'restart']
+!
+!
+      electric_field%name_    = 'electric field'
+      electric_field%required = .false.
+      electric_field%keywords = [character(len=30) ::        &
+                                'envelope',                  &
+                                'x polarization',            &
+                                'y polarization',            &
+                                'z polarization',            &
+                                'central time',              &
+                                'width',                     &
+                                'central angular frequency', &
+                                'peak strength',             &
+                                'phase shift',               &
+                                'repetition',                &
+                                'separation']
+!
+!
+      hf_mean_value%name_    = 'hf mean value'
+      hf_mean_value%required = .false.
+      hf_mean_value%keywords = [character(len=30) :: &
+                               'dipole',             &
+                               'quadrupole']
+!
 !
       frozen_orbitals%name_    = 'frozen orbitals'
       frozen_orbitals%required = .false.
       frozen_orbitals%keywords = [character(len=30) :: &
-                              'hf', &
-                              'core']
+                                 'hf', &
+                                 'core']
 !
-      integrals%name_ = 'integrals'
+!
+      integrals%name_    = 'integrals'
       integrals%required = .false.
-      integrals%keywords = [character(len=30) ::  &
-                              'cholesky storage', &
-                              'mo eri in memory', &
-                              't1 eri in memory', &
-                              'eri storage']
+      integrals%keywords = [character(len=30) :: &
+                           'cholesky storage',   &
+                           'mo eri in memory',   &
+                           't1 eri in memory',   &
+                           'eri storage']
+!
+!
+      memory%name_    = 'memory'
+      memory%required = .false.
+      memory%keywords = [character(len=30) :: &
+                        'available', &
+                        'unit']
+!
+      mlcc%name_    = 'mlcc'
+      mlcc%required = .false.
+      mlcc%keywords = [character(len=30) ::     &
+                      'levels',                 &
+                      'cc2 orbitals',           &
+                      'ccsd orbitals',          &
+                      'cholesky threshold',     &
+                      'cnto restart',           &
+                      'orbital restart',        &
+                      'cnto occupied cc2',      &
+                      'cnto virtual cc2',       &
+                      'cnto occupied ccsd',     &
+                      'cnto virtual ccsd',      &
+                      'cnto states',            &
+                      'nto states',             &
+                      'nto occupied cc2',       &
+                      'nto occupied ccsd',      &
+                      'canonical virtual cc2',  &
+                      'canonical virtual ccsd', &
+                      'print ccs calculation',  &
+                      'print cc2 calculation']
+!
+!
+      mm%name_    = 'molecular mechanics'
+      mm%required = .false.
+      mm%keywords = [character(len=30) :: &
+                    'forcefield',         &
+                    'algorithm ']
+!
+!
+      mlhf%name_    = 'multilevel hf'
+      mlhf%required = .false.
+      mlhf%keywords = [character(len=30) ::           &
+                      'initial hf optimization',    &
+                      'initial hf threshold',       &
+                      'print initial hf',           &
+                      'cholesky threshold',         &
+                      'project on minimal basis',   &
+                      'cholesky virtuals']
+!
+!
+      pcm%name_    = 'pcm'
+      pcm%required = .false.
+      pcm%keywords = [character(len=30) :: &
+                     'solvent',            &
+                     'input',              &
+                     'tesserae area',      &
+                     'solver type']
+!
+!
+      global_print%name_    = 'print'
+      global_print%required = .false.
+      global_print%keywords = [character(len=30) ::  &
+                              'output print level ', &
+                              'timing print level ']
+!
+!
+      solver_cholesky%name_    = 'solver cholesky'
+      solver_cholesky%required = .false.
+      solver_cholesky%keywords = [character(len=30) :: &
+                                 'threshold',          &
+                                 'span',               &
+                                 'batches',            &
+                                 'qualified',          &
+                                 'one center',         &
+                                 'no vectors',         &
+                                 'mo screening']
+!
+!
+      solver_scf%name_    = 'solver scf'
+      solver_scf%required = .false.
+      solver_scf%keywords = [character(len=30) ::        &
+                            'algorithm',                 &
+                            'energy threshold',          &
+                            'gradient threshold',        &
+                            'storage',                   &
+                            'crop',                      &
+                            'cumulative fock threshold', &
+                            'max iterations',            &
+                            'coulomb threshold',         &
+                            'exchange threshold',        &
+                            'integral precision',        &
+                            'integral cutoff',           &
+                            'diis dimension',            &
+                            'restart',                   &
+                            'ao density guess',          &
+                            'print orbitals']
+!
+!
+      solver_scf_geoopt%name_    = 'solver scf geoopt'
+      solver_scf_geoopt%required = .false.
+      solver_scf_geoopt%keywords = [character(len=30) :: &
+                                   'algorithm',          &
+                                   'max step',           &
+                                   'energy threshold',   &
+                                   'gradient threshold', &
+                                   'max iterations',     &
+                                   'restart']
+!
+!
+      solver_cc_es%name_    = 'solver cc es'
+      solver_cc_es%required = .false.
+      solver_cc_es%keywords = [character(len=30) ::       &
+                              'algorithm',                &
+                              'core excitation',          &
+                              'ionization',               &
+                              'energy threshold ',        &
+                              'crop',                     &
+                              'residual threshold',       &
+                              'max iterations',           &
+                              'restart',                  &
+                              'left eigenvectors',        &
+                              'right eigenvectors',       &
+                              'storage',                  &
+                              'singlet states',           &
+                              'diis dimension',           &
+                              'max micro iterations',     &
+                              'max reduced dimension',    &
+                              'davidson preconvergence',  &
+                              'preconvergence threshold', &
+                              'max micro iterations',     &
+                              'rel micro threshold',      &
+                              'chain length',             &
+                              'lanczos normalization']
+!
+!
+      solver_cc_gs%name_    = 'solver cc gs'
+      solver_cc_gs%required = .false.
+      solver_cc_gs%keywords = [character(len=30) ::   &
+                              'algorithm',            &
+                              'energy threshold',     &
+                              'omega threshold',      &
+                              'crop',                 &
+                              'max micro iterations', &
+                              'rel micro threshold',  &
+                              'storage',              &
+                              'max iterations',       &
+                              'diis dimension',       &
+                              'restart' ]
+!
+!
+      solver_cc_multipliers%name_    = 'solver cc multipliers'
+      solver_cc_multipliers%required = .false.
+      solver_cc_multipliers%keywords = [character(len=30) ::    &
+                                       'algorithm',             &
+                                       'threshold',             &
+                                       'storage',               &
+                                       'crop',                  &
+                                       'diis dimension',        &
+                                       'restart',               &
+                                       'max reduced dimension', &
+                                       'max iterations']
+!
+!
+      solver_cc_propagation%name_    = 'solver cc propagation'
+      solver_cc_propagation%required = .false.
+      solver_cc_propagation%keywords = [character(len=30) ::    &
+                                       'initial time',          &
+                                       'final time',            &
+                                       'time step',             &
+                                       'steps between output',  &
+                                       'implicit threshold',    &
+                                       'energy output',         &
+                                       'dipole moment output',  &
+                                       'electric field output', &
+                                       'amplitudes output',     &
+                                       'multipliers output',    &
+                                       'density matrix output', &
+                                       'integrator']
+!
+!
+      solver_cc_response%name_    = 'solver cc response'
+      solver_cc_response%required = .false.
+      solver_cc_response%keywords = [character(len=30) ::    &
+                                    'threshold            ', &
+                                    'storage              ', &
+                                    'max iterations       ']
+!
+!
+      solver_fft_dipole_moment%name_    = 'solver fft dipole moment'
+      solver_fft_dipole_moment%required = .false.
+      solver_fft_dipole_moment%keywords = [character(len=30) :: & 
+                                          'initial time',       &
+                                          'final time',         &
+                                          'time step']
+!
+!
+      solver_fft_electric_field%name_    = 'solver fft electric field'
+      solver_fft_electric_field%required = .false.
+      solver_fft_electric_field%keywords = [character(len=30) :: &
+                                           'initial time',       &
+                                           'final time',         &
+                                           'time step']
+!
+!
+      system%name_    = 'system'
+      system%required = .true.
+      system%keywords = [character(len=30) ::'name', &
+                        'cartesian gaussians',       &
+                        'pure gaussians',            &
+                        'charge',                    &
+                        'multiplicity']
+!
+!
+      visualization%name_    = 'visualization'
+      visualization%required = .false.
+      visualization%keywords = [character(len=30) ::        &
+                               'grid spacing',              &
+                               'grid buffer',               &
+                               'plot cc density',           &
+                               'plot hf orbitals',          &
+                               'plot hf density',           &
+                               'plot hf active density',    &
+                               'plot transition densities', &
+                               'states to plot']
 !
 !     Gather all sections into the file's section array
 !
-      the_file%sections = [calculations,              &
-                           system,                    &
-                           memory,                    &
-                           method,                    &
-                           hf_mean_value,             &
+      the_file%sections = [active_atoms,              &
+                           calculations,              &
+                           cc,                        &
                            cc_mean_value,             &
                            cc_response,               &
                            cc_td,                     &
+                           electric_field,            &
+                           frozen_orbitals,           &
+                           global_print,              &
+                           hf_mean_value,             &
+                           integrals,                 &
+                           mlcc,                      &
+                           mlhf,                      &
+                           mm,                        &
+                           memory,                    &
+                           method,                    &
+                           pcm,                       &
                            solver_cholesky,           &
-                           solver_scf,                &
-                           solver_scf_geoopt,         &
                            solver_cc_gs,              &
                            solver_cc_es,              &
                            solver_cc_multipliers,     &
@@ -512,17 +552,10 @@ contains
                            solver_cc_propagation,     &
                            solver_fft_dipole_moment,  &
                            solver_fft_electric_field, &
-                           electric_field,            &
-                           active_atoms,              &
-                           mlcc,                      &
-                           cc,                        &
-                           mm,                        &
-                           pcm,                       &
-                           mlhf,                      &
-                           global_print,              &
-                           visualization,             &
-                           frozen_orbitals,           &
-                           integrals]
+                           solver_scf,                &
+                           solver_scf_geoopt,         &
+                           system,                    &
+                           visualization]
 !
       the_file%is_open = .false.
       the_file%unit_ = -1
