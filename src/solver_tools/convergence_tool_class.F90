@@ -123,7 +123,7 @@ contains
 !
       class(convergence_tool), intent(in) :: this 
 !
-      call output%printf('m', 'Residual threshold:            (e11.4)', &
+      call output%printf('m', 'Residual threshold:           (e11.4)', &
                          reals=[this%residual_threshold], fs='(/t6,a)')
 !
       if (this%energy_convergence) &
