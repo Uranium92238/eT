@@ -642,6 +642,9 @@ contains
 !
          call dcopy(wf%n_ao**2, template_wf%frozen_CCT, 1, wf%frozen_CCT, 1)
 !
+         wf%frozen_dipole = template_wf%frozen_dipole
+         wf%frozen_quadrupole = template_wf%frozen_quadrupole
+!
       endif
 !
    end subroutine set_variables_from_template_wf_ccs

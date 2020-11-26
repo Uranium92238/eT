@@ -171,3 +171,33 @@
       real(dp), dimension(wf%n_ao,wf%n_ao), intent(out) :: D
 !
    end subroutine get_full_idempotent_density_hf
+!
+!
+   module subroutine calculate_frozen_dipole_moment_hf(wf)
+!!
+!!    Calculate frozen dipole moment
+!!    Written by Sarai D. Folkestad, 2020
+!!
+!!    Calculates the constribution to the dipole 
+!!    moment from the frozen orbitals
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+   end subroutine calculate_frozen_dipole_moment_hf
+!
+!
+   module subroutine calculate_frozen_quadrupole_moment_hf(wf)
+!!
+!!    Calculate frozen quadrupole moment
+!!    Written by Sarai D. Folkestad, 2020
+!!
+!!    Calculates the constribution to the quadrupole 
+!!    moment from the frozen orbitals
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+   end subroutine calculate_frozen_quadrupole_moment_hf
