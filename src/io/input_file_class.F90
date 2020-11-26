@@ -374,7 +374,6 @@ contains
                                  'batches',            &
                                  'qualified',          &
                                  'one center',         &
-                                 'no vectors',         &
                                  'mo screening']
 !
 !

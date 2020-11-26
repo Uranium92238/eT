@@ -3213,7 +3213,6 @@ contains
 !!           span: 1.0d-2
 !!           qualified: 1000
 !!           one center
-!!           no vectors
 !!        end solver cholesky
 !!
       implicit none
