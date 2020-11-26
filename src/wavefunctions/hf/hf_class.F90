@@ -281,6 +281,9 @@ module hf_class
 !
       procedure :: flip_final_orbitals                         => flip_final_orbitals_hf
 !
+      procedure :: calculate_frozen_dipole_moment              => calculate_frozen_dipole_moment_hf
+      procedure :: calculate_frozen_quadrupole_moment          => calculate_frozen_quadrupole_moment_hf
+!
    end type hf
 !
    interface
@@ -865,6 +868,9 @@ contains
 !     is requested
 !
       call wf%prepare_mos()
+!
+      call wf%calculate_frozen_dipole_moment()
+      call wf%calculate_frozen_quadrupole_moment()
 !
 !     Prepare frozen Fock terms from frozen core 
 !     and frozen HF

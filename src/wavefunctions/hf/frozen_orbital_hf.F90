@@ -68,7 +68,6 @@ contains
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
 !
-!
 !     Eliminate the core orbitals if frozen core requested
 !
 !     MO coefficients for core orbitals are placed in 
@@ -710,6 +709,152 @@ contains
       call dscal(wf%n_ao**2, half, D, 1)
 !
    end subroutine get_full_idempotent_density_hf
+!
+!
+   module subroutine calculate_frozen_dipole_moment_hf(wf)
+!!
+!!    Calculate frozen dipole moment
+!!    Written by Sarai D. Folkestad, 2020
+!!
+!!    Calculates the constribution to the dipole 
+!!    moment from the frozen orbitals
+!!
+      use array_utilities, only: symmetric_sandwich
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(:,:,:), allocatable :: mu_ao
+      real(dp), dimension(:,:), allocatable :: mu_mo
+!
+      integer :: i, j
+!
+      wf%frozen_dipole = zero
+!
+      call mem%alloc(mu_ao, wf%n_ao, wf%n_ao, 3)
+!
+      call wf%get_ao_mu_wx(mu_ao(:,:,1), mu_ao(:,:,2), mu_ao(:,:,3))
+!
+      if (wf%frozen_core) then
+!
+         call mem%alloc(mu_mo, wf%n_frozen_core_orbitals, wf%n_frozen_core_orbitals)
+!
+         do i = 1, 3!
+            call symmetric_sandwich(mu_mo, mu_ao(:,:,i), &
+                                    wf%orbital_coefficients_fc, &                                    
+                                    wf%n_ao, wf%n_frozen_core_orbitals)
+!
+            do j = 1, wf%n_frozen_core_orbitals
+!
+               wf%frozen_dipole(i) = wf%frozen_dipole(i) + two*mu_mo(j,j)
+!
+            enddo
+!
+         enddo
+!
+         call mem%dealloc(mu_mo, wf%n_frozen_core_orbitals, wf%n_frozen_core_orbitals)
+!
+      endif
+!
+      if (wf%frozen_hf_mos) then
+!
+         call mem%alloc(mu_mo, wf%n_frozen_hf_o, wf%n_frozen_hf_o)
+!
+         do i = 1, 3
+!
+            call symmetric_sandwich(mu_mo, mu_ao(:,:,i), &
+                                    wf%orbital_coefficients_frozen_hf, &
+                                    wf%n_ao, wf%n_frozen_hf_o)
+!
+            do j = 1, wf%n_frozen_hf_o
+!
+               wf%frozen_dipole(i) = wf%frozen_dipole(i) + two*mu_mo(j,j)
+!
+            enddo
+!
+         enddo
+!
+         call mem%dealloc(mu_mo, wf%n_frozen_hf_o, wf%n_frozen_hf_o)
+!
+      endif
+!
+      call mem%dealloc(mu_ao, wf%n_ao, wf%n_ao, 3)
+!
+   end subroutine calculate_frozen_dipole_moment_hf
+!
+!
+   module subroutine calculate_frozen_quadrupole_moment_hf(wf)
+!!
+!!    Calculate frozen quadrupole moment
+!!    Written by Sarai D. Folkestad, 2020
+!!
+!!    Calculates the constribution to the quadrupole 
+!!    moment from the frozen orbitals
+!!
+      use array_utilities, only: symmetric_sandwich
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(:,:,:), allocatable :: q_ao
+      real(dp), dimension(:,:), allocatable :: q_mo
+!
+      integer :: i, j
+!
+      wf%frozen_quadrupole = zero
+!
+      call mem%alloc(q_ao, wf%n_ao, wf%n_ao, 6)
+!
+      call wf%get_ao_q_wx(q_ao(:,:,1), q_ao(:,:,2), q_ao(:,:,3), &
+                          q_ao(:,:,4), q_ao(:,:,5), q_ao(:,:,6))
+!
+      if (wf%frozen_core) then
+!
+         call mem%alloc(q_mo, wf%n_frozen_core_orbitals, wf%n_frozen_core_orbitals)
+!
+         do i = 1, 6
+!
+            call symmetric_sandwich(q_mo, q_ao(:,:,i), &
+                                    wf%orbital_coefficients_fc, &
+                                    wf%n_ao, wf%n_frozen_core_orbitals)
+!
+            do j = 1, wf%n_frozen_core_orbitals
+!
+               wf%frozen_quadrupole(i) = wf%frozen_quadrupole(i) + two*q_mo(j,j)
+!
+            enddo
+!
+         enddo
+!
+         call mem%dealloc(q_mo, wf%n_frozen_core_orbitals, wf%n_frozen_core_orbitals)
+!
+      endif
+!
+      if (wf%frozen_hf_mos) then
+!
+         call mem%alloc(q_mo, wf%n_frozen_hf_o, wf%n_frozen_hf_o)
+!
+         do i = 1, 6
+!
+            call symmetric_sandwich(q_mo, q_ao(:,:,i), &
+                                    wf%orbital_coefficients_frozen_hf, &
+                                    wf%n_ao, wf%n_frozen_hf_o)
+!
+            do j = 1, wf%n_frozen_hf_o
+!
+               wf%frozen_quadrupole(i) = wf%frozen_quadrupole(i) + two*q_mo(j,j)
+!
+            enddo
+!
+         enddo
+!
+         call mem%dealloc(q_mo, wf%n_frozen_hf_o, wf%n_frozen_hf_o)
+!
+      endif
+!
+      call mem%dealloc(q_ao, wf%n_ao, wf%n_ao, 6)
+!
+   end subroutine calculate_frozen_quadrupole_moment_hf
 !
 !
 end submodule frozen_orbital_hf

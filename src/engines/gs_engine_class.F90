@@ -405,6 +405,7 @@ contains
       do k = 1, 3
 !
          electronic(k) = wf%calculate_expectation_value(mu_pqk(:,:,k), wf%density)
+         if (wf%exists_frozen_fock_terms) electronic(k) = electronic(k) + wf%frozen_dipole(k)
 !
       enddo
 !
@@ -450,6 +451,7 @@ contains
       do k = 1, 6
 !
          electronic(k) = wf%calculate_expectation_value(q_pqk(:,:,k), wf%density)
+         if (wf%exists_frozen_fock_terms) electronic(k) = electronic(k) + wf%frozen_quadrupole(k)
 !
       enddo
 !
