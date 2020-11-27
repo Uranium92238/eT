@@ -26,7 +26,7 @@ solver scf geoopt
 end solver scf geoopt
 
 geometry
-basis: aug-cc-pVDZ
+basis: cc-pVDZ
 H 0.0000 0.0000 0.0000
 H 1.0000 0.0000 0.0000
 O 0.0000 1.0000 0.0000

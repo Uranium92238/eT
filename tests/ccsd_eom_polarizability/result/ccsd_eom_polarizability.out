@@ -1,16 +1,39 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.1 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.1.0, Nachspiel
+  ------------------------------------------------------------
+  Compiled by:        alexancp
+  Compiled on:        NTNU16748
+  Configuration date: 2020-11-27 09:33:39 UTC +01:00
+  Git branch:         speedup-of-tests
+  Git hash:           8c21e529e365b13ed1e9193264a7eb1a530e7451
+  Fortran compiler:   GNU 9.3.0
+  C compiler:         GNU 9.3.0
+  C++ compiler:       GNU 9.3.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2020-11-27 09:51:33 UTC +01:00
 
 
   :: Input file
@@ -61,7 +84,7 @@
      end solver cc response
 
 
-  Running on 2 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -73,11 +96,11 @@
      Multiplicity:     1
      Coordinate units: bohr
 
-     Pure basis functions:         38
-     Cartesian basis functions:    40
-     Primitive basis functions:    84
+     Pure basis functions:         29
+     Cartesian basis functions:    30
+     Primitive basis functions:    56
 
-     Nuclear repulsion energy (a.u.):             48.499011140898
+     Nuclear repulsion energy (a.u.):             12.163673938822
      Bohr/angstrom value (CODATA 2010):            0.529177210920
 
      ==============================================================================
@@ -87,7 +110,7 @@
      ==============================================================================
         Basis: cc-pvdz
         1 H      0.866810000000     0.601440000000     5.000000000000        1
-        2 F     -0.866810000000     0.601440000000     5.000000000000        2
+        2 H     -0.866810000000     0.601440000000     5.000000000000        2
         3 O      0.000000000000    -0.075790000000     5.000000000000        3
         4 He     0.100000000000     0.100000000000     7.500000000000        4
      ==============================================================================
@@ -99,65 +122,10 @@
      ==============================================================================
         Basis: cc-pvdz
         1 H      1.638033502034     1.136556880358     9.448630622825        1
-        2 F     -1.638033502034     1.136556880358     9.448630622825        2
+        2 H     -1.638033502034     1.136556880358     9.448630622825        2
         3 O      0.000000000000    -0.143222342981     9.448630622825        3
         4 He     0.188972612457     0.188972612457    14.172945934238        4
      ==============================================================================
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
-
-  Performs a Cholesky decomposition of the two-electron electronic repulsion 
-  integrals in the atomic orbital basis,
-
-  (ab|cd) = sum_J L_ab^J L_cd^J.
-
-  Once the Cholesky basis has been determined, the vectors L^J are constructed 
-  and stored to disk. These may either be used directly, or be transformed 
-  to the MO basis for use in post-HF calculations. For more information, 
-  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
-
-  - Cholesky decomposition settings:
-
-     Target threshold is:   0.10E-10
-     Span factor:           0.10E-01
-     Max qual:                  1000
-
-  - Cholesky decomposition system details:
-
-     Total number of AOs:                    38
-     Total number of shell pairs:           171
-     Total number of AO pairs:              741
-
-     Significant shell pairs:               161
-     Significant AO pairs:                  697
-
-     Construct shell pairs:                 171
-     Construct AO pairs:                    741
-
-  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
-  -------------------------------------------------------------------------------------------------------
-     1               671 /     150       0.53537E+01         194             49             32879
-     2               524 /     128       0.52718E-01         398            155             81220
-     3               484 /     114       0.52421E-03         303            243            117612
-     4               362 /      92       0.51415E-05         311            362            131044
-     5               232 /      54       0.50229E-07         225            475            110200
-     6                 0 /       0       0.50128E-09         127            550                 0
-  -------------------------------------------------------------------------------------------------------
-
-  - Summary of Cholesky decomposition of electronic repulsion integrals:
-
-     Final number of Cholesky vectors: 550
-
- - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
-
-     Maximal difference between approximate and actual diagonal:              0.9471E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.1110E-14
-
-  - Finished decomposing the ERIs.
-
-     Total wall time (sec):              0.29200
-     Total cpu time (sec):               0.48951
 
 
   :: RHF wavefunction
@@ -167,10 +135,10 @@
 
   - Orbital details:
 
-     Number of occupied orbitals:        10
-     Number of virtual orbitals:         28
-     Number of molecular orbitals:       38
-     Number of atomic orbitals:          38
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:         23
+     Number of molecular orbitals:       29
+     Number of atomic orbitals:          29
 
 
   :: Hartree-Fock engine
@@ -203,8 +171,7 @@
      DIIS dimension:                         8
      Cumulative Fock threshold:       0.10E+01
 
-     Energy threshold:              0.1000E-05
-     Gradient threshold:            0.1000E-10
+     Residual threshold:            0.1000E-10
 
      Coulomb screening threshold:   0.1000E-16
      Exchange screening threshold:  0.1000E-14
@@ -213,58 +180,54 @@
 
   - Setting initial AO density to SAD
 
-     Energy of initial guess:              -178.316435989143
-     Number of electrons in guess:           20.000000000000
+     Energy of initial guess:               -78.492416266399
+     Number of electrons in guess:           12.000000000000
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -177.452460025509     0.7565E-01     0.1775E+03
-     2          -177.479057956533     0.1346E-01     0.2660E-01
-     3          -177.480054154998     0.4309E-02     0.9962E-03
-     4          -177.480180562238     0.1844E-02     0.1264E-03
-     5          -177.480194220839     0.3631E-03     0.1366E-04
-     6          -177.480195441222     0.7394E-04     0.1220E-05
-     7          -177.480195516819     0.2206E-04     0.7560E-07
-     8          -177.480195527024     0.5084E-05     0.1021E-07
-     9          -177.480195527847     0.1218E-05     0.8233E-09
-    10          -177.480195527874     0.2531E-06     0.2666E-10
-    11          -177.480195527875     0.4375E-07     0.1307E-11
-    12          -177.480195527875     0.9241E-08     0.1421E-12
-    13          -177.480195527875     0.4370E-08     0.8527E-13
-    14          -177.480195527875     0.1744E-08     0.2842E-13
-    15          -177.480195527875     0.3643E-09     0.5684E-13
-    16          -177.480195527875     0.1712E-09     0.8527E-13
-    17          -177.480195527875     0.5856E-10     0.1137E-12
-    18          -177.480195527875     0.5043E-11     0.0000E+00
+     1           -78.796385564787     0.9059E-01     0.7880E+02
+     2           -78.828483050775     0.7130E-01     0.3210E-01
+     3           -78.843252536556     0.8289E-02     0.1477E-01
+     4           -78.843634172391     0.2415E-02     0.3816E-03
+     5           -78.843675489196     0.3300E-03     0.4132E-04
+     6           -78.843676312828     0.5524E-04     0.8236E-06
+     7           -78.843676336350     0.5855E-05     0.2352E-07
+     8           -78.843676337053     0.2353E-05     0.7030E-09
+     9           -78.843676337126     0.2069E-06     0.7363E-10
+    10           -78.843676337127     0.1582E-07     0.4121E-12
+    11           -78.843676337127     0.3956E-08     0.4263E-13
+    12           -78.843676337127     0.1341E-08     0.5684E-13
+    13           -78.843676337127     0.4647E-09     0.0000E+00
+    14           -78.843676337127     0.1354E-09     0.0000E+00
+    15           -78.843676337127     0.1584E-10     0.2842E-13
+    16           -78.843676337127     0.3044E-11     0.2842E-13
   ---------------------------------------------------------------
-  Convergence criterion met in 18 iterations!
+  Convergence criterion met in 16 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.600390987886
-     Nuclear repulsion energy:      48.499011140898
-     Electronic energy:           -225.979206668772
-     Total energy:                -177.480195527875
+     HOMO-LUMO gap:                  0.645839120081
+     Nuclear repulsion energy:      12.163673938822
+     Electronic energy:            -91.007350275948
+     Total energy:                 -78.843676337127
 
   - Molecular orbital energies
 
   -----------------------------------------------------------------------------------
-   1 -26.334192004700  11   0.160784516403  21   1.557386191143  31   3.061118983645
-   2 -20.644662877237  12   0.548538270213  22   1.685781695475  32   3.534276472645
-   3  -1.894491828922  13   0.716617362076  23   1.771160576632  33   3.763035846069
-   4  -1.204308976031  14   1.106279200333  24   2.107888307850  34   3.962304853878
-   5  -0.911949983661  15   1.130688493503  25   2.500306219284  35   4.000653348396
-   6  -0.866287973463  16   1.195338322958  26   2.529687453714  36   4.553980959888
-   7  -0.832614061197  17   1.332576309251  27   2.529802664165  37   4.580686751359
-   8  -0.790123932097  18   1.427802958738  28   2.601526974778  38   5.083719172632
-   9  -0.497908722170  19   1.453664008356  29   2.725866593376
-  10  -0.439606471483  20   1.485675098613  30   2.888341323819
+   1 -20.574161720883   9   0.704387759569  17   1.680115020157  25   3.175802280618
+   2  -1.277649761715  10   0.746901100079  18   1.804193350625  26   3.209692713503
+   3  -0.899902596944  11   1.154728902868  19   1.904213902493  27   3.328283990654
+   4  -0.629830825440  12   1.170784555105  20   2.148837823370  28   3.722330385569
+   5  -0.541608797265  13   1.267987483216  21   2.200396855907  29   3.985536398833
+   6  -0.485759965504  14   1.449812798732  22   2.539474155966
+   7   0.160079154577  15   1.465208505809  23   2.540985376002
+   8   0.229286143882  16   1.477689924381  24   2.561261268944
   -----------------------------------------------------------------------------------
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.18200
-     Total cpu time (sec):               2.14628
+     Total wall time (sec):              0.59853
+     Total cpu time (sec):               1.16001
 
 
   :: CCSD wavefunction
@@ -275,15 +238,15 @@
 
    - Number of orbitals:
 
-     Occupied orbitals:    10
-     Virtual orbitals:     28
-     Molecular orbitals:   38
-     Atomic orbitals:      38
+     Occupied orbitals:    6
+     Virtual orbitals:     23
+     Molecular orbitals:   29
+     Atomic orbitals:      29
 
    - Number of ground state amplitudes:
 
-     Single excitation amplitudes:  280
-     Double excitation amplitudes:  39340
+     Single excitation amplitudes:  138
+     Double excitation amplitudes:  9591
 
 
   :: Coupled cluster response engine
@@ -296,22 +259,82 @@
   This is a CCSD response calculation.
   The following tasks will be performed:
 
-     1) Preparation of MO basis and integrals
-     2) Calculation of the ground state (diis algorithm)
-     3) Calculation of the multipliers (davidson algorithm)
-     4) Calculation of the excited state (davidson algorithm)
-     5) Calculation of the EOM polarizabilities
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
+     4) Calculation of the multipliers (davidson algorithm)
+     5) Calculation of the excited state (davidson algorithm)
+     6) Calculation of the EOM polarizabilities
 
 
-  1) Preparation of MO basis and integrals
+  1) Cholesky decomposition of the electron repulsion integrals
+
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-10
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition system details:
+
+     Total number of AOs:                    29
+     Total number of shell pairs:           120
+     Total number of AO pairs:              435
+
+     Significant shell pairs:               118
+     Significant AO pairs:                  431
+
+     Construct shell pairs:                 120
+     Construct AO pairs:                    435
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               405 /     107       0.47383E+01         147             42             17010
+     2               318 /      92       0.47167E-01         234            111             35298
+     3               247 /      75       0.46940E-03         178            183             45201
+     4               181 /      53       0.38429E-05         146            267             48327
+     5                70 /      18       0.38181E-07          73            325             22750
+     6                 0 /       0       0.37014E-09          36            345                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 345
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.8367E-11
+     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       True
+     ERI matrix in memory:       False
+     T1 ERI matrix in memory:    True
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.27992
+     Total cpu time (sec):               0.55994
 
 
-  2) Calculation of the ground state (diis algorithm)
+  2) Preparation of MO basis and integrals
+
+
+  3) Calculation of the ground state (diis algorithm)
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -323,8 +346,7 @@
 
   - DIIS CC ground state solver settings:
 
-     Omega threshold:           0.10E-10
-     Energy threshold:          0.10E-05
+     Residual threshold:            0.1000E-10
 
      DIIS dimension:                   8
      Max number of iterations:       100
@@ -333,79 +355,77 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -177.877001409677     0.1168E+00     0.1779E+03
-    2          -177.886677470622     0.3120E-01     0.9676E-02
-    3          -177.894835530803     0.8696E-02     0.8158E-02
-    4          -177.896138458912     0.2772E-02     0.1303E-02
-    5          -177.895996892339     0.9633E-03     0.1416E-03
-    6          -177.895989294977     0.4209E-03     0.7597E-05
-    7          -177.895986725657     0.1136E-03     0.2569E-05
-    8          -177.895979732813     0.3176E-04     0.6993E-05
-    9          -177.895980089062     0.8612E-05     0.3562E-06
-   10          -177.895980244987     0.3383E-05     0.1559E-06
-   11          -177.895980204536     0.1671E-05     0.4045E-07
-   12          -177.895980277251     0.8445E-06     0.7272E-07
-   13          -177.895980290896     0.2798E-06     0.1364E-07
-   14          -177.895980297510     0.1025E-06     0.6614E-08
-   15          -177.895980299218     0.2911E-07     0.1708E-08
-   16          -177.895980298866     0.8897E-08     0.3515E-09
-   17          -177.895980298710     0.2774E-08     0.1558E-09
-   18          -177.895980298609     0.8305E-09     0.1012E-09
-   19          -177.895980298571     0.3203E-09     0.3786E-10
-   20          -177.895980298567     0.1026E-09     0.4292E-11
-   21          -177.895980298568     0.3742E-10     0.8527E-12
-   22          -177.895980298569     0.1594E-10     0.1364E-11
-   23          -177.895980298569     0.9386E-11     0.8527E-13
+    1           -79.084077835139     0.9451E-01     0.7908E+02
+    2           -79.092423265378     0.2732E-01     0.8345E-02
+    3           -79.099238114217     0.7525E-02     0.6815E-02
+    4           -79.100188779336     0.2098E-02     0.9507E-03
+    5           -79.100209227511     0.5171E-03     0.2045E-04
+    6           -79.100230097906     0.2316E-03     0.2087E-04
+    7           -79.100222251158     0.4967E-04     0.7847E-05
+    8           -79.100220947051     0.1195E-04     0.1304E-05
+    9           -79.100220337523     0.4257E-05     0.6095E-06
+   10           -79.100220132091     0.1863E-05     0.2054E-06
+   11           -79.100220175033     0.7313E-06     0.4294E-07
+   12           -79.100220186150     0.3170E-06     0.1112E-07
+   13           -79.100220199848     0.1053E-06     0.1370E-07
+   14           -79.100220193779     0.3052E-07     0.6069E-08
+   15           -79.100220192940     0.6335E-08     0.8387E-09
+   16           -79.100220193154     0.2110E-08     0.2131E-09
+   17           -79.100220193343     0.6412E-09     0.1894E-09
+   18           -79.100220193403     0.1569E-09     0.5976E-10
+   19           -79.100220193410     0.5326E-10     0.7674E-11
+   20           -79.100220193412     0.2038E-10     0.1052E-11
+   21           -79.100220193412     0.7823E-11     0.6395E-12
   ---------------------------------------------------------------
-  Convergence criterion met in 23 iterations!
+  Convergence criterion met in 21 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):  -177.895980298569
+     Final ground state energy (a.u.):   -79.100220193412
 
-     Correlation energy (a.u.):           -0.415784770694
+     Correlation energy (a.u.):           -0.256543856285
 
      Largest single amplitudes:
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        1      9       -0.020651636310
-        3      9        0.009706732908
-        4      7       -0.006068718374
-       14      9       -0.005941010435
-        5      6       -0.004942153767
-       14      6       -0.004895171179
-        4     10       -0.004671533330
-       10      7        0.004165868970
-        6      9       -0.004156331764
-       22      8        0.004124452262
+        1      5        0.014747369533
+       14      4       -0.009547136381
+        7      4        0.008286082476
+       15      5       -0.006127815615
+        4      5        0.005597168702
+        6      2        0.005482270194
+        2      4        0.005315676356
+       13      5        0.005262264632
+        5      6       -0.004976931950
+       11      6       -0.003468458373
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         t(ai,bj)
      --------------------------------------------------
-        1      9       1      9       -0.041651517349
-        3      9       3      9       -0.038277257591
-        1      9       3      9        0.032355810187
-        4     10       4     10       -0.031405794810
-       16      5      16      5       -0.031169179229
-       17      5      17      5       -0.031146442905
-        2      8       2      8       -0.030330489548
-        8      5       8      5       -0.027874803992
-        1      6       1      9       -0.024542890128
-        3      6       3      9       -0.021838950657
+        2      4       2      4       -0.047348347761
+        5      6       5      6       -0.046125315414
+        3      4       3      4       -0.036665602909
+        6      5       6      5       -0.034567429546
+        1      5       1      5       -0.034196788115
+       16      3      16      3       -0.032093077498
+       17      3      17      3       -0.032023970211
+       18      3      18      3       -0.031207949792
+        9      3       9      3       -0.030955102756
+        2      4       3      4       -0.029700794879
      --------------------------------------------------
 
-     T1 diagnostic (|T1|/sqrt(N_e)): 0.006881423818
+     T1 diagnostic (|T1|/sqrt(N_e)): 0.007230547545
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.12700
-     Total cpu time (sec):               4.14407
+     Total wall time (sec):              0.24127
+     Total cpu time (sec):               0.48126
 
 
-  3) Calculation of the multipliers (davidson algorithm)
+  4) Calculation of the multipliers (davidson algorithm)
 
    - Davidson coupled cluster multipliers solver
   -------------------------------------------------
@@ -420,74 +440,70 @@
      Residual threshold:        0.10E-10
      Max number of iterations:       100
 
-     Reduced space basis and transforms are stored on disk.
-
   Iteration     Residual norm
   ---------------------------
-    1             0.3184E+00
-    2             0.7430E-01
-    3             0.1833E-01
-    4             0.8154E-02
-    5             0.2544E-02
-    6             0.1025E-02
-    7             0.2886E-03
-    8             0.7249E-04
-    9             0.2172E-04
-   10             0.9186E-05
-   11             0.4807E-05
-   12             0.1913E-05
-   13             0.6161E-06
-   14             0.1752E-06
-   15             0.4543E-07
-   16             0.1257E-07
-   17             0.3602E-08
-   18             0.1158E-08
-   19             0.3097E-09
-   20             0.9058E-10
-   21             0.3022E-10
-   22             0.8237E-11
+    1             0.3517E-01
+    2             0.6903E-02
+    3             0.1186E-02
+    4             0.6184E-03
+    5             0.1750E-03
+    6             0.4651E-04
+    7             0.1074E-04
+    8             0.3420E-05
+    9             0.1679E-05
+   10             0.6733E-06
+   11             0.2193E-06
+   12             0.5501E-07
+   13             0.1272E-07
+   14             0.2939E-08
+   15             0.7566E-09
+   16             0.2298E-09
+   17             0.8312E-10
+   18             0.3665E-10
+   19             0.1210E-10
+   20             0.4111E-11
   ---------------------------
 
-  Convergence criterion met in 22 iterations!
+  Convergence criterion met in 20 iterations!
 
   - Davidson CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
-        a       i         t(a,i)
+        a       i         tbar(a,i)
      -----------------------------------
-        1      9       -0.029646992279
-        3      9        0.014755436675
-       14      9       -0.010760413664
-       14      6       -0.008752717972
-        4      7       -0.008523553420
-        5      6       -0.007827835742
-       22      8        0.007464592418
-        6      9       -0.007308533179
-        4     10       -0.007005592080
-        9      8       -0.006942220637
+        1      5        0.022805147344
+       14      4       -0.015908633383
+        7      4        0.014301022446
+        4      5        0.011694825280
+       15      5       -0.010012933936
+        6      2        0.009090546441
+       13      5        0.008759484934
+        2      4        0.006944367808
+        5      6       -0.006882875140
+        3      4        0.006757635369
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
-        a      i       b      j         t(ai,bj)
+        a      i       b      j         tbar(ai,bj)
      --------------------------------------------------
-        1      9       1      9       -0.079106600826
-        3      9       3      9       -0.073265261744
-        4     10       4     10       -0.062400215002
-       16      5      16      5       -0.061891347282
-       17      5      17      5       -0.061846092494
-        1      9       3      9        0.061771798249
-        2      8       2      8       -0.058800453495
-        5      8       4     10       -0.055766556911
-        8      5       8      5       -0.055363216797
-        6      9       4     10        0.052190751148
+        5      6       5      6       -0.092268813941
+        2      4       2      4       -0.092077851559
+        6      5       5      6       -0.089587402693
+        2      4       5      6        0.083766793134
+        2      4       6      5        0.077165954299
+        2      4       1      5       -0.076349534109
+        7      4       5      6       -0.071310533230
+        3      4       3      4       -0.071295647619
+        6      5       6      5       -0.068100598733
+        1      5       1      5       -0.065946545915
      --------------------------------------------------
 
   - Finished solving the CCSD multipliers equations
 
-     Total wall time (sec):               0.90600
-     Total cpu time (sec):                1.72850
+     Total wall time (sec):               0.18079
+     Total cpu time (sec):                0.26186
 
   Determining amplitude response...
   Asking solver to get response for component 1 and (-)-frequencies.
@@ -506,8 +522,6 @@
      Residual threshold:        0.10E-10
      Max number of iterations:       100
 
-     Reduced space basis and transforms are stored on disk.
-
   - Entering iterative loop to solve equations.
 
   Iteration:               1
@@ -515,9 +529,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.81E+00
-  -0.40E-01      0.79E+00
-  -0.60E-01      0.77E+00
+  -0.20E-01      0.76E+00
+  -0.40E-01      0.74E+00
+  -0.60E-01      0.71E+00
   ------------------------------
 
   Iteration:               2
@@ -525,9 +539,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.18E+00
-  -0.40E-01      0.17E+00
-  -0.60E-01      0.16E+00
+  -0.20E-01      0.14E+00
+  -0.40E-01      0.13E+00
+  -0.60E-01      0.13E+00
   ------------------------------
 
   Iteration:               3
@@ -535,9 +549,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.55E-01
-  -0.40E-01      0.51E-01
-  -0.60E-01      0.48E-01
+  -0.20E-01      0.34E-01
+  -0.40E-01      0.32E-01
+  -0.60E-01      0.30E-01
   ------------------------------
 
   Iteration:               4
@@ -545,9 +559,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.15E-01
-  -0.40E-01      0.14E-01
-  -0.60E-01      0.13E-01
+  -0.20E-01      0.70E-02
+  -0.40E-01      0.64E-02
+  -0.60E-01      0.59E-02
   ------------------------------
 
   Iteration:               5
@@ -555,9 +569,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.34E-02
-  -0.40E-01      0.31E-02
-  -0.60E-01      0.28E-02
+  -0.20E-01      0.14E-02
+  -0.40E-01      0.13E-02
+  -0.60E-01      0.12E-02
   ------------------------------
 
   Iteration:               6
@@ -565,9 +579,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.82E-03
-  -0.40E-01      0.73E-03
-  -0.60E-01      0.65E-03
+  -0.20E-01      0.28E-03
+  -0.40E-01      0.25E-03
+  -0.60E-01      0.23E-03
   ------------------------------
 
   Iteration:               7
@@ -575,9 +589,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.22E-03
-  -0.40E-01      0.19E-03
-  -0.60E-01      0.16E-03
+  -0.20E-01      0.56E-04
+  -0.40E-01      0.50E-04
+  -0.60E-01      0.44E-04
   ------------------------------
 
   Iteration:               8
@@ -585,9 +599,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.60E-04
-  -0.40E-01      0.51E-04
-  -0.60E-01      0.43E-04
+  -0.20E-01      0.12E-04
+  -0.40E-01      0.11E-04
+  -0.60E-01      0.93E-05
   ------------------------------
 
   Iteration:               9
@@ -595,9 +609,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.14E-04
-  -0.40E-01      0.12E-04
-  -0.60E-01      0.97E-05
+  -0.20E-01      0.27E-05
+  -0.40E-01      0.23E-05
+  -0.60E-01      0.20E-05
   ------------------------------
 
   Iteration:               10
@@ -605,9 +619,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.37E-05
-  -0.40E-01      0.30E-05
-  -0.60E-01      0.25E-05
+  -0.20E-01      0.65E-06
+  -0.40E-01      0.56E-06
+  -0.60E-01      0.48E-06
   ------------------------------
 
   Iteration:               11
@@ -615,9 +629,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.11E-05
-  -0.40E-01      0.86E-06
-  -0.60E-01      0.70E-06
+  -0.20E-01      0.18E-06
+  -0.40E-01      0.15E-06
+  -0.60E-01      0.13E-06
   ------------------------------
 
   Iteration:               12
@@ -625,9 +639,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.26E-06
-  -0.40E-01      0.20E-06
-  -0.60E-01      0.16E-06
+  -0.20E-01      0.49E-07
+  -0.40E-01      0.40E-07
+  -0.60E-01      0.32E-07
   ------------------------------
 
   Iteration:               13
@@ -635,9 +649,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.59E-07
-  -0.40E-01      0.46E-07
-  -0.60E-01      0.36E-07
+  -0.20E-01      0.17E-07
+  -0.40E-01      0.13E-07
+  -0.60E-01      0.11E-07
   ------------------------------
 
   Iteration:               14
@@ -645,9 +659,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.17E-07
-  -0.40E-01      0.13E-07
-  -0.60E-01      0.10E-07
+  -0.20E-01      0.62E-08
+  -0.40E-01      0.47E-08
+  -0.60E-01      0.37E-08
   ------------------------------
 
   Iteration:               15
@@ -655,9 +669,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.64E-08
-  -0.40E-01      0.48E-08
-  -0.60E-01      0.36E-08
+  -0.20E-01      0.18E-08
+  -0.40E-01      0.13E-08
+  -0.60E-01      0.10E-08
   ------------------------------
 
   Iteration:               16
@@ -665,9 +679,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.21E-08
-  -0.40E-01      0.15E-08
-  -0.60E-01      0.12E-08
+  -0.20E-01      0.38E-09
+  -0.40E-01      0.28E-09
+  -0.60E-01      0.21E-09
   ------------------------------
 
   Iteration:               17
@@ -675,9 +689,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.57E-09
-  -0.40E-01      0.41E-09
-  -0.60E-01      0.30E-09
+  -0.20E-01      0.83E-10
+  -0.40E-01      0.61E-10
+  -0.60E-01      0.46E-10
   ------------------------------
 
   Iteration:               18
@@ -685,36 +699,26 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.15E-09
-  -0.40E-01      0.10E-09
-  -0.60E-01      0.75E-10
+  -0.20E-01      0.19E-10
+  -0.40E-01      0.13E-10
+  -0.60E-01      0.10E-10
   ------------------------------
 
   Iteration:               19
-  Reduced space dimension: 57
+  Reduced space dimension: 56
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.36E-10
-  -0.40E-01      0.25E-10
-  -0.60E-01      0.18E-10
+  -0.20E-01      0.38E-11
+  -0.40E-01      0.27E-11
+  -0.60E-01      0.20E-11
   ------------------------------
-
-  Iteration:               20
-  Reduced space dimension: 60
-
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.91E-11
-  -0.40E-01      0.63E-11
-  -0.60E-01      0.44E-11
-  ------------------------------
-  Convergence criterion met in 20 iterations!
+  Convergence criterion met in 19 iterations!
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               3.07400
-     Total cpu time (sec):                5.29215
+     Total wall time (sec):               0.26449
+     Total cpu time (sec):                0.52847
 
   Determining amplitude response...
   Asking solver to get response for component 1 and (+)-frequencies.
@@ -733,8 +737,6 @@
      Residual threshold:        0.10E-10
      Max number of iterations:       100
 
-     Reduced space basis and transforms are stored on disk.
-
   - Entering iterative loop to solve equations.
 
   Iteration:               1
@@ -742,9 +744,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.87E+00
-   0.40E-01      0.90E+00
-   0.60E-01      0.94E+00
+   0.20E-01      0.81E+00
+   0.40E-01      0.84E+00
+   0.60E-01      0.87E+00
   ------------------------------
 
   Iteration:               2
@@ -752,9 +754,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.20E+00
-   0.40E-01      0.22E+00
-   0.60E-01      0.23E+00
+   0.20E-01      0.16E+00
+   0.40E-01      0.16E+00
+   0.60E-01      0.17E+00
   ------------------------------
 
   Iteration:               3
@@ -762,9 +764,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.64E-01
-   0.40E-01      0.70E-01
-   0.60E-01      0.77E-01
+   0.20E-01      0.39E-01
+   0.40E-01      0.41E-01
+   0.60E-01      0.45E-01
   ------------------------------
 
   Iteration:               4
@@ -772,9 +774,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.18E-01
-   0.40E-01      0.21E-01
-   0.60E-01      0.23E-01
+   0.20E-01      0.82E-02
+   0.40E-01      0.90E-02
+   0.60E-01      0.99E-02
   ------------------------------
 
   Iteration:               5
@@ -782,9 +784,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.42E-02
-   0.40E-01      0.47E-02
-   0.60E-01      0.53E-02
+   0.20E-01      0.17E-02
+   0.40E-01      0.19E-02
+   0.60E-01      0.21E-02
   ------------------------------
 
   Iteration:               6
@@ -792,9 +794,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.11E-02
-   0.40E-01      0.12E-02
-   0.60E-01      0.14E-02
+   0.20E-01      0.35E-03
+   0.40E-01      0.39E-03
+   0.60E-01      0.44E-03
   ------------------------------
 
   Iteration:               7
@@ -802,9 +804,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.30E-03
-   0.40E-01      0.36E-03
-   0.60E-01      0.44E-03
+   0.20E-01      0.71E-04
+   0.40E-01      0.81E-04
+   0.60E-01      0.93E-04
   ------------------------------
 
   Iteration:               8
@@ -812,9 +814,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.84E-04
-   0.40E-01      0.10E-03
-   0.60E-01      0.13E-03
+   0.20E-01      0.15E-04
+   0.40E-01      0.18E-04
+   0.60E-01      0.21E-04
   ------------------------------
 
   Iteration:               9
@@ -822,9 +824,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.21E-04
-   0.40E-01      0.26E-04
-   0.60E-01      0.33E-04
+   0.20E-01      0.36E-05
+   0.40E-01      0.43E-05
+   0.60E-01      0.51E-05
   ------------------------------
 
   Iteration:               10
@@ -832,9 +834,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.60E-05
-   0.40E-01      0.76E-05
-   0.60E-01      0.98E-05
+   0.20E-01      0.10E-05
+   0.40E-01      0.12E-05
+   0.60E-01      0.16E-05
   ------------------------------
 
   Iteration:               11
@@ -842,9 +844,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.17E-05
-   0.40E-01      0.22E-05
-   0.60E-01      0.30E-05
+   0.20E-01      0.25E-06
+   0.40E-01      0.32E-06
+   0.60E-01      0.41E-06
   ------------------------------
 
   Iteration:               12
@@ -852,9 +854,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.44E-06
-   0.40E-01      0.57E-06
-   0.60E-01      0.77E-06
+   0.20E-01      0.73E-07
+   0.40E-01      0.94E-07
+   0.60E-01      0.13E-06
   ------------------------------
 
   Iteration:               13
@@ -862,9 +864,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.12E-06
-   0.40E-01      0.16E-06
-   0.60E-01      0.21E-06
+   0.20E-01      0.22E-07
+   0.40E-01      0.28E-07
+   0.60E-01      0.39E-07
   ------------------------------
 
   Iteration:               14
@@ -872,9 +874,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.44E-07
-   0.40E-01      0.58E-07
-   0.60E-01      0.78E-07
+   0.20E-01      0.57E-08
+   0.40E-01      0.76E-08
+   0.60E-01      0.11E-07
   ------------------------------
 
   Iteration:               15
@@ -882,9 +884,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.15E-07
-   0.40E-01      0.20E-07
-   0.60E-01      0.28E-07
+   0.20E-01      0.15E-08
+   0.40E-01      0.21E-08
+   0.60E-01      0.30E-08
   ------------------------------
 
   Iteration:               16
@@ -892,9 +894,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.38E-08
-   0.40E-01      0.52E-08
-   0.60E-01      0.73E-08
+   0.20E-01      0.33E-09
+   0.40E-01      0.45E-09
+   0.60E-01      0.64E-09
   ------------------------------
 
   Iteration:               17
@@ -902,9 +904,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.99E-09
-   0.40E-01      0.14E-08
-   0.60E-01      0.20E-08
+   0.20E-01      0.77E-10
+   0.40E-01      0.11E-09
+   0.60E-01      0.15E-09
   ------------------------------
 
   Iteration:               18
@@ -912,9 +914,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.26E-09
-   0.40E-01      0.37E-09
-   0.60E-01      0.53E-09
+   0.20E-01      0.19E-10
+   0.40E-01      0.26E-10
+   0.60E-01      0.39E-10
   ------------------------------
 
   Iteration:               19
@@ -922,36 +924,26 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.65E-10
-   0.40E-01      0.93E-10
-   0.60E-01      0.14E-09
+   0.20E-01      0.46E-11
+   0.40E-01      0.66E-11
+   0.60E-01      0.10E-10
   ------------------------------
 
   Iteration:               20
-  Reduced space dimension: 60
+  Reduced space dimension: 58
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.17E-10
-   0.40E-01      0.24E-10
-   0.60E-01      0.36E-10
+   0.20E-01      0.11E-11
+   0.40E-01      0.15E-11
+   0.60E-01      0.23E-11
   ------------------------------
-
-  Iteration:               21
-  Reduced space dimension: 63
-
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.40E-11
-   0.40E-01      0.59E-11
-   0.60E-01      0.89E-11
-  ------------------------------
-  Convergence criterion met in 21 iterations!
+  Convergence criterion met in 20 iterations!
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               3.36300
-     Total cpu time (sec):                5.72217
+     Total wall time (sec):               0.27238
+     Total cpu time (sec):                0.54440
 
   Determining amplitude response...
   Asking solver to get response for component 3 and (-)-frequencies.
@@ -970,8 +962,6 @@
      Residual threshold:        0.10E-10
      Max number of iterations:       100
 
-     Reduced space basis and transforms are stored on disk.
-
   - Entering iterative loop to solve equations.
 
   Iteration:               1
@@ -979,9 +969,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.31E+00
-  -0.40E-01      0.31E+00
-  -0.60E-01      0.30E+00
+  -0.20E-01      0.33E+00
+  -0.40E-01      0.32E+00
+  -0.60E-01      0.31E+00
   ------------------------------
 
   Iteration:               2
@@ -989,9 +979,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.54E-01
-  -0.40E-01      0.51E-01
-  -0.60E-01      0.48E-01
+  -0.20E-01      0.53E-01
+  -0.40E-01      0.49E-01
+  -0.60E-01      0.46E-01
   ------------------------------
 
   Iteration:               3
@@ -999,9 +989,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.13E-01
-  -0.40E-01      0.11E-01
-  -0.60E-01      0.11E-01
+  -0.20E-01      0.11E-01
+  -0.40E-01      0.97E-02
+  -0.60E-01      0.89E-02
   ------------------------------
 
   Iteration:               4
@@ -1009,9 +999,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.34E-02
-  -0.40E-01      0.30E-02
-  -0.60E-01      0.27E-02
+  -0.20E-01      0.23E-02
+  -0.40E-01      0.20E-02
+  -0.60E-01      0.18E-02
   ------------------------------
 
   Iteration:               5
@@ -1019,9 +1009,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.72E-03
-  -0.40E-01      0.63E-03
-  -0.60E-01      0.56E-03
+  -0.20E-01      0.45E-03
+  -0.40E-01      0.40E-03
+  -0.60E-01      0.36E-03
   ------------------------------
 
   Iteration:               6
@@ -1029,9 +1019,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.17E-03
-  -0.40E-01      0.14E-03
-  -0.60E-01      0.12E-03
+  -0.20E-01      0.12E-03
+  -0.40E-01      0.11E-03
+  -0.60E-01      0.94E-04
   ------------------------------
 
   Iteration:               7
@@ -1039,9 +1029,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.44E-04
-  -0.40E-01      0.36E-04
-  -0.60E-01      0.31E-04
+  -0.20E-01      0.36E-04
+  -0.40E-01      0.31E-04
+  -0.60E-01      0.27E-04
   ------------------------------
 
   Iteration:               8
@@ -1049,9 +1039,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.13E-04
-  -0.40E-01      0.11E-04
-  -0.60E-01      0.90E-05
+  -0.20E-01      0.92E-05
+  -0.40E-01      0.78E-05
+  -0.60E-01      0.67E-05
   ------------------------------
 
   Iteration:               9
@@ -1059,9 +1049,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.32E-05
-  -0.40E-01      0.26E-05
-  -0.60E-01      0.22E-05
+  -0.20E-01      0.20E-05
+  -0.40E-01      0.17E-05
+  -0.60E-01      0.14E-05
   ------------------------------
 
   Iteration:               10
@@ -1069,9 +1059,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.84E-06
-  -0.40E-01      0.66E-06
-  -0.60E-01      0.54E-06
+  -0.20E-01      0.43E-06
+  -0.40E-01      0.35E-06
+  -0.60E-01      0.29E-06
   ------------------------------
 
   Iteration:               11
@@ -1079,9 +1069,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.22E-06
-  -0.40E-01      0.17E-06
-  -0.60E-01      0.13E-06
+  -0.20E-01      0.97E-07
+  -0.40E-01      0.77E-07
+  -0.60E-01      0.63E-07
   ------------------------------
 
   Iteration:               12
@@ -1089,9 +1079,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.53E-07
-  -0.40E-01      0.40E-07
-  -0.60E-01      0.31E-07
+  -0.20E-01      0.28E-07
+  -0.40E-01      0.21E-07
+  -0.60E-01      0.17E-07
   ------------------------------
 
   Iteration:               13
@@ -1099,9 +1089,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.14E-07
-  -0.40E-01      0.10E-07
-  -0.60E-01      0.79E-08
+  -0.20E-01      0.72E-08
+  -0.40E-01      0.54E-08
+  -0.60E-01      0.42E-08
   ------------------------------
 
   Iteration:               14
@@ -1109,9 +1099,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.35E-08
-  -0.40E-01      0.26E-08
-  -0.60E-01      0.20E-08
+  -0.20E-01      0.18E-08
+  -0.40E-01      0.13E-08
+  -0.60E-01      0.10E-08
   ------------------------------
 
   Iteration:               15
@@ -1119,9 +1109,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.84E-09
-  -0.40E-01      0.64E-09
-  -0.60E-01      0.49E-09
+  -0.20E-01      0.39E-09
+  -0.40E-01      0.29E-09
+  -0.60E-01      0.22E-09
   ------------------------------
 
   Iteration:               16
@@ -1129,9 +1119,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.20E-09
-  -0.40E-01      0.15E-09
-  -0.60E-01      0.11E-09
+  -0.20E-01      0.93E-10
+  -0.40E-01      0.68E-10
+  -0.60E-01      0.51E-10
   ------------------------------
 
   Iteration:               17
@@ -1139,9 +1129,9 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.53E-10
-  -0.40E-01      0.38E-10
-  -0.60E-01      0.28E-10
+  -0.20E-01      0.23E-10
+  -0.40E-01      0.17E-10
+  -0.60E-01      0.12E-10
   ------------------------------
 
   Iteration:               18
@@ -1149,26 +1139,16 @@
 
   Frequency      Residual norm
   ------------------------------
-  -0.20E-01      0.15E-10
-  -0.40E-01      0.10E-10
-  -0.60E-01      0.73E-11
+  -0.20E-01      0.62E-11
+  -0.40E-01      0.43E-11
+  -0.60E-01      0.31E-11
   ------------------------------
-
-  Iteration:               19
-  Reduced space dimension: 56
-
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.34E-11
-  -0.40E-01      0.23E-11
-  -0.60E-01      0.16E-11
-  ------------------------------
-  Convergence criterion met in 19 iterations!
+  Convergence criterion met in 18 iterations!
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               2.77700
-     Total cpu time (sec):                4.85776
+     Total wall time (sec):               0.29571
+     Total cpu time (sec):                0.59156
 
   Determining amplitude response...
   Asking solver to get response for component 3 and (+)-frequencies.
@@ -1187,8 +1167,6 @@
      Residual threshold:        0.10E-10
      Max number of iterations:       100
 
-     Reduced space basis and transforms are stored on disk.
-
   - Entering iterative loop to solve equations.
 
   Iteration:               1
@@ -1196,9 +1174,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.33E+00
-   0.40E-01      0.34E+00
-   0.60E-01      0.35E+00
+   0.20E-01      0.35E+00
+   0.40E-01      0.37E+00
+   0.60E-01      0.38E+00
   ------------------------------
 
   Iteration:               2
@@ -1208,7 +1186,7 @@
   ------------------------------
    0.20E-01      0.62E-01
    0.40E-01      0.68E-01
-   0.60E-01      0.76E-01
+   0.60E-01      0.75E-01
   ------------------------------
 
   Iteration:               3
@@ -1216,9 +1194,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.16E-01
-   0.40E-01      0.18E-01
-   0.60E-01      0.21E-01
+   0.20E-01      0.13E-01
+   0.40E-01      0.15E-01
+   0.60E-01      0.17E-01
   ------------------------------
 
   Iteration:               4
@@ -1226,9 +1204,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.44E-02
-   0.40E-01      0.52E-02
-   0.60E-01      0.62E-02
+   0.20E-01      0.28E-02
+   0.40E-01      0.33E-02
+   0.60E-01      0.38E-02
   ------------------------------
 
   Iteration:               5
@@ -1236,9 +1214,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.96E-03
-   0.40E-01      0.11E-02
-   0.60E-01      0.14E-02
+   0.20E-01      0.58E-03
+   0.40E-01      0.67E-03
+   0.60E-01      0.78E-03
   ------------------------------
 
   Iteration:               6
@@ -1246,9 +1224,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.24E-03
-   0.40E-01      0.29E-03
-   0.60E-01      0.36E-03
+   0.20E-01      0.16E-03
+   0.40E-01      0.19E-03
+   0.60E-01      0.23E-03
   ------------------------------
 
   Iteration:               7
@@ -1256,9 +1234,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.67E-04
-   0.40E-01      0.87E-04
-   0.60E-01      0.12E-03
+   0.20E-01      0.48E-04
+   0.40E-01      0.57E-04
+   0.60E-01      0.70E-04
   ------------------------------
 
   Iteration:               8
@@ -1266,9 +1244,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.20E-04
-   0.40E-01      0.26E-04
-   0.60E-01      0.36E-04
+   0.20E-01      0.12E-04
+   0.40E-01      0.15E-04
+   0.60E-01      0.18E-04
   ------------------------------
 
   Iteration:               9
@@ -1276,9 +1254,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.46E-05
-   0.40E-01      0.62E-05
-   0.60E-01      0.88E-05
+   0.20E-01      0.26E-05
+   0.40E-01      0.32E-05
+   0.60E-01      0.40E-05
   ------------------------------
 
   Iteration:               10
@@ -1286,9 +1264,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.11E-05
-   0.40E-01      0.16E-05
-   0.60E-01      0.23E-05
+   0.20E-01      0.59E-06
+   0.40E-01      0.76E-06
+   0.60E-01      0.10E-05
   ------------------------------
 
   Iteration:               11
@@ -1296,9 +1274,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.28E-06
-   0.40E-01      0.40E-06
-   0.60E-01      0.61E-06
+   0.20E-01      0.16E-06
+   0.40E-01      0.22E-06
+   0.60E-01      0.31E-06
   ------------------------------
 
   Iteration:               12
@@ -1306,9 +1284,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.75E-07
-   0.40E-01      0.11E-06
-   0.60E-01      0.17E-06
+   0.20E-01      0.51E-07
+   0.40E-01      0.73E-07
+   0.60E-01      0.11E-06
   ------------------------------
 
   Iteration:               13
@@ -1316,9 +1294,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.21E-07
-   0.40E-01      0.30E-07
-   0.60E-01      0.45E-07
+   0.20E-01      0.12E-07
+   0.40E-01      0.17E-07
+   0.60E-01      0.25E-07
   ------------------------------
 
   Iteration:               14
@@ -1326,9 +1304,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.55E-08
-   0.40E-01      0.79E-08
-   0.60E-01      0.12E-07
+   0.20E-01      0.30E-08
+   0.40E-01      0.42E-08
+   0.60E-01      0.62E-08
   ------------------------------
 
   Iteration:               15
@@ -1336,9 +1314,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.14E-08
-   0.40E-01      0.19E-08
-   0.60E-01      0.29E-08
+   0.20E-01      0.73E-09
+   0.40E-01      0.10E-08
+   0.60E-01      0.15E-08
   ------------------------------
 
   Iteration:               16
@@ -1346,9 +1324,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.33E-09
-   0.40E-01      0.47E-09
-   0.60E-01      0.71E-09
+   0.20E-01      0.20E-09
+   0.40E-01      0.29E-09
+   0.60E-01      0.45E-09
   ------------------------------
 
   Iteration:               17
@@ -1356,9 +1334,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.10E-09
-   0.40E-01      0.15E-09
-   0.60E-01      0.23E-09
+   0.20E-01      0.55E-10
+   0.40E-01      0.82E-10
+   0.60E-01      0.13E-09
   ------------------------------
 
   Iteration:               18
@@ -1366,9 +1344,9 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.30E-10
-   0.40E-01      0.45E-10
-   0.60E-01      0.70E-10
+   0.20E-01      0.15E-10
+   0.40E-01      0.23E-10
+   0.60E-01      0.36E-10
   ------------------------------
 
   Iteration:               19
@@ -1376,39 +1354,33 @@
 
   Frequency      Residual norm
   ------------------------------
-   0.20E-01      0.75E-11
-   0.40E-01      0.11E-10
-   0.60E-01      0.18E-10
+   0.20E-01      0.36E-11
+   0.40E-01      0.56E-11
+   0.60E-01      0.89E-11
   ------------------------------
-
-  Iteration:               20
-  Reduced space dimension: 59
-
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.21E-11
-   0.40E-01      0.32E-11
-   0.60E-01      0.51E-11
-  ------------------------------
-  Convergence criterion met in 20 iterations!
+  Convergence criterion met in 19 iterations!
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               3.04400
-     Total cpu time (sec):                5.23951
+     Total wall time (sec):               0.35532
+     Total cpu time (sec):                0.71123
 
 
-  5) Calculation of the EOM polarizabilities
-     << mu_x, mu_x >>(0.20E-01):    -10.083648727920
-     << mu_z, mu_x >>(0.20E-01):     -5.023093797220
-     << mu_x, mu_x >>(0.40E-01):    -10.135541510745
-     << mu_z, mu_x >>(0.40E-01):     -5.048764965796
-     << mu_x, mu_x >>(0.60E-01):    -10.224429272535
-     << mu_z, mu_x >>(0.60E-01):     -5.092723718731
+  6) Calculation of the EOM polarizabilities
+     << mu_x, mu_x >>(0.20E-01):    -10.667179880761
+     << mu_z, mu_x >>(0.20E-01):     -5.333963363960
+     << mu_x, mu_x >>(0.40E-01):    -10.712628014280
+     << mu_z, mu_x >>(0.40E-01):     -5.356666625013
+     << mu_x, mu_x >>(0.60E-01):    -10.789511136657
+     << mu_z, mu_x >>(0.60E-01):     -5.395071746456
 
   - Timings for the CCSD response calculation
 
-     Total wall time (sec):             14.33500
-     Total cpu time (sec):              27.06360
+     Total wall time (sec):              1.89401
+     Total cpu time (sec):               3.68687
+
+     Peak memory usage during the execution of eT: 16.013176 MB
+
+  Calculation ended: 2020-11-27 09:51:35 UTC +01:00
 
   eT terminated successfully!
