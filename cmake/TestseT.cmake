@@ -107,6 +107,7 @@ add_eT_runtest(cc2_right_cvs_es_energies_diis               "eT;short;cc2;es;rig
 add_eT_runtest(cc2_right_ip_energies                        "eT;short;cc2;es;right")
 add_eT_runtest(cc2_right_ip_diis                            "eT;short;cc2;es;right;diis")
 add_eT_runtest(cc2_left_es_energies                         "eT;short;cc2;es;left")
+add_eT_runtest(cc2_left_right_es_energies                   "eT;short;cc2;es;left;right")
 add_eT_runtest(cc2_left_cvs_es_energies                     "eT;short;cc2;es;left;cvs")
 add_eT_runtest(cc2_left_ip_energies                         "eT;short;cc2;es;left")
 add_eT_runtest(cc2_left_ip_diis                             "eT;short;cc2;es;left;diis")

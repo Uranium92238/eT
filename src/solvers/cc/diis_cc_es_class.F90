@@ -495,11 +495,11 @@ contains
 !
          call output%printf('n', '- Stored converged states to file.', fs='(/t3,a)')
 !
+         call wf%set_excitation_energies(solver%energies, solver%transformation)
+!
          call solver%print_summary(wf, X, X_order)
 !
          call mem%dealloc(X_order, solver%n_singlet_states)
-!
-         call wf%set_excitation_energies(solver%energies, solver%transformation)
 !
          call wf%check_for_parallel_states(solver%transformation, solver%convergence_checker%residual_threshold)
 !

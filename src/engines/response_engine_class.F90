@@ -264,7 +264,7 @@ contains
 !
          call engine%do_excited_state(wf,                                                       &
                                       transformation='left',                                    &
-                                      restart=(engine%es_restart .or. engine%es_restart_left))
+                                      restart = .true.)
 !
 !        Biorthornormalize and look for duplicate states 
 !

@@ -721,11 +721,12 @@ def autogenerate_complex_files(source_directory):
             complex_submodule_file.close()
 
 
-def main():
-    source_directory = Path("src")
+def main(root_dir):
+    source_directory = Path(root_dir / "src")
     autogenerate_complex_files(source_directory)
     autogenerate_interfaces(source_directory)
 
 
 if __name__ == "__main__":
-    main()
+    default_path = Path(__file__).resolve().parent
+    main(default_path)
