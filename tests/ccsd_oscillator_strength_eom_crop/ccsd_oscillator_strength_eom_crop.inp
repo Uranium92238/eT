@@ -1,5 +1,5 @@
 system
-  name: ozone
+  name: HOF He
 end system
 
 do
@@ -49,7 +49,8 @@ end method
 
 geometry
 basis: cc-pVDZ
-O 0.00000 0.00000 0.0000
-O 1.2720 0.00000 0.0000
-O -0.57325 1.1354 0.0000
+ H          0.86681        0.60144        5.00000
+ F         -0.86681        0.60144        5.00000
+ O          0.00000       -0.07579        5.00000
+ He         0.1000         0.1000         7.5000
 end geometry

@@ -1,16 +1,39 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.1 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.1.0, Nachspiel
+  ------------------------------------------------------------
+  Compiled by:        alexancp
+  Compiled on:        NTNU16748
+  Configuration date: 2020-11-26 19:47:10 UTC +01:00
+  Git branch:         always-restart-l-from-r
+  Git hash:           b27c502fa8a19f78bb56d8c82213e7b5136821fe
+  Fortran compiler:   GNU 9.3.0
+  C compiler:         GNU 9.3.0
+  C++ compiler:       GNU 9.3.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2020-11-27 09:07:49 UTC +01:00
 
 
   :: Input file
@@ -49,7 +72,7 @@
      end active atoms
 
 
-  Running on 2 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -61,9 +84,9 @@
      Multiplicity:     1
      Coordinate units: angstrom
 
-     Pure basis functions:         82
-     Cartesian basis functions:    86
-     Primitive basis functions:   134
+     Pure basis functions:         48
+     Cartesian basis functions:    50
+     Primitive basis functions:    98
 
      Nuclear repulsion energy (a.u.):             37.386395233393
      Bohr/angstrom value (CODATA 2010):            0.529177210920
@@ -73,9 +96,9 @@
      ====================================
         Atom              Basis   Method
      ====================================
-        1 O         aug-cc-pvdz    hf
-        2 H         aug-cc-pvdz    hf
-        3 H         aug-cc-pvdz    hf
+        1 O             cc-pvdz    hf
+        2 H             cc-pvdz    hf
+        3 H             cc-pvdz    hf
      ====================================
      Total number of active atoms: 3
      OBS: Atoms will be reordered, active atoms first
@@ -85,7 +108,7 @@
      ==============================================================================
         Atom           X                  Y                  Z         # in input
      ==============================================================================
-        Basis: aug-cc-pvdz
+        Basis: cc-pvdz
         1 O     -0.573030000000     2.189950000000    -0.052560000000        1
         2 H      0.347690000000     2.485980000000     0.050490000000        2
         3 H     -1.075800000000     3.019470000000     0.020240000000        3
@@ -99,7 +122,7 @@
      ==============================================================================
         Atom           X                  Y                  Z         # in input
      ==============================================================================
-        Basis: aug-cc-pvdz
+        Basis: cc-pvdz
         1 O     -1.082869761160     4.138405726491    -0.099324005107        1
         2 H      0.657038876250     4.697821351146     0.095412272029        2
         3 H     -2.032967364807     5.705971341340     0.038248056761        3
@@ -124,9 +147,9 @@
   - Orbital details:
 
      Number of occupied orbitals:        10
-     Number of virtual orbitals:         72
-     Number of molecular orbitals:       82
-     Number of atomic orbitals:          82
+     Number of virtual orbitals:         38
+     Number of molecular orbitals:       48
+     Number of atomic orbitals:          48
 
 
   :: Hartree-Fock engine
@@ -158,8 +181,8 @@
 
      DIIS dimension:                         8
 
+     Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
-     Gradient threshold:            0.1000E-10
 
      Coulomb screening threshold:   0.1000E-16
      Exchange screening threshold:  0.1000E-14
@@ -168,22 +191,22 @@
 
   - Setting initial AO density to SAD
 
-     Energy of initial guess:              -151.700236809961
+     Energy of initial guess:              -151.796506244372
      Number of electrons in guess:           20.000000000000
 
   - Active orbital space:
 
       Number of active occupied orbitals:        5
-      Number of active virtual orbitals:        40
-      Number of active orbitals:                45
+      Number of active virtual orbitals:        23
+      Number of active orbitals:                28
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -152.024109278144     0.2024E+00     0.1520E+03
-     2          -152.030947253751     0.1192E+00     0.6838E-02
-     3          -152.035375815953     0.6515E-02     0.4429E-02
-     4          -152.035401061491     0.1083E-02     0.2525E-04
-     5          -152.035402508919     0.2202E-03     0.1447E-05
+     1          -152.011877032065     0.1544E+00     0.1520E+03
+     2          -152.016473856419     0.8902E-01     0.4597E-02
+     3          -152.018679270091     0.6660E-02     0.2205E-02
+     4          -152.018703828355     0.1115E-02     0.2456E-04
+     5          -152.018704682990     0.2473E-03     0.8546E-06
   ---------------------------------------------------------------
 
   Error: Was not able to converge the equations in the given number of 
