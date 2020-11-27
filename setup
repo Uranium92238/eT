@@ -262,7 +262,7 @@ def run_CMake(command, build_path):
 
 def main(argv):
     args = input_parser()
-    autogenerate_files.main()
+    autogenerate_files.main(root_dir)
     build_path = build_maker(args)
     cmake_command = construct_command(args)
     run_CMake(cmake_command, build_path)
