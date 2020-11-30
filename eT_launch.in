@@ -110,7 +110,8 @@ parser.add_argument(
 parser.add_argument(
     "-i-err",
     "--ignore-errors",
-    help="Continue with default behaviour if errors detected",
+    help="Continue with default behaviour if errors detected, "
+    "i.e. continue the loop over input files and delete scratch when done.",
     action="store_true",
 )
 
