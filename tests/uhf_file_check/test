@@ -29,17 +29,13 @@ f = get_hf_filter(threshold)
 # invoke the command line interface parser which returns options
 options = cli()
 
-checkfiles = ["hf_energy.AO_density.plt", 
-              "hf_energy.MO_0001.plt", 
-              "hf_energy.MO_0002.plt", 
-              "hf_energy.MO_0003.plt", 
-              "hf_energy_mo_information.out", 
-              "hof_he.xyz"]
+checkfiles = ["uhf_mo_information.out", 
+              "h2o_he.xyz"]
 
 checkfiles = [os.path.join(os.path.dirname(__file__), i) for i in checkfiles]
 
 ierr = 0
-for inp in ['hf_energy.inp']:
+for inp in ['uhf.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

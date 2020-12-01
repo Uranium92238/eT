@@ -293,8 +293,6 @@ contains
             call output%printf('n', 'Convergence criterion met in (i0) iterations!', &
                                ints=[iteration], fs='(t3,a)')
 !
-            call wf%print_summary()
-!
          else
 !
             prev_energy = wf%energy

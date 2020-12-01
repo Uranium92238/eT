@@ -62,14 +62,14 @@ add_eT_runtest(hf_scf_energy_qmfq                           "eT;short;hf;sad;qmm
 add_eT_runtest(hf_dipole                                    "eT;short;hf;sad;dipole")
 add_eT_runtest(hf_quadrupole                                "eT;short;hf;sad;quadrupole")
 add_eT_runtest(restart_hf                                   "eT;short;hf;restart")
-#
 add_eT_runtest(hf_bohr_units                                "eT;short;hf;sad")
 #
 add_eT_runtest(uhf_energy                                   "eT;short;uhf")
-#
+add_eT_runtest(uhf_file_check                               "eT;short;uhf;eT_launch")
 add_eT_runtest(uhf_energy_qmmmnopol                         "eT;short;uhf;sad;qmmm;mmnopol")
 add_eT_runtest(uhf_energy_qmfq                              "eT;short;uhf;sad;qmmm;fq")
 add_eT_runtest(uhf_dipole                                   "eT;short;uhf;sad;dipole")
+#
 add_eT_runtest(mlhf_cholesky_energy                         "eT;short;mlhf;sad;cholesky")
 add_eT_runtest(mlhf_pao_energy                              "eT;short;mlhf;sad;pao")
 add_eT_runtest(mlhf_pao_energy_central_atom                 "eT;short;mlhf;sad;pao;central-atom")
@@ -80,6 +80,7 @@ add_eT_runtest(mlhf_initial_full_space_optimization         "eT;short;mlhf;sad;p
 add_eT_runtest(mlhf_restart                                 "eT;short;mlhf;sad;pao;restart")
 add_eT_runtest(mlhf_dipole                                  "eT;short;mlhf;sad;pao;dipole")
 add_eT_runtest(mlhf_quadrupole                              "eT;short;mlhf;sad;pao;quadrupole")
+#
 add_eT_runtest(mp2_energy                                   "eT;short;hf;mp2")
 add_eT_runtest(mp2_energy_qmmmnopol                         "eT;short;hf;mp2;qmmm;mmnopol")
 add_eT_runtest(mp2_energy_qmfq                              "eT;short;hf;mp2;qmmm;fq")
