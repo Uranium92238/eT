@@ -48,7 +48,7 @@ module reference_engine_class
       logical :: requested_mean_value
 !
       logical :: plot_orbitals
-      logical :: print_coeff
+      logical :: print_mo_info
 !
    contains 
 !
@@ -101,7 +101,7 @@ contains
       engine%quadrupole       = .false.
       engine%plot_orbitals    = .false.
       engine%plot_density     = .false.
-      engine%print_coeff      = .false.
+      engine%print_mo_info    = .false.
 !
       call engine%read_settings()
 !
@@ -154,13 +154,7 @@ contains
 !
       call engine%do_ground_state(wf)
 !
-!     Print MO-coefficients
-!
-      if (engine%print_coeff) then
-!
-         call wf%print_orbitals()
-!
-      end if
+      call wf%print_summary(engine%print_mo_info)
 !
 !     Plot orbitals and/or density
 !
@@ -191,7 +185,7 @@ contains
       call input%get_keyword_in_section('ao density guess', 'solver scf', engine%ao_density_guess)
 !
       if (input%requested_keyword_in_section('print orbitals', 'solver scf')) then
-         engine%print_coeff = .true.
+         engine%print_mo_info = .true.
       end if
 !
       if (input%requested_keyword_in_section('plot hf orbitals', 'visualization')) then

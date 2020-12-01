@@ -58,87 +58,86 @@ module uhf_class
 !
 !     Preparation routines
 !
-      procedure :: prepare                              => prepare_uhf
-      procedure :: determine_n_alpha_and_n_beta         => determine_n_alpha_and_n_beta_uhf
-      procedure :: read_settings                        => read_settings_uhf
-      procedure :: read_uhf_settings                    => read_uhf_settings_uhf
+      procedure :: prepare                               => prepare_uhf
+      procedure :: determine_n_alpha_and_n_beta          => determine_n_alpha_and_n_beta_uhf
+      procedure :: read_settings                         => read_settings_uhf
+      procedure :: read_uhf_settings                     => read_uhf_settings_uhf
 !
 !     AO Fock and energy related routines
 !
-      procedure :: initialize_fock                      => initialize_fock_uhf
-      procedure :: construct_ao_spin_fock               => construct_ao_spin_fock_uhf
-      procedure :: calculate_uhf_energy                 => calculate_uhf_energy_uhf
+      procedure :: initialize_fock                       => initialize_fock_uhf
+      procedure :: construct_ao_spin_fock                => construct_ao_spin_fock_uhf
+      procedure :: calculate_uhf_energy                  => calculate_uhf_energy_uhf
       procedure :: update_fock_and_energy_non_cumulative => update_fock_and_energy_non_cumulative_uhf
-      procedure :: update_fock_and_energy_cumulative    => update_fock_and_energy_cumulative_uhf
-      procedure :: update_fock_and_energy               => update_fock_and_energy_uhf
-      procedure :: update_fock_mm                       => update_fock_mm_uhf
-      procedure :: update_fock_pcm                      => update_fock_pcm_uhf
-      procedure :: set_ao_fock                          => set_ao_fock_uhf
-      procedure :: get_ao_fock                          => get_ao_fock_uhf
+      procedure :: update_fock_and_energy_cumulative     => update_fock_and_energy_cumulative_uhf
+      procedure :: update_fock_and_energy                => update_fock_and_energy_uhf
+      procedure :: update_fock_mm                        => update_fock_mm_uhf
+      procedure :: update_fock_pcm                       => update_fock_pcm_uhf
+      procedure :: set_ao_fock                           => set_ao_fock_uhf
+      procedure :: get_ao_fock                           => get_ao_fock_uhf
+      procedure :: print_energy                          => print_energy_uhf
 !
 !     AO Density related routines
 !
-      procedure :: initialize_density                   => initialize_density_uhf
-      procedure :: set_initial_ao_density_guess         => set_initial_ao_density_guess_uhf
-      procedure :: save_ao_density                      => save_ao_density_uhf
-      procedure :: update_ao_density                    => update_ao_density_uhf
-      procedure :: form_ao_density                      => form_ao_density_uhf
-      procedure :: construct_ao_spin_density            => construct_ao_spin_density_uhf
-      procedure :: set_ao_density_to_core_guess         => set_ao_density_to_core_guess_uhf
-      procedure :: get_homo_degeneracy                  => get_homo_degeneracy_uhf
-      procedure :: get_ao_density_sq                    => get_ao_density_sq_uhf
+      procedure :: initialize_density                    => initialize_density_uhf
+      procedure :: set_initial_ao_density_guess          => set_initial_ao_density_guess_uhf
+      procedure :: save_ao_density                       => save_ao_density_uhf
+      procedure :: update_ao_density                     => update_ao_density_uhf
+      procedure :: form_ao_density                       => form_ao_density_uhf
+      procedure :: construct_ao_spin_density             => construct_ao_spin_density_uhf
+      procedure :: set_ao_density_to_core_guess          => set_ao_density_to_core_guess_uhf
+      procedure :: get_homo_degeneracy                   => get_homo_degeneracy_uhf
+      procedure :: get_ao_density_sq                     => get_ao_density_sq_uhf
 !
-      procedure :: construct_mo_fock                    => construct_mo_fock_uhf
+      procedure :: construct_mo_fock                     => construct_mo_fock_uhf
 !
 !     MO orbital related routines
 !
-      procedure :: initialize_orbitals                  => initialize_orbitals_uhf
-      procedure :: roothan_hall_update_orbitals         => roothan_hall_update_orbitals_uhf
-      procedure :: print_orbital_energies               => print_orbital_energies_uhf
-      procedure :: print_energy                         => print_energy_uhf
-      procedure :: print_orbitals                       => print_orbitals_uhf
-      procedure :: save_orbital_coefficients            => save_orbital_coefficients_uhf
-      procedure :: read_orbital_coefficients            => read_orbital_coefficients_uhf
-      procedure :: save_orbital_energies                => save_orbital_energies_uhf
-      procedure :: read_orbital_energies                => read_orbital_energies_uhf
+      procedure :: initialize_orbitals                   => initialize_orbitals_uhf
+      procedure :: roothan_hall_update_orbitals          => roothan_hall_update_orbitals_uhf
+      procedure :: save_orbital_info                     => save_orbital_info_uhf
+      procedure :: save_orbital_coefficients             => save_orbital_coefficients_uhf
+      procedure :: read_orbital_coefficients             => read_orbital_coefficients_uhf
+      procedure :: save_orbital_energies                 => save_orbital_energies_uhf
+      procedure :: read_orbital_energies                 => read_orbital_energies_uhf
 !
 !     Roothan-Hall gradient 
 !
-      procedure :: get_packed_roothan_hall_gradient     => get_packed_roothan_hall_gradient_uhf
+      procedure :: get_packed_roothan_hall_gradient      => get_packed_roothan_hall_gradient_uhf
 !
 !     Class variable initialize and destruct routines
 !
-      procedure :: initialize_ao_density_a              => initialize_ao_density_a_uhf
-      procedure :: initialize_ao_density_b              => initialize_ao_density_b_uhf
+      procedure :: initialize_ao_density_a               => initialize_ao_density_a_uhf
+      procedure :: initialize_ao_density_b               => initialize_ao_density_b_uhf
 !
-      procedure :: initialize_ao_fock_a                 => initialize_ao_fock_a_uhf
-      procedure :: initialize_ao_fock_b                 => initialize_ao_fock_b_uhf
+      procedure :: initialize_ao_fock_a                  => initialize_ao_fock_a_uhf
+      procedure :: initialize_ao_fock_b                  => initialize_ao_fock_b_uhf
 !
-      procedure :: initialize_orbital_coefficients_a    => initialize_orbital_coefficients_a_uhf
-      procedure :: initialize_orbital_coefficients_b    => initialize_orbital_coefficients_b_uhf
+      procedure :: initialize_orbital_coefficients_a     => initialize_orbital_coefficients_a_uhf
+      procedure :: initialize_orbital_coefficients_b     => initialize_orbital_coefficients_b_uhf
 !
-      procedure :: initialize_orbital_energies_a        => initialize_orbital_energies_a_uhf
-      procedure :: initialize_orbital_energies_b        => initialize_orbital_energies_b_uhf
+      procedure :: initialize_orbital_energies_a         => initialize_orbital_energies_a_uhf
+      procedure :: initialize_orbital_energies_b         => initialize_orbital_energies_b_uhf
 !
-      procedure :: destruct_ao_density                  => destruct_ao_density_uhf
-      procedure :: destruct_ao_density_a                => destruct_ao_density_a_uhf
-      procedure :: destruct_ao_density_b                => destruct_ao_density_b_uhf
+      procedure :: destruct_ao_density                   => destruct_ao_density_uhf
+      procedure :: destruct_ao_density_a                 => destruct_ao_density_a_uhf
+      procedure :: destruct_ao_density_b                 => destruct_ao_density_b_uhf
 !
-      procedure :: destruct_fock                        => destruct_fock_uhf
-      procedure :: destruct_ao_fock_a                   => destruct_ao_fock_a_uhf
-      procedure :: destruct_ao_fock_b                   => destruct_ao_fock_b_uhf
+      procedure :: destruct_fock                         => destruct_fock_uhf
+      procedure :: destruct_ao_fock_a                    => destruct_ao_fock_a_uhf
+      procedure :: destruct_ao_fock_b                    => destruct_ao_fock_b_uhf
 !
-      procedure :: destruct_orbital_coefficients        => destruct_orbital_coefficients_uhf
-      procedure :: destruct_orbital_coefficients_a      => destruct_orbital_coefficients_a_uhf
-      procedure :: destruct_orbital_coefficients_b      => destruct_orbital_coefficients_b_uhf
+      procedure :: destruct_orbital_coefficients         => destruct_orbital_coefficients_uhf
+      procedure :: destruct_orbital_coefficients_a       => destruct_orbital_coefficients_a_uhf
+      procedure :: destruct_orbital_coefficients_b       => destruct_orbital_coefficients_b_uhf
 !
-      procedure :: destruct_orbital_energies            => destruct_orbital_energies_uhf
-      procedure :: destruct_orbital_energies_a          => destruct_orbital_energies_a_uhf
-      procedure :: destruct_orbital_energies_b          => destruct_orbital_energies_b_uhf
+      procedure :: destruct_orbital_energies             => destruct_orbital_energies_uhf
+      procedure :: destruct_orbital_energies_a           => destruct_orbital_energies_a_uhf
+      procedure :: destruct_orbital_energies_b           => destruct_orbital_energies_b_uhf
 !
-      procedure :: set_n_mo                             => set_n_mo_uhf
+      procedure :: set_n_mo                              => set_n_mo_uhf
 !
-      procedure :: cleanup                              => cleanup_uhf 
+      procedure :: cleanup                               => cleanup_uhf 
 !
    end type uhf
 !
@@ -297,31 +296,6 @@ contains
    end subroutine set_initial_ao_density_guess_uhf
 !
 !
-   subroutine print_orbital_energies_uhf(wf)
-!!
-!!    Print orbital energies
-!!    Written by Eirik F. Kjønstad, Sep 2018
-!!
-!!    Prints the current orbital energies to output.
-!!
-!!    Modified by Tor S. Haugland, Oct 2019
-!!
-!!    Use new output%print_vector instead of deprecated print_vector.
-!!    Removed indent from input.
-!!
-      implicit none
-!
-      class(uhf), intent(in) :: wf
-!
-      call output%print_vector('normal', '- Alpha orbital energies', wf%n_mo, wf%orbital_energies_a, &
-                              fs='(f16.12)', columns=4)
-!
-      call output%print_vector('normal', '- Beta orbital energies',  wf%n_mo, wf%orbital_energies_b, &
-                              fs='(f16.12)', columns=4)
-!
-   end subroutine print_orbital_energies_uhf
-!
-!
    subroutine get_packed_roothan_hall_gradient_uhf(wf, G)
 !!
 !!    Get packed Roothan-Hall gradient
@@ -420,62 +394,6 @@ contains
       call wf%do_roothan_hall(wf%ao_fock_b, wf%orbital_coefficients_b, wf%orbital_energies_b)
 !
    end subroutine roothan_hall_update_orbitals_uhf
-!
-!
-   subroutine print_energy_uhf(wf)
-!!
-!!    Print wavefunction summary
-!!    Written by Eirik F. Kjønstad, Sep 2018
-!!
-!!    Prints information related to the wavefunction,
-!!    most of which is meaningful only for a properly
-!!    converged wavefunction. Should be overwritten in
-!!    descendants if more or less or other information
-!!    is present.
-!!
-      implicit none
-!
-      class(uhf), intent(inout) :: wf
-!
-      real(dp) :: homo_lumo_gap_a
-      real(dp) :: homo_lumo_gap_b
-      real(dp) :: nuclear_repulsion
-!
-      if (wf%n_alpha > 0 .and. wf%n_alpha < wf%n_mo) then 
-!
-         homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
-         call output%printf('m', 'HOMO-LUMO gap (alpha):     (f19.12)', &
-                            reals=[homo_lumo_gap_a], fs='(/t6,a)')
-!
-      endif 
-!
-      if (wf%n_beta > 0 .and. wf%n_beta < wf%n_mo) then 
-!
-         homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
-         call output%printf('m', 'HOMO-LUMO gap (beta):      (f19.12)', &
-                            reals=[homo_lumo_gap_b], fs='(t6,a)')
-!
-      endif
-!
-      nuclear_repulsion = wf%system%get_nuclear_repulsion()
-!
-      if(wf%system%mm_calculation.and.wf%system%mm%forcefield.eq.'non-polarizable') then
-!
-         nuclear_repulsion = nuclear_repulsion + wf%system%get_nuclear_repulsion_mm()
-!
-      endif
-!
-      call output%printf('m', 'Nuclear repulsion energy:  (f19.12)', &
-                         reals=[nuclear_repulsion], fs='(t6,a)')
-      call output%printf('m', 'Electronic energy:         (f19.12)', &
-                         reals=[wf%energy - nuclear_repulsion], fs='(t6,a)')
-      call output%printf('m', 'Total energy:              (f19.12)', &
-                         reals=[wf%energy], fs='(t6,a)')
-!
-      if(wf%system%mm_calculation) call wf%print_energy_mm()
-      if(wf%system%pcm_calculation) call wf%print_energy_pcm()
-!
-   end subroutine print_energy_uhf
 !
 !
    subroutine update_ao_density_uhf(wf)
@@ -876,13 +794,60 @@ contains
    end subroutine set_n_mo_uhf
 !
 !
-   subroutine print_orbitals_uhf(wf)
+   subroutine print_energy_uhf(wf)
 !!
-!!    Print orbitals
-!!    Written by Eirik F. Kjønstad and Tor S. Haugland, Oct 2019
-!!    Modified by Alexander C. Paul to print all MOs to file, Dec 2019
+!!    Print energy
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Prints the alpha- and beta-orbitals with atom & orbital information given.
+!!    Prints information related to the wavefunction,
+!!    most of which is meaningful only for a properly
+!!    converged wavefunction. Should be overwritten in
+!!    descendants if more or less or other information
+!!    is present.
+!!
+      implicit none
+!
+      class(uhf), intent(inout) :: wf
+!
+      real(dp) :: homo_lumo_gap_a
+      real(dp) :: homo_lumo_gap_b
+      real(dp) :: nuclear_repulsion
+!
+      if (wf%n_alpha > 0 .and. wf%n_alpha < wf%n_mo) then 
+!
+         homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
+         call output%printf('m', 'HOMO-LUMO gap (alpha):     (f19.12)', &
+                            reals=[homo_lumo_gap_a], fs='(/t6,a)')
+!
+      endif 
+!
+      if (wf%n_beta > 0 .and. wf%n_beta < wf%n_mo) then 
+!
+         homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
+         call output%printf('m', 'HOMO-LUMO gap (beta):      (f19.12)', &
+                            reals=[homo_lumo_gap_b], fs='(t6,a)')
+!
+      endif
+!
+      nuclear_repulsion = wf%system%get_total_nuclear_repulsion()
+!
+      call output%printf('m', 'Nuclear repulsion energy:  (f19.12)', &
+                         reals=[nuclear_repulsion], fs='(t6,a)')
+      call output%printf('m', 'Electronic energy:         (f19.12)', &
+                         reals=[wf%energy - nuclear_repulsion], fs='(t6,a)')
+      call output%printf('m', 'Total energy:              (f19.12)', &
+                         reals=[wf%energy], fs='(t6,a)')
+!
+      if(wf%system%mm_calculation) call wf%print_energy_mm()
+      if(wf%system%pcm_calculation) call wf%print_energy_pcm()
+!
+   end subroutine print_energy_uhf
+!
+!
+   subroutine save_orbital_info_uhf(wf)
+!!
+!!    Make orbital info file
+!!    Written by Alexander C. Paul Nov 2020
 !!
       use output_file_class, only: output_file
 !
@@ -890,29 +855,24 @@ contains
 !
       class(uhf), intent(in) :: wf
 !
-      type(output_file) ::mo_coefficient_file
+      type(output_file) :: mo_information_file
 !
-!     Alpha
+      mo_information_file = output_file('mo_information.out')
+      call mo_information_file%open_('rewind')
 !
-      mo_coefficient_file = output_file('alpha_mo_coefficients.out')
-      call mo_coefficient_file%open_()
+      call wf%print_orbitals_and_energies(mo_information_file, wf%orbital_energies_a, &
+                                          wf%orbital_coefficients_a, &
+                                          '- Alpha molecular orbital')
 !
-      call wf%print_orbitals_from_coefficients(wf%orbital_coefficients_a, &
-                                               mo_coefficient_file)
+      call mo_information_file%print_separator('m', 83, '=', fs='(//t3,a/)')
 !
-      call mo_coefficient_file%close_()
+      call wf%print_orbitals_and_energies(mo_information_file, wf%orbital_energies_b, &
+                                          wf%orbital_coefficients_b, &
+                                          '- Beta molecular orbital')
 !
-!     Beta
+      call mo_information_file%close_()
 !
-      mo_coefficient_file = output_file('beta_mo_coefficients.out')
-      call mo_coefficient_file%open_('rewind')
-!
-      call wf%print_orbitals_from_coefficients(wf%orbital_coefficients_b, &
-                                               mo_coefficient_file)
-!
-      call mo_coefficient_file%close_()
-!
-   end subroutine print_orbitals_uhf
+   end subroutine save_orbital_info_uhf
 !
 !
    subroutine cleanup_uhf(wf)

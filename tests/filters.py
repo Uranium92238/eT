@@ -6,7 +6,9 @@ def get_hf_filter(tolerance, convergence=False, restart=False):
     from runtest import get_filter
 
     f = [
-        # total energy
+        # Energy quantities
+        get_filter(string="Nuclear repulsion energy:", abs_tolerance=tolerance),
+        get_filter(string="HOMO-LUMO gap", abs_tolerance=tolerance),
         get_filter(string="Total energy:", abs_tolerance=tolerance),
         # idempotent SAD
         get_filter(

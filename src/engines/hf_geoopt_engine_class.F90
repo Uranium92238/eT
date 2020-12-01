@@ -68,6 +68,7 @@ contains
       engine%restart          = .false.
       engine%plot_orbitals    = .false.
       engine%plot_density     = .false.
+      engine%print_mo_info    = .false.
 !
       call engine%read_settings()
 !
@@ -127,6 +128,10 @@ contains
 !
       call input%get_keyword_in_section('algorithm', 'solver scf geoopt', engine%algorithm)
       if (input%requested_keyword_in_section('restart', 'solver scf geoopt')) engine%restart = .true.
+!
+      if (input%requested_keyword_in_section('print orbitals', 'solver scf')) then
+         engine%print_mo_info = .true.
+      end if
 !
    end subroutine read_settings_hf_geoopt_engine
 !
