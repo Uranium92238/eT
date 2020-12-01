@@ -43,7 +43,7 @@ for inp in ['mlcc2_cnto_es.inp']:
     ierr += run(options,
                 configure,
                 input_files=inp,
-                extra_args='-ks --scratch ./scratch',
+                extra_args='-save ./',
                 filters={'out': f}) 
 
 # reset ierr: helpful if the first calculation is supposed to crash
@@ -58,7 +58,7 @@ for inp in ['restart_mlcc2.inp']:
     ierr += run(options,
                 configure,
                 input_files=inp,
-                extra_args='--scratch ./scratch',
+                extra_args='-load ./mlcc2_cnto_es_restart_files',
                 filters={'out': f})
 
 sys.exit(ierr)
