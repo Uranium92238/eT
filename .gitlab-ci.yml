@@ -1,4 +1,4 @@
-image: registry.gitlab.com/et-program/et/ubuntu-for-et:v5.0
+image: registry.gitlab.com/et-program/et/alpine-for-et
 
 stages:
   - pystyle
@@ -26,8 +26,14 @@ build:
     - cmake --version
     - git submodule init
     - git submodule update
-    - ./setup --int32 -FC=gfortran-8 -CXX=g++-8 --pcm $extra_setup_options
+    - >
+      if [ "$coverage" == "true" ]; then 
+        extra_F_flags=' -fprofile-arcs -ftest-coverage'
+      fi
+    - ./setup --int32 -FC=gfortran -CXX=g++ -F-flags="$extra_F_flags" $extra_setup_options --pcm
     - cd build
+    - cmake_command=$(cat setup_cmake_output | head -1)
+    - echo ${cmake_command}
     - make
   tags:
     - docker
@@ -60,6 +66,10 @@ run:
     - last_test=$(($CI_NODE_INDEX==$CI_NODE_TOTAL?$n_tests_total:$last_test_in_batch))
     - echo Will run test $first_test to test $last_test 
     - ctest -I $first_test,$last_test
+    - >
+      if [ "$coverage" == "true" ]; then 
+        bash <(curl -s https://codecov.io/bash)
+      fi
   tags:
     - docker
   only:
@@ -67,3 +77,5 @@ run:
     - development
     - merge_requests
     - /^release\/\d+\.\d+$/
+
+
