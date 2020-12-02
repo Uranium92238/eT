@@ -296,6 +296,8 @@ contains
             call input%get_array_for_keyword_in_section('separation', 'electric field', &
                                                         field%n_pulses, field%separation)
             separation_input = .true.
+         else
+            field%separation = zero
          endif
 !
          if (input%requested_keyword_in_section('repetition', 'electric field')) then

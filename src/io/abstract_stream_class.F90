@@ -230,7 +230,7 @@ contains
            form = 'unformatted', action = action_, status = the_file%status_, &
            position = position_, iostat = io_status, iomsg = io_message)
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'open')
+      call the_file%check_io_status(io_status, io_message, 'open')
 !
       the_file%is_open = .true.
       the_file%status_ = 'old'
@@ -275,7 +275,7 @@ contains
 !
 !     Was it fine?
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'close')
+      call the_file%check_io_status(io_status, io_message, 'close')
 !
       the_file%is_open = .false.
       the_file%unit_ = 1
@@ -386,7 +386,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
+      call the_file%check_io_status(io_status, io_message, 'read from', status_)
 !
    end subroutine read_0_real_dp_abstract_stream
 !
@@ -432,7 +432,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
+      call the_file%check_io_status(io_status, io_message, 'read from', status_)
 !
    end subroutine read_0_real_sp_abstract_stream
 !
@@ -478,7 +478,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
+      call the_file%check_io_status(io_status, io_message, 'read from', status_)
 !
    end subroutine read_0_complex_dp_abstract_stream
 !
@@ -524,7 +524,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
+      call the_file%check_io_status(io_status, io_message, 'read from', status_)
 !
    end subroutine read_0_int_32_abstract_stream
 !
@@ -570,7 +570,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
+      call the_file%check_io_status(io_status, io_message, 'read from', status_)
 !
    end subroutine read_0_int_64_abstract_stream
 !
@@ -613,7 +613,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
+      call the_file%check_io_status(io_status, io_message, 'read from', status_)
 !
    end subroutine read_0_log_abstract_stream
 !
@@ -662,7 +662,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
+      call the_file%check_io_status(io_status, io_message, 'read from', status_)
 !
    end subroutine read_1_real_dp_abstract_stream
 !
@@ -711,7 +711,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
+      call the_file%check_io_status(io_status, io_message, 'read from', status_)
 !
    end subroutine read_1_real_sp_abstract_stream
 !
@@ -760,7 +760,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
+      call the_file%check_io_status(io_status, io_message, 'read from', status_)
 !
    end subroutine read_1_complex_dp_abstract_stream
 !
@@ -809,7 +809,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
+      call the_file%check_io_status(io_status, io_message, 'read from', status_)
 !
    end subroutine read_1_int_32_abstract_stream
 !
@@ -858,7 +858,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
+      call the_file%check_io_status(io_status, io_message, 'read from', status_)
 !
    end subroutine read_1_int_64_abstract_stream
 !
@@ -904,7 +904,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'read from', status_)
+      call the_file%check_io_status(io_status, io_message, 'read from', status_)
 !
    end subroutine read_1_log_abstract_stream
 !
@@ -946,7 +946,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'write to')
+      call the_file%check_io_status(io_status, io_message, 'write to')
 !
    end subroutine write_0_real_dp_abstract_stream
 !
@@ -988,7 +988,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'write to')
+      call the_file%check_io_status(io_status, io_message, 'write to')
 !
    end subroutine write_0_real_sp_abstract_stream
 !
@@ -1030,7 +1030,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'write to')
+      call the_file%check_io_status(io_status, io_message, 'write to')
 !
    end subroutine write_0_complex_dp_abstract_stream
 !
@@ -1072,7 +1072,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'write to')
+      call the_file%check_io_status(io_status, io_message, 'write to')
 !
    end subroutine write_0_int_32_abstract_stream
 !
@@ -1114,7 +1114,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'write to')
+      call the_file%check_io_status(io_status, io_message, 'write to')
 !
    end subroutine write_0_int_64_abstract_stream
 !
@@ -1153,7 +1153,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'write to')
+      call the_file%check_io_status(io_status, io_message, 'write to')
 !
    end subroutine write_0_log_abstract_stream
 !
@@ -1198,7 +1198,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'write to')
+      call the_file%check_io_status(io_status, io_message, 'write to')
 !
    end subroutine write_1_real_dp_abstract_stream
 !
@@ -1243,7 +1243,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'write to')
+      call the_file%check_io_status(io_status, io_message, 'write to')
 !
    end subroutine write_1_real_sp_abstract_stream
 !
@@ -1288,7 +1288,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'write to')
+      call the_file%check_io_status(io_status, io_message, 'write to')
 !
    end subroutine write_1_complex_dp_abstract_stream
 !
@@ -1333,7 +1333,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'write to')
+      call the_file%check_io_status(io_status, io_message, 'write to')
 !
    end subroutine write_1_int_32_abstract_stream
 !
@@ -1378,7 +1378,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'write to')
+      call the_file%check_io_status(io_status, io_message, 'write to')
 !
    end subroutine write_1_int_64_abstract_stream
 !
@@ -1420,7 +1420,7 @@ contains
 !
       end if
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'write to')
+      call the_file%check_io_status(io_status, io_message, 'write to')
 !
    end subroutine write_1_log_abstract_stream
 !
@@ -1453,7 +1453,7 @@ contains
            form='unformatted', action='write', status='new', &
            iostat=io_status, iomsg=io_message)
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'open')
+      call the_file%check_io_status(io_status, io_message, 'open')
 !
 !     Check if the file is open
 !
@@ -1484,7 +1484,7 @@ contains
 !     Close the files
       close(copy_unit, status='keep', iostat=io_status, iomsg=io_message)
 !
-      call the_file%check_io_status(io_status, trim(io_message), 'close')
+      call the_file%check_io_status(io_status, io_message, 'close')
 !
       if(was_closed) then
          call the_file%close_()
@@ -1510,7 +1510,7 @@ contains
 !
          close(the_file%unit_, iostat=io_status, iomsg=io_message, status='delete')
 !
-         call the_file%check_io_status(io_status, trim(io_message), 'delete')
+         call the_file%check_io_status(io_status, io_message, 'delete')
 !
       else
 !
@@ -1518,7 +1518,7 @@ contains
 !
          close(the_file%unit_, iostat=io_status, iomsg=io_message, status='delete')
 !
-         call the_file%check_io_status(io_status, trim(io_message), 'delete')
+         call the_file%check_io_status(io_status, io_message, 'delete')
 !
       endif
 !
@@ -1558,7 +1558,7 @@ contains
       else if(io_status .ne. 0) then
 !
          call output%error_msg('Failed to '// task // ' file (a0), status is &
-                               &(i0) and error message is ' // io_message,   &
+                               &(i0) and error message is: ' // trim(io_message), &
                                chars = [the_file%name_], ints = [io_status])
       endif
 !
