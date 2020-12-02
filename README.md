@@ -106,7 +106,7 @@ Go to this directory:
 ```shell
 cd eT
 ```
-Run the [setup](https://gitlab.com/eT-program/eT/-/wikis/Using-eT/How-to-use-the-setup-script) script to configure CMake:
+Run the [setup](https://etprogram.org/setup.html) script to configure CMake:
 ```shell
 ./setup 
 ```
@@ -136,7 +136,7 @@ This will list the various options,
 a short description,
 and the default values.
 For more detailed description, 
-see the [wiki page](https://gitlab.com/eT-program/eT/-/wikis/Using-eT/How-to-use-the-setup-script).
+see the [website](https://etprogram.org/setup.html).
 
 **Optional:**
 To enable PCMSolver, 
@@ -157,7 +157,7 @@ make
 Use `make -j n`, where `n` is the number of processors, to make the compilation run in parallel.
 
 If successful, the directory now contains the executable, `eT`, as well as a Python launch script 
-[eT_launch](https://gitlab.com/eT-program/eT/-/wikis/Using-eT/How-to-use-the-launch-script). 
+[eT_launch](https://etprogram.org/eT_launch.html). 
 If you downloaded runtest,
 you can test your installation using ctest:
 ```shell
@@ -169,7 +169,7 @@ The launch script is the recommended way of running eT.
 Similarly to `setup`, 
 it has a `--help` option 
 and a more detailed description is available 
-[here](https://gitlab.com/eT-program/eT/-/wikis/Using-eT/How-to-use-the-launch-script).
+[here](https://etprogram.org/eT_launch.html).
 To have `eT_launch` easily available,
 you can add `build` to your `PATH` variable in `.bashrc`;
 ```shell
@@ -177,7 +177,7 @@ export PATH=$PATH:/path/to/eT/build
 ```
 or copy the script to somewhere more convenient.
 
-See the [wiki](https://gitlab.com/eT-program/eT/-/wikis/home) 
+See the [website](https://etprogram.org) 
 for more help or look in `eT/tests` for inspiration when making your own input file.
 For example, 
 `eT/tests/hf_energy/hf_energy.inp` is an input file for a Hartree-Fock calculation.
