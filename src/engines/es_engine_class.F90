@@ -162,8 +162,17 @@ contains
       if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) &
                                                 engine%es_transformation = 'left'
 !
-      if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) &
-                                                engine%es_transformation = 'right'
+      if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) then
+         if (engine%es_transformation == 'left') then
+!
+            engine%es_transformation = 'both'
+!
+         else
+!
+            engine%es_transformation = 'right'
+!
+         end if
+      end if
 !
       engine%es_restart = input%requested_keyword_in_section('restart', 'solver cc es')
 !
@@ -197,7 +206,16 @@ contains
 !
 !     Excited state solutions
 !
-      call engine%do_excited_state(wf, engine%es_transformation, engine%es_restart)
+      if (engine%es_transformation .eq. 'both') then
+!
+         call engine%do_excited_state(wf, 'right', engine%es_restart)
+         call engine%do_excited_state(wf, 'left', restart = .true.)
+!
+      else 
+!
+         call engine%do_excited_state(wf, engine%es_transformation, engine%es_restart)
+!
+      end if
 !
    end subroutine run_es_engine
 !

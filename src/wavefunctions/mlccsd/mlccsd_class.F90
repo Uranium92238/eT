@@ -232,14 +232,14 @@ module mlccsd_class
 !
 !     Read/save
 !
-      procedure :: read_amplitudes              => read_amplitudes_mlccsd
-      procedure :: save_amplitudes              => save_amplitudes_mlccsd
+      procedure :: read_amplitudes                => read_amplitudes_mlccsd
+      procedure :: save_amplitudes                => save_amplitudes_mlccsd
       procedure :: read_excitation_vector_file    => read_excitation_vector_file_mlccsd
       procedure :: save_excitation_vector_on_file => save_excitation_vector_on_file_mlccsd
       procedure :: get_restart_vector             => get_restart_vector_mlccsd
 !
-      procedure :: save_mlcc_orbitals           => save_mlcc_orbitals_mlccsd
-      procedure :: read_mlcc_orbitals           => read_mlcc_orbitals_mlccsd
+      procedure :: save_mlcc_orbitals             => save_mlcc_orbitals_mlccsd
+      procedure :: read_mlcc_orbitals             => read_mlcc_orbitals_mlccsd
 !
 !     Cleanup 
 !
@@ -302,6 +302,10 @@ contains
       wf%do_cc2 = .false.
 !
       wf%need_g_abcd = .false.
+!
+      wf%restart_orbitals = .false.
+      wf%cnto_restart = .false.
+      wf%nto_restart = .false.
 !
       wf%cholesky_orbital_threshold = 1.0d-2
 !
@@ -430,7 +434,13 @@ contains
       has_restart_files = wf%T_cnto_o_file%exists() .and. wf%T_cnto_v_file%exists()
       if (.not. has_restart_files) wf%cnto_restart = .false.
 !
+      has_restart_files = wf%T_nto_o_file%exists()
+      if (.not. has_restart_files) wf%nto_restart = .false.
+!
       if (wf%restart_orbitals) then
+!
+         call output%printf('m', 'Requested orbital restart, &
+                           &reading orbitals and orbital energies')
 !
          call wf%mo_preparations_from_restart()
 !

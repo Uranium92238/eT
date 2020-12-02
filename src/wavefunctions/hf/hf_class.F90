@@ -192,8 +192,8 @@ module hf_class
       procedure :: do_roothan_hall                             => do_roothan_hall_hf
       procedure :: initialize_orbitals                         => initialize_orbitals_hf
       procedure :: roothan_hall_update_orbitals                => roothan_hall_update_orbitals_hf
-      procedure :: print_orbital_energies                      => print_orbital_energies_hf
-      procedure :: print_orbitals                              => print_orbitals_hf
+      procedure :: print_orbitals_and_energies                 => print_orbitals_and_energies_hf
+      procedure :: save_orbital_info                           => save_orbital_info_hf
       procedure :: print_orbitals_from_coefficients            => print_orbitals_from_coefficients_hf
 !
 !     Class variable initialize and destruct routines
@@ -280,6 +280,9 @@ module hf_class
       procedure :: prepare_for_roothan_hall_mo                 => prepare_for_roothan_hall_mo_hf
 !
       procedure :: flip_final_orbitals                         => flip_final_orbitals_hf
+!
+      procedure :: calculate_frozen_dipole_moment              => calculate_frozen_dipole_moment_hf
+      procedure :: calculate_frozen_quadrupole_moment          => calculate_frozen_quadrupole_moment_hf
 !
    end type hf
 !
@@ -511,25 +514,7 @@ contains
    end subroutine read_hf_settings_hf
 !
 !
-   subroutine print_orbital_energies_hf(wf)
-!!
-!!    Print orbital energies
-!!    Written by Eirik F. Kjønstad, Sep 2018
-!!
-!!    Prints the current orbital energies to output
-!!    in a hopefully readable way.
-!!
-      implicit none
-!
-      class(hf), intent(in) :: wf
-!
-      call output%print_vector('normal', '- Molecular orbital energies', wf%n_mo, wf%orbital_energies, &
-                              fs='(f16.12)', columns=4)
-!
-   end subroutine print_orbital_energies_hf
-!
-!
-   subroutine print_summary_hf(wf)
+   subroutine print_summary_hf(wf, print_mo_info)
 !!
 !!    Print Summary
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -540,23 +525,23 @@ contains
 !
       class(hf), intent(inout) :: wf
 !
+      logical, intent(in) :: print_mo_info
+!
       call output%printf('m', '- Summary of '// &
                          &trim(convert_to_uppercase(wf%name_))// ' wavefunction &
                          &energetics (a.u.):', fs='(/t3,a)')
 !
       call wf%print_energy()
-      call wf%print_orbital_energies()
+!
+      if (print_mo_info) call wf%save_orbital_info()
 !
    end subroutine print_summary_hf
 !
 !
-   subroutine print_orbitals_hf(wf)
+   subroutine save_orbital_info_hf(wf)
 !!
-!!    Print orbitals
-!!    Written by Eirik F. Kjønstad and Tor S. Haugland, Oct 2019
-!!    Modified by Alexander C. Paul to print all MOs to file, Dec 2019
-!!
-!!    Prints the orbitals with atom & orbital information given.
+!!    Save orbital info
+!!    Written by Alexander C. Paul, Nov 2020
 !!
       use output_file_class, only: output_file
 !
@@ -564,17 +549,54 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      type(output_file) :: mo_coefficient_file
+      type(output_file) :: mo_information_file
 !
-      mo_coefficient_file = output_file('mo_coefficients.out')
-      call mo_coefficient_file%open_()
+      mo_information_file = output_file('mo_information.out')
+      call mo_information_file%open_('rewind')
 !
-      call wf%print_orbitals_from_coefficients(wf%orbital_coefficients, &
-                                               mo_coefficient_file)
+      call wf%print_orbitals_and_energies(mo_information_file, wf%orbital_energies, &
+                                          wf%orbital_coefficients, '- Molecular orbital')
 !
-      call mo_coefficient_file%close_()
+      call mo_information_file%close_()
 !
-   end subroutine print_orbitals_hf
+   end subroutine save_orbital_info_hf
+!
+!
+   subroutine print_orbitals_and_energies_hf(wf, mo_information_file, mo_energies, &
+                                    mo_coefficients, prefix)
+!!
+!!    Print orbitals and energies
+!!    Written by Eirik F. Kjønstad and Tor S. Haugland, Oct 2019
+!!    Modified by Alexander C. Paul to print all MOs to file, Dec 2019
+!!    Modified by ALexander C. Paul prints MO energies to file as well, Oct 2020
+!!
+!!    Prints the orbital energies and the orbitals with atom & orbital information given.
+!!
+      use output_file_class, only: output_file
+!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      type(output_file), intent(inout) :: mo_information_file
+!
+      real(dp), dimension(wf%n_mo), intent(in) :: mo_energies
+      real(dp), dimension(wf%n_ao, wf%n_mo), intent(in) :: mo_coefficients
+!
+      character(len=*), intent(in) :: prefix
+      character(len=200) :: header
+!
+      write(header, '(a,a)') trim(prefix), ' energies'
+!
+      call mo_information_file%print_vector('m', header, wf%n_mo, mo_energies, &
+                                             fs='(f16.12)', columns=4)
+!
+      write(header, '(a,a)') trim(prefix), ' coefficients'
+      call mo_information_file%printf('m', header, fs='(//t3,a)')
+!
+      call wf%print_orbitals_from_coefficients(mo_coefficients, mo_information_file)
+!
+   end subroutine print_orbitals_and_energies_hf
 !
 !
    subroutine print_orbitals_from_coefficients_hf(wf, orbital_coefficients, the_file)
@@ -865,6 +887,9 @@ contains
 !     is requested
 !
       call wf%prepare_mos()
+!
+      call wf%calculate_frozen_dipole_moment()
+      call wf%calculate_frozen_quadrupole_moment()
 !
 !     Prepare frozen Fock terms from frozen core 
 !     and frozen HF

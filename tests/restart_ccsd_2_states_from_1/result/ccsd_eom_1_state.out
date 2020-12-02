@@ -179,15 +179,15 @@
      5           -78.843850846799     0.3301E-03     0.4131E-04
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
-     8           -78.843851693557     0.2356E-05     0.7053E-09
-     9           -78.843851693630     0.2071E-06     0.7384E-10
-    10           -78.843851693631     0.1594E-07     0.2700E-12
-    11           -78.843851693631     0.3322E-08     0.1563E-12
-    12           -78.843851693631     0.1197E-08     0.9948E-13
-    13           -78.843851693631     0.4264E-09     0.1421E-13
-    14           -78.843851693631     0.1280E-09     0.1421E-13
-    15           -78.843851693631     0.1479E-10     0.1421E-13
-    16           -78.843851693631     0.2908E-11     0.1421E-13
+     8           -78.843851693557     0.2356E-05     0.7054E-09
+     9           -78.843851693630     0.2071E-06     0.7383E-10
+    10           -78.843851693631     0.1594E-07     0.2984E-12
+    11           -78.843851693631     0.3322E-08     0.7105E-13
+    12           -78.843851693631     0.1197E-08     0.1421E-13
+    13           -78.843851693631     0.4264E-09     0.2842E-13
+    14           -78.843851693631     0.1280E-09     0.4263E-13
+    15           -78.843851693631     0.1479E-10     0.7105E-13
+    16           -78.843851693631     0.2906E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -213,8 +213,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.01691
-     Total cpu time (sec):               2.01426
+     Total wall time (sec):              0.52076
+     Total cpu time (sec):               1.03404
 
 
   :: CCSD wavefunction
@@ -310,12 +310,13 @@
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       True
+     ERI matrix in memory:       False
+     T1 ERI matrix in memory:    True
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.35765
-     Total cpu time (sec):               0.71592
+     Total wall time (sec):              0.17682
+     Total cpu time (sec):               0.35283
 
 
   2) Preparation of MO basis and integrals
@@ -356,7 +357,7 @@
    11           -79.100383466393     0.6705E-06     0.3938E-07
    12           -79.100383474630     0.2989E-06     0.8237E-08
    13           -79.100383487351     0.1028E-06     0.1272E-07
-   14           -79.100383481865     0.3056E-07     0.5487E-08
+   14           -79.100383481864     0.3056E-07     0.5487E-08
    15           -79.100383481092     0.6508E-08     0.7730E-09
    16           -79.100383481302     0.2112E-08     0.2109E-09
    17           -79.100383481484     0.6588E-09     0.1819E-09
@@ -409,8 +410,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.60858
-     Total cpu time (sec):               1.21361
+     Total wall time (sec):              0.22029
+     Total cpu time (sec):               0.44030
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -435,32 +436,31 @@
 
   Iteration    Norm residual
   ----------------------------
-    1          0.2076E+01
-    2          0.2758E+00
-    3          0.7390E-01
-    4          0.1823E-01
-    5          0.5144E-02
-    6          0.1276E-02
-    7          0.4964E-03
-    8          0.1188E-03
-    9          0.3340E-04
-   10          0.1139E-04
-   11          0.4270E-05
-   12          0.1506E-05
-   13          0.7168E-06
-   14          0.2642E-06
-   15          0.7915E-07
-   16          0.2040E-07
-   17          0.5933E-08
-   18          0.2025E-08
-   19          0.5601E-09
-   20          0.2374E-09
-   21          0.7979E-10
-   22          0.2750E-10
-   23          0.1089E-10
-   24          0.5256E-11
+    1          0.1021E+01
+    2          0.1361E+00
+    3          0.3631E-01
+    4          0.8952E-02
+    5          0.2512E-02
+    6          0.6071E-03
+    7          0.2307E-03
+    8          0.5637E-04
+    9          0.1605E-04
+   10          0.5490E-05
+   11          0.2004E-05
+   12          0.6562E-06
+   13          0.3073E-06
+   14          0.1215E-06
+   15          0.3779E-07
+   16          0.9826E-08
+   17          0.2801E-08
+   18          0.9514E-09
+   19          0.2593E-09
+   20          0.1098E-09
+   21          0.3681E-10
+   22          0.1219E-10
+   23          0.4638E-11
   ----------------------------
-  Convergence criterion met in 24 iterations!
+  Convergence criterion met in 23 iterations!
 
   - DIIS CC multipliers solver summary:
 
@@ -468,7 +468,7 @@
      -----------------------------------
         a       i         tbar(a,i)
      -----------------------------------
-        1      5        0.022790118897
+        1      5        0.022790118898
        14      4       -0.015907507091
         7      4        0.014297181947
         4      5        0.011712306721
@@ -484,7 +484,7 @@
      --------------------------------------------------
         a      i       b      j         tbar(ai,bj)
      --------------------------------------------------
-        5      6       5      6       -0.092500754790
+        5      6       5      6       -0.092500754791
         2      4       2      4       -0.092085328213
         6      5       5      6        0.089666625590
         2      4       5      6       -0.083792278098
@@ -498,8 +498,8 @@
 
   - Finished solving the ccsd multipliers equations
 
-     Total wall time (sec):              0.19741
-     Total cpu time (sec):               0.39320
+     Total wall time (sec):              0.10334
+     Total cpu time (sec):               0.20735
 
 
   5) Calculation of the excited state (diis algorithm)
@@ -528,6 +528,7 @@
      Max number of iterations:             100
 
      DIIS dimension:                        20
+
 
   Iteration:                  1
 
@@ -774,8 +775,8 @@
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              0.16019
-     Total cpu time (sec):               0.32007
+     Total wall time (sec):              0.10456
+     Total cpu time (sec):               0.20850
 
 
   5) Calculation of the excited state (diis algorithm)
@@ -804,6 +805,7 @@
      Max number of iterations:             100
 
      DIIS dimension:                        20
+
 
   Iteration:                  1
 
@@ -998,7 +1000,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255572       0.4515E-11
+     1      0.247194255572       0.4514E-11
   -----------------------------------------------
   Convergence criterion met in 28 iterations!
 
@@ -1057,8 +1059,8 @@
 
   - Finished solving the CCSD excited state equations (left)
 
-     Total wall time (sec):              0.22102
-     Total cpu time (sec):               0.44346
+     Total wall time (sec):              0.12906
+     Total cpu time (sec):               0.25705
 
 
   6) Calculation of the transition moments (EOM)
@@ -1086,8 +1088,8 @@
 
   - Timings for the CCSD response calculation
 
-     Total wall time (sec):              1.54723
-     Total cpu time (sec):               3.08866
+     Total wall time (sec):              0.73562
+     Total cpu time (sec):               1.47157
 
      Peak memory usage during the execution of eT: 16.307080 MB
 

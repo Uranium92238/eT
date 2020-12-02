@@ -57,6 +57,7 @@ def list_restart_files(restart_dir):
         "l_*",
         "G_De_ao",
         "mlhf_inactive_fock_term",
+        "*nto*transformation",
     ]
     rfiles = []
     for regex in regexs:
@@ -110,7 +111,8 @@ parser.add_argument(
 parser.add_argument(
     "-i-err",
     "--ignore-errors",
-    help="Continue with default behaviour if errors detected",
+    help="Continue with default behaviour if errors detected, "
+    "i.e. continue the loop over input files and delete scratch when done.",
     action="store_true",
 )
 
@@ -332,14 +334,14 @@ for i, (inpf, outf) in enumerate(zip(args.input_file, args.output_file)):
             xyzdest = cwd / xyzfile
             shutil.copyfile(xyzsrc, xyzdest)
 
-    # Check if there are mo_coefficient.out files
-    coeff_files = scratch.glob("*mo_coefficients.out")
-    for coeff_file in coeff_files:
-        coeff_file = coeff_file.name
-        mo_coeff_src = scratch / coeff_file
-        mo_coeff_name = f"{out_name}_{coeff_file}"
-        mo_coeff_dest = cwd / mo_coeff_name
-        shutil.copyfile(mo_coeff_src, mo_coeff_dest)
+    # Check if there are mo_information.out files
+    mo_files = scratch.glob("*mo_information.out")
+    for mo_file in mo_files:
+        mo_file = mo_file.name
+        mo_src = scratch / mo_file
+        mo_name = f"{out_name}_{mo_file}"
+        mo_dest = cwd / mo_name
+        shutil.copyfile(mo_src, mo_dest)
 
     # Check if there are any .plt files
     pltfiles = scratch.glob("*.plt")

@@ -534,6 +534,11 @@ module reordering
                    construct_packed_contravariant_complex
    end interface construct_packed_contravariant
 !
+   interface construct_packed_covariant
+      procedure :: construct_packed_covariant_real, &
+                   construct_packed_covariant_complex
+   end interface construct_packed_covariant
+!
 !
 contains
 !
@@ -7779,7 +7784,12 @@ contains
 !$omp parallel do schedule(static) collapse(2) private(s,r,q,p,pq,rs,pqrs)
       do s = 1, dim_q
          do r = 1, dim_p
+!
+            rs = dim_p*(s-1)+r
+!
             do q = 1, s
+!
+               rq = dim_p*(q-1)+r
 !
                if (s .ne. q) then
                   p_end = dim_p
@@ -7790,8 +7800,6 @@ contains
                do p = 1, p_end
 !
                   pq = dim_p*(q-1)+p
-                  rs = dim_p*(s-1)+r
-                  rq = dim_p*(q-1)+r
                   ps = dim_p*(s-1)+p
                   pqrs = rs*(rs-3)/2 + pq + rs
                   rqps = max(rq,ps)*(max(rq,ps)-3)/2 + rq + ps
@@ -7827,7 +7835,12 @@ contains
 !$omp parallel do schedule(static) collapse(2) private(s,r,q,p,pq,rs,pqrs)
       do s = 1, dim_q
          do r = 1, dim_p
+!
+            rs = dim_p*(s-1)+r
+!
             do q = 1, s
+!
+               rq = dim_p*(q-1)+r
 !
                if (s .ne. q) then
                   p_end = dim_p
@@ -7838,8 +7851,6 @@ contains
                do p = 1, p_end
 !
                   pq = dim_p*(q-1)+p
-                  rs = dim_p*(s-1)+r
-                  rq = dim_p*(q-1)+r
                   ps = dim_p*(s-1)+p
                   pqrs = rs*(rs-3)/2 + pq + rs
                   rqps = max(rq,ps)*(max(rq,ps)-3)/2 + rq + ps
@@ -7853,6 +7864,112 @@ contains
 !$omp end parallel do
 !
    end subroutine construct_packed_contravariant_complex
+!
+!
+   subroutine construct_packed_covariant_real(x, y, dim_p, dim_q)
+!!
+!!    Construct packed covariant
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Aug 2020
+!!
+!!    Constructs:
+!!       Y_pqrs = 1/3(2X_pqrs + X_rqps)
+!!
+!!    Note that this routine requires dim_p = dim_r and dim_q = dim_s
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      real(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(in)  :: x
+      real(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(out) :: y
+!
+      integer :: p, q, r, s, pq, rs, pqrs, p_end, rq, ps, rqps
+!
+!$omp parallel do schedule(static) collapse(2) private(s,r,q,p,pq,rs,pqrs)
+      do s = 1, dim_q
+         do r = 1, dim_p
+!
+            rs = dim_p*(s-1)+r
+!
+            do q = 1, s
+!
+               rq = dim_p*(q-1)+r
+!
+               if (s .ne. q) then
+                  p_end = dim_p
+               else
+                  p_end = r
+               end if
+!
+               do p = 1, p_end
+!
+                  pq = dim_p*(q-1)+p
+                  ps = dim_p*(s-1)+p
+                  pqrs = rs*(rs-3)/2 + pq + rs
+                  rqps = max(rq,ps)*(max(rq,ps)-3)/2 + rq + ps
+!
+                  y(pqrs) = third*(two*x(pqrs) + x(rqps))
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine construct_packed_covariant_real
+!
+!
+   subroutine construct_packed_covariant_complex(x, y, dim_p, dim_q)
+!!
+!!    Construct packed covariant
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Aug 2020
+!!
+!!    Constructs:
+!!       Y_pqrs = 1/3(2X_pqrs + X_rqps)
+!!
+!!    Note that this routine requires dim_p = dim_r and dim_q = dim_s
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      complex(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(in)  :: x
+      complex(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(out) :: y
+!
+      integer :: p, q, r, s, pq, rs, pqrs, p_end, rq, ps, rqps
+!
+!$omp parallel do schedule(static) collapse(2) private(s,r,q,p,pq,rs,pqrs)
+      do s = 1, dim_q
+         do r = 1, dim_p
+!
+            rs = dim_p*(s-1)+r
+!
+            do q = 1, s
+!
+               rq = dim_p*(q-1)+r
+!
+               if (s .ne. q) then
+                  p_end = dim_p
+               else
+                  p_end = r
+               end if
+!
+               do p = 1, p_end
+!
+                  pq = dim_p*(q-1)+p
+                  ps = dim_p*(s-1)+p
+                  pqrs = rs*(rs-3)/2 + pq + rs
+                  rqps = max(rq,ps)*(max(rq,ps)-3)/2 + rq + ps
+!
+                  y(pqrs) = third*(two*x(pqrs) + x(rqps))
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine construct_packed_covariant_complex
 !
 !
 end module reordering

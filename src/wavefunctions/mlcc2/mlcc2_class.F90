@@ -89,6 +89,7 @@ module mlcc2_class
       integer, dimension(:), allocatable :: nto_states
 !
       logical :: cnto_restart
+      logical :: nto_restart
 !
       logical :: restart_orbitals
 !
@@ -98,6 +99,7 @@ module mlcc2_class
       type(stream_file) :: orbital_coefficients_mlcc_file
       type(stream_file) :: orbital_energies_mlcc_file
 !
+      type(stream_file) :: T_nto_o_file
       type(stream_file) :: T_cnto_o_file
       type(stream_file) :: T_cnto_v_file
 !
@@ -160,6 +162,12 @@ module mlcc2_class
                      => read_cnto_transformation_matrices_mlcc2
       procedure :: write_cnto_transformation_matrices &
                      => write_cnto_transformation_matrices_mlcc2
+!
+!
+      procedure :: read_nto_transformation_matrix &
+                     => read_nto_transformation_matrix_mlcc2
+      procedure :: write_nto_transformation_matrix &
+                     => write_nto_transformation_matrix_mlcc2
 !
       procedure :: construct_ccs_cnto_transformation_matrices        => construct_ccs_cnto_transformation_matrices_mlcc2
 !
@@ -294,6 +302,7 @@ contains
 !
       wf%restart_orbitals = .false.
       wf%cnto_restart = .false.
+      wf%nto_restart = .false.
 !
       wf%cholesky_orbital_threshold = 1.0d-2
 !
@@ -319,6 +328,10 @@ contains
 !
          wf%T_cnto_o_file = stream_file('cnto_M_transformation')
          wf%T_cnto_v_file = stream_file('cnto_N_transformation')
+!
+      elseif (trim(wf%cc2_orbital_type) == 'nto-canonical') then
+!
+         wf%T_nto_o_file = stream_file('nto_M_transformation')
 !
       endif
 !
@@ -444,6 +457,11 @@ contains
                   wf%cholesky_orbital_threshold)
 !
       elseif (trim(orbital_type) == 'nto-canonical') then
+!
+         wf%nto_restart = .false.
+!
+         if (input%requested_keyword_in_section('nto restart', 'mlcc') .or. &
+            input%requested_keyword_in_section('restart', 'do')) wf%nto_restart = .true.
 !
          wf%n_nto_states = input%get_n_elements_for_keyword_in_section('nto states', 'mlcc')
 !
@@ -1011,7 +1029,6 @@ contains
 !
       integer ::  mo
 !
-!
 !     Sanity check on core MOs -> Are they in active space?
 !
       do mo = 1, wf%n_core_MOs
@@ -1036,17 +1053,22 @@ contains
 !
       class(mlcc2) :: wf
 !
-      if (wf%restart_orbitals .and.                               &
-         ((.not. wf%orbital_coefficients_mlcc_file%exists()) .or. &
-         (.not. wf%orbital_energies_mlcc_file%exists())))         &
-               wf%restart_orbitals = .false.
+      logical :: has_restart_files
 !
-      if (wf%cnto_restart .and.                       &
-            ((.not. wf%T_cnto_o_file%exists()) .or.   &
-             (.not. wf%T_cnto_v_file%exists())))      &
-                  wf%cnto_restart = .false.
+      has_restart_files = wf%orbital_coefficients_mlcc_file%exists() .and. &
+                          wf%orbital_energies_mlcc_file%exists()
+      if (.not. has_restart_files) wf%restart_orbitals = .false.
+!
+      has_restart_files = wf%T_cnto_o_file%exists() .and. wf%T_cnto_v_file%exists()
+      if (.not. has_restart_files) wf%cnto_restart = .false.
+!
+      has_restart_files = wf%T_nto_o_file%exists()
+      if (.not. has_restart_files) wf%nto_restart = .false.
 !
       if (wf%restart_orbitals) then
+!
+         call output%printf('m', 'Requested orbital restart, &
+                           &reading orbitals and orbital energies')
 !
          call wf%mo_preparations_from_restart()
 !

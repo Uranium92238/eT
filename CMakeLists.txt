@@ -35,7 +35,7 @@ set(CMAKE_MODULE_PATH
 
 # Set options with standard values 
 
-option(ENABLE_64BIT_INTEGERS  "Enable 64-bit integers"      	                          ON)
+option(ENABLE_64BIT_INTEGERS  "Enable 64-bit integers"                                   ON)
 option(ENABLE_AUTO_BLAS       "Enable CMake to autodetect BLAS"                          ON)
 option(ENABLE_AUTO_LAPACK     "Enable CMake to autodetect LAPACK"                        ON)
 option(ENABLE_OMP             "Enable OpenMP parallelization"                            ON)
@@ -49,21 +49,6 @@ find_package(Libint2 REQUIRED)
 find_package(Eigen3)
 find_package(Boost REQUIRED)
 
-if(ENABLE_PCMSOLVER)
-   add_definitions(-DHAS_PCMSOLVER)
-   message(STATUS "Polarizable Continuum Model via PCMSolver ENABLED")
-   find_package(PCMSolver REQUIRED)
-
-endif()
-
-message("-- Boost location: ${Boost_INCLUDE_DIRS}")
-
-# Include the relevant directories 
-if(ENABLE_PCMSOLVER)
-   include_directories(${PCMSolver_INCLUDE_DIR})
-endif()
-
-
 if(NOT ENABLE_64BIT_INTEGERS)
    add_definitions(-DHAS_32BIT_INTEGERS)
    message(STATUS "32bit integers ENABLED")
@@ -74,6 +59,8 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Libint2_H_DIR})
 include_directories(${Libint2_INCLUDE_DIR})
 
+message("-- Boost location: ${Boost_INCLUDE_DIRS}")
+
 # Including the source files
 include(eT_sources)
 include(Fortran_flags)
@@ -81,7 +68,12 @@ include(eT_CXX_sources)
 include(CXX_flags)
 include(ConfigTesting)
 
+#Handle PCMSolver
 if(ENABLE_PCMSOLVER)
+   add_definitions(-DHAS_PCMSOLVER)
+   message(STATUS "Polarizable Continuum Model via PCMSolver ENABLED")
+   find_package(PCMSolver REQUIRED)
+   include_directories(${PCMSolver_INCLUDE_DIR})
    set(eT_fortran_sources 
    ${PCMSolver_INCLUDE_DIR}/PCMSolver/pcmsolver.f90
    ${eT_fortran_sources}
@@ -99,18 +91,10 @@ if(LAPACK_FOUND AND BLAS_FOUND)
     set(lapackblas_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 endif()
 
-
-set(eT_fortran_sources
-        ${eT_fortran_sources}
-        )
-
-set(eT_CXX_sources
-        ${eT_CXX_sources}
-        )
-
 add_executable(eT ${eT_fortran_sources} ${eT_CXX_sources})
+add_library(get_compilation_info ${CMAKE_BINARY_DIR}/get_compilation_info.F90)
 
-target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} ${PCMSolver_LIBRARY} ${EXTRA_LINKER_FLAGS})
+target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} ${PCMSolver_LIBRARY} ${EXTRA_LINKER_FLAGS} get_compilation_info)
 
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
 
@@ -126,9 +110,14 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest)
    file(COPY ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest DESTINATION ${CMAKE_BINARY_DIR}/tests)
 endif()
 
+#Configure eT_launch, set permissions toexecutable and copy into build
 configure_file(${CMAKE_SOURCE_DIR}/eT_launch.in ${CMAKE_SOURCE_DIR}/eT_launch)
 file(COPY ${CMAKE_SOURCE_DIR}/eT_launch 
      DESTINATION ${CMAKE_BINARY_DIR} 
      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ WORLD_READ)
 file(REMOVE  ${CMAKE_SOURCE_DIR}/eT_launch)
+
+#Configure get_complilation_info library
+include(CompilationInfo)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/get_compilation_info.in ${CMAKE_BINARY_DIR}/get_compilation_info.F90)
 

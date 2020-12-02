@@ -75,6 +75,7 @@ module diis_cc_es_class
    use array_utilities, only: quicksort_with_index_ascending, get_l2_norm
    use string_utilities, only: convert_to_uppercase
    use precondition_tool_class, only: precondition_tool
+   use convergence_tool_class, only: convergence_tool 
 !
    implicit none
 !
@@ -149,8 +150,6 @@ contains
 !
       solver%n_singlet_states          = 0
       solver%max_iterations            = 100
-      solver%eigenvalue_threshold      = 1.0d-6
-      solver%residual_threshold        = 1.0d-6
       solver%diis_dimension            = 20
       solver%restart                   = restart
       solver%transformation            = trim(transformation)
@@ -161,7 +160,14 @@ contains
       solver%davidson_preconvergence   = .false.
       solver%preconvergence_threshold  = 1.0d-2
 !
+!     Initialize convergence checker with default threshols
+!
+      solver%convergence_checker = convergence_tool(energy_threshold   = 1.0d-3,   &
+                                                    residual_threshold = 1.0d-3,   &
+                                                    energy_convergence = .false.)
+!
       call solver%read_settings()
+!
       call solver%print_settings()
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
@@ -279,9 +285,6 @@ contains
 !
       logical, dimension(:), allocatable :: converged
 !
-      logical, dimension(:), allocatable :: converged_eigenvalue
-      logical, dimension(:), allocatable :: converged_residual
-!
       real(dp), dimension(:), allocatable :: prev_energies
       real(dp), dimension(:), allocatable :: residual_norms 
 !
@@ -332,12 +335,8 @@ contains
       residual_norms    = zero 
 !
       call mem%alloc(converged, (solver%n_singlet_states))
-      call mem%alloc(converged_residual, (solver%n_singlet_states))
-      call mem%alloc(converged_eigenvalue, (solver%n_singlet_states))
 !
-      converged            = .false.
-      converged_residual   = .false.
-      converged_eigenvalue = .false.
+      converged = .false.
 !
 !     Make DIIS tools array & initialize the individual DIIS tools 
 !
@@ -407,21 +406,11 @@ contains
 !
 !              Update convergence logicals 
 !
-               converged_eigenvalue(state) = abs(solver%energies(state)-prev_energies(state)) &
-                                                      .lt. solver%eigenvalue_threshold
-!
-               converged_residual(state)   = residual_norms(state) .lt. solver%residual_threshold
-!
-               converged(state) = converged_eigenvalue(state) .and. converged_residual(state)
+               converged(state) = solver%convergence_checker%has_converged(residual_norms(state), &
+                                          solver%energies(state)-prev_energies(state), iteration)
 !
 !              Perform DIIS extrapolation to the optimal next guess for X,
 !              then normalize it to avoid accumulating norm in X
-!
-               if (converged_residual(state) .and. iteration .eq. 1) then 
-!
-                  converged(state) = .true.
-!
-               endif
 !
                if (.not. converged(state)) then
 !
@@ -506,13 +495,13 @@ contains
 !
          call output%printf('n', '- Stored converged states to file.', fs='(/t3,a)')
 !
+         call wf%set_excitation_energies(solver%energies, solver%transformation)
+!
          call solver%print_summary(wf, X, X_order)
 !
          call mem%dealloc(X_order, solver%n_singlet_states)
 !
-         call wf%set_excitation_energies(solver%energies, solver%transformation)
-!
-         call wf%check_for_parallel_states(solver%transformation, solver%residual_threshold)
+         call wf%check_for_parallel_states(solver%transformation, solver%convergence_checker%residual_threshold)
 !
       else 
 !
@@ -524,8 +513,6 @@ contains
       call mem%dealloc(residual_norms, solver%n_singlet_states)
 !
       call mem%dealloc(converged, (solver%n_singlet_states))
-      call mem%dealloc(converged_residual, (solver%n_singlet_states))
-      call mem%dealloc(converged_eigenvalue, (solver%n_singlet_states))
 !
       call mem%dealloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
       call mem%dealloc(R, wf%n_es_amplitudes, solver%n_singlet_states)
@@ -601,7 +588,8 @@ contains
                                                  solver%es_type,                    &
                                                  solver%storage,                    &
                                                  solver%n_singlet_states,           &
-                                                 prepare_wf=.false.)
+                                                 prepare_wf=.false.,                &
+                                                 energy_convergence=solver%convergence_checker%energy_convergence)
 !
       call davidson_solver%run(wf)
 !

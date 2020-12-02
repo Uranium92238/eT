@@ -1,16 +1,39 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.1 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.1.0, Nachspiel
+  ------------------------------------------------------------
+  Compiled by:        alexancp
+  Compiled on:        NTNU16748
+  Configuration date: 2020-11-26 19:47:10 UTC +01:00
+  Git branch:         always-restart-l-from-r
+  Git hash:           b27c502fa8a19f78bb56d8c82213e7b5136821fe
+  Fortran compiler:   GNU 9.3.0
+  C compiler:         GNU 9.3.0
+  C++ compiler:       GNU 9.3.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2020-11-27 09:07:27 UTC +01:00
 
 
   :: Input file
@@ -52,7 +75,7 @@
      end active atoms
 
 
-  Running on 2 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -64,9 +87,9 @@
      Multiplicity:     1
      Coordinate units: angstrom
 
-     Pure basis functions:         82
-     Cartesian basis functions:    86
-     Primitive basis functions:   134
+     Pure basis functions:         48
+     Cartesian basis functions:    50
+     Primitive basis functions:    98
 
      Nuclear repulsion energy (a.u.):             37.386395233393
      Bohr/angstrom value (CODATA 2010):            0.529177210920
@@ -76,9 +99,9 @@
      ====================================
         Atom              Basis   Method
      ====================================
-        1 O         aug-cc-pvdz    hf
-        2 H         aug-cc-pvdz    hf
-        3 H         aug-cc-pvdz    hf
+        1 O             cc-pvdz    hf
+        2 H             cc-pvdz    hf
+        3 H             cc-pvdz    hf
      ====================================
      Total number of active atoms: 3
      OBS: Atoms will be reordered, active atoms first
@@ -88,7 +111,7 @@
      ==============================================================================
         Atom           X                  Y                  Z         # in input
      ==============================================================================
-        Basis: aug-cc-pvdz
+        Basis: cc-pvdz
         1 O     -0.573030000000     2.189950000000    -0.052560000000        1
         2 H      0.347690000000     2.485980000000     0.050490000000        2
         3 H     -1.075800000000     3.019470000000     0.020240000000        3
@@ -102,7 +125,7 @@
      ==============================================================================
         Atom           X                  Y                  Z         # in input
      ==============================================================================
-        Basis: aug-cc-pvdz
+        Basis: cc-pvdz
         1 O     -1.082869761160     4.138405726491    -0.099324005107        1
         2 H      0.657038876250     4.697821351146     0.095412272029        2
         3 H     -2.032967364807     5.705971341340     0.038248056761        3
@@ -127,9 +150,9 @@
   - Orbital details:
 
      Number of occupied orbitals:        10
-     Number of virtual orbitals:         72
-     Number of molecular orbitals:       82
-     Number of atomic orbitals:          82
+     Number of virtual orbitals:         38
+     Number of molecular orbitals:       48
+     Number of atomic orbitals:          48
 
 
   :: Hartree-Fock engine
@@ -161,8 +184,8 @@
 
      DIIS dimension:                         8
 
+     Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
-     Gradient threshold:            0.1000E-10
 
      Coulomb screening threshold:   0.1000E-16
      Exchange screening threshold:  0.1000E-14
@@ -171,70 +194,70 @@
 
   - Setting initial AO density to SAD
 
-     Energy of initial guess:              -151.700236809961
+     Energy of initial guess:              -151.796506244372
      Number of electrons in guess:           20.000000000000
 
   - Active orbital space:
 
       Number of active occupied orbitals:        5
-      Number of active virtual orbitals:        41
-      Number of active orbitals:                46
+      Number of active virtual orbitals:        24
+      Number of active orbitals:                29
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -151.272511660155     0.2138E+00     0.1513E+03
-     2          -151.284222747106     0.4918E-01     0.1171E-01
-     3          -151.284917619211     0.2458E-01     0.6949E-03
-     4          -151.285122036730     0.2848E-02     0.2044E-03
-     5          -151.285127410256     0.4541E-03     0.5374E-05
-     6          -151.285127643784     0.9510E-04     0.2335E-06
-     7          -151.285127648885     0.1623E-04     0.5101E-08
-     8          -151.285127649166     0.2999E-05     0.2811E-09
-     9          -151.285127649175     0.4476E-06     0.8811E-11
-    10          -151.285127649175     0.1987E-06     0.3126E-12
-    11          -151.285127649175     0.8237E-07     0.2842E-13
-    12          -151.285127649175     0.1439E-07     0.0000E+00
-    13          -151.285127649175     0.3413E-08     0.5684E-13
-    14          -151.285127649175     0.6538E-09     0.2842E-13
-    15          -151.285127649175     0.1267E-09     0.2842E-13
-    16          -151.285127649175     0.2598E-10     0.2842E-13
-    17          -151.285127649175     0.3029E-11     0.0000E+00
+     1          -151.588800438698     0.2161E+00     0.1516E+03
+     2          -151.601725994917     0.1316E+00     0.1293E-01
+     3          -151.605163926717     0.1530E-01     0.3438E-02
+     4          -151.605296875270     0.1865E-02     0.1329E-03
+     5          -151.605298664112     0.2553E-03     0.1789E-05
+     6          -151.605298715585     0.1055E-03     0.5147E-07
+     7          -151.605298722048     0.2946E-04     0.6463E-08
+     8          -151.605298722506     0.3778E-05     0.4585E-09
+     9          -151.605298722515     0.5719E-06     0.8896E-11
+    10          -151.605298722515     0.2475E-06     0.2274E-12
+    11          -151.605298722515     0.5146E-07     0.8527E-13
+    12          -151.605298722515     0.2124E-07     0.5684E-13
+    13          -151.605298722515     0.5459E-08     0.2842E-13
+    14          -151.605298722516     0.8547E-09     0.5684E-13
+    15          -151.605298722515     0.1968E-09     0.2842E-13
+    16          -151.605298722516     0.3203E-10     0.5684E-13
+    17          -151.605298722516     0.2832E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
   - Summary of MLHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.567650218660
+     HOMO-LUMO gap:                  0.692127597682
      Nuclear repulsion energy:      37.386395233393
-     Electronic energy:           -188.671522882569
-     Total energy:                -151.285127649175
+     Electronic energy:           -188.991693955909
+     Total energy:                -151.605298722516
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
-     Active energy:               -104.882980576402
-     Active-inactive energy:        19.544110671999
-     Inactive energy:             -103.332652978166
+     Active energy:               -105.136992188615
+     Active-inactive energy:        19.848422490294
+     Inactive energy:             -103.703124257587
 
   - Molecular orbital energies
 
   -----------------------------------------------------------------------------------
-   1 -20.601079467061  13   0.325511421554  25   1.120570921341  37   2.433540774218
-   2  -1.370532866639  14   0.372276540301  26   1.184853562965  38   2.573260334378
-   3  -0.733781429266  15   0.385255859678  27   1.224791051506  39   2.678762403438
-   4  -0.619996527629  16   0.411300511944  28   1.302604434157  40   2.833592155103
-   5  -0.537519443630  17   0.533140966028  29   1.302679665770  41   2.957479148415
-   6   0.030130775030  18   0.542178966773  30   1.433333928001  42   3.656430009780
-   7   0.054332259260  19   0.631574114320  31   1.481395255806  43   3.671612906012
-   8   0.170919027958  20   0.643110475547  32   1.678272423612  44   3.774165007334
-   9   0.193689867651  21   0.668066629413  33   1.975617727184  45   4.008183276562
-  10   0.226517572896  22   0.777745248889  34   1.983998726538  46   4.252009568522
-  11   0.228951164346  23   0.915943188497  35   2.108086196739
-  12   0.275029148829  24   1.013293627382  36   2.349830143612
+   1 -20.584986436602   9   0.742419012127  17   1.634987027074  25   3.259395614454
+   2  -1.391538580087  10   0.827698754554  18   1.717720625516  26   3.281287885708
+   3  -0.722070284631  11   1.140648852515  19   1.851872157032  27   3.466640371774
+   4  -0.612509666476  12   1.204308534181  20   1.927210588642  28   3.832610521980
+   5  -0.529564452929  13   1.206368810175  21   2.164951662085  29   4.107947493893
+   6   0.162563144753  14   1.341268929370  22   2.382670607428
+   7   0.235746054624  15   1.451689736101  23   2.420941620837
+   8   0.589720368181  16   1.544516931293  24   2.640300970240
   -----------------------------------------------------------------------------------
 
   - Timings for the MLHF ground state calculation
 
-     Total wall time (sec):              4.52300
-     Total cpu time (sec):               8.81186
+     Total wall time (sec):              3.96848
+     Total cpu time (sec):               7.78884
+
+     Peak memory usage during the execution of eT: 321.584 KB
+
+  Calculation ended: 2020-11-27 09:07:31 UTC +01:00
 
   eT terminated successfully!

@@ -36,10 +36,11 @@ module scf_hf_class
    use kinds
    use abstract_hf_solver_class
 !
-   use hf_class,              only : hf
-   use memory_manager_class,  only : mem
-   use timings_class,         only : timings 
-   use array_utilities,       only : get_abs_max
+   use hf_class,                only : hf
+   use memory_manager_class,    only : mem
+   use timings_class,           only : timings 
+   use array_utilities,         only : get_abs_max
+   use convergence_tool_class,  only: convergence_tool
 !
    implicit none
 !
@@ -88,9 +89,14 @@ contains
 !
       solver%max_iterations      = 100
       solver%ao_density_guess    = 'SAD'
-      solver%energy_threshold    = 1.0D-6
-      solver%gradient_threshold  = 1.0D-6
       solver%restart             = restart
+!
+!     Initialize convergence checker with default threshols
+!
+      solver%convergence_checker = convergence_tool(energy_threshold   = 1.0d-7,   &
+                                                    residual_threshold = 1.0d-7,   &
+                                                    energy_convergence = .false.)
+!
 !
 !     Read settings (thresholds, etc.)
 !
@@ -105,7 +111,8 @@ contains
                                         max_iterations,        &
                                         ao_density_guess,      &
                                         energy_threshold,      &
-                                        gradient_threshold) result(solver)
+                                        residual_threshold, &
+                                        energy_convergence) result(solver)
 !!
 !!    New SCF from parameters
 !!    Written by Tor S. Haugland, 2019
@@ -120,15 +127,16 @@ contains
       integer,            intent(in) :: max_iterations
       character(len=200), intent(in) :: ao_density_guess
       real(dp),           intent(in) :: energy_threshold
-      real(dp),           intent(in) :: gradient_threshold
+      real(dp),           intent(in) :: residual_threshold
+      logical,            intent(in) :: energy_convergence
 !
 !     Set settings from parameters
 !
       solver%max_iterations      = max_iterations
       solver%ao_density_guess    = ao_density_guess
-      solver%energy_threshold    = energy_threshold
-      solver%gradient_threshold  = gradient_threshold
       solver%restart             = restart
+!
+      solver%convergence_checker = convergence_tool(energy_threshold, residual_threshold, energy_convergence)
 !
       call solver%prepare(wf)
 !
@@ -167,7 +175,7 @@ contains
 !
       call solver%print_banner()
 !
-      call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
+      call wf%set_screening_and_precision_thresholds(solver%convergence_checker%residual_threshold)
 !
       call solver%print_settings(wf)
 !
@@ -214,7 +222,6 @@ contains
       class(hf) :: wf
 !
       logical :: converged
-      logical :: converged_energy, converged_gradient 
 !
       real(dp) :: energy, prev_energy, max_grad 
 !
@@ -225,7 +232,6 @@ contains
       if (wf%n_ao == 1) then 
 !
          call solver%run_single_ao(wf)
-         call wf%print_summary()
          return
 !
       endif 
@@ -238,12 +244,8 @@ contains
 !
       iteration_timer = timings('SCF iteration time', pl='normal')
 !
-      iteration = 0
-!
-      converged            = .false.
-      converged_energy     = .false.
-      converged_gradient   = .false.
-!
+      iteration   = 0
+      converged   = .false.
       prev_energy = zero
 !
       call output%printf('n', 'Iteration       Energy (a.u.)      Max(grad.)    &
@@ -265,14 +267,7 @@ contains
                             ints=[iteration], reals=[wf%energy, max_grad, &
                             abs(wf%energy-prev_energy)], fs='(t3,a)')
 !
-!        Test for convergence:
-!
-         converged_energy     = abs(energy-prev_energy) .lt. solver%energy_threshold
-         converged_gradient   = max_grad                .lt. solver%gradient_threshold
-!
-         converged            = converged_energy .and. converged_gradient
-!
-         if (converged_gradient .and. iteration .eq. 1) converged = .true.
+         converged = solver%convergence_checker%has_converged(max_grad, energy-prev_energy, iteration)
 !
          if (converged) then
 !
@@ -280,8 +275,6 @@ contains
 !
             call output%printf('n', 'Convergence criterion met in (i0) iterations!', &
                                ints=[iteration], fs='(t3,a)')
-!
-            call wf%print_summary()
 !
          else
 !
@@ -347,7 +340,7 @@ contains
 !
       call output%printf('m', '- Hartree-Fock solver settings:',fs='(/t3,a)')
 !
-      call solver%print_hf_solver_settings()
+      call solver%convergence_checker%print_settings()
       call wf%print_screening_settings()
 !
    end subroutine print_settings_scf_hf

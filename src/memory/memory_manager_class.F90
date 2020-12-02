@@ -2241,7 +2241,7 @@ contains
       req1_min = int(req1*e_size, kind=i64)
 !
       req_min = req0_tot + req1_min
-      req_tot = req0_tot + req1_min*batch_p%index_dimension
+      req_tot = req0_tot + req1_min*int(batch_p%index_dimension,kind=i64)
 !
       if (req_tot .lt. mem%available) then
 !
@@ -2253,6 +2253,7 @@ contains
       else if (req_min .gt. mem%available) then
 !
 !        Hack because intel flips out if we put two functions in chars=[]
+!
          reqChar = mem%get_memory_as_character(req_min, .true.) 
          call output%printf('m', 'Need at least (a0) but only have (a0)', &
                             chars=[reqChar, mem%get_memory_as_character(mem%available, .true.)])
@@ -2762,7 +2763,7 @@ contains
 !
       integer(i64):: elements
 !
-      logical :: found_batch_size, incremented
+      logical:: found_batch_size, incremented
 !
       integer :: e_size
       character(len=17), allocatable :: reqChar

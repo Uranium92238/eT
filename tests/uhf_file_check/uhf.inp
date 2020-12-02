@@ -1,20 +1,27 @@
 system
    name: H2O He
    charge: 0
+   multiplicity: 3
 end system
 
 do
-  cholesky eri
+   ground state
 end do
+
+method
+   uhf
+end method
 
 memory
    available: 8
 end memory
 
-solver cholesky
-   threshold: 1.0d-10
-   no vectors
-end solver cholesky
+solver scf
+   print orbitals
+   algorithm:          scf-diis
+   energy threshold:   1.0d-11
+   gradient threshold: 1.0d-11
+end solver scf
 
 geometry
 basis: cc-pVDZ

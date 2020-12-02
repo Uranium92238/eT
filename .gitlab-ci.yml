@@ -1,4 +1,4 @@
-image: registry.gitlab.com/et-program/et/ubuntu-for-et:v5.0
+image: registry.gitlab.com/et-program/et/alpine-for-et
 
 stages:
   - pystyle
@@ -16,6 +16,7 @@ pystyle:
     - master
     - development
     - merge_requests
+    - /^release\/\d+\.\d+$/
 
 build:
   stage: build
@@ -25,8 +26,14 @@ build:
     - cmake --version
     - git submodule init
     - git submodule update
-    - ./setup --int32 -FC=gfortran-8 -CXX=g++-8 --pcm $extra_setup_options
+    - >
+      if [ "$coverage" == "true" ]; then 
+        extra_F_flags=' -fprofile-arcs -ftest-coverage'
+      fi
+    - ./setup --int32 -FC=gfortran -CXX=g++ -F-flags="$extra_F_flags" $extra_setup_options --pcm
     - cd build
+    - cmake_command=$(cat setup_cmake_output | head -1)
+    - echo ${cmake_command}
     - make
   tags:
     - docker
@@ -34,6 +41,7 @@ build:
     - master
     - development
     - merge_requests
+    - /^release\/\d+\.\d+$/
   artifacts:
     paths: 
       - build/
@@ -41,12 +49,33 @@ build:
 run:
   stage: run
   needs: ["build"]
+  parallel: 15
   script:
     - cd build
-    - ctest
+    - echo I am node $CI_NODE_INDEX out of a total of $CI_NODE_TOTAL nodes
+    # get line that contains the number of tests
+    - n_tests_total=$(ctest -N | tail -1)     
+    # extract total number of tests from the line
+    - n_tests_total=${n_tests_total//[^0-9]/} 
+    - echo There are a total of $n_tests_total tests  
+    - n_tests=$(expr $n_tests_total / $CI_NODE_TOTAL)
+    - first_test=$(expr \( $CI_NODE_INDEX - 1 \) \* $n_tests + 1)
+    - last_test_in_batch=$(expr $first_test + $n_tests - 1)
+    # if (last node) => last_test = n_tests_total
+    # else           => last_test = last_test_in_batch
+    - last_test=$(($CI_NODE_INDEX==$CI_NODE_TOTAL?$n_tests_total:$last_test_in_batch))
+    - echo Will run test $first_test to test $last_test 
+    - ctest -I $first_test,$last_test
+    - >
+      if [ "$coverage" == "true" ]; then 
+        bash <(curl -s https://codecov.io/bash)
+      fi
   tags:
     - docker
   only:
     - master
     - development
     - merge_requests
+    - /^release\/\d+\.\d+$/
+
+

@@ -270,8 +270,6 @@ contains
          call mem%alloc(field%repetition, field%n_pulses)
          call mem%alloc(field%separation, field%n_pulses)
 !
-         field%repetition = 1
-!
          call input%get_array_for_keyword_in_section('envelope', 'electric field', &
                                                      field%n_pulses, field%envelope)
          call input%get_array_for_keyword_in_section('x polarization', 'electric field', &
@@ -292,12 +290,14 @@ contains
          call input%get_array_for_keyword_in_section('phase shift', 'electric field', &
                                                      field%n_pulses, field%phase_shift)
 !
+         field%separation = zero
          if (input%requested_keyword_in_section('separation', 'electric field')) then
             call input%get_array_for_keyword_in_section('separation', 'electric field', &
                                                         field%n_pulses, field%separation)
             separation_input = .true.
          endif
 !
+         field%repetition = 1
          if (input%requested_keyword_in_section('repetition', 'electric field')) then
             call input%get_array_for_keyword_in_section('repetition', 'electric field', &
                                                         field%n_pulses, field%repetition)

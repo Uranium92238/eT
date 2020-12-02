@@ -76,8 +76,6 @@ contains
 !
       if (.not. allocated(wf%t1_complex)) call mem%alloc(wf%t1_complex, wf%n_v, wf%n_o)
 !
-      call zero_array_complex(wf%t1_complex, wf%n_t1)
-!
    end subroutine initialize_t1_ccs_complex
 !
 !

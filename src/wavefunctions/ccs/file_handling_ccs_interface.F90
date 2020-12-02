@@ -261,21 +261,25 @@
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
       real(dp), intent(out) :: energy
       logical,  intent(out) :: found
-      integer,          intent(in) :: n
-      character(len=*), intent(in) :: side
+      integer,          intent(in)  :: n
+      character(len=*), intent(in)  :: side
 !
    end subroutine check_and_get_restart_vector_ccs
 !
 !
-   module subroutine get_restart_vector_ccs(wf, file_, vector, energy)
+   module subroutine get_restart_vector_ccs(wf, file_, vector, energy, restart_from, restart_to)
 !!
 !!    Get restart vector
 !!    Written by Alexander C. Paul, Sep 2020
 !!
-!!    Gets start vector and energy from file
+!!    Gets start vector and energy from file and
+!!    handles the basis transformations according to:
 !!
-!!    Only a wrapper in CCS but overwritten for doubles
-!!    to handle the restart from a pure singles vector.
+!!    restart from "right" to "left"
+!!    L^a_i = 2R^a_i
+!!
+!!    restart from "left" to "right"
+!!    R^a_i = 1/2 L^a_i
 !!
       implicit none
 !
@@ -283,6 +287,7 @@
       type(stream_file), intent(inout) :: file_
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
       real(dp), intent(out) :: energy
+      character(len=*), intent(in) :: restart_from, restart_to
 !
    end subroutine get_restart_vector_ccs
 !

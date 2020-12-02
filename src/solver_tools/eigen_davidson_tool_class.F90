@@ -223,6 +223,12 @@ contains
       real(dp) :: dummy = 0.0
       real(dp), dimension(1) :: optwork
 !
+      type(timings) :: solve_reduced
+!
+      solve_reduced = timings("Davidson: solve reduced problem", pl='v')
+!
+      call solve_reduced%turn_on()
+!
 !     Construct reduced space matrix A 
 !
       call davidson%construct_reduced_matrix()
@@ -341,6 +347,8 @@ contains
       call mem%dealloc(index_list, davidson%n_solutions)
 !
       davidson%n_new_trials = 0
+!
+      call solve_reduced%turn_off()
 !
    end subroutine solve_reduced_problem_eigen_davidson_tool
 !

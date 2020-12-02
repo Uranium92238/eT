@@ -86,6 +86,9 @@ module wavefunction_class
       real(dp), dimension(:,:), allocatable :: ao_fock
       real(dp), dimension(:,:), allocatable :: mo_fock
 !
+      real(dp), dimension(3) :: frozen_dipole
+      real(dp), dimension(6) :: frozen_quadrupole
+!
    contains
 !
       procedure :: initialize_orbital_coefficients => initialize_orbital_coefficients_wavefunction

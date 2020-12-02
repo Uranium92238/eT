@@ -3316,184 +3316,133 @@ contains
    subroutine gram_schmidt_biorthonormalization(L, R, dim_, n_vectors, threshold)
 !!
 !!    Gram-Schmidt Biorthonormalization
-!!    written by Alexander C. Paul, Oct 2019
+!!    Written by Alexander C. Paul, Oct 2019
 !!
-!!    Routine to biorthonormalize two linear independent sets of vectors L and R
-!!    following Kohaupt, L., Rocky Mountain J. Math., 44, 1265, (2014)
+!!    Routine to biorthonormalize two linear independent sets of vectors L and
+!!    R following Kohaupt, L., Rocky Mountain J. Math., 44, 1265, (2014)
 !!
 !!    NB: Order of the R vectors can change from input to output
 !!        The R vectors are ordered such that the corresponding L vector 
 !!        with non-zero overlap are at the same position
 !!
-!!    Only normalization is needed, 
-!!    if the L vectors are already biorthogonal to the R vectors
-!!
-!!    Otherwise we need to biorthonormalize:
-!!    The p-th vector is determined in terms of the previously biorthogonalized vectors q
+!!    The p-th vector is determined in terms of the previously biorthogonalized
+!!    vectors q
 !!
 !!    Biorthogonal:  L'_p = L_p - sum_q < L_p, R"_q>  L"_q
 !!    Biorthonormal: L"_p = < L'_p, R_p >^(-1)  L'_p = < L'_p, R"_p >^(-1)  L'_p
 !!
 !!    Biorthonormal: R"_p = R_p - sum_q < R_p, L"_q >  R"_q
 !!
+!!    Modified by Andreas S. Skeidsvoll, Nov 2020
+!!    Biorthogonalization against previous vectors is now done irrespectively
+!!    of the number of zero overlaps with the following vectors (unless all
+!!    overlaps are zero).
+!!
       implicit none
 !
       integer, intent(in) :: dim_, n_vectors
-!
       real(dp), dimension(dim_, n_vectors), intent(inout)  :: L, R
-!
       real(dp), intent(in) :: threshold
 !
-      real(dp), dimension(:), allocatable :: overlap_lr
+      real(dp) :: overlap, max_overlap, temp
 !
-      real(dp) :: overlap_L_R, overlap_L_Rnorm, overlap_Lnorm_R, ddot, temp
+      integer :: p, q, index_max_overlap
 !
-      integer :: p, q, i
-      integer :: n_overlap_zero, max_overlap
-!
-      logical :: biorthonormalize
-!
-      call mem%alloc(overlap_lr, n_vectors)
-!
-      biorthonormalize = .false.
+      real(dp), external :: ddot
 !
       do p = 1, n_vectors ! looping through the left vectors
 !
-         n_overlap_zero = 0
-         max_overlap = p
+!        :: Biorthogonalize left vector against previous right vectors ::
+!        ----------------------------------------------------------------
 !
-         call zero_array(overlap_lr, n_vectors)
+         do q = 1, p-1
 !
-!        We first check if the vector L_p is already biorthogonal to the vectors R
-!        then we only need to binormalize (biorthonormalize = .false.).
-!        Otherwise we need to biorthonormalize and the logical is set to .true.
-!        so that we don't run into the wrong branch of the if-statement
+!           Construct biorthogonal left vector:
+!              L'_p = L_p - sum_q < L_p, R"_q>  L"_q
 !
-!        The first (p-1) vectors have already been biorthonormalized - start at q = p
+            overlap = ddot(dim_,      &
+                           L(:,p), 1, &
+                           R(:,q), 1)
+!
+            call daxpy(dim_,      &
+                       -overlap,  &
+                       L(:,q), 1, &
+                       L(:,p), 1)
+!
+         enddo
+!
+!        Look for the right vector with the maximum overlap with L_p. Start at
+!        q = p, as the overlaps with the first (p-1) vectors are zero.
+!
+         index_max_overlap = p
+         max_overlap = zero
+!
          do q = p, n_vectors ! right vectors
 !
-            overlap_lr(q) = ddot(dim_,      &
-                                 L(:,p), 1, &
-                                 R(:,q), 1)
+            overlap = ddot(dim_,      &
+                           L(:,p), 1, &
+                           R(:,q), 1)
 !
-            if(abs(overlap_lr(q)) .lt. threshold) then
+            if (abs(overlap) .gt. abs(max_overlap)) then
 !
-               n_overlap_zero = n_overlap_zero + 1
-!
-            else if(abs(overlap_lr(q)) .gt. abs(overlap_lr(max_overlap))) then
-!
-!              save the index of the vector with non zero overlap
-!              in case only one overlap is non zero
-!
-               max_overlap = q
+               index_max_overlap = q
+               max_overlap = overlap
 !
             end if
 !
          end do
 !
-!        :: Binormalization/Biorthonormalization ::
-!        ------------------------------------------
+         if (abs(max_overlap) .lt. threshold) then
 !
-         if ((.not. biorthonormalize) .and. &
-             (n_overlap_zero .eq. n_vectors-p)) then
+            call output%printf('m', 'Overlaps between left vector with &
+                                     &index (i0) and right vectors are &
+                                     &less than threshold: (e8.3).', &
+                               reals=[threshold], ints=[p])
 !
-!           :: Simple binormalization ::
-!
-!           only 1 right vector has significant overlap with the left vector    
-!
-            if(abs(overlap_lr(max_overlap)) .lt. threshold) then
-!
-               call output%printf('m', 'Overlap of (i0). left and right &
-                                 &vector less than threshold: (e8.3).', &
-                                  reals=[threshold], ints=[p])
-!
-               call output%error_msg('Trying to binormalize nonoverlapping vectors.')
-!
-            end if
-!
-            call dscal(dim_, &
-                       one/overlap_lr(max_overlap), &
-                       L(:,p), 1)
-!
-         else 
-!
-!           :: Actual biorthonormalization :: 
-!
-!           Make sure to not run into the other branch of the if statement
-            biorthonormalize = .true.
-!
-!           loop over already biorthonormalized vectors
-!
-            do q = 1, p - 1
-!
-!              Construct biorthogonal left vector:
-!                 L'_p = L_p - sum_q < L_p, R"_q>  L"_q
-!
-               overlap_L_Rnorm = ddot(dim_,      &
-                                      L(:,p), 1, &
-                                      R(:,q), 1)
-!
-               call daxpy(dim_,             &
-                          -overlap_L_Rnorm, &
-                          L(:,q), 1,        &
-                          L(:,p), 1)
-!
-!              Construct biorthonormal right vector:
-!                 R"_p = R_p - sum_q < R(p), L"_q >  R"_q
-!
-               overlap_Lnorm_R = ddot(dim_,               &
-                                     R(:,max_overlap), 1, &
-                                     L(:,q), 1)
-!
-               call daxpy(dim_,              &
-                          -overlap_Lnorm_R,  &
-                          R(:,q), 1,         &
-                          R(:,max_overlap), 1)
-!
-            end do
-!
-!           Binormalize the left to the right vector
-!
-            overlap_L_R = ddot(dim_,               &
-                               L(:,p), 1,          &
-                               R(:,max_overlap), 1)
-!
-!           Sanity check that the left and corresponding right vector are not orthogonal
-!
-            if(abs(overlap_L_R) .lt. threshold) then
-!
-               call output%printf('m', 'Overlap of (i0). left and right &
-                                 &vector less than threshold: (e8.3).', &
-                                  reals=[threshold], ints=[p])
-!
-               call output%error_msg('Trying to binormalize nonoverlapping vectors.')
-!
-            end if
-!
-            call dscal(dim_, one/overlap_L_R, L(:,p), 1)
+            call output%error_msg('Trying to binormalize nonoverlapping vectors.')
 !
          end if
 !
-!        Exchange R_p and R_max_overlap to achieve the correct ordering:
-!        < L_p, R_p > = 1
+!        :: Biorthonormalization ::
+!        --------------------------
 !
-         if(p .ne. max_overlap) then
+!        L"_p = < L'_p, R_p >^(-1)  L'_p
+!
+         call dscal(dim_, one/max_overlap, L(:,p), 1)
+!
+         do q = 1, p-1
+!
+!           Construct biorthonormal right vector:
+!              R"_p = R_p - sum_q < R_p, L"_q >  R"_q
+!
+            overlap = ddot(dim_,                  &
+                           R(:,index_max_overlap), 1, &
+                           L(:,q), 1)
+!
+            call daxpy(dim_,      &
+                       -overlap,  &
+                       R(:,q), 1, &
+                       R(:,index_max_overlap), 1)
+!
+         end do
+!
+!        Exchange R_p and R_index_max_overlap to achieve the correct ordering
+!
+         if(p .ne. index_max_overlap) then
 !
 !$omp parallel do private(temp, q)
-            do i = 1, dim_
+            do q = 1, dim_
 !
-               temp   = R(i,p)
-               R(i,p) = R(i,max_overlap)
-               R(i,max_overlap) = temp
+               temp   = R(q,p)
+               R(q,p) = R(q,index_max_overlap)
+               R(q,index_max_overlap) = temp
 !
             end do
 !$omp end parallel do
 !
          end if
 !
-      end do ! Loop over p (left vectors )
-!
-      call mem%dealloc(overlap_lr, n_vectors)
+      end do ! Loop over p (left vectors)
 !
    end subroutine gram_schmidt_biorthonormalization
 !

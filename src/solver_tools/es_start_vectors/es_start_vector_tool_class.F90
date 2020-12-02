@@ -69,7 +69,6 @@ contains
 !!
       use array_utilities, only: get_l2_norm
       use ccs_class, only: ccs
-      use global_out, only: output
 !
       implicit none 
 !
@@ -100,9 +99,6 @@ contains
          call wf%check_and_get_restart_vector(vector, energy, n, side, vector_found)
 !
          if (vector_found) then
-!
-            call output%printf('n', 'Restarting (a0) vector (i0) from file.', &
-                               ints=[n], chars=[side], fs='(t6,a)')
 !
             norm_ = get_l2_norm(vector, tool%vector_length)
             call dscal(tool%vector_length, one/norm_, vector, 1)
