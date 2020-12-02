@@ -220,6 +220,37 @@
    end subroutine construct_M_nto_mlcc2
 !
 !
+   module subroutine read_nto_transformation_matrix_mlcc2(wf, T_o)
+!!
+!!    Read NTO transformation matrices
+!!    Written by Sarai D. Folkestad, Jun 2019
+!!
+!!    Read NTO transformation matrices.
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+      real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
+!
+   end subroutine read_nto_transformation_matrix_mlcc2
+!
+!
+   module subroutine write_nto_transformation_matrix_mlcc2(wf, T_o)
+!!
+!!    Write NTO transformation matrices
+!!    Written by Sarai D. Folkestad, Jun 2019
+!!
+!!    Write NTO transformation matrices.
+!!    Used to ensure restart
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+      real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: T_o
+!
+   end subroutine write_nto_transformation_matrix_mlcc2
+!
+!
    module subroutine construct_ccs_nto_transformation_matrix_mlcc2(wf, T_o)
 !!
 !!    Construct CCS CNTO transformation matrices

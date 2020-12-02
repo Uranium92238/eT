@@ -303,6 +303,10 @@ contains
 !
       wf%need_g_abcd = .false.
 !
+      wf%restart_orbitals = .false.
+      wf%cnto_restart = .false.
+      wf%nto_restart = .false.
+!
       wf%cholesky_orbital_threshold = 1.0d-2
 !
       wf%cc2_orbital_type = 'none'
@@ -430,7 +434,13 @@ contains
       has_restart_files = wf%T_cnto_o_file%exists() .and. wf%T_cnto_v_file%exists()
       if (.not. has_restart_files) wf%cnto_restart = .false.
 !
+      has_restart_files = wf%T_nto_o_file%exists()
+      if (.not. has_restart_files) wf%nto_restart = .false.
+!
       if (wf%restart_orbitals) then
+!
+         call output%printf('m', 'Requested orbital restart, &
+                           &reading orbitals and orbital energies')
 !
          call wf%mo_preparations_from_restart()
 !
