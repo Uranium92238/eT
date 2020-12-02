@@ -52,10 +52,14 @@ module abstract_cc_es_class
    use es_cvs_start_vector_tool_class, only: es_cvs_start_vector_tool
    use es_ip_start_vector_tool_class, only: es_ip_start_vector_tool
 !
+   use precondition_tool_class, only: precondition_tool
+!
    use es_projection_tool_class, only : es_projection_tool
    use es_valence_projection_tool_class, only: es_valence_projection_tool
    use es_cvs_projection_tool_class, only: es_cvs_projection_tool
    use es_ip_projection_tool_class, only: es_ip_projection_tool
+!
+   use abstract_convergence_tool_class, only: abstract_convergence_tool 
 !
    implicit none
 !
@@ -69,8 +73,7 @@ module abstract_cc_es_class
 !
       integer :: max_iterations
 !
-      real(dp) :: eigenvalue_threshold  
-      real(dp) :: residual_threshold  
+      class(abstract_convergence_tool), allocatable :: convergence_checker
 !
       character(len=200) :: storage 
       logical :: records_in_memory 
@@ -89,6 +92,7 @@ module abstract_cc_es_class
 !
       class(es_start_vector_tool), allocatable  :: start_vectors
       class(es_projection_tool), allocatable    :: projector
+      class(precondition_tool), allocatable     :: preconditioner 
 !
    contains
 !
@@ -104,13 +108,13 @@ module abstract_cc_es_class
 !
       procedure :: prepare_wf_for_excited_state     => prepare_wf_for_excited_state_abstract_cc_es
 !
-      procedure :: determine_restart_transformation => determine_restart_transformation_abstract_cc_es 
-!
       procedure :: initialize_start_vector_tool     => initialize_start_vector_tool_abstract_cc_es
       procedure :: initialize_projection_tool       => initialize_projection_tool_abstract_cc_es
 !
       procedure :: initialize_energies              => initialize_energies_abstract_cc_es
       procedure :: destruct_energies                => destruct_energies_abstract_cc_es
+!
+      procedure :: set_initial_guesses              => set_initial_guesses_abstract_cc_es
 !
    end type abstract_cc_es
 !
@@ -194,8 +198,22 @@ contains
 !
       class(abstract_cc_es) :: solver 
 !
-      call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
-      call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
+      real(dp) :: eigenvalue_threshold, residual_threshold
+!
+      if (input%requested_keyword_in_section('energy threshold', 'solver cc es')) then
+!
+         call input%get_keyword_in_section('energy threshold', 'solver cc es', eigenvalue_threshold)
+         call solver%convergence_checker%set_energy_threshold(eigenvalue_threshold)
+!
+      endif
+!
+      if (input%requested_keyword_in_section('residual threshold', 'solver cc es')) then
+!
+         call input%get_keyword_in_section('residual threshold', 'solver cc es', residual_threshold)
+         call solver%convergence_checker%set_residual_threshold(residual_threshold)
+!
+      endif
+!
       call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
 !               
       call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
@@ -228,10 +246,7 @@ contains
       call output%printf('m', 'Excitation vectors:  (a0)', &
                          chars=[trim(solver%transformation)], fs='(t6,a)')
 !
-      call output%printf('m', 'Energy threshold:             (e11.2)', &
-                         reals=[solver%eigenvalue_threshold], fs='(/t6,a)')
-      call output%printf('m', 'Residual threshold:           (e11.2)', &
-                         reals=[solver%residual_threshold], fs='(t6,a)')
+      call solver%convergence_checker%print_settings()
 !
       call output%printf('m', 'Number of singlet states:     (i11)', &
                          ints=[solver%n_singlet_states], fs='(/t6,a)')
@@ -268,10 +283,26 @@ contains
    end subroutine cleanup_abstract_cc_es
 !
 !
-   subroutine print_summary_abstract_cc_es(solver, wf, X)
+   subroutine print_summary_abstract_cc_es(solver, wf, X, X_order)
 !!
 !!    Print summary 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!    Written by Eirik F. Kjønstad, Dec 2018
+!!    Modified by Eirik F. Kjønstad, Mar 2020  
+!!
+!!    Prints summary of excited states. Lists the dominant amplitudes and 
+!!    the energies, along with fraction of singles. 
+!!
+!!    X:         array with excited states stored in the columns
+!!
+!!    X_order:   optional index list giving the ordering of states from low 
+!!               to high energy. Default is to assume that X is already 
+!!               ordered from low to high energies.
+!!
+!!    Warning: it is assumed on entry that the energies are already ordered according 
+!!             to energy. It is just the states that are not necessarily ordered.
+!!
+!!    Eirik F. Kjønstad, Mar 2020: added X_order to avoid duplicate copy of states 
+!!                                 in DIIS solver.
 !!
       implicit none 
 !
@@ -281,29 +312,55 @@ contains
 !
       real(dp), dimension(wf%n_es_amplitudes, solver%n_singlet_states), intent(in) :: X
 !
-      integer :: state 
+      integer, dimension(solver%n_singlet_states), optional, intent(in) :: X_order
+!
+      integer, dimension(:), allocatable :: X_order_local
+!
+      integer :: state, state_index
 !
       character(len=1) :: label ! R or L, depending on whether left or right transformation 
+!
+!     Set up list that gives ordering of energies from low to high
+!
+      call mem%alloc(X_order_local, solver%n_singlet_states)
+!
+      if (present(X_order)) then 
+!
+         X_order_local = X_order
+!
+      else 
+!
+         do state = 1, solver%n_singlet_states
+!
+            X_order_local(state) = state
+!
+         enddo
+!
+      endif 
+!
+!     Print excited state vectors 
 !
       label = trim(adjustl(convert_to_uppercase(solver%transformation(1:1))))
 !
       call output%printf('n', '- Excitation vector amplitudes:', fs='(/t3,a)')
 !
-      do state = 1, solver%n_singlet_states
+      do state = 1, solver%n_singlet_states 
+!
+         state_index = X_order_local(state) 
 !
          call output%printf('n', 'Electronic state nr. (i0)', ints=[state], fs='(/t6,a)')
 !
          call output%printf('n', 'Energy (Hartree):             (f19.12)', &
-                            reals=[solver%energies(state)], fs='(/t6,a)')
+                            reals=[solver%energies(state_index)], fs='(/t6,a)')
 !
-         call output%printf('n', 'Fraction singles (|(a0)1|/|(a0)|):  (f19.12)' &
-                            &, reals=[get_l2_norm(X(1:wf%n_t1, state), &
-                            wf%n_t1)/get_l2_norm(X(:, state), &
-                            wf%n_es_amplitudes)], chars=[label, label], fs='(t6,a)')
-!
-         call wf%print_dominant_x_amplitudes(X(1, state), label)
+         call wf%print_X1_diagnostics(X(:,state_index), label)
+         call wf%print_dominant_x_amplitudes(X(1, state_index), label)
 !
       enddo 
+!
+      call mem%dealloc(X_order_local, solver%n_singlet_states)
+!
+!     Print excited state energies 
 !
       call output%printf('m', '- Electronic excitation energies:', fs='(/t6,a)')
 !
@@ -314,8 +371,8 @@ contains
 !
       do state = 1, solver%n_singlet_states
 !
-         call output%printf('m', '(i4)             (f19.12)   (f19.12)', &
-                            ints=[state], reals=[solver%energies(state), &
+         call output%printf('m', '(i4)             (f19.12)   (f19.12)',         &
+                            ints=[state], reals=[solver%energies(state),   &
                             solver%energies(state)*Hartree_to_eV], fs='(t6,a)')
 !
       enddo 
@@ -334,95 +391,31 @@ contains
 !!
       implicit none
 !
-      class(abstract_cc_es), intent(in)   :: solver 
-      class(ccs), intent(inout)           :: wf
+      class(abstract_cc_es), intent(in) :: solver 
+      class(ccs), intent(inout)         :: wf
+!
+      call wf%initialize_excited_state_files
 !
       if (solver%transformation == 'right') then 
 !
-         call wf%initialize_excited_state_files('right')
+         call wf%initialize_right_excitation_energies
          call wf%prepare_for_jacobian()
 !
       else if (solver%transformation == 'left') then 
 !
-         call wf%initialize_excited_state_files('left')
+         call wf%initialize_left_excitation_energies
          call wf%prepare_for_jacobian_transpose()
 !
       else if (solver%transformation == 'both') then 
 !
-         call wf%initialize_excited_state_files('both')
-         call wf%prepare_for_jacobian()
-         call wf%prepare_for_jacobian_transpose()
-!
-      else if (solver%transformation == 'both') then 
-!
+         call wf%initialize_right_excitation_energies
+         call wf%initialize_left_excitation_energies
          call wf%prepare_for_jacobian()
          call wf%prepare_for_jacobian_transpose()
 !
       end if
 !
    end subroutine prepare_wf_for_excited_state_abstract_cc_es
-!
-!
-   subroutine determine_restart_transformation_abstract_cc_es(solver, wf)
-!!
-!!    Determine number of states on file 
-!!    Written by Eirik F. Kjønstad, June 2019
-!!
-      implicit none 
-!
-      class(abstract_cc_es), intent(inout) :: solver
-!
-      class(ccs), intent(in) :: wf 
-!
-      integer :: n_left_vectors_on_file, n_right_vectors_on_file
-!
-      if (solver%transformation == 'right') then 
-!
-!        Dirty hack to disable right restart from left for now !!!!!
-         n_right_vectors_on_file = wf%get_n_excited_states_on_file('right')
-         n_left_vectors_on_file = 0
-!
-         if (n_right_vectors_on_file > 0) then 
-!
-            solver%restart_transformation = 'right'
-!
-         elseif (n_right_vectors_on_file == 0 .and. n_left_vectors_on_file > 0) then 
-!
-            solver%restart_transformation = 'left'
-!
-         else
-!
-            call output%error_msg('Could not restart excited state calculation.')
-!
-         endif 
-!
-      elseif (solver%transformation == 'left') then
-!
-!        Dirty hack to disable left restart from right for now !!!!!
-         n_left_vectors_on_file = wf%get_n_excited_states_on_file('left')
-         n_right_vectors_on_file = 0
-!
-         if (n_left_vectors_on_file > 0) then 
-!
-            solver%restart_transformation = 'left'
-!
-         elseif (n_left_vectors_on_file == 0 .and. n_right_vectors_on_file > 0) then 
-!
-            solver%restart_transformation = 'right'
-!
-         else
-!
-            call output%error_msg('Could not restart excited state calculation.')
-!
-         endif          
-!
-      else 
-!
-         call output%error_msg('Could not restart excited state calculation.')
-!
-      endif  
-!
-   end subroutine determine_restart_transformation_abstract_cc_es
 !
 !
    subroutine initialize_start_vector_tool_abstract_cc_es(solver, wf) 
@@ -488,6 +481,35 @@ contains
       endif
 !
    end subroutine initialize_projection_tool_abstract_cc_es
+!
+!
+   subroutine set_initial_guesses_abstract_cc_es(solver, wf, X, first, last)
+!!
+!!    Set initial guesses
+!!    Written by Alexander C. Paul, Oct 2020
+!!
+      implicit none
+!
+      class(abstract_cc_es) :: solver
+!
+      class(ccs) :: wf
+!
+      integer, intent(in) :: first, last
+!
+      real(dp), dimension(wf%n_es_amplitudes,first:last), intent(out) :: X
+!
+      integer :: state
+!
+      do state = first, last
+!
+         call solver%start_vectors%get(wf, state, X(:,state),  &
+                                       solver%energies(state), &
+                                       solver%transformation,  &
+                                       solver%restart)
+!
+      enddo 
+!
+   end subroutine set_initial_guesses_abstract_cc_es
 !
 !
 end module abstract_cc_es_class

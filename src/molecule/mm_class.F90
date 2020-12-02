@@ -27,7 +27,6 @@ module mm_class
    use array_utilities
    use parameters
    use atomic_class
-   use io_utilities
    use memory_manager_class
 !
    implicit none
@@ -393,11 +392,10 @@ contains
 !
             if(molecule%molecule(i+1).ne.(molecule%molecule(i) + 1)) then
 !
-               call output%printf('m', 'Warning: Molecule (i0) missing even &
-                                  &though (i0) should be present.', &
-                                  ints=[molecule%molecule(i) + 1, &
-                                  molecule%max_mm_mol], fs='(/t3,a)')
-               call output%error_msg('Something went wrong in QM/MM calculation.')
+               call output%error_msg('Molecule (i0) missing even though (i0) &
+                                     &should be present in QM/MM calculation.', &
+                                     ints=[molecule%molecule(i) + 1, &
+                                     molecule%max_mm_mol])
 !
             endif
 !

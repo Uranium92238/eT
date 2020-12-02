@@ -64,7 +64,8 @@ contains
       real(dp), dimension(:), allocatable :: eps         ! Orbital differences 
       real(dp), dimension(:), allocatable :: lowest_eps  ! Lowest orbital differences 
 !
-      if (wf%bath_orbital) call output%error_msg('Bath orbitals can not be used in valence excitation calculation')
+      if (wf%bath_orbital) &
+         call output%error_msg('Bath orbitals can not be used in valence excitation calculation')
 !
       tool%n_vectors = wf%n_singlet_states
       tool%vector_length = wf%n_es_amplitudes

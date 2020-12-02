@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+
+# provides os.path.join
+import os
+
+# provides exit
+import sys
+
+# we make sure we can import runtest and runtest_config
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+# we import essential functions from the runtest library
+from runtest import version_info, get_filter, cli, run
+
+# this tells runtest how to run your code
+from runtest_config import configure
+
+# functions to get the filters
+from filters import get_eom_filter
+               
+# we stop the script if the major version is not compatible
+assert version_info.major == 2
+
+# construct filter(s)
+n_states = 3   
+threshold = 1.0e-10
+restart = True 
+               
+f = get_eom_filter(n_states, threshold, restart=restart)
+
+# invoke the command line interface parser which returns options
+options = cli()
+
+ierr = 0
+
+#  Run ccsd calculation, filter and compare to reference
+#  - extra arguments -ks and --scratch to keep the scratch 
+#    after the first calculation
+#  - scratch will be in build/tests/test_name/scratch
+#  - If we don't provide the "filters" line, the first output file 
+#    would not be filtered and compared
+#  - We can also provide a second filter list e.g. g to check both 
+#    output files for different things
+#
+for inp in ['ccsd.inp']:
+    #
+    # the run function runs the code with extra arguments
+    # keep the scratch in the tests folder in build
+    #
+    ierr += run(options,
+                configure,
+                input_files=inp,
+                extra_args='-ks --scratch ./scratch',
+                filters={'out': f}) 
+
+# reset ierr: helpful if the first calculation is supposed to crash
+# e.g. if the calculations has to little iterations to converge
+ierr = 0
+#
+#
+for inp in ['restart_ccs.inp']:
+    #
+    # the run function runs the code and filters the outputs
+    # don't provide -ks to delete scratch after succesful run
+    #
+    ierr += run(options,
+                configure,
+                input_files=inp,
+                extra_args='--scratch ./scratch',
+                filters={'out': f})
+
+sys.exit(ierr)

@@ -93,42 +93,6 @@ contains
    end subroutine get_roothan_hall_mo_gradient_hf
 !
 !
-   module subroutine get_mo_fock_hf(wf, F)
-!!
-!!    Get MO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Gets the MO Fock
-!!
-      implicit none
-!
-      class(hf), intent(in) :: wf
-!
-      real(dp), dimension(:,:), intent(inout) :: F
-!
-      call dcopy(wf%n_mo**2, wf%mo_fock, 1, F, 1)
-!
-   end subroutine get_mo_fock_hf
-!
-!
-   module subroutine set_mo_fock_hf(wf, F)
-!!
-!!    Set MO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Sets the MO Fock from input
-!!
-      implicit none
-!
-      class(hf), intent(in) :: wf
-!
-      real(dp), dimension(:, :), intent(inout) :: F
-!
-      call dcopy(wf%n_mo**2, F, 1, wf%mo_fock, 1)
-!
-   end subroutine set_mo_fock_hf
-!
-!
    module subroutine roothan_hall_update_orbitals_mo_hf(wf)
 !!
 !!    Roothan-Hall update of orbitals
@@ -136,15 +100,12 @@ contains
 !!
 !!    Update orbitals after a Roothan-Hall step in the MO basis
 !!
+!!
       implicit none
 !
       class(hf) :: wf
 !
       real(dp), dimension(:,:), allocatable :: C_old
-!
-      integer :: p
-!
-      real(dp) :: overlap, ddot
 !
       call wf%do_roothan_hall_mo(wf%mo_fock, wf%orbital_energies)
 !
@@ -165,24 +126,6 @@ contains
                   zero,                      &
                   wf%orbital_coefficients,   &
                   wf%n_ao)
-!
-!
-!     Test for orbitals that were approximately sign-flipped by dsygv,
-!     resetting them if this is the case. This is necessary for restart in 
-!     CC
-!
-      do p = 1, wf%n_mo
-!
-         overlap = ddot(wf%n_ao, C_old(1, p), 1, wf%orbital_coefficients(1, p), 1)
-!
-         if (overlap .lt. zero) then
-!
-            call dscal(wf%n_ao, -one, wf%orbital_coefficients(:,p), 1)
-            call dscal(wf%n_mo, -one, wf%W_mo_update(:,p), 1)
-!
-         endif
-!
-      enddo
 !
       call mem%dealloc(C_old, wf%n_ao, wf%n_mo)
 !

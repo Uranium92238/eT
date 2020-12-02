@@ -122,7 +122,7 @@ contains
 !     Set default settings, read, & print 
 !
       solver%max_iterations      = 100
-      solver%residual_threshold  = 1.0d-6
+      solver%residual_threshold  = 1.0d-5
       solver%restart             = restart
       solver%max_dim_red         = 50
       solver%records_in_memory   = .false.
@@ -189,7 +189,7 @@ contains
 !
       integer :: iteration 
 !
-      real(dp) :: residual_norm, ddot, norm_trial
+      real(dp) :: residual_norm
 !
       call wf%prepare_for_multiplier_equation()
 !
@@ -220,9 +220,10 @@ contains
 !
       call dscal(wf%n_gs_amplitudes, -one, eta, 1)
 !
-      davidson = linear_davidson_tool('multipliers', wf%n_gs_amplitudes,   &
-                                       solver%residual_threshold,          &
-                                       solver%max_dim_red,                 &
+      davidson = linear_davidson_tool('multipliers',                                  &
+                                       wf%n_gs_amplitudes,                            &
+                                       min(1.0d-11, tenth*solver%residual_threshold), &
+                                       solver%max_dim_red,                            &
                                        eta, 1)
 !
       call davidson%initialize_trials_and_transforms(solver%records_in_memory)
@@ -234,25 +235,9 @@ contains
 !
 !     :: Set start vector / initial guess ::
 !
-      if (solver%restart) then ! Read multiplier vector from file
-!
-         call output%printf('m', 'Requested restart. Reading multipliers from file.', &
-                            fs='(/t3,a)')
-!
-         call wf%read_multipliers()
-!
-         call wf%get_multipliers(multipliers)
-!
-         norm_trial = sqrt(ddot(wf%n_gs_amplitudes, multipliers, 1, multipliers, 1))
-         call dscal(wf%n_gs_amplitudes, one/norm_trial, multipliers, 1)
-!
-         call davidson%set_trial(multipliers, 1)
-!
-      else ! Use - eta_mu / eps_mu as first trial 
-!
-         call davidson%set_trials_to_preconditioner_guess()
-!
-      endif 
+      call wf%set_initial_multipliers_guess(solver%restart)
+      call wf%get_multipliers(multipliers)
+      call davidson%set_trial(multipliers, 1)
 !
 !     :: Iterative loop ::
 !
@@ -265,7 +250,14 @@ contains
       do while (.not. converged_residual .and. (iteration .le. solver%max_iterations))
 !
          iteration = iteration + 1       
-         call davidson%iterate()
+!
+!        Reduced space preparations 
+!
+         if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+!
+         call davidson%update_reduced_dim()
+!
+         call davidson%orthonormalize_trial_vecs() 
 !
 !        Transform new trial vector and write to file
 !

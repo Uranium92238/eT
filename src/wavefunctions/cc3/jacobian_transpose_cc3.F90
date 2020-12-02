@@ -261,7 +261,7 @@ contains
 !
 !        Read in X_abid written with compound index "id" as record
 !
-         call compound_record_reader(wf%n_o, batch_d, wf%X_abid, X_abid)
+         call wf%X_abid%read_compound_full_batch(X_abid, wf%n_o, batch_d)
 !
          call dgemm('T','N',                    & ! X is transposed
                      batch_d%length,            &
@@ -289,7 +289,7 @@ contains
 !
       call mem%alloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call single_record_reader(wf%n_o, wf%X_ajil, X_ajil)
+      call wf%X_ajil%read_(X_ajil, 1, wf%n_o)
 !
       call wf%X_ajil%close_()
 !
@@ -433,22 +433,22 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call single_record_reader(batch_i, wf%g_bdck_t, g_bdci)
+         call wf%g_bdck_t%read_interval(g_bdci, batch_i)
          g_bdci_p => g_bdci
 !
          do j_batch = 1, i_batch
 !
             call batch_j%determine_limits(j_batch)
 !
-            call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci)
+            call wf%g_ljck_t%read_compound(g_ljci, batch_j, batch_i)
             g_ljci_p => g_ljci
 !
             if (j_batch .ne. i_batch) then
 !
-               call single_record_reader(batch_j, wf%g_bdck_t, g_bdcj)
+               call wf%g_bdck_t%read_interval(g_bdcj, batch_j)
                g_bdcj_p => g_bdcj
 !
-               call compound_record_reader(batch_i, batch_j, wf%g_ljck_t, g_licj)
+               call wf%g_ljck_t%read_compound(g_licj, batch_i, batch_j)
                g_licj_p => g_licj
 !
             else
@@ -465,21 +465,20 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call single_record_reader(batch_k, wf%g_bdck_t, g_bdck)
+                  call wf%g_bdck_t%read_interval(g_bdck, batch_k)
                   g_bdck_p => g_bdck
 ! 
-                  call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci)
+                  call wf%g_ljck_t%read_compound(g_lkci, batch_k, batch_i)
                   g_lkci_p => g_lkci
 !
-                  call compound_record_reader(batch_i, batch_k, wf%g_ljck_t, g_lick)
+                  call wf%g_ljck_t%read_compound(g_lick, batch_i, batch_k)
                   g_lick_p => g_lick
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj)
+                  call wf%g_ljck_t%read_compound(g_lkcj, batch_k, batch_j)
                   g_lkcj_p => g_lkcj
 !
-                  call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck)
+                  call wf%g_ljck_t%read_compound(g_ljck, batch_j, batch_k)
                   g_ljck_p => g_ljck
-!
 !
                else if (k_batch .eq. i_batch) then ! k_batch == j_batch == i_batch
 !
@@ -498,7 +497,7 @@ contains
                   g_lkci_p => g_ljci
                   g_lick_p => g_licj
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj)
+                  call wf%g_ljck_t%read_compound(g_lkcj, batch_k, batch_j)
                   g_lkcj_p => g_lkcj
                   g_ljck_p => g_lkcj
 !
@@ -624,7 +623,7 @@ contains
 !
          call batch_l%determine_limits(l_batch)
 !
-         call compound_record_reader(wf%n_o, batch_l, wf%L_jbkc_t, L_jbkc)
+         call wf%L_jbkc_t%read_compound_full_batch(L_jbkc, wf%n_o, batch_l)
 !
          call sort_1234_to_1324(L_jbkc, L_iald, wf%n_v, wf%n_v, wf%n_o, batch_l%length)
 !
@@ -1004,27 +1003,28 @@ contains
       call wf%g_jlkc_t%open_('read')
       call wf%L_jbkc_t%open_('read')
 !
-      wf%Y_bcek = direct_file('Y_bcek', wf%n_v**3)
+      wf%Y_bcek = direct_stream_file('Y_bcek', wf%n_v**3)
       call wf%Y_bcek%open_()
 !
       do i_batch = 1, batch_i%num_batches
 !
          call batch_i%determine_limits(i_batch)
 !
-         call single_record_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_t, g_dbic)
+         call wf%g_bdck_t%read_interval(g_bdci, batch_i)
+         call wf%g_dbkc_t%read_interval(g_dbic, batch_i)
+         call zero_array(Y_bcei, batch_i%length*wf%n_v**3)
+!
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
-!
-         call zero_array(Y_bcei, batch_i%length*wf%n_v**3)
          Y_bcei_p => Y_bcei
 !
          do j_batch = 1, i_batch
 !
             call batch_j%determine_limits(j_batch)
 !
-            call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, &
-                                        wf%g_jlkc_t, g_jlic)
-            call compound_record_reader(batch_i, batch_j, wf%L_jbkc_t, L_ibjc)
+            call wf%g_ljck_t%read_compound(g_ljci, batch_j, batch_i)
+            call wf%g_jlkc_t%read_compound(g_jlic, batch_j, batch_i)
+            call wf%L_jbkc_t%read_compound(L_ibjc, batch_i, batch_j)
 !
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
@@ -1032,14 +1032,17 @@ contains
 !
             if (j_batch .ne. i_batch) then
 !
-               call single_record_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_t, g_dbjc)
+               call wf%g_bdck_t%read_interval(g_bdcj, batch_j)
+               call wf%g_dbkc_t%read_interval(g_dbjc, batch_j)
+               call wf%Y_bcek%read_interval(Y_bcej, batch_j)
+!
                g_bdcj_p => g_bdcj
                g_dbjc_p => g_dbjc
-!
-               call single_record_reader(batch_j, wf%Y_bcek, Y_bcej)
                Y_bcej_p => Y_bcej
 !
-               call compound_record_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, wf%g_jlkc_t, g_iljc)
+               call wf%g_ljck_t%read_compound(g_licj, batch_i, batch_j)
+               call wf%g_jlkc_t%read_compound(g_iljc, batch_i, batch_j)
+!
                g_licj_p => g_licj
                g_iljc_p => g_iljc
 !
@@ -1061,31 +1064,37 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc)
+                  call wf%g_bdck_t%read_interval(g_bdck, batch_k)
+                  call wf%g_dbkc_t%read_interval(g_dbkc, batch_k)
+                  call wf%Y_bcek%read_interval(Y_bcek, batch_k)
+!
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
-!
-                  call single_record_reader(batch_k, wf%Y_bcek, Y_bcek)
                   Y_bcek_p => Y_bcek
 ! 
-                  call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t, g_klic)
+                  call wf%g_ljck_t%read_compound(g_lkci, batch_k, batch_i)
+                  call wf%g_jlkc_t%read_compound(g_klic, batch_k, batch_i)
 !
                   g_lkci_p => g_lkci
                   g_klic_p => g_klic
 !
-                  call compound_record_reader(batch_i, batch_k, wf%g_ljck_t, g_lick, wf%g_jlkc_t, g_ilkc, & 
-                                              wf%L_jbkc_t, L_ibkc)
+                  call wf%g_ljck_t%read_compound(g_lick, batch_i, batch_k)
+                  call wf%g_jlkc_t%read_compound(g_ilkc, batch_i, batch_k)
+                  call wf%L_jbkc_t%read_compound(L_ibkc, batch_i, batch_k)
 !
                   g_lick_p => g_lick
                   g_ilkc_p => g_ilkc
                   L_ibkc_p => L_ibkc
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t, g_kljc)
+                  call wf%g_ljck_t%read_compound(g_lkcj, batch_k, batch_j)
+                  call wf%g_jlkc_t%read_compound(g_kljc, batch_k, batch_j)
+!
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
 !
-                  call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck, wf%g_jlkc_t, g_jlkc, & 
-                                              wf%L_jbkc_t, L_jbkc)
+                  call wf%g_ljck_t%read_compound(g_ljck, batch_j, batch_k)
+                  call wf%g_jlkc_t%read_compound(g_jlkc, batch_j, batch_k)
+                  call wf%L_jbkc_t%read_compound(L_jbkc, batch_j, batch_k)
 !
                   g_ljck_p => g_ljck
                   g_jlkc_p => g_jlkc
@@ -1095,7 +1104,6 @@ contains
 !
                   g_bdck_p => g_bdci
                   g_dbkc_p => g_dbic
-!
                   Y_bcek_p => Y_bcei
 !
                   g_lkci_p => g_ljci
@@ -1126,8 +1134,10 @@ contains
                   g_ilkc_p => g_iljc
                   L_ibkc_p => L_ibjc
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
-                                             g_kljc, wf%L_jbkc_t, L_jbkc)
+                  call wf%g_ljck_t%read_compound(g_lkcj, batch_k, batch_j)
+                  call wf%g_jlkc_t%read_compound(g_kljc, batch_k, batch_j)
+                  call wf%L_jbkc_t%read_compound(L_jbkc, batch_k, batch_j)
+!
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
 !
@@ -1222,18 +1232,18 @@ contains
 !              Will be read in after the loops for the contractions to sigma_ai
 !
                if (k_batch .ne. j_batch) then !k_batch != j_batch, k_batch != i_batch
-                  call single_record_writer(batch_k, wf%Y_bcek, Y_bcek)
+                  call wf%Y_bcek%write_interval(Y_bcek, batch_k)
                endif
 !
             enddo ! batch_k
 !
             if (j_batch .ne. i_batch) then
-               call single_record_writer(batch_j, wf%Y_bcek, Y_bcej)
+               call wf%Y_bcek%write_interval(Y_bcej, batch_j)
             endif
 !
          enddo ! batch_j
 !
-         call single_record_writer(batch_i, wf%Y_bcek, Y_bcei)
+         call wf%Y_bcek%write_interval(Y_bcei, batch_i)
 !
       enddo ! batch_i
 !
@@ -1308,7 +1318,7 @@ contains
 !
 !     Contribution of the Y_bcek to sigma1
 !
-      call wf%jacobian_transpose_cc3_c3_b1_y_v(sigma_ai)
+      call wf%jacobian_transpose_cc3_c3_a1_y_v(sigma_ai)
 !
       call wf%Y_bcek%close_()
 !
@@ -2132,8 +2142,8 @@ contains
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
 !!    sigma_1 += sum_mjk Y_cmjk * g_mjlk
-!!    sigma_1 += sum_cmj g_mjcd * Y_cmjk
-!!    sigma_1 += sum_cmk g_leck * Y_cmjk
+!!    sigma_1 += sum_cmj Y_cmjk * g_mjcd
+!!    sigma_1 += sum_cmk Y_cmjk * g_mdck
 !!   
       implicit none
 !
@@ -2143,157 +2153,168 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(in) :: Y_cmjk
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_mjlk ! ordered g_mjkl
-      real(dp), dimension(:,:,:,:), allocatable :: g_cdmj ! ordered g_cmjd
-      real(dp), dimension(:,:,:,:), allocatable :: g_cjmd ! ordered g_cmjd
+      real(dp), dimension(:,:,:,:), allocatable :: Y_mjck
 !
-!     arrays for resorting
-      real(dp), dimension(:,:,:,:), allocatable :: Y_cmkj
+      real(dp), dimension(:,:,:), allocatable :: X_J_ck
+      real(dp), dimension(:,:,:), allocatable :: X_Jk_c
 !
-      type(batching_index) :: batch_l, batch_d
-      integer :: l_batch, d_batch
-      integer :: req_0, req_1
+      real(dp), dimension(:,:,:), allocatable :: X_J_lk
+      real(dp), dimension(:,:,:), allocatable :: X_J_kl
 !
-!     :: Term 1: sigma_cl += sum_mjk Y_cmjk * g_mjlk ::
+      real(dp), dimension(:,:,:), allocatable :: L_J_vv
 !
-      call wf%g_mjlk_t%open_('read')
+      type(batching_index) :: batch_k, batch_v
+      integer :: k_batch, v_batch
+      integer :: req_0, req_k, req_v, req_2
 !
-      batch_l = batching_index(wf%n_o)
-!
-      req_0 = 0
-      req_1 = wf%n_o**3
-!
-      call mem%batch_setup(batch_l, req_0, req_1)
-!
-      call batch_l%determine_limits(1)
-      call mem%alloc(g_mjlk, wf%n_o, wf%n_o, wf%n_o, batch_l%length) ! g_mjk#l
-!
-      do l_batch = 1, batch_l%num_batches
-!
-         call batch_l%determine_limits(l_batch)
-!
-         call single_record_reader(batch_l, wf%g_mjlk_t, g_mjlk)
-!
-         call dgemm('N','N',                    &
-                     wf%n_v,                    &
-                     batch_l%length,            &
-                     wf%n_o**3,                 &
-                     one,                       &
-                     Y_cmjk,                    & ! Y_c_mjk
-                     wf%n_v,                    &
-                     g_mjlk,                    & ! g_mjk_l
-                     wf%n_o**3,                 &
-                     one,                       &
-                     sigma_ai(1,batch_l%first), &
-                     wf%n_v)
-!
-      enddo ! l_batch
-!
-      call batch_l%determine_limits(1)
-      call mem%dealloc(g_mjlk, wf%n_o, wf%n_o, wf%n_o, batch_l%length)
-!
-      call wf%g_mjlk_t%close_()
-!
-!
-!     :: Term 2: sigma_dk += - sum_cmj g_cdmj * Y_cmjk ::
-!
-      call wf%g_cdlk_t%open_('read')
-!
-      batch_d = batching_index(wf%n_v)
+      batch_k = batching_index(wf%n_o)
+      batch_v = batching_index(wf%n_v)
 !
       req_0 = 0
-      req_1 = 2*wf%n_v*wf%n_o**2
+      req_k = wf%n_v*wf%n_o**2 + (2*wf%n_v + wf%n_o)*wf%eri%n_J
+      req_v = max(wf%n_v,wf%n_o)*wf%eri%n_J
+      req_2 = 0
 !
-      call mem%batch_setup(batch_d, req_0, req_1)
+      call mem%alloc(X_J_lk, wf%eri%n_J, wf%n_o, wf%n_o)
+      call mem%alloc(X_J_kl, wf%eri%n_J, wf%n_o, wf%n_o)
 !
-      call batch_d%determine_limits(1)
-      call mem%alloc(g_cdmj, wf%n_v, wf%n_o, wf%n_o, batch_d%length) ! cmj#d
+      call mem%batch_setup(batch_k, batch_v, req_0, req_k, req_v, req_2)
 !
-      do d_batch = 1, batch_d%num_batches
+      call mem%alloc(Y_mjck, wf%n_v, batch_k%max_length, wf%n_o, wf%n_o)
 !
-         call batch_d%determine_limits(d_batch)
+      call mem%alloc(X_J_ck, wf%eri%n_J, wf%n_v, batch_k%max_length)
+      call mem%alloc(X_Jk_c, wf%eri%n_J, batch_k%max_length, wf%n_v)
 !
-!        read g_cdmj stored as cmj#d
-         call compound_record_reader(wf%n_o, batch_d, wf%g_cdlk_t, g_cdmj)
+      call mem%alloc(L_J_vv, wf%eri%n_J, max(wf%n_v, wf%n_o), batch_v%max_length)
 !
-         call dgemm('T','N',                       &
-                     batch_d%length,               &
-                     wf%n_o,                       &
-                     wf%n_v*wf%n_o**2,             &
-                     -one,                         &
-                     g_cdmj,                       & ! g_cmj_#d
-                     wf%n_v*wf%n_o**2,             &
-                     Y_cmjk,                       & ! Y_cmj_k
-                     wf%n_v*wf%n_o**2,             &
-                     one,                          &
-                     sigma_ai(batch_d%first,1),    &
-                     wf%n_v)
+      do k_batch = 1, batch_k%num_batches
 !
+         call batch_k%determine_limits(k_batch)
+!
+         call sort_1234_to_2314(Y_cmjk(:,:,:,batch_k%first:), Y_mjck, &
+                                wf%n_v, wf%n_o, wf%n_o, batch_k%length)
+!
+         call wf%eri%get_cholesky_t1(X_J_lk, 1, wf%n_o, 1, wf%n_o)
+!
+         call dgemm('N', 'N',              &
+                    wf%eri%n_J,            &
+                    wf%n_v*batch_k%length, &
+                    wf%n_o**2,             &
+                    one,                   &
+                    X_J_lk,                & ! L_J_mj
+                    wf%eri%n_J,            &
+                    Y_mjck,                & ! Y_mj_c#k
+                    wf%n_o**2,             &
+                    zero,                  &
+                    X_J_ck,                & ! X_J_c#k
+                    wf%eri%n_J)
+!
+!        :: Term 1: sigma_dk -= sum_cmj Y_cmjk * g_cdmj  ::
+!
+         do v_batch = 1, batch_v%num_batches
+!
+            call batch_v%determine_limits(v_batch)
+!
+            call wf%eri%get_cholesky_t1(L_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
+                                                      wf%n_o+batch_v%first, wf%n_o+batch_v%last)
+!
+            call dgemm('T','N',                                 &
+                        batch_v%length,                         &
+                        batch_k%length,                         &
+                        wf%n_v*wf%eri%n_J,                      &
+                        -one,                                   &
+                        L_J_vv,                                 & ! L_Jc_#d
+                        wf%n_v*wf%eri%n_J,                      &
+                        X_J_ck,                                 & ! X_Jc_#k
+                        wf%n_v*wf%eri%n_J,                      &
+                        one,                                    &
+                        sigma_ai(batch_v%first:,batch_k%first), & ! sigma_#d_#k
+                        wf%n_v)
+!
+         enddo
+!
+!        :: Term 2: sigma_cl += sum_mjk Y_cmjk * g_mjlk ::
+!
+         call wf%eri%get_cholesky_t1(X_J_lk, 1, wf%n_o, batch_k%first, batch_k%last)
+!
+         call sort_123_to_132(X_J_lk, X_J_kl, wf%eri%n_J, wf%n_o, batch_k%length)
+         call sort_123_to_132(X_J_ck, X_Jk_c, wf%eri%n_J, wf%n_v, batch_k%length)
+!
+         call dgemm('T', 'N',                  &
+                    wf%n_v,                    &
+                    wf%n_o,                    &
+                    wf%eri%n_J*batch_k%length, &
+                    one,                       &
+                    X_Jk_c,                    & ! X_J#k_c
+                    wf%eri%n_J*batch_k%length, &
+                    X_J_kl,                    & ! L_J#k_l
+                    wf%eri%n_J*batch_k%length, &
+                    one,                       &
+                    sigma_ai,                  & ! sigma_c_l
+                    wf%n_v)
+!
+!        :: Term 3: sigma_dj -= sum_cmj Y_cmjk * g_ckmd ::
+!
+         call wf%eri%get_cholesky_t1(X_J_ck, wf%n_o+1, wf%n_o+wf%n_v, &
+                                                   batch_k%first, batch_k%last)
+!
+         call dgemm('N', 'T',              &
+                    wf%eri%n_J,            &
+                    wf%n_o**2,             &
+                    wf%n_v*batch_k%length, &
+                    one,                   &
+                    X_J_ck,                & ! L_J_c#k
+                    wf%eri%n_J,            &
+                    Y_mjck,                & ! Y_mj_c#k
+                    wf%n_o**2,             &
+                    zero,                  &
+                    X_J_lk,                & ! X_J_mj
+                    wf%eri%n_J)
+!
+         do v_batch = 1, batch_v%num_batches
+!
+            call batch_v%determine_limits(v_batch)
+!
+            call wf%eri%get_cholesky_t1(L_J_vv, 1, wf%n_o, &
+                                              wf%n_o+batch_v%first, wf%n_o+batch_v%last)
+!
+            call dgemm('T','N',                     &
+                        batch_v%length,             &
+                        wf%n_o,                     &
+                        wf%n_o*wf%eri%n_J,          &
+                        -one,                       &
+                        L_J_vv,                     & ! L_Jm_#d
+                        wf%n_o*wf%eri%n_J,          &
+                        X_J_lk,                     & ! X_Jm_j
+                        wf%n_o*wf%eri%n_J,          &
+                        one,                        &
+                        sigma_ai(batch_v%first:,1), & ! sigma_#dj
+                        wf%n_v)
+!
+         enddo
       enddo
 !
-      call batch_d%determine_limits(1)
-      call mem%dealloc(g_cdmj, wf%n_v, wf%n_o, wf%n_o, batch_d%length) ! cmj#d
+      call mem%dealloc(L_J_vv, wf%eri%n_J, max(wf%n_v,wf%n_o), batch_v%max_length)
 !
-      call wf%g_cdlk_t%close_()
+      call mem%dealloc(X_Jk_c, wf%eri%n_J, batch_k%max_length, wf%n_v)
+      call mem%dealloc(X_J_ck, wf%eri%n_J, wf%n_v, batch_k%max_length)
 !
+      call mem%dealloc(Y_mjck, wf%n_v, batch_k%max_length, wf%n_o, wf%n_o)
 !
-!     :: Term 3: sigma_dk += - sum_cmj g_cjmd * Y_cmkj ::
-!
-      call mem%alloc(Y_cmkj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      call sort_1234_to_1243(Y_cmjk, Y_cmkj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-!
-      call wf%g_ckld_t%open_('read')
-!
-      batch_d = batching_index(wf%n_v)
-!
-      req_0 = 0
-      req_1 = wf%n_v*wf%n_o**2
-!
-      call mem%batch_setup(batch_d, req_0, req_1)
-!
-      call batch_d%determine_limits(1)
-!
-      call mem%alloc(g_cjmd, wf%n_v, wf%n_o, wf%n_o, batch_d%length) ! cmj#d
-!
-      do d_batch = 1, batch_d%num_batches
-!
-         call batch_d%determine_limits(d_batch)
-!
-         call compound_record_reader(wf%n_o, batch_d, wf%g_ckld_t, g_cjmd) ! cmj#d
-!
-         call dgemm('T','N',                       &
-                     batch_d%length,               &
-                     wf%n_o,                       &
-                     wf%n_v*wf%n_o**2,             &
-                     -one,                         &
-                     g_cjmd,                       & ! g_cmj_#d
-                     wf%n_v*wf%n_o**2,             &
-                     Y_cmkj,                       & ! Y_cmj_k
-                     wf%n_v*wf%n_o**2,             &
-                     one,                          &
-                     sigma_ai(batch_d%first,1),    &
-                     wf%n_v)
-!
-      enddo
-!
-      call batch_d%determine_limits(1)
-      call mem%dealloc(g_cjmd, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
-!
-      call wf%g_ckld_t%close_()
-!
-      call mem%dealloc(Y_cmkj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call mem%dealloc(X_J_kl, wf%eri%n_J, wf%n_o, wf%n_o)
+      call mem%dealloc(X_J_lk, wf%eri%n_J, wf%n_o, wf%n_o)
 !
    end subroutine jacobian_transpose_cc3_c3_a1_y_o_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_c3_b1_y_v_cc3(wf, sigma_ai)
+   module subroutine jacobian_transpose_cc3_c3_a1_y_v_cc3(wf, sigma_ai)
 !!
 !!    Jacobian transpose contribution Y_vvvo
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    sigma_1 += sum_bec g_becd * X_bcek
-!!    sigma_1 += sum_cek X_bcek * g_leck
-!!    sigma_1 += sum_bek X_bcek * g_lkbe
+!!    sigma_dk += sum_bec Y_bcek * g_becd
+!!    sigma_cl += sum_bek Y_bcek * g_lkbe
+!!    sigma_bl += sum_cek Y_bcek * g_leck
 !!
       implicit none
 !
@@ -2301,178 +2322,181 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_becd ! vvvv sorted as bce#d
-      real(dp), dimension(:,:,:,:), allocatable :: g_ckle ! ovvo sorted as cl#ke
-      real(dp), dimension(:,:,:,:), allocatable :: g_celk ! vvoo sorted as cle#k
-!
-!     arrays for reordering
-      real(dp), dimension(:,:,:,:), allocatable :: g_cekl
-!
       real(dp), dimension(:,:,:,:), allocatable :: Y_bcek
-      real(dp), dimension(:,:,:,:), allocatable :: Y_cbek
+      real(dp), dimension(:,:,:,:), allocatable :: Y_beck
 !
-      type(batching_index) :: batch_k, batch_d
-      integer :: k_batch, d_batch
-      integer :: req_0, req_k, req_d, req_2
+      real(dp), dimension(:,:,:), allocatable :: L_J_lk
+      real(dp), dimension(:,:,:), allocatable :: L_Jk_l
 !
-!     :: Term 1: sigma_dk += sum_bec g_becd * Y_bcek ::
+      real(dp), dimension(:,:,:), allocatable :: L_J_le
+      real(dp), dimension(:,:,:), allocatable :: L_eJ_l
 !
-      call wf%g_becd_t%open_('read')
+      real(dp), dimension(:,:,:), allocatable :: X_J_ck
+      real(dp), dimension(:,:,:), allocatable :: X_J_kc
+!
+      real(dp), dimension(:,:,:), allocatable :: X_J_vv
+!
+      type(batching_index) :: batch_k, batch_v
+      integer :: k_batch, v_batch
+      integer :: req_0, req_k, req_v, req_2
 !
       batch_k = batching_index(wf%n_o)
-      batch_d = batching_index(wf%n_v)
+      batch_v = batching_index(wf%n_v)
 !
       req_0 = 0
-      req_k = wf%n_v**3
-      req_d = wf%n_v**3
+      req_k = 2*wf%n_v**3 + 2*wf%n_v*wf%eri%n_J + 2*wf%n_o*wf%eri%n_J
+      req_v = wf%n_v*wf%eri%n_J + wf%n_o*wf%eri%n_J
       req_2 = 0
 !
-      call mem%batch_setup(batch_k, batch_d, req_0, req_k, req_d, req_2)
+      call mem%batch_setup(batch_k, batch_v, req_0, req_k, req_v, req_2)
 !
-      call batch_k%determine_limits(1)
-      call mem%alloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+      call mem%alloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
+      call mem%alloc(Y_beck, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
 !
-      call batch_d%determine_limits(1)
-      call mem%alloc(g_becd, wf%n_v, wf%n_v, wf%n_v, batch_d%length) 
+      call mem%alloc(L_Jk_l, wf%eri%n_J, batch_k%max_length, wf%n_o)
+      call mem%alloc(L_J_lk, wf%eri%n_J, wf%n_o, batch_k%max_length)
+!
+      call mem%alloc(L_J_le, wf%eri%n_J, wf%n_o, batch_v%max_length)
+      call mem%alloc(L_eJ_l, batch_v%max_length, wf%eri%n_J, wf%n_o)
+!
+      call mem%alloc(X_J_ck, wf%eri%n_J, wf%n_v, batch_k%max_length)
+      call mem%alloc(X_J_kc, wf%eri%n_J, batch_k%max_length, wf%n_v)
+!
+      call mem%alloc(X_J_vv, wf%eri%n_J, wf%n_v, batch_v%max_length)
 !
       do k_batch = 1, batch_k%num_batches
 !
          call batch_k%determine_limits(k_batch)
 !
-         call single_record_reader(batch_k, wf%Y_bcek, Y_bcek)
+         call wf%Y_bcek%read_interval(Y_bcek, batch_k)
+         call sort_1234_to_1324(Y_bcek, Y_beck, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
-         do d_batch = 1, batch_d%num_batches
+         call zero_array(X_J_ck, wf%eri%n_J*wf%n_v*batch_k%length)
 !
-            call batch_d%determine_limits(d_batch)
-            call single_record_reader(batch_d, wf%g_becd_t, g_becd)
+         do v_batch = 1, batch_v%num_batches
 !
-            call dgemm('T','N',                                &
-                        batch_d%length,                        &
-                        batch_k%length,                        &
-                        wf%n_v**3,                             &
-                        one,                                   &
-                        g_becd,                                & ! g_bce_d
-                        wf%n_v**3,                             &
-                        Y_bcek,                                & ! Y_bce_k
-                        wf%n_v**3,                             &
-                        one,                                   &
-                        sigma_ai(batch_d%first,batch_k%first), & ! sigma_a_i
+            call batch_v%determine_limits(v_batch)
+!
+            call wf%eri%get_cholesky_t1(X_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
+                                                      wf%n_o+batch_v%first, wf%n_o+batch_v%last)
+!
+            call dgemm('N','N',                      &
+                        wf%eri%n_J,                  &
+                        wf%n_v*batch_k%length,       &
+                        wf%n_v*batch_v%length,       &
+                        one,                         &
+                        X_J_vv,                      & ! L_J_b#e
+                        wf%eri%n_J,                  &
+                        Y_beck(:,batch_v%first,1,1), & ! Y_b#e_c#k
+                        wf%n_v**2,                   &
+                        one,                         &
+                        X_J_ck,                      & ! X_J_c#k
+                        wf%eri%n_J)
+!
+         enddo ! v_batch
+!
+!        :: Term 1: sigma_dk += sum_bec Y_bcek * g_becd ::
+!
+         do v_batch = 1, batch_v%num_batches
+!
+            call batch_v%determine_limits(v_batch)
+!
+            call wf%eri%get_cholesky_t1(X_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
+                                                      wf%n_o+batch_v%first, wf%n_o+batch_v%last)
+!
+            call dgemm('T','N',                                 &
+                        batch_v%length,                         &
+                        batch_k%length,                         &
+                        wf%n_v*wf%eri%n_J,                      &
+                        one,                                    &
+                        X_J_vv,                                 & ! L_Jc_#d
+                        wf%n_v*wf%eri%n_J,                      &
+                        X_J_ck,                                 & ! X_Jc_#k
+                        wf%n_v*wf%eri%n_J,                      &
+                        one,                                    &
+                        sigma_ai(batch_v%first:,batch_k%first), & ! sigma_#d#k
                         wf%n_v)
 !
-         enddo ! d_batch
+         enddo ! v_batch
+!
+!        :: Term 2: sigma_cl -= sum_bek Y_bcek * g_belk ::
+!
+         call sort_123_to_132(X_J_ck, X_J_kc, wf%eri%n_J, wf%n_v, batch_k%length)
+!
+         call wf%eri%get_cholesky_t1(L_J_lk, 1, wf%n_o, batch_k%first, batch_k%last)
+         call sort_123_to_132(L_J_lk, L_Jk_l, wf%eri%n_J, wf%n_o, batch_k%length)
+!
+         call dgemm('T', 'N',                  &
+                    wf%n_v, wf%n_o,            &
+                    wf%eri%n_J*batch_k%length, &
+                    -one,                      &
+                    X_J_kc,                    & !X_J#k_c
+                    wf%eri%n_J*batch_k%length, &
+                    L_Jk_l,                    & !L_J#k_l
+                    wf%eri%n_J*batch_k%length, &
+                    one,                       &
+                    sigma_ai,                  & !sigma_cl
+                    wf%n_v)
+!
+!
+!        :: Term 3: sigma_bl += - sum_cek Y_bcek * g_ckle ::
+!
+         call wf%eri%get_cholesky_t1(X_J_ck, 1+wf%n_o, wf%n_v+wf%n_o, &
+                                                   batch_k%first, batch_k%last)
+!
+         do v_batch = 1, batch_v%num_batches
+!
+            call batch_v%determine_limits(v_batch)
+!
+            call dgemm('N','T',                      &
+                        wf%n_v*batch_v%length,       &
+                        wf%eri%n_J,                  &
+                        wf%n_v*batch_k%length,       &
+                        one,                         &
+                        Y_beck(:,batch_v%first,1,1), & ! Y_b#e_c#k
+                        wf%n_v**2,                   &
+                        X_J_ck,                      & ! L_J_c#k
+                        wf%eri%n_J,                  &
+                        zero,                        &
+                        X_J_vv,                      & ! X_b#e_J
+                        wf%n_v*batch_v%length)
+!
+            call wf%eri%get_cholesky_t1(L_J_le, 1, wf%n_o, &
+                                                      batch_v%first+wf%n_o, batch_v%last+wf%n_o)
+!
+            call sort_123_to_312(L_J_le, L_eJ_l, wf%eri%n_J, wf%n_o, batch_v%length)
+!
+            call dgemm('N','N',                    &
+                        wf%n_v, wf%n_o,            &
+                        wf%eri%n_J*batch_v%length, &
+                        -one,                      &
+                        X_J_vv,                    & ! X_b_#eJ
+                        wf%n_v,                    &
+                        L_eJ_l,                    & ! L_#eJ_l
+                        wf%eri%n_J*batch_v%length, &
+                        one,                       &
+                        sigma_ai,                  & ! sigma_bl
+                        wf%n_v)
+!
+         enddo
 !
       enddo ! k_batch
 !
-      call batch_k%determine_limits(1)
-      call mem%dealloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+      call mem%dealloc(X_J_vv, wf%eri%n_J, wf%n_v, batch_v%max_length)
 !
-      call batch_d%determine_limits(1)
-      call mem%dealloc(g_becd, wf%n_v, wf%n_v, wf%n_v, batch_d%length)
+      call mem%dealloc(X_J_kc, wf%eri%n_J, batch_k%max_length, wf%n_v)
+      call mem%dealloc(X_J_ck, wf%eri%n_J, wf%n_v, batch_k%max_length)
 !
-      call wf%g_becd_t%close_()
+      call mem%dealloc(L_eJ_l, wf%eri%n_J, batch_v%max_length, wf%n_o)
+      call mem%dealloc(L_J_le, wf%eri%n_J, wf%n_o, batch_v%max_length)
 !
+      call mem%dealloc(L_J_lk, wf%eri%n_J, wf%n_o, batch_k%max_length)
+      call mem%dealloc(L_Jk_l, wf%eri%n_J, batch_k%max_length, wf%n_o)
 !
-!     :: Term 2: sigma_bl += - sum_cek Y_bcek * g_ckle ::
+      call mem%dealloc(Y_beck, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
+      call mem%dealloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
 !
-      batch_k = batching_index(wf%n_o)
-!
-      req_0 = 0
-      req_k = wf%n_v**3 + 2*wf%n_o*wf%n_v**2
-!
-      call mem%batch_setup(batch_k, req_0, req_k)
-!
-      call batch_k%determine_limits(1)
-      call mem%alloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-!
-      call wf%g_ckld_t%open_('read')
-!
-      do k_batch = 1, batch_k%num_batches
-!
-         call batch_k%determine_limits(k_batch)
-!
-         call mem%alloc(g_ckle, wf%n_v, wf%n_o, batch_k%length, wf%n_v) ! read in cl#ke
-         call mem%alloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) ! sort to ce#kl
-!
-         call compound_record_reader(wf%n_v, batch_k, wf%g_ckld_t, g_ckle, .true.) ! stored as cl#k#e
-         call sort_1234_to_1432(g_ckle, g_cekl, wf%n_v, wf%n_o, batch_k%length, wf%n_v) ! cl#ke -> ce#kl
-!
-         call single_record_reader(batch_k, wf%Y_bcek, Y_bcek)
-!
-         call dgemm('N','N',                    &
-                     wf%n_v,                    &
-                     wf%n_o,                    &
-                     batch_k%length*wf%n_v**2,  &
-                     -one,                      &
-                     Y_bcek,                    & ! Y_b_cek
-                     wf%n_v,                    &
-                     g_cekl,                    & ! g_cek_l
-                     batch_k%length*wf%n_v**2,  &
-                     one,                       &
-                     sigma_ai,                  &
-                     wf%n_v)
-!
-         call mem%dealloc(g_ckle, wf%n_v, wf%n_o, batch_k%length, wf%n_v) ! cl#ke
-         call mem%dealloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) ! ce#kl
-!
-      enddo
-!
-      call batch_k%determine_limits(1)
-      call mem%dealloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-!
-      call wf%g_ckld_t%close_()
-!
-!     
-!     :: Term 3: sigma_bl += - sum_cek Y_cbek * g_celk ::
-!
-      call wf%g_cdlk_t%open_('read')
-!
-      req_0 = 0
-      req_k = 2*wf%n_v**3 + 2*wf%n_o*wf%n_v**2
-!
-      call mem%batch_setup(batch_k, req_0, req_k)
-!
-      call batch_k%determine_limits(1)
-      call mem%alloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-      call mem%alloc(Y_cbek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-!
-      do k_batch = 1, batch_k%num_batches
-!
-         call batch_k%determine_limits(k_batch)
-!
-         call mem%alloc(g_celk, wf%n_v, wf%n_o, batch_k%length, wf%n_v) ! read in cl#ke
-         call mem%alloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) ! sort to ce#kl
-!
-         call single_record_reader(batch_k, wf%Y_bcek, Y_bcek)
-         call sort_1234_to_2134(Y_bcek, Y_cbek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-!
-         call compound_record_reader(wf%n_v, batch_k, wf%g_cdlk_t, g_celk, .true.) ! stored as cl#k#e
-         call sort_1234_to_1432(g_celk, g_cekl, wf%n_v, wf%n_o, batch_k%length, wf%n_v) ! cl#ke -> ce#kl
-!
-         call dgemm('N','N',                    &
-                     wf%n_v,                    &
-                     wf%n_o,                    &
-                     batch_k%length*wf%n_v**2,  &
-                     -one,                      &
-                     Y_cbek,                    & ! Y_b_cek
-                     wf%n_v,                    &
-                     g_cekl,                    & ! g_cek_l
-                     batch_k%length*wf%n_v**2,  &
-                     one,                       &
-                     sigma_ai,                  &
-                     wf%n_v)
-!
-         call mem%dealloc(g_celk, wf%n_v, wf%n_o, batch_k%length, wf%n_v) ! cl#ke
-         call mem%dealloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) ! ce#kl
-!
-      enddo
-!
-      call batch_k%determine_limits(1)
-      call mem%dealloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-      call mem%dealloc(Y_cbek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-!
-      call wf%g_cdlk_t%close_()
-!
-   end subroutine jacobian_transpose_cc3_c3_b1_y_v_cc3
+   end subroutine jacobian_transpose_cc3_c3_a1_y_v_cc3
 !
 !
 end submodule jacobian_transpose

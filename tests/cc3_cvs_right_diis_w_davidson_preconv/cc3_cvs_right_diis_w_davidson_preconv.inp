@@ -1,0 +1,46 @@
+system
+  name: H2O
+end system
+
+do
+  excited state
+end do
+
+method
+  hf
+  cc3
+end method
+
+solver cholesky
+  threshold: 1.0d-8
+end solver cholesky
+
+solver scf
+  restart
+  energy threshold:   1.0d-8
+  gradient threshold: 1.0d-8
+end solver scf
+
+solver cc gs
+  restart
+  omega threshold:  1.0d-8
+  energy threshold: 1.0d-8
+end solver cc gs
+
+solver cc es
+  restart
+  davidson preconvergence
+  preconvergence threshold: 1.0d-2
+  algorithm:                diis
+  singlet states:           10
+  residual threshold:       1.0d-6
+  energy threshold:         1.0d-6
+  core excitation:          {1}
+end solver cc es
+
+geometry
+basis: cc-pVDZ
+O        1.4059135598      1.5728867794      0.0000000000                 
+H        2.3759135598      1.5728867794      0.0000000000                 
+H        1.0825837481      2.0185366861     -0.7985950122
+end geometry

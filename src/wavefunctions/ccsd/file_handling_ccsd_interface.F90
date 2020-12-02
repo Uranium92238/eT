@@ -29,6 +29,25 @@
    end subroutine save_amplitudes_ccsd
 !
 !
+   module subroutine read_amplitudes_ccsd(wf, read_n)
+!!
+!!    Read amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Adapted to return the number of read amplitdues if requested 
+!!    by Alexander C. Paul, Oct 2020
+!!
+!!    read_n: optionally returns the number of amplitudes read. 
+!!            This is especially useful e.g. in CCSD to provide a start guess 
+!!            for the doubles if only singles were found on file.
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+      integer, intent(out), optional :: read_n
+!
+   end subroutine read_amplitudes_ccsd
+!
+!
    module subroutine save_multipliers_ccsd(wf)
 !!
 !!    Save multipliers
@@ -41,25 +60,20 @@
    end subroutine save_multipliers_ccsd
 !
 !
-   module subroutine read_amplitudes_ccsd(wf)
-!!
-!!    Read amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-      implicit none
-!
-      class(ccsd), intent(inout) :: wf
-!
-   end subroutine read_amplitudes_ccsd
-!
-!
-   module subroutine read_multipliers_ccsd(wf)
+   module subroutine read_multipliers_ccsd(wf, read_n)
 !!
 !!    Read multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
+!!    Adapted to return the number of read multipliers if requested 
+!!    by Alexander C. Paul, Oct 2020
+!!
+!!    read_n: optionally returns the number of mutliplers read. 
+!!            This is especially useful e.g. in CCSD to provide a start guess 
+!!            for the doubles if only singles were found on file.
 !!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
+      integer, intent(out), optional :: read_n
 !
    end subroutine read_multipliers_ccsd

@@ -42,7 +42,7 @@
 !!
 !!    Calculates the A1 term,
 !!
-!!       A1: sum_ckd u_bj_ci * g_abjc,
+!!       A1: sum_cjb u_bj_ci * g_abjc,
 !!
 !!    with 
 !!       
@@ -56,7 +56,7 @@
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
@@ -83,7 +83,7 @@
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
@@ -114,7 +114,7 @@
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v

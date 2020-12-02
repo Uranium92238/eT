@@ -17,6 +17,10 @@ solver scf
    gradient threshold: 1.0d-10
 end solver scf
 
+solver cholesky
+   threshold: 1.0d-11
+end solver cholesky
+
 molecular mechanics
    forcefield: fq
 end molecular mechanics

@@ -48,7 +48,7 @@ module asymmetric_lanczos_cc_es_class
 !!
 !!    and the oscillator strengths may be calculated through
 !!
-!!       f(j)^q = (2/3) * omega(j) norm_eta^q norm_csi^q L^T_n(j1) R_n(1j)
+!!       f(j)^q = (2/3) * omega(j) norm_eta^q norm_xi^q L^T_n(j1) R_n(1j)
 !!
 !!    See for further details: 
 !!       S. Coriani et. al., J. Chem. Theory Comput. 2012, 8, 5, 1616-1628
@@ -230,12 +230,12 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable   :: dipole_length
       real(dp), dimension(:,:), allocatable     :: reduced_left, reduced_right
-      real(dp), dimension(:), allocatable       :: etaX, csiX
+      real(dp), dimension(:), allocatable       :: etaX, xiX
       real(dp), dimension(:), allocatable       :: Aq, pA
       real(dp), dimension(:), allocatable       :: eigenvalues_Re, eigenvalues_Im
       real(dp), dimension(:), allocatable       :: oscillator_strength
 !
-      real(dp) :: norm_eta_times_norm_csi, ddot, overlap, factor, norm_p1q1
+      real(dp) :: norm_eta_times_norm_xi, ddot, overlap, factor, norm_p1q1
 !
       integer :: cartesian, iteration
 !
@@ -244,28 +244,28 @@ contains
       call mem%alloc(dipole_length, wf%n_mo, wf%n_mo, 3)
       call wf%construct_mu(dipole_length)
 !
-      call mem%alloc(csiX, wf%n_es_amplitudes)     
+      call mem%alloc(xiX, wf%n_es_amplitudes)     
       call mem%alloc(etaX, wf%n_es_amplitudes)     
 !
       do cartesian=1, 3
 !
-!        Construct the eta and csi vectors
+!        Construct the eta and xi vectors
 !
-         call wf%construct_csiX(dipole_length(:,:,cartesian), csiX)
-         call wf%construct_eom_etaX(dipole_length(:,:,cartesian), csiX, etaX)
+         call wf%construct_xiX(dipole_length(:,:,cartesian), xiX)
+         call wf%construct_eom_etaX(dipole_length(:,:,cartesian), xiX, etaX)
 !
          if (solver%projector%active) then
 !
-            call solver%projector%do_(csiX)
+            call solver%projector%do_(xiX)
             call solver%projector%do_(etaX)
 !
          endif
 !
-!        Prepare initial seeds (p1,q1) as binormalized etaX and csiX vectors
+!        Prepare initial seeds (p1,q1) as binormalized etaX and xiX vectors
 !        
 !        The binormalization procedure is either 'symmetric' or 'asymmetric'
 !
-         overlap = ddot(wf%n_es_amplitudes, etaX, 1, csiX, 1)
+         overlap = ddot(wf%n_es_amplitudes, etaX, 1, xiX, 1)
 !
          if(solver%normalization=="symmetric")then
 !
@@ -273,7 +273,7 @@ contains
 !
             factor = one/norm_p1q1
 !
-            call dscal(wf%n_es_amplitudes, factor, csiX, 1)
+            call dscal(wf%n_es_amplitudes, factor, xiX, 1)
             call dscal(wf%n_es_amplitudes, dsign(factor,overlap), etaX, 1)
 !         
          else if (solver%normalization=="asymmetric") then
@@ -288,14 +288,14 @@ contains
 !
          endif
 !
-!        Product of the norm of eta and the norm of csi, to be used for oscillator strengths
+!        Product of the norm of eta and the norm of xi, to be used for oscillator strengths
 !
-         norm_eta_times_norm_csi = overlap
+         norm_eta_times_norm_xi = overlap
 !
 !        Initialize the asymmetric Lanczos tool
 !
          lanczos = asymmetric_lanczos_tool(wf%n_es_amplitudes, solver%chain_length, &
-                                             etaX, csiX, solver%normalization)
+                                             etaX, xiX, solver%normalization)
 !
          call mem%alloc(Aq, wf%n_es_amplitudes)
          call mem%alloc(pA, wf%n_es_amplitudes)
@@ -372,7 +372,7 @@ contains
 !        Calculate oscillator strength
 !
          call solver%calculate_oscillator_strength(reduced_left, reduced_right, eigenvalues_Re, &
-                                                   norm_eta_times_norm_csi, oscillator_strength) 
+                                                   norm_eta_times_norm_xi, oscillator_strength) 
 !
          call mem%dealloc(reduced_left, solver%chain_length, solver%chain_length)
          call mem%dealloc(reduced_right, solver%chain_length, solver%chain_length)
@@ -388,7 +388,7 @@ contains
 !
       enddo
 !
-      call mem%dealloc(csiX,wf%n_es_amplitudes)
+      call mem%dealloc(xiX,wf%n_es_amplitudes)
       call mem%dealloc(etaX,wf%n_es_amplitudes)
       call mem%dealloc(dipole_length,wf%n_mo,wf%n_mo,3)
 !
@@ -470,14 +470,14 @@ contains
 !
 !
    subroutine calculate_oscillator_strength_asymmetric_lanczos_cc_es(solver, L, R, eigenvalues, &
-            norm_eta_times_norm_csi, oscillator_strength)
+            norm_eta_times_norm_xi, oscillator_strength)
 !!
 !!    Calculate oscillator strength
 !!    Written by Sonia Coriani, Torsha Moitra and Sarai D. Folkestad, 2019
 !!
 !!    Constructs the oscillator strength
 !!
-!!       f(j)^q = (2/3) * omega(j) * norm_eta^q * norm_csi^q * L^T(j1) * R(1j)
+!!       f(j)^q = (2/3) * omega(j) * norm_eta^q * norm_xi^q * L^T(j1) * R(1j)
 !!
 !!    for the cartesian component q
 !!
@@ -492,7 +492,7 @@ contains
 !
       real(dp), dimension(solver%chain_length), intent(in) :: eigenvalues
 !
-      real(dp), intent(in) :: norm_eta_times_norm_csi
+      real(dp), intent(in) :: norm_eta_times_norm_xi
 !
       real(dp), dimension(solver%chain_length), intent(out) :: oscillator_strength
 
@@ -514,7 +514,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call dscal(solver%chain_length, (two/three)*norm_eta_times_norm_csi, oscillator_strength, 1)
+      call dscal(solver%chain_length, (two/three)*norm_eta_times_norm_xi, oscillator_strength, 1)
 !
    end subroutine calculate_oscillator_strength_asymmetric_lanczos_cc_es
 !

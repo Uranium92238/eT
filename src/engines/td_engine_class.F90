@@ -58,7 +58,7 @@ module td_engine_class
       procedure :: do_fft_dipole_moment  => do_fft_dipole_moment_td_engine
       procedure :: do_fft_electric_field => do_fft_electric_field_td_engine
 !
-      procedure :: do_visualization      => do_visualization_td_engine
+      procedure :: do_td_visualization   => do_td_visualization_td_engine
 !
       procedure :: set_printables        => set_printables_td_engine
 !
@@ -101,7 +101,8 @@ contains
 !
       engine%gs_algorithm          = 'diis'
 !
-      if (wf%name_ .eq. 'cc2' .or. &
+      if (wf%name_ .eq. 'ccs' .or. &
+          wf%name_ .eq. 'cc2' .or. &
           wf%name_ .eq. 'cc3' .or. &
           wf%name_ .eq. 'low memory cc2') then
 !
@@ -186,6 +187,10 @@ contains
 !
       call engine%print_banner(wf)
 !
+      call engine%tasks%print_('cholesky')
+!
+      call engine%do_cholesky(wf)
+!
       call engine%tasks%print_('mo preparations')
 !
       call wf%mo_preparations()
@@ -216,7 +221,7 @@ contains
 !
 !     Plot density matrices
 !
-      if (engine%plot_density) call engine%do_visualization(wf)
+      if (engine%plot_density) call engine%do_td_visualization(wf)
 !
 !     Deallocate complex arrays
 !
@@ -370,6 +375,10 @@ contains
 !
       engine%tasks = task_list()
 !
+      call engine%tasks%add(label='cholesky', &
+                            description='Cholesky decomposition of the electron &
+                                         &repulsion integrals')
+!
       call engine%tasks%add(label='mo preparations',                             &
                             description='Preparation of MO basis and integrals')
 !
@@ -412,7 +421,7 @@ contains
    end subroutine set_printables_td_engine
 !
 !
-   subroutine do_visualization_td_engine(engine, wf)
+   subroutine do_td_visualization_td_engine(engine, wf)
 !!
 !!    Do visualization
 !!    Written by Andreas Skeidsvoll, Dec 2019
@@ -447,6 +456,7 @@ contains
 !     Initialize the plotter
 !
       plotter = visualization(wf%system, wf%n_ao)
+      call plotter%initialize(wf%system)
 !
       call mem%alloc(mo_density, wf%n_mo, wf%n_mo)
       call mem%alloc(density, wf%n_ao, wf%n_ao)
@@ -521,7 +531,9 @@ contains
       call mem%dealloc(mo_density, wf%n_mo, wf%n_mo)
       call mem%dealloc(density, wf%n_ao, wf%n_ao)
 !
-   end subroutine do_visualization_td_engine
+      call plotter%cleanup()
+!
+   end subroutine do_td_visualization_td_engine
 !
 !
 end module td_engine_class

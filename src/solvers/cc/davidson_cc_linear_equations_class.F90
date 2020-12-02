@@ -127,7 +127,7 @@ contains
 !     Set default settings
 !
       solver%max_iterations      = 100
-      solver%residual_threshold  = 1.0d-6
+      solver%residual_threshold  = 1.0d-3
       solver%restart             = .false.
       solver%max_dim_red         = 100
       solver%records_in_memory   = .false.
@@ -242,10 +242,10 @@ contains
 !
 !     :: Initialize solver tool and set preconditioner and start vectors ::
 !
-      davidson = linear_davidson_tool('davidson_t_response',         &
-                                       wf%n_gs_amplitudes,           &
-                                       solver%residual_threshold,    &
-                                       solver%max_dim_red, G, n_rhs, &
+      davidson = linear_davidson_tool('davidson_t_response',                        &
+                                       wf%n_gs_amplitudes,                          &
+                                       min(1.0d-11, solver%residual_threshold),     &
+                                       solver%max_dim_red, G, n_rhs,                &
                                        frequencies, n_frequencies)
 !
       call davidson%initialize_trials_and_transforms(solver%records_in_memory)
@@ -264,7 +264,14 @@ contains
       do while (.not. converged_residual .and. (iteration .le. solver%max_iterations))
 !
          iteration = iteration + 1       
-         call davidson%iterate()
+!
+!        Reduced space preparations 
+!
+         if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+!
+         call davidson%update_reduced_dim()
+!
+         call davidson%orthonormalize_trial_vecs() 
 !
          call output%printf('n', 'Iteration:               (i0)', &
                             ints=[iteration], fs='(/t3,a)')

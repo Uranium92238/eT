@@ -100,77 +100,90 @@ contains
 !
    end subroutine initialize_nuclear
 !
-   subroutine initialize_atoms(mol_name)
+   subroutine export_geometry_and_basis_to_libint(atoms)
+!!
+!!    Export geometry and basis
+!!    Written by Rolf Heilemann Myhre, Mar. 2020
+!!
+!!    Uses the input array of atoms to generate
+!!    a C integer array with atomic numbers,
+!!    a C double array with coordinates,
+!!    a C char array with basis set names,
+!!    a C pointer array to the basis set names, and
+!!    a C integer array which is 1 if basis on atom is cartesian and 0 otherwise
+!!    and pass them on to the C side
+!!
 !
-      use iso_c_binding, only: c_char, c_null_char
+      use atomic_class, only: atomic
+      use parameters, only: angstrom_to_bohr
+      use iso_c_binding, only: c_int, c_double, c_char, c_null_char
+!
       implicit none
 !
-      character(len=*) :: mol_name
-      character(len=40) :: mol_name_temp
-      character(kind=c_char),dimension(40) :: cpp_temp_mol_name
+      integer(c_int), parameter :: max_length = 100
 !
-      integer :: j
+      type(atomic), dimension(:), intent(in) :: atoms
 !
-      mol_name_temp = trim(mol_name)//c_null_char
+      integer(c_int), dimension(:), allocatable :: atomic_numbers_c
+      real(c_double), dimension(:,:), allocatable :: atomic_coordinates_c
 !
-      do j=1,len_trim(mol_name_temp)
+      integer :: i
 !
-         cpp_temp_mol_name(j) = mol_name_temp(j:j)  
+      integer :: n_atoms
+      integer(c_int) :: n_atoms_c
 !
-      enddo
+      character(len=max_length, kind=c_char), dimension(:), allocatable :: basis_sets_c
 !
-      call initialize_atoms_c(cpp_temp_mol_name)
+      integer(kind=c_int), dimension(:), allocatable :: cartesians_c
 !
-   end subroutine initialize_atoms
+      n_atoms = size(atoms)
+      n_atoms_c = int(n_atoms, c_int)
 !
-   subroutine initialize_basis(basis_set, file_name, cartesian_gaussians_int)
+      allocate(atomic_numbers_c(n_atoms))
+      allocate(atomic_coordinates_c(3, n_atoms))
+      allocate(basis_sets_c(n_atoms))
+      allocate(cartesians_c(n_atoms))
 !
-      use iso_c_binding, only: c_char, c_null_char, c_int
-      implicit none
 !
-      character(len=*) :: basis_set
-      character(len=*) :: file_name
+!     Construct C arrays with atom numbers and coordinates
+      do i =1,n_atoms
 !
-      character(len=40) :: basis_set_temp
-      character(len=40) :: file_name_temp
+         call atoms(i)%set_number()
+         atomic_numbers_c(i) = int(atoms(i)%number_, c_int)
 !
-      character(kind=c_char),dimension(40) :: cpp_temp_basis
-      character(kind=c_char),dimension(40) :: cpp_temp_file
+         atomic_coordinates_c(1,i) = real(atoms(i)%x*angstrom_to_bohr, c_double)
+         atomic_coordinates_c(2,i) = real(atoms(i)%y*angstrom_to_bohr, c_double)
+         atomic_coordinates_c(3,i) = real(atoms(i)%z*angstrom_to_bohr, c_double)
 !
-      integer :: cartesian_gaussians_int
-      integer(c_int) :: cartesian_gaussians_int_c
+         basis_sets_c(i) = trim(atoms(i)%basis)//c_null_char
 !
-      integer :: j
-!
-      basis_set_temp = trim(basis_set)//c_null_char
-!
-      do j=1,len_trim(basis_set_temp)
-!
-         cpp_temp_basis(j) = basis_set_temp(j:j)
-!
-      enddo
-!
-      file_name_temp = trim(file_name)//c_null_char
-!
-      do j=1,len_trim(file_name_temp)
-!
-         cpp_temp_file(j) = file_name_temp(j:j)  
+         if (atoms(i)%cartesian) then
+            cartesians_c(i) = int(1, c_int)
+         else
+            cartesians_c(i) = int(0, c_int)
+         endif
 !
       enddo
 !
-      cartesian_gaussians_int_c = int(cartesian_gaussians_int, kind=c_int)
-!     
-      call initialize_basis_c(cpp_temp_basis, cpp_temp_file, cartesian_gaussians_int_c)
+!     Export the geometry and basis
+!     We only pass on the pointers to basis_sets_c because chars are difficult in C
+      call export_geometry_and_basis_to_libint_c(n_atoms_c, &
+                                                 atomic_numbers_c, &
+                                                 atomic_coordinates_c, &
+                                                 basis_sets_c, &
+                                                 max_length, &
+                                                 cartesians_c)
 !
-   end subroutine initialize_basis
+!
+   end subroutine export_geometry_and_basis_to_libint
 !
    subroutine initialize_potential(charges,coordinates,n_points)
 !
-      use iso_c_binding
+      use iso_c_binding, only: c_int
       implicit none
       real(dp) :: charges(*)
       real(dp) :: coordinates(*)
-      integer(i6) :: n_points
+      integer(c_int) :: n_points
 !
       call initialize_potential_c(charges,coordinates,n_points)
 !

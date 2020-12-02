@@ -1,4 +1,3 @@
-
 !
 !  eT - a coupled cluster program
 !  Copyright (C) 2016-2020 the authors of eT
@@ -70,12 +69,16 @@ module memory_manager_class
 !
 !     The total amount of memory specified by user (standard: 8 GB)
 !
-      integer(i15), private :: total
+      integer(i64), private :: total
 !
 !     The amount of memory currently available, based on the arrays currently allocated
 !     (memory used by objects and local variables are not included in this estimate)
 !
-      integer(i15), private :: available
+      integer(i64), private :: available
+!
+!     Maximum amount of memory used at the same time
+!
+      integer(i64), private :: max_used
 !
 !     Unit for memory, default is GB
 !
@@ -95,33 +98,39 @@ module memory_manager_class
       procedure :: alloc_r_4_memory_manager
       procedure :: alloc_r_5_memory_manager
       procedure :: alloc_r_6_memory_manager
+      procedure :: alloc_r_2_p_memory_manager
+      procedure :: alloc_r_3_p_memory_manager
       procedure :: alloc_c_1_memory_manager
       procedure :: alloc_c_2_memory_manager
       procedure :: alloc_c_3_memory_manager
       procedure :: alloc_c_4_memory_manager
       procedure :: alloc_c_5_memory_manager
       procedure :: alloc_c_6_memory_manager
+      procedure :: alloc_c_3_p_memory_manager
       procedure :: alloc_i_1_memory_manager
       procedure :: alloc_i_2_memory_manager
       procedure :: alloc_i_3_memory_manager
       procedure :: alloc_i_4_memory_manager
       procedure :: alloc_l_1_memory_manager
-      generic   :: alloc             => alloc_r_1_memory_manager, &
-                                        alloc_r_2_memory_manager, &
-                                        alloc_r_3_memory_manager, &
-                                        alloc_r_4_memory_manager, &
-                                        alloc_r_5_memory_manager, &
-                                        alloc_r_6_memory_manager, &
-                                        alloc_c_1_memory_manager, &
-                                        alloc_c_2_memory_manager, &
-                                        alloc_c_3_memory_manager, &
-                                        alloc_c_4_memory_manager, &
-                                        alloc_c_5_memory_manager, &
-                                        alloc_c_6_memory_manager, &
-                                        alloc_i_1_memory_manager, &
-                                        alloc_i_2_memory_manager, &
-                                        alloc_i_3_memory_manager, &
-                                        alloc_i_4_memory_manager, &
+      generic   :: alloc             => alloc_r_1_memory_manager,   &
+                                        alloc_r_2_memory_manager,   &
+                                        alloc_r_3_memory_manager,   &
+                                        alloc_r_4_memory_manager,   &
+                                        alloc_r_5_memory_manager,   &
+                                        alloc_r_6_memory_manager,   &
+                                        alloc_r_2_p_memory_manager, &
+                                        alloc_r_3_p_memory_manager, &
+                                        alloc_c_1_memory_manager,   &
+                                        alloc_c_2_memory_manager,   &
+                                        alloc_c_3_memory_manager,   &
+                                        alloc_c_4_memory_manager,   &
+                                        alloc_c_5_memory_manager,   &
+                                        alloc_c_6_memory_manager,   &
+                                        alloc_c_3_p_memory_manager, &
+                                        alloc_i_1_memory_manager,   &
+                                        alloc_i_2_memory_manager,   &
+                                        alloc_i_3_memory_manager,   &
+                                        alloc_i_4_memory_manager,   &
                                         alloc_l_1_memory_manager
 !
       procedure :: dealloc_r_1_memory_manager
@@ -130,33 +139,39 @@ module memory_manager_class
       procedure :: dealloc_r_4_memory_manager
       procedure :: dealloc_r_5_memory_manager
       procedure :: dealloc_r_6_memory_manager
+      procedure :: dealloc_r_2_p_memory_manager
+      procedure :: dealloc_r_3_p_memory_manager
       procedure :: dealloc_c_1_memory_manager
       procedure :: dealloc_c_2_memory_manager
       procedure :: dealloc_c_3_memory_manager
       procedure :: dealloc_c_4_memory_manager
       procedure :: dealloc_c_5_memory_manager
       procedure :: dealloc_c_6_memory_manager
+      procedure :: dealloc_c_3_p_memory_manager
       procedure :: dealloc_i_1_memory_manager
       procedure :: dealloc_i_2_memory_manager
       procedure :: dealloc_i_3_memory_manager
       procedure :: dealloc_i_4_memory_manager
       procedure :: dealloc_l_1_memory_manager
-      generic   :: dealloc           => dealloc_r_1_memory_manager, &
-                                        dealloc_r_2_memory_manager, &
-                                        dealloc_r_3_memory_manager, &
-                                        dealloc_r_4_memory_manager, &
-                                        dealloc_r_5_memory_manager, &
-                                        dealloc_r_6_memory_manager, &
-                                        dealloc_c_1_memory_manager, &
-                                        dealloc_c_2_memory_manager, &
-                                        dealloc_c_3_memory_manager, &
-                                        dealloc_c_4_memory_manager, &
-                                        dealloc_c_5_memory_manager, &
-                                        dealloc_c_6_memory_manager, &
-                                        dealloc_i_1_memory_manager, &
-                                        dealloc_i_2_memory_manager, &
-                                        dealloc_i_3_memory_manager, &
-                                        dealloc_i_4_memory_manager, &
+      generic   :: dealloc           => dealloc_r_1_memory_manager,   &
+                                        dealloc_r_2_memory_manager,   &
+                                        dealloc_r_3_memory_manager,   &
+                                        dealloc_r_4_memory_manager,   &
+                                        dealloc_r_5_memory_manager,   &
+                                        dealloc_r_6_memory_manager,   &
+                                        dealloc_r_2_p_memory_manager, &
+                                        dealloc_r_3_p_memory_manager, &
+                                        dealloc_c_1_memory_manager,   &
+                                        dealloc_c_2_memory_manager,   &
+                                        dealloc_c_3_memory_manager,   &
+                                        dealloc_c_4_memory_manager,   &
+                                        dealloc_c_5_memory_manager,   &
+                                        dealloc_c_6_memory_manager,   &
+                                        dealloc_c_3_p_memory_manager, &
+                                        dealloc_i_1_memory_manager,   &
+                                        dealloc_i_2_memory_manager,   &
+                                        dealloc_i_3_memory_manager,   &
+                                        dealloc_i_4_memory_manager,   &
                                         dealloc_l_1_memory_manager
 !
 !     Routines for determining the number of batches
@@ -164,19 +179,26 @@ module memory_manager_class
       procedure :: batch_setup_1_memory_manager
       procedure :: batch_setup_2_memory_manager
       procedure :: batch_setup_3_memory_manager
-      generic   :: batch_setup       => batch_setup_1_memory_manager, batch_setup_2_memory_manager, &
-                                          batch_setup_3_memory_manager
+      generic   :: batch_setup       => batch_setup_1_memory_manager, &
+                                        batch_setup_2_memory_manager, &
+                                        batch_setup_3_memory_manager
 !
       procedure :: batch_setup_3_ident_memory_manager
       generic   :: batch_setup_ident => batch_setup_3_ident_memory_manager
+!
+      procedure :: update_memory_after_alloc        => update_memory_after_alloc_memory_manager
+!
+      procedure, nopass :: print_allocation_error   => print_allocation_error_memory_manager
+      procedure, nopass :: print_deallocation_error => print_deallocation_error_memory_manager
 !
 !     Read and print of settings 
 !
       procedure :: read_settings     => read_settings_memory_manager
       procedure :: print_settings    => print_settings_memory_manager
 !
-!     Get and print of available memory 
+!     Get and print of memory 
 !
+      procedure :: print_max_used                  => print_max_used_memory_manager
       procedure :: print_available                 => print_available_memory_manager
       procedure :: get_available                   => get_available_memory_manager
       procedure, nopass :: get_memory_as_character => get_memory_as_character_memory_manager
@@ -243,6 +265,7 @@ contains
       endif
 !
       mem%available = mem%total
+      mem%max_used = mem%total - mem%available
 !
       call mem%print_settings()
 !
@@ -289,7 +312,7 @@ contains
    end subroutine check_for_leak_memory_manager
 !
 !
-   function get_available_memory_manager(mem) result(memory)
+   pure function get_available_memory_manager(mem) result(memory)
 !!
 !!    Get available  
 !!    Written by Eirik F. Kjønstad, Jan 2019 
@@ -298,7 +321,7 @@ contains
 !
       class(memory_manager), intent(in) :: mem
 !
-      integer(i15) :: memory
+      integer(i64) :: memory
 !
       memory = mem%available
 !
@@ -317,7 +340,7 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: input_mem
+      integer(i64), intent(in) :: input_mem
 !
       logical, intent(in), optional :: all_digits
 !
@@ -376,6 +399,22 @@ contains
    end subroutine print_available_memory_manager
 !
 !
+   subroutine print_max_used_memory_manager(mem)
+!!
+!!    Print maximum used memory 
+!!    Written by Alexander C. Paul, May 2020
+!!
+      implicit none 
+!
+      class(memory_manager), intent(in) :: mem 
+!
+
+      call output%printf('n', 'Peak memory usage during the execution of eT: (a0)', &
+                         chars=[mem%get_memory_as_character(mem%max_used)], fs='(/t6,a)')
+!
+   end subroutine print_max_used_memory_manager
+!
+!
    subroutine alloc_r_1_memory_manager(mem, array, M)
 !!
 !!    Alloc (memory manager)
@@ -395,16 +434,16 @@ contains
       integer :: size_array ! Total size of array (M)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M), stat = error)
+      allocate(array(M), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -412,16 +451,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, dp)
 !
    end subroutine alloc_r_1_memory_manager
 !
@@ -445,16 +475,16 @@ contains
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N), stat = error)
+      allocate(array(M,N), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -462,16 +492,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, dp)
 !
    end subroutine alloc_r_2_memory_manager
 !
@@ -495,16 +516,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O), stat = error)
+      allocate(array(M,N,O), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -512,16 +533,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, dp)
 !
    end subroutine alloc_r_3_memory_manager
 !
@@ -545,16 +557,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O,P), stat = error)
+      allocate(array(M,N,O,P), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -562,16 +574,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, dp)
 !
    end subroutine alloc_r_4_memory_manager
 !
@@ -595,16 +598,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O,P,Q), stat = error)
+      allocate(array(M,N,O,P,Q), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -612,16 +615,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, dp)
 !
    end subroutine alloc_r_5_memory_manager
 !
@@ -645,16 +639,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q*R)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q*R
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O,P,Q,R), stat = error)
+      allocate(array(M,N,O,P,Q,R), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -662,18 +656,99 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, dp)
 !
    end subroutine alloc_r_6_memory_manager
+!
+!
+   subroutine alloc_r_2_p_memory_manager(mem, point, M, N)
+!!
+!!    Alloc r 2 pointer
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+!!    Allocates a two dimensional double precision array pointer
+!!    and updates the available memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      real(dp), dimension(:,:), pointer, contiguous :: point
+!
+      integer, intent(in) :: M, N ! First and second dimension of array
+!
+      integer :: size_array ! Total size of array (M*N)
+      integer :: error = 0
+!
+      character(len=100) :: error_msg
+!
+      if(associated(point)) then
+         call output%error_msg('Tried to allocate associated pointer')
+      endif
+!
+      size_array = M*N
+!
+!     Allocate array and check whether allocation was successful
+!
+      allocate(point(M,N), stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_allocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!
+!     The 'double precision' type (see types.F90) is typically 8 bytes,
+!     though it might differ due to its definition in terms of precision.
+!
+      call mem%update_memory_after_alloc(size_array, dp)
+!
+   end subroutine alloc_r_2_p_memory_manager
+!
+!
+   subroutine alloc_r_3_p_memory_manager(mem, point, M, N, O)
+!!
+!!    Alloc r 3 pointer
+!!    Written by Rolf H. Myhre, Jun. 2020
+!!
+!!    Allocates a three dimensional double precision array pointer
+!!    and updates the available memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      real(dp), dimension(:,:,:), pointer :: point
+!
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array 
+!
+      integer :: size_array ! Total size of array (M*N*O)
+      integer :: error = 0
+!
+      character(len=100) :: error_msg
+!
+      if(associated(point)) then
+         call output%error_msg('Tried to allocate associated pointer')
+      endif
+!
+      size_array = M*N*O
+!
+!     Allocate pointer and check whether allocation was successful
+!
+      allocate(point(M,N,O), stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_allocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!
+!     The 'double precision' type (see types.F90) is typically 8 bytes,
+!     though it might differ due to its definition in terms of precision.
+!
+      call mem%update_memory_after_alloc(size_array, dp)
+!
+   end subroutine alloc_r_3_p_memory_manager
 !
 !
    subroutine alloc_c_1_memory_manager(mem, array, M)
@@ -695,16 +770,16 @@ contains
       integer :: size_array ! Total size of array (M)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M), stat = error)
+      allocate(array(M), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -712,16 +787,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - 2*dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, 2*dp)
 !
    end subroutine alloc_c_1_memory_manager
 !
@@ -745,16 +811,16 @@ contains
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N), stat = error)
+      allocate(array(M,N), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -762,16 +828,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - 2*dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, 2*dp)
 !
    end subroutine alloc_c_2_memory_manager
 !
@@ -795,16 +852,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O), stat = error)
+      allocate(array(M,N,O), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -812,16 +869,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - 2*dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, 2*dp)
 !
    end subroutine alloc_c_3_memory_manager
 !
@@ -845,16 +893,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O,P), stat = error)
+      allocate(array(M,N,O,P), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -862,16 +910,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - 2*dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, 2*dp)
 !
    end subroutine alloc_c_4_memory_manager
 !
@@ -895,16 +934,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O,P,Q), stat = error)
+      allocate(array(M,N,O,P,Q), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -912,16 +951,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - 2*dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, 2*dp)
 !
    end subroutine alloc_c_5_memory_manager
 !
@@ -945,16 +975,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q*R)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q*R
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O,P,Q,R), stat = error)
+      allocate(array(M,N,O,P,Q,R), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -962,18 +992,54 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - 2*dp*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, 2*dp)
 !
    end subroutine alloc_c_6_memory_manager
+!
+!
+   subroutine alloc_c_3_p_memory_manager(mem, point, M, N, O)
+!!
+!!    Alloc c 3 pointer
+!!    Written by Rolf H. Myhre, Jun. 2020
+!!
+!!    Allocates a three dimensional double precision array pointer
+!!    and updates the available memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      complex(dp), dimension(:,:,:), pointer :: point
+!
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array 
+!
+      integer :: size_array ! Total size of array (M*N*O)
+      integer :: error = 0
+!
+      character(len=100) :: error_msg
+!
+      size_array = M*N*O
+!
+      if(associated(point)) then
+         call output%error_msg('Tried to allocate associated pointer')
+      endif
+!
+!     Allocate pointer and check whether allocation was successful
+!
+      allocate(point(M,N,O), stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_allocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!
+!     The 'double precision' type (see types.F90) is typically 8 bytes,
+!     though it might differ due to its definition in terms of precision.
+!
+      call mem%update_memory_after_alloc(size_array, 2*dp)
+!
+   end subroutine alloc_c_3_p_memory_manager
 !
 !
    subroutine dealloc_r_1_memory_manager(mem, array, M)
@@ -995,16 +1061,16 @@ contains
       integer :: size_array ! Total size of array (M)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1036,16 +1102,16 @@ contains
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1077,16 +1143,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1118,16 +1184,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1159,16 +1225,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1200,16 +1266,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q*R)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q*R
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1220,6 +1286,88 @@ contains
       mem%available = mem%available + dp*size_array
 !
    end subroutine dealloc_r_6_memory_manager
+!
+!
+   subroutine dealloc_r_2_p_memory_manager(mem, point, M, N)
+!!
+!!    Dealloc r 2 pointer
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+!!    Deallocates a two dimensional double precision array pointer 
+!!    and updates the available memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      real(dp), dimension(:,:), pointer :: point
+!
+      integer, intent(in) :: M, N ! First and second dimension of array 
+!
+      integer :: size_array ! Total size of array (M*N)
+      integer :: error = 0
+!
+      character(len=100) :: error_msg
+!
+      size_array = M*N
+!
+!     Deallocate array and check whether deallocation was successful
+!
+      deallocate(point, stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_deallocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!
+!     The 'double precision' type (see types.F90) is typically 8 bytes,
+!     though it might differ due to its definition in terms of precision.
+!
+      mem%available = mem%available + dp*size_array
+!
+   end subroutine dealloc_r_2_p_memory_manager
+!
+!
+   subroutine dealloc_r_3_p_memory_manager(mem, point, M, N, O)
+!!
+!!    Dealloc r 3 pointer
+!!    Written by Rolf H. Myhre, January 2019
+!!
+!!    Deallocates a three dimensional double precision array pointer 
+!!    and updates the available memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      real(dp), dimension(:,:,:), pointer :: point
+!
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array
+!
+      integer :: size_array ! Total size of array (M*N*O)
+      integer :: error = 0
+!
+      character(len=100) :: error_msg
+!
+      size_array = M*N*O
+!
+!     Deallocate pointer and check whether deallocation was successful
+!
+      deallocate(point, stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_deallocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!
+!     The 'double precision' type (see types.F90) is typically 8 bytes,
+!     though it might differ due to its definition in terms of precision.
+!
+      mem%available = mem%available + dp*size_array
+!
+   end subroutine dealloc_r_3_p_memory_manager
 !
 !
    subroutine dealloc_c_1_memory_manager(mem, array, M)
@@ -1241,16 +1389,16 @@ contains
       integer :: size_array ! Total size of array (M)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1282,16 +1430,16 @@ contains
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1323,16 +1471,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1364,16 +1512,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1405,16 +1553,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1446,16 +1594,16 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P*Q*R)
       integer :: error = 0
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P*Q*R
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1466,6 +1614,47 @@ contains
       mem%available = mem%available + 2*dp*size_array
 !
    end subroutine dealloc_c_6_memory_manager
+!
+!
+   subroutine dealloc_c_3_p_memory_manager(mem, point, M, N, O)
+!!
+!!    Dealloc c 3 pointer
+!!    Written by Rolf H. Myhre, January 2019
+!!
+!!    Deallocates a three dimensional double precision pointer 
+!!    and updates the available memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      complex(dp), dimension(:,:,:), pointer :: point
+!
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array
+!
+      integer :: size_array ! Total size of array (M*N*O)
+      integer :: error = 0
+!
+      character(len=100) :: error_msg
+!
+      size_array = M*N*O
+!
+!     Deallocate pointer and check whether deallocation was successful
+!
+      deallocate(point, stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_deallocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!
+!     The 'double precision' type (see types.F90) is typically 8 bytes,
+!     though it might differ due to its definition in terms of precision.
+!
+      mem%available = mem%available + 2*dp*size_array
+!
+   end subroutine dealloc_c_3_p_memory_manager
 !
 !
    subroutine alloc_i_1_memory_manager(mem, array, M)
@@ -1488,34 +1677,23 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M), stat = error)
+      allocate(array(M), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('Error: could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
-!
-!     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1))/8
-      mem%available = mem%available - int_size*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, int_size)
 !
    end subroutine alloc_i_1_memory_manager
 !
@@ -1540,34 +1718,23 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N), stat = error)
+      allocate(array(M,N), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('Error: could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
-!
-!     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1,1))/8
-      mem%available = mem%available - int_size*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, int_size)
 !
    end subroutine alloc_i_2_memory_manager
 !
@@ -1592,34 +1759,23 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O), stat = error)
+      allocate(array(M,N,O), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('Error: could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
-!
-!     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1,1,1))/8
-      mem%available = mem%available - int_size*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, int_size)
 !
    end subroutine alloc_i_3_memory_manager
 !
@@ -1644,34 +1800,23 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M,N,O,P), stat = error)
+      allocate(array(M,N,O,P), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('Error: could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
-!
-!     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1,1,1,1))/8
-      mem%available = mem%available - int_size*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, int_size)
 !
    end subroutine alloc_i_4_memory_manager
 !
@@ -1696,22 +1841,20 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
-!
-!     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1))/8
       mem%available = mem%available + int_size*size_array
@@ -1739,22 +1882,20 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
-!
-!     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1,1))/8
       mem%available = mem%available + int_size*size_array
@@ -1782,22 +1923,20 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
-!
-!     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1,1,1))/8
       mem%available = mem%available + int_size*size_array
@@ -1825,22 +1964,20 @@ contains
       integer :: error = 0
       integer :: int_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M*N*O*P
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
-!
-!     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
-!     though it might differ due to its definition in terms of precision.
+!     Check integer size
 !
       int_size = storage_size(array(1,1,1,1))/8
       mem%available = mem%available + int_size*size_array
@@ -1868,33 +2005,23 @@ contains
       integer :: error = 0
       integer :: log_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Allocate array and check whether allocation was successful
 !
-      allocate(array(M), stat = error)
+      allocate(array(M), stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('Error: could not allocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_allocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
-!
 !     Figure out how big a logical is.
 !
       log_size = storage_size(array(1))/8
-      mem%available = mem%available - log_size*size_array
-!
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
-!
-      if (mem%available .lt. 0) then
-!
-         call output%error_msg('user-specified memory insufficient.')
-!
-      endif
+      call mem%update_memory_after_alloc(size_array, log_size)
 !
    end subroutine alloc_l_1_memory_manager
 !
@@ -1919,16 +2046,16 @@ contains
       integer :: error = 0
       integer :: log_size
 !
+      character(len=100) :: error_msg
+!
       size_array = M
 !
 !     Deallocate array and check whether deallocation was successful
 !
-      deallocate(array, stat = error)
+      deallocate(array, stat = error, errmsg = error_msg)
 !
       if (error .ne. 0) then
-!
-         call output%error_msg('could not deallocate array with #elements = (i0)', ints=[size_array])
-!
+         call mem%print_deallocation_error(size_array, error_msg)
       endif
 !
 !     Update the available memory
@@ -1937,6 +2064,77 @@ contains
       mem%available = mem%available + log_size*size_array
 !
    end subroutine dealloc_l_1_memory_manager
+!
+!
+   subroutine print_allocation_error_memory_manager(size_array, error_msg)
+!!
+!!    Check allocation error
+!!    Written by Alexander C. Paul, March 2020
+!!
+      implicit none
+!
+      integer, intent(in) :: size_array
+      character (len=*), intent(in) :: error_msg
+!
+      call output%printf('m', error_msg, fs='(/t3,a)')
+      call output%printf('m', 'Note: Error message from gfortran might not be accurate.', &
+                          fs='(t3,a)')
+      call output%error_msg('Could not allocate array with #elements = (i0).', &
+                             ints=[size_array], ffs='(t3,a)')
+!
+   end subroutine print_allocation_error_memory_manager
+!
+!
+   subroutine print_deallocation_error_memory_manager(size_array, error_msg)
+!!
+!!    Check deallocation error
+!!    Written by Alexander C. Paul, March 2020
+!!
+      implicit none
+!
+      integer, intent(in) :: size_array
+      character (len=*), intent(in) :: error_msg
+!
+      call output%printf('m', error_msg)
+      call output%printf('m', 'Note: Error message from gfortran might not be accurate.')
+      call output%error_msg('Could not deallocate array with #elements = (i0).', &
+                             ints=[size_array])
+!
+   end subroutine print_deallocation_error_memory_manager
+!
+!
+   subroutine update_memory_after_alloc_memory_manager(mem, size_array, size_type)
+!!
+!!    Update memory after allocation
+!!    Written by Alexander C. Paul, May 2020
+!!
+!!    size_array: total size of the array allocated
+!!    size_type : storage size of one element of the array in Byte
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      integer, intent(in) :: size_array, size_type
+!
+!     Update available memory
+!
+      mem%available = mem%available - size_array*size_type
+!
+!     Check if there is no more memory (defined as being no more memory
+!     left of what was specified by user as available)
+!
+      if (mem%available .lt. 0) then
+!
+         call output%error_msg('User-specified memory insufficient.')
+!
+      endif
+!
+!     Update max used memory if needed
+      if (mem%max_used < (mem%total - mem%available)) &
+          mem%max_used =  mem%total - mem%available
+!
+   end subroutine update_memory_after_alloc_memory_manager
 !
 !
    subroutine read_settings_memory_manager(mem)
@@ -2019,11 +2217,11 @@ contains
 !
       integer, intent(in), optional :: element_size
 !
-      integer(i15) :: req0_tot
-      integer(i15) :: req1_min
-      integer(i15) :: req_min
+      integer(i64):: req0_tot
+      integer(i64):: req1_min
+      integer(i64):: req_min
 !
-      integer(i15) :: req_tot
+      integer(i64):: req_tot
 !
       integer :: e_size
       character(len=17), allocatable :: reqChar
@@ -2039,11 +2237,11 @@ contains
          e_size = element_size
       endif
 !
-      req0_tot = int(req0*e_size, kind=i15)
-      req1_min = int(req1*e_size, kind=i15)
+      req0_tot = int(req0*e_size, kind=i64)
+      req1_min = int(req1*e_size, kind=i64)
 !
       req_min = req0_tot + req1_min
-      req_tot = req0_tot + req1_min*int(batch_p%index_dimension,kind=i15)
+      req_tot = req0_tot + req1_min*int(batch_p%index_dimension,kind=i64)
 !
       if (req_tot .lt. mem%available) then
 !
@@ -2054,9 +2252,8 @@ contains
 !
       else if (req_min .gt. mem%available) then
 !
-!        Not enough memory for a batch
-!
 !        Hack because intel flips out if we put two functions in chars=[]
+!
          reqChar = mem%get_memory_as_character(req_min, .true.) 
          call output%printf('m', 'Need at least (a0) but only have (a0)', &
                             chars=[reqChar, mem%get_memory_as_character(mem%available, .true.)])
@@ -2126,14 +2323,14 @@ contains
 !
       logical :: figured_out
 !
-      integer(i15) :: req0_tot
-      integer(i15) :: req1_p_min
-      integer(i15) :: req1_q_min 
-      integer(i15) :: req2_min
-      integer(i15) :: req_min
-      integer(i15) :: req_tot 
+      integer(i64):: req0_tot
+      integer(i64):: req1_p_min
+      integer(i64):: req1_q_min 
+      integer(i64):: req2_min
+      integer(i64):: req_min
+      integer(i64):: req_tot 
 !
-      integer(i15) :: p_elements, q_elements
+      integer(i64):: p_elements, q_elements
 !
       integer :: e_size
       character(len=17), allocatable :: reqChar
@@ -2149,17 +2346,17 @@ contains
          e_size = element_size
       endif
 !
-      req0_tot   = int(req0*e_size, kind=i15)
-      req1_p_min = int(req1_p*e_size, kind=i15)
-      req1_q_min = int(req1_q*e_size, kind=i15)
-      req2_min   = int(req2*e_size, kind=i15)
+      req0_tot   = int(req0*e_size, kind=i64)
+      req1_p_min = int(req1_p*e_size, kind=i64)
+      req1_q_min = int(req1_q*e_size, kind=i64)
+      req2_min   = int(req2*e_size, kind=i64)
 !
       req_min = req0_tot + req1_p_min + req1_q_min + req2_min
 !
-      req_tot = req0_tot + req1_p_min*int(batch_p%index_dimension, kind=i15) &
-                         + req1_q_min*int(batch_q%index_dimension, kind=i15) &
-                         + req2_min*int(batch_p%index_dimension, kind=i15)&
-                           *int(batch_q%index_dimension, kind=i15)
+      req_tot = req0_tot + req1_p_min*int(batch_p%index_dimension, kind=i64)  &
+                         + req1_q_min*int(batch_q%index_dimension, kind=i64)  &
+                         + req2_min*int(batch_p%index_dimension, kind=i64)    &
+                           *int(batch_q%index_dimension, kind=i64)
 !
       if (req_tot .lt. mem%available) then
 !
@@ -2173,10 +2370,8 @@ contains
 !
       else if (req_min .gt. mem%available) then
 !
-!        Not enough memory for a batch
-!
 !        Hack because intel flips out if we put two functions in chars=[]
-         reqChar = mem%get_memory_as_character(req_min, .true.) 
+         reqChar = mem%get_memory_as_character(req_min, .true.)
          call output%printf('m', 'Need at least (a0) but only have (a0)', &
                             chars=[reqChar, mem%get_memory_as_character(mem%available, .true.)])
          call output%error_msg('Not enough memory for a batch.')
@@ -2342,29 +2537,31 @@ contains
 !
       integer, intent(in), optional :: element_size
 !
-      integer(i15) :: req0_tot
+      integer(i64):: req0_tot
 !
-      integer(i15) :: req1_p_min
-      integer(i15) :: req1_q_min 
-      integer(i15) :: req1_r_min
+      integer(i64):: req1_p_min
+      integer(i64):: req1_q_min 
+      integer(i64):: req1_r_min
 ! 
-      integer(i15) :: req2_pq_min
-      integer(i15) :: req2_pr_min
-      integer(i15) :: req2_qr_min
+      integer(i64):: req2_pq_min
+      integer(i64):: req2_pr_min
+      integer(i64):: req2_qr_min
 !
-      integer(i15) :: req3_min
+      integer(i64):: req3_min
 !
-      integer(i15) :: req_min
-      integer(i15) :: req_tot 
+      integer(i64):: req_min
+      integer(i64):: req_tot 
 !
-      integer(i15) :: p_elements, q_elements, r_elements
+      integer(i64):: p_elements, q_elements, r_elements
 !
       logical :: found_batch_size, p_incremented, q_incremented, r_incremented
 !
       integer :: e_size
       character(len=17), allocatable :: reqChar
 !
-      if ((.not. batch_p%initialized) .or. (.not. batch_q%initialized) .or. (.not. batch_r%initialized)) then
+      if ((.not. batch_p%initialized)        &
+            .or. (.not. batch_q%initialized) &
+            .or. (.not. batch_r%initialized)) then
 !
          call output%error_msg('batch_setup_3 called on uninitialized batch')
 !
@@ -2375,33 +2572,33 @@ contains
          e_size = element_size
       endif
 !
-      req0_tot   = int(req0*e_size, kind=i15)
+      req0_tot   = int(req0*e_size, kind=i64)
 !
-      req1_p_min = int(req1_p*e_size, kind=i15)
-      req1_q_min = int(req1_q*e_size, kind=i15)
-      req1_r_min = int(req1_r*e_size, kind=i15)
+      req1_p_min = int(req1_p*e_size, kind=i64)
+      req1_q_min = int(req1_q*e_size, kind=i64)
+      req1_r_min = int(req1_r*e_size, kind=i64)
 !
-      req2_pq_min = int(req2_pq*e_size, kind=i15)
-      req2_pr_min = int(req2_pr*e_size, kind=i15)
-      req2_qr_min = int(req2_qr*e_size, kind=i15)
+      req2_pq_min = int(req2_pq*e_size, kind=i64)
+      req2_pr_min = int(req2_pr*e_size, kind=i64)
+      req2_qr_min = int(req2_qr*e_size, kind=i64)
 !
-      req3_min = int(req3*e_size, kind=i15)
+      req3_min = int(req3*e_size, kind=i64)
 !
       req_min = req0_tot + req1_p_min + req1_q_min + req1_r_min &
                            + req2_pq_min + req2_pr_min + req2_qr_min + req3_min
 !
-      req_tot = req0_tot + req1_p_min*int(batch_p%index_dimension, kind=i15)  &
-                         + req1_q_min*int(batch_q%index_dimension, kind=i15)  &
-                         + req1_r_min*int(batch_r%index_dimension, kind=i15)  &
-                         + req2_pq_min*int(batch_p%index_dimension, kind=i15) &
-                           *int(batch_q%index_dimension, kind=i15)            &
-                         + req2_pr_min*int(batch_p%index_dimension, kind=i15) &
-                           *int(batch_r%index_dimension, kind=i15)            &
-                         + req2_qr_min*int(batch_q%index_dimension, kind=i15) &
-                           *int(batch_r%index_dimension, kind=i15)            &
-                         + req3_min*int(batch_p%index_dimension, kind=i15)    &
-                           *int(batch_q%index_dimension, kind=i15)            &
-                           *int(batch_r%index_dimension, kind=i15)
+      req_tot = req0_tot + req1_p_min*int(batch_p%index_dimension, kind=i64)  &
+                         + req1_q_min*int(batch_q%index_dimension, kind=i64)  &
+                         + req1_r_min*int(batch_r%index_dimension, kind=i64)  &
+                         + req2_pq_min*int(batch_p%index_dimension, kind=i64) &
+                           *int(batch_q%index_dimension, kind=i64)            &
+                         + req2_pr_min*int(batch_p%index_dimension, kind=i64) &
+                           *int(batch_r%index_dimension, kind=i64)            &
+                         + req2_qr_min*int(batch_q%index_dimension, kind=i64) &
+                           *int(batch_r%index_dimension, kind=i64)            &
+                         + req3_min*int(batch_p%index_dimension, kind=i64)    &
+                           *int(batch_q%index_dimension, kind=i64)            &
+                           *int(batch_r%index_dimension, kind=i64)
 !
       if (req_tot .lt. mem%available) then
 !
@@ -2418,13 +2615,11 @@ contains
 !
       else if (req_min .gt. mem%available) then
 !
-!        Not enough memory for a batch
-!
 !        Hack because intel flips out if we put two functions in chars=[]
          reqChar = mem%get_memory_as_character(req_min, .true.) 
          call output%printf('m', 'Need at least (a0) but only have (a0)', &
                             chars=[reqChar, mem%get_memory_as_character(mem%available, .true.)])
-         call output%error_msg('Not enough memory for a batch')
+         call output%error_msg('Not enough memory for a batch.')
 !
       else
 !
@@ -2557,16 +2752,16 @@ contains
 !
       integer, intent(in), optional :: element_size
 !
-      integer(i15):: req0_tot
+      integer(i64):: req0_tot
 !
-      integer(i15):: req1_min
-      integer(i15):: req2_min
-      integer(i15):: req3_min
+      integer(i64):: req1_min
+      integer(i64):: req2_min
+      integer(i64):: req3_min
 !
-      integer(i15):: req_min
-      integer(i15):: req_tot 
+      integer(i64):: req_min
+      integer(i64):: req_tot 
 !
-      integer(i15):: elements
+      integer(i64):: elements
 !
       logical:: found_batch_size, incremented
 !
@@ -2591,18 +2786,18 @@ contains
 !
       endif
 !
-      req0_tot   = int((req0 + req0)*e_size, kind=i15)
-      req1_min   = int((req1 + req1)*e_size, kind=i15)
-      req2_min   = int((req2 + req2)*e_size, kind=i15)
-      req3_min   = int((req3 + req3)*e_size, kind=i15)
+      req0_tot   = int(req0*e_size, kind=i64)
+      req1_min   = int(req1*e_size, kind=i64)
+      req2_min   = int(req2*e_size, kind=i64)
+      req3_min   = int(req3*e_size, kind=i64)
 !
 !     Minimal required memory for batches of size 1
       req_min = req0_tot + 3*req1_min + 6*req2_min + 6*req3_min
 !
 !     Required memory to hold complete arrays in mem (no batching)
-      req_tot = req0_tot + req1_min*int(batch_p%index_dimension, kind=i15)     &
-                         + req2_min*int(batch_p%index_dimension, kind=i15)**2  &
-                         + req3_min*int(batch_p%index_dimension, kind=i15)**3
+      req_tot = req0_tot + req1_min*int(batch_p%index_dimension, kind=int64)     &
+                         + req2_min*int(batch_p%index_dimension, kind=int64)**2  &
+                         + req3_min*int(batch_p%index_dimension, kind=int64)**3
 !
       if (req_tot .lt. mem%available) then
 !
@@ -2619,13 +2814,11 @@ contains
 !
       else if (req_min .gt. mem%available) then
 !
-!        Not enough memory for a batch
-!
 !        Hack because intel flips out if we put two functions in chars=[]
          reqChar = mem%get_memory_as_character(req_min, .true.) 
          call output%printf('m', 'Need at least (a0) but only have (a0)', &
                             chars=[reqChar, mem%get_memory_as_character(mem%available, .true.)])
-         call output%error_msg('Not enough memory for a batch')
+         call output%error_msg('Not enough memory for a batch.')
 !
       else
 !

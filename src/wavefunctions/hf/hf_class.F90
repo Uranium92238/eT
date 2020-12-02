@@ -52,17 +52,14 @@ module hf_class
 !
       real(dp), dimension(:,:), allocatable :: ao_h
 !
-      real(dp), dimension(:,:), allocatable :: ao_fock
-      real(dp), dimension(:,:), allocatable :: mo_fock
-!
       real(dp) :: coulomb_threshold  = 1.0D-12   ! Screening threshold (Fock, Coulomb)
       real(dp) :: exchange_threshold = 1.0D-10   ! Screening threshold (Fock, exchange)
       real(dp) :: libint_epsilon     = 1.0D-20   ! Libint electron repulsion integral 
                                                  ! precision given approximately by sqrt(epsilon)
       real(dp) :: integral_cutoff    = 1.0D-10   ! Default: sqrt(epsilon) 
 !
-      real(dp), dimension(:,:), allocatable :: sp_eri_schwarz      ! Screening for (wx | yz)
-      integer,  dimension(:,:), allocatable :: sp_eri_schwarz_list ! Indices for screening 
+      real(dp), dimension(:,:), allocatable :: shp_eri_schwarz      ! Screening for (wx | yz)
+      integer,  dimension(:,:), allocatable :: shp_eri_schwarz_list ! Indices for screening 
 !
       real(dp), dimension(:,:), allocatable :: W_mo_update ! Eigenvectors for 
                                                            ! Roothan-Hall in MO basis
@@ -126,6 +123,7 @@ module hf_class
       procedure :: is_restart_safe                             => is_restart_safe_hf
       procedure :: write_scf_restart                           => write_scf_restart_hf
       procedure :: write_orbital_information                   => write_orbital_information_hf
+      procedure :: is_restart_possible                         => is_restart_possible_hf
 !
 !     Preparation and cleanup routines
 !
@@ -187,29 +185,25 @@ module hf_class
       procedure :: set_ao_density_to_sad                       => set_ao_density_to_sad_hf
       procedure :: set_ao_density_to_core_guess                => set_ao_density_to_core_guess_hf
       procedure :: get_n_electrons_in_density                  => get_n_electrons_in_density_hf
-      procedure :: construct_sp_density_schwarz                => construct_sp_density_schwarz_hf
+      procedure :: construct_shp_density_schwarz               => construct_shp_density_schwarz_hf
 !
 !     MO orbital related routines
 !
       procedure :: do_roothan_hall                             => do_roothan_hall_hf
       procedure :: initialize_orbitals                         => initialize_orbitals_hf
       procedure :: roothan_hall_update_orbitals                => roothan_hall_update_orbitals_hf
-      procedure :: print_orbital_energies                      => print_orbital_energies_hf
-      procedure :: print_orbitals                              => print_orbitals_hf
+      procedure :: print_orbitals_and_energies                 => print_orbitals_and_energies_hf
+      procedure :: save_orbital_info                           => save_orbital_info_hf
       procedure :: print_orbitals_from_coefficients            => print_orbitals_from_coefficients_hf
 !
 !     Class variable initialize and destruct routines
 !
       procedure :: initialize_ao_density                       => initialize_ao_density_hf
-      procedure :: initialize_ao_fock                          => initialize_ao_fock_hf
-      procedure :: initialize_mo_fock                          => initialize_mo_fock_hf
       procedure :: initialize_ao_overlap                       => initialize_ao_overlap_hf
       procedure :: initialize_pivot_matrix_ao_overlap          => initialize_pivot_matrix_ao_overlap_hf
       procedure :: initialize_cholesky_ao_overlap              => initialize_cholesky_ao_overlap_hf
 !
       procedure :: destruct_ao_density                         => destruct_ao_density_hf
-      procedure :: destruct_ao_fock                            => destruct_ao_fock_hf
-      procedure :: destruct_mo_fock                            => destruct_mo_fock_hf
       procedure :: destruct_ao_overlap                         => destruct_ao_overlap_hf
       procedure :: destruct_pivot_matrix_ao_overlap            => destruct_pivot_matrix_ao_overlap_hf
       procedure :: destruct_cholesky_ao_overlap                => destruct_cholesky_ao_overlap_hf
@@ -226,14 +220,14 @@ module hf_class
 !
 !     Integral related routines
 !
-      procedure :: initialize_sp_eri_schwarz                   => initialize_sp_eri_schwarz_hf
-      procedure :: destruct_sp_eri_schwarz                     => destruct_sp_eri_schwarz_hf
+      procedure :: initialize_shp_eri_schwarz                  => initialize_shp_eri_schwarz_hf
+      procedure :: destruct_shp_eri_schwarz                    => destruct_shp_eri_schwarz_hf
 !
-      procedure :: initialize_sp_eri_schwarz_list              => initialize_sp_eri_schwarz_list_hf
-      procedure :: destruct_sp_eri_schwarz_list                => destruct_sp_eri_schwarz_list_hf
+      procedure :: initialize_shp_eri_schwarz_list             => initialize_shp_eri_schwarz_list_hf
+      procedure :: destruct_shp_eri_schwarz_list               => destruct_shp_eri_schwarz_list_hf
 !
-      procedure :: construct_sp_eri_schwarz                    => construct_sp_eri_schwarz_hf
-      procedure :: get_n_sig_eri_sp                            => get_n_sig_eri_sp_hf
+      procedure :: construct_shp_eri_schwarz                   => construct_shp_eri_schwarz_hf
+      procedure :: get_n_sig_eri_shp                           => get_n_sig_eri_shp_hf
 !
       procedure :: set_n_mo                                    => set_n_mo_hf
 !
@@ -272,21 +266,23 @@ module hf_class
 !
 !     MO-SCF routines
 !
-      procedure :: get_max_roothan_hall_mo_gradient         => get_max_roothan_hall_mo_gradient_hf
+      procedure :: get_max_roothan_hall_mo_gradient            => get_max_roothan_hall_mo_gradient_hf
+!  
+      procedure :: update_fock_and_energy_mo                   => update_fock_and_energy_mo_hf
+      procedure :: get_roothan_hall_mo_gradient                => get_roothan_hall_mo_gradient_hf
+!  
+      procedure :: do_roothan_hall_mo                          => do_roothan_hall_mo_hf
+!  
+      procedure :: initialize_W_mo_update                      => initialize_W_mo_update_hf
+      procedure :: destruct_W_mo_update                        => destruct_W_mo_update_hf
+!  
+      procedure :: roothan_hall_update_orbitals_mo             => roothan_hall_update_orbitals_mo_hf
+      procedure :: prepare_for_roothan_hall_mo                 => prepare_for_roothan_hall_mo_hf
 !
-      procedure :: update_fock_and_energy_mo                => update_fock_and_energy_mo_hf
-      procedure :: get_roothan_hall_mo_gradient             => get_roothan_hall_mo_gradient_hf
+      procedure :: flip_final_orbitals                         => flip_final_orbitals_hf
 !
-      procedure :: get_mo_fock                              => get_mo_fock_hf
-      procedure :: set_mo_fock                              => set_mo_fock_hf
-!
-      procedure :: do_roothan_hall_mo                       => do_roothan_hall_mo_hf
-!
-      procedure :: initialize_W_mo_update                   => initialize_W_mo_update_hf
-      procedure :: destruct_W_mo_update                     => destruct_W_mo_update_hf
-!
-      procedure :: roothan_hall_update_orbitals_mo          => roothan_hall_update_orbitals_mo_hf
-      procedure :: prepare_for_roothan_hall_mo              => prepare_for_roothan_hall_mo_hf
+      procedure :: calculate_frozen_dipole_moment              => calculate_frozen_dipole_moment_hf
+      procedure :: calculate_frozen_quadrupole_moment          => calculate_frozen_quadrupole_moment_hf
 !
    end type hf
 !
@@ -350,7 +346,7 @@ contains
    end subroutine read_for_scf_restart_hf
 !
 !
-   subroutine is_restart_safe_hf(wf, task)
+   subroutine is_restart_safe_hf(wf)
 !!
 !!    Is restart safe?
 !!    Written by Eirik F. Kjønstad, Mar 2019
@@ -358,8 +354,6 @@ contains
       implicit none
 !
       class(hf) :: wf
-!
-      character(len=*), intent(in) :: task
 !
       integer :: n_ao, n_densities, n_electrons
 !
@@ -372,22 +366,41 @@ contains
       call wf%restart_file%close_
 !
       if (n_ao .ne. wf%n_ao) then
-         call output%error_msg('attempted to restart HF with an inconsistent number ' // &
-                               'of atomic orbitals for task ' // trim(task))
+         call output%error_msg('Attempted to restart HF with an inconsistent number ' // &
+                               'of atomic orbitals.')
       endif
 !
       if (n_densities .ne. wf%n_densities) then
-         call output%error_msg('attempted to restart HF with an inconsistent number ' // &
-                               'of atomic densities (likely a HF/UHF inconsistency) for task ' // &
-                               trim(task))
+         call output%error_msg('Attempted to restart HF with an inconsistent number ' // &
+                               'of atomic densities (likely a HF/UHF inconsistency).')
       endif
 !
       if (n_electrons .ne. wf%system%get_n_electrons()) then
-         call output%error_msg('attempted to restart HF with an inconsistent number ' // &
-                               'of electrons for task ' // trim(task))
+         call output%error_msg('Attempted to restart HF with an inconsistent number ' // &
+                               'of electrons.')
       endif
 !
    end subroutine is_restart_safe_hf
+!
+!
+   function is_restart_possible_hf(wf) result(restart_is_possible)
+!!
+!!    Is restart possible
+!!    Written by Alexander C. Paul, Okt 2020
+!!
+!!    Checks if restart files exist
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      logical :: restart_is_possible
+!
+      restart_is_possible = (wf%restart_file%exists() &
+                       .and. wf%orbital_coefficients_file%exists() &
+                       .and. wf%orbital_energies_file%exists())
+!
+   end function is_restart_possible_hf
 !
 !
    subroutine print_energy_hf(wf)
@@ -501,25 +514,7 @@ contains
    end subroutine read_hf_settings_hf
 !
 !
-   subroutine print_orbital_energies_hf(wf)
-!!
-!!    Print orbital energies
-!!    Written by Eirik F. Kjønstad, Sep 2018
-!!
-!!    Prints the current orbital energies to output
-!!    in a hopefully readable way.
-!!
-      implicit none
-!
-      class(hf), intent(in) :: wf
-!
-      call output%print_vector('normal', '- Molecular orbital energies', wf%n_mo, wf%orbital_energies, &
-                              fs='(f16.12)', columns=4)
-!
-   end subroutine print_orbital_energies_hf
-!
-!
-   subroutine print_summary_hf(wf)
+   subroutine print_summary_hf(wf, print_mo_info)
 !!
 !!    Print Summary
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -530,23 +525,23 @@ contains
 !
       class(hf), intent(inout) :: wf
 !
+      logical, intent(in) :: print_mo_info
+!
       call output%printf('m', '- Summary of '// &
                          &trim(convert_to_uppercase(wf%name_))// ' wavefunction &
                          &energetics (a.u.):', fs='(/t3,a)')
 !
       call wf%print_energy()
-      call wf%print_orbital_energies()
+!
+      if (print_mo_info) call wf%save_orbital_info()
 !
    end subroutine print_summary_hf
 !
 !
-   subroutine print_orbitals_hf(wf)
+   subroutine save_orbital_info_hf(wf)
 !!
-!!    Print orbitals
-!!    Written by Eirik F. Kjønstad and Tor S. Haugland, Oct 2019
-!!    Modified by Alexander C. Paul to print all MOs to file, Dec 2019
-!!
-!!    Prints the orbitals with atom & orbital information given.
+!!    Save orbital info
+!!    Written by Alexander C. Paul, Nov 2020
 !!
       use output_file_class, only: output_file
 !
@@ -554,17 +549,54 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      type(output_file) :: mo_coefficient_file
+      type(output_file) :: mo_information_file
 !
-      mo_coefficient_file = output_file('mo_coefficients.out')
-      call mo_coefficient_file%open_()
+      mo_information_file = output_file('mo_information.out')
+      call mo_information_file%open_('rewind')
 !
-      call wf%print_orbitals_from_coefficients(wf%orbital_coefficients, &
-                                               mo_coefficient_file)
+      call wf%print_orbitals_and_energies(mo_information_file, wf%orbital_energies, &
+                                          wf%orbital_coefficients, '- Molecular orbital')
 !
-      call mo_coefficient_file%close_()
+      call mo_information_file%close_()
 !
-   end subroutine print_orbitals_hf
+   end subroutine save_orbital_info_hf
+!
+!
+   subroutine print_orbitals_and_energies_hf(wf, mo_information_file, mo_energies, &
+                                    mo_coefficients, prefix)
+!!
+!!    Print orbitals and energies
+!!    Written by Eirik F. Kjønstad and Tor S. Haugland, Oct 2019
+!!    Modified by Alexander C. Paul to print all MOs to file, Dec 2019
+!!    Modified by ALexander C. Paul prints MO energies to file as well, Oct 2020
+!!
+!!    Prints the orbital energies and the orbitals with atom & orbital information given.
+!!
+      use output_file_class, only: output_file
+!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      type(output_file), intent(inout) :: mo_information_file
+!
+      real(dp), dimension(wf%n_mo), intent(in) :: mo_energies
+      real(dp), dimension(wf%n_ao, wf%n_mo), intent(in) :: mo_coefficients
+!
+      character(len=*), intent(in) :: prefix
+      character(len=200) :: header
+!
+      write(header, '(a,a)') trim(prefix), ' energies'
+!
+      call mo_information_file%print_vector('m', header, wf%n_mo, mo_energies, &
+                                             fs='(f16.12)', columns=4)
+!
+      write(header, '(a,a)') trim(prefix), ' coefficients'
+      call mo_information_file%printf('m', header, fs='(//t3,a)')
+!
+      call wf%print_orbitals_from_coefficients(mo_coefficients, mo_information_file)
+!
+   end subroutine print_orbitals_and_energies_hf
 !
 !
    subroutine print_orbitals_from_coefficients_hf(wf, orbital_coefficients, the_file)
@@ -634,7 +666,7 @@ contains
                   index_in_shell = ao - wf%system%atoms(atom)%shells(shell)%first + 1
 !
                   call wf%system%atoms(atom)%shells(shell)%get_angular_momentum_label( &
-                                 l, index_in_shell, ang_mom, wf%system%cartesian_basis)
+                                 l, index_in_shell, ang_mom, wf%system%atoms(atom)%cartesian)
 !
 !                 Setup the string for printf to print the right number of reals
 !
@@ -801,8 +833,8 @@ contains
       call wf%destruct_ao_density()
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
-      call wf%destruct_sp_eri_schwarz()
-      call wf%destruct_sp_eri_schwarz_list()
+      call wf%destruct_shp_eri_schwarz()
+      call wf%destruct_shp_eri_schwarz_list()
       call wf%destruct_ao_h()
 !
       call wf%destruct_W_mo_update()
@@ -855,6 +887,9 @@ contains
 !     is requested
 !
       call wf%prepare_mos()
+!
+      call wf%calculate_frozen_dipole_moment()
+      call wf%calculate_frozen_quadrupole_moment()
 !
 !     Prepare frozen Fock terms from frozen core 
 !     and frozen HF
@@ -1397,6 +1432,7 @@ contains
 !!
 !!       F_mo = C'^T P^T F P C'
 !!
+!!
       implicit none
 !
       class(hf) :: wf
@@ -1410,11 +1446,7 @@ contains
       real(dp), dimension(:,:), allocatable :: ao_fock
       real(dp), dimension(:,:), allocatable :: FP
 !
-      real(dp), dimension(:,:), allocatable :: prev_C
-!
-      real(dp) :: ddot, orbital_dotprod
-!
-      integer :: info, p
+      integer :: info
 !
       type(timings), allocatable :: timer 
 !
@@ -1494,12 +1526,9 @@ contains
       call mem%dealloc(metric, wf%n_mo, wf%n_mo)
       call mem%dealloc(work, 4*wf%n_mo)
 !
-      if (info .ne. 0) call output%error_msg('Error: could not solve Roothan-Hall equations.')
+      if (info .ne. 0) call output%error_msg('Could not solve Roothan-Hall equations.')
 !
 !     Transform back the solutions to original basis, C = P (P^T C) = P C'
-!
-      call mem%alloc(prev_C, wf%n_ao, wf%n_mo)
-      call dcopy(wf%n_ao*wf%n_mo, C, 1, prev_C, 1)
 !
       call dgemm('N','N',                       &
                   wf%n_ao,                      &
@@ -1515,26 +1544,6 @@ contains
                   wf%n_ao)
 !
       call mem%dealloc(ao_fock, wf%n_mo, wf%n_mo)
-!
-!     Test for orbitals that were approximately sign-flipped by dsygv,
-!     resetting them if this is the case (this changes the orbitals
-!     minimally, thus preserving the sweetness of whatever CC guess
-!     is on file).
-!
-      do p = 1, wf%n_mo
-!
-         orbital_dotprod = ddot(wf%n_ao, prev_C(1, p), 1, C(1, p), 1)&
-                          /ddot(wf%n_ao, C(1, p), 1, C(1, p), 1)
-!
-         if (orbital_dotprod .lt. zero) then
-!
-            call dscal(wf%n_ao, -one, C(:, p), 1)
-!
-         endif
-!
-      enddo
-!
-      call mem%dealloc(prev_C, wf%n_ao, wf%n_mo)
 !
       call timer%turn_off()
 !
@@ -2054,7 +2063,7 @@ contains
 !     (not the case for the standard atomic superposition density)
 !
       call wf%roothan_hall_update_orbitals() ! F => C
-      call wf%update_ao_density()            ! C => D
+      call wf%update_ao_density() ! C => D
 !
    end subroutine prepare_for_roothan_hall_hf
 !
@@ -2081,10 +2090,10 @@ contains
 !
       wf%restart_file = sequential_file('scf_restart_file')
 !
-      call wf%initialize_sp_eri_schwarz()
-      call wf%initialize_sp_eri_schwarz_list()
+      call wf%initialize_shp_eri_schwarz()
+      call wf%initialize_shp_eri_schwarz_list()
 !
-      call wf%construct_sp_eri_schwarz()
+      call wf%construct_shp_eri_schwarz()
 !
       if (wf%system%mm_calculation) call wf%prepare_qmmm()
       if (wf%system%pcm_calculation) call wf%initialize_pcm_matrices()
@@ -2323,6 +2332,51 @@ contains
          call output%warning_msg('no active density for CC to plot in HF, no plots produced.')
 !
    end subroutine read_frozen_orbitals_settings_hf
+!
+!
+   subroutine flip_final_orbitals_hf(wf)
+!!
+!!    Flip final orbitals
+!!    Written by Sarai D. Folkestad, Apr 2020
+!!
+!!    Ensures that orbitals will have the same
+!!    signs each time HF converged.
+!!
+!!    Finds the first element of each MO with magnitude larger than
+!!    0.01 and flips it if it is < 0
+!!
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+      integer :: p, w
+!
+      do p = 1, wf%n_mo
+!
+         do w = 1, wf%n_ao
+!
+            if (abs(wf%orbital_coefficients(w,p)) .gt. 1.0d-2) then
+!  
+!              Found the first significant contribution to MO p
+!
+               if (wf%orbital_coefficients(w,p) .lt. 0.0d0) then
+!
+!                 First contribution is negative, so we flip MO p
+!
+                  call dscal(wf%n_ao, -one, wf%orbital_coefficients(1,p), 1)
+!
+               endif
+!
+               exit
+!
+            endif
+!
+         enddo
+!
+      enddo
+!
+   end subroutine flip_final_orbitals_hf
 !
 !
 end module hf_class

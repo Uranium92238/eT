@@ -46,12 +46,10 @@ module es_engine_class
 !
       procedure :: read_settings             => read_settings_es_engine
       procedure :: read_es_settings          => read_es_settings_es_engine
-!
+! 
       procedure :: do_excited_state          => do_excited_state_es_engine
 !
       procedure :: set_printables            => set_printables_es_engine
-!
-      procedure :: restart_handling          => restart_handling_es_engine
 !
    end type es_engine
 !
@@ -94,7 +92,8 @@ contains
          engine%multipliers_algorithm = 'diis'
          engine%es_algorithm          = 'diis'
 !
-      else if (wf%name_ .eq. 'cc2' .or. &
+      else if (wf%name_ .eq. 'ccs' .or. &
+               wf%name_ .eq. 'cc2' .or. &
                wf%name_ .eq. 'mlcc2') then
 !
          engine%multipliers_algorithm = 'diis'
@@ -115,10 +114,6 @@ contains
       engine%es_restart            = .false.
 !
       call engine%read_settings()
-!
-      engine%restart =  engine%gs_restart .or. &
-                        engine%multipliers_restart .or. &
-                        engine%es_restart
 !
       call engine%set_printables()
 !
@@ -167,10 +162,22 @@ contains
       if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) &
                                                 engine%es_transformation = 'left'
 !
-      if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) &
-                                                engine%es_transformation = 'right'
+      if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) then
+         if (engine%es_transformation == 'left') then
+!
+            engine%es_transformation = 'both'
+!
+         else
+!
+            engine%es_transformation = 'right'
+!
+         end if
+      end if
 !
       engine%es_restart = input%requested_keyword_in_section('restart', 'solver cc es')
+!
+!     global restart
+      if (input%requested_keyword_in_section('restart', 'do')) engine%es_restart = .true.
 !
    end subroutine read_es_settings_es_engine
 !
@@ -185,11 +192,13 @@ contains
       class(es_engine)  :: engine
       class(ccs)        :: wf
 !
+      call engine%tasks%print_('cholesky')
+!
+      call engine%do_cholesky(wf)
+!
       call engine%tasks%print_('mo preparations')
 !
       call wf%mo_preparations()
-!
-      call engine%restart_handling(wf)
 !
 !     Ground state solution
 !
@@ -197,7 +206,16 @@ contains
 !
 !     Excited state solutions
 !
-      call engine%do_excited_state(wf, engine%es_transformation, engine%es_restart)
+      if (engine%es_transformation .eq. 'both') then
+!
+         call engine%do_excited_state(wf, 'right', engine%es_restart)
+         call engine%do_excited_state(wf, 'left', restart = .true.)
+!
+      else 
+!
+         call engine%do_excited_state(wf, engine%es_transformation, engine%es_restart)
+!
+      end if
 !
    end subroutine run_es_engine
 !
@@ -219,6 +237,7 @@ contains
 !!
       use abstract_cc_es_class, only: abstract_cc_es
       use davidson_cc_es_class, only: davidson_cc_es
+      use nonlinear_davidson_cc_es_class, only: nonlinear_davidson_cc_es
       use diis_cc_es_class, only: diis_cc_es
       use asymmetric_lanczos_cc_es_class, only: asymmetric_lanczos_cc_es
 !
@@ -252,7 +271,6 @@ contains
          if (engine%es_algorithm == 'diis') then
 !
             cc_es_solver = diis_cc_es(transformation, wf, restart)
-
 ! 
          elseif (engine%es_algorithm == 'davidson') then
 !
@@ -264,8 +282,13 @@ contains
 !
             cc_es_solver = davidson_cc_es(transformation, wf, restart)
 !
-         else
-               call output%error_msg('Could not start excited state solver. It may be that the &
+         elseif (engine%es_algorithm == 'non-linear davidson') then 
+!
+            cc_es_solver = nonlinear_davidson_cc_es(transformation, wf, engine%es_restart)
+!
+         else 
+!
+            call output%error_msg('Could not start excited state solver. It may be that the &
                                     &algorithm is not implemented for the method specified.')
          endif
 !
@@ -282,7 +305,6 @@ contains
 !!    Set printables
 !!    Written by sarai D. Folkestad, May 2019
 !!
-!
       use string_utilities, only: convert_to_uppercase
 !
       implicit none
@@ -296,6 +318,10 @@ contains
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
+!
+      call engine%tasks%add(label='cholesky', &
+                            description='Cholesky decomposition of the electron &
+                                         &repulsion integrals')
 !
       call engine%tasks%add(label='mo preparations',                             &
                             description='Preparation of MO basis and integrals')
@@ -326,38 +352,6 @@ contains
       engine%description  = 'Calculates the coupled cluster excitation vectors and excitation energies'
 !
    end subroutine set_printables_es_engine
-!
-!
-   subroutine restart_handling_es_engine(engine, wf)
-!!
-!!    Restart handling
-!!    Written by Sarai D. Folkestad, Nov 2019
-!!
-!!    Writes the restart information 
-!!    if restart is not requested.
-!!
-!!    If restart is requested performs safety 
-!!    checks for restart
-!!
-      implicit none
-!
-      class(es_engine), intent(in) :: engine
-      class(ccs), intent(in) :: wf
-!
-      if (.not. engine%restart) then
-!
-         call wf%write_cc_restart()
-!
-      else
-!
-         if (engine%gs_restart .or. engine%multipliers_restart) &
-                                 call wf%is_restart_safe('ground state')
-!
-         if (engine%es_restart) call wf%is_restart_safe('excited state')
-!
-      endif
-!
-   end subroutine restart_handling_es_engine
 !
 !
 end module es_engine_class

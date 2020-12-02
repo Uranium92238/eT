@@ -60,7 +60,7 @@
 !!                      determine if we construct occuped 
 !!                      Cholesky orbitals only, or if we also 
 !!                      construct the virtual Cholesky orbitals
-!!                      DEFAULT: .false.
+!!                      default: .false.
 !!
       implicit none
 !
@@ -70,56 +70,30 @@
    end subroutine construct_cholesky_orbitals_mlcc2
 !
 !
-   module subroutine construct_block_diagonal_fock_orbitals_mlcc2(wf)
+   module subroutine construct_block_diagonal_fock_orbitals_mlcc2(wf, n_levels, n_occupied_list, &
+                                          n_virtual_list, orbital_coefficients, orbital_energies) 
 !!
 !!    Construct block diagonal Fock MOs 
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!
-!!    This routine block-diagonalizes the occupied-occupied
+!!    This routine constructs the MOs which
+!!    block-diagonalize the occupied-occupied
 !!    and virutal-virtual blocks of the Fock matrix s.t.
 !!    the active-active, and inactive-inactive blocks are 
 !!    diagonal.
 !!   
 !!    Note that after this routine, the Fock matrix in wf 
-!!    corresponds to the old basis.
+!!    corresponds to the old basis but the MOs are updated.
 !!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
+      integer, intent(in) :: n_levels
+      integer, dimension(n_levels), intent(in) :: n_occupied_list, n_virtual_list
+      real(dp), dimension(wf%n_ao, wf%n_mo), intent(inout) :: orbital_coefficients
+      real(dp), dimension(wf%n_mo), intent(inout) :: orbital_energies
 !
    end subroutine construct_block_diagonal_fock_orbitals_mlcc2
-!
-!
-   module subroutine construct_block_diagonal_fock_mos_2_level_mlcc2(wf, n_total, n_active, fock, mo_coeff, diagonal)
-!!
-!!    Construct Fock block diagonal 2 levels
-!!    Written by Sarai D. Folkestad, Feb 2019
-!!
-!!    Construct orbitals that block diagonalizes 
-!!    Fock matrix block for two levels (inactive/active)
-!!
-!!    'n_total' : Total dimmension of Fock matrix block
-!!
-!!    'n_active' : Dimension of active block of Fock matrix block
-!!
-!!    'fock' : Fock matrix block to block diagonalize
-!!
-!!    'mo_coef' : MO coefficients which are updated to 
-!!                the new basis which block diagonalizes Fock
-!!                matrix block
-!!
-!!    'diagonal' : Diagonal elements of Fock matrix after block
-!!                 diagonalization
-!!
-      implicit none
-!
-      class(mlcc2), intent(inout) :: wf
-      integer, intent(in) :: n_total, n_active ! Total matrix dimension of block, and number of active orbitals
-      real(dp), dimension(n_total, n_total), intent(inout) :: fock
-      real(dp), dimension(wf%n_ao, n_total), intent(inout) :: mo_coeff
-      real(dp), dimension(n_total), intent(out) :: diagonal
-!
-   end subroutine construct_block_diagonal_fock_mos_2_level_mlcc2
 !
 !
    module subroutine construct_M_and_N_cnto_mlcc2(wf, R_ai, R_aibj, M, N, set_to_zero)
@@ -129,13 +103,13 @@
 !!
 !!    Constructs the M and N matrices,
 !!
-!!       M_ij += ( sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibj R_ajbl )
+!!       M_ij += ( sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibl R_ajbl )
 !!       N_ab += ( sum_i R_ai R_bi + 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
 !!
 !!    Used to construct CNTOs.
 !!
 !!    set_to_zero determines if M and N are set to zero initially. This makes it possible for 
-!!    the routine ton be used to add to M and N if we are using more than one excitation vector 
+!!    the routine to be used to add to M and N if we are using more than one excitation vector 
 !!    to generate the CNTOs.
 !!
       implicit none
@@ -183,6 +157,23 @@
    end subroutine read_cnto_transformation_matrices_mlcc2
 !
 !
+   module subroutine write_cnto_transformation_matrices_mlcc2(wf, T_o, T_v)
+!!
+!!    Write CNTO transformation matrices
+!!    Written by Sarai D. Folkestad, Jun 2019
+!!
+!!    Write CNTO transformation matrices.
+!!    Used to ensure restart
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+      real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: T_o
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: T_v
+!
+   end subroutine write_cnto_transformation_matrices_mlcc2
+!
+!
    module subroutine construct_ccs_cnto_transformation_matrices_mlcc2(wf, T_o, T_v)
 !!
 !!    Construct CCS CNTO transformation matrices
@@ -216,9 +207,8 @@
 !!
 !!    Used to construct occupied NTOs.
 !!
-!!    set_to_zero determines if M and N are set to zero initially. This is used such that 
-!!    the routine can be used to add to M and N if we are using more than one excitation vector 
-!!    to generate the CNTOs.
+!!    set_to_zero determines if contributions are added to, or overwrites M and N. 
+!!
 !!
       implicit none
 !
@@ -228,6 +218,37 @@
       logical, intent(in) :: set_to_zero
 !
    end subroutine construct_M_nto_mlcc2
+!
+!
+   module subroutine read_nto_transformation_matrix_mlcc2(wf, T_o)
+!!
+!!    Read NTO transformation matrices
+!!    Written by Sarai D. Folkestad, Jun 2019
+!!
+!!    Read NTO transformation matrices.
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+      real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
+!
+   end subroutine read_nto_transformation_matrix_mlcc2
+!
+!
+   module subroutine write_nto_transformation_matrix_mlcc2(wf, T_o)
+!!
+!!    Write NTO transformation matrices
+!!    Written by Sarai D. Folkestad, Jun 2019
+!!
+!!    Write NTO transformation matrices.
+!!    Used to ensure restart
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+      real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: T_o
+!
+   end subroutine write_nto_transformation_matrix_mlcc2
 !
 !
    module subroutine construct_ccs_nto_transformation_matrix_mlcc2(wf, T_o)
@@ -343,3 +364,71 @@
       class(mlcc2) :: wf
 !
    end subroutine check_orthonormality_of_MOs_mlcc2
+!
+!
+   module subroutine add_doubles_M_and_N_cnto_mlcc2(wf, M, N, doubles_file)
+!!
+!!    Add doubles M and N CNTO 
+!!    Written by Sarai D. Folkestad, Feb 2020
+!!
+!!    The CNTO matrices are defined as
+!!
+!!       M_ij = ( sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibl R_ajbl )
+!!       N_ab = ( sum_i R_ai R_bi + 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
+!!
+!!    In this routine the doubles part 
+!!
+!!       M_ij += ( 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibl R_ajbl )
+!!       N_ab += ( 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
+!!
+!!    is added for the R_aibj on doubles_file
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+      type(direct_stream_file) :: doubles_file
+      real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: M
+      real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: N
+!
+   end subroutine add_doubles_M_and_N_cnto_mlcc2
+!
+!
+   module subroutine construct_M_and_N_singles_cnto_mlcc2(wf, R_ai, M, N, set_to_zero)
+!!
+!!    Construct M and N
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Constructs the M and N matrices,
+!!
+!!       M_ij = ( sum_a R_ai R_aj )
+!!       N_ab = ( sum_i R_ai R_bi )
+!!
+!!    Used to construct CNTOs.
+!!
+!!    set_to_zero determines if contributions are added to, or overwrites M and N. 
+!!
+!!
+      implicit none
+!
+      class(mlcc2), intent(inout) :: wf
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+      real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: M
+      real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: N
+      logical, intent(in) :: set_to_zero
+!
+   end subroutine construct_M_and_N_singles_cnto_mlcc2
+!
+!
+   module subroutine construct_semicanonical_mlcc_orbitals_mlcc2(wf)
+!!
+!!    Construct semicanonical orbitals
+!!    Written by Sarai D. Folkestad
+!!
+!!    Wrapper to construct orbitals that block diagonalizes the fock matrix
+!!    for the different orbitals
+!!
+      implicit none
+!
+      class(mlcc2), intent(inout) :: wf
+!
+   end subroutine construct_semicanonical_mlcc_orbitals_mlcc2

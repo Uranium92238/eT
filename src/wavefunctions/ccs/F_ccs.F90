@@ -53,7 +53,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
@@ -96,7 +96,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
@@ -107,7 +107,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: L_aibj
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%get_ovov(g_iajb)
+      call wf%eri%get_eri_t1('ovov', g_iajb)
 !
       call mem%alloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -235,7 +235,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
@@ -253,7 +253,7 @@ contains
 !     L_ikjb = 2 g_ikjb - g_jkib (ordered as L_kibj)
 !
       call mem%alloc(g_ikjb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-      call wf%get_ooov(g_ikjb)   
+      call wf%eri%get_eri_t1('ooov', g_ikjb)
 !
       call mem%alloc(L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)  
 !
@@ -350,7 +350,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
@@ -371,9 +371,9 @@ contains
 !
 !     Prepare for batching over index c
 !
-      req0 = (wf%integrals%n_J)*(wf%n_o)*(wf%n_v)
+      req0 = (wf%eri%n_J)*(wf%n_o)*(wf%n_v)
 !
-      req1 = max(2*(wf%n_o)*(wf%n_v**2), (wf%n_o)*(wf%n_v**2) + (wf%integrals%n_J)*(wf%n_v))
+      req1 = max(2*(wf%n_o)*(wf%n_v**2), (wf%n_o)*(wf%n_v**2) + (wf%eri%n_J)*(wf%n_v))
 !
       batch_c = batching_index(wf%n_v)
 !
@@ -389,11 +389,7 @@ contains
 !
          call mem%alloc(g_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%get_vvov(g_cajb,                        &
-                           batch_c%first, batch_c%last,  &
-                           1, wf%n_v,                    &
-                           1, wf%n_o,                    &
-                           1,wf%n_v)
+         call wf%eri%get_eri_t1('vvov', g_cajb, first_p = batch_c%first, last_p = batch_c%last)
 !
          call mem%alloc(L_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !

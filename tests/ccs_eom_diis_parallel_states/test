@@ -15,31 +15,19 @@ from runtest import version_info, get_filter, cli, run
 # this tells runtest how to run your code
 from runtest_config import configure
 
+# functions to get the filters
+from filters import get_eom_filter 
+
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
 
 # construct filter(s)
-f = [
-    get_filter(from_string='State                (Hartree)             (eV)',
-               num_lines=4,
-               abs_tolerance=1.0e-10,
-               mask=[2]), 
-    get_filter(from_string='Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >',
-               num_lines=5,
-               abs_tolerance=1.0e-10,
-               mask=[1,2],
-               ignore_sign=True),
-    get_filter(from_string='Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >',
-               num_lines=5,
-               abs_tolerance=1.0e-10,
-               mask=[3]),
-    get_filter(string='Oscillator strength [a.u.]:',
-               abs_tolerance=1.0e-10),
-    get_filter(string='Final ground state energy (a.u.):',
-               abs_tolerance=1.0e-10),
-    get_filter(string='Warning: Skipped state',
-               abs_tolerance=1.0e-10)
-]
+n_states = 6
+threshold = 1.0e-10
+f = get_eom_filter(n_states, threshold)
+
+f.append(get_filter(string='Warning: Skipped state',
+                    abs_tolerance=1.0e-10))
 
 # invoke the command line interface parser which returns options
 options = cli()

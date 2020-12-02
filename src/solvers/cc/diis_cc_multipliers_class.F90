@@ -147,7 +147,7 @@ contains
 !
       solver%diis_dimension      = 8
       solver%max_iterations      = 100
-      solver%residual_threshold  = 1.0d-6
+      solver%residual_threshold  = 1.0d-5
       solver%restart             = restart
       solver%storage             = 'disk'
       solver%crop                = .false.
@@ -256,20 +256,8 @@ contains
 !
       call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
 !
-      if (solver%restart) then 
-!
-         call output%printf('m', 'Requested restart. Reading multipliers from file.', &
-                            fs='(/t3,a)')
-!
-         call wf%read_multipliers()
-         call wf%get_multipliers(multipliers) 
-!
-      else
-!
-         multipliers = zero
-         call wf%set_multipliers(multipliers)
-!
-      endif
+      call wf%set_initial_multipliers_guess(solver%restart)
+      call wf%get_multipliers(multipliers) 
 !
       converged_residual = .false.
 !
@@ -396,7 +384,7 @@ contains
 !
       call output%printf('m', '- DIIS CC multipliers solver summary:', fs='(/t3,a)')
 !
-      call wf%print_dominant_x_amplitudes(X, 'r')
+      call wf%print_dominant_x_amplitudes(X, 'tbar')
 !
    end subroutine print_summary_diis_cc_multipliers
 !

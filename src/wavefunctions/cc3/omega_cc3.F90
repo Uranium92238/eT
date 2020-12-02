@@ -315,7 +315,9 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call single_record_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_t, g_dbic)
+         call wf%g_bdck_t%read_interval(g_bdci, batch_i)
+         call wf%g_dbkc_t%read_interval(g_dbic, batch_i)
+!
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
 !
@@ -323,20 +325,26 @@ contains
 !
             call batch_j%determine_limits(j_batch)
 !
-            call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, &
-                                        wf%g_jlkc_t, g_jlic, wf%L_jbkc_t, L_jbic)
+            call wf%g_ljck_t%read_compound(g_ljci, batch_j, batch_i)
+            call wf%g_jlkc_t%read_compound(g_jlic, batch_j, batch_i)
+            call wf%L_jbkc_t%read_compound(L_jbic, batch_j, batch_i)
+!
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
             L_jbic_p => L_jbic
 !
             if (j_batch .ne. i_batch) then
 !
-               call single_record_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_t, g_dbjc)
+               call wf%g_bdck_t%read_interval(g_bdcj, batch_j)
+               call wf%g_dbkc_t%read_interval(g_dbjc, batch_j)
+!
                g_bdcj_p => g_bdcj
                g_dbjc_p => g_dbjc
 !
-               call compound_record_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, &
-                                          wf%g_jlkc_t, g_iljc, wf%L_jbkc_t, L_ibjc)
+               call wf%g_ljck_t%read_compound(g_licj, batch_i, batch_j)
+               call wf%g_jlkc_t%read_compound(g_iljc, batch_i, batch_j)
+               call wf%L_jbkc_t%read_compound(L_ibjc, batch_i, batch_j)
+!
                g_licj_p => g_licj
                g_iljc_p => g_iljc
                L_ibjc_p => L_ibjc
@@ -358,30 +366,40 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc)
+                  call wf%g_bdck_t%read_interval(g_bdck, batch_k)
+                  call wf%g_dbkc_t%read_interval(g_dbkc, batch_k)
+!
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
 !
-                  call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, &
-                                             wf%g_jlkc_t, g_klic, wf%L_jbkc_t, L_kbic)
+                  call wf%g_ljck_t%read_compound(g_lkci, batch_k, batch_i)
+                  call wf%g_jlkc_t%read_compound(g_klic, batch_k, batch_i)
+                  call wf%L_jbkc_t%read_compound(L_kbic, batch_k, batch_i)
+!
                   g_lkci_p => g_lkci
                   g_klic_p => g_klic
                   L_kbic_p => L_kbic
 !
-                  call compound_record_reader(batch_i, batch_k, wf%g_ljck_t, g_lick, &
-                                             wf%g_jlkc_t, g_ilkc, wf%L_jbkc_t, L_ibkc)
+                  call wf%g_ljck_t%read_compound(g_lick, batch_i, batch_k)
+                  call wf%g_jlkc_t%read_compound(g_ilkc, batch_i, batch_k)
+                  call wf%L_jbkc_t%read_compound(L_ibkc, batch_i, batch_k)
+!
                   g_lick_p => g_lick
                   g_ilkc_p => g_ilkc
                   L_ibkc_p => L_ibkc
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, &
-                                             wf%g_jlkc_t, g_kljc, wf%L_jbkc_t, L_kbjc)
+                  call wf%g_ljck_t%read_compound(g_lkcj, batch_k, batch_j)
+                  call wf%g_jlkc_t%read_compound(g_kljc, batch_k, batch_j)
+                  call wf%L_jbkc_t%read_compound(L_kbjc, batch_k, batch_j)
+!
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
                   L_kbjc_p => L_kbjc
 !
-                  call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck, &
-                                             wf%g_jlkc_t, g_jlkc, wf%L_jbkc_t, L_jbkc)
+                  call wf%g_ljck_t%read_compound(g_ljck, batch_j, batch_k)
+                  call wf%g_jlkc_t%read_compound(g_jlkc, batch_j, batch_k)
+                  call wf%L_jbkc_t%read_compound(L_jbkc, batch_j, batch_k)
+!
                   g_ljck_p => g_ljck
                   g_jlkc_p => g_jlkc
                   L_jbkc_p => L_jbkc
@@ -420,8 +438,10 @@ contains
                   g_ilkc_p => g_iljc
                   L_ibkc_p => L_ibjc
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, &
-                                             wf%g_jlkc_t, g_kljc, wf%L_jbkc_t, L_kbjc)
+                  call wf%g_ljck_t%read_compound(g_lkcj, batch_k, batch_j)
+                  call wf%g_jlkc_t%read_compound(g_kljc, batch_k, batch_j)
+                  call wf%L_jbkc_t%read_compound(L_kbjc, batch_k, batch_j)
+!
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
                   L_kbjc_p => L_kbjc
@@ -570,9 +590,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_pqrs ! Array for constructed integrals
       real(dp), dimension(:,:,:,:), allocatable :: h_pqrs ! Array for sorted integrals
-      real(dp), dimension(:,:), allocatable     :: v2_help ! Help array for constructing L_jbkc
 !
-      integer :: k, j
       type(batching_index) :: batch_k
 !
       integer :: req_0, req_k
@@ -582,189 +600,155 @@ contains
 !
 !     (bd|ck)
 !
-      req_0 = wf%integrals%n_J*wf%n_v**2
-      req_k = 2*wf%n_v**3 + wf%integrals%n_J*wf%n_v
+      req_0 = 0
+      req_k = wf%n_v**3
+      call wf%eri%get_eri_t1_mem('vvvo', req_0, req_k, wf%n_v, wf%n_v, wf%n_v, 1, qp=.true.)
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      wf%g_bdck_t = direct_file('g_bdck_t',wf%n_v**3)
+      call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
+!
+      wf%g_bdck_t = direct_stream_file('g_bdck_t',wf%n_v**3)
       call wf%g_bdck_t%open_('write')
 !
       do current_k_batch = 1,batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+         call wf%eri%get_eri_t1('vvvo', g_pqrs, &
+                                first_s=batch_k%first, last_s=batch_k%last, qp=.true.)
 !
-         call wf%get_vvvo(g_pqrs, &
-                           1,wf%n_v, &
-                           1,wf%n_v, &
-                           1,wf%n_v, &
-                           batch_k%first,batch_k%last)
-!
-         call sort_1234_to_2134(g_pqrs,h_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_k%length)
-!
-         call single_record_writer(batch_k, wf%g_bdck_t, h_pqrs)
-!
-         call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+         call wf%g_bdck_t%write_interval(g_pqrs, batch_k)
 !
       enddo
 !
       call wf%g_bdck_t%close_()
-!
+      call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
 !
 !     (db|kc)
-!     Same batching
 !
-      wf%g_dbkc_t = direct_file('g_dbkc_t',wf%n_v**3)
+      req_0 = 0
+      req_k = wf%n_v**3
+      call wf%eri%get_eri_t1_mem('vvov', req_0, req_k, wf%n_v, wf%n_v, 1, wf%n_v)
+!
+      call mem%alloc(g_pqrs, wf%n_v, wf%n_v, batch_k%max_length, wf%n_v)
+      call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
+!
+      wf%g_dbkc_t = direct_stream_file('g_dbkc_t',wf%n_v**3)
       call wf%g_dbkc_t%open_('write')
 !
       do current_k_batch = 1,batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
-         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-!
-         call wf%get_vvov(g_pqrs, &
-                           1,wf%n_v, &
-                           1,wf%n_v, &
-                           batch_k%first,batch_k%last, &
-                           1,wf%n_v)
+         call wf%eri%get_eri_t1('vvov', g_pqrs, first_r=batch_k%first, last_r=batch_k%last)
 !
          call sort_1234_to_2413(g_pqrs,h_pqrs,wf%n_v,wf%n_v,batch_k%length,wf%n_v)
 !
-         call single_record_writer(batch_k, wf%g_dbkc_t, h_pqrs)
-!
-         call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
-         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+         call wf%g_dbkc_t%write_interval(h_pqrs, batch_k)
 !
       enddo
 !
       call wf%g_dbkc_t%close_()
 !
+      call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
+      call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, batch_k%max_length, wf%n_v)
 !
 !     (lj|ck)
 !
-      req_0 = wf%integrals%n_J*wf%n_o**2
-      req_k = 2*wf%n_o**2*wf%n_v + wf%integrals%n_J*wf%n_v
+      req_0 = 0
+      req_k = 2*wf%n_o**2*wf%n_v
+      call wf%eri%get_eri_t1_mem('oovo', req_0, req_k, wf%n_o, wf%n_o, wf%n_v, 1)
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      wf%g_ljck_t = direct_file('g_ljck_t',wf%n_v*wf%n_o)
+      wf%g_ljck_t = direct_stream_file('g_ljck_t',wf%n_v*wf%n_o)
       call wf%g_ljck_t%open_('write')
+!
+      call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%max_length)
+      call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o ,batch_k%max_length)
 !
       do current_k_batch = 1,batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
-         call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o ,batch_k%length)
+         call wf%eri%get_eri_t1('oovo', g_pqrs, first_s=batch_k%first,last_s=batch_k%last)
 !
-         call wf%get_oovo(g_pqrs, &
-                           1,wf%n_o, &
-                           1,wf%n_o, &
-                           1,wf%n_v, &
-                           batch_k%first,batch_k%last)
+         call sort_1234_to_1324(g_pqrs, h_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
 !
-         call sort_1234_to_1324(g_pqrs,h_pqrs,wf%n_o,wf%n_o,wf%n_v,batch_k%length)
-!
-         call compound_record_writer(wf%n_o, batch_k, wf%g_ljck_t, h_pqrs)
-!
-         call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
-         call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
+         call wf%g_ljck_t%write_compound_full_batch(h_pqrs, wf%n_o, batch_k)
 !
       enddo
+!
+      call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%max_length)
+      call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%max_length)
 !
       call wf%g_ljck_t%close_()
 !
 !     (jl|kc)
-!     Same batching
 !
-      wf%g_jlkc_t = direct_file('g_jlkc_t',wf%n_v*wf%n_o)
-      call wf%g_jlkc_t%open_('write')
-!
-      do current_k_batch = 1,batch_k%num_batches
-!
-         call batch_k%determine_limits(current_k_batch)
-!
-         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
-         call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
-!
-         call wf%get_ooov(g_pqrs, &
-                           1,wf%n_o, &
-                           1,wf%n_o, &
-                           batch_k%first,batch_k%last, &
-                           1,wf%n_v)
-!
-         call sort_1234_to_4213(g_pqrs, h_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
-!
-         call compound_record_writer(wf%n_o, batch_k, wf%g_jlkc_t, h_pqrs)
-!
-         call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
-         call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
-!
-      enddo
-!
-      call wf%g_jlkc_t%close_()
-!
-!
-!     (jb|kc)
-!
-      call mem%alloc(v2_help,wf%n_v,wf%n_v)
-!
-      req_0 = wf%integrals%n_J*wf%n_o*wf%n_v
-      req_k = 2*wf%n_v**2*wf%n_o + wf%integrals%n_J*wf%n_v
+      req_0 = 0
+      req_k = 2*wf%n_o**2*wf%n_v
+      call wf%eri%get_eri_t1_mem('ooov', req_0, req_k, wf%n_o, wf%n_o, 1, wf%n_v)
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      wf%L_jbkc_t = direct_file('L_jbkc_t',wf%n_v**2)
-      call wf%L_jbkc_t%open_('write')
+      wf%g_jlkc_t = direct_stream_file('g_jlkc_t',wf%n_v*wf%n_o)
+      call wf%g_jlkc_t%open_('write')
 !
-      call batch_k%determine_limits(1)
-      call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+      call mem%alloc(g_pqrs, wf%n_o, wf%n_o, batch_k%max_length, wf%n_v)
+      call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%max_length)
 !
       do current_k_batch = 1,batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
+         call wf%eri%get_eri_t1('ooov', g_pqrs, first_r=batch_k%first, last_r=batch_k%last)
 !
-         call wf%get_ovov(g_pqrs, &
-                           1,wf%n_o, &
-                           1,wf%n_v, &
-                           batch_k%first,batch_k%last, &
-                           1,wf%n_v)
+         call sort_1234_to_4213(g_pqrs, h_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
 !
-         call sort_1234_to_2413(g_pqrs,h_pqrs,wf%n_o,wf%n_v,batch_k%length,wf%n_v)
-!
-         do k = 1,batch_k%length
-            do j = 1,wf%n_o
-!
-               call sort_12_to_21(h_pqrs(:,:,j,k), v2_help, wf%n_v, wf%n_v)
-!
-               call dscal(wf%n_v**2, two, h_pqrs(:,:,j,k), 1)
-!
-               call daxpy(wf%n_v**2, -one, v2_help, 1, h_pqrs(:,:,j,k), 1)
-!
-            enddo
-         enddo
-!
-         call compound_record_writer(wf%n_o, batch_k, wf%L_jbkc_t, h_pqrs)
-!
-         call mem%dealloc(g_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
+         call wf%g_jlkc_t%write_compound_full_batch(h_pqrs, wf%n_o, batch_k)
 !
       enddo
 !
-      call batch_k%determine_limits(1)
-      call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+      call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_k%max_length, wf%n_v)
+      call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%max_length)
 !
-      call mem%dealloc(v2_help, wf%n_v, wf%n_v)
+      call wf%g_jlkc_t%close_()
+!
+!     (jb|kc)
+!
+      req_0 = 0
+      req_k = 2*wf%n_v**2*wf%n_o
+      call wf%eri%get_eri_t1_mem('ovov', req_0, req_k, wf%n_o, wf%n_v, 1, wf%n_v)
+!
+      call mem%batch_setup(batch_k,req_0,req_k)
+!
+      wf%L_jbkc_t = direct_stream_file('L_jbkc_t',wf%n_v**2)
+      call wf%L_jbkc_t%open_('write')
+!
+      call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%max_length)
+      call mem%alloc(g_pqrs, wf%n_o, wf%n_v, batch_k%max_length, wf%n_v)
+!
+      do current_k_batch = 1,batch_k%num_batches
+!
+         call batch_k%determine_limits(current_k_batch)
+!
+         call wf%eri%get_eri_t1('ovov', g_pqrs, first_r=batch_k%first, last_r=batch_k%last)
+!
+         call sort_1234_to_1432(g_pqrs, h_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
+         call dscal(wf%n_v**2*wf%n_o*batch_k%length, two, g_pqrs, 1)
+         call daxpy(wf%n_v**2*wf%n_o*batch_k%length, -one, h_pqrs, 1, g_pqrs, 1)
+         call sort_1234_to_2413(g_pqrs, h_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
+!
+         call wf%L_jbkc_t%write_compound_full_batch(h_pqrs, wf%n_o, batch_k)
+!
+      enddo
+!
+      call mem%dealloc(g_pqrs, wf%n_o, wf%n_v, batch_k%max_length, wf%n_v)
+      call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%max_length)
 !
       call wf%L_jbkc_t%close_()
-!
 !
    end subroutine omega_cc3_integrals_cc3
 !
@@ -774,16 +758,16 @@ contains
                                         L_jbic, L_kbic, L_kbjc,    &
                                         L_ibjc, L_ibkc, L_jbkc)
 !!
-!!    omega_cc3_a_n6
+!!    omega cc3 n6 terms
 !!
 !!    Calculate the triples contribution to omega1 and
 !!    the Fock contribution to omega2 scaling as n^6
 !!
 !!    Written by Rolf H. Myhre, January 2019
 !!
-!!    omega^a_i += sum_bcjk (t^abc_ijk - t^cba_ijk)*L_jbkc
+!!    omega^a_i += sum_bcjk (t^abc_ijk - t^cba_ijk) L_jbkc
 !!    
-!!    omega^ab_ij += P^{ab}_{ij}sum_ck (t^abc_ijk - t^cba_ijk)*F_kc
+!!    omega^ab_ij += P^{ab}_{ij}sum_ck (t^abc_ijk - t^cba_ijk) F_kc
 !!
       implicit none
 !
@@ -806,13 +790,12 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_ibkc
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbkc
 !
-!
 !     Construct u_abc = t_abc - t_cba
 !     Zero if i == k, but this is never true
 !
       call construct_123_minus_321(t_abc, u_abc, wf%n_v)
 !
-!     omega_ai += sum_bc (t^abc - t^cba)*L_jbkc
+!     omega_ai += sum_bc (t^abc - t^cba) L_jbkc
 !
       call dgemv('N', &
                  wf%n_v, &
@@ -826,7 +809,7 @@ contains
                  omega1(:,i), &
                  1)
 !
-!     omega_abij += sum_c (t^abc - t^cba)*F_kc
+!     omega_abij += sum_c (t^abc - t^cba) F_kc
 !
       call dgemv('N', &
                  wf%n_v**2, &
@@ -840,8 +823,7 @@ contains
                  omega2(:,:,i,j), &
                  1)
 !
-!
-!     omega_ak += sum_cb (t^cba - t^abc)*L_jbic
+!     omega_ak += sum_cb (t^cba - t^abc) L_jbic
 !
       call dgemv('N', &
                  wf%n_v, &
@@ -855,7 +837,7 @@ contains
                  omega1(:,k), &
                  1)
 !
-!     omega_abkj += sum_c (t^cba - t^abc)*F_ic
+!     omega_abkj += sum_c (t^cba - t^abc) F_ic
 !
       call dgemv('N', &
                  wf%n_v**2, &
@@ -877,7 +859,7 @@ contains
 !
          call construct_132_minus_312(t_abc, u_abc, wf%n_v)
 !
-!        omega_ai += sum_cb (t^acb - t^cab)*L_kbjc
+!        omega_ai += sum_cb (t^acb - t^cab) L_kbjc
 !
          call dgemv('N', &
                     wf%n_v, &
@@ -891,7 +873,7 @@ contains
                     omega1(:,i), &
                     1)
 !
-!        omega_abji += sum_c (t^acb - t^cab)*F_jc
+!        omega_abik += sum_c (t^acb - t^cab) F_jc
 !
          call dgemv('N', &
                     wf%n_v**2, &
@@ -905,8 +887,7 @@ contains
                     omega2(:,:,i,k), &
                     1)
 !
-!
-!           omega_aj += sum_cb (t^cab - t^acb)*L_kbic
+!           omega_aj += sum_cb (t^cab - t^acb) L_kbic
 !
             call dgemv('N', &
                        wf%n_v, &
@@ -920,7 +901,7 @@ contains
                        omega1(:,j), &
                        1)
 !
-!           omega_abjk += sum_c (t^cab - t^acb)*F_ic
+!           omega_abjk += sum_c (t^cab - t^acb) F_ic
 !
             call dgemv('N', &
                        wf%n_v**2, &
@@ -934,13 +915,12 @@ contains
                        omega2(:,:,j,k), &
                        1)
 !
-!
 !        Construct u_abc = t_bac - t_bca
 !        This is zero if j == k
 !
          call construct_213_minus_231(t_abc, u_abc, wf%n_v)
 !
-!        omega_aj += sum_cb (t^bac - t^bca)*L_ibkc
+!        omega_aj += sum_cb (t^bac - t^bca) L_ibkc
 !
          call dgemv('N', &
                     wf%n_v, &
@@ -954,7 +934,7 @@ contains
                     omega1(:,j), &
                     1)
 !
-!        omega_abij += sum_c (t^bac - t^bca)*F_kc
+!        omega_abji += sum_c (t^bac - t^bca) F_kc
 !
          call dgemv('N', &
                     wf%n_v**2, &
@@ -967,7 +947,6 @@ contains
                     one, &
                     omega2(:,:,j,i), &
                     1)
-!
 !
 !        omega_ak += sum_cb (t^bca - t^bac)*L_ibjc
 !
@@ -983,7 +962,7 @@ contains
                     omega1(:,k), &
                     1)
 !
-!        omega_abki += sum_c (t^bca - t^bac)*F_jc
+!        omega_abki += sum_c (t^bca - t^bac) F_jc
 !
          call dgemv('N', &
                     wf%n_v**2, &
@@ -1007,15 +986,15 @@ contains
                                         g_dbic, g_dbjc, g_dbkc, &
                                         g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
 !!
-!!    omega_cc3_a_n7
+!!    omega cc3 n7 terms
 !!
 !!    Written by Rolf H. Myhre, January 2019
 !!
 !!    Calculate the triples contribution to omega2. Scaling as n^7
 !!
-!!    omega_abli -= P^ab_li sum_cjk(2t^bac_ijk - t^bca_ijk - t^cab_ijk)*g_jlkc
+!!    omega_ablj -= P^ab_lj sum_cik(2t^abc_ijk - t^cba_ijk - t^acb_ijk) g_ilkc
 !!
-!!    omega_adij -= P^ad_ij sum_bck(2t^abc_ijk - t^cba_ijk - t^acb_ijk)*g_dbkc
+!!    omega_adij += P^ad_ij sum_bck(2t^abc_ijk - t^cba_ijk - t^acb_ijk) g_dbkc
 !!
       implicit none
 !
@@ -1040,11 +1019,11 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_ilkc
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_jlkc
 !
-!     construct u_abc = 2*t_abc - t_acb - t_cba
+!     construct u_abc = 2t_abc - t_acb - t_cba
 !
       call construct_123_min_132_min_321(t_abc, u_abc, wf%n_v)
 !
-!     omega_adij += sum_bc (2*t_abc - t_acb - t_cba)*g_dbkc
+!     omega_adij += sum_bc (2t_abc - t_acb - t_cba) g_dbkc
 !
       call dgemm('N','N', &
                  wf%n_v, &
@@ -1059,8 +1038,7 @@ contains
                  omega2(:,:,i,j), &
                  wf%n_v)
 !
-!
-!     omega_ablj += sum_c (2*t_abc - t_acb - t_cba)*g_ilkc
+!     omega_ablj += sum_c (2t_abc - t_acb - t_cba) g_ilkc
 !
       call dgemm('N','N', &
                  wf%n_v**2, &
@@ -1078,11 +1056,11 @@ contains
 !
       if (j .ne. i) then
 !
-!        resort to u_bac = 2*t_bac - t_bca - t_cab
+!        resort to u_bac = 2t_bac - t_bca - t_cab
 !      
          call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
 !      
-!        omega_adji += sum_bc (2*t_bac - t_bca - t_cab)*g_dbkc
+!        omega_adji += sum_bc (2t_bac - t_bca - t_cab) g_dbkc
 !      
          call dgemm('N','N', &
                     wf%n_v, &
@@ -1097,7 +1075,7 @@ contains
                     omega2(:,:,j,i), &
                     wf%n_v)
 !      
-!        omega_abli += sum_c (2*t_bac - t_bca - t_cab)*g_jlkc
+!        omega_abli += sum_c (2t_bac - t_bca - t_cab) g_jlkc
 !      
          call dgemm('N','N', &
                     wf%n_v**2, &
@@ -1114,12 +1092,11 @@ contains
 !
       end if ! j .ne. i
 !
-!
-!     construct u_cba = 2*t_cba - t_abc - t_bca
+!     construct u_cba = 2t_cba - t_abc - t_bca
 !
       call construct_321_min_231_min_123(t_abc, u_abc, wf%n_v)
 !
-!     omega_adkj += sum_bc (2*t_cba - t_abc - t_bca)*g_dbic
+!     omega_adkj += sum_bc (2t_cba - t_abc - t_bca) g_dbic
 !
       call dgemm('N','N', &
                  wf%n_v, &
@@ -1134,7 +1111,7 @@ contains
                  omega2(:,:,k,j), &
                  wf%n_v)
 !
-!     omega_ablj += sum_c (2*t_cba - t_abc - t_bca)*g_klic
+!     omega_ablj += sum_c (2t_cba - t_abc - t_bca) g_klic
 !
       call dgemm('N','N', &
                  wf%n_v**2, &
@@ -1149,15 +1126,13 @@ contains
                  omega2(:,:,:,j), &
                  wf%n_v**2)
 !
-!
       if (j .ne. k) then
 !
-!        resort to u_cab = 2*t_cab - t_acb - t_bac
+!        resort to u_cab = 2t_cab - t_acb - t_bac
 !
          call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
 !
-!
-!        omega_adjk += sum_bc (2*t_cab - t_acb - t_bac)*g_dbic
+!        omega_adjk += sum_bc (2t_cab - t_acb - t_bac) g_dbic
 !
          call dgemm('N','N', &
                     wf%n_v, &
@@ -1172,7 +1147,7 @@ contains
                     omega2(:,:,j,k), &
                     wf%n_v)
 !
-!        omega_ablk += sum_c (2*t_cab - t_acb - t_bac)*g_jlic
+!        omega_ablk += sum_c (2t_cab - t_acb - t_bac) g_jlic
 !
          call dgemm('N','N', &
                     wf%n_v**2, &
@@ -1187,14 +1162,13 @@ contains
                     omega2(:,:,:,k), &
                     wf%n_v**2)
 !
-!
          if (j .ne. i) then
 !
-!        construct u_acb = 2*t_acb - t_abc - t_cab
+!        construct u_acb = 2t_acb - t_abc - t_cab
 !
             call construct_132_min_123_min_312(t_abc, u_abc, wf%n_v)
 !
-!           omega_adik += sum_bc (2*t_acb - t_abc - t_cab)*g_dbjc
+!           omega_adik += sum_bc (2t_acb - t_abc - t_cab) g_dbjc
 !
             call dgemm('N','N', &
                        wf%n_v, &
@@ -1209,8 +1183,7 @@ contains
                        omega2(:,:,i,k), &
                        wf%n_v)
 !
-!
-!              omega_ablk += sum_c (2*t_acb - t_abc - t_cab)*g_iljc
+!              omega_ablk += sum_c (2t_acb - t_abc - t_cab) g_iljc
 !
                call dgemm('N','N', &
                           wf%n_v**2, &
@@ -1225,12 +1198,11 @@ contains
                           omega2(:,:,:,k), &
                           wf%n_v**2)
 !
-!
-!           resort to u_abc = 2*t_bca - t_bac - t_cba
+!           resort to u_abc = 2t_bca - t_bac - t_cba
 !
             call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
 !
-!           omega_adki += sum_bc (2*t_bca - t_bac - t_cba)*g_dbjc
+!           omega_adki += sum_bc (2t_bca - t_bac - t_cba) g_dbjc
 !
             call dgemm('N','N', &
                        wf%n_v, &
@@ -1245,7 +1217,7 @@ contains
                        omega2(:,:,k,i), &
                        wf%n_v)
 !
-!           omega_abli += sum_c (2*t_bca - t_bac - t_cba)*g_kljc
+!           omega_abli += sum_c (2t_bca - t_bac - t_cba) g_kljc
 !
             call dgemm('N','N', &
                        wf%n_v**2, &
@@ -1262,7 +1234,6 @@ contains
 !
          end if ! j .ne. i
       end if ! k .ne. j
-!
 !
    end subroutine omega_cc3_a_n7_cc3
 !

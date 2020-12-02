@@ -72,7 +72,7 @@ contains
       call zero_array(l_tdm, wf%n_mo**2)
 !
       call mem%alloc(L_k, wf%n_es_amplitudes)
-      call wf%read_excited_state(L_k, state, 'left')
+      call wf%read_excited_state(L_k, state, state, 'left')
 !
 !     Allocate the singles part of the excitation vector
 !
@@ -215,7 +215,7 @@ contains
       call zero_array(r_tdm, (wf%n_mo)**2)
 !
       call mem%alloc(R_k, wf%n_es_amplitudes)
-      call wf%read_excited_state(R_k, state, 'right')
+      call wf%read_excited_state(R_k, state, state, 'right')
 !
       call mem%alloc(R_ai, wf%n_v, wf%n_o)
 !
@@ -434,14 +434,14 @@ contains
 !
       call wf%g_bdck_t%open_('read')
       call wf%g_ljck_t%open_('read')
-      call wf%g_bdck_c1%open_('read')
-      call wf%g_ljck_c1%open_('read')
+      call wf%g_bdck_c%open_('read')
+      call wf%g_ljck_c%open_('read')
 !
       call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-      call single_record_reader(wf%n_o, wf%g_bdck_t, g_bdci)
+      call wf%g_bdck_t%read_(g_bdci, 1, wf%n_o)
 !
       call mem%alloc(g_bdci_c1, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-      call single_record_reader(wf%n_o, wf%g_bdck_c1, g_bdci_c1)
+      call wf%g_bdck_c%read_(g_bdci_c1, 1, wf%n_o)
 !
       call zero_array(R_abcijk, (wf%n_v*wf%n_o)**3)
 !
@@ -504,13 +504,13 @@ contains
       call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
       call mem%dealloc(g_bdci_c1, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
       call wf%g_bdck_t%close_()
-      call wf%g_bdck_c1%close_()
+      call wf%g_bdck_c%close_()
 !
       call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call compound_record_reader(wf%n_o, wf%n_o, wf%g_ljck_t, g_ljci)
+      call wf%g_ljck_t%read_(g_ljci, 1, wf%n_o*wf%n_o)
 !
       call mem%alloc(g_ljci_c1, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call compound_record_reader(wf%n_o, wf%n_o, wf%g_ljck_c1, g_ljci_c1)
+      call wf%g_ljck_c%read_(g_ljci_c1, 1, wf%n_o*wf%n_o)
 !
       do k = 1, wf%n_o
          do j = 1, wf%n_o
@@ -609,7 +609,7 @@ contains
       call mem%dealloc(g_ljci_c1, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call wf%g_ljck_t%close_()
-      call wf%g_ljck_c1%close_()
+      call wf%g_ljck_c%close_()
 !
    end subroutine construct_full_R3_cc3
 !
@@ -651,10 +651,10 @@ contains
       call wf%g_ljck_t%open_('read')
 !
       call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-      call single_record_reader(wf%n_o, wf%g_bdck_t, g_bdci)
+      call wf%g_bdck_t%read_(g_bdci, 1, wf%n_o)
 !
       call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call compound_record_reader(wf%n_o, wf%n_o, wf%g_ljck_t, g_ljci)
+      call wf%g_ljck_t%read_(g_ljci, 1, wf%n_o*wf%n_o)
 !
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
 !
@@ -750,13 +750,13 @@ contains
       call wf%L_jbkc_t%open_('read')
 !
       call mem%alloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-      call single_record_reader(wf%n_o, wf%g_dbkc_t, g_dbic)
+      call wf%g_dbkc_t%read_(g_dbic, 1, wf%n_o)
 !
       call mem%alloc(g_jlic, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      call compound_record_reader(wf%n_o, wf%n_o, wf%g_jlkc_t, g_jlic)
+      call wf%g_jlkc_t%read_(g_jlic, 1, wf%n_o*wf%n_o)
 !
       call mem%alloc(L_ibjc, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call compound_record_reader(wf%n_o, wf%n_o, wf%L_jbkc_t, L_ibjc)
+      call wf%L_jbkc_t%read_(L_ibjc, 1, wf%n_o*wf%n_o)
 !
 !
       call zero_array(tbar_abcijk, (wf%n_v*wf%n_o)**3)

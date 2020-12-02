@@ -64,6 +64,8 @@ module davidson_cc_es_class
    use es_cvs_projection_tool_class, only: es_cvs_projection_tool
    use es_ip_projection_tool_class, only: es_ip_projection_tool
 !
+   use convergence_tool_class, only: convergence_tool 
+!
    implicit none
 !
    type, extends(abstract_cc_es) :: davidson_cc_es
@@ -80,8 +82,6 @@ module davidson_cc_es_class
       procedure :: read_davidson_settings            => read_davidson_settings_davidson_cc_es
 !
       procedure :: print_settings                    => print_settings_davidson_cc_es
-!
-      procedure :: set_start_vectors                 => set_start_vectors_davidson_cc_es
 !       
    end type davidson_cc_es
 !
@@ -101,6 +101,9 @@ contains
 !!    New Davidson CC ES 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    Modified by Andreas S. Skeidsvoll, Oct 2020
+!!    Added max_dim_red and n_singlet_states consistency checks.
+!!
       implicit none
 !
       type(davidson_cc_es) :: solver
@@ -110,19 +113,20 @@ contains
 !
       logical, intent(in) :: restart
 !
-      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
+      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state (' &
+                     // trim(transformation) //')')
       call solver%timer%turn_on()
 !
       solver%name_ = 'Davidson coupled cluster excited state solver'
       solver%tag   = 'Davidson'
 !
       solver%description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
-               & the right or left eigenvectors of the Jacobian matrix, A. The eigenvalue &
-               & problem is solved in a reduced space, the dimension of which is &
-               & expanded until the convergence criteria are met.'
+               &the right or left eigenvectors of the Jacobian matrix, A. The eigenvalue &
+               &problem is solved in a reduced space, the dimension of which is &
+               &expanded until the convergence criteria are met.'
 !
       solver%description2 = 'A complete description of the algorithm can be found in &
-                                 & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
+                            &E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
       call solver%print_banner()
 !
@@ -130,8 +134,6 @@ contains
 !
       solver%n_singlet_states     = 0
       solver%max_iterations       = 100
-      solver%eigenvalue_threshold = 1.0d-6
-      solver%residual_threshold   = 1.0d-6
       solver%restart              = restart
       solver%max_dim_red          = 100 
       solver%transformation       = trim(transformation)
@@ -139,20 +141,48 @@ contains
       solver%records_in_memory    = .false.  
       solver%storage              = 'disk'
 !
-      call solver%read_settings()
-      call solver%print_settings()
+!     Initialize convergence checker with default threshols
 !
-      call solver%initialize_energies()
-      solver%energies = zero
+      solver%convergence_checker = convergence_tool(energy_threshold   = 1.0d-3,   &
+                                                    residual_threshold = 1.0d-3,   &
+                                                    energy_convergence = .false.)
+!
+      call solver%read_settings()
+!
+!     Value of max_dim_red is set greater than or equal to 10*n_singlet_states
+!     (if value is not specified in input), and less than or equal to number of
+!     excited state amplitudes (always).
+!
+      if (.not. input%requested_keyword_in_section('max reduced dimension', 'solver cc es')) &
+         solver%max_dim_red = max(solver%max_dim_red, 10*solver%n_singlet_states)
+!
+      if (solver%max_dim_red .gt. wf%n_es_amplitudes) then
+!
+         solver%max_dim_red = wf%n_es_amplitudes
+!
+         if (input%requested_keyword_in_section('max reduced dimension', 'solver cc es')) then
+!
+            call output%warning_msg('specified maximum reduced dimension exceeds the number ' // &
+                                    'of independent solutions. It has been changed to the '   // &
+                                    'number of excited state amplitudes.')
+!
+         endif
+!
+      endif
+!
+      call solver%print_settings()
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
+      if (solver%n_singlet_states .gt. wf%n_es_amplitudes) &
+         call output%error_msg('specified number of excitations exceeds the number of ' // &
+                               'independent solutions.')
+!
+      if (solver%n_singlet_states .gt. solver%max_dim_red) &
+         call output%error_msg('number of excitations exceeds the specified maximum ' // &
+                               'reduced dimension.')
+!
       wf%n_singlet_states = solver%n_singlet_states
-!
-      call solver%initialize_start_vector_tool(wf)
-      call solver%initialize_projection_tool(wf)
-!
-      call solver%prepare_wf_for_excited_state(wf)
 !
 !     Determine whether to store records in memory or on file
 !
@@ -186,7 +216,7 @@ contains
       call solver%print_es_settings()
 !
       call output%printf('m', 'Max reduced space dimension:  (i11)', &
-                         ints=[solver%max_dim_red], fs='(/t6,a)')
+                         ints=[solver%max_dim_red], fs='(/t6,a/)')
 !
    end subroutine print_settings_davidson_cc_es
 !
@@ -203,8 +233,7 @@ contains
       class(ccs) :: wf
 !
       logical, dimension(:), allocatable :: converged
-      logical, dimension(:), allocatable :: converged_eigenvalue
-      logical, dimension(:), allocatable :: converged_residual
+      logical, dimension(:), allocatable :: residual_lt_lindep
 !
       integer :: iteration, trial, n, state
 !
@@ -220,9 +249,19 @@ contains
 !  
       real(dp) :: lindep_threshold
 !
+      type(timings) :: construct_new_trial, iteration_time
+!
+      iteration_time = timings("Davidson: CC ES iteration time", pl="n")
+      construct_new_trial = timings("Davidson: construct new trial", pl="v")
+!
 !     :: Preparations ::
 !  
-      lindep_threshold = min(solver%residual_threshold, 1.0d-11)
+      call solver%initialize_start_vector_tool(wf)
+      call solver%initialize_projection_tool(wf)
+!
+      call solver%prepare_wf_for_excited_state(wf)
+!
+      lindep_threshold = min(1.0d-11, 0.1d0*solver%convergence_checker%residual_threshold)
 !
       davidson = eigen_davidson_tool('cc_es_davidson',                           &
                                        wf%n_es_amplitudes,                       &
@@ -233,24 +272,47 @@ contains
       call davidson%initialize_trials_and_transforms(solver%records_in_memory)
 !
       call solver%set_precondition_vector(wf, davidson)
-      call solver%set_start_vectors(wf, davidson)
+!
+!     :: Set start vectors and handle restart ::
+!
+      call solver%initialize_energies()
+!
+      call mem%alloc(c, wf%n_es_amplitudes)
+!
+      do trial = 1, solver%n_singlet_states
+!
+         call solver%set_initial_guesses(wf, c, trial, trial)
+         call davidson%set_trial(c, trial)
+!
+      enddo
+!
+      call mem%dealloc(c, wf%n_es_amplitudes)
 !
 !     :: Iterative loop :: 
 !
       call mem%alloc(converged, solver%n_singlet_states)
-      call mem%alloc(converged_eigenvalue, solver%n_singlet_states)
-      call mem%alloc(converged_residual, solver%n_singlet_states)
+      call mem%alloc(residual_lt_lindep, solver%n_singlet_states)
 !
       converged            = .false. 
-      converged_eigenvalue = .false. 
-      converged_residual   = .false. 
+      residual_lt_lindep   = .false.
 !
       iteration = 0
 !
       do while (.not. all(converged) .and. (iteration .le. solver%max_iterations))
 !
+         call iteration_time%turn_on()
+!
          iteration = iteration + 1
-         call davidson%iterate()
+!
+!        Reduced space preparations 
+!
+         if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+!
+         call davidson%update_reduced_dim()
+!
+         call davidson%orthonormalize_trial_vecs() 
+!
+!        Print iteration information 
 !
          call output%printf('n', 'Iteration:               (i4)', &
                             ints=[iteration], fs='(/t3,a)')
@@ -288,14 +350,13 @@ contains
                             &(Im)    |residual|   Delta E (Re)', fs='(/t3,a)', ll=120)
          call output%print_separator('n', 72,'-')
 !
-         converged_residual   = .true.
-         converged_eigenvalue = .true.
+         call construct_new_trial%turn_on()
 !
          do n = 1, solver%n_singlet_states
 !
             call davidson%construct_solution(solution, n) 
 !
-            call wf%save_excited_state(solution, n, solver%transformation) 
+            call wf%save_excited_state(solution, n, n, solver%transformation, solver%energies(n)) 
 !
             call davidson%construct_residual(residual, solution, n) 
 !
@@ -304,17 +365,14 @@ contains
 !
             residual_norm = get_l2_norm(residual, wf%n_es_amplitudes)
 !
-            converged_residual(n)   = residual_norm <= solver%residual_threshold
+            converged(n) = solver%convergence_checker%has_converged(residual_norm, &
+                                 davidson%omega_re(n)-solver%energies(n), iteration)
 !
-            converged_eigenvalue(n) = dabs(davidson%omega_re(n) &
-                                          - solver%energies(n)) <= solver%eigenvalue_threshold
-!
-            converged(n) = converged_residual(n) .and. converged_eigenvalue(n) .or. &
-                           converged_residual(n) .and. iteration == 1
+            residual_lt_lindep(n) = (residual_norm <= lindep_threshold)
 !
             if (.not. converged(n)) then 
 !
-               if (residual_norm <= lindep_threshold) then 
+               if (residual_lt_lindep(n)) then 
 !
                   call output%warning_msg('Residual norm for root (i0) smaller than linear ' // &
                                           'dependence threshold, but energy and residual  '  // &
@@ -339,6 +397,8 @@ contains
 !
          enddo ! Done constructing new trials from residuals
 !
+         call construct_new_trial%turn_off()
+!
          call output%print_separator('n', 72,'-')
 !
          call mem%dealloc(residual, wf%n_es_amplitudes)
@@ -347,18 +407,23 @@ contains
 !        Update energies and save them
 !
          solver%energies = davidson%omega_re
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
 !
 !        Special case when residuals converge in first iteration, e.g. on restart
 !        => Exit without testing energy convergence 
 !
-         if (all(converged_residual) .and. iteration == 1) then 
+         if (all(residual_lt_lindep) .and. .not. all(converged)) then
 !
-            call output%printf('m', 'Note: Residual(s) converged in first &
-                               &iteration. ' // 'Energy convergence therefore &
-                               &not tested in this calculation.')
+            converged = .true.
+            call output%printf('m', 'Note: all residuals are converged and &
+                               &have norms that are smaller than linear &
+                               &dependence threshold. ' // 'Energy &
+                               &convergence therefore not tested in this &
+                               &calculation.')
 !
          endif
+!
+         call iteration_time%turn_off()
+         call iteration_time%reset()
 !
       enddo ! End of iterative loop
 !
@@ -366,10 +431,12 @@ contains
 !
       if (.not. all(converged)) then
 !
-         call output%error_msg("Did not converge in the max number of " // & 
-                                 "iterations in run_davidson_cc_es.")
+         call output%error_msg("Did not converge in the max number of &
+                               &iterations in run_davidson_cc_es.")
 !
       else 
+!
+         call wf%set_excitation_energies(solver%energies, solver%transformation)
 !
          call output%printf('m', 'Convergence criterion met in (i0) iterations!', &
                             ints=[iteration], fs='(t3,a)')
@@ -391,78 +458,9 @@ contains
       call davidson%finalize_trials_and_transforms()
 !
       call mem%dealloc(converged, solver%n_singlet_states)
-      call mem%dealloc(converged_eigenvalue, solver%n_singlet_states)
-      call mem%dealloc(converged_residual, solver%n_singlet_states)
+      call mem%dealloc(residual_lt_lindep, solver%n_singlet_states)
 !
    end subroutine run_davidson_cc_es
-!
-!
-   subroutine set_start_vectors_davidson_cc_es(solver, wf, davidson)
-!!
-!!    Set start vectors 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-!!    Sets initial trial vectors either from Koopman guess or from vectors given on input.
-!!
-      implicit none
-!
-      class(davidson_cc_es) :: solver
-!
-      class(ccs) :: wf
-!
-      class(eigen_davidson_tool) :: davidson
-!
-      real(dp), dimension(:), allocatable :: c
-!
-      integer :: trial, n_solutions_on_file
-!
-      if (solver%restart) then 
-!
-!        Read the solutions from file & set as initial trial vectors 
-!
-         call solver%determine_restart_transformation(wf) ! Read right or left?
-         n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
-!
-         call output%printf('m', 'Requested restart - restarting (i0) (a0) &
-                           &eigenvectors from file.', fs='(/t3,a)', &
-                            ints=[n_solutions_on_file], &
-                            chars=[solver%restart_transformation])
-!
-         call mem%alloc(c, wf%n_es_amplitudes)
-!
-         do trial = 1, n_solutions_on_file
-!
-            call wf%read_excited_state(c, trial, solver%restart_transformation)
-            call davidson%set_trial(c, trial)
-!
-         enddo 
-!
-         call mem%dealloc(c, wf%n_es_amplitudes)
-!
-      else
-!
-         n_solutions_on_file = 0
-!
-      endif 
-!
-!     Sets whatever remains using the start vector tool 
-!
-      if (n_solutions_on_file .lt. solver%n_singlet_states) then 
-!
-         call mem%alloc(c, wf%n_es_amplitudes)
-!
-         do trial = n_solutions_on_file + 1, solver%n_singlet_states
-!
-            call solver%start_vectors%get(c, trial)
-            call davidson%set_trial(c, trial)
-!
-         enddo 
-!
-         call mem%dealloc(c, wf%n_es_amplitudes)
-!     
-      endif
-!
-   end subroutine set_start_vectors_davidson_cc_es
 !
 !
    subroutine set_precondition_vector_davidson_cc_es(wf, davidson)

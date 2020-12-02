@@ -56,24 +56,61 @@ module es_start_vector_tool_class
 contains 
 !
 !
-   subroutine get_es_start_vector_tool(tool, R, n)
+   subroutine get_es_start_vector_tool(tool, wf, n, vector, energy, side, restart)
 !!
-!!    Get 
+!!    Get
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
 !!
-!!    Sets the nth vector R equal to the starting guess according to the 
-!!    nth index in indices (see constructors for the initialization of tool%indices)
+!!    Modified by Alexander C. Paul, Sep 2020 - now also handles restart
 !!
+!!    Returns the nth start vector
+!!    If restart is requested, it checks for the vector on file
+!!    otherwise the start vector are determined from tool%indices.
+!!
+      use array_utilities, only: get_l2_norm
+      use ccs_class, only: ccs
+!
       implicit none 
 !
       class(es_start_vector_tool), intent(in) :: tool
 !
-      real(dp), dimension(tool%vector_length), intent(inout) :: R 
+      class(ccs), intent(inout) :: wf
 !
-      integer, intent(in) :: n 
+      integer, intent(in) :: n
 !
-      call zero_array(R, tool%vector_length)
-      R(tool%indices(n)) = one
+      real(dp), dimension(tool%vector_length), intent(inout) :: vector
+      real(dp), intent(inout) :: energy
+!
+      logical, intent(in) :: restart
+!
+      character(len=*), intent(in) :: side
+!
+      logical  :: vector_found
+      real(dp) :: norm_
+!
+      if (.not. restart) then
+!
+         energy = zero
+         call zero_array(vector, tool%vector_length)
+         vector(tool%indices(n)) = one
+!
+      else ! restarting
+!
+         call wf%check_and_get_restart_vector(vector, energy, n, side, vector_found)
+!
+         if (vector_found) then
+!
+            norm_ = get_l2_norm(vector, tool%vector_length)
+            call dscal(tool%vector_length, one/norm_, vector, 1)
+!               
+         else
+!
+            energy = zero
+            call zero_array(vector, tool%vector_length)
+            vector(tool%indices(n)) = one
+!
+         end if
+      end if
 !
    end subroutine get_es_start_vector_tool
 !

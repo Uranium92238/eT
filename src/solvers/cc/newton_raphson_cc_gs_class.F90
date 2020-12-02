@@ -59,6 +59,9 @@ module newton_raphson_cc_gs_class
    use kinds
    use ccs_class
    use diis_tool_class
+
+   use abstract_convergence_tool_class,   only : abstract_convergence_tool
+   use convergence_tool_class,            only : convergence_tool
 !
    implicit none
 !
@@ -73,9 +76,6 @@ module newton_raphson_cc_gs_class
       integer :: max_iterations
       integer :: diis_dimension
 !
-      real(dp) :: omega_threshold
-      real(dp) :: energy_threshold
-!
       integer  :: max_micro_iterations
       integer  :: max_micro_dim_red
       real(dp) :: micro_residual_threshold
@@ -87,6 +87,8 @@ module newton_raphson_cc_gs_class
       logical :: restart, records_in_memory 
 !
       type(timings), allocatable :: timer 
+!
+      class(abstract_convergence_tool), allocatable :: convergence_checker
 !
    contains
 !     
@@ -138,36 +140,32 @@ contains
       solver%diis_dimension                     = 8
       solver%max_micro_iterations               = 100
       solver%relative_micro_residual_threshold  = 1.0d-2
-      solver%energy_threshold                   = 1.0d-6
-      solver%omega_threshold                    = 1.0d-6
       solver%restart                            = restart
       solver%max_micro_dim_red                  = 50
       solver%storage                            = 'disk'
       solver%crop                               = .false.
 !
+!     Initialize convergence checker with default threshols
+!
+      solver%convergence_checker = convergence_tool(energy_threshold   = 1.0d-5,   &
+                                                    residual_threshold = 1.0d-5,   &
+                                                    energy_convergence = .false.)
+!
 !     Read & print settings (thresholds, etc.)
 !
       call solver%read_settings()
+!
       call solver%print_settings()
 !
 !     Set the amplitudes to the initial guess or read if restart
 !
       call wf%initialize_amplitudes()
 !
-      if (solver%restart) then
+      call wf%eri%set_t1_to_mo()
+      call wf%eri%place_g_mo_in_memory()
 !
-         call wf%read_amplitudes()
-!
-         call wf%integrals%update_t1_integrals(wf%t1)
+      call wf%set_initial_amplitudes_guess(solver%restart)
 ! 
-      else
-!
-         call wf%integrals%update_t1_integrals(wf%t1)
-!
-         call wf%set_initial_amplitudes_guess()
-!
-      endif
-!
 !     Determine whether to store records in memory or on file
 !
       if (trim(solver%storage) == 'memory') then 
@@ -200,10 +198,8 @@ contains
       call output%printf('m', '- DIIS accelerated Newton-Raphson CC ground &
                          &state solver settings:', fs='(/t3,a)')
 !
-      call output%printf('m', 'Omega threshold:          (e14.3)', &
-                         reals=[solver%omega_threshold], fs='(/t6,a)')
-      call output%printf('m', 'Energy threshold:         (e14.3)', &
-                         reals=[solver%energy_threshold], fs='(t6,a)')
+      call solver%convergence_checker%print_settings()
+!
       call output%printf('m', 'Relative micro threshold: (e14.3)', &
                          reals=[solver%relative_micro_residual_threshold], fs='(t6,a)')
 !
@@ -240,7 +236,7 @@ contains
 !
       integer :: iteration, micro_iterations
 !
-      logical :: converged, converged_omega, converged_energy
+      logical :: converged
 !
       real(dp) :: energy, prev_energy, omega_norm
 !
@@ -258,8 +254,6 @@ contains
       micro_iterations = 0
       prev_energy = zero
 !
-      converged_energy = .false.
-      converged_omega = .false.
       converged = .false.
 !
       macro_iteration_timer = timings('Newton-Raphson macro-iteration time ' // &
@@ -297,12 +291,7 @@ contains
 !
          call output%print_separator('n', 64, '-', fs='(t3,a)')
 !
-         converged_energy   = abs(energy-prev_energy) .lt. solver%energy_threshold
-         converged_omega    = omega_norm              .lt. solver%omega_threshold
-!
-         converged = converged_omega .and. converged_energy
-!
-         if (iteration .eq. 1 .and. converged_omega) converged = .true. ! Exception to the rule
+         converged = solver%convergence_checker%has_converged(omega_norm, energy-prev_energy, iteration)
 !
 !        If not converged, perform micro-iterations to get an estimate for the next amplitudes 
 !
@@ -322,11 +311,13 @@ contains
 !           Update the Cholesky (and electron repulsion integrals, if in memory) 
 !           to new T1 amplitudes 
 !
-            call wf%integrals%update_t1_integrals(wf%t1)
+            call wf%eri%update_t1_integrals(wf%t1)
 !
          endif 
 !
          prev_energy = energy 
+!
+         call wf%save_amplitudes()
 !
          call macro_iteration_timer%turn_off()
          call macro_iteration_timer%reset()
@@ -399,8 +390,11 @@ contains
       call mem%alloc(minus_omega, wf%n_gs_amplitudes)
       call copy_and_scale(-one, omega, minus_omega, wf%n_gs_amplitudes)
 !
-      davidson = linear_davidson_tool('cc_gs_newton_raphson', wf%n_gs_amplitudes, &
-         solver%micro_residual_threshold, solver%max_micro_dim_red, minus_omega, 1)
+      davidson = linear_davidson_tool('cc_gs_newton_raphson',                          &
+                                       wf%n_gs_amplitudes,                             &
+                                       min(1.0d-11, solver%micro_residual_threshold),  &
+                                       solver%max_micro_dim_red,                       &
+                                       minus_omega, 1)
 !
       call davidson%initialize_trials_and_transforms(solver%records_in_memory)
 !
@@ -435,7 +429,13 @@ contains
          micro_iteration = micro_iteration + 1
          call micro_iteration_timer%turn_on()
 !
-         call davidson%iterate()
+!        Reduced space preparations 
+!
+         if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+!
+         call davidson%update_reduced_dim()
+!
+         call davidson%orthonormalize_trial_vecs() 
 !
 !        Transform new trial vectors and write to file
 !
@@ -539,8 +539,21 @@ contains
 !
       class(newton_raphson_cc_gs) :: solver    
 !
-      call input%get_keyword_in_section('omega threshold', 'solver cc gs', solver%omega_threshold)
-      call input%get_keyword_in_section('energy threshold', 'solver cc gs', solver%energy_threshold)
+      real(dp) :: energy_threshold, omega_threshold
+!
+      if (input%requested_keyword_in_section('energy threshold', 'solver cc gs')) then
+!
+         call input%get_keyword_in_section('energy threshold', 'solver cc gs', energy_threshold)
+         call solver%convergence_checker%set_energy_threshold(energy_threshold)
+!
+      endif
+!
+      if (input%requested_keyword_in_section('omega threshold', 'solver cc gs')) then
+!
+         call input%get_keyword_in_section('omega threshold', 'solver cc gs', omega_threshold)
+         call solver%convergence_checker%set_residual_threshold(omega_threshold)
+!
+      endif
       call input%get_keyword_in_section('diis dimension', 'solver cc gs', solver%diis_dimension)
       call input%get_keyword_in_section('max iterations', 'solver cc gs', solver%max_iterations)
       call input%get_keyword_in_section('rel micro threshold', 'solver cc gs', solver%relative_micro_residual_threshold)

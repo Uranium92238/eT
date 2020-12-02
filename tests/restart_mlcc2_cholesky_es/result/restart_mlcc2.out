@@ -50,16 +50,16 @@
 
      solver cc gs
         restart
-        omega threshold:  1.0d-11
-        energy threshold: 1.0d-11
+        omega threshold:  1.0d-10
+        energy threshold: 1.0d-10
      end solver cc gs
 
      solver cc es
         restart
         algorithm:          davidson
         singlet states:     4
-        residual threshold: 1.0d-11
-        energy threshold:   1.0d-11
+        residual threshold: 1.0d-10
+        energy threshold:   1.0d-10
         right eigenvectors
      end solver cc es
 
@@ -127,62 +127,6 @@
         4 He     0.188972612457    -0.037794522491    14.229637717975        4
      ==============================================================================
 
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
-
-  Performs a Cholesky decomposition of the two-electron electronic repulsion 
-  integrals in the atomic orbital basis,
-
-  (ab|cd) = sum_J L_ab^J L_cd^J.
-
-  Once the Cholesky basis has been determined, the vectors L^J are constructed 
-  and stored to disk. These may either be used directly, or be transformed 
-  to the MO basis for use in post-HF calculations. For more information, 
-  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
-
-  - Cholesky decomposition settings:
-
-     Target threshold is:   0.10E-11
-     Span factor:           0.10E-01
-     Max qual:                  1000
-
-  - Cholesky decomposition system details:
-
-     Total number of AOs:                    29
-     Total number of shell pairs:           120
-     Total number of AO pairs:              435
-
-     Significant shell pairs:               118
-     Significant AO pairs:                  431
-
-     Construct shell pairs:                 120
-     Construct AO pairs:                    435
-
-  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
-  -------------------------------------------------------------------------------------------------------
-     1               406 /     108       0.47383E+01         147             42             17052
-     2               319 /      93       0.47165E-01         234            111             35409
-     3               250 /      76       0.46944E-03         178            183             45750
-     4               187 /      55       0.38270E-05         145            265             49555
-     5                87 /      25       0.38106E-07          78            324             28188
-     6                21 /       3       0.37202E-09          43            349              7329
-     7                 0 /       0       0.36652E-11           7            354                 0
-  -------------------------------------------------------------------------------------------------------
-
-  - Summary of Cholesky decomposition of electronic repulsion integrals:
-
-     Final number of Cholesky vectors: 354
-
- - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
-
-     Maximal difference between approximate and actual diagonal:              0.7161E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1110E-14
-
-  - Finished decomposing the ERIs.
-
-     Total wall time (sec):              0.11500
-     Total cpu time (sec):               0.16811
-
 
   :: RHF wavefunction
   ======================
@@ -235,7 +179,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.6422E-12     0.7884E+02
+     1           -78.843851693631     0.6421E-12     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -264,8 +208,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.01300
-     Total cpu time (sec):               0.02297
+     Total wall time (sec):              0.01900
+     Total cpu time (sec):               0.03689
 
 
   :: MLCC2 wavefunction
@@ -281,10 +225,6 @@
      Molecular orbitals:   29
      Atomic orbitals:      29
 
-   - Number of ground state amplitudes:
-
-     Single excitation amplitudes:  138
-
 
   :: Excited state coupled cluster engine
   ==========================================
@@ -294,21 +234,81 @@
   This is a MLCC2 excited state calculation.
   The following tasks will be performed:
 
-     1) Preparation of MO basis and integrals
-     2) Calculation of the ground state (diis algorithm)
-     3) Calculation of the excited state (davidson algorithm)
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
+     4) Calculation of the excited state (davidson algorithm)
 
 
-  1) Preparation of MO basis and integrals
+  1) Cholesky decomposition of the electron repulsion integrals
 
-     The smallest diagonal after decomposition is:  -0.3759E-16
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
 
-     The smallest diagonal after decomposition is:  -0.1810E-13
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-11
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition system details:
+
+     Total number of AOs:                    29
+     Total number of shell pairs:           120
+     Total number of AO pairs:              435
+
+     Significant shell pairs:               118
+     Significant AO pairs:                  431
+
+     Construct shell pairs:                 120
+     Construct AO pairs:                    435
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               406 /     108       0.47383E+01         147             42             17052
+     2               319 /      93       0.47165E-01         234            111             35409
+     3               250 /      76       0.46944E-03         178            183             45750
+     4               187 /      55       0.38270E-05         145            265             49555
+     5                87 /      25       0.38106E-07          78            324             28188
+     6                21 /       3       0.37202E-09          43            349              7329
+     7                 0 /       0       0.36652E-11           7            354                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 354
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.7161E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.35200
+     Total cpu time (sec):               0.57600
+
+
+  2) Preparation of MO basis and integrals
+
+     The smallest diagonal after decomposition is:  -0.3481E-16
+
+     The smallest diagonal after decomposition is:  -0.1892E-13
 
   - MLCC2 orbital partitioning:
 
@@ -321,7 +321,7 @@
      Number virtual ccs orbitals:    10
 
 
-  2) Calculation of the ground state (diis algorithm)
+  3) Calculation of the ground state (diis algorithm)
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -333,8 +333,8 @@
 
   - DIIS CC ground state solver settings:
 
-     Omega threshold:           0.10E-10
-     Energy threshold:          0.10E-10
+     Omega threshold:           0.10E-09
+     Energy threshold:          0.10E-09
 
      DIIS dimension:                   8
      Max number of iterations:       100
@@ -345,7 +345,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -78.992658321885     0.7707E-11     0.7899E+02
+    1           -78.992658321885     0.8213E-12     0.7899E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -362,27 +362,27 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-       15      4        0.016328878163
-        5      3       -0.014564153929
-        6      4       -0.012826074952
-       17      3        0.012491270948
+       15      4        0.016328878160
+        5      3       -0.014564153928
+        6      4       -0.012826074950
+       17      3        0.012491270947
         3      3        0.009204805602
-       14      3       -0.007937198481
+       14      3       -0.007937198480
         2      5       -0.006832883845
        20      3        0.003941989393
-        1      2       -0.003004112649
-       15      2        0.002970409241
+        1      2       -0.003004112650
+       15      2        0.002970409243
      ------------------------------------
 
-     T1 diagnostic (|T1|/sqrt(N_e)): 0.009412263874
+     T1 diagnostic (|T1|/sqrt(N_e)): 0.009412263873
 
   - Finished solving the MLCC2 ground state equations
 
-     Total wall time (sec):              0.00800
-     Total cpu time (sec):               0.01526
+     Total wall time (sec):              0.01100
+     Total cpu time (sec):               0.01945
 
 
-  3) Calculation of the excited state (davidson algorithm)
+  4) Calculation of the excited state (davidson algorithm)
      Calculating right vectors
 
    - Davidson coupled cluster excited state solver
@@ -401,8 +401,8 @@
      Calculation type:    valence
      Excitation vectors:  right
 
-     Energy threshold:                0.10E-10
-     Residual threshold:              0.10E-10
+     Energy threshold:                0.10E-09
+     Residual threshold:              0.10E-09
 
      Number of singlet states:               4
      Max number of iterations:             100
@@ -418,10 +418,10 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.311438820474    0.000000000000     0.1664E-11   0.3114E+00
-     2   0.364807620015    0.000000000000     0.7588E-12   0.3648E+00
-     3   0.405815979832    0.000000000000     0.2125E-11   0.4058E+00
-     4   0.457308246773    0.000000000000     0.3678E-11   0.4573E+00
+     1   0.311438820474    0.000000000000     0.2152E-12   0.3114E+00
+     2   0.364807620015    0.000000000000     0.1168E-12   0.3648E+00
+     3   0.405815979832    0.000000000000     0.3262E-12   0.4058E+00
+     4   0.457308246773    0.000000000000     0.3481E-12   0.4573E+00
   ------------------------------------------------------------------------
   Note: Residual(s) converged in first iteration. Energy convergence therefore 
   not tested in this calculation.
@@ -434,6 +434,11 @@
      Energy (Hartree):                  0.311438820474
      Fraction singles (|R1|/|R|):       0.998500898646
 
+     MLCC diagnostics:
+
+     |R1^internal|/|R| =       0.556319394931
+     |R1^internal|/|R1| =      0.557154626185
+
      Largest single amplitudes:
      -----------------------------------
         a       i         R(a,i)
@@ -445,7 +450,7 @@
        12      5        0.065368798023
         1      5        0.054735307894
         7      5       -0.043283525692
-        8      5       -0.024658717930
+        8      5       -0.024658717929
         2      5        0.019694008118
        11      5       -0.014132968046
      ------------------------------------
@@ -455,6 +460,11 @@
      Energy (Hartree):                  0.364807620015
      Fraction singles (|R1|/|R|):       0.997950547483
 
+     MLCC diagnostics:
+
+     |R1^internal|/|R| =       0.660097599964
+     |R1^internal|/|R1| =      0.661453216924
+
      Largest single amplitudes:
      -----------------------------------
         a       i         R(a,i)
@@ -463,7 +473,7 @@
         3      5       -0.523393275766
        14      5        0.503802434509
         5      5        0.400124089716
-       20      5       -0.081570718825
+       20      5       -0.081570718826
        13      5       -0.039917247008
        14      6        0.008440416703
         3      6       -0.006838474397
@@ -475,6 +485,11 @@
 
      Energy (Hartree):                  0.405815979832
      Fraction singles (|R1|/|R|):       0.998318120755
+
+     MLCC diagnostics:
+
+     |R1^internal|/|R| =       0.561879932187
+     |R1^internal|/|R1| =      0.562826538461
 
      Largest single amplitudes:
      -----------------------------------
@@ -497,20 +512,25 @@
      Energy (Hartree):                  0.457308246773
      Fraction singles (|R1|/|R|):       0.998200691097
 
+     MLCC diagnostics:
+
+     |R1^internal|/|R| =       0.627728553611
+     |R1^internal|/|R1| =      0.628860067128
+
      Largest single amplitudes:
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-       14      4       -0.524937949092
-       17      4        0.496334167673
-        3      4        0.476062084510
-        5      4       -0.355598561800
-       15      3       -0.259240725964
-        6      3        0.180075291591
-       16      3        0.083997747617
+       14      4       -0.524937949090
+       17      4        0.496334167672
+        3      4        0.476062084508
+        5      4       -0.355598561799
+       15      3       -0.259240725972
+        6      3        0.180075291595
+       16      3        0.083997747618
        20      4        0.075844096163
-        4      3        0.065668145123
-       13      4        0.047168737713
+        4      3        0.065668145124
+       13      4        0.047168737712
      ------------------------------------
 
      - Electronic excitation energies:
@@ -519,21 +539,21 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.311438820474        8.474681965521
-        2                  0.364807620015        9.926920971272
-        3                  0.405815979832       11.042815280294
-        4                  0.457308246773       12.443991233060
+        1                  0.311438820474        8.474681965522
+        2                  0.364807620015        9.926920971276
+        3                  0.405815979832       11.042815280303
+        4                  0.457308246773       12.443991233063
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the MLCC2 excited state equations (right)
 
-     Total wall time (sec):              0.02300
-     Total cpu time (sec):               0.03413
+     Total wall time (sec):              0.03900
+     Total cpu time (sec):               0.06614
 
   - Timings for the MLCC2 excited state calculation
 
-     Total wall time (sec):              0.05100
-     Total cpu time (sec):               0.08581
+     Total wall time (sec):              0.41800
+     Total cpu time (sec):               0.69361
 
   eT terminated successfully!

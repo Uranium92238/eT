@@ -75,17 +75,23 @@ contains
 !
       if (wf%name_ .eq. 'ccsd(t)' .or. &
           wf%name_ .eq. 'low memory cc2' .or. &
-          wf%name_ .eq. 'mlcc2' .or. &
+          wf%name_ .eq. 'mlccsd' .or. &
           wf%name_ .eq. 'mp2') then
 !
-         call output%error_msg("Zero order properties not implemented for (a0)", &
+         call output%error_msg("Mean value calculations not implemented for (a0)", &
+                               chars=[wf%name_])
+!
+      elseif (wf%name_ .eq. 'mlcc2') then
+!
+         call output%warning_msg("Mean value calculations not recomended for (a0)!", &
                                chars=[wf%name_])
 !
       end if
 !
       engine%gs_algorithm = 'diis'
 !
-      if (wf%name_ .eq. 'cc2' .or. &
+      if (wf%name_ .eq. 'ccs' .or. &
+          wf%name_ .eq. 'cc2' .or. &
           wf%name_ .eq. 'low memory cc2' .or. &
           wf%name_ .eq. 'mlcc2' .or. &
           wf%name_ .eq. 'cc3') then
@@ -98,16 +104,14 @@ contains
 !
       end if
 !
-      engine%dipole                 = .false.
-      engine%quadrupole             = .false.
-      engine%plot_density           = .false.
+      engine%dipole               = .false.
+      engine%quadrupole           = .false.
+      engine%plot_density         = .false.
 !
-      engine%gs_restart            = .false.
-      engine%multipliers_restart   = .false.
+      engine%gs_restart           = .false.
+      engine%multipliers_restart  = .false.
 !
       call engine%read_settings()
-!
-      engine%restart = engine%gs_restart .or. engine%multipliers_restart
 !
       call engine%set_printables()
 !
@@ -152,16 +156,25 @@ contains
 !!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use visualization_class,  only: visualization
+      use memory_manager_class, only: mem
+!
       implicit none
 !
-      class(ccs)         :: wf
-      class(mean_value_engine)  :: engine
+      class(ccs)               :: wf
+      class(mean_value_engine) :: engine
+!
+      type(visualization), allocatable :: visualizer
+!
+      real(dp), dimension(:,:), allocatable :: c_D_ct
+!
+      call engine%tasks%print_('cholesky')
+!
+      call engine%do_cholesky(wf)
 !
       call engine%tasks%print_('mo preparations')
 !
       call wf%mo_preparations()
-!
-      call engine%restart_handling(wf)
 !
 !     Determine ground state | CC >
 !
@@ -181,7 +194,18 @@ contains
 !
       if (engine%plot_density) then
 !
-         call engine%do_visualization(wf)
+!        Transform the density to AO basis and plot
+!
+         visualizer = visualization(wf%system, wf%n_ao)
+!
+         call visualizer%initialize(wf%system)
+         call mem%alloc(c_D_ct, wf%n_ao, wf%n_ao)
+!
+         call wf%add_t1_terms_and_transform(wf%density, c_D_ct)
+         call visualizer%plot_density(wf%system, c_D_ct, 'cc_gs_density')
+!
+         call mem%dealloc(c_D_ct, wf%n_ao, wf%n_ao)
+         call visualizer%cleanup()
 !
       endif
 !
@@ -201,13 +225,17 @@ contains
 !
       class(mean_value_engine) :: engine
 !
-      engine%name_ = 'Zeroth order coupled cluster properties engine'
+      engine%name_ = 'Mean value coupled cluster engine'
 !
-      engine%tag   = 'zeroth order properties'
+      engine%tag   = 'mean value'
 !
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
+!
+      call engine%tasks%add(label='cholesky', &
+                            description='Cholesky decomposition of the electron &
+                                         &repulsion integrals')
 !
       call engine%tasks%add(label='mo preparations',                             &
                             description='Preparation of MO basis and integrals')
@@ -225,8 +253,7 @@ contains
                             description='Calculation of ground state properties')
 !
       if (engine%plot_density) &
-      call engine%tasks%add(label='plotting',                                 &
-                            description='Plot density')
+         call engine%tasks%add(label='plotting', description='Plot ground state density')
 !
       engine%description  = 'Calculates the time-independent expectation value of&
                             & one-electron operators A, < A > = < Λ | A | CC >.'

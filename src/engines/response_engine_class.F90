@@ -66,10 +66,10 @@ module response_engine_class
                                                          ! in compute_polarizability
 !
 !     etaX_mu = < HF | e-T X eT | mu >
-!     csiX_mu = < mu | e-T X eT | HF >
+!     xiX_mu = < mu | e-T X eT | HF >
 !
       real(dp), dimension(:,:), allocatable :: etaX ! columns correspond to components of X
-      real(dp), dimension(:,:), allocatable :: csiX ! columns correspond to components of X
+      real(dp), dimension(:,:), allocatable :: xiX  ! columns correspond to components of X
 !
 !     File arrays to store vectors needed for linear response 
 !
@@ -80,12 +80,18 @@ module response_engine_class
 !
       logical :: dipole_length
 !
+!     Plotting
+!
+      logical :: plot_tdm
+      integer :: n_states_to_plot
+      integer, dimension(:), allocatable :: states_to_plot
+!
    contains
 !
       procedure :: run                              => run_response_engine
 !
       procedure :: read_settings                    => read_settings_response_engine
-      procedure :: read_response_settings                => read_response_settings_response_engine
+      procedure :: read_response_settings           => read_response_settings_response_engine
 !
       procedure, nopass :: get_thresholds           => get_thresholds_response_engine
 !
@@ -96,7 +102,7 @@ module response_engine_class
       procedure :: do_eom_transition_moments        => do_eom_transition_moments_response_engine
       procedure :: do_lr_transition_moments         => do_lr_transition_moments_response_engine
 !
-      procedure :: construct_etaX_and_csiX          => construct_etaX_and_csiX_response_engine
+      procedure :: construct_etaX_and_xiX           => construct_etaX_and_xiX_response_engine
       procedure :: determine_M_vectors              => determine_M_vectors_response_engine
       procedure :: determine_amplitude_response     => determine_amplitude_response_response_engine 
       procedure :: calculate_polarizabilities       => calculate_polarizabilities_response_engine
@@ -133,9 +139,10 @@ contains
       if (wf%name_ .eq. 'ccsd(t)' .or. &
           wf%name_ .eq. 'mp2' .or.     &
           wf%name_ .eq. 'mlcc2' .or.   &
+          wf%name_ .eq. 'mlccsd' .or.   &
           wf%name_ .eq. 'low memory cc2') then
 !
-         call output%error_msg("First order properties not implemented for (a0)", &
+         call output%error_msg("Response properties not implemented for (a0)", &
                                chars=[wf%name_])
 !
       end if
@@ -146,7 +153,8 @@ contains
          engine%multipliers_algorithm = 'diis'
          engine%es_algorithm          = 'diis'
 !
-      else if (wf%name_ .eq. 'cc2' .or. &
+      else if (wf%name_ .eq. 'ccs' .or. &
+               wf%name_ .eq. 'cc2' .or. &
                wf%name_ .eq. 'mlcc2') then
 !
          engine%multipliers_algorithm = 'diis'
@@ -167,20 +175,18 @@ contains
       engine%compute_polarizability = .false.
       engine%compute_t_response     = .false.
 !
-      engine%gs_restart            = .false.
-      engine%multipliers_restart   = .false.
-      engine%es_restart            = .false.
-      engine%es_restart_left       = .false.
-      engine%es_restart_right      = .false.
+      engine%gs_restart             = .false.
+      engine%multipliers_restart    = .false.
+      engine%es_restart             = .false.
+      engine%es_restart_left        = .false.
+      engine%es_restart_right       = .false.
 !
-      engine%dipole_length         = .false.
+      engine%dipole_length          = .false.
+!
+      engine%plot_density           = .false.
+      engine%plot_tdm               = .false.
 !
       call engine%read_settings()
-!
-!
-      engine%restart =  engine%gs_restart .or. &
-                        engine%multipliers_restart .or. &
-                        engine%es_restart
 !
       call engine%set_printables()
 !
@@ -212,11 +218,13 @@ contains
 !
       end if
 !
+      call engine%tasks%print_('cholesky')
+!
+      call engine%do_cholesky(wf)
+!
       call engine%tasks%print_('mo preparations')
 !
       call wf%mo_preparations()
-!
-      call engine%restart_handling(wf)
 !
 !     Ground state solution
 !
@@ -226,16 +234,16 @@ contains
 !
       call engine%do_multipliers(wf)
 !
-!     Construct etaX and csiX if they are going to be needed 
+!     Construct etaX and xiX if they are going to be needed 
 !
       if (engine%polarizabilities .or. &
             (engine%lr .and. engine%transition_moments)) then 
 !
-         call mem%alloc(engine%csiX, wf%n_es_amplitudes, 3)
+         call mem%alloc(engine%xiX, wf%n_es_amplitudes, 3)
          call mem%alloc(engine%etaX, wf%n_es_amplitudes, 3)
 !
-         call engine%construct_etaX_and_csiX(wf) ! etaX_mu = < Lambda | [X-bar, τ_mu] | HF >
-                                                 ! csiX_mu = < mu | X-bar | HF >         
+         call engine%construct_etaX_and_xiX(wf) ! etaX_mu = < Lambda | [X-bar, τ_mu] | HF >
+                                                ! xiX_mu = < mu | X-bar | HF >         
 !
       endif 
 !
@@ -256,7 +264,7 @@ contains
 !
          call engine%do_excited_state(wf,                                                       &
                                       transformation='left',                                    &
-                                      restart=(engine%es_restart .or. engine%es_restart_left))
+                                      restart = .true.)
 !
 !        Biorthornormalize and look for duplicate states 
 !
@@ -293,11 +301,11 @@ contains
 !
       endif 
 !
-!     Deallocate csi and eta if they were constructed
+!     Deallocate xi and eta if they were constructed
       if (engine%polarizabilities .or. &
             (engine%lr .and. engine%transition_moments)) then 
 !
-         call mem%dealloc(engine%csiX, wf%n_es_amplitudes, 3)
+         call mem%dealloc(engine%xiX, wf%n_es_amplitudes, 3)
          call mem%dealloc(engine%etaX, wf%n_es_amplitudes, 3)
 !
       endif 
@@ -309,15 +317,15 @@ contains
    end subroutine run_response_engine
 !
 !
-   subroutine construct_etaX_and_csiX_response_engine(engine, wf)
+   subroutine construct_etaX_and_xiX_response_engine(engine, wf)
 !!
-!!    Construct etaX and csiX 
+!!    Construct etaX and xiX 
 !!    Written by Eirik F. Kjønstad, Nov 2019
 !!
 !!    Allocates and constructs the vectors
 !!
 !!       etaX_mu = < Lambda | [X-bar, τ_mu] | HF > (+ EOM correction)
-!!       csiX_mu = < mu | X-bar | HF >,
+!!       xiX_mu = < mu | X-bar | HF >,
 !!
 !!    where
 !!
@@ -341,11 +349,11 @@ contains
       call wf%construct_mu(X)
 !
 !     Construct the right-hand-side vector for operator X,
-!     i.e. csiX_mu = < mu | X-bar | HF >.
+!     i.e. xiX_mu = < mu | X-bar | HF >.
 !
       do k = 1, 3
 !
-         call wf%construct_csiX(X(:,:,k), engine%csiX(:,k))
+         call wf%construct_xiX(X(:,:,k), engine%xiX(:,k))
 !
       enddo 
 !
@@ -356,7 +364,7 @@ contains
 !
          if (engine%eom) then 
 !
-            call wf%construct_eom_etaX(X(:,:,k), engine%csiX(:,k), engine%etaX(:,k))
+            call wf%construct_eom_etaX(X(:,:,k), engine%xiX(:,k), engine%etaX(:,k))
 !
          else ! LR  
 !
@@ -368,7 +376,7 @@ contains
 !
       call mem%dealloc(X, wf%n_mo, wf%n_mo, 3)
 !
-   end subroutine construct_etaX_and_csiX_response_engine
+   end subroutine construct_etaX_and_xiX_response_engine
 !
 !
    subroutine calculate_polarizabilities_response_engine(engine, wf)
@@ -390,7 +398,7 @@ contains
 !!    vectors (t^X, t^Y)  needed for the polarizability components 
 !!    have been converged. These are solutions to the equations 
 !!
-!!       (A - omega_k I) t^X(omega_k) = -csi^X
+!!       (A - omega_k I) t^X(omega_k) = -xi^X
 !!
 !!    Currently, X and Y are components of the dipole operator. 
 !!
@@ -543,7 +551,7 @@ contains
 !!
 !!    These responses are solutions of the equations 
 !!
-!!       (A - omega_k I) t^X(omega_k) = -csi^X
+!!       (A - omega_k I) t^X(omega_k) = -xi^X
 !!
 !!    The amplitude response t^X(+- omega_k) are stored to file. In particular, 
 !!    these are stored in a sequential file array: 
@@ -605,7 +613,7 @@ contains
          if (.not. engine%compute_t_response(k)) cycle ! skip; kth component not needed
                                                        ! for requested polarizability calculations! 
 !
-         call copy_and_scale(-one, engine%csiX(:,k), rhs, wf%n_es_amplitudes)
+         call copy_and_scale(-one, engine%xiX(:,k), rhs, wf%n_es_amplitudes)
 !
          do sign = 1, 2
 !
@@ -680,9 +688,12 @@ contains
 !
       call mem%alloc(minus_FR, wf%n_es_amplitudes, wf%n_singlet_states)
 !
-      do k = 1, wf%n_singlet_states
+      call wf%read_excited_state(minus_FR,            &
+                                 1,                   &
+                                 wf%n_singlet_states, &
+                                 'right')
 !
-         call wf%read_excited_state(minus_FR(:,k), k, 'right')
+      do k = 1, wf%n_singlet_states
 !
          call wf%F_transformation(minus_FR(:,k))
 !
@@ -906,6 +917,48 @@ contains
 !
       endif
 !
+!     Plotting of transition densities
+!     plot_density   - logical to enable plotting of the gs density
+!     plot_tdm       - logical to enable plotting of tranistion densities
+!     states_to_plot - list of integers containing states of which 
+!                      the transition densities shall be plotted (default all states)
+!
+      engine%plot_density = &
+               input%requested_keyword_in_section('plot cc density', 'visualization')
+!
+      engine%plot_tdm = &
+               input%requested_keyword_in_section('plot transition densities', 'visualization')
+!
+      if (engine%plot_tdm) then
+!
+         if (input%requested_keyword_in_section('states to plot', 'visualization')) then
+!
+            engine%n_states_to_plot = input%get_n_elements_for_keyword_in_section(&
+                                      'states to plot', 'visualization')
+!
+            call mem%alloc(engine%states_to_plot, engine%n_states_to_plot)
+!
+            call input%get_array_for_keyword_in_section('states to plot',         &
+                                                        'visualization',          &
+                                                         engine%n_states_to_plot, &
+                                                         engine%states_to_plot)
+!
+         else
+!
+            call input%get_required_keyword_in_section('singlet states',   &
+                                                       'solver cc es',     &
+                                                        engine%n_states_to_plot)
+!
+            call mem%alloc(engine%states_to_plot, engine%n_states_to_plot)
+!
+            do k = 1, engine%n_states_to_plot
+               engine%states_to_plot(k) = k
+            end do
+!
+         end if
+!
+      end if
+!
    end subroutine read_response_settings_response_engine
 !
 !
@@ -922,7 +975,7 @@ contains
 !!         transition moments in response theory
 !!
 !!       - Calls wavefunction routine that computes the moments and strengths from 
-!!         the etaX, csiX and M vectors. 
+!!         the etaX, xiX and M vectors. 
 !!
 !!       - Calls routine to print the transition moments / strengths to output
 !!
@@ -975,7 +1028,7 @@ contains
 !
             call wf%calculate_lr_transition_strength(transition_strength(component),      &
                                                      engine%etaX(:,component),            &
-                                                     engine%csiX(:,component),            &
+                                                     engine%xiX(:,component),            &
                                                      state,                               &
                                                      transition_moment_left(component),   &
                                                      transition_moment_right(component),  &
@@ -1006,14 +1059,17 @@ contains
 !!    Computes the EOM dipole transition moments using transition densities 
 !!    and dipole moment integrals. 
 !!
+      use visualization_class, only: visualization
+!
       implicit none
 !
       class(response_engine) :: engine
-      class(ccs)        :: wf
+      class(ccs)             :: wf
 !
       logical, dimension(wf%n_singlet_states), intent(in) :: skip_states
 !
       real(dp), dimension(:,:,:), allocatable :: operator
+      real(dp), dimension(:,:),   allocatable :: c_D_ct
 !
       real(dp), dimension(3) :: transition_strength, transition_moment_left, transition_moment_right
 !
@@ -1022,10 +1078,12 @@ contains
       real(dp) :: trace_r_tdm, trace_l_tdm
       integer :: p
 !
-      type(sequential_file) :: left_file, right_file
-      character(len=15)     :: name_left, name_right
+      type(sequential_file) :: density_file
+      character(len=15)     :: file_name
 !
       type(timings) :: EOM_timer
+!
+      type(visualization), allocatable :: visualizer
 !
       call engine%tasks%print_('transition moments')
 !
@@ -1036,6 +1094,7 @@ contains
       call wf%prepare_for_density()
       call wf%initialize_gs_density()
       call wf%construct_gs_density()
+!
       call wf%initialize_transition_densities()
 !
       call output%printf('m', ':: EOM properties calculation', fs='(/t3,a)')
@@ -1064,26 +1123,25 @@ contains
 !
             end if
 !
+!           Construct right tdm and write to file
+!
             call wf%construct_right_transition_density(state)
+!
+            write(file_name, '(a, i3.3)') 'right_tdm_', state
+            density_file = sequential_file(trim(file_name))
+            call density_file%open_('write')
+            call density_file%write_(wf%right_transition_density, wf%n_mo**2)
+            call density_file%close_()
+!
+!           Construct left tdm and write to file
 !
             call wf%construct_left_transition_density(state)
 !
-!           Initialize and write the files to store the transition densities
-!
-            write(name_left, '(a, i3.3)') 'left_tdm_', state
-            write(name_right, '(a, i3.3)') 'right_tdm_', state
-!
-            left_file  = sequential_file(trim(name_left))
-            right_file = sequential_file(trim(name_right))
-!
-            call left_file%open_('write')
-            call right_file%open_('write')
-!
-            call left_file%write_(wf%left_transition_density, wf%n_mo**2)
-            call right_file%write_(wf%right_transition_density, wf%n_mo**2)
-!
-            call left_file%close_()
-            call right_file%close_()
+            write(file_name, '(a, i3.3)') 'left_tdm_', state
+            density_file  = sequential_file(trim(file_name))
+            call density_file%open_('write')
+            call density_file%write_(wf%left_transition_density, wf%n_mo**2)
+            call density_file%close_()
 !
             do component = 1, 3
 !
@@ -1127,10 +1185,63 @@ contains
 !
       endif
 !
+      if (engine%plot_density .or. engine%plot_tdm) then
+!
+         call engine%tasks%print_('plotting')
+!
+         visualizer = visualization(wf%system, wf%n_ao)
+!
+         call visualizer%initialize(wf%system)
+         call mem%alloc(c_D_ct, wf%n_ao, wf%n_ao)
+!
+         if (engine%plot_density) then
+!
+            call wf%add_t1_terms_and_transform(wf%density, c_D_ct)
+            call visualizer%plot_density(wf%system, c_D_ct, 'cc_gs_density')
+!
+         end if
+!
+         if (engine%plot_tdm) then
+!
+            do p = 1, engine%n_states_to_plot
+!
+               state = engine%states_to_plot(p)
+!
+               write(file_name, '(a, i3.3)') 'right_tdm_', state
+               density_file  = sequential_file(trim(file_name))
+               call density_file%open_('read')
+               call density_file%read_(wf%right_transition_density, wf%n_mo**2)
+!
+               call wf%add_t1_terms_and_transform(wf%right_transition_density, c_D_ct)
+               call visualizer%plot_density(wf%system, c_D_ct, file_name)
+!
+               call density_file%close_()
+!
+               write(file_name, '(a, i3.3)') 'left_tdm_', state
+               density_file  = sequential_file(trim(file_name))
+               call density_file%open_('read')
+               call density_file%read_(wf%left_transition_density, wf%n_mo**2)
+!
+               call wf%add_t1_terms_and_transform(wf%left_transition_density, c_D_ct)
+               call visualizer%plot_density(wf%system, c_D_ct, file_name)
+!
+               call density_file%close_
+!            
+            end do
+!
+         end if
+!         
+         call mem%dealloc(c_D_ct, wf%n_ao, wf%n_ao)
+         call visualizer%cleanup()
+!
+      end if
+!
       call wf%destruct_transition_densities()
       call wf%destruct_gs_density()
 !
       call EOM_timer%turn_off()
+!
+      if (engine%plot_tdm) call mem%dealloc(engine%states_to_plot, engine%n_states_to_plot)
 !
    end subroutine do_eom_transition_moments_response_engine
 !
@@ -1239,7 +1350,7 @@ contains
 !
       call output%print_separator('m', 74, '-', fs='(t6,a)')
 !
-      call output%printf('m', 'Oscillator strength [a.u.]: (f19.12)', &
+      call output%printf('m', 'Oscillator strength: (f19.12)', &
                          reals=[(two/three)*excitation_energy*sum_strength], fs='(t6,a)')
 !
    end subroutine print_transition_moment_summary_response_engine
@@ -1259,7 +1370,7 @@ contains
 !
       character(len=5) :: response_type
 !
-      engine%name_       = 'Coupled cluster response engine'
+      engine%name_ = 'Coupled cluster response engine'
 !
       engine%tag = 'response'
 !
@@ -1276,6 +1387,10 @@ contains
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
+!
+      call engine%tasks%add(label='cholesky', &
+                            description='Cholesky decomposition of the electron &
+                                         &repulsion integrals')
 !
       call engine%tasks%add(label='mo preparations',                             &
                             description='Preparation of MO basis and integrals')
@@ -1303,10 +1418,17 @@ contains
 !
       if (engine%polarizabilities) then
 !
-         call engine%tasks%add(label='polarizabilities',                         &
-                           description='Calculation of the '//trim(response_type)//' polarizabilities')
+         call engine%tasks%add(label='polarizabilities',          &
+                               description='Calculation of the '  &
+                               //trim(response_type)// ' polarizabilities')
 !
       endif
+!
+      if (engine%plot_density .or. engine%plot_tdm) then
+!
+         call engine%tasks%add(label='plotting', description='Visualization of CC densities')
+!
+      end if
 !
       engine%description = 'Calculates dipole transition moments and oscillator strengths between &
                            &the ground state and the excited states.'

@@ -357,13 +357,20 @@ contains
    end subroutine pop_back_array_list
 !
 !
-   subroutine get_array_array_list(list, array_pointer, n)
+   subroutine get_array_array_list(list, array_pointer, n, first, last, n_columns)
 !!
 !!    Get array
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jul 2018
 !!
-!!    Set a pointer to the n'th array in the list
+!!    Set array_pointer to the nth array in the list
 !!
+!!    first: optional integer specifying the first column to point to (default: 1) 
+!!    last:  optional integer specifying the last column to point to  (default: n_columns)
+!!
+!!    n_columns: returns the number of columns in the nth array. Optional.
+!!
+      use interval_class, only: interval
+!
       implicit none
 !
       class(array_list), intent(inout) :: list
@@ -375,11 +382,21 @@ contains
       integer :: element
       type(array_node), pointer :: node_pointer
 !
+      integer, intent(in), optional :: first, last 
+!
+      integer, intent(out), optional :: n_columns 
+!
+      integer :: first_local, last_local
+!
+!     Is n in the list? 
+!
       if (n .gt. list%n_nodes .or. n .lt. 1) then
 !
          call output%error_msg('Attempted to get an element not in the list.')
 !
       endif
+!
+!     Get pointer to the nth node 
 !
       node_pointer => list%head
 !
@@ -389,7 +406,25 @@ contains
 !
       enddo
 !
-      array_pointer => node_pointer%array
+!     Set pointer to (sub)-array at the nth node
+!
+      first_local = 1
+      last_local  = node_pointer%n_columns
+!
+      if (present(n_columns)) n_columns = node_pointer%n_columns
+!
+      if (present(first)) first_local = first 
+      if (present(last))  last_local = last
+!
+      if (first_local .lt. 1 .or. last_local .gt. node_pointer%n_columns) then 
+!
+         call output%error_msg('Tried to point to column range [(i0),(i0)] of &
+                               &array node with (i0) number of columns.', &
+                               ints=[first_local, last_local, node_pointer%n_columns])
+!
+      endif 
+!
+      array_pointer => node_pointer%array(:, first_local : last_local)
 !
    end subroutine get_array_array_list
 !

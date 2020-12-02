@@ -39,6 +39,8 @@ module atomic_class
 !
       character(len=100) :: basis ! name of basis set
 !
+      logical :: cartesian !Is the basis set cartesian
+!
       integer :: n_ao ! Number of aos sentered on this atom
 !
       integer :: n_shells

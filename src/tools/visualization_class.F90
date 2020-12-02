@@ -87,7 +87,8 @@ module visualization_class
       procedure, private :: evaluate_density_on_grid     => evaluate_density_on_grid_visualization
       procedure, private :: place_grid_in_memory         => place_grid_in_memory_visualization
 !
-      final :: destructor_visualization
+      procedure :: initialize                            => initialize_visualization
+      procedure :: cleanup                               => cleanup_visualization
 !
    end type visualization
 !
@@ -133,18 +134,32 @@ contains
 !
       call system%set_basis_info()
 !
-!     Evaluate aos on grid if we can keep it in memory
-!
-     if (plotter%n_ao*plotter%n_grid_points*dp .lt. mem%get_available()/2) then
-!
-        plotter%grid_in_memory = .true.
-        call mem%alloc(plotter%aos_on_grid, plotter%n_ao, plotter%n_grid_points)
-!
-        call plotter%place_grid_in_memory(system)
-!
-     endif
-!
    end function new_visualization
+!
+!
+   subroutine initialize_visualization(plotter, system)
+!!
+!!    Initialize
+!!    Written by Andreas S. Skeidsvoll, Sep 2020
+!!
+!!    Allocates and fills an array with the AOs evaluated on the grid, if the
+!!    array can be held in memory.
+!!
+      implicit none 
+!
+      class(visualization), intent(inout) :: plotter
+      type(molecular_system), intent(inout) :: system
+!
+      if (plotter%n_ao*plotter%n_grid_points*dp .lt. mem%get_available()/2) then
+!
+         plotter%grid_in_memory = .true.
+         call mem%alloc(plotter%aos_on_grid, plotter%n_ao, plotter%n_grid_points)
+!
+         call plotter%place_grid_in_memory(system)
+!
+      endif
+!
+   end subroutine initialize_visualization
 !
 !
   subroutine set_up_grid_visualization(plotter, system)
@@ -226,24 +241,24 @@ contains
       class(visualization), intent(in) :: plotter
 !
       call output%printf('n', 'Grid information              x             y    &
-                         &         z       ', fs='(/t3, a)')
+                         &         z       ', fs='(/t6, a)')
 !
-      call output%print_separator(pl='normal', fs='(t3, a)', n=66, symbol='-')
+      call output%print_separator(pl='normal', fs='(t6, a)', n=66, symbol='-')
 !
       call output%printf('n', 'First (A):                (f8.2)      (f8.2)     &
                          & (f8.2)', reals=[plotter%x_min, plotter%y_min, &
-                         plotter%z_min], fs='(t3, a)')
+                         plotter%z_min], fs='(t6, a)')
 !
       call output%printf('n', 'Last (A):                 (f8.2)      (f8.2)     &
                          & (f8.2)', &
                          reals=[plotter%x_min + (plotter%n_x-1)*plotter%dx, &
                          plotter%y_min + (plotter%n_y-1)*plotter%dx, &
-                         plotter%z_min + (plotter%n_z-1)*plotter%dx], fs='(t3, a)')
+                         plotter%z_min + (plotter%n_z-1)*plotter%dx], fs='(t6, a)')
 !
       call output%printf('n', 'Number of grid points:  (i8)      (i8)       (i8)', &
-                         ints=[plotter%n_x, plotter%n_y, plotter%n_z], fs='(t3, a)')
+                         ints=[plotter%n_x, plotter%n_y, plotter%n_z], fs='(t6, a)')
 !
-      call output%print_separator(pl='normal', fs='(t3, a)', n=66, symbol='-')
+      call output%print_separator(pl='normal', fs='(t6, a)', n=66, symbol='-')
 !
    end subroutine print_grid_info_visualization
 !  
@@ -253,27 +268,53 @@ contains
 !!    Write vector to plt file
 !!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Aug 2019
 !!
+!!    Modified by Alexander C. Paul, May 2020
+!!    Handles the chimera format and writes to file
+!!
 !
-      use direct_file_class, only: direct_file
+      use stream_file_class, only: stream_file
 !
       implicit none
 !
       class(visualization), intent(in) :: plotter
 !
-      real(kind=4), dimension(plotter%n_grid_points), intent(in) :: vector
+      real(sp), dimension(plotter%n_grid_points), intent(in) :: vector
 !
       character(len=*), intent(in) :: file_name
 !
-      type(direct_file) :: plt_file
+!     Single precision
+      integer(i32), dimension(2) :: chimera_ints
+      integer(i32), dimension(3) :: n_zyx_sp
+      real(sp), dimension(6)     :: zyx_min_max_sp
 !
-      plt_file = direct_file(trim(file_name), (plotter%n_grid_points + 11), w_size=4)
+      type(stream_file) :: plt_file
 !
-      call plt_file%open_('write')
+      chimera_ints(1) = 3   ! Required integer that must always be 3
+      chimera_ints(2) = 200 ! Required integer that can be anything
 !
-      call plt_file%write_chimera(plotter%n_z, plotter%n_y, plotter%n_x,   &
-                                       plotter%z_min, plotter%z_max, plotter%y_min,    &
-                                       plotter%y_max, plotter%x_min, plotter%x_max,    &
-                                       vector)
+!     Type conversion to single precision for the Grid dimensions and points
+!
+      n_zyx_sp(1) = int(plotter%n_z,i32)
+      n_zyx_sp(2) = int(plotter%n_y,i32)
+      n_zyx_sp(3) = int(plotter%n_x,i32)
+!
+      zyx_min_max_sp(1) = real(plotter%z_min,4)
+      zyx_min_max_sp(2) = real(plotter%z_max,4)
+      zyx_min_max_sp(3) = real(plotter%y_min,4)
+      zyx_min_max_sp(4) = real(plotter%y_max,4)
+      zyx_min_max_sp(5) = real(plotter%x_min,4)
+      zyx_min_max_sp(6) = real(plotter%x_max,4)
+!
+      plt_file = stream_file(trim(file_name))
+!
+      call plt_file%open_('write', 'rewind')
+!
+!     Write in the chimera format
+!
+      call plt_file%write_(chimera_ints, 2)
+      call plt_file%write_(n_zyx_sp, 3)
+      call plt_file%write_(zyx_min_max_sp, 6)
+      call plt_file%write_(vector, size(vector))
 !
       call plt_file%close_('keep')
 !
@@ -318,7 +359,7 @@ contains
 !
       integer, intent(in) :: n_mo
 !
-      real(kind=4), dimension(plotter%n_x, plotter%n_y, &
+      real(sp), dimension(plotter%n_x, plotter%n_y, &
                               plotter%n_z, n_mo), intent(out) :: mos_on_grid
 !
       type(molecular_system), intent(in) :: system
@@ -357,7 +398,7 @@ contains
                do j = 1, plotter%n_y
                   do i = 1, plotter%n_x
 !
-                     mos_on_grid(i, j, k, mo) = real(mos_on_grid_dp(i, j, k, mo), kind=4)
+                     mos_on_grid(i, j, k, mo) = real(mos_on_grid_dp(i, j, k, mo), kind=sp)
 !
                   enddo
                enddo
@@ -365,7 +406,7 @@ contains
          enddo
 !$omp end parallel do
 !
-      call mem%dealloc(mos_on_grid_dp, plotter%n_x, plotter%n_y, plotter%n_z, n_mo)
+         call mem%dealloc(mos_on_grid_dp, plotter%n_x, plotter%n_y, plotter%n_z, n_mo)
 !
       else
 !
@@ -394,7 +435,7 @@ contains
                   do mo = 1, n_mo
 !
                      mos_on_grid(i, j, k, mo) = real(ddot(plotter%n_ao, aos_at_point(:,thread), &
-                         1, orbital_coefficients(1,mo), 1), kind=4)
+                         1, orbital_coefficients(1,mo), 1), kind=sp)
 !
                   enddo
 !
@@ -437,7 +478,7 @@ contains
 !
       character(len=200), dimension(n_mo), intent(in) :: file_tags
 !
-      real(kind=4), dimension(:,:,:,:), allocatable :: mos_on_grid
+      real(sp), dimension(:,:,:,:), allocatable :: mos_on_grid
 !
       character(len=200) :: file_name
 !
@@ -497,7 +538,7 @@ contains
 !
       real(dp), dimension(plotter%n_ao, plotter%n_ao), intent(in) :: density
 !
-      real(kind=4), dimension(:), allocatable :: density_on_grid_vec
+      real(sp), dimension(:), allocatable :: density_on_grid_vec
 !
       character(len=200) :: file_name
 
@@ -555,8 +596,8 @@ contains
 !
       class(visualization), intent(in)  :: plotter
 !
-      real(dp), dimension(plotter%n_ao, plotter%n_ao), intent(in)  :: density
-      real(kind=4), dimension(plotter%n_grid_points), intent(out)  :: density_on_grid_vec
+      real(dp), dimension(plotter%n_ao, plotter%n_ao), intent(in) :: density
+      real(sp), dimension(plotter%n_grid_points), intent(out)     :: density_on_grid_vec
 !
       type(molecular_system), intent(in) :: system
 !
@@ -588,7 +629,7 @@ contains
 !
             density_on_grid_vec(gp) = &
                      real(ddot(plotter%n_ao, plotter%aos_on_grid(1,gp), 1, I1(1,gp), 1), &
-                          kind=4)
+                          kind=sp)
 !
          enddo
 !
@@ -633,7 +674,7 @@ contains
 !
                   vector_index = (k-1)*plotter%n_y*plotter%n_x + (j-1)*plotter%n_x + i
                   density_on_grid_vec(vector_index) = real(ddot(plotter%n_ao, &
-                                                    aos_at_point(1,thread), 1, I2, 1), kind=4)
+                                                    aos_at_point(1,thread), 1, I2, 1), kind=sp)
 !
                enddo
             enddo
@@ -706,20 +747,23 @@ contains
    end subroutine place_grid_in_memory_visualization
 !
 !
-   subroutine destructor_visualization(plotter)
+   subroutine cleanup_visualization(plotter)
 !!
-!!    Destructor  
-!!    Written by Sarai D. Folkestad, Nov 2019 
+!!    Cleanup  
+!!    Written by Sarai D. Folkestad, Nov 2019
+!!
+!!    Modified by Andreas S. Skeidsvoll, Sep 2020
+!!    Changed from destructor to cleanup routine, in order to comply with
+!!    Fortran standards.
 !!
       implicit none 
 !
-      type(visualization) :: plotter
+      class(visualization), intent(inout) :: plotter
 !
       if (plotter%grid_in_memory) call mem%dealloc(plotter%aos_on_grid, &
                                        plotter%n_ao, plotter%n_grid_points)
 !
-   end subroutine destructor_visualization
+   end subroutine cleanup_visualization
 !
 !
-
 end module visualization_class

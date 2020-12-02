@@ -29,30 +29,6 @@
    end subroutine initialize_ao_density_hf
 !
 !
-   module subroutine initialize_ao_fock_hf(wf)
-!!
-!!    Initialize AO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_ao_fock_hf
-!
-!
-   module subroutine initialize_mo_fock_hf(wf)
-!!
-!!    Initialize MO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_mo_fock_hf
-!
-!
    module subroutine initialize_ao_overlap_hf(wf)
 !!
 !!    Initialize AO overlap
@@ -89,7 +65,7 @@
    end subroutine initialize_cholesky_ao_overlap_hf
 !
 !
-   module subroutine initialize_sp_eri_schwarz_hf(wf)
+   module subroutine initialize_shp_eri_schwarz_hf(wf)
 !!
 !!    Initialize shell pair eri schwarz
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -98,10 +74,10 @@
 !
       class(hf) :: wf
 !
-   end subroutine initialize_sp_eri_schwarz_hf
+   end subroutine initialize_shp_eri_schwarz_hf
 !
 !
-   module subroutine destruct_sp_eri_schwarz_hf(wf)
+   module subroutine destruct_shp_eri_schwarz_hf(wf)
 !!
 !!    Destruct shell pair eri schwarz
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -110,10 +86,10 @@
 !
       class(hf) :: wf
 !
-   end subroutine destruct_sp_eri_schwarz_hf
+   end subroutine destruct_shp_eri_schwarz_hf
 !
 !
-   module subroutine initialize_sp_eri_schwarz_list_hf(wf)
+   module subroutine initialize_shp_eri_schwarz_list_hf(wf)
 !!
 !!    Initialize shell pair eri schwarz list
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -122,10 +98,10 @@
 !
       class(hf) :: wf
 !
-   end subroutine initialize_sp_eri_schwarz_list_hf
+   end subroutine initialize_shp_eri_schwarz_list_hf
 !
 !
-   module subroutine destruct_sp_eri_schwarz_list_hf(wf)
+   module subroutine destruct_shp_eri_schwarz_list_hf(wf)
 !!
 !!    Destruct shell pair eri schwarz list
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -134,7 +110,7 @@
 !
       class(hf) :: wf
 !
-   end subroutine destruct_sp_eri_schwarz_list_hf
+   end subroutine destruct_shp_eri_schwarz_list_hf
 !
 !
    module subroutine destruct_ao_overlap_hf(wf)
@@ -159,30 +135,6 @@
       class(hf) :: wf
 !
    end subroutine destruct_ao_density_hf
-!
-!
-   module subroutine destruct_ao_fock_hf(wf)
-!!
-!!    Destruct AO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_ao_fock_hf
-!
-!
-   module subroutine destruct_mo_fock_hf(wf)
-!!
-!!    Destruct MO Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_mo_fock_hf
 !
 !
    module subroutine destruct_pivot_matrix_ao_overlap_hf(wf)

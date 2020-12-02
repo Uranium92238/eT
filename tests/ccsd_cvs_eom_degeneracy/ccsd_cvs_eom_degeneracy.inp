@@ -44,7 +44,7 @@ end solver cc multipliers
 
 solver cc es
    core excitation:    {1,2}
-   algorithm:          diis
+   algorithm:          davidson
    singlet states:     4
    residual threshold: 1.0d-11
    energy threshold:   1.0d-11

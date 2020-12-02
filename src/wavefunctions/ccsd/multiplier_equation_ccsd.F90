@@ -63,7 +63,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(ccsd), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: eta
 !
@@ -89,7 +89,7 @@ contains
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%get_ovov(g_iajb)
+      call wf%eri%get_eri_t1('ovov', g_iajb)
 !
       call mem%alloc(eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(eta_aibj, (wf%n_o*wf%n_v)**2)

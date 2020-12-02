@@ -180,14 +180,6 @@ contains
 !
       solver%vector_length = 2*wf%n_gs_amplitudes
 !
-!     Initial state t1 and t1 transformed g_pqrs
-!
-      call mem%alloc(solver%t1_complex_ti, wf%n_v, wf%n_o)
-      call mem%alloc(solver%g_pqrs_complex_ti, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call zcopy(wf%n_t1, wf%t1_complex, 1, solver%t1_complex_ti, 1)
-      call zcopy(wf%n_mo**4, wf%integrals%g_pqrs_complex, 1, solver%g_pqrs_complex_ti, 1)
-!
 !     Complex density matrix used to calculate properties
 !
       if (solver%energy_output             &
@@ -366,11 +358,6 @@ contains
 !
       call solver%print_summary(wf, field)
 !
-!     Initial state t1 and t1 transformed g_pqrs
-!
-      call mem%dealloc(solver%t1_complex_ti, wf%n_v, wf%n_o)
-      call mem%dealloc(solver%g_pqrs_complex_ti, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
 !     Complex density matrix used to calculate properties
 !
       if (solver%energy_output             &
@@ -423,11 +410,11 @@ contains
       complex(dp), dimension(solver%vector_length), intent(in) :: amplitudes_multipliers
 !
       call wf%set_amplitudes_complex(amplitudes_multipliers(1:wf%n_gs_amplitudes))
+!
       call wf%set_multipliers_complex( &
          amplitudes_multipliers(wf%n_gs_amplitudes+1:solver%vector_length))
 !
-      call wf%t1_transform_4_complex(solver%g_pqrs_complex_ti, wf%integrals%g_pqrs_complex, &
-                                     wf%t1_complex - solver%t1_complex_ti)
+      call wf%eri_complex%update_t1_integrals(wf%t1_complex)
 !
       call wf%construct_fock_complex()
 !
@@ -652,7 +639,7 @@ contains
 !
       call zcopy(wf%n_mo**2, wf%density_complex, 1, mo_density_complex, 1)
 !
-      call wf%t1_transpose_transform_complex(mo_density_complex)
+      call wf%add_t1_terms_complex(mo_density_complex)
 !
 !     Write real part of density matrix to file
 !

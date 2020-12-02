@@ -73,7 +73,7 @@ contains
 !!
 !!    Calculates the A1 term,
 !!
-!!       A1: sum_ckd u_bj_ci * g_abjc,
+!!       A1: sum_cjb u_bj_ci * g_abjc,
 !!
 !!    with 
 !!       
@@ -87,7 +87,7 @@ contains
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
@@ -114,8 +114,8 @@ contains
 !
       req0 = 0
 !
-      req1_b = (wf%integrals%n_J)*(wf%n_v)
-      req1_c = (wf%integrals%n_J)*(wf%n_o)
+      req1_b = (wf%eri%n_J)*(wf%n_v)
+      req1_c = (wf%eri%n_J)*(wf%n_o)
 !
       req2 =  2*(wf%n_o**2) + (wf%n_o)*(wf%n_v)
 !
@@ -137,11 +137,8 @@ contains
             call mem%alloc(g_bicj, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
             call mem%alloc(u_bjci, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
 !
-            call wf%get_vovo(g_bicj,                        &
-                              batch_b%first, batch_b%last,  &
-                              1, wf%n_o,                    &
-                              batch_c%first, batch_c%last,  &
-                              1, wf%n_o)
+            call wf%eri%get_eri_t1('vovo', g_bicj, batch_b%first, batch_b%last, 1, wf%n_o, &
+                                                   batch_c%first, batch_c%last, 1, wf%n_o)
 !
 !$omp parallel do schedule(static) private(i, j, c, b, eps_ci) collapse(2)
             do i = 1, wf%n_o
@@ -168,11 +165,8 @@ contains
 !
             call mem%alloc(g_abjc, batch_b%length,wf%n_v, batch_c%length,wf%n_o)
 !
-            call wf%get_vvov(g_abjc,                        &
-                              1, wf%n_v,                    &
-                              batch_b%first, batch_b%last,  &
-                              1, wf%n_o,                    &
-                              batch_c%first, batch_c%last)
+            call wf%eri%get_eri_t1('vvov', g_abjc, 1, wf%n_v, batch_b%first, batch_b%last, &
+                                                   1, wf%n_o, batch_c%first, batch_c%last)
 !
             call dgemm('N','N',                                   &
                         wf%n_v,                                   &
@@ -217,7 +211,7 @@ contains
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
@@ -242,12 +236,12 @@ contains
 !
       req0 = 0
 !
-      req1_b = wf%integrals%n_J
-      req1_j = wf%integrals%n_J*(wf%n_v)
-      req1_k = wf%integrals%n_J*(wf%n_o)
+      req1_b = wf%eri%n_J
+      req1_j = wf%eri%n_J*(wf%n_v)
+      req1_k = wf%eri%n_J*(wf%n_o)
 !
-      req2_bj = wf%integrals%n_J
-      req2_bk = wf%integrals%n_J
+      req2_bj = wf%eri%n_J
+      req2_bk = wf%eri%n_J
       req2_jk = 0
 !
       req3 = (wf%n_v) + 2*(wf%n_o) 
@@ -277,11 +271,10 @@ contains
                call mem%alloc(g_ajbk, wf%n_v, batch_j%length,&
                               batch_b%length, batch_k%length)
 !
-               call wf%get_vovo(g_ajbk,                    &
-                               1, wf%n_v,                   &
-                               batch_j%first, batch_j%last, &
-                               batch_b%first, batch_b%last, &
-                               batch_k%first, batch_k%last)
+               call wf%eri%get_eri_t1('vovo', g_ajbk, 1, wf%n_v, &
+                                                      batch_j%first, batch_j%last, &
+                                                      batch_b%first, batch_b%last, &
+                                                      batch_k%first, batch_k%last)
 !
 !$omp parallel do schedule(static) private(k, j, a, b)
                do a = 1, wf%n_v
@@ -303,11 +296,11 @@ contains
                call mem%alloc(g_jbki, batch_j%length, batch_b%length, &
                               batch_k%length, wf%n_o)
 !
-               call wf%get_ovoo(g_jbki,                       &
-                                 batch_j%first, batch_j%last, &
-                                 batch_b%first, batch_b%last, &
-                                 batch_k%first, batch_k%last, & 
-                                 1, wf%n_o)
+               call wf%eri%get_eri_t1('ovoo', g_jbki,              &
+                                      batch_j%first, batch_j%last, &
+                                      batch_b%first, batch_b%last, &
+                                      batch_k%first, batch_k%last, & 
+                                      1, wf%n_o)
 !
 !              Omega_ai += sum_jbk t_ajbk g_jbki       
 !
@@ -332,11 +325,11 @@ contains
                call mem%alloc(g_kbji, batch_k%length, batch_b%length, &
                                       batch_j%length, wf%n_o)
 !
-               call wf%get_ovoo(g_kbji,                     &
-                                batch_k%first, batch_k%last, &
-                                batch_b%first, batch_b%last, &
-                                batch_j%first, batch_j%last, & 
-                                1, wf%n_o)
+               call wf%eri%get_eri_t1('ovoo', g_kbji,              &
+                                      batch_k%first, batch_k%last, &
+                                      batch_b%first, batch_b%last, &
+                                      batch_j%first, batch_j%last, & 
+                                      1, wf%n_o)
 !
                call mem%alloc(g_jbki, batch_j%length, batch_b%length, &
                               batch_k%length, wf%n_o)
@@ -399,7 +392,7 @@ contains
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
@@ -424,8 +417,8 @@ contains
 !
       req0 = 0
 !
-      req1_j = (wf%n_v)*(wf%integrals%n_J)
-      req1_i = (wf%n_v)*(wf%integrals%n_J)
+      req1_j = (wf%n_v)*(wf%eri%n_J)
+      req1_i = (wf%n_v)*(wf%eri%n_J)
 !
       req2 =  2*(wf%n_v)**2
 !
@@ -446,11 +439,8 @@ contains
 !
             call mem%alloc(g_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
 !
-            call wf%get_vovo(g_aibj,                        &
-                              1, wf%n_v,                    &
-                              batch_i%first, batch_i%last,  &
-                              1, wf%n_v,                    &
-                              batch_j%first, batch_j%last)
+            call wf%eri%get_eri_t1('vovo', g_aibj, 1, wf%n_v, batch_i%first, batch_i%last,  &
+                                                   1, wf%n_v, batch_j%first, batch_j%last)
 !
             call mem%alloc(u_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
 !

@@ -134,7 +134,7 @@
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_bj
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
@@ -161,7 +161,7 @@
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
       real(dp), intent(in) :: omega
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
@@ -190,7 +190,7 @@
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
       real(dp), intent(in) :: omega
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
@@ -221,7 +221,7 @@
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
       real(dp), intent(in) :: omega
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_cj
@@ -248,7 +248,7 @@
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
       real(dp), intent(in) :: omega
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_bl
@@ -274,7 +274,7 @@
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
       real(dp), intent(in) :: omega
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_dk
@@ -303,7 +303,7 @@
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
       real(dp), intent(in) :: omega
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai

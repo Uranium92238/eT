@@ -37,6 +37,10 @@
         gradient threshold: 1.0d-10
      end solver scf
 
+     solver cholesky
+        threshold: 1.0d-11
+     end solver cholesky
+
      molecular mechanics
         forcefield: fq
      end molecular mechanics
@@ -107,60 +111,6 @@
       H       1    -0.419020  -1.818953   0.760190   0.499339   0.824306
       H       1    -0.419020  -1.818953  -0.760190   0.499339   0.824306
     ====================================================================
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
-
-  Performs a Cholesky decomposition of the two-electron electronic repulsion 
-  integrals in the atomic orbital basis,
-
-  (ab|cd) = sum_J L_ab^J L_cd^J.
-
-  Once the Cholesky basis has been determined, the vectors L^J are constructed 
-  and stored to disk. These may either be used directly, or be transformed 
-  to the MO basis for use in post-HF calculations. For more information, 
-  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
-
-  - Cholesky decomposition settings:
-
-     Target threshold is:   0.10E-07
-     Span factor:           0.10E-01
-     Max qual:                  1000
-
-  - Cholesky decomposition system details:
-
-     Total number of AOs:                    24
-     Total number of shell pairs:            78
-     Total number of AO pairs:              300
-
-     Significant shell pairs:                78
-     Significant AO pairs:                  300
-
-     Construct shell pairs:                  78
-     Construct AO pairs:                    300
-
-  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
-  -------------------------------------------------------------------------------------------------------
-     1               285 /      71       0.47383E+01         150             29              8265
-     2               220 /      60       0.46828E-01         242             99             21780
-     3               141 /      47       0.46528E-03         158            157             22137
-     4                87 /      21       0.45055E-05         122            226             19662
-     5                 0 /       0       0.45032E-07          29            246                 0
-  -------------------------------------------------------------------------------------------------------
-
-  - Summary of Cholesky decomposition of electronic repulsion integrals:
-
-     Final number of Cholesky vectors: 246
-
- - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
-
-     Maximal difference between approximate and actual diagonal:              0.9126E-08
-     Minimal element of difference between approximate and actual diagonal:  -0.8882E-15
-
-  - Finished decomposing the ERIs.
-
-     Total wall time (sec):              0.07700
-     Total cpu time (sec):               0.11228
 
 
   :: RHF wavefunction
@@ -251,19 +201,19 @@
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1           -76.167279756518     0.8765E-01     0.7617E+02
-     2           -76.197738767139     0.5225E-01     0.3046E-01
-     3           -76.206846897170     0.5938E-02     0.9108E-02
+     2           -76.197738767140     0.5225E-01     0.3046E-01
+     3           -76.206846897171     0.5938E-02     0.9108E-02
      4           -76.207017689704     0.1052E-02     0.1708E-03
      5           -76.207030611240     0.1541E-03     0.1292E-04
      6           -76.207030952283     0.3075E-04     0.3410E-06
      7           -76.207030963599     0.2102E-05     0.1132E-07
-     8           -76.207030963669     0.6179E-06     0.7017E-10
+     8           -76.207030963669     0.6179E-06     0.7013E-10
      9           -76.207030963674     0.1630E-06     0.4789E-11
-    10           -76.207030963674     0.3461E-07     0.2984E-12
-    11           -76.207030963674     0.4998E-08     0.8527E-13
-    12           -76.207030963674     0.1125E-08     0.0000E+00
-    13           -76.207030963674     0.2482E-09     0.7105E-13
-    14           -76.207030963674     0.8065E-10     0.7105E-13
+    10           -76.207030963674     0.3461E-07     0.4263E-12
+    11           -76.207030963674     0.4998E-08     0.4263E-13
+    12           -76.207030963674     0.1125E-08     0.7105E-13
+    13           -76.207030963674     0.2481E-09     0.9948E-13
+    14           -76.207030963674     0.8065E-10     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -282,18 +232,18 @@
   - Molecular orbital energies
 
   -----------------------------------------------------------------------------------
-   1 -20.467446747437   7   0.408029032492  13   1.545907756442  19   2.647770951987
+   1 -20.467446747437   7   0.408029032492  13   1.545907756442  19   2.647770951988
    2  -1.263412577108   8   0.885760158996  14   1.558611930852  20   3.358494521730
    3  -0.630396552895   9   0.963764657476  15   1.780478947573  21   3.437577336196
-   4  -0.491021893205  10   1.231125361121  16   1.947044486630  22   3.590447188220
+   4  -0.491021893205  10   1.231125361121  16   1.947044486631  22   3.590447188220
    5  -0.420458911599  11   1.267871248677  17   2.028727537771  23   3.984049679300
    6   0.258135217813  12   1.327920236221  18   2.574580643208  24   4.227444004111
   -----------------------------------------------------------------------------------
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.33700
-     Total cpu time (sec):               0.56012
+     Total wall time (sec):              0.36372
+     Total cpu time (sec):               0.72277
 
 
   :: MP2 wavefunction
@@ -322,29 +272,91 @@
   This is a MP2 ground state calculation.
   The following tasks will be performed:
 
-     1) Preparation of MO basis and integrals
-     2) Calculation of the ground state (diis algorithm)
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
 
 
-  1) Preparation of MO basis and integrals
+  1) Cholesky decomposition of the electron repulsion integrals
+
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-10
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition system details:
+
+     Total number of AOs:                    24
+     Total number of shell pairs:            78
+     Total number of AO pairs:              300
+
+     Significant shell pairs:                78
+     Significant AO pairs:                  300
+
+     Construct shell pairs:                  78
+     Construct AO pairs:                    300
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               285 /      71       0.47383E+01         150             29              8265
+     2               220 /      60       0.46828E-01         242             99             21780
+     3               141 /      47       0.46528E-03         158            157             22137
+     4               105 /      33       0.45055E-05         122            226             23730
+     5                12 /       8       0.45032E-07          55            271              3252
+     6                 0 /       0       0.23634E-09           9            279                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 279
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.1995E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
+     T1 ERI matrix in memory:    False
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.12682
+     Total cpu time (sec):               0.25482
 
 
-  2) Calculation of the ground state (diis algorithm)
+  2) Preparation of MO basis and integrals
+
+
+  3) Calculation of the ground state (diis algorithm)
 
   :: Summary of MP2 wavefunction energetics (a.u.)
 
      HF energy:                   -76.207030963674
-     MP2 correction:               -0.201403214011
-     MP2 energy:                  -76.408434177685
+     MP2 correction:               -0.201403215155
+     MP2 energy:                  -76.408434178830
 
   - Timings for the MP2 ground state calculation
 
-     Total wall time (sec):              0.00800
-     Total cpu time (sec):               0.01309
+     Total wall time (sec):              0.12718
+     Total cpu time (sec):               0.25518
+
+     Peak memory usage during the execution of eT: 5.864544 MB
 
   eT terminated successfully!

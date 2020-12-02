@@ -42,7 +42,6 @@ contains
 !!
       class(ccs) :: wf 
 !
-      call wf%initialize_cc_files()
       call wf%initialize_ground_state_files()
 !
    end subroutine initialize_files_ccs
@@ -55,109 +54,109 @@ contains
 !!
       class(ccs) :: wf 
 !
-      wf%t_file = sequential_file('t')
-      wf%tbar_file = sequential_file('tbar')
+      wf%t_file = stream_file('t')
+      wf%tbar_file = stream_file('tbar')
 !
    end subroutine initialize_ground_state_files_ccs
 !
 !
-   module subroutine initialize_cc_files_ccs(wf)
-!!
-!!    Initialize singles files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
-!!
-      class(ccs) :: wf 
-!
-      wf%restart_file = sequential_file('cc_restart_file')
-!
-      wf%excitation_energies_file = sequential_file('excitation_energies')
-!
-   end subroutine initialize_cc_files_ccs
-!
-!
-   module subroutine initialize_excited_state_files_ccs(wf, transformation)
+   module subroutine initialize_excited_state_files_ccs(wf)
 !!
 !!    Initialize files for excited state vectors and energies
-!!    Written by Alexander C. Paul, Oct 2019 
+!!    Written by Alexander C. Paul, Oct 2019
+!!
+!!    Modified by Alexander C. Paul, May 2020: array of stream files
 !!
       class(ccs), intent(inout) :: wf
 !
-      character(len=*), intent(in) :: transformation
+      character(len=5) :: file_name
+      integer :: state
 !
-      if(trim(transformation) .eq. 'right') then
+      if(.not. allocated(wf%r_files)) then
 !
-         wf%r_files = file_storer('r_', wf%n_es_amplitudes,       &
-                                         wf%n_singlet_states,     &
-                                         delete=.false.,          &
-                                         direct_=.false.)
+         allocate(wf%r_files(wf%n_singlet_states))
 !
-         wf%excitation_energies_file = sequential_file('excitation_energies')
+         do state = 1, wf%n_singlet_states
 !
-         call wf%r_files%initialize_storer()
+            write(file_name,'(a,i3.3)') 'r_', state
+            wf%r_files(state) = stream_file(trim(file_name))
 !
-      else if(trim(transformation) .eq. 'left') then
+         end do
 !
-         wf%l_files = file_storer('l_', wf%n_es_amplitudes,       &
-                                         wf%n_singlet_states,     &
-                                         delete=.false.,          &
-                                         direct_=.false.)
+      end if
 !
-         wf%excitation_energies_file = sequential_file('excitation_energies')
+      if(.not. allocated(wf%l_files)) then
 !
-         call wf%l_files%initialize_storer()
+         allocate(wf%l_files(wf%n_singlet_states))
 !
-      else if(trim(transformation) .eq. 'both') then 
+         do state = 1, wf%n_singlet_states
 !
-         wf%r_files = file_storer('r_', wf%n_es_amplitudes,       &
-                                         wf%n_singlet_states,     &
-                                         delete=.false.,          &
-                                         direct_=.false.)
+            write(file_name,'(a,i3.3)') 'l_', state
+            wf%l_files(state) = stream_file(trim(file_name))
 !
-         wf%l_files = file_storer('l_', wf%n_es_amplitudes,       &
-                                         wf%n_singlet_states,     &
-                                         delete=.false.,          &
-                                         direct_=.false.)
-!
-         wf%excitation_energies_file = sequential_file('excitation_energies')
-!
-         call wf%l_files%initialize_storer()
-         call wf%r_files%initialize_storer()
-!
-      else
-!
-         call output%error_msg('Tried to initialize files for excited states &
-                              & but argument ' // trim(transformation) //    &
-                              ' not recognized')
+         end do
 !
       end if
 !
    end subroutine initialize_excited_state_files_ccs
 !
 !
-   module subroutine read_singles_vector_ccs(wf, X, file_)
+   module subroutine read_singles_vector_ccs(wf, file_, vector, read_n)
 !!
-!!    Read singles vector X from a file
+!!    Read singles vector
 !!    Written by Alexander C. Paul, Oct 2019 
 !!
-!!    Files are written with the singles part in the first record
-!!    and the doubles part in the second. 
-!!    Thus, read wf%n_o*wf%n_v elements.
+!!    read_n: optionally adds the number of amplitudes read to read_n
 !!
       implicit none 
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_t1), intent(out) :: X 
+      type(stream_file), intent(inout) :: file_
 !
-      type(sequential_file), intent(inout) :: file_
+      real(dp), dimension(wf%n_t1), intent(out) :: vector
 !
-      call file_%open_('read', 'rewind')
+      integer, intent(inout) :: read_n
 !
-      call file_%read_(X, wf%n_t1)
+      integer(i64) :: n
+      integer      :: n_t1
 !
-      call file_%close_()
+      call file_%read_(n, dp+1)
+      n_t1 = int(n)
+!
+      if (n_t1 .ne. wf%n_t1 .and. n_t1 .ne. 0) then
+         call output%error_msg('Wrong number of singles amplitudes in (a0): (i0)', &
+                                chars=[file_%get_name()], ints=[n_t1])
+      end if
+!
+      call file_%read_(vector, wf%n_t1)
+!
+      read_n = read_n + n_t1
 !
    end subroutine read_singles_vector_ccs
+!
+!
+   module subroutine save_singles_vector_ccs(wf, file_, vector)
+!!
+!!    Save singles vector
+!!    Written by Alexander C. Paul, Oct 2019 
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf
+!
+      type(stream_file), intent(inout) :: file_
+!
+      real(dp), dimension(wf%n_t1), intent(in) :: vector 
+!
+      integer(i64) :: n
+!
+      n = int(wf%n_t1, i64)
+!
+      call file_%write_(n, dp+1)
+      call file_%write_(vector, wf%n_t1)
+!
+   end subroutine save_singles_vector_ccs
 !
 !
    module subroutine save_amplitudes_ccs(wf)
@@ -165,33 +164,46 @@ contains
 !!    Save amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
+!!    File format: energy n_t1, t1
+!!
       implicit none
 !
       class(ccs), intent(inout) :: wf 
 !
-      call wf%t_file%open_('write', 'rewind')
-!
-      call wf%t_file%write_(wf%t1, wf%n_t1)
-!
-      call wf%t_file%close_()
+      call wf%t_file%open_('write','rewind')
+      call wf%t_file%write_(wf%energy)
+      call wf%save_singles_vector(wf%t_file, wf%t1)
+      call wf%t_file%close_
 !
    end subroutine save_amplitudes_ccs
 !
 !
-   module subroutine read_amplitudes_ccs(wf)
+   module subroutine read_amplitudes_ccs(wf, read_n)
 !!
 !!    Read amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Adapted to return the number of read amplitdues if requested 
+!!    by Alexander C. Paul, Oct 2020
+!!
+!!    read_n: optionally returns the number of amplitudes read. 
+!!            This is especially useful e.g. in CCSD to provide a start guess 
+!!            for the doubles if only singles were found on file.
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
+      integer, intent(out), optional :: read_n
+!
+      integer :: n
+!
+      n = 0
+!
       call wf%t_file%open_('read', 'rewind')
+      call wf%read_singles_vector(wf%t_file, wf%t1, n)
+      call wf%t_file%close_
 !
-      call wf%t_file%read_(wf%t1, wf%n_t1)
-!
-      call wf%t_file%close_()
+      if (present(read_n)) read_n = n
 !
    end subroutine read_amplitudes_ccs
 !
@@ -201,265 +213,361 @@ contains
 !!    Save multipliers 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
+!!    File format: energy n_t1, t1bar
+!!
       implicit none
 !
       class(ccs), intent(inout) :: wf 
 !
-      call wf%tbar_file%open_('write', 'rewind')
-!
-      call wf%tbar_file%write_(wf%t1bar, wf%n_t1)
-!
-      call wf%tbar_file%close_()
+      call wf%tbar_file%open_('write','rewind')
+      call wf%tbar_file%write_(wf%energy)
+      call wf%save_singles_vector(wf%tbar_file, wf%t1bar)
+      call wf%tbar_file%close_
 !
    end subroutine save_multipliers_ccs
 !
 !
-   module subroutine read_multipliers_ccs(wf)
+   module subroutine read_multipliers_ccs(wf, read_n)
 !!
 !!    Read multipliers 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Adapted to return the number of read multipliers if requested 
+!!    by Alexander C. Paul, Oct 2020
+!!
+!!    read_n: optionally returns the number of multipliers read. 
+!!            This is especially useful e.g. in CCSD to provide a start guess 
+!!            for the doubles if only singles were found on file.
 !!
       implicit none 
 !
       class(ccs), intent(inout) :: wf 
 !
+      integer, intent(out), optional :: read_n
+!
+      integer :: n
+!
+      n = 0
+!
       call wf%tbar_file%open_('read', 'rewind')
+      call wf%read_singles_vector(wf%tbar_file, wf%t1bar, n)
+      call wf%tbar_file%close_
 !
-      call wf%tbar_file%read_(wf%t1bar, wf%n_t1)
-!
-      call wf%tbar_file%close_()
+      if (present(read_n)) read_n = n
 !
    end subroutine read_multipliers_ccs
 !
 !
-   module subroutine save_excited_state_ccs(wf, X, n, side)
+   module subroutine save_excited_state_ccs(wf, X, first, last, side, energies)
 !!
 !!    Save excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019
-!!    modified by Alexander C. Paul, Oct 2019
+!!    Modified by Alexander C. Paul, Oct 2019
+!!    Modified by Eirik F. Kjønstad, Mar 2020
 !!
-!!    Saves an excited state to disk. 
-!!    Since the solvers  keep these vectors in full length, 
-!!    we save the vector in full length (n_es_amplitudes), 
+!!    Writes excited states in the columns of X to disk.
 !!
-!!    Uses file_storer to distinguish different states
+!!    first: first state to write
+!!    last:  last state to write
+!!    side:  'right' or 'left' depending on right or left excited states 
 !!
+!!    Modified by Eirik F. Kjønstad, Mar 2020: made changes for direct stream,
+!!                                             and added [first, last] range 
+!!    Modified by Alexander C. Paul, May 2020: introduced array of stream files
+!!    for the excited states
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X 
+      integer, intent(in) :: first, last ! first, last state number 
 !
-      integer, intent(in) :: n ! state number 
+      real(dp), dimension(wf%n_es_amplitudes, first:last), intent(in) :: X 
 !
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
+      character(len=*), intent(in) :: side ! 'left' or 'right'
+!
+      real(dp), dimension(first:last), optional, intent(in) :: energies
+!
+      integer :: state
 !
       if (trim(side) .eq. 'right') then 
 !
-         call wf%r_files%set(x, n)
+         do state = first, last
 !
-      elseif (trim(side) .eq. 'left') then 
+            call wf%save_excitation_vector_on_file(wf%r_files(state), X(:,state), &
+                                                   energies(state))
 !
-         call wf%l_files%set(x, n)
+         end do
 !
-      else
+      else if (trim(side) .eq. 'left') then 
 !
-         call output%error_msg('Tried to save an excited state, &
-                              & but argument side not recognized: ' // side)
+         do state = first, last
+!
+            call wf%save_excitation_vector_on_file(wf%l_files(state), X(:,state), &
+                                                   energies(state))
+!
+         end do
 !
       endif
 !
    end subroutine save_excited_state_ccs
 !
 !
-   module subroutine read_excited_state_ccs(wf, X, n, side)
+   module subroutine save_excitation_vector_on_file_ccs(wf, file_, vector, energy)
+!!
+!!    Save excitation vector on file 
+!!    Written by Alexander C. Paul, Sep 2020
+!!
+!!    Writes excitation vector o file structured as follows:
+!!    excitation_energy, n_t1, X1
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf 
+!
+      type(stream_file), intent(inout) :: file_
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: vector
+!
+      real(dp), intent(in) :: energy
+!
+      call file_%open_('write', 'rewind')
+!
+      call file_%write_(energy)
+      call wf%save_singles_vector(file_, vector)
+!
+      call file_%close_
+!
+   end subroutine save_excitation_vector_on_file_ccs
+!
+!
+   module subroutine read_excited_state_ccs(wf, X, first, last, side, energies)
 !!
 !!    Read excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019
 !!    modified by Alexander C. Paul, Oct 2019
+!!    modified by Eirik F. Kjønstad, Mar 2020
 !!
-!!    Reads an excited state from disk. Since this routine is used by 
-!!    solvers, it returns the vector in the full space.
+!!    Reads excited states from disk into the columns of X.
 !!
-!!    Uses file_storer to distinguish different states
+!!    first: first state to read
+!!    last:  last state to read
+!!    side:  'right' or 'left' depending on right or left excited states 
+!!
+!!    Modified by Eirik F. Kjønstad, Mar 2020: made changes for direct stream,
+!!                                             and added [first, last] range 
+!!    Modified by Alexander C. Paul, May 2020: introduced array of stream files
+!!    for the excited states.
+!!    Modified by Alexander C. Paul, Sep 2020: Files now contain energy and n_es
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
+      integer, intent(in) :: first, last ! first, last state number 
 !
-      integer, intent(in) :: n ! state number 
+      real(dp), dimension(wf%n_es_amplitudes, first:last), intent(out) :: X
+      real(dp), dimension(first:last), optional,           intent(out) :: energies
 !
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
+      character(len=*), intent(in) :: side ! 'left' or 'right'
+!
+      real(dp), dimension(first:last) :: temp_energies
+!
+      integer :: state
 !
       if (trim(side) .eq. 'right') then 
 !
-         call wf%r_files%get(x, n)
+         do state = first, last
+!
+            call wf%read_excitation_vector_file(wf%r_files(state), X(:,state), &
+                                                temp_energies(state))
+!
+         end do
 !
       elseif (trim(side) .eq. 'left') then 
 !
-         call wf%l_files%get(x, n)
+         do state = first, last
+!
+            call wf%read_excitation_vector_file(wf%l_files(state), X(:,state), &
+                                                temp_energies(state))
+!
+         end do
 !
       else
 !
-         call output%error_msg('Tried to read an excited state, but argument side not recognized: ' // side)
+         call output%error_msg('Tried to read an excited state, &
+                               &but argument side not recognized: ' // side)
 !
       endif
+!
+      if (present(energies)) then
+         energies = temp_energies
+      end if
 !
    end subroutine read_excited_state_ccs
 !
 !
-   module subroutine save_excitation_energies_ccs(wf, n_states, energies, r_or_l)
+   module subroutine read_excitation_vector_file_ccs(wf, file_, vector, energy, read_n)
 !!
-!!    Save excitation energies 
-!!    Written by Sarai D. Folkestad, Mar 2019 
+!!    Read excitation vector file 
+!!    Written by Alexander C. Paul, Sep 2020
 !!
-!!    Saves 'n_states' excitation energies to disk & in memory. 
+!!    Reads excitation vector from file structured as follows:
+!!    excitation_energy, n_t1, X1
+!!
+!!    read_n: optionally returns the number of amplitudes read
 !!
       implicit none
-!
-      class(ccs), intent(inout) :: wf
-!
-      integer, intent(in) :: n_states ! number of states
-!
-      real(dp), dimension(n_states), intent(in) :: energies
-!
-      character(len=*), intent(in) :: r_or_l 
-!
-      if (trim(r_or_l) .eq. 'right') then 
-!
-         call wf%initialize_right_excitation_energies()
-         wf%right_excitation_energies = energies 
-!
-      elseif (trim(r_or_l) .eq. 'left') then 
-!
-         call wf%initialize_left_excitation_energies()
-         wf%left_excitation_energies = energies 
-!
-      else
-!
-         call output%error_msg('Could not recognize transformation in save_excitation_energies_ccs')
-!
-      endif 
-!
-      call wf%excitation_energies_file%open_('write', 'rewind')
-!
-      call wf%excitation_energies_file%write_(n_states)
-      call wf%excitation_energies_file%write_(energies, n_states)
-!
-      call wf%excitation_energies_file%close_()
-!     
-   end subroutine save_excitation_energies_ccs
-!
-!
-   module subroutine read_excitation_energies_ccs(wf, n_states, energies)
-!!
-!!    Read excitation energies 
-!!    Written by Sarai D. Folkestad, Mar 2019 
-!!
-!!    Reads excitation energies from file
-!!
-!!    Note: "n_states" gives the dimension of the array "energies".
-!!          It should match the actual number of states on file,
-!!          given by the first record, "n_states" before the routine is called
-!!          by either reading the restart file or by calling the function 
-!!          read_n_excitation_energies
-!!
-!!    n_states: number of states found on file
-!!              Obtained by the number of existing records in the file storer
-!!
-      implicit none 
-!
-      class(ccs), intent(inout) :: wf
-!
-      integer, intent(in) :: n_states
-!
-      real(dp), dimension(:), intent(out) :: energies
-!
-      integer :: dim_
-!
-      dim_ = size(energies)
-!
-      call wf%excitation_energies_file%open_('read', 'rewind')
-!
-!     First line of excitation_energies_file contains n_states
-!
-      call wf%excitation_energies_file%skip(1)
-!
-      if (dim_ .gt. n_states) then
-!
-         call wf%excitation_energies_file%read_(energies(1:n_states), n_states)
-         call wf%excitation_energies_file%close_()
-!
-      else if (dim_ .le. n_states) then
-!
-         call wf%excitation_energies_file%read_(energies, dim_)
-         call wf%excitation_energies_file%close_()
-!
-      endif
-!     
-   end subroutine read_excitation_energies_ccs
-!
-!
-   integer module function get_n_excitation_energies_on_file_ccs(wf)
-!!
-!!    Read n excitation energies 
-!!    Written by Sarai D. Folkestad, Mar 2019 
-!!
-!!    Reads and returns the number of excitation energies on file
-!!
-      implicit none 
 !
       class(ccs), intent(inout) :: wf 
 !
-      call wf%excitation_energies_file%open_('read', 'rewind')
+      type(stream_file), intent(inout) :: file_
 !
-      call wf%excitation_energies_file%read_(get_n_excitation_energies_on_file_ccs)
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
 !
-      call wf%excitation_energies_file%close_()
-!     
-   end function get_n_excitation_energies_on_file_ccs
+      real(dp), intent(out) :: energy
+!
+      integer, intent(inout), optional :: read_n
+      integer :: n
+!
+      n = 0
+!
+      call file_%open_('read', 'rewind')
+!
+      call file_%read_(energy)
+      call wf%read_singles_vector(file_, vector, n)
+!
+      call file_%close_
+!
+      if (present(read_n)) read_n = n
+!
+   end subroutine read_excitation_vector_file_ccs
 !
 !
-   module function get_n_excited_states_on_file_ccs(wf, side) result(n_states)
+   module subroutine check_and_get_restart_vector_ccs(wf, vector, energy, n, side, found)
 !!
-!!    Get number of excited states on file 
-!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!    Check and get restart vector
+!!    Written by Alexander C. Paul, Sep 2020
 !!
-!!    Figures out the number of excited states on file, 
-!!    using the r1 and l1 files. This should be sufficient for 
-!!    all coupled cluster models (i.e., it is most likely  
-!!    unneccessary to overwrite this routine in descendants)
+!!    Inquires if the nth file of "side" exists and
+!!    returns the corresponding vector if the file exists.
+!!    Otherwise checks the "other side" and tries to read it.
 !!
-      implicit none
+      implicit none 
 !
-      class(ccs) :: wf 
+      class(ccs), intent(inout) :: wf
 !
-      character(len=*), intent(in) :: side 
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
+      real(dp), intent(out) :: energy
+      logical,  intent(out) :: found
 !
-      integer :: n_states
+      integer,          intent(in)  :: n
+      character(len=*), intent(in)  :: side
+      character(len=:), allocatable :: file_name
 !
-      n_states = 0
+      found = .false.
 !
-      if (trim(side) .eq. 'right') then
+!     File_name cannot be uninitialized
+      file_name = wf%r_files(n)%get_name()
 !
-         n_states = wf%r_files%get_n_existing_records()
+      if (trim(side) == 'right') then
 !
-      else if (trim(side) .eq. 'left') then
+         if (wf%r_files(n)%exists()) then
 !
-         n_states = wf%l_files%get_n_existing_records()
+            call wf%get_restart_vector(wf%r_files(n), vector, energy, 'right', 'right')
+            found = .true.
 !
-      else 
+         else
+!           
+            if (wf%l_files(n)%exists()) then
 !
-         call output%error_msg('Tried to compute number of excited states. &
-                              & Unrecognized _side_: ' // side)
+               call wf%get_restart_vector(wf%l_files(n), vector, energy, &
+                                          'left', 'right')
+               file_name = wf%l_files(n)%get_name()
+               found = .true.
+!
+            end if
+!
+         end if
+!
+      else if (trim(side) == 'left') then
+!
+         if (wf%l_files(n)%exists()) then
+!
+            call wf%get_restart_vector(wf%l_files(n), vector, energy, 'left', 'left')
+            file_name = wf%l_files(n)%get_name()
+            found = .true.
+!
+         else
+!
+            if (wf%r_files(n)%exists()) then
+!
+               call wf%get_restart_vector(wf%r_files(n), vector, energy, 'right', 'left')
+               found = .true.
+!
+            end if
+!
+         end if      
+!
+      else
+!
+         call output%error_msg('Trying to restart an excited state, but &
+                               &argument side not recognized: ' // trim(side))
 !
       end if
 !
-   end function get_n_excited_states_on_file_ccs
-
+      if (found) then
+!
+         call output%printf('n', 'Restarting '// trim(side) //' vector (i0) from file (a0).', &
+                           ints=[n], chars=[trim(file_name)], fs='(t6,a)')
+!
+      end if
+!
+   end subroutine check_and_get_restart_vector_ccs
+!
+!
+   module subroutine get_restart_vector_ccs(wf, file_, vector, energy, restart_from, restart_to)
+!!
+!!    Get restart vector
+!!    Written by Alexander C. Paul, Sep 2020
+!!
+!!    Gets start vector and energy from file and
+!!    handles the basis transformations according to:
+!!
+!!    restart from "right" to "left"
+!!    L^a_i = 2R^a_i
+!!
+!!    restart from "left" to "right"
+!!    R^a_i = 1/2 L^a_i
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf 
+!
+      type(stream_file), intent(inout) :: file_
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
+!
+      real(dp), intent(out) :: energy
+!
+      character(len=*), intent(in) :: restart_from, restart_to
+!
+      if (restart_to == restart_from) then
+!
+         call wf%read_excitation_vector_file(file_, vector, energy)
+!
+      else if (restart_from == 'left' .and. restart_to == 'right') then
+!
+         call wf%read_excitation_vector_file(file_, vector, energy)
+         call dscal(wf%n_es_amplitudes, two, vector, 1)
+!
+      else if (restart_from == 'right' .and. restart_to == 'left') then
+!
+         call wf%read_excitation_vector_file(file_, vector, energy)
+         call dscal(wf%n_es_amplitudes, half, vector, 1)
+!
+      end if
+!
+   end subroutine get_restart_vector_ccs
 !
 !
    module subroutine save_tbar_intermediates_ccs(wf)
@@ -467,13 +575,14 @@ contains
 !!    Save tbar intermediates multiplier equation
 !!    Written by Alexander C. Paul, Aug 2019
 !!
+      use warning_suppressor
+!
       implicit none
 !
       class(ccs) :: wf
 !
-!     For now, do nothing.
-!
-      call output%printf('v', 'No intermediates to save in (a0)', chars=[trim(wf%name_)])
+!     Suppress unused variable compiler warning for wf
+      call do_nothing(wf) 
 !
    end subroutine save_tbar_intermediates_ccs
 !

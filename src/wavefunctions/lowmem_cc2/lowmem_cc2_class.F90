@@ -75,6 +75,10 @@ module lowmem_cc2_class
       procedure :: effective_jacobian_transpose_cc2_e1   => effective_jacobian_transpose_cc2_e1_lowmem_cc2
       procedure :: effective_jacobian_transpose_cc2_f1   => effective_jacobian_transpose_cc2_f1_lowmem_cc2
 !
+!     Initialize wavefunction
+!
+      procedure :: initialize => initialize_lowmem_cc2
+!
    end type lowmem_cc2
 !
 !
@@ -88,32 +92,23 @@ module lowmem_cc2_class
    end interface
 !
 !
-   interface lowmem_cc2
-!
-      procedure :: new_lowmem_cc2
-!
-   end interface lowmem_cc2
-!
-!
 contains
 !
 !
-   function new_lowmem_cc2(system, template_wf) result(wf)
+   subroutine initialize_lowmem_cc2(wf, template_wf)
 !!
-!!    New lowmem CC2
+!!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      type(lowmem_cc2) :: wf
-!
-      class(molecular_system), target, intent(in) :: system 
+      class(lowmem_cc2), intent(inout) :: wf
 !
       class(wavefunction), intent(in) :: template_wf
 !
       wf%name_ = 'low memory cc2'
 !
-      call wf%general_cc_preparations(system)
+      call wf%general_cc_preparations()
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
@@ -126,7 +121,7 @@ contains
 !
       call wf%print_amplitude_info()
 !
-   end function new_lowmem_cc2
+   end subroutine initialize_lowmem_cc2
 !
 !
    subroutine construct_Jacobian_transform_lowmem_cc2(wf, r_or_l, X, w)
@@ -153,7 +148,7 @@ contains
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
 !
       character(len=*), intent(in) :: r_or_l
 !

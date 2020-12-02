@@ -78,7 +78,7 @@ contains
 !     Both intermediates need g_ovov and u_bjck -> u_cjbk
 !
       call mem%alloc(g_ovov, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%get_ovov_complex(g_ovov)
+      call wf%eri_complex%get_eri_t1('ovov', g_ovov)
 !
       call mem%alloc(u_cjbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call sort_1234_to_3214(u_bjck, u_cjbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -215,7 +215,7 @@ contains
 !
       call mem%alloc(g_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call mem%alloc(L_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%get_ovov_complex(g_iakc)
+      call wf%eri_complex%get_eri_t1('ovov', g_iakc)
 !
       call copy_and_scale_complex(two_complex, g_iakc, L_iakc, wf%n_t1**2)
       call add_1432_to_1234(-one_complex, g_iakc, L_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -341,8 +341,8 @@ contains
 !
 !     :: Term 1: sigma_ai =+ sum_bjc c_bjci g_bjca = sum_bjc (g_bjca)^T c_bjci
 !
-      req0 = (wf%n_v)*(wf%n_o)*(wf%integrals%n_J)
-      req1 = max((wf%n_v)*(wf%integrals%n_J) + (wf%n_o)*(wf%n_v)**2, 2*(wf%n_o)*(wf%n_v)**2)
+      req0 = (wf%n_v)*(wf%n_o)*(wf%eri_complex%n_J)
+      req1 = max((wf%n_v)*(wf%eri_complex%n_J) + (wf%n_o)*(wf%n_v)**2, 2*(wf%n_o)*(wf%n_v)**2)
 !
       batch_a = batching_index(wf%n_v)
 !
@@ -354,11 +354,7 @@ contains
 !
          call mem%alloc(g_bjca, wf%n_v, wf%n_o, wf%n_v, batch_a%length)
 !
-         call wf%get_vovv_complex(g_bjca,                        &
-                           1, wf%n_v,                    &
-                           1, wf%n_o,                    &
-                           1, wf%n_v,                    &
-                           batch_a%first, batch_a%last)
+         call wf%eri_complex%get_eri_t1('vovv', g_bjca, first_s=batch_a%first, last_s=batch_a%last)
 !
 !        sigma_ai =+ sum_bjc g_abjc * c_bjci
 !
@@ -383,7 +379,7 @@ contains
 !
       call mem%alloc(g_ikbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%get_oovo_complex(g_ikbj)
+      call wf%eri_complex%get_eri_t1('oovo', g_ikbj)
 !
 !     sigma_ai =- sum_bjk c_akbj g_ikbj
 !
@@ -475,7 +471,7 @@ contains
 !     L_ikjb = 2 g_ikjb - g_jkib (ordered as g_kibj)
 !
       call mem%alloc(g_ikjb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-      call wf%get_ooov_complex(g_ikjb)
+      call wf%eri_complex%get_eri_t1('ooov', g_ikjb)
 !
       call mem%alloc(L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
       call zero_array_complex(L_kibj, (wf%n_o**3)*wf%n_v)
@@ -505,8 +501,8 @@ contains
       call mem%alloc(sigma_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array_complex(sigma_ajbi, wf%n_t1**2)
 !
-      req0 = (wf%n_v)*(wf%n_o)*(wf%integrals%n_J)
-      req1 = (wf%n_v)*(wf%integrals%n_J) + (wf%n_o)*(wf%n_v)**2
+      req0 = (wf%n_v)*(wf%n_o)*(wf%eri_complex%n_J)
+      req1 = max((wf%n_v)*(wf%eri_complex%n_J) + (wf%n_o)*(wf%n_v)**2, 2*(wf%n_o)*(wf%n_v)**2)
 !
       batch_c = batching_index(wf%n_v)
 !
@@ -520,11 +516,7 @@ contains
 !
          call mem%alloc(g_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%get_vvov_complex(g_cajb, &
-                           batch_c%first, batch_c%last,   &
-                           1, wf%n_v,                     &
-                           1, wf%n_o,                     &
-                           1, wf%n_v)
+         call wf%eri_complex%get_eri_t1('vvov', g_cajb, first_p=batch_c%first, last_p=batch_c%last)
 !
          call mem%alloc(L_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !

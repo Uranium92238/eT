@@ -99,11 +99,15 @@ contains
 !
          if (wf%cnto_restart) then
 !
+            call output%printf('m', 'Requested restart for CNTOs, &
+                                    &reading orbital transformation matrices')
+!
             call wf%read_cnto_transformation_matrices(T_o, T_v)
 !
          else
 !
             call wf%construct_ccs_cnto_transformation_matrices(T_o, T_v)
+            call wf%write_cnto_transformation_matrices(T_o, T_v)
 !
          endif
 !
@@ -116,9 +120,24 @@ contains
 !
          call mem%alloc(T_o, wf%n_o, wf%n_o)
 !
-         call wf%construct_ccs_nto_transformation_matrix(T_o)
+         if (wf%nto_restart) then
+!
+            call output%printf('m', 'Requested restart for NTOs, &
+                                    &reading orbital transformation matrix')
+!
+            call wf%read_nto_transformation_matrix(T_o)
+!
+         else
+!
+            call wf%construct_ccs_nto_transformation_matrix(T_o)
+            call wf%write_nto_transformation_matrix(T_o)
+!
+         endif
 !
          call wf%construct_mixed_nto_canonical_orbitals(T_o)
+!
+         wf%n_ccs_o = wf%n_o - wf%n_cc2_o
+         wf%n_ccs_v = wf%n_v - wf%n_cc2_v
 !
          call mem%dealloc(T_o, wf%n_o, wf%n_o)
 !
@@ -175,7 +194,7 @@ contains
 !!                      determine if we construct occuped 
 !!                      Cholesky orbitals only, or if we also 
 !!                      construct the virtual Cholesky orbitals
-!!                      DEFAULT: .false.
+!!                      default: .false.
 !!
       implicit none
 !
@@ -236,7 +255,8 @@ contains
 !
       mo_offset = 0
 !
-      call wf%construct_orbital_block_by_density_cd(D, wf%n_cc2_o, wf%cholesky_orbital_threshold, mo_offset, active_aos)
+      call wf%construct_orbital_block_by_density_cd(D, wf%n_cc2_o, wf%cholesky_orbital_threshold, &
+                                                      mo_offset, active_aos)
 !
 !     Construct inactive occupied orbitals
 !
@@ -283,24 +303,38 @@ contains
    end subroutine construct_cholesky_orbitals_mlcc2
 !
 !
-   module subroutine construct_block_diagonal_fock_orbitals_mlcc2(wf)
+   module subroutine construct_block_diagonal_fock_orbitals_mlcc2(wf, n_levels, n_occupied_list, &
+                                          n_virtual_list, orbital_coefficients, orbital_energies) 
 !!
 !!    Construct block diagonal Fock MOs 
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!
-!!    This routine block-diagonalizes the occupied-occupied
+!!    This routine constructs the MOs which
+!!    block-diagonalize the occupied-occupied
 !!    and virutal-virtual blocks of the Fock matrix s.t.
 !!    the active-active, and inactive-inactive blocks are 
 !!    diagonal.
 !!   
 !!    Note that after this routine, the Fock matrix in wf 
-!!    corresponds to the old basis.
+!!    corresponds to the old basis but the MOs are updated.
 !!
+!
+      use array_utilities, only : block_diagonalize_symmetric
+!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: F_oo, F_vv
+      integer, intent(in) :: n_levels
+!
+      integer, dimension(n_levels), intent(in) :: n_occupied_list, n_virtual_list
+!
+      real(dp), dimension(wf%n_ao, wf%n_mo), intent(inout) :: orbital_coefficients
+      real(dp), dimension(wf%n_mo), intent(inout) :: orbital_energies
+!
+      real(dp), dimension(:,:), allocatable :: F_oo, F_vv, C_copy
+!
+      integer :: i, offset
 !
       call mem%alloc(F_oo, wf%n_o, wf%n_o)
       call mem%alloc(F_vv, wf%n_v, wf%n_v)
@@ -310,201 +344,72 @@ contains
 !
 !     Block diagonal occupied-occupied Fock
 !
-      call wf%construct_block_diagonal_fock_mos_2_level( wf%n_o, wf%n_cc2_o, F_oo, &
-                           wf%orbital_coefficients(:,1:wf%n_o), wf%orbital_energies(1:wf%n_o))
-
+      call block_diagonalize_symmetric(F_oo, wf%n_o, n_levels, n_occupied_list, &
+                                       orbital_energies(1:wf%n_o))
 !
 !     Block diagonal virtual-virtual Fock
 !
-      call wf%construct_block_diagonal_fock_mos_2_level( wf%n_v, wf%n_cc2_v, F_vv, &
-                           wf%orbital_coefficients(:,wf%n_o + 1 : wf%n_mo), wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
+      call block_diagonalize_symmetric(F_vv, wf%n_v, n_levels, n_virtual_list, &
+                                    orbital_energies(wf%n_o+1:wf%n_mo))
 !
+!     Transform blocks
+!
+      call mem%alloc(C_copy, wf%n_ao, wf%n_mo)
+      call dcopy(wf%n_mo*wf%n_ao, orbital_coefficients, 1, C_copy, 1)
+!
+      call zero_array(orbital_coefficients, wf%n_mo*wf%n_ao)
+!
+      offset = 1
+!
+      do i = 1, n_levels
+!
+         if (n_occupied_list(i) == 0 ) cycle
+!
+         call dgemm('N', 'N',                      &
+                  wf%n_ao,                         &
+                  n_occupied_list(i),              &
+                  n_occupied_list(i),              &
+                  one,                             &
+                  C_copy(1, offset),               &
+                  wf%n_ao,                         &
+                  F_oo(offset, offset),            &
+                  wf%n_o,                          &
+                  one,                             &
+                  orbital_coefficients(1, offset), &
+                  wf%n_ao)
+!
+         offset = offset + n_occupied_list(i)
+!
+      enddo
+!
+      offset = 1
+!
+      do i = 1, n_levels
+!
+         if (n_virtual_list(i) == 0 ) cycle
+!
+         call dgemm('N', 'N',                               &
+                  wf%n_ao,                                  &
+                  n_virtual_list(i),                        &
+                  n_virtual_list(i),                        &
+                  one,                                      &
+                  C_copy(1, offset + wf%n_o),               &
+                  wf%n_ao,                                  &
+                  F_vv(offset, offset),                     &
+                  wf%n_v,                                   &
+                  one,                                      &
+                  orbital_coefficients(1, offset + wf%n_o), &
+                  wf%n_ao)
+!
+         offset = offset + n_virtual_list(i)
+!
+      enddo
+!
+      call mem%dealloc(C_copy, wf%n_ao, wf%n_mo)
       call mem%dealloc(F_oo, wf%n_o, wf%n_o)
       call mem%dealloc(F_vv, wf%n_v, wf%n_v)
 !
    end subroutine construct_block_diagonal_fock_orbitals_mlcc2
-!
-!
-   module subroutine construct_block_diagonal_fock_mos_2_level_mlcc2(wf, n_total, n_active, fock, mo_coeff, diagonal)
-!!
-!!    Construct Fock block diagonal 2 levels
-!!    Written by Sarai D. Folkestad, Feb 2019
-!!
-!!    Construct orbitals that block diagonalizes 
-!!    Fock matrix block for two levels (inactive/active)
-!!
-!!    'n_total' : Total dimmension of Fock matrix block
-!!
-!!    'n_active' : Dimension of active block of Fock matrix block
-!!
-!!    'fock' : Fock matrix block to block diagonalize
-!!
-!!    'mo_coef' : MO coefficients which are updated to 
-!!                the new basis which block diagonalizes Fock
-!!                matrix block
-!!
-!!    'diagonal' : Diagonal elements of Fock matrix after block
-!!                 diagonalization
-!!
-      implicit none
-!
-      class(mlcc2), intent(inout) :: wf
-!
-      integer, intent(in) :: n_total, n_active ! Total matrix dimension of block, and number of active orbitals
-!
-      real(dp), dimension(n_total, n_total), intent(inout) :: fock
-      real(dp), dimension(wf%n_ao, n_total), intent(inout) :: mo_coeff
-      real(dp), dimension(n_total), intent(out) :: diagonal
-!
-      real(dp), dimension(:), allocatable :: work
-      real(dp), dimension(:), allocatable :: orbital_energies
-      real(dp), dimension(:,:), allocatable :: C_active, C_inactive
-!
-      integer :: info, i, j
-!
-!     1. Active block     
-!
-      if (n_active .gt. 0) then
-!
-!        Diagonalize active block
-!
-         call mem%alloc(work, 4*n_active)
-         call mem%alloc(orbital_energies, n_active)
-!
-         call dsyev('V','U',           &
-                     n_active,         &
-                     fock,             &
-                     n_total,          &
-                     orbital_energies, &
-                     work,             &
-                     4*n_active,       &
-                     info)
-!
-         call mem%dealloc(work, 4*n_active)
-!
-         if (info .ne. 0) then
-            call output%error_msg('Diagonalization of active fock matrix block failed.' // &
-                                 ' "Dsyev" finished with info: (i0)', ints=[info])
-         end if
-!
-!        Setting diagonal (orbital energies)
-!
-         do i = 1, n_active
-!
-            diagonal(i) = orbital_energies(i)
-!
-         enddo
-!
-         call mem%dealloc(orbital_energies, n_active)
-!
-      endif
-!
-!     2. Inactive block
-!
-      if ((n_total - n_active) .gt. 0) then
-!
-!        Diagonalize inactive block
-!
-         call mem%alloc(work, 4*(n_total - n_active))
-         call mem%alloc(orbital_energies, (n_total - n_active))
-!
-         call dsyev('V','U',                                &
-                     (n_total - n_active),                  &
-                     fock(n_active + 1, n_active + 1),      &
-                     n_total,                               &
-                     orbital_energies,                      &
-                     work,                                  &
-                     4*(n_total - n_active),                &
-                     info)
-!
-         call mem%dealloc(work, 4*(n_total - n_active))
-!
-         if (info .ne. 0) then 
-            call output%error_msg('Diagonalization of inactive fock matrix block failed.' // &
-                                  ' "Dsyev" finished with info: (i0)', ints=[info])
-         end if
-!
-!        Setting diagonal (orbital energies)
-!
-         do i = 1, (n_total - n_active)
-!
-            diagonal(n_active + i) = orbital_energies(i)
-!
-         enddo
-!
-         call mem%dealloc(orbital_energies, (n_total - n_active))
-!
-      endif
-!
-!     Transform orbital coefficients
-!
-!     1. Active 
-!
-      if (n_active .gt. 0) then
-!
-         call mem%alloc(C_active, wf%n_ao, n_active)
-!
-         call dgemm('N', 'N',    &
-                     wf%n_ao,    &
-                     n_active,   &
-                     n_active,   &
-                     one,        &
-                     mo_coeff,   &
-                     wf%n_ao,    &
-                     fock,       &
-                     n_total,    &
-                     zero,       &
-                     C_active,   &
-                     wf%n_ao)
-!
-!$omp parallel do private(i, j)
-         do j = 1, n_active
-            do i = 1, wf%n_ao
-!
-              mo_coeff(i, j) = C_active(i, j)
-!
-            enddo
-         enddo
-!$omp end parallel do
-!
-         call mem%dealloc(C_active, wf%n_ao, n_active)
-!
-      endif
-!
-!     1. Inactive 
-!
-      if ((n_total - n_active) .gt. 0) then
-!
-         call mem%alloc(C_inactive, wf%n_ao, (n_total - n_active))
-!
-         call dgemm('N', 'N',                            &
-                     wf%n_ao,                            &
-                     (n_total - n_active),               &
-                     (n_total - n_active),               &
-                     one,                                &
-                     mo_coeff(1, n_active + 1),          &
-                     wf%n_ao,                            &
-                     fock(n_active + 1, n_active + 1),   &
-                     n_total,                            &
-                     zero,                               &
-                     C_inactive,                         &
-                     wf%n_ao)
-!
-!$omp parallel do private(i, j)
-         do j = 1, (n_total - n_active)
-            do i = 1, wf%n_ao
-!
-               mo_coeff(i, j + n_active) = C_inactive(i, j)
-!
-            enddo
-         enddo
-!$omp end parallel do
-!
-         call mem%dealloc(C_inactive, wf%n_ao, (n_total - n_active))
-!
-      endif    
-!
-   end subroutine construct_block_diagonal_fock_mos_2_level_mlcc2
 !
 !
    module subroutine construct_M_and_N_cnto_mlcc2(wf, R_ai, R_aibj, M, N, set_to_zero)
@@ -514,13 +419,13 @@ contains
 !!
 !!    Constructs the M and N matrices,
 !!
-!!       M_ij += ( sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibj R_ajbl )
+!!       M_ij += ( sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibl R_ajbl )
 !!       N_ab += ( sum_i R_ai R_bi + 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
 !!
 !!    Used to construct CNTOs.
 !!
 !!    set_to_zero determines if M and N are set to zero initially. This makes it possible for 
-!!    the routine ton be used to add to M and N if we are using more than one excitation vector 
+!!    the routine to be used to add to M and N if we are using more than one excitation vector 
 !!    to generate the CNTOs.
 !!
       implicit none
@@ -537,43 +442,42 @@ contains
 !
       integer :: a, i
 !
-      if (set_to_zero) then
+      real(dp) :: zero_or_one
 !
-         call zero_array(M, wf%n_o**2)
-         call zero_array(N, wf%n_v**2)
+      zero_or_one = one
 !
-      endif
+      if (set_to_zero) zero_or_one = zero
 !
 !     1. Singles contribution
 !
 !     M_ij += sum_a R_ai R_aj
 !
-      call dgemm('T', 'N', &
-                  wf%n_o,  &
-                  wf%n_o,  &
-                  wf%n_v,  &
-                  one,     &
-                  R_ai,    & ! R_ai
-                  wf%n_v,  &
-                  R_ai,    & ! R_aj
-                  wf%n_v,  &
-                  one,     &
-                  M,       & ! M_ij
+      call dgemm('T', 'N',       &
+                  wf%n_o,        &
+                  wf%n_o,        &
+                  wf%n_v,        &
+                  one,           &
+                  R_ai,          & ! R_ai
+                  wf%n_v,        &
+                  R_ai,          & ! R_aj
+                  wf%n_v,        &
+                  zero_or_one,   &
+                  M,             & ! M_ij
                   wf%n_o)
 !
 !     N_ab += sum_i R_ai R_aj
 !
-      call dgemm('N', 'T', &
-                  wf%n_v,  &
-                  wf%n_v,  &
-                  wf%n_o,  &
-                  one,     &
-                  R_ai,    & ! R_ai
-                  wf%n_v,  &
-                  R_ai,    & ! R_bi
-                  wf%n_v,  &
-                  one,     &
-                  N,       & ! N_ab
+      call dgemm('N', 'T',       &
+                  wf%n_v,        &
+                  wf%n_v,        &
+                  wf%n_o,        &
+                  one,           &
+                  R_ai,          & ! R_ai
+                  wf%n_v,        &
+                  R_ai,          & ! R_bi
+                  wf%n_v,        &
+                  zero_or_one,   &
+                  N,             & ! N_ab
                   wf%n_v)
 !
 !     2. Doubles contribution
@@ -698,21 +602,43 @@ contains
       real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
       real(dp), dimension(wf%n_v, wf%n_v), intent(out) :: T_v
 !
-      type(sequential_file) :: transformation_o, transformation_v
+      call wf%T_cnto_o_file%open_('read', 'rewind')
+      call wf%T_cnto_v_file%open_('read', 'rewind')
 !
-      transformation_o = sequential_file('cnto_M_transformation', 'unformatted')
-      transformation_v = sequential_file('cnto_N_transformation', 'unformatted')
+      call wf%T_cnto_o_file%read_(T_o, wf%n_o**2)
+      call wf%T_cnto_v_file%read_(T_v, wf%n_v**2)
 !
-      call transformation_o%open_('read', 'rewind')
-      call transformation_v%open_('read', 'rewind')
-!
-      call transformation_o%read_(T_o, wf%n_o**2)
-      call transformation_v%read_(T_v, wf%n_v**2)
-!
-      call transformation_o%close_('keep')
-      call transformation_v%close_('keep')
+      call wf%T_cnto_o_file%close_('keep')
+      call wf%T_cnto_v_file%close_('keep')
 !
    end subroutine read_cnto_transformation_matrices_mlcc2
+!
+!
+   module subroutine write_cnto_transformation_matrices_mlcc2(wf, T_o, T_v)
+!!
+!!    Write CNTO transformation matrices
+!!    Written by Sarai D. Folkestad, Jun 2019
+!!
+!!    Write CNTO transformation matrices.
+!!    Used to ensure restart
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: T_o
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: T_v
+!
+      call wf%T_cnto_o_file%open_('write', 'rewind')
+      call wf%T_cnto_v_file%open_('write', 'rewind')
+!
+      call wf%T_cnto_o_file%write_(T_o, wf%n_o**2)
+      call wf%T_cnto_v_file%write_(T_v, wf%n_v**2)
+!
+      call wf%T_cnto_o_file%close_('keep')
+      call wf%T_cnto_v_file%close_('keep')
+!
+   end subroutine write_cnto_transformation_matrices_mlcc2
 !
 !
    module subroutine construct_ccs_cnto_transformation_matrices_mlcc2(wf, T_o, T_v)
@@ -741,13 +667,17 @@ contains
       real(dp), dimension(:), allocatable       :: omega_ccs ! CCS excitation energies
       real(dp), dimension(:,:), allocatable     :: R_ai_k
       real(dp), dimension(:,:,:), allocatable   :: R_ai
-      real(dp), dimension(:,:,:,:), allocatable :: R_aibj_k
 !
       logical :: set_to_zero
 !
-      type(sequential_file) :: transformation_o, transformation_v
-!
       character(len=200) :: r_or_l
+!
+      type(direct_stream_file) :: doubles_file
+!
+      type(timings) :: timer
+!
+      timer = timings('Construct CNTO matrices')
+      call timer%turn_on()
 !
       n_cnto_states = size(wf%cnto_states)
 !
@@ -764,20 +694,24 @@ contains
 !
       set_to_zero = .true.
 !
+!     Prepare file
+!
+      doubles_file = direct_stream_file('approximate_doubles', wf%n_v*wf%n_o**2)
+!
       call mem%alloc(R_ai_k, wf%n_v, wf%n_o)
-      call mem%alloc(R_aibj_k, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !   
       do k = 1, n_cnto_states
 !
          call dcopy(wf%n_t1, R_ai(1,1,k), 1, R_ai_k, 1)
 !
 !        Construct approximate double excitation vector
-! 
-         call wf%approximate_double_excitation_vectors(R_ai_k, R_aibj_k, omega_ccs(k))
+!
+         call wf%approximate_double_excitation_vectors(R_ai_k, omega_ccs(k), doubles_file)
 !
 !        Add contribution to M and N
 !
-         call wf%construct_M_and_N_cnto(R_ai_k, R_aibj_k, T_o, T_v, set_to_zero)
+         call wf%construct_M_and_N_singles_cnto(R_ai_k, T_o, T_v, set_to_zero)
+         call wf%add_doubles_M_and_N_cnto(T_o, T_v, doubles_file)
 !
          set_to_zero = .false.
 !
@@ -785,26 +719,9 @@ contains
 !
       call mem%dealloc(omega_ccs, n_cnto_states)
       call mem%dealloc(R_ai_k, wf%n_v, wf%n_o)
-      call mem%dealloc(R_aibj_k, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(R_ai, wf%n_v, wf%n_o, n_cnto_states)
 !
       call wf%diagonalize_M_and_N(T_o, T_v)
-!
-!     Write eigenvectors of M and N 
-!
-      transformation_o = sequential_file('cnto_M_transformation', 'unformatted')
-      transformation_v = sequential_file('cnto_N_transformation', 'unformatted')
-!
-      call transformation_o%open_('write', 'rewind')
-      call transformation_v%open_('write', 'rewind')
-!
-      call transformation_o%write_(T_o, wf%n_o**2)
-      call transformation_v%write_(T_v, wf%n_v**2)
-!
-      call transformation_o%close_('keep')
-      call transformation_v%close_('keep')
-!
-      call wf%integrals%cleanup()
 !
    end subroutine construct_ccs_cnto_transformation_matrices_mlcc2
 !
@@ -820,9 +737,8 @@ contains
 !!
 !!    Used to construct occupied NTOs.
 !!
-!!    set_to_zero determines if M and N are set to zero initially. This is used such that 
-!!    the routine can be used to add to M and N if we are using more than one excitation vector 
-!!    to generate the CNTOs.
+!!    set_to_zero determines if contributions are added to, or overwrites M and N. 
+!!
 !!
       implicit none
 !
@@ -834,30 +750,75 @@ contains
 !
       logical, intent(in) :: set_to_zero
 !
-      if (set_to_zero) then
+      real(dp) :: zero_or_one
 !
-         call zero_array(M, wf%n_o**2)
+      zero_or_one = one
 !
-      endif
+      if (set_to_zero) zero_or_one = zero
 !
 !     1. Singles contribution
 !
 !     M_ij += sum_a R_ai R_aj
 !
-      call dgemm('T', 'N', &
-                  wf%n_o,  &
-                  wf%n_o,  &
-                  wf%n_v,  &
-                  one,     &
-                  R_ai,    & ! R_ai
-                  wf%n_v,  &
-                  R_ai,    & ! R_aj
-                  wf%n_v,  &
-                  one,     &
-                  M,       & ! M_ij
+      call dgemm('T', 'N',       &
+                  wf%n_o,        &
+                  wf%n_o,        &
+                  wf%n_v,        &
+                  one,           &
+                  R_ai,          & ! R_ai
+                  wf%n_v,        &
+                  R_ai,          & ! R_aj
+                  wf%n_v,        &
+                  zero_or_one,   &
+                  M,             & ! M_ij
                   wf%n_o)
 !
    end subroutine construct_M_nto_mlcc2
+!
+!
+   module subroutine read_nto_transformation_matrix_mlcc2(wf, T_o)
+!!
+!!    Read NTO transformation matrices
+!!    Written by Sarai D. Folkestad, Jun 2019
+!!
+!!    Read NTO transformation matrices.
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
+!
+      call wf%T_nto_o_file%open_('read', 'rewind')
+!
+      call wf%T_nto_o_file%read_(T_o, wf%n_o**2)
+!
+      call wf%T_nto_o_file%close_('keep')
+!
+   end subroutine read_nto_transformation_matrix_mlcc2
+!
+!
+   module subroutine write_nto_transformation_matrix_mlcc2(wf, T_o)
+!!
+!!    Write NTO transformation matrices
+!!    Written by Sarai D. Folkestad, Jun 2019
+!!
+!!    Write NTO transformation matrices.
+!!    Used to ensure restart
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: T_o
+!
+      call wf%T_nto_o_file%open_('write', 'rewind')
+!
+      call wf%T_nto_o_file%write_(T_o, wf%n_o**2)
+!
+      call wf%T_nto_o_file%close_('keep')
+!
+   end subroutine write_nto_transformation_matrix_mlcc2
 !
 !
    module subroutine construct_ccs_nto_transformation_matrix_mlcc2(wf, T_o)
@@ -873,21 +834,21 @@ contains
 !!
 !!       - Write transformation matrix to file
 !!
+!
+      use array_utilities, only: diagonalize_symmetric
+!
       implicit none
 !
       class(mlcc2) :: wf
 !
       real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
 !
-      integer :: k, info, n_nto_states
+      integer :: k, n_nto_states
 !
-      real(dp), dimension(:), allocatable       :: work, eigenvalues
       real(dp), dimension(:,:), allocatable     :: R_ai_k
       real(dp), dimension(:,:,:), allocatable   :: R_ai
 !
       logical :: set_to_zero
-!
-      type(sequential_file) :: transformation_o
 
       character(len=200) :: r_or_l
 !
@@ -926,37 +887,7 @@ contains
 !
       call dscal(wf%n_o**2, -one, T_o, 1)
 !
-      call mem%alloc(work, 4*wf%n_o)
-      call mem%alloc(eigenvalues, wf%n_o)
-!
-      call dsyev('V','U',        &
-                  wf%n_o,        &
-                  T_o,           &
-                  wf%n_o,        &
-                  eigenvalues,   &
-                  work,          &
-                  4*wf%n_o,      &
-                  info)
-!
-      call mem%dealloc(work, 4*wf%n_o)
-      call mem%dealloc(eigenvalues, wf%n_o)
-!
-      if (info .ne. 0) then 
-         call output%error_msg('Diagonalization of M failed.' // &
-                               ' "Dsyev" finished with info: (i0)', ints=[info])
-      end if
-!
-!     Write eigenvectors of M 
-!
-      transformation_o = sequential_file('cnto_M_transformation', 'unformatted')
-!
-      call transformation_o%open_('write', 'rewind')
-!
-      call transformation_o%write_(T_o, wf%n_o**2)
-!
-      call transformation_o%close_('keep')
-!
-      call wf%integrals%cleanup()
+      call diagonalize_symmetric(T_o, wf%n_o)
 !
    end subroutine construct_ccs_nto_transformation_matrix_mlcc2
 !
@@ -993,9 +924,6 @@ contains
                   one,                       &
                   wf%orbital_coefficients,   &
                   wf%n_ao)
-!
-      wf%n_ccs_o = wf%n_o - wf%n_cc2_o
-      wf%n_ccs_v = wf%n_v - wf%n_cc2_v
 !
       call mem%dealloc(MO_coeff, wf%n_ao, wf%n_mo)
 !
@@ -1060,7 +988,7 @@ contains
 !
       call mem%alloc(PAO_coeff, wf%n_ao, n_active_aos)
 !
-      call wf%projected_atomic_orbitals(D, PAO_coeff, n_active_aos, first_ao)
+      call wf%project_atomic_orbitals(D, PAO_coeff, n_active_aos, first_ao)
 !
 !     3. Orthonormalize PAOs to get active virtual orbitals
 !
@@ -1115,7 +1043,7 @@ contains
 !
          call mem%alloc(PAO_coeff, wf%n_ao, wf%n_ao)
 !
-         call wf%projected_atomic_orbitals(D, PAO_coeff, wf%n_ao)
+         call wf%project_atomic_orbitals(D, PAO_coeff, wf%n_ao)
 !
 !        5. Orthonormalize PAOs to get inactive virtual orbitals
 !
@@ -1155,6 +1083,9 @@ contains
 !!
 !!    Diagonalizes the M and N CNTO matrices.
 !!
+!
+      use array_utilities, only: diagonalize_symmetric
+!
       implicit none
 !
       class(mlcc2) :: wf
@@ -1162,9 +1093,9 @@ contains
       real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: T_o
       real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: T_v
 !
-      real(dp), dimension(:), allocatable       :: work, eigenvalues
+      real(dp), dimension(:), allocatable :: eigenvalues
 !
-      integer :: info, i, work_size
+      integer :: i
 !
       integer :: count_zero_eigenvalues
 !
@@ -1173,33 +1104,8 @@ contains
       call dscal(wf%n_o**2, -one, T_o, 1)
       call dscal(wf%n_v**2, -one, T_v, 1)
 !
-      call mem%alloc(work, 1)
       call mem%alloc(eigenvalues, wf%n_o)
-!
-      call dsyev('V','U',        &
-                  wf%n_o,        &
-                  T_o,           &
-                  wf%n_o,        &
-                  eigenvalues,   &
-                  work,          &
-                  -1,            &
-                  info)
-!
-      work_size = int(work(1))
-!
-      call mem%dealloc(work, 1)
-      call mem%alloc(work, work_size)
-!
-      call dsyev('V','U',        &
-                  wf%n_o,        &
-                  T_o,           &
-                  wf%n_o,        &
-                  eigenvalues,   &
-                  work,          &
-                  work_size,      &
-                  info)
-!
-      call mem%dealloc(work, work_size)
+      call diagonalize_symmetric(T_o, wf%n_o, eigenvalues)
 !
       count_zero_eigenvalues = 0
 !
@@ -1210,39 +1116,12 @@ contains
       enddo
 !
       if (count_zero_eigenvalues .gt. 0)  &
-         call output%printf('m', 'Warning: T_o has (i0) zero eigenvalues', ints=[count_zero_eigenvalues])
+         call output%warning_msg('T_o has (i0) zero eigenvalues', ints=[count_zero_eigenvalues])
 !
       call mem%dealloc(eigenvalues, wf%n_o)
 !
-      if (info .ne. 0) call output%error_msg('Diagonalization of M failed')
-!
-      call mem%alloc(work, 1)
       call mem%alloc(eigenvalues, wf%n_v)
-!
-      call dsyev('V','U',        &
-                  wf%n_v,        &
-                  T_v,           &
-                  wf%n_v,        &
-                  eigenvalues,   &
-                  work,          &
-                  -1,            &
-                  info)
-!
-      work_size = int(work(1))
-!
-      call mem%dealloc(work, 1)
-      call mem%alloc(work, work_size)
-!
-      call dsyev('V','U',        &
-                  wf%n_v,        &
-                  T_v,           &
-                  wf%n_v,        &
-                  eigenvalues,   &
-                  work,          &
-                  work_size,     &
-                  info)
-!
-      call mem%dealloc(work, work_size)
+      call diagonalize_symmetric(T_v, wf%n_v, eigenvalues)
 !
       count_zero_eigenvalues = 0
 !
@@ -1253,14 +1132,9 @@ contains
       enddo
 !
       if (count_zero_eigenvalues .gt. 0)  &
-         call output%warning_msg('Warning: T_v has (i0) zero eigenvalues', ints=[count_zero_eigenvalues])
+         call output%warning_msg('T_v has (i0) zero eigenvalues', ints=[count_zero_eigenvalues])
 !
       call mem%dealloc(eigenvalues, wf%n_v)
-!
-      if (info .ne. 0) then
-         call output%error_msg('Diagonalization of N failed. ' // &
-                               ' "Dsyev" finished with info: (i0)', ints=[info])
-      end if
 !
    end subroutine diagonalize_M_and_N_mlcc2
 !
@@ -1316,9 +1190,14 @@ contains
 !
 !     1. Preparations (Note that cholesky decomposition is already done)
 !
-      ccs_wf = ccs(wf%system, wf)
+      allocate(ccs::ccs_wf)
+      call ccs_wf%initialize(wf)
 !
       call ccs_wf%mo_preparations()
+!
+      ccs_wf%eri = t1_eri_tool(wf%eri)
+      call ccs_wf%eri%initialize()
+      call ccs_wf%eri%copy_from_t1(wf%eri)
 !
 !     1. Ground state
 !
@@ -1330,8 +1209,6 @@ contains
       call cc_gs_solver_diis%cleanup(ccs_wf)
 !
       call timer_gs%turn_off()
-!
-      call ccs_wf%integrals%update_t1_integrals(ccs_wf%t1)
 !
 !     Excited states
 !
@@ -1346,14 +1223,11 @@ contains
 !
 !     Transfer information to mlcc wavefunction
 !
-!     1. Integrals
+!     1. Excitation vectors
 !
-      wf%integrals = mo_integral_tool(ccs_wf%integrals)
-      call wf%integrals%initialize_storage(ccs_wf%integrals)
+      n_es = ccs_wf%n_singlet_states
 !
-!     2. Excitation vectors
-!
-      n_es = ccs_wf%get_n_excitation_energies_on_file()
+      call mem%alloc(all_omega_ccs, n_es)
 !
       if(n_es .lt. n_cnto_states) call output%error_msg('Requested too many CNTO/NTO states')
 !
@@ -1363,19 +1237,17 @@ contains
 !
          if(n_es .lt. cnto_states(n)) call output%error_msg('Requested non-existent CNTO/NTO state')
 !
-         call ccs_wf%read_excited_state(R_ai(:,:,n), cnto_states(n), transformation)   
+         call ccs_wf%read_excited_state(R_ai(:,:,n),        &
+                                        cnto_states(n),     &
+                                        cnto_states(n),     &
+                                        transformation,     &
+                                        all_omega_ccs(n))   
 !
       enddo  
 !
-!     3. Excitation energies (if requested)
+!     2. Excitation energies (if requested)
 !
       if (present(omega_ccs)) then  
-!
-         call mem%alloc(all_omega_ccs, n_es)
-!
-!        Read CCS excitaion energies
-!
-         call wf%read_excitation_energies(n_es, all_omega_ccs)
 !
 !        Return only the excitation energies in cnto_states
 !
@@ -1385,9 +1257,9 @@ contains
 !
          enddo  
 !
-         call mem%dealloc(all_omega_ccs, n_es)
-!
       endif
+!
+      call mem%dealloc(all_omega_ccs, n_es)
 !
 !     Cleanup and print
 !
@@ -1469,12 +1341,14 @@ contains
                   wf%n_mo)
 !
       do i = 1, wf%n_mo
-         if (abs(I2(i,i) - 1.0d0) .gt. 1.0d-8) call output%error_msg(trim(wf%name_)//' orbitals are not normal')
+         if (abs(I2(i,i) - 1.0d0) .gt. 1.0d-6) then
+            call output%error_msg(trim(wf%name_)//' orbitals are not normal')
+         endif
       enddo
 !
       do i = 1, wf%n_mo
          do j = 1, i-1
-            if (abs(I2(i,j)) .gt. 1.0d-8) then
+            if (abs(I2(i,j)) .gt. 1.0d-6) then
             call output%error_msg(trim(wf%name_)//' orbitals are not orthogonal')
             endif
          enddo
@@ -1485,6 +1359,230 @@ contains
 
    end subroutine check_orthonormality_of_MOs_mlcc2
 !
-end submodule orbitals_mlcc2
+!
+   module subroutine add_doubles_M_and_N_cnto_mlcc2(wf, M, N, doubles_file)
+!!
+!!    Add doubles M and N CNTO 
+!!    Written by Sarai D. Folkestad, Feb 2020
+!!
+!!    The CNTO matrices are defined as
+!!
+!!       M_ij = ( sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibl R_ajbl )
+!!       N_ab = ( sum_i R_ai R_bi + 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
+!!
+!!    In this routine the doubles part 
+!!
+!!       M_ij += ( 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibl R_ajbl )
+!!       N_ab += ( 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
+!!
+!!    is added for the R_aibj on doubles_file
+!!
+!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      type(direct_stream_file) :: doubles_file
+!
+      real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: M
+      real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: N
+!
+      type(batching_index) :: batch_a, batch_c
+!
+      integer :: current_a_batch, current_c_batch
+      integer :: req0, req1_a, req1_c, req2
+!
+      integer :: a, i
+!
+      real(dp), dimension(:,:,:,:), allocatable :: R_ibja, R_kdlc
+!
+      call doubles_file%open_('read')
+!
+      req0 = 0
+!
+      req1_a = wf%n_o**2*wf%n_v
+!
+      req1_c = req1_a
+!
+      req2 = 0
+!
+!     Initialize batching variables
+!
+      batch_a = batching_index(wf%n_v)
+      batch_c = batching_index(wf%n_v)
 
+      call mem%batch_setup(batch_a, batch_c, req0, req1_a, req1_c, req2)
+!
+
+      call mem%alloc(R_ibja, wf%n_o, wf%n_v, wf%n_o, batch_a%max_length)
+      call mem%alloc(R_kdlc, wf%n_o, wf%n_v, wf%n_o, batch_c%max_length)
+!
+      do current_a_batch = 1, batch_a%num_batches
+!
+         call batch_a%determine_limits(current_a_batch)
+!
+         call doubles_file%read_(R_ibja(:,:,:,1:batch_a%length), batch_a%first, batch_a%last)
+!
+!        M_ij = 1/2 (1 + delta_ai,bk delta_i,j) R_jbka R_ibka
+!
+         call dgemm('N', 'T',                      &
+                     wf%n_o,                       &
+                     wf%n_o,                       &
+                     wf%n_v*wf%n_o*batch_a%length, &
+                     half,                         &
+                     R_ibja,                       &
+                     wf%n_o,                       &
+                     R_ibja,                       &
+                     wf%n_o,                       &
+                     one,                          &
+                     M,                            &
+                     wf%n_o)
+!
+!$omp parallel do private (i, a)
+         do i = 1, wf%n_o
+            do a = 1, batch_a%length
+!
+               M(i,i) = M(i,i) + half*R_ibja(i, a + batch_a%first - 1, i, a)**2
+!
+            enddo
+         enddo
+!$omp end parallel do
+!
+         do current_c_batch = 1, batch_c%num_batches
+!
+            call batch_c%determine_limits(current_c_batch)
+!
+            call doubles_file%read_(R_kdlc(:,:,:,1:batch_c%length), batch_c%first, batch_c%last)
+!
+!           N_ac += 1/2 sum_dkl(1 + delta_ak,dl delta_a,c) R_akdl R_ckdl
+!
+            call dgemm('T', 'N',                         &
+                        batch_a%length,                  &
+                        batch_c%length,                  &
+                        wf%n_o**2*wf%n_v,                &
+                        half,                            &
+                        R_ibja,                          &
+                        wf%n_o**2*wf%n_v,                &
+                        R_kdlc,                          &
+                        wf%n_o**2*wf%n_v,                &
+                        one,                             &
+                        N(batch_a%first, batch_c%first), &
+                        wf%n_v)
+!
+         enddo
+!
+!$omp parallel do private (a, i)
+         do a = 1, batch_a%length
+            do i = 1, wf%n_o           
+!
+               N(a + batch_a%first - 1, a + batch_a%first - 1) &
+                  = N(a + batch_a%first - 1, a + batch_a%first - 1) &
+                     + half*R_ibja(i, a + batch_a%first - 1, i, a)**2
+!
+            enddo
+         enddo
+!$omp end parallel do
+!
+      enddo
+!
+!
+      call mem%dealloc(R_kdlc, wf%n_o, wf%n_v, wf%n_o, batch_c%max_length)
+      call mem%dealloc(R_ibja, wf%n_o, wf%n_v, wf%n_o, batch_a%max_length)
+!
+      call doubles_file%close_('keep')
+!
+   end subroutine add_doubles_M_and_N_cnto_mlcc2
+!
+!
+   module subroutine construct_M_and_N_singles_cnto_mlcc2(wf, R_ai, M, N, set_to_zero)
+!!
+!!    Construct M and N
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Constructs the M and N matrices,
+!!
+!!       M_ij = ( sum_a R_ai R_aj )
+!!       N_ab = ( sum_i R_ai R_bi )
+!!
+!!    Used to construct CNTOs.
+!!
+!!    set_to_zero determines if contributions are added to, or overwrites M and N. 
+!!
+!!
+      implicit none
+!
+      class(mlcc2), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+      real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: M
+      real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: N
+!
+      logical, intent(in) :: set_to_zero
+!
+      real(dp) :: zero_or_one
+!
+      zero_or_one = one
+!
+      if (set_to_zero) zero_or_one = zero
+!
+!     1. Singles contribution
+!
+!     M_ij += sum_a R_ai R_aj
+!
+      call dgemm('T', 'N',       &
+                  wf%n_o,        &
+                  wf%n_o,        &
+                  wf%n_v,        &
+                  one,           &
+                  R_ai,          & ! R_ai
+                  wf%n_v,        &
+                  R_ai,          & ! R_aj
+                  wf%n_v,        &
+                  zero_or_one,   &
+                  M,             & ! M_ij
+                  wf%n_o)
+!
+!     N_ab += sum_i R_ai R_aj
+!
+      call dgemm('N', 'T',       &
+                  wf%n_v,        &
+                  wf%n_v,        &
+                  wf%n_o,        &
+                  one,           &
+                  R_ai,          & ! R_ai
+                  wf%n_v,        &
+                  R_ai,          & ! R_bi
+                  wf%n_v,        &
+                  zero_or_one,   &
+                  N,             & ! N_ab
+                  wf%n_v)
+!
+   end subroutine construct_M_and_N_singles_cnto_mlcc2
+!
+!
+   module subroutine construct_semicanonical_mlcc_orbitals_mlcc2(wf)
+!!
+!!    Construct semicanonical orbitals
+!!    Written by Sarai D. Folkestad
+!!
+!!    Wrapper to construct orbitals that block diagonalizes the fock matrix
+!!    for the different orbitals
+!!
+      implicit none
+!
+      class(mlcc2), intent(inout) :: wf
+!
+      integer :: n_levels
+!
+      n_levels = 2
+!
+      call wf%construct_block_diagonal_fock_orbitals(n_levels, [wf%n_cc2_o, wf%n_ccs_o],   &
+                                          [wf%n_cc2_v, wf%n_ccs_v], wf%orbital_coefficients, &
+                                          wf%orbital_energies) 
+!
+   end subroutine construct_semicanonical_mlcc_orbitals_mlcc2
+!
+!
+end submodule orbitals_mlcc2
 !

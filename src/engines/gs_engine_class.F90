@@ -39,7 +39,6 @@ module gs_engine_class
 !
       character(len=200) :: gs_algorithm
 !
-      logical :: restart
       logical :: gs_restart
       logical :: multipliers_restart
 !
@@ -61,9 +60,7 @@ module gs_engine_class
 !
       procedure, nopass :: calculate_quadrupole_moment   => calculate_quadrupole_moment_gs_engine
 !
-      procedure :: restart_handling                      => restart_handling_gs_engine
-!
-      procedure :: do_visualization                      => do_visualization_gs_engine
+      procedure, nopass :: do_cholesky                   => do_cholesky_gs_engine
 !
    end type gs_engine
 !
@@ -90,9 +87,10 @@ contains
 !
       type(gs_engine) :: engine 
 !
-      engine%gs_algorithm          = 'diis'
+      engine%gs_algorithm = 'diis'
 !
-      if (wf%name_ .eq. 'cc2' .or. &
+      if (wf%name_ .eq. 'ccs' .or. &
+          wf%name_ .eq. 'cc2' .or. &
           wf%name_ .eq. 'cc3' .or. &
           wf%name_ .eq. 'low memory cc2' .or. &
           wf%name_ .eq. 'mlcc2') then
@@ -105,12 +103,10 @@ contains
 !
       end if
 !
-      engine%gs_restart            = .false.
-      engine%multipliers_restart   = .false.
+      engine%gs_restart          = .false.
+      engine%multipliers_restart = .false.
 !
       call engine%read_settings()
-!
-      engine%restart = engine%gs_restart .or. engine%multipliers_restart
 !
       call engine%set_printables()
 !
@@ -150,11 +146,13 @@ contains
       class(gs_engine) :: engine
       class(ccs)       :: wf
 !
+      call engine%tasks%print_('cholesky')
+!
+      call engine%do_cholesky(wf)
+!
       call engine%tasks%print_('mo preparations')
 !
       call wf%mo_preparations() 
-!
-      call engine%restart_handling(wf)
 !
 !     Determine ground state
 !
@@ -196,6 +194,12 @@ contains
       engine%multipliers_restart = &
                input%requested_keyword_in_section('restart', 'solver cc multipliers')
 !
+!     global restart
+      if (input%requested_keyword_in_section('restart', 'do')) then 
+         engine%gs_restart = .true.
+         engine%multipliers_restart = .true.
+      end if
+!
       engine%plot_density = &
                input%requested_keyword_in_section('plot cc density', 'visualization')
 !
@@ -224,6 +228,10 @@ contains
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
+!
+      call engine%tasks%add(label='cholesky', &
+                            description='Cholesky decomposition of the electron &
+                                         &repulsion integrals')
 !
       call engine%tasks%add(label='mo preparations',                             &
                             description='Preparation of MO basis and integrals')
@@ -263,7 +271,7 @@ contains
 !
       if (trim(wf%name_) == 'mp2') then
 !
-         call wf%integrals%update_t1_integrals(wf%t1)
+         call wf%eri%set_t1_to_mo()
 !
          call wf%calculate_energy()
 !
@@ -279,25 +287,34 @@ contains
          call output%printf('m', 'MP2 energy:               (f19.12)', &
                             reals=[wf%energy], fs='(t6,a)')
 !
-      elseif (trim(engine%gs_algorithm) == 'diis') then
+      else
 !
-         diis_solver = diis_cc_gs(wf, engine%gs_restart)
-         call diis_solver%run(wf)
-         call diis_solver%cleanup(wf)
+         if (trim(engine%gs_algorithm) == 'diis') then
 !
-      elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
+            diis_solver = diis_cc_gs(wf, engine%gs_restart)
+            call diis_solver%run(wf)
+            call diis_solver%cleanup(wf)
 !
-            if (trim(wf%name_) == 'cc2') then
+         elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
 !
-                call output%error_msg('Newton-Raphson not implemented for CC2')
+               if (trim(wf%name_) == 'cc2') then
 !
-            end if
+                  call output%error_msg('Newton-Raphson not implemented for CC2')
 !
-         newton_raphson_solver = newton_raphson_cc_gs(wf, engine%gs_restart)
-         call newton_raphson_solver%run(wf)
-         call newton_raphson_solver%cleanup(wf)
+               end if
 !
-      endif 
+            newton_raphson_solver = newton_raphson_cc_gs(wf, engine%gs_restart)
+            call newton_raphson_solver%run(wf)
+            call newton_raphson_solver%cleanup(wf)
+!
+         else 
+!
+            call output%error_msg('(a0) is not a valid ground state algorithm.', &
+                                  chars=[engine%gs_algorithm])
+!
+         endif 
+!
+      endif
 !
    end subroutine do_ground_state_gs_engine
 !
@@ -388,6 +405,7 @@ contains
       do k = 1, 3
 !
          electronic(k) = wf%calculate_expectation_value(mu_pqk(:,:,k), wf%density)
+         if (wf%exists_frozen_fock_terms) electronic(k) = electronic(k) + wf%frozen_dipole(k)
 !
       enddo
 !
@@ -433,6 +451,7 @@ contains
       do k = 1, 6
 !
          electronic(k) = wf%calculate_expectation_value(q_pqk(:,:,k), wf%density)
+         if (wf%exists_frozen_fock_terms) electronic(k) = electronic(k) + wf%frozen_quadrupole(k)
 !
       enddo
 !
@@ -447,96 +466,71 @@ contains
    end subroutine calculate_quadrupole_moment_gs_engine
 !
 !
-   subroutine restart_handling_gs_engine(engine, wf)
+   subroutine do_cholesky_gs_engine(wf)
 !!
-!!    Restart handling
-!!    Written by Sarai D. Folkestad, Nov 2019
+!!    Do Cholesky 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Feb 2020
 !!
-!!    Writes the restart information 
-!!    if restart is not requested.
+!!    Performs Cholesky decomposition of the electron repulsion integral matrix.
 !!
-!!    If restart is requested performs safety 
-!!    checks for restart
+!!    For reduced space coupled cluster calculations (frozen HF or MLHF)
+!!    the MO screening can be used to reduce the number of Cholesky vectors,
+!!    as the accuracy of the integrals in the active MO basis, 
+!!    rather than the AO basis, is targeted. For details, see 
+!!    Folkestad, S. D., Kjønstad, E. F., and Koch, H., JCP, 150(19), 194112 (2019).
 !!
-      implicit none
+!!
+      use eri_cd_class, only: eri_cd
+      use t1_eri_tool_class, only: t1_eri_tool
 !
-      class(gs_engine), intent(in) :: engine
-      class(ccs), intent(in) :: wf
+      implicit none 
 !
-      if (.not. engine%restart) then
+      class(ccs) :: wf 
 !
-         call wf%write_cc_restart()
+      type(eri_cd), allocatable :: eri_cholesky_solver 
+!
+      logical :: do_MO_screening
+!
+      real(dp), dimension(:,:), allocatable, target :: screening_vector
+!
+      call output%printf('v', 'Doing Cholesky decomposition of the ERIs.')
+!
+      do_MO_screening = input%requested_keyword_in_section('mo screening', 'solver cholesky')
+!
+      eri_cholesky_solver = eri_cd(wf%system)
+!
+      if (do_MO_screening) then
+!
+         call output%printf('m', 'Using the MO screening for the Cholesky decomposition', &
+                        fs='(/t3,a)')
+!
+         call mem%alloc(screening_vector, wf%n_ao, wf%n_ao)
+         call wf%construct_MO_screening_for_cd(screening_vector)
+!
+         call eri_cholesky_solver%run(wf%system, screening_vector)   ! Do the Cholesky decomposition
+                                                                     ! using the MO screening
+!
+         call mem%dealloc(screening_vector, wf%n_ao, wf%n_ao) 
 !
       else
 !
-         if (engine%gs_restart .or. engine%multipliers_restart) &
-               call wf%is_restart_safe('ground state')
+         call eri_cholesky_solver%run(wf%system) ! Do the Cholesky decomposition 
 !
       endif
 !
-   end subroutine restart_handling_gs_engine
+      call eri_cholesky_solver%diagonal_test(wf%system)  ! Determine the largest 
+                                                         ! deviation in the ERI matrix 
 !
+      wf%eri = t1_eri_tool(wf%n_o, wf%n_v, eri_cholesky_solver%n_cholesky, wf%need_g_abcd)
 !
-   subroutine do_visualization_gs_engine(engine, wf)
-!!
-!!    Do visualization
-!!    Written by Tor S. Haugland, Nov 2019
-!!
-!!    Writes the electron density to file.
-!!
-!!    Based on do_visualization_reference_engine by S. D. Folkestad
-!!
-      use visualization_class, only : visualization
-      use array_utilities, only: symmetric_sandwich_right_transposition
+      call wf%eri%initialize()
 !
-      implicit none
+      call eri_cholesky_solver%construct_cholesky_mo_vectors(wf%system, wf%n_ao, wf%n_mo, &
+                                                             wf%orbital_coefficients, wf%eri)
 !
-      class(gs_engine) :: engine
-      class(ccs) :: wf 
+      call eri_cholesky_solver%cleanup()
 !
-      type(visualization), allocatable :: plotter
-!
-      character(len=200) :: density_file_tag
-      real(dp), dimension(:,:), allocatable :: mo_density, density
-!
-      call engine%tasks%print_('plotting')
-!
-      if (.not. allocated(wf%density) ) &
-         call output%error_msg("CC density not allocated")
-!
-!     Initialize the plotter
-!
-      plotter = visualization(wf%system, wf%n_ao)
-!
-!     Transform the density matix from the t1 basis to the MO basis
-!
-      call mem%alloc(mo_density, wf%n_mo, wf%n_mo)
-!
-      call dcopy(wf%n_mo**2, wf%density, 1, mo_density, 1)
-!
-      call wf%t1_transpose_transform(mo_density)
-!
-!     D_alpha,beta = sum_pq  D_pq C_alpha,p C_beta,q
-!
-      call mem%alloc(density, wf%n_ao, wf%n_ao)
-!
-      call symmetric_sandwich_right_transposition(density,                 &
-                                                  mo_density,              &
-                                                  wf%orbital_coefficients, &
-                                                  wf%n_ao,                 &
-                                                  wf%n_mo)
-!
-      call mem%dealloc(mo_density, wf%n_mo, wf%n_mo)
-!
-!     Plot density
-!
-      density_file_tag = 'cc_gs_density'
-!
-      call plotter%plot_density(wf%system, density, density_file_tag)
-!
-      call mem%dealloc(density, wf%n_ao, wf%n_ao)
-!
-   end subroutine do_visualization_gs_engine
+   end subroutine do_cholesky_gs_engine
 !
 !
 end module gs_engine_class

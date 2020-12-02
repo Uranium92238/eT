@@ -79,7 +79,7 @@ contains
    function new_electric_field() result(field)
 !!
 !!    New
-!!    Written by Andreas Skeidsvoll, May 2019 
+!!    Written by Andreas Skeidsvoll, May 2019
 !!
 !!    Generate a new electric field object.
 !!
@@ -98,14 +98,14 @@ contains
 !
    subroutine cleanup_electric_field(field)
 !!
-!!    Cleanup 
+!!    Cleanup
 !!    Written by Andreas Skeidsvoll and Alice Balbi, May 2019
 !!
 !!    Clean up the electric field object
 !!
       implicit none
 !
-      class(electric_field) :: field 
+      class(electric_field) :: field
 !
       if (field%n_pulses .ne. 0) then
 !
@@ -129,7 +129,7 @@ contains
    subroutine read_settings_electric_field(field)
 !!
 !!    Read settings
-!!    Written by Andreas Skeidsvoll and Alice Balbi, May 2019 
+!!    Written by Andreas Skeidsvoll and Alice Balbi, May 2019
 !!
 !!    Read the settings in the section 'electric field'. The settings give the parameters
 !!    necessary for specifying an arbitrary number of (possibly repeated) single electric field
@@ -167,7 +167,7 @@ contains
 !     Read settings for an arbitrary number of pulses to arrays
 !
       separation_input      = .false.
-      n_envelopes           = 0 
+      n_envelopes           = 0
       n_x_polarizations     = 0
       n_y_polarizations     = 0
       n_z_polarizations     = 0
@@ -270,8 +270,6 @@ contains
          call mem%alloc(field%repetition, field%n_pulses)
          call mem%alloc(field%separation, field%n_pulses)
 !
-         field%repetition = 1
-!
          call input%get_array_for_keyword_in_section('envelope', 'electric field', &
                                                      field%n_pulses, field%envelope)
          call input%get_array_for_keyword_in_section('x polarization', 'electric field', &
@@ -292,19 +290,21 @@ contains
          call input%get_array_for_keyword_in_section('phase shift', 'electric field', &
                                                      field%n_pulses, field%phase_shift)
 !
+         field%separation = zero
          if (input%requested_keyword_in_section('separation', 'electric field')) then
             call input%get_array_for_keyword_in_section('separation', 'electric field', &
                                                         field%n_pulses, field%separation)
             separation_input = .true.
          endif
 !
+         field%repetition = 1
          if (input%requested_keyword_in_section('repetition', 'electric field')) then
             call input%get_array_for_keyword_in_section('repetition', 'electric field', &
-                                                        field%n_pulses, field%repetition)                                                                                 
+                                                        field%n_pulses, field%repetition)
          endif
 !
          do i = 1, field%n_pulses
-! 
+!
             if (field%repetition(i) .lt. 0) then
                call output%error_msg('the number of repetitions have to be positive.')
             endif

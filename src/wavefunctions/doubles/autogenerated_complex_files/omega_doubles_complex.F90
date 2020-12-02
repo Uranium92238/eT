@@ -46,34 +46,50 @@ contains
 !!
       implicit none
 !
-      class(doubles), intent(in) :: wf
+      class(doubles), intent(inout) :: wf
 !
       complex(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
       complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
 !
-      complex(dp), dimension(:,:,:,:), allocatable :: g_abjc, u_bjci
-!
-      complex(dp), dimension(:,:), allocatable :: omega_ai
+      complex(dp), dimension(:,:,:), allocatable :: L_Jcj, L_Jab, L_aJb, X_Jbi
 !
       type(batching_index) :: batch_a
 !
       integer :: req0, req1
 !
-      integer :: a, i, current_a_batch
+      integer :: current_a_batch
 !
       type(timings) :: timer 
 !  
       timer = timings('omega doubles a1', pl='verbose')
       call timer%turn_on()
 !
-      call mem%alloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     Using L_Jjc_t1 =  L_Jjc_mo = L_Jcj_mo
 !
-!     Reorder u_bicj to u_bjci
+      call mem%alloc(L_Jcj, wf%eri_complex%n_J, wf%n_v, wf%n_o)
+      call wf%eri_complex%get_cholesky_mo(L_Jcj, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
 !
-      call sort_1234_to_1432(u, u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     X_Jbi = u_bicj L_Jcj
 !
-      req0 = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
-      req1 = (wf%n_v)**2*(wf%n_o) + (wf%n_v)*(wf%integrals%n_J)
+      call mem%alloc(X_Jbi, wf%eri_complex%n_J, wf%n_v, wf%n_o)
+!
+      call zgemm('N', 'N',       &
+                  wf%eri_complex%n_J,    &
+                  wf%n_o*wf%n_v, &
+                  wf%n_o*wf%n_v, &
+                  one_complex,           &
+                  L_Jcj,         &
+                  wf%eri_complex%n_J,    &
+                  u,             & ! u_cjbi
+                  wf%n_o*wf%n_v, &
+                  zero_complex,          &
+                  X_Jbi,         &
+                  wf%eri_complex%n_J)
+!
+      call mem%dealloc(L_Jcj, wf%eri_complex%n_J, wf%n_v, wf%n_o)
+!
+      req0 = 0
+      req1 = 2*(wf%n_v)*(wf%eri_complex%n_J)
 !
       batch_a = batching_index(wf%n_v)
 !
@@ -83,47 +99,34 @@ contains
 !
          call batch_a%determine_limits(current_a_batch)
 !
-         call mem%alloc(g_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+         call mem%alloc(L_Jab, wf%eri_complex%n_J, batch_a%length, wf%n_v)
+         call wf%eri_complex%get_cholesky_t1(L_Jab,                  &
+                                     wf%n_o + batch_a%first, &
+                                     wf%n_o + batch_a%last,  &
+                                     wf%n_o + 1, wf%n_mo)
 !
-         call wf%get_vvov_complex(g_abjc,                       &
-                           batch_a%first, batch_a%last, &
-                           1, wf%n_v,                   &
-                           1, wf%n_o,                   &
-                           1, wf%n_v)
+         call mem%alloc(L_aJb, batch_a%length, wf%eri_complex%n_J, wf%n_v)
+         call sort_123_to_213(L_Jab, L_aJb, wf%eri_complex%n_J, batch_a%length, wf%n_v)
+         call mem%dealloc(L_Jab, wf%eri_complex%n_J, batch_a%length, wf%n_v)
 !
-         call mem%alloc(omega_ai, batch_a%length, wf%n_o)
+         call zgemm('N','N',                 &
+                     batch_a%length,         &
+                     wf%n_o,                 &
+                     wf%eri_complex%n_J*wf%n_v,      &
+                     one_complex,                    &
+                     L_aJb,                  & 
+                     batch_a%length,         &
+                     X_Jbi,                  & 
+                     wf%eri_complex%n_J*wf%n_v,      &
+                     one_complex,                    &
+                     omega(batch_a%first,1), & 
+                     wf%n_v)
 !
-         call zgemm('N','N',               &
-                     batch_a%length,       &
-                     wf%n_o,               &
-                     (wf%n_o)*(wf%n_v)**2, &
-                     one_complex,                  &
-                     g_abjc,               & ! g_a_bjc
-                     batch_a%length,       &
-                     u_bjci,               & ! u_bjc_i
-                     (wf%n_o)*(wf%n_v)**2, &
-                     zero_complex,                 &
-                     omega_ai,             &
-                     batch_a%length)
-!
-         call mem%dealloc(g_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
-!
-!$omp parallel do private(i, a)
-         do i = 1, wf%n_o
-            do a = 1, batch_a%length
-!
-               omega(a + batch_a%first - 1, i) = omega(a + batch_a%first - 1, i) &
-                                                + omega_ai(a, i)
-!
-            enddo
-         enddo
-!$omp end parallel do
-!
-         call mem%dealloc(omega_ai, batch_a%length, wf%n_o)
+         call mem%dealloc(L_aJb, batch_a%length, wf%eri_complex%n_J, wf%n_v)
 !
       enddo ! batch_a
 !
-      call mem%dealloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(X_Jbi, wf%eri_complex%n_J, wf%n_v, wf%n_o)
 !
       call timer%turn_off()
 !
@@ -147,7 +150,7 @@ contains
 !!
       implicit none
 !
-      class(doubles), intent(in) :: wf
+      class(doubles), intent(inout) :: wf
 !
       complex(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
       complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
@@ -164,7 +167,7 @@ contains
 !
       call mem%alloc(g_kbji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call wf%get_ovoo_complex(g_kbji)
+      call wf%eri_complex%get_eri_t1('ovoo', g_kbji)
 !
       call mem%alloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !

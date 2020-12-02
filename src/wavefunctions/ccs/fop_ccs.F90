@@ -137,7 +137,7 @@ contains
       call zero_array(wf%right_transition_density, (wf%n_mo)**2)
 !
       call mem%alloc(R_k, wf%n_es_amplitudes)
-      call wf%read_excited_state(R_k, state, 'right')
+      call wf%read_excited_state(R_k, state, state, 'right')
 !
       call wf%density_ccs_mu_nu_oo(wf%right_transition_density, wf%t1bar, R_k)
       call wf%density_ccs_ref_mu_ov(wf%right_transition_density, R_k)
@@ -381,7 +381,7 @@ contains
       call L_TDM_timer%turn_on()
 !
       call mem%alloc(L_k, wf%n_es_amplitudes)
-      call wf%read_excited_state(L_k, state, 'left')
+      call wf%read_excited_state(L_k, state, state, 'left')
 !
       call zero_array(wf%left_transition_density, (wf%n_mo)**2)
 !
@@ -394,7 +394,7 @@ contains
    end subroutine construct_left_transition_density_ccs
 !
 !
-   module subroutine construct_eom_etaX_ccs(wf, X, csiX, etaX)
+   module subroutine construct_eom_etaX_ccs(wf, X, xiX, etaX)
 !!
 !!    Construct EOM etaX
 !!    Written by Sarai D. Folkestad, May 2019
@@ -408,13 +408,13 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: xiX
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
 
       call wf%construct_etaX(X, etaX)
 !
-      call wf%etaX_eom_a(etaX, csiX)
+      call wf%etaX_eom_a(etaX, xiX)
 !
    end subroutine construct_eom_etaX_ccs
 !
@@ -567,9 +567,9 @@ contains
    end subroutine etaX_ccs_b1_ccs
 !
 !
-   module subroutine construct_csiX_ccs(wf, X, csiX)
+   module subroutine construct_xiX_ccs(wf, X, xiX)
 !!
-!!    Construct csiX
+!!    Construct xiX
 !!    Written by Josefine H. Andersen, 2019
 !!
 !!    Adapted by Sarai D. Folkestad
@@ -584,21 +584,21 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: xiX
 !
-      call zero_array(csiX, wf%n_es_amplitudes)
+      call zero_array(xiX, wf%n_es_amplitudes)
 !
-      call wf%csiX_ccs_a1(X, csiX)
+      call wf%xiX_ccs_a1(X, xiX)
 !
-   end subroutine construct_csiX_ccs
+   end subroutine construct_xiX_ccs
 !
 !
-   module subroutine csiX_ccs_a1_ccs(wf, X, csiX_ai)
+   module subroutine xiX_ccs_a1_ccs(wf, X, xiX_ai)
 !!
-!!    Construct csiX A1 
+!!    Construct xiX A1 
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
-!!    Adds the A1 term to csiX:
+!!    Adds the A1 term to xiX:
 !! 
 !!       xi^X_ai += X_ai
 !!
@@ -608,7 +608,7 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: csiX_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: xiX_ai
 !
       integer :: a, i
 !
@@ -616,16 +616,16 @@ contains
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
-            csiX_ai(a, i) = csiX_ai(a, i) + X(wf%n_o + a, i)
+            xiX_ai(a, i) = xiX_ai(a, i) + X(wf%n_o + a, i)
 !
          enddo
       enddo
 !$omp end parallel do
 !
-   end subroutine csiX_ccs_a1_ccs
+   end subroutine xiX_ccs_a1_ccs
 !
 !
-   module subroutine etaX_eom_a_ccs(wf, etaX, csiX)
+   module subroutine etaX_eom_a_ccs(wf, etaX, xiX)
 !!
 !!    EtaX EOM A
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -639,24 +639,24 @@ contains
       class(ccs), intent(in) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: xiX
 !
       real(dp) :: X_cc
       real(dp) :: ddot
 !
-      X_cc = ddot(wf%n_es_amplitudes, wf%t1bar, 1, csiX, 1)
+      X_cc = ddot(wf%n_es_amplitudes, wf%t1bar, 1, xiX, 1)
 !
       call daxpy(wf%n_es_amplitudes, -X_cc, wf%t1bar, 1, etaX, 1)
 !
    end subroutine etaX_eom_a_ccs
 !
 !
-   module subroutine calculate_lr_transition_strength_ccs(wf, S, etaX, csiX, state, T_l, T_r, M)
+   module subroutine calculate_lr_transition_strength_ccs(wf, S, etaX, xiX, state, T_l, T_r, M)
 !!
 !!    Calculate LR transition strength
 !!    Written by Josefine H. Andersen, February 2019
 !!
-!!    Given etaX and csiX, this routine calculates the left and right transition 
+!!    Given etaX and xiX, this routine calculates the left and right transition 
 !!    moments T_l and T_r for the state number "state" and the transition strength 
 !!    S = T_l * T_r.
 !! 
@@ -672,7 +672,7 @@ contains
       real(dp), intent(inout) :: S
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: xiX
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: M
 !
@@ -686,13 +686,13 @@ contains
       call mem%alloc(L, wf%n_es_amplitudes)
       call mem%alloc(R, wf%n_es_amplitudes)
 !
-      call wf%read_excited_state(L, state, 'left')
-      call wf%read_excited_state(R, state, 'right')
+      call wf%read_excited_state(L, state, state, 'left')
+      call wf%read_excited_state(R, state, state, 'right')
 !
 !     Left and right transition moments
 !
-      T_r = ddot(wf%n_es_amplitudes, etaX, 1, R, 1) + ddot(wf%n_es_amplitudes, M, 1, csiX, 1)
-      T_l = ddot(wf%n_es_amplitudes, L, 1, csiX, 1)
+      T_r = ddot(wf%n_es_amplitudes, etaX, 1, R, 1) + ddot(wf%n_es_amplitudes, M, 1, xiX, 1)
+      T_l = ddot(wf%n_es_amplitudes, L, 1, xiX, 1)
 !
 !     Transition strength
 !

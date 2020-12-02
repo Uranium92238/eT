@@ -72,7 +72,8 @@ contains
    end subroutine construct_omega_mlcc2
 !
 !
-   module subroutine omega_cc2_a1_mlcc2(wf, omega, n_cc2_o, n_cc2_v, first_cc2_o, first_cc2_v, last_cc2_o, last_cc2_v)
+   module subroutine omega_cc2_a1_mlcc2(wf, omega, n_cc2_o, n_cc2_v, first_cc2_o, &
+                                       first_cc2_v, last_cc2_o, last_cc2_v)
 !!
 !!    Omega MLCC2 A1 term
 !!    Adapted by Sarai D. Folkestad, Jan 2019
@@ -93,7 +94,7 @@ contains
 !!
       implicit none
 !
-      class(mlcc2), intent(in) :: wf
+      class(mlcc2), intent(inout) :: wf
 !
       integer, intent(in) :: n_cc2_o, n_cc2_v, first_cc2_o, first_cc2_v, last_cc2_o, last_cc2_v
 !
@@ -101,26 +102,49 @@ contains
 !
 !     Local variables
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_abjc, u_bjci
-      real(dp), dimension(:,:), allocatable     :: omega_ai
+      real(dp), dimension(:,:,:), allocatable :: L_Jcj, L_Jab, L_aJb, X_Jbi
 !
       type(batching_index) :: batch_a
-      integer              :: req0, req1
-      integer              :: a, i, current_a_batch
+!
+      integer :: req0, req1
+!
+      integer :: current_a_batch
 !
       type(timings) :: timer
 !  
       timer = timings('omega mlcc2 a1')
       call timer%turn_on()
 !
-      call mem%alloc(u_bjci, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
+!     Using L_Jjc_t1 =  L_Jjc_mo = L_Jcj_mo
 !
-!     Reorder u_bicj to u_bjci
+      call mem%alloc(L_Jcj, wf%eri%n_J, n_cc2_v, n_cc2_o)
+      call wf%eri%get_cholesky_mo(L_Jcj,                &
+                                  wf%n_o + first_cc2_v, &
+                                  wf%n_o + last_cc2_v,  &
+                                  first_cc2_o,          &
+                                  last_cc2_o)
 !
-      call sort_1234_to_1432(wf%u_aibj, u_bjci, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
+!     X_Jbi = u_bicj L_Jcj
 !
-      req0 = (n_cc2_o)*(n_cc2_v)*(wf%integrals%n_J)
-      req1 = (n_cc2_v)**2*(n_cc2_o) + (n_cc2_v)*(wf%integrals%n_J)
+      call mem%alloc(X_Jbi, wf%eri%n_J, n_cc2_v, n_cc2_o)
+!
+      call dgemm('N', 'N',         &
+                  wf%eri%n_J,      &
+                  n_cc2_o*n_cc2_v, &
+                  n_cc2_o*n_cc2_v, &
+                  one,             &
+                  L_Jcj,           &
+                  wf%eri%n_J,      &
+                  wf%u_aibj,       & ! u_cjbi
+                  n_cc2_o*n_cc2_v, &
+                  zero,            &
+                  X_Jbi,           &
+                  wf%eri%n_J)
+!
+      call mem%dealloc(L_Jcj, wf%eri%n_J, n_cc2_v, n_cc2_o)
+!
+      req0 = 0
+      req1 = 2*(n_cc2_v)*(wf%eri%n_J)
 !
       batch_a = batching_index(wf%n_v)
 !
@@ -130,49 +154,37 @@ contains
 !
          call batch_a%determine_limits(current_a_batch)
 !
-         call mem%alloc(g_abjc, batch_a%length, n_cc2_v, n_cc2_o, n_cc2_v)
+         call mem%alloc(L_Jab, wf%eri%n_J, batch_a%length, n_cc2_v)
+         call wf%eri%get_cholesky_t1(L_Jab,                       &
+                                          wf%n_o + batch_a%first, &
+                                          wf%n_o + batch_a%last,  & 
+                                          wf%n_o + first_cc2_v,   &
+                                          wf%n_o + last_cc2_v)
 !
-         call wf%get_vvov(g_abjc,                           &
-                           batch_a%first, batch_a%last,     &
-                           first_cc2_v,  last_cc2_v,        &
-                           first_cc2_o,  last_cc2_o,        &
-                           first_cc2_v,  last_cc2_v)
+         call mem%alloc(L_aJb, batch_a%length, wf%eri%n_J, n_cc2_v)
+         call sort_123_to_213(L_Jab, L_aJb, wf%eri%n_J, batch_a%length, n_cc2_v)
+         call mem%dealloc(L_Jab, wf%eri%n_J, batch_a%length, n_cc2_v)
 !
-         call mem%alloc(omega_ai, batch_a%length, n_cc2_o)
+         call dgemm('N','N',                           &
+                     batch_a%length,                   &
+                     n_cc2_o,                          &
+                     wf%eri%n_J*n_cc2_v,               &
+                     one,                              &
+                     L_aJb,                            & 
+                     batch_a%length,                   &
+                     X_Jbi,                            & 
+                     wf%eri%n_J*n_cc2_v,               &
+                     one,                              &
+                     omega(batch_a%first,first_cc2_o), & 
+                     wf%n_v)
 !
-         call dgemm('N','N',                 &
-                     batch_a%length,         &
-                     n_cc2_o,                &
-                     (n_cc2_o)*(n_cc2_v)**2, &
-                     one,                    &
-                     g_abjc,                 & ! g_a_bjc
-                     batch_a%length,         &
-                     u_bjci,                 & ! u_bjc_i
-                     (n_cc2_o)*(n_cc2_v)**2, &
-                     zero,                   &
-                     omega_ai,               &
-                     batch_a%length)
-!
-         call mem%dealloc(g_abjc, batch_a%length, n_cc2_v, n_cc2_o, n_cc2_v)
-!
-!$omp parallel do private (a, i)
-         do I = 1, n_cc2_o
-            do a = 1, batch_a%length
-!
-               omega(a + batch_a%first - 1, I + first_cc2_o - 1) = &
-                                 omega(a + batch_a%first - 1, I + first_cc2_o - 1)  + omega_ai(a, I)
-!
-            enddo
-         enddo
-!$omp end parallel do
-!
-         call mem%dealloc(omega_ai, batch_a%length, n_cc2_o)
+         call mem%dealloc(L_aJb, batch_a%length, wf%eri%n_J, n_cc2_v)
 !
       enddo ! batch_a
 !
-      call timer%turn_off()
+      call mem%dealloc(X_Jbi, wf%eri%n_J, n_cc2_v, n_cc2_o)
 !
-      call mem%dealloc(u_bjci, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
+      call timer%turn_off()
 !
    end subroutine omega_cc2_a1_mlcc2
 !
@@ -196,7 +208,7 @@ contains
 !!
       implicit none
 !
-      class(mlcc2), intent(in) :: wf
+      class(mlcc2), intent(inout) :: wf
 
       integer, intent(in) :: n_cc2_o, n_cc2_v, first_cc2_o, first_cc2_v, last_cc2_o, last_cc2_v
 !
@@ -214,11 +226,8 @@ contains
 !
       call mem%alloc(g_kbji, n_cc2_o, n_cc2_v, n_cc2_o, wf%n_o)
 !
-      call wf%get_ovoo(g_kbji, &
-                       first_cc2_o, last_cc2_o, &
-                       first_cc2_v, last_cc2_v, &
-                       first_cc2_o, last_cc2_o, &
-                       1, wf%n_o)
+      call wf%eri%get_eri_t1('ovoo', g_kbji, first_cc2_o, last_cc2_o, first_cc2_v, last_cc2_v, &
+                                             first_cc2_o, last_cc2_o, 1, wf%n_o)
 !
       call mem%alloc(g_jbki, n_cc2_o, n_cc2_v, n_cc2_o, wf%n_o)
 !
@@ -354,11 +363,10 @@ contains
 !
       call mem%alloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
-      call wf%get_vovo(g_aibj, &
-                        wf%first_cc2_v, wf%last_cc2_v, &
-                        wf%first_cc2_o, wf%last_cc2_o, &
-                        wf%first_cc2_v, wf%last_cc2_v, &
-                        wf%first_cc2_o, wf%last_cc2_o)
+      call wf%eri%get_eri_t1('vovo', g_aibj, wf%first_cc2_v, wf%last_cc2_v, &
+                                             wf%first_cc2_o, wf%last_cc2_o, &
+                                             wf%first_cc2_v, wf%last_cc2_v, &
+                                             wf%first_cc2_o, wf%last_cc2_o)
 !
       call packin(omega2, g_aibj, wf%n_cc2_v*wf%n_cc2_o)
 !

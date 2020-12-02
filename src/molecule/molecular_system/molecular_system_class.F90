@@ -25,21 +25,19 @@ module molecular_system_class
 !!
 !
    use parameters
-   use libint_initialization
-   use active_atoms_class, only : active_atoms
 !
    use global_in, only : input
    use global_out, only : output
    use sequential_file_class, only : sequential_file
-   use direct_file_class, only : direct_file
    use output_file_class, only : output_file
    use memory_manager_class, only : mem
-   use string_utilities, only : convert_to_lowercase
+   use string_utilities, only : convert_to_lowercase, remove_spaces_etc
    use interval_class, only : interval
    use atomic_class, only : atomic
    use mm_class, only : mm
    use pcm_class, only : pcm
    use timings_class, only: timings
+   use active_atoms_class, only : active_atoms
 !
    implicit none
 !
@@ -59,8 +57,6 @@ module molecular_system_class
       integer :: n_electrons 
       integer :: n_s
 !
-      integer :: cartesian_gaussians_int
-!
       type(atomic), dimension(:), allocatable :: atoms
 !
       type(interval), dimension(:), allocatable :: shell_limits 
@@ -77,26 +73,22 @@ module molecular_system_class
       integer :: n_cart_basis = 0                              
       integer :: n_pure_basis = 0                              
       integer :: n_primitives_cart = 0                         
-      logical :: cartesian_basis = .false. 
       logical :: mm_calculation = .false.
       logical :: pcm_calculation = .false.
 !
       type(mm) :: mm
       type(pcm) :: pcm
 !
-!     AO Cholesky vectors
+!     .xyz file to write system geometry
 !
-      type(direct_file) :: ao_cholesky_file
-!
-      integer :: n_J = 0
+      type(output_file) :: xyz_file
 !
    contains
 !
       procedure, private :: prepare                         => prepare_molecular_system
       procedure :: cleanup                                  => cleanup_molecular_system
 !
-      procedure, private :: write_libint_files              => write_libint_files_molecular_system
-      procedure, private :: delete_libint_files             => delete_libint_files_molecular_system
+      procedure :: write_xyz_file                           => write_xyz_file_molecular_system
 !
       procedure, private :: read_settings                   => read_settings_molecular_system
       procedure, private :: read_system                     => read_system_molecular_system
@@ -182,6 +174,7 @@ module molecular_system_class
 !
    end type molecular_system
 !
+   private :: default_cartesian_basis
 !
    interface
 !
@@ -212,7 +205,6 @@ contains
 !
       molecule%charge = 0
       molecule%multiplicity = 1
-      molecule%cartesian_gaussians_int = 0      
       molecule%n_active_atom_spaces = 0
 !
       call molecule%read_settings()
@@ -249,7 +241,6 @@ contains
       molecule%mm_calculation  = mm_calculation
       molecule%pcm_calculation = pcm_calculation
 !
-      molecule%cartesian_gaussians_int = 0
       molecule%n_active_atom_spaces = 0
 !
       call molecule%prepare()
@@ -281,7 +272,10 @@ contains
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use iso_c_binding
+!
       use shell_class, only: shell
+      use libint_initialization, only: initialize_shell2atom_c
 !
       implicit none
 !
@@ -290,15 +284,17 @@ contains
       integer :: s 
 !
       integer :: n_s, i, j
-      integer(i6) :: k
+      integer(c_int) :: k
 !
-      integer(i6), dimension(:), allocatable :: n_shells_on_atoms
-      integer(i6), dimension(:), allocatable :: n_basis_in_shells
-      integer(i6), dimension(:), allocatable :: first_ao_in_shells
-      integer(i6), dimension(:), allocatable :: shell_numbers
+      integer(c_int), dimension(:), allocatable :: n_shells_on_atoms
+      integer(c_int), dimension(:), allocatable :: n_basis_in_shells
+      integer(c_int), dimension(:), allocatable :: first_ao_in_shells
+      integer(c_int), dimension(:), allocatable :: shell_numbers
 !
       real(dp), dimension(:,:), allocatable :: qm_coordinates
       real(dp), dimension(:), allocatable :: qm_charges
+!
+      character(len=:), allocatable :: xyz_file_name
 !
       type(timings), allocatable :: timer 
       type(timings), allocatable :: libint_timer  
@@ -441,6 +437,14 @@ contains
 !
       enddo
 !
+!     Create the systems xyz file
+!
+      xyz_file_name = trim(molecule%name_) // '.xyz'
+!
+      call remove_spaces_etc(xyz_file_name)
+
+      molecule%xyz_file = output_file(xyz_file_name)
+!
       call timer%turn_off()
 !
    end subroutine prepare_molecular_system
@@ -467,7 +471,6 @@ contains
       call molecule%destruct_basis_sets()
       call molecule%destruct_shell_limits()
       call molecule%destruct_shell2atom()
-      call molecule%delete_libint_files()
       if (molecule%mm_calculation) call molecule%mm%cleanup()
       if (molecule%pcm_calculation) call molecule%pcm%cleanup()
 !
@@ -477,29 +480,17 @@ contains
    subroutine initialize_libint_atoms_and_bases_molecular_system(molecule)
 !!
 !!    Initialize Libint atoms and bases 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad 2018-2019
+!!    Written by Rolf H. Myhre, Mar. 2020
 !!
+!!    Calls export_geometry_and_basis with molecule%atoms as argument
+!!
+      use libint_initialization, only: export_geometry_and_basis_to_libint
+!
       implicit none 
 !
       class(molecular_system) :: molecule 
 !           
-      character(len=100) :: temp_name
-!
-      integer :: i
-!
-      call molecule%write_libint_files()
-!
-      call initialize_atoms(molecule%name_)
-!
-      call reset_basis_c()
-!
-      do i = 1, molecule%n_basis_sets
-!
-         write(temp_name, '(a, a1, i4.4)') trim(molecule%name_), '_', i
-!
-         call initialize_basis(molecule%basis_sets(i), temp_name, molecule%cartesian_gaussians_int)
-!
-      enddo
+      call export_geometry_and_basis_to_libint(molecule%atoms)
 !
    end subroutine initialize_libint_atoms_and_bases_molecular_system
 !
@@ -593,6 +584,16 @@ contains
 !!    Initialize Libint integral engines 
 !!    Written by Eirik F. Kjønstad, June 2019 
 !!
+!!    Modified by Rolf. H Myhre, Mar. 2020
+!!    Moved use statements here
+!!
+      use libint_initialization, only: initialize_coulomb_c
+      use libint_initialization, only: initialize_kinetic_c
+      use libint_initialization, only: initialize_nuclear_c
+      use libint_initialization, only: initialize_overlap_c
+      use libint_initialization, only: initialize_dipole_c
+      use libint_initialization, only: initialize_quadrupole_c
+!
       implicit none 
 !
       call initialize_coulomb_c()
@@ -628,6 +629,9 @@ contains
 !!    If active atoms are specified, they will be read and 
 !!    reordered in read_active_atoms_molecular_system
 !!
+!!    Modified by Rolf H. Myhre, Mar. 2020
+!!    Simplified the looping structure and sets Cartesian which is now an atom variable
+!!
       implicit none
 !
       class(molecular_system) :: molecule
@@ -639,11 +643,12 @@ contains
       character(len=2), dimension(:), allocatable :: symbols
       character(len=100), dimension(:), allocatable :: basis_sets
 !
-      logical, dimension(:), allocatable :: selected_atom
+      logical, dimension(:), allocatable :: atom_remains
 !
       integer :: atom, current_atom
 !
       character(len=100) :: current_basis
+      logical :: current_cartesian, cartesian_in_input, cartesian_input
 !
       logical :: units_angstrom
 !
@@ -659,7 +664,23 @@ contains
       allocate(symbols(molecule%n_atoms))
       allocate(basis_sets(molecule%n_atoms))
 !
+!     Read geometry from input file
+!
       call input%get_geometry(molecule%n_atoms, symbols, positions, basis_sets, units_angstrom)
+!
+!     Check if user asks for cartesian basis
+!     This should probably be in geometry and be handled by get_geometry
+!
+      if (input%requested_keyword_in_section('cartesian gaussians', 'system')) then
+         cartesian_in_input = .true.
+         cartesian_input = .true.
+      else if (input%requested_keyword_in_section('pure gaussians', 'system')) then
+         cartesian_in_input = .true.
+         cartesian_input = .false.
+      else
+         cartesian_in_input = .true.
+      endif
+!
 !
       call molecule%initialize_atoms()
 !
@@ -674,64 +695,29 @@ contains
 !
 !     1. Place the first atom in atoms
 !
-      current_atom = 1
+      call mem%alloc(atom_remains, molecule%n_atoms)
+      atom_remains = .true.
 !
-      molecule%atoms(current_atom)%symbol       = symbols(current_atom)
-      molecule%atoms(current_atom)%basis        = basis_sets(current_atom)
-      molecule%atoms(current_atom)%x            = positions(current_atom,1)*angstrom_conversion
-      molecule%atoms(current_atom)%y            = positions(current_atom,2)*angstrom_conversion
-      molecule%atoms(current_atom)%z            = positions(current_atom,3)*angstrom_conversion
+!     Must start at zero in case of single atom
+      current_atom = 0
+      current_cartesian = .false.
 !
-      molecule%atoms(current_atom)%input_number = current_atom
+      do while (current_atom .lt. molecule%n_atoms)
 !
-      current_basis = molecule%atoms(current_atom)%basis
-!
-      allocate(selected_atom(molecule%n_atoms))
-      selected_atom = .false.
-!
-      selected_atom(current_atom) = .true.
-!
-!     2. Place rest of atoms such that they come in order of basis set
-!
-      do while (current_atom < molecule%n_atoms)
+!        Find the first remaining basis from the remaining atoms and set cartesian
 !
          do atom = 1, molecule%n_atoms
 !
-            if (trim(basis_sets(atom)) == trim(current_basis) .and. .not. selected_atom(atom)) then
+            if (atom_remains(atom)) then
 !
-               current_atom = current_atom + 1
+               current_basis = basis_sets(atom)
 !
-               molecule%atoms(current_atom)%symbol       = symbols(atom)
-               molecule%atoms(current_atom)%basis        = basis_sets(atom)
-               molecule%atoms(current_atom)%x            = positions(atom,1)*angstrom_conversion
-               molecule%atoms(current_atom)%y            = positions(atom,2)*angstrom_conversion
-               molecule%atoms(current_atom)%z            = positions(atom,3)*angstrom_conversion
-!
-               molecule%atoms(current_atom)%input_number = atom
-!
-               selected_atom(atom) = .true.      
-!
-            endif
-!
-         enddo
-!
-         do atom = 1, molecule%n_atoms
-!
-            if (.not. selected_atom(atom)) then
-!
-               current_atom = current_atom + 1
-!
-               molecule%atoms(current_atom)%symbol       = symbols(atom)
-               molecule%atoms(current_atom)%basis        = basis_sets(atom)
-               molecule%atoms(current_atom)%x            = positions(atom,1)*angstrom_conversion
-               molecule%atoms(current_atom)%y            = positions(atom,2)*angstrom_conversion
-               molecule%atoms(current_atom)%z            = positions(atom,3)*angstrom_conversion
-!
-               molecule%atoms(current_atom)%input_number = atom
-!
-               current_basis = molecule%atoms(current_atom)%basis
-!
-               selected_atom(atom) = .true.
+!              Set if cartesian
+               if (cartesian_in_input) then
+                  current_cartesian = cartesian_input
+               else
+                  current_cartesian = default_cartesian_basis(current_basis)
+               endif
 !
                exit             
 !
@@ -739,13 +725,36 @@ contains
 !
          enddo         
 !
+!        Set the atoms with current_basis
+!
+         do atom = 1, molecule%n_atoms
+!
+            if (trim(basis_sets(atom)) .eq. trim(current_basis) &
+                .and. atom_remains(atom)) then
+!
+               current_atom = current_atom + 1
+!
+               molecule%atoms(current_atom)%symbol       = symbols(atom)
+               molecule%atoms(current_atom)%basis        = current_basis
+               molecule%atoms(current_atom)%x            = positions(atom,1)*angstrom_conversion
+               molecule%atoms(current_atom)%y            = positions(atom,2)*angstrom_conversion
+               molecule%atoms(current_atom)%z            = positions(atom,3)*angstrom_conversion
+               molecule%atoms(current_atom)%input_number = atom
+               molecule%atoms(current_atom)%cartesian    = current_cartesian
+!
+               atom_remains(atom) = .false.
+!
+            endif
+!
+         enddo
+!
       enddo
 !
       call mem%dealloc(positions, molecule%n_atoms, 3)
+      call mem%dealloc(atom_remains, molecule%n_atoms)
 !
       deallocate(symbols)
       deallocate(basis_sets)
-      deallocate(selected_atom)
 !
    end subroutine read_geometry_molecular_system
 !
@@ -797,7 +806,7 @@ contains
    end subroutine rename_core_valence_dunning_sets_molecular_system
 !
 !
-   subroutine write_libint_files_molecular_system(molecule)
+   subroutine write_xyz_file_molecular_system(molecule, append)
 !!
 !!    Write LibInt files
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -809,145 +818,43 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      integer :: atom = 0
+      logical, optional, intent(in) :: append
 !
-      character(len=100) temp_name
-      character(len=100) current_basis
+      integer :: atom
 !
-      type(output_file) :: mol_file
-      type(output_file) :: basis_file
-!
-      integer :: basis_set_counter, atom_offset, current_basis_nbr, i
-!
-      integer, dimension(:), allocatable :: n_atoms_in_basis
+      character(len=:), allocatable :: position_
 !
 !     Write atom file
 !
-      mol_file = output_file(trim(molecule%name_) // '.xyz')
-      call mol_file%open_('rewind')
+      position_ = 'rewind'
+      if (present(append)) then
+         if (append) then
+            position_ = 'append'
+         else
+            position_ = 'rewind'
+         endif
+      endif
 !
-      call mol_file%printf('m', '(i5)', ints=[molecule%n_atoms], fs='(a/)')
+      call molecule%xyz_file%open_(position_)
+!
+      call molecule%xyz_file%printf('m', '(i5)', ints=[molecule%n_atoms], fs='(a/)')
 !
       do atom = 1, molecule%n_atoms
 !
-         call mol_file%printf('m', '(a2)   (f21.16)   (f21.16)   (f21.16)', &
-                              chars = [molecule%atoms(atom)%symbol],        &
-                              reals = [molecule%atoms(atom)%x,              &
-                                       molecule%atoms(atom)%y,              &
-                                       molecule%atoms(atom)%z],             &
-                              fs ='(a)', ll=80)
+         call molecule%xyz_file%printf('m', '(b2)   (f21.16)   (f21.16)   (f21.16)', &
+                                       chars = [molecule%atoms(atom)%symbol],        &
+                                       reals = [molecule%atoms(atom)%x,              &
+                                                molecule%atoms(atom)%y,              &
+                                                molecule%atoms(atom)%z],             &
+                                       fs ='(a)', ll=80)
 !
       enddo
 !
-      call mol_file%close_
+      call molecule%xyz_file%printf('m','')
+      call molecule%xyz_file%printf('m','')
+      call molecule%xyz_file%close_
 !
-!     Count number of basis sets
-!
-      current_basis = molecule%atoms(1)%basis
-      molecule%n_basis_sets = 1
-!
-      do atom = 2, molecule%n_atoms
-!
-         if (molecule%atoms(atom)%basis .ne. current_basis) then
-!
-            molecule%n_basis_sets = molecule%n_basis_sets + 1
-            current_basis = molecule%atoms(atom)%basis
-!
-         endif
-!
-      enddo
-!
-      call molecule%initialize_basis_sets()
-!
-      call mem%alloc(n_atoms_in_basis, molecule%n_basis_sets)
-!
-      n_atoms_in_basis = 1
-      basis_set_counter = 1
-      molecule%basis_sets(basis_set_counter) = molecule%atoms(1)%basis
-!
-!     Count number of atoms in each basis
-!
-      do atom = 2, molecule%n_atoms
-!
-         if (molecule%atoms(atom)%basis .ne. molecule%basis_sets(basis_set_counter)) then
-!
-            basis_set_counter = basis_set_counter + 1
-            molecule%basis_sets(basis_set_counter) = molecule%atoms(atom)%basis
-!
-         else
-!
-            n_atoms_in_basis(basis_set_counter) = n_atoms_in_basis(basis_set_counter) + 1
-!
-         endif
-!
-      enddo
-!
-      atom_offset = 0
-!
-      do current_basis_nbr = 1, molecule%n_basis_sets
-!
-         write(temp_name, '(a, a1, i4.4, a4)')trim(molecule%name_), '_', current_basis_nbr,  '.xyz'
-!
-         basis_file = output_file(trim(temp_name))
-         call basis_file%open_('rewind')
-!
-         call basis_file%printf('m', '(i5)', ints=[n_atoms_in_basis(current_basis_nbr)], &
-                                fs='(a/)')
-!
-         do i = 1, n_atoms_in_basis(current_basis_nbr)
-!
-            atom = i + atom_offset
-!
-            call basis_file%printf('m', '(a2)   (f21.16)   (f21.16)   (f21.16)', &
-                                   chars = [molecule%atoms(atom)%symbol],        &
-                                   reals = [molecule%atoms(atom)%x,              &
-                                            molecule%atoms(atom)%y,              &
-                                            molecule%atoms(atom)%z],             &
-                                   fs ='(a)', ll=80)
-!
-         enddo
-!
-         call basis_file%close_
-!
-         atom_offset = atom_offset + n_atoms_in_basis(current_basis_nbr)
-!
-      enddo
-!
-      call mem%dealloc(n_atoms_in_basis, molecule%n_basis_sets)
-!
-   end subroutine write_libint_files_molecular_system
-!
-!
-   subroutine delete_libint_files_molecular_system(molecule)
-!!
-!!    Delete LibInt Files
-!!    Written by Tor S. Haugland, 2019
-!!
-!!    Deletes .xyz files used by LibInt to generate integrals.
-!!
-      implicit none
-!
-      class(molecular_system) :: molecule
-!
-      type(sequential_file) :: xyz_file
-      integer :: current_basis_nbr
-      character(len=100) temp_name
-!
-      xyz_file = sequential_file(trim(molecule%name_) // '.xyz', 'formatted')
-!
-      call xyz_file%delete_()
-!
-      do current_basis_nbr = 1, molecule%n_basis_sets
-!
-         write(temp_name, '(a, a1, i4.4, a4)') trim(molecule%name_), '_', current_basis_nbr, '.xyz'
-!
-         xyz_file = sequential_file(trim(temp_name), 'formatted')
-!
-         call xyz_file%delete_()
-!
-      enddo
-!
-   end subroutine delete_libint_files_molecular_system
+   end subroutine write_xyz_file_molecular_system
 !
 !
    subroutine read_active_atoms_molecular_system(molecule)
@@ -1933,9 +1840,6 @@ contains
       call output%printf('m', 'Coordinate units: (a0)', &
                          chars=[trim(molecule%coordinate_units)], fs='(t6,a)')
 !
-      if (molecule%cartesian_gaussians_int.eq.1) &
-         call output%printf('m', 'Using Cartesian gaussians.', fs='(/t6,a)')
-!
       call output%printf('m', 'Pure basis functions:      (i5)', &
                          ints=[molecule%n_pure_basis], fs='(/t6,a)')
       call output%printf('m', 'Cartesian basis functions: (i5)', &
@@ -2555,8 +2459,6 @@ contains
 !  
       enddo
 !  
-      if(molecule%n_cart_basis.eq.molecule%n_pure_basis) molecule%cartesian_basis = .True.
-!  
 !
    end subroutine check_convert_pure_to_cartesian_basis_molecular_system
 !
@@ -2770,29 +2672,6 @@ contains
 !
       enddo
 !
-      if(trim(basis).eq.'3-21g'.or.         &
-         trim(basis).eq.'6-31g'.or.         &
-         trim(basis).eq.'6-31+g'.or.        &
-         trim(basis).eq.'6-31++g'.or.       &
-         trim(basis).eq.'6-31g*'.or.        &
-         trim(basis).eq.'6-31g**'.or.       &
-         trim(basis).eq.'6-31+g*'.or.       &
-         trim(basis).eq.'6-31+g**'.or.      &
-         trim(basis).eq.'6-31++g**'.or.     &
-         trim(basis).eq.'6-31g(d,p)'.or.    &
-         trim(basis).eq.'6-31g(2df,p)'.or.  &
-         trim(basis).eq.'6-31g(3df,3pd)') molecule%cartesian_gaussians_int = 1
-!
-      if (input%requested_keyword_in_section('cartesian gaussians', 'system')) then 
-!
-         molecule%cartesian_gaussians_int = 1
-! 
-      else if(input%requested_keyword_in_section('pure gaussians','system')) then
-!
-         molecule%cartesian_gaussians_int = 0
-!
-      endif 
-
    end subroutine check_if_basis_present_and_pure_molecular_system
 !
 !
@@ -3164,6 +3043,41 @@ contains
       call output%printf('m','OBS: Atoms will be reordered, active atoms first', fs='(t6, a)')
 !
    end subroutine print_active_atoms_molecular_system
+!
+!
+   pure function default_cartesian_basis(basis) result(cartesian)
+!!
+!!    Default cartesian basis
+!!    Written by Rolf H. Myhre, Mar. 2020
+!!
+!!    Short helper function to check if basis is one of the
+!!    basis sets that are cartesian by default
+!!
+      implicit none
+!
+      character(len=*), intent(in) :: basis
+!
+      logical :: cartesian
+!
+      cartesian = .false.
+      if(trim(basis).eq.'3-21g'.or.         &
+         trim(basis).eq.'6-31g'.or.         &
+         trim(basis).eq.'6-31+g'.or.        &
+         trim(basis).eq.'6-31++g'.or.       &
+         trim(basis).eq.'6-31g*'.or.        &
+         trim(basis).eq.'6-31g**'.or.       &
+         trim(basis).eq.'6-31+g*'.or.       &
+         trim(basis).eq.'6-31+g**'.or.      &
+         trim(basis).eq.'6-31++g**'.or.     &
+         trim(basis).eq.'6-31g(d,p)'.or.    &
+         trim(basis).eq.'6-31g(2df,p)'.or.  &
+         trim(basis).eq.'6-31g(3df,3pd)') then
+!
+         cartesian = .true.
+!
+      endif
+!
+   end function default_cartesian_basis
 !
 !
 end module molecular_system_class

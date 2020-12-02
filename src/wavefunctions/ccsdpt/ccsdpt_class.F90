@@ -35,9 +35,7 @@ module ccsdpt_class
    use batching_index_class, only : batching_index
    use global_out, only: output
    use timings_class, only: timings
-   use direct_file_class, only : direct_file
-   use io_utilities, only : single_record_reader, compound_record_reader 
-   use io_utilities, only : single_record_writer, compound_record_writer
+   use direct_stream_file_class, only : direct_stream_file
    use array_utilities, only: entrywise_product, zero_array
    use reordering
 !
@@ -47,9 +45,9 @@ module ccsdpt_class
 !
 !     Integral files
 !
-      type(direct_file) :: g_bdck
-      type(direct_file) :: g_ljck
-      type(direct_file) :: g_jbkc
+      type(direct_stream_file) :: g_bdck
+      type(direct_stream_file) :: g_ljck
+      type(direct_stream_file) :: g_jbkc
 !
       real(dp) :: ccsdpt_energy_correction
 !
@@ -64,37 +62,31 @@ module ccsdpt_class
       procedure :: print_gs_summary            => print_gs_summary_ccsdpt
 !
       procedure :: cleanup                     => cleanup_ccsdpt
+! 
+      procedure :: initialize                  => initialize_ccsdpt
 !
    end type ccsdpt
 !
-   interface ccsdpt
-!
-      procedure :: new_ccsdpt
-!
-   end interface ccsdpt
 !
 contains
 !
 !
-   function new_ccsdpt(system, template_wf) result(wf)
+   subroutine initialize_ccsdpt(wf, template_wf)
 !!
-!!    New CCSD(T)
+!!    Initialize
 !!    Written by Rolf H. Myhre, 2018
 !!
-      use molecular_system_class, only: molecular_system
       use wavefunction_class, only : wavefunction
 !
       implicit none
 !
-      type(ccsdpt) :: wf
-!
-      class(molecular_system), target, intent(in) :: system 
+      class(ccsdpt), intent(inout) :: wf
 !
       class(wavefunction), intent(in) :: template_wf
 !
       wf%name_ = 'ccsd(t)'
 !
-      call wf%general_cc_preparations(system)
+      call wf%general_cc_preparations()
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
@@ -109,7 +101,7 @@ contains
 !
       call wf%print_amplitude_info()
 !
-   end function new_ccsdpt
+   end subroutine initialize_ccsdpt
 !   
 !
    subroutine cleanup_ccsdpt(wf)
@@ -132,7 +124,7 @@ contains
 !
    subroutine prepare_integrals_ccsdpt(wf)
 !!
-!!    Prepate integrals for CCSD(T)
+!!    Prepare integrals for CCSD(T)
 !!    written by Alexander C. Paul and Rolf H. Myhre, Nov 2019
 !!
 !!    Construct and reorder integrals files for CCSD(T)
@@ -158,86 +150,79 @@ contains
 !
 !     (jb|kc) ! stored as bcj#k
 !
-      req_0 = wf%integrals%n_J*wf%n_o*wf%n_v
-      req_k = max(wf%integrals%n_J*wf%n_v + wf%n_o*wf%n_v**2, 2*wf%n_o*wf%n_v**2)
+      req_0 = 0
+      req_k = 2*wf%n_o*wf%n_v**2
+!
+      call wf%eri%get_eri_mo_mem('ovov', req_0, req_k, wf%n_o, wf%n_v, wf%n_o, 1, .true., .true.)
 !
       batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_k, req_0, req_k)
       call batch_k%determine_limits(1)
 !
-      call mem%alloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
+      call mem%alloc(g_pqrs, wf%n_o , wf%n_v , batch_k%max_length , wf%n_v)
+      call mem%alloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%max_length)
 !
-      wf%g_jbkc = direct_file('g_jbkc', wf%n_v**2)
+      wf%g_jbkc = direct_stream_file('g_jbkc', wf%n_v**2)
       call wf%g_jbkc%open_('write')
 !
       do k_batch = 1, batch_k%num_batches
 !
          call batch_k%determine_limits(k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_o , wf%n_v , batch_k%length , wf%n_v)
+         call wf%eri%get_eri_mo('ovov', g_pqrs,              &
+                                first_r=batch_k%first, last_r=batch_k%last, qp=.true., sr=.true.)
 !
-         call wf%integrals%construct_g_pqrs_mo(g_pqrs,    &
-                                               1, wf%n_o, &
-                                               wf%n_o+1, wf%n_o+wf%n_v,     &
-                                               batch_k%first, batch_k%last, &
-                                               wf%n_o+1, wf%n_o+wf%n_v)
+         call sort_1234_to_1324(g_pqrs, h_pqrs, wf%n_v, wf%n_o, wf%n_v, batch_k%length)
 !
-         call sort_1234_to_2413(g_pqrs , h_pqrs , wf%n_o , wf%n_v , batch_k%length , wf%n_v) ! sort to bcjk
-!
-         call compound_record_writer(wf%n_o, batch_k, wf%g_jbkc, h_pqrs)
-!
-         call mem%dealloc(g_pqrs, wf%n_o , wf%n_v , batch_k%length , wf%n_v)
+         call wf%g_jbkc%write_compound_full_batch(h_pqrs, wf%n_o, batch_k)
 !
       enddo
 !
-      call batch_k%determine_limits(1)
-      call mem%dealloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
+      call mem%dealloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%max_length)
+      call mem%dealloc(g_pqrs, wf%n_o , wf%n_v , batch_k%max_length , wf%n_v)
 !
       call wf%g_jbkc%close_()
 !
 !     (bd|ck) ordered dbc,k
 !
-      req_0 = wf%integrals%n_J*wf%n_v**2
-      req_k = 2*wf%n_v**3 + wf%integrals%n_J*wf%n_v
+      req_0 = 0
+      req_k = wf%n_v**3
+!
+      call wf%eri%get_eri_mo_mem('vvvo', req_0, req_k, wf%n_v, wf%n_v, wf%n_v, 1, qp=.true.)
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      wf%g_bdck = direct_file('g_bdck',wf%n_v**3)
+      call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
+!
+      wf%g_bdck = direct_stream_file('g_bdck',wf%n_v**3)
       call wf%g_bdck%open_('write')
 !
       do k_batch = 1,batch_k%num_batches
 !
          call batch_k%determine_limits(k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+         call wf%eri%get_eri_mo('vvvo', g_pqrs,                   &
+                                first_s=batch_k%first, last_s=batch_k%last, qp=.true.)
 !
-         call wf%integrals%construct_g_pqrs_mo(g_pqrs,    &
-                                               wf%n_o+1, wf%n_o+wf%n_v,     &
-                                               wf%n_o+1, wf%n_o+wf%n_v,     &
-                                               wf%n_o+1, wf%n_o+wf%n_v,     &
-                                               batch_k%first, batch_k%last)
-!
-         call sort_1234_to_2134(g_pqrs,h_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_k%length)
-!
-         call single_record_writer(batch_k, wf%g_bdck, h_pqrs)
-!
-         call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+         call wf%g_bdck%write_interval(g_pqrs, batch_k)
 !
       enddo
+!
+      call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
 !
       call wf%g_bdck%close_()
 !
 !     (lj|ck) ordered lcjk
 !
-      req_0 = wf%integrals%n_J*wf%n_o**2
-      req_k = 2*wf%n_o**2*wf%n_v + wf%integrals%n_J*wf%n_v
+      req_0 = 0
+      req_k = 2*wf%n_o**2*wf%n_v
+!
+      call wf%eri%get_eri_mo_mem('oovo', req_0, req_k, wf%n_o, wf%n_o, wf%n_v, 1)
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      wf%g_ljck = direct_file('g_ljck',wf%n_v*wf%n_o)
+      wf%g_ljck = direct_stream_file('g_ljck',wf%n_v*wf%n_o)
       call wf%g_ljck%open_('write')
 !
       do k_batch = 1,batch_k%num_batches
@@ -247,15 +232,12 @@ contains
          call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
          call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o ,batch_k%length)
 !
-         call wf%integrals%construct_g_pqrs_mo(g_pqrs,    &
-                                               1, wf%n_o, &
-                                               1, wf%n_o, &
-                                               wf%n_o+1, wf%n_v+wf%n_o, &
-                                               batch_k%first, batch_k%last)
+         call wf%eri%get_eri_mo('oovo', g_pqrs,                   &
+                                first_s=batch_k%first, last_s=batch_k%last)
 !
          call sort_1234_to_1324(g_pqrs,h_pqrs,wf%n_o,wf%n_o,wf%n_v,batch_k%length)
 !
-         call compound_record_writer(wf%n_o, batch_k, wf%g_ljck, h_pqrs)
+         call wf%g_ljck%write_compound_full_batch(h_pqrs, wf%n_o, batch_k)
 !
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
          call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
@@ -400,25 +382,25 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call single_record_reader(batch_i, wf%g_bdck, g_bdci)
+         call wf%g_bdck%read_interval(g_bdci, batch_i)
          g_bdci_p => g_bdci
 !
          do j_batch = 1, i_batch
 !
             call batch_j%determine_limits(j_batch)
 !
-            call compound_record_reader(batch_j, batch_i, wf%g_ljck, g_ljci)
-            call compound_record_reader(batch_i, batch_j, wf%g_jbkc, g_ibjc)
+            call wf%g_ljck%read_compound(g_ljci, batch_j, batch_i)
+            call wf%g_jbkc%read_compound(g_ibjc, batch_i, batch_j)
 !
             g_ljci_p => g_ljci
             g_ibjc_p => g_ibjc
 !
             if (j_batch .ne. i_batch) then
 !
-               call single_record_reader(batch_j, wf%g_bdck, g_bdcj)
+               call wf%g_bdck%read_interval(g_bdcj, batch_j)
                g_bdcj_p => g_bdcj
 !
-               call compound_record_reader(batch_i, batch_j, wf%g_ljck, g_licj)
+               call wf%g_ljck%read_compound(g_licj, batch_i, batch_j)
                g_licj_p => g_licj
 !
             else
@@ -435,22 +417,22 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call single_record_reader(batch_k, wf%g_bdck, g_bdck)
+                  call wf%g_bdck%read_interval(g_bdck, batch_k)
                   g_bdck_p => g_bdck
 ! 
-                  call compound_record_reader(batch_k, batch_i, wf%g_ljck, g_lkci)
+                  call wf%g_ljck%read_compound(g_lkci, batch_k, batch_i)
                   g_lkci_p => g_lkci
 !
-                  call compound_record_reader(batch_i, batch_k, wf%g_ljck, g_lick, &
-                                                                wf%g_jbkc, g_ibkc)
+                  call wf%g_ljck%read_compound(g_lick, batch_i, batch_k)
+                  call wf%g_jbkc%read_compound(g_ibkc, batch_i, batch_k)
                   g_lick_p => g_lick
                   g_ibkc_p => g_ibkc
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck, g_lkcj)
+                  call wf%g_ljck%read_compound(g_lkcj, batch_k, batch_j)
                   g_lkcj_p => g_lkcj
 !
-                  call compound_record_reader(batch_j, batch_k, wf%g_ljck, g_ljck, &
-                                                                wf%g_jbkc, g_jbkc)
+                  call wf%g_ljck%read_compound(g_ljck, batch_j, batch_k)
+                  call wf%g_jbkc%read_compound(g_jbkc, batch_j, batch_k)
                   g_ljck_p => g_ljck
                   g_jbkc_p => g_jbkc
 !
@@ -474,8 +456,8 @@ contains
                   g_lick_p => g_licj
                   g_ibkc_p => g_ibjc
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck, g_lkcj, &
-                                                                wf%g_jbkc, g_jbkc) ! g_jbkc = g_kbjc
+                  call wf%g_ljck%read_compound(g_lkcj, batch_k, batch_j)
+                  call wf%g_jbkc%read_compound(g_jbkc, batch_k, batch_j) ! g_jbkc = g_kbjc
                   g_lkcj_p => g_lkcj
                   g_ljck_p => g_lkcj
                   g_jbkc_p => g_jbkc

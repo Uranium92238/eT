@@ -241,8 +241,8 @@ contains
 !
       req0 = 0
 !
-      req1_i = (wf%n_v)*(wf%integrals%n_J)
-      req1_j = (wf%n_v)*(wf%integrals%n_J)
+      req1_i = (wf%n_v)*(wf%eri%n_J)
+      req1_j = (wf%n_v)*(wf%eri%n_J)
 !
       req2 = (wf%n_v**2)
 !
@@ -263,11 +263,11 @@ contains
 !
             call mem%alloc(g_iajb, batch_i%length, wf%n_v, batch_j%length, wf%n_v)
 !
-            call wf%get_ovov(g_iajb, &
-                              batch_i%first, batch_i%last, &
-                              1, wf%n_v, &
-                              batch_j%first, batch_j%last, &
-                              1, wf%n_v)
+            call wf%eri%get_eri_t1('ovov', g_iajb, &
+                                   batch_i%first, batch_i%last, &
+                                   1, wf%n_v, &
+                                   batch_j%first, batch_j%last, &
+                                   1, wf%n_v)
 !
 !$omp parallel do private(b,i,j,a) reduction(+:omp_correlation_energy)
             do b = 1, wf%n_v

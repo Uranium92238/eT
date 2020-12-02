@@ -31,17 +31,25 @@ module parameters
 !
    implicit none
 !
+!  Version
+!
+   integer, parameter :: major_version = 1
+   integer, parameter :: minor_version = 1
+   integer, parameter :: patch_version = 0
+   character(len=7), parameter :: version_name = "Bastion"
+!
 !  Integers 
 !
-   real(dp), parameter :: zero  = 0.0D0
-   real(dp), parameter :: one   = 1.0D0
-   real(dp), parameter :: two   = 2.0D0
-   real(dp), parameter :: three = 3.0D0
-   real(dp), parameter :: four  = 4.0D0
-   real(dp), parameter :: five  = 5.0D0
-   real(dp), parameter :: six   = 6.0D0
-   real(dp), parameter :: seven = 7.0D0
-   real(dp), parameter :: eight = 8.0D0
+   real(dp), parameter :: zero  =  0.0D0
+   real(dp), parameter :: one   =  1.0D0
+   real(dp), parameter :: two   =  2.0D0
+   real(dp), parameter :: three =  3.0D0
+   real(dp), parameter :: four  =  4.0D0
+   real(dp), parameter :: five  =  5.0D0
+   real(dp), parameter :: six   =  6.0D0
+   real(dp), parameter :: seven =  7.0D0
+   real(dp), parameter :: eight =  8.0D0
+   real(dp), parameter :: ten   = 10.0D0
 !
 !  Fractions
 !
@@ -50,6 +58,7 @@ module parameters
    real(dp), parameter :: quarter   = one/four
    real(dp), parameter :: sixth     = one/six
    real(dp), parameter :: eighth    = one/eight
+   real(dp), parameter :: tenth     = one/ten
 !
 !  Pi
 !
@@ -66,6 +75,7 @@ module parameters
    complex(dp), parameter :: six_complex   = cmplx(six, zero, dp)
    complex(dp), parameter :: seven_complex = cmplx(seven, zero, dp)
    complex(dp), parameter :: eight_complex = cmplx(eight, zero, dp)
+   complex(dp), parameter :: ten_complex   = cmplx(ten, zero, dp)
 !
 !  Complex fractions
 !
@@ -73,6 +83,7 @@ module parameters
    complex(dp), parameter :: third_complex   = cmplx(third, zero, dp)
    complex(dp), parameter :: quarter_complex = cmplx(quarter, zero, dp)
    complex(dp), parameter :: eighth_complex  = cmplx(eighth, zero, dp)
+   complex(dp), parameter :: tenth_complex   = cmplx(tenth, zero, dp)
 !
 !  Conversion factors
 !

@@ -64,7 +64,6 @@ module mlhf_class
 !
    type, extends(hf) :: mlhf
 !
-      type(sequential_file) :: inactive_energy_file
       type(sequential_file) :: mlhf_inactive_fock_term_file
       type(sequential_file) :: G_De_ao_file
 !
@@ -91,6 +90,7 @@ module mlhf_class
 !
       procedure :: append_orbital_info_to_restart           => append_orbital_info_to_restart_mlhf
       procedure :: is_restart_safe                          => is_restart_safe_mlhf
+      procedure :: is_restart_possible                      => is_restart_possible_mlhf
       procedure :: read_for_scf_restart                     => read_for_scf_restart_mlhf
       procedure :: read_for_scf_restart_mo                  => read_for_scf_restart_mlhf
 !
@@ -209,10 +209,10 @@ contains
 !
 !     Construct screening vectors
 !
-      call wf%initialize_sp_eri_schwarz()
-      call wf%initialize_sp_eri_schwarz_list()
+      call wf%initialize_shp_eri_schwarz()
+      call wf%initialize_shp_eri_schwarz_list()
 !
-      call wf%construct_sp_eri_schwarz()
+      call wf%construct_shp_eri_schwarz()
 !
       call wf%initialize_ao_h()
       call wf%get_ao_h_wx(wf%ao_h)
@@ -591,7 +591,8 @@ contains
 !
 !        Standard Roothan-Hall step to generate idempotent density
 !
-         call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies) ! F => C
+         call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, &
+                                    wf%orbital_energies) ! F => C
          call wf%update_ao_density() ! C => D
 !
       endif
@@ -935,7 +936,7 @@ contains
       n_active_aos = last_hf_ao ! Because if there are CC active atoms, these are also HF active
 !
       call mem%alloc(C_pao_copy, wf%n_ao, n_active_aos)
-      call wf%projected_atomic_orbitals(wf%ao_density, C_pao_copy, n_active_aos)
+      call wf%project_atomic_orbitals(wf%ao_density, C_pao_copy, n_active_aos)
 !
       call mem%alloc(S_pao, n_active_aos, n_active_aos)
 !
@@ -976,7 +977,7 @@ contains
 !
 !     Project occupied and active virtual out of AOs
 !
-      call wf%projected_atomic_orbitals(D, C_pao_copy, wf%n_ao)
+      call wf%project_atomic_orbitals(D, C_pao_copy, wf%n_ao)
 !
       call mem%dealloc(D, wf%n_ao, wf%n_ao)
 !
@@ -1149,8 +1150,8 @@ contains
       call wf%destruct_ao_density()
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
-      call wf%destruct_sp_eri_schwarz()
-      call wf%destruct_sp_eri_schwarz_list()
+      call wf%destruct_shp_eri_schwarz()
+      call wf%destruct_shp_eri_schwarz_list()
       call wf%destruct_ao_h()
 !
       call wf%destruct_W_mo_update()
@@ -1191,7 +1192,7 @@ contains
 !
       call dscal(wf%n_ao**2, two, wf%ao_density, 1)
 !
-      call wf%construct_ao_G(wf%ao_density, wf%G_De_ao)
+      call wf%construct_ao_G(wf%ao_density, wf%G_De_ao, C_screening=.true.)
 !
       call wf%G_De_ao_file%open_('write', 'rewind')
       call wf%G_De_ao_file%write_(wf%G_De_ao, wf%n_ao**2)
@@ -1380,7 +1381,7 @@ contains
    end subroutine construct_active_mos_mlhf
 !
 !
-   subroutine is_restart_safe_mlhf(wf, task)
+   subroutine is_restart_safe_mlhf(wf)
 !!
 !!    Is restart safe?
 !!    Written by Eirik F. Kjønstad, Linda Goletto
@@ -1389,8 +1390,6 @@ contains
       implicit none
 !
       class(mlhf) :: wf
-!
-      character(len=*), intent(in) :: task
 !
       integer :: n_ao, n_densities, i, n_active_atoms, n_active_spaces, n_electrons
       integer, dimension(:), allocatable :: active_atoms
@@ -1414,32 +1413,35 @@ contains
 !
       if (n_ao .ne. wf%n_ao) then
          call output%error_msg('attempted to restart MLHF ' // &
-                           'with an inconsistent number of atomic orbitals for task ' // trim(task))
+                               'with an inconsistent number of atomic orbitals.')
       endif
 !
       if (n_densities .ne. wf%n_densities) then
          call output%error_msg('attempted to restart MLHF with an inconsistent number ' // &
-            'of atomic densities (likely a HF/UHF inconsistency) for task ' // trim(task))
+                               'of atomic densities (likely a HF/UHF inconsistency).')
       endif
 !
       if (n_electrons .ne. wf%system%get_n_electrons()) then
          call output%error_msg('attempted to restart MLHF with an inconsistent number ' // &
-                               'of electrons for task ' // trim(task))
+                               'of electrons.')
       endif
 !
       if (n_active_atoms .ne. wf%system%active_atom_spaces(n_active_spaces)%last_atom) then
-         call output%error_msg('attempted to restart MLHF with an inconsistent number ' // &
-            'of active atoms for task ' // trim(task))
+         call output%error_msg('attempted to restart MLHF with an ' // &
+                               'inconsistent number of active atoms.')
       endif
 !
       call mem%alloc(active_atoms, n_active_atoms)
 !
       do i = 1, n_active_atoms
+!
          call wf%restart_file%read_(active_atoms(i))
+!
          if (active_atoms(i) .ne. wf%system%atoms(i)%input_number) then
                      call output%error_msg('attempted to restart MLHF ' // &
-                     'with inconsistent active atoms for task ' // trim(task))
+                                           'with inconsistent active atoms.')
          endif
+!
       enddo
 !
       call mem%dealloc(active_atoms, n_active_atoms)
@@ -1447,6 +1449,28 @@ contains
       call wf%restart_file%close_
 !
    end subroutine is_restart_safe_mlhf
+!
+!
+   function is_restart_possible_mlhf(wf) result(restart_is_possible)
+!!
+!!    Is restart possible
+!!    Written by Alexander C. Paul, Okt 2020
+!!
+!!    Checks if restart files exist
+!!
+      implicit none
+!
+      class(mlhf) :: wf
+!
+      logical :: restart_is_possible
+!
+      restart_is_possible = (wf%restart_file%exists() &
+                       .and. wf%orbital_coefficients_file%exists() &
+                       .and. wf%orbital_energies_file%exists() &
+                       .and. wf%G_De_ao_file%exists() &
+                       .and. wf%mlhf_inactive_fock_term_file%exists())
+! 
+   end function is_restart_possible_mlhf
 !
 !
    subroutine read_for_scf_restart_mlhf(wf)
@@ -1563,10 +1587,11 @@ contains
                         ao_density_guess=ao_density_guess,              &
                         energy_threshold=wf%full_space_hf_threshold,    &
                         max_iterations=max_iterations,                  &
-                        gradient_threshold=wf%full_space_hf_threshold,  &
+                        residual_threshold=wf%full_space_hf_threshold,  &
                         storage=storage,                                &
                         cumulative_threshold=1.0d-2,                    &
-                        crop=.false.)
+                        crop=.false.,                                   &
+                        energy_convergence=.false.)
 !
       call full_space_solver%run(full_space_wf)
 !
@@ -1824,6 +1849,7 @@ contains
 !
          plotter = visualization(wf%system, wf%n_ao)
 !
+         call plotter%initialize(wf%system)
          call mem%alloc(D, wf%n_ao, wf%n_ao)
 !
          call dgemm('N', 'T',                   &
@@ -1844,6 +1870,7 @@ contains
          call plotter%plot_density(wf%system, D, label)
 !
          call mem%dealloc(D, wf%n_ao, wf%n_ao)
+         call plotter%cleanup()
 !
       endif
 

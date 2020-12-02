@@ -55,7 +55,7 @@
 !!
       implicit none
 !
-      class(mlcc2), intent(in) :: wf
+      class(mlcc2), intent(inout) :: wf
       real(dp), dimension(wf%n_es_amplitudes), intent(inout)   :: c
 !
    end subroutine jacobian_transformation_mlcc2
@@ -100,7 +100,7 @@
 !!
       implicit none
 !
-      class(mlcc2), intent(in) :: wf
+      class(mlcc2), intent(inout) :: wf
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(out)   :: rho_ai
       integer, intent(in) :: n_cc2_o, n_cc2_v, first_cc2_o, first_cc2_v

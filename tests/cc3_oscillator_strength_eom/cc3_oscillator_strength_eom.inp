@@ -4,6 +4,7 @@ system
 end system
 
 do
+   restart
    response
 end do
 

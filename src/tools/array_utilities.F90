@@ -42,6 +42,13 @@ module array_utilities
                    sandwich_complex
    end interface sandwich
 !
+   interface symmetric_sandwich_right_transposition
+      procedure :: symmetric_sandwich_right_transposition_real, &
+                   symmetric_sandwich_right_transposition_complex, &
+                   symmetric_sandwich_right_transposition_complex_between_real, &
+                   symmetric_sandwich_right_transposition_replace
+   end interface symmetric_sandwich_right_transposition
+!
    interface scale_diagonal
       procedure :: scale_real_diagonal_by_real, &
                    scale_complex_diagonal_by_real, &
@@ -147,7 +154,7 @@ contains
    end subroutine identity_array
 !
 !
-   logical function is_significant(x, n, threshold, screening)
+   pure logical function is_significant(x, n, threshold, screening)
 !!
 !!    Is significant
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
@@ -167,7 +174,7 @@ contains
 !
       real(dp), intent(in)  :: threshold
 !
-      integer :: i = 0
+      integer :: i
 !
       is_significant = .false.
 !
@@ -1173,9 +1180,9 @@ contains
                         X,       & ! X = A tmp = A X B^T
                         n)
 !
-            endif
+         endif
 !
-         else ! Transpose left factor (standard)
+      else ! Transpose left factor (standard)
 !  
             call dgemm('N', 'N', &
                         n,       &
@@ -1203,7 +1210,7 @@ contains
                         X,       & ! X = A^T tmp = A^T X B
                         n)
 !
-         endif
+      endif
 !
       call mem%dealloc(tmp, n, n)
 !
@@ -1389,7 +1396,7 @@ contains
    end subroutine symmetric_sandwich
 !
 !
-   subroutine symmetric_sandwich_right_transposition(Xr, X, A, m, n)
+   subroutine symmetric_sandwich_right_transposition_real(Xr, X, A, m, n)
 !!
 !!    Symmetric sandwich right transposition
 !!    Written by Eirik F. Kjønstad, 2018
@@ -1399,15 +1406,13 @@ contains
 !!
 !!       Xr = A X A^T
 !!
-!!
       implicit none
 !
       integer, intent(in) :: m, n
 !
-      real(dp), dimension(m, n), intent(in) :: A
-!
-      real(dp), dimension(n, n) :: X
-      real(dp), dimension(m, m) :: Xr
+      real(dp), dimension(m, n), intent(in)  :: A
+      real(dp), dimension(n, n), intent(in)  :: X
+      real(dp), dimension(m, m), intent(out) :: Xr
 !
       real(dp), dimension(:, :), allocatable :: tmp
 !
@@ -1441,7 +1446,116 @@ contains
 !
       call mem%dealloc(tmp, n, m)
 !
-   end subroutine symmetric_sandwich_right_transposition
+   end subroutine symmetric_sandwich_right_transposition_real
+!
+!
+   subroutine symmetric_sandwich_right_transposition_complex_between_real(Xr, X, A, m, n)
+!!
+!!    Symmetric sandwich right transposition
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the similarity transformation
+!!    wrt the matrix A^T
+!!
+!!       Xr = A X A^T
+!!
+!!    Modified by Andreas S. Skeidsvoll, Jul 2020
+!!    To be used with real A and complex X matrices.
+!!
+      implicit none
+!
+      integer, intent(in) :: m, n
+!
+      real(dp), dimension(m, n), intent(in)  :: A
+      complex(dp), dimension(n, n), intent(in)  :: X
+      complex(dp), dimension(m, m), intent(out) :: Xr
+!
+      complex(dp), dimension(:, :), allocatable :: tmp
+!
+      call mem%alloc(tmp, n, m)
+!
+      call zgemm('N', 'T',            &
+                  n,                  &
+                  m,                  &
+                  n,                  &
+                  one_complex,        &
+                  X,                  &
+                  n,                  &
+                  cmplx(A, zero, dp), &
+                  m,                  &
+                  zero_complex,       &
+                  tmp,                & ! tmp = X A^T
+                  n)
+!
+      call zgemm('N', 'N',            &
+                  m,                  &
+                  m,                  &
+                  n,                  &
+                  one_complex,        &
+                  cmplx(A, zero, dp), &
+                  m,                  &
+                  tmp,                &
+                  n,                  &
+                  zero_complex,       &
+                  Xr,                 & ! X = A tmp = A X A^T 
+                  m)
+!
+      call mem%dealloc(tmp, n, m)
+!
+   end subroutine symmetric_sandwich_right_transposition_complex_between_real
+!
+!
+   subroutine symmetric_sandwich_right_transposition_complex(Xr, X, A, m, n)
+!!
+!!    Symmetric sandwich right transposition
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the similarity transformation
+!!    wrt the matrix A^T
+!!
+!!       Xr = A X A^T
+!!
+      implicit none
+!
+      integer, intent(in) :: m, n
+!
+      complex(dp), dimension(m, n), intent(in)  :: A
+      complex(dp), dimension(n, n), intent(in)  :: X
+      complex(dp), dimension(m, m), intent(out) :: Xr
+!
+      complex(dp), dimension(:, :), allocatable :: tmp
+!
+      call mem%alloc(tmp, n, m)
+!
+      call zgemm('N', 'T',      &
+                  n,            &
+                  m,            &
+                  n,            &
+                  one_complex,  &
+                  X,            &
+                  n,            &
+                  A,            &
+                  m,            &
+                  zero_complex, &
+                  tmp,          & ! tmp = X A^T
+                  n)
+!
+      call zgemm('N', 'N',      &
+                  m,            &
+                  m,            &
+                  n,            &
+                  one_complex,  &
+                  A,            &
+                  m,            &
+                  tmp,          &
+                  n,            &
+                  zero_complex, &
+                  Xr,           & ! X = A tmp = A X A^T 
+                  m)
+!
+      call mem%dealloc(tmp, n, m)
+!
+   end subroutine symmetric_sandwich_right_transposition_complex
 !
 !
    subroutine symmetric_sandwich_right_transposition_replace(X, A, m)
@@ -2510,6 +2624,68 @@ contains
    end function are_vectors_parallel
 !
 !
+   subroutine check_for_parallel_vectors(vectors, dim_, n_vectors,    &
+                                         n_non_parallel_vectors,     &
+                                         threshold, parallel)
+!!
+!!    Check for parallel vectors
+!!    written by Alexander Paul, Oct 2019
+!!
+!!    Checks for parallel vectors in a given array of vectors
+!!    returns the number of not parallel vectors and which vectors parallel
+!!
+!!    vectors:  array of vectors to be checked
+!!    parallel: parallel(p) will be true on out if vector p is parallel to a
+!!              previous vector for example, if there are three vectors and they
+!!              are all parallel, parallel will be [.false., .true., .true.] on output
+!!
+      implicit none
+!
+      integer, intent(in)  :: n_vectors
+      integer, intent(out) :: n_non_parallel_vectors
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_, n_vectors), intent(in) :: vectors
+!
+      real(dp), intent(in) :: threshold
+!
+      logical, dimension(n_vectors), intent(out), optional :: parallel
+!
+      logical, dimension(n_vectors) :: parallel_temp
+!
+      integer :: p, q
+!
+      n_non_parallel_vectors = n_vectors
+!
+      do p = 1, n_vectors
+!
+         parallel_temp(p) = .false.
+!
+         do q = 1, p-1
+!
+!        Skip if the vector q was already parallel to another p
+!
+            if (parallel_temp(q)) cycle
+!
+               if(are_vectors_parallel(vectors(:,p), vectors(:,q), dim_, threshold)) then
+!
+                  parallel_temp(p) = .true.
+!
+                  n_non_parallel_vectors = n_non_parallel_vectors - 1
+!
+               end if
+!
+         end do
+      end do
+!
+      if (present(parallel)) then
+         parallel = parallel_temp
+      end if
+!
+   end subroutine check_for_parallel_vectors
+!
+!
    subroutine entrywise_product_in_place(dim_, X, Y)
 !!
 !!    entrywise product in place
@@ -3036,5 +3212,278 @@ contains
 !
    end function our_zdotu
 !
+!
+   subroutine block_diagonalize_symmetric(A,  n_total, n_blocks, block_dim, diagonal)
+!!
+!!    Block diagonalize symmetric
+!!    Written by Sarai D. Folkestad, Mar 2020
+!!
+!!    Block diagonalizes the symmetric matrix A (an n_total x n_total matrix)
+!!
+!!    n_blocks : The number of blocks
+!!
+!!    block_dim : array of dimensions for the blocks
+!!                Elements sum up to n_total
+!!
+!!    doagonal : Contains the diagonal elements of the 
+!!               matrix A after block diagonalization
+!!
+!!    This routine uses the convention that eigenvectors are flipped
+!!    such that the largest element of the eigenvectors are positive.
+!!
+!!
+      implicit none
+!
+      integer, intent(in) :: n_total, n_blocks
+      integer, dimension(n_blocks), intent(in) :: block_dim
+!
+      real(dp), dimension(n_total, n_total), intent(inout) :: A
+      real(dp), dimension(n_total), intent(out) :: diagonal
+!
+      real(dp), dimension(:), allocatable :: work
+!
+      real(dp), dimension(:), allocatable :: eigenvalues
+!
+      integer :: info, i, block_, offset, index_max
+!
+      offset = 1
+!
+      do block_ = 1, n_blocks
+!
+         if (block_dim(block_) .gt. 0) then
+!
+!           Diagonalize block
+!
+            call mem%alloc(work, 4*block_dim(block_))
+            call mem%alloc(eigenvalues, block_dim(block_))
+!
+            call dsyev('V','U',              &
+                        block_dim(block_),   &
+                        A(offset, offset),   &
+                        n_total,             &
+                        eigenvalues,         &
+                        work,                &
+                        4*block_dim(block_), &
+                        info)
+!
+!           Convention for eigenvectors of block, maximum element is positive
+!
+            do i = offset, offset + block_dim(block_) - 1
+!
+               index_max = maxloc(abs(A(offset : offset + block_dim(block_) - 1, i)), dim=1)
+               index_max = index_max + offset - 1
+!
+               if (A(index_max, i) .lt. zero) &
+                  call dscal(block_dim(block_), &
+                            -one,               &
+                            A(offset : offset + block_dim(block_) - 1, i), 1)
+!
+            enddo
+!
+            call mem%dealloc(work, 4*block_dim(block_))
+!
+            if (info .ne. 0) then
+               call output%error_msg('Diagonalization of block failed.' // &
+                                    ' "Dsyev" finished with info: (i0)', ints=[info])
+            end if
+!
+!           Setting diagonal
+!
+            do i = 1, block_dim(block_)
+!
+               diagonal(i + offset - 1) = eigenvalues(i)
+!
+            enddo
+!
+            call mem%dealloc(eigenvalues, block_dim(block_))
+!
+         elseif (block_dim(block_) .lt. 0) then
+!
+            call output%error_msg('block diagonalization attempted with negative dimension.')
+!
+         endif
+!
+         offset = offset + block_dim(block_)
+!
+      enddo
+!
+      if ((offset - 1) .ne. n_total) &
+         call output%error_msg('dimensions do not add to n_total in block diagonalization')
+!
+   end subroutine block_diagonalize_symmetric
+!
+!
+   subroutine gram_schmidt_biorthonormalization(L, R, dim_, n_vectors, threshold)
+!!
+!!    Gram-Schmidt Biorthonormalization
+!!    Written by Alexander C. Paul, Oct 2019
+!!
+!!    Routine to biorthonormalize two linear independent sets of vectors L and
+!!    R following Kohaupt, L., Rocky Mountain J. Math., 44, 1265, (2014)
+!!
+!!    NB: Order of the R vectors can change from input to output
+!!        The R vectors are ordered such that the corresponding L vector 
+!!        with non-zero overlap are at the same position
+!!
+!!    The p-th vector is determined in terms of the previously biorthogonalized
+!!    vectors q
+!!
+!!    Biorthogonal:  L'_p = L_p - sum_q < L_p, R"_q>  L"_q
+!!    Biorthonormal: L"_p = < L'_p, R_p >^(-1)  L'_p = < L'_p, R"_p >^(-1)  L'_p
+!!
+!!    Biorthonormal: R"_p = R_p - sum_q < R_p, L"_q >  R"_q
+!!
+!!    Modified by Andreas S. Skeidsvoll, Nov 2020
+!!    Biorthogonalization against previous vectors is now done irrespectively
+!!    of the number of zero overlaps with the following vectors (unless all
+!!    overlaps are zero).
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_, n_vectors
+      real(dp), dimension(dim_, n_vectors), intent(inout)  :: L, R
+      real(dp), intent(in) :: threshold
+!
+      real(dp) :: overlap, max_overlap, temp
+!
+      integer :: p, q, index_max_overlap
+!
+      real(dp), external :: ddot
+!
+      do p = 1, n_vectors ! looping through the left vectors
+!
+!        :: Biorthogonalize left vector against previous right vectors ::
+!        ----------------------------------------------------------------
+!
+         do q = 1, p-1
+!
+!           Construct biorthogonal left vector:
+!              L'_p = L_p - sum_q < L_p, R"_q>  L"_q
+!
+            overlap = ddot(dim_,      &
+                           L(:,p), 1, &
+                           R(:,q), 1)
+!
+            call daxpy(dim_,      &
+                       -overlap,  &
+                       L(:,q), 1, &
+                       L(:,p), 1)
+!
+         enddo
+!
+!        Look for the right vector with the maximum overlap with L_p. Start at
+!        q = p, as the overlaps with the first (p-1) vectors are zero.
+!
+         index_max_overlap = p
+         max_overlap = zero
+!
+         do q = p, n_vectors ! right vectors
+!
+            overlap = ddot(dim_,      &
+                           L(:,p), 1, &
+                           R(:,q), 1)
+!
+            if (abs(overlap) .gt. abs(max_overlap)) then
+!
+               index_max_overlap = q
+               max_overlap = overlap
+!
+            end if
+!
+         end do
+!
+         if (abs(max_overlap) .lt. threshold) then
+!
+            call output%printf('m', 'Overlaps between left vector with &
+                                     &index (i0) and right vectors are &
+                                     &less than threshold: (e8.3).', &
+                               reals=[threshold], ints=[p])
+!
+            call output%error_msg('Trying to binormalize nonoverlapping vectors.')
+!
+         end if
+!
+!        :: Biorthonormalization ::
+!        --------------------------
+!
+!        L"_p = < L'_p, R_p >^(-1)  L'_p
+!
+         call dscal(dim_, one/max_overlap, L(:,p), 1)
+!
+         do q = 1, p-1
+!
+!           Construct biorthonormal right vector:
+!              R"_p = R_p - sum_q < R_p, L"_q >  R"_q
+!
+            overlap = ddot(dim_,                  &
+                           R(:,index_max_overlap), 1, &
+                           L(:,q), 1)
+!
+            call daxpy(dim_,      &
+                       -overlap,  &
+                       R(:,q), 1, &
+                       R(:,index_max_overlap), 1)
+!
+         end do
+!
+!        Exchange R_p and R_index_max_overlap to achieve the correct ordering
+!
+         if(p .ne. index_max_overlap) then
+!
+!$omp parallel do private(temp, q)
+            do q = 1, dim_
+!
+               temp   = R(q,p)
+               R(q,p) = R(q,index_max_overlap)
+               R(q,index_max_overlap) = temp
+!
+            end do
+!$omp end parallel do
+!
+         end if
+!
+      end do ! Loop over p (left vectors)
+!
+   end subroutine gram_schmidt_biorthonormalization
+!
+!
+   subroutine diagonalize_symmetric(A, dim_, diagonal)
+!!
+!!    Diagonalize symmetric
+!!    Written by Sarai D. Folkestad, Jun 2020
+!!
+!!    Diagonalizes the symmetric matrix A (an dim_ x dim_ matrix)
+!!
+!!    diagonal : Contains the diagonal elements of the 
+!!               matrix A after block diagonalization
+!!
+!!    This routine uses the convention that eigenvectors are flipped
+!!    such that the largest element of the eigenvectors are positive.
+!!
+!!    This is a wrapper using the block_diagonalization routine
+!!    which in turn uses the lapack dsyeev routine
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_, dim_), intent(inout)   :: A
+      real(dp), dimension(dim_), optional, intent(out) :: diagonal
+!
+      real(dp), dimension(:), allocatable :: eigenvalues
+!
+      if (present(diagonal)) then
+!
+         call block_diagonalize_symmetric(A,  dim_, 1, [dim_], diagonal)
+!
+      else
+!
+         call mem%alloc(eigenvalues, dim_)
+         call block_diagonalize_symmetric(A,  dim_, 1, [dim_], eigenvalues)
+         call mem%dealloc(eigenvalues, dim_)
+!
+      endif
+!
+   end subroutine diagonalize_symmetric
 !
 end module array_utilities

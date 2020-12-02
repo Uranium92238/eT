@@ -96,12 +96,14 @@ contains
    end subroutine t1_transform_ccs_complex
 !
 !
-   module subroutine t1_transpose_transform_ccs_complex(wf, Z_pq)
+   module subroutine add_t1_terms_ccs_complex(wf, Z_pq)
 !!
-!!    T1 transform transpose
+!!    Add t1 terms
 !!    Written by Andreas Skeidsvoll, Jan 2020
 !!
-!!    Assumes that Z is in the T1 basis and performs the transpose T1 transformation,
+!!    Here, Z is assumed to be the density matrix with no T1 contributions on input
+!!    - the so-called T1-transformed density matrix.
+!!    The routine adds the missing T1 contributions to Z:
 !!
 !!       Z_pq <- sum_rs X_sp Z_sr Y_rq,    i.e.    Z <- X^T Z Y
 !!
@@ -110,8 +112,8 @@ contains
 !!       X = I - t1
 !!       Y = I + t1^T
 !!
-!!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ
-!!    part, where it is equal to t_i^a.
+!!    t1 is a full MO matrix whose only non-zero block is the vir-occ part,
+!!    where it is equal to t_i^a.
 !!
 !!    Based on t1_transform_ccs_complex by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
@@ -160,136 +162,49 @@ contains
       call mem%dealloc(X, wf%n_mo, wf%n_mo)
       call mem%dealloc(Y, wf%n_mo, wf%n_mo)
 !
-   end subroutine t1_transpose_transform_ccs_complex
+   end subroutine add_t1_terms_ccs_complex
 !
 !
-   module subroutine t1_transform_4_ccs_complex(wf, Z_tuvw, Z_pqrs, t1)
+   module subroutine add_t1_terms_and_transform_ccs_complex(wf, Z_pq, Z_out)
 !!
-!!    T1 transform 4 index arrays
-!!    Written by Andreas Skeidsvoll, Apr 2019
+!!    Add t1 terms and transform
+!!    Written by Tor S. Haugland, Nov 2019 (as do_visualization)
 !!
-!!    Assumes that Z is in the MO basis and performs the T1 transformation,
+!!    Here Z, on input, is assumed to be the density matrix with no T1 contributions 
+!!    - the so-called T1-transformed density matrix.
+!!    The routine adds the missing T1 contributions to Z and transforms it
+!!    with the AO coefficients to obtain a density as needed by the visualization tool.
 !!
-!!       Z_pqrs = sum_tuvw X_pt Y_qu X_rm Y_sn Z_tuvw,
+!!       Z_alpha,beta = (sum_pq  Z_pq C_alpha,p C_beta,q) 
 !!
-!!    where
+!!    Renamed and moved here, by Alexander C. Paul, May 2020
 !!
-!!       X = I - t1
-!!       Y = I + t1^T
-!!
-!!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ
-!!    part, where it is equal to t_i^a.
-!!    NB: needs place for an additional 2*wf%n_mo**4 + wf%n_t1 in memory.
-!!
+      use array_utilities, only: symmetric_sandwich_right_transposition
+!
       implicit none
 !
       class(ccs), intent(in) :: wf
-      complex(dp), dimension(wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo), intent(in) :: Z_tuvw
-      complex(dp), dimension(wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo), intent(out) :: Z_pqrs
-      complex(dp), dimension(wf%n_v, wf%n_o), intent(in) :: t1
 !
-      complex(dp), dimension(:,:), allocatable :: X, Y
-      complex(dp), dimension(:,:,:,:), allocatable :: Z_tuvs, Z_puvs, Z_vspu, Z_vspq
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(in)  :: Z_pq
+      complex(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: Z_out
 !
-      integer :: p, a, i
+      complex(dp), dimension(:,:), allocatable :: Z_mo
 !
-      call mem%alloc(X, wf%n_mo, wf%n_mo)
-      call mem%alloc(Y, wf%n_mo, wf%n_mo)
+      call mem%alloc(Z_mo, wf%n_mo, wf%n_mo)
 !
-      X = zero_complex
-      Y = zero_complex
+      call zcopy(wf%n_mo**2, Z_pq, 1, Z_mo, 1)
 !
-      do p = 1, wf%n_mo
+      call wf%add_t1_terms_complex(Z_mo)
 !
-         X(p, p) = one_complex
-         Y(p, p) = one_complex
+!     D_alpha,beta = sum_pq  D_pq C_alpha,p C_beta,q
 !
-      enddo
+      call symmetric_sandwich_right_transposition(Z_out, Z_mo,              &
+                                                  wf%orbital_coefficients, &
+                                                  wf%n_ao, wf%n_mo)
 !
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
+      call mem%dealloc(Z_mo, wf%n_mo, wf%n_mo)
 !
-            X(wf%n_o + a, i) = -t1(a, i)
-            Y(i, wf%n_o + a) = t1(a, i)
-!
-         enddo
-      enddo
-!
-      call mem%alloc(Z_tuvs, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call zgemm('N', 'T',   &
-                 wf%n_mo**3, &
-                 wf%n_mo,    &
-                 wf%n_mo,    &
-                 one_complex,        &
-                 Z_tuvw,     &
-                 wf%n_mo**3, &
-                 Y,          &
-                 wf%n_mo,    &
-                 zero_complex,       &
-                 Z_tuvs,     &
-                 wf%n_mo**3)
-!
-      call mem%alloc(Z_puvs, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call zgemm('N', 'N',   &
-                 wf%n_mo,    &
-                 wf%n_mo**3, &
-                 wf%n_mo,    &
-                 one_complex,        &
-                 X,          &
-                 wf%n_mo,    &
-                 Z_tuvs,     &
-                 wf%n_mo,    &
-                 zero_complex,       &
-                 Z_puvs,     &
-                 wf%n_mo)
-!
-      call mem%dealloc(Z_tuvs, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call mem%alloc(Z_vspu, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call sort_1234_to_3412(Z_puvs, Z_vspu, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call mem%dealloc(Z_puvs, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call mem%alloc(Z_vspq, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-      call zgemm('N', 'T',   &
-                 wf%n_mo**3, &
-                 wf%n_mo,    &
-                 wf%n_mo,    &
-                 one_complex,        &
-                 Z_vspu,     &
-                 wf%n_mo**3, &
-                 Y,          &
-                 wf%n_mo,    &
-                 zero_complex,       &
-                 Z_vspq,     &
-                 wf%n_mo**3)
-!
-      call mem%dealloc(Z_vspu, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-!
-!     Z_rspq = Z_pqrs because of particle permutation symmetry
-!
-      call zgemm('N', 'N',   &
-                 wf%n_mo,    &
-                 wf%n_mo**3, &
-                 wf%n_mo,    &
-                 one_complex,        &
-                 X,          &
-                 wf%n_mo,    &
-                 Z_vspq,     &
-                 wf%n_mo,    &
-                 zero_complex,       &
-                 Z_pqrs,     &
-                 wf%n_mo)
-!
-      call mem%dealloc(Z_vspq, wf%n_mo, wf%n_mo, wf%n_mo, wf%n_mo)
-      call mem%dealloc(X, wf%n_mo, wf%n_mo)
-      call mem%dealloc(Y, wf%n_mo, wf%n_mo)
-!
-   end subroutine t1_transform_4_ccs_complex
+   end  subroutine add_t1_terms_and_transform_ccs_complex
 !
 !
 end submodule t1_ccs_complex

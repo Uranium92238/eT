@@ -33,7 +33,8 @@
    end subroutine construct_omega_mlcc2
 !
 !
-   module subroutine omega_cc2_a1_mlcc2(wf, omega, n_cc2_o, n_cc2_v, first_cc2_o, first_cc2_v, last_cc2_o, last_cc2_v)
+   module subroutine omega_cc2_a1_mlcc2(wf, omega, n_cc2_o, n_cc2_v, first_cc2_o, &
+                                       first_cc2_v, last_cc2_o, last_cc2_v)
 !!
 !!    Omega MLCC2 A1 term
 !!    Adapted by Sarai D. Folkestad, Jan 2019
@@ -54,7 +55,7 @@
 !!
       implicit none
 !
-      class(mlcc2), intent(in) :: wf
+      class(mlcc2), intent(inout) :: wf
       integer, intent(in) :: n_cc2_o, n_cc2_v, first_cc2_o, first_cc2_v, last_cc2_o, last_cc2_v
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
 !
@@ -80,7 +81,7 @@
 !!
       implicit none
 !
-      class(mlcc2), intent(in) :: wf
+      class(mlcc2), intent(inout) :: wf
       integer, intent(in) :: n_cc2_o, n_cc2_v, first_cc2_o, first_cc2_v, last_cc2_o, last_cc2_v
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
 !

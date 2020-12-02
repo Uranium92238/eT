@@ -31,9 +31,7 @@ module cc3_class
    use batching_index_class, only : batching_index
    use global_out, only: output
    use timings_class, only: timings
-   use direct_file_class, only : direct_file
-   use io_utilities, only : single_record_reader, compound_record_reader 
-   use io_utilities, only : single_record_writer, compound_record_writer
+   use direct_stream_file_class, only : direct_stream_file
    use array_utilities, only: zero_array
    use reordering
 !
@@ -43,47 +41,40 @@ module cc3_class
 !
 !     Ground state integral files
 !
-      type(direct_file) :: g_bdck_t
-      type(direct_file) :: g_ljck_t
-      type(direct_file) :: g_dbkc_t
-      type(direct_file) :: g_jlkc_t
-      type(direct_file) :: L_jbkc_t
+      type(direct_stream_file) :: g_bdck_t
+      type(direct_stream_file) :: g_ljck_t
+      type(direct_stream_file) :: g_dbkc_t
+      type(direct_stream_file) :: g_jlkc_t
+      type(direct_stream_file) :: L_jbkc_t
 !
 !     Right Jacobian integral files
 !
-      type(direct_file) :: g_bdck_c1
-      type(direct_file) :: g_ljck_c1
-!
-!     Left Jacobian integral files
-!
-      type(direct_file) :: g_becd_t
-      type(direct_file) :: g_mjlk_t
-      type(direct_file) :: g_ckld_t
-      type(direct_file) :: g_cdlk_t
+      type(direct_stream_file) :: g_bdck_c
+      type(direct_stream_file) :: g_ljck_c
 !
 !     Jacobian intermediates files
 !
-      type(direct_file) :: g_lbkc_t
-      type(direct_file) :: X_abdi
-      type(direct_file) :: X_abid
-      type(direct_file) :: Y_bcek
-      type(direct_file) :: X_ajil
+      type(direct_stream_file) :: g_lbkc_t
+      type(direct_stream_file) :: X_abdi
+      type(direct_stream_file) :: X_abid
+      type(direct_stream_file) :: Y_bcek
+      type(direct_stream_file) :: X_ajil
 !
 !     Files for batching of the virtual indices
 !
-      type(direct_file) :: g_bdck_t_v
-      type(direct_file) :: g_ljck_t_v
-      type(direct_file) :: g_dbkc_t_v
-      type(direct_file) :: g_jlkc_t_v
-      type(direct_file) :: L_jbkc_t_v
+      type(direct_stream_file) :: g_bdck_t_v
+      type(direct_stream_file) :: g_ljck_t_v
+      type(direct_stream_file) :: g_dbkc_t_v
+      type(direct_stream_file) :: g_jlkc_t_v
+      type(direct_stream_file) :: L_jbkc_t_v
 !
-      type(direct_file) :: g_bdck_c1_v
-      type(direct_file) :: g_ljck_c1_v
+      type(direct_stream_file) :: g_bdck_c_v
+      type(direct_stream_file) :: g_ljck_c_v
 !
 !     Density intermediates files
 !
-      type(direct_file) :: Y_clik_tbar
-      type(direct_file) :: Z_bcjk
+      type(direct_stream_file) :: Y_clik_tbar
+      type(direct_stream_file) :: Z_bcjk
 !
       real(dp), dimension(:,:), allocatable :: GS_cc3_density_oo
       real(dp), dimension(:,:), allocatable :: GS_cc3_density_vv
@@ -92,17 +83,17 @@ module cc3_class
 !
 !     Preparation and cleanup routines
 !
-      procedure :: cleanup                   => cleanup_cc3
-      procedure :: delete_intermediate_files => delete_intermediate_files_cc3
+      procedure :: cleanup                              => cleanup_cc3
+      procedure :: delete_intermediate_files            => delete_intermediate_files_cc3
 !
 !     Routines related to omega
 !
-      procedure :: construct_omega     => construct_omega_cc3
+      procedure :: construct_omega                      => construct_omega_cc3
 !
-      procedure :: omega_cc3_a         => omega_cc3_a_cc3
-      procedure :: omega_cc3_integrals => omega_cc3_integrals_cc3
-      procedure :: omega_cc3_a_n6      => omega_cc3_a_n6_cc3
-      procedure :: omega_cc3_a_n7      => omega_cc3_a_n7_cc3
+      procedure :: omega_cc3_a                          => omega_cc3_a_cc3
+      procedure :: omega_cc3_integrals                  => omega_cc3_integrals_cc3
+      procedure :: omega_cc3_a_n6                       => omega_cc3_a_n6_cc3
+      procedure :: omega_cc3_a_n7                       => omega_cc3_a_n7_cc3
 !
 !     Routines used for prepare, both left and right
 !
@@ -113,111 +104,111 @@ module cc3_class
       procedure :: construct_x_intermediates            => construct_x_intermediates_cc3
       procedure :: sort_x_to_abid_and_write             => sort_x_to_abid_and_write_cc3
 !
-      procedure :: prepare_cc3_jacobian_trans_integrals => prepare_cc3_jacobian_trans_integrals_cc3
-!
 !     Routines for CVS
-      procedure :: get_cvs_projector                   => get_cvs_projector_cc3
-      procedure :: get_triples_cvs_projector_abc_batch => get_triples_cvs_projector_abc_batch_cc3
+      procedure :: get_cvs_projector                    => get_cvs_projector_cc3
+      procedure :: get_triples_cvs_projector_abc        => get_triples_cvs_projector_abc_cc3
 !
 !     Routines related to the jacobian
 !
-      procedure :: construct_Jacobian_transform      => construct_Jacobian_transform_cc3
+      procedure :: construct_Jacobian_transform         => construct_Jacobian_transform_cc3
 !
 !     Right hand side transformation
 !
-      procedure :: effective_jacobian_transformation => effective_jacobian_transformation_cc3
+      procedure :: effective_jacobian_transformation    => effective_jacobian_transformation_cc3
 !
-      procedure :: jacobian_cc3_t3_a2                => jacobian_cc3_t3_a2_cc3
-      procedure :: jacobian_cc3_t3_b2                => jacobian_cc3_t3_b2_cc3
-      procedure :: construct_c1_fock                 => construct_c1_fock_cc3
-      procedure :: jacobian_cc3_b2_fock              => jacobian_cc3_b2_fock_cc3
-      procedure :: jacobian_cc3_c3_a                 => jacobian_cc3_c3_a_cc3
-      procedure :: construct_c1_integrals            => construct_c1_integrals_cc3
+      procedure :: jacobian_cc3_t3_a2                   => jacobian_cc3_t3_a2_cc3
+      procedure :: jacobian_cc3_t3_b2                   => jacobian_cc3_t3_b2_cc3
+      procedure :: construct_c1_fock                    => construct_c1_fock_cc3
+      procedure :: jacobian_cc3_b2_fock                 => jacobian_cc3_b2_fock_cc3
+      procedure :: jacobian_cc3_c3_a                    => jacobian_cc3_c3_a_cc3
+      procedure :: construct_c1_integrals               => construct_c1_integrals_cc3
 !
 !     Routines related to the transpose of the jacobian
 !
       procedure :: effective_jacobian_transpose_transformation  &
-                                    => effective_jacobian_transpose_transformation_cc3
+                   => effective_jacobian_transpose_transformation_cc3
 !
-      procedure :: jacobian_transpose_cc3_t3_a1       => jacobian_transpose_cc3_t3_a1_cc3
-      procedure :: jacobian_transpose_cc3_t3_b1       => jacobian_transpose_cc3_t3_b1_cc3
-      procedure :: construct_x_ai_intermediate        => construct_x_ai_intermediate_cc3
-      procedure :: jacobian_transpose_cc3_c3_a        => jacobian_transpose_cc3_c3_a_cc3
-      procedure :: jacobian_transpose_cc3_c3_calc     => jacobian_transpose_cc3_c3_calc_cc3
-      procedure :: jacobian_transpose_cc3_a_n7        => jacobian_transpose_cc3_a_n7_cc3
-      procedure :: construct_y_intermediates          => construct_y_intermediates_cc3
-      procedure :: jacobian_transpose_cc3_c3_a1_y_o   => jacobian_transpose_cc3_c3_a1_y_o_cc3
-      procedure :: jacobian_transpose_cc3_c3_b1_y_v   => jacobian_transpose_cc3_c3_b1_y_v_cc3
+      procedure :: jacobian_transpose_cc3_t3_a1         => jacobian_transpose_cc3_t3_a1_cc3
+      procedure :: jacobian_transpose_cc3_t3_b1         => jacobian_transpose_cc3_t3_b1_cc3
+      procedure :: construct_x_ai_intermediate          => construct_x_ai_intermediate_cc3
+      procedure :: jacobian_transpose_cc3_c3_a          => jacobian_transpose_cc3_c3_a_cc3
+      procedure :: jacobian_transpose_cc3_c3_calc       => jacobian_transpose_cc3_c3_calc_cc3
+      procedure :: jacobian_transpose_cc3_a_n7          => jacobian_transpose_cc3_a_n7_cc3
+      procedure :: construct_y_intermediates            => construct_y_intermediates_cc3
+      procedure :: jacobian_transpose_cc3_c3_a1_y_o     => jacobian_transpose_cc3_c3_a1_y_o_cc3
+      procedure :: jacobian_transpose_cc3_c3_a1_y_v     => jacobian_transpose_cc3_c3_a1_y_v_cc3
 !
 !     Routines related to the multipliers
 !
-      procedure :: prepare_for_multiplier_equation    => prepare_for_multiplier_equation_cc3
-      procedure :: construct_multiplier_equation      => construct_multiplier_equation_cc3
-      procedure :: save_tbar_intermediates            => save_tbar_intermediates_cc3
+      procedure :: prepare_for_multiplier_equation      => prepare_for_multiplier_equation_cc3
+      procedure :: construct_multiplier_equation        => construct_multiplier_equation_cc3
+      procedure :: save_tbar_intermediates              => save_tbar_intermediates_cc3
 !
 !     Routines to construct triples amplitudes in batches of a,b,c
 !
-      procedure :: prepare_cc3_integrals_t3_abc_batch => prepare_cc3_integrals_t3_abc_batch_cc3
-      procedure :: prepare_cc3_integrals_R3_abc_batch => prepare_cc3_integrals_R3_abc_batch_cc3
-      procedure :: prepare_cc3_integrals_L3_abc_batch => prepare_cc3_integrals_L3_abc_batch_cc3
-      procedure :: omega_cc3_W_calc_abc_batch         => omega_cc3_W_calc_abc_batch_cc3
-      procedure :: omega_cc3_eps_abc_batch            => omega_cc3_eps_abc_batch_cc3
-      procedure :: jacobian_transpose_cc3_c3_calc_abc_batch &
-                                                      => jacobian_transpose_cc3_c3_calc_abc_batch_cc3
+      procedure :: prepare_cc3_integrals_t3_abc         => prepare_cc3_integrals_t3_abc_cc3
+      procedure :: prepare_cc3_integrals_R3_abc         => prepare_cc3_integrals_R3_abc_cc3
+      procedure :: prepare_cc3_integrals_L3_abc         => prepare_cc3_integrals_L3_abc_cc3
+      procedure :: omega_cc3_W_calc_abc                 => omega_cc3_W_calc_abc_cc3
+      procedure :: omega_cc3_eps_abc                    => omega_cc3_eps_abc_cc3
+      procedure :: jacobian_transpose_cc3_c3_calc_abc   => jacobian_transpose_cc3_c3_calc_abc_cc3
 !
 !     Routines related to density matrices
 !
-      procedure :: initialize_gs_density              => initialize_gs_density_cc3
-      procedure :: destruct_gs_density                => destruct_gs_density_cc3
+      procedure :: initialize_gs_density                => initialize_gs_density_cc3
+      procedure :: destruct_gs_density                  => destruct_gs_density_cc3
 !
-      procedure :: prepare_for_density                => prepare_for_density_cc3
-      procedure :: construct_gs_density               => construct_gs_density_cc3
-      procedure :: construct_left_transition_density  => construct_left_transition_density_cc3
-      procedure :: construct_right_transition_density => construct_right_transition_density_cc3
+      procedure :: prepare_for_density                  => prepare_for_density_cc3
+      procedure :: construct_gs_density                 => construct_gs_density_cc3
+      procedure :: construct_left_transition_density    => construct_left_transition_density_cc3
+      procedure :: construct_right_transition_density   => construct_right_transition_density_cc3
 !
-      procedure :: density_cc3_mu_ref_abc             => density_cc3_mu_ref_abc_cc3
-      procedure :: density_cc3_mu_ref_oo              => density_cc3_mu_ref_oo_cc3
-      procedure :: density_cc3_mu_ref_ijk             => density_cc3_mu_ref_ijk_cc3
-      procedure :: density_cc3_mu_ref_vv              => density_cc3_mu_ref_vv_cc3
-      procedure :: construct_y_intermediate_vo3       => construct_y_intermediate_vo3_cc3
+      procedure :: density_cc3_mu_ref_abc               => density_cc3_mu_ref_abc_cc3
+      procedure :: density_cc3_mu_ref_oo                => density_cc3_mu_ref_oo_cc3
+      procedure :: density_cc3_mu_ref_ijk               => density_cc3_mu_ref_ijk_cc3
+      procedure :: density_cc3_mu_ref_vv                => density_cc3_mu_ref_vv_cc3
+      procedure :: construct_y_intermediate_vo3         => construct_y_intermediate_vo3_cc3
 !
-      procedure :: density_cc3_mu_nu_ov               => density_cc3_mu_nu_ov_cc3
-      procedure :: density_cc3_mu_nu_oo_ov_vv         => density_cc3_mu_nu_oo_ov_vv_cc3
-      procedure :: density_cc3_mu3_nu2_ov             => density_cc3_mu3_nu2_ov_cc3
-      procedure :: density_cc3_mu_nu_ijk              => density_cc3_mu_nu_ijk_cc3
-      procedure :: density_cc3_mu_nu_abc              => density_cc3_mu_nu_abc_cc3
-      procedure :: density_cc3_mu_nu_ov_Z_term        => density_cc3_mu_nu_ov_Z_term_cc3
-      procedure :: density_cc3_mu_nu_vo               => density_cc3_mu_nu_vo_cc3
-      procedure :: construct_Z_intermediate           => construct_Z_intermediate_cc3
+      procedure :: density_cc3_mu_nu_ov                 => density_cc3_mu_nu_ov_cc3
+      procedure :: density_cc3_mu_nu_oo_ov_vv           => density_cc3_mu_nu_oo_ov_vv_cc3
+      procedure :: density_cc3_mu3_nu2_ov               => density_cc3_mu3_nu2_ov_cc3
+      procedure :: density_cc3_mu_nu_ijk                => density_cc3_mu_nu_ijk_cc3
+      procedure :: density_cc3_mu_nu_abc                => density_cc3_mu_nu_abc_cc3
+      procedure :: density_cc3_mu_nu_ov_Z_term          => density_cc3_mu_nu_ov_Z_term_cc3
+      procedure :: density_cc3_mu_nu_vo                 => density_cc3_mu_nu_vo_cc3
+      procedure :: construct_Z_intermediate             => construct_Z_intermediate_cc3
 !
 !     Routines related to the biorthonormalization
 !
-      procedure :: L_R_overlap                            => L_R_overlap_cc3
-      procedure :: L_R_overlap_triples                    => L_R_overlap_triples_cc3
-!
-      procedure :: biorthonormalize_L_and_R               => biorthonormalize_L_and_R_cc3
+      procedure :: L_R_overlap                          => L_R_overlap_cc3
+      procedure :: L_R_overlap_triples                  => L_R_overlap_triples_cc3
 !
 !     Routines for constructing the R-tdm in a noddy way
 !     only for debugging purposes
 !
-      procedure :: right_tdm_debug       => right_tdm_debug_cc3
-      procedure :: left_tdm_debug        => left_tdm_debug_cc3
+      procedure :: right_tdm_debug                      => right_tdm_debug_cc3
+      procedure :: left_tdm_debug                       => left_tdm_debug_cc3
 !
-      procedure :: debug_left_oo         => debug_left_oo_cc3
-      procedure :: debug_left_ov_N7      => debug_left_ov_N7_cc3
-      procedure :: debug_left_ov_N6      => debug_left_ov_N6_cc3
-      procedure :: debug_left_vv         => debug_left_vv_cc3
-      procedure :: debug_right_ov_t3     => debug_right_ov_t3_cc3
-      procedure :: debug_right_ov_Y_term => debug_right_ov_Y_term_cc3
-      procedure :: debug_right_oo        => debug_right_oo_cc3
-      procedure :: debug_right_vv        => debug_right_vv_cc3
-      procedure :: debug_right_ov_R3     => debug_right_ov_R3_cc3
-      procedure :: debug_right_vo        => debug_right_vo_cc3
+      procedure :: debug_left_oo                        => debug_left_oo_cc3
+      procedure :: debug_left_ov_N7                     => debug_left_ov_N7_cc3
+      procedure :: debug_left_ov_N6                     => debug_left_ov_N6_cc3
+      procedure :: debug_left_vv                        => debug_left_vv_cc3
+      procedure :: debug_right_ov_t3                    => debug_right_ov_t3_cc3
+      procedure :: debug_right_ov_Y_term                => debug_right_ov_Y_term_cc3
+      procedure :: debug_right_oo                       => debug_right_oo_cc3
+      procedure :: debug_right_vv                       => debug_right_vv_cc3
+      procedure :: debug_right_ov_R3                    => debug_right_ov_R3_cc3
+      procedure :: debug_right_vo                       => debug_right_vo_cc3
 !
 !     Construction of the full amplitudes
-      procedure :: construct_full_R3     => construct_full_R3_cc3
-      procedure :: construct_full_t3     => construct_full_t3_cc3
-      procedure :: construct_full_tbar3  => construct_full_tbar3_cc3
+!
+      procedure :: construct_full_R3                    => construct_full_R3_cc3
+      procedure :: construct_full_t3                    => construct_full_t3_cc3
+      procedure :: construct_full_tbar3                 => construct_full_tbar3_cc3
+!
+!     Initialize wavefunction
+!
+      procedure :: initialize             => initialize_cc3
 !
    end type cc3
 !
@@ -230,7 +221,7 @@ module cc3_class
       include "prepare_jacobian_transform_cc3_interface.F90"
       include "jacobian_cc3_interface.F90"
       include "jacobian_transpose_cc3_interface.F90"
-      include "cc3_batching_abc_interface.F90"
+      include "abc_batching_cc3_interface.F90"
       include "zop_cc3_interface.F90"
       include "fop_cc3_interface.F90"
 !
@@ -239,35 +230,25 @@ module cc3_class
    end interface
 !
 !
-   interface cc3
-!
-      procedure :: new_cc3 
-!
-   end interface cc3
-!
-!
 contains
 !
 !
-   function new_cc3(system, template_wf) result(wf)
+   subroutine initialize_cc3(wf, template_wf)
 !!
-!!    New CC3
+!!    Initialize
 !!    Written by Rolf H. Myhre, 2018
 !!
-      use molecular_system_class, only: molecular_system!
       use wavefunction_class, only : wavefunction
 !
       implicit none
 !
-      type(cc3) :: wf
-!
-      class(molecular_system), target, intent(in) :: system 
+      class(cc3), intent(inout) :: wf
 !
       class(wavefunction), intent(in) :: template_wf
 !
       wf%name_ = 'cc3'
 !
-      call wf%general_cc_preparations(system)
+      call wf%general_cc_preparations()
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
@@ -282,13 +263,13 @@ contains
 !
       call wf%print_amplitude_info()
 !
-   end function new_cc3
+   end subroutine initialize_cc3
 !
 !
    subroutine cleanup_cc3(wf)
 !!
 !!    Cleanup
-!!    Written by Rolf H. Myhre, 2018
+!!    Written by Rolf H. Myhre and Alexander C. Paul, 2018
 !!
       implicit none
 !
@@ -313,7 +294,7 @@ contains
 !
       class(cc3) :: wf
 !
-      type(direct_file) :: Y_bcek_tbar
+      type(direct_stream_file) :: Y_bcek_tbar
 !
 !     Delete files for GS
       if (wf%g_bdck_t%exists()) then
@@ -335,20 +316,16 @@ contains
       end if
 !
 !     Delete additional files for jacobian transformation
-      if (wf%g_bdck_c1%exists()) then
+      if (wf%g_bdck_c%exists()) then
 !
-         call wf%g_bdck_c1%delete_
-         call wf%g_ljck_c1%delete_
+         call wf%g_bdck_c%delete_
+         call wf%g_ljck_c%delete_
 !
       end if
 !
 !     Delete additional files for jacobian transpose transformation
-      if (wf%g_becd_t%exists()) then
+      if (wf%Y_bcek%exists()) then
 !
-         call wf%g_becd_t%delete_
-         call wf%g_mjlk_t%delete_
-         call wf%g_ckld_t%delete_
-         call wf%g_cdlk_t%delete_
          call wf%Y_bcek%delete_
 !
       end if
@@ -368,15 +345,15 @@ contains
       end if
 !
 !     Intermediates created for fop
-      if (wf%g_bdck_c1_v%exists()) then
+      if (wf%g_bdck_c_v%exists()) then
 !
 !        Integral files needed for R3 in batches of a,b,c
-         call wf%g_bdck_c1_v%delete_
-         call wf%g_ljck_c1_v%delete_
+         call wf%g_bdck_c_v%delete_
+         call wf%g_ljck_c_v%delete_
 !
          call wf%Z_bcjk%delete_
 !
-         Y_bcek_tbar = direct_file('Y_bcek_tbar', wf%n_v**3)
+         Y_bcek_tbar = direct_stream_file('Y_bcek_tbar', wf%n_v**3)
          call Y_bcek_tbar%open_('write')
          call Y_bcek_tbar%delete_
 !
@@ -409,7 +386,7 @@ contains
 !!
       implicit none
 !
-      class(cc3), intent(in) :: wf
+      class(cc3), intent(inout) :: wf
 !
       character(len=*), intent(in) :: r_or_l
 !
@@ -449,6 +426,9 @@ contains
 !!    Save tbar intermediates
 !!    Written by Alexander C. Paul, August 2019
 !!
+!!    Modified by Rolf H. Myhre Feb. 2020
+!!    copy() should not be used
+!!
 !!    jacobian_transpose_transformation is used 
 !!    for multipliers and left excited states
 !!    Copy the intermediate Y_bcek after solving
@@ -459,14 +439,19 @@ contains
 !
       class(cc3) :: wf
 !
-      type(direct_file) :: Y_bcek_tbar
+      type(direct_stream_file) :: Y_bcek_tbar
+!
+      type(batching_index) :: batch_k
+      integer :: k_batch, req_0, req_1
+!
+      real(dp), dimension(:,:), allocatable :: Y_bcek
 !
 !     Copy the intermediate Y_bcek constructed as follows:
 !     Y_bcek = sum_aij tbar^abc_ijk * t^ae_ij
 !
 !     Later used in the right transition density matrix
 !
-      Y_bcek_tbar = direct_file('Y_bcek_tbar', wf%n_v**3)
+      Y_bcek_tbar = direct_stream_file('Y_bcek_tbar', wf%n_v**3)
 !
 !     Delete if the file already exists 
 !     e.g. when restarting a crashed CC3 calculation
@@ -475,7 +460,31 @@ contains
          call Y_bcek_tbar%delete_
       end if
 !
-      call wf%Y_bcek%copy('Y_bcek_tbar')
+!     We want to read and write as much as possible at once,
+!     so we'll set up a batch
+!
+      req_0 = 0
+      req_1 = wf%n_v**3
+!
+      batch_k = batching_index(wf%n_o)
+      call mem%batch_setup(batch_k, req_0, req_1)
+      call mem%alloc(Y_bcek, wf%n_v**3, batch_k%max_length)
+!
+      call Y_bcek_tbar%open_('write')
+      call wf%Y_bcek%open_('read')
+!
+      do k_batch = 1, batch_k%num_batches
+         call batch_k%determine_limits(k_batch)
+!
+         call wf%Y_bcek%read_interval(Y_bcek, batch_k)
+         call Y_bcek_tbar%write_interval(Y_bcek, batch_k)
+!
+      enddo
+!
+      call wf%Y_bcek%close_()
+      call Y_bcek_tbar%close_()
+!
+      call mem%dealloc(Y_bcek, wf%n_v**3, batch_k%max_length)
 !
    end subroutine save_tbar_intermediates_cc3
 !
@@ -542,8 +551,8 @@ contains
 !$omp end parallel do
 !
       call wf%L_R_overlap_triples(wf%left_excitation_energies(left_state),  &
-                                                   wf%right_excitation_energies(right_state),&
-                                                   L_ai, L_abij, R_abij, L_R_overlap_cc3)
+                                  wf%right_excitation_energies(right_state),&
+                                  L_ai, L_abij, R_abij, L_R_overlap_cc3)
 !
       call mem%dealloc(L_ai, wf%n_v, wf%n_o)
       call mem%dealloc(L_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -786,47 +795,52 @@ contains
       call wf%g_jlkc_t%open_('read')
       call wf%L_jbkc_t%open_('read')
 !
-      call wf%g_bdck_c1%open_('read')
-      call wf%g_ljck_c1%open_('read')
+      call wf%g_bdck_c%open_('read')
+      call wf%g_ljck_c%open_('read')
 !
       do i_batch = 1, batch_i%num_batches
 !
          call batch_i%determine_limits(i_batch)
 !
-         call single_record_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_t, g_dbic, &
-                                    wf%g_bdck_c1, g_bdci_c1)
+         call wf%g_bdck_t%read_interval(g_bdci, batch_i)
+         call wf%g_dbkc_t%read_interval(g_dbic, batch_i)
+         call wf%g_bdck_c%read_interval(g_bdci_c1, batch_i)
+!
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
-!
          g_bdci_c1_p => g_bdci_c1
 !
          do j_batch = 1, i_batch
 !
             call batch_j%determine_limits(j_batch)
 !
-            call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, wf%g_jlkc_t,  &
-                                       g_jlic, wf%g_ljck_c1, g_ljci_c1)
-            call compound_record_reader(batch_i, batch_j, wf%L_jbkc_t, L_ibjc)
+            call wf%g_ljck_t%read_compound(g_ljci, batch_j, batch_i)
+            call wf%g_jlkc_t%read_compound(g_jlic, batch_j, batch_i)
+            call wf%g_ljck_c%read_compound(g_ljci_c1, batch_j, batch_i)
+
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
-            L_ibjc_p => L_ibjc
-!
             g_ljci_c1_p => g_ljci_c1
+!
+            call wf%L_jbkc_t%read_compound(L_ibjc, batch_i, batch_j)
+            L_ibjc_p => L_ibjc
 !
             if (j_batch .ne. i_batch) then
 !
-               call single_record_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_t, g_dbjc, &
-                                          wf%g_bdck_c1, g_bdcj_c1)
+               call wf%g_bdck_t%read_interval(g_bdcj, batch_j)
+               call wf%g_dbkc_t%read_interval(g_dbjc, batch_j)
+               call wf%g_bdck_c%read_interval(g_bdcj_c1, batch_j)
+!
                g_bdcj_p => g_bdcj
                g_dbjc_p => g_dbjc
-!
                g_bdcj_c1_p => g_bdcj_c1
 !
-               call compound_record_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, wf%g_jlkc_t,  &
-                                          g_iljc, wf%g_ljck_c1, g_licj_c1)
+               call wf%g_ljck_t%read_compound(g_licj, batch_i, batch_j)
+               call wf%g_jlkc_t%read_compound(g_iljc, batch_i, batch_j)
+               call wf%g_ljck_c%read_compound(g_licj_c1, batch_i, batch_j)
+!
                g_licj_p => g_licj
                g_iljc_p => g_iljc
-!
                g_licj_c1_p => g_licj_c1
 !
             else
@@ -849,101 +863,101 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc, &
-                                             wf%g_bdck_c1, g_bdck_c1)
+                  call wf%g_bdck_t%read_interval(g_bdck, batch_k)
+                  call wf%g_dbkc_t%read_interval(g_dbkc, batch_k)
+                  call wf%g_bdck_c%read_interval(g_bdck_c1, batch_k)
+!
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
-!
                   g_bdck_c1_p => g_bdck_c1
 ! 
-                  call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
-                                             g_klic, wf%g_ljck_c1, g_lkci_c1)
+                  call wf%g_ljck_t%read_compound(g_lkci, batch_k, batch_i)
+                  call wf%g_jlkc_t%read_compound(g_klic, batch_k, batch_i)
+                  call wf%g_ljck_c%read_compound(g_lkci_c1, batch_k, batch_i)
+!
                   g_lkci_p => g_lkci
                   g_klic_p => g_klic
-!
                   g_lkci_c1_p => g_lkci_c1
 !
-                  call compound_record_reader(batch_i, batch_k, wf%g_ljck_t, g_lick, wf%g_jlkc_t,  &
-                                             g_ilkc, wf%L_jbkc_t, L_ibkc, wf%g_ljck_c1, g_lick_c1)
+                  call wf%g_ljck_t%read_compound(g_lick, batch_i, batch_k)
+                  call wf%g_jlkc_t%read_compound(g_ilkc, batch_i, batch_k)
+                  call wf%L_jbkc_t%read_compound(L_ibkc, batch_i, batch_k)
+                  call wf%g_ljck_c%read_compound(g_lick_c1, batch_i, batch_k)
+!
                   g_lick_p => g_lick
                   g_ilkc_p => g_ilkc
                   L_ibkc_p => L_ibkc
-!
                   g_lick_c1_p => g_lick_c1
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
-                                             g_kljc, wf%g_ljck_c1, g_lkcj_c1)
+                  call wf%g_ljck_t%read_compound(g_lkcj, batch_k, batch_j)
+                  call wf%g_jlkc_t%read_compound(g_kljc, batch_k, batch_j)
+                  call wf%g_ljck_c%read_compound(g_lkcj_c1, batch_k, batch_j)
+!
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
-!
                   g_lkcj_c1_p => g_lkcj_c1
 !
-                  call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck, wf%g_jlkc_t,  &
-                                             g_jlkc, wf%L_jbkc_t, L_jbkc, wf%g_ljck_c1, g_ljck_c1)
+                  call wf%g_ljck_t%read_compound(g_ljck, batch_j, batch_k)
+                  call wf%g_jlkc_t%read_compound(g_jlkc, batch_j, batch_k)
+                  call wf%L_jbkc_t%read_compound(L_jbkc, batch_j, batch_k)
+                  call wf%g_ljck_c%read_compound(g_ljck_c1, batch_j, batch_k)
+!
                   g_ljck_p => g_ljck
                   g_jlkc_p => g_jlkc
                   L_jbkc_p => L_jbkc
-!
                   g_ljck_c1_p => g_ljck_c1
 !
                else if (k_batch .eq. i_batch) then ! k_batch == j_batch == i_batch
 !
                   g_bdck_p => g_bdci
                   g_dbkc_p => g_dbic
-!
                   g_bdck_c1_p => g_bdci_c1
 !
                   g_lkci_p => g_ljci
                   g_klic_p => g_jlic
-!
                   g_lkci_c1_p => g_ljci_c1
 !
                   g_lick_p => g_ljci
                   g_ilkc_p => g_jlic
                   L_ibkc_p => L_ibjc
-!
                   g_lick_c1_p => g_ljci_c1
 !
                   g_lkcj_p => g_ljci
                   g_kljc_p => g_jlic
-!
                   g_lkcj_c1_p => g_ljci_c1
 !
                   g_ljck_p => g_ljci
                   g_jlkc_p => g_jlic
                   L_jbkc_p => L_ibjc
-!
                   g_ljck_c1_p => g_ljci_c1
 !
                else ! k_batch == j_batch != i_batch
 !
                   g_bdck_p => g_bdcj
                   g_dbkc_p => g_dbjc
-!
                   g_bdck_c1_p => g_bdcj_c1
 !
                   g_lkci_p => g_ljci
                   g_klic_p => g_jlic
-!
                   g_lkci_c1_p => g_ljci_c1
 !
                   g_lick_p => g_licj
                   g_ilkc_p => g_iljc
                   L_ibkc_p => L_ibjc
-!
                   g_lick_c1_p => g_licj_c1
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
-                                             g_kljc, wf%L_jbkc_t, L_jbkc, wf%g_ljck_c1, g_lkcj_c1)
+                  call wf%g_ljck_t%read_compound(g_lkcj, batch_k, batch_j)
+                  call wf%g_jlkc_t%read_compound(g_kljc, batch_k, batch_j)
+                  call wf%L_jbkc_t%read_compound(L_jbkc, batch_k, batch_j) !L_jbkc = L_kbjc
+                  call wf%g_ljck_c%read_compound(g_lkcj_c1, batch_k, batch_j)
+!
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
-!
                   g_lkcj_c1_p => g_lkcj_c1
 !
                   g_ljck_p => g_lkcj
                   g_jlkc_p => g_kljc
                   L_jbkc_p => L_jbkc
-!
                   g_ljck_c1_p => g_lkcj_c1
 !
 !
@@ -1067,8 +1081,8 @@ contains
       call wf%g_jlkc_t%close_()
       call wf%L_jbkc_t%close_()
 !
-      call wf%g_bdck_c1%close_()
-      call wf%g_ljck_c1%close_()
+      call wf%g_bdck_c%close_()
+      call wf%g_ljck_c%close_()
 !
 !     Deallocate the integral arrays
 !
@@ -1186,493 +1200,6 @@ contains
      enddo
 !
    end subroutine get_cvs_projector_cc3
-!
-!
-   subroutine biorthonormalize_L_and_R_cc3(wf, energy_threshold, residual_threshold, skip_states)
-!!
-!!    Biorthonormalize the left and right eigenvectors
-!!    Written by Alexander C. Paul, Sep 2019
-!!
-!!    NB: Folding in the Triples part of the excited states leads to 
-!!        non biorthogonal eigenvectors of the jacobian
-!!        Therefore, a biorthonormalization would have to include the singles, 
-!!        doubles and full triples part which is not feasible due to memory.
-!!        
-!!        It should be possible though to restart from biorthogonal states 
-!!        from a CCSD-calculation. Biorthorgonal CC3 states should be obtained 
-!!        from that because DIIS does not tend to mix the degenerate states 
-!!
-!!    For that: 
-!!       - check if left and right excitation energies are consistent
-!!       - check for degenerate states
-!!       - check for and discard parallel states
-!!       - If degeneracies are present: Print Warning and biorthonormalize
-!!       - Normalize and write to file
-!!
-      use array_utilities, only: are_vectors_parallel, quicksort_with_index_descending
-!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      real(dp), intent(in) :: energy_threshold, residual_threshold
-!
-      logical, dimension(wf%n_singlet_states), intent(inout) :: skip_states
-!
-      real(dp), dimension(:,:), allocatable :: R, R_normalized
-      real(dp), dimension(:,:), allocatable :: L, L_normalized
-!
-      real(dp), dimension(:), allocatable :: overlap_LR
-!
-      integer, dimension(:), allocatable :: order
-!
-      logical, dimension(:), allocatable :: parallel
-!
-      real(dp) :: LT_R
-      real(dp) :: ddot
-!
-      integer :: state, current_state, p, q
-      integer :: n_degeneracy, reduced_degeneracy_r, reduced_degeneracy_l
-      integer :: n_overlap_zero, state_nonzero_overlap
-!
-      logical :: biorthonormalize
-!
-!     Loop through states look for degenerate states (skip degeneracy)
-!     discard parallel states
-!     binormalize degenerate states
-!
-      call output%printf('v', 'Biorthonormalization of left and right excited &
-                         &state vectors', fs='(/t3,a)')
-!
-      current_state = 1
-!
-      do while (current_state .le. wf%n_singlet_states)
-!
-         skip_states(current_state) = .false.
-!
-         if (abs(wf%left_excitation_energies(current_state) &
-               - wf%right_excitation_energies(current_state)) .lt. energy_threshold) then
-!
-            call output%printf('v', 'The left and right states corresponding to &
-                               &root (i0) are consistent', &
-                               ints=[current_state], fs='(/t6,a)')
-!
-            n_degeneracy = 1
-            state = current_state + 1
-!
-!           :: Check for degeneracies in both left and right excitation energies ::
-!
-            do while (state .le. wf%n_singlet_states)
-!
-               if(abs(wf%left_excitation_energies(state)          &
-                    - wf%left_excitation_energies(current_state)) &
-                  .gt. energy_threshold) exit
-!
-               if (abs(wf%right_excitation_energies(state)           &
-                     - wf%right_excitation_energies(current_state))  &
-                     .lt. energy_threshold) then
-!
-                  n_degeneracy = n_degeneracy + 1
-!
-               else 
-!
-                  call output%error_msg('Different degree of degeneracy in the   &
-                  &    left excited states compared to the right excited states')
-!
-               end if
-!
-               state = state + 1
-!
-            end do
-!
-            call output%printf('debug', 'Degree of degeneracy: (i0)', &
-                               ints=[n_degeneracy], fs='(t6,a)')
-!
-            if(n_degeneracy .gt. 1) then
-!
-!              :: Check for parallel "right" states ::
-!
-               call mem%alloc(R, wf%n_es_amplitudes, n_degeneracy)
-!
-               do p = 1, n_degeneracy
-                  call wf%read_excited_state(R(:,p), current_state + p - 1, 'right')
-               end do
-!
-               reduced_degeneracy_r = n_degeneracy
-!
-               call mem%alloc(parallel, n_degeneracy)
-!
-               do p = 1, n_degeneracy
-!
-                  parallel(p) = .false.
-!
-                  do q = 1, p-1
-!
-!                    Skip if the state q was already parallel to another p
-!
-                     if (parallel(q)) cycle
-!
-                     if(are_vectors_parallel(R(:,p), R(:,q), &
-                        wf%n_es_amplitudes, residual_threshold)) then
-!
-                        parallel(p) = .true.
-!
-                        call output%printf('m', 'Warning: The right states (i0) &
-                                           &and (i0) are parallel', &
-                                           ints=[current_state+p-1, &
-                                           current_state+q-1], fs='(/t3,a)')
-!
-                        reduced_degeneracy_r = reduced_degeneracy_r - 1
-!
-                     end if
-!
-                  end do
-               end do
-!
-!              Remove parallel state from array R
-               if(reduced_degeneracy_r .ne. n_degeneracy) then
-!
-                  state = 0
-!
-                  do p = 1, n_degeneracy
-                     if(parallel(p)) cycle
-!
-                     state = state + 1
-                     call dcopy(wf%n_es_amplitudes, &
-                                R(:,p), 1,          &
-                                R(:,state), 1)
-!
-                  end do
-!
-               end if
-!
-!              :: Check for parallel "left" states ::
-!
-               call mem%alloc(L, wf%n_es_amplitudes, n_degeneracy)
-!
-               do p = 1, n_degeneracy
-                  call wf%read_excited_state(L(:,p), current_state + p - 1, 'left')
-               end do
-!
-               reduced_degeneracy_l = n_degeneracy
-!
-               do p = 1, n_degeneracy
-!
-                  parallel(p) = .false.
-                  skip_states(current_state + p - 1) = .false.
-!
-                  do q = 1, p-1
-!
-!                    Skip if the state q was already parallel to another p
-!
-                     if (parallel(q)) cycle
-!
-                     if(are_vectors_parallel(L(:,p), L(:,q), &
-                        wf%n_es_amplitudes, residual_threshold)) then
-!
-                        parallel(p) = .true.
-!
-                        call output%printf('m', 'Warning: The left states (i0) &
-                                           &and (i0) are parallel', &
-                                           ints=[current_state + p - 1, &
-                                           current_state+q-1], fs='(/t3,a)')
-!
-                        reduced_degeneracy_l = reduced_degeneracy_l - 1
-!
-                     end if
-!
-                  end do
-               end do
-!
-               if(reduced_degeneracy_l .ne. reduced_degeneracy_r) then
-                  call output%error_msg('Different degree of degeneracy in the &
-                                        &left excited states compared to the &
-                                        &right excited states')
-               end if
-!
-!              Remove parallel state from array L
-               if(reduced_degeneracy_l .ne. n_degeneracy) then
-!
-                  state = 0
-!
-                  do p = 1, n_degeneracy
-!
-                     if(p .gt. reduced_degeneracy_l) then
-                        skip_states(current_state + p - 1) = .true.
-                     end if
-!
-                     if(parallel(p)) cycle
-!
-                     state = state + 1
-!
-                     call dcopy(wf%n_es_amplitudes, &
-                                L(:,p), 1,          &
-                                L(:,state), 1)
-!
-                  end do
-!
-               end if
-!
-               if (reduced_degeneracy_r .gt. 1) then
-!
-                  call output%warning_msg('Cannot guarantee that degenerate &
-                                          &roots are biorthogonal in cc3.')
-!
-                  call output%printf('n', 'Found a degeneracy between:', fs='(/t6,a)')
-                  call output%print_separator('n', 29,'-', fs='(t6,a)')
-                  call output%printf('n', 'State     Excitation Energy', fs='(t6,a)')
-!
-                  do p = 1, n_degeneracy
-!
-                     if(parallel(p)) cycle
-!
-                     call output%printf('n', ' (i2)     (f19.12)', &
-                                        ints=[current_state + p - 1], &
-                                        reals=[wf%right_excitation_energies(current_state+p-1)], fs='(t6,a)')
-!
-                  end do
-!
-               end if
-!
-               call mem%dealloc(parallel, n_degeneracy)
-!
-!              :: Biorthonormalize states ::
-!              -----------------------------
-!              (following Kohaupt, L., Rocky Mountain J. Math., 44, 1265, (2014))
-!
-!              non degenerate L/R states are biorthogonal, thus only normalization needed
-!
-!              degenerate L/R states should be biorthogonal as well
-!              if not the k-th state is determined in terms of the 
-!              previously biorthogonalized states i
-!
-!              Intermediate:  L'(k) = L(k) - sum_i < L(k)|R"(i)> * L"(i)
-!              Biorthonormal: L"(k) = < L'(k)|R(k)>^(-1) * L'(k)
-!
-!              Biorthonormal: R"(k) = R(k) - sum_i < R(k)|L"(i)> * R"(i)
-!
-!              Renormalize R"(k) afterwards and then binormalize L"(k) to R"(k)
-!
-               call mem%alloc(L_normalized, wf%n_es_amplitudes, reduced_degeneracy_l)
-               call mem%alloc(R_normalized, wf%n_es_amplitudes, reduced_degeneracy_r)
-!
-               do p = 1, reduced_degeneracy_l
-!
-                  call dcopy(wf%n_es_amplitudes, &
-                             L(:,p), 1,          &
-                             L_normalized(:,p), 1)
-!
-               end do
-!
-               call mem%alloc(overlap_LR, reduced_degeneracy_r)
-               call mem%alloc(order, reduced_degeneracy_r)
-!
-!              We first check if the degenerate states are biorthogonal
-!              then we only need to binormalize (biorthonormalize = .false.).
-!              If we need to biorthonormalize the logical is set to .true.
-!              so that we don't run into the wrong branch of the if-statement
-!
-               biorthonormalize = .false.
-!
-               do state = 1, reduced_degeneracy_l
-!
-                  n_overlap_zero = 0
-                  state_nonzero_overlap = 0
-!
-                  do q = 1, reduced_degeneracy_r
-!
-!                    Overlap of Singles and Doubles should be enough also for CC3
-                     overlap_lr(q) = abs(ddot(wf%n_es_amplitudes, &
-                                              L(:,state), 1,      &
-                                              R(:,q), 1))
-!
-                     if(overlap_lr(q) .lt. residual_threshold) then
-!
-                        n_overlap_zero = n_overlap_zero + 1
-!
-                     else
-!
-                        state_nonzero_overlap = q
-!
-                     end if
-!
-                  end do
-!
-!                 Simple binormalization if only 1 right state 
-!                 has significant overlap with the left state
-!
-                  if((.not. biorthonormalize) .and. &
-                     (n_overlap_zero .eq. reduced_degeneracy_r-1)) then
-!
-                     call output%printf('v', 'Degenerate states except one are &
-                                        &biorthogonal - Thus, only binormalize' &
-                                        &, fs='(/t6,a)')
-!
-                     LT_R = wf%L_R_overlap(L(:, state),                             &
-                                           current_state + state - 1,               &
-                                           R(:, state_nonzero_overlap),             &
-                                           current_state + state_nonzero_overlap - 1)
-!
-!                    Sanity check that the left and corresponding right state are not orthogonal
-!
-                     if(abs(LT_R) .lt. 1.0d-2) then
-!
-                        call output%printf('m', 'Warning: Overlap of (i0). left &
-                                           &and right state close to zero.', ints=[current_state])
-!
-                     end if
-!
-!                    Normalize the new left state to the right state
-                     call dscal(wf%n_es_amplitudes,     &
-                                one/LT_R,               &
-                                L_normalized(:, state), & 
-                                1)
-!
-!                    Copy to have correct ordering in R_normalized
-                     call dcopy(wf%n_es_amplitudes,            &
-                                R(:,state_nonzero_overlap), 1, &
-                                R_normalized(:, state), 1)
-!
-!                 The biorthonormalization will not work in CC3 
-!                 unless we include the full triples
-!
-!                 Print warning but still binormalize the left 
-!                 and right vector with the largest overlap
-!
-                  else
-!
-                     call output%printf('n', 'Binormalize degenerate left state &
-                                        &to the right state with the largest overlap', &
-                                        fs='(/t6,a)')
-!
-                     call output%warning_msg('Cannot guarantee that degenerate roots &
-                                             &are biorthogonal in cc3.')
-                     call output%warning_msg('Oscillator strength cannot be trusted &
-                                             &for the degenerate states.')
-!
-!                    Make sure to not run into the other branch of the if statement
-                     biorthonormalize = .true.
-!
-!                    sort overlap_lr and select corresponding R state for L(p)
-!                    R(:,order(1)) has the maximal overlap with L(p)
-!
-                     call quicksort_with_index_descending(overlap_lr, &
-                                                          order,      &
-                                                          reduced_degeneracy_r)
-!
-                     call dcopy(wf%n_es_amplitudes,       &
-                                R(:,order(1)), 1,         &
-                                R_normalized(:,state), 1)
-!
-!                    Zero out R state that has already been used
-!                    Thus, overlap_lr(q) will be zero and this state will not be selected again
-!
-                     call zero_array(R(:,order(1)), wf%n_es_amplitudes)
-!
-!                    :: Binormalize the left to the right vectors ::
-!                    ::        including triples if present       ::
-!
-                     LT_R = wf%L_R_overlap(L_normalized(:,state),     &
-                                           current_state + state - 1, &
-                                           R_normalized(:,state),     &
-                                           current_state + state - 1)
-!
-!                    Sanity check that the left and corresponding right state are not orthogonal
-!
-                     if(abs(LT_R) .lt. 1.0d-2) then
-!
-                        call output%printf('m', 'Warning: Overlap of (i0). left &
-                                           &and right state close to zero.', ints=[current_state])
-!
-                     else if(abs(LT_R) .lt. residual_threshold) then
-!
-                        call output%printf('m', 'Overlap of (i0). left and &
-                                           &right state less than threshold: (e8.3).', &
-                                           reals=[residual_threshold], ints=[current_state])
-!
-                        call output%error_msg('Trying to binormalize nonoverlapping states.')
-!
-                     end if
-!
-                     call dscal(wf%n_es_amplitudes, one/LT_R, L_normalized(:, state), 1)
-!
-                  end if
-!
-                  call wf%save_excited_state(L_normalized(:, state), current_state+state-1, 'left')
-                  call wf%save_excited_state(R_normalized(:, state), current_state+state-1, 'right')
-!
-               end do
-!
-               call mem%dealloc(R_normalized, wf%n_es_amplitudes, reduced_degeneracy_r)
-               call mem%dealloc(L_normalized, wf%n_es_amplitudes, reduced_degeneracy_l)
-!
-               call mem%dealloc(R, wf%n_es_amplitudes, n_degeneracy)
-               call mem%dealloc(L, wf%n_es_amplitudes, n_degeneracy)
-!
-               call mem%dealloc(overlap_LR, reduced_degeneracy_r)
-               call mem%dealloc(order, reduced_degeneracy_r)
-!
-            else ! States are not degenerate, thus only binormalize
-!
-               call mem%alloc(R, wf%n_es_amplitudes, 1)
-               call wf%read_excited_state(R, current_state, 'right')
-!
-               call mem%alloc(L, wf%n_es_amplitudes, 1)
-               call wf%read_excited_state(L, current_state, 'left')
-!
-               LT_R = wf%L_R_overlap(L,             &
-                                     current_state, &
-                                     R,             &
-                                     current_state)
-!
-!              Sanity check that the left and corresponding right state are not orthogonal
-!
-               if(abs(LT_R) .lt. 1.0d-2) then
-!
-                  call output%printf('m', 'Warning: Overlap of (i0). left and &
-                                     &right state close to zero.', ints=[current_state])
-!
-               else if(abs(LT_R) .lt. residual_threshold) then
-!
-                  call output%printf('m', 'Overlap of (i0). left and right &
-                                     &state less than threshold: (e8.3).', &
-                                     reals=[residual_threshold], ints=[current_state])
-!
-                  call output%error_msg('Trying to binormalize biorthogonal states.')
-!
-               end if
-!
-               call mem%dealloc(R, wf%n_es_amplitudes, 1)
-!
-!              Normalize the new left state to the right state
-               call dscal(wf%n_es_amplitudes, 1/LT_R, L, 1)
-!
-               call wf%save_excited_state(L, current_state, 'left')
-!
-               call mem%dealloc(L, wf%n_es_amplitudes, 1)
-!
-            end if
-!
-         else ! Sanity check failed - roots ordered incorrectly
-!
-            call output%printf('m', 'Eigenvector (i0) is not left-right &
-                               &consistent  to threshold (e8.3).', &
-                               ints=[current_state], reals=[energy_threshold], fs='(/t6,a)')
-!
-            call output%printf('m', 'Energies (left, right): (f19.12) (f19.12)' &
-                               &, &
-                               reals=[wf%left_excitation_energies(current_state), &
-                               wf%right_excitation_energies(current_state)], fs='(/t6,a)')
-!
-            call output%error_msg('while biorthonormalizing.')
-!
-         end if
-!
-         current_state = current_state + n_degeneracy
-!
-      end do
-!
-   end subroutine biorthonormalize_L_and_R_cc3
 !
 !
 end module cc3_class

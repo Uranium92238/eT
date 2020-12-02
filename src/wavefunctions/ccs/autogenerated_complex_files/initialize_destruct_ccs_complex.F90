@@ -76,8 +76,6 @@ contains
 !
       if (.not. allocated(wf%t1_complex)) call mem%alloc(wf%t1_complex, wf%n_v, wf%n_o)
 !
-      call zero_array_complex(wf%t1_complex, wf%n_t1)
-!
    end subroutine initialize_t1_ccs_complex
 !
 !
@@ -295,18 +293,6 @@ contains
       if (allocated(wf%density_complex)) call mem%dealloc(wf%density_complex, wf%n_mo, wf%n_mo)
 !
    end subroutine destruct_gs_density_ccs_complex
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
 !
 !
    module subroutine initialize_core_MOs_ccs_complex(wf)

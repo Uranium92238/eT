@@ -72,7 +72,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
@@ -176,7 +176,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_bj
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
@@ -202,8 +202,8 @@ contains
 !
       req0 = 0
 !
-      req1_i = (wf%integrals%n_J)*(wf%n_v)
-      req1_j = (wf%integrals%n_J)*(wf%n_v)
+      req1_i = (wf%eri%n_J)*(wf%n_v)
+      req1_j = (wf%eri%n_J)*(wf%n_v)
 !
       req2 = (wf%n_v)**2
 !
@@ -222,11 +222,8 @@ contains
 !
             call mem%alloc(g_aijb, wf%n_v, (batch_i%length), (batch_j%length), wf%n_v)
 !
-            call wf%get_voov(g_aijb,                        &
-                              1, wf%n_v,                    &
-                              batch_i%first, batch_i%last,  &
-                              batch_j%first, batch_j%last,  &
-                              1, wf%n_v)
+            call wf%eri%get_eri_t1('voov', g_aijb, 1, wf%n_v, batch_i%first, batch_i%last, &
+                                                   batch_j%first, batch_j%last, 1, wf%n_v)
 !
             call mem%alloc(c_jb, (batch_j%length), wf%n_v)
 !
@@ -265,8 +262,8 @@ contains
 !
 !     :: Term 2 rho_ai = - g_abji * c_bj::
 !
-      req1_i = max((wf%integrals%n_J)*(wf%n_v), (wf%integrals%n_J)*(wf%n_o))
-      req1_b = max((wf%integrals%n_J)*(wf%n_v), (wf%integrals%n_J)*(wf%n_o))
+      req1_i = max((wf%eri%n_J)*(wf%n_v), (wf%eri%n_J)*(wf%n_o))
+      req1_b = max((wf%eri%n_J)*(wf%n_v), (wf%eri%n_J)*(wf%n_o))
 !
       req2 = 2*(wf%n_o)*(wf%n_v)
 !
@@ -285,11 +282,8 @@ contains
 !
             call mem%alloc(g_abji, wf%n_v, (batch_b%length), wf%n_o, (batch_i%length))
 !
-            call wf%get_vvoo(g_abji,                        &
-                              1, wf%n_v,                    &
-                              batch_b%first, batch_b%last,  &
-                              1, wf%n_o,                    &
-                              batch_i%first, batch_i%last)
+            call wf%eri%get_eri_t1('vvoo', g_abji, 1, wf%n_v, batch_b%first, batch_b%last,  &
+                                                   1, wf%n_o, batch_i%first, batch_i%last)
 !
 !           Sort g_abji(a,b,j,i) as g_abji(a,i,j,b)
 !

@@ -24,17 +24,17 @@ program eT_program
 !!  Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2019
 !!
 !
-   use kinds
-   use global_in 
+   use parameters
+   use global_in
    use global_out
    use timings_class, only : timings, timing
    use memory_manager_class, only : mem, memory_manager
    use libint_initialization, only : initialize_libint, finalize_libint
    use molecular_system_class, only : molecular_system
 !
-   use hf_class, only: hf 
-   use uhf_class, only: uhf 
-   use mlhf_class, only: mlhf 
+   use hf_class, only: hf
+   use uhf_class, only: uhf
+   use mlhf_class, only: mlhf
 !
    use omp_lib
 !
@@ -42,9 +42,9 @@ program eT_program
 !
    integer :: n_threads
 !
-!  Molecular system object 
+!  Molecular system object
 !
-   type(molecular_system) :: system 
+   type(molecular_system) :: system
 !
 !  Timer object
 !
@@ -53,6 +53,8 @@ program eT_program
 !  Reference wavefunction
 !
    class(hf), allocatable  :: ref_wf
+!
+   character(len=50) :: timestamp
 !
 !  Interface reference and CC wavefunction calculation
 !
@@ -70,15 +72,14 @@ program eT_program
 !
       end subroutine reference_calculation
 !
-      subroutine cc_calculation(system, ref_wf)
+      subroutine cc_calculation(ref_wf)
 !
          use molecular_system_class, only: molecular_system
 !
-         use hf_class, only: hf 
+         use hf_class, only: hf
 !
          implicit none
 !
-         type(molecular_system) :: system
          class(hf), intent(in)  :: ref_wf
 !
       end subroutine cc_calculation
@@ -103,14 +104,27 @@ program eT_program
 !
    call print_program_banner()
 !
-   call input%print_to_output()  ! Print input file to output file 
-   call input%check_for_errors() ! Check for incorrect/missing keywords/sections
+   call output%printf('m', "This is eT version (i0).(i0).(i0), (a0)", &
+                      ints=[major_version, minor_version, patch_version], &
+                      chars = [version_name], fs='(//t4,a)')
+!
+   call print_compilation_info()
+!
+   call get_date_and_time(timestamp)
+   call output%printf('m', "Calculation started: (a0)", chars=[timestamp], fs='(/t3,a)')
+!
+   call input%read_keywords_and_geometry()
+   call input%close_()
 !
    n_threads = 1
 !
 !$   n_threads = omp_get_max_threads()
 !
-   call output%printf('m', 'Running on (i0) OMP thread(s)', ints=[n_threads], fs='(/t3,a)')
+   if (n_threads .eq. 1) then
+      call output%printf('m', 'Running on (i0) OMP thread', ints=[n_threads], fs='(/t3,a)')
+   else
+      call output%printf('m', 'Running on (i0) OMP threads', ints=[n_threads], fs='(/t3,a)')
+   endif
 !
 !  Set print level in output and timing files
 !
@@ -122,15 +136,18 @@ program eT_program
 !
    call initialize_libint() ! Safe to use Libint from now on
 !
-!  Create molecular system 
+!  Create molecular system
 !
    system = molecular_system()
 !
+!  Write xyz and deallocate geometry in input
+!
+   call system%write_xyz_file()
+   call input%cleanup_geometry()
+!
 !  Cholesky decomposition of electron repulsion integrals (ERIs)
 !
-   if (input%requested_cc_calculation() .or.                      &
-       input%requested_keyword_in_section('cholesky eri', 'do'))  &
-         call do_eri_cholesky(system) 
+   if (input%requested_keyword_in_section('cholesky eri', 'do')) call do_eri_cholesky(system) 
 !
 !  Hartree-Fock calculation
 !
@@ -143,7 +160,7 @@ program eT_program
       if (input%requested_cc_calculation()) then
 !
          call ref_wf%prepare_for_cc()
-         call cc_calculation(system, ref_wf)
+         call cc_calculation(ref_wf)
 !
       endif
 !
@@ -165,14 +182,18 @@ program eT_program
    call system%cleanup()
 !
    call mem%check_for_leak()
+   call mem%print_max_used()
 !
    call output%check_for_warnings()
+!
+   call get_date_and_time(timestamp)
+   call output%printf('m', "Calculation ended: (a0)", chars=[timestamp], fs='(/t3,a)')
 !
    call output%printf('m', 'eT terminated successfully!', fs='(/t3,a)')
 !
    call output%close_()
-   call input%close_()
    call timing%close_()
+   call input%cleanup_keywords()
 !
 end program eT_program
 !
@@ -186,15 +207,15 @@ subroutine reference_calculation(system, ref_wf)
 !!
    use molecular_system_class, only: molecular_system
 !
-   use global_in,  only: input 
+   use global_in,  only: input
    use global_out, only: output
 !
-   use reference_engine_class, only: reference_engine 
-   use hf_geoopt_engine_class, only: hf_geoopt_engine 
+   use reference_engine_class, only: reference_engine
+   use hf_geoopt_engine_class, only: hf_geoopt_engine
 !
-   use hf_class, only: hf 
-   use uhf_class, only: uhf 
-   use mlhf_class, only: mlhf 
+   use hf_class, only: hf
+   use uhf_class, only: uhf
+   use mlhf_class, only: mlhf
 !
    implicit none
 !
@@ -227,22 +248,22 @@ subroutine reference_calculation(system, ref_wf)
 !
    endif
 !
-   if (input%requested_keyword_in_section('ground state geoopt', 'do')) then 
+   if (input%requested_keyword_in_section('ground state geoopt', 'do')) then
 !
       ref_engine = hf_geoopt_engine()
 !
-   else 
+   else
 !
       ref_engine = reference_engine()
 !
-   endif 
+   endif
 !
    call ref_engine%ignite(ref_wf)
 !
 end subroutine reference_calculation
 !
 !
-subroutine cc_calculation(system, ref_wf)
+subroutine cc_calculation(ref_wf)
 !!
 !! Coupled cluster calculation
 !! Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -250,35 +271,32 @@ subroutine cc_calculation(system, ref_wf)
 !! Directs the coupled cluster calculation for eT
 !!
    use global_in,  only: input
-   use global_out, only: output 
+   use global_out, only: output
 !
-   use molecular_system_class, only: molecular_system
+   use hf_class, only: hf
 !
-   use hf_class, only: hf 
-!
-   use ccs_class, only: ccs 
-   use cc2_class, only: cc2 
+   use ccs_class, only: ccs
+   use cc2_class, only: cc2
    use lowmem_cc2_class, only: lowmem_cc2
    use ccsd_class, only: ccsd
    use cc3_class, only: cc3
    use ccsdpt_class, only: ccsdpt
-   use mp2_class, only: mp2 
+   use mp2_class, only: mp2
    use mlcc2_class, only: mlcc2
+   use mlccsd_class, only: mlccsd
 !
    use gs_engine_class, only: gs_engine
    use es_engine_class, only: es_engine
-   use response_engine_class, only: response_engine 
-   use mean_value_engine_class, only: mean_value_engine 
+   use response_engine_class, only: response_engine
+   use mean_value_engine_class, only: mean_value_engine
    use td_engine_class, only: td_engine
 !
    implicit none
 !
-   type(molecular_system) :: system
-!
    class(hf), intent(in)  :: ref_wf
 !
    class(ccs), allocatable :: cc_wf
-   class(gs_engine), allocatable :: cc_engine 
+   class(gs_engine), allocatable :: cc_engine
 !
    character(len=30) :: cc_wf_name
 !
@@ -288,41 +306,49 @@ subroutine cc_calculation(system, ref_wf)
 !
       case ('ccs')
 !
-         cc_wf = ccs(system, ref_wf)
+         allocate(ccs::cc_wf)
 !
       case ('cc2')
 !
-         cc_wf = cc2(system, ref_wf)
+         allocate(cc2::cc_wf)
 !
       case ('lowmem-cc2')
 !
-         cc_wf = lowmem_cc2(system, ref_wf)
+         allocate(lowmem_cc2::cc_wf)
 !
       case ('ccsd')
 !
-         cc_wf = ccsd(system, ref_wf)
+         allocate(ccsd::cc_wf)
 !
       case ('cc3')
 !
-         cc_wf = cc3(system, ref_wf)
+         allocate(cc3::cc_wf)
 !
       case ('ccsd(t)')
 !
-         cc_wf = ccsdpt(system, ref_wf)
+         allocate(ccsdpt::cc_wf)
 !
       case ('mp2')
 !
-         cc_wf = mp2(system, ref_wf)
+         allocate(mp2::cc_wf)
 !
       case ('mlcc2')
 !
-         cc_wf = mlcc2(system, ref_wf)
+         allocate(mlcc2::cc_wf)
+!
+      case ('mlccsd')
+!
+         allocate(mlccsd::cc_wf)
 !
       case default
 !
          call output%error_msg('could not recognize CC method ' // trim(cc_wf_name) // '.')
 !
    end select
+!
+!  initialize wavefunction
+!
+   call cc_wf%initialize(ref_wf)
 !
    if (input%requested_keyword_in_section('response', 'do')) then
 !
@@ -332,7 +358,7 @@ subroutine cc_calculation(system, ref_wf)
 !
       cc_engine = es_engine(cc_wf)
 !
-   elseif (input%requested_keyword_in_section('mean value', 'do')) then 
+   elseif (input%requested_keyword_in_section('mean value', 'do')) then
 !
       cc_engine = mean_value_engine(cc_wf)
 !
@@ -358,30 +384,29 @@ end subroutine cc_calculation
 !
 subroutine do_eri_cholesky(system)
 !!
-!! Do ERI Cholesky 
+!! Do ERI Cholesky
 !! Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019 and Dec 2019
-!! 
-!! Performs Cholesky decomposition of the atomic orbital (AO) electron repulsion 
-!! integrals. 
 !!
-   use eri_cd_class,             only: eri_cd 
+!! Performs Cholesky decomposition of the atomic orbital (AO) electron repulsion
+!! integrals.
+!!
+   use eri_cd_class,             only: eri_cd
    use molecular_system_class,   only: molecular_system
 !
-   implicit none 
+   implicit none
 !
    type(molecular_system), intent(inout) :: system
 !
-   type(eri_cd), allocatable :: eri_cholesky_solver 
+   type(eri_cd), allocatable :: eri_cholesky_solver
 !
    eri_cholesky_solver = eri_cd(system)
 !
-   call eri_cholesky_solver%run(system)               ! Do the Cholesky decomposition 
+   call eri_cholesky_solver%run(system)
 !
-   if (eri_cholesky_solver%construct_vectors) &
-      call eri_cholesky_solver%diagonal_test(system)  ! Determine the largest 
-                                                      ! deviation in the ERI matrix 
+   call eri_cholesky_solver%diagonal_test(system)  ! Determine the largest 
+                                                   ! deviation in the ERI matrix 
 !
-   call eri_cholesky_solver%cleanup(system)
+   call eri_cholesky_solver%cleanup()
 !
 end subroutine do_eri_cholesky
 !
@@ -394,14 +419,14 @@ subroutine set_global_print_levels()
 !! Reads and sets the global print levels for the output file
 !! and the timing file from input.
 !!
-   use global_out, only: output 
+   use global_out, only: output
    use global_in, only: input
    use timings_class, only : timing
 !
    character(len=200) :: print_level
 !
 !  Set default
-   print_level = 'normal' 
+   print_level = 'normal'
 !
 !  Overwrite print_level if keyword is present
    call input%get_keyword_in_section('output print level', 'print', print_level)
@@ -411,7 +436,7 @@ subroutine set_global_print_levels()
 !
 !  Repeat for timing file
 !  Set default
-   print_level = 'normal' 
+   print_level = 'normal'
 !
 !  Overwrite print_level if keyword is present
    call input%get_keyword_in_section('timing print level', 'print', print_level)
@@ -424,16 +449,18 @@ end subroutine set_global_print_levels
 !
 subroutine print_program_banner()
 !!
-!! Print program banner 
-!! Written by Eirik F. Kjønstad, 2019 
+!! Print program banner
+!! Written by Eirik F. Kjønstad, 2019
 !!
 !! Prints banner, author list, and list of contributors.
 !!
-   use global_out, only: output 
+   use parameters
+   use global_out, only: output
 !
-   implicit none 
+   implicit none
 !
-   call output%printf('m', 'eT - an electronic structure program ', fs='(///t22,a)')
+   call output%printf('m', 'eT (i0).(i0) - an electronic structure program ', &
+                      ints=[major_version, minor_version], fs='(///t22,a)')
 !
    call output%print_separator('m',72,'-', fs='(/t3,a)')
 !
@@ -455,12 +482,109 @@ subroutine print_program_banner()
                            'T. Moitra, '        // &
                            'R. H. Myhre, '      // &
                            'A. C. Paul, '       // &
+                           'S. Roet, '          // &
                            'M. Scavino, '       // &
                            'A. Skeidsvoll, '    // &
                            'Å. H. Tveten',         &
-                           ffs='(t4,a)', fs='(t4,a)', ll=70)
+                           ffs='(t4,a)', fs='(t4,a)', ll=68)
 !
    call output%print_separator('m',72,'-', fs='(t3,a)')
 !
+   call output%printf('m', 'J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713', &
+                      fs='(t4,a)')
+!
 end subroutine print_program_banner
+!
+!
+subroutine get_date_and_time(string)
+!!
+!! Get date and time
+!! Written by Rolf H. Myhre, Nov, 2020
+!!
+!! Returns a formatted string with date, time and UTC offset
+!!
+!! Format: yyyy-mm-dd hh:mm:ss UTC xhh:mm
+!!
+   implicit none
+!
+   character(len=*), intent(out) :: string
+   character(len=20) :: date, time, zone
+!
+   call date_and_time(date=date, time=time, zone=zone)
+!
+   string = ""
+   write(string, "(a,a,a,a,a,a)") date(1:4), "-", date(5:6), "-", date(7:8), " "
+   write(string(12:), "(a,a,a,a,a)") time(1:2), ":", time(3:4), ":", time(5:6)
+   write(string(20:), "(a,a,a,a)") " UTC ", zone(1:3), ":", zone(4:5)
+!
+end subroutine get_date_and_time
+!
+!
+subroutine print_compilation_info()
+!!
+!! Print compilation info
+!! Written by Rolf H. Myhre, Nov, 2020
+!!
+!! Retrieves compilation information from the 
+!! get_compilation_info library generated by CMake
+!! and prints to output
+!!
+   use global_out, only: output
+!
+   implicit none
+!
+   character(len=200) :: string
+!
+   call output%print_separator('n',60,'-', fs='(t3,a)')
+!
+   call get_username(string)
+   call output%printf("m", "Compiled by:        (a0)", chars =[string]) 
+!
+   call get_hostname(string)
+   call output%printf("m", "Compiled on:        (a0)", chars =[string]) 
+!
+   call get_configuration_time(string)
+   call output%printf("m", "Configuration date: (a0)", chars =[string]) 
+!
+   call get_git_branch(string)
+   if(len_trim(string) .gt. 0) then
+      call output%printf("m", "Git branch:         (a0)", chars =[string]) 
+
+      call get_git_hash(string)
+      call output%printf("m", "Git hash:           (a0)", chars =[string]) 
+   endif
+!
+   call get_fortran_compiler(string)
+   call output%printf("m", "Fortran compiler:   (a0)", chars =[string]) 
+!
+   call get_c_compiler(string)
+   call output%printf("m", "C compiler:         (a0)", chars =[string]) 
+!
+   call get_cxx_compiler(string)
+   call output%printf("m", "C++ compiler:       (a0)", chars =[string]) 
+!
+   call get_lapack_type(string)
+   call output%printf("m", "LAPACK type:        (a0)", chars =[string]) 
+!
+   call get_blas_type(string)
+   call output%printf("m", "BLAS type:          (a0)", chars =[string]) 
+!
+   call get_int64(string)
+   call output%printf("m", "64-bit integers:    (a0)", chars =[string]) 
+!
+   call get_omp(string)
+   call output%printf("m", "OpenMP:             (a0)", chars =[string]) 
+!
+   call get_pcm(string)
+   call output%printf("m", "PCM:                (a0)", chars =[string]) 
+!
+   call get_forced_batching(string)
+   call output%printf("m", "Forced batching:    (a0)", chars =[string]) 
+!
+   call get_runtime_check(string)
+   call output%printf("m", "Runtime checks:     (a0)", chars =[string]) 
+!
+   call output%print_separator("m",60,"-", fs="(t3,a)")
+!
+end subroutine print_compilation_info
 !

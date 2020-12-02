@@ -25,17 +25,22 @@ module kinds
 !!
 !!    Defines a set of kinds in terms of precision. Usage:
 !!
-!!       In declarations:   "real(dp) :: foo", "integer(i15) :: foo_int", etc.
+!!       In declarations:   "real(dp) :: foo", "integer(i64) :: foo_int", etc.
 !!       In record-lengths: "recl=dp*200" (200 double precision numbers per record)
 !!
+   use, intrinsic :: iso_fortran_env, only: real32, real64, real128
+   use, intrinsic :: iso_fortran_env, only: int8, int16, int32, int64
 !
    implicit none
 !
-   integer, parameter :: dp  = selected_real_kind(15,307)
-   integer, parameter :: qp  = selected_real_kind(33,4931)
-   integer, parameter :: i15 = selected_int_kind(15)
-   integer, parameter :: i6  = selected_int_kind(6)
+   integer, parameter :: sp  = real32
+   integer, parameter :: dp  = real64
+   integer, parameter :: qp  = real128
+   integer, parameter :: i64 = int64
+   integer, parameter :: i32 = int32
+   integer, parameter :: i16 = int16
+   integer, parameter :: i8  = int8
 !
-   integer, parameter :: int_size = bit_size(i15)/8
+   integer, parameter :: int_size = bit_size(i64)/8
 !
 end module kinds

@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2020 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module bfgs_geoopt_hf_class
 !
 !!
@@ -16,6 +35,10 @@ module bfgs_geoopt_hf_class
    use bfgs_tool_class,       only: bfgs_tool
    use timings_class,         only: timings
 !
+
+   use abstract_convergence_tool_class,   only: abstract_convergence_tool 
+   use convergence_tool_class,            only: convergence_tool 
+!
    implicit none
 !
    type :: bfgs_geoopt_hf
@@ -31,8 +54,8 @@ module bfgs_geoopt_hf_class
 !
       integer :: max_iterations
 !
-      real(dp) :: energy_threshold
-      real(dp) :: gradient_threshold
+      class(abstract_convergence_tool), allocatable :: convergence_checker
+!
       real(dp) :: max_step 
 !
       real(dp), dimension(:), allocatable :: energies, gradient_maxs 
@@ -74,6 +97,9 @@ contains
 !
       logical, intent(in) :: restart 
 !
+      real(dp)  :: energy_threshold, gradient_threshold
+      logical   :: energy_convergence
+!
       solver%timer = timings('HF geometry optimization BFGS solver', pl='minimal')
       call solver%timer%turn_on()
 !
@@ -96,14 +122,19 @@ contains
 !     Set standard settings 
 !
       solver%max_iterations      = 250
-      solver%energy_threshold    = 1.0d-4
-      solver%gradient_threshold  = 1.0d-4
       solver%max_step            = 0.5d0
       solver%restart             = restart
 !
+      energy_threshold    = 1.0d-4
+      gradient_threshold  = 1.0d-4
+      energy_convergence  = .false. 
+!
 !     Read & print settings (thresholds, etc.)
 !
-      call solver%read_settings()
+      call solver%read_settings(energy_threshold, gradient_threshold, energy_convergence)
+!
+      solver%convergence_checker = convergence_tool(energy_threshold, gradient_threshold, energy_convergence)
+!
       call solver%print_settings()
 !
       allocate(solver%energies(solver%max_iterations))
@@ -112,7 +143,7 @@ contains
    end function new_bfgs_geoopt_hf
 !
 !
-   subroutine read_settings_bfgs_geoopt_hf(solver)
+   subroutine read_settings_bfgs_geoopt_hf(solver, energy_threshold, gradient_threshold, energy_convergence)
 !!
 !!    Read settings 
 !!    Written by Åsmund H. Tveten and Eirik F. Kjønstad, 2019
@@ -121,11 +152,18 @@ contains
 !
       class(bfgs_geoopt_hf), intent(inout) :: solver 
 !
-      call input%get_keyword_in_section('gradient threshold', &
-                                        'solver scf geoopt', solver%gradient_threshold)
+      real(dp), intent(inout) :: energy_threshold, gradient_threshold
+      logical, intent(inout)  :: energy_convergence
 !
-      call input%get_keyword_in_section('energy threshold', &
-                                        'solver scf geoopt', solver%energy_threshold)
+      call input%get_keyword_in_section('gradient threshold', &
+                                        'solver scf geoopt', gradient_threshold)
+!
+      if (input%requested_keyword_in_section('energy threshold', 'solver scf geoopt')) then
+!
+         energy_convergence = .true.
+         call input%get_keyword_in_section('energy threshold', &
+                                        'solver scf geoopt', energy_threshold)
+      endif
 !
       call input%get_keyword_in_section('max iterations', &
                                         'solver scf geoopt', solver%max_iterations)
@@ -147,10 +185,7 @@ contains
 !
       call output%printf('m', '- BFGS geometry optimization settings:', fs='(/t3,a)')
 !
-      call output%printf('m', 'Gradient threshold: (e11.4)', &
-                         reals=[solver%gradient_threshold], fs='(/t6,a)')
-      call output%printf('m', 'Energy threshold:   (e11.4)', &
-                         reals=[solver%energy_threshold], fs='(t6,a)')
+      call solver%convergence_checker%print_settings()
 !
       call output%printf('m', 'Max iterations:     (i11)', &
                          ints=[solver%max_iterations], fs='(/t6,a)')
@@ -182,6 +217,7 @@ contains
 !        Update geometry to the one requested
 !
          call wf%system%set_geometry(geometry)
+         call wf%system%write_xyz_file(append=.true.)
 !
 !        Re-decompose the AO overlap 
 !
@@ -196,7 +232,7 @@ contains
 !
 !        Update Cauchy Schwarz screening list 
 !
-         call wf%construct_sp_eri_schwarz()
+         call wf%construct_shp_eri_schwarz()
 !
       endif
 !
@@ -208,6 +244,7 @@ contains
 !
       hf_gs_solver = scf_diis_hf(wf, restart)
       call hf_gs_solver%run(wf)
+      call wf%print_summary(print_mo_info=.false.)
 !
 !     Compute gradient 
 !
@@ -231,8 +268,6 @@ contains
       class(hf) :: wf
 !
       logical :: converged
-      logical :: converged_energy
-      logical :: converged_gradient
 !
       real(dp) :: energy, prev_energy, max_gradient
 !
@@ -251,9 +286,7 @@ contains
 !
       solver%iteration = 0
 !
-      converged          = .false.
-      converged_energy   = .false.
-      converged_gradient = .false.
+      converged = .false.
 !
       energy = zero
       prev_energy = zero
@@ -278,10 +311,7 @@ contains
          solver%energies(solver%iteration) = energy 
          solver%gradient_maxs(solver%iteration) = max_gradient
 !
-         converged_gradient = max_gradient               <= solver%gradient_threshold
-         converged_energy   = abs(energy - prev_energy)  <= solver%energy_threshold
-!
-         converged = converged_gradient .and. converged_energy
+         converged = solver%convergence_checker%has_converged(max_gradient, energy - prev_energy)
 !
          if (converged) then
 !

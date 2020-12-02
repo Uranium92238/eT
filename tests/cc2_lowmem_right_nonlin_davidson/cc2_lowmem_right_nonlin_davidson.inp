@@ -1,0 +1,40 @@
+system
+  name: H2O
+end system
+
+do
+  excited state
+end do
+
+method
+  hf
+  lowmem-cc2
+end method
+
+solver cholesky
+  threshold: 1.0d-11
+end solver cholesky
+
+solver scf
+  energy threshold:   1.0d-11
+  gradient threshold: 1.0d-11
+end solver scf
+
+solver cc gs
+  omega threshold:  1.0d-11
+  energy threshold: 1.0d-11
+end solver cc gs
+
+solver cc es
+  algorithm:          non-linear davidson
+  singlet states:     8
+  residual threshold: 1.0d-10
+  energy threshold:   1.0d-10
+end solver cc es
+
+geometry
+basis: cc-pVDZ
+O        1.4059135598      1.5728867794      0.0000000000                 
+H        2.3759135598      1.5728867794      0.0000000000                 
+H        1.0825837481      2.0185366861     -0.7985950122
+end geometry

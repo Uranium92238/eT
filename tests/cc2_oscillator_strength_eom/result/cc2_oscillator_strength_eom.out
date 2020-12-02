@@ -104,61 +104,6 @@
         4 He     0.188972612457     0.188972612457    14.172945934238        4
      ==============================================================================
 
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
-
-  Performs a Cholesky decomposition of the two-electron electronic repulsion 
-  integrals in the atomic orbital basis,
-
-  (ab|cd) = sum_J L_ab^J L_cd^J.
-
-  Once the Cholesky basis has been determined, the vectors L^J are constructed 
-  and stored to disk. These may either be used directly, or be transformed 
-  to the MO basis for use in post-HF calculations. For more information, 
-  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
-
-  - Cholesky decomposition settings:
-
-     Target threshold is:   0.10E-10
-     Span factor:           0.10E-01
-     Max qual:                  1000
-
-  - Cholesky decomposition system details:
-
-     Total number of AOs:                    38
-     Total number of shell pairs:           171
-     Total number of AO pairs:              741
-
-     Significant shell pairs:               161
-     Significant AO pairs:                  697
-
-     Construct shell pairs:                 171
-     Construct AO pairs:                    741
-
-  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
-  -------------------------------------------------------------------------------------------------------
-     1               671 /     150       0.53537E+01         194             49             32879
-     2               524 /     128       0.52718E-01         398            155             81220
-     3               484 /     114       0.52421E-03         303            243            117612
-     4               362 /      92       0.51415E-05         311            362            131044
-     5               232 /      54       0.50229E-07         225            475            110200
-     6                 0 /       0       0.50128E-09         127            550                 0
-  -------------------------------------------------------------------------------------------------------
-
-  - Summary of Cholesky decomposition of electronic repulsion integrals:
-
-     Final number of Cholesky vectors: 550
-
- - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
-
-     Maximal difference between approximate and actual diagonal:              0.9471E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.1554E-14
-
-  - Finished decomposing the ERIs.
-
-     Total wall time (sec):              0.29200
-     Total cpu time (sec):               0.48746
-
 
   :: RHF wavefunction
   ======================
@@ -219,23 +164,23 @@
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1          -177.452460025510     0.7565E-01     0.1775E+03
-     2          -177.479057956533     0.1346E-01     0.2660E-01
-     3          -177.480054154998     0.4309E-02     0.9962E-03
+     2          -177.479057956534     0.1346E-01     0.2660E-01
+     3          -177.480054154999     0.4309E-02     0.9962E-03
      4          -177.480180562238     0.1844E-02     0.1264E-03
-     5          -177.480194220840     0.3631E-03     0.1366E-04
+     5          -177.480194220839     0.3631E-03     0.1366E-04
      6          -177.480195441222     0.7394E-04     0.1220E-05
      7          -177.480195516819     0.2206E-04     0.7560E-07
      8          -177.480195527024     0.5084E-05     0.1021E-07
-     9          -177.480195527847     0.1218E-05     0.8231E-09
-    10          -177.480195527874     0.2531E-06     0.2660E-10
-    11          -177.480195527875     0.4375E-07     0.1052E-11
-    12          -177.480195527875     0.9241E-08     0.2842E-13
-    13          -177.480195527875     0.4370E-08     0.1421E-12
-    14          -177.480195527875     0.1744E-08     0.2558E-12
-    15          -177.480195527875     0.3643E-09     0.2842E-12
-    16          -177.480195527875     0.1712E-09     0.1137E-12
-    17          -177.480195527875     0.5855E-10     0.1705E-12
-    18          -177.480195527875     0.5043E-11     0.4547E-12
+     9          -177.480195527847     0.1218E-05     0.8234E-09
+    10          -177.480195527874     0.2531E-06     0.2663E-10
+    11          -177.480195527875     0.4375E-07     0.1165E-11
+    12          -177.480195527875     0.9241E-08     0.1990E-12
+    13          -177.480195527875     0.4370E-08     0.5684E-13
+    14          -177.480195527875     0.1744E-08     0.5684E-13
+    15          -177.480195527875     0.3643E-09     0.1137E-12
+    16          -177.480195527875     0.1712E-09     0.5684E-13
+    17          -177.480195527875     0.5855E-10     0.8527E-13
+    18          -177.480195527875     0.5044E-11     0.8527E-13
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -256,15 +201,15 @@
    5  -0.911949983661  15   1.130688493503  25   2.500306219284  35   4.000653348396
    6  -0.866287973463  16   1.195338322958  26   2.529687453714  36   4.553980959887
    7  -0.832614061197  17   1.332576309251  27   2.529802664165  37   4.580686751359
-   8  -0.790123932097  18   1.427802958738  28   2.601526974778  38   5.083719172632
+   8  -0.790123932097  18   1.427802958738  28   2.601526974779  38   5.083719172632
    9  -0.497908722170  19   1.453664008356  29   2.725866593376
   10  -0.439606471484  20   1.485675098613  30   2.888341323819
   -----------------------------------------------------------------------------------
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.18900
-     Total cpu time (sec):               2.15668
+     Total wall time (sec):              3.45130
+     Total cpu time (sec):               6.73740
 
 
   :: CC2 wavefunction
@@ -296,22 +241,81 @@
   This is a CC2 response calculation.
   The following tasks will be performed:
 
-     1) Preparation of MO basis and integrals
-     2) Calculation of the ground state (diis algorithm)
-     3) Calculation of the multipliers (diis algorithm)
-     4) Calculation of the excited state (davidson algorithm)
-     5) Calculation of the transition moments (EOM)
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
+     4) Calculation of the multipliers (diis algorithm)
+     5) Calculation of the excited state (davidson algorithm)
+     6) Calculation of the transition moments (EOM)
 
 
-  1) Preparation of MO basis and integrals
+  1) Cholesky decomposition of the electron repulsion integrals
+
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-10
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition system details:
+
+     Total number of AOs:                    38
+     Total number of shell pairs:           171
+     Total number of AO pairs:              741
+
+     Significant shell pairs:               161
+     Significant AO pairs:                  697
+
+     Construct shell pairs:                 171
+     Construct AO pairs:                    741
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               671 /     150       0.53537E+01         194             49             32879
+     2               524 /     128       0.52718E-01         398            155             81220
+     3               484 /     114       0.52421E-03         303            243            117612
+     4               362 /      92       0.51415E-05         311            362            131044
+     5               232 /      54       0.50229E-07         225            475            110200
+     6                 0 /       0       0.50128E-09         127            550                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 550
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.9471E-11
+     Minimal element of difference between approximate and actual diagonal:  -0.1084E-14
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
 
+  - Finished decomposing the ERIs.
 
-  2) Calculation of the ground state (diis algorithm)
+     Total wall time (sec):              1.07461
+     Total cpu time (sec):               2.10358
+
+
+  2) Preparation of MO basis and integrals
+
+
+  3) Calculation of the ground state (diis algorithm)
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -333,18 +337,18 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -177.877001409678     0.4674E-01     0.1779E+03
+    1          -177.877001409677     0.4674E-01     0.1779E+03
     2          -177.878674723964     0.9225E-02     0.1673E-02
     3          -177.879094696948     0.1669E-02     0.4200E-03
-    4          -177.879150335164     0.5273E-03     0.5564E-04
+    4          -177.879150335163     0.5273E-03     0.5564E-04
     5          -177.879146466204     0.9144E-04     0.3869E-05
-    6          -177.879146277703     0.1165E-04     0.1885E-06
+    6          -177.879146277702     0.1165E-04     0.1885E-06
     7          -177.879146253559     0.3927E-05     0.2414E-07
     8          -177.879146237884     0.1639E-05     0.1568E-07
     9          -177.879146249877     0.3173E-06     0.1199E-07
    10          -177.879146248545     0.6848E-07     0.1332E-08
-   11          -177.879146248482     0.1241E-07     0.6352E-10
-   12          -177.879146248450     0.2381E-08     0.3212E-10
+   11          -177.879146248481     0.1241E-07     0.6352E-10
+   12          -177.879146248449     0.2381E-08     0.3212E-10
    13          -177.879146248424     0.5290E-09     0.2515E-10
    14          -177.879146248423     0.6468E-10     0.1307E-11
    15          -177.879146248424     0.1009E-10     0.1137E-11
@@ -362,12 +366,12 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        1      9       -0.022050116778
+        1      9        0.022050116778
         3      9        0.008444448645
-        4      7       -0.006514017945
+        4      7        0.006514017945
        14      9       -0.005581547297
-        4     10       -0.005276241552
-        5      6       -0.005084191936
+        4     10        0.005276241552
+        5      6        0.005084191936
        14      6       -0.004916693498
        10      7        0.004447459944
         5      4       -0.004325455304
@@ -378,11 +382,11 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.41300
-     Total cpu time (sec):               0.95974
+     Total wall time (sec):              0.49021
+     Total cpu time (sec):               0.97591
 
 
-  3) Calculation of the multipliers (diis algorithm)
+  4) Calculation of the multipliers (diis algorithm)
 
    - DIIS coupled cluster multipliers solver
   ---------------------------------------------
@@ -427,27 +431,27 @@
 
      Largest single amplitudes:
      -----------------------------------
-        a       i         r(a,i)
+        a       i         tbar(a,i)
      -----------------------------------
-        1      9       -0.036962642266
+        1      9        0.036962642266
         3      9        0.012935991802
-        4      7       -0.012258896995
+        4      7        0.012258896995
        14      9       -0.011861824005
-        4     10       -0.010369057365
+        4     10        0.010369057365
        14      6       -0.010065074998
         3      6       -0.009844666364
-        5      6       -0.009547250035
-       22      8        0.008767267832
+        5      6        0.009547250035
+       22      8       -0.008767267832
         5      4       -0.008015599057
      ------------------------------------
 
   - Finished solving the cc2 multipliers equations
 
-     Total wall time (sec):              0.26900
-     Total cpu time (sec):               0.86054
+     Total wall time (sec):              0.41553
+     Total cpu time (sec):               0.83132
 
 
-  4) Calculation of the excited state (davidson algorithm)
+  5) Calculation of the excited state (davidson algorithm)
      Calculating right vectors
 
    - Davidson coupled cluster excited state solver
@@ -633,7 +637,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.201127277039    0.000000000000     0.3857E-09   0.5272E-11
+     1   0.201127277038    0.000000000000     0.3857E-09   0.5271E-11
   ------------------------------------------------------------------------
 
   Iteration:                 21
@@ -641,7 +645,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.201127277038    0.000000000000     0.9305E-10   0.8674E-13
+     1   0.201127277038    0.000000000000     0.9305E-10   0.8837E-13
   ------------------------------------------------------------------------
 
   Iteration:                 22
@@ -649,7 +653,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.201127277039    0.000000000000     0.2108E-10   0.3310E-12
+     1   0.201127277039    0.000000000000     0.2108E-10   0.3327E-12
   ------------------------------------------------------------------------
 
   Iteration:                 23
@@ -657,7 +661,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.201127277039    0.000000000000     0.5972E-11   0.3619E-13
+     1   0.201127277039    0.000000000000     0.5972E-11   0.3583E-13
   ------------------------------------------------------------------------
   Convergence criterion met in 23 iterations!
 
@@ -672,11 +676,11 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1     10        0.969476561347
+        1     10       -0.969476561347
         3     10       -0.125401050294
         2     10       -0.044652852212
-        1      7        0.029684176013
-        6     10       -0.025268358601
+        1      7       -0.029684176013
+        6     10        0.025268358601
        13     10        0.024905743222
        12     10        0.022819066416
        14     10       -0.012100557798
@@ -696,11 +700,11 @@
 
   - Finished solving the CC2 excited state equations (right)
 
-     Total wall time (sec):              0.61700
-     Total cpu time (sec):               1.38751
+     Total wall time (sec):              0.72916
+     Total cpu time (sec):               1.45748
 
 
-  4) Calculation of the excited state (davidson algorithm)
+  5) Calculation of the excited state (davidson algorithm)
      Calculating left vectors
 
    - Davidson coupled cluster excited state solver
@@ -894,7 +898,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.201127277039    0.000000000000     0.1163E-09   0.7813E-12
+     1   0.201127277039    0.000000000000     0.1163E-09   0.7820E-12
   ------------------------------------------------------------------------
 
   Iteration:                 22
@@ -902,7 +906,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.201127277039    0.000000000000     0.2631E-10   0.3575E-12
+     1   0.201127277039    0.000000000000     0.2631E-10   0.3576E-12
   ------------------------------------------------------------------------
 
   Iteration:                 23
@@ -910,7 +914,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.201127277039    0.000000000000     0.8240E-11   0.6947E-13
+     1   0.201127277039    0.000000000000     0.8240E-11   0.6845E-13
   ------------------------------------------------------------------------
   Convergence criterion met in 23 iterations!
 
@@ -926,14 +930,14 @@
         a       i         L(a,i)
      -----------------------------------
         1     10        0.942330174952
-        3     10       -0.116649345855
-        2     10       -0.042150791714
+        3     10        0.116649345855
+        2     10        0.042150791714
         1      7        0.028600356348
-       13     10        0.023373547168
+       13     10       -0.023373547168
         6     10       -0.022187183144
-       12     10        0.020730882672
-        3      7       -0.011418643707
-        2      7       -0.010972514427
+       12     10       -0.020730882672
+        3      7        0.011418643707
+        2      7        0.010972514427
         5      7       -0.010664423988
      ------------------------------------
 
@@ -949,11 +953,11 @@
 
   - Finished solving the CC2 excited state equations (left)
 
-     Total wall time (sec):              0.61900
-     Total cpu time (sec):               1.41024
+     Total wall time (sec):              1.09724
+     Total cpu time (sec):               2.00401
 
 
-  5) Calculation of the transition moments (EOM)
+  6) Calculation of the transition moments (EOM)
 
   :: EOM properties calculation
 
@@ -974,11 +978,13 @@
      Y          -0.0022758762     -0.0047093106            0.0000107178
      Z           0.1036563917      0.2062513433            0.0213792700
      --------------------------------------------------------------------------
-     Oscillator strength [a.u.]:      0.002875535148
+     Oscillator strength:      0.002875535148
 
   - Timings for the CC2 response calculation
 
-     Total wall time (sec):              1.95000
-     Total cpu time (sec):               4.67954
+     Total wall time (sec):              3.83303
+     Total cpu time (sec):               7.42237
+
+     Peak memory usage during the execution of eT: 28.039464 MB
 
   eT terminated successfully!
