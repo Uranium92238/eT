@@ -1,0 +1,82 @@
+# eT v1.1
+### Bugfixes
+- Fixed bug in EOM when $`n_o > n_v`$
+- Fixed wrong allocation in expectation value engine
+- Fixed wrong memory estimate for doubles A1 term, CCSD A2 term, and CCSD E1 (Jacobian transpose)
+- File needed for restart in MLHF no longer deleted
+- Threshold in biorthonormalization no longer squared 
+- Fixed the linear dependence threshold for all davidson solvers, the threshold is now 1.0d-11 or lower.
+- Fixed wrong dimension of optwork in eigen\_davidson\_tool to comply with gfortran10
+- If $`e^T`$ is compiled with 32bit integers, it will check that the number of MOs does not exceed 215 
+  so that $`n_{MO}^4`$ can be stored in an integer.
+- Fixed the useage of 32bit integers in the batching setup.
+- Fixed a bug with intel compilers where we could not use printf to print two chars returned by two different functions.
+- Fixed bug where the linear dependence threshold could be larger than the residual threshold.
+- The label in the print of the largest amplitudes was changed from 'r' to 'tbar' for the multipliers.
+- Fixed basis of plotted CC density matrix (t1 to MO)
+- Fixed batching estimate in Jacobian D1 doubles
+- Moved opening of time-dependent CC files out of constructor
+- Fixed copying of HF energy when initializing CC wavefunction
+- Removed memory leak in visualization class
+- Fixed diagonal scaling factor in CC3 (affects transition moments)
+- Sanity checks in Davidson CC ES solver, and changed default for linear dependency threshold that could cause issues in rare cases
+- Cluster amplitudes now stored to disk in each iteration of the Newton-Raphson ground state solver
+- Fixed Gram-Schmidt biorthonormalization bug that may appear in rare cases for degenerate states (not observed in practice)
+- Fixed memory leaks in visualization\_tool, some of which were intel-specific
+- Fixed print for oscillator strenths, they are now unitless
+- Fixed uninitialized variable field%separation when not specified in input
+- Added missing frozen-core contributions to CC dipoles and quadrupoles
+
+### Features
+- Integral screening in MLHF for inactive density
+- MLCCSD GS, right ES with NTO, CNTO, PAO and Cholesky orbitals and CVS
+- Non-linear Davidson solver for CC2 and CC3
+- Now possible to do only Cholesky decomposition
+- Visualization of CC ground state density and transition densities
+- Restart functionality was added to MLCCSD.
+- Convention enforced that largest element of an eigenvector from LAPACK has a positive sign.
+- Estimate for the maximum amount of memory used printed at the end of the execution.
+- Added CMake command to CMake output
+- Now possible to restart singles and doubles from singles, and vice versa (e.g. CCS from CCSD and vice versa)
+- Now possible to do global restart instead of specifying restart for each individual solver
+- Added restart left from right and vice vers with the correct transformation of the basis
+- Now possible to run calculations beyond Calcium
+- Changes to default thresholds to avoid overly tight thresholds unless requested
+- Improved help messages from setup script and added documentation for fortran flags
+- Sign of converged Hartree-Fock orbitals are deterministic.
+- Minimal Python version is 3.6 
+- Added additional authors and a reference to the paper to the output
+- Added compilation information to the beginning of the output
+- Restart added for CNTO orbitals 
+
+### Optimization
+- Removed unnecessary reordering in Jacobian doubles
+- Batching functionality was added to the construction of CNTOs in multilevel coupled cluster.
+- Added batching to CCS energy calculation to reduce memory requirement
+- Introduced batching in DIIS and Davidson and record storers to minimize copy-operations
+- Cholesky vectors are now stored according to occupied-virtual blocks to improve copy/write/read performance
+- Reduced prefactor of CC2 and MLCC2 ground state and Jacobian transformation equations by use of the Cholesky vector expression rather than ERIs.
+- Reduced prefactor of CC3 Jacobian transpose transformation equations by use of the Cholesky vector expression.
+- Reduced prefactor of CCSD and MLCCSD ground state equations by use of the Cholesky vector expression rather than ERIs.
+- Removed unnecessary reorderings from CCSD Jacobian transformation
+
+### Structure
+- Wavefunction constructors and init routines
+- Implemented stream and direct stream files
+- Input file read only once
+- Removed direct access files
+- Geometry now passed to libint in memory
+- Record storers for records in memory or on file implemented and used in Davidson
+- Improved error messages in memory manager
+- The ground state engine now gives an error message if the selected algorithm is not recognized.
+- Cleanup and generalization of the biorthogonalization routine
+- The vector csiX in the eom/response modules was renamed to xiX according to the greek letter.
+- Some improvements in how the autogenerate interfaces Python script recognizes submodules and deals with ampersand, and some restructuring of the script
+- Removed direct\_file object
+- Excited states are stored in separate stream files which are stored as an array of files in eT.
+- Stream files are used for amplitudes and multipliers.
+- Separated out convergence tests for solvers into convergence\_tool
+- runtest now has a separate file that defines filters
+- Python code follows the black code style
+- Additional davidson timers
+
