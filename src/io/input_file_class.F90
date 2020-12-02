@@ -316,6 +316,7 @@ contains
                       'cc2 orbitals',           &
                       'ccsd orbitals',          &
                       'cholesky threshold',     &
+                      'nto restart',            &
                       'cnto restart',           &
                       'orbital restart',        &
                       'cnto occupied cc2',      &

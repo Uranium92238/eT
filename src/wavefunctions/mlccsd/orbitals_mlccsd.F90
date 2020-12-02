@@ -138,6 +138,9 @@ contains
 !
          if (wf%cnto_restart) then
 !
+            call output%printf('m', 'Requested restart for CNTOs, &
+                                    &reading orbital transformation matrices')
+!
             call wf%read_cnto_transformation_matrices(T_o, T_v)
 !
          else
@@ -179,7 +182,18 @@ contains
 !
          call mem%alloc(T_o, wf%n_o, wf%n_o)
 !
-         call wf%construct_ccs_nto_transformation_matrix(T_o)
+         if (wf%nto_restart) then
+!
+            call output%printf('m', 'Requested restart for NTOs, &
+                                    &reading orbital transformation matrix')
+!
+            call wf%read_nto_transformation_matrix(T_o)
+!
+         else
+
+            call wf%construct_ccs_nto_transformation_matrix(T_o)
+!
+         endif
 !
          call wf%construct_mixed_nto_canonical_orbitals(T_o)
 !

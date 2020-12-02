@@ -214,6 +214,7 @@ add_eT_runtest(restart_mlcc2_cholesky_es                    "eT;short;mlcc2;es;c
 add_eT_runtest(restart_mlcc2_left_from_right                "eT;short;mlcc2;es;cholesky;restart")
 add_eT_runtest(restart_mlcc2_right_from_left                "eT;short;mlcc2;es;cholesky;restart")
 add_eT_runtest(restart_mlcc2_cnto_es                        "eT;short;mlcc2;es;cnto;restart")
+add_eT_runtest(restart_mlcc2_nto                            "eT;short;mlcc2;es;nto;restart")
 add_eT_runtest(restart_orbitals_mlcc2_cholesky_pao          "eT;short;mlcc2;es;cholesky-pao;restart")
 #
 add_eT_runtest(mlccsd_cnto_full_gs                          "eT;short;mlccsd;gs;cnto")

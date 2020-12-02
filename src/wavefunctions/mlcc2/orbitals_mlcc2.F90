@@ -99,6 +99,9 @@ contains
 !
          if (wf%cnto_restart) then
 !
+            call output%printf('m', 'Requested restart for CNTOs, &
+                                    &reading orbital transformation matrices')
+!
             call wf%read_cnto_transformation_matrices(T_o, T_v)
 !
          else
@@ -117,7 +120,19 @@ contains
 !
          call mem%alloc(T_o, wf%n_o, wf%n_o)
 !
-         call wf%construct_ccs_nto_transformation_matrix(T_o)
+         if (wf%nto_restart) then
+!
+            call output%printf('m', 'Requested restart for NTOs, &
+                                    &reading orbital transformation matrix')
+!
+            call wf%read_nto_transformation_matrix(T_o)
+!
+         else
+!
+            call wf%construct_ccs_nto_transformation_matrix(T_o)
+            call wf%write_nto_transformation_matrix(T_o)
+!
+         endif
 !
          call wf%construct_mixed_nto_canonical_orbitals(T_o)
 !
@@ -759,6 +774,51 @@ contains
                   wf%n_o)
 !
    end subroutine construct_M_nto_mlcc2
+!
+!
+   module subroutine read_nto_transformation_matrix_mlcc2(wf, T_o)
+!!
+!!    Read NTO transformation matrices
+!!    Written by Sarai D. Folkestad, Jun 2019
+!!
+!!    Read NTO transformation matrices.
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
+!
+      call wf%T_nto_o_file%open_('read', 'rewind')
+!
+      call wf%T_nto_o_file%read_(T_o, wf%n_o**2)
+!
+      call wf%T_nto_o_file%close_('keep')
+!
+   end subroutine read_nto_transformation_matrix_mlcc2
+!
+!
+   module subroutine write_nto_transformation_matrix_mlcc2(wf, T_o)
+!!
+!!    Write NTO transformation matrices
+!!    Written by Sarai D. Folkestad, Jun 2019
+!!
+!!    Write NTO transformation matrices.
+!!    Used to ensure restart
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: T_o
+!
+      call wf%T_nto_o_file%open_('write', 'rewind')
+!
+      call wf%T_nto_o_file%write_(T_o, wf%n_o**2)
+!
+      call wf%T_nto_o_file%close_('keep')
+!
+   end subroutine write_nto_transformation_matrix_mlcc2
 !
 !
    module subroutine construct_ccs_nto_transformation_matrix_mlcc2(wf, T_o)
@@ -1525,5 +1585,4 @@ contains
 !
 !
 end submodule orbitals_mlcc2
-
 !
