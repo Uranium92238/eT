@@ -36,7 +36,7 @@ module parameters
    integer, parameter :: major_version = 1
    integer, parameter :: minor_version = 1
    integer, parameter :: patch_version = 0
-   character(len=9), parameter :: version_name = "Nachspiel"
+   character(len=7), parameter :: version_name = "Bastion"
 !
 !  Integers 
 !
