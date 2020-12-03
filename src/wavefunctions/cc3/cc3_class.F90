@@ -183,29 +183,6 @@ module cc3_class
       procedure :: L_R_overlap                          => L_R_overlap_cc3
       procedure :: L_R_overlap_triples                  => L_R_overlap_triples_cc3
 !
-!     Routines for constructing the R-tdm in a noddy way
-!     only for debugging purposes
-!
-      procedure :: right_tdm_debug                      => right_tdm_debug_cc3
-      procedure :: left_tdm_debug                       => left_tdm_debug_cc3
-!
-      procedure :: debug_left_oo                        => debug_left_oo_cc3
-      procedure :: debug_left_ov_N7                     => debug_left_ov_N7_cc3
-      procedure :: debug_left_ov_N6                     => debug_left_ov_N6_cc3
-      procedure :: debug_left_vv                        => debug_left_vv_cc3
-      procedure :: debug_right_ov_t3                    => debug_right_ov_t3_cc3
-      procedure :: debug_right_ov_Y_term                => debug_right_ov_Y_term_cc3
-      procedure :: debug_right_oo                       => debug_right_oo_cc3
-      procedure :: debug_right_vv                       => debug_right_vv_cc3
-      procedure :: debug_right_ov_R3                    => debug_right_ov_R3_cc3
-      procedure :: debug_right_vo                       => debug_right_vo_cc3
-!
-!     Construction of the full amplitudes
-!
-      procedure :: construct_full_R3                    => construct_full_R3_cc3
-      procedure :: construct_full_t3                    => construct_full_t3_cc3
-      procedure :: construct_full_tbar3                 => construct_full_tbar3_cc3
-!
 !     Initialize wavefunction
 !
       procedure :: initialize             => initialize_cc3
@@ -224,8 +201,6 @@ module cc3_class
       include "abc_batching_cc3_interface.F90"
       include "zop_cc3_interface.F90"
       include "fop_cc3_interface.F90"
-!
-      include "debug_transition_density_cc3_interface.F90"
 !
    end interface
 !
