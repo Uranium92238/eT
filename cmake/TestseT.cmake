@@ -65,10 +65,11 @@ add_eT_runtest(restart_hf                                   "eT;short;hf;restart
 add_eT_runtest(hf_bohr_units                                "eT;short;hf;sad")
 #
 add_eT_runtest(uhf_energy                                   "eT;short;uhf")
-add_eT_runtest(uhf_file_check                               "eT;short;uhf;eT_launch")
 add_eT_runtest(uhf_energy_qmmmnopol                         "eT;short;uhf;sad;qmmm;mmnopol")
 add_eT_runtest(uhf_energy_qmfq                              "eT;short;uhf;sad;qmmm;fq")
 add_eT_runtest(uhf_dipole                                   "eT;short;uhf;sad;dipole")
+add_eT_runtest(uhf_atomic_doublet                           "eT;short;uhf;spin")
+add_eT_runtest(uhf_molecular_triplet                        "eT;short;uhf;spin")
 #
 add_eT_runtest(mlhf_cholesky_energy                         "eT;short;mlhf;sad;cholesky")
 add_eT_runtest(mlhf_pao_energy                              "eT;short;mlhf;sad;pao")

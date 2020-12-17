@@ -572,7 +572,6 @@ contains
 !!    Print amplitude info
 !!    Written by Sarai D. Folkestad, Dec 2019
 !!
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -933,7 +932,6 @@ contains
       endif
 !
    end subroutine construct_Jacobian_transform_ccs
-!
 !
    subroutine get_cvs_projector_ccs(wf, projector, n_cores, core_MOs)
 !!
