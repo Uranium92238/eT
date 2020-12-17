@@ -983,7 +983,7 @@ contains
 !
       class(uhf), intent(in) :: wf
 !
-      real(dp) :: spin, sz
+      real(dp) :: spin
 !
       spin = half*real(wf%n_alpha - wf%n_beta,dp)*(half*real(wf%n_alpha - wf%n_beta,dp) + one)
 !
