@@ -1,3 +1,7 @@
+# eT v1.2
+### Features
+- UHF spin contamination is computed and printed in all UHF calculations. See merge request eT-program/eT:!675
+
 # eT v1.1
 ### Bugfixes
 - Fixed bug in EOM when $`n_o > n_v`$

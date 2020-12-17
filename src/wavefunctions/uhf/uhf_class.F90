@@ -93,12 +93,15 @@ module uhf_class
 !
 !     MO orbital related routines
 !
+
       procedure :: initialize_orbitals                   => initialize_orbitals_uhf
       procedure :: roothan_hall_update_orbitals          => roothan_hall_update_orbitals_uhf
       procedure :: save_orbital_info                     => save_orbital_info_uhf
       procedure :: save_orbital_coefficients             => save_orbital_coefficients_uhf
       procedure :: read_orbital_coefficients             => read_orbital_coefficients_uhf
       procedure :: save_orbital_energies                 => save_orbital_energies_uhf
+      procedure :: print_spin                            => print_spin_uhf
+      procedure :: print_summary                         => print_summary_uhf
       procedure :: read_orbital_energies                 => read_orbital_energies_uhf
 !
 !     Roothan-Hall gradient 
@@ -138,6 +141,9 @@ module uhf_class
       procedure :: set_n_mo                              => set_n_mo_uhf
 !
       procedure :: cleanup                               => cleanup_uhf 
+!
+      procedure :: get_spin_contamination               => get_spin_contamination_uhf
+      procedure :: get_exact_s2                         => get_exact_s2_uhf
 !
    end type uhf
 !
@@ -906,6 +912,140 @@ contains
       call wf%destruct_pcm_matrices()
 !
    end subroutine cleanup_uhf
+!
+!
+   function get_spin_contamination_uhf(wf) result(spin_contamination)
+!!
+!!    Get spin contamination
+!!    Written by Sarai D. Folkestad, 2020
+!!
+!!    S^2 - S_z(S_z + 1) = n_beta - sum_ij |<phi_i^alpha|phi_j^beta>|^2
+!!                       = n_beta - Tr([D^alpha S][D^beta S])
+!!
+      implicit none
+!
+      class(uhf), intent(in) :: wf
+!
+      real(dp) :: spin_contamination
+!
+      real(dp) :: ddot
+!
+      real(dp), dimension(:,:), allocatable :: DS_alpha, DS_beta
+!
+      spin_contamination = real(wf%n_beta,dp)
+!
+      call mem%alloc(DS_alpha, wf%n_ao, wf%n_ao)
+      call mem%alloc(DS_beta, wf%n_ao, wf%n_ao)
+!
+      call dgemm('n', 'n',          &
+                  wf%n_ao,          &
+                  wf%n_ao,          &
+                  wf%n_ao,          &
+                  one,              &
+                  wf%ao_density_a,  &
+                  wf%n_ao,          &
+                  wf%ao_overlap,    &
+                  wf%n_ao,          &
+                  zero,             &
+                  DS_alpha,         &
+                  wf%n_ao)
+!
+      call dgemm('t', 't',          &
+                  wf%n_ao,          &
+                  wf%n_ao,          &
+                  wf%n_ao,          &
+                  one,              &
+                  wf%ao_overlap,    &
+                  wf%n_ao,          &
+                  wf%ao_density_b,  &
+                  wf%n_ao,          &
+                  zero,             &
+                  DS_beta,          &
+                  wf%n_ao)
+!
+      spin_contamination = spin_contamination &
+            - ddot(wf%n_ao**2, DS_alpha, 1, DS_beta, 1)
+!
+      call mem%dealloc(DS_alpha, wf%n_ao, wf%n_ao)
+      call mem%dealloc(DS_beta, wf%n_ao, wf%n_ao)
+!
+   end function get_spin_contamination_uhf
+!
+!
+   pure function get_exact_s2_uhf(wf) result(spin)
+!!
+!!    Get exact S^2
+!!    Written by Sarai D. Folkestad, 2020
+!!
+!!    S^2 = S_z(S_z + 1) = (n_alpha - n_beta)/2*((n_alpha - n_beta)/2 + 1)
+!!
+      implicit none
+!
+      class(uhf), intent(in) :: wf
+!
+      real(dp) :: spin, sz
+!
+      spin = half*real(wf%n_alpha - wf%n_beta,dp)*(half*real(wf%n_alpha - wf%n_beta,dp) + one)
+!
+   end function get_exact_s2_uhf
+!
+!
+   subroutine print_summary_uhf(wf, print_mo_info)
+!!
+!!    Print Summary
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      use string_utilities, only: convert_to_uppercase
+!
+      implicit none 
+!
+      class(uhf), intent(inout) :: wf
+!
+      logical, intent(in) :: print_mo_info
+!
+      call output%printf('m', '- Summary of '// &
+                         &trim(convert_to_uppercase(wf%name_))// ' wavefunction &
+                         &energetics (a.u.):', fs='(/t3,a)')
+      call wf%print_energy()
+!
+      if (print_mo_info) call wf%save_orbital_info()
+!
+      call output%printf('m', '- '// &
+                         &trim(convert_to_uppercase(wf%name_))// ' wavefunction spin expectation values:', fs='(/t3,a)')     
+!
+      call wf%print_spin()
+!
+   end subroutine print_summary_uhf
+!
+!
+   subroutine print_spin_uhf(wf)
+!!
+!!    Print spin
+!!    Written by Sarai D. Folkestad, 2020
+!!
+      implicit none
+!
+      class(uhf), intent(in) :: wf
+!
+      real(dp) :: exact_S2
+      real(dp) :: contamination
+!
+      exact_S2      = wf%get_exact_s2()
+      contamination = wf%get_spin_contamination()
+!
+      call output%printf('m', 'Sz:                 (f12.8)', &
+                         reals=[half*real(wf%n_alpha - wf%n_beta,dp)], fs='(/t6,a)')
+!
+      call output%printf('m', 'Sz(Sz + 1):         (f12.8)', &
+                         reals=[exact_S2], fs='(t6,a)')
+!
+      call output%printf('m', 'S^2:                (f12.8)', &
+                         reals=[exact_S2 + contamination], fs='(t6,a)')
+!
+      call output%printf('m', 'Spin contamination: (f12.8)', &
+                         reals=[contamination], fs='(t6,a)')
+!
+   end subroutine print_spin_uhf
 !
 !
 end module uhf_class

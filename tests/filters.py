@@ -191,3 +191,20 @@ def get_quadrupole_filter(tolerance):
     ]
 
     return f
+
+
+def get_spin_filter(tolerance):
+    """
+    Returns filters for spin summary
+    """
+
+    from runtest import get_filter
+
+    f = [
+        get_filter(string="Sz:", abs_tolerance=tolerance),
+        get_filter(string="Sz(Sz + 1):", abs_tolerance=tolerance),
+        get_filter(string="S^2:", abs_tolerance=tolerance),
+        get_filter(string="Spin contamination:", abs_tolerance=tolerance),
+    ]
+
+    return f
