@@ -35,6 +35,8 @@ module hf_class
    use array_utilities, only : get_n_highest
    use array_utilities, only : identity_array
 !
+   use output_file_class, only: output_file
+!
    use libint_initialization, only : set_coulomb_precision_c
 !
    use omp_lib
@@ -102,6 +104,8 @@ module hf_class
       type(sequential_file) :: orbital_information_file
 !
       logical :: plot_active_density
+!
+      type(output_file) :: mo_information_file
 !
    contains
 !
@@ -543,27 +547,23 @@ contains
 !!    Save orbital info
 !!    Written by Alexander C. Paul, Nov 2020
 !!
-      use output_file_class, only: output_file
-!
       implicit none
 !
-      class(hf), intent(in) :: wf
+      class(hf), intent(inout) :: wf
 !
-      type(output_file) :: mo_information_file
+      wf%mo_information_file = output_file('mo_information.out')
+      call wf%mo_information_file%open_('rewind')
 !
-      mo_information_file = output_file('mo_information.out')
-      call mo_information_file%open_('rewind')
+      call wf%print_orbitals_and_energies(wf%orbital_energies,     &
+                                          wf%orbital_coefficients, &
+                                          '- Molecular orbital')
 !
-      call wf%print_orbitals_and_energies(mo_information_file, wf%orbital_energies, &
-                                          wf%orbital_coefficients, '- Molecular orbital')
-!
-      call mo_information_file%close_()
+      call wf%mo_information_file%close_()
 !
    end subroutine save_orbital_info_hf
 !
 !
-   subroutine print_orbitals_and_energies_hf(wf, mo_information_file, mo_energies, &
-                                    mo_coefficients, prefix)
+   subroutine print_orbitals_and_energies_hf(wf, mo_energies, mo_coefficients, prefix)
 !!
 !!    Print orbitals and energies
 !!    Written by Eirik F. Kjønstad and Tor S. Haugland, Oct 2019
@@ -572,13 +572,9 @@ contains
 !!
 !!    Prints the orbital energies and the orbitals with atom & orbital information given.
 !!
-      use output_file_class, only: output_file
-!
       implicit none
 !
       class(hf), intent(in) :: wf
-!
-      type(output_file), intent(inout) :: mo_information_file
 !
       real(dp), dimension(wf%n_mo), intent(in) :: mo_energies
       real(dp), dimension(wf%n_ao, wf%n_mo), intent(in) :: mo_coefficients
@@ -588,18 +584,18 @@ contains
 !
       write(header, '(a,a)') trim(prefix), ' energies'
 !
-      call mo_information_file%print_vector('m', header, wf%n_mo, mo_energies, &
-                                             fs='(f16.12)', columns=4)
+      call wf%mo_information_file%print_vector('m', header, wf%n_mo, mo_energies, &
+                                               fs='(f16.12)', columns=4)
 !
       write(header, '(a,a)') trim(prefix), ' coefficients'
-      call mo_information_file%printf('m', header, fs='(//t3,a)')
+      call wf%mo_information_file%printf('m', header, fs='(//t3,a)')
 !
-      call wf%print_orbitals_from_coefficients(mo_coefficients, mo_information_file)
+      call wf%print_orbitals_from_coefficients(mo_coefficients)
 !
    end subroutine print_orbitals_and_energies_hf
 !
 !
-   subroutine print_orbitals_from_coefficients_hf(wf, orbital_coefficients, the_file)
+   subroutine print_orbitals_from_coefficients_hf(wf, orbital_coefficients)
 !!
 !!    Print orbitals from coefficients
 !!    Written by Eirik F. Kjønstad and Tor S. Haugland, Oct 2019
@@ -607,12 +603,9 @@ contains
 !!
 !!    Prints the orbitals from coefficients with atom & orbital information given.
 !!
-      use output_file_class, only: output_file
-!
       implicit none
 !
       class(hf),                             intent(in) :: wf
-      type(output_file),                     intent(in) :: the_file
       real(dp), dimension(wf%n_ao, wf%n_mo), intent(in) :: orbital_coefficients 
 !
       integer, parameter :: n_entries  = 5
@@ -638,17 +631,17 @@ contains
 !
 !        Print header: AO Atom l ml 1 2 3 4 ..
 !
-         call the_file%printf('n', '  AO    Atom  l m_l', fs='(/t3,a)', adv=.false.)
+         call wf%mo_information_file%printf('n', '  AO    Atom  l m_l', fs='(/t3,a)', adv=.false.)
 !
          do mo = first_mo, last_mo
 !
             adv = (mo == last_mo)
 !
-            call the_file%printf('n', '(i4)', adv=adv, ints=[mo], fs='(8x,a)')
+            call wf%mo_information_file%printf('n', '(i4)', adv=adv, ints=[mo], fs='(8x,a)')
 !
          enddo
 !
-         call the_file%print_separator(pl='normal', n=83, symbol='-')
+         call wf%mo_information_file%print_separator(pl='normal', n=83, symbol='-')
 !
 !        Print content: AO, Element symbol, orbital and orbital coefficients
 !
@@ -672,7 +665,8 @@ contains
 !
                   n_format_string = repeat('  ' // format_string, n_mo)
 !
-                  call the_file%printf('n', '(i4) (i4) (b2)  '// ang_mom // n_format_string, &
+                  call wf%mo_information_file%printf('n', &
+                                      '(i4) (i4) (b2)  '// ang_mom // n_format_string, &
                                       reals=[orbital_coefficients(ao, first_mo:last_mo)], &
                                       ints=[ao, atom], chars=[symbol], ll=85)
 !
@@ -682,7 +676,7 @@ contains
 !
          enddo
 !
-         call the_file%print_separator(pl='normal', n=83, symbol='-')
+         call wf%mo_information_file%print_separator(pl='normal', n=83, symbol='-')
 !
       enddo
 !
