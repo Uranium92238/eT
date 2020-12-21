@@ -855,28 +855,24 @@ contains
 !!    Make orbital info file
 !!    Written by Alexander C. Paul Nov 2020
 !!
-      use output_file_class, only: output_file
-!
       implicit none
 !
-      class(uhf), intent(in) :: wf
+      class(uhf), intent(inout) :: wf
 !
-      type(output_file) :: mo_information_file
+      wf%mo_information_file = output_file('mo_information.out')
+      call wf%mo_information_file%open_('rewind')
 !
-      mo_information_file = output_file('mo_information.out')
-      call mo_information_file%open_('rewind')
-!
-      call wf%print_orbitals_and_energies(mo_information_file, wf%orbital_energies_a, &
+      call wf%print_orbitals_and_energies(wf%orbital_energies_a,     &
                                           wf%orbital_coefficients_a, &
                                           '- Alpha molecular orbital')
 !
-      call mo_information_file%print_separator('m', 83, '=', fs='(//t3,a/)')
+      call wf%mo_information_file%print_separator('m', 83, '=', fs='(//t3,a/)')
 !
-      call wf%print_orbitals_and_energies(mo_information_file, wf%orbital_energies_b, &
+      call wf%print_orbitals_and_energies(wf%orbital_energies_b,     &
                                           wf%orbital_coefficients_b, &
                                           '- Beta molecular orbital')
 !
-      call mo_information_file%close_()
+      call wf%mo_information_file%close_()
 !
    end subroutine save_orbital_info_uhf
 !

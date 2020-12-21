@@ -2,6 +2,10 @@
 ### Features
 - UHF spin contamination is computed and printed in all UHF calculations. See merge request eT-program/eT:!675
 
+# eT v1.1.1
+### Structure
+- `mo_information_file` now part of `hf_class` as workaround for ifort segfault. See merge request eT-program/eT:!681
+
 # eT v1.1
 ### Bugfixes
 - Fixed bug in EOM when $`n_o > n_v`$
