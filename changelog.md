@@ -1,4 +1,6 @@
 # eT v1.2
+### Optimization
+- CCS Jacobian is now N^4 scaling (Cholesky vector algorithm) See merge request eT-program/eT!592
 ### Features
 - UHF spin contamination is computed and printed in all UHF calculations. See merge request eT-program/eT:!675
 

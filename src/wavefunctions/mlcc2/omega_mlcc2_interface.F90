@@ -110,25 +110,3 @@
       integer, intent(in) :: n_cc2_o, n_cc2_v, first_cc2_o, first_cc2_v
 !
     end subroutine omega_cc2_c1_mlcc2
-!
-!
-   module subroutine construct_omega_doubles_mlcc2(wf, omega2)
-!!
-!!    Construct Omega doubles
-!!    Written by Sarai D. Folkestad, Sep 2019
-!!
-!!    Constructs the doubles part of omega for MLCC2
-!!
-!!    Note that this is not used to solve MLCC2 equations, 
-!!    but it is only used for debug of Jacobian matrix
-!!
-!!    omega_aibj = 1/Δ_aibj g_aibj + e_aibj s_aibj 
-!!
-!!    Note that it is calculated in the biorthonormal basis!
-!!
-      implicit none
-!
-      class(mlcc2) :: wf
-      real(dp), dimension(wf%n_x2), intent(out) :: omega2
-!
-   end subroutine construct_omega_doubles_mlcc2
