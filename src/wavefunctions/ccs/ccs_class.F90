@@ -384,14 +384,7 @@ module ccs_class
 !
       procedure :: mo_preparations                               => mo_preparations_ccs
       procedure :: construct_MO_screening_for_cd                 => construct_MO_screening_for_cd_ccs
-!   
-!     Debug 
-!
-      procedure :: omega_for_jacobian_debug                      => omega_for_jacobian_debug_ccs
-      procedure :: amplitudes_for_jacobian_debug                 => amplitudes_for_jacobian_debug_ccs
-      procedure :: normalization_for_jacobian_debug              => normalization_for_jacobian_debug_ccs
-      procedure :: numerical_test_jacobian                       => numerical_test_jacobian_ccs
-!
+! 
 !     Core-valence separation procedures
 !
       procedure :: get_cvs_projector                             => get_cvs_projector_ccs
@@ -454,7 +447,6 @@ module ccs_class
       include "oei_ccs_interface.F90"
       include "t1_ccs_interface.F90"
       include "fock_ccs_interface.F90"
-      include "debug_jacobian_ccs_interface.F90"
 !
       include "complex_ccs_interface.F90"
 !

@@ -77,13 +77,6 @@ module cc2_class
 !
       procedure :: prepare_for_density                         => prepare_for_density_cc2
 !
-!     Debug 
-!
-      procedure :: omega_for_jacobian_debug                    => omega_for_jacobian_debug_cc2
-      procedure :: amplitudes_for_jacobian_debug               => amplitudes_for_jacobian_debug_cc2
-      procedure :: normalization_for_jacobian_debug            => normalization_for_jacobian_debug_cc2
-      procedure :: construct_omega2                            => construct_omega2_cc2
-!
 !     Initialize wavefunction
 !
       procedure :: initialize                                  => initialize_cc2
@@ -98,7 +91,6 @@ module cc2_class
       include "jacobian_cc2_interface.F90"
       include "jacobian_transpose_cc2_interface.F90"
       include "zop_cc2_interface.F90"
-      include "debug_jacobian_cc2_interface.F90"
 !
    end interface
 !

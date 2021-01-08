@@ -31,26 +31,3 @@
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
    end subroutine construct_omega_cc2
-!
-!
-   module subroutine construct_omega2_cc2(wf, omega2, t)
-!!
-!!    Construct Omega2
-!!    Written by Sarai D. Folkestad, Sep 2019
-!!
-!!    Constructs the doubles part of omega for CC2
-!!
-!!    Note that this is not used to solve CC2 equations, 
-!!    but used for debug of Jacobian matrix.
-!!
-!!    omega2 = 1/Δ_aibj (g_aibj + e_aibj t_aibj)
-!! 
-!!    NOTE: made in the biorthonormal basis
-!!
-      implicit none
-!
-      class(cc2) :: wf
-      real(dp), dimension(wf%n_t2), intent(out) :: omega2
-      real(dp), dimension(wf%n_t2), intent(in) :: t
-!
-   end subroutine construct_omega2_cc2

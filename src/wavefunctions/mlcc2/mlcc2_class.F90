@@ -233,13 +233,6 @@ module mlcc2_class
       procedure :: construct_t2bar                                   => construct_t2bar_mlcc2
       procedure :: construct_u_aibj                                  => construct_u_aibj_mlcc2
 !
-!     Debug 
-!
-      procedure :: omega_for_jacobian_debug                          => omega_for_jacobian_debug_mlcc2
-      procedure :: amplitudes_for_jacobian_debug                     => amplitudes_for_jacobian_debug_mlcc2
-      procedure :: normalization_for_jacobian_debug                  => normalization_for_jacobian_debug_mlcc2
-      procedure :: construct_omega_doubles                           => construct_omega_doubles_mlcc2
-!
 !     Restart
 !
       procedure :: read_doubles_vector                               => read_doubles_vector_mlcc2
@@ -271,7 +264,6 @@ module mlcc2_class
       include "./jacobian_mlcc2_interface.F90"
       include "./jacobian_transpose_mlcc2_interface.F90"
       include "./initialize_destruct_mlcc2_interface.F90"
-      include "./debug_jacobian_mlcc2_interface.F90"
 !
    end interface 
 !
