@@ -242,7 +242,7 @@ contains
 !
       if (solver%restart .or. solver%iteration > 1) restart = .true.
 !
-      hf_gs_solver = scf_diis_hf(wf, restart)
+      hf_gs_solver = scf_diis_hf(wf, restart, skip=.false.)
       call hf_gs_solver%run(wf)
       call wf%print_summary(print_mo_info=.false.)
 !

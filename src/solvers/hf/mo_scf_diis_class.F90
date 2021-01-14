@@ -83,7 +83,7 @@ module mo_scf_diis_class
 contains
 !
 !
-   function new_mo_scf_diis(wf, restart) result(solver)
+   function new_mo_scf_diis(wf, restart, skip) result(solver)
 !!
 !!    New MO SCF DIIS
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -95,6 +95,7 @@ contains
       class(hf) :: wf
 !
       logical, intent(in) :: restart
+      logical, intent(in) :: skip
 !
 !     Set standard settings
 !
@@ -105,6 +106,7 @@ contains
       solver%storage                = 'memory'
       solver%cumulative             = .false.
       solver%cumulative_threshold   = 1.0d0
+      solver%skip                   = skip
 !
 !     Initialize convergence checker with default threshols
 !
@@ -157,13 +159,15 @@ contains
       call wf%initialize_density()
       call wf%initialize_orbitals()
 !
-      if (solver%restart) then
+      if (solver%restart .or. solver%skip) then
 !
          call output%printf('m', '- Requested restart. Reading orbitals from file', &
                             fs='(/t3,a)')
 !
          call wf%is_restart_safe
          call wf%read_for_scf_restart_mo()
+!
+         if (solver%skip) call solver%control_scf_skip(wf)
 !
       else
 !
@@ -223,6 +227,8 @@ contains
       integer :: dim_gradient, dim_fock
 !
       type(timings) :: iteration_timer, solver_timer
+!
+      if (solver%skip) return
 !
 !     :: Part I. Preparations.
 !

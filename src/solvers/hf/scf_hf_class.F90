@@ -72,7 +72,7 @@ module scf_hf_class
 contains
 !
 !
-   function new_scf_hf(wf, restart) result(solver)
+   function new_scf_hf(wf, restart, skip) result(solver)
 !!
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -84,14 +84,16 @@ contains
       class(hf) :: wf
 !
       logical, intent(in) :: restart
+      logical, intent(in) :: skip
 ! 
 !     Set standards 
 !
       solver%max_iterations      = 100
       solver%ao_density_guess    = 'SAD'
       solver%restart             = restart
+      solver%skip                = skip
 !
-!     Initialize convergence checker with default threshols
+!     Initialize convergence checker with default thresholds
 !
       solver%convergence_checker = convergence_tool(energy_threshold   = 1.0d-7,   &
                                                     residual_threshold = 1.0d-7,   &
@@ -107,12 +109,13 @@ contains
    end function new_scf_hf
 !
 !
-   function new_scf_hf_from_parameters(wf, restart,            &
-                                        max_iterations,        &
-                                        ao_density_guess,      &
-                                        energy_threshold,      &
+   function new_scf_hf_from_parameters(wf, restart,         &
+                                        max_iterations,     &
+                                        ao_density_guess,   &
+                                        energy_threshold,   &
                                         residual_threshold, &
-                                        energy_convergence) result(solver)
+                                        energy_convergence, &
+                                        skip) result(solver)
 !!
 !!    New SCF from parameters
 !!    Written by Tor S. Haugland, 2019
@@ -129,14 +132,18 @@ contains
       real(dp),           intent(in) :: energy_threshold
       real(dp),           intent(in) :: residual_threshold
       logical,            intent(in) :: energy_convergence
+      logical,            intent(in) :: skip
 !
 !     Set settings from parameters
 !
-      solver%max_iterations      = max_iterations
-      solver%ao_density_guess    = ao_density_guess
-      solver%restart             = restart
+      solver%max_iterations   = max_iterations
+      solver%ao_density_guess = ao_density_guess
+      solver%restart          = restart
+      solver%skip             = skip
 !
-      solver%convergence_checker = convergence_tool(energy_threshold, residual_threshold, energy_convergence)
+      solver%convergence_checker = convergence_tool(energy_threshold,   &
+                                                    residual_threshold, &
+                                                    energy_convergence)
 !
       call solver%prepare(wf)
 !
@@ -188,13 +195,15 @@ contains
 !     The initial (idempotent) density is obtained either from one Roothan-Hall step, or
 !     by reading orbital coefficients (restart)
 !
-      if (solver%restart) then
+      if (solver%restart .or. solver%skip) then
 !
          call output%printf('m', '- Requested restart. Reading orbitals from file', &
                             fs='(/t3,a)')
 !
          call wf%is_restart_safe
          call wf%read_for_scf_restart()
+!
+         if (solver%skip) call solver%control_scf_skip(wf)
 !
       else 
 !
@@ -228,6 +237,8 @@ contains
       integer :: iteration
 !
       type(timings), allocatable :: iteration_timer
+!
+      if (solver%skip) return
 !
       if (wf%n_ao == 1) then 
 !

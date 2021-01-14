@@ -94,6 +94,7 @@ add_eT_runtest(ccs_right_lt_lindep                          "eT;short;ccs;es")
 add_eT_runtest(restart_ccs_es                               "eT;short;ccs;es;restart")
 add_eT_runtest(restart_ccs_eom                              "eT;short;ccs;eom;restart")
 add_eT_runtest(restart_ccs_from_ccsd                        "eT;short;ccs;eom;es;restart")
+add_eT_runtest(restart_ccs_v1.0                             "eT;short;ccs;eom;restart;v1.0")
 #
 add_eT_runtest(cc2_gs_energy                                "eT;short;cc2;gs")
 add_eT_runtest(cc2_gs_MO_screening                          "eT;short;cc2;gs;cholesky;mo screening")
@@ -122,6 +123,7 @@ add_eT_runtest(cc2_lowmem_right_nonlin_davidson             "eT;short;lowmem-cc2
 add_eT_runtest(cc2_lowmem_right_diis_w_davidson_preconv     "eT;short;lowmem-cc2;es;diis;non-linear davidson")
 add_eT_runtest(restart_lowmem_cc2_es                        "eT;short;lowmem-cc2;es;restart")
 add_eT_runtest(restart_cc2_lowmem_from_ccs                  "eT;short;lowmem-cc2;es;restart")
+add_eT_runtest(restart_cc2_v1.0                             "eT;short;cc2;es;restart;v1.0")
 #
 add_eT_runtest(ccsd_gs_energy                               "eT;short;ccsd;gs")
 add_eT_runtest(ccsd_gs_energy_nr_crop                       "eT;short;ccsd;newton-raphson;crop")
@@ -172,6 +174,9 @@ add_eT_runtest(restart_ccsd_right_from_left                 "eT;short;ccsd;es;re
 add_eT_runtest(restart_ccsd_left_from_right                 "eT;short;ccsd;es;restart")
 add_eT_runtest(restart_ccsd_eom_diis                        "eT;short;ccsd;eom;restart")
 add_eT_runtest(restart_right_ccsd_oscillator_strength_eom   "eT;short;ccsd;es;eom;restart")
+add_eT_runtest(restart_ccsd_v1.0                            "eT;short;ccsd;eom;restart;v1.0")
+add_eT_runtest(restart_ccsd_from_cc2_v1.0                   "eT;short;ccsd;eom;restart;v1.0")
+#
 add_eT_runtest(mlhf_ccsd_gs_energy                          "eT;short;mlhf;ccsd;pao")
 add_eT_runtest(mlhf_frozen_hf_ccsd_gs_energy                "eT;short;mlhf;ccsd;pao;frozen core")
 add_eT_runtest(mlhf_fc_ccsd_gs_energy                       "eT;short;mlhf;ccsd;pao;frozen hf")
