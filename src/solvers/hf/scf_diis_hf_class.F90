@@ -82,7 +82,7 @@ module scf_diis_hf_class
 contains
 !
 !
-   function new_scf_diis_hf(wf, restart) result(solver)
+   function new_scf_diis_hf(wf, restart, skip) result(solver)
 !!
 !!    New SCF DIIS 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -94,6 +94,7 @@ contains
       class(hf) :: wf
 !
       logical, intent(in) :: restart 
+      logical, intent(in) :: skip
 !
 !     Set standard settings
 !
@@ -105,6 +106,7 @@ contains
       solver%cumulative             = .false.
       solver%cumulative_threshold   = 1.0d0
       solver%crop                   = .false.
+      solver%skip                   = skip
 !
 !     Initialize convergence checker with default threshols
 !
@@ -131,7 +133,8 @@ contains
                                                 storage,                &
                                                 cumulative_threshold,   &
                                                 crop,                   &
-                                                energy_convergence) result(solver)
+                                                energy_convergence,     &
+                                                skip) result(solver)
 !!
 !!    New SCF DIIS from parameters
 !!    Written by Tor S. Haugland, 2019
@@ -152,6 +155,7 @@ contains
       real(dp),           intent(in) :: cumulative_threshold
       logical,            intent(in) :: crop 
       logical,            intent(in) :: energy_convergence
+      logical,            intent(in) :: skip
 !
 !     Set settings from parameters
 !
@@ -162,6 +166,7 @@ contains
       solver%storage                = storage
       solver%cumulative_threshold   = cumulative_threshold
       solver%crop                   = crop
+      solver%skip                   = skip
 !
       solver%convergence_checker = convergence_tool(energy_threshold, residual_threshold, energy_convergence)
 !
@@ -207,13 +212,15 @@ contains
       call wf%initialize_density()
       call wf%initialize_orbitals()
 !
-      if (solver%restart) then
+      if (solver%restart .or. solver%skip) then
 !
          call output%printf('m', '- Requested restart. Reading orbitals from file', &
                             fs='(/t3,a)')
 !
          call wf%is_restart_safe
          call wf%read_for_scf_restart()
+!
+         if (solver%skip) call solver%control_scf_skip(wf)
 !
       else
 !
@@ -295,6 +302,8 @@ contains
       integer :: dim_gradient, dim_fock
 !
       type(timings), allocatable :: iteration_timer
+!
+      if (solver%skip) return
 !
       if (wf%n_ao == 1) then 
 !

@@ -395,7 +395,8 @@ contains
                             'diis dimension',            &
                             'restart',                   &
                             'ao density guess',          &
-                            'print orbitals']
+                            'print orbitals',            &
+                            'skip']
 !
 !
       solver_scf_geoopt%name_    = 'solver scf geoopt'
