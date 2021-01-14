@@ -52,6 +52,8 @@ module abstract_hf_solver_class
 !  
       class(abstract_convergence_tool), allocatable :: convergence_checker
 !
+      logical :: skip
+!
    contains 
 !
       procedure :: print_banner             => print_banner_abstract_hf_solver
@@ -59,7 +61,11 @@ module abstract_hf_solver_class
       procedure :: read_settings            => read_settings_abstract_hf_solver
       procedure :: read_hf_solver_settings  => read_hf_solver_settings_abstract_hf_solver
 !
-      procedure, nopass :: run_single_ao    => run_single_ao_abstract_hf_solver 
+      procedure :: control_scf_skip &
+                => control_scf_skip_abstract_hf_solver
+!
+      procedure, nopass :: run_single_ao &
+                        => run_single_ao_abstract_hf_solver 
 !
    end type abstract_hf_solver
 !
@@ -162,6 +168,60 @@ contains
       call output%printf('n', '(a0)', ffs='(/t3,a)',  chars=[trim(solver%description)])
 !
    end subroutine print_banner_abstract_hf_solver
+!
+!
+   subroutine control_scf_skip_abstract_hf_solver(solver, wf)
+!!
+!!    Control SCF skip
+!!    Written by Sarai D. Folkestad, 2020
+!!
+!!    Handles skipping of SCF
+!!
+!!    Asks wf to calculate fock, energy, and gradient.
+!!    Checks if gradient has converged to the given threshold.
+!!
+!!    Prints energy and gradient.
+!!
+!!    Gives error if gradient is not converged.
+!!
+      implicit none
+!
+      class(abstract_hf_solver), intent(in)     :: solver
+      class(hf),                 intent(inout)  :: wf
+!
+      logical :: has_converged
+!
+      real(dp) :: max_gradient
+!
+      call output%warning_msg('skipping SCF solver!')
+!
+      call wf%update_fock_and_energy()
+      max_gradient = wf%get_max_roothan_hall_gradient()
+!
+!     Only want gradient test -> pass iteration = 1 to convergence checker routine
+!
+      has_converged = solver%convergence_checker%has_converged(max_gradient, wf%energy, iteration=1)
+
+!
+      call output%printf('n', 'Iteration       Energy (a.u.)      Max(grad.)    &
+                         &Delta E (a.u.)', fs='(/t3,a)')
+      call output%print_separator('n', 63,'-')
+      call output%printf('n', '(i4)  (f25.12)    (e11.4)    (e11.4)', &
+                  ints=[1], reals=[wf%energy, max_gradient, abs(wf%energy)], fs='(t3,a)')
+      call output%print_separator('n', 63,'-')
+!
+      if (has_converged) then
+!
+         call output%printf('n', 'Convergence criterion met in 1 iteration!', fs='(t3,a)')
+      else
+!
+         call output%error_msg('The provided restart files do not correspond to &
+                               &a converged Hartree-Fock wave function. Cannot skip &
+                               & SCF solver.')
+!
+      endif
+!
+   end subroutine control_scf_skip_abstract_hf_solver
 !
 !
 end module abstract_hf_solver_class
