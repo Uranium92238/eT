@@ -38,7 +38,7 @@ submodule (cc3_class) jacobian_transpose
 contains
 !
 !
-   module subroutine effective_jacobian_transpose_transformation_cc3(wf, omega, c, cvs)
+   module subroutine effective_jacobian_transpose_transformation_cc3(wf, omega, b, sigma, cvs)
 !!
 !!    Effective Jacobian transpose transformation (CC3)
 !!    Alexander C. Paul and Rolf H. Myhre, March 2019
@@ -47,9 +47,8 @@ contains
 !!
 !!       A_mu,nu = < mu| exp(-T) [H, tau_nu] exp(T)|R >,
 !!
-!!    The transformation is performed as sigma^T = c^T A, where c is the vector
-!!    sent to the routine. On exit, the vector c is equal to sigma (the transformed
-!!    vector).
+!!    The transformation is performed as sigma^T = b^T A, where b is the vector
+!!    sent to the routine. 
 !!
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
@@ -59,148 +58,49 @@ contains
 !
       real(dp), intent(in) :: omega
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(in)  :: b
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: sigma
 !
 !     Same routines used for tbar3 and L3
       logical, intent(in) :: cvs
 !
-      real(dp), dimension(:,:), allocatable :: c_ai
-      real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij
+      real(dp), dimension(:,:,:,:), allocatable :: b_abij
+      real(dp), dimension(:,:,:,:), allocatable :: sigma_abij
 !
-      real(dp), dimension(:,:), allocatable :: sigma_ai
-      real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj, sigma_abij
+      type(timings) :: timer
 !
-      type(timings) :: cc3_timer, cc3_timer_t3_a1, cc3_timer_t3_b1, cc3_timer_c3
-      type(timings) :: ccsd_timer, timer 
-!
-      cc3_timer_t3_a1   = timings('Time in CC3 T3 a1', pl='normal')
-      cc3_timer_t3_b1   = timings('Time in CC3 T3 b1', pl='normal')
-      cc3_timer_c3      = timings('Time in CC3 C3', pl='normal')
-!
-      timer             = timings('Jacobian transpose CC3', pl='normal')
-      cc3_timer         = timings('Jacobian transpose CC3 (CC3 contribution)', pl='normal')
-      ccsd_timer        = timings('Jacobian transpose CC3 (CCSD contribution)', pl='normal')
-!
+      timer = timings('Jacobian transpose CC3', pl='normal')
       call timer%turn_on()
 !
-!     Allocate and zero the transformed singles vector
+!     Zero the transformed vector
 !
-      call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
-      call zero_array(sigma_ai, wf%n_v*wf%n_o)
+      call zero_array(sigma, wf%n_t1 + wf%n_t2)
 !
-      call mem%alloc(c_ai, wf%n_v, wf%n_o)
+      call wf%ccsd%jacobian_transpose_transformation(b, sigma)
 !
-      call dcopy(wf%n_t1, c, 1, c_ai, 1)
-!
-!     :: CCS contributions to the transformed singles vector ::
-!
-      call ccsd_timer%turn_on()
-!
-      call wf%jacobian_transpose_ccs_a1(sigma_ai, c_ai)
-      call wf%jacobian_transpose_ccs_b1(sigma_ai, c_ai)
-!
-!     :: CCSD contributions to the transformed singles vector ::
-!
-      call wf%jacobian_transpose_doubles_a1(sigma_ai, c_ai, wf%u_aibj)
-!
-!     Allocate the incoming unpacked doubles vector
-!
-      call mem%alloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call squareup(c(wf%n_t1 + 1 : wf%n_es_amplitudes), c_aibj, wf%n_t1)
-!
-      call wf%jacobian_transpose_doubles_b1(sigma_ai, c_aibj)
-      call wf%jacobian_transpose_ccsd_d1(sigma_ai, c_aibj)
-      call wf%jacobian_transpose_ccsd_e1(sigma_ai, c_aibj)
-      call wf%jacobian_transpose_ccsd_f1(sigma_ai, c_aibj)
-      call wf%jacobian_transpose_ccsd_g1(sigma_ai, c_aibj)
-!
-!     :: CCSD contributions to the transformed doubles vector ::
-!     Allocate unpacked transformed vector
-!
-      call mem%alloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(sigma_aibj, (wf%n_v*wf%n_o)**2)
-!
-!     Contributions from singles vector c
-!
-      !call wf%jacobian_transpose_ccsd_a2(sigma_aibj, c_ai)
-      call wf%jacobian_transpose_doubles_a2(sigma_aibj, c_ai)
-!
-!     Contributions from doubles vector c
-!
-      call wf%jacobian_transpose_ccsd_b2(sigma_aibj, c_aibj)
-      call wf%jacobian_transpose_ccsd_c2(sigma_aibj, c_aibj)
-      call wf%jacobian_transpose_ccsd_d2(sigma_aibj, c_aibj)
-      call wf%jacobian_transpose_ccsd_e2(sigma_aibj, c_aibj)
-      call wf%jacobian_transpose_ccsd_f2(sigma_aibj, c_aibj)
-      call wf%jacobian_transpose_ccsd_g2(sigma_aibj, c_aibj)
-!
-!     Compute CC3 contributions to sigma_ai and sigma_aibj and symmetrize sigma_aibj
-!     CCSD H2 and I2 are already symmetric and will be computed afterwards
-!
-      call ccsd_timer%freeze()
+!     Compute CC3 contributions to sigma and symmetrize sigma_aibj
 !
       call mem%alloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%alloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call zero_array(sigma_abij, (wf%n_v*wf%n_o)**2)
 !
-      call sort_1234_to_1324(sigma_aibj, sigma_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call sort_1234_to_1324(c_aibj, c_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call cc3_timer%turn_on()
+      call mem%alloc(b_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call squareup_and_sort_1234_to_1324(b(wf%n_t1+1:), b_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     CC3-Contributions from the T3-amplitudes
-      call cc3_timer_t3_a1%turn_on()
+      call wf%jacobian_transpose_cc3_t3_a1(b_abij, sigma)
 !
-      call wf%jacobian_transpose_cc3_t3_a1(c_abij, sigma_ai)
-!
-      call cc3_timer_t3_a1%turn_off()
-!
-      call cc3_timer_t3_b1%turn_on()
-!
-      call wf%jacobian_transpose_cc3_t3_b1(c_abij, sigma_ai, cvs)
-!
-      call cc3_timer_t3_b1%turn_off()
+      call wf%jacobian_transpose_cc3_t3_b1(b_abij, sigma, cvs)
 !
 !     CC3-Contributions from the C3-amplitudes
-      call cc3_timer_c3%turn_on()
+      call wf%jacobian_transpose_cc3_c3_a(omega, b, b_abij, sigma, sigma_abij, cvs)
 !
-      call wf%jacobian_transpose_cc3_c3_a(omega, c_ai, c_abij, sigma_ai, sigma_abij, cvs)
-!
-      call cc3_timer_c3%turn_off()
-!
-      call cc3_timer%turn_off()
-!
-!     Done with singles vector c; Overwrite the incoming singles c vector for exit
-!
-      call ccsd_timer%turn_on()
-!
-      call mem%dealloc(c_ai, wf%n_v, wf%n_o)
-!
-      call dcopy(wf%n_t1, sigma_ai, 1, c, 1)
-!
-      call mem%dealloc(sigma_ai, wf%n_v, wf%n_o)
-!
-!     Last two CCSD-terms (H2, I2) are already symmetric.
-!     Perform the symmetrization sigma_aibj = P_ij^ab sigma_aibj
+      call mem%dealloc(b_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call symmetrize_12_and_34(sigma_abij, wf%n_v, wf%n_o)
 !
-!     Compute CCSD H2 and I2 contributions
+!     Pack sigma_abij into sigma
 !
-      call wf%jacobian_transpose_ccsd_h2(sigma_abij, c_abij)
-      call wf%jacobian_transpose_ccsd_i2(sigma_abij, c_abij)
-!
-      call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call ccsd_timer%turn_off()
-!
-!     overwrite the incoming, packed doubles c vector with sigma_abij
-!     and pack in for exit
-!
-      call packin(c(wf%n_t1 + 1 : wf%n_es_amplitudes), sigma_abij, wf%n_v, wf%n_o)
+      call packin_and_add(sigma(wf%n_t1 + 1:), sigma_abij, wf%n_v, wf%n_o)
 !
       call mem%dealloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -240,6 +140,11 @@ contains
       type(batching_index) :: batch_d
       integer :: d_batch
       integer :: req_0, req_d
+!
+      type(timings) :: timer
+!
+      timer = timings('Time in CC3 T3 a1', pl='verbose')
+      call timer%turn_on()
 !
 !     :: X_abid term ::
 !
@@ -308,6 +213,8 @@ contains
 !
       call mem%dealloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_cc3_t3_a1_cc3
 !
 !
@@ -372,6 +279,11 @@ contains
       integer :: req_0, req_1, req_2, req_3
 !
       logical :: ijk_core
+!
+      type(timings) :: timer
+!
+      timer = timings('Time in CC3 T3 b1', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Construct intermediate X_ai ::
 !
@@ -651,6 +563,8 @@ contains
 !
       call mem%dealloc(X_ai, wf%n_v, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_cc3_t3_b1_cc3
 !
 !
@@ -901,6 +815,11 @@ contains
       integer              :: req_0, req_1, req_2, req_3
 !
       logical :: ijk_core
+!
+      type(timings) :: timer
+!
+      timer = timings('Time in CC3 C3', pl='verbose')
+      call timer%turn_on()
 !
 !
 !     Set up arrays for amplitudes
@@ -1321,6 +1240,8 @@ contains
       call wf%jacobian_transpose_cc3_c3_a1_y_v(sigma_ai)
 !
       call wf%Y_bcek%close_()
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_transpose_cc3_c3_a_cc3
 !

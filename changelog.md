@@ -3,6 +3,10 @@
 - CCS Jacobian is now N^4 scaling (Cholesky vector algorithm) See merge request eT-program/eT!592
 ### Features
 - UHF spin contamination is computed and printed in all UHF calculations. See merge request eT-program/eT:!675
+- Tidied up Omega and Jacobian timings to make them more consistent. See merge request eT-program/eT:!684
+
+### Structure
+- Omega and Jacobian routines have separate in and out vectors and call the corresponding parent routines. See merge request eT-program/eT:!!684
 
 # eT v1.1.1
 # eT v1.1.1

@@ -55,7 +55,7 @@ contains
    end subroutine prepare_for_jacobian_transpose_ccs_complex
 !
 !
-   module subroutine jacobian_transpose_transformation_ccs_complex(wf, b)
+   module subroutine jacobian_transpose_transformation_ccs_complex(wf, b, sigma)
 !!
 !!    Jacobian transpose transformation 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
@@ -69,15 +69,12 @@ contains
 !!
 !!       sigma_mu = (b^T A)_mu = sum_ck b_ck A_ck,mu.
 !!
-!!    On exit, b is overwritten by sigma.
-!!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      complex(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
-!
-      complex(dp), dimension(:,:), allocatable :: sigma_ai
+      complex(dp), dimension(wf%n_t1), intent(in)  :: b
+      complex(dp), dimension(wf%n_t1), intent(out) :: sigma
 !
       type(timings), allocatable :: timer 
 !
@@ -86,16 +83,10 @@ contains
 !
 !     Allocate the transformed vector & add the terms to it
 !
-      call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
-      call zero_array_complex(sigma_ai, wf%n_t1)
+      call zero_array_complex(sigma, wf%n_t1)
 !
-      call wf%jacobian_transpose_ccs_a1_complex(sigma_ai, b)
-      call wf%jacobian_transpose_ccs_b1_complex(sigma_ai, b)
-!
-!     Then overwrite the b vector with the transformed vector
-!
-      call zcopy((wf%n_o)*(wf%n_v), sigma_ai, 1, b, 1)
-      call mem%dealloc(sigma_ai, wf%n_v, wf%n_o)
+      call wf%jacobian_transpose_ccs_a1_complex(sigma, b)
+      call wf%jacobian_transpose_ccs_b1_complex(sigma, b)
 !
       call timer%turn_off()
 !

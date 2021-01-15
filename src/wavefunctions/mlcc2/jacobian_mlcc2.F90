@@ -62,7 +62,7 @@ contains
    end subroutine prepare_for_jacobian_mlcc2
 !
 !
-   module subroutine jacobian_transformation_mlcc2(wf, c)
+   module subroutine jacobian_transformation_mlcc2(wf, c, rho)
 !!
 !!    Jacobian transformation (mlcc2)
 !!    Written by Sarai D. Folkestad, 2019
@@ -80,45 +80,34 @@ contains
 !!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck
 !!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
 !!
-!!    On exit, c is overwritten by rho. That is, c_ai = rho_ai,
-!!    and c_aibj = rho_aibj.
-!!
+      use array_utilities, only: scale_diagonal
+!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout)   :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)  :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: rho
 !
-      real(dp), dimension(:,:), allocatable     :: c_ai
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj
-!
-      real(dp), dimension(:,:), allocatable     :: rho_ai   
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj
-!
-      integer :: a, i
 !
       type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transformation MLCC2', pl='normal')
       call timer%turn_on()
 !
-!     Allocate and zero the transformed vector (singles part)
+!     Zero the transformed vector
 !
-      call mem%alloc(rho_ai, wf%n_v, wf%n_o)
-      call zero_array(rho_ai, wf%n_t1)
+      call zero_array(rho, wf%n_es_amplitudes)
 !
-      call mem%alloc(c_ai, wf%n_v, wf%n_o)
+!     CCS contributions to the singles rho vector
 !
-      call dcopy(wf%n_t1, c, 1, c_ai, 1)
-!
-!     CCS contributions to the singles c vector
-!
-      call wf%jacobian_ccs_a1(rho_ai, c_ai)
-      call wf%jacobian_ccs_b1(rho_ai, c_ai)
+      call wf%ccs%jacobian_transformation(c(1 : wf%n_t1), rho(1 : wf%n_t1))
 !
 !     CC2 contributions to the transformed singles vector  
 !
-      call wf%jacobian_cc2_a1(rho_ai, c_ai, wf%n_cc2_o, wf%n_cc2_v, &
+      call wf%jacobian_cc2_a1(rho(1 : wf%n_t1), c(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
                               wf%first_cc2_o, wf%first_cc2_v)
 !
 !     Allocate the incoming unpacked doubles vector
@@ -130,64 +119,36 @@ contains
 !
 !     Scale the doubles vector by (1 + delta_ai,bj)
 !
-!$omp parallel do schedule(static) private(a, i) 
-      do a =1, wf%n_cc2_v
-         do i = 1, wf%n_cc2_o
-!
-            c_aibj(a, i, a, i) = two*c_aibj(a, i, a, i)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call scale_diagonal(two, c_aibj, wf%n_cc2_o*wf%n_cc2_v)
 !     
-      call wf%jacobian_cc2_b1(rho_ai, c_aibj, wf%n_cc2_o, wf%n_cc2_v, &
+      call wf%jacobian_cc2_b1(rho(1 : wf%n_t1), c_aibj, wf%n_cc2_o, wf%n_cc2_v, &
                               wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
 !
-!     Done with singles part of c; overwrite it with
-!     transformed vector for exit
-!
-      call dcopy(wf%n_t1, rho_ai, 1 , c, 1)
-!
-      call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
-!
 !     CC2 contributions to the transformed doubles vector
-!
-!     Allocate unpacked transformed vector
 !
       call mem%alloc(rho_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
       call zero_array(rho_aibj, (wf%n_cc2_o**2)*(wf%n_cc2_v**2))
 !
 !     Contributions from singles vector c
 !
-      call wf%jacobian_cc2_a2(rho_aibj, c_ai, wf%n_cc2_o, wf%n_cc2_v, &
+      call wf%jacobian_cc2_a2(rho_aibj, c(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
                               wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
 ! 
 !     Biorthonormalize
 !
-!$omp parallel do private(a, i)
-      do a = 1, wf%n_cc2_v 
-         do i = 1, wf%n_cc2_o
-!
-            rho_aibj(a, i, a, i) = half*rho_aibj(a, i, a, i)
-!
-         enddo
-      enddo
-!$omp end parallel do 
+      call scale_diagonal(half, rho_aibj, wf%n_cc2_o*wf%n_cc2_v)
 !
 !     Symmetrize (b2 term is already symmetric)
 !
       call symmetric_sum(rho_aibj, wf%n_cc2_o*wf%n_cc2_v)
 !
-      call mem%dealloc(c_ai, wf%n_v, wf%n_o)     
-! 
       call wf%jacobian_cc2_b2(rho_aibj, c_aibj)
 !
       call mem%dealloc(c_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
-!     Overwrite the incoming doubles c vector & pack in
+!     Pack in
 !
-      call packin(c(wf%n_t1 + 1 : wf%n_es_amplitudes), &
-                  rho_aibj, wf%n_cc2_v*wf%n_cc2_o)
+      call packin(rho(wf%n_t1 + 1:), rho_aibj, wf%n_cc2_v*wf%n_cc2_o)
 !
       call mem%dealloc(rho_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !

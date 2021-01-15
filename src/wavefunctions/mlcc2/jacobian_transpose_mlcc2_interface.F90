@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine jacobian_transpose_transformation_mlcc2(wf, b)
+   module subroutine jacobian_transpose_transformation_mlcc2(wf, b, sigma)
 !!
 !!    Jacobian transpose transformation (MLCC2)
 !!    Adapted by Sarai D. Folkestad, Jul 2019
@@ -34,7 +34,8 @@
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)  :: b
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: sigma
 !
    end subroutine jacobian_transpose_transformation_mlcc2
 !

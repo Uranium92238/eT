@@ -29,12 +29,12 @@
    end subroutine prepare_for_jacobian_ccs
 !
 !
-   module subroutine jacobian_transformation_ccs(wf, c)
+   module subroutine jacobian_transformation_ccs(wf, c, rho)
 !!
 !!    Jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!    Directs the transformation by the CCSD Jacobi matrix,
+!!    Directs the transformation by the CCS Jacobi matrix,
 !!
 !!       A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
 !!
@@ -42,12 +42,11 @@
 !!
 !!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
 !!
-!!    On exit, c is overwritten by rho.
-!!
       implicit none
 !
       class(ccs), intent(inout) :: wf
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
+      real(dp), dimension(wf%n_t1), intent(in) :: c
+      real(dp), dimension(wf%n_t1), intent(out) :: rho
 !
    end subroutine jacobian_transformation_ccs
 !

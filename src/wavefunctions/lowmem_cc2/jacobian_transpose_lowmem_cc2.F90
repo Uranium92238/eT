@@ -38,7 +38,7 @@ submodule (lowmem_cc2_class) jacobian_transpose
 contains
 !
 !
-   module subroutine effective_jacobian_transpose_transformation_lowmem_cc2(wf, omega, b, cvs)
+   module subroutine effective_jacobian_transpose_transformation_lowmem_cc2(wf,omega,b,sigma,cvs)
 !!
 !!    Effective Jacobian transpose transformation
 !!    Written by Sarai Dery Folkestad, Jun 2019
@@ -48,13 +48,10 @@ contains
       class(lowmem_cc2) :: wf
 !
       real(dp), intent(in) :: omega
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
+      real(dp), dimension(wf%n_t1), intent(in)  :: b
+      real(dp), dimension(wf%n_t1), intent(out) :: sigma
 !
       logical, intent(in) :: cvs
-!
-      real(dp), dimension(:,:), allocatable :: b_ai
-!
-      real(dp), dimension(:,:), allocatable :: sigma_ai
 !
       real(dp), dimension(:), allocatable :: eps_o
       real(dp), dimension(:), allocatable :: eps_v
@@ -66,18 +63,13 @@ contains
 !
       if (cvs) call output%error_msg('CVS not yet implemented for lowmem CC2.')
 !
-!     Allocate and zero the transformed vector (singles part)
+!     Zero the transformed vector
 !
-      call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
-      call zero_array(sigma_ai, (wf%n_v)*(wf%n_o))
-!
-      call mem%alloc(b_ai, wf%n_v, wf%n_o)
-      call dcopy(wf%n_t1, b, 1, b_ai, 1)
+      call zero_array(sigma, wf%n_t1)
 !
 !     :: CCS contributions to the singles c vector ::
 !
-      call wf%jacobian_transpose_ccs_a1(sigma_ai, b_ai)
-      call wf%jacobian_transpose_ccs_b1(sigma_ai, b_ai)
+      call wf%ccs%jacobian_transpose_transformation(b, sigma)
 !
 !     :: CC2 contributions to the transformed singles vector ::
 !
@@ -87,22 +79,18 @@ contains
       call dcopy(wf%n_o, wf%orbital_energies, 1, eps_o, 1)
       call dcopy(wf%n_v, wf%orbital_energies(wf%n_o + 1), 1, eps_v, 1)
 !
-      call wf%jacobian_transpose_cc2_a1(sigma_ai, b_ai, eps_o, eps_v)
-      call wf%jacobian_transpose_cc2_b1(sigma_ai, b_ai, eps_o, eps_v)
+      call wf%jacobian_transpose_cc2_a1(sigma, b, eps_o, eps_v)
+      call wf%jacobian_transpose_cc2_b1(sigma, b, eps_o, eps_v)
 !
-      call wf%effective_jacobian_transpose_cc2_a1(omega, sigma_ai, b_ai, eps_o, eps_v)
-      call wf%effective_jacobian_transpose_cc2_b1(omega, sigma_ai, b_ai, eps_o, eps_v)
-      call wf%effective_jacobian_transpose_cc2_c1(omega, sigma_ai, b_ai, eps_o, eps_v)
-      call wf%effective_jacobian_transpose_cc2_d1(omega, sigma_ai, b_ai, eps_o, eps_v)
-      call wf%effective_jacobian_transpose_cc2_e1(omega, sigma_ai, b_ai, eps_o, eps_v)
-      call wf%effective_jacobian_transpose_cc2_f1(omega, sigma_ai, b_ai, eps_o, eps_v)
+      call wf%effective_jacobian_transpose_cc2_a1(omega, sigma, b, eps_o, eps_v)
+      call wf%effective_jacobian_transpose_cc2_b1(omega, sigma, b, eps_o, eps_v)
+      call wf%effective_jacobian_transpose_cc2_c1(omega, sigma, b, eps_o, eps_v)
+      call wf%effective_jacobian_transpose_cc2_d1(omega, sigma, b, eps_o, eps_v)
+      call wf%effective_jacobian_transpose_cc2_e1(omega, sigma, b, eps_o, eps_v)
+      call wf%effective_jacobian_transpose_cc2_f1(omega, sigma, b, eps_o, eps_v)
 !
-      call mem%dealloc(b_ai, wf%n_v, wf%n_o)
       call mem%dealloc(eps_o, wf%n_o)
       call mem%dealloc(eps_v, wf%n_v)
-!
-      call copy_and_scale(one, sigma_ai, b, wf%n_t1)
-      call mem%dealloc(sigma_ai, wf%n_v, wf%n_o)
 !
       call timer%turn_off()
 !

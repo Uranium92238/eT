@@ -31,7 +31,7 @@
    end subroutine prepare_for_jacobian_transpose_ccsd_complex
 !
 !
-   module subroutine jacobian_transpose_transformation_ccsd_complex(wf, b)
+   module subroutine jacobian_transpose_transformation_ccsd_complex(wf, b, sigma)
 !!
 !!    Jacobian transpose transformation 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -48,7 +48,8 @@
       implicit none
 !
       class(ccsd), intent(inout) :: wf
-      complex(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
+      complex(dp), dimension(wf%n_t1 + wf%n_t2), intent(in)  :: b
+      complex(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: sigma
 !
    end subroutine jacobian_transpose_transformation_ccsd_complex
 !

@@ -47,79 +47,35 @@ contains
 !
       class(cc3), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: omega
 !
-      real(dp), dimension(:,:), allocatable     :: omega1
       real(dp), dimension(:,:,:,:), allocatable :: omega_abij
+      real(dp), dimension(:,:,:,:), allocatable :: t_abij
 !
-      real(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij, omega_aibj
-!
-      type(timings), allocatable :: cc3_timer
-      type(timings), allocatable :: ccsd_timer
       type(timings), allocatable :: timer 
 !
-      timer       = timings('Construct omega CC3', pl='normal')
-      ccsd_timer  = timings('Omega CC3 (CCSD contribution)', pl='normal')
-      cc3_timer   = timings('Omega CC3 (CC3 contribution)', pl='normal')
+      timer       = timings('Construct CC3 Omega', pl='normal')
 !
       call timer%turn_on()
 !
-      call mem%alloc(omega1, wf%n_v, wf%n_o)
-      call zero_array(omega1, wf%n_t1)
+      call zero_array(omega, wf%n_t1 + wf%n_t2)
 !
-!     Construct CCSD singles contributions
+      call wf%ccsd%construct_omega(omega)
 !
-      call ccsd_timer%turn_on()
-!
-      call wf%omega_ccs_a1(omega1)
-!  
-      call wf%construct_u_aibj()
-!
-      call wf%omega_doubles_a1(omega1, wf%u_aibj)
-      call wf%omega_doubles_b1(omega1, wf%u_aibj)
-      call wf%omega_doubles_c1(omega1, wf%u_aibj)
-!
-!     Construct CCSD doubles contributions
-!
-      call mem%alloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(omega_aibj, wf%n_t1**2)
-!
-      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_aibj, wf%n_t1)
-
-      call wf%omega_ccsd_c2(omega_aibj, t_aibj)
-      call wf%omega_ccsd_d2(omega_aibj, t_aibj)
-      call wf%omega_ccsd_e2(omega_aibj, t_aibj)
+      call mem%alloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call zero_array(omega_abij, (wf%n_v*wf%n_o)**2)
 !
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call sort_1234_to_1324(t_aibj, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call ccsd_timer%freeze()
-!    
-      call mem%alloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call sort_1234_to_1324(omega_aibj, omega_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call cc3_timer%turn_on()
-      call wf%omega_cc3_a(omega1, omega_abij)
-      call cc3_timer%turn_off()
-!
-      call symmetrize_12_and_34(omega_abij, wf%n_v, wf%n_o)
-!
-      call ccsd_timer%turn_on()
-      call wf%omega_ccsd_a2(omega_abij, t_abij)
-      call wf%omega_ccsd_b2(omega_abij, t_abij)
-      call scale_diagonal(half, omega_abij, wf%n_v, wf%n_o)
-      call ccsd_timer%turn_off()
+      call wf%omega_cc3_a(omega, omega_abij, t_abij)
 !
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call dcopy(wf%n_t1, omega1, 1, omega, 1)
+      call scale_diagonal(half, omega_abij, wf%n_v, wf%n_o)
+      call symmetrize_12_and_34(omega_abij, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(omega1, wf%n_v, wf%n_o)
-!
-      call packin(omega(wf%n_t1+1 : wf%n_gs_amplitudes), omega_abij, wf%n_v, wf%n_o)
+      call packin_and_add(omega(wf%n_t1+1:), omega_abij, wf%n_v, wf%n_o)
 !
       call mem%dealloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -128,7 +84,7 @@ contains
    end subroutine construct_omega_cc3
 !
 !
-   module subroutine omega_cc3_a_cc3(wf, omega1, omega2)
+   module subroutine omega_cc3_a_cc3(wf, omega1, omega2, t_abij)
 !!
 !!    CC3 Omega terms
 !!    Written by Rolf H. Myhre, January 2019
@@ -145,6 +101,7 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega1
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: omega2
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)    :: t_abij
 !
 !     Arrays for triples amplitudes
       real(dp), dimension(:,:,:), allocatable :: t_abc
@@ -152,7 +109,6 @@ contains
       real(dp), dimension(:,:,:), allocatable :: v_abc
 !
 !     Unpacked doubles amplitudes
-      real(dp), dimension(:,:,:,:), allocatable :: t_abij
 !
       real(dp), dimension(:,:), allocatable :: F_ov_ck !Transpose the fock matrix ov block
 !
@@ -220,9 +176,6 @@ contains
 !
 !     Set up required integrals on disk
       call wf%omega_cc3_integrals()
-!
-      call mem%alloc(t_abij,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
-      call squareup_and_sort_1234_to_1324(wf%t2,t_abij,wf%n_v,wf%n_o,wf%n_v,wf%n_o)
 !
       req_0 = 3*wf%n_v**3 + wf%n_v*wf%n_o
       req_1 = 2*wf%n_v**3
@@ -567,8 +520,6 @@ contains
       call mem%dealloc(t_abc,wf%n_v,wf%n_v,wf%n_v)
       call mem%dealloc(u_abc,wf%n_v,wf%n_v,wf%n_v)
       call mem%dealloc(v_abc,wf%n_v,wf%n_v,wf%n_v)
-!
-      call mem%dealloc(t_abij,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
 !
    end subroutine omega_cc3_a_cc3
 !

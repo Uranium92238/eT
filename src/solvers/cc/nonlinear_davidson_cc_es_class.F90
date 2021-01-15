@@ -433,9 +433,9 @@ contains
 !           Construct residual and compute residual norm for the given state,
 !           and update the energy estimate 
 !
-            call dcopy(wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
-!
-            call wf%construct_Jacobian_transform(solver%transformation, R(:,state), &
+            call wf%construct_Jacobian_transform(solver%transformation, &
+                                                 X(:,state),            &
+                                                 R(:,state),            &
                                                  solver%energies(state))
 !
             if (solver%projector%active) call solver%projector%do_(R(:,state))            
@@ -769,11 +769,12 @@ contains
 !
                call wf%construct_Jacobian_transform(solver%transformation,                &
                                                     c,                                    &
+                                                    residual,                             &
                                                     solver%energies(corresponding_state))
 !
-               if (solver%projector%active) call solver%projector%do_(c)
+               if (solver%projector%active) call solver%projector%do_(residual)
 ! 
-               call davidson%set_transform(c, trial)
+               call davidson%set_transform(residual, trial)
 !
             enddo 
 !

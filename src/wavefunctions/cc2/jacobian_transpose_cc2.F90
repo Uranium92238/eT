@@ -64,7 +64,7 @@ contains
    end subroutine prepare_for_jacobian_transpose_cc2
 !
 !
-   module subroutine jacobian_transpose_transformation_cc2(wf, b)
+   module subroutine jacobian_transpose_transformation_cc2(wf, b, sigma)
 !!
 !!    Jacobian transpose transformation
 !!    Written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
@@ -75,19 +75,17 @@ contains
 !!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >.
 !!
 !!    The transformation is performed as sigma^T = c^T A, where c is the vector
-!!    sent to the routine. On exit, the vector c is equal to sigma (the transformed
-!!    vector).
+!!    sent to the routine. 
 !!
       implicit none
 !
       class(cc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(in)  :: b
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: sigma
 !
-      real(dp), dimension(:,:), allocatable :: b_ai
       real(dp), dimension(:,:,:,:), allocatable :: b_aibj
 !
-      real(dp), dimension(:,:), allocatable :: sigma_ai
       real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj
 !
       type(timings), allocatable :: timer
@@ -95,52 +93,31 @@ contains
       timer = timings('Jacobian transpose CC2', pl='normal')
       call timer%turn_on()
 !
-!     Allocate and zero the transformed vecotr (singles part)
-!
-      call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
-      call zero_array(sigma_ai, wf%n_t1)
-!
-      call mem%alloc(b_ai, wf%n_v, wf%n_o)
-!
-      call dcopy(wf%n_t1, b, 1, b_ai, 1)
+      call zero_array(sigma, wf%n_t1 + wf%n_t2)
 !
 !     :: CCS contributions to the singles b vector ::
 !
-      call wf%jacobian_transpose_ccs_a1(sigma_ai, b_ai)
-      call wf%jacobian_transpose_ccs_b1(sigma_ai, b_ai)
+      call wf%ccs%jacobian_transpose_transformation(b(1 : wf%n_t1), sigma(1 : wf%n_t1))
 !
 !     :: CC2 contributions to the transformed singles vector ::
 !
-      call wf%jacobian_transpose_doubles_a1(sigma_ai, b_ai, wf%u_aibj)
-!
-!     Allocate the incoming unpacked doubles vector
+      call wf%jacobian_transpose_doubles_a1(sigma(1 : wf%n_t1), b(1 : wf%n_t1), wf%u_aibj)
 !
       call mem%alloc(b_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
 !
-      call squareup(b(wf%n_t1 + 1 : wf%n_es_amplitudes), b_aibj, wf%n_t1)
+      call squareup(b(wf%n_t1+1:), b_aibj, wf%n_t1)
 !
-      call wf%jacobian_transpose_doubles_b1(sigma_ai, b_aibj)
-!
-!     Done with singles vector c; overwrite it with
-!     transformed vector for exit
-!
-      call dcopy(wf%n_t1, sigma_ai, 1, b, 1)
-!
-      call mem%dealloc(sigma_ai, wf%n_v, wf%n_o)
+      call wf%jacobian_transpose_doubles_b1(sigma(1 : wf%n_t1), b_aibj)
 !
 !     :: CC2 contributions to the transformed doubles vector ::
-!
-!     Allocate unpacked transformed vector
 !
       call mem%alloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(sigma_aibj, wf%n_t1**2)
 !
 !     Contributions from singles vector b
 !
-      call wf%jacobian_transpose_doubles_a2(sigma_aibj, b_ai)
+      call wf%jacobian_transpose_doubles_a2(sigma_aibj, b(1 : wf%n_t1))
       call symmetric_sum(sigma_aibj, wf%n_t1)
-!
-      call mem%dealloc(b_ai, wf%n_v, wf%n_o)
 !
 !     Contributions from doubles vector b
 !
@@ -150,7 +127,7 @@ contains
 !
 !     Overwrite the incoming doubles b vector & pack in
 !
-      call packin(b(wf%n_t1 + 1 : wf%n_es_amplitudes), sigma_aibj, wf%n_t1)
+      call packin(sigma(wf%n_t1+1:), sigma_aibj, wf%n_t1)
 !
       call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !

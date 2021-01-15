@@ -231,6 +231,7 @@ contains
       real(dp), dimension(:,:,:), allocatable   :: dipole_length
       real(dp), dimension(:,:), allocatable     :: reduced_left, reduced_right
       real(dp), dimension(:), allocatable       :: etaX, xiX
+      real(dp), dimension(:), allocatable       :: p_and_q
       real(dp), dimension(:), allocatable       :: Aq, pA
       real(dp), dimension(:), allocatable       :: eigenvalues_Re, eigenvalues_Im
       real(dp), dimension(:), allocatable       :: oscillator_strength
@@ -297,6 +298,8 @@ contains
          lanczos = asymmetric_lanczos_tool(wf%n_es_amplitudes, solver%chain_length, &
                                              etaX, xiX, solver%normalization)
 !
+         call mem%alloc(p_and_q, wf%n_es_amplitudes)
+!
          call mem%alloc(Aq, wf%n_es_amplitudes)
          call mem%alloc(pA, wf%n_es_amplitudes)
 !
@@ -305,15 +308,17 @@ contains
 !
          do iteration = 1, solver%chain_length 
 !
-!           p_(i) and q_(i) are stored in pA and Aq
 !             
-            call lanczos%read_p(pA, iteration)
-            call lanczos%read_q(Aq, iteration)
 !
 !           Transforms p -> pA and q -> Aq
 !
-            call wf%jacobian_transformation(Aq) 
-            call wf%jacobian_transpose_transformation(pA)
+!           q_(i) is stored in p_and_q
+            call lanczos%read_q(p_and_q, iteration)
+            call wf%jacobian_transformation(p_and_q, Aq) 
+!
+!           p_(i) is stored in p_and_q
+            call lanczos%read_p(p_and_q, iteration)
+            call wf%jacobian_transpose_transformation(p_and_q, pA)
 !
             if (solver%projector%active) then
 !
@@ -352,6 +357,8 @@ contains
 !
          call mem%dealloc(Aq, wf%n_es_amplitudes)
          call mem%dealloc(pA, wf%n_es_amplitudes)
+!
+         call mem%dealloc(p_and_q, wf%n_es_amplitudes)
 !
 !        Diagonalize T to get the eigenvalues and eigenvectors 
 !

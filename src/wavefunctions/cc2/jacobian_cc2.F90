@@ -61,7 +61,7 @@ contains
    end subroutine prepare_for_jacobian_cc2
 !
 !
-   module subroutine jacobian_transformation_cc2(wf, c)
+   module subroutine jacobian_transformation_cc2(wf, c, rho)
 !!
 !!    Jacobian transformation
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
@@ -83,12 +83,11 @@ contains
 !
       class(cc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(in)  :: c
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: rho
 !
-      real(dp), dimension(:,:), allocatable     :: c_ai
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj
 !
-      real(dp), dimension(:,:), allocatable     :: rho_ai   
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj
 !
       type(timings) :: timer
@@ -96,45 +95,30 @@ contains
       timer = timings('Jacobian transformation CC2', pl='normal')
       call timer%turn_on()
 !
-!     Allocate and zero the transformed vector (singles part)
+!     Zero the transformed vector
 !
-      call mem%alloc(rho_ai, wf%n_v, wf%n_o)
-      call zero_array(rho_ai, wf%n_t1)
-!
-      call mem%alloc(c_ai, wf%n_v, wf%n_o)
-!
-      call dcopy(wf%n_t1, c, 1, c_ai, 1)
+      call zero_array(rho, wf%n_t1 + wf%n_t2)
 !
 !     :: CCS contributions to the singles c vector ::
 !
-      call wf%jacobian_ccs_a1(rho_ai, c_ai)
-      call wf%jacobian_ccs_b1(rho_ai, c_ai)
+      call wf%ccs%jacobian_transformation(c(1 : wf%n_t1), rho(1 : wf%n_t1))
 !
 !     :: CC2 contributions to the transformed singles vector ::
 !
-      call wf%jacobian_doubles_a1(rho_ai, c_ai)
-!
-!     Allocate the incoming unpacked doubles vector
+      call wf%jacobian_doubles_a1(rho(1 : wf%n_t1), c(1 : wf%n_t1))
 !
       call mem%alloc(c_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
 !
-      call squareup(c(wf%n_t1 + 1 : wf%n_es_amplitudes), c_aibj, wf%n_t1)
+      call squareup(c(wf%n_t1+1:), c_aibj, wf%n_t1)
 !
 !     Scale the doubles vector by 1 + delta_ai,bj, i.e.
 !     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
 !
       call scale_diagonal(two, c_aibj, wf%n_t1)
 !
-      call wf%jacobian_doubles_b1(rho_ai, c_aibj)
-      call wf%jacobian_doubles_c1(rho_ai, c_aibj)
-      call wf%jacobian_doubles_d1(rho_ai, c_aibj)
-!
-!     Done with singles vector c; overwrite it with
-!     transformed vector for exit
-!
-      call dcopy(wf%n_t1, rho_ai, 1, c, 1)
-!
-      call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
+      call wf%jacobian_doubles_b1(rho(1 : wf%n_t1), c_aibj)
+      call wf%jacobian_doubles_c1(rho(1 : wf%n_t1), c_aibj)
+      call wf%jacobian_doubles_d1(rho(1 : wf%n_t1), c_aibj)
 !
 !     :: CC2 contributions to the transformed doubles vector ::
 !
@@ -145,13 +129,11 @@ contains
 !
 !     Contributions from singles vector c
 !
-      call wf%jacobian_doubles_a2(rho_aibj, c_ai)
+      call wf%jacobian_doubles_a2(rho_aibj, c(1 : wf%n_t1))
 !
       call scale_diagonal(half, rho_aibj, wf%n_t1)
 !
       call symmetric_sum(rho_aibj, wf%n_t1)
-!
-      call mem%dealloc(c_ai, wf%n_v, wf%n_o)
 !
 !     Contributions from doubles vector c      
 !
@@ -161,7 +143,7 @@ contains
 !
 !     Overwrite the incoming doubles c vector & pack in
 !
-      call packin(c(wf%n_t1 + 1 : wf%n_es_amplitudes), rho_aibj, wf%n_t1)
+      call packin(rho(wf%n_t1+1:), rho_aibj, wf%n_t1)
 !
       call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !

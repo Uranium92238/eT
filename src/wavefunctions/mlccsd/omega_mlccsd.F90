@@ -52,9 +52,8 @@ contains
 !
       class(mlccsd), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(out) :: omega
 !
-      real(dp), dimension(:,:), allocatable     :: omega_ai
       real(dp), dimension(:,:,:,:), allocatable :: omega_aibj
       real(dp), dimension(:,:,:,:), allocatable :: x_aibj
 !
@@ -62,36 +61,33 @@ contains
 !
       type(timings) :: timer
 !
-      timer = timings('Construct Omega MLCCSD', pl='n')
+      timer = timings('Construct MLCCSD Omega', pl='n')
       call timer%turn_on()
+!
+!     Set the omega vector to zero
 !
       call zero_array(omega, wf%n_gs_amplitudes)
 !
       n_a_o = wf%n_cc2_o + wf%n_ccsd_o
       n_a_v = wf%n_cc2_v + wf%n_ccsd_v
 !
-      call mem%alloc(omega_ai, wf%n_v, wf%n_o)
-      call mem%alloc(omega_aibj, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
-!
-!     Set the omega vector to zero
-!
-      call zero_array(omega_ai, wf%n_t1)
-      call zero_array(omega_aibj, (wf%n_ccsd_v**2)*(wf%n_ccsd_o**2))
-!
-      call wf%construct_u_aibj()
+      call wf%ccs%construct_omega(omega(1 : wf%n_t1))
 !
 !     Construct singles contributions
 !
-      call wf%omega_cc2_a1(omega_ai, n_a_o, n_a_v, 1, 1, n_a_o, n_a_v)
-      call wf%omega_cc2_b1(omega_ai, n_a_o, n_a_v, 1, 1, n_a_o, n_a_v)
-      call wf%omega_cc2_c1(omega_ai, n_a_o, n_a_v, 1, 1)
+      call wf%construct_u_aibj()
+!
+      call wf%omega_cc2_a1(omega(1 : wf%n_t1), n_a_o, n_a_v, 1, 1, n_a_o, n_a_v)
+      call wf%omega_cc2_b1(omega(1 : wf%n_t1), n_a_o, n_a_v, 1, 1, n_a_o, n_a_v)
+      call wf%omega_cc2_c1(omega(1 : wf%n_t1), n_a_o, n_a_v, 1, 1)
 !
       call mem%alloc(x_aibj, n_a_v, n_a_o, n_a_v, n_a_o)
       call squareup(wf%x2, x_aibj, n_a_o*n_a_v)
 !
-      call wf%omega_ccs_a1(omega_ai)
-!
 !     Construct doubles contributions
+!
+      call mem%alloc(omega_aibj, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
+      call zero_array(omega_aibj, (wf%n_ccsd_v**2)*(wf%n_ccsd_o**2))
 !
       call wf%omega_ccsd_a2(omega_aibj)
       call wf%omega_ccsd_b2(omega_aibj, x_aibj)
@@ -102,11 +98,8 @@ contains
 !
       call scale_diagonal(half, omega_aibj, wf%n_ccsd_v*wf%n_ccsd_o)
 !
-      call dcopy(wf%n_t1, omega_ai, 1, omega, 1)
-!
       call packin(omega(wf%n_t1 + 1:wf%n_gs_amplitudes), omega_aibj, wf%n_ccsd_v*wf%n_ccsd_o)
 !
-      call mem%dealloc(omega_ai, wf%n_v, wf%n_o)
       call mem%dealloc(omega_aibj, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
       call mem%dealloc(x_aibj, n_a_v, n_a_o, n_a_v, n_a_o)
 !

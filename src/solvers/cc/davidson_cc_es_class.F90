@@ -321,16 +321,17 @@ contains
 !        Transform new trial vectors and write them to file
 !
          call mem%alloc(c, wf%n_es_amplitudes)
+         call mem%alloc(residual, wf%n_es_amplitudes)
 !
          do trial = davidson%first_new_trial(), davidson%last_new_trial()
 !
             call davidson%get_trial(c, trial)
 !
-            call wf%construct_Jacobian_transform(solver%transformation, c)
+            call wf%construct_jacobian_transform(solver%transformation, c, residual)
 !
-            if (solver%projector%active) call solver%projector%do_(c)
+            if (solver%projector%active) call solver%projector%do_(residual)
 !
-            call davidson%set_transform(c, trial)
+            call davidson%set_transform(residual, trial)
 !
          enddo ! Done transforming new trials 
 !
@@ -343,7 +344,6 @@ contains
 !        Construct the full space solutions, test for convergence, 
 !        and use the residuals to construct the next trial vectors 
 !
-         call mem%alloc(residual, wf%n_es_amplitudes)
          call mem%alloc(solution, wf%n_es_amplitudes)
 !
          call output%printf('n', ' Root  Eigenvalue (Re)   Eigenvalue &

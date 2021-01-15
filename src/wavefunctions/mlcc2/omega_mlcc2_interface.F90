@@ -28,7 +28,7 @@
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(out) :: omega
 !
    end subroutine construct_omega_mlcc2
 !

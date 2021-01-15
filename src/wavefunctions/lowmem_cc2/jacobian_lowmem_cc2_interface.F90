@@ -93,7 +93,7 @@
    end subroutine save_jacobian_a1_3_intermediate_lowmem_cc2
 !
 !
-   module subroutine effective_jacobian_transformation_lowmem_cc2(wf, omega, c)
+   module subroutine effective_jacobian_transformation_lowmem_cc2(wf, omega, c, rho)
 !!
 !!    Effective jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
@@ -107,7 +107,8 @@
 !
       class(lowmem_cc2) :: wf
       real(dp), intent(in) :: omega
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
+      real(dp), dimension(wf%n_t1), intent(in)  :: c
+      real(dp), dimension(wf%n_t1), intent(out) :: rho
 !
    end subroutine effective_jacobian_transformation_lowmem_cc2
 !

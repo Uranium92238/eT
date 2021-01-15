@@ -48,33 +48,27 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: omega
 !
-      real(dp), dimension(:,:), allocatable :: omega1
       real(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij
       real(dp), dimension(:,:,:,:), allocatable :: omega_aibj, omega_abij
 !
       type(timings), allocatable :: timer 
 !
-      timer = timings('Construct ccsd omega', pl='normal')
+      timer = timings('Construct CCSD Omega', pl='normal')
       call timer%turn_on()
+!
+      call zero_array(omega, wf%n_t1 + wf%n_t2)
 !
 !     Construct singles contributions
 !
-      call mem%alloc(omega1, wf%n_v, wf%n_o)
-      call zero_array(omega1, wf%n_t1)
-!
-      call wf%omega_ccs_a1(omega1)
+      call wf%ccs%construct_omega(omega(1 : wf%n_t1))
 !
       call wf%construct_u_aibj()
 !
-      call wf%omega_doubles_a1(omega1, wf%u_aibj)
-      call wf%omega_doubles_b1(omega1, wf%u_aibj)
-      call wf%omega_doubles_c1(omega1, wf%u_aibj)
-!
-      call dcopy(wf%n_t1, omega1, 1, omega, 1)
-!
-      call mem%dealloc(omega1, wf%n_v, wf%n_o)
+      call wf%omega_doubles_a1(omega(1 : wf%n_t1), wf%u_aibj)
+      call wf%omega_doubles_b1(omega(1 : wf%n_t1), wf%u_aibj)
+      call wf%omega_doubles_c1(omega(1 : wf%n_t1), wf%u_aibj)
 !
 !     Construct doubles contributions
 !

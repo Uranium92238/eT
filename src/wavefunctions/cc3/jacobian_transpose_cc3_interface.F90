@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine effective_jacobian_transpose_transformation_cc3(wf, omega, c, cvs)
+   module subroutine effective_jacobian_transpose_transformation_cc3(wf, omega, b, sigma, cvs)
 !!
 !!    Effective Jacobian transpose transformation (CC3)
 !!    Alexander C. Paul and Rolf H. Myhre, March 2019
@@ -27,8 +27,7 @@
 !!       A_mu,nu = < mu| exp(-T) [H, tau_nu] exp(T)|R >,
 !!
 !!    The transformation is performed as sigma^T = c^T A, where c is the vector
-!!    sent to the routine. On exit, the vector c is equal to sigma (the transformed
-!!    vector).
+!!    sent to the routine. 
 !!
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
@@ -36,7 +35,8 @@
 !
       class(cc3) :: wf
       real(dp), intent(in) :: omega
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(in)  :: b
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: sigma
       logical, intent(in) :: cvs
 !
    end subroutine effective_jacobian_transpose_transformation_cc3

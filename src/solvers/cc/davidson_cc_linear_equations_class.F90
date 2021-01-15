@@ -234,7 +234,7 @@ contains
 !
       logical :: converged_residual
 !
-      real(dp), dimension(:), allocatable :: c, residual, solution
+      real(dp), dimension(:), allocatable :: c, X, solution
 !
       integer :: iteration, root, trial
 !
@@ -281,15 +281,16 @@ contains
 !
 !        Transform new trial vectors 
 !
+         call mem%alloc(X, wf%n_gs_amplitudes)
          call mem%alloc(c, wf%n_gs_amplitudes)
 !
          do trial = davidson%first_new_trial(), davidson%last_new_trial()
 !
             call davidson%get_trial(c, trial)
 !
-            call wf%construct_Jacobian_transform(trim(transformation), c)
+            call wf%construct_Jacobian_transform(trim(transformation), c, X)
 !
-            call davidson%set_transform(c, trial)
+            call davidson%set_transform(X, trial)
 !
          enddo
 !
@@ -305,20 +306,18 @@ contains
          call output%printf('n', 'Frequency      Residual norm', fs='(/t3,a)')
          call output%print_separator('n', 30, '-')
 !
-         call mem%alloc(residual, wf%n_gs_amplitudes)
-!
          converged_residual = .true.
 !
          do root = 1, n_frequencies
 !
-            call davidson%construct_residual(residual, root)
+            call davidson%construct_residual(X, root)
 !
-            residual_norm = get_l2_norm(residual, wf%n_gs_amplitudes)
+            residual_norm = get_l2_norm(X, wf%n_gs_amplitudes)
 !
             if (residual_norm > solver%residual_threshold) then 
 !
                converged_residual = .false.
-               call davidson%add_new_trial(residual, root)
+               call davidson%add_new_trial(X, root)
 !
             endif
 !
@@ -327,7 +326,7 @@ contains
 !
          enddo 
 !
-         call mem%dealloc(residual, wf%n_gs_amplitudes)
+         call mem%dealloc(X, wf%n_gs_amplitudes)
 !
          call output%print_separator('n', 30, '-')
 !

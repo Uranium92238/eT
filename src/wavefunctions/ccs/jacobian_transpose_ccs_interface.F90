@@ -29,7 +29,7 @@
    end subroutine prepare_for_jacobian_transpose_ccs
 !
 !
-   module subroutine jacobian_transpose_transformation_ccs(wf, b)
+   module subroutine jacobian_transpose_transformation_ccs(wf, b, sigma)
 !!
 !!    Jacobian transpose transformation 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
@@ -43,12 +43,11 @@
 !!
 !!       sigma_mu = (b^T A)_mu = sum_ck b_ck A_ck,mu.
 !!
-!!    On exit, b is overwritten by sigma.
-!!
       implicit none
 !
       class(ccs), intent(inout) :: wf
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
+      real(dp), dimension(wf%n_t1), intent(in)  :: b
+      real(dp), dimension(wf%n_t1), intent(out) :: sigma
 !
    end subroutine jacobian_transpose_transformation_ccs
 !
