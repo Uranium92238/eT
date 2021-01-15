@@ -1591,7 +1591,8 @@ contains
                         storage=storage,                                &
                         cumulative_threshold=1.0d-2,                    &
                         crop=.false.,                                   &
-                        energy_convergence=.false.)
+                        energy_convergence=.false.,                     &
+                        skip=.false.)
 !
       call full_space_solver%run(full_space_wf)
 !

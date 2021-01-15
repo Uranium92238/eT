@@ -50,6 +50,8 @@ module reference_engine_class
       logical :: plot_orbitals
       logical :: print_mo_info
 !
+      logical :: skip_scf
+!
    contains 
 !
       procedure :: ignite                              => ignite_reference_engine
@@ -102,7 +104,8 @@ contains
       engine%plot_orbitals    = .false.
       engine%plot_density     = .false.
       engine%print_mo_info    = .false.
-!
+      engine%skip_scf         = .false.
+!  
       call engine%read_settings()
 !
    end function new_reference_engine
@@ -142,7 +145,9 @@ contains
       class(reference_engine)    :: engine 
       class(hf)                  :: wf
 !
-      if (.not. engine%restart .and. (trim(engine%ao_density_guess) == 'sad')) then
+      if ((.not. engine%restart) .and.  &
+          (.not. engine%skip_scf) .and. &
+          (trim(engine%ao_density_guess) == 'sad')) then
 !
 !        Generate SAD if requested
 !
@@ -178,9 +183,8 @@ contains
 !
       call input%get_keyword_in_section('algorithm', 'solver scf', engine%algorithm)
 !
-      if (input%requested_keyword_in_section('restart', 'solver scf')) then
-         engine%restart = .true.
-      end if
+      engine%restart = input%requested_keyword_in_section('restart', 'solver scf')
+      engine%skip_scf = input%requested_keyword_in_section('skip', 'solver scf')
 !
       call input%get_keyword_in_section('ao density guess', 'solver scf', engine%ao_density_guess)
 !
@@ -373,7 +377,8 @@ contains
                            energy_threshold=energy_threshold,     &
                            max_iterations=max_iterations,         &
                            residual_threshold=gradient_threshold, &
-                           energy_convergence=.false.)
+                           energy_convergence=.false.,            &
+                           skip=.false.)
 !
          call sad_solver%run(sad_wf)
 !
@@ -810,17 +815,17 @@ contains
 !
       elseif (trim(engine%algorithm) == 'scf-diis') then
 !
-         scf_diis = scf_diis_hf(wf, engine%restart)
+         scf_diis = scf_diis_hf(wf, engine%restart, engine%skip_scf)
          call scf_diis%run(wf)
 !
       elseif (trim(engine%algorithm) == 'mo-scf-diis') then
 !
-         mo_scf_diis_ = mo_scf_diis(wf, engine%restart)
+         mo_scf_diis_ = mo_scf_diis(wf, engine%restart, engine%skip_scf)
          call mo_scf_diis_%run(wf)
 !
       elseif (trim(engine%algorithm) == 'scf') then 
 !
-         scf = scf_hf(wf, engine%restart)
+         scf = scf_hf(wf, engine%restart, engine%skip_scf)
          call scf%run(wf)
 !
       else
