@@ -38,7 +38,7 @@ submodule (cc3_class) jacobian
 contains
 !
 !
-   module subroutine effective_jacobian_transformation_cc3(wf, omega, c)
+   module subroutine effective_jacobian_transformation_cc3(wf, omega, c, rho)
 !!
 !!    Effective Jacobian transformation (CC3)
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Feb 2019
@@ -63,147 +63,59 @@ contains
       class(cc3) :: wf
 !
       real(dp), intent(in) :: omega
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(in)  :: c
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: rho
 !
-      real(dp), dimension(:,:), allocatable :: c_ai
-      real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij
+      real(dp), dimension(:,:,:,:), allocatable :: c_abij
 !
-      real(dp), dimension(:,:), allocatable :: rho_ai
-      real(dp), dimension(:,:,:,:), allocatable :: rho_aibj, rho_abij
+      real(dp), dimension(:,:,:,:), allocatable :: rho_abij
 !
-      type(timings), allocatable :: cc3_timer, ccsd_timer, timer
+      type(timings), allocatable :: timer
 !
-      timer           = timings('Jacobian CC3')
-      cc3_timer       = timings('Jacobian CC3 (CC3 contribution)', pl='normal')
-      ccsd_timer      = timings('Jacobian CC3 (CCSD contribution)', pl='normal')
-!
+      timer = timings('Jacobian CC3 transformation', pl='normal')
       call timer%turn_on()
 !
-!     Allocate and zero the transformed vector (singles part)
+!     Zero the transformed vector
 !
-      call mem%alloc(rho_ai, wf%n_v, wf%n_o)
-      call zero_array(rho_ai, wf%n_v*wf%n_o)
+      call zero_array(rho, wf%n_t1 + wf%n_t2)
+! 
+!     :: CCSD contributions to the rho vector ::
 !
-      call mem%alloc(c_ai, wf%n_v, wf%n_o)
+      call wf%ccsd%jacobian_transformation(c, rho)
 !
-      call dcopy(wf%n_t1, c(1:wf%n_t1), 1, c_ai, 1)
-!
-!     :: CCS contributions to the singles c vector ::
-!
-      call ccsd_timer%turn_on()
-!
-      call wf%jacobian_ccs_a1(rho_ai, c_ai)
-      call wf%jacobian_ccs_b1(rho_ai, c_ai)
-!
-!     :: CCSD contributions to the transformed singles vector ::
-!
-      call wf%jacobian_doubles_a1(rho_ai, c_ai)
-!
-!     Allocate the incoming unpacked doubles vector
-!
-      call mem%alloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call squareup(c(wf%n_t1 + 1 : wf%n_es_amplitudes), c_aibj, wf%n_t1)
-!
-!     Scale the doubles vector by 1 + delta_ai,bj, i.e.
-!     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
-!
-      call scale_diagonal(two, c_aibj, wf%n_t1)
-!
-      call wf%jacobian_doubles_b1(rho_ai, c_aibj)
-      call wf%jacobian_doubles_c1(rho_ai, c_aibj)
-      call wf%jacobian_doubles_d1(rho_ai, c_aibj)
-!
-!     :: CCSD contributions to the transformed doubles vector ::
-!     Allocate unpacked transformed vector
-!
-      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(rho_aibj, (wf%n_v*wf%n_o)**2)
-!
-!     Contributions from singles vector c
-!
-      call wf%jacobian_doubles_a2(rho_aibj, c_ai)
-      call wf%jacobian_ccsd_b2(rho_aibj, c_ai)
-      call wf%jacobian_ccsd_c2(rho_aibj, c_ai)
-      call wf%jacobian_ccsd_d2(rho_aibj, c_ai)
-!
-!     Contributions from doubles vector c
-!
-      call wf%jacobian_ccsd_e2(rho_aibj, c_aibj)
-      call wf%jacobian_ccsd_f2(rho_aibj, c_aibj)
-      call wf%jacobian_ccsd_g2(rho_aibj, c_aibj)
-      call wf%jacobian_ccsd_h2(rho_aibj, c_aibj)
-      call wf%jacobian_ccsd_i2(rho_aibj, c_aibj)
-!
-!     Compute CC3 contributions to rho_ai and rho_aibj and symmetrise rho_aibj
-!     CCSD J2 and K2 are already symmetric and will be computed afterwards. The CCSD L2 
-!     term is also already symmetric, but is computed as aibj and is computed before 
-!     reordering, where the half*c2 cancels out in later symmetrization of ai-bj.
+!     Compute CC3 contributions to rho and symmetrise rho_aibj
 !
       call mem%alloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call zero_array(rho_abij, (wf%n_v*wf%n_o)**2)
+!
       call mem%alloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call sort_1234_to_1324(c_aibj, c_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call sort_1234_to_1324(rho_aibj, rho_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call ccsd_timer%freeze()
-!
-      call cc3_timer%turn_on()
+      call squareup_and_sort_1234_to_1324(c(wf%n_t1+1:), c_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call scale_diagonal(two, C_abij, wf%n_v, wf%n_o)
 !
 !     CC3-Contributions from the T3-amplitudes
-      call wf%jacobian_cc3_t3_a2(c_ai, rho_abij)
+      call wf%jacobian_cc3_t3_a2(c, rho_abij)
 !
-      call wf%jacobian_cc3_t3_b2(c_ai, rho_abij)
+      call wf%jacobian_cc3_t3_b2(c, rho_abij)
 !
 !     CC3-Contributions from the C3-amplitudes
 !
-      call wf%jacobian_cc3_c3_a(omega, c_ai, c_abij, rho_ai, rho_abij)
-!
-      call cc3_timer%freeze()
-!
-!     Done with singles vector c; Overwrite the incoming singles c vector for exit
-!
-      call mem%dealloc(c_ai, wf%n_v, wf%n_o)
-!
-      call dcopy(wf%n_t1, rho_ai, 1, c, 1)
-!
-      call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
-!
-!     Last two CCSD-terms (J2, K2) are already symmetric.
-!     Perform the symmetrization rho_ai_bj = P_ij^ab rho_ai_bj
-!
-      call ccsd_timer%turn_on()
-!
-      call symmetrize_12_and_34(rho_abij, wf%n_v, wf%n_o)
-!
-!     Compute CCSD J2 and K2 contributions
-!
-      call wf%jacobian_ccsd_j2(rho_abij, c_abij)
-      call wf%jacobian_ccsd_k2(rho_abij, c_abij)
-      call wf%omega_ccsd_a2(rho_abij, c_abij)
+      call wf%jacobian_cc3_c3_a(omega, c, c_abij, rho, rho_abij)
 !
       call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call ccsd_timer%freeze()
+      call symmetrize_12_and_34(rho_abij, wf%n_v, wf%n_o)
 !
 !     divide by the biorthonormal factor 1 + delta_ai,bj
 ! 
       call scale_diagonal(half, rho_abij, wf%n_v, wf%n_o)
 !
-!     overwrite the incoming, packed doubles c vector with rho_abij
-!     and pack in for exit
+!     Add rho_abij to rho
 !
-      call packin(c(wf%n_t1 + 1 : wf%n_es_amplitudes), rho_abij, wf%n_v, wf%n_o)
+      call packin_and_add(rho(wf%n_t1+1:), rho_abij, wf%n_v, wf%n_o)
 !
       call mem%dealloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call timer%turn_off()
-      call cc3_timer%turn_off()
-      call ccsd_timer%turn_off()
 !
    end subroutine effective_jacobian_transformation_cc3
 !

@@ -29,7 +29,7 @@
    end subroutine prepare_for_jacobian_cc2
 !
 !
-   module subroutine jacobian_transformation_cc2(wf, c)
+   module subroutine jacobian_transformation_cc2(wf, c, rho)
 !!
 !!    Jacobian transformation
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
@@ -50,7 +50,8 @@
       implicit none
 !
       class(cc2), intent(inout) :: wf
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(in)  :: c
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: rho
 !
    end subroutine jacobian_transformation_cc2
 !

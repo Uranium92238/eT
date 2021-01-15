@@ -33,7 +33,7 @@
    end subroutine prepare_for_jacobian_transpose_cc2
 !
 !
-   module subroutine jacobian_transpose_transformation_cc2(wf, b)
+   module subroutine jacobian_transpose_transformation_cc2(wf, b, sigma)
 !!
 !!    Jacobian transpose transformation
 !!    Written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
@@ -44,13 +44,13 @@
 !!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >.
 !!
 !!    The transformation is performed as sigma^T = c^T A, where c is the vector
-!!    sent to the routine. On exit, the vector c is equal to sigma (the transformed
-!!    vector).
+!!    sent to the routine. 
 !!
       implicit none
 !
       class(cc2), intent(inout) :: wf
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(in)  :: b
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: sigma
 !
    end subroutine jacobian_transpose_transformation_cc2
 !

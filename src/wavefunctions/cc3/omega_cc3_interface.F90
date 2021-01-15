@@ -28,12 +28,12 @@
       implicit none
 !
       class(cc3), intent(inout) :: wf
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: omega
 !
    end subroutine construct_omega_cc3
 !
 !
-   module subroutine omega_cc3_a_cc3(wf, omega1, omega2)
+   module subroutine omega_cc3_a_cc3(wf, omega1, omega2, t_abij)
 !!
 !!    CC3 Omega terms
 !!    Written by Rolf H. Myhre, January 2019
@@ -49,6 +49,7 @@
       class(cc3) :: wf
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega1
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: omega2
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)    :: t_abij
 !
    end subroutine omega_cc3_a_cc3
 !

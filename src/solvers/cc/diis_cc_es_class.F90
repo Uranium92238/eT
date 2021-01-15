@@ -384,9 +384,8 @@ contains
 !
 !              Construct R = AX 
 !
-               call dcopy(wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
-!
                call wf%construct_Jacobian_transform(solver%transformation, &
+                                                      X(:,state),          &
                                                       R(:,state),          &
                                                       solver%energies(state))
 !

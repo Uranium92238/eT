@@ -124,7 +124,7 @@ contains
    end subroutine initialize_lowmem_cc2
 !
 !
-   subroutine construct_Jacobian_transform_lowmem_cc2(wf, r_or_l, X, w)
+   subroutine construct_Jacobian_transform_lowmem_cc2(wf, r_or_l, X, R, w)
 !!
 !!    Construct Jacobian transform
 !!    Written by Eirik F. Kjønstad, Dec 2018
@@ -152,7 +152,8 @@ contains
 !
       character(len=*), intent(in) :: r_or_l
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout)   :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)  :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: R
 !
       real(dp), intent(in), optional :: w
 !
@@ -169,11 +170,11 @@ contains
 !
       if (r_or_l .eq. "right") then
 !
-         call wf%effective_jacobian_transformation(w, X) ! X <- AX
+         call wf%effective_jacobian_transformation(w, X, R) ! X <- AX
 !
       else if (r_or_l .eq. "left") then
 !
-         call wf%effective_jacobian_transpose_transformation(w, X, wf%cvs) ! X <- A^TX
+         call wf%effective_jacobian_transpose_transformation(w, X, R, wf%cvs) ! X <- A^TX
 !
       else
 !

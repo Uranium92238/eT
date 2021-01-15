@@ -524,6 +524,11 @@ module reordering
                    packin_4_from_1324_order_complex
    end interface packin
 !
+   interface packin_and_add
+      procedure :: packin_and_add, &
+                   packin_and_add_from_1324
+   end interface packin_and_add
+!
    interface packin_anti
       procedure :: packin_anti, &
                    packin_anti_complex
@@ -7692,7 +7697,7 @@ contains
 !
                   rs = dim_p*(s - 1) + r
 !
-                  pqrs = pq*(pq-3)/2 + pq + rs
+                  pqrs = (pq*(pq-1))/2 + rs
 !
                   packed(pqrs) = unpacked(p,r,q,s)
 !
@@ -7970,6 +7975,84 @@ contains
 !$omp end parallel do
 !
    end subroutine construct_packed_covariant_complex
+!
+!
+   subroutine packin_and_add(packed,unpacked,N)
+!!
+!!    Pack in and add
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
+!!
+!!    Pack down full square matrix of dimension N x N.
+!!
+      implicit none
+!
+      integer, intent(in) :: N
+!
+      real(dp), dimension(N*(N+1)/2), intent(inout) :: packed
+      real(dp), dimension(N,N), intent(in)          :: unpacked
+!
+      integer :: i, j
+!
+!$omp parallel do schedule(static) private(i,j)
+      do i = 1, N
+         do j = 1, i
+!
+            packed((i*(i-1))/2 + j) = packed((i*(i-1))/2 + j) + unpacked(i, j)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine packin_and_add
+!
+!
+   subroutine packin_and_add_from_1324(packed, unpacked, dim_p, dim_q)
+!!
+!!    Pack in and add from 1324
+!!    Written by Rolf H. Myhre, Dec 2020
+!!
+!!    Pack in unpacked array X_prqs to packed array Y_pqrs
+!!    where dim_p = dim_r and dim_q = dim_s
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p
+      integer, intent(in) :: dim_q
+!
+      real(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(inout) :: packed
+      real(dp), dimension(dim_p,dim_p,dim_q,dim_q), intent(in)          :: unpacked
+!
+      integer :: p, q, r, s, pq, rs, pqrs, r_end
+!
+!$omp parallel do schedule(static) private(p, q, r, s, pq, rs, pqrs, r_end)
+      do q = 1, dim_q
+         do p = 1, dim_p
+!
+            pq = dim_p*(q - 1) + p
+!
+            do s = 1, q
+!
+               if (s .ne. q) then
+                  r_end = dim_p
+               else
+                  r_end = p
+               endif
+!
+               do r = 1, r_end
+!
+                  rs = dim_p*(s - 1) + r
+!
+                  pqrs = (pq*(pq-1))/2 + rs
+!
+                  packed(pqrs) = packed(pqrs) + unpacked(p,r,q,s)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine packin_and_add_from_1324
 !
 !
 end module reordering

@@ -45,16 +45,16 @@ contains
 !
       class(cc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1), intent(out) :: omega
 !
       type(timings) :: timer
 !
-      timer = timings('Construct cc2 omega', pl='normal')
+      timer = timings('Construct CC2 omega', pl='normal')
       call timer%turn_on()
 !
-      call zero_array(omega, wf%n_gs_amplitudes)
+      call zero_array(omega, wf%n_t1)
 !
-      call wf%omega_ccs_a1(omega)
+      call wf%ccs%construct_omega(omega)
 !
       call wf%construct_u_aibj()
 !

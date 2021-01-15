@@ -76,15 +76,15 @@ contains
 !
 !     Copy the multipliers, eq. = t-bar
 !
-      call wf%get_multipliers_complex(equation)
+      call mem%alloc(eta, wf%n_gs_amplitudes)
+      call wf%get_multipliers_complex(eta)
 !
 !     Transform the multipliers by A^T, eq. = t-bar^T A
 !
-      call wf%jacobian_transpose_transformation_complex(equation)
+      call wf%jacobian_transpose_transformation_complex(eta, equation)
 !
 !     Add eta, eq. = t-bar^T A + eta
 !
-      call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta_complex(eta)
 !
       call zaxpy(wf%n_gs_amplitudes, one_complex, eta, 1, equation, 1)

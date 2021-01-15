@@ -32,7 +32,7 @@
    end subroutine prepare_for_jacobian_mlcc2
 !
 !
-   module subroutine jacobian_transformation_mlcc2(wf, c)
+   module subroutine jacobian_transformation_mlcc2(wf, c, rho)
 !!
 !!    Jacobian transformation (mlcc2)
 !!    Written by Sarai D. Folkestad, 2019
@@ -56,7 +56,8 @@
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout)   :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)  :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: rho
 !
    end subroutine jacobian_transformation_mlcc2
 !

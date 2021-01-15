@@ -25,7 +25,7 @@
       implicit none
 !
       class(ccs), intent(inout) :: wf
-      complex(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      complex(dp), dimension(wf%n_t1), intent(out) :: omega
 !
    end subroutine construct_omega_ccs_complex
 !

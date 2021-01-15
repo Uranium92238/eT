@@ -55,12 +55,12 @@ contains
    end subroutine prepare_for_jacobian_ccs
 !
 !
-   module subroutine jacobian_transformation_ccs(wf, c)
+   module subroutine jacobian_transformation_ccs(wf, c, rho)
 !!
 !!    Jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!    Directs the transformation by the CCSD Jacobi matrix,
+!!    Directs the transformation by the CCS Jacobi matrix,
 !!
 !!       A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
 !!
@@ -68,33 +68,22 @@ contains
 !!
 !!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
 !!
-!!    On exit, c is overwritten by rho.
-!!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
-!
-      real(dp), dimension(:,:), allocatable :: rho
+      real(dp), dimension(wf%n_t1), intent(in) :: c
+      real(dp), dimension(wf%n_t1), intent(out) :: rho
 !
       type(timings), allocatable :: timer
 !
       timer = timings('Jacobian CCS transformation', pl='normal')
       call timer%turn_on()
 !
-!     Allocate the transformed vector & add the terms to it
-!
-      call mem%alloc(rho, wf%n_v, wf%n_o)
       call zero_array(rho, wf%n_t1)
 !
       call wf%jacobian_ccs_a1(rho, c)
       call wf%jacobian_ccs_b1(rho, c)
-!
-!     Then overwrite the c vector with the transformed vector
-!
-      call dcopy((wf%n_o)*(wf%n_v), rho, 1, c, 1)
-      call mem%dealloc(rho, wf%n_v, wf%n_o)
 !
       call timer%turn_off()
 !

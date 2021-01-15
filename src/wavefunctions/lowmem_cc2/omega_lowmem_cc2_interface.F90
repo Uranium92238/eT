@@ -29,7 +29,7 @@
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1), intent(out) :: omega
 !
    end subroutine construct_omega_lowmem_cc2
 !
@@ -57,7 +57,7 @@
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
@@ -84,7 +84,7 @@
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
@@ -115,7 +115,7 @@
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !

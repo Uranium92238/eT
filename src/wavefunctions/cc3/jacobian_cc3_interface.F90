@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine effective_jacobian_transformation_cc3(wf, omega, c)
+   module subroutine effective_jacobian_transformation_cc3(wf, omega, c, rho)
 !!
 !!    Effective Jacobian transformation (CC3)
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Feb 2019
@@ -39,7 +39,8 @@
 !
       class(cc3) :: wf
       real(dp), intent(in) :: omega
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(in)  :: c
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: rho
 !
    end subroutine effective_jacobian_transformation_cc3
 !

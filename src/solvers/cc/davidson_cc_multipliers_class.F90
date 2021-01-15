@@ -185,24 +185,23 @@ contains
 !
       logical :: converged_residual
 !
-      real(dp), dimension(:), allocatable :: eta, c, multipliers, residual 
+      real(dp), dimension(:), allocatable :: eta, c, X, multipliers
 !
       integer :: iteration 
 !
       real(dp) :: residual_norm
 !
       call wf%prepare_for_multiplier_equation()
-!
-!     :: Initialize solver tool and set preconditioner ::
+      call wf%initialize_multipliers()
 !
       call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
 !
       if (get_l2_norm(eta, wf%n_gs_amplitudes) < solver%residual_threshold) then 
 !
-         call output%printf('m', 'Convergence criterion already met!', fs='(t3,a)')
-!
-         call wf%initialize_multipliers()
+         call output%printf('m', 'Right hand side is zero to within threshold (e6.1).', &
+                                  reals=[solver%residual_threshold], fs='(/t3,a)')
+         call output%printf('m', 'Equations solved with multipliers set to zero!')
 !
          call mem%alloc(multipliers, wf%n_gs_amplitudes)
          call zero_array(multipliers, wf%n_gs_amplitudes)
@@ -218,6 +217,8 @@ contains
 !
       endif
 !
+!     :: Initialize solver tool and set preconditioner ::
+!
       call dscal(wf%n_gs_amplitudes, -one, eta, 1)
 !
       davidson = linear_davidson_tool('multipliers',                                  &
@@ -230,14 +231,12 @@ contains
 !
       call solver%set_precondition_vector(wf, davidson) 
 !
-      call wf%initialize_multipliers()
-      call mem%alloc(multipliers, wf%n_gs_amplitudes)
-!
 !     :: Set start vector / initial guess ::
 !
       call wf%set_initial_multipliers_guess(solver%restart)
-      call wf%get_multipliers(multipliers)
-      call davidson%set_trial(multipliers, 1)
+      call mem%alloc(X, wf%n_gs_amplitudes)
+      call wf%get_multipliers(X)
+      call davidson%set_trial(X, 1)
 !
 !     :: Iterative loop ::
 !
@@ -246,6 +245,8 @@ contains
 !
       iteration = 0
       converged_residual = .false.
+!
+      call mem%alloc(c, davidson%n_parameters)
 !
       do while (.not. converged_residual .and. (iteration .le. solver%max_iterations))
 !
@@ -261,15 +262,11 @@ contains
 !
 !        Transform new trial vector and write to file
 !
-         call mem%alloc(c, davidson%n_parameters)
-!
          call davidson%get_trial(c, davidson%dim_red)
 !
-         call wf%construct_Jacobian_transform('left', c, zero)
+         call wf%construct_Jacobian_transform('left', c, X, zero)
 !
-         call davidson%set_transform(c, davidson%dim_red)
-!
-         call mem%dealloc(c, davidson%n_parameters)
+         call davidson%set_transform(X, davidson%dim_red)
 !
 !        Solve problem in reduced space
 !
@@ -278,30 +275,29 @@ contains
 !        Check if convergence criterion on residual is satisfied,
 !        and, if not, construct a new trial vector using the residual vector
 !
-         call mem%alloc(residual, wf%n_gs_amplitudes)
-!
-         call davidson%construct_residual(residual, 1)
-         residual_norm = get_l2_norm(residual, wf%n_gs_amplitudes)
+         call davidson%construct_residual(X, 1)
+         residual_norm = get_l2_norm(X, wf%n_gs_amplitudes)
 !
          converged_residual = .true.
          if (residual_norm >= solver%residual_threshold) then 
 !
             converged_residual = .false.
-            call davidson%add_new_trial(residual, 1)
+            call davidson%add_new_trial(X, 1)
 !
          endif 
-!
-         call mem%dealloc(residual, wf%n_gs_amplitudes)
 !
 !        Print iteration and residual norm
 !
          call output%printf('n', '(i3)            (e11.4)', ints=[iteration], reals=[residual_norm])
 !
-         call davidson%construct_solution(multipliers, 1)
-         call wf%set_multipliers(multipliers)
+         call davidson%construct_solution(X, 1)
+         call wf%set_multipliers(X)
          call wf%save_multipliers()
 !
       enddo ! End of iterative loop 
+!
+      call mem%dealloc(c, wf%n_gs_amplitudes)
+      call mem%dealloc(X, wf%n_gs_amplitudes)
 !
       call output%print_separator('n', 27,'-')
 !
@@ -314,9 +310,12 @@ contains
 !
          call output%printf('n', '- Davidson CC multipliers solver summary:', fs='(/t3,a)')
 !
-         call wf%get_multipliers(multipliers)
+         call mem%alloc(multipliers, wf%n_gs_amplitudes)
 !
+         call wf%get_multipliers(multipliers)
          call wf%print_dominant_x_amplitudes(multipliers, 'tbar')
+!
+         call mem%dealloc(multipliers, wf%n_gs_amplitudes)
 !
       else
 !
@@ -326,7 +325,7 @@ contains
       endif
 !
       call mem%dealloc(eta, wf%n_gs_amplitudes)
-      call mem%dealloc(multipliers, wf%n_gs_amplitudes)
+!
       call davidson%cleanup()
 !
    end subroutine run_davidson_cc_multipliers

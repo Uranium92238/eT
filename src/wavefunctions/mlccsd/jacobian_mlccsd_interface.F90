@@ -29,7 +29,7 @@
    end subroutine prepare_for_jacobian_mlccsd
 !
 !
-   module subroutine jacobian_transformation_mlccsd(wf, c)
+   module subroutine jacobian_transformation_mlccsd(wf, c, rho)
 !!
 !!    Jacobian transformation (MLCCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -52,7 +52,8 @@
       implicit none
 !
       class(mlccsd), intent(inout) :: wf
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)  :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: rho
 !
    end subroutine jacobian_transformation_mlccsd
 !

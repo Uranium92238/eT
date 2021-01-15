@@ -85,17 +85,17 @@ contains
 !
 !     Copy the multipliers, eq. = t-bar
 !
-      call wf%get_multipliers(equation)
+      call mem%alloc(eta, wf%n_gs_amplitudes)
+      call wf%get_multipliers(eta)
 !
 !     Transform the multipliers by A^T, eq. = t-bar^T A
 !
 !     Same as A^T transformation but with zero frequency and cvs is switched off
-      call wf%effective_jacobian_transpose_transformation(omega = zero, c = equation, cvs = .false.)
+      call wf%effective_jacobian_transpose_transformation(zero, eta, equation, .false.)
 !
 !     No triples contributions to η
 !     Construct eta(CCSD) and add, eq. = t-bar^T A + eta
 !
-      call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
 !
       call daxpy(wf%n_gs_amplitudes, one, eta, 1, equation, 1)

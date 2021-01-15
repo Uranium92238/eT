@@ -365,7 +365,7 @@ contains
 !
       integer, intent(out) :: final_iteration
 !
-      real(dp), dimension(:), allocatable :: preconditioner, c, residual
+      real(dp), dimension(:), allocatable :: preconditioner, c, r
 !
       real(dp), dimension(:), allocatable :: minus_omega  
 !
@@ -420,7 +420,7 @@ contains
       converged_residual = .false.
 !
       call mem%alloc(c, davidson%n_parameters)
-      call mem%alloc(residual, davidson%n_parameters)
+      call mem%alloc(r, davidson%n_parameters)
 !
       micro_iteration_timer = timings('Newton-Raphson micro-iteration time', pl='verbose')
 !
@@ -440,8 +440,8 @@ contains
 !        Transform new trial vectors and write to file
 !
          call davidson%get_trial(c, davidson%dim_red)
-         call wf%construct_Jacobian_transform('right', c, w = zero)
-         call davidson%set_transform(c, davidson%dim_red)
+         call wf%construct_Jacobian_transform('right', c, r, w = zero)
+         call davidson%set_transform(r, davidson%dim_red)
 !
 !        Solve problem in reduced space
 !
@@ -449,14 +449,14 @@ contains
 !
 !        Construct new trials and check if convergence criterion on residual is satisfied
 !
-         call davidson%construct_residual(residual, 1)
-         residual_norm = get_l2_norm(residual, wf%n_gs_amplitudes)
+         call davidson%construct_residual(r, 1)
+         residual_norm = get_l2_norm(r, wf%n_gs_amplitudes)
 !
          converged_residual = .true.
          if (residual_norm >= solver%micro_residual_threshold) then 
 !
             converged_residual = .false.
-            call davidson%add_new_trial(residual, 1)
+            call davidson%add_new_trial(r, 1)
 !
          endif 
 !
@@ -468,7 +468,7 @@ contains
 !
       enddo
 !
-      call mem%dealloc(residual, davidson%n_parameters)
+      call mem%dealloc(r, davidson%n_parameters)
       call mem%dealloc(c, davidson%n_parameters)
 !
       call output%print_separator('n', 26, '-', fs='(t6,a)')

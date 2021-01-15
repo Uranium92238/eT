@@ -45,14 +45,14 @@ contains
 !
       class(lowmem_cc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1), intent(out) :: omega
 !
       type(timings), allocatable :: timer 
 !
       timer = timings('Construct omega lowmem-cc2', pl='normal')
       call timer%turn_on()
 !
-      call zero_array(omega, wf%n_gs_amplitudes)
+      call zero_array(omega, wf%n_t1)
 !
       call wf%omega_ccs_a1(omega)
 !
@@ -89,7 +89,7 @@ contains
 !
       class(lowmem_cc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
@@ -213,7 +213,7 @@ contains
 !
       class(lowmem_cc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
@@ -394,7 +394,7 @@ contains
 !
       class(lowmem_cc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !

@@ -871,7 +871,7 @@ contains
    end subroutine get_gs_orbital_differences_ccs
 !
 !
-   subroutine construct_Jacobian_transform_ccs(wf, r_or_l, X, w)
+   subroutine construct_Jacobian_transform_ccs(wf, r_or_l, X, R, w)
 !!
 !!    Construct Jacobian transform
 !!    Written by Eirik F. Kjønstad, Dec 2018
@@ -888,7 +888,8 @@ contains
 !!            determines if Jacobian or Jacobian transpose is called
 !!
 !!    X: On input contains the vector to transform, 
-!!       on output contains the transformed vector
+!!
+!!    R: On output contains the transformed vector
 !!
 !!    w: Excitation energy. Only used for debug prints for CCS, CCSD etc.
 !!       but is passed to the effective_jacobian_transform for lowmem_CC2 and CC3
@@ -901,7 +902,8 @@ contains
 !
       character(len=*), intent(in) :: r_or_l
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout)   :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)  :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: R
 !
       real(dp), intent(in), optional :: w
 !
@@ -911,11 +913,11 @@ contains
 !     Compute the transformed matrix
       if (r_or_l .eq. "right") then
 !
-         call wf%jacobian_transformation(X) ! X <- AX
+         call wf%jacobian_transformation(X, R) ! X <- AX
 !
       elseif (r_or_l .eq. 'left') then
 !
-         call wf%jacobian_transpose_transformation(X) ! X <- XA
+         call wf%jacobian_transpose_transformation(X, R) ! X <- XA
 !
       else
 !

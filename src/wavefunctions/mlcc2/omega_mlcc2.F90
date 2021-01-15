@@ -47,25 +47,28 @@ contains
 !
       class(mlcc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(out) :: omega
 !
       type(timings) :: timer
 !
-      timer = timings('omega MLCC2')
+      timer       = timings('Construct MLCC2 Omega', pl='normal')
       call timer%turn_on()
 !
       call zero_array(omega,wf%n_gs_amplitudes)
 !
-      call wf%omega_ccs_a1(omega)
+      call wf%ccs%construct_omega(omega(1 : wf%n_t1))
 !
       call wf%construct_x2()
       call wf%construct_u_aibj()
 !
-      call wf%omega_cc2_a1(omega, wf%n_cc2_o, wf%n_cc2_v, wf%first_cc2_o, wf%first_cc2_v, &
-                           wf%last_cc2_o, wf%last_cc2_v)
-      call wf%omega_cc2_b1(omega, wf%n_cc2_o, wf%n_cc2_v, wf%first_cc2_o, wf%first_cc2_v, &
-                           wf%last_cc2_o, wf%last_cc2_v)
-      call wf%omega_cc2_c1(omega, wf%n_cc2_o, wf%n_cc2_v, wf%first_cc2_o, wf%first_cc2_v)
+      call wf%omega_cc2_a1(omega(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
+                           wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+!
+      call wf%omega_cc2_b1(omega(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
+                           wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+!
+      call wf%omega_cc2_c1(omega(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
+                           wf%first_cc2_o, wf%first_cc2_v)
 !
       call timer%turn_off()
 !

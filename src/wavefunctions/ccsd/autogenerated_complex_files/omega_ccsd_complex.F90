@@ -48,33 +48,27 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      complex(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      complex(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: omega
 !
-      complex(dp), dimension(:,:), allocatable :: omega1
       complex(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij
       complex(dp), dimension(:,:,:,:), allocatable :: omega_aibj, omega_abij
 !
       type(timings), allocatable :: timer 
 !
-      timer = timings('Construct ccsd omega', pl='normal')
+      timer = timings('Construct CCSD Omega', pl='normal')
       call timer%turn_on()
+!
+      call zero_array_complex(omega, wf%n_t1 + wf%n_t2)
 !
 !     Construct singles contributions
 !
-      call mem%alloc(omega1, wf%n_v, wf%n_o)
-      call zero_array_complex(omega1, wf%n_t1)
-!
-      call wf%omega_ccs_a1_complex(omega1)
+      call wf%ccs%construct_omega_complex(omega)
 !
       call wf%construct_u_aibj_complex()
 !
-      call wf%omega_doubles_a1_complex(omega1, wf%u_aibj_complex)
-      call wf%omega_doubles_b1_complex(omega1, wf%u_aibj_complex)
-      call wf%omega_doubles_c1_complex(omega1, wf%u_aibj_complex)
-!
-      call zcopy(wf%n_t1, omega1, 1, omega, 1)
-!
-      call mem%dealloc(omega1, wf%n_v, wf%n_o)
+      call wf%omega_doubles_a1_complex(omega, wf%u_aibj_complex)
+      call wf%omega_doubles_b1_complex(omega, wf%u_aibj_complex)
+      call wf%omega_doubles_c1_complex(omega, wf%u_aibj_complex)
 !
 !     Construct doubles contributions
 !

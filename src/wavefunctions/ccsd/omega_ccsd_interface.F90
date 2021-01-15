@@ -28,7 +28,7 @@
       implicit none
 !
       class(ccsd), intent(inout) :: wf
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: omega
 !
    end subroutine construct_omega_ccsd
 !
