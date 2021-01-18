@@ -171,7 +171,7 @@ contains
 !
       do k = 1, n_components
 !
-         call output%printf('v', '(a4)   (E14.7)  (E14.7)  (E14.7)', &
+         call output%printf('v', '(a4)   (e14.7)  (e14.7)  (e14.7)', &
                             chars=[components(k)], reals=[electronic(k), &
                             nuclear(k), total(k)], fs='(t6,a)')
 !
@@ -199,7 +199,7 @@ contains
 !
          do k = 1, n_components
 !
-            call output%printf('v', '(a4)   (E14.7)  (E14.7)  (E14.7)', &
+            call output%printf('v', '(a4)   (e14.7)  (e14.7)  (e14.7)', &
                                chars=[components(k)], &
                                reals=[electronic(k)*au_to_debye, &
                                nuclear(k)*au_to_debye, total(k)*au_to_debye], fs='(t6,a)')
@@ -240,7 +240,7 @@ contains
 !
          do k = 1, n_components
 !
-            call output%printf('v', '(a4)   (E14.7)  (E14.7)  (E14.7)', &
+            call output%printf('v', '(a4)   (e14.7)  (e14.7)  (e14.7)', &
                                chars=[components(k)], &
                                reals=[electronic(k)*au_to_debye*bohr_to_angstrom, &
                                nuclear(k)*au_to_debye*bohr_to_angstrom, &
