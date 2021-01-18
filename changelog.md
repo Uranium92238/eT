@@ -15,6 +15,7 @@
   Restart between 1.0.x and 1.1 now possible with the conversion script. See merge request eT-program/eT:!683
 ### Structure
 - `mo_information_file` now part of `hf_class` as workaround for ifort segfault. See merge request eT-program/eT:!681
+- printf accepts complex numbers and possible to repeat formats. See merge request eT-program/eT!674
 
 # eT v1.1
 ### Bugfixes
