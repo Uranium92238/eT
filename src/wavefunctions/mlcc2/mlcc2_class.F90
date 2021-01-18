@@ -1,7 +1,7 @@
 !construct_c1_integrals
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2020 the authors of eT
+!  Copyright (C) 2016-2021 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
