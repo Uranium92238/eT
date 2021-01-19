@@ -1,0 +1,34 @@
+system
+  name: H2O
+  charge: 0
+  multiplicity: 1
+end system
+
+do
+  ground state geoopt
+  restart
+end do
+
+method
+  hf
+end method
+
+solver scf
+  algorithm: scf-diis
+  energy threshold: 1.0d-11
+  gradient threshold: 1.0d-11
+end solver scf
+
+solver scf geoopt
+  algorithm: bfgs
+  max step: 0.5d0
+  energy threshold:   1.0d-11
+  gradient threshold: 1.0d-11
+end solver scf geoopt
+
+geometry
+basis: cc-pVDZ
+ H     -0.345773153501    -0.036392603072     0.000000000000
+ H      1.106549984242     0.328986445566    -0.000000000000
+ O      0.239223169259     0.707406157504    -0.000000000000
+end geometry

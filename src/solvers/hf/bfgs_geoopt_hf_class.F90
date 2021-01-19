@@ -303,8 +303,9 @@ contains
          energy = wf%energy 
          max_gradient = get_abs_max(gradient, 3*wf%system%n_atoms)
 !
-         call output%printf('n', 'Geometry optimization iteration (i0)', &
-                            ints=[solver%iteration], fs='(/t3,a)')
+         call output%printf('n', 'Geometry optimization iteration: (i4)', &
+                            ints=[solver%iteration], fs='(//t3,a)')
+         call output%print_separator('m', 37, '=')
          call output%printf('n', 'Absolute maximum of molecular gradient: (f17.12)', &
                             reals=[max_gradient], fs='(t3,a)')
 !
