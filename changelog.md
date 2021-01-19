@@ -1,7 +1,9 @@
 # eT v1.2
 ### Optimization
 - CCS Jacobian is now N^4 scaling (Cholesky vector algorithm) See merge request eT-program/eT!592
+
 ### Features
+- printf accepts complex numbers and possible to repeat formats. See merge request eT-program/eT!674
 - UHF spin contamination is computed and printed in all UHF calculations. See merge request eT-program/eT:!675
 - Tidied up Omega and Jacobian timings to make them more consistent. See merge request eT-program/eT:!684
 
@@ -9,14 +11,13 @@
 - Omega and Jacobian routines have separate in and out vectors and call the corresponding parent routines. See merge request eT-program/eT:!!684
 
 # eT v1.1.1
-# eT v1.1.1
 ### Features
 - Functionality added for skipping SCF if equations are solved. 
   Restart between 1.0.x and 1.1 now possible with the conversion script. See merge request eT-program/eT:!683
 - Global restart keyword for `scf geoopt`. See merge request eT-program/eT:!693
+
 ### Structure
 - `mo_information_file` now part of `hf_class` as workaround for ifort segfault. See merge request eT-program/eT:!681
-- printf accepts complex numbers and possible to repeat formats. See merge request eT-program/eT!674
 
 # eT v1.1
 ### Bugfixes
