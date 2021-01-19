@@ -6,6 +6,10 @@ import os
 # provides exit
 import sys
 
+import shutil
+import subprocess
+from pathlib import Path
+
 # we make sure we can import runtest and runtest_config
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -34,6 +38,24 @@ options = cli()
 
 ierr = 0
 
+# Copy old_restart_files to converted_files
+src = os.path.join(os.path.dirname(__file__), "old_restart_files")
+dest = os.path.join(os.path.dirname(__file__), "converted_files")
+
+shutil.copytree(src, dest)
+
+# Use the script on converted_files
+script = Path.cwd().parent / "convert_v.1.0_restart_files.py" 
+py_exe_ = sys.executable # use the correct python executable
+call_script = f"{py_exe_} {script} {dest}"
+print(call_script)
+
+p = subprocess.run(
+    call_script,
+    shell=True,
+    stderr=subprocess.PIPE,
+)
+
 for inp in ['restart_ccs.inp']:
     #
     # the run function runs the code and filters the outputs
@@ -41,7 +63,9 @@ for inp in ['restart_ccs.inp']:
     ierr += run(options,
                 configure,
                 input_files=inp,
-                extra_args='-load ./old_restart_files',
+                extra_args='-load ./converted_files',
                 filters={'out': f})
+
+shutil.rmtree(dest)
 
 sys.exit(ierr)
