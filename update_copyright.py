@@ -10,7 +10,7 @@ current_year = datetime.today().year
 def allowed(f):
     # List of unreadable suffixes
     unreadable = {".zip", ".swp", ".pyc", ".jpg", ".bin", ".ipynb"}
-    excluded_dirs = {"build", ".git", "submodule"}
+    excluded_dirs = {"build", ".git", "submodules", "docs"}
     if (
         f.is_file()
         and f.suffix not in unreadable
@@ -20,14 +20,24 @@ def allowed(f):
     return False
 
 
-def replace_copyright(of):
+def update_autodocs():
+    # Special function for updating the copyright of the doc autogeneration
+    # script
+    f = Path("./documentation/eT_docs.md")
+    with f.open("r+") as of:
+        # We are looking for the 'date' line here instead of copyright
+        replace_copyright(of, requirements={"date"})
+
+
+def replace_copyright(of, requirements={"copyright", "et"}):
     # Assume file has been read, so seek to 0
     of.seek(0)
     lines = of.readlines()
     with TemporaryFile("w+") as tf:
         for line in lines:
             ll = line.lower()
-            if "copyright" in ll and "et" in ll:
+            if all(req in ll for req in requirements):
+                print(f"Updating file: {of.name}")
                 # Regex explaination:
                 # "20[0-9][0-9]" matches 20**
                 # (?! ....) negative lookahead (unmatch a match if .... is found
@@ -54,8 +64,8 @@ def main(rootdir=""):
             except UnicodeDecodeError:
                 continue
             if "copyright" in content.lower():
-                print(f"Updating file: {f}")
                 replace_copyright(of)
+    update_autodocs()
 
 
 if __name__ == "__main__":
