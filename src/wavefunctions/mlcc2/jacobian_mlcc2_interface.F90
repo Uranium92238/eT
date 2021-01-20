@@ -50,9 +50,6 @@
 !!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck
 !!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
 !!
-!!    On exit, c is overwritten by rho. That is, c_ai = rho_ai,
-!!    and c_aibj = rho_aibj.
-!!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf

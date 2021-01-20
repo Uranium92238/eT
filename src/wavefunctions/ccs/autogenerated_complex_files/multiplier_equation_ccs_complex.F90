@@ -74,7 +74,7 @@ contains
 !
       complex(dp), dimension(:), allocatable :: eta
 !
-!     Copy the multipliers, eq. = t-bar
+!     Copy the multipliers, eta = t-bar
 !
       call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%get_multipliers_complex(eta)
