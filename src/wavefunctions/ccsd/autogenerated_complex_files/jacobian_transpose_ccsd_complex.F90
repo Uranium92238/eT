@@ -164,22 +164,22 @@ contains
 !     Calculate and add the CCS contributions to the
 !     singles transformed vector
 !
-      call wf%ccs%jacobian_transpose_transformation_complex(b, sigma)
+      call wf%ccs%jacobian_transpose_transformation_complex(b(1 : wf%n_t1), sigma(1 : wf%n_t1))
 !
 !     Calculate and add the CCSD contributions to the
 !     singles transformed vector
 !
-      call wf%jacobian_transpose_doubles_a1_complex(sigma, b, wf%u_aibj_complex)
+      call wf%jacobian_transpose_doubles_a1_complex(sigma(1 : wf%n_t1), b(1 : wf%n_t1), wf%u_aibj_complex)
 !
       call mem%alloc(b_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(b(wf%n_t1+1:wf%n_t1 + wf%n_t2), b_aibj, wf%n_v*wf%n_o)
 !
-      call wf%jacobian_transpose_doubles_b1_complex(sigma, b_aibj)
+      call wf%jacobian_transpose_doubles_b1_complex(sigma(1 : wf%n_t1), b_aibj)
 !
-      call wf%jacobian_transpose_ccsd_d1_complex(sigma, b_aibj)
-      call wf%jacobian_transpose_ccsd_e1_complex(sigma, b_aibj)
-      call wf%jacobian_transpose_ccsd_f1_complex(sigma, b_aibj)
-      call wf%jacobian_transpose_ccsd_g1_complex(sigma, b_aibj)
+      call wf%jacobian_transpose_ccsd_d1_complex(sigma(1 : wf%n_t1), b_aibj)
+      call wf%jacobian_transpose_ccsd_e1_complex(sigma(1 : wf%n_t1), b_aibj)
+      call wf%jacobian_transpose_ccsd_f1_complex(sigma(1 : wf%n_t1), b_aibj)
+      call wf%jacobian_transpose_ccsd_g1_complex(sigma(1 : wf%n_t1), b_aibj)
 !
 !     Add the CCSD contributions to the doubles vector arising from
 !     the incoming singles vector
@@ -187,7 +187,7 @@ contains
       call mem%alloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array_complex(sigma_aibj, (wf%n_o*wf%n_v)**2)
 !
-      call wf%jacobian_transpose_doubles_a2_complex(sigma_aibj, b)
+      call wf%jacobian_transpose_doubles_a2_complex(sigma_aibj, b(1 : wf%n_t1))
 !
       call wf%jacobian_transpose_ccsd_b2_complex(sigma_aibj, b_aibj)
       call wf%jacobian_transpose_ccsd_c2_complex(sigma_aibj, b_aibj)
@@ -217,8 +217,6 @@ contains
       call wf%jacobian_transpose_ccsd_i2_complex(sigma_abij, b_abij)
 !
       call mem%dealloc(b_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-!     Overwrite the incoming doubles b vector
 !
       call packin(sigma(wf%n_t1+1:), sigma_abij, wf%n_v, wf%n_o)
 !

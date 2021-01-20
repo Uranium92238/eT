@@ -81,8 +81,6 @@ contains
       timer = timings('Jacobian transpose CCS', pl='normal')
       call timer%turn_on()
 !
-!     Allocate the transformed vector & add the terms to it
-!
       call zero_array_complex(sigma, wf%n_t1)
 !
       call wf%jacobian_transpose_ccs_a1_complex(sigma, b)

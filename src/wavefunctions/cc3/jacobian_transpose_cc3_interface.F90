@@ -26,7 +26,7 @@
 !!
 !!       A_mu,nu = < mu| exp(-T) [H, tau_nu] exp(T)|R >,
 !!
-!!    The transformation is performed as sigma^T = c^T A, where c is the vector
+!!    The transformation is performed as sigma^T = b^T A, where b is the vector
 !!    sent to the routine. 
 !!
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019

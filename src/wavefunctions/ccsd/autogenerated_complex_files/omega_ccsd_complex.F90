@@ -62,13 +62,13 @@ contains
 !
 !     Construct singles contributions
 !
-      call wf%ccs%construct_omega_complex(omega)
+      call wf%ccs%construct_omega_complex(omega(1 : wf%n_t1))
 !
       call wf%construct_u_aibj_complex()
 !
-      call wf%omega_doubles_a1_complex(omega, wf%u_aibj_complex)
-      call wf%omega_doubles_b1_complex(omega, wf%u_aibj_complex)
-      call wf%omega_doubles_c1_complex(omega, wf%u_aibj_complex)
+      call wf%omega_doubles_a1_complex(omega(1 : wf%n_t1), wf%u_aibj_complex)
+      call wf%omega_doubles_b1_complex(omega(1 : wf%n_t1), wf%u_aibj_complex)
+      call wf%omega_doubles_c1_complex(omega(1 : wf%n_t1), wf%u_aibj_complex)
 !
 !     Construct doubles contributions
 !
