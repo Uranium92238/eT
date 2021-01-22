@@ -54,10 +54,10 @@ module visualization_class
 !
    use parameters
 !
-   use molecular_system_class, only: molecular_system
    use global_out, only: output
    use global_in, only: input
    use memory_manager_class, only: mem
+   use ao_tool_class, only: ao_tool
 !
    type :: visualization 
 !
@@ -103,41 +103,35 @@ module visualization_class
 contains
 !
 !
-   function new_visualization(system, n_ao) result(plotter)
+   function new_visualization(ao) result(plotter)
 !!
 !!    New visualization 
 !!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Aug 2019
 !!
       implicit none 
 !
-      type(molecular_system), intent(inout) :: system
-      type(visualization) :: plotter
+      type(ao_tool), intent(inout) :: ao
 !
-      integer :: n_ao
+      type(visualization) :: plotter
 !
 !     Default settings (lengths given in Ångströms)
 !
       plotter%dx              = 0.1d0 
       plotter%buffer          = 2.00d0
       plotter%grid_in_memory  = .false.
-      plotter%n_ao            = n_ao
+      plotter%n_ao            = ao%n
 !
       call output%printf('m', ':: Visualization of orbitals and density', fs='(/t3,a)')
 !
       call plotter%read_settings()
 !
-!     Set up grid
-!
-      call plotter%set_up_grid(system)
+      call plotter%set_up_grid(ao)
 !
       call plotter%print_grid_info()
 !
-      call system%set_basis_info()
-!
    end function new_visualization
 !
-!
-   subroutine initialize_visualization(plotter, system)
+   subroutine initialize_visualization(plotter, ao)
 !!
 !!    Initialize
 !!    Written by Andreas S. Skeidsvoll, Sep 2020
@@ -148,21 +142,21 @@ contains
       implicit none 
 !
       class(visualization), intent(inout) :: plotter
-      type(molecular_system), intent(inout) :: system
+      type(ao_tool), intent(inout) :: ao
 !
       if (plotter%n_ao*plotter%n_grid_points*dp .lt. mem%get_available()/2) then
 !
          plotter%grid_in_memory = .true.
          call mem%alloc(plotter%aos_on_grid, plotter%n_ao, plotter%n_grid_points)
 !
-         call plotter%place_grid_in_memory(system)
+         call plotter%place_grid_in_memory(ao)
 !
       endif
 !
    end subroutine initialize_visualization
 !
 !
-  subroutine set_up_grid_visualization(plotter, system)
+  subroutine set_up_grid_visualization(plotter, ao)
 !!
 !!    Set up grid
 !!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Jul 2019
@@ -175,34 +169,43 @@ contains
       implicit none
 !
       class(visualization), intent(inout) :: plotter
-      type(molecular_system), intent(in)      :: system
+!
+      type(ao_tool), intent(in) :: ao
 !
       integer :: i
+!
+      real(dp), dimension(:,:), allocatable :: R_qk
 !
       if (plotter%buffer .lt. plotter%dx) &
          call output%error_msg('in visualization tool. Buffer is smaller than grid point spacing!')
 !
 !     Find minimal and maximal atomic x, y and z positions in the molecule
 !
-      plotter%x_min = system%atoms(1)%x
-      plotter%y_min = system%atoms(1)%y
-      plotter%z_min = system%atoms(1)%z
+      call mem%alloc(R_qk, 3, ao%get_n_centers())
 !
-      plotter%x_max = system%atoms(1)%x
-      plotter%y_max = system%atoms(1)%y
-      plotter%z_max = system%atoms(1)%z
+      R_qk = ao%get_center_coordinates()
 !
-      do i = 2, system%n_atoms
+      plotter%x_min = R_qk(1, 1)
+      plotter%y_min = R_qk(2, 1)
+      plotter%z_min = R_qk(3, 1)
 !
-         plotter%x_min = min(plotter%x_min, system%atoms(i)%x)
-         plotter%y_min = min(plotter%y_min, system%atoms(i)%y)
-         plotter%z_min = min(plotter%z_min, system%atoms(i)%z)
+      plotter%x_max = R_qk(1, 1)
+      plotter%y_max = R_qk(2, 1)
+      plotter%z_max = R_qk(3, 1)
 !
-         plotter%x_max = max(plotter%x_max, system%atoms(i)%x)
-         plotter%y_max = max(plotter%y_max, system%atoms(i)%y)
-         plotter%z_max = max(plotter%z_max, system%atoms(i)%z)
+      do i = 2, ao%get_n_centers()
+!
+         plotter%x_min = min(plotter%x_min, R_qk(1, i))
+         plotter%y_min = min(plotter%y_min, R_qk(2, i))
+         plotter%z_min = min(plotter%z_min, R_qk(3, i))
+!
+         plotter%x_max = max(plotter%x_max, R_qk(1, i))
+         plotter%y_max = max(plotter%y_max, R_qk(2, i))
+         plotter%z_max = max(plotter%z_max, R_qk(3, i))
 !
       enddo
+!
+      call mem%dealloc(R_qk, 3, ao%get_n_centers())
 !
 !     Subtract/add buffer from minimum/maximum X,Y,Z values
 !
@@ -336,7 +339,7 @@ contains
    end subroutine read_settings_visualization
 !
 !
-   subroutine evaluate_mos_on_grid_visualization(plotter, system, mos_on_grid, &
+   subroutine evaluate_mos_on_grid_visualization(plotter, ao, mos_on_grid, &
                                                          orbital_coefficients, n_mo)
 !!
 !!    Evaluate MOs on grid
@@ -362,7 +365,7 @@ contains
       real(sp), dimension(plotter%n_x, plotter%n_y, &
                               plotter%n_z, n_mo), intent(out) :: mos_on_grid
 !
-      type(molecular_system), intent(in) :: system
+      type(ao_tool), intent(in) :: ao
 !
       real(dp), dimension(plotter%n_ao, n_mo), intent(in) :: orbital_coefficients
 !
@@ -430,7 +433,7 @@ contains
                   y = plotter%y_min + real((j-1), dp)*plotter%dx
                   z = plotter%z_min + real((k-1), dp)*plotter%dx
 !
-                  call system%evaluate_aos_at_point(x, y, z, aos_at_point(:,thread), plotter%n_ao)
+                  call ao%evaluate_aos_at_point(x, y, z, aos_at_point(:,thread))
 !
                   do mo = 1, n_mo
 !
@@ -451,7 +454,7 @@ contains
    end subroutine evaluate_mos_on_grid_visualization
 !
 !
-   subroutine plot_orbitals_visualization(plotter, system, orbital_coefficients, &
+   subroutine plot_orbitals_visualization(plotter, ao, orbital_coefficients, &
                                                 n_mo, file_tags)
 !!
 !!    Plot orbitals
@@ -470,7 +473,7 @@ contains
 !
       class(visualization), intent(inout) :: plotter
 !
-      type(molecular_system), intent(in) :: system
+      type(ao_tool), intent(in) :: ao
 !
       integer, intent(in) :: n_mo
 !
@@ -489,7 +492,7 @@ contains
 !     Create array of molecular orbitals at grid point
 !
       allocate(mos_on_grid(plotter%n_x, plotter%n_y, plotter%n_z, n_mo))
-      call plotter%evaluate_mos_on_grid(system, mos_on_grid, orbital_coefficients, n_mo)
+      call plotter%evaluate_mos_on_grid(ao, mos_on_grid, orbital_coefficients, n_mo)
 !
 !     Write the molecular orbitals in the array to .plt files
 !
@@ -508,7 +511,7 @@ contains
    end subroutine plot_orbitals_visualization
 !
 !
-   subroutine plot_density_visualization(plotter, system, density, file_tag)
+   subroutine plot_density_visualization(plotter, ao, density, file_tag)
 !!
 !!    Plot density 
 !!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Sep 2019
@@ -532,7 +535,7 @@ contains
       implicit none 
 !
       class(visualization), intent(in)     :: plotter
-      class(molecular_system), intent(in)  :: system
+      class(ao_tool), intent(in)           :: ao
 !
       character(len=*), intent(in) :: file_tag
 !
@@ -548,7 +551,7 @@ contains
 !
       allocate(density_on_grid_vec(plotter%n_grid_points))
 !
-      call plotter%evaluate_density_on_grid(system, density, density_on_grid_vec)
+      call plotter%evaluate_density_on_grid(ao, density, density_on_grid_vec)
 !
 !     Write vector to .plt file
 !
@@ -560,7 +563,7 @@ contains
    end subroutine plot_density_visualization
 !
 !
-   subroutine evaluate_density_on_grid_visualization(plotter, system, density, &
+   subroutine evaluate_density_on_grid_visualization(plotter, ao, density, &
                                                       density_on_grid_vec)
 !!
 !!    Evaluate density on grid
@@ -599,7 +602,7 @@ contains
       real(dp), dimension(plotter%n_ao, plotter%n_ao), intent(in) :: density
       real(sp), dimension(plotter%n_grid_points), intent(out)     :: density_on_grid_vec
 !
-      type(molecular_system), intent(in) :: system
+      type(ao_tool), intent(in) :: ao
 !
       integer                                :: i, j, k, vector_index, gp, n_threads, thread
       real(dp), dimension(:), allocatable    :: I2
@@ -658,7 +661,7 @@ contains
                   y = plotter%y_min + real((j-1), dp)*plotter%dx
                   z = plotter%z_min + real((k-1), dp)*plotter%dx
 !
-                  call system%evaluate_aos_at_point(x, y, z, aos_at_point(:,thread), plotter%n_ao)
+                  call ao%evaluate_aos_at_point(x, y, z, aos_at_point(:,thread))
 !
                   call dgemv('N',                        &
                              plotter%n_ao,               &
@@ -689,7 +692,7 @@ contains
    end subroutine evaluate_density_on_grid_visualization
 !
 !
-   subroutine place_grid_in_memory_visualization(plotter, system)
+   subroutine place_grid_in_memory_visualization(plotter, ao)
 !!
 !!    Place grid in memory
 !!    Written by Sarai D. Folkestad, Nov 2019
@@ -703,7 +706,7 @@ contains
 !
       class(visualization), intent(inout) :: plotter
 !
-      type(molecular_system), intent(in)  :: system
+      type(ao_tool), intent(in)  :: ao
 !
       real(dp), dimension(:,:), allocatable :: coordinates
 !
@@ -733,11 +736,10 @@ contains
 !$omp parallel do private(gp)
       do gp = 1, plotter%n_grid_points
 !
-         call system%evaluate_aos_at_point(coordinates(gp, 1), &
-                                             coordinates(gp, 2), &
-                                             coordinates(gp, 3), &
-                                             plotter%aos_on_grid(:,gp), &
-                                             plotter%n_ao)
+         call ao%evaluate_aos_at_point(coordinates(gp, 1), &
+                                       coordinates(gp, 2), &
+                                       coordinates(gp, 3), &
+                                       plotter%aos_on_grid(:,gp))
 !
       enddo
 !$omp end parallel do

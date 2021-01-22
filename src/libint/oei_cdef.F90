@@ -20,33 +20,34 @@
 interface
 !
 !
-   subroutine construct_ao_h_wx_c(h, s1, s2) bind(C, name='construct_ao_h_wx')
+   subroutine get_oei_c(type_, x, s1, s2) bind(C, name='get_oei')
 !
       use iso_c_binding
 !
       implicit none
 !
-      real(c_double) :: h(*)
+      character(c_char) :: type_
+      real(c_double) :: x(*)
       integer(c_int) :: s1, s2
 !
-   end subroutine construct_ao_h_wx_c
+   end subroutine get_oei_c
 !
 !
-   subroutine construct_ao_h_wx_kinetic_1der_c(s_1x, s_1y, s_1z, &
-            s_2x, s_2y, s_2z, s1, s2) bind(C, name='construct_ao_h_wx_kinetic_1der')
+   subroutine get_oei_1der_c(type_, x, s1, s2) bind(C, name='get_oei_1der')
 !
       use iso_c_binding
 !
       implicit none
 !
-      real(c_double) :: s_1x(*), s_1y(*), s_1z(*), s_2x(*), s_2y(*), s_2z(*)
+      character(c_char) :: type_
+      real(c_double) :: x(*)
       integer(c_int) :: s1, s2
 !
-   end subroutine construct_ao_h_wx_kinetic_1der_c
+   end subroutine get_oei_1der_c
 !
 !
-   subroutine construct_and_add_ao_h_wx_nuclear_1der_c(h_wxqk, s1, s2, n_ao) &
-                           bind(C, name='construct_and_add_ao_h_wx_nuclear_1der')
+   subroutine add_nuclear_h_1der_c(h_wxqk, s1, s2, n_ao) &
+                           bind(C, name='add_nuclear_h_1der')
 !
       use iso_c_binding
 !
@@ -55,7 +56,7 @@ interface
       real(c_double) :: h_wxqk(*)
       integer(c_int) :: s1, s2, n_ao
 !
-   end subroutine construct_and_add_ao_h_wx_nuclear_1der_c
+   end subroutine add_nuclear_h_1der_c
 !
 !
 end interface

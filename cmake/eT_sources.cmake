@@ -52,14 +52,19 @@ set(eT_fortran_sources
    src/memory/batching_index_class.F90
    src/memory/memory_manager_class.F90
 #
-   src/molecule/atomic_class.F90
-   src/molecule/molecular_system/molecular_system_class.F90
-   src/molecule/mm_class.F90
-   src/molecule/pcm_class.F90
-   src/molecule/molecular_system/ao_integrals.F90
+   src/embedding/mm_atom_class.F90
+   src/embedding/mm_molecule_class.F90
+   src/embedding/environment_factory_class.F90
+   src/embedding/environment_class.F90
+   src/embedding/electrostatic_environment_class.F90
+   src/embedding/fq_environment_class.F90
+   src/embedding/pcm_environment_class.F90
+#
+   src/molecule/atomic_center_class.F90
+   src/molecule/atomic_center_reader_class.F90
+   src/molecule/ao_tool_class.F90
    src/molecule/periodic_table.F90
    src/molecule/shell_class.F90
-   src/molecule/active_atoms_class.F90
 #
    src/solver_tools/cholesky_array_list_class.F90
    src/solver_tools/bfgs_tool_class.F90
@@ -106,6 +111,7 @@ set(eT_fortran_sources
    src/solvers/cc/asymmetric_lanczos_cc_es_class.F90
 #
    src/tools/interval_class.F90
+   src/tools/named_interval_class.F90
    src/tools/index_invert.F90
    src/tools/reordering.F90
    src/tools/timings_class.F90
@@ -120,6 +126,8 @@ set(eT_fortran_sources
    src/tools/string_utilities.F90
    src/tools/visualization_class.F90
    src/tools/task_list_class.F90
+   src/tools/electrostatics/point_charges_class.F90
+   src/tools/electrostatics/point_charge_class.F90
 #
    src/various/butcher_tables.F90
    src/various/continuous_output_coefficients.F90

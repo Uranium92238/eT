@@ -29,102 +29,6 @@
    end subroutine initialize_ao_density_hf
 !
 !
-   module subroutine initialize_ao_overlap_hf(wf)
-!!
-!!    Initialize AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_ao_overlap_hf
-!
-!
-   module subroutine initialize_pivot_matrix_ao_overlap_hf(wf)
-!!
-!!    Initialize pivot matrix AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_pivot_matrix_ao_overlap_hf
-!
-!
-   module subroutine initialize_cholesky_ao_overlap_hf(wf)
-!!
-!!    Initialize cholesky vectors AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_cholesky_ao_overlap_hf
-!
-!
-   module subroutine initialize_shp_eri_schwarz_hf(wf)
-!!
-!!    Initialize shell pair eri schwarz
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_shp_eri_schwarz_hf
-!
-!
-   module subroutine destruct_shp_eri_schwarz_hf(wf)
-!!
-!!    Destruct shell pair eri schwarz
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_shp_eri_schwarz_hf
-!
-!
-   module subroutine initialize_shp_eri_schwarz_list_hf(wf)
-!!
-!!    Initialize shell pair eri schwarz list
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_shp_eri_schwarz_list_hf
-!
-!
-   module subroutine destruct_shp_eri_schwarz_list_hf(wf)
-!!
-!!    Destruct shell pair eri schwarz list
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_shp_eri_schwarz_list_hf
-!
-!
-   module subroutine destruct_ao_overlap_hf(wf)
-!!
-!!    Destruct AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_ao_overlap_hf
-!
-!
    module subroutine destruct_ao_density_hf(wf)
 !!
 !!    Destruct AO density
@@ -135,30 +39,6 @@
       class(hf) :: wf
 !
    end subroutine destruct_ao_density_hf
-!
-!
-   module subroutine destruct_pivot_matrix_ao_overlap_hf(wf)
-!!
-!!    Destruct pivot matrix AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_pivot_matrix_ao_overlap_hf
-!
-!
-   module subroutine destruct_cholesky_ao_overlap_hf(wf)
-!!
-!!    Initialize cholesky vectors AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_cholesky_ao_overlap_hf
 !
 !
    module subroutine initialize_orbitals_hf(wf)
@@ -228,30 +108,6 @@
       class(hf) :: wf
 !
    end subroutine destruct_fock_hf
-!
-!
-   module subroutine initialize_ao_h_hf(wf)
-!!
-!!    Initialize AO h
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine initialize_ao_h_hf
-!
-!
-   module subroutine destruct_ao_h_hf(wf)
-!!
-!!    Destruct AO h
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine destruct_ao_h_hf
 !
 !
    module subroutine initialize_orbital_coefficients_frozen_hf_hf(wf)

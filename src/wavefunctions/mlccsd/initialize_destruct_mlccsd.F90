@@ -136,7 +136,7 @@ contains
 !
       class(mlccsd) :: wf
 !
-      call mem%alloc(wf%orbital_coefficients_cc2, wf%n_ao, wf%n_mo)
+      call mem%alloc(wf%orbital_coefficients_cc2, wf%ao%n, wf%n_mo)
 !
     end subroutine initialize_orbital_coefficients_cc2_mlccsd
 !
@@ -151,7 +151,7 @@ contains
       class(mlccsd) :: wf
 !
       if (allocated (wf%orbital_coefficients_cc2)) &
-        call mem%dealloc(wf%orbital_coefficients_cc2, wf%n_ao, wf%n_mo)
+        call mem%dealloc(wf%orbital_coefficients_cc2, wf%ao%n, wf%n_mo)
 !
     end subroutine destruct_orbital_coefficients_cc2_mlccsd
 !

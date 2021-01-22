@@ -44,7 +44,7 @@ contains
 !
       call wf%orbital_coefficients_file%open_('write', 'rewind')
 !
-      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
+      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
 !
       call wf%orbital_coefficients_file%close_
 !
@@ -62,7 +62,7 @@ contains
 !
       call wf%orbital_coefficients_file%open_('read', 'rewind')
 !
-      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
+      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
 !
       call wf%orbital_coefficients_file%close_
 !
@@ -118,9 +118,9 @@ contains
 !
       call wf%restart_file%open_('write', 'rewind')
 !
-      call wf%restart_file%write_(wf%n_ao)
+      call wf%restart_file%write_(wf%ao%n)
       call wf%restart_file%write_(wf%n_densities)
-      call wf%restart_file%write_(wf%system%get_n_electrons())
+      call wf%restart_file%write_(wf%ao%get_n_electrons())
 !
       call wf%restart_file%close_
 !
@@ -146,7 +146,7 @@ contains
 !
       call wf%orbital_information_file%write_(wf%n_o)
       call wf%orbital_information_file%write_(wf%n_v)
-      call wf%orbital_information_file%write_(wf%n_ao)
+      call wf%orbital_information_file%write_(wf%ao%n)
       call wf%orbital_information_file%write_(wf%n_mo)
       call wf%orbital_information_file%write_(wf%energy)
 !
@@ -155,7 +155,7 @@ contains
       CC_orbitals_file = sequential_file('cc_orbital_coefficients')
       call CC_orbitals_file%open_('write', 'rewind')
 !
-      call CC_orbitals_file%write_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
+      call CC_orbitals_file%write_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
 !
       call CC_orbitals_file%close_('keep')
 !
@@ -186,7 +186,7 @@ contains
       ao_density_file = sequential_file('ao_density')
       call ao_density_file%open_('write', 'rewind')
 !
-      call ao_density_file%write_(wf%ao_density, wf%n_ao*wf%n_ao)
+      call ao_density_file%write_(wf%ao_density, wf%ao%n*wf%ao%n)
 !
       call ao_density_file%close_
 !

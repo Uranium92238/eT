@@ -9,6 +9,8 @@
 
 ### Structure
 - Omega and Jacobian routines have separate in and out vectors and call the corresponding parent routines. See merge request eT-program/eT:!!684
+- An AO tool is added that handles the basis set, AO integral construction, and  all communication with Libint; replaces the molecular system class 
+- The MM and PCM code is restructured in a hierarchy of embedding/environment classes. Wave function classes and embedding classes are more decoupled.
 
 # eT v1.1.1
 ### Features

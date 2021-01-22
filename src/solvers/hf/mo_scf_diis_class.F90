@@ -255,7 +255,7 @@ contains
 !
       call mem%alloc(G, wf%n_v, wf%n_o)
       call mem%alloc(F, wf%n_mo, wf%n_mo)
-      call mem%alloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
+      call mem%alloc(prev_ao_density, wf%ao%n**2, wf%n_densities)
 !
       call wf%get_roothan_hall_mo_gradient(G)
 !
@@ -364,7 +364,7 @@ contains
 !
       call mem%dealloc(G, wf%n_v, wf%n_o)
       call mem%dealloc(F, wf%n_mo, wf%n_mo)
-      call mem%dealloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
+      call mem%dealloc(prev_ao_density, wf%ao%n**2, wf%n_densities)
 !
 !     Initialize engine (make final deallocations, and other stuff)
 !

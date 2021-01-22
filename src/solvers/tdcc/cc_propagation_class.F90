@@ -503,7 +503,7 @@ contains
 !     Do contraction between electronic dipole integrals and electronic density
 !
       call mem%alloc(mu, wf%n_mo, wf%n_mo, 3)
-      call wf%construct_mu_complex(mu)
+      call wf%get_t1_oei_complex('dipole', mu)
 !
       wf%dipole_moment_complex(1) = our_zdotu(wf%n_mo*wf%n_mo, wf%density_complex, 1, mu(:,:,1), 1)
       wf%dipole_moment_complex(2) = our_zdotu(wf%n_mo*wf%n_mo, wf%density_complex, 1, mu(:,:,2), 1)
@@ -513,7 +513,7 @@ contains
 !
 !     Add the nuclear contribution
 !
-      call wf%system%get_nuclear_dipole(nuclear)
+      nuclear = wf%get_nuclear_dipole()
 !
       wf%dipole_moment_complex(1) = wf%dipole_moment_complex(1) + cmplx(nuclear(1), zero, dp)
       wf%dipole_moment_complex(2) = wf%dipole_moment_complex(2) + cmplx(nuclear(2), zero, dp)

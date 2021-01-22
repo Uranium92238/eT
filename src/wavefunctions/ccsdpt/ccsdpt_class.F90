@@ -736,8 +736,6 @@ contains
 !
       class(ccsdpt), intent(inout) :: wf 
 !
-      real(dp) :: t1_diagnostic
-!
       call wf%calculate_energy_correction()
 !
       call output%printf('m', '- Ground state summary:', fs='(/t3,a)')
@@ -757,10 +755,6 @@ contains
                          reals=[wf%ccsdpt_energy_correction], fs='(/t6,a)')
 !
       call wf%print_dominant_amplitudes()
-!
-      t1_diagnostic = wf%get_t1_diagnostic() 
-      call output%printf('m', 'T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', &
-                         reals=[t1_diagnostic], fs='(/t6,a)')
 !
    end subroutine print_gs_summary_ccsdpt
 !

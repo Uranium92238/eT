@@ -346,7 +346,7 @@ contains
 !     Compute the operator X = mu, the dipole operator
 !
       call mem%alloc(X, wf%n_mo, wf%n_mo, 3)
-      call wf%construct_mu(X)
+      call wf%get_t1_oei('dipole', X)
 !
 !     Construct the right-hand-side vector for operator X,
 !     i.e. xiX_mu = < mu | X-bar | HF >.
@@ -1105,7 +1105,7 @@ contains
 !
 !        Constructs dipole operator in t1-transformed basis.
 !
-         call wf%construct_mu(operator)
+         call wf%get_t1_oei('dipole', operator)
 !
 !        Loop over excited states, construct transition density
 !        and calculate transition strength
@@ -1189,15 +1189,15 @@ contains
 !
          call engine%tasks%print_('plotting')
 !
-         visualizer = visualization(wf%system, wf%n_ao)
+         visualizer = visualization(wf%ao)
+         call visualizer%initialize(wf%ao)
 !
-         call visualizer%initialize(wf%system)
-         call mem%alloc(c_D_ct, wf%n_ao, wf%n_ao)
+         call mem%alloc(c_D_ct, wf%ao%n, wf%ao%n)
 !
          if (engine%plot_density) then
 !
             call wf%add_t1_terms_and_transform(wf%density, c_D_ct)
-            call visualizer%plot_density(wf%system, c_D_ct, 'cc_gs_density')
+            call visualizer%plot_density(wf%ao, c_D_ct, 'cc_gs_density')
 !
          end if
 !
@@ -1213,7 +1213,7 @@ contains
                call density_file%read_(wf%right_transition_density, wf%n_mo**2)
 !
                call wf%add_t1_terms_and_transform(wf%right_transition_density, c_D_ct)
-               call visualizer%plot_density(wf%system, c_D_ct, file_name)
+               call visualizer%plot_density(wf%ao, c_D_ct, file_name)
 !
                call density_file%close_()
 !
@@ -1223,7 +1223,7 @@ contains
                call density_file%read_(wf%left_transition_density, wf%n_mo**2)
 !
                call wf%add_t1_terms_and_transform(wf%left_transition_density, c_D_ct)
-               call visualizer%plot_density(wf%system, c_D_ct, file_name)
+               call visualizer%plot_density(wf%ao, c_D_ct, file_name)
 !
                call density_file%close_
 !            
@@ -1231,7 +1231,7 @@ contains
 !
          end if
 !         
-         call mem%dealloc(c_D_ct, wf%n_ao, wf%n_ao)
+         call mem%dealloc(c_D_ct, wf%ao%n, wf%ao%n)
          call visualizer%cleanup()
 !
       end if

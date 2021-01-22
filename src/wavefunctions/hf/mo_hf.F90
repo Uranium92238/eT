@@ -111,23 +111,23 @@ contains
 !
 !     Update of the orbital coefficients in the new mo basis
 !
-      call mem%alloc(C_old, wf%n_ao, wf%n_mo)
-      call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, C_old, 1)
+      call mem%alloc(C_old, wf%ao%n, wf%n_mo)
+      call dcopy(wf%ao%n*wf%n_mo, wf%orbital_coefficients, 1, C_old, 1)
 !
       call dgemm('N', 'N',                   &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   wf%n_mo,                   &
                   wf%n_mo,                   &
                   one,                       &
                   C_old,                     &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   wf%W_mo_update,            &
                   wf%n_mo,                   &
                   zero,                      &
                   wf%orbital_coefficients,   &
-                  wf%n_ao)
+                  wf%ao%n)
 !
-      call mem%dealloc(C_old, wf%n_ao, wf%n_mo)
+      call mem%dealloc(C_old, wf%ao%n, wf%n_mo)
 !
    end subroutine roothan_hall_update_orbitals_mo_hf
 !
@@ -204,7 +204,7 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
+      real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in), optional :: prev_ao_density
 !
       real(dp), dimension(:,:), allocatable :: G
 !
@@ -218,19 +218,19 @@ contains
 !        Construct the two electron part of the Fock matrix (G),
 !        and add the contribution to the Fock matrix
 !
-         call daxpy(wf%n_ao**2, -one, prev_ao_density, 1, wf%ao_density, 1)
+         call daxpy(wf%ao%n**2, -one, prev_ao_density, 1, wf%ao_density, 1)
 !
-         call mem%alloc(G, wf%n_ao, wf%n_ao)
+         call mem%alloc(G, wf%ao%n, wf%ao%n)
 !
          call wf%construct_ao_G(wf%ao_density,                    &
                                 G,                                &
                                 C_screening=(wf%name_ == 'mlhf'))
 !
-         call daxpy(wf%n_ao**2, one, G, 1, wf%ao_fock, 1)
+         call daxpy(wf%ao%n**2, one, G, 1, wf%ao_fock, 1)
 !
-         call mem%dealloc(G, wf%n_ao, wf%n_ao)
+         call mem%dealloc(G, wf%ao%n, wf%ao%n)
 !
-         call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density, 1)         
+         call daxpy(wf%ao%n**2, one, prev_ao_density, 1, wf%ao_density, 1)         
 !
       else
 !
@@ -245,13 +245,13 @@ contains
 !
 !        Add the one-electron part
 !
-         call daxpy(wf%n_ao**2, one, wf%ao_h, 1, wf%ao_fock, 1)
+         call daxpy(wf%ao%n**2, one, wf%ao%h, 1, wf%ao_fock, 1)
 !
       endif
 !
       call timer%turn_off()
 !
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao_h)
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao%h)
 !
 !     Transformation of the AO fock in the MO basis
 !
@@ -335,35 +335,35 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: X
 !
-      call mem%alloc(X, wf%n_ao, wf%n_mo)
+      call mem%alloc(X, wf%ao%n, wf%n_mo)
 !
       call dgemm('N', 'N',                   &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   wf%n_mo,                   &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   one,                       &
                   wf%ao_fock,                &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   wf%orbital_coefficients,   &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   zero,                      &
                   X,                         & ! X = F^ao C
-                  wf%n_ao)
+                  wf%ao%n)
 !
       call dgemm('T', 'N',                   &
                   wf%n_mo,                   &
                   wf%n_mo,                   &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   one,                       &
                   wf%orbital_coefficients,   &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   X,                         &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   zero,                      &
                   wf%mo_fock,                & ! F = C^T F^ao C
                   wf%n_mo)
 !
-      call mem%dealloc(X, wf%n_ao, wf%n_mo)
+      call mem%dealloc(X, wf%ao%n, wf%n_mo)
 !
    end subroutine construct_mo_fock_hf
 !
@@ -383,35 +383,35 @@ contains
       real(dp), dimension(wf%n_o, wf%n_v)   :: F ! F_ia
       real(dp), dimension(:,:), allocatable :: X
 !
-      call mem%alloc(X, wf%n_ao, wf%n_v)
+      call mem%alloc(X, wf%ao%n, wf%n_v)
 !
       call dgemm('N', 'N',                                  &
-                  wf%n_ao,                                  &
+                  wf%ao%n,                                  &
                   wf%n_v,                                   &
-                  wf%n_ao,                                  &
+                  wf%ao%n,                                  &
                   one,                                      &
                   wf%ao_fock,                               &
-                  wf%n_ao,                                  &
+                  wf%ao%n,                                  &
                   wf%orbital_coefficients(1, wf%n_o + 1),   &
-                  wf%n_ao,                                  &
+                  wf%ao%n,                                  &
                   zero,                                     &
                   X,                                        &
-                  wf%n_ao)
+                  wf%ao%n)
 !
       call dgemm('T', 'N',                   &
                   wf%n_o,                    &
                   wf%n_v,                    &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   one,                       &
                   wf%orbital_coefficients,   &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   X,                         &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   zero,                      &
                   F,                         &
                   wf%n_o)
 !
-      call mem%dealloc(X, wf%n_ao, wf%n_v)
+      call mem%dealloc(X, wf%ao%n, wf%n_v)
 !
    end subroutine get_fock_ov_hf
 !

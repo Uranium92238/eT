@@ -49,8 +49,7 @@
 !!       Removes 1s, 2s, 2p for Al - Zn
 !!
 !!    - The core orbitals are stored in wf%orbital_coefficients_fc
-!!    - The number of frozen core orbitals is wf%n_frozen_core_orbitals 
-!!       on exit
+!!    - The number of frozen core orbitals is wf%n_frozen_core_orbitals on exit
 !!    - On exit wf%n_mo and wf%n_o are updated to not include the core orbitals
 !!    
       implicit none
@@ -168,7 +167,7 @@
       implicit none
 !
       class(hf), intent(in) :: wf
-      real(dp), dimension(wf%n_ao,wf%n_ao), intent(out) :: D
+      real(dp), dimension(wf%ao%n,wf%ao%n), intent(out) :: D
 !
    end subroutine get_full_idempotent_density_hf
 !

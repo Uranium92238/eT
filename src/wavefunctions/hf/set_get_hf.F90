@@ -43,9 +43,9 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_ao**2,wf%n_densities), intent(inout) :: D
+      real(dp), dimension(wf%ao%n**2,wf%n_densities), intent(inout) :: D
 !
-      call dcopy(wf%n_ao**2, wf%ao_density, 1, D, 1)
+      call dcopy(wf%ao%n**2, wf%ao_density, 1, D, 1)
 !
    end subroutine get_ao_density_sq_hf
 !
@@ -63,7 +63,7 @@ contains
 !
       real(dp), dimension(:) :: D ! Packed
 !
-      call squareup(D, wf%ao_density, wf%n_ao)
+      call squareup(D, wf%ao_density, wf%ao%n)
 !
    end subroutine set_ao_density_hf
 !
@@ -79,9 +79,9 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities), intent(in) :: F ! Packed
+      real(dp), dimension(wf%ao%n*(wf%ao%n + 1)/2, wf%n_densities), intent(in) :: F ! Packed
 !
-      call squareup(F(:,1), wf%ao_fock, wf%n_ao)
+      call squareup(F(:,1), wf%ao_fock, wf%ao%n)
 !
    end subroutine set_ao_fock_hf
 !
@@ -97,9 +97,9 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_ao*(wf%n_ao+1)/2, wf%n_densities), intent(inout) :: F ! Packed
+      real(dp), dimension(wf%ao%n*(wf%ao%n+1)/2, wf%n_densities), intent(inout) :: F ! Packed
 !
-      call packin(F(:,1), wf%ao_fock, wf%n_ao)
+      call packin(F(:,1), wf%ao_fock, wf%ao%n)
 !
    end subroutine get_ao_fock_hf
 !
@@ -117,7 +117,7 @@ contains
 !
       real(dp), dimension(:,:) :: D
 !
-      call packin(D(:,1), wf%ao_density, wf%n_ao)
+      call packin(D(:,1), wf%ao_density, wf%ao%n)
 !
    end subroutine get_ao_density_hf
 !

@@ -90,7 +90,7 @@
       class(mlcc2), intent(inout) :: wf
       integer, intent(in) :: n_levels
       integer, dimension(n_levels), intent(in) :: n_occupied_list, n_virtual_list
-      real(dp), dimension(wf%n_ao, wf%n_mo), intent(inout) :: orbital_coefficients
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(inout) :: orbital_coefficients
       real(dp), dimension(wf%n_mo), intent(inout) :: orbital_energies
 !
    end subroutine construct_block_diagonal_fock_orbitals_mlcc2

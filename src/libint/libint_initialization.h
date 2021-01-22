@@ -34,32 +34,23 @@ extern "C" {
 #endif
 
 void initialize_libint();
-
 void finalize_libint();
-
-void initialize_coulomb();
-
+void initialize_eri(double *eri_precision);
 void export_geometry_and_basis_to_libint(const int nAtoms,
                                          const int *atomicNumbers,
                                          const double *atomicCoordinates,
                                          const char *basisSets,
                                          const int maxLength,
                                          const int *cartesians);
-
 void initialize_kinetic();
-
 void initialize_nuclear();
-
 void initialize_overlap();
-
 void initialize_dipole();
-
 void initialize_quadrupole();
-
-void set_coulomb_precision(double *prec);
-
+void set_eri_precision(double *eri_precision);
 void initialize_potential(double *charges, double *coordinates, int *n_points);
-
+void initialize_coulomb_external_charges(double *charges, double *coordinates, int *n_points);
+void initialize_coulomb_external_unit_charges(double *coordinates, int *n_points);
 void initialize_shell2atom();
 
 #ifdef __cplusplus

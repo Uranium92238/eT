@@ -33,6 +33,8 @@ module uhf_class
 !
    type, extends(hf) :: uhf
 !
+      integer :: multiplicity ! 2S + 1
+!
       integer :: n_alpha ! Number of alpha electrons 
       integer :: n_beta  ! Number of beta electrons 
 !
@@ -69,25 +71,22 @@ module uhf_class
       procedure :: construct_ao_spin_fock                => construct_ao_spin_fock_uhf
       procedure :: calculate_uhf_energy                  => calculate_uhf_energy_uhf
       procedure :: update_fock_and_energy_non_cumulative => update_fock_and_energy_non_cumulative_uhf
-      procedure :: update_fock_and_energy_cumulative     => update_fock_and_energy_cumulative_uhf
-      procedure :: update_fock_and_energy                => update_fock_and_energy_uhf
-      procedure :: update_fock_mm                        => update_fock_mm_uhf
-      procedure :: update_fock_pcm                       => update_fock_pcm_uhf
-      procedure :: set_ao_fock                           => set_ao_fock_uhf
-      procedure :: get_ao_fock                           => get_ao_fock_uhf
-      procedure :: print_energy                          => print_energy_uhf
+!
+      procedure :: update_fock_and_energy_cumulative    => update_fock_and_energy_cumulative_uhf
+      procedure :: update_fock_and_energy               => update_fock_and_energy_uhf
+      procedure :: set_ao_fock                          => set_ao_fock_uhf
+      procedure :: get_ao_fock                          => get_ao_fock_uhf
 !
 !     AO Density related routines
 !
-      procedure :: initialize_density                    => initialize_density_uhf
-      procedure :: set_initial_ao_density_guess          => set_initial_ao_density_guess_uhf
-      procedure :: save_ao_density                       => save_ao_density_uhf
-      procedure :: update_ao_density                     => update_ao_density_uhf
-      procedure :: form_ao_density                       => form_ao_density_uhf
-      procedure :: construct_ao_spin_density             => construct_ao_spin_density_uhf
-      procedure :: set_ao_density_to_core_guess          => set_ao_density_to_core_guess_uhf
-      procedure :: get_homo_degeneracy                   => get_homo_degeneracy_uhf
-      procedure :: get_ao_density_sq                     => get_ao_density_sq_uhf
+      procedure :: initialize_density                   => initialize_density_uhf
+      procedure :: set_initial_ao_density_guess         => set_initial_ao_density_guess_uhf
+      procedure :: save_ao_density                      => save_ao_density_uhf
+      procedure :: update_ao_density                    => update_ao_density_uhf
+      procedure :: construct_ao_spin_density            => construct_ao_spin_density_uhf
+      procedure :: set_ao_density_to_core_guess         => set_ao_density_to_core_guess_uhf
+      procedure :: get_homo_degeneracy                  => get_homo_degeneracy_uhf
+      procedure :: get_ao_density_sq                    => get_ao_density_sq_uhf
 !
       procedure :: construct_mo_fock                     => construct_mo_fock_uhf
 !
@@ -142,8 +141,9 @@ module uhf_class
 !
       procedure :: cleanup                               => cleanup_uhf 
 !
-      procedure :: get_spin_contamination               => get_spin_contamination_uhf
-      procedure :: get_exact_s2                         => get_exact_s2_uhf
+      procedure :: print_energy                          => print_energy_uhf
+      procedure :: get_spin_contamination                => get_spin_contamination_uhf
+      procedure :: get_exact_s2                          => get_exact_s2_uhf
 !
    end type uhf
 !
@@ -169,7 +169,7 @@ module uhf_class
 contains 
 !
 !
-   function new_uhf(system) result(wf)
+   function new_uhf() result(wf)
 !!
 !!    New UHF
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -178,22 +178,17 @@ contains
 !
       type(uhf) :: wf
 !
-      class(molecular_system), target, intent(in) :: system
-!
-      wf%system => system
-!
       wf%name_ = 'uhf'
 !
       call wf%read_settings()
 !
       call wf%print_banner()
 !
-      call wf%prepare()
-!
    end function new_uhf
 !
 !
-   function new_uhf_from_parameters(system, fractional_uniform_valence) result(wf)
+   function new_uhf_from_parameters(fractional_uniform_valence, &
+                                    multiplicity) result(wf)
 !!
 !!    New UHF from parameters
 !!    Written by Tor S. Haugland, 2019
@@ -202,21 +197,19 @@ contains
 !
       type(uhf) :: wf
 !
-      class(molecular_system), target, intent(in) :: system
       logical,                         intent(in) :: fractional_uniform_valence
-!
-      wf%system => system
+      integer,                         intent(in) :: multiplicity
 !
       wf%name_ = 'uhf'
 !
       wf%fractional_uniform_valence = fractional_uniform_valence
 !
-      call wf%prepare()
+      wf%multiplicity = multiplicity
 !
    end function new_uhf_from_parameters
 !
 !
-   subroutine prepare_uhf(wf)
+   subroutine prepare_uhf(wf, centers, embedding)
 !!
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -224,11 +217,17 @@ contains
 !!    Initializes files
 !!    and constructs screening vectors
 !!
+      use atomic_center_class, only: atomic_center
+!
       implicit none
 !
       class(uhf) :: wf
 !
-      wf%n_ao = wf%system%get_n_aos()
+      class(atomic_center), dimension(:), optional, intent(in) :: centers 
+!
+      logical, intent(in), optional :: embedding
+!
+      call wf%prepare_ao_tool_and_embedding(centers, embedding)
 !
       call wf%set_n_mo()
 !
@@ -244,19 +243,8 @@ contains
       wf%orbital_energies_file = sequential_file('orbital_energies')
       wf%restart_file = sequential_file('scf_restart_file')
 !
-      call wf%initialize_shp_eri_schwarz() 
-      call wf%initialize_shp_eri_schwarz_list()
-!
-      call wf%construct_shp_eri_schwarz()
-!
-      if (wf%system%mm_calculation) call wf%prepare_qmmm()
-      if(wf%system%pcm_calculation) call wf%initialize_pcm_matrices()
-!
       wf%frozen_core = .false.
       wf%frozen_hf_mos = .false.
-!
-      call wf%initialize_ao_h()
-      call wf%get_ao_h_wx(wf%ao_h)
 !
    end subroutine prepare_uhf
 !
@@ -281,17 +269,17 @@ contains
 !
       if (trim(guess) == 'sad' .or. trim(guess) == 'SAD') then
 !
-         call wf%set_ao_density_to_sad()
+         call wf%ao%get_sad_guess(wf%ao_density)
 !
          alpha_prefactor = real(wf%n_alpha, kind=dp)/real(wf%n_alpha + wf%n_beta, kind=dp)
          beta_prefactor  = real(wf%n_beta,  kind=dp)/real(wf%n_alpha + wf%n_beta, kind=dp)
 !
-         call copy_and_scale(alpha_prefactor, wf%ao_density, wf%ao_density_a, wf%n_ao**2)
-         call copy_and_scale(beta_prefactor,  wf%ao_density, wf%ao_density_b, wf%n_ao**2)
+         call copy_and_scale(alpha_prefactor, wf%ao_density, wf%ao_density_a, wf%ao%n**2)
+         call copy_and_scale(beta_prefactor,  wf%ao_density, wf%ao_density_b, wf%ao%n**2)
 !
       elseif (trim(guess) == 'core' .or. trim(guess) == 'CORE') then
 !
-         call wf%set_ao_density_to_core_guess(wf%ao_h)
+         call wf%set_ao_density_to_core_guess(wf%ao%h)
 !
       else
 !
@@ -322,8 +310,8 @@ contains
       real(dp), dimension(:), allocatable :: G_pck
       real(dp), dimension(:,:), allocatable :: Po, Pv
 !
-      call mem%alloc(Po, wf%n_ao, wf%n_ao)
-      call mem%alloc(Pv, wf%n_ao, wf%n_ao)
+      call mem%alloc(Po, wf%ao%n, wf%ao%n)
+      call mem%alloc(Pv, wf%ao%n, wf%ao%n)
       call mem%alloc(G_pck, wf%n_mo*(wf%n_mo - 1)/2)
       call mem%alloc(G_sq, wf%n_mo, wf%n_mo)
 !
@@ -331,18 +319,18 @@ contains
 !
       call wf%construct_projection_matrices(Po, Pv, wf%ao_density_a)
       call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock_a)
-      call packin_anti(G_pck, G_sq, wf%n_ao)
-      call dcopy(wf%n_ao*(wf%n_ao - 1)/2, G_pck, 1, G, 1)
+      call packin_anti(G_pck, G_sq, wf%ao%n)
+      call dcopy(wf%ao%n*(wf%ao%n - 1)/2, G_pck, 1, G, 1)
 !
 !     Beta gradient
 !
       call wf%construct_projection_matrices(Po, Pv, wf%ao_density_b)
       call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock_b)
-      call packin_anti(G_pck, G_sq, wf%n_ao)
-      call dcopy(wf%n_ao*(wf%n_ao - 1)/2, G_pck, 1, G(1, 2), 1)
+      call packin_anti(G_pck, G_sq, wf%ao%n)
+      call dcopy(wf%ao%n*(wf%ao%n - 1)/2, G_pck, 1, G(1, 2), 1)
 !
-      call mem%dealloc(Po, wf%n_ao, wf%n_ao)
-      call mem%dealloc(Pv, wf%n_ao, wf%n_ao)
+      call mem%dealloc(Po, wf%ao%n, wf%ao%n)
+      call mem%dealloc(Pv, wf%ao%n, wf%ao%n)
       call mem%dealloc(G_pck, wf%n_mo*(wf%n_mo - 1)/2)
       call mem%dealloc(G_sq, wf%n_mo, wf%n_mo)
 !
@@ -377,6 +365,10 @@ contains
 !
       class(uhf) :: wf
 !
+      call input%get_keyword_in_section('multiplicity',  &
+                                        'system',        &
+                                        wf%multiplicity)
+!
       wf%fractional_uniform_valence = &
             input%requested_keyword_in_section('fractional uniform valence', 'hf')
 !
@@ -402,6 +394,55 @@ contains
    end subroutine roothan_hall_update_orbitals_uhf
 !
 !
+   subroutine print_energy_uhf(wf)
+!!
+!!    Print energy
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+!!    Prints information related to the wavefunction,
+!!    most of which is meaningful only for a properly
+!!    converged wavefunction. Should be overwritten in
+!!    descendants if more or less or other information
+!!    is present.
+!!
+      implicit none
+!
+      class(uhf), intent(inout) :: wf
+!
+      real(dp) :: homo_lumo_gap_a
+      real(dp) :: homo_lumo_gap_b
+      real(dp) :: nuclear_repulsion
+!
+      if (wf%n_alpha > 0 .and. wf%n_alpha < wf%n_mo) then 
+!
+         homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
+         call output%printf('m', 'HOMO-LUMO gap (alpha):     (f19.12)', &
+                            reals=[homo_lumo_gap_a], fs='(/t6,a)')
+!
+      endif 
+!
+      if (wf%n_beta > 0 .and. wf%n_beta < wf%n_mo) then 
+!
+         homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
+         call output%printf('m', 'HOMO-LUMO gap (beta):      (f19.12)', &
+                            reals=[homo_lumo_gap_b], fs='(t6,a)')
+!
+      endif
+!
+      nuclear_repulsion = wf%get_nuclear_repulsion()
+!
+      call output%printf('m', 'Nuclear repulsion energy:  (f19.12)', &
+                         reals=[nuclear_repulsion], fs='(t6,a)')
+      call output%printf('m', 'Electronic energy:         (f19.12)', &
+                         reals=[wf%energy - nuclear_repulsion], fs='(t6,a)')
+      call output%printf('m', 'Total energy:              (f19.12)', &
+                         reals=[wf%energy], fs='(t6,a)')
+!
+      if (wf%embedded) call wf%embedding%print_energy(wf%ao, wf%ao_density)
+!
+   end subroutine print_energy_uhf
+!
+!
    subroutine update_ao_density_uhf(wf)
 !!
 !!    Update AO density
@@ -417,7 +458,8 @@ contains
       call wf%construct_ao_spin_density('alpha') ! Make D_alpha
       call wf%construct_ao_spin_density('beta')  ! Make D_beta
 !
-      call wf%form_ao_density()                  ! Set D = D_alpha + D_beta
+      call dcopy(wf%ao%n**2, wf%ao_density_a, 1, wf%ao_density, 1)
+      call daxpy(wf%ao%n**2, one, wf%ao_density_b, 1, wf%ao_density, 1)
 !
    end subroutine update_ao_density_uhf
 !
@@ -437,21 +479,18 @@ contains
 !
       class(uhf) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: h_wx
 !
-      call dcopy(wf%n_ao**2, h_wx, 1, wf%ao_fock, 1)
+      call dcopy(wf%ao%n**2, h_wx, 1, wf%ao_fock, 1)
       call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies)
 !
-      call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, wf%orbital_coefficients_a, 1)
-      call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, wf%orbital_coefficients_b, 1)
+      call dcopy(wf%ao%n*wf%n_mo, wf%orbital_coefficients, 1, wf%orbital_coefficients_a, 1)
+      call dcopy(wf%ao%n*wf%n_mo, wf%orbital_coefficients, 1, wf%orbital_coefficients_b, 1)
 !
       call dcopy(wf%n_mo, wf%orbital_energies, 1, wf%orbital_energies_a, 1)
       call dcopy(wf%n_mo, wf%orbital_energies, 1, wf%orbital_energies_b, 1)
 !
-      call wf%construct_ao_spin_density('alpha')
-      call wf%construct_ao_spin_density('beta')
-!
-      call wf%form_ao_density()
+      call wf%update_ao_density()
 !
    end subroutine set_ao_density_to_core_guess_uhf
 !
@@ -473,15 +512,15 @@ contains
 !
       integer :: n_alpha_m_n_beta, n_alpha_p_n_beta
 !
-      n_alpha_m_n_beta = wf%system%multiplicity - 1 ! 2 S + 1 - 1 = 2 S
-      n_alpha_p_n_beta = wf%system%n_electrons
+      n_alpha_m_n_beta = wf%multiplicity - 1 ! 2 S + 1 - 1 = 2 S
+      n_alpha_p_n_beta = wf%ao%get_n_electrons()
 !
       wf%n_alpha = (n_alpha_p_n_beta + n_alpha_m_n_beta)/2
-      wf%n_beta  = wf%system%n_electrons - wf%n_alpha
+      wf%n_beta  = n_alpha_p_n_beta - wf%n_alpha
 !
-      if ((wf%n_alpha + wf%n_beta) .ne. wf%system%n_electrons) then
+      if ((wf%n_alpha + wf%n_beta) .ne. n_alpha_p_n_beta) then
 !
-         call output%error_msg('Given multiplicity and number of electrons is inconsistent.')
+         call output%error_msg('Given multiplicity and number of electrons are inconsistent.')
 !
       endif
 !
@@ -525,34 +564,34 @@ contains
 !
          if (.not. wf%fractional_uniform_valence) then ! Standard
 !
-            call zero_array(wf%ao_density_a, wf%n_ao**2)
+            call zero_array(wf%ao_density_a, wf%ao%n**2)
             if (wf%n_alpha .eq. 0) return
 !
             call dgemm('N', 'T',                   &
-                        wf%n_ao,                   &
-                        wf%n_ao,                   &
+                        wf%ao%n,                   &
+                        wf%ao%n,                   &
                         wf%n_alpha,                &
                         one,                       &
                         wf%orbital_coefficients_a, &
-                        wf%n_ao,                   &
+                        wf%ao%n,                   &
                         wf%orbital_coefficients_a, &
-                        wf%n_ao,                   &
+                        wf%ao%n,                   &
                         zero,                      &
                         wf%ao_density_a,           &
-                        wf%n_ao)
+                        wf%ao%n)
 !
          else ! Smear out HOMO electrons, if degenerate
 !
             call wf%get_homo_degeneracy(wf%orbital_energies_a, homo_first, homo_last, &
                                           n_homo_orbitals, n_homo_electrons, wf%n_alpha)
 !
-            call zero_array(wf%ao_density_a, wf%n_ao**2)
+            call zero_array(wf%ao_density_a, wf%ao%n**2)
             if (wf%n_alpha .eq. 0) return
 !
             electrons_to_fill = real(n_homo_electrons, kind=dp)/real(n_homo_orbitals, kind=dp)
 !
-            do alpha = 1, wf%n_ao
-               do beta = 1, wf%n_ao
+            do alpha = 1, wf%ao%n
+               do beta = 1, wf%ao%n
 !
                   do i = 1, homo_first - 1
 !
@@ -577,34 +616,34 @@ contains
 !
          if (.not. wf%fractional_uniform_valence) then ! Standard
 !
-            call zero_array(wf%ao_density_b, wf%n_ao**2)
+            call zero_array(wf%ao_density_b, wf%ao%n**2)
             if (wf%n_beta .eq. 0) return
 !
             call dgemm('N', 'T',                   &
-                        wf%n_ao,                   &
-                        wf%n_ao,                   &
+                        wf%ao%n,                   &
+                        wf%ao%n,                   &
                         wf%n_beta,                 &
                         one,                       &
                         wf%orbital_coefficients_b, &
-                        wf%n_ao,                   &
+                        wf%ao%n,                   &
                         wf%orbital_coefficients_b, &
-                        wf%n_ao,                   &
+                        wf%ao%n,                   &
                         zero,                      &
                         wf%ao_density_b,           &
-                        wf%n_ao)
+                        wf%ao%n)
 !
          else ! Smear out HOMO electrons, if degenerate
 !
             call wf%get_homo_degeneracy(wf%orbital_energies_b, homo_first, homo_last, &
                                           n_homo_orbitals, n_homo_electrons, wf%n_beta)
 !
-            call zero_array(wf%ao_density_b, wf%n_ao**2)
+            call zero_array(wf%ao_density_b, wf%ao%n**2)
             if (wf%n_beta .eq. 0) return
 !
             electrons_to_fill = real(n_homo_electrons, kind=dp)/real(n_homo_orbitals, kind=dp)
 !
-            do alpha = 1, wf%n_ao
-               do beta = 1, wf%n_ao
+            do alpha = 1, wf%ao%n
+               do beta = 1, wf%ao%n
 !
                   do i = 1, homo_first - 1
 !
@@ -634,7 +673,8 @@ contains
    end subroutine construct_ao_spin_density_uhf
 !
 !
-   subroutine get_homo_degeneracy_uhf(wf, energies, homo_first, homo_last, n_homo_orbitals, n_homo_electrons, n_electrons)
+   subroutine get_homo_degeneracy_uhf(wf, energies, homo_first, homo_last, &
+                                      n_homo_orbitals, n_homo_electrons, n_electrons)
 !!
 !!    Get HOMO degeneracy
 !!    Written by Eirik F. Kjønstad, Sep 2018
@@ -697,31 +737,6 @@ contains
    end subroutine get_homo_degeneracy_uhf
 !
 !
-   subroutine form_ao_density_uhf(wf)
-!!
-!!    Form AO density
-!!    Written by Eirik F. Kjønstad, Sep 2018
-!!
-!!    Given that the spin densities have been constructed,
-!!    this routine sets
-!!
-!!       D = D_alpha + D_beta
-!!
-!!    Note that it is not constructed from the orbital
-!!    coefficients and should be preceded by calls to
-!!    "construct_ao_spin_density" to make sure that the
-!!    spin densities are up-to-date.
-!!
-      implicit none
-!
-      class(uhf) :: wf
-!
-      call dcopy(wf%n_ao**2, wf%ao_density_a, 1, wf%ao_density, 1)
-      call daxpy(wf%n_ao**2, one, wf%ao_density_b, 1, wf%ao_density, 1)
-!
-   end subroutine form_ao_density_uhf
-!
-!
    subroutine calculate_uhf_energy_uhf(wf, h_wx)
 !!
 !!    Calculate UHF energy
@@ -736,20 +751,19 @@ contains
 !
       class(uhf) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: h_wx
+      real(dp), dimension(wf%ao%n, wf%ao%n) :: h_wx
 !
       real(dp) :: ddot
 !
-      wf%energy = wf%system%get_nuclear_repulsion()
+      wf%energy = wf%get_nuclear_repulsion()
 !
-      if (wf%system%mm_calculation) call wf%calculate_mm_energy_terms()
-      if (wf%system%pcm_calculation) call wf%calculate_pcm_energy_terms()
+      if (wf%embedded) wf%energy = wf%energy + wf%embedding%get_energy(wf%ao, wf%ao_density)
 !      
-      wf%energy = wf%energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_a, 1, h_wx, 1)
-      wf%energy = wf%energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_a, 1, wf%ao_fock_a, 1)
+      wf%energy = wf%energy + (one/two)*ddot((wf%ao%n)**2, wf%ao_density_a, 1, h_wx, 1)
+      wf%energy = wf%energy + (one/two)*ddot((wf%ao%n)**2, wf%ao_density_a, 1, wf%ao_fock_a, 1)
 !
-      wf%energy = wf%energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_b, 1, h_wx, 1)
-      wf%energy = wf%energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_b, 1, wf%ao_fock_b, 1)
+      wf%energy = wf%energy + (one/two)*ddot((wf%ao%n)**2, wf%ao_density_b, 1, h_wx, 1)
+      wf%energy = wf%energy + (one/two)*ddot((wf%ao%n)**2, wf%ao_density_b, 1, wf%ao_fock_b, 1)
 !
    end subroutine calculate_uhf_energy_uhf
 !
@@ -763,91 +777,31 @@ contains
 !
       class(uhf) :: wf
 !
-      call output%printf('n', '- Cholesky decomposition of AO overlap to get &
-                         &linearly independent orbitals:', ll=100, fs='(/t3,a)')
-!
-      call wf%initialize_ao_overlap()
-      call wf%construct_ao_overlap()
-      call wf%decompose_ao_overlap()
+      wf%n_mo = wf%ao%get_n_oao()
 !
       wf%n_densities = 2 ! [D_alpha, D_beta]
 !
       call wf%determine_n_alpha_and_n_beta()
 !
 !
-      call output%printf('m', '- Orbital details:', &
+      call output%printf('m', '- Molecular orbital details:', &
                          fs='(/t3,a)')
 !
       call output%printf('m', 'Number of alpha electrons:        (i8)', &
                          ints=[wf%n_alpha], fs='(/t6,a)')
+!
       call output%printf('m', 'Number of beta electrons:         (i8)', &
                          ints=[wf%n_beta], fs='(t6,a)')
 !
       call output%printf('m', 'Number of virtual alpha orbitals: (i8)', &
                          ints=[wf%n_mo - wf%n_alpha], fs='(t6,a)')
+!
       call output%printf('m', 'Number of virtual beta orbitals:  (i8)', &
                          ints=[wf%n_mo - wf%n_beta], fs='(t6,a)')
 !
-      call output%printf('m', 'Number of molecular orbitals:     (i8)', &
-                         ints=[wf%n_mo], fs='(t6,a)')
-      call output%printf('m', 'Number of atomic orbitals:        (i8)', &
-                         ints=[wf%n_ao], fs='(t6,a)')
-!
-      if (wf%n_mo .lt. wf%n_ao) &
-         call output%printf('m', 'Removed (i0) AOs due to linear dep.', &
-                            ints=[wf%n_ao - wf%n_mo], fs='(/t6,a)')
+      call output%printf('m', 'Number of molecular orbitals:     (i8)', ints=[wf%n_mo], fs='(t6,a)')
 !
    end subroutine set_n_mo_uhf
-!
-!
-   subroutine print_energy_uhf(wf)
-!!
-!!    Print energy
-!!    Written by Eirik F. Kjønstad, Sep 2018
-!!
-!!    Prints information related to the wavefunction,
-!!    most of which is meaningful only for a properly
-!!    converged wavefunction. Should be overwritten in
-!!    descendants if more or less or other information
-!!    is present.
-!!
-      implicit none
-!
-      class(uhf), intent(inout) :: wf
-!
-      real(dp) :: homo_lumo_gap_a
-      real(dp) :: homo_lumo_gap_b
-      real(dp) :: nuclear_repulsion
-!
-      if (wf%n_alpha > 0 .and. wf%n_alpha < wf%n_mo) then 
-!
-         homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
-         call output%printf('m', 'HOMO-LUMO gap (alpha):     (f19.12)', &
-                            reals=[homo_lumo_gap_a], fs='(/t6,a)')
-!
-      endif 
-!
-      if (wf%n_beta > 0 .and. wf%n_beta < wf%n_mo) then 
-!
-         homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
-         call output%printf('m', 'HOMO-LUMO gap (beta):      (f19.12)', &
-                            reals=[homo_lumo_gap_b], fs='(t6,a)')
-!
-      endif
-!
-      nuclear_repulsion = wf%system%get_total_nuclear_repulsion()
-!
-      call output%printf('m', 'Nuclear repulsion energy:  (f19.12)', &
-                         reals=[nuclear_repulsion], fs='(t6,a)')
-      call output%printf('m', 'Electronic energy:         (f19.12)', &
-                         reals=[wf%energy - nuclear_repulsion], fs='(t6,a)')
-      call output%printf('m', 'Total energy:              (f19.12)', &
-                         reals=[wf%energy], fs='(t6,a)')
-!
-      if(wf%system%mm_calculation) call wf%print_energy_mm()
-      if(wf%system%pcm_calculation) call wf%print_energy_pcm()
-!
-   end subroutine print_energy_uhf
 !
 !
    subroutine save_orbital_info_uhf(wf)
@@ -892,20 +846,14 @@ contains
 !
       call wf%destruct_orbital_energies()
       call wf%destruct_orbital_coefficients()
-      call wf%destruct_ao_overlap()
       call wf%destruct_fock()
       call wf%destruct_ao_density()
-      call wf%destruct_pivot_matrix_ao_overlap()
-      call wf%destruct_cholesky_ao_overlap()
-      call wf%destruct_shp_eri_schwarz()
-      call wf%destruct_shp_eri_schwarz_list()
-      call wf%destruct_ao_h()
 !
       call wf%destruct_W_mo_update()
       call wf%destruct_mo_fock()
 !
-      call wf%destruct_mm_matrices()
-      call wf%destruct_pcm_matrices()
+      deallocate(wf%ao)
+      if (wf%embedded) deallocate(wf%embedding)
 !
    end subroutine cleanup_uhf
 !
@@ -930,40 +878,40 @@ contains
 !
       spin_contamination = real(wf%n_beta,dp)
 !
-      call mem%alloc(DS_alpha, wf%n_ao, wf%n_ao)
-      call mem%alloc(DS_beta, wf%n_ao, wf%n_ao)
+      call mem%alloc(DS_alpha, wf%ao%n, wf%ao%n)
+      call mem%alloc(DS_beta, wf%ao%n, wf%ao%n)
 !
       call dgemm('n', 'n',          &
-                  wf%n_ao,          &
-                  wf%n_ao,          &
-                  wf%n_ao,          &
+                  wf%ao%n,          &
+                  wf%ao%n,          &
+                  wf%ao%n,          &
                   one,              &
                   wf%ao_density_a,  &
-                  wf%n_ao,          &
-                  wf%ao_overlap,    &
-                  wf%n_ao,          &
+                  wf%ao%n,          &
+                  wf%ao%s,          &
+                  wf%ao%n,          &
                   zero,             &
                   DS_alpha,         &
-                  wf%n_ao)
+                  wf%ao%n)
 !
       call dgemm('t', 't',          &
-                  wf%n_ao,          &
-                  wf%n_ao,          &
-                  wf%n_ao,          &
+                  wf%ao%n,          &
+                  wf%ao%n,          &
+                  wf%ao%n,          &
                   one,              &
-                  wf%ao_overlap,    &
-                  wf%n_ao,          &
+                  wf%ao%s,          &
+                  wf%ao%n,          &
                   wf%ao_density_b,  &
-                  wf%n_ao,          &
+                  wf%ao%n,          &
                   zero,             &
                   DS_beta,          &
-                  wf%n_ao)
+                  wf%ao%n)
 !
       spin_contamination = spin_contamination &
-            - ddot(wf%n_ao**2, DS_alpha, 1, DS_beta, 1)
+            - ddot(wf%ao%n**2, DS_alpha, 1, DS_beta, 1)
 !
-      call mem%dealloc(DS_alpha, wf%n_ao, wf%n_ao)
-      call mem%dealloc(DS_beta, wf%n_ao, wf%n_ao)
+      call mem%dealloc(DS_alpha, wf%ao%n, wf%ao%n)
+      call mem%dealloc(DS_beta, wf%ao%n, wf%ao%n)
 !
    end function get_spin_contamination_uhf
 !

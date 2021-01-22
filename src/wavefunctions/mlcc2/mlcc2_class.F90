@@ -1105,8 +1105,8 @@ contains
 !
 !      Keep canonical orbitals (for transformation of frozen MO fock terms)
 !
-      call mem%alloc(canonical_orbitals, wf%n_ao, wf%n_mo)
-      call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, canonical_orbitals, 1)
+      call mem%alloc(canonical_orbitals, wf%ao%n, wf%n_mo)
+      call dcopy(wf%ao%n*wf%n_mo, wf%orbital_coefficients, 1, canonical_orbitals, 1)
 !
 !     Construct partitioning orbital basis, and determine active spaces
 !
@@ -1126,7 +1126,7 @@ contains
       if (wf%exists_frozen_fock_terms) &
          call wf%update_MO_fock_contributions(canonical_orbitals)
 !
-      call mem%dealloc(canonical_orbitals, wf%n_ao, wf%n_mo)
+      call mem%dealloc(canonical_orbitals, wf%ao%n, wf%n_mo)
 !
       call wf%initialize_t1()
       call zero_array(wf%t1, wf%n_t1)
@@ -1137,8 +1137,8 @@ contains
 !
 !     Keep partitioning orbital basis (for transformation of frozen MO fock terms)
 !
-      call mem%alloc(partitioning_orbitals, wf%n_ao, wf%n_mo)
-      call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, partitioning_orbitals, 1)
+      call mem%alloc(partitioning_orbitals, wf%ao%n, wf%n_mo)
+      call dcopy(wf%ao%n*wf%n_mo, wf%orbital_coefficients, 1, partitioning_orbitals, 1)
 !
 !     Construct MLCC orbital basis
 !
@@ -1154,7 +1154,7 @@ contains
       if (wf%exists_frozen_fock_terms) &
          call wf%update_MO_fock_contributions(partitioning_orbitals)
 !
-      call mem%dealloc(partitioning_orbitals, wf%n_ao, wf%n_mo)
+      call mem%dealloc(partitioning_orbitals, wf%ao%n, wf%n_mo)
 !
 !     Print MLCC orbital coefficients to file
 !
@@ -1195,6 +1195,9 @@ contains
 !
       call wf%destruct_nto_states()
       call wf%destruct_cnto_states()
+!
+      deallocate(wf%ao)
+      if (wf%embedded) deallocate(wf%embedding)
 !
    end subroutine cleanup_mlcc2
 !
@@ -1256,7 +1259,7 @@ contains
 !
       class(mlcc2) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_mo), intent(in) :: C_old
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(in) :: C_old
 !
       real(dp), dimension(:,:), allocatable :: T
 !
@@ -1346,8 +1349,8 @@ contains
 !
 !     Keep canonical orbitals (for transformation of frozen MO fock terms)
 !
-      call mem%alloc(canonical_orbitals, wf%n_ao, wf%n_mo)
-      call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, canonical_orbitals, 1)
+      call mem%alloc(canonical_orbitals, wf%ao%n, wf%n_mo)
+      call dcopy(wf%ao%n*wf%n_mo, wf%orbital_coefficients, 1, canonical_orbitals, 1)
 !
 !     Read partitionings from restart file
 !
@@ -1382,7 +1385,7 @@ contains
       if (wf%exists_frozen_fock_terms) &
          call wf%update_MO_fock_contributions(canonical_orbitals)
 !
-      call mem%dealloc(canonical_orbitals, wf%n_ao, wf%n_mo)
+      call mem%dealloc(canonical_orbitals, wf%ao%n, wf%n_mo)
 !
    end subroutine mo_preparations_from_restart_mlcc2
 !

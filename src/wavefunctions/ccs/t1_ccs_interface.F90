@@ -84,7 +84,7 @@
       implicit none 
 !
       class(ccs), intent(in) :: wf 
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)  :: x_wx 
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)  :: x_wx 
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: y_pq 
 !
    end subroutine ao_to_t1_transformation_ccs
@@ -103,7 +103,7 @@
       implicit none 
 !
       class(ccs), intent(in) :: wf 
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)  :: x_wx
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)  :: x_wx
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: y_pq
 !
    end subroutine ao_to_t1_transformation_ccs_complex
@@ -127,6 +127,6 @@
 !
       class(ccs), intent(in) :: wf
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in)  :: Z_pq
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: Z_out
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(out) :: Z_out
 !
    end  subroutine add_t1_terms_and_transform_ccs

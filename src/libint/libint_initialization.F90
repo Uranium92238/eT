@@ -26,79 +26,6 @@ module libint_initialization
 !
 contains
 !
-   subroutine set_coulomb_precision(prec)
-!
-      implicit none
-!
-      real(dp) :: prec
-!
-      call set_coulomb_precision_c(prec)
-!
-   end subroutine set_coulomb_precision
-!
-   subroutine initialize_libint()
-!
-      implicit none
-!
-      call initialize_libint_c()
-!
-   end subroutine initialize_libint
-!
-   subroutine finalize_libint()
-!
-      implicit none
-!
-      call finalize_libint_c()
-!
-   end subroutine finalize_libint
-!
-   subroutine initialize_overlap()
-!
-      implicit none
-!
-      call initialize_overlap_c()
-!
-   end subroutine initialize_overlap
-!
-   subroutine initialize_dipole()
-!
-      implicit none
-!
-      call initialize_dipole_c()
-!
-   end subroutine initialize_dipole
-!
-   subroutine initialize_quadrupole()
-!
-      implicit none
-!
-      call initialize_quadrupole_c()
-!
-   end subroutine initialize_quadrupole
-!
-   subroutine initialize_coulomb()
-!
-      implicit none
-!
-      call initialize_coulomb_c()
-!
-   end subroutine initialize_coulomb
-!
-   subroutine initialize_kinetic()
-!
-      implicit none
-!
-      call initialize_kinetic_c()
-!
-   end subroutine initialize_kinetic
-!
-   subroutine initialize_nuclear()
-!
-      implicit none
-!
-      call initialize_nuclear_c()
-!
-   end subroutine initialize_nuclear
 !
    subroutine export_geometry_and_basis_to_libint(atoms)
 !!
@@ -114,7 +41,7 @@ contains
 !!    and pass them on to the C side
 !!
 !
-      use atomic_class, only: atomic
+      use atomic_center_class, only: atomic_center
       use parameters, only: angstrom_to_bohr
       use iso_c_binding, only: c_int, c_double, c_char, c_null_char
 !
@@ -122,7 +49,7 @@ contains
 !
       integer(c_int), parameter :: max_length = 100
 !
-      type(atomic), dimension(:), intent(in) :: atoms
+      type(atomic_center), dimension(:), intent(in) :: atoms
 !
       integer(c_int), dimension(:), allocatable :: atomic_numbers_c
       real(c_double), dimension(:,:), allocatable :: atomic_coordinates_c
@@ -148,12 +75,11 @@ contains
 !     Construct C arrays with atom numbers and coordinates
       do i =1,n_atoms
 !
-         call atoms(i)%set_number()
          atomic_numbers_c(i) = int(atoms(i)%number_, c_int)
 !
-         atomic_coordinates_c(1,i) = real(atoms(i)%x*angstrom_to_bohr, c_double)
-         atomic_coordinates_c(2,i) = real(atoms(i)%y*angstrom_to_bohr, c_double)
-         atomic_coordinates_c(3,i) = real(atoms(i)%z*angstrom_to_bohr, c_double)
+         atomic_coordinates_c(1,i) = real(atoms(i)%coordinates(1)*angstrom_to_bohr, c_double)
+         atomic_coordinates_c(2,i) = real(atoms(i)%coordinates(2)*angstrom_to_bohr, c_double)
+         atomic_coordinates_c(3,i) = real(atoms(i)%coordinates(3)*angstrom_to_bohr, c_double)
 !
          basis_sets_c(i) = trim(atoms(i)%basis)//c_null_char
 !
@@ -177,16 +103,5 @@ contains
 !
    end subroutine export_geometry_and_basis_to_libint
 !
-   subroutine initialize_potential(charges,coordinates,n_points)
-!
-      use iso_c_binding, only: c_int
-      implicit none
-      real(dp) :: charges(*)
-      real(dp) :: coordinates(*)
-      integer(c_int) :: n_points
-!
-      call initialize_potential_c(charges,coordinates,n_points)
-!
-   end subroutine initialize_potential
 !
 end module libint_initialization

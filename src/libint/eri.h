@@ -24,7 +24,10 @@ extern "C" {
 #else
 #endif
 
-void construct_ao_v_wx(double *V, int *s1, int *s2);
+void get_eri(double *g, int *s1, int *s2, int *s3, int *s4, double *epsilon, 
+             int *skip, int *n1, int *n2, int *n3, int *n4);
+
+void get_eri_1der(double *g, int *s1, int *s2, int *s3, int *s4);
 
 #ifdef __cplusplus
 }

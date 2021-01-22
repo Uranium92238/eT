@@ -32,23 +32,26 @@ module ccs_class
    use reordering
 !
    use direct_stream_file_class, only : direct_stream_file
-   use stream_file_class, only: stream_file
-   use sequential_file_class, only : sequential_file
-   use string_utilities, only : convert_to_uppercase
-   use array_utilities, only : zero_array_complex
-   use array_utilities, only: sandwich
-   use array_utilities, only : get_l2_norm, copy_and_scale, copy_and_scale_complex, copy_, our_zdotu
-   use array_utilities, only : get_abs_max_w_index, get_n_lowest, get_n_highest
-   use array_utilities, only: quicksort_with_index_descending, are_vectors_parallel
-   use index_invert, only : invert_compound_index, invert_packed_index
-   use batching_index_class, only : batching_index
-   use timings_class, only : timings
+   use stream_file_class,        only : stream_file
+   use sequential_file_class,    only : sequential_file
+   use string_utilities,         only : convert_to_uppercase
+   use array_utilities,          only : zero_array, zero_array_complex
+   use array_utilities,          only : sandwich
+   use array_utilities,          only : get_l2_norm, copy_and_scale, copy_and_scale_complex, copy_, our_zdotu
+   use array_utilities,          only : get_abs_max_w_index, get_n_lowest, get_n_highest
+   use array_utilities,          only : quicksort_with_index_descending, are_vectors_parallel
+   use index_invert,             only : invert_compound_index, invert_packed_index
+   use batching_index_class,     only : batching_index
+   use timings_class,            only : timings
 !
    use hf_class, only : hf
 !
    implicit none
 !
    type, extends(wavefunction) :: ccs
+!
+      real(dp)    :: correlation_energy
+      complex(dp) :: correlation_energy_complex
 !
       integer :: n_gs_amplitudes
       integer :: n_es_amplitudes
@@ -351,14 +354,10 @@ module ccs_class
       procedure :: ao_to_t1_transformation                       => ao_to_t1_transformation_ccs
       procedure :: ao_to_t1_transformation_complex               => ao_to_t1_transformation_ccs_complex
 !
-      procedure :: construct_h                                   => construct_h_ccs
-      procedure :: construct_h_complex                           => construct_h_ccs_complex
+!     One-electron integrals 
 !
-      procedure :: construct_mu                                  => construct_mu_ccs
-      procedure :: construct_mu_complex                          => construct_mu_ccs_complex
-!
-      procedure :: construct_q                                   => construct_q_ccs
-      procedure :: construct_q_complex                           => construct_q_ccs_complex
+      procedure :: get_t1_oei          => get_t1_oei_ccs 
+      procedure :: get_t1_oei_complex  => get_t1_oei_ccs_complex
 !
 !     Preparation procedures
 !
@@ -400,7 +399,6 @@ module ccs_class
       procedure :: set_initial_multipliers_guess                 => set_initial_multipliers_guess_ccs
       procedure :: set_ip_start_indices                          => set_ip_start_indices_ccs
       procedure :: get_ip_projector                              => get_ip_projector_ccs
-      procedure :: get_t1_diagnostic                             => get_t1_diagnostic_ccs
 !
       procedure :: form_newton_raphson_t_estimate                => form_newton_raphson_t_estimate_ccs
 !
@@ -409,8 +407,6 @@ module ccs_class
       procedure :: print_dominant_x1                             => print_dominant_x1_ccs
 !
       procedure :: make_bath_orbital                             => make_bath_orbital_ccs
-!
-      procedure :: construct_molecular_gradient                  => construct_molecular_gradient_ccs
 !
 !     Procedures related to time dependency
 !
@@ -502,19 +498,15 @@ contains
 !
       class(ccs) :: wf
 !
-!     Initialize CC files
-!
       call wf%initialize_files()
-!
-!     Logicals for special methods
 !
       wf%bath_orbital = .false.
       wf%cvs = .false.
       wf%need_g_abcd = .false.
 !
-!     Read CC settings from eT.inp (from cc section)
-!
       call wf%read_settings()
+!
+      call wf%prepare_ao_tool_and_embedding()
 !
    end subroutine general_cc_preparations_ccs
 !
@@ -554,7 +546,7 @@ contains
       call output%printf('m', 'Molecular orbitals:   (i0)', &
                          ints=[wf%n_mo], fs='(t6,a)')
       call output%printf('m', 'Atomic orbitals:      (i0)', &
-                         ints=[wf%n_ao], fs='(t6,a)')
+                         ints=[wf%ao%n], fs='(t6,a)')
 !
    end subroutine print_banner_ccs
 !
@@ -593,12 +585,10 @@ contains
 
       class(wavefunction), intent(in) :: template_wf
 !
-      wf%system => template_wf%system
-!
       wf%n_o = template_wf%n_o
       wf%n_v = template_wf%n_v
 !
-      wf%n_ao = template_wf%n_ao
+      wf%ao%n = template_wf%ao%n
       wf%n_mo = template_wf%n_mo
 !
 #ifdef HAS_32BIT_INTEGERS  
@@ -614,7 +604,7 @@ contains
 !
       call dcopy(wf%n_mo, template_wf%orbital_energies, 1, wf%orbital_energies, 1)
 !
-      call dcopy(wf%n_ao*wf%n_mo, template_wf%orbital_coefficients, 1, wf%orbital_coefficients, 1)
+      call dcopy(wf%ao%n*wf%n_mo, template_wf%orbital_coefficients, 1, wf%orbital_coefficients, 1)
 !
 !     Handle changes in the number of MOs as a result of 
 !     special methods
@@ -631,7 +621,7 @@ contains
 !
          call wf%initialize_frozen_CCT()
 !
-         call dcopy(wf%n_ao**2, template_wf%frozen_CCT, 1, wf%frozen_CCT, 1)
+         call dcopy(wf%ao%n**2, template_wf%frozen_CCT, 1, wf%frozen_CCT, 1)
 !
          wf%frozen_dipole = template_wf%frozen_dipole
          wf%frozen_quadrupole = template_wf%frozen_quadrupole
@@ -666,6 +656,9 @@ contains
       call wf%eri%cleanup()
 !
       call wf%destruct_core_MOs()
+!
+      deallocate(wf%ao)
+      if (wf%embedded) deallocate(wf%embedding)
 !
       call output%printf('v', '- Cleaning up ' // trim(wf%name_) // ' wavefunction', &
                          fs='(/t3,a)')
@@ -716,7 +709,7 @@ contains
 !
       call orbital_information_file%read_(wf%n_o)     
       call orbital_information_file%read_(wf%n_v)         
-      call orbital_information_file%read_(wf%n_ao)     
+      call orbital_information_file%read_(wf%ao%n)     
       call orbital_information_file%read_(wf%n_mo)     
       call orbital_information_file%read_(wf%hf_energy)    
 !
@@ -730,7 +723,7 @@ contains
       CC_orbitals_file = sequential_file('cc_orbital_coefficients')
       call CC_orbitals_file%open_('read', 'rewind')
 !
-      call CC_orbitals_file%read_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
+      call CC_orbitals_file%read_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
 !
       call CC_orbitals_file%close_('keep')
 !
@@ -742,24 +735,6 @@ contains
       call CC_orbital_energies_file%close_('keep')
 !
    end subroutine read_hf_ccs
-!
-!
-   subroutine construct_molecular_gradient_ccs(wf, E_qk)
-!!
-!!    Construct molecular gradient 
-!!    Written by Eirik F. Kjønstad, June 2019 
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      real(dp), dimension(3, wf%system%n_atoms), intent(inout) :: E_qk 
-!
-      E_qk = zero 
-!
-      call output%error_msg('Molecular gradient not implemented for ' // trim(wf%name_))
-!
-   end subroutine construct_molecular_gradient_ccs
 !
 !
    subroutine set_initial_amplitudes_guess_ccs(wf, restart)
@@ -1065,21 +1040,6 @@ contains
    end subroutine print_dominant_x1_ccs
 !
 !
-   real(dp) function get_t1_diagnostic_ccs(wf)
-!!
-!!    Get t1 diagnostic
-!!    Written by Eirik F. Kjønstad
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      get_t1_diagnostic_ccs = get_l2_norm(wf%t1, wf%n_t1)
-      get_t1_diagnostic_ccs = get_t1_diagnostic_ccs/sqrt(real(wf%system%n_electrons,kind=dp))
-!
-   end function get_t1_diagnostic_ccs
-!
-!
    subroutine set_cvs_start_indices_ccs(wf, start_indices)
 !!
 !!    Set CVS start indices
@@ -1205,18 +1165,18 @@ contains
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_copy
       real(dp), dimension(:), allocatable :: orbital_energies_copy
 !
-      call mem%alloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
+      call mem%alloc(orbital_coefficients_copy, wf%ao%n, wf%n_mo)
 !
-      call copy_and_scale(one, wf%orbital_coefficients, orbital_coefficients_copy, wf%n_mo*wf%n_ao)
+      call copy_and_scale(one, wf%orbital_coefficients, orbital_coefficients_copy, wf%n_mo*wf%ao%n)
 !
       call wf%destruct_orbital_coefficients()
 !
-      call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo + wf%n_bath_orbitals)
-      call zero_array(wf%orbital_coefficients, wf%n_ao*(wf%n_mo + wf%n_bath_orbitals))
+      call mem%alloc(wf%orbital_coefficients, wf%ao%n, wf%n_mo + wf%n_bath_orbitals)
+      call zero_array(wf%orbital_coefficients, wf%ao%n*(wf%n_mo + wf%n_bath_orbitals))
 !
-      wf%orbital_coefficients(1:wf%n_ao, 1:wf%n_mo) = orbital_coefficients_copy(:,:)
+      wf%orbital_coefficients(1:wf%ao%n, 1:wf%n_mo) = orbital_coefficients_copy(:,:)
 !
-      call mem%dealloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
+      call mem%dealloc(orbital_coefficients_copy, wf%ao%n, wf%n_mo)
 !
       call mem%alloc(orbital_energies_copy, wf%n_mo)
 !
@@ -2440,8 +2400,6 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      real(dp) :: t1_diagnostic 
-!
       call output%printf('m', '- Ground state summary:', fs='(/t3,a)')
 !
       call output%printf('m', 'Final ground state energy (a.u.): (f18.12)', &
@@ -2451,10 +2409,6 @@ contains
                          reals=[wf%correlation_energy], fs='(/t6,a)')
 !
       call wf%print_dominant_amplitudes()
-!
-      t1_diagnostic = wf%get_t1_diagnostic() 
-      call output%printf('m', 'T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', &
-                         reals=[t1_diagnostic], fs='(/t6,a)')
 !
    end subroutine print_gs_summary_ccs
 !
@@ -2504,17 +2458,17 @@ contains
       implicit none
 !
       class(ccs), intent(in) :: wf
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: screening_vector
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(out) :: screening_vector
 !
       integer :: x, p, y
 !
       real(dp), dimension(:), allocatable :: v
 !
-      call mem%alloc(v, wf%n_ao)
-      call zero_array(v, wf%n_ao)
+      call mem%alloc(v, wf%ao%n)
+      call zero_array(v, wf%ao%n)
 !
 !$omp parallel do private(x, p)
-      do x = 1, wf%n_ao
+      do x = 1, wf%ao%n
          do p = 1, wf%n_mo
 !
             if (wf%orbital_coefficients(x,p)**2 .gt. v(x)) &
@@ -2526,8 +2480,8 @@ contains
 !$omp end parallel do
 !
 !$omp parallel do private(x, y)
-      do x = 1, wf%n_ao
-         do y = 1, wf%n_ao
+      do x = 1, wf%ao%n
+         do y = 1, wf%ao%n
 !
             screening_vector(x, y) = v(x)*v(y)
 !
@@ -2535,7 +2489,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(v, wf%n_ao)
+      call mem%dealloc(v, wf%ao%n)
 !
    end subroutine construct_MO_screening_for_cd_ccs
 !

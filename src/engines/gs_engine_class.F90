@@ -398,7 +398,7 @@ contains
 !     Get the integrals mu_pqk for components k = 1, 2, 3 in the T1-transformed basis
 !
       call mem%alloc(mu_pqk, wf%n_mo, wf%n_mo, 3)
-      call wf%construct_mu(mu_pqk)
+      call wf%get_t1_oei('dipole', mu_pqk)
 !
 !     Get electronic expectation value contribution
 !
@@ -413,7 +413,7 @@ contains
 !
 !     Get nuclear expectation value contribution, then sum the two
 !
-      call wf%system%get_nuclear_dipole(nuclear)
+      nuclear = wf%get_nuclear_dipole()
 !
       total = electronic + nuclear
 !
@@ -444,7 +444,7 @@ contains
 !     Get the integrals q_pqk for components k = 1, 2, ..., 6 in the T1-transformed basis
 !
       call mem%alloc(q_pqk, wf%n_mo, wf%n_mo, 6)
-      call wf%construct_q(q_pqk)
+      call wf%get_t1_oei('quadrupole', q_pqk)
 !
 !     Get electronic expectation value contribution
 !
@@ -459,7 +459,7 @@ contains
 !
 !     Get nuclear expectation value contribution, then sum the two
 !
-      call wf%system%get_nuclear_quadrupole(nuclear)
+      nuclear = wf%get_nuclear_quadrupole()
 !
       total = electronic + nuclear
 !
@@ -497,36 +497,36 @@ contains
 !
       do_MO_screening = input%requested_keyword_in_section('mo screening', 'solver cholesky')
 !
-      eri_cholesky_solver = eri_cd(wf%system)
+      eri_cholesky_solver = eri_cd(wf%ao)
 !
       if (do_MO_screening) then
 !
          call output%printf('m', 'Using the MO screening for the Cholesky decomposition', &
                         fs='(/t3,a)')
 !
-         call mem%alloc(screening_vector, wf%n_ao, wf%n_ao)
+         call mem%alloc(screening_vector, wf%ao%n, wf%ao%n)
          call wf%construct_MO_screening_for_cd(screening_vector)
 !
-         call eri_cholesky_solver%run(wf%system, screening_vector)   ! Do the Cholesky decomposition
+         call eri_cholesky_solver%run(wf%ao, screening_vector)   ! Do the Cholesky decomposition
                                                                      ! using the MO screening
 !
-         call mem%dealloc(screening_vector, wf%n_ao, wf%n_ao) 
+         call mem%dealloc(screening_vector, wf%ao%n, wf%ao%n) 
 !
       else
 !
-         call eri_cholesky_solver%run(wf%system) ! Do the Cholesky decomposition 
+         call eri_cholesky_solver%run(wf%ao) ! Do the Cholesky decomposition 
 !
       endif
 !
-      call eri_cholesky_solver%diagonal_test(wf%system)  ! Determine the largest 
+      call eri_cholesky_solver%diagonal_test(wf%ao)  ! Determine the largest 
                                                          ! deviation in the ERI matrix 
 !
       wf%eri = t1_eri_tool(wf%n_o, wf%n_v, eri_cholesky_solver%n_cholesky, wf%need_g_abcd)
 !
       call wf%eri%initialize()
 !
-      call eri_cholesky_solver%construct_cholesky_mo_vectors(wf%system, wf%n_ao, wf%n_mo, &
-                                                             wf%orbital_coefficients, wf%eri)
+      call eri_cholesky_solver%construct_cholesky_mo_vectors(wf%ao, wf%ao%n, wf%n_mo, &
+                                                   wf%orbital_coefficients, wf%eri)
 !
       call eri_cholesky_solver%cleanup()
 !
