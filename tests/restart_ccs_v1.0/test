@@ -42,13 +42,14 @@ ierr = 0
 src = os.path.join(os.path.dirname(__file__), "old_restart_files")
 dest = os.path.join(os.path.dirname(__file__), "converted_files")
 
+if os.path.exists(dest):
+    shutil.rmtree(dest)
 shutil.copytree(src, dest)
 
 # Use the script on converted_files
 script = Path.cwd().parent / "convert_v.1.0_restart_files.py" 
 py_exe_ = sys.executable # use the correct python executable
 call_script = f"{py_exe_} {script} {dest}"
-print(call_script)
 
 p = subprocess.run(
     call_script,
