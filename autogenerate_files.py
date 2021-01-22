@@ -678,15 +678,7 @@ def autogenerate_complex_files(source_directory):
 
                     # Change integral and t1 transformation routines
 
-                    line = sub(
-                        r"\b" + "construct_mu" + r"\b", "construct_mu_complex", line
-                    )
-                    line = sub(
-                        r"\b" + "construct_h" + r"\b", "construct_h_complex", line
-                    )
-                    line = sub(
-                        r"\b" + "construct_q" + r"\b", "construct_q_complex", line
-                    )
+                    line = sub(r"\b" + "get_t1_oei" + r"\b", "get_t1_oei_complex", line)
                     line = sub(
                         r"\b" + "get_g_pqrs_t1" + r"\b", "get_g_pqrs_t1_complex", line
                     )

@@ -331,7 +331,7 @@ contains
 !
          call wf%initialize_ao_fock()
 !
-         call dcopy(wf%n_ao**2, template_wf%ao_fock, 1, wf%ao_fock, 1)                                                 
+         call dcopy(wf%ao%n**2, template_wf%ao_fock, 1, wf%ao_fock, 1)                                                 
 !                               
          call wf%initialize_mo_fock()
 !
@@ -1211,6 +1211,9 @@ contains
       call wf%destruct_mo_fock()
       call wf%destruct_ao_fock()
 !
+      deallocate(wf%ao)
+      if (wf%embedded) deallocate(wf%embedding)
+!
    end subroutine cleanup_mlccsd
 !
 !
@@ -1438,8 +1441,8 @@ contains
                               &from orbital_coefficients_mlcc. Make sure restarted &
                               &calculation and restart files are consistent!')
 !
-      call mem%alloc(canonical_orbitals, wf%n_ao, wf%n_mo)
-      call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, canonical_orbitals, 1)
+      call mem%alloc(canonical_orbitals, wf%ao%n, wf%n_mo)
+      call dcopy(wf%ao%n*wf%n_mo, wf%orbital_coefficients, 1, canonical_orbitals, 1)
 !
       call wf%read_mlcc_orbitals()
 !
@@ -1458,7 +1461,7 @@ contains
       if (wf%exists_frozen_fock_terms) &
          call wf%update_MO_fock_contributions(canonical_orbitals)
 !
-      call mem%dealloc(canonical_orbitals, wf%n_ao, wf%n_mo)
+      call mem%dealloc(canonical_orbitals, wf%ao%n, wf%n_mo)
 !
    end subroutine mo_preparations_from_restart_mlccsd
 !

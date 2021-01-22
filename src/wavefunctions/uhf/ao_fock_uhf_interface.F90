@@ -44,7 +44,7 @@
       implicit none
 !
       class(uhf) :: wf
-      real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in) :: prev_ao_density
+      real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in) :: prev_ao_density
 !
    end subroutine update_fock_and_energy_cumulative_uhf
 !
@@ -78,7 +78,7 @@
       implicit none
 !
       class(uhf) :: wf
-      real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
+      real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in), optional :: prev_ao_density
 !
    end subroutine update_fock_and_energy_uhf
 !
@@ -103,41 +103,10 @@
       implicit none
 !
       class(uhf) :: wf
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D_sigma
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D_sigma
       character(len=*), intent(in) :: sigma
       logical, intent(in), optional :: cumulative
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: h_wx
 !
    end subroutine construct_ao_spin_fock_uhf
-!
-!
-   module subroutine update_fock_mm_uhf(wf)
-!!
-!!    Update alpha and beta Fock matrices with polarizable QM/MM terms
-!!    For now: QM/FQ model (see mm_class and output file)
-!!    Written by Tommaso Giovannini, July 2019 for QM/MM
-!!
-      implicit none
-!
-      class(uhf) :: wf
-!
-   end subroutine update_fock_mm_uhf
-!
-!
-   module subroutine update_fock_pcm_uhf(wf)
-!!
-!!    Update Fock PCM 
-!!    Written by Tommaso Giovannini, Oct 2019 
-!!
-!!    The QM Fock is updated with the contributions coming 
-!!    from the PCM:
-!!       q*V_wx
-!!
-!!    Done by interfacing to PCMSolver
-!!
-      implicit none
-!
-      class(uhf) :: wf
-!
-   end subroutine update_fock_pcm_uhf

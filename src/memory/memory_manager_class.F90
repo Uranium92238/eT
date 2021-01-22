@@ -51,7 +51,6 @@ module memory_manager_class
 !
    use parameters
    use global_out, only : output
-   use global_in, only : input
    use batching_index_class, only : batching_index
 !
 !     Debug option:
@@ -191,9 +190,8 @@ module memory_manager_class
       procedure, nopass :: print_allocation_error   => print_allocation_error_memory_manager
       procedure, nopass :: print_deallocation_error => print_deallocation_error_memory_manager
 !
-!     Read and print of settings 
+!     Print of settings 
 !
-      procedure :: read_settings     => read_settings_memory_manager
       procedure :: print_settings    => print_settings_memory_manager
 !
 !     Get and print of memory 
@@ -219,7 +217,7 @@ module memory_manager_class
 contains
 !
 !
-   function new_memory_manager() result(mem)
+   function new_memory_manager(total, units) result(mem)
 !!
 !!    New memory manager 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
@@ -231,14 +229,16 @@ contains
 !
       type(memory_manager) :: mem
 !
+      integer, intent(in) :: total 
+!
+      character(len=*), intent(in) :: units 
+!
 !     Set standard and read settings 
 !
 !     Default is 8 GB
 !
-      mem%total = 8 
-      mem%units = 'gb'
-!
-      call mem%read_settings()
+      mem%total = total 
+      mem%units = trim(units)
 !
 !     Convert from current unit to B
 !
@@ -2135,43 +2135,6 @@ contains
           mem%max_used =  mem%total - mem%available
 !
    end subroutine update_memory_after_alloc_memory_manager
-!
-!
-   subroutine read_settings_memory_manager(mem)
-!!
-!!    Read settings
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-      implicit none
-!
-      class(memory_manager) :: mem
-!
-      character(len=200) :: unit_string
-!
-!     Read unit
-!
-      if (input%requested_keyword_in_section('unit', 'memory')) then
-!
-         call input%get_keyword_in_section('unit', 'memory', unit_string)
-!
-         unit_string = adjustl(unit_string)
-         mem%units(1 : 2) = unit_string(1 : 2)
-!
-!        Sanity check: 
-!     
-!        If unit is specified, available must also be specified
-!
-         if (.not. input%requested_keyword_in_section('available', 'memory')) then
-!
-            call output%error_msg('memory unit can not be specified without &
-               &specifying available memory')
-!
-         endif
-      endif
-!
-      call input%get_keyword_in_section('available', 'memory', mem%total)
-!
-   end subroutine read_settings_memory_manager
 !
 !
    subroutine print_settings_memory_manager(mem)

@@ -280,20 +280,20 @@ contains
       n_doubles_o = wf%n_ccsd_o + wf%n_cc2_o
       n_doubles_v = wf%n_ccsd_v + wf%n_cc2_v
 !
-      call mem%alloc(S, wf%n_ao, wf%n_ao)
-      call wf%get_ao_s_wx(S)
+      call mem%alloc(S, wf%ao%n, wf%ao%n)
+      call wf%ao%get_oei('overlap', S)
 !
-      call mem%alloc(X, n_doubles_o, wf%n_ao)
+      call mem%alloc(X, n_doubles_o, wf%ao%n)
 !
       call dgemm('T', 'N',                      &
                   n_doubles_o,                  &
-                  wf%n_ao,                      &
-                  wf%n_ao,                      &
+                  wf%ao%n,                      &
+                  wf%ao%n,                      &
                   one,                          &
                   wf%orbital_coefficients_cc2,  &
-                  wf%n_ao,                      &
+                  wf%ao%n,                      &
                   S,                            &
-                  wf%n_ao,                      &
+                  wf%ao%n,                      &
                   zero,                         &
                   X,                            &
                   n_doubles_o)
@@ -301,49 +301,49 @@ contains
       call dgemm('N', 'N',                &
                   n_doubles_o,            &
                   n_doubles_o,            &
-                  wf%n_ao,                &
+                  wf%ao%n,                &
                   one,                    &
                   X,                      &
                   n_doubles_o,            &
                   wf%orbital_coefficients,&
-                  wf%n_ao,                &
+                  wf%ao%n,                &
                   zero,                   &
                   wf%O_o,                 &
                   n_doubles_o)
 !
-      call mem%dealloc(X, n_doubles_o, wf%n_ao)
+      call mem%dealloc(X, n_doubles_o, wf%ao%n)
 !
-      call mem%alloc(X, n_doubles_v, wf%n_ao)
+      call mem%alloc(X, n_doubles_v, wf%ao%n)
 !
       call dgemm('T', 'N',                                      &
                   n_doubles_v,                                  &
-                  wf%n_ao,                                      &
-                  wf%n_ao,                                      &
+                  wf%ao%n,                                      &
+                  wf%ao%n,                                      &
                   one,                                          &
                   wf%orbital_coefficients_cc2(1, wf%n_o + 1),   &
-                  wf%n_ao,                                      &
+                  wf%ao%n,                                      &
                   S,                                            &
-                  wf%n_ao,                                      &
+                  wf%ao%n,                                      &
                   zero,                                         &
                   X,                                            &
                   n_doubles_v)
 !
-      call mem%dealloc(S, wf%n_ao, wf%n_ao)
+      call mem%dealloc(S, wf%ao%n, wf%ao%n)
 !
       call dgemm('N', 'N',                               &
                   n_doubles_v,                           &
                   n_doubles_v,                           &
-                  wf%n_ao,                               &
+                  wf%ao%n,                               &
                   one,                                   &
                   X,                                     &
                   n_doubles_v,                           &
                   wf%orbital_coefficients(1, wf%n_o + 1),&
-                  wf%n_ao,                               &
+                  wf%ao%n,                               &
                   zero,                                  &
                   wf%O_v,                                &
                   n_doubles_v)
 !
-      call mem%dealloc(X, n_doubles_v, wf%n_ao)
+      call mem%dealloc(X, n_doubles_v, wf%ao%n)
 !
    end subroutine construct_mlccsd_basis_transformation_matrix_mlccsd
 !
@@ -398,7 +398,7 @@ contains
 !     Note that active atoms are the first atoms of the array of atoms in system. 
 !     They are also ordered after the method they are treated with.
 !
-      call wf%system%first_and_last_ao_active_space('ccsd', first_ao_ccsd, last_ao_ccsd) 
+      call wf%ao%get_aos_in_subset('ccsd', first_ao_ccsd, last_ao_ccsd)
 !
       n_active_aos_ccsd = last_ao_ccsd - first_ao_ccsd + 1
 !
@@ -415,7 +415,7 @@ contains
 !
       if (wf%do_cc2 .and. wf%do_ccs) then
 !
-         call wf%system%first_and_last_ao_active_space('cc2', first_ao_cc2, last_ao_cc2)
+         call wf%ao%get_aos_in_subset('cc2', first_ao_cc2, last_ao_cc2)
 !         
          n_active_aos_cc2 = last_ao_cc2 - first_ao_cc2 + 1
          call mem%alloc(active_aos_cc2, n_active_aos_ccsd + n_active_aos_cc2)
@@ -436,20 +436,20 @@ contains
 !
 !     Set up active occupied density 
 !
-      call mem%alloc(D, wf%n_ao, wf%n_ao)
+      call mem%alloc(D, wf%ao%n, wf%ao%n)
 !
       call dgemm('N', 'T',                   &
-                  wf%n_ao,                   &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
+                  wf%ao%n,                   &
                   wf%n_o,                    &
                   one,                       &
                   wf%orbital_coefficients,   &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   wf%orbital_coefficients,   &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   zero,                      &
                   D,                         &
-                  wf%n_ao)
+                  wf%ao%n)
 !
 !
 !     Construct active occupied orbitals
@@ -490,17 +490,17 @@ contains
 !        Set up virtual density     
 !
          call dgemm('N', 'T',                                  &
-                     wf%n_ao,                                  &
-                     wf%n_ao,                                  &
+                     wf%ao%n,                                  &
+                     wf%ao%n,                                  &
                      wf%n_v,                                   &
                      one,                                      &
                      wf%orbital_coefficients(1, wf%n_o + 1),   &
-                     wf%n_ao,                                  &
+                     wf%ao%n,                                  &
                      wf%orbital_coefficients(1, wf%n_o + 1),   &
-                     wf%n_ao,                                  &
+                     wf%ao%n,                                  &
                      zero,                                     &
                      D,                                        &
-                     wf%n_ao)
+                     wf%ao%n)
 !
          mo_offset = wf%n_o
 !
@@ -514,7 +514,7 @@ contains
             call wf%construct_orbital_block_by_density_cd(D, wf%n_cc2_v, &
                               wf%cholesky_orbital_threshold, mo_offset, active_aos_cc2)
 !
-            call wf%system%first_and_last_ao_active_space('cc2', first_ao_cc2, last_ao_cc2)
+            call wf%ao%get_aos_in_subset('cc2', first_ao_cc2, last_ao_cc2)
 !         
             n_active_aos_cc2 = last_ao_cc2 - first_ao_cc2 + 1
             call mem%dealloc(active_aos_cc2, n_active_aos_ccsd + n_active_aos_cc2)
@@ -541,7 +541,7 @@ contains
       endif
 !
       call mem%dealloc(active_aos_ccsd, n_active_aos_ccsd) 
-      call mem%dealloc(D, wf%n_ao, wf%n_ao)        
+      call mem%dealloc(D, wf%ao%n, wf%ao%n)        
 !
    end subroutine construct_cholesky_orbitals_mlccsd
 !
@@ -573,36 +573,36 @@ contains
 !
 !     0. Determine active ao list
 !
-      call wf%system%first_and_last_ao_active_space('ccsd', first_ao, last_ao)
+      call wf%ao%get_aos_in_subset('ccsd', first_ao, last_ao)
 !
       n_active_aos = last_ao - first_ao + 1
 !
 !     1. Set up occupied density
 !
-      call mem%alloc(D, wf%n_ao, wf%n_ao)
+      call mem%alloc(D, wf%ao%n, wf%ao%n)
 !
       call dgemm('N', 'T',                   &
-                  wf%n_ao,                   &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
+                  wf%ao%n,                   &
                   wf%n_o,                    &
                   one,                       &
                   wf%orbital_coefficients,   &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   wf%orbital_coefficients,   &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   zero,                      &
                   D,                         &
-                  wf%n_ao)
+                  wf%ao%n)
 !
       if (wf%exists_frozen_fock_terms) then
 !
-         call daxpy(wf%n_ao**2, one, wf%frozen_CCT, 1, D, 1)
+         call daxpy(wf%ao%n**2, one, wf%frozen_CCT, 1, D, 1)
 !
       endif
 !
 !     2. Construct PAOs for active atoms
 !
-      call mem%alloc(PAO_coeff, wf%n_ao, n_active_aos)
+      call mem%alloc(PAO_coeff, wf%ao%n, n_active_aos)
 !
       call wf%project_atomic_orbitals(D, PAO_coeff, n_active_aos, first_ao)
 !
@@ -620,42 +620,42 @@ contains
 !
 !     Set the active virtual orbital coefficients
 !
-      call dcopy(wf%n_ccsd_v*wf%n_ao, PAO_coeff, 1, wf%orbital_coefficients(1, wf%n_o + 1), 1)
+      call dcopy(wf%n_ccsd_v*wf%ao%n, PAO_coeff, 1, wf%orbital_coefficients(1, wf%n_o + 1), 1)
 !
-      call mem%dealloc(PAO_coeff, wf%n_ao, n_active_aos)
+      call mem%dealloc(PAO_coeff, wf%ao%n, n_active_aos)
 !
       if (rank .lt. wf%n_v) then 
 !
          if (wf%do_cc2 .and. wf%do_ccs) then
 !
-            call wf%system%first_and_last_ao_active_space('cc2', first_ao, last_ao)
+            call wf%ao%get_aos_in_subset('cc2', first_ao, last_ao)
 !
             n_active_aos = last_ao - first_ao + 1
 !
 !           1. Set up occupied + virtual CCSD density 
 !
             call dgemm('N', 'T',             &
-                     wf%n_ao,                &
-                     wf%n_ao,                &
+                     wf%ao%n,                &
+                     wf%ao%n,                &
                      wf%n_o + wf%n_ccsd_v,   &
                      one,                    &
                      wf%orbital_coefficients,&
-                     wf%n_ao,                &
+                     wf%ao%n,                &
                      wf%orbital_coefficients,&
-                     wf%n_ao,                &
+                     wf%ao%n,                &
                      zero,                   &
                      D,                      &
-                     wf%n_ao)
+                     wf%ao%n)
 !
             if (wf%exists_frozen_fock_terms) then
 !  
-               call daxpy(wf%n_ao**2, one, wf%frozen_CCT, 1, D, 1)
+               call daxpy(wf%ao%n**2, one, wf%frozen_CCT, 1, D, 1)
 !  
             endif
 !
 !           2. Construct PAOs for active atoms
 !
-            call mem%alloc(PAO_coeff, wf%n_ao, n_active_aos)
+            call mem%alloc(PAO_coeff, wf%ao%n, n_active_aos)
 !
             call wf%project_atomic_orbitals(D, PAO_coeff, n_active_aos, first_ao)
 !
@@ -673,10 +673,10 @@ contains
 !
 !           Set the active virtual orbital coefficients
 !
-            call dcopy(wf%n_cc2_v*wf%n_ao, PAO_coeff, 1, &
+            call dcopy(wf%n_cc2_v*wf%ao%n, PAO_coeff, 1, &
                      wf%orbital_coefficients(1, wf%n_o + wf%n_ccsd_v + 1), 1)
 !
-            call mem%dealloc(PAO_coeff, wf%n_ao, n_active_aos)
+            call mem%dealloc(PAO_coeff, wf%ao%n, n_active_aos)
 !
             if (wf%n_ccsd_v + wf%n_cc2_v .lt. wf%n_v) then 
 !
@@ -685,48 +685,48 @@ contains
 !              4. Construct M = sum_p C_αp C_βp  for p = 1, n_o + n_cc2_v + n_ccsd_v
 !
                call dgemm('N', 'T',                            &
-                           wf%n_ao,                            &
-                           wf%n_ao,                            &
+                           wf%ao%n,                            &
+                           wf%ao%n,                            &
                            wf%n_o + wf%n_ccsd_v + wf%n_cc2_v,  &
                            one,                                &
                            wf%orbital_coefficients,            &
-                           wf%n_ao,                            &
+                           wf%ao%n,                            &
                            wf%orbital_coefficients,            &
-                           wf%n_ao,                            &
+                           wf%ao%n,                            &
                            zero,                               &
                            D,                                  &
-                           wf%n_ao)
+                           wf%ao%n)
 !
                if (wf%exists_frozen_fock_terms) then
 !
-                  call daxpy(wf%n_ao**2, one, wf%frozen_CCT, 1, D, 1)
+                  call daxpy(wf%ao%n**2, one, wf%frozen_CCT, 1, D, 1)
 !
                endif
 !
 !              Construct PAOs for the remaining virtual orbitals
 !
-               call mem%alloc(PAO_coeff, wf%n_ao, wf%n_ao)
+               call mem%alloc(PAO_coeff, wf%ao%n, wf%ao%n)
 !
-               call wf%project_atomic_orbitals(D, PAO_coeff, wf%n_ao)
+               call wf%project_atomic_orbitals(D, PAO_coeff, wf%ao%n)
 !
 !              5. Orthonormalize PAOs to get inactive virtual orbitals
 !
-               call mem%alloc(S, wf%n_ao, wf%n_ao)
+               call mem%alloc(S, wf%ao%n, wf%ao%n)
 !
-               call wf%get_orbital_overlap(PAO_coeff, wf%n_ao, S)
+               call wf%get_orbital_overlap(PAO_coeff, wf%ao%n, S)
 !
-               call wf%lowdin_orthonormalization(PAO_coeff, S, wf%n_ao, rank)
+               call wf%lowdin_orthonormalization(PAO_coeff, S, wf%ao%n, rank)
 !
-               call mem%dealloc(S, wf%n_ao, wf%n_ao)
+               call mem%dealloc(S, wf%ao%n, wf%ao%n)
 !
                wf%n_ccs_v = rank 
 !
 !              6. Set inactive virtuals
 !
-               call dcopy(wf%n_ccs_v*wf%n_ao, PAO_coeff, 1, &
+               call dcopy(wf%n_ccs_v*wf%ao%n, PAO_coeff, 1, &
                            wf%orbital_coefficients(1, wf%n_o + wf%n_ccsd_v + wf%n_cc2_v + 1), 1)
 !
-               call mem%dealloc(PAO_coeff, wf%n_ao, wf%n_ao)
+               call mem%dealloc(PAO_coeff, wf%ao%n, wf%ao%n)
 !
             endif
 !
@@ -737,39 +737,39 @@ contains
 !           4. Construct M = sum_p C_αp C_βp  for p = 1, n_o + n_ccsd_v
 !
             call dgemm('N', 'T',             &
-                     wf%n_ao,                &
-                     wf%n_ao,                &
+                     wf%ao%n,                &
+                     wf%ao%n,                &
                      wf%n_o + wf%n_ccsd_v,   &
                      one,                    &
                      wf%orbital_coefficients,&
-                     wf%n_ao,                &
+                     wf%ao%n,                &
                      wf%orbital_coefficients,&
-                     wf%n_ao,                &
+                     wf%ao%n,                &
                      zero,                   &
                      D,                      &
-                     wf%n_ao)
+                     wf%ao%n)
 !
             if (wf%exists_frozen_fock_terms) then
 !
-               call daxpy(wf%n_ao**2, one, wf%frozen_CCT, 1, D, 1)
+               call daxpy(wf%ao%n**2, one, wf%frozen_CCT, 1, D, 1)
 !
             endif
 !
 !           Construct PAOs for the remaining virtual orbitals
 !
-            call mem%alloc(PAO_coeff, wf%n_ao, wf%n_ao)
+            call mem%alloc(PAO_coeff, wf%ao%n, wf%ao%n)
 !
-            call wf%project_atomic_orbitals(D, PAO_coeff, wf%n_ao)
+            call wf%project_atomic_orbitals(D, PAO_coeff, wf%ao%n)
 !
 !           5. Orthonormalize PAOs to get inactive virtual orbitals
 !
-            call mem%alloc(S, wf%n_ao, wf%n_ao)
+            call mem%alloc(S, wf%ao%n, wf%ao%n)
 !
-            call wf%get_orbital_overlap(PAO_coeff, wf%n_ao, S)
+            call wf%get_orbital_overlap(PAO_coeff, wf%ao%n, S)
 !
-            call wf%lowdin_orthonormalization(PAO_coeff, S, wf%n_ao, rank)
+            call wf%lowdin_orthonormalization(PAO_coeff, S, wf%ao%n, rank)
 !
-            call mem%dealloc(S, wf%n_ao, wf%n_ao)
+            call mem%dealloc(S, wf%ao%n, wf%ao%n)
 !
             if (wf%do_cc2) then
 !
@@ -783,16 +783,16 @@ contains
 !
 !           6. Set inactive virtuals
 !
-            call dcopy((rank)*wf%n_ao, PAO_coeff, 1, &
+            call dcopy((rank)*wf%ao%n, PAO_coeff, 1, &
                            wf%orbital_coefficients(1, wf%n_o + wf%n_ccsd_v + 1), 1)
 !
-            call mem%dealloc(PAO_coeff, wf%n_ao, wf%n_ao)
+            call mem%dealloc(PAO_coeff, wf%ao%n, wf%ao%n)
 !
          endif
 !
       endif
 !
-      call mem%dealloc(D, wf%n_ao, wf%n_ao)
+      call mem%dealloc(D, wf%ao%n, wf%ao%n)
 !
    end subroutine construct_paos_mlccsd
 !
@@ -1046,7 +1046,7 @@ contains
       call wf%construct_fock()
       call wf%destruct_t1()
 
-      call dcopy(wf%n_mo*wf%n_ao, wf%orbital_coefficients, 1, wf%orbital_coefficients_cc2, 1)
+      call dcopy(wf%n_mo*wf%ao%n, wf%orbital_coefficients, 1, wf%orbital_coefficients_cc2, 1)
 !
       call wf%construct_block_diagonal_fock_orbitals(n_levels,                   &
                                        [wf%n_ccsd_o + wf%n_cc2_o, wf%n_ccs_o],   &

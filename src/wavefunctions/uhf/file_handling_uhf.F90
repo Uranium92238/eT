@@ -45,8 +45,8 @@ contains
 !
       call wf%orbital_coefficients_file%open_('write', 'rewind')
 !
-      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients_a, wf%n_ao*wf%n_mo)
-      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients_b, wf%n_ao*wf%n_mo)
+      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients_a, wf%ao%n*wf%n_mo)
+      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients_b, wf%ao%n*wf%n_mo)
 !
       call wf%orbital_coefficients_file%close_
 !
@@ -66,8 +66,8 @@ contains
 !
       call wf%orbital_coefficients_file%open_('read', 'rewind')
 !
-      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients_a, wf%n_ao*wf%n_mo)
-      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients_b, wf%n_ao*wf%n_mo)
+      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients_a, wf%ao%n*wf%n_mo)
+      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients_b, wf%ao%n*wf%n_mo)
 !
       call wf%orbital_coefficients_file%close_
 !
@@ -135,15 +135,15 @@ contains
       ao_density_file_b = sequential_file('ao_density_b')
 !
       call ao_density_file%open_('write', 'rewind')
-      call ao_density_file%write_(wf%ao_density, wf%n_ao*wf%n_ao)
+      call ao_density_file%write_(wf%ao_density, wf%ao%n*wf%ao%n)
       call ao_density_file%close_
 !
       call ao_density_file_a%open_('write', 'rewind')
-      call ao_density_file_a%write_(wf%ao_density_a, wf%n_ao*wf%n_ao)
+      call ao_density_file_a%write_(wf%ao_density_a, wf%ao%n*wf%ao%n)
       call ao_density_file_a%close_
 !
       call ao_density_file_b%open_('write', 'rewind')
-      call ao_density_file_b%write_(wf%ao_density_b, wf%n_ao*wf%n_ao)
+      call ao_density_file_b%write_(wf%ao_density_b, wf%ao%n*wf%ao%n)
       call ao_density_file_b%close_
 !
    end subroutine save_ao_density_uhf

@@ -96,4 +96,80 @@ module parameters
 !
    integer, parameter :: int32_mo_limit = 215
 !
+!
+contains
+!
+!
+   pure function get_conversion_factor(from, to) result(conversion_factor)
+!!
+!!    Get conversion factor 
+!!    Written by Eirik F. Kjønstad, 2020
+!!
+!!    Returns the conversion factor needed to convert from units 
+!!    'from' to units 'to' (angstrom/bohr).
+!!
+!!    Returns zero if from or two are not recognized units.
+!!
+      implicit none 
+!
+      character(len=*), intent(in) :: from, to  
+!
+      real(dp) :: conversion_factor
+!
+      if (trim(from) .eq. 'bohr' .and. trim(to) .eq. 'angstrom') then 
+!
+         conversion_factor = bohr_to_angstrom
+!
+      elseif (trim(from) .eq. 'angstrom' .and. trim(to) .eq. 'bohr') then 
+!
+         conversion_factor = angstrom_to_bohr
+!
+      else
+!
+         conversion_factor = one
+!
+      endif      
+!
+      if (trim(from) .ne. 'angstrom' .and. trim(from) .ne. 'bohr' .or. &
+          trim(to)   .ne. 'angstrom' .and. trim(to)   .ne. 'bohr') then 
+!
+         conversion_factor = zero
+!
+      endif
+!
+   end function get_conversion_factor
+!
+!
+   pure function get_units_label(units) result(label)
+!!
+!!    Get units label 
+!!    Written by Eirik F. Kjønstad, 2020
+!!
+!!    Returns 'a.u.' if units = 'bohr'
+!!    Returns 'angstrom' if units = 'angstrom'
+!!    Returns 'unknown' otherwise
+!!
+      implicit none 
+!
+      character(len=*), intent(in) :: units 
+!
+      character(len=100) :: label 
+!
+      if (trim(units) == 'angstrom') then
+!
+         label = 'angstrom'
+!
+      elseif (trim(units) == 'bohr') then
+!
+         label = 'a.u.'
+!
+      else
+!
+         label = 'unknown'
+!
+      endif      
+!
+   end function get_units_label
+!
+!
 end module parameters

@@ -27,14 +27,14 @@
       implicit none
 !
       class(hf) :: wf
-      real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
+      real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in), optional :: prev_ao_density
 !
    end subroutine update_fock_and_energy_hf
 !
 !
-   module subroutine update_fock_and_energy_cumulative_hf(wf, prev_ao_density)
+   module subroutine update_G_cumulative_hf(wf, prev_ao_density)
 !!
-!!    Update Fock and energy cumulatively
+!!    Update G cumulative
 !!    Written by Eirik F. Kjønstad, Sep 2018
 !!
 !!    Called by solver when a new density has been obtained and
@@ -42,19 +42,23 @@
 !!    we mean using the density change to build the Fock matrix
 !!    in the iterative loop.
 !!
+!!    Modified by SDF, Sep 2020:
+!!    
+!!    Cumulative construction of two-electron part and not
+!!    full Fock matrix
+!!
       implicit none
 !
       class(hf) :: wf
-      real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in) :: prev_ao_density
+      real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in) :: prev_ao_density
 !
-   end subroutine update_fock_and_energy_cumulative_hf
+   end subroutine update_G_cumulative_hf
 !
 !
-   module subroutine update_fock_and_energy_non_cumulative_hf(wf)
+   module subroutine update_G_non_cumulative_hf(wf)
 !!
-!!    Update Fock and energy
+!!    Update G
 !!    Written by Eirik F. Kjønstad, Sep 2018
-!!    Modified by Tommaso Giovannini, May 2019 for QM/MM
 !!
 !!    Called by solver when a new density has been obtained and
 !!    the next Fock and energy is to be computed.
@@ -63,7 +67,7 @@
 !
       class(hf) :: wf
 !
-   end subroutine update_fock_and_energy_non_cumulative_hf
+   end subroutine update_G_non_cumulative_hf
 !
 !
    module subroutine construct_ao_G_hf(wf, D, G, C_screening)
@@ -87,8 +91,8 @@
 !!                 MLHF when constructing G(Da). Default: false.
 !!
       class(hf)   :: wf
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: D
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: G
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)    :: D
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(inout) :: G
       logical, optional, intent(in) :: C_screening
 !
    end subroutine construct_ao_G_hf
@@ -118,12 +122,12 @@
 !
       class(hf), intent(in) :: wf
       integer, intent(in) :: n_threads, n_sig_shp
-      type(interval), dimension(wf%system%n_s), intent(in) :: shells
-      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
+      type(interval), dimension(wf%ao%n_sh), intent(in) :: shells
+      real(dp), dimension(wf%ao%n, wf%ao%n*n_threads)   :: F
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz 
       real(dp), intent(in) :: coulomb_thr, exchange_thr, precision_thr
-      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: shp_density_schwarz
+      real(dp), dimension(wf%ao%n_sh, wf%ao%n_sh), intent(in) :: shp_density_schwarz
 !
    end subroutine construct_ao_G_thread_terms_hf
 !
@@ -166,12 +170,12 @@
 !
       class(hf), intent(in) :: wf
       integer, intent(in) :: n_threads, n_sig_shp
-      type(interval), dimension(wf%system%n_s), intent(in) :: shells
-      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
+      type(interval), dimension(wf%ao%n_sh), intent(in) :: shells
+      real(dp), dimension(wf%ao%n, wf%ao%n*n_threads)   :: F
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz 
       real(dp), intent(in) :: coulomb_thr, exchange_thr, precision_thr
-      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: shp_density_schwarz
+      real(dp), dimension(wf%ao%n_sh, wf%ao%n_sh), intent(in) :: shp_density_schwarz
 !
    end subroutine construct_ao_G_thread_terms_mo_screened_hf
 !
@@ -197,11 +201,11 @@
 !
       class(hf), intent(in) :: wf
       integer, intent(in) :: n_threads,  n_sig_shp
-      type(interval), dimension(wf%system%n_s), intent(in) :: shells
-      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
+      type(interval), dimension(wf%ao%n_sh), intent(in) :: shells
+      real(dp), dimension(wf%ao%n, wf%ao%n*n_threads)   :: F
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, precision_thr
-      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in)               :: shp_density_schwarz
+      real(dp), dimension(wf%ao%n_sh, wf%ao%n_sh), intent(in)               :: shp_density_schwarz
 !
    end subroutine construct_coulomb_ao_G_hf
 !
@@ -227,29 +231,13 @@
 !
       class(hf), intent(in) :: wf
       integer, intent(in) :: n_threads,  n_sig_shp
-      type(interval), dimension(wf%system%n_s), intent(in) :: shells
-      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
+      type(interval), dimension(wf%ao%n_sh), intent(in) :: shells
+      real(dp), dimension(wf%ao%n, wf%ao%n*n_threads)   :: F
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, exchange_thr, precision_thr
-      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: shp_density_schwarz
+      real(dp), dimension(wf%ao%n_sh, wf%ao%n_sh), intent(in) :: shp_density_schwarz
 !
    end subroutine construct_exchange_ao_G_hf
-!
-!
-   module subroutine construct_shp_eri_schwarz_hf(wf)
-!!
-!!    Construct shell-pair electronic-repulsion-integral Schwarz vector
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Computes a vector that contains the largest value (in absolute terms)
-!!    of g_wxwx^1/2 for each shell pair (A,B), where w and x is in A and B,
-!!    respectively.
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine construct_shp_eri_schwarz_hf
 !
 !
    module subroutine construct_shp_density_schwarz_hf(wf, shp_density_schwarz, D)
@@ -264,28 +252,10 @@
       implicit none
 !
       class(hf) :: wf
-      real(dp), dimension(wf%system%n_s, wf%system%n_s) :: shp_density_schwarz
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
+      real(dp), dimension(wf%ao%n_sh, wf%ao%n_sh) :: shp_density_schwarz
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
 !
    end subroutine construct_shp_density_schwarz_hf
-!
-!
-   module subroutine get_n_sig_eri_shp_hf(wf, n_sig_shp)
-!!
-!!    Get number of significant ERI shell-pairs
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-!!    Calculates the number of significant shell pairs. The threshold
-!!    determines how small the largest element of g_wxwx in a shell
-!!    pair AB (w in A, x in B) to be ignored completely in the Fock
-!!    construction loop.
-!!
-      implicit none
-!
-      class(hf), intent(in) :: wf
-      integer, intent(inout) :: n_sig_shp
-!
-   end subroutine get_n_sig_eri_shp_hf
 !
 !
    module subroutine construct_ao_G_1der_hf(wf, G_ao, D_ao)
@@ -303,41 +273,10 @@
       implicit none
 !
       class(hf), intent(in) :: wf
-      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms) :: G_ao
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D_ao
+      real(dp), dimension(wf%ao%n, wf%ao%n, 3, wf%n_atomic_centers) :: G_ao
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D_ao
 !
    end subroutine construct_ao_G_1der_hf
-!
-!
-   module subroutine add_pcm_fock_term_hf(wf)
-!!
-!!    Update Fock PCM 
-!!    Written by Tommaso Giovannini, Oct 2019 
-!!
-!!    The QM Fock is updated with the contributions coming 
-!!    from the PCM:
-!!       q*V_wx
-!!
-!!    Done by interfacing to PCMSolver
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine add_pcm_fock_term_hf
-!
-!
-   module subroutine add_mm_fock_terms_hf(wf)
-!!
-!!    Update Fock with polarizable QM/MM terms
-!!    For now: QM/FQ model (see mm_class and output file)
-!!    Written by Tommaso Giovannini, July 2019 for QM/MM
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine add_mm_fock_terms_hf
 !
 !
    module subroutine set_screening_and_precision_thresholds_hf(wf, gradient_threshold)

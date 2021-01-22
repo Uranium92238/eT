@@ -26,7 +26,7 @@ module shell_class
 !
    use kinds
 !
-   use interval_class
+   use interval_class, only: interval
    use global_out, only : output
    use memory_manager_class, only : mem
 !
@@ -352,7 +352,7 @@ contains
 !!                cartesian basis functions: {xx, xy, xz, yy, yz, zz}
 !!                spherical/pure functions:  m_l: {2, 1, 0, -1, -2}
 !!    label:      string that is returned e.g. d_xx
-!!    cartesian: logical determining if a cartesian or "pure" basis set is used
+!!    cartesian:  logical determining if a cartesian or "pure" basis set is used
 !!
       use angular_momentum
 !

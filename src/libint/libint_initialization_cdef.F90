@@ -19,22 +19,6 @@
 !
 interface
 !
-   subroutine set_coulomb_precision_c(prec) bind(C, name='set_coulomb_precision')
-!
-      use iso_c_binding
-      implicit none
-!
-      real(c_double) :: prec
-!
-   end subroutine set_coulomb_precision_c
-!
-!
-   subroutine initialize_shell2atom_c() bind(C, name='initialize_shell2atom')
-!
-      implicit none
-!
-   end subroutine initialize_shell2atom_c
-!
 !
    subroutine export_geometry_and_basis_to_libint_c(nAtoms, &
                                                     atomicNumbers, &
@@ -42,7 +26,7 @@ interface
                                                     basisSets, &
                                                     maxLen, &
                                                     cartesians) &
-              bind(C, name='export_geometry_and_basis_to_libint')
+               bind(C, name='export_geometry_and_basis_to_libint')
 !
       use iso_c_binding, only: c_int, c_double, c_char
       implicit none
@@ -71,12 +55,13 @@ interface
 !
    end subroutine finalize_libint_c
 !
-   subroutine initialize_coulomb_c() bind(C, name='initialize_coulomb')
+   subroutine initialize_eri_c(eri_precision) bind(C, name='initialize_eri')
 !
       use iso_c_binding
       implicit none
+      real(c_double) :: eri_precision
 !
-   end subroutine initialize_coulomb_c
+   end subroutine initialize_eri_c
 !
    subroutine initialize_kinetic_c() bind(C, name='initialize_kinetic')
 !
@@ -122,5 +107,26 @@ interface
       integer(c_int)  :: n_points
 !
    end subroutine initialize_potential_c
+!
+   subroutine initialize_coulomb_external_charges_c(charges,coordinates,n_points) &
+            bind(C, name='initialize_coulomb_external_charges')
+!
+      use iso_c_binding
+      implicit none
+      real(c_double)  :: charges(*)
+      real(c_double)  :: coordinates(*)
+      integer(c_int)  :: n_points
+!
+   end subroutine initialize_coulomb_external_charges_c
+!
+   subroutine initialize_coulomb_external_unit_charges_c(coordinates,n_points) &
+            bind(C, name='initialize_coulomb_external_unit_charges')
+!
+      use iso_c_binding
+      implicit none
+      real(c_double)  :: coordinates(*)
+      integer(c_int)  :: n_points
+!
+   end subroutine initialize_coulomb_external_unit_charges_c
 !
 end interface

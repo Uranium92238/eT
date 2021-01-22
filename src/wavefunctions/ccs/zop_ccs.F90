@@ -361,7 +361,7 @@ contains
 !     Construct t1 transformed dipole moment
 !
       call mem%alloc(mu, wf%n_mo, wf%n_mo, 3)
-      call wf%construct_mu(mu)
+      call wf%get_t1_oei('dipole', mu)
 !
 !     Add one-electron electric field contribution to the diagonal 
 !     of Fock and one-electron integral terms

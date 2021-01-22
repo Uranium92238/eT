@@ -56,6 +56,8 @@ contains
 !!    Initialize
 !!    Written by Andreas Skeidsvoll, 2018
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(mp2), intent(inout) :: wf

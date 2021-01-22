@@ -80,8 +80,8 @@ add_eT_runtest(mlhf_full_space_energy                       "eT;short;mlhf;sad;p
 add_eT_runtest(mlhf_min_basis_diagonalization_energy        "eT;short;mlhf;sad;pao")
 add_eT_runtest(mlhf_initial_full_space_optimization         "eT;short;mlhf;sad;pao")
 add_eT_runtest(mlhf_restart                                 "eT;short;mlhf;sad;pao;restart")
-add_eT_runtest(mlhf_dipole                                  "eT;short;mlhf;sad;pao;dipole")
-add_eT_runtest(mlhf_quadrupole                              "eT;short;mlhf;sad;pao;quadrupole")
+add_eT_runtest(mlhf_dipole                                  "eT;short;mlhf;dipole")
+add_eT_runtest(mlhf_quadrupole                              "eT;short;mlhf;quadrupole")
 #
 add_eT_runtest(mp2_energy                                   "eT;short;hf;mp2")
 add_eT_runtest(mp2_energy_qmmmnopol                         "eT;short;hf;mp2;qmmm;mmnopol")

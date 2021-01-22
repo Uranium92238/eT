@@ -305,7 +305,7 @@ contains
 !
       if (solver%skip) return
 !
-      if (wf%n_ao == 1) then 
+      if (wf%ao%n == 1) then 
 !
          call solver%run_single_ao(wf)
          return
@@ -318,7 +318,7 @@ contains
 !
 !     Initialize the DIIS manager object
 !
-      dim_fock     = ((wf%n_ao)*(wf%n_ao + 1)/2)*(wf%n_densities)
+      dim_fock     = ((wf%ao%n)*(wf%ao%n + 1)/2)*(wf%n_densities)
       dim_gradient = (wf%n_mo*(wf%n_mo - 1)/2)*(wf%n_densities)
 !
       diis = diis_tool('hf_diis',                           &
@@ -333,11 +333,11 @@ contains
 !
       call wf%update_fock_and_energy()
 !
-      call mem%alloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
-      call mem%alloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
+      call mem%alloc(ao_fock, wf%ao%n*(wf%ao%n + 1)/2, wf%n_densities)
+      call mem%alloc(prev_ao_density, wf%ao%n**2, wf%n_densities)
 !
       call mem%alloc(G, wf%n_mo*(wf%n_mo - 1)/2, wf%n_densities)
-      call mem%alloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
+      call mem%alloc(F, wf%ao%n*(wf%ao%n + 1)/2, wf%n_densities)
 !
       call wf%get_packed_roothan_hall_gradient(G)
 !
@@ -443,10 +443,10 @@ contains
       enddo
 !
       call mem%dealloc(G, wf%n_mo*(wf%n_mo - 1)/2, wf%n_densities)
-      call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
+      call mem%dealloc(F, wf%ao%n*(wf%ao%n + 1)/2, wf%n_densities)
 !
-      call mem%dealloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
-      call mem%dealloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
+      call mem%dealloc(ao_fock, wf%ao%n*(wf%ao%n + 1)/2, wf%n_densities)
+      call mem%dealloc(prev_ao_density, wf%ao%n**2, wf%n_densities)
 !
       if (.not. solver%converged) then
 !

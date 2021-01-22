@@ -186,7 +186,7 @@ contains
       class(ccs), intent(in) :: wf
 !
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(in)  :: Z_pq
-      complex(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: Z_out
+      complex(dp), dimension(wf%ao%n, wf%ao%n), intent(out) :: Z_out
 !
       complex(dp), dimension(:,:), allocatable :: Z_mo
 !
@@ -200,7 +200,7 @@ contains
 !
       call symmetric_sandwich_right_transposition(Z_out, Z_mo,              &
                                                   wf%orbital_coefficients, &
-                                                  wf%n_ao, wf%n_mo)
+                                                  wf%ao%n, wf%n_mo)
 !
       call mem%dealloc(Z_mo, wf%n_mo, wf%n_mo)
 !

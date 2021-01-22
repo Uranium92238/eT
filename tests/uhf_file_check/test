@@ -29,8 +29,7 @@ f = get_hf_filter(threshold)
 # invoke the command line interface parser which returns options
 options = cli()
 
-checkfiles = ["uhf_mo_information.out", 
-              "h2o_he.xyz"]
+checkfiles = ["uhf_mo_information.out"]
 
 checkfiles = [os.path.join(os.path.dirname(__file__), i) for i in checkfiles]
 

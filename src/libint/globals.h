@@ -28,17 +28,28 @@
 */
 #include "eT_basis.h"
 
-extern eTBasis basis;                                        // The basis set used throughout
-extern vector<libint2::Engine> electronic_repulsion_engines; // The ERI engines
-extern vector<libint2::Engine> electronic_repulsion_1der;    // The ERI first derivative engines
-extern vector<libint2::Engine> kinetic;                      // The kinetic energy engines vector
-extern libint2::Engine kinetic_1der;						       // The kinetic energy first derivative
-extern vector<libint2::Engine> nuclear;                      // The nuclear attraction engine vector
-extern libint2::Engine nuclear_1der;						       // The nuclear energy first derivative
-extern libint2::Engine overlap_1der;                         // The overlap first derivative engine
-extern vector<libint2::Engine> overlap;                      // The overlap engine vector
-extern vector<libint2::Engine> dipole;                       // The dipole engine
-extern vector<libint2::Engine> quadrupole;                   // The quadrupole engine
-extern vector<libint2::Engine> potential;                    // The electronic potential engine vector
-extern vector<libint2::Atom> atoms;                          // Atoms vector
-extern vector<int> shell2atom;                               // Shell center vector
+// Global variables declared in this file
+
+// Basis set, atoms, and AOs
+extern eTBasis basis;  
+extern vector<libint2::Atom> atoms;                          
+extern vector<vector<int>> atom_to_shell_list;
+extern vector<int> shell_to_first_ao;       
+
+/* Vectors of Libint engines. 
+   Length of vectors is equal to number of threads 
+*/
+extern vector<libint2::Engine> electronic_repulsion; 
+extern vector<libint2::Engine> electronic_repulsion_1der;     
+extern vector<libint2::Engine> kinetic;                       
+extern vector<libint2::Engine> kinetic_1der;
+extern vector<libint2::Engine> nuclear;                      
+extern vector<libint2::Engine> nuclear_1der;                 
+extern vector<libint2::Engine> overlap; 						  
+extern vector<libint2::Engine> overlap_1der;                       
+extern vector<libint2::Engine> dipole;                        
+extern vector<libint2::Engine> quadrupole;                    
+extern vector<libint2::Engine> potential;                     
+extern vector<libint2::Engine> coulomb_external_charges;      
+extern vector<libint2::Engine> coulomb_external_unit_charges; 
+             

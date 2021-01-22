@@ -126,6 +126,32 @@ contains
    end subroutine zero_array_complex
 !
 !
+   subroutine zero_array_int(x, n)
+!!
+!!    Zero array int
+!!    Written by Eirik F. Kjønstad, 2020 
+!!
+!!    Sets the integer array x of length n to zero.
+!!
+      implicit none 
+!
+      integer, intent(in) :: n 
+!
+      integer, dimension(n), intent(out) :: x 
+!
+      integer :: I 
+!
+!$omp parallel do private(I) schedule(static)
+      do I = 1, n 
+!
+         x(I) = 0 
+!
+      enddo
+!$omp end parallel do
+!
+   end subroutine zero_array_int
+!
+!
    subroutine identity_array(x, n)
 !!
 !!    Identity array 
@@ -895,34 +921,49 @@ contains
 !
       real(dp), dimension(n,n), intent(in) :: A
       real(dp), dimension(n,n), intent(inout) :: Ainv
-
+!
+!     Store A in Ainv to prevent it from being overwritten by LAPACK
+      call dcopy(n**2, A, 1, Ainv, 1)
+!
+      call invert_in_place(Ainv, n)
+!
+   end subroutine invert
+!
+!
+   subroutine invert_in_place(A, n)
+!!
+!!    Invert in place
+!!    Written by Sarai D. Folkestad, 2018
+!!
+!!    Inverts n x n - matrix A and places the result in A.
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+!
+      real(dp), dimension(n,n), intent(inout) :: A
+!
       real(dp), dimension(n) :: work  ! work array for LAPACK
       integer, dimension(n) :: ipiv   ! pivot indices
       integer :: info
 !
-!     Store A in Ainv to prevent it from being overwritten by LAPACK
-!
-      Ainv = A
-!
 !     DGETRF computes an LU factorization of a general M-by-N matrix A
 !     using partial pivoting with row interchanges.
 !
-      call DGETRF(n, n, Ainv, n, ipiv, info)
+      call dgetrf(n, n, A, n, ipiv, info)
 !
-      if (info /= 0) then
-         stop 'Matrix is numerically singular!'
-      end if
+      if (info /= 0) &
+         call output%error_msg('Matrix is numerically singular! dgetrf error integer: (i0)', ints=[info])
 !
 !     DGETRI computes the inverse of a matrix using the LU factorization
 !     computed by DGETRF.
 !
-      call DGETRI(n, Ainv, n, ipiv, work, n, info)
+      call dgetri(n, A, n, ipiv, work, n, info)
 !
-      if (info /= 0) then
-         stop 'Matrix inversion failed!'
-      end if
+      if (info /= 0) &
+         call output%error_msg('Matrix inversion failed! dgetri error integer: (i0)', ints=[info])
 !
-   end subroutine invert
+   end subroutine invert_in_place
 !
 !
    subroutine invert_lower_triangular(Ainv, A, n)

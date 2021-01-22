@@ -108,7 +108,7 @@
       implicit none
 !
       class(hf) :: wf
-      real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
+      real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in), optional :: prev_ao_density
 !
    end subroutine update_fock_and_energy_mo_hf
 !

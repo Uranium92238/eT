@@ -243,7 +243,7 @@ contains
 !     Construct the dipole integrals
 !
       call mem%alloc(dipole_length, wf%n_mo, wf%n_mo, 3)
-      call wf%construct_mu(dipole_length)
+      call wf%get_t1_oei('dipole', dipole_length)
 !
       call mem%alloc(xiX, wf%n_es_amplitudes)     
       call mem%alloc(etaX, wf%n_es_amplitudes)     
@@ -386,7 +386,7 @@ contains
 !
 !        print results from Asymmetric Lanczos solver
 !
-         call solver%print_summary(wf, cartesian, eigenvalues_Re, eigenvalues_Im, &
+         call solver%print_summary(cartesian, eigenvalues_Re, eigenvalues_Im, &
                                     oscillator_strength)
 !
          call mem%dealloc(eigenvalues_Re, solver%chain_length)
@@ -541,21 +541,18 @@ contains
    end subroutine prepare_wf_for_excited_state_asymmetric_lanczos_cc_es
 !
 !
-   subroutine print_summary_asymmetric_lanczos_cc_es(solver, wf, component, eigenvalues_Re, &
+   subroutine print_summary_asymmetric_lanczos_cc_es(solver, component, eigenvalues_Re, &
                eigenvalues_Im, oscillator_strength)
 !!
 !!    Print summary 
 !!    Written by Sarai D. Folkestad and Torsha Moitra, Nov 2019
 !!
-!
       use output_file_class,              only: output_file
       use array_utilities,                only: quicksort_with_index_ascending
 !
       implicit none
 !
       class(asymmetric_lanczos_cc_es), intent(in) :: solver
-!
-      class(ccs), intent(in) :: wf
 !
       integer, intent(in) :: component
 !
@@ -585,8 +582,8 @@ contains
 !
       write(chain_length_string, '(i6)') solver%chain_length
 !
-      spectrum_file = output_file(trim(wf%system%name_)//'_'// &
-               trim(adjustl(chain_length_string))//'_'//component_string(component))
+      spectrum_file = output_file('lanczos' // trim(adjustl(chain_length_string)) // '_' &
+                                   //component_string(component))
 !
       call spectrum_file%open_()
 !
@@ -644,10 +641,7 @@ contains
 !
       call output%print_separator('minimal', 70, '-', fs='(t6, a)')
 !
-      call output%printf('m', 'For full spectrum see file: ' //  &
-                        trim(wf%system%name_) // '_' //  &
-                        trim(adjustl(chain_length_string)) // '_' //  &
-                        component_string(component), fs='(t6,a)')
+      call output%printf('m', 'For full spectrum see file: ' // spectrum_file%name_, fs='(t6,a)')
 !
       call mem%dealloc(index_list, solver%chain_length)
 !

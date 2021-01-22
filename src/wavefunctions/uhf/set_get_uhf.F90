@@ -42,23 +42,23 @@ contains
 !
       class(uhf) :: wf
 !
-      real(dp), dimension(wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities), intent(in) :: F ! Packed
+      real(dp), dimension(wf%ao%n*(wf%ao%n + 1)/2, wf%n_densities), intent(in) :: F ! Packed
 !
       real(dp), dimension(:), allocatable :: F_sigma
 !
-      call mem%alloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2)
+      call mem%alloc(F_sigma, wf%ao%n*(wf%ao%n + 1)/2)
 !
 !     Alpha Fock
 !
-      call dcopy(wf%n_ao*(wf%n_ao + 1)/2, F, 1, F_sigma, 1)
-      call squareup(F_sigma, wf%ao_fock_a, wf%n_ao)
+      call dcopy(wf%ao%n*(wf%ao%n + 1)/2, F, 1, F_sigma, 1)
+      call squareup(F_sigma, wf%ao_fock_a, wf%ao%n)
 !
 !     Beta Fock
 !
-      call dcopy(wf%n_ao*(wf%n_ao + 1)/2, F(1, 2), 1, F_sigma, 1)
-      call squareup(F_sigma, wf%ao_fock_b, wf%n_ao)
+      call dcopy(wf%ao%n*(wf%ao%n + 1)/2, F(1, 2), 1, F_sigma, 1)
+      call squareup(F_sigma, wf%ao_fock_b, wf%ao%n)
 !
-      call mem%dealloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2)
+      call mem%dealloc(F_sigma, wf%ao%n*(wf%ao%n + 1)/2)
 !
    end subroutine set_ao_fock_uhf
 !
@@ -74,23 +74,23 @@ contains
 !
       class(uhf), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_ao*(wf%n_ao+1)/2, wf%n_densities), intent(inout) :: F ! Packed
+      real(dp), dimension(wf%ao%n*(wf%ao%n+1)/2, wf%n_densities), intent(inout) :: F ! Packed
 !
       real(dp), dimension(:), allocatable :: F_sigma
 !
-      call mem%alloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2)
+      call mem%alloc(F_sigma, wf%ao%n*(wf%ao%n + 1)/2)
 !
 !     Alpha Fock
 !
-      call packin(F_sigma, wf%ao_fock_a, wf%n_ao)
-      call dcopy(wf%n_ao*(wf%n_ao + 1)/2, F_sigma, 1, F, 1)
+      call packin(F_sigma, wf%ao_fock_a, wf%ao%n)
+      call dcopy(wf%ao%n*(wf%ao%n + 1)/2, F_sigma, 1, F, 1)
 !
 !     Beta Fock
 !
-      call packin(F_sigma, wf%ao_fock_b, wf%n_ao)
-      call dcopy(wf%n_ao*(wf%n_ao + 1)/2, F_sigma, 1, F(1, 2), 1)
+      call packin(F_sigma, wf%ao_fock_b, wf%ao%n)
+      call dcopy(wf%ao%n*(wf%ao%n + 1)/2, F_sigma, 1, F(1, 2), 1)
 !
-      call mem%dealloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2)
+      call mem%dealloc(F_sigma, wf%ao%n*(wf%ao%n + 1)/2)
 !
    end subroutine get_ao_fock_uhf
 !
@@ -107,10 +107,10 @@ contains
 !
       class(uhf), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(inout) :: D
+      real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(inout) :: D
 !
-      call dcopy(wf%n_ao**2, wf%ao_density_a, 1, D, 1)
-      call dcopy(wf%n_ao**2, wf%ao_density_b, 1, D(1, 2), 1)
+      call dcopy(wf%ao%n**2, wf%ao_density_a, 1, D, 1)
+      call dcopy(wf%ao%n**2, wf%ao_density_b, 1, D(1, 2), 1)
 !
    end subroutine get_ao_density_sq_uhf
 !

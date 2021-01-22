@@ -81,7 +81,7 @@ module eri_cd_class
    use cholesky_array_list_class, only : cholesky_array_list
 !
    use batching_index_class, only : batching_index
-   use molecular_system_class, only : molecular_system
+   use ao_tool_class, only : ao_tool
 !
    use timings_class, only : timings
 !
@@ -184,15 +184,15 @@ module eri_cd_class
 contains
 !
 !
-   function new_eri_cd(system) result(solver)
+   function new_eri_cd(ao) result(solver)
 !!
 !!    New ERI CD
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      type(eri_cd) :: solver
-      type(molecular_system) :: system
+      type(eri_cd)  :: solver
+      type(ao_tool) :: ao
 !
       solver%timer = timings('Cholesky decomposition of ERIs')
       call solver%timer%turn_on()
@@ -212,9 +212,9 @@ contains
 !
       call solver%read_settings()
 !
-      solver%n_aop   = system%get_n_aos()*(system%get_n_aos()+1)/2 ! Number of ao pairs packed
-      solver%n_ao    = system%get_n_aos()
-      solver%n_s     = system%get_n_shells()
+      solver%n_aop   = ao%n*(ao%n+1)/2 ! Number of ao pairs packed
+      solver%n_ao    = ao%n
+      solver%n_s     = ao%n_sh
       solver%n_shp   = solver%n_s*(solver%n_s + 1)/2              ! Number of shell pairs packed
 !
 !     Initialize files
@@ -232,10 +232,10 @@ contains
 !
 !     Additional prints
 !
-      call output%printf('m', '- Cholesky decomposition system details:', fs='(/t3, a)')
+      call output%printf('m', '- Cholesky decomposition ao details:', fs='(/t3, a)')      
 !
       call output%printf('m', 'Total number of AOs:         (i13)', &
-                         ints=[system%get_n_aos()], fs='(/t6,a)')
+                         ints=[solver%n_ao], fs='(/t6,a)')
       call output%printf('m', 'Total number of shell pairs: (i13)', &
                          ints=[solver%n_shp], fs='(t6, a)')
       call output%printf('m', 'Total number of AO pairs:    (i13)', &
@@ -244,7 +244,7 @@ contains
    end function new_eri_cd
 !
 !
-   subroutine run_eri_cd(solver, system, screening_vector)
+   subroutine run_eri_cd(solver, ao, screening_vector)
 !!
 !!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -253,7 +253,7 @@ contains
 !
       class(eri_cd) :: solver
 !
-      type(molecular_system) :: system
+      type(ao_tool) :: ao
 !
       real(dp), dimension(solver%n_ao), optional :: screening_vector
 !
@@ -273,11 +273,11 @@ contains
 !
          if (present(screening_vector)) then
 !
-            call solver%construct_significant_diagonal_atomic(system, screening_vector)
+            call solver%construct_significant_diagonal_atomic(ao, screening_vector)
 !
          else
 !
-            call solver%construct_significant_diagonal_atomic(system)
+            call solver%construct_significant_diagonal_atomic(ao)
 !
          endif
 !
@@ -285,11 +285,11 @@ contains
 !
          if (present(screening_vector)) then
 !
-            call solver%construct_significant_diagonal(system, screening_vector)
+            call solver%construct_significant_diagonal(ao, screening_vector)
 !
          else
 !
-            call solver%construct_significant_diagonal(system)
+            call solver%construct_significant_diagonal(ao)
 !
          endif
 !
@@ -299,12 +299,12 @@ contains
 !
       if (solver%n_batches == 1) then
 !
-         call solver%determine_cholesky_basis(system, solver%diagonal_info_target, &
+         call solver%determine_cholesky_basis(ao, solver%diagonal_info_target, &
                                               solver%cholesky_basis_file)
 !
       else
 !
-         call solver%determine_cholesky_basis_PCD(system)
+         call solver%determine_cholesky_basis_PCD(ao)
 !
       endif
 !
@@ -314,7 +314,7 @@ contains
 !
 !     Construct and decompose S, invert the factors Q.
 !
-      call solver%construct_S(system)
+      call solver%construct_S(ao)
       call solver%invert_Q()
 !
       call invert_timer%turn_off()
@@ -343,7 +343,7 @@ contains
    end subroutine cleanup_eri_cd
 !
 !
-   subroutine construct_significant_diagonal_eri_cd(solver, system, screening_vector)
+   subroutine construct_significant_diagonal_eri_cd(solver, ao, screening_vector)
 !!
 !!    Construct significant diagonal
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -359,8 +359,8 @@ contains
 !!
       implicit none
 !
-      class(eri_cd) :: solver
-      class(molecular_system) :: system
+      class(eri_cd)  :: solver
+      class(ao_tool) :: ao
 !
       real(dp), dimension(solver%n_ao*solver%n_ao), target, optional :: screening_vector
 !
@@ -381,9 +381,9 @@ contains
 !
       real(dp), dimension(:,:,:,:), pointer :: g_ABAB_p
 !
-      real(dp), dimension(system%max_shell_size**4), target :: g_ABAB
-      real(dp), dimension(system%max_shell_size**2) :: construct_test
-      real(dp), dimension(system%max_shell_size**2) :: D_AB, D_AB_screen
+      real(dp), dimension(ao%max_sh_size**4), target :: g_ABAB
+      real(dp), dimension(ao%max_sh_size**2) :: construct_test
+      real(dp), dimension(ao%max_sh_size**2) :: D_AB, D_AB_screen
 !
       integer :: x, y, xy, xy_packed, A, B, I, K
 !
@@ -452,12 +452,12 @@ contains
          A = shp_index(I, 1)
          B = shp_index(I, 2)
 !
-         A_interval = system%shell_limits(A)
-         B_interval = system%shell_limits(B)
+         A_interval = ao%shells(A)
+         B_interval = ao%shells(B)
 !
 !        Construct diagonal D_AB for the given shell pair
 !
-         call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+         call ao%get_eri(g_ABAB, A, B, A, B)
 !
          g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
                   1 : A_interval%length, 1 : B_interval%length) &
@@ -505,12 +505,12 @@ contains
          A = shp_index(I, 1)
          B = shp_index(I, 2)
 !
-         A_interval = system%shell_limits(A)
-         B_interval = system%shell_limits(B)
+         A_interval = ao%shells(A)
+         B_interval = ao%shells(B)
 !
 !        Construct diagonal construct_test for the given shell pair
 !
-         call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+         call ao%get_eri(g_ABAB, A, B, A, B)
 !
          g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
                   1 : A_interval%length, 1 : B_interval%length) &
@@ -546,8 +546,8 @@ contains
             A = shp_index(I, 1)
             B = shp_index(I, 2)
 !
-            A_interval = system%shell_limits(A)
-            B_interval = system%shell_limits(B)
+            A_interval = ao%shells(A)
+            B_interval = ao%shells(B)
 !
             n_sig_aop = n_sig_aop + &
                            get_size_shp(A_interval, B_interval)
@@ -568,8 +568,8 @@ contains
             A = shp_index(I, 1)
             B = shp_index(I, 2)
 !
-            A_interval = system%shell_limits(A)
-            B_interval = system%shell_limits(B)
+            A_interval = ao%shells(A)
+            B_interval = ao%shells(B)
 !
             n_construct_aop = n_construct_aop + &
                            get_size_shp(A_interval, B_interval)
@@ -608,8 +608,8 @@ contains
             A = shp_index(I, 1)
             B = shp_index(I, 2)
 !
-            A_interval = system%shell_limits(A)
-            B_interval = system%shell_limits(B)
+            A_interval = ao%shells(A)
+            B_interval = ao%shells(B)
 !
             sig_shp_index(current_sig_shp, 1) = A
             sig_shp_index(current_sig_shp, 2) = B
@@ -645,10 +645,10 @@ contains
          A = sig_shp_index(I, 1)
          B = sig_shp_index(I, 2)
 !
-         A_interval = system%shell_limits(A)
-         B_interval = system%shell_limits(B)
+         A_interval = ao%shells(A)
+         B_interval = ao%shells(B)
 !
-         call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+         call ao%get_eri(g_ABAB, A, B, A, B)
 !
          g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
                   1 : A_interval%length, 1 : B_interval%length) &
@@ -730,7 +730,7 @@ contains
    end subroutine construct_significant_diagonal_eri_cd
 !
 !
-   subroutine construct_significant_diagonal_atomic_eri_cd(solver, system, screening_vector)
+   subroutine construct_significant_diagonal_atomic_eri_cd(solver, ao, screening_vector)
 !!
 !!    Construct significant diagonal atomic
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -751,7 +751,7 @@ contains
       implicit none
 !
       class(eri_cd) :: solver
-      class(molecular_system) :: system
+      class(ao_tool) :: ao
 !
       real(dp), dimension(solver%n_ao*solver%n_ao), target, optional :: screening_vector
 !
@@ -767,8 +767,8 @@ contains
       real(dp), dimension(:), allocatable :: D_xy
 !
       real(dp), dimension(:,:,:,:), pointer :: g_ABAB_p
-      real(dp), dimension(system%max_shell_size**4), target :: g_ABAB
-      real(dp), dimension(system%max_shell_size**2) :: D_AB, D_AB_screen, construct_test
+      real(dp), dimension(ao%max_sh_size**4), target :: g_ABAB
+      real(dp), dimension(ao%max_sh_size**2) :: D_AB, D_AB_screen, construct_test
 !
       integer :: x, y, xy, xy_packed, A, B, I, K
 !
@@ -837,14 +837,14 @@ contains
          A = shp_index(I, 1)
          B = shp_index(I, 2)
 !
-         if (system%shell_to_atom(B) == system%shell_to_atom(A)) then
+         if (ao%shell_to_center(B) == ao%shell_to_center(A)) then
 !
-            A_interval = system%shell_limits(A)
-            B_interval = system%shell_limits(B)
+            A_interval = ao%shells(A)
+            B_interval = ao%shells(B)
 !
 !           Construct diagonal D_AB for the given shell pair
 !
-            call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+            call ao%get_eri(g_ABAB, A, B, A, B)
 !
             g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
                      1 : A_interval%length, 1 : B_interval%length) &
@@ -896,12 +896,12 @@ contains
          A = shp_index(I, 1)
          B = shp_index(I, 2)
 !
-         A_interval = system%shell_limits(A)
-         B_interval = system%shell_limits(B)
+         A_interval = ao%shells(A)
+         B_interval = ao%shells(B)
 !
 !        Construct diagonal D_AB for the given shell pair
 !
-         call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+         call ao%get_eri(g_ABAB, A, B, A, B)
 !
          g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
                   1 : A_interval%length, 1 : B_interval%length) &
@@ -935,8 +935,8 @@ contains
             A = shp_index(I, 1)
             B = shp_index(I, 2)
 !
-            A_interval = system%shell_limits(A)
-            B_interval = system%shell_limits(B)
+            A_interval = ao%shells(A)
+            B_interval = ao%shells(B)
 !
             n_sig_aop = n_sig_aop + &
                            get_size_shp(A_interval, B_interval)
@@ -957,8 +957,8 @@ contains
             A = shp_index(I, 1)
             B = shp_index(I, 2)
 !
-            A_interval = system%shell_limits(A)
-            B_interval = system%shell_limits(B)
+            A_interval = ao%shells(A)
+            B_interval = ao%shells(B)
 !
             n_construct_aop = n_construct_aop + &
                            get_size_shp(A_interval, B_interval)
@@ -997,8 +997,8 @@ contains
             A = shp_index(I, 1)
             B = shp_index(I, 2)
 !
-            A_interval = system%shell_limits(A)
-            B_interval = system%shell_limits(B)
+            A_interval = ao%shells(A)
+            B_interval = ao%shells(B)
 !
             sig_shp_index(current_sig_shp, 1) = A
             sig_shp_index(current_sig_shp, 2) = B
@@ -1034,10 +1034,10 @@ contains
          A = sig_shp_index(I, 1)
          B = sig_shp_index(I, 2)
 !
-         A_interval = system%shell_limits(A)
-         B_interval = system%shell_limits(B)
+         A_interval = ao%shells(A)
+         B_interval = ao%shells(B)
 !
-         call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+         call ao%get_eri(g_ABAB, A, B, A, B)
 !
          g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
                   1 : A_interval%length, 1 : B_interval%length) &
@@ -1121,7 +1121,7 @@ contains
    end subroutine construct_significant_diagonal_atomic_eri_cd
 !
 !
-   subroutine construct_diagonal_batches_eri_cd(solver, system)
+   subroutine construct_diagonal_batches_eri_cd(solver, ao)
 !!
 !!    Construct diagonal batches
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1133,7 +1133,7 @@ contains
 !
       class(eri_cd) :: solver
 !
-      type(molecular_system) :: system
+      type(ao_tool) :: ao
 !
       integer :: n_sig_aop, n_sig_shp, n_sig_shp_batch, shp
 !
@@ -1200,8 +1200,8 @@ contains
 !
                if (sig_shp(shp)) then
 !
-                  A_interval = system%shell_limits(A)
-                  B_interval = system%shell_limits(B)
+                  A_interval = ao%shells(A)
+                  B_interval = ao%shells(B)
 !
                   xy_last = xy_last + get_size_shp(A_interval, B_interval)
 !
@@ -1281,7 +1281,8 @@ contains
    end subroutine construct_diagonal_batches_eri_cd
 !
 !
-   subroutine construct_diagonal_from_batch_bases_eri_cd(solver, system, n_cholesky_batches, n_shp_in_basis_batches)
+   subroutine construct_diagonal_from_batch_bases_eri_cd(solver, ao, &
+                                                      n_cholesky_batches, n_shp_in_basis_batches)
 !!
 !!    Construct diagonal from batch bases
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
@@ -1293,7 +1294,7 @@ contains
 !
       class(eri_cd) :: solver
 !
-      type(molecular_system) :: system
+      type(ao_tool) :: ao
 !
       integer, dimension(solver%n_batches), intent(in) :: n_cholesky_batches
       integer, dimension(solver%n_batches), intent(in) :: n_shp_in_basis_batches
@@ -1462,8 +1463,8 @@ contains
 !
             if (shp == sorted_AB(I)) then
 !
-               A_interval = system%shell_limits(A_shell)
-               B_interval = system%shell_limits(B_shell)
+               A_interval = ao%shells(A_shell)
+               B_interval = ao%shells(B_shell)
 !
                sig_shp(shp) = .true.
                n_sig_shp = n_sig_shp + 1
@@ -1517,8 +1518,8 @@ contains
 !
             if (sig_shp_old(shp)) then
 !
-               A_interval = system%shell_limits(A_shell)
-               B_interval = system%shell_limits(B_shell)
+               A_interval = ao%shells(A_shell)
+               B_interval = ao%shells(B_shell)
 !
                if (sig_shp(shp)) then
 !
@@ -1550,8 +1551,8 @@ contains
 !
          n_basis_aop_in_AB_total = sorted_n_basis_aop_in_AB(I)
 !
-         A_interval = system%shell_limits(sorted_A(I))
-         B_interval = system%shell_limits(sorted_B(I))
+         A_interval = ao%shells(sorted_A(I))
+         B_interval = ao%shells(sorted_B(I))
 !
          do aop = 1, n_basis_aop_in_AB_total
 !
@@ -1629,7 +1630,7 @@ contains
    end subroutine construct_diagonal_from_batch_bases_eri_cd
 !
 !
-   subroutine determine_cholesky_basis_PCD_eri_cd(solver, system)
+   subroutine determine_cholesky_basis_PCD_eri_cd(solver, ao)
 !!
 !!    Determine cholesky basis for partitioned Cholesky decomposition
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1640,7 +1641,7 @@ contains
 !
       class(eri_cd), intent(inout) :: solver
 !
-      class(molecular_system), intent(in) :: system
+      class(ao_tool), intent(in) :: ao
 !
       integer :: batch
 !
@@ -1657,7 +1658,7 @@ contains
       n_cholesky_batches = 0
       n_shp_in_basis_batches = 0
 !
-      call solver%construct_diagonal_batches(system)
+      call solver%construct_diagonal_batches(ao)
 !
       call output%printf('n', '- Decomposing batched diagonal', fs='(/t3,a)')
 !
@@ -1671,7 +1672,7 @@ contains
          write(temp_name, '(a11, i4.4)')'basis_info_', batch
          batch_file_basis = sequential_file(trim(temp_name))
 !
-         call solver%determine_cholesky_basis(system, batch_file_diag, batch_file_basis)
+         call solver%determine_cholesky_basis(ao, batch_file_diag, batch_file_basis)
 !
          n_cholesky_batches(batch)     = solver%n_cholesky
          n_shp_in_basis_batches(batch)  = solver%n_shp_in_basis
@@ -1680,8 +1681,8 @@ contains
 !
       call output%printf('n', '- Final decomposition step:', fs='(/t3,a)')
 !
-      call solver%construct_diagonal_from_batch_bases(system, n_cholesky_batches, n_shp_in_basis_batches)
-      call solver%determine_cholesky_basis(system, solver%diagonal_info_target, solver%cholesky_basis_file)
+      call solver%construct_diagonal_from_batch_bases(ao, n_cholesky_batches, n_shp_in_basis_batches)
+      call solver%determine_cholesky_basis(ao, solver%diagonal_info_target, solver%cholesky_basis_file)
 !
       call mem%dealloc(n_cholesky_batches, solver%n_batches)
       call mem%dealloc(n_shp_in_basis_batches, solver%n_batches)
@@ -1689,7 +1690,7 @@ contains
    end subroutine determine_cholesky_basis_PCD_eri_cd
 !
 !
-   subroutine determine_cholesky_basis_eri_cd(solver, system, diagonal_info, basis_info)
+   subroutine determine_cholesky_basis_eri_cd(solver, ao, diagonal_info, basis_info)
 !!
 !!    Determine cholesky basis
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1700,7 +1701,7 @@ contains
 !
       class(eri_cd), intent(inout) :: solver
 !
-      class(molecular_system), intent(in) :: system
+      class(ao_tool), intent(in) :: ao
 !
       type(sequential_file), intent(inout) :: diagonal_info
       type(sequential_file), intent(inout) :: basis_info
@@ -1812,7 +1813,7 @@ contains
       real(dp), dimension(:,:), allocatable :: cholesky_tmp
 !
 !     Array for eri for shell pairs AB and CD
-      real(dp), dimension(system%max_shell_size**4), target :: g_ABCD
+      real(dp), dimension(ao%max_sh_size**4), target :: g_ABCD
 !     Pointer for eri for shell pairs AB and CD
       real(dp), dimension(:,:,:,:), pointer :: g_ABCD_p
 !
@@ -1880,8 +1881,8 @@ contains
 !
                sig_shp_to_first_sig_aop(current_sig_shp) = first_sig_aop
 !
-               A_interval = system%shell_limits(A)
-               B_interval = system%shell_limits(B)
+               A_interval = ao%shells(A)
+               B_interval = ao%shells(B)
 !
                sig_shp_to_shells(current_sig_shp, 1) = A
                sig_shp_to_shells(current_sig_shp, 2) = B
@@ -2051,8 +2052,8 @@ contains
                first_x = sig_aop_to_aos(first_sig_aop, 1) ! alpha
                first_y = sig_aop_to_aos(first_sig_aop, 2) ! beta
 !
-               qual_shp(n_qual_shp, 1) = system%basis2shell(first_x)
-               qual_shp(n_qual_shp, 2) = system%basis2shell(first_y)
+               qual_shp(n_qual_shp, 1) = ao%ao_to_shell(first_x)
+               qual_shp(n_qual_shp, 2) = ao%ao_to_shell(first_y)
                qual_shp(n_qual_shp, 3) = n_qual_aop_in_shp
 !
                call mem%dealloc(sorted_qual_aop_in_shp_indices, n_qual_aop_in_shp)
@@ -2116,8 +2117,8 @@ contains
             D                = qual_shp(CD_shp, 2)
             n_qual_aop_in_shp = qual_shp(CD_shp, 3)
 !
-            C_interval = system%shell_limits(C)
-            D_interval = system%shell_limits(D)
+            C_interval = ao%shells(C)
+            D_interval = ao%shells(D)
 !
 !           Calculate the ({wx} | J) integrals,
 !           where {wx} is the screened list of integrals
@@ -2127,10 +2128,10 @@ contains
                A = sig_shp_to_shells(AB_shp, 1)
                B = sig_shp_to_shells(AB_shp, 2)
 !
-               A_interval = system%shell_limits(A)
-               B_interval = system%shell_limits(B)
+               A_interval = ao%shells(A)
+               B_interval = ao%shells(B)
 !
-               call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
+               call ao%get_eri(g_ABCD, A, B, C, D)
 !
                g_ABCD_p(1 : A_interval%length, 1 : B_interval%length, &
                         1 : C_interval%length, 1 : D_interval%length) &
@@ -2268,8 +2269,8 @@ contains
                cholesky_basis(solver%n_cholesky + current_qual, 1) = qual_aop(qual_max(current_qual), 1)
                cholesky_basis(solver%n_cholesky + current_qual, 2) = qual_aop(qual_max(current_qual), 2)
 !
-               A = system%basis2shell(qual_aop(qual_max(current_qual), 1))
-               B = system%basis2shell(qual_aop(qual_max(current_qual), 2))
+               A = ao%ao_to_shell(qual_aop(qual_max(current_qual), 1))
+               B = ao%ao_to_shell(qual_aop(qual_max(current_qual), 2))
 !
                cholesky_basis(solver%n_cholesky + current_qual, 3) = get_shp_from_shells(A, B, solver%n_s)
 !
@@ -2439,8 +2440,8 @@ contains
                   A = sig_shp_to_shells(shp, 1)
                   B = sig_shp_to_shells(shp, 2)
 !
-                  A_interval = system%shell_limits(A)
-                  B_interval = system%shell_limits(B)
+                  A_interval = ao%shells(A)
+                  B_interval = ao%shells(B)
 !
                   new_sig_shp_to_first_sig_aop(current_new_sig_shp) = first_sig_aop
 !
@@ -2625,8 +2626,8 @@ contains
 !
       do i = 1, solver%n_cholesky
 !
-         A = system%basis2shell(cholesky_basis_new(i, 1))
-         B = system%basis2shell(cholesky_basis_new(i, 2))
+         A = ao%ao_to_shell(cholesky_basis_new(i, 1))
+         B = ao%ao_to_shell(cholesky_basis_new(i, 2))
 !
          AB = get_shp_from_shells(A, B, solver%n_s)
 !
@@ -2684,7 +2685,7 @@ contains
    end subroutine determine_cholesky_basis_eri_cd
 !
 !
-   subroutine construct_S_eri_cd(solver, system)
+   subroutine construct_S_eri_cd(solver, ao)
 !!
 !!    Construct S
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2696,7 +2697,7 @@ contains
 !
       class(eri_cd) :: solver
 !
-      type(molecular_system) :: system
+      type(ao_tool) :: ao
 !
 !     Local variables
 !
@@ -2714,19 +2715,23 @@ contains
 !     Info on shells containing elements of the basis
       integer, dimension(:,:), allocatable :: basis_shell_info
       integer, dimension(:,:), allocatable :: basis_shell_info_full
+!
 !     ao and ao pair indices of the elements of the cholesky basis
       integer, dimension(:,:), allocatable :: cholesky_basis
       integer, dimension(:,:), allocatable :: cholesky_basis_updated
 !
 !     basis ao pairs in shell pair CD
-      integer, dimension(3*system%max_shell_size**2), target :: basis_aops_in_CD_shp
+      integer, dimension(3*ao%max_sh_size**2), target :: basis_aops_in_CD_shp
+!
 !     basis ao pairs in shell pair AB
-      integer, dimension(3*system%max_shell_size**2), target :: basis_aops_in_AB_shp
+      integer, dimension(3*ao%max_sh_size**2), target :: basis_aops_in_AB_shp
 !
 !     basis ao pairs in shell pair CD
       integer, dimension(:,:), pointer :: basis_aops_in_CD_shp_p
+!
 !     basis ao pairs in shell pair AB
       integer, dimension(:,:), pointer :: basis_aops_in_AB_shp_p
+!
       integer, dimension(:,:), allocatable :: aops_in_basis
 !
       integer, dimension(:), allocatable :: keep_vectors
@@ -2741,7 +2746,7 @@ contains
 !
 !     Real allocatable arrays
 !
-      real(dp), dimension(system%max_shell_size**4), target :: g_AB_CD
+      real(dp), dimension(ao%max_sh_size**4), target :: g_AB_CD
       real(dp), dimension(:,:), pointer :: g_AB_CD_p
 !
       real(dp), dimension(:,:), allocatable :: integrals_auxiliary
@@ -2785,8 +2790,8 @@ contains
          C = basis_shell_info(CD_shp, 1)
          D = basis_shell_info(CD_shp, 2)
 !
-         C_interval = system%shell_limits(C)
-         D_interval = system%shell_limits(D)
+         C_interval = ao%shells(C)
+         D_interval = ao%shells(D)
 !
          basis_aops_in_CD_shp_p(1 : basis_shell_info(CD_shp, 4), 1 : 3) => &
                basis_aops_in_CD_shp(1 : basis_shell_info(CD_shp, 4)*3)
@@ -2812,8 +2817,8 @@ contains
             A = basis_shell_info(AB_shp, 1)
             B = basis_shell_info(AB_shp, 2)
 !
-            A_interval = system%shell_limits(A)
-            B_interval = system%shell_limits(B)
+            A_interval = ao%shells(A)
+            B_interval = ao%shells(B)
 !
             basis_aops_in_AB_shp_p(1 : basis_shell_info(AB_shp, 4), 1 : 3) => &
                   basis_aops_in_AB_shp(1 : basis_shell_info(AB_shp, 4)*3)
@@ -2836,7 +2841,7 @@ contains
 !
 !           Construct integrals
 !
-            call system%construct_ao_g_wxyz(g_AB_CD, A, B, C, D)
+            call ao%get_eri(g_AB_CD, A, B, C, D)
 !
             g_AB_CD_p(1 : A_interval%length*B_interval%length, &
                         1 : C_interval%length*D_interval%length) &
@@ -2939,8 +2944,8 @@ contains
 !
       do i = 1, solver%n_cholesky
 !
-         A = system%basis2shell(cholesky_basis_updated(i, 1))
-         B = system%basis2shell(cholesky_basis_updated(i, 2))
+         A = ao%ao_to_shell(cholesky_basis_updated(i, 1))
+         B = ao%ao_to_shell(cholesky_basis_updated(i, 2))
 !
          AB = get_shp_from_shells(A, B, solver%n_s)
 !
@@ -3010,8 +3015,8 @@ contains
       B  = basis_shell_info(AB_shp, 2)
       AB = basis_shell_info(AB_shp, 3)
 !
-      A_interval = system%shell_limits(A)
-      B_interval = system%shell_limits(B)
+      A_interval = ao%shells(A)
+      B_interval = ao%shells(B)
 !
 !     Determine which elements in the shell pair AB are elements of the basis
 !
@@ -3276,7 +3281,7 @@ contains
    end subroutine print_settings_eri_cd
 !
 !
-   subroutine construct_cholesky_mo_vectors_eri_cd(solver, system, n_ao, n_mo, &
+   subroutine construct_cholesky_mo_vectors_eri_cd(solver, ao, n_ao, n_mo, &
                                                    orbital_coefficients, integrals)
 !!
 !!    Construct Cholesky MO vectors
@@ -3299,7 +3304,7 @@ contains
 !
       class(eri_cd) :: solver
 !
-      type(molecular_system) :: system
+      type(ao_tool) :: ao
 !
       integer, intent(in) :: n_mo, n_ao
 !
@@ -3320,7 +3325,7 @@ contains
       integer, dimension(:,:), allocatable :: aops_in_basis
       integer, dimension(:,:), allocatable   :: AB_info
 !
-      real(dp), dimension(system%max_shell_size**4), target :: g_ABCD
+      real(dp), dimension(ao%max_sh_size**4), target :: g_ABCD
       real(dp), dimension(:,:,:,:), pointer :: g_ABCD_p
 !
       real(dp), dimension(:,:,:), allocatable :: g_wxK, g_pxK, g_xpK, g_qpK, g_qpK_red
@@ -3453,8 +3458,8 @@ contains
             C = basis_shell_info(K_shp, 1)
             D = basis_shell_info(K_shp, 2)
 !
-            C_interval = system%shell_limits(C)
-            D_interval = system%shell_limits(D)
+            C_interval = ao%shells(C)
+            D_interval = ao%shells(D)            
 !
 !$omp parallel do private(AB_shp, A, B, A_interval, B_interval, g_ABCD, g_ABCD_p, w, x, J, y, z)
             do AB_shp = 1, n_construct_shp
@@ -3462,10 +3467,10 @@ contains
                A = AB_info(AB_shp, 1)
                B = AB_info(AB_shp, 2)
 !
-               B_interval = system%shell_limits(B)
-               A_interval = system%shell_limits(A)
+               B_interval = ao%shells(B)
+               A_interval = ao%shells(A)
 !
-               call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
+               call ao%get_eri(g_ABCD, A, B, C, D)
 !
                g_ABCD_p(1 : A_interval%length, 1 : B_interval%length, &
                         1 : C_interval%length, 1 : D_interval%length) &
@@ -3617,7 +3622,7 @@ contains
    end subroutine construct_cholesky_mo_vectors_eri_cd
 !
 !
-   subroutine diagonal_test_eri_cd(solver, system)
+   subroutine diagonal_test_eri_cd(solver, ao)
 !!
 !!    Cholesky vectors diagonal test
 !!    Written by Sarai D. Folkestad, Feb 2020
@@ -3634,9 +3639,9 @@ contains
 !
       class(eri_cd) :: solver
 !
-      type(molecular_system), intent(in) :: system
+      type(ao_tool), intent(in) :: ao
 !
-      real(dp), dimension(system%max_shell_size**4), target :: g_ABAB, g_ABCD
+      real(dp), dimension(ao%max_sh_size**4), target :: g_ABAB, g_ABCD
       real(dp), dimension(:,:,:,:), pointer :: g_ABAB_p, g_ABCD_p
 !
       real(dp), dimension(:), allocatable :: D_xy
@@ -3750,9 +3755,9 @@ contains
 !
                current_construct_shp = current_construct_shp + 1
 !
-               A_interval = system%shell_limits(A)
-               B_interval = system%shell_limits(B)
-!
+               A_interval = ao%shells(A)
+               B_interval = ao%shells(B)
+!     
                construct_shp_index(current_construct_shp, 1) = A
                construct_shp_index(current_construct_shp, 2) = B
 !
@@ -3783,10 +3788,10 @@ contains
          A = construct_shp_index(AB_shp, 1)
          B = construct_shp_index(AB_shp, 2)
 !
-         A_interval = system%shell_limits(A)
-         B_interval = system%shell_limits(B)
+         A_interval = ao%shells(A)
+         B_interval = ao%shells(B)
 !
-         call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+         call ao%get_eri(g_ABAB, A, B, A, B)
 !
          g_ABAB_p(1 : A_interval%length, &
                   1 : B_interval%length, &
@@ -3845,8 +3850,8 @@ contains
             C = basis_shell_info(K_shp, 1)
             D = basis_shell_info(K_shp, 2)
 !
-            C_interval = system%shell_limits(C)
-            D_interval = system%shell_limits(D)
+            C_interval = ao%shells(C)
+            D_interval = ao%shells(D)            
 !
             call mem%alloc(g_wxK, n_construct_aop, basis_shell_info(K_shp,4))
 !
@@ -3855,11 +3860,11 @@ contains
 !
                A = construct_shp_index(AB_shp, 1)
                B = construct_shp_index(AB_shp, 2)
+!  
+               A_interval = ao%shells(A)
+               B_interval = ao%shells(B)
 !
-               A_interval = system%shell_limits(A)
-               B_interval = system%shell_limits(B)
-!
-               call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
+               call ao%get_eri(g_ABCD, A, B, C, D)
 !
                g_ABCD_p(1 : A_interval%length, 1 : B_interval%length, &
                         1 : C_interval%length, 1 : D_interval%length) &

@@ -269,8 +269,7 @@ contains
 !!
       use sequential_file_class,  only: sequential_file
 !
-      use atomic_class,           only: atomic
-      use molecular_system_class, only: molecular_system
+      use atomic_center_class,    only: atomic_center
 !
       use uhf_class,              only: uhf
       use scf_hf_class,           only: scf_hf
@@ -285,8 +284,6 @@ contains
 !
       class(hf)                        :: wf
 !
-      type(atomic), allocatable              :: atom
-      type(molecular_system), allocatable    :: sad_system
       type(uhf),         allocatable         :: sad_wf
       type(scf_hf), allocatable              :: sad_solver
 !
@@ -304,10 +301,12 @@ contains
       type(sequential_file) :: beta_density_file
 !
       integer :: I
-      character(len=50), dimension(wf%system%n_atoms) :: atom_and_basis
-      integer,           dimension(wf%system%n_atoms) :: unique_atom_index
+      character(len=50), dimension(wf%n_atomic_centers) :: atom_and_basis
+      integer,           dimension(wf%n_atomic_centers) :: unique_atom_index
 !
       type(timings), allocatable :: sad_generation_timer
+!
+      type(atomic_center), allocatable :: center 
 !
       call engine%tasks%print_('sad')
 !
@@ -329,27 +328,32 @@ contains
 !
 !     Find atomic index of unique atom/basis combinations
 !
-      do I = 1, wf%system%n_atoms
+      allocate(center)
 !
-         atom_and_basis(I) = trim(wf%system%atoms(I)%symbol) // trim(wf%system%atoms(I)%basis)
+      do I = 1, wf%n_atomic_centers
+!
+         call wf%ao%get_center(I, center)
+!
+         atom_and_basis(I) = trim(center%symbol) // trim(center%basis)
 !
       enddo
 !
-      call index_of_unique_strings(unique_atom_index, wf%system%n_atoms, atom_and_basis)
+      call index_of_unique_strings(unique_atom_index, wf%n_atomic_centers, atom_and_basis)
 !
 !     For every unique atom, generate SAD density to file
 !
       call timing%mute()
 !
-      do I = 1, wf%system%n_atoms
+      do I = 1, wf%n_atomic_centers
 !
 !        Check unique
 !
          if ( all(unique_atom_index /= I)) cycle
 !
-         atom = wf%system%atoms(I)
+         call wf%ao%get_center(I, center)
 !
-         name_       = "sad_" // trim(atom%basis) // "_" // trim(atom%symbol)
+         name_ = "sad_" // trim(center%basis) // "_" // trim(center%symbol)
+!
          alpha_fname = trim(name_) // '_alpha'
          beta_fname  = trim(name_) // '_beta'
 !
@@ -357,17 +361,14 @@ contains
 !
          call output%mute()
 !
-         multiplicity = atom%get_multiplicity()
-         sad_system   = molecular_system(atoms=[atom],              &
-                                         name_=name_,               &
-                                         charge=0,                  &
-                                         multiplicity=multiplicity, &
-                                         mm_calculation=.false.,    &
-                                         pcm_calculation=.false.     )
+         multiplicity = center%get_ground_state_multiplicity()
 !
 !        Prepare SAD wavefunction
 !
-         sad_wf = uhf(sad_system, fractional_uniform_valence=.true.)
+         sad_wf = uhf(fractional_uniform_valence=.true., &
+                      multiplicity=multiplicity)
+!
+         call sad_wf%prepare([center],  embedding=.false.)
 !
 !        Prepare and run solver
 !
@@ -385,16 +386,14 @@ contains
 !        Cleanup and generate ao_density_a and ao_density_b
 !
          call sad_wf%cleanup()
-         call sad_system%cleanup()
 !
          deallocate(sad_wf)
-         deallocate(sad_system)
 !
          call output%unmute()
 !
          call output%printf('v', 'Generated atomic density for ' //  &
-                            adjustl(atom%symbol) // ' using UHF/(a0)', &
-                            chars=[atom%basis], fs='(t6,a)')
+                            adjustl(center%symbol) // ' using UHF/(a0)', &
+                            chars=[center%basis], fs='(t6,a)')
 !
 !        Move densities to where "set_ao_density_sad" can use them,
 !        but first delete SAD if it already exists.
@@ -413,14 +412,13 @@ contains
          call beta_density_file%copy(beta_fname)
          call beta_density_file%delete_()
 !
-         deallocate(atom)
-!
       enddo
+!
+      deallocate(center)
 !
 !     Libint is overwritten by SAD. Re-initialize.
 !
-      call wf%system%initialize_libint_atoms_and_bases()
-      call wf%system%initialize_libint_integral_engines()
+      call wf%ao%export_centers_to_libint()
 !
       call timing%unmute()
       call sad_generation_timer%turn_off()
@@ -457,8 +455,8 @@ contains
 !
 !     Initialize the plotter
 !
-      plotter = visualization(wf%system, wf%n_ao)
-      call plotter%initialize(wf%system)
+      plotter = visualization(wf%ao)
+      call plotter%initialize(wf%ao)
 !
       if (engine%plot_orbitals) then
 !
@@ -472,7 +470,7 @@ contains
          call density_plotting_timer%turn_on()
 !
          density_file_tag = 'AO_density'
-         call plotter%plot_density(wf%system, wf%ao_density, density_file_tag)
+         call plotter%plot_density(wf%ao, wf%ao_density, density_file_tag)
 !
          call density_plotting_timer%turn_off()
 !
@@ -527,11 +525,11 @@ contains
 !
 !     Extract the orbitals we will plot from the full orbital coefficient matrix
 !
-      call mem%alloc(orbital_coefficients, wf%n_ao, n_orbitals_to_plot)
+      call mem%alloc(orbital_coefficients, wf%ao%n, n_orbitals_to_plot)
 !
       do i = 1, n_orbitals_to_plot
 !
-         call dcopy(wf%n_ao, wf%orbital_coefficients(1, orbitals_to_plot(i)), &
+         call dcopy(wf%ao%n, wf%orbital_coefficients(1, orbitals_to_plot(i)), &
                1, orbital_coefficients(1, i), 1)
 !
       enddo
@@ -551,10 +549,10 @@ contains
 !
 !     Plot orbitals
 !
-      call plotter%plot_orbitals(wf%system, orbital_coefficients, &
+      call plotter%plot_orbitals(wf%ao, orbital_coefficients, &
                                        n_orbitals_to_plot, orbital_file_tags)
 !
-      call mem%dealloc(orbital_coefficients, wf%n_ao, n_orbitals_to_plot)
+      call mem%dealloc(orbital_coefficients, wf%ao%n, n_orbitals_to_plot)
       deallocate(orbital_file_tags)
 !
       call timer%turn_off()
@@ -692,10 +690,14 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable :: mu_pqk
 !
+      if(wf%name_.eq.'mlhf') &
+         call output%warning_msg('dipole moments are size-extensive and&
+                                 & are not well defined in MLHF.')
+!
 !     Get the integrals mu_pqk for components k = 1, 2, 3
 !
-      call mem%alloc(mu_pqk, wf%n_ao, wf%n_ao, 3)
-      call wf%get_ao_mu_wx(mu_pqk(:,:,1), mu_pqk(:,:,2), mu_pqk(:,:,3))
+      call mem%alloc(mu_pqk, wf%ao%n, wf%ao%n, 3)
+      call wf%ao%get_oei('dipole', mu_pqk)
 !
 !     Get electronic expectation value contribution
 !
@@ -705,22 +707,11 @@ contains
 !
       enddo
 !
-      call mem%dealloc(mu_pqk, wf%n_ao, wf%n_ao, 3)
+      call mem%dealloc(mu_pqk, wf%ao%n, wf%ao%n, 3)
 !
 !     Get nuclear expectation value contribution, then sum the two
 !
-      if(wf%name_.eq.'mlhf') then
-!
-         call output%printf('m', 'In MLHF the dipole moment is computed only in &
-                            &the active space', fs='(/t6,a)')
-!
-         call wf%system%get_nuclear_dipole_active(nuclear)
-!
-      else
-!
-         call wf%system%get_nuclear_dipole(nuclear)
-!
-      endif
+      nuclear = wf%get_nuclear_dipole()
 !
       total = electronic + nuclear
 !
@@ -752,9 +743,9 @@ contains
 !
 !     Get the integrals q_pqk for components k = 1, 2, ..., 6 in the T1-transformed basis
 !
-      call mem%alloc(q_pqk, wf%n_ao, wf%n_ao, 6)
-      call wf%get_ao_q_wx(q_pqk(:,:,1), q_pqk(:,:,2), q_pqk(:,:,3), &
-                          q_pqk(:,:,4), q_pqk(:,:,5), q_pqk(:,:,6))
+      call mem%alloc(q_pqk, wf%ao%n, wf%ao%n, 6)
+!
+      call wf%ao%get_oei('quadrupole', q_pqk)
 !
 !     Get electronic expectation value contribution
 !
@@ -764,22 +755,15 @@ contains
 !
       enddo
 !
-      call mem%dealloc(q_pqk, wf%n_ao, wf%n_ao, 6)
+      call mem%dealloc(q_pqk, wf%ao%n, wf%ao%n, 6)
 !
 !     Get nuclear expectation value contribution, then sum the two
 !
-      if(wf%name_.eq.'mlhf') then
+      if(wf%name_.eq.'mlhf') &
+         call output%warning_msg('quadrupole moments are size-extensive&
+                                 &and are not well defined in MLHF.')
 !
-         call output%printf('m', 'In MLHF the quadrupole moment is computed &
-                            &only in the active space', fs='(/t6,a)')
-!
-         call wf%system%get_nuclear_quadrupole_active(nuclear)
-!
-      else
-!
-         call wf%system%get_nuclear_quadrupole(nuclear)
-!
-      endif
+      nuclear = wf%get_nuclear_quadrupole()
 !
       total = electronic + nuclear
 !

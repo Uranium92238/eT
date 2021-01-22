@@ -58,7 +58,7 @@
       implicit none 
 !
       class(ccs), intent(in) :: wf 
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(inout) :: F_pq 
 !
    end subroutine add_frozen_fock_terms_ccs
 !

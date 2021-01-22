@@ -80,7 +80,7 @@ contains
 !
       call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
 !
-      call wf%construct_h_complex(F_pq)
+      call wf%get_t1_oei_complex('hamiltonian', F_pq)
 !
 !     Add effective contributions to Fock matrix 
 !
@@ -310,7 +310,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      complex(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
+      complex(dp), dimension(wf%ao%n, wf%ao%n), intent(inout) :: F_pq 
 !
       complex(dp), dimension(:,:), allocatable :: F_pq_frozen
 !
@@ -364,7 +364,7 @@ contains
       integer :: a, i, b, j
 !
       call mem%alloc(mu, wf%n_mo, wf%n_mo, 3)
-      call wf%construct_mu_complex(mu)
+      call wf%get_t1_oei_complex('dipole', mu)
 !
 !     Create interaction potential by scaling dipole integrals by minus electric field
 !

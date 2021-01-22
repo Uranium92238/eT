@@ -92,6 +92,9 @@ contains
 !
       type(bfgs_geoopt_hf) :: bfgs_geoopt
 !
+      if (wf%embedded) &
+         call output%error_msg('geometry optimization with embedding is not supported')
+!
       if (.not. engine%restart .and. (trim(engine%ao_density_guess) == 'sad')) then
 !
 !        Generate SAD if requested

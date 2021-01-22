@@ -33,8 +33,7 @@ checkfiles = ["hf_energy.AO_density.plt",
               "hf_energy.MO_0001.plt", 
               "hf_energy.MO_0002.plt", 
               "hf_energy.MO_0003.plt", 
-              "hf_energy_mo_information.out", 
-              "hof_he.xyz"]
+              "hf_energy_mo_information.out"]
 
 checkfiles = [os.path.join(os.path.dirname(__file__), i) for i in checkfiles]
 

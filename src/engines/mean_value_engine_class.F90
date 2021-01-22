@@ -196,16 +196,17 @@ contains
 !
 !        Transform the density to AO basis and plot
 !
-         visualizer = visualization(wf%system, wf%n_ao)
+         visualizer = visualization(wf%ao)
+         call visualizer%initialize(wf%ao)
 !
-         call visualizer%initialize(wf%system)
-         call mem%alloc(c_D_ct, wf%n_ao, wf%n_ao)
+         call mem%alloc(c_D_ct, wf%ao%n, wf%ao%n)
 !
          call wf%add_t1_terms_and_transform(wf%density, c_D_ct)
-         call visualizer%plot_density(wf%system, c_D_ct, 'cc_gs_density')
+         call visualizer%plot_density(wf%ao, c_D_ct, 'cc_gs_density')
 !
-         call mem%dealloc(c_D_ct, wf%n_ao, wf%n_ao)
          call visualizer%cleanup()
+!
+         call mem%dealloc(c_D_ct, wf%ao%n, wf%ao%n)
 !
       endif
 !

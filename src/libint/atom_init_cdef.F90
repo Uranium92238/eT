@@ -41,16 +41,16 @@ interface
 !
    end subroutine get_first_ao_in_shells_c
 !
-   subroutine get_n_basis_in_shells_c(atom, nbis) bind(C, name='get_n_basis_in_shells')
+   subroutine get_n_aos_in_shell_c(atom, n_aos_in_shell) bind(C, name='get_n_aos_in_shell')
 !
       use iso_c_binding
 !
       implicit none
 !
       integer(c_int) :: atom
-      integer(c_int), dimension(1,1) :: nbis
+      integer(c_int), dimension(1,1) :: n_aos_in_shell
 !
-   end subroutine get_n_basis_in_shells_c
+   end subroutine get_n_aos_in_shell_c
 !
    subroutine get_n_shells_on_atoms_c(nsoa) bind(C, name='get_n_shells_on_atoms')
 !
@@ -61,5 +61,31 @@ interface
       integer(c_int), dimension(1,1) :: nsoa
 !
    end subroutine get_n_shells_on_atoms_c
+!
+   subroutine get_n_shells_on_atom_c(atom, n_shells) bind(C, name='get_n_shells_on_atom')
+!
+      use iso_c_binding
+!
+      implicit none
+!
+      integer(c_int) :: atom, n_shells
+!
+   end subroutine get_n_shells_on_atom_c
+!
+   subroutine initialize_atom_to_shell_list_c() bind(C, name='initialize_atom_to_shell_list')
+!
+      use iso_c_binding
+!
+      implicit none
+!
+   end subroutine initialize_atom_to_shell_list_c
+!
+   subroutine initialize_shell_to_first_ao_c() bind(C, name='initialize_shell_to_first_ao')
+!
+      use iso_c_binding
+!
+      implicit none
+!
+   end subroutine initialize_shell_to_first_ao_c
 !
 end interface

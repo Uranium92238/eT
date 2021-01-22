@@ -89,6 +89,6 @@
 !
       class(ccs), intent(in) :: wf
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(in)  :: Z_pq
-      complex(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: Z_out
+      complex(dp), dimension(wf%ao%n, wf%ao%n), intent(out) :: Z_out
 !
    end  subroutine add_t1_terms_and_transform_ccs_complex

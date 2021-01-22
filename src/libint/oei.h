@@ -17,6 +17,8 @@
 //  along with this program. If not, see <https://www.gnu.org/licenses/>.
 //
 // -----------------------------------------------------------------------
+#include <libint2.hpp>
+#include <vector>
 
 #ifdef __cplusplus
 // Are we compiling this with a C++ compiler? Add extern "C" { ... }
@@ -24,12 +26,29 @@ extern "C" {
 #else
 #endif
 
-void construct_ao_g_wxyz_epsilon(double *g, int *s1, int *s2, int *s3, int *s4, double *epsilon, 
-                                 int *thread, int *skip, int *n1, int *n2, int *n3, int *n4);
+void construct_oei(vector<libint2::Engine> engine, \
+                  double *x,                       \
+                  int *s1,                         \
+                  int *s2,                         \
+                  int n_components,                \
+                  int offset,                      \
+                  double prefactor,                \
+                  bool add_);
 
-void construct_ao_g_wxyz(double *g, int *s1, int *s2, int *s3, int *s4);
+void get_oei(char *type_, 	                     \
+			double *x, 		               \
+			int *s1, 		               \
+			int *s2);
 
-void construct_ao_g_wxyz_1der(double *g_wxyzqk, int *s1, int *s2, int *s3, int *s4);
+void get_oei_1der(char *type_,                     \
+                  double *x,                       \
+                  int *s1,                         \
+                  int *s2);
+
+void add_nuclear_h_1der(double *h_wxqk,   \
+                        int *s1,          \
+                        int *s2,          \
+                        int *n_ao);
 
 #ifdef __cplusplus
 }

@@ -42,41 +42,50 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
+      real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in), optional :: prev_ao_density
 !
-      if (.not. present(prev_ao_density)) then
+     if (present(prev_ao_density)) then
 !
-          call wf%update_fock_and_energy_non_cumulative()
+         call wf%update_G_cumulative(prev_ao_density)
 !
-      else
+     else
 !
-         if(.not.wf%system%mm_calculation.and..not.wf%system%pcm_calculation) then
+         call wf%update_G_non_cumulative()
 !
-            call wf%update_fock_and_energy_cumulative(prev_ao_density)
+     endif
 !
-         else
+!     Set the two-electron part
 !
-            if(wf%system%mm%forcefield.eq.'non-polarizable') then
+      call dcopy(wf%ao%n**2,  wf%ao_G, 1, wf%ao_fock, 1)
 !
-               call wf%update_fock_and_energy_cumulative(prev_ao_density)
+!     Add the one-electron part
 !
-            else
+      call daxpy(wf%ao%n**2, one, wf%ao%h, 1, wf%ao_fock, 1)
 !
-               call wf%update_fock_and_energy_non_cumulative()
+!     Embedding contribution
 !
-            endif
+      if (wf%embedded) then
 !
-         endif
+!        Update embedding if necessary
+!
+         call wf%embedding%update(wf%ao, wf%ao_density)
+!
+!        Add embedding term to fock matrix
+!
+         call daxpy(wf%ao%n**2, one, wf%ao%v, 1, wf%ao_fock, 1)
 !
       endif
 !
+!     Energy
+!
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao%h)
 !
    end subroutine update_fock_and_energy_hf
 !
 !
-   module subroutine update_fock_and_energy_cumulative_hf(wf, prev_ao_density)
+   module subroutine update_G_cumulative_hf(wf, prev_ao_density)
 !!
-!!    Update Fock and energy cumulatively
+!!    Update G cumulative
 !!    Written by Eirik F. Kjønstad, Sep 2018
 !!
 !!    Called by solver when a new density has been obtained and
@@ -84,54 +93,48 @@ contains
 !!    we mean using the density change to build the Fock matrix
 !!    in the iterative loop.
 !!
+!!    Modified by SDF, Sep 2020:
+!!    
+!!    Cumulative construction of two-electron part and not
+!!    full Fock matrix
+!!
       implicit none
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in) :: prev_ao_density
+      real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in) :: prev_ao_density
 !
       real(dp), dimension(:, :), allocatable :: G
 !
       type(timings) :: timer
 !
-      timer = timings('AO Fock construction', pl='normal')
+      timer = timings('AO G construction', pl='normal')
       call timer%turn_on()
 !
-!     Fock
+!     Determine density differences
 !
-!     Construct the two electron part of the Fock matrix (G),
-!     and add the contribution to the Fock matrix
+      call daxpy(wf%ao%n**2, -one, prev_ao_density, 1, wf%ao_density, 1)
 !
-      call daxpy(wf%n_ao**2, -one, prev_ao_density, 1, wf%ao_density, 1)
+!     Construct the two electron part of the Fock matrix (G)
 !
-      call mem%alloc(G, wf%n_ao, wf%n_ao)
+      call mem%alloc(G, wf%ao%n, wf%ao%n)
       call wf%construct_ao_G(wf%ao_density, G)
+      call daxpy(wf%ao%n**2, one, G, 1, wf%ao_G, 1)
+      call mem%dealloc(G, wf%ao%n, wf%ao%n)
 !
-      call daxpy(wf%n_ao**2, one, G, 1, wf%ao_fock, 1)
+!     Restore the density
 !
-      call mem%dealloc(G, wf%n_ao, wf%n_ao)
-!
-      call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density, 1)
+      call daxpy(wf%ao%n**2, one, prev_ao_density, 1, wf%ao_density, 1)
 !
       call timer%turn_off()
 !
-!     Energy
-!
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao_h)
-!
-!     Note! Must be called after wf%calculate_hf_energy_from_fock !!
-!
-      if(wf%system%mm_calculation) call wf%calculate_mm_energy_terms()
-      if(wf%system%pcm_calculation) call wf%calculate_pcm_energy_terms()
-!
-   end subroutine update_fock_and_energy_cumulative_hf
+   end subroutine update_G_cumulative_hf
 !
 !
-   module subroutine update_fock_and_energy_non_cumulative_hf(wf)
+   module subroutine update_G_non_cumulative_hf(wf)
 !!
-!!    Update Fock and energy
+!!    Update G
 !!    Written by Eirik F. Kjønstad, Sep 2018
-!!    Modified by Tommaso Giovannini, May 2019 for QM/MM
 !!
 !!    Called by solver when a new density has been obtained and
 !!    the next Fock and energy is to be computed.
@@ -142,33 +145,17 @@ contains
 !
       type(timings) :: timer
 !
-      timer = timings('AO Fock construction', pl='normal')
+      timer = timings('AO G construction', pl='normal')
       call timer%turn_on()
 !
 !     Construct the two electron part of the Fock matrix (G),
 !     and add the contribution to the Fock matrix
 !
-      call wf%construct_ao_G(wf%ao_density, wf%ao_fock)
-!
-!     Add the one-electron part
-!
-      call daxpy(wf%n_ao**2, one, wf%ao_h, 1, wf%ao_fock, 1)
-!
-!     QM/MM and PCM specific work
-!
-      if (wf%system%mm_calculation) call wf%add_mm_fock_terms()
-      if (wf%system%pcm_calculation) call wf%add_pcm_fock_term()
+      call wf%construct_ao_G(wf%ao_density, wf%ao_G)
 !
       call timer%turn_off()
 !
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao_h)
-!
-!     QM/MM and PCM energy terms (NOTE! these must be called after calculate_hf_energy_from_fock !!)
-!
-      if(wf%system%mm_calculation) call wf%calculate_mm_energy_terms()
-      if(wf%system%pcm_calculation) call wf%calculate_pcm_energy_terms()
-!
-   end subroutine update_fock_and_energy_non_cumulative_hf
+   end subroutine update_G_non_cumulative_hf
 !
 !
    module subroutine construct_ao_G_hf(wf, D, G, C_screening)
@@ -193,17 +180,17 @@ contains
 !!
       class(hf)   :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: D
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: G
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)    :: D
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(inout) :: G
 !
       integer :: thread = 0, n_threads = 1
 !
       real(dp), dimension(:,:), allocatable :: shp_Density_schwarz
       real(dp), dimension(:,:,:), allocatable :: G_thread
 !
-      integer :: n_sig_shp
-!
       real(dp) :: max_D_schwarz, max_eri_schwarz
+!
+      real(dp) :: eri_precision
 !
       logical, optional, intent(in) :: C_screening
       logical :: C_screening_local 
@@ -216,59 +203,60 @@ contains
 !
 !     Construct the density screening vector and the maximum element in the density
 !
-      call mem%alloc(shp_density_schwarz, wf%system%n_s, wf%system%n_s)
+      call mem%alloc(shp_density_schwarz, wf%ao%n_sh, wf%ao%n_sh)
 !
       call wf%construct_shp_Density_schwarz(shp_Density_schwarz, D)
-      max_D_schwarz = get_abs_max(shp_Density_schwarz, wf%system%n_s**2)
+      max_D_schwarz = get_abs_max(shp_Density_schwarz, wf%ao%n_sh**2)
 !
 !     Compute number of significant ERI shell pairs (the G construction
 !     only loops over these shell pairs) and the maximum element
 !
-      call wf%get_n_sig_eri_shp(n_sig_shp)
-      max_eri_schwarz = get_abs_max(wf%shp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2)
+      max_eri_schwarz = get_abs_max(wf%ao%cs_eri_max, wf%ao%n_sh*(wf%ao%n_sh + 1)/2)
 !
 !     Construct the two electron part of the Fock matrix, using the screening vectors
 !     and parallelizing over available threads (each gets its own copy of the Fock matrix)
 !
 !$    n_threads = omp_get_max_threads()
 !
-      call mem%alloc(G_thread, wf%n_ao, wf%n_ao, n_threads) ! [G(thread 1) G(thread 2) ...]
-      call zero_array(G_thread, (wf%n_ao**2)*n_threads)
+      call mem%alloc(G_thread, wf%ao%n, wf%ao%n, n_threads) ! [G(thread 1) G(thread 2) ...]
+      call zero_array(G_thread, (wf%ao%n**2)*n_threads)
+!
+      eri_precision = wf%ao%get_libint_epsilon()
 !
       if (.not. C_screening_local) then 
 !
          call wf%construct_ao_G_thread_terms(G_thread, D, n_threads, max_D_schwarz,           &
-                                             max_eri_schwarz, shp_density_schwarz, n_sig_shp, &
+                                             max_eri_schwarz, shp_density_schwarz, wf%ao%n_sig_eri_shp, &
                                              wf%coulomb_threshold, wf%exchange_threshold,     &
-                                             wf%libint_epsilon, wf%system%shell_limits)
+                                             eri_precision, wf%ao%shells)
 !
       else 
 !
          call wf%construct_ao_G_thread_terms_mo_screened(G_thread, D, n_threads, max_D_schwarz,   &
                                                          max_eri_schwarz, shp_density_schwarz,    &
-                                                         n_sig_shp, wf%coulomb_threshold,          &
-                                                         wf%exchange_threshold, wf%libint_epsilon,&
-                                                         wf%system%shell_limits)         
+                                                         wf%ao%n_sig_eri_shp, wf%coulomb_threshold,         &
+                                                         wf%exchange_threshold, eri_precision,    &
+                                                         wf%ao%shells)         
 !
       endif
 !
-      call mem%dealloc(shp_density_schwarz, wf%system%n_s, wf%system%n_s)
+      call mem%dealloc(shp_density_schwarz, wf%ao%n_sh, wf%ao%n_sh)
 !
 !     Put the accumulated Fock matrices from each thread into the Fock matrix,
 !     and symmetrize the result
 !
-      call zero_array(G, (wf%n_ao**2))
+      call zero_array(G, (wf%ao%n**2))
 !
       do thread = 1, n_threads
 !
-         call daxpy(wf%n_ao**2, one, G_thread(1, 1, thread), 1, G, 1)
+         call daxpy(wf%ao%n**2, one, G_thread(1, 1, thread), 1, G, 1)
 !
       enddo
 !
-      call mem%dealloc(G_thread, wf%n_ao, wf%n_ao, n_threads)
+      call mem%dealloc(G_thread, wf%ao%n, wf%ao%n, n_threads)
 !
-      call symmetric_sum(G, wf%n_ao)
-      call dscal(wf%n_ao**2, half, G, 1)
+      call symmetric_sum(G, wf%ao%n)
+      call dscal(wf%ao%n**2, half, G, 1)
 !
    end subroutine construct_ao_G_hf
 !
@@ -299,15 +287,15 @@ contains
 !
       integer, intent(in) :: n_threads, n_sig_shp
 !
-      type(interval), dimension(wf%system%n_s), intent(in) :: shells
+      type(interval), dimension(wf%ao%n_sh), intent(in) :: shells
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
+      real(dp), dimension(wf%ao%n, wf%ao%n*n_threads)   :: F
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz 
       real(dp), intent(in) :: coulomb_thr, exchange_thr, precision_thr
 !
-      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: shp_density_schwarz
+      real(dp), dimension(wf%ao%n_sh, wf%ao%n_sh), intent(in) :: shp_density_schwarz
 !
       real(dp) :: d1, d2, d3, d4, d5, d6, shp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8
@@ -318,7 +306,7 @@ contains
 !
       real(dp) :: shp_density_schwarz_s1s2, shp_density_schwarz_s3s2, shp_density_schwarz_s3s1
 !
-      real(dp), dimension(wf%system%max_shell_size**4) :: g
+      real(dp), dimension(wf%ao%max_sh_size**4) :: g
 !
       integer :: thread = 0, skip
 !
@@ -331,14 +319,14 @@ contains
       do s1s2 = 1, n_sig_shp
 !
 !$       thread = omp_get_thread_num()
-         thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix
+         thread_offset = thread*wf%ao%n ! Start column of thread's Fock matrix
 !
-         shp_eri_schwarz_s1s2 = wf%shp_eri_schwarz(s1s2, 1)
+         shp_eri_schwarz_s1s2 = wf%ao%cs_eri_max(s1s2, 1)
 !
-         s1s2_packed = wf%shp_eri_schwarz_list(s1s2, 3) ! The s1s2-th largest packed index
+         s1s2_packed = wf%ao%cs_eri_max_indices(s1s2, 3) ! The s1s2-th largest packed index
 !
-         s1 = wf%shp_eri_schwarz_list(s1s2_packed, 1)
-         s2 = wf%shp_eri_schwarz_list(s1s2_packed, 2)
+         s1 = wf%ao%cs_eri_max_indices(s1s2_packed, 1)
+         s2 = wf%ao%cs_eri_max_indices(s1s2_packed, 2)
 !
          shp_density_schwarz_s1s2 = shp_density_schwarz(s1, s2)
          if (shp_eri_schwarz_s1s2*(max_D_schwarz)*(max_eri_schwarz) .lt. coulomb_thr) cycle
@@ -356,7 +344,7 @@ contains
 !
                s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4
 !
-               temp = shp_eri_schwarz_s1s2*wf%shp_eri_schwarz(s3s4, 2)
+               temp = shp_eri_schwarz_s1s2*wf%ao%cs_eri_max(s3s4, 2)
 
                if (temp*(max_D_schwarz) .lt. coulomb_thr) cycle ! Screened out shell pair
 !
@@ -375,9 +363,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%system%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,         &
-                  precision_thr/max(temp7,temp8), thread, skip, shells(s1)%length, shells(s2)%length, &
-                  shells(s3)%length, shells(s4)%length)
+               call wf%ao%get_eri(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8), skip)
 !
                if (skip == 1) cycle
 !
@@ -441,8 +427,6 @@ contains
       enddo
 !$omp end parallel do
 !
-      call set_coulomb_precision_c(wf%libint_epsilon)
-!
    end subroutine construct_ao_G_thread_terms_hf
 !
 !
@@ -486,15 +470,15 @@ contains
 !
       integer, intent(in) :: n_threads, n_sig_shp
 !
-      type(interval), dimension(wf%system%n_s), intent(in) :: shells
+      type(interval), dimension(wf%ao%n_sh), intent(in) :: shells
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
+      real(dp), dimension(wf%ao%n, wf%ao%n*n_threads)   :: F
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz 
       real(dp), intent(in) :: coulomb_thr, exchange_thr, precision_thr
 !
-      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: shp_density_schwarz
+      real(dp), dimension(wf%ao%n_sh, wf%ao%n_sh), intent(in) :: shp_density_schwarz
 !
       real(dp) :: d1, d2, d3, d4, d5, d6, shp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8
@@ -505,7 +489,7 @@ contains
 !
       real(dp) :: shp_density_schwarz_s1s2, shp_density_schwarz_s3s2, shp_density_schwarz_s3s1
 !
-      real(dp), dimension(wf%system%max_shell_size**4) :: g
+      real(dp), dimension(wf%ao%max_sh_size**4) :: g
 !
       integer :: thread = 0, skip, q
 !
@@ -513,12 +497,12 @@ contains
 !
       real(dp), dimension(:), allocatable :: C_max
 !
-      call mem%alloc(C_max, wf%system%n_s) 
+      call mem%alloc(C_max, wf%ao%n_sh) 
 !
       C_max_timer = timings('MO coefficients maximums screening vector', 'n')
       call C_max_timer%turn_on()
 !
-      do s1 = 1, wf%system%n_s 
+      do s1 = 1, wf%ao%n_sh 
 !
          C_max(s1) = zero 
 !
@@ -541,19 +525,19 @@ contains
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34,     &
 !$omp w, x, y, z, temp1, temp2, temp3, d1, d2, d3, d4, d5, d6, thread, thread_offset,         &
 !$omp temp4, temp5, temp6, temp7, temp8, w_red, x_red, tot_dim, y_red, z_red, wxyz, g,        &
-!$omp shp_eri_schwarz_s1s2, shp_density_schwarz_s1s2, deg_12_34,                                &
+!$omp shp_eri_schwarz_s1s2, shp_density_schwarz_s1s2, deg_12_34,                              &
 !$omp shp_density_schwarz_s3s2, shp_density_schwarz_s3s1, skip) schedule(dynamic)
       do s1s2 = 1, n_sig_shp
 !
 !$       thread = omp_get_thread_num()
-         thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix
+         thread_offset = thread*wf%ao%n ! Start column of thread's Fock matrix
 !
-         shp_eri_schwarz_s1s2 = wf%shp_eri_schwarz(s1s2, 1)
+         shp_eri_schwarz_s1s2 = wf%ao%cs_eri_max(s1s2, 1)
 !
-         s1s2_packed = wf%shp_eri_schwarz_list(s1s2, 3) ! The s1s2-th largest packed index
+         s1s2_packed = wf%ao%cs_eri_max_indices(s1s2, 3) ! The s1s2-th largest packed index
 !
-         s1 = wf%shp_eri_schwarz_list(s1s2_packed, 1)
-         s2 = wf%shp_eri_schwarz_list(s1s2_packed, 2)
+         s1 = wf%ao%cs_eri_max_indices(s1s2_packed, 1)
+         s2 = wf%ao%cs_eri_max_indices(s1s2_packed, 2)
 !
          shp_density_schwarz_s1s2 = shp_density_schwarz(s1, s2)
          if (shp_eri_schwarz_s1s2*(max_D_schwarz)*(max_eri_schwarz) .lt. coulomb_thr) cycle
@@ -571,7 +555,7 @@ contains
 !
                s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4
 !
-               temp = shp_eri_schwarz_s1s2*wf%shp_eri_schwarz(s3s4, 2)
+               temp = shp_eri_schwarz_s1s2*wf%ao%cs_eri_max(s3s4, 2)
 !
                if (temp*(max_D_schwarz) .lt. coulomb_thr) cycle ! Screened out shell pair
 !
@@ -590,14 +574,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%system%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,              &
-                                                          precision_thr/max(temp7,temp8), &
-                                                          thread,                         &
-                                                          skip,                           &
-                                                          shells(s1)%length,              &
-                                                          shells(s2)%length,              &
-                                                          shells(s3)%length,              &
-                                                          shells(s4)%length)
+               call wf%ao%get_eri(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8), skip)
 !
                if (skip == 1) cycle
 !
@@ -663,8 +640,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call set_coulomb_precision_c(wf%libint_epsilon)
-      call mem%dealloc(C_max, wf%system%n_s) 
+      call mem%dealloc(C_max, wf%ao%n_sh) 
 !
    end subroutine construct_ao_G_thread_terms_mo_screened_hf
 !
@@ -692,14 +668,14 @@ contains
 !
       integer, intent(in) :: n_threads,  n_sig_shp
 !
-      type(interval), dimension(wf%system%n_s), intent(in) :: shells
+      type(interval), dimension(wf%ao%n_sh), intent(in) :: shells
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
+      real(dp), dimension(wf%ao%n, wf%ao%n*n_threads)   :: F
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, precision_thr
 !
-      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in)               :: shp_density_schwarz
+      real(dp), dimension(wf%ao%n_sh, wf%ao%n_sh), intent(in)               :: shp_density_schwarz
 !
       real(dp) :: d1, d2, shp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp7, deg, deg_12, deg_34, deg_12_34
@@ -709,7 +685,7 @@ contains
 !
       real(dp) :: shp_density_schwarz_s1s2, shp_density_schwarz_s3s2, shp_density_schwarz_s3s1
 !
-      real(dp), dimension(wf%system%max_shell_size**4) :: g
+      real(dp), dimension(wf%ao%max_sh_size**4) :: g
 !
       integer :: thread = 0, skip
 !
@@ -722,14 +698,14 @@ contains
       do s1s2 = 1, n_sig_shp
 !
 !$       thread = omp_get_thread_num()
-         thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix
+         thread_offset = thread*wf%ao%n ! Start column of thread's Fock matrix
 !
-         shp_eri_schwarz_s1s2 = wf%shp_eri_schwarz(s1s2, 1)
+         shp_eri_schwarz_s1s2 = wf%ao%cs_eri_max(s1s2, 1)
 !
-         s1s2_packed = wf%shp_eri_schwarz_list(s1s2, 3) ! The s1s2-th largest packed index
+         s1s2_packed = wf%ao%cs_eri_max_indices(s1s2, 3) ! The s1s2-th largest packed index
 !
-         s1 = wf%shp_eri_schwarz_list(s1s2_packed, 1)
-         s2 = wf%shp_eri_schwarz_list(s1s2_packed, 2)
+         s1 = wf%ao%cs_eri_max_indices(s1s2_packed, 1)
+         s2 = wf%ao%cs_eri_max_indices(s1s2_packed, 2)
 !
          shp_density_schwarz_s1s2 = shp_density_schwarz(s1, s2)
          if (shp_eri_schwarz_s1s2*(max_D_schwarz)*(max_eri_schwarz) .lt. coulomb_thr) cycle
@@ -747,7 +723,7 @@ contains
 !
                s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4
 !
-               temp = shp_eri_schwarz_s1s2*wf%shp_eri_schwarz(s3s4, 2)
+               temp = shp_eri_schwarz_s1s2*wf%ao%cs_eri_max(s3s4, 2)
 
                if (temp*(max_D_schwarz) .lt. coulomb_thr) cycle ! Screened out shell pair
 !
@@ -760,9 +736,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%system%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, &
-                  precision_thr/temp7, thread, skip, shells(s1)%length, shells(s2)%length,    &
-                  shells(s3)%length, shells(s4)%length)
+               call wf%ao%get_eri(g, s1, s2, s3, s4, precision_thr/temp7, skip)
 !
                if (skip == 1) cycle
 !
@@ -836,14 +810,14 @@ contains
 !
       integer, intent(in) :: n_threads,  n_sig_shp
 !
-      type(interval), dimension(wf%system%n_s), intent(in) :: shells
+      type(interval), dimension(wf%ao%n_sh), intent(in) :: shells
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
+      real(dp), dimension(wf%ao%n, wf%ao%n*n_threads)   :: F
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, exchange_thr, precision_thr
 !
-      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: shp_density_schwarz
+      real(dp), dimension(wf%ao%n_sh, wf%ao%n_sh), intent(in) :: shp_density_schwarz
 !
       real(dp) :: d3, d4, d5, d6, shp_eri_schwarz_s1s2
       real(dp) :: temp, temp3, temp4, temp5, temp6, temp8, deg, deg_12, deg_34, deg_12_34
@@ -853,7 +827,7 @@ contains
 !
       real(dp) :: shp_density_schwarz_s1s2, shp_density_schwarz_s3s2, shp_density_schwarz_s3s1
 !
-      real(dp), dimension(wf%system%max_shell_size**4) :: g
+      real(dp), dimension(wf%ao%max_sh_size**4) :: g
 !
       integer :: thread = 0, skip
 !
@@ -866,14 +840,14 @@ contains
       do s1s2 = 1, n_sig_shp
 !
 !$       thread = omp_get_thread_num()
-         thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix
+         thread_offset = thread*wf%ao%n ! Start column of thread's Fock matrix
 !
-         shp_eri_schwarz_s1s2 = wf%shp_eri_schwarz(s1s2, 1)
+         shp_eri_schwarz_s1s2 = wf%ao%cs_eri_max(s1s2, 1)
 !
-         s1s2_packed = wf%shp_eri_schwarz_list(s1s2, 3) ! The s1s2-th largest packed index
+         s1s2_packed = wf%ao%cs_eri_max_indices(s1s2, 3) ! The s1s2-th largest packed index
 !
-         s1 = wf%shp_eri_schwarz_list(s1s2_packed, 1)
-         s2 = wf%shp_eri_schwarz_list(s1s2_packed, 2)
+         s1 = wf%ao%cs_eri_max_indices(s1s2_packed, 1)
+         s2 = wf%ao%cs_eri_max_indices(s1s2_packed, 2)
 !
          shp_density_schwarz_s1s2 = shp_density_schwarz(s1, s2)
          if (shp_eri_schwarz_s1s2*(max_D_schwarz)*(max_eri_schwarz) .lt. exchange_thr) cycle
@@ -891,7 +865,7 @@ contains
 !
                s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4
 !
-               temp = shp_eri_schwarz_s1s2*wf%shp_eri_schwarz(s3s4, 2)
+               temp = shp_eri_schwarz_s1s2*wf%ao%cs_eri_max(s3s4, 2)
 
                if (temp*(max_D_schwarz) .lt. exchange_thr) cycle ! Screened out shell pair
 !
@@ -907,9 +881,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%system%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, &
-                  precision_thr/temp8, thread, skip, shells(s1)%length, shells(s2)%length,    &
-                  shells(s3)%length, shells(s4)%length)
+               call wf%ao%get_eri(g, s1, s2, s3, s4, precision_thr/temp8, skip)
 !
                if (skip == 1) cycle
 !
@@ -966,106 +938,6 @@ contains
    end subroutine construct_exchange_ao_G_hf
 !
 !
-   module subroutine construct_shp_eri_schwarz_hf(wf)
-!!
-!!    Construct shell-pair electronic-repulsion-integral Schwarz vector
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Computes a vector that contains the largest value (in absolute terms)
-!!    of g_wxwx^1/2 for each shell pair (A,B), where w and x is in A and B,
-!!    respectively.
-!!
-!
-      use array_utilities, only: quicksort_with_index_descending
-!
-      implicit none
-!
-      class(hf) :: wf
-!
-      integer, dimension(:),  allocatable :: shp_eri_schwarz_index_list
-      real(dp), dimension(:), allocatable :: sorted_shp_eri_schwarz
-!
-!     Local variables
-!
-      integer :: s1, s2, s1s2, shp
-!
-      real(dp) :: maximum
-!
-      real(dp), dimension(wf%system%max_shell_size**4) :: g
-!
-      type(interval) :: A_interval, B_interval
-!
-      type(timings) :: timer, timer_sort
-!
-      timer = timings('Construct ERI screening list', 'v')
-      call timer%turn_on()
-!
-!     Set the maximum element in each shell pair
-!
-      call set_coulomb_precision_c(1.0d-50)
-!
-!$omp parallel do private(s1, s2, s1s2, A_interval, B_interval, g, maximum) schedule(dynamic)
-      do s1 = 1, wf%system%n_s
-         do s2 = 1, s1
-!
-            s1s2 = (max(s1,s2)*(max(s1,s2)-3)/2) + s1 + s2
-!
-            A_interval = wf%system%shell_limits(s1)
-            B_interval = wf%system%shell_limits(s2)
-!
-            call wf%system%construct_ao_g_wxyz(g, s1, s2, s1, s2)
-!
-            maximum = get_abs_max(g, ((A_interval%length)*(B_interval%length))**2)
-!
-            wf%shp_eri_schwarz(s1s2, 1) = sqrt(maximum)
-!
-            wf%shp_eri_schwarz_list(s1s2, 1) = s1
-            wf%shp_eri_schwarz_list(s1s2, 2) = s2
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-!     Sort the shp_eri_schwarz vector and use the resulting index list
-!     to resort the shp_eri_schwarz_list matrix
-!
-      call mem%alloc(shp_eri_schwarz_index_list, wf%system%n_s*(wf%system%n_s + 1)/2)
-      call mem%alloc(sorted_shp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2)
-!
-      call dcopy(wf%system%n_s*(wf%system%n_s + 1)/2, &
-                  wf%shp_eri_schwarz(:, 1), 1, sorted_shp_eri_schwarz, 1)
-!
-      timer_sort = timings('Construct ERI screening list (time to sort)','v')
-      call timer_sort%turn_on()
-!
-      call quicksort_with_index_descending(sorted_shp_eri_schwarz, shp_eri_schwarz_index_list, &
-                                                wf%system%n_s*(wf%system%n_s + 1)/2)
-!
-      call timer_sort%turn_off()
-!
-      call dcopy(wf%system%n_s*(wf%system%n_s + 1)/2, &
-                  wf%shp_eri_schwarz(:, 1), 1, wf%shp_eri_schwarz(:, 2), 1)
-!
-      call dcopy(wf%system%n_s*(wf%system%n_s + 1)/2, sorted_shp_eri_schwarz, 1, &
-                  wf%shp_eri_schwarz(:, 1), 1)
-
-      call mem%dealloc(sorted_shp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2)
-!
-!$omp parallel do private(shp)
-      do shp = 1, wf%system%n_s*(wf%system%n_s + 1)/2
-!
-         wf%shp_eri_schwarz_list(shp, 3) = shp_eri_schwarz_index_list(shp)
-!
-      enddo
-!$omp end parallel do
-!
-      call mem%dealloc(shp_eri_schwarz_index_list, wf%system%n_s*(wf%system%n_s + 1)/2)
-!
-      call timer%turn_off()
-!
-   end subroutine construct_shp_eri_schwarz_hf
-!
-!
    module subroutine construct_shp_density_schwarz_hf(wf, shp_density_schwarz, D)
 !!
 !!    Construct shell-pair density schwarz vector
@@ -1079,9 +951,9 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%system%n_s, wf%system%n_s) :: shp_density_schwarz
+      real(dp), dimension(wf%ao%n_sh, wf%ao%n_sh) :: shp_density_schwarz
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
 !
       real(dp), dimension(:,:), allocatable, target :: D_red
       real(dp), dimension(:,:), contiguous, pointer :: D_red_p => null()
@@ -1095,16 +967,16 @@ contains
 !
 !$    n_threads = omp_get_max_threads()
 !
-      call mem%alloc(D_red,wf%system%max_shell_size**2,n_threads)
+      call mem%alloc(D_red,wf%ao%max_sh_size**2,n_threads)
 !
 !$omp parallel do private(s1, s2, A_interval, B_interval, D_red_p, maximum, thread) schedule(dynamic)
-      do s1 = 1, wf%system%n_s
+      do s1 = 1, wf%ao%n_sh
          do s2 = 1, s1
 !
 !$          thread = omp_get_thread_num()
 !
-            A_interval = wf%system%shell_limits(s1)
-            B_interval = wf%system%shell_limits(s2)
+            A_interval = wf%ao%shells(s1)
+            B_interval = wf%ao%shells(s2)
 !
             D_red_p(1:A_interval%length,1:B_interval%length) => D_red(1:A_interval%length*B_interval%length,thread+1)
 !
@@ -1121,46 +993,9 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(D_red,wf%system%max_shell_size**2,n_threads)
+      call mem%dealloc(D_red,wf%ao%max_sh_size**2,n_threads)
 !
    end subroutine construct_shp_density_schwarz_hf
-!
-!
-   module subroutine get_n_sig_eri_shp_hf(wf, n_sig_shp)
-!!
-!!    Get number of significant ERI shell-pairs
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-!!    Calculates the number of significant shell pairs. The threshold
-!!    determines how small the largest element of g_wxwx in a shell
-!!    pair AB (w in A, x in B) to be ignored completely in the Fock
-!!    construction loop.
-!!
-      implicit none
-!
-      class(hf), intent(in) :: wf
-!
-      integer, intent(inout) :: n_sig_shp
-!
-      integer :: s1s2
-!
-      n_sig_shp = 0
-!
-      do s1s2 = 1, wf%system%n_s*(wf%system%n_s + 1)/2
-!
-         if (wf%shp_eri_schwarz(s1s2, 1)*wf%shp_eri_schwarz(1, 1) .lt. wf%integral_cutoff) then
-!
-            exit
-!
-         else
-!
-            n_sig_shp = n_sig_shp + 1
-!
-         endif
-!
-      enddo
-!
-   end subroutine get_n_sig_eri_shp_hf
 !
 !
    module subroutine construct_ao_G_1der_hf(wf, G_ao, D_ao)
@@ -1179,13 +1014,13 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms) :: G_ao
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D_ao
+      real(dp), dimension(wf%ao%n, wf%ao%n, 3, wf%n_atomic_centers) :: G_ao
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D_ao
 !
-      real(dp), dimension((wf%system%max_shell_size**4)*3*4), target :: g_ABCDqk
+      real(dp), dimension((wf%ao%max_sh_size**4)*3*4), target :: g_ABCDqk
       real(dp), dimension(:,:,:,:,:,:), pointer, contiguous :: g_ABCDqk_p
 !
-      integer :: A, B, C, D, D_max, w, x, y, z, n_sig_shp, AB, AB_packed
+      integer :: A, B, C, D, D_max, w, x, y, z, AB, AB_packed
       integer :: w_red, x_red, y_red, z_red, tot_dim, k, q, n_threads, thread
 !
       real(dp) :: d1, d2, d3, d4, d5, d6
@@ -1201,33 +1036,31 @@ contains
       thread = 0
       n_threads = 1
 !$    n_threads = omp_get_max_threads()
-      call mem%alloc(G_ao_t, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms, n_threads)
+      call mem%alloc(G_ao_t, wf%ao%n, wf%ao%n, 3, wf%n_atomic_centers, n_threads)
       G_ao_t = zero
-!
-      call wf%get_n_sig_eri_shp(n_sig_shp)
 !
 !$omp parallel do private(A, B, C, D, D_max, atoms, deg, deg_CD, deg_AB, deg_AB_CD, g_ABCDqk, g_ABCDqk_p, &
 !$omp w, x, y, z, w_red, x_red, y_red, z_red, temp, temp1, temp2, temp3, temp4, temp5, temp6, &
 !$omp d1, d2, d3, d4, d5, d6, thread, q, k, tot_dim, AB, AB_packed) schedule(dynamic)
-      do AB = 1, n_sig_shp
+      do AB = 1, wf%ao%n_sig_eri_shp
 !
 !$       thread = omp_get_thread_num()
 !
-         if (wf%shp_eri_schwarz(AB, 1)*wf%shp_eri_schwarz(1, 1) < wf%coulomb_threshold) cycle
-         AB_packed = wf%shp_eri_schwarz_list(AB, 3)
+         if (wf%ao%cs_eri_max(AB, 1)*wf%ao%cs_eri_max(1, 1) < wf%coulomb_threshold) cycle
+         AB_packed = wf%ao%cs_eri_max_indices(AB, 3)
 !
-         A = wf%shp_eri_schwarz_list(AB_packed, 1)
-         B = wf%shp_eri_schwarz_list(AB_packed, 2)
+         A = wf%ao%cs_eri_max_indices(AB_packed, 1)
+         B = wf%ao%cs_eri_max_indices(AB_packed, 2)
 !
-         atoms(1) = wf%system%shell2atom(A)
-         atoms(2) = wf%system%shell2atom(B)
+         atoms(1) = wf%ao%shell_to_center(A)
+         atoms(2) = wf%ao%shell_to_center(B)
 !
          deg_AB = real(2-B/A, kind=dp)
 !
             do C = 1, A
 !
                D_max = (C/A)*B + (1-C/A)*C
-               atoms(3) = wf%system%shell2atom(C)
+               atoms(3) = wf%ao%shell_to_center(C)
 !
                do D = 1, D_max
 !
@@ -1236,44 +1069,44 @@ contains
 
                   deg = deg_AB*deg_CD*deg_AB_CD ! Shell degeneracy
 !
-                  atoms(4) = wf%system%shell2atom(D)
+                  atoms(4) = wf%ao%shell_to_center(D)
 !
-                  call wf%system%construct_ao_g_wxyz_1der(g_ABCDqk, A, B, C, D)
+                  call wf%ao%get_eri_1der(g_ABCDqk, A, B, C, D)
 !
-                  tot_dim = (wf%system%shell_limits(A)%length)*(wf%system%shell_limits(B)%length)&
-                              *(wf%system%shell_limits(C)%length)*(wf%system%shell_limits(D)%length)&
+                  tot_dim = (wf%ao%shells(A)%length)*(wf%ao%shells(B)%length)&
+                              *(wf%ao%shells(C)%length)*(wf%ao%shells(D)%length)&
                               *3*4
 !
                   g_ABCDqk(1:tot_dim) = deg*g_ABCDqk(1:tot_dim)
 !
-                  g_ABCDqk_p(1 : wf%system%shell_limits(A)%length, 1 : wf%system%shell_limits(B)%length, &
-                             1 : wf%system%shell_limits(C)%length, 1 : wf%system%shell_limits(D)%length, &
+                  g_ABCDqk_p(1 : wf%ao%shells(A)%length, 1 : wf%ao%shells(B)%length, &
+                             1 : wf%ao%shells(C)%length, 1 : wf%ao%shells(D)%length, &
                              1 : 3, 1 : 4) => g_ABCDqk(1 : tot_dim)
 !
-                  do z = wf%system%shell_limits(D)%first, wf%system%shell_limits(D)%last
+                  do z = wf%ao%shells(D)%first, wf%ao%shells(D)%last
 !
-                     z_red = z - wf%system%shell_limits(D)%first + 1
+                     z_red = z - wf%ao%shells(D)%first + 1
 !
-                     do y = wf%system%shell_limits(C)%first, wf%system%shell_limits(C)%last
+                     do y = wf%ao%shells(C)%first, wf%ao%shells(C)%last
 !
-                        y_red = y - wf%system%shell_limits(C)%first + 1
+                        y_red = y - wf%ao%shells(C)%first + 1
 !
                         d1 = D_ao(y, z)
 !
-                        do x = wf%system%shell_limits(B)%first, wf%system%shell_limits(B)%last
+                        do x = wf%ao%shells(B)%first, wf%ao%shells(B)%last
 !
-                           x_red = x - wf%system%shell_limits(B)%first + 1
+                           x_red = x - wf%ao%shells(B)%first + 1
 !
                            d3 = D_ao(x, y)
                            d5 = D_ao(x, z)
 !
-                           do w = wf%system%shell_limits(A)%first, wf%system%shell_limits(A)%last
+                           do w = wf%ao%shells(A)%first, wf%ao%shells(A)%last
 !
                               d2 = D_ao(w, x)
                               d4 = D_ao(w, y)
                               d6 = D_ao(w, z)
 !
-                              w_red = w - wf%system%shell_limits(A)%first + 1
+                              w_red = w - wf%ao%shells(A)%first + 1
 !
                               do k = 1, 4
                                  do q = 1, 3
@@ -1316,175 +1149,13 @@ contains
 !
       do thread = 1, n_threads
 !
-         call daxpy(3*wf%system%n_atoms*wf%n_ao**2, one, G_ao_t(1,1,1,1,thread), 1, G_ao, 1)
+         call daxpy(3*wf%n_atomic_centers*wf%ao%n**2, one, G_ao_t(1,1,1,1,thread), 1, G_ao, 1)
 !
       enddo
 !
-      call mem%dealloc(G_ao_t, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms, n_threads)
+      call mem%dealloc(G_ao_t, wf%ao%n, wf%ao%n, 3, wf%n_atomic_centers, n_threads)
 !
    end subroutine construct_ao_G_1der_hf
-!
-!
-   module subroutine add_pcm_fock_term_hf(wf)
-!!
-!!    Update Fock PCM 
-!!    Written by Tommaso Giovannini, Oct 2019 
-!!
-!!    The QM Fock is updated with the contributions coming 
-!!    from the PCM:
-!!       q*V_wx
-!!
-!!    Done by interfacing to PCMSolver
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      integer :: i
-!     
-! 
-      call zero_array(wf%pcm_fock, wf%n_ao*wf%n_ao)
-      call zero_array(wf%system%pcm%pcm_rhs, wf%system%pcm%n_tesserae)
-!      
-!     electrostatic potential contracted with density : \sum_i V_mu(D_mu)(r_i)
-!
-      call wf%construct_ao_electrostatics(0, 1, 'prop', &
-                                          wf%system%pcm%n_tesserae, &
-                                          wf%system%pcm%grid_coord*bohr_to_angstrom, &
-                                          property_points=wf%system%pcm%pcm_rhs, &
-                                          ao_density=wf%ao_density) 
-!      
-!     solve q=D^-1 (V(D)) 
-! 
-      call wf%system%pcm%set_surface_function('NucMEP')
-!                                          
-      call wf%system%pcm%compute_asc('NucMEP', 'NucASC')
-!                                          
-      call wf%system%pcm%get_surface_function('NucASC')
-!                                          
-      call output%print_separator('verbose', 67, fs='(/t3,a)')
-!
-      call output%printf('v', 'Atom         PCM ASC            PCM RHS', fs='(t6,a)')
-!
-      do i = 1, wf%system%pcm%n_tesserae
-!
-         call output%printf('v', '(i4)      (e13.6)      (e13.6)', ints=[i], &
-                            reals=[wf%system%pcm%charges(i), &
-                            wf%system%pcm%pcm_rhs(i)], fs='(t6,a)')
-!
-      enddo
-!
-      call output%print_separator('verbose', 67)
-!
-!     Fock creation: F_munu = \sum_i q_i V_munu(r_i)
-!
-      call wf%construct_ao_electrostatics(0, 0, 'fock', &
-                                          wf%system%pcm%n_tesserae, &
-                                          wf%system%pcm%grid_coord*bohr_to_angstrom, & 
-                                          elec_fock=wf%pcm_fock, &
-                                          charges=wf%system%pcm%charges) 
-!
-      wf%ao_fock = wf%ao_fock + half*wf%pcm_fock
-!
-      call output%print_matrix('debug', 'QM Density', wf%ao_density, wf%n_ao, wf%n_ao)
-!
-      call output%print_matrix('debug', 'PCM Fock', wf%pcm_fock, wf%n_ao, wf%n_ao)
-!
-      call output%print_matrix('debug', 'QM/PCM Fock', wf%ao_fock, wf%n_ao, wf%n_ao)
-!
-!
-   end subroutine add_pcm_fock_term_hf
-!
-!
-   module subroutine add_mm_fock_terms_hf(wf)
-!!
-!!    Update Fock with polarizable QM/MM terms
-!!    For now: QM/FQ model (see mm_class and output file)
-!!    Written by Tommaso Giovannini, July 2019 for QM/MM
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      real(dp), dimension(:), allocatable                   :: potential_points
-      integer :: i
-!
-      if (wf%system%mm%forcefield .eq. 'non-polarizable') then
-!
-         call daxpy(wf%n_ao**2, half, wf%nopol_h_wx, 1, wf%ao_fock, 1)
-!
-      elseif (wf%system%mm%forcefield .eq. 'fq') then
-!
-         if(.not.allocated(potential_points)) call mem%alloc(potential_points, wf%system%mm%n_atoms)
-!
-         call zero_array(wf%pol_emb_fock,wf%n_ao*wf%n_ao)
-         call zero_array(wf%system%mm%pol_emb_rhs,wf%system%mm%n_variables)
-!
-!        electrostatic potential contracted with density : \sum_i V_mu(D_mu)(r_i)
-!
-         call wf%construct_ao_electrostatics(0,1,'prop',wf%system%mm%n_atoms,wf%system%mm%coordinates, &
-                                             property_points=potential_points,ao_density=wf%ao_density) 
-!
-!        rhs for fq: -chi - V(D)
-!
-         wf%system%mm%pol_emb_rhs(1:wf%system%mm%n_atoms) = -wf%system%mm%chi + potential_points
-!
-!        solve q=D^-1 (-chi - V(D))
-!
-         call dgemm('N', 'N',                   &
-                     wf%system%mm%n_variables,  &
-                     1,                         &
-                     wf%system%mm%n_variables,  &
-                     one,                       &
-                     wf%system%mm%fq_matrix,    &
-                     wf%system%mm%n_variables,  &
-                     wf%system%mm%pol_emb_rhs,  &
-                     wf%system%mm%n_variables,  &
-                     zero,                      &
-                     wf%system%mm%pol_emb_lhs,  &
-                     wf%system%mm%n_variables)
-!
-!
-         call output%print_separator('verbose', 67, fs='(/t3,a)')
-!
-         call output%printf('v', 'Atom          FQ LHS             FQ RHS       &
-                            & QM Potential@FQs', fs='(t6,a)')
-!
-         do i = 1, wf%system%mm%n_atoms
-!
-            call output%printf('v', '(i4)      (e13.6)      (e13.6)      (e13.6)', &
-                               ints=[i], reals=[wf%system%mm%pol_emb_lhs(i), &
-                               wf%system%mm%pol_emb_rhs(i), &
-                               potential_points(i)], fs='(t6,a)')
-!
-         enddo
-!
-         call output%print_separator('verbose', 67)
-!
-!        Put FQ charges into charge (I am discrading langrangian multipliers)
-!
-         wf%system%mm%charge = wf%system%mm%pol_emb_lhs(1:wf%system%mm%n_atoms)
-!
-!        Fock creation: F_munu = \sum_i q_i V_munu(r_i)
-!
-         call wf%construct_ao_electrostatics(0,0,'fock',wf%system%mm%n_atoms,wf%system%mm%coordinates, & 
-                                             elec_fock=wf%pol_emb_fock,charges=wf%system%mm%charge) 
-!
-         call daxpy(wf%n_ao**2, half, wf%pol_emb_fock, 1, wf%ao_fock, 1)
-!
-         call output%print_matrix('debug', 'QM Density', wf%ao_density, wf%n_ao, wf%n_ao)
-         call output%print_matrix('debug', 'FQ Fock', wf%pol_emb_fock, wf%n_ao, wf%n_ao)
-         call output%print_matrix('debug', 'QM/FQ Fock', wf%ao_fock, wf%n_ao, wf%n_ao)
-!
-         call mem%dealloc(potential_points, wf%system%mm%n_atoms)
-!
-      else
-!
-         call output%error_msg('did not recognize the force field')
-!
-      endif
-!
-   end subroutine add_mm_fock_terms_hf
 !
 !
    module subroutine set_screening_and_precision_thresholds_hf(wf, gradient_threshold)
@@ -1501,6 +1172,8 @@ contains
       class(hf), intent(inout) :: wf
 !
       real(dp), intent(in) :: gradient_threshold
+!
+      real(dp) :: epsilon ! Libint ERI precision 
 !
 !     If not specified by user, set Coulomb and exchange thresholds 
 !     (For ref., this will give 10-12 and 10-10 for gradient threshold: 10-6)
@@ -1524,11 +1197,7 @@ contains
 !        Tighten the default threshold if it is larger than 
 !        the lowest screening threshold squared
 !
-!        Either 10-20 (which wf%libint_epsilon is set to by default),
-!        or the minimum of coulomb and exchange squared
-!
-         wf%libint_epsilon = min(wf%libint_epsilon,                                    &
-                                 min(wf%coulomb_threshold, wf%exchange_threshold)**2)
+         epsilon = min(wf%coulomb_threshold, wf%exchange_threshold)**2
 !
       else
 !
@@ -1544,7 +1213,7 @@ contains
 !
       if (.not. input%requested_keyword_in_section('integral cutoff', 'solver scf')) then
 !
-         wf%integral_cutoff = sqrt(wf%libint_epsilon)
+         wf%integral_cutoff = sqrt(epsilon)
 !
       endif
 !
@@ -1559,6 +1228,8 @@ contains
          wf%exchange_threshold = wf%coulomb_threshold
 !
       endif
+!
+      call wf%ao%set_libint_epsilon(epsilon)
 !
    end subroutine set_screening_and_precision_thresholds_hf
 !

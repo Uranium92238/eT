@@ -240,7 +240,7 @@ contains
 !
       if (solver%skip) return
 !
-      if (wf%n_ao == 1) then 
+      if (wf%ao%n == 1) then 
 !
          call solver%run_single_ao(wf)
          return

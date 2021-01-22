@@ -41,11 +41,14 @@ module input_file_class
       integer :: n_geometry_lines    ! Number of QM atoms
       integer :: n_mm_atom_lines ! Number of MM atoms
 !
-      character(len=200), dimension(:), allocatable :: input_  ! Array of the input
-                                                               ! lines excluding geometry
+!     Array of the input lines excluding geometry
 !
-      character(len=200), dimension(:), allocatable :: geometry    ! Array of the QM input geometry
-      character(len=200), dimension(:), allocatable :: mm_geometry ! Array of the MM input geometry
+      character(len=200), dimension(:), allocatable :: input_  
+!
+!     Array of the QM and MM input geometries
+!
+      character(len=200), dimension(:), allocatable :: geometry    
+      character(len=200), dimension(:), allocatable :: mm_geometry 
 !
    contains
 !
@@ -60,9 +63,14 @@ module input_file_class
       procedure :: get_integer_array_for_keyword_in_section             => get_integer_array_for_keyword_in_section_input_file
       procedure :: get_real_array_for_keyword_in_section                => get_real_array_for_keyword_in_section_input_file
       procedure :: get_n_atoms                                          => get_n_atoms_input_file
-      procedure :: get_mm_n_atoms                                       => get_mm_n_atoms_input_file
+      procedure :: get_n_mm_atoms                                       => get_n_mm_atoms_input_file
+      procedure :: get_n_mm_molecules                                   => get_n_mm_molecules_input_file
       procedure :: get_geometry                                         => get_geometry_input_file
-      procedure :: get_mm_geometry                                      => get_mm_geometry_input_file
+!
+      procedure :: get_mm_geometry_fq                                   => get_mm_geometry_fq_input_file
+      procedure :: get_mm_geometry_non_polarizable                      => get_mm_geometry_non_polarizable_input_file
+!
+
       procedure :: get_reference_wf                                     => get_reference_wf_input_file
       procedure :: get_cc_wf                                            => get_cc_wf_input_file
 !
@@ -101,12 +109,14 @@ module input_file_class
       procedure :: get_required_integer8_keyword_in_section_input_file
       procedure :: get_required_dp_keyword_in_section_input_file
 !
-      procedure :: is_string_in_cs_list   => is_string_in_cs_list_input_file
+      procedure :: is_string_in_cs_list        => is_string_in_cs_list_input_file
 !
-      procedure :: read_keywords_and_geometry => read_keywords_and_geometry_input_file
+      procedure :: read_keywords_and_geometry  => read_keywords_and_geometry_input_file
 !
-      procedure :: cleanup_geometry    => cleanup_geometry_input_file
-      procedure :: cleanup_keywords    => cleanup_keywords_input_file
+      procedure :: cleanup_geometry            => cleanup_geometry_input_file
+      procedure :: cleanup_keywords            => cleanup_keywords_input_file
+!
+      procedure :: is_embedding_on             => is_embedding_on_input_file
 !
    end type input_file
 !
@@ -173,6 +183,19 @@ contains
       the_file%action_ = 'read'
 !
 !     Set method section
+!
+      the_file%rf_wfs = [character(len=30) :: 'hf','uhf','mlhf']
+!
+      the_file%cc_wfs = [character(len=30) ::   &
+                           'ccs',               &
+                           'mp2',               &
+                           'cc2',               &
+                           'lowmem-cc2',        &
+                           'ccsd',              &
+                           'cc3',               &
+                           'ccsd(t)',           &
+                           'mlcc2',             &
+                           'mlccsd']
 !
       method%name_    = 'method'
       method%required = .false.
@@ -1675,9 +1698,9 @@ contains
    end function  get_n_atoms_input_file
 !
 !
-   pure function get_mm_n_atoms_input_file(the_file) result(n_atoms)
+   pure function get_n_mm_atoms_input_file(the_file) result(n_atoms)
 !!
-!!    Get n atoms
+!!    Get n MM atoms
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    Reads the geometry section of the input and
@@ -1691,7 +1714,67 @@ contains
 !
       n_atoms = the_file%n_mm_atom_lines
 !
-   end function  get_mm_n_atoms_input_file
+   end function  get_n_mm_atoms_input_file
+!
+!
+   function get_n_mm_molecules_input_file(the_file) result(n_molecules)
+!!
+!!    Get n MM molecules
+!!    Written by Sarai D. Folkestad, Sep 2020
+!!
+!!    Reads the MM geometry section of the input and
+!!    counts the number of molecules
+!!
+      implicit none
+!
+      class(input_file), intent(in) :: the_file
+!
+      integer :: n_molecules
+!
+!     Local variables
+!
+      integer :: cursor, record, current_molecule, previous_molecule
+!
+      character(len=200) :: string, imolecule
+!
+!     Loop through the MM geometry section 
+!
+      previous_molecule = 1
+      n_molecules       = 1
+!
+      do record = 1, the_file%n_mm_atom_lines
+!
+         string = (trim(adjustl(the_file%mm_geometry(record))))
+         cursor = set_cursor_to_character(string,'=')
+!
+         string = string(cursor+1:200)
+!
+         cursor = set_cursor_to_character(string,']')
+!
+         imolecule = string(1:cursor-1)
+         read(imolecule,'(i4)') current_molecule
+!
+         if (record == 1 .and. current_molecule .ne. 1) &
+            call output%error_msg('Molecule 1 is missing!')
+!
+         if (current_molecule .eq. previous_molecule + 1) then
+!
+            n_molecules = n_molecules + 1
+!
+         elseif (current_molecule .ne. previous_molecule .and. &
+               current_molecule .ne. previous_molecule + 1) then
+!
+               call output%error_msg('Molecule (i0) missing even though (i0) &
+                                    &should be present in QM/MM calculation.', &
+                                    ints=[previous_molecule + 1, n_molecules])
+!
+         endif
+!
+         previous_molecule = current_molecule
+!
+      enddo
+!
+   end function get_n_mm_molecules_input_file
 !
 !
    subroutine get_geometry_input_file(the_file, n_atoms, symbols, &
@@ -1717,17 +1800,17 @@ contains
       character(len=2), dimension(n_atoms), intent(out)   :: symbols
       character(len=100), dimension(n_atoms), intent(out) :: basis_sets
 !
-      real(dp), dimension(n_atoms, 3), intent(out) :: positions ! x, y, z
+      real(dp), dimension(3, n_atoms), intent(out) :: positions ! x, y, z
 !
       logical, intent(out) :: units_angstrom ! True if units are Ångström/unspecified, false if Bohr
 !
 !     Local variables
 !
-      integer :: cursor, current_atom, i
+      integer :: current_atom, i
 !
       integer :: start_
 !
-      character(len=200) :: string, coordinate
+      character(len=200) :: string
       character(len=100) :: current_basis
 !
       start_ = 1 ! Specifies the line of the first and required basis
@@ -1766,38 +1849,24 @@ contains
 !
       do i = start_, the_file%n_geometry_lines
 !
-         if (the_file%geometry(i)(1:6) == 'units:') &
+         string = trim(adjustl(the_file%geometry(i)))
+!
+         if (string(1:6) == 'units:') &
          call output%error_msg('Units must be specified as the first line in the geometry section.')
 !
-         if(the_file%geometry(i)(1:6) == 'basis:') then
+         if(string(1:6) == 'basis:') then
 !
-            current_basis = trim(adjustl(the_file%geometry(i)(7:200)))
+            current_basis = trim(adjustl(string(7:200)))
 !
          else
 !
             current_atom = current_atom + 1
 !
             basis_sets(current_atom) = current_basis
-            symbols(current_atom)    = trim(the_file%geometry(i)(1:2))
+            symbols(current_atom)    = string(1:2)
 !
-            string = the_file%geometry(i)(3:200)
-!
-            cursor = set_cursor_to_character(string)
-!
-            coordinate = string(1:cursor)
-            read(coordinate, '(f25.16)') positions(current_atom, 1)
-!
-            string = string(cursor + 1:200)
-!
-            cursor = set_cursor_to_character(string)
-!
-            coordinate = string(1:cursor)
-            read(coordinate, '(f25.16)') positions(current_atom, 2)
-!
-            coordinate = string(cursor + 1:200)
-            coordinate = adjustl(coordinate)
-!
-            read(coordinate, '(f25.16)') positions(current_atom, 3)
+            string = adjustl(string(3:200))
+            read(string(1:), *) positions(:, current_atom)           
 !
          endif
 !
@@ -1814,132 +1883,105 @@ contains
    end subroutine get_geometry_input_file
 !
 !
-   subroutine get_mm_geometry_input_file(the_file, n_atoms, symbols, mols, positions, charge, chi, eta)
+   subroutine get_mm_geometry_fq_input_file(the_file, n_atoms, n_molecules, &
+                                          n_atoms_per_molecule, symbols,   &
+                                          positions, chi, eta)
 !!
-!!    Get MM geometry
+!!    Get MM geometry FQ
 !!    Written by Tommaso Giovanini, May 2019
+!!    Modified for robustness by Sarai D. Folkestad 2020
 !!
-!!    Reads the geometry of the MM portion from the input file and
-!!    sets it in the list of atoms.
+!!    Reads the geometry of the MM portion from the input file in the case 
+!!    of an fq calculation and sets it in the list of atoms.
 !!
-!!    Note: In order to be run, you need to know the number of MM atoms
+!!    Note: In order to be run, you need to know the number of MM atoms and molecules
 !!          in the system
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file),   intent(in) :: the_file
+      integer,             intent(in) :: n_atoms
+      integer,             intent(in) :: n_molecules
 !
-      integer, intent(in) :: n_atoms
-!
-      character(len=2), dimension(n_atoms), intent(out)   :: symbols
-!
-      real(dp), dimension(3, n_atoms), intent(out) :: positions ! x, y, z
-      real(dp), dimension(n_atoms), intent(out), optional :: charge ! charges for non-polarizable QMMM
-      real(dp), dimension(n_atoms), intent(out), optional :: chi ! electronegativity for FQ
-      real(dp), dimension(n_atoms), intent(out), optional :: eta ! chemical hardness for FQ
-!
-      integer, dimension(n_atoms), intent(out) :: mols
+      character(len=2), dimension(n_atoms),     intent(out) :: symbols
+      real(dp),         dimension(3, n_atoms),  intent(out) :: positions 
+      real(dp),         dimension(n_atoms),     intent(out) :: chi       
+      real(dp),         dimension(n_atoms),     intent(out) :: eta       
+      integer,          dimension(n_molecules), intent(out) :: n_atoms_per_molecule
 !
 !     Local variables
 !
-      integer :: record, cursor, current_atom, i
+      integer :: record, cursor, current_atom, i, current_molecule
 !
-      character(len=200) :: string, coordinate, imolecule, charge_read, chi_read, eta_read
-!
-!     Loop through the rest of the geometry section to get atoms
+      character(len=200) :: string, coordinate
 !
       current_atom = 0
+!
+      current_molecule     = 0
+      n_atoms_per_molecule = 0
+!
+!     Loop through the MM atoms specified on input
 !
       do record = 1, the_file%n_mm_atom_lines
 !
          current_atom = current_atom + 1
+         string = trim(adjustl(the_file%mm_geometry(record)))
 !
-         symbols(current_atom)    = trim(the_file%mm_geometry(record)(1:2))
+!        Determine symbol
 !
-         string = the_file%mm_geometry(record)(3:200)
+         symbols(current_atom) = string(1:2)
+         string = adjustl(string(3:200))
 !
-         cursor = set_cursor_to_character(string,'=')
+!        Determine molecule index
 !
-         string = string(cursor+1:200)
+         cursor = set_cursor_to_substring(string, 'mol')
+         string = adjustl(string(cursor+1:200))
+!
+         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         string = adjustl(string(2:200))
+
+         cursor = set_cursor_to_character(string, ']')
+         read(string(1:cursor-1),*) current_molecule
+         string = adjustl(string(cursor+1:200))
+!
+         n_atoms_per_molecule(current_molecule) = n_atoms_per_molecule(current_molecule) + 1
+!
+!        Determine position
+!
+         cursor = set_cursor_to_character(string, '[')
+!
+         coordinate = string(1:cursor-1)
+         read(coordinate, *) positions(:, current_atom)
+!
+         string = adjustl(string(cursor+1:200))
+!
+!        Determine chi
+!
+         cursor = set_cursor_to_substring(string, 'chi')
+         string = adjustl(string(cursor+1:200))
+!
+         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         string = adjustl(string(2:200))
+!
+         cursor = set_cursor_to_character(string,',')
+         read(string(1:cursor-1), * ) chi(current_atom)
+         string = adjustl(string(cursor+1:200))
+!
+!        Determine eta
+!
+         cursor = set_cursor_to_substring(string, 'eta')
+         string = trim(adjustl(string(cursor+1:200)))
+!
+         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         string = adjustl(string(2:200))
 !
          cursor = set_cursor_to_character(string,']')
+         read(string(1:cursor-1), * ) eta(current_atom)
 !
-         imolecule = string(1:cursor-1)
-         read(imolecule,'(i4)') mols(current_atom)
+         if(abs(eta(current_atom)).lt.1.0d-8) then
 !
-         string = string(cursor+1:200)
-!
-         cursor = set_cursor_to_character(string)
-!
-         coordinate = string(1:cursor)
-         read(coordinate, '(f21.16)') positions(1, current_atom)
-!
-         string = string(cursor + 1:200)
-!
-         cursor = set_cursor_to_character(string)
-!
-         coordinate = string(1:cursor)
-         read(coordinate, '(f21.16)') positions(2, current_atom)
-!
-         string = string(cursor + 1:200)
-!
-         cursor = set_cursor_to_character(string)
-!
-         coordinate = string(1:cursor)
-         read(coordinate, '(f21.16)') positions(3, current_atom)
-!
-         if (present (charge)) then ! non-polarizable QM/MM [q=value]
-!
-             string = string(cursor + 1:200)
-!
-             cursor = set_cursor_to_character(string,'q')
-!
-             string = string(cursor+2:200)
-!
-             cursor = set_cursor_to_character(string,']')
-!
-             charge_read = string(1:cursor-1)
-             read(charge_read,'(f21.16)') charge(current_atom)
-!
-             if(abs(charge(current_atom)).lt.1.0d-8) then
-!
-                call output%printf('m', 'Electrostatic Embedding QM/MM ', fs='(/t6,a)')
-                call output%warning_msg('You put zero charge on atom = (i0)', &
-                                         ints=[current_atom], fs='(t6,a)')
-!
-             endif
-!
-         else if (present (chi).and.present(eta)) then ! polarizable QM/FQ [chi=value,eta=value]
-!
-             string = string(cursor + 1:200)
-!
-             cursor = set_cursor_to_character(string,'=')
-!
-             string = string(cursor+1:200)
-!
-             cursor = set_cursor_to_character(string,',')
-!
-             chi_read = string(1:cursor-1)
-             read(chi_read,'(f21.16)') chi(current_atom)
-!
-             string = string(cursor + 1:200)
-!
-             cursor = set_cursor_to_character(string,'=')
-!
-             string = string(cursor+1:200)
-!
-             cursor = set_cursor_to_character(string,']')
-!
-             eta_read = string(1:cursor-1)
-             read(eta_read,'(f21.16)') eta(current_atom)
-!
-             if(abs(eta(current_atom)).lt.1.0d-8) then
-!
-               call output%printf('m', 'Polarizable QM/FQ ', fs='(/t6,a)')
-               call output%error_msg('You have put zero chemical hardness on atom: (i0)', &
-                                      ints=[current_atom])
-!
-             endif
+            call output%error_msg('You have put zero chemical hardness on atom: (i0)', &
+                                  ints=[current_atom])
 !
          endif
 !
@@ -1953,7 +1995,103 @@ contains
 !
       enddo
 !
-   end subroutine get_mm_geometry_input_file
+   end subroutine get_mm_geometry_fq_input_file
+!
+!
+   subroutine get_mm_geometry_non_polarizable_input_file(the_file, n_atoms, symbols,   &
+                                                         positions, charge)
+!!
+!!    Get MM geometry non-polarizable
+!!    Written by Tommaso Giovanini, May 2019
+!!    Modified for robustness by Sarai D. Folkestad 2020
+!!
+!!    Reads the geometry of the MM portion from the input file and
+!!    sets it in the list of atoms.
+!!
+!!    Note: In order to be run, you need to know the number of MM atoms
+!!          there are in the system
+!!
+      implicit none
+!
+      class(input_file), intent(in) :: the_file
+!
+      integer, intent(in) :: n_atoms
+!
+      character(len=2), dimension(n_atoms),     intent(out) :: symbols
+      real(dp),         dimension(3, n_atoms),  intent(out) :: positions    
+      real(dp),         dimension(n_atoms),     intent(out) :: charge  
+!
+!     Local variables
+!
+      integer :: record, cursor, current_atom, i, current_molecule
+!
+      character(len=200) :: string, coordinate
+!
+!     Loop through the MM atoms specified on input
+!
+      current_atom      = 0
+      current_molecule  = 0
+!
+      do record = 1, the_file%n_mm_atom_lines
+!
+         current_atom = current_atom + 1
+         string = trim(adjustl(the_file%mm_geometry(record)))
+!
+!        Determine symbol
+!
+         symbols(current_atom) = string(1:2)
+         string = adjustl(string(3:200))
+!
+!        Determine molecule index
+!
+         cursor = set_cursor_to_substring(string, 'mol')
+         string = adjustl(string(cursor+1:200))
+!
+         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         string = adjustl(string(2:200))
+
+         cursor = set_cursor_to_character(string, ']')
+         read(string(1:cursor-1),*) current_molecule
+         string = adjustl(string(cursor+1:200))
+!
+!        Determine position
+!
+         cursor = set_cursor_to_character(string, '[')
+!
+         coordinate = string(1:cursor-1)
+         read(coordinate, *) positions(:, current_atom)
+!
+         string = adjustl(string(cursor+1:200))
+!
+!        Determine charge
+!
+         cursor = set_cursor_to_character(string, 'q')
+         string = adjustl(string(cursor+1:200))
+!
+         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         string = adjustl(string(2:200))
+!
+         cursor = set_cursor_to_character(string,']')
+         read(string(1:cursor-1), * ) charge(current_atom)
+!
+         if(abs(charge(current_atom)).lt.1.0d-8) then
+!
+            call output%warning_msg('You put zero charge on atom = (i0)', &
+                                     ints=[current_atom], fs='(t6,a)')
+!
+         endif
+!
+      enddo
+!
+!     First character of symbol should be upper case
+!
+      do i = 1, n_atoms
+!
+         symbols(i)(1:1) = convert_char_to_uppercase(symbols(i)(1:1))
+!
+      enddo
+!
+   end subroutine get_mm_geometry_non_polarizable_input_file
 !
 !
    function is_string_in_cs_list_input_file(the_file, keyword, section, string) result(found)
@@ -2287,6 +2425,25 @@ contains
       deallocate(the_file%input_)
 !
    end subroutine cleanup_keywords_input_file
+!
+!
+   pure function is_embedding_on_input_file(the_file) result(embedding_status)
+!!
+!!    Is embedding on 
+!!    Written by Sarai D. Folkestad, Sep 2020
+!!
+!!    Returns true if wavefunction is embedded
+!!
+      implicit none
+!
+      class(input_file), intent(in) :: the_file
+!
+      logical :: embedding_status
+!
+      embedding_status = the_file%requested_section('molecular mechanics') .or. &
+                         the_file%requested_section('pcm')
+!
+   end function is_embedding_on_input_file
 !
 !
 end module input_file_class

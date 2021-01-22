@@ -28,7 +28,7 @@
       implicit none
 !
       class(hf), intent(in) :: wf
-      real(dp), dimension(wf%n_ao**2,wf%n_densities), intent(inout) :: D
+      real(dp), dimension(wf%ao%n**2,wf%n_densities), intent(inout) :: D
 !
    end subroutine get_ao_density_sq_hf
 !
@@ -58,7 +58,7 @@
       implicit none
 !
       class(hf) :: wf
-      real(dp), dimension(wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities), intent(in) :: F ! Packed
+      real(dp), dimension(wf%ao%n*(wf%ao%n + 1)/2, wf%n_densities), intent(in) :: F ! Packed
 !
    end subroutine set_ao_fock_hf
 !
@@ -73,7 +73,7 @@
       implicit none
 !
       class(hf), intent(in) :: wf
-      real(dp), dimension(wf%n_ao*(wf%n_ao+1)/2, wf%n_densities), intent(inout) :: F ! Packed
+      real(dp), dimension(wf%ao%n*(wf%ao%n+1)/2, wf%n_densities), intent(inout) :: F ! Packed
 !
    end subroutine get_ao_fock_hf
 !

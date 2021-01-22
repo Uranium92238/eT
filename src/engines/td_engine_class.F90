@@ -455,11 +455,11 @@ contains
 !
 !     Initialize the plotter
 !
-      plotter = visualization(wf%system, wf%n_ao)
-      call plotter%initialize(wf%system)
+      plotter = visualization(wf%ao)
+      call plotter%initialize(wf%ao)
 !
       call mem%alloc(mo_density, wf%n_mo, wf%n_mo)
-      call mem%alloc(density, wf%n_ao, wf%n_ao)
+      call mem%alloc(density, wf%ao%n, wf%ao%n)
 !
 !     Plot real electron densities using density matrices on file
 !
@@ -479,7 +479,7 @@ contains
          call symmetric_sandwich_right_transposition(density,                 &
                                                      mo_density,              &
                                                      wf%orbital_coefficients, &
-                                                     wf%n_ao,                 &
+                                                     wf%ao%n,                 &
                                                      wf%n_mo)
 !
 !        Plot density
@@ -487,7 +487,7 @@ contains
          file_count = file_count + 1
          write(file_count_string, *) file_count
 !
-         call plotter%plot_density(wf%system, density, 'cc_propagation_density_matrix_real_' &
+         call plotter%plot_density(wf%ao, density, 'cc_propagation_density_matrix_real_' &
                                                        // trim(adjustl(file_count_string)))
 !
       enddo
@@ -513,7 +513,7 @@ contains
          call symmetric_sandwich_right_transposition(density,                 &
                                                      mo_density,              &
                                                      wf%orbital_coefficients, &
-                                                     wf%n_ao,                 &
+                                                     wf%ao%n,                 &
                                                      wf%n_mo)
 !
 !        Plot density
@@ -521,7 +521,7 @@ contains
          file_count = file_count + 1
          write(file_count_string, *) file_count
 !
-         call plotter%plot_density(wf%system, density, 'cc_propagation_density_matrix_imaginary_' &
+         call plotter%plot_density(wf%ao, density, 'cc_propagation_density_matrix_imaginary_' &
                                                        // trim(adjustl(file_count_string)))
 !
       enddo
@@ -529,7 +529,7 @@ contains
       call density_matrix_imaginary_file%close_
 !
       call mem%dealloc(mo_density, wf%n_mo, wf%n_mo)
-      call mem%dealloc(density, wf%n_ao, wf%n_ao)
+      call mem%dealloc(density, wf%ao%n, wf%ao%n)
 !
       call plotter%cleanup()
 !
