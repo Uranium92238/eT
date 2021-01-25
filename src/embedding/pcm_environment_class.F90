@@ -134,7 +134,9 @@ contains
       type(PCMInput)                         :: host_input
       type(point_charges)                    :: qm_points 
 !
-      integer(c_int), dimension(4), parameter  :: symmetry_info = [0,0,0,0]
+      integer(c_int), dimension(4)           :: symmetry_info 
+!
+      symmetry_info = [int(0,c_int),int(0,c_int),int(0,c_int),int(0,c_int)]
 !
       call embedding%print_description()
       call embedding%read_parameters()
