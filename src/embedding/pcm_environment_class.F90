@@ -397,13 +397,13 @@ contains
 !
       logical :: file_exists
 !      
-      call input%get_keyword_in_section('input', 'pcm', embedding%input)
+      call input%get_keyword('input', 'pcm', embedding%input)
 !      
       if (trim(embedding%input) .eq. 'internal') then 
 !      
-         call input%get_keyword_in_section('solvent','pcm',embedding%solvent)
-         call input%get_keyword_in_section('tesserae area','pcm',embedding%tesserae_area)
-         call input%get_keyword_in_section('solver type','pcm',embedding%solver_type)
+         call input%get_keyword('solvent','pcm',embedding%solvent)
+         call input%get_keyword('tesserae area','pcm',embedding%tesserae_area)
+         call input%get_keyword('solver type','pcm',embedding%solver_type)
 !         
          if(len_trim(embedding%solvent) .eq. 0) &
             call output%error_msg('PCM Calculation Internal Input: Solvent Not Specified')

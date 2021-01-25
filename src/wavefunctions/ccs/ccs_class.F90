@@ -677,9 +677,9 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      if (input%requested_section('cc')) then
+      if (input%is_section_present('cc')) then
 !
-         if (input%requested_keyword_in_section('bath orbital','cc')) then 
+         if (input%is_keyword_present('bath orbital','cc')) then 
 !
             wf%bath_orbital = .true.
             wf%n_bath_orbitals = 1 ! May want to expand the number of bath orbitals later on
@@ -1847,17 +1847,17 @@ contains
 !
       class(ccs) :: wf 
 !
-      if (input%requested_keyword_in_section('core excitation', 'solver cc es')) then 
+      if (input%is_keyword_present('core excitation', 'solver cc es')) then 
 !  
 !        Determine the number of core MOs 
 !
-         wf%n_core_MOs = input%get_n_elements_for_keyword_in_section('core excitation', 'solver cc es')
+         wf%n_core_MOs = input%get_n_elements_for_keyword('core excitation', 'solver cc es')
 !
 !        Then read the vector of core MOs
 !
          call wf%initialize_core_MOs()
 !
-         call input%get_array_for_keyword_in_section('core excitation', 'solver cc es', wf%n_core_MOs, wf%core_MOs)
+         call input%get_array_for_keyword('core excitation', 'solver cc es', wf%n_core_MOs, wf%core_MOs)
 !
       else
 !
@@ -1869,8 +1869,8 @@ contains
 !
 !     Consistency check (given currently implemented CVS capabilities)
 !
-      if (input%requested_keyword_in_section('core excitation', 'solver cc es') .and. &
-          input%requested_keyword_in_section('core', 'frozen orbitals')) then 
+      if (input%is_keyword_present('core excitation', 'solver cc es') .and. &
+          input%is_keyword_present('core', 'frozen orbitals')) then 
 !
          call output%error_msg('No support for CVS with frozen core yet. Turn off frozen core.')
 !

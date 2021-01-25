@@ -417,15 +417,15 @@ contains
 !
       class(hf) :: wf
 !
-      call input%get_keyword_in_section('coulomb threshold',   &
+      call input%get_keyword('coulomb threshold',   &
                                         'solver scf',          &
                                         wf%coulomb_threshold)
 !
-      call input%get_keyword_in_section('exchange threshold',  &
+      call input%get_keyword('exchange threshold',  &
                                         'solver scf',          &
                                         wf%exchange_threshold)
 !
-      call input%get_keyword_in_section('integral cutoff',     &
+      call input%get_keyword('integral cutoff',     &
                                         'solver scf',          &
                                         wf%integral_cutoff)      
 !
@@ -1609,10 +1609,10 @@ contains
 !
       wf%plot_active_density = .false.
 !
-      wf%frozen_core = input%requested_keyword_in_section('core', 'frozen orbitals')
-      wf%frozen_hf_mos = input%requested_keyword_in_section('hf', 'frozen orbitals')
+      wf%frozen_core = input%is_keyword_present('core', 'frozen orbitals')
+      wf%frozen_hf_mos = input%is_keyword_present('hf', 'frozen orbitals')
 !
-      wf%plot_active_density = input%requested_keyword_in_section('plot hf active density', &
+      wf%plot_active_density = input%is_keyword_present('plot hf active density', &
             'visualization')
 !
       if (wf%plot_active_density .and. .not.  (wf%frozen_core .or. wf%frozen_hf_mos)) &

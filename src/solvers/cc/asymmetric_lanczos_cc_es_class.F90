@@ -434,15 +434,15 @@ contains
 !
       class(asymmetric_lanczos_cc_es) :: solver 
 !
-      call input%get_keyword_in_section('chain length', 'solver cc es', solver%chain_length)
+      call input%get_keyword('chain length', 'solver cc es', solver%chain_length)
 !
-      call input%get_keyword_in_section('lanczos normalization', 'solver cc es', &
+      call input%get_keyword('lanczos normalization', 'solver cc es', &
                                                    solver%normalization)
 !
-      if (input%requested_keyword_in_section('core excitation', 'solver cc es')) &
+      if (input%is_keyword_present('core excitation', 'solver cc es')) &
             solver%es_type = 'core'
 !
-      if (input%requested_keyword_in_section('ionization', 'solver cc es')) &
+      if (input%is_keyword_present('ionization', 'solver cc es')) &
             call output%error_msg('Ionization not possible with the asymmetric Lanczos solver')
 !
    end subroutine read_settings_asymmetric_lanczos_cc_es

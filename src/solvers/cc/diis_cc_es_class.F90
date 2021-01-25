@@ -251,21 +251,21 @@ contains
 !
       class(diis_cc_es) :: solver 
 !
-      call input%get_keyword_in_section('diis dimension', 'solver cc es', solver%diis_dimension)
+      call input%get_keyword('diis dimension', 'solver cc es', solver%diis_dimension)
 !
-      if (input%requested_keyword_in_section('crop', 'solver cc es')) then 
+      if (input%is_keyword_present('crop', 'solver cc es')) then 
 !
          solver%crop = .true.
 !
       endif
 !
-      if (input%requested_keyword_in_section('davidson preconvergence', 'solver cc es')) then 
+      if (input%is_keyword_present('davidson preconvergence', 'solver cc es')) then 
 !
          solver%davidson_preconvergence = .true.
 !
       endif
 !
-      call input%get_keyword_in_section('preconvergence threshold',  &
+      call input%get_keyword('preconvergence threshold',  &
                                         'solver cc es',              &
                                         solver%preconvergence_threshold)
 !
@@ -561,15 +561,15 @@ contains
 !
 !     Read non-default values, if provided by user 
 !
-      call input%get_keyword_in_section('max reduced dimension',  &
+      call input%get_keyword('max reduced dimension',  &
                                         'solver cc es',           &
                                         max_dim_red)
 !
-      call input%get_keyword_in_section('max micro iterations',  &
+      call input%get_keyword('max micro iterations',  &
                                         'solver cc es',           &
                                         max_micro_iterations)
 !
-      call input%get_keyword_in_section('rel micro threshold',    &
+      call input%get_keyword('rel micro threshold',    &
                                         'solver cc es',           &
                                         relative_micro_residual_threshold)
 !

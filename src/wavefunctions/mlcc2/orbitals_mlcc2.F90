@@ -683,7 +683,7 @@ contains
 !
       r_or_l = 'right'
 !
-      if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) r_or_l = 'left'
+      if (input%is_keyword_present('left eigenvectors', 'solver cc es')) r_or_l = 'left'
 
       call mem%alloc(R_ai, wf%n_v, wf%n_o, n_cnto_states)
       call mem%alloc(omega_ccs, n_cnto_states)
@@ -856,7 +856,7 @@ contains
 !
       r_or_l = 'right'
 !
-      if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) r_or_l = 'left'
+      if (input%is_keyword_present('left eigenvectors', 'solver cc es')) r_or_l = 'left'
 !
       call mem%alloc(R_ai, wf%n_v, wf%n_o, n_nto_states)
 !
@@ -1181,7 +1181,7 @@ contains
 !
       call output%printf('m', 'Running CCS calculation for NTOs/CNTOs.', fs='(/t3,a)')
 !
-      if (.not. input%requested_keyword_in_section('print ccs calculation','mlcc')) call output%mute()
+      if (.not. input%is_keyword_present('print ccs calculation','mlcc')) call output%mute()
 !
 !     Run CCS calculation
 !
@@ -1265,7 +1265,7 @@ contains
 !
       call ccs_wf%cleanup() 
 !
-      if (.not. input%requested_keyword_in_section('print ccs calculation','mlcc')) &
+      if (.not. input%is_keyword_present('print ccs calculation','mlcc')) &
          call output%unmute()
 !
       call timer%turn_off()

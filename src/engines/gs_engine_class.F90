@@ -184,24 +184,24 @@ contains
 !
       class(gs_engine) :: engine
 !
-      call input%get_keyword_in_section('algorithm', 'solver cc multipliers', &
+      call input%get_keyword('algorithm', 'solver cc multipliers', &
                                                             engine%multipliers_algorithm)
 !
-      call input%get_keyword_in_section('algorithm', 'solver cc gs', engine%gs_algorithm )
+      call input%get_keyword('algorithm', 'solver cc gs', engine%gs_algorithm )
 !
-      engine%gs_restart = input%requested_keyword_in_section('restart', 'solver cc gs')
+      engine%gs_restart = input%is_keyword_present('restart', 'solver cc gs')
 !
       engine%multipliers_restart = &
-               input%requested_keyword_in_section('restart', 'solver cc multipliers')
+               input%is_keyword_present('restart', 'solver cc multipliers')
 !
 !     global restart
-      if (input%requested_keyword_in_section('restart', 'do')) then 
+      if (input%is_keyword_present('restart', 'do')) then 
          engine%gs_restart = .true.
          engine%multipliers_restart = .true.
       end if
 !
       engine%plot_density = &
-               input%requested_keyword_in_section('plot cc density', 'visualization')
+               input%is_keyword_present('plot cc density', 'visualization')
 !
    end subroutine read_gs_settings_gs_engine
 !
@@ -495,7 +495,7 @@ contains
 !
       call output%printf('v', 'Doing Cholesky decomposition of the ERIs.')
 !
-      do_MO_screening = input%requested_keyword_in_section('mo screening', 'solver cholesky')
+      do_MO_screening = input%is_keyword_present('mo screening', 'solver cholesky')
 !
       eri_cholesky_solver = eri_cd(wf%ao)
 !

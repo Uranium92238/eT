@@ -111,19 +111,19 @@ contains
 !
 !     Cannot perform PCM and MM at the same time
 !
-      if (input%requested_section('molecular mechanics') .and. &
-          input%requested_section('pcm')) &
+      if (input%is_section_present('molecular mechanics') .and. &
+          input%is_section_present('pcm')) &
             call output%error_msg('PCM and QM/MM together is not currently supported.')
 !
-      if (.not. (input%requested_section('molecular mechanics') .or. &
-                 input%requested_section('pcm'))) &
+      if (.not. (input%is_section_present('molecular mechanics') .or. &
+                 input%is_section_present('pcm'))) &
             call output%error_msg('embedding type must be either PCM or molecular mechanics.')
 !
-      if (input%requested_section('molecular mechanics')) then
+      if (input%is_section_present('molecular mechanics')) then
 !         
          factory%type_ = 'molecular mechanics'
 !
-         call input%get_keyword_in_section('forcefield', 'molecular mechanics', factory%forcefield)
+         call input%get_keyword('forcefield', 'molecular mechanics', factory%forcefield)
 !
 !        Check if force field is supported
 !
@@ -132,7 +132,7 @@ contains
 !
       endif
 !
-      if (input%requested_section('pcm')) factory%type_ = 'pcm'
+      if (input%is_section_present('pcm')) factory%type_ = 'pcm'
 !
    end subroutine read_embedding_environment_factory
 !

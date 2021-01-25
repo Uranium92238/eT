@@ -864,24 +864,24 @@ contains
 !
       class(mlhf) :: wf               
 !
-      call input%get_keyword_in_section('cholesky threshold', 'multilevel hf', wf%cholesky_threshold)
-      call input%get_keyword_in_section('initial hf threshold', 'multilevel hf', wf%full_space_hf_threshold)
+      call input%get_keyword('cholesky threshold', 'multilevel hf', wf%cholesky_threshold)
+      call input%get_keyword('initial hf threshold', 'multilevel hf', wf%full_space_hf_threshold)
 !
-      if (input%requested_keyword_in_section('project on minimal basis', 'multilevel hf')) &
+      if (input%is_keyword_present('project on minimal basis', 'multilevel hf')) &
             wf%minimal_basis_diagonalization = .true.
 !
-      if (input%requested_keyword_in_section('cholesky virtuals', 'multilevel hf')) &
+      if (input%is_keyword_present('cholesky virtuals', 'multilevel hf')) &
             wf%cholesky_virtuals = .true.
 !
-      if (input%requested_keyword_in_section('initial hf optimization', 'multilevel hf')) &
+      if (input%is_keyword_present('initial hf optimization', 'multilevel hf')) &
             wf%full_space_optimization = .true.
 !
-      if (input%requested_keyword_in_section('print initial hf', 'multilevel hf')) &
+      if (input%is_keyword_present('print initial hf', 'multilevel hf')) &
             wf%print_initial_hf = .true.
 !
 !     Sanity checks
 !
-      if (input%requested_keyword_in_section('initial hf threshold', 'multilevel hf') &
+      if (input%is_keyword_present('initial hf threshold', 'multilevel hf') &
             .and. .not. wf%full_space_optimization) &
             call output%error_msg('Initial hf threshold specified, without specifying initial hf optimization')
 !

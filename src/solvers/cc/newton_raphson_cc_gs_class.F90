@@ -541,27 +541,27 @@ contains
 !
       real(dp) :: energy_threshold, omega_threshold
 !
-      if (input%requested_keyword_in_section('energy threshold', 'solver cc gs')) then
+      if (input%is_keyword_present('energy threshold', 'solver cc gs')) then
 !
-         call input%get_keyword_in_section('energy threshold', 'solver cc gs', energy_threshold)
+         call input%get_keyword('energy threshold', 'solver cc gs', energy_threshold)
          call solver%convergence_checker%set_energy_threshold(energy_threshold)
 !
       endif
 !
-      if (input%requested_keyword_in_section('omega threshold', 'solver cc gs')) then
+      if (input%is_keyword_present('omega threshold', 'solver cc gs')) then
 !
-         call input%get_keyword_in_section('omega threshold', 'solver cc gs', omega_threshold)
+         call input%get_keyword('omega threshold', 'solver cc gs', omega_threshold)
          call solver%convergence_checker%set_residual_threshold(omega_threshold)
 !
       endif
-      call input%get_keyword_in_section('diis dimension', 'solver cc gs', solver%diis_dimension)
-      call input%get_keyword_in_section('max iterations', 'solver cc gs', solver%max_iterations)
-      call input%get_keyword_in_section('rel micro threshold', 'solver cc gs', solver%relative_micro_residual_threshold)
-      call input%get_keyword_in_section('max micro iterations', 'solver cc gs', solver%max_micro_iterations)
+      call input%get_keyword('diis dimension', 'solver cc gs', solver%diis_dimension)
+      call input%get_keyword('max iterations', 'solver cc gs', solver%max_iterations)
+      call input%get_keyword('rel micro threshold', 'solver cc gs', solver%relative_micro_residual_threshold)
+      call input%get_keyword('max micro iterations', 'solver cc gs', solver%max_micro_iterations)
 !
-      call input%get_keyword_in_section('storage', 'solver cc gs', solver%storage)
+      call input%get_keyword('storage', 'solver cc gs', solver%storage)
 !
-      if (input%requested_keyword_in_section('crop', 'solver cc gs')) then 
+      if (input%is_keyword_present('crop', 'solver cc gs')) then 
 !
          solver%crop = .true.
 !

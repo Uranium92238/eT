@@ -145,8 +145,8 @@ contains
 !
       class(mean_value_engine) :: engine
 !
-      if (input%requested_keyword_in_section('dipole','cc mean value')) engine%dipole = .true.
-      if (input%requested_keyword_in_section('quadrupole','cc mean value')) engine%quadrupole = .true.
+      if (input%is_keyword_present('dipole','cc mean value')) engine%dipole = .true.
+      if (input%is_keyword_present('quadrupole','cc mean value')) engine%quadrupole = .true.
 !
    end subroutine read_cc_mean_value_settings_mean_value_engine
 !

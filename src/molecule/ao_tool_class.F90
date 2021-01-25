@@ -254,7 +254,7 @@ contains
 !
       ao%libint_epsilon = ao%eri_cutoff**2
 !
-      call input%get_keyword_in_section('integral precision',  &
+      call input%get_keyword('integral precision',  &
                                         'solver scf',          &
                                         ao%libint_epsilon)
 !
@@ -265,11 +265,11 @@ contains
 !
       ao%basis_type_ = 'default'
 !
-      if (input%requested_keyword_in_section('cartesian gaussians', 'system')) then 
+      if (input%is_keyword_present('cartesian gaussians', 'system')) then 
 !
          ao%basis_type_ = 'cartesian'
 !
-      elseif (input%requested_keyword_in_section('spherical gaussians', 'system')) then 
+      elseif (input%is_keyword_present('spherical gaussians', 'system')) then 
 !
          ao%basis_type_ = 'spherical'
 !
@@ -2573,7 +2573,7 @@ contains
       enddo
 !
       Q = 0
-      call input%get_keyword_in_section('charge', 'system', Q)
+      call input%get_keyword('charge', 'system', Q)
 !
       n = n - Q
 !

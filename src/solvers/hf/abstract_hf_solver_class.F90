@@ -133,22 +133,22 @@ contains
 !
       real(dp) :: energy_threshold, gradient_threshold
 !!
-      if (input%requested_keyword_in_section('energy threshold', 'solver scf')) then
+      if (input%is_keyword_present('energy threshold', 'solver scf')) then
 !
-         call input%get_keyword_in_section('energy threshold', 'solver scf', energy_threshold)
+         call input%get_keyword('energy threshold', 'solver scf', energy_threshold)
          call solver%convergence_checker%set_energy_threshold(energy_threshold)
 !
       endif
 !
-      if (input%requested_keyword_in_section('gradient threshold', 'solver scf')) then
+      if (input%is_keyword_present('gradient threshold', 'solver scf')) then
 !
-         call input%get_keyword_in_section('gradient threshold', 'solver scf', gradient_threshold)
+         call input%get_keyword('gradient threshold', 'solver scf', gradient_threshold)
          call solver%convergence_checker%set_residual_threshold(gradient_threshold)
 !
       endif
 !
-      call input%get_keyword_in_section('max iterations', 'solver scf', solver%max_iterations)
-      call input%get_keyword_in_section('ao density guess', 'solver scf', solver%ao_density_guess)
+      call input%get_keyword('max iterations', 'solver scf', solver%max_iterations)
+      call input%get_keyword('ao density guess', 'solver scf', solver%ao_density_guess)
 !
    end subroutine read_hf_solver_settings_abstract_hf_solver
 !

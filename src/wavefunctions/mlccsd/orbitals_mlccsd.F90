@@ -831,7 +831,7 @@ contains
 !
       r_or_l = 'right'
 !
-      if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) r_or_l = 'left'
+      if (input%is_keyword_present('left eigenvectors', 'solver cc es')) r_or_l = 'left'
 !
       if(wf%do_cc2 .and. wf%do_ccs) then
 !
@@ -916,7 +916,7 @@ contains
 !
       call output%printf('m', 'Running CC2 calculation for CNTOs.', fs='(/t3,a)')
 !
-      if (.not. input%requested_keyword_in_section('print cc2 calculation','mlcc')) &
+      if (.not. input%is_keyword_present('print cc2 calculation','mlcc')) &
          call output%mute()
 !
 !     Run CC2 calculation
@@ -983,7 +983,7 @@ contains
 !
       call cc2_wf%cleanup() 
 !
-      if (.not. input%requested_keyword_in_section('print cc2 calculation','mlcc')) &
+      if (.not. input%is_keyword_present('print cc2 calculation','mlcc')) &
          call output%unmute()
 !
       call output%printf('m', '- Summary of CC2 calculation for CNTOs:',fs='(/t3,a)')

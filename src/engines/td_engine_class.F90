@@ -158,12 +158,12 @@ contains
 !
       call engine%gs_engine%read_settings()
 !
-      call input%get_keyword_in_section('integrator', 'solver cc propagation', engine%integrator)
+      call input%get_keyword('integrator', 'solver cc propagation', engine%integrator)
 !
-      if (input%requested_keyword_in_section('propagation','cc td')) engine%propagation = .true.
-      if (input%requested_keyword_in_section('fft dipole moment','cc td')) &
+      if (input%is_keyword_present('propagation','cc td')) engine%propagation = .true.
+      if (input%is_keyword_present('fft dipole moment','cc td')) &
          engine%fft_dipole_moment = .true.
-      if (input%requested_keyword_in_section('fft electric field','cc td')) &
+      if (input%is_keyword_present('fft electric field','cc td')) &
          engine%fft_electric_field = .true.
 !
    end subroutine read_settings_td_engine

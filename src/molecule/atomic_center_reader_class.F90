@@ -453,7 +453,7 @@ contains
 !
       do k = 1, size(this%ordered_wfs)
 !
-         if (input%requested_keyword_in_section(trim(this%ordered_wfs(k)), 'active atoms')) then
+         if (input%is_keyword_present(trim(this%ordered_wfs(k)), 'active atoms')) then
 !
             this%n_sets = this%n_sets + 1
 !
@@ -485,7 +485,7 @@ contains
 !
       do k = 1, size(this%ordered_wfs)
 !
-         if (input%requested_keyword_in_section(trim(this%ordered_wfs(k)), 'active atoms')) then
+         if (input%is_keyword_present(trim(this%ordered_wfs(k)), 'active atoms')) then
 !
             set = set + 1
             this%sets(set)%name_ = trim(this%ordered_wfs(k))
@@ -522,7 +522,7 @@ contains
 !
       selection_type = 'none'
 !
-      call input%get_keyword_in_section('selection type',   &
+      call input%get_keyword('selection type',   &
                                         'active atoms',     &
                                         selection_type)
 !
@@ -577,13 +577,13 @@ contains
 !
       do i = 1, this%n_sets - 1
 !
-         length = input%get_n_elements_for_keyword_in_section(trim(this%sets(i)%name_), &
+         length = input%get_n_elements_for_keyword(trim(this%sets(i)%name_), &
                                                               'active atoms')         
 !
          last = first + length - 1
          call this%sets(i)%set_interval(first, last)
 !
-         call input%get_array_for_keyword_in_section(trim(this%sets(i)%name_),     &
+         call input%get_array_for_keyword(trim(this%sets(i)%name_),     &
                                                      'active atoms',               &
                                                      length,                       &
                                                      center_indices(first : last))
@@ -633,7 +633,7 @@ contains
 !
 !     Get the central atom and the radii for different methods
 !
-      call input%get_keyword_in_section('central atom', &
+      call input%get_keyword('central atom', &
                                         'active atoms', &
                                         central_atom)
 !
@@ -643,7 +643,7 @@ contains
 !
       do i = 1, this%n_sets - 1
 !
-         call input%get_keyword_in_section(trim(this%sets(i)%name_),  &
+         call input%get_keyword(trim(this%sets(i)%name_),  &
                                            'active atoms',            &
                                            radii(i))         
 !

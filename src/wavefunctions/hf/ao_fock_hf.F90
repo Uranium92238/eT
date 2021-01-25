@@ -1178,13 +1178,13 @@ contains
 !     If not specified by user, set Coulomb and exchange thresholds 
 !     (For ref., this will give 10-12 and 10-10 for gradient threshold: 10-6)
 !
-      if (.not. input%requested_keyword_in_section('coulomb threshold', 'solver scf')) then 
+      if (.not. input%is_keyword_present('coulomb threshold', 'solver scf')) then 
 !
          wf%coulomb_threshold  = gradient_threshold*1.0d-6
 !
       endif 
 !
-      if (.not. input%requested_keyword_in_section('exchange threshold', 'solver scf')) then 
+      if (.not. input%is_keyword_present('exchange threshold', 'solver scf')) then 
 !
          wf%exchange_threshold = gradient_threshold*1.0d-4
 !
@@ -1192,7 +1192,7 @@ contains
 !
 !     If not requested by user, set Libint integral accuracy according to thresholds 
 !
-      if (.not. input%requested_keyword_in_section('integral precision', 'solver scf')) then 
+      if (.not. input%is_keyword_present('integral precision', 'solver scf')) then 
 !
 !        Tighten the default threshold if it is larger than 
 !        the lowest screening threshold squared
@@ -1211,7 +1211,7 @@ contains
 !
 !     If not requested by user, set integral cutoff
 !
-      if (.not. input%requested_keyword_in_section('integral cutoff', 'solver scf')) then
+      if (.not. input%is_keyword_present('integral cutoff', 'solver scf')) then
 !
          wf%integral_cutoff = sqrt(epsilon)
 !

@@ -365,12 +365,12 @@ contains
 !
       class(uhf) :: wf
 !
-      call input%get_keyword_in_section('multiplicity',  &
+      call input%get_keyword('multiplicity',  &
                                         'system',        &
                                         wf%multiplicity)
 !
       wf%fractional_uniform_valence = &
-            input%requested_keyword_in_section('fractional uniform valence', 'hf')
+            input%is_keyword_present('fractional uniform valence', 'hf')
 !
    end subroutine read_uhf_settings_uhf
 !

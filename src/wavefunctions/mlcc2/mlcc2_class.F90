@@ -370,13 +370,13 @@ contains
 !
       class(mlcc2), intent(inout) :: wf
 !
-      if (.not. input%requested_section('mlcc')) &
+      if (.not. input%is_section_present('mlcc')) &
          call output%error_msg('cannot do mlcc calculation without mlcc section in eT.inp')
 !
-      wf%restart_orbitals = input%requested_keyword_in_section('orbital restart', 'mlcc') .or. &
-                            input%requested_keyword_in_section('restart', 'do')
+      wf%restart_orbitals = input%is_keyword_present('orbital restart', 'mlcc') .or. &
+                            input%is_keyword_present('restart', 'do')
 !
-      call input%get_required_keyword_in_section('cc2 orbitals', 'mlcc', wf%cc2_orbital_type)
+      call input%get_required_keyword('cc2 orbitals', 'mlcc', wf%cc2_orbital_type)
 !
 !     Read orbital settings
 !
@@ -421,60 +421,60 @@ contains
 !
          wf%cnto_restart = .false.
 !
-         if (input%requested_keyword_in_section('cnto restart', 'mlcc') .or. &
-            input%requested_keyword_in_section('restart', 'do')) wf%cnto_restart = .true.
+         if (input%is_keyword_present('cnto restart', 'mlcc') .or. &
+            input%is_keyword_present('restart', 'do')) wf%cnto_restart = .true.
 !
-         wf%n_cnto_states = input%get_n_elements_for_keyword_in_section('cnto states', 'mlcc')
+         wf%n_cnto_states = input%get_n_elements_for_keyword('cnto states', 'mlcc')
 !
          if (wf%n_cnto_states == 0) &
                call output%error_msg('to construct CNTOs excitation vectors must be specified.')
 !
          call wf%initialize_cnto_states()
 !
-         call input%get_array_for_keyword_in_section('cnto states', 'mlcc', &
+         call input%get_array_for_keyword('cnto states', 'mlcc', &
                wf%n_cnto_states, wf%cnto_states)
 !
 !
-         call input%get_required_keyword_in_section('cnto occupied ' // trim(level_string), &
+         call input%get_required_keyword('cnto occupied ' // trim(level_string), &
                'mlcc', n_level_o)
 !
          n_level_v = n_level_o*(wf%n_v/wf%n_o)
 !
-         call input%get_keyword_in_section('cnto virtual ' // trim(level_string), 'mlcc', n_level_v)
+         call input%get_keyword('cnto virtual ' // trim(level_string), 'mlcc', n_level_v)
 !
 !
       elseif (trim(orbital_type) == 'cholesky') then
 !
-         call input%get_keyword_in_section('cholesky threshold', 'mlcc', &
+         call input%get_keyword('cholesky threshold', 'mlcc', &
                   wf%cholesky_orbital_threshold)
 !
       elseif (trim(orbital_type) == 'nto-canonical') then
 !
          wf%nto_restart = .false.
 !
-         if (input%requested_keyword_in_section('nto restart', 'mlcc') .or. &
-            input%requested_keyword_in_section('restart', 'do')) wf%nto_restart = .true.
+         if (input%is_keyword_present('nto restart', 'mlcc') .or. &
+            input%is_keyword_present('restart', 'do')) wf%nto_restart = .true.
 !
-         wf%n_nto_states = input%get_n_elements_for_keyword_in_section('nto states', 'mlcc')
+         wf%n_nto_states = input%get_n_elements_for_keyword('nto states', 'mlcc')
 !
          if (wf%n_nto_states == 0) &
                call output%error_msg('to construct NTOs excitation vectors must be specified.')
 !
          call wf%initialize_nto_states()
-         call input%get_array_for_keyword_in_section('nto states', 'mlcc', &
+         call input%get_array_for_keyword('nto states', 'mlcc', &
                wf%n_nto_states, wf%nto_states)
 !
-         call input%get_required_keyword_in_section('nto occupied ' // trim(level_string), &
+         call input%get_required_keyword('nto occupied ' // trim(level_string), &
                'mlcc', n_level_o)
 !
          n_level_v = n_level_o*(wf%n_v/wf%n_o)
 !
-         call input%get_keyword_in_section('canonical virtual ' // trim(level_string), &
+         call input%get_keyword('canonical virtual ' // trim(level_string), &
                'mlcc', n_level_v)
 !
       elseif (trim(orbital_type) == 'cholesky-pao') then
 !
-         call input%get_keyword_in_section('cholesky threshold', 'mlcc', &
+         call input%get_keyword('cholesky threshold', 'mlcc', &
                wf%cholesky_orbital_threshold)
 !
       else 

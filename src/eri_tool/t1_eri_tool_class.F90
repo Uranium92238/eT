@@ -307,7 +307,7 @@ contains
 !
       call eri%read_general_settings(eri%t1_eri_mem)
 !
-      if (input%requested_keyword_in_section('t1 eri in memory', 'integrals')) then
+      if (input%is_keyword_present('t1 eri in memory', 'integrals')) then
 !
             eri%t1_eri_mem = .true.
 !

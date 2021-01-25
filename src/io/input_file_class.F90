@@ -32,91 +32,129 @@ module input_file_class
 !
    type, extends(abstract_file) :: input_file
 !
-      type(section), allocatable :: sections(:)
+      type(section), allocatable, private :: sections(:)
 !
-      character(len=30), allocatable :: rf_wfs(:)
-      character(len=30), allocatable :: cc_wfs(:)
+      character(len=30), allocatable, private :: rf_wfs(:)
+      character(len=30), allocatable, private :: cc_wfs(:)
 !
-      integer :: n_keyword_lines ! Number of lines excluding the geometry section
-      integer :: n_geometry_lines    ! Number of QM atoms
-      integer :: n_mm_atom_lines ! Number of MM atoms
+      integer, private :: n_keyword_lines ! Number of lines excluding the geometry section
+      integer, private :: n_qm_atom_lines ! Number of QM atoms
+      integer, private :: n_mm_atom_lines ! Number of MM atoms
 !
 !     Array of the input lines excluding geometry
 !
-      character(len=200), dimension(:), allocatable :: input_  
+      character(len=200), dimension(:), allocatable, private :: input_  
 !
 !     Array of the QM and MM input geometries
 !
-      character(len=200), dimension(:), allocatable :: geometry    
-      character(len=200), dimension(:), allocatable :: mm_geometry 
+      character(len=200), dimension(:), allocatable, private :: geometry    
+      character(len=200), dimension(:), allocatable, private :: mm_geometry 
 !
    contains
 !
-      procedure :: open_                                                => open_input_file
-      procedure :: close_                                               => close_input_file
+      procedure :: open_                                    &
+                => open_input_file
 !
-      procedure :: check_for_errors                                     => check_for_errors_input_file
+      procedure :: close_                                   &
+                => close_input_file
 !
-      procedure :: requested_section                                    => requested_section_input_file
-      procedure :: requested_keyword_in_section                         => requested_keyword_in_section_input_file
-      procedure :: get_n_elements_for_keyword_in_section                => get_n_elements_for_keyword_in_section_input_file
-      procedure :: get_integer_array_for_keyword_in_section             => get_integer_array_for_keyword_in_section_input_file
-      procedure :: get_real_array_for_keyword_in_section                => get_real_array_for_keyword_in_section_input_file
-      procedure :: get_n_atoms                                          => get_n_atoms_input_file
-      procedure :: get_n_mm_atoms                                       => get_n_mm_atoms_input_file
-      procedure :: get_n_mm_molecules                                   => get_n_mm_molecules_input_file
-      procedure :: get_geometry                                         => get_geometry_input_file
+      generic :: get_keyword                                &
+              => get_integer4_keyword,                      &
+                 get_integer8_keyword,                      &
+                 get_string_keyword,                        &
+                 get_real_dp_keyword
 !
-      procedure :: get_mm_geometry_fq                                   => get_mm_geometry_fq_input_file
-      procedure :: get_mm_geometry_non_polarizable                      => get_mm_geometry_non_polarizable_input_file
+      generic :: get_required_keyword                       &
+              => get_required_string_keyword,               &
+                 get_required_integer4_keyword,             &
+                 get_required_integer8_keyword,             &
+                 get_required_real_dp_keyword
 !
-
-      procedure :: get_reference_wf                                     => get_reference_wf_input_file
-      procedure :: get_cc_wf                                            => get_cc_wf_input_file
+      generic :: get_array_for_keyword                      &
+              => get_integer_array_for_keyword,             &
+                 get_real_array_for_keyword
 !
-      procedure :: requested_reference_calculation                      => requested_reference_calculation_input_file
-      procedure :: requested_cc_calculation                             => requested_cc_calculation_input_file
+      procedure :: check_for_errors                         &
+                => check_for_errors_input_file
 !
-      procedure, private :: get_string_keyword_in_section_wo_safety     => get_string_keyword_in_section_wo_safety_input_file
-      procedure, private :: get_section_limits                          => get_section_limits_input_file
-      procedure, private :: check_section_for_illegal_keywords          => check_section_for_illegal_keywords_input_file
-      procedure, private :: check_for_illegal_sections                  => check_for_illegal_sections_input_file
-      procedure, private :: print_sections                              => print_sections_input_file
+      procedure :: is_section_present                       &
+                => is_section_present_input_file
 !
-      procedure, nopass, private :: string_is_comment                   => string_is_comment_input_file
-      procedure, nopass, private :: extract_keyword_from_string         => extract_keyword_from_string_input_file
-      procedure, nopass, private :: extract_keyword_value_from_string   => extract_keyword_value_from_string_input_file
+      procedure :: is_keyword_present                       &
+                => is_keyword_present_input_file
 !
-      generic :: get_keyword_in_section                                 => get_integer4_keyword_in_section_input_file,  &
-                                                                           get_integer8_keyword_in_section_input_file,  &
-                                                                           get_string_keyword_in_section_input_file,    &
-                                                                           get_dp_keyword_in_section_input_file
+      procedure :: get_n_elements_for_keyword               &
+                => get_n_elements_for_keyword
 !
-      generic :: get_required_keyword_in_section                        => get_required_string_keyword_in_section_input_file,    &
-                                                                           get_required_integer4_keyword_in_section_input_file,  &
-                                                                           get_required_integer8_keyword_in_section_input_file,  &
-                                                                           get_required_dp_keyword_in_section_input_file
+      procedure :: get_n_atoms                              &
+                => get_n_atoms_input_file
 !
-      generic :: get_array_for_keyword_in_section                       => get_integer_array_for_keyword_in_section, &
-                                                                           get_real_array_for_keyword_in_section
+      procedure :: get_n_mm_atoms                           &
+                => get_n_mm_atoms_input_file
 !
-      procedure :: get_integer4_keyword_in_section_input_file
-      procedure :: get_integer8_keyword_in_section_input_file
-      procedure :: get_string_keyword_in_section_input_file
-      procedure :: get_dp_keyword_in_section_input_file
-      procedure :: get_required_string_keyword_in_section_input_file
-      procedure :: get_required_integer4_keyword_in_section_input_file
-      procedure :: get_required_integer8_keyword_in_section_input_file
-      procedure :: get_required_dp_keyword_in_section_input_file
+      procedure :: get_n_mm_molecules                       &
+                => get_n_mm_molecules_input_file
 !
-      procedure :: is_string_in_cs_list        => is_string_in_cs_list_input_file
+      procedure :: get_geometry                             &
+                => get_geometry_input_file
 !
-      procedure :: read_keywords_and_geometry  => read_keywords_and_geometry_input_file
+      procedure :: get_mm_geometry_fq                       &
+                => get_mm_geometry_fq_input_file
 !
-      procedure :: cleanup_geometry            => cleanup_geometry_input_file
-      procedure :: cleanup_keywords            => cleanup_keywords_input_file
+      procedure :: get_mm_geometry_non_polarizable          &
+                => get_mm_geometry_non_polarizable_input_file
 !
-      procedure :: is_embedding_on             => is_embedding_on_input_file
+      procedure :: get_reference_wf                         &
+                => get_reference_wf_input_file
+!
+      procedure :: get_cc_wf                                &
+                => get_cc_wf_input_file
+!
+      procedure :: requested_reference_calculation          &
+                => requested_reference_calculation_input_file
+!
+      procedure :: requested_cc_calculation                 &
+                => requested_cc_calculation_input_file
+!
+      procedure :: is_string_in_cs_list                     &
+                => is_string_in_cs_list_input_file
+!
+      procedure :: read_keywords_and_geometry               &
+                => read_keywords_and_geometry_input_file
+!
+      procedure :: cleanup_geometry                         &
+                => cleanup_geometry_input_file
+!
+      procedure :: cleanup_keywords                         &
+                => cleanup_keywords_input_file
+!
+      procedure :: is_embedding_on                          &
+                => is_embedding_on_input_file
+!
+      procedure, private :: get_wf
+      procedure, private :: requested_calculation 
+!
+      procedure, private :: get_string_keyword_wo_safety     
+      procedure, private :: get_section_limits         
+      procedure, private :: check_section_for_illegal_keywords
+      procedure, private :: check_for_illegal_sections        
+      procedure, private :: print_sections                    
+!
+      procedure, nopass, private :: string_is_comment               
+      procedure, nopass, private :: extract_keyword_from_string      
+      procedure, nopass, private :: extract_keyword_value_from_string 
+!
+      procedure, private :: get_integer4_keyword
+      procedure, private :: get_integer8_keyword
+      procedure, private :: get_string_keyword
+      procedure, private :: get_real_dp_keyword
+      procedure, private :: get_required_string_keyword
+      procedure, private :: get_required_integer4_keyword
+      procedure, private :: get_required_integer8_keyword
+      procedure, private :: get_required_real_dp_keyword
+!
+      procedure, private :: get_integer_array_for_keyword
+      procedure, private :: get_real_array_for_keyword
 !
    end type input_file
 !
@@ -130,17 +168,14 @@ module input_file_class
 contains
 !
 !
-   function new_input_file(name_) result(the_file)
+   function new_input_file(name_) result(this)
 !!
-!!    Initialize input file
+!!    New input file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
-!!
-!!    Initializes the input file for opening by the disk manager
-!!    and sets the valid sections and their keywords.
 !!
       implicit none
 !
-      type(input_file) :: the_file
+      type(input_file) :: this
 !
       character(len=*), intent(in) :: name_
 !
@@ -176,17 +211,17 @@ contains
 !
 !     Set input file name, access and format
 !
-      the_file%name_ = name_
+      this%name_ = name_
 !
-      the_file%access_ = 'sequential'
-      the_file%format_ = 'formatted'
-      the_file%action_ = 'read'
+      this%access_ = 'sequential'
+      this%format_ = 'formatted'
+      this%action_ = 'read'
 !
 !     Set method section
 !
-      the_file%rf_wfs = [character(len=30) :: 'hf','uhf','mlhf']
+      this%rf_wfs = [character(len=30) :: 'hf','uhf','mlhf']
 !
-      the_file%cc_wfs = [character(len=30) ::   &
+      this%cc_wfs = [character(len=30) ::   &
                            'ccs',               &
                            'mp2',               &
                            'cc2',               &
@@ -200,12 +235,12 @@ contains
       method%name_    = 'method'
       method%required = .false.
 !
-      the_file%rf_wfs = [character(len=30) :: &
+      this%rf_wfs = [character(len=30) :: &
                         'hf',  &
                         'uhf', &
                         'mlhf']
 !
-      the_file%cc_wfs = [character(len=30) :: &
+      this%cc_wfs = [character(len=30) :: &
                         'ccs',                &
                         'mp2',                &
                         'cc2',                &
@@ -216,10 +251,10 @@ contains
                         'mlcc2',              &
                         'mlccsd']
 !
-      allocate(method%keywords(size(the_file%rf_wfs) &
-                             + size(the_file%cc_wfs)))
+      allocate(method%keywords(size(this%rf_wfs) &
+                             + size(this%cc_wfs)))
 !
-      method%keywords = [the_file%rf_wfs, the_file%cc_wfs]
+      method%keywords = [this%rf_wfs, this%cc_wfs]
 !
 !     Set other sections in alphabetical order
 !
@@ -551,7 +586,7 @@ contains
 !
 !     Gather all sections into the file's section array
 !
-      the_file%sections = [active_atoms,              &
+      this%sections = [active_atoms,              &
                            calculations,              &
                            cc,                        &
                            cc_mean_value,             &
@@ -581,75 +616,75 @@ contains
                            system,                    &
                            visualization]
 !
-      the_file%is_open = .false.
-      the_file%unit_ = -1
+      this%is_open = .false.
+      this%unit_ = -1
 !
    end function new_input_file
 !
 !
-   subroutine open_input_file(the_file)
+   subroutine open_input_file(this)
 !!
-!!    Open the input file
+!!    Open input file
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(input_file) :: the_file
+      class(input_file) :: this
 !
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      if (the_file%is_open) then
+      if (this%is_open) then
 !
-         call output%error_msg(trim(the_file%name_)//' is already open')
+         call output%error_msg(trim(this%name_)//' is already open')
 !
       endif
 !
-      open(newunit=the_file%unit_, file=the_file%name_, access=the_file%access_, &
-           action='read', status='unknown', form=the_file%format_, iostat=io_error, iomsg=io_msg)
+      open(newunit=this%unit_, file=this%name_, access=this%access_, &
+           action='read', status='unknown', form=this%format_, iostat=io_error, iomsg=io_msg)
 !
       if (io_error .ne. 0) then
 !
-         call output%error_msg('could not open eT input file '//trim(the_file%name_)//&
+         call output%error_msg('could not open eT input file '//trim(this%name_)//&
                               &'error message: '//trim(io_msg))
       endif
 !
-      the_file%is_open = .true.
+      this%is_open = .true.
 !
    end subroutine open_input_file
 !
 !
-   subroutine close_input_file(the_file)
+   subroutine close_input_file(this)
 !!
-!!    Close the input file
+!!    Close input file
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(input_file) :: the_file
+      class(input_file) :: this
 !
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      if (.not. the_file%is_open) then
-         call output%error_msg(trim(the_file%name_)//' already closed')
+      if (.not. this%is_open) then
+         call output%error_msg(trim(this%name_)//' already closed')
       end if
 !
-      close(the_file%unit_, iostat=io_error, iomsg=io_msg, status='keep')
+      close(this%unit_, iostat=io_error, iomsg=io_msg, status='keep')
 !
       if (io_error .ne. 0) then
 !
-         call output%error_msg('could not close eT input file '//trim(the_file%name_)//&
+         call output%error_msg('could not close eT input file '//trim(this%name_)//&
                               &'error message: '//trim(io_msg))
       endif
 !
-      the_file%is_open = .false.
-      the_file%unit_ = -1
+      this%is_open = .false.
+      this%unit_ = -1
 !
    end subroutine close_input_file
 !
 !
-   subroutine check_for_errors_input_file(the_file)
+   subroutine check_for_errors_input_file(this)
 !!
 !!    Check for errors
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -658,28 +693,28 @@ contains
 !!
       implicit none
 !
-      class(input_file) :: the_file
+      class(input_file) :: this
 !
       integer :: k
 !
 !     Look for illegal sections
 !
-      call the_file%check_for_illegal_sections()
+      call this%check_for_illegal_sections()
 !
 !     For each legal section present, look for illegal keywords within that section
 !
-      do k = 1, size(the_file%sections)
+      do k = 1, size(this%sections)
 !
-         if (the_file%requested_section(the_file%sections(k)%name_)) then
+         if (this%is_section_present(this%sections(k)%name_)) then
 !
-            call the_file%check_section_for_illegal_keywords(the_file%sections(k))
+            call this%check_section_for_illegal_keywords(this%sections(k))
 !
          else
 !
-            if (the_file%sections(k)%required) then
+            if (this%sections(k)%required) then
 !
                call output%printf('m', 'All calculations require the section "' // &
-                                  trim(the_file%sections(k)%name_) // '". It &
+                                  trim(this%sections(k)%name_) // '". It &
                                   &appears to be missing.', fs='(/t3,a)')
 !
                call output%error_msg('Something is wrong in the input file. See above.')
@@ -693,7 +728,7 @@ contains
    end subroutine check_for_errors_input_file
 !
 !
-   subroutine check_for_illegal_sections_input_file(the_file)
+   subroutine check_for_illegal_sections(this)
 !!
 !!    Check for illegal sections
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -706,38 +741,41 @@ contains
 !!
       implicit none
 !
-      class(input_file) :: the_file
+      class(input_file) :: this
 !
       integer :: k, start_, end_, i
 !
       logical :: recognized
 !
-      do i = 1, the_file%n_keyword_lines
+      character(len=200) :: section 
 !
-         if (the_file%input_(i)(1 : 3) == 'end') then
+      do i = 1, this%n_keyword_lines
+!
+         if (this%input_(i)(1 : 3) == 'end') then
 !
 !           Located the end of a section -
 !           attempt to move to the beginning of that section => fails if inconsistent beginning and end
 !
-            call the_file%get_section_limits(trim(adjustl(the_file%input_(i)(4 : 200))), start_, end_)
+            section = trim(adjustl(this%input_(i)(4 : 200)))
+!
+            call this%get_section_limits(section, start_, end_)
 !
 !           Check whether section name is valid
 !
             recognized = .false.
 !
-            do k = 1, size(the_file%sections)
+            do k = 1, size(this%sections)
 !
-               if (trim(the_file%sections(k)%name_) == trim(adjustl(the_file%input_(i)(4 : 200)))) &
-                  recognized = .true.
+               if (this%sections(k)%name_ == section) recognized = .true.
 !
             enddo
 !
             if (.not. recognized) then
 !
-               call output%printf('m', 'Could not recognize section named "' //  &
-                                   trim(adjustl(the_file%input_(i)(4 : 200))) // '".', fs='(/t3,a)')
+               call output%printf('m', 'Could not recognize section named "(a0)".', &
+                                       chars=[section], fs='(/t3,a)')
 !
-               call the_file%print_sections()
+               call this%print_sections()
 !
                call output%error_msg('Something is wrong in the input file. See above.')
 !
@@ -747,32 +785,32 @@ contains
 !
       enddo
 !
-   end subroutine check_for_illegal_sections_input_file
+   end subroutine check_for_illegal_sections
 !
 !
-   subroutine print_sections_input_file(the_file)
+   subroutine print_sections(this)
 !!
 !!    Print sections
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       integer :: k
 !
       call output%printf('m', 'The valid input sections are:', fs='(/t3,a/)')
 !
-      do k = 1, size(the_file%sections)
+      do k = 1, size(this%sections)
 !
-         call output%printf('m', '(a0)', chars=[trim(the_file%sections(k)%name_)], fs='(t6,a)')
+         call output%printf('m', '(a0)', chars=[trim(this%sections(k)%name_)], fs='(t6,a)')
 !
       enddo
 !
-   end subroutine print_sections_input_file
+   end subroutine print_sections
 !
 !
-   subroutine check_section_for_illegal_keywords_input_file(the_file, the_section)
+   subroutine check_section_for_illegal_keywords(this, the_section)
 !!
 !!    Checks a section for illegal keywords
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -782,7 +820,7 @@ contains
 !!
       implicit none
 !
-      class(input_file) :: the_file
+      class(input_file) :: this
 !
       class(section) :: the_section
 !
@@ -797,15 +835,15 @@ contains
       allocate(keywords_instances(size(the_section%keywords)))
       keywords_instances = 0
 !
-      call the_file%get_section_limits(the_section%name_, start_, end_)
+      call this%get_section_limits(the_section%name_, start_, end_)
 !
       do record = start_ + 1, end_ - 1
 !
          recognized = .false.
 !
-         if (.not. the_file%string_is_comment(the_file%input_(record))) then
+         if (.not. this%string_is_comment(this%input_(record))) then
 !
-            call the_file%extract_keyword_from_string(the_file%input_(record), keyword)
+            call this%extract_keyword_from_string(this%input_(record), keyword)
 !
             do k = 1, size(the_section%keywords)
 !
@@ -852,163 +890,167 @@ contains
 !
       deallocate(keywords_instances)
 !
-   end subroutine check_section_for_illegal_keywords_input_file
+   end subroutine check_section_for_illegal_keywords
 !
 !
-   logical function requested_reference_calculation_input_file(the_file)
+   function requested_reference_calculation_input_file(this) result(requested)
 !!
 !!    Requested reference calculation
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
-      integer :: n_rf_wfs, k
+      logical :: requested 
 !
-      n_rf_wfs = 0
-      do k = 1, size(the_file%rf_wfs)
-!
-         if (the_file%requested_keyword_in_section(the_file%rf_wfs(k), 'method')) then
-!
-            n_rf_wfs = n_rf_wfs + 1
-!
-         endif
-!
-      enddo
-!
-      if (n_rf_wfs == 1) then
-!
-         requested_reference_calculation_input_file = .true.
-!
-      elseif (n_rf_wfs > 1) then
-!
-         requested_reference_calculation_input_file = .false.
-         call output%error_msg('Requested more than one reference wavefunction.')
-!
-      else
-!
-         requested_reference_calculation_input_file = .false.
-!
-      endif
+      requested = this%requested_calculation(this%rf_wfs)
 !
    end function requested_reference_calculation_input_file
 !
 !
-   character(len=30) function get_reference_wf_input_file(the_file)
+   function get_reference_wf_input_file(this) result(ref_wf)
 !!
 !!    Get reference wavefunction
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
-      integer :: k
+      character(len=30) :: ref_wf 
 !
-      logical :: recognized
+      ref_wf = this%get_wf(this%rf_wfs)     
 !
-      recognized = .false.
+   end function get_reference_wf_input_file
 !
-      do k = 1, size(the_file%rf_wfs)
 !
-         if (the_file%requested_keyword_in_section(the_file%rf_wfs(k),'method')) then
+   function requested_calculation(this, wfs) result(requested)
+!!
+!!    Requested calculation
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+!!    Looks for wfs(k) in method and returns true if it finds one such wf
+!!    in the input file. Gives an error if it finds more than one of wfs(k).
+!!
+      implicit none 
 !
-            get_reference_wf_input_file = the_file%rf_wfs(k)
-            recognized = .true.
+      class(input_file), intent(in) :: this
+!
+      character(len=30), dimension(:), intent(in) :: wfs
+!
+      logical :: requested 
+!
+      integer :: n_wfs, k
+!
+      n_wfs = 0
+      do k = 1, size(wfs)
+!
+         if (this%is_keyword_present(wfs(k), 'method')) then
+!
+            n_wfs = n_wfs + 1
 !
          endif
 !
       enddo
 !
-      if (.not. recognized) call output%error_msg('Tried to read reference wavefunction, but could not find any.')
+      if (n_wfs == 1) then
 !
-   end function get_reference_wf_input_file
+         requested = .true.
+!
+      elseif (n_wfs > 1) then
+!
+         requested = .false.
+         call output%error_msg('Requested more than one method &
+                               & of a single kind (e.g., two CC methods).')
+!
+      else
+!
+         requested = .false.
+!
+      endif      
+!
+   end function requested_calculation 
 !
 !
-   logical function requested_cc_calculation_input_file(the_file)
+   function requested_cc_calculation_input_file(this) result(requested)
 !!
 !!    Requested CC calculation
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
-      integer :: n_cc_wfs, k
+      logical :: requested
 !
-      n_cc_wfs = 0
-      do k = 1, size(the_file%cc_wfs)
-!
-         if (the_file%requested_keyword_in_section(the_file%cc_wfs(k), 'method')) then
-!
-            n_cc_wfs = n_cc_wfs + 1
-!
-         endif
-!
-      enddo
-!
-      if (n_cc_wfs == 1) then
-!
-         requested_cc_calculation_input_file = .true.
-!
-      elseif (n_cc_wfs > 1) then
-!
-         requested_cc_calculation_input_file = .false.
-         call output%error_msg('Requested more than one CC wavefunction.')
-!
-      else
-!
-         requested_cc_calculation_input_file = .false.
-!
-      endif
+      requested = this%requested_calculation(this%cc_wfs)
 !
    end function requested_cc_calculation_input_file
 !
 !
-   character(len=30) function get_cc_wf_input_file(the_file)
+   function get_cc_wf_input_file(this) result(cc_wf)
 !!
 !!    Get CC wavefunction
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
-      integer :: k
+      character(len=30) :: cc_wf 
 !
-      logical :: recognized
-!
-      recognized = .false.
-!
-      do k = 1, size(the_file%cc_wfs)
-!
-         if (the_file%requested_keyword_in_section(the_file%cc_wfs(k),'method')) then
-!
-            get_cc_wf_input_file = the_file%cc_wfs(k)
-            recognized = .true.
-!
-         endif
-!
-      enddo
-!
-      if (.not. recognized) call output%error_msg('Tried to read CC wavefunction, but could not find any.')
+      cc_wf = this%get_wf(this%cc_wfs)
 !
    end function get_cc_wf_input_file
 !
 !
-!
-!
-   subroutine get_integer4_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   function get_wf(this, wfs) result(wf)
 !!
-!!    Read integer keyword in section
+!!    Get wavefunction
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!    
+!!    Looks for wfs(k) in the 'method' section of the input.
+!!
+      implicit none 
+!
+      class(input_file), intent(in) :: this
+!
+      character(len=30), dimension(:), intent(in) :: wfs
+!
+      character(len=30) :: wf 
+!
+      integer :: k
+!
+      do k = 1, size(wfs)
+!
+         if (this%is_keyword_present(wfs(k),'method')) then
+!
+            wf = wfs(k)
+            return
+!
+         endif         
+!
+      enddo
+!
+      call output%error_msg('Failed to read wavefunction from input. &
+         & Did you forget to specify all wavefunctions for the calculation?')
+!
+   end function get_wf
+!
+!
+!
+!
+   subroutine get_integer4_keyword(this, keyword, section, keyword_value)
+!!
+!!    Get integer(4) keyword
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    If specified, reads keyword as an integer into keyword value.
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: section
@@ -1017,11 +1059,11 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
-      if (the_file%requested_keyword_in_section(keyword, section)) then
+      if (this%is_keyword_present(keyword, section)) then
 !
 !        Get the keyword value in string format
 !
-         call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+         call this%get_string_keyword_wo_safety(keyword, section, keyword_value_string)
 !
 !        Extract the integer from the string
 !
@@ -1029,19 +1071,19 @@ contains
 !
       endif
 !
-   end subroutine get_integer4_keyword_in_section_input_file
+   end subroutine get_integer4_keyword
 !
 !
-   subroutine get_integer8_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_integer8_keyword(this, keyword, section, keyword_value)
 !!
-!!    Read integer keyword in section
+!!    Get integer(8) keyword
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    If specified, reads keyword as an integer into keyword value.
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: section
@@ -1050,11 +1092,11 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
-      if (the_file%requested_keyword_in_section(keyword, section)) then
+      if (this%is_keyword_present(keyword, section)) then
 !
 !        Get the keyword value in string format
 !
-         call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+         call this%get_string_keyword_wo_safety(keyword, section, keyword_value_string)
 !
 !        Extract the integer from the string
 !
@@ -1062,21 +1104,20 @@ contains
 !
       endif
 !
-   end subroutine get_integer8_keyword_in_section_input_file
+   end subroutine get_integer8_keyword
 !
 !
-   subroutine get_required_integer4_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_required_integer4_keyword(this, keyword, section, keyword_value)
 !!
-!!    Read required integer keyword in section
+!!    Get required integer(4) keyword
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    Reads keyword as an integer into keyword value. If the keyword or the
 !!    section is not specified, an error occurs because the keyword is "required".
 !!
-!!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: section
@@ -1085,35 +1126,35 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
-      if (.not. the_file%requested_section(section)) &
+      if (.not. this%is_section_present(section)) &
          call output%error_msg('could not find the required section: '// trim(section) // '.')
 !
-      if (.not. the_file%requested_keyword_in_section(keyword, section)) &
-         call output%error_msg('could not find the required keyword '// trim(keyword) // ' in section ' // trim(section))
+      if (.not. this%is_keyword_present(keyword, section)) &
+         call output%error_msg('could not find the required keyword '// trim(keyword) // &
+                               ' in section ' // trim(section))
 !
 !     Get the keyword value in string format
 !
-      call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+      call this%get_string_keyword_wo_safety(keyword, section, keyword_value_string)
 !
 !     Extract the integer from the string
 !
       read(keyword_value_string, *) keyword_value
 !
-   end subroutine get_required_integer4_keyword_in_section_input_file
+   end subroutine get_required_integer4_keyword
 !
 !
-   subroutine get_required_integer8_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_required_integer8_keyword(this, keyword, section, keyword_value)
 !!
-!!    Read required integer keyword in section
+!!    Get required integer(8) keyword
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    Reads keyword as an integer into keyword value. If the keyword or the
 !!    section is not specified, an error occurs because the keyword is "required".
 !!
-!!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: section
@@ -1122,33 +1163,34 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
-      if (.not. the_file%requested_section(section)) &
+      if (.not. this%is_section_present(section)) &
          call output%error_msg('could not find the required section: '// trim(section) // '.')
 !
-      if (.not. the_file%requested_keyword_in_section(keyword, section)) &
-         call output%error_msg('could not find the required keyword '// trim(keyword) // ' in section ' // trim(section))
+      if (.not. this%is_keyword_present(keyword, section)) &
+         call output%error_msg('could not find the required keyword '// trim(keyword) // &
+                               ' in section ' // trim(section))
 !
 !     Get the keyword value in string format
 !
-      call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+      call this%get_string_keyword_wo_safety(keyword, section, keyword_value_string)
 !
 !     Extract the integer from the string
 !
       read(keyword_value_string, *) keyword_value
 !
-   end subroutine get_required_integer8_keyword_in_section_input_file
+   end subroutine get_required_integer8_keyword
 !
 !
-   subroutine get_dp_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_real_dp_keyword(this, keyword, section, keyword_value)
 !!
-!!    Read double precision keyword in section
+!!    Get real(dp) keyword
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    If specified, reads keyword as a real double precision into keyword value.
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: section
@@ -1157,11 +1199,11 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
-      if (the_file%requested_keyword_in_section(keyword, section)) then
+      if (this%is_keyword_present(keyword, section)) then
 !
 !        Get the keyword value in string format
 !
-         call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+         call this%get_string_keyword_wo_safety(keyword, section, keyword_value_string)
 !
 !        Extract the integer from the string
 !
@@ -1169,12 +1211,12 @@ contains
 !
       endif
 !
-   end subroutine get_dp_keyword_in_section_input_file
+   end subroutine get_real_dp_keyword
 !
 !
-   subroutine get_required_dp_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_required_real_dp_keyword(this, keyword, section, keyword_value)
 !!
-!!    Read required double precision keyword in section
+!!    Get required real(dp) keyword
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    Reads keyword as an double precision into keyword value. If the keyword or the
@@ -1182,7 +1224,7 @@ contains
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: section
@@ -1191,90 +1233,91 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
-      if (.not. the_file%requested_section(section)) &
+      if (.not. this%is_section_present(section)) &
          call output%error_msg('could not find the required section: '// trim(section) // '.')
 !
-      if (.not. the_file%requested_keyword_in_section(keyword, section)) &
-         call output%error_msg('could not find the required keyword '// trim(keyword) // ' in section ' // trim(section))
+      if (.not. this%is_keyword_present(keyword, section)) &
+         call output%error_msg('could not find the required keyword '// trim(keyword) // &
+                               ' in section ' // trim(section))
 !
 !     Get the keyword value in string format
 !
-      call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+      call this%get_string_keyword_wo_safety(keyword, section, keyword_value_string)
 !
 !     Extract the integer from the string
 !
       read(keyword_value_string, *) keyword_value
 !
-   end subroutine get_required_dp_keyword_in_section_input_file
+   end subroutine get_required_real_dp_keyword
 !
 !
-   subroutine get_string_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_string_keyword(this, keyword, section, keyword_value)
 !!
-!!    Read string keyword in section
+!!    Get string keyword
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    If specified, reads keyword as a string into keyword value.
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: section
 !
       character(len=200) :: keyword_value
 !
-      if (the_file%requested_keyword_in_section(keyword, section)) then
+      if (this%is_keyword_present(keyword, section)) then
 !
 !        Get the keyword value in string format
 !
-         call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value)
+         call this%get_string_keyword_wo_safety(keyword, section, keyword_value)
 !
       endif
 !
-   end subroutine get_string_keyword_in_section_input_file
+   end subroutine get_string_keyword
 !
 !
-   subroutine get_required_string_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_required_string_keyword(this, keyword, section, keyword_value)
 !!
-!!    Read string keyword in section
+!!    Get required string keyword
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    If specified, reads keyword as a string into keyword value.
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: section
 !
       character(len=200) :: keyword_value
 !
-      if (.not. the_file%requested_section(section)) &
+      if (.not. this%is_section_present(section)) &
          call output%error_msg('could not find the required section: '// trim(section) // '.')
 !
-      if (.not. the_file%requested_keyword_in_section(keyword, section)) &
+      if (.not. this%is_keyword_present(keyword, section)) &
          call output%error_msg('could not find the required keyword '// trim(keyword) // ' in section ' // trim(section))
 !
 !     Get the keyword value in string format
 !
-      call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value)
+      call this%get_string_keyword_wo_safety(keyword, section, keyword_value)
 !
-   end subroutine get_required_string_keyword_in_section_input_file
+   end subroutine get_required_string_keyword
 !
 !
-   subroutine get_string_keyword_in_section_wo_safety_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_string_keyword_wo_safety(this, keyword, section, keyword_value)
 !!
-!!    Read string keyword in section without safety
+!!    Get string keyword without safety
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    Reads keyword in section, placing the result in the string keyword_value. This
-!!    routine gives an error if the keyword is not located.
+!!    routine gives an error if the keyword is not located ("no safety").
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: section
@@ -1287,23 +1330,23 @@ contains
 !
 !     Move to the requested section & get the number of records in that section
 !
-      call the_file%get_section_limits(section, start_, end_)
+      call this%get_section_limits(section, start_, end_)
 !
 !     Loop through records within the section to locate & get the keyword value
 !
       do record = start_ + 1, end_ - 1
 !
-         if (the_file%string_is_comment(the_file%input_(record))) then
+         if (this%string_is_comment(this%input_(record))) then
 !
             cycle
 !
          else
 !
-            call the_file%extract_keyword_from_string(the_file%input_(record), local_keyword)
+            call this%extract_keyword_from_string(this%input_(record), local_keyword)
 !
             if (trim(local_keyword) == keyword) then
 !
-               call the_file%extract_keyword_value_from_string(the_file%input_(record), &
+               call this%extract_keyword_value_from_string(this%input_(record), &
                   keyword_value)
                return
 !
@@ -1317,17 +1360,19 @@ contains
 !
       call output%error_msg('Failed to read keyword ' // keyword // ' in section ' // section)
 !
-   end subroutine get_string_keyword_in_section_wo_safety_input_file
+   end subroutine get_string_keyword_wo_safety
 !
 !
-   logical function string_is_comment_input_file(string)
+   pure function string_is_comment(string) result(is_comment)
 !!
-!!    Is the string a comment?
+!!    String is comment?
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
       implicit none
 !
       character(len=200), intent(in) :: string
+!
+      logical :: is_comment
 !
       character(len=200) :: tmp_string
 !
@@ -1335,18 +1380,18 @@ contains
 !
       if (tmp_string(1:1) == '!') then
 !
-         string_is_comment_input_file = .true.
+         is_comment = .true.
 !
       else
 !
-         string_is_comment_input_file = .false.
+         is_comment = .false.
 !
       endif
 !
-   end function string_is_comment_input_file
+   end function string_is_comment
 !
 !
-   subroutine extract_keyword_from_string_input_file(string, keyword)
+   subroutine extract_keyword_from_string(string, keyword)
 !!
 !!    Extract keyword from string
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -1388,16 +1433,15 @@ contains
 !
       endif
 !
-   end subroutine extract_keyword_from_string_input_file
+   end subroutine extract_keyword_from_string
 !
 !
-   subroutine extract_keyword_value_from_string_input_file(string, keyword_value)
+   subroutine extract_keyword_value_from_string(string, keyword_value)
 !!
 !!    Extract keyword value from string
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
-!!    Note: assumes that the string is not a comment. This routine is therefore
-!!    called after a call to "is comment" logical routine.
+!!    Note: assumes that the string is not a comment.
 !!
       implicit none
 !
@@ -1437,25 +1481,24 @@ contains
       keyword_value = adjustl(keyword_value)
       call convert_to_lowercase(keyword_value)
 !
-   end subroutine extract_keyword_value_from_string_input_file
+   end subroutine extract_keyword_value_from_string
 !
 !
-   logical function requested_keyword_in_section_input_file(the_file, keyword, section)
+   function is_keyword_present_input_file(this, keyword, section) result(is_present)
 !!
-!!    Is string keyword in section?
+!!    Is keyword present?
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    Returns true if the keyword is in the section.
 !!
-!!    Note: stops inside "move to section" if the section is not present!
-!!    => this routine should only be called if you know the section in present.
-!!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: section
+!
+      logical :: is_present 
 !
       integer :: record, start_, end_
 !
@@ -1463,30 +1506,30 @@ contains
 !
 !     Move to the requested section & get the number of records in that section
 !
-      if (.not. the_file%requested_section(section)) then
+      if (.not. this%is_section_present(section)) then
 !
-         requested_keyword_in_section_input_file = .false.
+         is_present = .false.
          return
 !
       endif
 !
-      call the_file%get_section_limits(section, start_, end_)
+      call this%get_section_limits(section, start_, end_)
 !
 !     Loop through records within the section & try to locate the keyword
 !
       do record = start_ + 1, end_ - 1
 !
-         if (the_file%string_is_comment(the_file%input_(record))) then
+         if (this%string_is_comment(this%input_(record))) then
 !
             cycle
 !
          else
 !
-            call the_file%extract_keyword_from_string(the_file%input_(record), local_keyword)
+            call this%extract_keyword_from_string(this%input_(record), local_keyword)
 !
             if (trim(local_keyword) == keyword) then
 !
-               requested_keyword_in_section_input_file = .true.
+               is_present = .true.
                return
 !
             endif
@@ -1497,45 +1540,45 @@ contains
 !
 !     If you are here, you have not returned, so you have not found the keyword!
 !
-      requested_keyword_in_section_input_file = .false.
+      is_present = .false.
 !
-   end function requested_keyword_in_section_input_file
+   end function is_keyword_present_input_file
 !
 !
-   pure function requested_section_input_file(the_file, section) result(requested)
+   pure function is_section_present_input_file(this, section) result(is_present)
 !!
-!!    Requested section?
+!!    Is section present?
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    Returns true if the section exists, false if it doesn't.
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: section
 !
-      logical :: requested
+      logical :: is_present
 !
       integer :: i
 !
-      requested = .false.
+      is_present = .false.
 !
-      do i = 1, the_file%n_keyword_lines
+      do i = 1, this%n_keyword_lines
 !
-         if (trim(the_file%input_(i)) == section) then
+         if (trim(this%input_(i)) == section) then
 !
-            requested = .true.
+            is_present = .true.
             return
 !
          endif
 !
       enddo
 !
-   end function requested_section_input_file
+   end function is_section_present_input_file
 !
 !
-   function get_n_elements_for_keyword_in_section_input_file(the_file, keyword, section) result(n_elements)
+   function get_n_elements_for_keyword(this, keyword, section) result(n_elements)
 !!
 !!    Get n elements for keyword in section
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -1550,11 +1593,11 @@ contains
 !!    that is, in set notation.
 !!
 !!    Function is called in preparation for
-!!    get_array_for_keyword_in_section
+!!    get_array_for_keyword
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: section
@@ -1565,20 +1608,20 @@ contains
 !
       n_elements = 0
 !
-      if (.not. the_file%requested_keyword_in_section(keyword, section)) return
+      if (.not. this%is_keyword_present(keyword, section)) return
 !
 !     Get the keyword value in string format
 !
-      call the_file%get_keyword_in_section(keyword, section, keyword_value_string)
+      call this%get_keyword(keyword, section, keyword_value_string)
 !
 !     Use string utility functionality to get n_elements
 !
       n_elements = get_n_elements_in_string(keyword_value_string)
 !
-   end function get_n_elements_for_keyword_in_section_input_file
+   end function get_n_elements_for_keyword
 !
 !
-   subroutine get_integer_array_for_keyword_in_section_input_file(the_file, keyword, section, n_elements, array_)
+   subroutine get_integer_array_for_keyword(this, keyword, section, n_elements, array_)
 !!
 !!    Get array for keyword in section
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -1593,13 +1636,13 @@ contains
 !!    that is, in set notation.
 !!
 !!    Routine should be called after the
-!!    get_n_elements_for_keyword_in_section is called
+!!    get_n_elements_for_keyword is called
 !!    in order to determine n_elements so that array_
 !!    can be allocated.
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: section
@@ -1610,20 +1653,20 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
-      if (.not. the_file%requested_keyword_in_section(keyword, section)) return
+      if (.not. this%is_keyword_present(keyword, section)) return
 !
 !     Get the keyword value in string format
 !
-      call the_file%get_keyword_in_section(keyword, section, keyword_value_string)
+      call this%get_keyword(keyword, section, keyword_value_string)
 !
 !     Use string utility functionality to get the array
 !
       call get_elements_in_string(keyword_value_string, n_elements, array_)
 !
-   end subroutine get_integer_array_for_keyword_in_section_input_file
+   end subroutine get_integer_array_for_keyword
 !
 !
-   subroutine get_real_array_for_keyword_in_section_input_file(the_file, keyword, section, n_elements, array_)
+   subroutine get_real_array_for_keyword(this, keyword, section, n_elements, array_)
 !!
 !!    Get real array for keyword in section
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -1639,13 +1682,13 @@ contains
 !!    that is, in set notation.
 !!
 !!    Routine should be called after the
-!!    get_n_elements_for_keyword_in_section is called
+!!    get_n_elements_for_keyword is called
 !!    in order to determine n_elements so that array_
 !!    can be allocated.
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: section
@@ -1658,16 +1701,16 @@ contains
 !
 !     Get the keyword value in string format
 !
-      call the_file%get_keyword_in_section(keyword, section, keyword_value_string)
+      call this%get_keyword(keyword, section, keyword_value_string)
 !
 !     Use string utility functionality to get the real array
 !
       call get_reals_in_string(keyword_value_string, n_elements, array_)
 !
-   end subroutine get_real_array_for_keyword_in_section_input_file
+   end subroutine get_real_array_for_keyword
 !
 !
-   pure function get_n_atoms_input_file(the_file) result(n_atoms)
+   pure function get_n_atoms_input_file(this) result(n_atoms)
 !!
 !!    Get n atoms
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -1677,7 +1720,7 @@ contains
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       integer :: n_atoms
 !
@@ -1687,10 +1730,10 @@ contains
 !
       n_atoms = 0
 !
-      do record = 1, the_file%n_geometry_lines
+      do record = 1, this%n_qm_atom_lines
 !
-         if (the_file%geometry(record)(1:6) .ne. 'basis:' &
-            .and. (the_file%geometry(record)(1:6) .ne. 'units:')) &
+         if (this%geometry(record)(1:6) .ne. 'basis:' &
+            .and. (this%geometry(record)(1:6) .ne. 'units:')) &
             n_atoms = n_atoms + 1
 !
       enddo
@@ -1698,7 +1741,7 @@ contains
    end function  get_n_atoms_input_file
 !
 !
-   pure function get_n_mm_atoms_input_file(the_file) result(n_atoms)
+   pure function get_n_mm_atoms_input_file(this) result(n_atoms)
 !!
 !!    Get n MM atoms
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -1708,16 +1751,16 @@ contains
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       integer :: n_atoms
 !
-      n_atoms = the_file%n_mm_atom_lines
+      n_atoms = this%n_mm_atom_lines
 !
    end function  get_n_mm_atoms_input_file
 !
 !
-   function get_n_mm_molecules_input_file(the_file) result(n_molecules)
+   function get_n_mm_molecules_input_file(this) result(n_molecules)
 !!
 !!    Get n MM molecules
 !!    Written by Sarai D. Folkestad, Sep 2020
@@ -1727,7 +1770,7 @@ contains
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       integer :: n_molecules
 !
@@ -1742,9 +1785,9 @@ contains
       previous_molecule = 1
       n_molecules       = 1
 !
-      do record = 1, the_file%n_mm_atom_lines
+      do record = 1, this%n_mm_atom_lines
 !
-         string = (trim(adjustl(the_file%mm_geometry(record))))
+         string = (trim(adjustl(this%mm_geometry(record))))
          cursor = set_cursor_to_character(string,'=')
 !
          string = string(cursor+1:200)
@@ -1777,7 +1820,7 @@ contains
    end function get_n_mm_molecules_input_file
 !
 !
-   subroutine get_geometry_input_file(the_file, n_atoms, symbols, &
+   subroutine get_geometry_input_file(this, n_atoms, symbols, &
                                        positions, basis_sets, units_angstrom)
 !!
 !!    Get geometry
@@ -1793,7 +1836,7 @@ contains
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       integer, intent(in) :: n_atoms
 !
@@ -1820,9 +1863,9 @@ contains
 !
       units_angstrom = .true. ! Default units are Angstrom
 !
-      if (the_file%geometry(1)(1:6) == 'units:') then
+      if (this%geometry(1)(1:6) == 'units:') then
 !
-         string = (trim(adjustl(the_file%geometry(1)(7:200))))
+         string = (trim(adjustl(this%geometry(1)(7:200))))
 !
          if (string(1:4) == 'bohr') then
 !
@@ -1840,16 +1883,16 @@ contains
 !
 !     Error if next line is not a basis set line
 !
-      if(the_file%geometry(start_)(1:6) /= 'basis:') &
+      if(this%geometry(start_)(1:6) /= 'basis:') &
             call output%error_msg('did not find basis in geometry section.')
 !
 !     Loop through geometry
 !
       current_atom = 0
 !
-      do i = start_, the_file%n_geometry_lines
+      do i = start_, this%n_qm_atom_lines
 !
-         string = trim(adjustl(the_file%geometry(i)))
+         string = trim(adjustl(this%geometry(i)))
 !
          if (string(1:6) == 'units:') &
          call output%error_msg('Units must be specified as the first line in the geometry section.')
@@ -1883,7 +1926,7 @@ contains
    end subroutine get_geometry_input_file
 !
 !
-   subroutine get_mm_geometry_fq_input_file(the_file, n_atoms, n_molecules, &
+   subroutine get_mm_geometry_fq_input_file(this, n_atoms, n_molecules, &
                                           n_atoms_per_molecule, symbols,   &
                                           positions, chi, eta)
 !!
@@ -1899,7 +1942,7 @@ contains
 !!
       implicit none
 !
-      class(input_file),   intent(in) :: the_file
+      class(input_file),   intent(in) :: this
       integer,             intent(in) :: n_atoms
       integer,             intent(in) :: n_molecules
 !
@@ -1922,10 +1965,10 @@ contains
 !
 !     Loop through the MM atoms specified on input
 !
-      do record = 1, the_file%n_mm_atom_lines
+      do record = 1, this%n_mm_atom_lines
 !
          current_atom = current_atom + 1
-         string = trim(adjustl(the_file%mm_geometry(record)))
+         string = trim(adjustl(this%mm_geometry(record)))
 !
 !        Determine symbol
 !
@@ -1998,7 +2041,7 @@ contains
    end subroutine get_mm_geometry_fq_input_file
 !
 !
-   subroutine get_mm_geometry_non_polarizable_input_file(the_file, n_atoms, symbols,   &
+   subroutine get_mm_geometry_non_polarizable_input_file(this, n_atoms, symbols,   &
                                                          positions, charge)
 !!
 !!    Get MM geometry non-polarizable
@@ -2013,7 +2056,7 @@ contains
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       integer, intent(in) :: n_atoms
 !
@@ -2032,10 +2075,10 @@ contains
       current_atom      = 0
       current_molecule  = 0
 !
-      do record = 1, the_file%n_mm_atom_lines
+      do record = 1, this%n_mm_atom_lines
 !
          current_atom = current_atom + 1
-         string = trim(adjustl(the_file%mm_geometry(record)))
+         string = trim(adjustl(this%mm_geometry(record)))
 !
 !        Determine symbol
 !
@@ -2094,9 +2137,9 @@ contains
    end subroutine get_mm_geometry_non_polarizable_input_file
 !
 !
-   function is_string_in_cs_list_input_file(the_file, keyword, section, string) result(found)
+   function is_string_in_cs_list_input_file(this, keyword, section, string) result(in_list)
 !!
-!!    Is string in comma separated list
+!!    Is string in comma separated list?
 !!    Written by Sarai D. Folkestad, 2019-2020
 !!
 !!    Determines if the 'string' is one of the keyword values in the comma separated
@@ -2111,22 +2154,22 @@ contains
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
       character(len=*), intent(in) :: section
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: string
 !
-      logical :: found
+      logical :: in_list
 !
       character(len=200) :: line
       character(len=200) :: current_snippet
 !
       integer :: i, current_cursor
 !
-      found = .false.
+      in_list = .false.
 !
-      call the_file%get_required_keyword_in_section(keyword, section, line)
+      call this%get_required_keyword(keyword, section, line)
 !
       current_cursor = 1
       current_snippet = repeat(' ', 200)
@@ -2143,7 +2186,7 @@ contains
 !
                if (trim(adjustl(current_snippet)) == string) then
 !
-                  found = .true.
+                  in_list = .true.
                   return
 !
                endif
@@ -2156,7 +2199,7 @@ contains
 !
             if (trim(adjustl(current_snippet)) == string) then
 !
-               found = .true.
+               in_list = .true.
                return
 !
             endif
@@ -2170,9 +2213,9 @@ contains
    end function is_string_in_cs_list_input_file
 !
 !
-   subroutine read_keywords_and_geometry_input_file(the_file)
+   subroutine read_keywords_and_geometry_input_file(this)
 !!
-!!    Read all
+!!    Read keywords and geometry
 !!    Written by sarai D. Folkestad, Mar 2020
 !!
 !!       Includes the former routine
@@ -2196,7 +2239,7 @@ contains
 !!
       implicit none
 !
-      class(input_file), intent(inout) :: the_file
+      class(input_file), intent(inout) :: this
 !
       character(len=200) :: line
 !
@@ -2209,13 +2252,13 @@ contains
 !
       call output%printf('m', 'Note: geometry section is excluded from this print', fs='(t6,a/)')
 !
-      rewind(the_file%unit_)
+      rewind(this%unit_)
 !
-      the_file%n_keyword_lines = 0
+      this%n_keyword_lines = 0
 !
       do
 !
-         read(the_file%unit_, '(a)', iostat=io_error) line
+         read(this%unit_, '(a)', iostat=io_error) line
 !
          if (trim(adjustl(line)) == 'geometry') then
 !
@@ -2228,19 +2271,19 @@ contains
          endif
 !
          call output%printf('m', line, fs='(t6,a)', ll=120)
-         the_file%n_keyword_lines = the_file%n_keyword_lines + 1
+         this%n_keyword_lines = this%n_keyword_lines + 1
 !
       enddo
 !
 !     Continue reading the geometry to count QM and MM atoms
 !
       QM_atoms = .true.
-      the_file%n_geometry_lines = 0
-      the_file%n_mm_atom_lines = 0
+      this%n_qm_atom_lines = 0
+      this%n_mm_atom_lines = 0
 !
       do
 !
-         read(the_file%unit_, '(a)', iostat=io_error) line
+         read(this%unit_, '(a)', iostat=io_error) line
 !
          if (trim(adjustl(line)) == 'end geometry') then
 !
@@ -2257,11 +2300,11 @@ contains
 !
          if (QM_atoms) then
 !
-            the_file%n_geometry_lines = the_file%n_geometry_lines + 1
+            this%n_qm_atom_lines = this%n_qm_atom_lines + 1
 !
          else
 !
-            the_file%n_mm_atom_lines = the_file%n_mm_atom_lines + 1
+            this%n_mm_atom_lines = this%n_mm_atom_lines + 1
 !
          endif
 !
@@ -2269,80 +2312,79 @@ contains
 !
 !     Place keyword lines in memory
 !
-      allocate(the_file%input_(the_file%n_keyword_lines))
+      allocate(this%input_(this%n_keyword_lines))
 !
-      rewind(the_file%unit_)
+      rewind(this%unit_)
 !
-      do i = 1, the_file%n_keyword_lines
+      do i = 1, this%n_keyword_lines
 !
-         read(the_file%unit_, '(a)', iostat=io_error) line
+         read(this%unit_, '(a)', iostat=io_error) line
 !
          line = adjustl(line)
          call convert_to_lowercase(line)
 !
-         the_file%input_(i) = line
+         this%input_(i) = line
 !
       enddo
 !
 !     Place geometries in memory
 !
-      if (the_file%n_geometry_lines < 1) call output%error_msg('No QM atoms in geometry!')
+      if (this%n_qm_atom_lines < 1) call output%error_msg('No QM atoms in geometry!')
 !
-      allocate(the_file%geometry(the_file%n_geometry_lines))
+      allocate(this%geometry(this%n_qm_atom_lines))
 !
-      read(the_file%unit_, '(a)', iostat=io_error) line ! Reads 'geometry' line
+      read(this%unit_, '(a)', iostat=io_error) line ! Reads 'geometry' line
 !
 !     QM geometry
 !
-      do i = 1, the_file%n_geometry_lines
+      do i = 1, this%n_qm_atom_lines
 !
-         read(the_file%unit_, '(a)', iostat=io_error) line
+         read(this%unit_, '(a)', iostat=io_error) line
 !
          line = adjustl(line)
          call convert_to_lowercase(line)
 !
-         the_file%geometry(i) = line
+         this%geometry(i) = line
 !
       enddo
 !
 !     MM geometry if present
 !
-      if (the_file%n_mm_atom_lines > 0) then
+      if (this%n_mm_atom_lines > 0) then
 !
-         read(the_file%unit_, '(a)', iostat=io_error) line ! Reads '--' line
+         read(this%unit_, '(a)', iostat=io_error) line ! Reads '--' line
 !
-         allocate(the_file%mm_geometry(the_file%n_mm_atom_lines))
+         allocate(this%mm_geometry(this%n_mm_atom_lines))
 !
-         do i = 1, the_file%n_mm_atom_lines
+         do i = 1, this%n_mm_atom_lines
 !
-            read(the_file%unit_, '(a)', iostat=io_error) line
+            read(this%unit_, '(a)', iostat=io_error) line
 !
             line = adjustl(line)
             call convert_to_lowercase(line)
 !
-            the_file%mm_geometry(i) = line
+            this%mm_geometry(i) = line
 !
          enddo
       endif
 !
-      call the_file%check_for_errors() ! Check for incorrect/missing keywords/sections
+      call this%check_for_errors() ! Check for incorrect/missing keywords/sections
 !
    end subroutine read_keywords_and_geometry_input_file
 !
 !
-   subroutine get_section_limits_input_file(the_file, string, start_, end_)
+   subroutine get_section_limits(this, section, start_, end_)
 !!
-!!    Move to section
+!!    Get section limits
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 / Mar 2019
 !!
-!!    Moves cursor to section given by string, and
-!!    counts & returns the number of records in that section.
+!!    Finds the start and the end index of the section given by the string 'section'
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
-      character(len=*), intent(in) :: string
+      character(len=*), intent(in) :: section 
 !
       integer, intent(out) :: start_, end_
 !
@@ -2354,16 +2396,16 @@ contains
       n_ends = 0
       n_beginnings = 0
 !
-      do i = 1, the_file%n_keyword_lines !while (trim(line) /= 'end geometry')
+      do i = 1, this%n_keyword_lines 
 !
-         if (trim(the_file%input_(i)) == 'end ' // string) then
+         if (trim(this%input_(i)) == 'end ' // section) then
 !
             n_ends = n_ends + 1
             end_ = i
 !
          endif
 
-         if (trim(the_file%input_(i)) == string) then
+         if (trim(this%input_(i)) == section) then
 !
             n_beginnings = n_beginnings + 1
             start_ = i
@@ -2374,44 +2416,44 @@ contains
 !
       if (n_beginnings > 1)                                 &
          call output%error_msg('Tried to move to section "' &
-            // string // '" with more than one starting clause.')
+            // section // '" with more than one starting clause.')
 !
       if (n_ends > 1)                                       &
          call output%error_msg('Tried to move to section "' &
-            // string // '" with more than one ending clause.')
+            // section // '" with more than one ending clause.')
 !
       if (n_ends == 0 .and. n_beginnings == 0)                             &
          call output%error_msg('Tried to move to non-existent section "'   &
-            // string // '".')
+            // section // '".')
 !
       if (n_ends < 1) &
-         call output%error_msg('Tried to move to section "' // string // '" with no end.')
+         call output%error_msg('Tried to move to section "' // section // '" with no end.')
 !
       if (n_beginnings < 1) &
-         call output%error_msg('Tried to move to section "' // string // '" with no beginning.')
+         call output%error_msg('Tried to move to section "' // section // '" with no beginning.')
 !
-   end subroutine get_section_limits_input_file
+   end subroutine get_section_limits
 !
 !
-   subroutine cleanup_geometry_input_file(the_file)
+   subroutine cleanup_geometry_input_file(this)
 !!
-!!    Cleanup geometries
+!!    Cleanup geometry
 !!    Written by Sarai D. Folkestad, Mar 2020
 !!
 !!    Deallocates the geometry arrays
 !!
       implicit none
 !
-      class(input_file), intent(inout) :: the_file
+      class(input_file), intent(inout) :: this
 !
-      deallocate(the_file%geometry)
+      deallocate(this%geometry)
 !
-      if (allocated(the_file%mm_geometry)) deallocate(the_file%mm_geometry)
+      if (allocated(this%mm_geometry)) deallocate(this%mm_geometry)
 !
    end subroutine cleanup_geometry_input_file
 !
 !
-   subroutine cleanup_keywords_input_file(the_file)
+   subroutine cleanup_keywords_input_file(this)
 !!
 !!    Cleanup keywords
 !!    Written by Sarai D. Folkestad, Mar 2020
@@ -2420,28 +2462,28 @@ contains
 !!
       implicit none
 !
-      class(input_file), intent(inout) :: the_file
+      class(input_file), intent(inout) :: this
 !
-      deallocate(the_file%input_)
+      deallocate(this%input_)
 !
    end subroutine cleanup_keywords_input_file
 !
 !
-   pure function is_embedding_on_input_file(the_file) result(embedding_status)
+   pure function is_embedding_on_input_file(this) result(embedding)
 !!
-!!    Is embedding on 
+!!    Is embedding on?
 !!    Written by Sarai D. Folkestad, Sep 2020
 !!
-!!    Returns true if wavefunction is embedded
+!!    Returns true if wavefunction is embedded.
 !!
       implicit none
 !
-      class(input_file), intent(in) :: the_file
+      class(input_file), intent(in) :: this
 !
-      logical :: embedding_status
+      logical :: embedding
 !
-      embedding_status = the_file%requested_section('molecular mechanics') .or. &
-                         the_file%requested_section('pcm')
+      embedding = this%is_section_present('molecular mechanics') .or. &
+                  this%is_section_present('pcm')
 !
    end function is_embedding_on_input_file
 !

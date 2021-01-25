@@ -440,15 +440,15 @@ contains
 !
       class(davidson_cc_linear_equations) :: solver 
 !
-      call input%get_keyword_in_section('threshold',                       &
+      call input%get_keyword('threshold',                       &
                                         'solver ' // trim(solver%section), &
                                         solver%residual_threshold)
 !
-      call input%get_keyword_in_section('max iterations',                  &
+      call input%get_keyword('max iterations',                  &
                                         'solver ' // trim(solver%section), &
                                         solver%max_iterations)
 !
-      call input%get_keyword_in_section('storage',                         &
+      call input%get_keyword('storage',                         &
                                         'solver ' // trim(solver%section), &
                                          solver%storage)
 !
