@@ -333,8 +333,8 @@ contains
 !
       class(visualization), intent(inout) :: plotter 
 !
-      call input%get_keyword_in_section('grid spacing', 'visualization', plotter%dx)
-      call input%get_keyword_in_section('grid buffer', 'visualization', plotter%buffer)
+      call input%get_keyword('grid spacing', 'visualization', plotter%dx)
+      call input%get_keyword('grid buffer', 'visualization', plotter%buffer)
 !
    end subroutine read_settings_visualization
 !

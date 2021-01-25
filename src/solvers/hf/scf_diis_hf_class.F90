@@ -490,13 +490,13 @@ contains
 !
       class(scf_diis_hf) :: solver
 !
-      call input%get_keyword_in_section('diis dimension', 'solver scf', solver%diis_dimension)
-      call input%get_keyword_in_section('storage', 'solver scf', solver%storage)
+      call input%get_keyword('diis dimension', 'solver scf', solver%diis_dimension)
+      call input%get_keyword('storage', 'solver scf', solver%storage)
 !
-      call input%get_keyword_in_section('cumulative fock threshold', &
+      call input%get_keyword('cumulative fock threshold', &
                                         'solver scf', solver%cumulative_threshold)
 !
-      if (input%requested_keyword_in_section('crop', 'solver scf')) then 
+      if (input%is_keyword_present('crop', 'solver scf')) then 
 !
          solver%crop = .true.
 !

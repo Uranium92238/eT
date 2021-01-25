@@ -87,9 +87,9 @@ contains
       character(len=200) :: cholesky_storage
       character(len=200) :: eri_storage
 !
-      if (input%requested_keyword_in_section('cholesky storage', 'integrals')) then
+      if (input%is_keyword_present('cholesky storage', 'integrals')) then
 !
-         call input%get_keyword_in_section('cholesky storage', &
+         call input%get_keyword('cholesky storage', &
                                            'integrals',        &
                                            cholesky_storage)
 !
@@ -110,9 +110,9 @@ contains
 !
       endif
 !
-      if (input%requested_keyword_in_section('eri storage', 'integrals')) then
+      if (input%is_keyword_present('eri storage', 'integrals')) then
 !
-         call input%get_keyword_in_section('eri storage',     &
+         call input%get_keyword('eri storage',     &
                                            'integrals',       &
                                             eri_storage)
 !
@@ -133,7 +133,7 @@ contains
 !
       endif
 !
-      if (input%requested_keyword_in_section('mo eri in memory', 'integrals')) then
+      if (input%is_keyword_present('mo eri in memory', 'integrals')) then
 !
             eri%mo_eri_mem = .true.
 !

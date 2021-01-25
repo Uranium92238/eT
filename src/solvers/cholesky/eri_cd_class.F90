@@ -3224,12 +3224,12 @@ contains
 !
       class(eri_cd) :: solver
 !
-      call input%get_keyword_in_section('threshold', 'solver cholesky', solver%threshold)
-      call input%get_keyword_in_section('span', 'solver cholesky', solver%span)
-      call input%get_keyword_in_section('batches', 'solver cholesky', solver%n_batches)
-      call input%get_keyword_in_section('qualified', 'solver cholesky', solver%max_qual)
+      call input%get_keyword('threshold', 'solver cholesky', solver%threshold)
+      call input%get_keyword('span', 'solver cholesky', solver%span)
+      call input%get_keyword('batches', 'solver cholesky', solver%n_batches)
+      call input%get_keyword('qualified', 'solver cholesky', solver%max_qual)
 !
-      solver%one_center = input%requested_keyword_in_section('one center', 'solver cholesky')
+      solver%one_center = input%is_keyword_present('one center', 'solver cholesky')
 !
    end subroutine read_settings_eri_cd
 !

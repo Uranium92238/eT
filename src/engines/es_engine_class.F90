@@ -147,22 +147,22 @@ contains
 !
       class(es_engine) :: engine
 !
-      call input%get_keyword_in_section('algorithm', 'solver cc es', engine%es_algorithm)
+      call input%get_keyword('algorithm', 'solver cc es', engine%es_algorithm)
 !
-      if (input%requested_keyword_in_section('core excitation', 'solver cc es') .and. .not. &
-          input%requested_keyword_in_section('ionization', 'solver cc es')) engine%es_type = 'core'
+      if (input%is_keyword_present('core excitation', 'solver cc es') .and. .not. &
+          input%is_keyword_present('ionization', 'solver cc es')) engine%es_type = 'core'
 !
-      if (input%requested_keyword_in_section('ionization', 'solver cc es') .and. .not. &
-         input%requested_keyword_in_section('core excitation', 'solver cc es')) engine%es_type = 'ionize'
+      if (input%is_keyword_present('ionization', 'solver cc es') .and. .not. &
+         input%is_keyword_present('core excitation', 'solver cc es')) engine%es_type = 'ionize'
 !
-      if (input%requested_keyword_in_section('ionization', 'solver cc es') .and.    &
-         input%requested_keyword_in_section('core excitation', 'solver cc es'))     &
+      if (input%is_keyword_present('ionization', 'solver cc es') .and.    &
+         input%is_keyword_present('core excitation', 'solver cc es'))     &
             call output%error_msg('XPS still not implemented.')
 !
-      if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) &
+      if (input%is_keyword_present('left eigenvectors', 'solver cc es')) &
                                                 engine%es_transformation = 'left'
 !
-      if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) then
+      if (input%is_keyword_present('right eigenvectors', 'solver cc es')) then
          if (engine%es_transformation == 'left') then
 !
             engine%es_transformation = 'both'
@@ -174,10 +174,10 @@ contains
          end if
       end if
 !
-      engine%es_restart = input%requested_keyword_in_section('restart', 'solver cc es')
+      engine%es_restart = input%is_keyword_present('restart', 'solver cc es')
 !
 !     global restart
-      if (input%requested_keyword_in_section('restart', 'do')) engine%es_restart = .true.
+      if (input%is_keyword_present('restart', 'do')) engine%es_restart = .true.
 !
    end subroutine read_es_settings_es_engine
 !

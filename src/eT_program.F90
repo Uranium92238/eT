@@ -128,8 +128,8 @@ program eT_program
    mem_total = 8 
    mem_unit  = 'gb'
 !
-   call input%get_keyword_in_section('available', 'memory', mem_total)
-   call input%get_keyword_in_section('unit', 'memory', mem_unit)
+   call input%get_keyword('available', 'memory', mem_total)
+   call input%get_keyword('unit', 'memory', mem_unit)
 !
    mem = memory_manager(total=mem_total, &
                         units=mem_unit)
@@ -138,7 +138,7 @@ program eT_program
 !
 !  Cholesky decomposition of electron repulsion integrals (ERIs)
 !
-   if (input%requested_keyword_in_section('cholesky eri', 'do')) call do_eri_cholesky() 
+   if (input%is_keyword_present('cholesky eri', 'do')) call do_eri_cholesky() 
 !
 !  Hartree-Fock calculation
 !
@@ -238,7 +238,7 @@ subroutine reference_calculation(ref_wf)
 !
    call ref_wf%prepare()
 !
-   if (input%requested_keyword_in_section('ground state geoopt', 'do')) then
+   if (input%is_keyword_present('ground state geoopt', 'do')) then
 !
       ref_engine = hf_geoopt_engine()
 !
@@ -340,23 +340,23 @@ subroutine cc_calculation(ref_wf)
 !
    call cc_wf%initialize(ref_wf)
 !
-   if (input%requested_keyword_in_section('response', 'do')) then
+   if (input%is_keyword_present('response', 'do')) then
 !
       cc_engine = response_engine(cc_wf)
 !
-   elseif (input%requested_keyword_in_section('excited state', 'do')) then
+   elseif (input%is_keyword_present('excited state', 'do')) then
 !
       cc_engine = es_engine(cc_wf)
 !
-   elseif (input%requested_keyword_in_section('mean value', 'do')) then
+   elseif (input%is_keyword_present('mean value', 'do')) then
 !
       cc_engine = mean_value_engine(cc_wf)
 !
-   elseif (input%requested_keyword_in_section('ground state', 'do')) then
+   elseif (input%is_keyword_present('ground state', 'do')) then
 !
       cc_engine = gs_engine(cc_wf)
 !
-   elseif (input%requested_keyword_in_section('time dependent state', 'do')) then
+   elseif (input%is_keyword_present('time dependent state', 'do')) then
 !
       cc_engine = td_engine(cc_wf)
 !
@@ -421,7 +421,7 @@ subroutine set_global_print_levels()
    print_level = 'normal'
 !
 !  Overwrite print_level if keyword is present
-   call input%get_keyword_in_section('output print level', 'print', print_level)
+   call input%get_keyword('output print level', 'print', print_level)
 !
 !  This is the only place this routine is allowed to be called
    call output%set_global_print_level(print_level)
@@ -431,7 +431,7 @@ subroutine set_global_print_levels()
    print_level = 'normal'
 !
 !  Overwrite print_level if keyword is present
-   call input%get_keyword_in_section('timing print level', 'print', print_level)
+   call input%get_keyword('timing print level', 'print', print_level)
 !
 !  This is the only place this routine is allowed to be called
    call timing%set_global_print_level(print_level)

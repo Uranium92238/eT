@@ -181,27 +181,27 @@ contains
 !
       class(reference_engine) :: engine 
 !
-      call input%get_keyword_in_section('algorithm', 'solver scf', engine%algorithm)
+      call input%get_keyword('algorithm', 'solver scf', engine%algorithm)
 !
-      engine%restart = input%requested_keyword_in_section('restart', 'solver scf')
-      engine%skip_scf = input%requested_keyword_in_section('skip', 'solver scf')
+      engine%restart = input%is_keyword_present('restart', 'solver scf')
+      engine%skip_scf = input%is_keyword_present('skip', 'solver scf')
 !
-      call input%get_keyword_in_section('ao density guess', 'solver scf', engine%ao_density_guess)
+      call input%get_keyword('ao density guess', 'solver scf', engine%ao_density_guess)
 !
-      if (input%requested_keyword_in_section('print orbitals', 'solver scf')) then
+      if (input%is_keyword_present('print orbitals', 'solver scf')) then
          engine%print_mo_info = .true.
       end if
 !
-      if (input%requested_keyword_in_section('plot hf orbitals', 'visualization')) then
+      if (input%is_keyword_present('plot hf orbitals', 'visualization')) then
          engine%plot_orbitals = .true.
       end if
 !
-      if (input%requested_keyword_in_section('plot hf density', 'visualization')) then 
+      if (input%is_keyword_present('plot hf density', 'visualization')) then 
          engine%plot_density = .true.
       end if
 !
 !     Global restart
-      if (input%requested_keyword_in_section('restart', 'do')) then 
+      if (input%is_keyword_present('restart', 'do')) then 
          engine%restart = .true.
       end if
 !
@@ -319,11 +319,11 @@ contains
       max_iterations     = 100
 !
       energy_threshold   = 1.0D-6
-      call input%get_keyword_in_section('energy threshold', 'solver scf', energy_threshold)
+      call input%get_keyword('energy threshold', 'solver scf', energy_threshold)
       energy_threshold   = min(1.0D-6, energy_threshold)
 !
       gradient_threshold = 1.0D-6
-      call input%get_keyword_in_section('gradient threshold', 'solver scf', gradient_threshold)
+      call input%get_keyword('gradient threshold', 'solver scf', gradient_threshold)
       gradient_threshold = min(1.0D-6, gradient_threshold)
 !
 !     Find atomic index of unique atom/basis combinations
@@ -516,11 +516,11 @@ contains
 !
 !     Read orbital plotting settings
 !
-      n_orbitals_to_plot = input%get_n_elements_for_keyword_in_section('plot hf orbitals', &
+      n_orbitals_to_plot = input%get_n_elements_for_keyword('plot hf orbitals', &
                                                                         'visualization')
 !
       call mem%alloc(orbitals_to_plot, n_orbitals_to_plot)
-      call input%get_array_for_keyword_in_section('plot hf orbitals', 'visualization', &
+      call input%get_array_for_keyword('plot hf orbitals', 'visualization', &
             n_orbitals_to_plot, orbitals_to_plot)
 !
 !     Extract the orbitals we will plot from the full orbital coefficient matrix
@@ -570,14 +570,14 @@ contains
 !
       class(reference_engine) :: engine
 !
-      engine%requested_mean_value = input%requested_section('hf mean value')
+      engine%requested_mean_value = input%is_section_present('hf mean value')
 !
       if (engine%requested_mean_value) then 
 !
-         if (input%requested_keyword_in_section('dipole','hf mean value')) &
+         if (input%is_keyword_present('dipole','hf mean value')) &
              engine%dipole = .true.
 !
-         if (input%requested_keyword_in_section('quadrupole','hf mean value')) &
+         if (input%is_keyword_present('quadrupole','hf mean value')) &
              engine%quadrupole = .true.
 !
       endif

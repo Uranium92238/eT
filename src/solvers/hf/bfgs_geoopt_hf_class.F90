@@ -155,20 +155,20 @@ contains
       real(dp), intent(inout) :: energy_threshold, gradient_threshold
       logical, intent(inout)  :: energy_convergence
 !
-      call input%get_keyword_in_section('gradient threshold', &
+      call input%get_keyword('gradient threshold', &
                                         'solver scf geoopt', gradient_threshold)
 !
-      if (input%requested_keyword_in_section('energy threshold', 'solver scf geoopt')) then
+      if (input%is_keyword_present('energy threshold', 'solver scf geoopt')) then
 !
          energy_convergence = .true.
-         call input%get_keyword_in_section('energy threshold', &
+         call input%get_keyword('energy threshold', &
                                         'solver scf geoopt', energy_threshold)
       endif
 !
-      call input%get_keyword_in_section('max iterations', &
+      call input%get_keyword('max iterations', &
                                         'solver scf geoopt', solver%max_iterations)
 !
-      call input%get_keyword_in_section('max step', &
+      call input%get_keyword('max step', &
                                         'solver scf geoopt', solver%max_step)
 !
    end subroutine read_settings_bfgs_geoopt_hf

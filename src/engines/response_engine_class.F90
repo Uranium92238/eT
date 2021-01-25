@@ -760,29 +760,29 @@ contains
 !
       character(len=200) :: restart_string
 !
-      if (input%requested_keyword_in_section('eom','cc response')) then 
+      if (input%is_keyword_present('eom','cc response')) then 
 !
          engine%eom = .true.
 !
       endif 
 !
-      if (input%requested_keyword_in_section('lr','cc response')) then 
+      if (input%is_keyword_present('lr','cc response')) then 
 !
          engine%lr = .true.
 !
       endif 
 !
-      if (input%requested_keyword_in_section('transition moments','cc response')) then 
+      if (input%is_keyword_present('transition moments','cc response')) then 
 !
          engine%transition_moments = .true.
 !
       endif 
 !
-      if (input%requested_keyword_in_section('polarizabilities','cc response')) then 
+      if (input%is_keyword_present('polarizabilities','cc response')) then 
 !
          engine%polarizabilities = .true.
 !
-         n_polarizabilities = input%get_n_elements_for_keyword_in_section('polarizabilities', &
+         n_polarizabilities = input%get_n_elements_for_keyword('polarizabilities', &
                                                                            'cc response')
 !
          if (n_polarizabilities == 0) then 
@@ -799,7 +799,7 @@ contains
 !
             call mem%alloc(polarizabilities, n_polarizabilities)
 !
-            call input%get_array_for_keyword_in_section('polarizabilities', 'cc response', &
+            call input%get_array_for_keyword('polarizabilities', 'cc response', &
                                                          n_polarizabilities, polarizabilities)
 !
             do k = 1, n_polarizabilities
@@ -858,13 +858,13 @@ contains
 !
 !        Read in for which frequencies to compute the polarizability
 !
-         if (input%requested_keyword_in_section('frequencies', 'cc response')) then 
+         if (input%is_keyword_present('frequencies', 'cc response')) then 
 !
-            engine%n_frequencies = input%get_n_elements_for_keyword_in_section('frequencies', 'cc response')
+            engine%n_frequencies = input%get_n_elements_for_keyword('frequencies', 'cc response')
 !  
             call mem%alloc(engine%frequencies, engine%n_frequencies)
 !
-            call input%get_array_for_keyword_in_section('frequencies', 'cc response', &
+            call input%get_array_for_keyword('frequencies', 'cc response', &
                                                    engine%n_frequencies, engine%frequencies) 
 !
          else 
@@ -877,7 +877,7 @@ contains
 !
 !     Set operator
 !
-      engine%dipole_length = input%requested_keyword_in_section('dipole length','cc response')
+      engine%dipole_length = input%is_keyword_present('dipole length','cc response')
 !
 !     Sanity checks
 !
@@ -895,9 +895,9 @@ contains
 !     Check if the user wants to restart the right or left states in particular,
 !     and not do restart on both 
 !
-      if (input%requested_keyword_in_section('restart', 'solver cc es')) then 
+      if (input%is_keyword_present('restart', 'solver cc es')) then 
 !
-         call input%get_keyword_in_section('restart',       &
+         call input%get_keyword('restart',       &
                                            'solver cc es',  &
                                            restart_string)
 !
@@ -924,28 +924,28 @@ contains
 !                      the transition densities shall be plotted (default all states)
 !
       engine%plot_density = &
-               input%requested_keyword_in_section('plot cc density', 'visualization')
+               input%is_keyword_present('plot cc density', 'visualization')
 !
       engine%plot_tdm = &
-               input%requested_keyword_in_section('plot transition densities', 'visualization')
+               input%is_keyword_present('plot transition densities', 'visualization')
 !
       if (engine%plot_tdm) then
 !
-         if (input%requested_keyword_in_section('states to plot', 'visualization')) then
+         if (input%is_keyword_present('states to plot', 'visualization')) then
 !
-            engine%n_states_to_plot = input%get_n_elements_for_keyword_in_section(&
+            engine%n_states_to_plot = input%get_n_elements_for_keyword(&
                                       'states to plot', 'visualization')
 !
             call mem%alloc(engine%states_to_plot, engine%n_states_to_plot)
 !
-            call input%get_array_for_keyword_in_section('states to plot',         &
+            call input%get_array_for_keyword('states to plot',         &
                                                         'visualization',          &
                                                          engine%n_states_to_plot, &
                                                          engine%states_to_plot)
 !
          else
 !
-            call input%get_required_keyword_in_section('singlet states',   &
+            call input%get_required_keyword('singlet states',   &
                                                        'solver cc es',     &
                                                         engine%n_states_to_plot)
 !
@@ -1265,20 +1265,20 @@ contains
 !
 !     Set thresholds for the sanity checks if the roots are ordered correctly
 !
-      if (input%requested_keyword_in_section('energy threshold', 'solver cc es') .and. &
-          input%requested_keyword_in_section('residual threshold', 'solver cc es')) then 
+      if (input%is_keyword_present('energy threshold', 'solver cc es') .and. &
+          input%is_keyword_present('residual threshold', 'solver cc es')) then 
 !
-        call input%get_keyword_in_section('energy threshold', 'solver cc es', energy_threshold)
-        call input%get_keyword_in_section('residual threshold', 'solver cc es', residual_threshold)
+        call input%get_keyword('energy threshold', 'solver cc es', energy_threshold)
+        call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
 !
-      else if (input%requested_keyword_in_section('residual threshold', 'solver cc es')) then 
+      else if (input%is_keyword_present('residual threshold', 'solver cc es')) then 
 !
-        call input%get_keyword_in_section('residual threshold', 'solver cc es', residual_threshold)
+        call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
         energy_threshold = residual_threshold
 !
-      else if (input%requested_keyword_in_section('energy threshold', 'solver cc es')) then 
+      else if (input%is_keyword_present('energy threshold', 'solver cc es')) then 
 !
-         call input%get_keyword_in_section('energy threshold', 'solver cc es', energy_threshold)
+         call input%get_keyword('energy threshold', 'solver cc es', energy_threshold)
          residual_threshold = energy_threshold
 !
       endif

@@ -200,31 +200,31 @@ contains
 !
       real(dp) :: eigenvalue_threshold, residual_threshold
 !
-      if (input%requested_keyword_in_section('energy threshold', 'solver cc es')) then
+      if (input%is_keyword_present('energy threshold', 'solver cc es')) then
 !
-         call input%get_keyword_in_section('energy threshold', 'solver cc es', eigenvalue_threshold)
+         call input%get_keyword('energy threshold', 'solver cc es', eigenvalue_threshold)
          call solver%convergence_checker%set_energy_threshold(eigenvalue_threshold)
 !
       endif
 !
-      if (input%requested_keyword_in_section('residual threshold', 'solver cc es')) then
+      if (input%is_keyword_present('residual threshold', 'solver cc es')) then
 !
-         call input%get_keyword_in_section('residual threshold', 'solver cc es', residual_threshold)
+         call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
          call solver%convergence_checker%set_residual_threshold(residual_threshold)
 !
       endif
 !
-      call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
+      call input%get_keyword('max iterations', 'solver cc es', solver%max_iterations)
 !               
-      call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
+      call input%get_required_keyword('singlet states', 'solver cc es', solver%n_singlet_states)
 !  
-      if (input%requested_keyword_in_section('core excitation', 'solver cc es') .and. .not. &
-          input%requested_keyword_in_section('ionization', 'solver cc es')) solver%es_type = 'core'
+      if (input%is_keyword_present('core excitation', 'solver cc es') .and. .not. &
+          input%is_keyword_present('ionization', 'solver cc es')) solver%es_type = 'core'
 !
-      if (input%requested_keyword_in_section('ionization', 'solver cc es') .and. .not. &
-          input%requested_keyword_in_section('core excitation', 'solver cc es')) solver%es_type = 'ionize'
+      if (input%is_keyword_present('ionization', 'solver cc es') .and. .not. &
+          input%is_keyword_present('core excitation', 'solver cc es')) solver%es_type = 'ionize'
 !
-      call input%get_keyword_in_section('storage', 'solver cc es', solver%storage)
+      call input%get_keyword('storage', 'solver cc es', solver%storage)
 !
    end subroutine read_es_settings_abstract_cc_es
 !

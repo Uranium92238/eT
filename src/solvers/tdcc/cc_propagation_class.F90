@@ -746,26 +746,26 @@ contains
 !
       class(cc_propagation) :: solver
 !
-      call input%get_required_keyword_in_section('initial time', 'solver cc propagation', &
+      call input%get_required_keyword('initial time', 'solver cc propagation', &
                                                  solver%ti)
-      call input%get_required_keyword_in_section('final time', 'solver cc propagation', solver%tf)
-      call input%get_required_keyword_in_section('time step', 'solver cc propagation', solver%dt)
-      call input%get_keyword_in_section('steps between output', 'solver cc propagation', &
+      call input%get_required_keyword('final time', 'solver cc propagation', solver%tf)
+      call input%get_required_keyword('time step', 'solver cc propagation', solver%dt)
+      call input%get_keyword('steps between output', 'solver cc propagation', &
                                         solver%steps_between_output)
-      call input%get_keyword_in_section('implicit threshold', 'solver cc propagation', &
+      call input%get_keyword('implicit threshold', 'solver cc propagation', &
                                         solver%implicit_threshold)
 !
-      if (input%requested_keyword_in_section('energy output', 'solver cc propagation')) &
+      if (input%is_keyword_present('energy output', 'solver cc propagation')) &
          solver%energy_output = .true.
-      if (input%requested_keyword_in_section('dipole moment output', 'solver cc propagation')) &
+      if (input%is_keyword_present('dipole moment output', 'solver cc propagation')) &
          solver%dipole_moment_output = .true.
-      if (input%requested_keyword_in_section('electric field output', 'solver cc propagation')) &
+      if (input%is_keyword_present('electric field output', 'solver cc propagation')) &
          solver%electric_field_output = .true.
-      if (input%requested_keyword_in_section('amplitudes output', 'solver cc propagation')) &
+      if (input%is_keyword_present('amplitudes output', 'solver cc propagation')) &
          solver%amplitudes_output = .true.
-      if (input%requested_keyword_in_section('multipliers output', 'solver cc propagation')) &
+      if (input%is_keyword_present('multipliers output', 'solver cc propagation')) &
          solver%multipliers_output = .true.
-      if (input%requested_keyword_in_section('density matrix output', 'solver cc propagation')) &
+      if (input%is_keyword_present('density matrix output', 'solver cc propagation')) &
          solver%density_matrix_output = .true.
 !
    end subroutine read_settings_cc_propagation

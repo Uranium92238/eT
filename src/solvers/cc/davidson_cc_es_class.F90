@@ -153,14 +153,14 @@ contains
 !     (if value is not specified in input), and less than or equal to number of
 !     excited state amplitudes (always).
 !
-      if (.not. input%requested_keyword_in_section('max reduced dimension', 'solver cc es')) &
+      if (.not. input%is_keyword_present('max reduced dimension', 'solver cc es')) &
          solver%max_dim_red = max(solver%max_dim_red, 10*solver%n_singlet_states)
 !
       if (solver%max_dim_red .gt. wf%n_es_amplitudes) then
 !
          solver%max_dim_red = wf%n_es_amplitudes
 !
-         if (input%requested_keyword_in_section('max reduced dimension', 'solver cc es')) then
+         if (input%is_keyword_present('max reduced dimension', 'solver cc es')) then
 !
             call output%warning_msg('specified maximum reduced dimension exceeds the number ' // &
                                     'of independent solutions. It has been changed to the '   // &
@@ -510,7 +510,7 @@ contains
 !
       class(davidson_cc_es) :: solver 
 !
-      call input%get_keyword_in_section('max reduced dimension', 'solver cc es', solver%max_dim_red)
+      call input%get_keyword('max reduced dimension', 'solver cc es', solver%max_dim_red)
 !
    end subroutine read_davidson_settings_davidson_cc_es
 !

@@ -842,15 +842,15 @@ contains
 !
       class(nonlinear_davidson_cc_es) :: solver 
 !
-      call input%get_keyword_in_section('max reduced dimension',  &
+      call input%get_keyword('max reduced dimension',  &
                                         'solver cc es',           &
                                         solver%max_dim_red)
 !
-      call input%get_keyword_in_section('max micro iterations',  &
+      call input%get_keyword('max micro iterations',  &
                                         'solver cc es',           &
                                         solver%max_micro_iterations)
 !
-      call input%get_keyword_in_section('rel micro threshold',    &
+      call input%get_keyword('rel micro threshold',    &
                                         'solver cc es',           &
                                         solver%relative_micro_residual_threshold)
 !

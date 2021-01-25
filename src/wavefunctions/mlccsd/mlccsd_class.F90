@@ -367,7 +367,7 @@ contains
 !
       logical :: do_ccsd
 !
-      if (.not. input%requested_section('mlcc')) &
+      if (.not. input%is_section_present('mlcc')) &
          call output%error_msg('cannot do mlcc calculation without mlcc section in eT.inp')
 !
       wf%do_ccs  = input%is_string_in_cs_list('levels', 'mlcc', 'ccs')
@@ -380,14 +380,14 @@ contains
 !
       endif
 !
-      wf%restart_orbitals = input%requested_keyword_in_section('orbital restart', 'mlcc')
+      wf%restart_orbitals = input%is_keyword_present('orbital restart', 'mlcc')
 !
 !     Get orbital types
 !
       if (wf%do_cc2 .and. wf%do_ccs) &
-            call input%get_required_keyword_in_section('cc2 orbitals', 'mlcc', wf%cc2_orbital_type)
+            call input%get_required_keyword('cc2 orbitals', 'mlcc', wf%cc2_orbital_type)
 !     
-      call input%get_required_keyword_in_section('ccsd orbitals', 'mlcc', wf%ccsd_orbital_type)
+      call input%get_required_keyword('ccsd orbitals', 'mlcc', wf%ccsd_orbital_type)
 !
 !     Get specific CC2 and CCSD orbital settings
 !
