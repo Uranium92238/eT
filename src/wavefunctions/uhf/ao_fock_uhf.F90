@@ -77,11 +77,8 @@ contains
       call daxpy(wf%ao%n**2, -one, prev_ao_density(1, 2), 1, wf%ao_density, 1)
 !
       cumulative = .true.
-      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha', &
-                      wf%ao%h, cumulative)
 !
-      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_b, 'beta', &
-                      wf%ao%h, cumulative)
+      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, wf%ao_density_b, wf%ao%h, cumulative)
 !
 !     Restore density
 !
@@ -122,15 +119,19 @@ contains
          call dcopy(wf%ao%n**2, wf%ao%h, 1, h_wx_eff, 1)
          call daxpy(wf%ao%n**2, one, wf%ao%v, 1, h_wx_eff, 1)
 !
-         call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha', h_wx_eff)
-         call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_b, 'beta', h_wx_eff)
+         call wf%construct_ao_spin_fock(wf%ao_density,   &
+                                       wf%ao_density_a,  &
+                                       wf%ao_density_b,  &
+                                       h_wx_eff, cumulative=.false.)
 !
          call mem%dealloc(h_wx_eff, wf%ao%n, wf%ao%n) 
 !
       else
 !
-         call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha', wf%ao%h)
-         call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_b, 'beta', wf%ao%h)
+         call wf%construct_ao_spin_fock(wf%ao_density,   &
+                                        wf%ao_density_a, &
+                                        wf%ao_density_b, &
+                                        wf%ao%h, cumulative=.false.)
 !
       endif    
 !
@@ -174,14 +175,12 @@ contains
    end subroutine update_fock_and_energy_uhf
 !
 !
-   module subroutine construct_ao_spin_fock_uhf(wf, D, D_sigma, sigma, &
-                     h_wx, cumulative)
+   module subroutine construct_ao_spin_fock_uhf(wf, D, D_alpha, D_beta, h_wx, cumulative)
 !!
 !!    Construct AO spin Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    The routine computes the alpha or beta Fock matrix, depending
-!!    on the value of the spin 'sigma' (='alpha' or 'beta'):
+!!    The routine computes the alpha and beta Fock matrix:
 !!
 !!       F_αβ^alpha = h_αβ + sum_γδ g_αβγδ D_γδ - sum_γδ g_αδγβ D_γδ^alpha
 !!       F_αβ^beta  = h_αβ + sum_γδ g_αβγδ D_γδ - sum_γδ g_αδγβ D_γδ^beta
@@ -196,9 +195,7 @@ contains
       class(uhf) :: wf
 !
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
-      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D_sigma
-!
-      character(len=*), intent(in) :: sigma
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D_alpha, D_beta
 !
       logical, intent(in), optional :: cumulative
 !
@@ -207,17 +204,15 @@ contains
       integer :: thread = 0, n_threads = 1
       logical :: local_cumulative
 !
-      real(dp), dimension(:,:), allocatable :: F, shp_density_schwarz
+      real(dp), dimension(:,:), allocatable :: F, shp_density_schwarz, X_alpha, X_beta
 !
       real(dp) :: coulomb_thr, exchange_thr, precision_thr    ! Actual thresholds
 !
       real(dp) :: max_D_schwarz, max_eri_schwarz
 !
-      real(dp), dimension(:,:), allocatable :: scaled_D_sigma ! = 2 * D_sigma
-!
       type(timings), allocatable :: timer 
 !
-      timer = timings('AO Fock construction (' // trim(sigma) // ')', 'normal')
+      timer = timings('AO Fock construction', 'normal')
       call timer%turn_on()
 !
 !     Set thresholds to ignore Coulomb and exchange terms,
@@ -256,70 +251,69 @@ contains
       call wf%construct_shp_density_schwarz(shp_density_schwarz, D)
       max_D_schwarz = get_abs_max(shp_density_schwarz, wf%ao%n_sh**2)
 !
-!$      n_threads = omp_get_max_threads()
+!$    n_threads = omp_get_max_threads()
 !
       call mem%alloc(F, wf%ao%n, wf%ao%n*n_threads) ! [F(thread 1) F(thread 2) ...]
-      F = zero
+      call zero_array(F , wf%ao%n**2*n_threads)
 !
-      call wf%construct_coulomb_ao_G(F, D, n_threads, max_D_schwarz, max_eri_schwarz,         &
-                                                shp_density_schwarz,                          &
-                                                wf%ao%n_sig_eri_shp, coulomb_thr, precision_thr,         &
+      call wf%construct_coulomb_ao_G(F, D, n_threads, max_D_schwarz, max_eri_schwarz,            &
+                                                shp_density_schwarz,                             &
+                                                wf%ao%n_sig_eri_shp, coulomb_thr, precision_thr, &
                                                 wf%ao%shells)
 !
-!     Construct the Coulomb two electron part of the Fock matrix, using the screening vectors
+!     Construct the exchange two electron part of the Fock matrix, using the screening vectors
 !     and parallellizing over available threads (each gets its own copy of the Fock matrix)
 !
-      call mem%alloc(scaled_D_sigma, wf%ao%n, wf%ao%n)
-      scaled_D_sigma = two*D_sigma
-!
-      call wf%construct_shp_density_schwarz(shp_density_schwarz, scaled_D_sigma)
+      call wf%construct_shp_density_schwarz(shp_density_schwarz, D_alpha)
       max_D_schwarz = get_abs_max(shp_density_schwarz, wf%ao%n_sh**2)
 !
-      call wf%construct_exchange_ao_G(F, scaled_D_sigma, n_threads, max_D_schwarz,    &
+      call mem%alloc(X_alpha, wf%ao%n, wf%ao%n*n_threads) ! [F(thread 1) F(thread 2) ...]
+!
+      call zero_array(X_alpha , wf%ao%n**2*n_threads)
+      call wf%construct_exchange_ao_G(X_alpha, D_alpha, n_threads, max_D_schwarz,    &
+                                      max_eri_schwarz, shp_density_schwarz, wf%ao%n_sig_eri_shp, &
+                                      exchange_thr, precision_thr, wf%ao%shells)
+!
+      call wf%construct_shp_density_schwarz(shp_density_schwarz, D_beta)
+      max_D_schwarz = get_abs_max(shp_density_schwarz, wf%ao%n_sh**2)
+!
+      call mem%alloc(X_beta, wf%ao%n, wf%ao%n*n_threads) ! [F(thread 1) F(thread 2) ...]
+!
+      call zero_array(X_beta, wf%ao%n**2*n_threads)
+      call wf%construct_exchange_ao_G(X_beta, D_beta, n_threads, max_D_schwarz,    &
                                       max_eri_schwarz, shp_density_schwarz, wf%ao%n_sig_eri_shp, &
                                       exchange_thr, precision_thr, wf%ao%shells)
 !
       call mem%dealloc(shp_density_schwarz, wf%ao%n_sh, wf%ao%n_sh)
-      call mem%dealloc(scaled_D_sigma, wf%ao%n, wf%ao%n)
 !
 !     Add the accumulated Fock matrix F into the correct Fock matrix
 !     (i.e., either the alpha or beta Fock matrix )
 !
-      if (trim(sigma) == 'alpha') then
+      if (.not. local_cumulative) call dcopy(wf%ao%n**2, h_wx, 1, wf%ao_fock_a, 1)
+      do thread = 1, n_threads
 !
-         if (.not. local_cumulative) wf%ao_fock_a = zero
-         do thread = 1, n_threads
+         call daxpy(wf%ao%n**2, one, F(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
+         call daxpy(wf%ao%n**2, two, X_alpha(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
 !
-            call daxpy(wf%ao%n**2, one, F(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
+      enddo
 !
-         enddo
+      call symmetric_sum(wf%ao_fock_a, wf%ao%n)
+      call dscal(wf%ao%n**2, half, wf%ao_fock_a, 1)
 !
-         call symmetric_sum(wf%ao_fock_a, wf%ao%n)
-         wf%ao_fock_a = wf%ao_fock_a*half
+      if (.not. local_cumulative) call dcopy(wf%ao%n**2, h_wx, 1, wf%ao_fock_b, 1)
+      do thread = 1, n_threads
 !
-         if (.not. local_cumulative) wf%ao_fock_a = wf%ao_fock_a + h_wx
+         call daxpy(wf%ao%n**2, one, F(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_b, 1)
+         call daxpy(wf%ao%n**2, two, X_beta(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_b, 1)
 !
-      elseif (trim(sigma) == 'beta') then
+      enddo
 !
-         if (.not. local_cumulative) wf%ao_fock_b = zero
-         do thread = 1, n_threads
-!
-            call daxpy(wf%ao%n**2, one, F(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_b, 1)
-!
-         enddo
-!
-         call symmetric_sum(wf%ao_fock_b, wf%ao%n)
-         wf%ao_fock_b = wf%ao_fock_b*half
-!
-         if (.not. local_cumulative) wf%ao_fock_b = wf%ao_fock_b + h_wx
-!
-      else
-!
-         call output%error_msg('Did not recognize spin variable in construct_ao_fock:' // trim(sigma))
-!
-      endif
+      call symmetric_sum(wf%ao_fock_b, wf%ao%n)
+      call dscal(wf%ao%n**2, half, wf%ao_fock_b, 1)
 !
       call mem%dealloc(F, wf%ao%n, wf%ao%n*n_threads)
+      call mem%dealloc(X_alpha, wf%ao%n, wf%ao%n*n_threads)
+      call mem%dealloc(X_beta, wf%ao%n, wf%ao%n*n_threads)
       call timer%turn_off()
 !
    end subroutine construct_ao_spin_fock_uhf

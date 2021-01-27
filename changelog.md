@@ -1,5 +1,6 @@
 # eT v1.2
 ### Optimization
+- Removed one construction of the Coulomb fock matrix per iteration. See merge request eT-program/eT!677
 - CCS Jacobian is now N^4 scaling (Cholesky vector algorithm) See merge request eT-program/eT!592
 
 ### Features
