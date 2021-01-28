@@ -23,13 +23,12 @@
    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2020
  
 */
-#include <iostream>
 
 using namespace std;
 
-
 #include "eri.h"
 #include "globals.h"
+#include "omp_control.h"
 
 void get_eri(double *g, 
              int *s1, int *s2, int *s3, int *s4, 

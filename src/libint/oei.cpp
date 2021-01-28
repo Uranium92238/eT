@@ -23,14 +23,13 @@
    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2020
  
 */
-#include <iostream>
 
 using namespace std;
 
 #include "oei.h"
 #include "extract_integrals.h"
 #include "globals.h"
-
+#include "omp_control.h"
 
 void get_oei(char *type_, double *x, int *s1, int *s2){
 
