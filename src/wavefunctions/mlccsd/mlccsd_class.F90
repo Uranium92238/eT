@@ -126,6 +126,7 @@ module mlccsd_class
 !
 !     Omega
 !
+      procedure :: construct_fock               => construct_fock_mlccsd
       procedure :: construct_omega              => construct_omega_mlccsd
 !
       procedure :: omega_ccsd_a2                => omega_ccsd_a2_mlccsd
@@ -263,6 +264,7 @@ module mlccsd_class
       include "./file_handling_mlccsd_interface.F90"
       include "./set_get_mlccsd_interface.F90"
       include "./jacobian_mlccsd_interface.F90"
+      include "./fock_mlccsd_interface.F90"
 !
    end interface 
 !

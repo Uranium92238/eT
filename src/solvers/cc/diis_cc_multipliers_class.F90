@@ -156,8 +156,6 @@ contains
 !
       call solver%print_settings()
 !
-      call wf%construct_fock()
-!
 !     Determine whether to store records in memory or on file
 !
       if (trim(solver%storage) == 'memory') then 

@@ -39,6 +39,8 @@ module lowmem_cc2_class
 !
    contains
 !
+      procedure :: construct_fock   => construct_fock_lowmem_cc2
+!
       procedure :: construct_omega  => construct_omega_lowmem_cc2
 !
       procedure :: omega_cc2_a1     => omega_cc2_a1_lowmem_cc2
@@ -88,6 +90,7 @@ module lowmem_cc2_class
       include "jacobian_lowmem_cc2_interface.F90"
       include "jacobian_transpose_lowmem_cc2_interface.F90"
       include "zop_lowmem_cc2_interface.F90"
+      include "fock_lowmem_cc2_interface.F90"
 !
    end interface
 !

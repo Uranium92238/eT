@@ -277,7 +277,7 @@ contains
 !
 !        Calculate the energy and error vector omega 
 !
-         call wf%construct_fock()
+         call wf%construct_fock(task = 'gs')
 !
          call wf%calculate_energy()
          energy = wf%energy

@@ -945,6 +945,8 @@ contains
       timer_es = timings('Excited state CC2 calculation for CNTOs')
       call timer_es%turn_on()
 !
+      call cc2_wf%construct_fock('es')
+!
       cc_es_solver_davidson = davidson_cc_es(transformation, cc2_wf, restart=.false.)
       call cc_es_solver_davidson%run(cc2_wf)
       call cc_es_solver_davidson%cleanup(cc2_wf)

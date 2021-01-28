@@ -1,5 +1,6 @@
 # eT v1.2
 ### Optimization
+- Fock matrix construction at CC level, in terms of T1-transformed integrals, is now N^4 scaling. Only the necessary blocks for a given task are constructed. See merge request eT-program/eT!678
 - Removed one construction of the Coulomb fock matrix per iteration. See merge request eT-program/eT!677
 - CCS Jacobian is now N^4 scaling (Cholesky vector algorithm) See merge request eT-program/eT!592
 

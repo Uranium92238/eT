@@ -264,6 +264,7 @@ def autogenerate_complex_files(source_directory):
             "omega_ccsd.F90",
             "set_get_ccsd.F90",
             "zop_ccsd.F90",
+            "fock_ccsd.F90",
         ],
     }
 
