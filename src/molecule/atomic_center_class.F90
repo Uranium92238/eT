@@ -32,11 +32,20 @@ module atomic_center_class
 !
    implicit none
 !
-   integer, dimension(36) :: atomic_multiplicities = (/2,1,2,1,2,3,4,3,2,1, & ! H, He, ...
-                                                       2,1,2,3,4,3,2,1,2,1, &
-                                                       2,3,4,7,6,5,4,3,2,1, &
-                                                       2,3,4,3,2,1          &
-                                                         /)
+!  NIST Atomic Spectra Database (ver. 5.8),
+!  https://physics.nist.gov/asd, 2021, January 27
+!
+!  Multiplicity for lead from: 
+!  Dembcyński et al. Phys. Rev. A, 49, 745-754, 1994
+!
+   integer, dimension(105) :: atomic_multiplicities = (/ &
+            2,                                                            1, & ! H,    He
+            2,1,                                                2,3,4,3,2,1, & ! Li .. Ne
+            2,1,                                                2,3,4,3,2,1, & ! Na .. Ar
+            2,1,2,                            3,4,7,6,5,4,3,2,1,2,3,4,3,2,1, & ! K  .. Kr
+            2,1,2,                            3,6,7,6,5,4,1,2,1,2,3,4,3,2,1, & ! Rb .. Xe
+            2,1,2,2,1,4,5,6,7,8,9,6,5,4,3,2,1,3,4,5,6,5,4,3,2,1,2,3,4,3,2,1, & ! Cs .. Rn
+            2,1,2,2,3,4,5,6,7,8,9,6,5,4,3,2,1,3,4 /)                           ! Fr .. Db
 !
    type :: atomic_center
 !
@@ -377,7 +386,8 @@ contains
       integer :: multiplicity
 !
       if (center%number_ > size(atomic_multiplicities)) &
-         call output%error_msg("Atom multiplicity not supported for Z > (i0)", ints=[size(atomic_multiplicities)])
+         call output%error_msg("Atom multiplicity not supported for Z > (i0)", &
+                                ints=[size(atomic_multiplicities)])
 !
       multiplicity = atomic_multiplicities(center%number_)
 !

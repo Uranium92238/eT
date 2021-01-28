@@ -66,6 +66,7 @@ add_eT_runtest(restart_geoopt                               "eT;short;hf;bfgs;gr
 add_eT_runtest(hf_bohr_units                                "eT;short;hf;sad")
 #
 add_eT_runtest(uhf_energy                                   "eT;short;uhf")
+add_eT_runtest(uhf_energy_cs                                "eT;short;uhf;atom")
 add_eT_runtest(uhf_energy_qmmmnopol                         "eT;short;uhf;sad;qmmm;mmnopol")
 add_eT_runtest(uhf_energy_qmfq                              "eT;short;uhf;sad;qmmm;fq")
 add_eT_runtest(uhf_dipole                                   "eT;short;uhf;sad;dipole")
