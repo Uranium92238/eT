@@ -342,6 +342,8 @@ contains
       type(diis_cc_multipliers), allocatable     :: diis_solver
       type(davidson_cc_multipliers), allocatable :: davidson_solver
 !
+      call wf%construct_fock(task = 'multipliers')
+!
       call engine%tasks%print_('multipliers solver')
 !
       if (trim(engine%multipliers_algorithm) == 'davidson') then 

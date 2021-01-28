@@ -196,6 +196,7 @@ module mlcc2_class
 !
 !     Ground state routines
 !
+      procedure :: construct_fock                                    => construct_fock_mlcc2
       procedure :: calculate_energy                                  => calculate_energy_mlcc2
       procedure :: construct_omega                                   => construct_omega_mlcc2
 !
@@ -264,6 +265,7 @@ module mlcc2_class
       include "./jacobian_mlcc2_interface.F90"
       include "./jacobian_transpose_mlcc2_interface.F90"
       include "./initialize_destruct_mlcc2_interface.F90"
+      include "./fock_mlcc2_interface.F90"
 !
    end interface 
 !
@@ -1132,7 +1134,7 @@ contains
       call zero_array(wf%t1, wf%n_t1)
       call wf%eri%set_t1_to_mo()
 !
-      call wf%construct_fock()
+      call wf%construct_fock(task = 'block diagonalize fock')
       call wf%destruct_t1()
 !
 !     Keep partitioning orbital basis (for transformation of frozen MO fock terms)

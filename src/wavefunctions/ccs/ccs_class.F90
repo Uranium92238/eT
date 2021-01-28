@@ -248,6 +248,16 @@ module ccs_class
       procedure :: add_t1_fock_length_dipole_term                => add_t1_fock_length_dipole_term_ccs
       procedure :: add_t1_fock_length_dipole_term_complex        => add_t1_fock_length_dipole_term_ccs_complex
 !
+      procedure :: construct_fock_ai_t1                          => construct_fock_ai_t1_ccs
+      procedure :: construct_fock_ia_t1                          => construct_fock_ia_t1_ccs
+      procedure :: construct_fock_ij_t1                          => construct_fock_ij_t1_ccs
+      procedure :: construct_fock_ab_t1                          => construct_fock_ab_t1_ccs
+!
+      procedure :: construct_fock_ai_t1_complex                  => construct_fock_ai_t1_ccs_complex
+      procedure :: construct_fock_ia_t1_complex                  => construct_fock_ia_t1_ccs_complex
+      procedure :: construct_fock_ij_t1_complex                  => construct_fock_ij_t1_ccs_complex
+      procedure :: construct_fock_ab_t1_complex                  => construct_fock_ab_t1_ccs_complex
+!
 !     Procedures related to the omega vector
 !
       procedure :: construct_omega                               => construct_omega_ccs

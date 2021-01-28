@@ -292,6 +292,10 @@ contains
                                     &algorithm is not implemented for the method specified.')
          endif
 !
+!        Calculate the terms of the Fock matrix that was not needed for ground state
+!
+         call wf%construct_fock(task = 'es')
+!
          call cc_es_solver%run(wf)
          call cc_es_solver%cleanup(wf)
 !

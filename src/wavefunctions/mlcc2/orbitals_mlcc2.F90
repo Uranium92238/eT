@@ -1215,6 +1215,8 @@ contains
       timer_es = timings('Excited state CCS calculation for NTOs/CNTOs')
       call timer_es%turn_on()
 !
+      call ccs_wf%construct_fock('es')
+!
       cc_es_solver_davidson = davidson_cc_es(transformation, ccs_wf, restart=.false.)
       call cc_es_solver_davidson%run(ccs_wf)
       call cc_es_solver_davidson%cleanup(ccs_wf)

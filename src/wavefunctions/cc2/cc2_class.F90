@@ -34,6 +34,7 @@ module cc2_class
 !
 !     Ground state
 !
+      procedure :: construct_fock                              => construct_fock_cc2
       procedure :: construct_omega                             => construct_omega_cc2
       procedure :: calculate_energy                            => calculate_energy_cc2
 !
@@ -91,6 +92,7 @@ module cc2_class
       include "jacobian_cc2_interface.F90"
       include "jacobian_transpose_cc2_interface.F90"
       include "zop_cc2_interface.F90"
+      include "fock_cc2_interface.F90"
 !
    end interface
 !
