@@ -1,0 +1,51 @@
+system
+   name: Xenon
+   charge: 0
+   multiplicity: 1
+end system
+
+do
+   ground state
+   excited state
+end do
+
+method
+   hf
+   ccsd
+end method
+
+memory
+   available: 8
+end memory
+
+frozen orbitals
+   core
+end frozen orbitals
+
+solver scf
+  algorithm:          scf-diis
+  energy threshold:   1.0d-11
+  gradient threshold: 1.0d-11
+  print orbitals
+end solver scf
+
+solver cholesky
+   threshold: 1.0d-12
+end solver cholesky
+
+solver cc gs
+   energy threshold: 1.0d-11
+   omega threshold:  1.0d-11
+end solver cc gs
+
+solver cc es
+   singlet states: 8
+   residual threshold: 1.0d-11
+   right eigenvectors
+end solver cc es
+
+geometry
+basis: 3-21G
+   Xe         0.00000        0.00000        0.00000
+end geometry
+
