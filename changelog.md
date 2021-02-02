@@ -8,6 +8,8 @@
 - printf accepts complex numbers and possible to repeat formats. See merge request eT-program/eT!674
 - UHF spin contamination is computed and printed in all UHF calculations. See merge request eT-program/eT:!675
 - Tidied up Omega and Jacobian timings to make them more consistent. See merge request eT-program/eT:!684
+- SAD guess can be used for elements up to Dubnium. See merge request eT-program/eT:!707
+- Frozen core can be used for elements up to Dubnium. See merge request eT-program/eT:!709
 
 ### Structure
 - Omega and Jacobian routines have separate in and out vectors and call the corresponding parent routines. See merge request eT-program/eT:!684

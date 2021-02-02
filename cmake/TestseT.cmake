@@ -141,6 +141,7 @@ add_eT_runtest(ccsd_dipole_fc                               "eT;short;ccsd;gs;di
 add_eT_runtest(ccsd_quadrupole                              "eT;short;ccsd;gs;quadrupole")
 add_eT_runtest(ccsd_quadrupole_fc                           "eT;short;ccsd;gs;quadrupole;frozen core")
 add_eT_runtest(ccsd_frozen_core                             "eT;short;ccsd;es;gs;frozen core")
+add_eT_runtest(ccsd_frozen_core_xenon                       "eT;short;ccsd;es;gs;frozen core;atom")
 add_eT_runtest(ccsd_right_es_energies                       "eT;short;ccsd;es;right")
 add_eT_runtest(ccsd_right_es_energies_imaginary             "eT;medium;ccsd;es;right;imaginary-pair")
 add_eT_runtest(ccsd_right_es_replace_red_space              "eT;short;ccsd;es;right;red_space")

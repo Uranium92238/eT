@@ -1367,8 +1367,6 @@ contains
 !
       call mem%dealloc(E_kq, wf%n_atomic_centers, 3)
 !
-    !  call wf%system%print_molecular_vector('Molecular gradient (Hartree/bohr)', E_qk)
-!
       call mem%dealloc(DFD, wf%ao%n, wf%ao%n)
 !
       call non_integral_timer%turn_off()

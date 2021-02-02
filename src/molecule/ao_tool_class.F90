@@ -2126,6 +2126,8 @@ contains
 !!    Determines which centers to freeze (given by the logical array 'frozen') and 
 !!    the total number of frozen AOs. It considers only centers 'first' to 'last'.
 !!
+!!    Extened by Alexander C. Paul, Jan 2021
+!!
       implicit none 
 !
       class(ao_tool), intent(in) :: ao 
@@ -2154,9 +2156,39 @@ contains
             n_frozen_ao = n_frozen_ao + 5
             frozen(I)   = .true.
 !
-         elseif (ao%centers(I)%number_ .gt. 30) then
+         elseif (ao%centers(I)%number_ .ge. 31 .and. ao%centers(I)%number_ .le. 38) then
 !
-            call output%error_msg('No support for frozen core for Z > 30.')
+            n_frozen_ao = n_frozen_ao + 9
+            frozen(I)   = .true.
+!
+         elseif (ao%centers(I)%number_ .ge. 39 .and. ao%centers(I)%number_ .le. 48) then
+!
+            n_frozen_ao = n_frozen_ao + 14
+            frozen(I)   = .true.
+!
+         elseif (ao%centers(I)%number_ .ge. 49 .and. ao%centers(I)%number_ .le. 70) then
+!
+            n_frozen_ao = n_frozen_ao + 18
+            frozen(I)   = .true.
+!
+         elseif (ao%centers(I)%number_ .ge. 71 .and. ao%centers(I)%number_ .le. 80) then
+!
+            n_frozen_ao = n_frozen_ao + 23
+            frozen(I)   = .true.
+!
+         elseif (ao%centers(I)%number_ .ge. 81 .and. ao%centers(I)%number_ .le. 103) then
+!
+            n_frozen_ao = n_frozen_ao + 34
+            frozen(I)   = .true.
+!
+         elseif (ao%centers(I)%number_ .ge. 104 .and. ao%centers(I)%number_ .le. 105) then
+!
+            n_frozen_ao = n_frozen_ao + 50
+            frozen(I)   = .true.
+!
+         elseif (ao%centers(I)%number_ .gt. 105) then
+!
+            call output%error_msg('No support for frozen core for Z > 105.')
 !
          endif
 !

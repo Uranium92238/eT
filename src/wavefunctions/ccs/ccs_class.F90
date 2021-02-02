@@ -598,6 +598,11 @@ contains
       wf%n_o = template_wf%n_o
       wf%n_v = template_wf%n_v
 !
+      if (wf%n_v == 0) then
+         call output%error_msg('Number of virtual orbitals is zero. &
+                               &Cannot run post-HF methods')
+      end if
+!
       wf%ao%n = template_wf%ao%n
       wf%n_mo = template_wf%n_mo
 !
