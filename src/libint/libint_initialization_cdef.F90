@@ -59,7 +59,7 @@ interface
 !
       use iso_c_binding
       implicit none
-      real(c_double) :: eri_precision
+      real(c_double), value :: eri_precision
 !
    end subroutine initialize_eri_c
 !
@@ -98,24 +98,14 @@ interface
 !
    end subroutine initialize_nuclear_c
 !
-   subroutine initialize_potential_c(charges,coordinates,n_points) bind(C, name='initialize_potential')
-!
-      use iso_c_binding
-      implicit none
-      real(c_double)  :: charges(*)
-      real(c_double)  :: coordinates(*)
-      integer(c_int)  :: n_points
-!
-   end subroutine initialize_potential_c
-!
    subroutine initialize_coulomb_external_charges_c(charges,coordinates,n_points) &
             bind(C, name='initialize_coulomb_external_charges')
 !
       use iso_c_binding
       implicit none
-      real(c_double)  :: charges(*)
-      real(c_double)  :: coordinates(*)
-      integer(c_int)  :: n_points
+      real(c_double), dimension(*), intent(in) :: charges
+      real(c_double), dimension(*), intent(in) :: coordinates
+      integer(c_int), value  :: n_points
 !
    end subroutine initialize_coulomb_external_charges_c
 !
@@ -124,9 +114,19 @@ interface
 !
       use iso_c_binding
       implicit none
-      real(c_double)  :: coordinates(*)
-      integer(c_int)  :: n_points
+      real(c_double), dimension(*), intent(in) :: coordinates
+      integer(c_int), value :: n_points
 !
    end subroutine initialize_coulomb_external_unit_charges_c
+!
+   subroutine set_eri_precision_c(prec) bind(C, name='set_eri_precision')
+!
+      use iso_c_binding
+      implicit none
+!
+      real(c_double), value :: prec
+!
+   end subroutine set_eri_precision_c
+!
 !
 end interface

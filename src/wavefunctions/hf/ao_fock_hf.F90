@@ -911,7 +911,8 @@ contains
 !
                            w_red = w - shells(s1)%first + 1
 !
-                           wxyz = shells(s1)%length*(shells(s2)%length*(shells(s3)%length*(z_red-1)+y_red-1)+x_red-1)+w_red
+                           wxyz = shells(s1)%length*(shells(s2)%length*&
+                                  (shells(s3)%length*(z_red-1)+y_red-1)+x_red-1)+w_red
 !
                            temp = g(wxyz)
 !

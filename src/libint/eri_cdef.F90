@@ -20,29 +20,21 @@
 interface
 !
 !
-   subroutine get_eri_c(g, s1, s2, s3, s4, epsilon, &
-               skip, n1, n2, n3, n4) bind(C, name='get_eri')
+   subroutine get_eri_c(g, s1, s2, s3, s4, &
+                        epsilon_, skip,    &
+                        n1, n2, n3, n4) bind(C, name='get_eri')
 !
       use iso_c_binding
 !
       implicit none
 !
-      real(c_double) :: g(*)
-      real(c_double) :: epsilon
-      integer(c_int) :: s1, s2, s3, s4
-      integer(c_int) :: skip, n1, n2, n3, n4
+      real(c_double), dimension(*), intent(out) :: g
+      integer(c_int), value :: s1, s2, s3, s4
+      real(c_double), value :: epsilon_
+      integer(c_int), intent(out) :: skip
+      integer(c_int), value :: n1, n2, n3, n4
 !
    end subroutine get_eri_c
-!
-!
-   subroutine set_eri_precision_c(prec) bind(C, name='set_eri_precision')
-!
-      use iso_c_binding
-      implicit none
-!
-      real(c_double) :: prec
-!
-   end subroutine set_eri_precision_c
 !
 !
    subroutine get_eri_1der_c(g_wxyzqk, s1, s2, s3, s4) bind(C, name='get_eri_1der')
@@ -51,8 +43,8 @@ interface
 !
       implicit none
 !
-      real(c_double) :: g_wxyzqk(*)
-      integer(c_int) :: s1, s2, s3, s4
+      real(c_double), dimension(*), intent(out) :: g_wxyzqk
+      integer(c_int), value :: s1, s2, s3, s4
 !
    end subroutine get_eri_1der_c
 !
