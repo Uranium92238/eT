@@ -39,9 +39,9 @@ using namespace std;
 eTBasis basis;
 vector<Atom> atoms;
 
-/* 
-   Vectors of Libint engines. 
-   Length of vectors is equal to number of threads 
+/*
+   Vectors of Libint engines.
+   Length of vectors is equal to number of threads
 */
 vector<Engine> electronic_repulsion(omp_get_max_threads());
 vector<Engine> electronic_repulsion_1der(omp_get_max_threads());
@@ -196,13 +196,13 @@ void finalize_libint(){
 
 }
 
-void initialize_eri(double *eri_precision){
+void initialize_eri(const double eri_precision){
 
     electronic_repulsion[0] = Engine(Operator::coulomb, basis.max_nprim(), basis.max_l());
     electronic_repulsion_1der[0] = Engine(Operator::coulomb, basis.max_nprim(), basis.max_l(), 1);
 
-    electronic_repulsion[0].set_precision(*eri_precision);
-    electronic_repulsion_1der[0].set_precision(*eri_precision);
+    electronic_repulsion[0].set_precision(eri_precision);
+    electronic_repulsion_1der[0].set_precision(eri_precision);
 
     for (int i = 1; i < omp_get_max_threads(); i++){
 
@@ -213,12 +213,12 @@ void initialize_eri(double *eri_precision){
 
 }
 
-void set_eri_precision(double *eri_precision){
+void set_eri_precision(const double eri_precision){
 
     for (int i = 0; i < omp_get_max_threads(); i++){
 
-        electronic_repulsion[i].set_precision(*eri_precision);
-        electronic_repulsion_1der[i].set_precision(*eri_precision);
+        electronic_repulsion[i].set_precision(eri_precision);
+        electronic_repulsion_1der[i].set_precision(eri_precision);
 
     }
 
@@ -296,13 +296,14 @@ void initialize_quadrupole(){
 
 }
 
-void initialize_coulomb_external_charges(double *charges, double *coordinates, int *n_points){
+void initialize_coulomb_external_charges(const double *charges, const double *coordinates,
+                                         const int n_points){
 
     coulomb_external_charges[0] = Engine(Operator::nuclear, basis.max_nprim(), basis.max_l());
 
     vector<pair<double, array<double, 3>>> points;
 
-    for (int i = 0; i < *n_points; i++) {
+    for (int i = 0; i < n_points; i++) {
 
       int offset = (i-1)*3 + 3;
       points.push_back({(charges[i]),
@@ -313,7 +314,7 @@ void initialize_coulomb_external_charges(double *charges, double *coordinates, i
 
     coulomb_external_charges[0].set_params(points);
 
-    for (int i = 1; i < omp_get_max_threads(); i++){  
+    for (int i = 1; i < omp_get_max_threads(); i++){
 
         coulomb_external_charges[i] = coulomb_external_charges[0];
 
@@ -321,13 +322,13 @@ void initialize_coulomb_external_charges(double *charges, double *coordinates, i
 
 }
 
-void initialize_coulomb_external_unit_charges(double *coordinates, int *n_points){
+void initialize_coulomb_external_unit_charges(const double *coordinates, const int n_points){
 
     coulomb_external_unit_charges[0] = Engine(Operator::nuclear, basis.max_nprim(), basis.max_l());
 
     vector<pair<double, array<double, 3>>> points;
 
-    for (int i = 0; i < *n_points; i++) {
+    for (int i = 0; i < n_points; i++) {
 
       int offset = (i-1)*3 + 3;
       points.push_back({static_cast<double>(1.0e0),

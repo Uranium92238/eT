@@ -1025,14 +1025,6 @@ contains
                      skip_local,           &
                      n_A, n_B, n_C, n_D)  
 !
-!     Reset the default Libint epsilon, if non-default was requested 
-!
-      if (present(precision_)) then 
-!
-         call set_eri_precision_c(ao%libint_epsilon)
-!
-      endif
-!
 !     Return skip if requested; otherwise, zero g if skip_local = 1
 !
       if (present(skip)) then 
@@ -1736,7 +1728,7 @@ contains
    end function get_n_centers_in_subset_ao_tool
 !
 !
-   subroutine set_libint_epsilon_ao_tool(ao, epsilon)
+   subroutine set_libint_epsilon_ao_tool(ao, epsilon_)
 !!
 !!    Set Libint epsilon 
 !!    Written by Eirik F. Kjønstad, 2020
@@ -1748,15 +1740,15 @@ contains
 !
       class(ao_tool), intent(inout) :: ao
 !
-      real(dp), intent(in) :: epsilon 
+      real(dp), intent(in) :: epsilon_
 !
-      ao%libint_epsilon = epsilon 
+      ao%libint_epsilon = epsilon_
       call set_eri_precision_c(ao%libint_epsilon)
 !
    end subroutine set_libint_epsilon_ao_tool
 !
 !
-   function get_libint_epsilon_ao_tool(ao) result(epsilon)
+   pure function get_libint_epsilon_ao_tool(ao) result(epsilon_)
 !!
 !!    Get Libint epsilon 
 !!    Written by Eirik F. Kjønstad, 2020
@@ -1765,9 +1757,9 @@ contains
 !
       class(ao_tool), intent(in) :: ao
 !
-      real(dp) :: epsilon 
+      real(dp) :: epsilon_ 
 !
-      epsilon = ao%libint_epsilon 
+      epsilon_ = ao%libint_epsilon 
 !
    end function get_libint_epsilon_ao_tool
 !

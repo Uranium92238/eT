@@ -24,10 +24,12 @@ extern "C" {
 #else
 #endif
 
-void get_eri(double *g, int *s1, int *s2, int *s3, int *s4, double *epsilon, 
-             int *skip, int *n1, int *n2, int *n3, int *n4);
+void get_eri(double *g, 
+             const int s1, const int s2, const int s3, const int s4, 
+             const double epsilon_, int *skip, 
+             const int n1, const int n2, const int n3, const int n4);
 
-void get_eri_1der(double *g, int *s1, int *s2, int *s3, int *s4);
+void get_eri_1der(double *g, const int s1, const int s2, const int s3, const int s4);
 
 #ifdef __cplusplus
 }
