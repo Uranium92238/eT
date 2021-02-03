@@ -343,6 +343,16 @@ for i, (inpf, outf) in enumerate(zip(args.input_file, args.output_file)):
         mo_dest = cwd / mo_name
         shutil.copyfile(mo_src, mo_dest)
 
+    # Check if there are any spectrum files
+    globstring = "lanczos*[0-9]_[XYZ]"
+    spectrum_files = []
+    spectrum_files += [i.name for i in scratch.glob(globstring)]
+    for spectrum_file in spectrum_files:
+        file_name = f"{out_name}_{spectrum_file}"
+        file_src = scratch / spectrum_file
+        file_dest = cwd / file_name
+        shutil.copyfile(file_src, file_dest)
+
     # Check if there are any .plt files
     pltfiles = scratch.glob("*.plt")
     for pltfile in pltfiles:

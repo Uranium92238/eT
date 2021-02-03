@@ -29,6 +29,12 @@ f = [
                mask=[2])
 ]
 
+checkfiles = ["ccsd_cvs_lanczos_lanczos30_X", 
+              "ccsd_cvs_lanczos_lanczos30_Y", 
+              "ccsd_cvs_lanczos_lanczos30_Z"]
+
+checkfiles = [os.path.join(os.path.dirname(__file__), i) for i in checkfiles]
+
 # invoke the command line interface parser which returns options
 options = cli()
 
@@ -39,5 +45,12 @@ for inp in ['ccsd_cvs_lanczos.inp']:
                 configure,
                 input_files=inp,
                 filters={'out': f})
+
+missing_files = [i for i in checkfiles if not os.path.exists(i)]
+filerror = len(missing_files)
+
+if filerror > 0:
+    print("Missing files:")
+    print("\n".join(missing_files))
 
 sys.exit(ierr)
