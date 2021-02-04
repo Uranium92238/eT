@@ -275,17 +275,7 @@ contains
 !
          call wf%calculate_energy()
 !
-         call output%printf('m', ':: Summary of (a0) wavefunction energetics (a.u.)', &
-                            chars=[convert_to_uppercase(wf%name_)], fs='(/t3,a)')
-!
-         call output%printf('m', 'HF energy:                (f19.12)', &
-                            reals=[wf%hf_energy], fs='(/t6,a)')
-!
-         call output%printf('m', 'MP2 correction:           (f19.12)', &
-                            reals=[ (wf%energy - wf%hf_energy) ], fs='(t6,a)')
-!
-         call output%printf('m', 'MP2 energy:               (f19.12)', &
-                            reals=[wf%energy], fs='(t6,a)')
+         call wf%print_gs_summary
 !
       else
 !
