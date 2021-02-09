@@ -565,7 +565,9 @@ contains
 !
                   call the_file%modify_format(fstring, chars(char_count), format_length)
 !
-                  write(pstring(print_position:), fstring) trim(chars(char_count))
+                  if (format_length .gt. 0) then
+                     write(pstring(print_position:), fstring) trim(chars(char_count))
+                  endif
 !
 !              Is ( followed by x?
                elseif(ftype .eq. "x") then
