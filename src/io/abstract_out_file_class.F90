@@ -534,7 +534,6 @@ contains
 !
                   write(pstring(print_position:),fstring) ints(int_count)
 !
-                  format_length = the_file%get_format_length(fstring)
 !
 !              Is ( followed by l?
                elseif(ftype .eq. "l") then
@@ -575,7 +574,6 @@ contains
                   call the_file%modify_format(fstring, format_length)
 !
                   write(pstring(print_position:), fstring)
-                  format_length = the_file%get_format_length(fstring)
 !
                endif
 !
