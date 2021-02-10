@@ -1,3 +1,7 @@
+# eT v1.1.2
+### Bugfixes
+- Fixed incorrect memory estimate in Jacobian transpose ccsd. See merge request eT-program/eT:!718
+
 # eT v1.1.1
 ### Features
 - Functionality added for skipping SCF if equations are solved. 
