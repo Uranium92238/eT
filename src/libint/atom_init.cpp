@@ -25,15 +25,6 @@
 */
 #include "atom_init.h"
 
-#include <libint2.hpp>
-#include <iostream>
-#include <fstream>
-#include <string>
-
-using namespace libint2;
-using namespace std; 
-
-
 void get_shell_numbers(int *atom, int *n_shells){
 
 	auto a2s = basis.atom2shell(atoms); 
