@@ -28,10 +28,7 @@
 
 #include "eT_basis.h"
 
-#include <libint2.hpp>
 
-using namespace libint2;
-using namespace std;
 
 // Global variables declared in this file
 

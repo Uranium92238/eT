@@ -27,7 +27,6 @@
 using namespace std;
 
 #include "eri.h"
-#include "extract_integrals.h"
 #include "globals.h"
 #include "omp_control.h"
 

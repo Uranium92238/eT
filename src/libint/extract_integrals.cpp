@@ -25,7 +25,6 @@
  	To extract integrals from Libint and place them into array in Fortran order.
 
 */
-using namespace std;
 #include "extract_integrals.h"
 
 void extract_integrals(double *ints_fortran_order, const double *ints_cxx_order, int n1, int n2, double prefac){
