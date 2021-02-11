@@ -3317,15 +3317,15 @@ contains
 !
 !           Diagonalize block
 !
-            call mem%alloc(work, int(worksize(1)))
+            call mem%alloc(work, ceiling(worksize(1)))
 !
-            call dsyev('V','U',              &
-                        block_dim(block_),   &
-                        A(offset, offset),   &
-                        n_total,             &
-                        eigenvalues,         &
-                        work,                &
-                        int(worksize(1)),    &
+            call dsyev('V','U',               &
+                        block_dim(block_),    &
+                        A(offset, offset),    &
+                        n_total,              &
+                        eigenvalues,          &
+                        work,                 &
+                        ceiling(worksize(1)), &
                         info)
 !
             if (info .ne. 0) then
@@ -3333,7 +3333,7 @@ contains
                                     ' "Dsyev" finished with info: (i0)', ints=[info])
             end if
 !
-            call mem%dealloc(work, int(worksize(1)))
+            call mem%dealloc(work, ceiling(worksize(1)))
 !
 !           Convention for eigenvectors of block, maximum element is positive
 !
