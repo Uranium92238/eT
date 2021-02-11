@@ -3254,7 +3254,7 @@ contains
    end function our_zdotu
 !
 !
-   subroutine block_diagonalize_symmetric(A,  n_total, n_blocks, block_dim, diagonal)
+   subroutine block_diagonalize_symmetric(A,  n_total, n_blocks, block_dim, diagonal, flip_vectors)
 !!
 !!    Block diagonalize symmetric
 !!    Written by Sarai D. Folkestad, Mar 2020
@@ -3281,11 +3281,18 @@ contains
       real(dp), dimension(n_total, n_total), intent(inout) :: A
       real(dp), dimension(n_total), intent(out) :: diagonal
 !
+      logical, intent(in), optional :: flip_vectors
+!
       real(dp), dimension(:), allocatable :: work
 !
       real(dp), dimension(:), allocatable :: eigenvalues
 !
-      integer :: info, i, block_, offset, index_max
+      integer  :: info, i, block_, offset, index_max
+      real(dp) :: worksize 
+      logical  :: local_flip_vectors
+!
+      local_flip_vectors = .true.
+      if (present(flip_vectors)) local_flip_vectors = flip_vectors
 !
       offset = 1
 !
@@ -3293,10 +3300,24 @@ contains
 !
          if (block_dim(block_) .gt. 0) then
 !
+            call mem%alloc(eigenvalues, block_dim(block_))
+!  
+!           Work size query
+!  
+            call dsyev('V','U',              &
+                        block_dim(block_),   &
+                        A(offset, offset),   &
+                        n_total,             &
+                        eigenvalues,         &
+                        worksize,            &
+                        -1,                  &
+                        info)
+!  
+            if (info .ne. 0) call output%error_msg('could not perform DSYEV worksize query')
+!
 !           Diagonalize block
 !
-            call mem%alloc(work, 4*block_dim(block_))
-            call mem%alloc(eigenvalues, block_dim(block_))
+            call mem%alloc(work, int(worksize))
 !
             call dsyev('V','U',              &
                         block_dim(block_),   &
@@ -3304,29 +3325,33 @@ contains
                         n_total,             &
                         eigenvalues,         &
                         work,                &
-                        4*block_dim(block_), &
+                        int(worksize),       &
                         info)
-!
-!           Convention for eigenvectors of block, maximum element is positive
-!
-            do i = offset, offset + block_dim(block_) - 1
-!
-               index_max = maxloc(abs(A(offset : offset + block_dim(block_) - 1, i)), dim=1)
-               index_max = index_max + offset - 1
-!
-               if (A(index_max, i) .lt. zero) &
-                  call dscal(block_dim(block_), &
-                            -one,               &
-                            A(offset : offset + block_dim(block_) - 1, i), 1)
-!
-            enddo
-!
-            call mem%dealloc(work, 4*block_dim(block_))
 !
             if (info .ne. 0) then
                call output%error_msg('Diagonalization of block failed.' // &
                                     ' "Dsyev" finished with info: (i0)', ints=[info])
             end if
+!
+            call mem%dealloc(work, int(worksize))
+!
+!           Convention for eigenvectors of block, maximum element is positive
+!
+            if (local_flip_vectors) then
+!
+               do i = offset, offset + block_dim(block_) - 1
+!
+                  index_max = maxloc(abs(A(offset : offset + block_dim(block_) - 1, i)), dim=1)
+                  index_max = index_max + offset - 1
+!
+                  if (A(index_max, i) .lt. zero) &
+                     call dscal(block_dim(block_), &
+                               -one,               &
+                               A(offset : offset + block_dim(block_) - 1, i), 1)
+!
+               enddo
+!
+            endif
 !
 !           Setting diagonal
 !
@@ -3526,5 +3551,52 @@ contains
       endif
 !
    end subroutine diagonalize_symmetric
+!
+!
+   subroutine generalized_diagonalization_symmetric(A, S, dim_, e)
+!!
+!!    Generalized diagonalization symmetric matrix
+!!    Written by Sarai D. Folkestad,  2020
+!!
+!!    Solves the linear equation
+!!
+!!       A X = S X e.
+!!    
+!!    On exit the vectors (X) are stored in A
+!!    On exit S is overwritten
+!! 
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_, dim_), intent(inout)   :: A
+      real(dp), dimension(dim_, dim_), intent(inout)   :: S
+      real(dp), dimension(dim_), optional, intent(out) :: e
+!
+      real(dp), dimension(:), allocatable :: work
+!
+      integer :: info
+!
+      info = 0
+!
+      call mem%alloc(work, 4*dim_)
+!
+      call dsygv(1, 'V', 'L', &
+                  dim_,       &
+                  A,          & 
+                  dim_,       &
+                  S,          &
+                  dim_,       &
+                  e,          &
+                  work,       &
+                  4*(dim_),   &
+                  info)
+!
+      call mem%dealloc(work, 4*dim_)   
+!
+      if (info .ne. 0) call output%error_msg('in generalized diagonalization (array_utilities.F90)')   
+!
+   end subroutine generalized_diagonalization_symmetric
+!
 !
 end module array_utilities

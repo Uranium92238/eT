@@ -52,4 +52,3 @@ extern vector<libint2::Engine> quadrupole;
 extern vector<libint2::Engine> potential;                     
 extern vector<libint2::Engine> coulomb_external_charges;      
 extern vector<libint2::Engine> coulomb_external_unit_charges; 
-             

@@ -1,0 +1,32 @@
+system
+   name: H2O He
+   charge: 0
+   multiplicity: 3
+end system
+
+method
+   uhf
+end method
+
+memory
+   available: 8
+end memory
+
+solver scf
+   skip
+   algorithm:          scf-diis
+   energy threshold:   1.0d-11
+   gradient threshold: 1.0d-11
+end solver scf
+
+do
+   ground state
+end do
+
+geometry
+basis: cc-pVDZ
+ H          0.86681        0.60144        5.00000
+ H         -0.86681        0.60144        5.00000
+ O          0.00000       -0.07579        5.00000
+ He         0.10000       -0.02000        7.53000
+end geometry

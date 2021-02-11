@@ -88,20 +88,14 @@ module uhf_class
       procedure :: get_homo_degeneracy                  => get_homo_degeneracy_uhf
       procedure :: get_ao_density_sq                    => get_ao_density_sq_uhf
 !
-      procedure :: construct_mo_fock                     => construct_mo_fock_uhf
-!
 !     MO orbital related routines
 !
-
       procedure :: initialize_orbitals                   => initialize_orbitals_uhf
-      procedure :: roothan_hall_update_orbitals          => roothan_hall_update_orbitals_uhf
       procedure :: save_orbital_info                     => save_orbital_info_uhf
-      procedure :: save_orbital_coefficients             => save_orbital_coefficients_uhf
-      procedure :: read_orbital_coefficients             => read_orbital_coefficients_uhf
-      procedure :: save_orbital_energies                 => save_orbital_energies_uhf
+      procedure :: save_orbitals                         => save_orbitals_uhf
+      procedure :: read_orbitals                         => read_orbitals_uhf
       procedure :: print_spin                            => print_spin_uhf
       procedure :: print_summary                         => print_summary_uhf
-      procedure :: read_orbital_energies                 => read_orbital_energies_uhf
 !
 !     Roothan-Hall gradient 
 !
@@ -141,6 +135,9 @@ module uhf_class
 !
       procedure :: cleanup                               => cleanup_uhf 
 !
+      procedure :: get_F                                 => get_F_uhf
+      procedure :: set_C_and_e                           => set_C_and_e_uhf
+      procedure :: construct_initial_idempotent_density  => construct_initial_idempotent_density_uhf
       procedure :: print_energy                          => print_energy_uhf
       procedure :: get_spin_contamination                => get_spin_contamination_uhf
       procedure :: get_exact_s2                          => get_exact_s2_uhf
@@ -179,6 +176,7 @@ contains
       type(uhf) :: wf
 !
       wf%name_ = 'uhf'
+      wf%fock_matrix_computed = .false.
 !
       call wf%read_settings()
 !
@@ -201,6 +199,9 @@ contains
       integer,                         intent(in) :: multiplicity
 !
       wf%name_ = 'uhf'
+!
+      wf%cumulative_fock_threshold  = 1.0d0
+      wf%fock_matrix_computed       = .false.
 !
       wf%fractional_uniform_valence = fractional_uniform_valence
 !
@@ -227,9 +228,13 @@ contains
 !
       logical, intent(in), optional :: embedding
 !
+      wf%orbital_file = stream_file('orbital_coefficients')
+!
       call wf%prepare_ao_tool_and_embedding(centers, embedding)
 !
       call wf%set_n_mo()
+!
+      wf%gradient_dimension = wf%n_mo*(wf%n_mo - 1)/2*wf%n_densities
 !
       if (wf%fractional_uniform_valence) then
 !
@@ -238,10 +243,6 @@ contains
                             &highest molecular orbitals (if plural).', ffs='(/t3,a)')
 !
       endif
-!
-      wf%orbital_coefficients_file = sequential_file('orbital_coefficients')
-      wf%orbital_energies_file = sequential_file('orbital_energies')
-      wf%restart_file = sequential_file('scf_restart_file')
 !
       wf%frozen_core = .false.
       wf%frozen_hf_mos = .false.
@@ -287,6 +288,8 @@ contains
 !
       endif
 !
+      call zero_array(wf%previous_ao_density, wf%ao%n**2*wf%n_densities)
+!
    end subroutine set_initial_ao_density_guess_uhf
 !
 !
@@ -319,6 +322,7 @@ contains
 !
       call wf%construct_projection_matrices(Po, Pv, wf%ao_density_a)
       call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock_a)
+!
       call packin_anti(G_pck, G_sq, wf%ao%n)
       call dcopy(wf%ao%n*(wf%ao%n - 1)/2, G_pck, 1, G, 1)
 !
@@ -326,6 +330,7 @@ contains
 !
       call wf%construct_projection_matrices(Po, Pv, wf%ao_density_b)
       call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock_b)
+!
       call packin_anti(G_pck, G_sq, wf%ao%n)
       call dcopy(wf%ao%n*(wf%ao%n - 1)/2, G_pck, 1, G(1, 2), 1)
 !
@@ -365,33 +370,14 @@ contains
 !
       class(uhf) :: wf
 !
-      call input%get_keyword('multiplicity',  &
-                                        'system',        &
+      call input%get_keyword('multiplicity',       &
+                                        'system',  &
                                         wf%multiplicity)
 !
       wf%fractional_uniform_valence = &
             input%is_keyword_present('fractional uniform valence', 'hf')
 !
    end subroutine read_uhf_settings_uhf
-!
-!
-   subroutine roothan_hall_update_orbitals_uhf(wf)
-!!
-!!    Roothan-Hall update of orbitals
-!!    Written by Eirik F. Kjønstad, Sep 2018
-!!
-!!    This routine guides the construction of new orbital coefficients
-!!    from the current AO Fock matrix (or matrices if the wavefunction
-!!    is unrestricted).
-!!
-      implicit none
-!
-      class(uhf) :: wf
-!
-      call wf%do_roothan_hall(wf%ao_fock_a, wf%orbital_coefficients_a, wf%orbital_energies_a)
-      call wf%do_roothan_hall(wf%ao_fock_b, wf%orbital_coefficients_b, wf%orbital_energies_b)
-!
-   end subroutine roothan_hall_update_orbitals_uhf
 !
 !
    subroutine print_energy_uhf(wf)
@@ -455,6 +441,9 @@ contains
 !
       class(uhf) :: wf
 !
+      call dcopy(wf%ao%n**2, wf%ao_density_a, 1, wf%previous_ao_density(:,:,1), 1)
+      call dcopy(wf%ao%n**2, wf%ao_density_b, 1, wf%previous_ao_density(:,:,2), 1)
+!
       call wf%construct_ao_spin_density('alpha') ! Make D_alpha
       call wf%construct_ao_spin_density('beta')  ! Make D_beta
 !
@@ -475,14 +464,31 @@ contains
 !!    Based on the orbital coefficients, the routine constructs
 !!    the associated AO spin densities.
 !!
+!
+      use array_utilities, only : generalized_diagonalization_symmetric
+!
       implicit none
 !
       class(uhf) :: wf
 !
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: h_wx
 !
+      real(dp), dimension(:,:), allocatable :: F, S
+!
       call dcopy(wf%ao%n**2, h_wx, 1, wf%ao_fock, 1)
-      call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies)
+!
+      call mem%alloc(F, wf%n_mo, wf%n_mo)
+      call mem%alloc(S, wf%n_mo, wf%n_mo)
+!
+      call wf%ao_to_reduced_ao_transformation(F, wf%ao_fock)
+      call wf%ao%get_reduced_ao_metric(S)
+!
+      call generalized_diagonalization_symmetric(F, S, wf%n_mo, wf%orbital_energies)
+!
+      call wf%set_orbital_coefficients_from_reduced_ao_C(F, wf%orbital_coefficients)
+!
+      call mem%dealloc(F, wf%n_mo, wf%n_mo)
+      call mem%dealloc(S, wf%n_mo, wf%n_mo)
 !
       call dcopy(wf%ao%n*wf%n_mo, wf%orbital_coefficients, 1, wf%orbital_coefficients_a, 1)
       call dcopy(wf%ao%n*wf%n_mo, wf%orbital_coefficients, 1, wf%orbital_coefficients_b, 1)
@@ -501,7 +507,7 @@ contains
 !!    Written by Eirik F. Kjønstad, Sep 2018
 !!
 !!    Determines the number of alpha and beta elctrons
-!!    from the provided multiplicity and the number of
+!!    from the provided multiplicity and the number 
 !!    electrons in the system. We assume that n_alpha
 !!    is greater than or equal to n_beta without loss
 !!    of generality.
@@ -777,7 +783,7 @@ contains
 !
       class(uhf) :: wf
 !
-      wf%n_mo = wf%ao%get_n_oao()
+      wf%n_mo = wf%ao%get_n_orthonormal_ao()
 !
       wf%n_densities = 2 ! [D_alpha, D_beta]
 !
@@ -849,13 +855,115 @@ contains
       call wf%destruct_fock()
       call wf%destruct_ao_density()
 !
-      call wf%destruct_W_mo_update()
       call wf%destruct_mo_fock()
 !
       deallocate(wf%ao)
       if (wf%embedded) deallocate(wf%embedding)
 !
    end subroutine cleanup_uhf
+!
+   subroutine get_F_uhf(wf, F_packed)
+!!
+!!    Get F
+!!    Written by Sarai D. Folkestad
+!!
+!!    Constructs the Fock matrix in the orthonormal AO basis
+!!    and returns it packed
+!!
+      use reordering, only: packin 
+      implicit none
+!
+      class(uhf) :: wf
+!
+      real(dp), dimension(wf%n_mo*(wf%n_mo + 1)/2*wf%n_densities), intent(out) :: F_packed
+!
+      real(dp), dimension(:,:,:), allocatable :: F
+!
+      call wf%update_fock_and_energy()
+!
+      call mem%alloc(F, wf%n_mo, wf%n_mo, wf%n_densities)
+!
+      call wf%ao_to_orthonormal_ao_transformation(F(:,:,1), wf%ao_fock_a)
+      call wf%ao_to_orthonormal_ao_transformation(F(:,:,2), wf%ao_fock_b)
+!
+      call packin(F_packed, F(:,:,1), wf%n_mo)
+      call packin(F_packed(wf%n_mo*(wf%n_mo + 1)/2 + 1:), F(:,:,2), wf%n_mo)
+!
+      call mem%dealloc(F, wf%n_mo, wf%n_mo, wf%n_densities)
+!
+   end subroutine get_F_uhf
+!
+!
+   subroutine set_C_and_e_uhf(wf, C, e)
+!!
+!!    Set C and e
+!!    Written by Sarai D. Folkestad, 2020
+!! 
+!!    Sets the orbital coefficients from the orbital 
+!!    coefficients in the orthonormal AO basis (C)
+!!
+!!    Sets the orbital energies (e)
+!! 
+      implicit none
+!
+      class(uhf) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo, wf%n_densities), intent(in)  :: C
+      real(dp), dimension(wf%n_mo, wf%n_densities), intent(in)           :: e
+!
+      call wf%set_orbital_coefficients_from_orthonormal_ao_C(C(:,:,1), wf%orbital_coefficients_a)
+      call wf%set_orbital_coefficients_from_orthonormal_ao_C(C(:,:,2), wf%orbital_coefficients_b)
+!
+      call dcopy(wf%n_mo, e(:,1), 1, wf%orbital_energies_a, 1)
+      call dcopy(wf%n_mo, e(:,2), 1, wf%orbital_energies_b, 1)
+!
+      call wf%update_ao_density() ! C => D
+!
+      call wf%save_orbitals()
+!
+   end subroutine set_C_and_e_uhf
+!
+!
+   subroutine construct_initial_idempotent_density_uhf(wf)
+!!
+!!    Construct initial idempotent density
+!!    Written by Sarai D. Folkestad
+!!
+!
+      use array_utilities, only: generalized_diagonalization_symmetric
+!
+      implicit none
+!
+      class(uhf), intent(inout) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: S
+      real(dp), dimension(:,:), allocatable :: F
+!
+      call mem%alloc(S, wf%n_mo, wf%n_mo)
+      call mem%alloc(F, wf%n_mo, wf%n_mo)
+!
+      call wf%ao%get_reduced_ao_metric(S)
+      call wf%ao_to_reduced_ao_transformation(F, wf%ao_fock_a)
+!
+      call generalized_diagonalization_symmetric(F, S, wf%n_mo, wf%orbital_energies_a)
+!
+      call wf%set_orbital_coefficients_from_reduced_ao_C(F, wf%orbital_coefficients_a)
+!
+      call wf%ao%get_reduced_ao_metric(S)
+      call wf%ao_to_reduced_ao_transformation(F, wf%ao_fock_b)
+!
+      call generalized_diagonalization_symmetric(F, S, wf%n_mo, wf%orbital_energies_b)
+
+      call wf%set_orbital_coefficients_from_reduced_ao_C(F, wf%orbital_coefficients_b)
+!
+      call wf%save_orbitals()
+!
+      call mem%dealloc(F, wf%n_mo, wf%n_mo)
+      call mem%dealloc(S, wf%n_mo, wf%n_mo)
+!
+      call wf%update_ao_density()
+!
+   end subroutine construct_initial_idempotent_density_uhf
 !
 !
    function get_spin_contamination_uhf(wf) result(spin_contamination)

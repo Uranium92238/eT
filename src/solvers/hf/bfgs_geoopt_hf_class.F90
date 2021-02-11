@@ -31,7 +31,7 @@ module bfgs_geoopt_hf_class
    use memory_manager_class,  only: mem
 !
    use hf_class,              only: hf
-   use scf_diis_hf_class,     only: scf_diis_hf
+   use scf_solver_class,      only: scf_solver
    use bfgs_tool_class,       only: bfgs_tool
    use timings_class,         only: timings
 !
@@ -208,7 +208,7 @@ contains
 !
       real(dp), dimension(3, wf%n_atomic_centers) :: geometry, gradient 
 !
-      type(scf_diis_hf), allocatable :: hf_gs_solver
+      type(scf_solver), allocatable :: hf_gs_solver
 !
       logical :: restart
 !
@@ -226,7 +226,7 @@ contains
 !
       if (solver%restart .or. solver%iteration > 1) restart = .true.
 !
-      hf_gs_solver = scf_diis_hf(wf, restart, skip=.false.)
+      hf_gs_solver = scf_solver(restart = restart, acceleration_type = 'diis', skip = .false.)
       call hf_gs_solver%run(wf)
       call wf%print_summary(print_mo_info=.false.)
 !

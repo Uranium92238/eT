@@ -86,11 +86,12 @@ set(eT_fortran_sources
    src/solver_tools/abstract_convergence_tool_class.F90
    src/solver_tools/convergence_tool_class.F90
 #
-   src/solvers/hf/abstract_hf_solver_class.F90
-   src/solvers/hf/scf_diis_hf_class.F90
-   src/solvers/hf/mo_scf_diis_class.F90
-   src/solvers/hf/scf_hf_class.F90
+   src/solvers/hf/scf_solver_class.F90
    src/solvers/hf/bfgs_geoopt_hf_class.F90
+   src/solvers/hf/accelerator_tool_class.F90
+   src/solvers/hf/accelerator_factory_class.F90
+   src/solvers/hf/null_accelerator_tool_class.F90
+   src/solvers/hf/diis_accelerator_tool_class.F90
    src/solvers/cc/diis_cc_gs_class.F90
    src/solvers/cc/diis_cc_es_class.F90
    src/solvers/cc/diis_cc_multipliers_class.F90
@@ -140,7 +141,6 @@ set(eT_fortran_sources
 
    src/wavefunctions/hf/frozen_orbital_hf.F90
    src/wavefunctions/hf/hf_class.F90  
-   src/wavefunctions/hf/mo_hf.F90
    src/wavefunctions/hf/set_get_hf.F90
    src/wavefunctions/hf/initialize_destruct_hf.F90
    src/wavefunctions/hf/ao_fock_hf.F90

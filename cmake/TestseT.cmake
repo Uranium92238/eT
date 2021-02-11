@@ -72,6 +72,8 @@ add_eT_runtest(uhf_energy_qmfq                              "eT;short;uhf;sad;qm
 add_eT_runtest(uhf_dipole                                   "eT;short;uhf;sad;dipole")
 add_eT_runtest(uhf_atomic_doublet                           "eT;short;uhf;spin")
 add_eT_runtest(uhf_molecular_triplet                        "eT;short;uhf;spin")
+add_eT_runtest(restart_uhf                                  "eT;short;uhf;spin")
+add_eT_runtest(restart_uhf_v1.0                             "eT;short;uhf;spin;v1.0")
 #
 add_eT_runtest(mlhf_cholesky_energy                         "eT;short;mlhf;sad;cholesky")
 add_eT_runtest(mlhf_pao_energy                              "eT;short;mlhf;sad;pao")

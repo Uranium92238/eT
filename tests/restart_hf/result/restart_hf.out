@@ -112,67 +112,54 @@
 
   1) Calculation of reference state (SCF-DIIS algorithm)
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
+     Maximum iterations:                     100
+     Gradient threshold:              0.1000E-10
+     Acceleration type:                     diis
 
-  - Hartree-Fock solver settings:
+  - Requested restart. Reading orbitals from file
 
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
-
-     Energy threshold:              0.1000E-10
-     Gradient threshold:            0.1000E-10
+  - Screening and integral thresholds:
 
      Coulomb screening threshold:   0.1000E-16
      Exchange screening threshold:  0.1000E-14
      Fock precision:                0.1000E-33
      Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
 
-  - Requested restart. Reading orbitals from file
+  - DIIS convergence acceleration:
+
+     DIIS dimension:   8
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851692851     0.5865E-05     0.7884E+02
-     2           -78.843851693427     0.3271E-05     0.5756E-09
-     3           -78.843851693630     0.2650E-06     0.2032E-09
-     4           -78.843851693631     0.4900E-07     0.6821E-12
-     5           -78.843851693631     0.2336E-07     0.2842E-13
-     6           -78.843851693631     0.6227E-08     0.2842E-13
-     7           -78.843851693631     0.6472E-09     0.0000E+00
-     8           -78.843851693631     0.2717E-09     0.0000E+00
-     9           -78.843851693631     0.6958E-10     0.2842E-13
-    10           -78.843851693631     0.7698E-11     0.2842E-13
+     1           -78.843851669326     0.5527E-04     0.7884E+02
+     2           -78.843851689003     0.2098E-04     0.1968E-07
+     3           -78.843851693436     0.6101E-05     0.4433E-08
+     4           -78.843851693596     0.2640E-05     0.1600E-09
+     5           -78.843851693628     0.4376E-06     0.3214E-10
+     6           -78.843851693631     0.5306E-07     0.2203E-11
+     7           -78.843851693631     0.3406E-08     0.5684E-13
+     8           -78.843851693631     0.7875E-09     0.1421E-13
+     9           -78.843851693631     0.4130E-09     0.1421E-13
+    10           -78.843851693631     0.6583E-10     0.2842E-13
+    11           -78.843851693631     0.8637E-11     0.0000E+00
   ---------------------------------------------------------------
-  Convergence criterion met in 10 iterations!
+  Convergence criterion met in 11 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.645629080253
+     HOMO-LUMO gap:                  0.645629080251
      Nuclear repulsion energy:      12.116100574587
      Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.574269195149   9   0.704416610859  17   1.682695299870  25   3.175416260657
-   2  -1.277667044969  10   0.746260122905  18   1.804186820042  26   3.209661156309
-   3  -0.898849406812  11   1.155862024375  19   1.902641648740  27   3.328173215196
-   4  -0.629870222693  12   1.170770887077  20   2.148883457158  28   3.721936473466
-   5  -0.541641772851  13   1.267961746551  21   2.200395756960  29   3.985492632581
-   6  -0.485872762843  14   1.449847537209  22   2.540321860020
-   7   0.159756317410  15   1.463234913433  23   2.541517310545
-   8   0.229311906280  16   1.474444394523  24   2.559338707348
-  -----------------------------------------------------------------------------------
-
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.10700
-     Total cpu time (sec):               0.20259
+     Total wall time (sec):              0.34200
+     Total cpu time (sec):               0.55687
+
+     Peak memory usage during the execution of eT: 169.772 KB
 
   eT terminated successfully!

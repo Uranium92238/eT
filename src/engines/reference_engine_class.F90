@@ -26,18 +26,15 @@ module reference_engine_class
 !
    use abstract_engine_class, only: abstract_engine
 !
-   use global_in,            only: input
-   use global_out,           only: output
-   use timings_class,        only: timings
-   use memory_manager_class, only: mem
-   use task_list_class,      only: task_list
+   use global_in,                   only: input
+   use global_out,                  only: output
+   use timings_class,               only: timings
+   use memory_manager_class,        only: mem
+   use task_list_class,             only: task_list
 !
-   use hf_class,          only: hf
+   use hf_class,                    only: hf
 !
-   use scf_hf_class,      only: scf_hf
-   use scf_diis_hf_class, only: scf_diis_hf
-   use mo_scf_diis_class, only: mo_scf_diis
-!
+   use scf_solver_class,            only: scf_solver
 !
    type, extends(abstract_engine) :: reference_engine
 !
@@ -74,6 +71,8 @@ module reference_engine_class
 !
       procedure :: do_ground_state                     => do_ground_state_reference_engine
 !
+      procedure, private :: check_algorithm            => check_algorithm_reference_engine
+!
    end type reference_engine 
 !
 !
@@ -107,6 +106,7 @@ contains
       engine%skip_scf         = .false.
 !  
       call engine%read_settings()
+      call engine%check_algorithm()
 !
    end function new_reference_engine
 !
@@ -159,6 +159,7 @@ contains
 !
       call engine%do_ground_state(wf)
 !
+      if (.not. engine%skip_scf) call wf%flip_final_orbitals()
       call wf%print_summary(engine%print_mo_info)
 !
 !     Plot orbitals and/or density
@@ -272,7 +273,6 @@ contains
       use atomic_center_class,    only: atomic_center
 !
       use uhf_class,              only: uhf
-      use scf_hf_class,           only: scf_hf
 !
       use string_utilities,       only: index_of_unique_strings
 !
@@ -285,7 +285,7 @@ contains
       class(hf)                        :: wf
 !
       type(uhf),         allocatable         :: sad_wf
-      type(scf_hf), allocatable              :: sad_solver
+      type(scf_solver), allocatable          :: sad_solver
 !
       character(len=200)    :: ao_density_guess
       real(dp)              :: energy_threshold
@@ -372,19 +372,18 @@ contains
 !
 !        Prepare and run solver
 !
-         sad_solver = scf_hf(wf=sad_wf,                           &
-                           restart=.false.,                       &
+         sad_solver = scf_solver(restart=.false.,                 &
                            ao_density_guess=ao_density_guess,     &
-                           energy_threshold=energy_threshold,     &
                            max_iterations=max_iterations,         &
-                           residual_threshold=gradient_threshold, &
-                           energy_convergence=.false.,            &
-                           skip=.false.)
+                           gradient_threshold=gradient_threshold, &
+                           acceleration_type='none',              &
+                           skip = .false.)
 !
          call sad_solver%run(sad_wf)
 !
 !        Cleanup and generate ao_density_a and ao_density_b
 !
+         call sad_wf%orbital_file%delete_() 
          call sad_wf%cleanup()
 !
          deallocate(sad_wf)
@@ -780,45 +779,43 @@ contains
 !!
       implicit none
 !
-      class(reference_engine), intent(in)    :: engine 
-      class(hf), intent(inout)               :: wf 
+      class(reference_engine), intent(in)       :: engine 
+      class(hf), intent(inout)                  :: wf 
 !
-      type(scf_hf),      allocatable :: scf
-      type(scf_diis_hf), allocatable :: scf_diis
-      type(mo_scf_diis), allocatable :: mo_scf_diis_
+      class(scf_solver),  allocatable           :: scf
+      character(len=200)                        :: acceleration_type
 !
       call engine%tasks%print_('gs solver')
 !
-      if (trim(engine%algorithm) .eq. 'scf-diis' .and. trim(wf%name_) .eq. 'mlhf') then
+      acceleration_type = 'none'
 !
-         call output%error_msg('MLHF can not run with scf-diis, try mo-scf-diis.')
+      if (trim(engine%algorithm) == 'scf-diis' .or. &
+          trim(engine%algorithm) == 'mo-scf-diis') acceleration_type = 'diis'
 !
-      elseif (trim(engine%algorithm) .eq. 'mo-scf-diis' .and. trim(wf%name_) .eq. 'uhf') then
+      scf = scf_solver(engine%restart, acceleration_type, engine%skip_scf)     
+      call scf%run(wf)
 !
-         call output%error_msg('UHF can not run with mo-scf-diis, try scf-diis.')
+   end subroutine do_ground_state_reference_engine
 !
-      elseif (trim(engine%algorithm) == 'scf-diis') then
 !
-         scf_diis = scf_diis_hf(wf, engine%restart, engine%skip_scf)
-         call scf_diis%run(wf)
+   subroutine check_algorithm_reference_engine(engine)
+!!
+!!    Check algorithm 
+!!    Written by Sarai D. Folkestad, 2020
+!!
+      implicit none
+
+      class(reference_engine), intent(in) :: engine
 !
-      elseif (trim(engine%algorithm) == 'mo-scf-diis') then
+      if (trim(engine%algorithm) .ne. 'scf-diis'    .and. &
+          trim(engine%algorithm) .ne. 'scf'         .and. &
+          trim(engine%algorithm) .ne. 'mo-scf-diis') then
 !
-         mo_scf_diis_ = mo_scf_diis(wf, engine%restart, engine%skip_scf)
-         call mo_scf_diis_%run(wf)
-!
-      elseif (trim(engine%algorithm) == 'scf') then 
-!
-         scf = scf_hf(wf, engine%restart, engine%skip_scf)
-         call scf%run(wf)
-!
-      else
-!
-         call output%error_msg('did not recognize hf algorithm: '// engine%algorithm)
+         call output%error_msg('did not recognize SCF algorithm')
 !
       endif
 !
-   end subroutine do_ground_state_reference_engine
+   end subroutine check_algorithm_reference_engine
 !
 !
 end module reference_engine_class

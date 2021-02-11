@@ -164,7 +164,7 @@ contains
                                               qm_points%q, r,                       &
                                               symmetry_info, host_input,            &
                                               c_funloc(host_writer))
-!    
+!
       else ! get pcm solver input from separate file
 !      
          embedding%pcm_context = pcmsolver_new(PCMSOLVER_READER_OWN,                &

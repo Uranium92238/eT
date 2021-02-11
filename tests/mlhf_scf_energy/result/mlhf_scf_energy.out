@@ -14,26 +14,26 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Nachspiel
+   This is eT version 1.1.0, Bastion
   ------------------------------------------------------------
-  Compiled by:        alexancp
-  Compiled on:        NTNU16748
-  Configuration date: 2020-11-27 09:23:29 UTC +01:00
-  Git branch:         release/1.1
-  Git hash:           af4581f3e8635afcddc73e60492690f00784a9b0
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Compiled by:        sarai
+  Compiled on:        dhcp-10-24-7-39.wlan.ntnu.no
+  Configuration date: 2020-12-03 15:09:39 UTC +01:00
+  Git branch:         streamline-scf-solvers
+  Git hash:           3d9775e5fa78af06f0d1a16dc3fd1ab5cc193b5a
+  Fortran compiler:   GNU 9.2.0
+  C compiler:         GNU 6.3.0
+  C++ compiler:       GNU 9.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2020-11-27 09:31:26 UTC +01:00
+  Calculation started: 2020-12-03 15:11:17 UTC +01:00
 
 
   :: Input file
@@ -75,32 +75,15 @@
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
+  :: MLHF wavefunction
+  =======================
 
-     Name:             2 h2o close
-     Charge:           0
-     Multiplicity:     1
-     Coordinate units: angstrom
+  - MLHF settings:
 
-     Pure basis functions:         38
-     Cartesian basis functions:    38
-     Primitive basis functions:    72
+     Occupied orbitals:    Cholesky
+     Virtual orbitals:     PAOs
 
-     Nuclear repulsion energy (a.u.):             37.386395233393
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
-
-     Active atoms:
-
-     ====================================
-        Atom              Basis   Method
-     ====================================
-        1 O              6-31g*    hf
-        2 H              6-31g*    hf
-        3 H              6-31g*    hf
-     ====================================
-     Total number of active atoms: 3
-     OBS: Atoms will be reordered, active atoms first
+     Cholesky decomposition threshold:  0.10E-01
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -130,25 +113,17 @@
         6 H     -3.031385265460    -1.116752550573    -0.906482724693        6
      ==============================================================================
 
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  :: MLHF wavefunction
-  =======================
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               38
+     Number of orthonormal atomic orbitals:   38
 
-  - MLHF settings:
-
-     Occupied orbitals:    Cholesky
-     Virtual orbitals:     PAOs
-
-     Cholesky decomposition threshold:  0.10E-01
-
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of occupied orbitals:        10
      Number of virtual orbitals:         28
      Number of molecular orbitals:       38
-     Number of atomic orbitals:          38
 
 
   :: Hartree-Fock engine
@@ -168,30 +143,13 @@
 
   2) Calculation of reference state (SCF algorithm)
 
-   - Self-consistent field solver
-  ----------------------------------
+  - SCF solver settings:
 
-  Warning: We recommend to use the SCF-DIIS algorithm instead, which supports 
-  a gradient threshold and typically converges much faster. Use only when 
-  absolutely necessary!
+     Maximum iterations:                     100
+     Gradient threshold:              0.1000E-10
+     Acceleration type:                     none
 
-  A Roothan-Hall self-consistent field solver. In each iteration, the 
-  Roothan-Hall equation (or equations for unrestricted HF theory) are 
-  solved to provide the next orbital coefficients. From the new orbitals, 
-  a new density provides the next Fock matrix. The cycle repeats until 
-  the solution is self-consistent (as measured by the energy change).
-
-  - Hartree-Fock solver settings:
-
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
-
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
-     Integral cutoff:               0.1000E-16
-
-  - Setting initial AO density to SAD
+  - Setting initial AO density to sad
 
      Energy of initial guess:              -151.779405991039
      Number of electrons in guess:           20.000000000000
@@ -202,90 +160,87 @@
       Number of active virtual orbitals:        18
       Number of active orbitals:                23
 
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
+
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -151.977179401563     0.1933E+00     0.1520E+03
-     2          -151.981842532438     0.1012E+00     0.4663E-02
-     3          -151.983351024138     0.6615E-01     0.1508E-02
-     4          -151.983883466742     0.3637E-01     0.5324E-03
-     5          -151.984073735317     0.2324E-01     0.1903E-03
-     6          -151.984142173863     0.1341E-01     0.6844E-04
-     7          -151.984166797618     0.8270E-02     0.2462E-04
-     8          -151.984175669408     0.4879E-02     0.8872E-05
-     9          -151.984178865220     0.2963E-02     0.3196E-05
-    10          -151.984180016875     0.1765E-02     0.1152E-05
-    11          -151.984180431842     0.1065E-02     0.4150E-06
-    12          -151.984180581383     0.6372E-03     0.1495E-06
-    13          -151.984180635270     0.3833E-03     0.5389E-07
-    14          -151.984180654689     0.2298E-03     0.1942E-07
-    15          -151.984180661687     0.1381E-03     0.6998E-08
-    16          -151.984180664208     0.8284E-04     0.2522E-08
-    17          -151.984180665117     0.4974E-04     0.9087E-09
-    18          -151.984180665445     0.2985E-04     0.3275E-09
-    19          -151.984180665563     0.1792E-04     0.1180E-09
-    20          -151.984180665605     0.1076E-04     0.4252E-10
-    21          -151.984180665620     0.6459E-05     0.1529E-10
-    22          -151.984180665626     0.3877E-05     0.5542E-11
-    23          -151.984180665628     0.2328E-05     0.1990E-11
-    24          -151.984180665629     0.1397E-05     0.7105E-12
-    25          -151.984180665629     0.8388E-06     0.1990E-12
-    26          -151.984180665629     0.5035E-06     0.1137E-12
-    27          -151.984180665629     0.3023E-06     0.1421E-12
-    28          -151.984180665629     0.1814E-06     0.1137E-12
-    29          -151.984180665629     0.1089E-06     0.8527E-13
-    30          -151.984180665629     0.6539E-07     0.2842E-13
-    31          -151.984180665629     0.3925E-07     0.2842E-13
-    32          -151.984180665629     0.2356E-07     0.1137E-12
-    33          -151.984180665629     0.1414E-07     0.8527E-13
-    34          -151.984180665629     0.8491E-08     0.5684E-13
-    35          -151.984180665629     0.5097E-08     0.2842E-13
-    36          -151.984180665629     0.3060E-08     0.2842E-13
-    37          -151.984180665629     0.1837E-08     0.5684E-13
-    38          -151.984180665629     0.1103E-08     0.0000E+00
-    39          -151.984180665629     0.6619E-09     0.2842E-13
-    40          -151.984180665629     0.3974E-09     0.5684E-13
-    41          -151.984180665629     0.2386E-09     0.2842E-13
-    42          -151.984180665629     0.1432E-09     0.5684E-13
-    43          -151.984180665629     0.8601E-10     0.5684E-13
-    44          -151.984180665629     0.5171E-10     0.5684E-13
-    45          -151.984180665629     0.3101E-10     0.2842E-13
-    46          -151.984180665629     0.1860E-10     0.2842E-13
-    47          -151.984180665629     0.1119E-10     0.5684E-13
-    48          -151.984180665629     0.6726E-11     0.5684E-13
+     1          -151.950801650891     0.4263E+00     0.1520E+03
+     2          -151.977179401563     0.2067E+00     0.2638E-01
+     3          -151.981842532438     0.1063E+00     0.4663E-02
+     4          -151.983351024138     0.7176E-01     0.1508E-02
+     5          -151.983883466742     0.3986E-01     0.5324E-03
+     6          -151.984073735317     0.2526E-01     0.1903E-03
+     7          -151.984142173863     0.1462E-01     0.6844E-04
+     8          -151.984166797618     0.8995E-02     0.2462E-04
+     9          -151.984175669408     0.5314E-02     0.8872E-05
+    10          -151.984178865220     0.3224E-02     0.3196E-05
+    11          -151.984180016875     0.1922E-02     0.1152E-05
+    12          -151.984180431842     0.1159E-02     0.4150E-06
+    13          -151.984180581383     0.6937E-03     0.1495E-06
+    14          -151.984180635270     0.4172E-03     0.5389E-07
+    15          -151.984180654689     0.2502E-03     0.1942E-07
+    16          -151.984180661687     0.1503E-03     0.6998E-08
+    17          -151.984180664208     0.9017E-04     0.2522E-08
+    18          -151.984180665117     0.5415E-04     0.9087E-09
+    19          -151.984180665445     0.3250E-04     0.3275E-09
+    20          -151.984180665563     0.1951E-04     0.1181E-09
+    21          -151.984180665605     0.1171E-04     0.4260E-10
+    22          -151.984180665621     0.7031E-05     0.1526E-10
+    23          -151.984180665626     0.4220E-05     0.5485E-11
+    24          -151.984180665628     0.2534E-05     0.1990E-11
+    25          -151.984180665629     0.1521E-05     0.6821E-12
+    26          -151.984180665629     0.9130E-06     0.1137E-12
+    27          -151.984180665629     0.5481E-06     0.8527E-13
+    28          -151.984180665629     0.3290E-06     0.0000E+00
+    29          -151.984180665629     0.1975E-06     0.5684E-13
+    30          -151.984180665629     0.1186E-06     0.8527E-13
+    31          -151.984180665629     0.7117E-07     0.8527E-13
+    32          -151.984180665629     0.4273E-07     0.5684E-13
+    33          -151.984180665629     0.2565E-07     0.5684E-13
+    34          -151.984180665629     0.1540E-07     0.5684E-13
+    35          -151.984180665629     0.9243E-08     0.2842E-13
+    36          -151.984180665629     0.5548E-08     0.5684E-13
+    37          -151.984180665629     0.3331E-08     0.1421E-12
+    38          -151.984180665629     0.1999E-08     0.0000E+00
+    39          -151.984180665629     0.1200E-08     0.2842E-13
+    40          -151.984180665629     0.7205E-09     0.0000E+00
+    41          -151.984180665630     0.4325E-09     0.5684E-13
+    42          -151.984180665630     0.2597E-09     0.5684E-13
+    43          -151.984180665630     0.1559E-09     0.5684E-13
+    44          -151.984180665630     0.9358E-10     0.8527E-13
+    45          -151.984180665630     0.5619E-10     0.1137E-12
+    46          -151.984180665630     0.3373E-10     0.1137E-12
+    47          -151.984180665630     0.2025E-10     0.0000E+00
+    48          -151.984180665630     0.1215E-10     0.5684E-13
+    49          -151.984180665630     0.7294E-11     0.2842E-13
   ---------------------------------------------------------------
-  Convergence criterion met in 48 iterations!
+  Convergence criterion met in 49 iterations!
 
   - Summary of MLHF wavefunction energetics (a.u.):
 
      HOMO-LUMO gap:                  0.721516018256
      Nuclear repulsion energy:      37.386395233393
-     Electronic energy:           -189.370575899022
-     Total energy:                -151.984180665629
+     Electronic energy:           -189.370575899023
+     Total energy:                -151.984180665630
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
-     Active energy:               -104.802260473462
+     Active energy:               -104.802260473463
      Active-inactive energy:        19.260929706475
      Inactive energy:             -103.829245132035
 
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.606805934725   7   0.272003447512  13   1.325009090081  19   1.997935207577
-   2  -1.376736255002   8   0.545350871890  14   1.336683253900  20   2.179967289770
-   3  -0.737248463147   9   0.732978367482  15   1.406860872379  21   2.564479452976
-   4  -0.624756009881  10   0.965757783081  16   1.661876562075  22   2.870236989294
-   5  -0.542368082007  11   1.111992448404  17   1.719787469493  23   4.037481287537
-   6   0.179147936249  12   1.125221570451  18   1.993279214022
-  -----------------------------------------------------------------------------------
-
   - Timings for the MLHF ground state calculation
 
-     Total wall time (sec):              1.73520
-     Total cpu time (sec):               3.32658
+     Total wall time (sec):              1.85900
+     Total cpu time (sec):               3.56947
 
-     Peak memory usage during the execution of eT: 159.928 KB
+     Peak memory usage during the execution of eT: 199.728 KB
 
-  Calculation ended: 2020-11-27 09:31:28 UTC +01:00
+  Calculation ended: 2020-12-03 15:11:19 UTC +01:00
 
   eT terminated successfully!

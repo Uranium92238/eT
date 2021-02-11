@@ -14,26 +14,26 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Nachspiel
+   This is eT version 1.1.0, Bastion
   ------------------------------------------------------------
-  Compiled by:        alexancp
-  Compiled on:        NTNU16748
-  Configuration date: 2020-11-26 19:47:10 UTC +01:00
-  Git branch:         always-restart-l-from-r
-  Git hash:           b27c502fa8a19f78bb56d8c82213e7b5136821fe
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Compiled by:        sarai
+  Compiled on:        dhcp-10-24-7-39.wlan.ntnu.no
+  Configuration date: 2020-12-03 15:09:39 UTC +01:00
+  Git branch:         streamline-scf-solvers
+  Git hash:           3d9775e5fa78af06f0d1a16dc3fd1ab5cc193b5a
+  Fortran compiler:   GNU 9.2.0
+  C compiler:         GNU 6.3.0
+  C++ compiler:       GNU 9.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2020-11-27 09:07:27 UTC +01:00
+  Calculation started: 2020-12-03 15:11:22 UTC +01:00
 
 
   :: Input file
@@ -79,32 +79,15 @@
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
+  :: MLHF wavefunction
+  =======================
 
-     Name:             2 h2o close
-     Charge:           0
-     Multiplicity:     1
-     Coordinate units: angstrom
+  - MLHF settings:
 
-     Pure basis functions:         48
-     Cartesian basis functions:    50
-     Primitive basis functions:    98
+     Occupied orbitals:    Cholesky
+     Virtual orbitals:     PAOs
 
-     Nuclear repulsion energy (a.u.):             37.386395233393
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
-
-     Active atoms:
-
-     ====================================
-        Atom              Basis   Method
-     ====================================
-        1 O             cc-pvdz    hf
-        2 H             cc-pvdz    hf
-        3 H             cc-pvdz    hf
-     ====================================
-     Total number of active atoms: 3
-     OBS: Atoms will be reordered, active atoms first
+     Cholesky decomposition threshold:  0.10E-01
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -134,25 +117,17 @@
         6 H     -3.031385265460    -1.116752550573    -0.906482724693        6
      ==============================================================================
 
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  :: MLHF wavefunction
-  =======================
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               48
+     Number of orthonormal atomic orbitals:   48
 
-  - MLHF settings:
-
-     Occupied orbitals:    Cholesky
-     Virtual orbitals:     PAOs
-
-     Cholesky decomposition threshold:  0.10E-01
-
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of occupied orbitals:        10
      Number of virtual orbitals:         38
      Number of molecular orbitals:       48
-     Number of atomic orbitals:          48
 
 
   :: Hartree-Fock engine
@@ -172,27 +147,13 @@
 
   2) Calculation of reference state (MO-SCF-DIIS algorithm)
 
-   - MO Self-consistent field DIIS Hartree-Fock solver
-  -------------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
+     Maximum iterations:                     100
+     Gradient threshold:              0.1000E-10
+     Acceleration type:                     diis
 
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
-
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
-     Integral cutoff:               0.1000E-16
-
-  - Setting initial AO density to SAD
+  - Setting initial AO density to sad
 
      Energy of initial guess:              -151.796506244372
      Number of electrons in guess:           20.000000000000
@@ -203,61 +164,59 @@
       Number of active virtual orbitals:        24
       Number of active orbitals:                29
 
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS convergence acceleration:
+
+     DIIS dimension:   8
+
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -151.588800438698     0.2161E+00     0.1516E+03
-     2          -151.601725994917     0.1316E+00     0.1293E-01
-     3          -151.605163926717     0.1530E-01     0.3438E-02
-     4          -151.605296875270     0.1865E-02     0.1329E-03
-     5          -151.605298664112     0.2553E-03     0.1789E-05
-     6          -151.605298715585     0.1055E-03     0.5147E-07
-     7          -151.605298722048     0.2946E-04     0.6463E-08
-     8          -151.605298722506     0.3778E-05     0.4585E-09
-     9          -151.605298722515     0.5719E-06     0.8896E-11
-    10          -151.605298722515     0.2475E-06     0.2274E-12
-    11          -151.605298722515     0.5146E-07     0.8527E-13
-    12          -151.605298722515     0.2124E-07     0.5684E-13
-    13          -151.605298722515     0.5459E-08     0.2842E-13
-    14          -151.605298722516     0.8547E-09     0.5684E-13
-    15          -151.605298722515     0.1968E-09     0.2842E-13
-    16          -151.605298722516     0.3203E-10     0.5684E-13
-    17          -151.605298722516     0.2832E-11     0.2842E-13
+     1          -151.146033993475     0.2941E+01     0.1511E+03
+     2          -151.588800438698     0.2131E+00     0.4428E+00
+     3          -151.601511484079     0.9891E-01     0.1271E-01
+     4          -151.605204221840     0.1491E-01     0.3693E-02
+     5          -151.605297496948     0.1655E-02     0.9328E-04
+     6          -151.605298674775     0.2861E-03     0.1178E-05
+     7          -151.605298715459     0.1229E-03     0.4068E-07
+     8          -151.605298722100     0.3175E-04     0.6641E-08
+     9          -151.605298722507     0.3797E-05     0.4066E-09
+    10          -151.605298722515     0.6827E-06     0.7560E-11
+    11          -151.605298722515     0.7750E-07     0.2558E-12
+    12          -151.605298722515     0.2317E-07     0.2842E-13
+    13          -151.605298722515     0.4565E-08     0.2842E-13
+    14          -151.605298722515     0.9609E-09     0.0000E+00
+    15          -151.605298722515     0.2428E-09     0.5684E-13
+    16          -151.605298722515     0.2757E-10     0.2842E-13
+    17          -151.605298722515     0.3779E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
   - Summary of MLHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.692127597682
+     HOMO-LUMO gap:                  0.692127597680
      Nuclear repulsion energy:      37.386395233393
-     Electronic energy:           -188.991693955909
-     Total energy:                -151.605298722516
+     Electronic energy:           -188.991693955908
+     Total energy:                -151.605298722515
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
-     Active energy:               -105.136992188615
-     Active-inactive energy:        19.848422490294
+     Active energy:               -105.136992188611
+     Active-inactive energy:        19.848422490290
      Inactive energy:             -103.703124257587
-
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.584986436602   9   0.742419012127  17   1.634987027074  25   3.259395614454
-   2  -1.391538580087  10   0.827698754554  18   1.717720625516  26   3.281287885708
-   3  -0.722070284631  11   1.140648852515  19   1.851872157032  27   3.466640371774
-   4  -0.612509666476  12   1.204308534181  20   1.927210588642  28   3.832610521980
-   5  -0.529564452929  13   1.206368810175  21   2.164951662085  29   4.107947493893
-   6   0.162563144753  14   1.341268929370  22   2.382670607428
-   7   0.235746054624  15   1.451689736101  23   2.420941620837
-   8   0.589720368181  16   1.544516931293  24   2.640300970240
-  -----------------------------------------------------------------------------------
 
   - Timings for the MLHF ground state calculation
 
-     Total wall time (sec):              3.96848
-     Total cpu time (sec):               7.78884
+     Total wall time (sec):              2.38000
+     Total cpu time (sec):               4.52660
 
-     Peak memory usage during the execution of eT: 321.584 KB
+     Peak memory usage during the execution of eT: 398.736 KB
 
-  Calculation ended: 2020-11-27 09:07:31 UTC +01:00
+  Calculation ended: 2020-12-03 15:11:24 UTC +01:00
 
   eT terminated successfully!
