@@ -3288,7 +3288,7 @@ contains
       real(dp), dimension(:), allocatable :: eigenvalues
 !
       integer  :: info, i, block_, offset, index_max
-      real(dp) :: worksize 
+      real(dp), dimension(1) :: worksize
       logical  :: local_flip_vectors
 !
       local_flip_vectors = .true.
@@ -3317,7 +3317,7 @@ contains
 !
 !           Diagonalize block
 !
-            call mem%alloc(work, int(worksize))
+            call mem%alloc(work, int(worksize(1)))
 !
             call dsyev('V','U',              &
                         block_dim(block_),   &
@@ -3325,7 +3325,7 @@ contains
                         n_total,             &
                         eigenvalues,         &
                         work,                &
-                        int(worksize),       &
+                        int(worksize(1)),    &
                         info)
 !
             if (info .ne. 0) then
@@ -3333,7 +3333,7 @@ contains
                                     ' "Dsyev" finished with info: (i0)', ints=[info])
             end if
 !
-            call mem%dealloc(work, int(worksize))
+            call mem%dealloc(work, int(worksize(1)))
 !
 !           Convention for eigenvectors of block, maximum element is positive
 !
