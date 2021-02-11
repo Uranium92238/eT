@@ -3,10 +3,6 @@ system
    charge: 0
    multiplicity: 3
 end system
- 
-print 
-   output print level: verbose 
-end print
 
 method
    uhf

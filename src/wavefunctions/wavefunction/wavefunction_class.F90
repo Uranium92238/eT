@@ -50,6 +50,7 @@ module wavefunction_class
       integer :: n_v  ! Number of virtual orbbitals 
 !
       logical :: embedded
+!
       class(environment), allocatable :: embedding
 
       class(ao_tool), allocatable :: ao
@@ -167,7 +168,6 @@ module wavefunction_class
 !
 contains
 !
-!
    subroutine prepare_ao_tool_and_embedding_wavefunction(wf, centers, embedding)
 !!
 !!    Prepare AOs and embedding 
@@ -222,7 +222,7 @@ contains
 !!
 !!    Sets the position of the atomic nuclei. 
 !!
-!!       R:     (3 x n_atomic_centers) array containing the Cartesian coordinates of the atoms 
+!!       R:     (3 x n_atoms) array containing the Cartesian coordinates of the atoms 
 !!       units: specifies units of R ('angstrom' or 'bohr')
 !!
 !!    This includes updating the atomic centers of the AO tool 

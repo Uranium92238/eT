@@ -31,24 +31,6 @@ submodule (uhf_class) ao_fock
 contains
 !
 !
-   module subroutine construct_mo_fock_uhf(wf)
-!!
-!!    Construct MO Fock
-!!    Written by Eirik F. Kjønstad, Mar 2019
-!!
-!!    Give notice to user that it does not yet exist.
-!!
-      implicit none
-!
-      class(uhf), intent(inout) :: wf
-!
-      call output%printf('m', 'Requested MO transformation of Fock matrix, but &
-                         &this is not yet implemented for (a0).', &
-                         chars=[trim(wf%name_)], ffs='(/t3,a)')
-!
-   end subroutine construct_mo_fock_uhf
-!
-!
    module subroutine update_fock_and_energy_cumulative_uhf(wf, prev_ao_density)
 !!
 !!    Update Fock and energy cumulatively
@@ -66,6 +48,8 @@ contains
       real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in) :: prev_ao_density
 !
       logical :: cumulative
+!
+      call output%printf('v', 'Fock matrix construction using density differences')
 !
 !     Here, the previous AO density is sent as [D_a D_b],
 !     where each is full square
@@ -138,7 +122,7 @@ contains
    end subroutine update_fock_and_energy_non_cumulative_uhf
 !
 !
-   module subroutine update_fock_and_energy_uhf(wf, prev_ao_density)
+   module subroutine update_fock_and_energy_uhf(wf)
 !!
 !!    Update Fock and energy wrapper
 !!    Written by Tommaso Giovannini, July 2019
@@ -150,9 +134,7 @@ contains
 !
       class(uhf) :: wf
 !
-      real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in), optional :: prev_ao_density
-!
-      if (.not. present(prev_ao_density)) then 
+      if (.not. wf%do_cumulative_fock()) then
 !
           call wf%update_fock_and_energy_non_cumulative()
 !
@@ -164,11 +146,13 @@ contains
 !            
          else 
 !         
-            call wf%update_fock_and_energy_cumulative(prev_ao_density)
+            call wf%update_fock_and_energy_cumulative(wf%previous_ao_density)
 !         
          endif
 !
       endif
+!
+      wf%fock_matrix_computed = .true.
 !
       call wf%calculate_uhf_energy(wf%ao%h)
 !      

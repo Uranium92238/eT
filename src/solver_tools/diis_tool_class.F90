@@ -135,6 +135,9 @@ module diis_tool_class
       procedure :: finalize_storers                => finalize_storers_diis_tool
 !
       procedure :: get_dim_G                       => get_dim_G_diis_tool
+      procedure :: get_dimension                   => get_dimension_diis_tool
+!
+      procedure :: print_settings                  => print_settings_diis_tool
 !
       procedure, private :: construct_padded_G              &
                          => construct_padded_G_diis_tool
@@ -214,16 +217,16 @@ contains
       logical, intent(in), optional :: erase_history
       logical, intent(in), optional :: crop
 !
-      diis%name_            = trim(name_)
-      diis%n_parameters     = n_parameters
-      diis%n_equations      = n_equations
+      diis%name_           = trim(name_)
+      diis%n_parameters    = n_parameters
+      diis%n_equations     = n_equations
  !
-      diis%iteration        = 1 
-      diis%dimension_       = 8
+      diis%iteration       = 1 
+      diis%dimension_      = 8
 !
-      diis%accumulate       = .true. 
-      diis%erase_history    = .false. 
-      diis%crop             = .false. 
+      diis%accumulate      = .true. 
+      diis%erase_history   = .false. 
+      diis%crop            = .false. 
 !
       if (present(accumulate)) then 
 !
@@ -361,7 +364,7 @@ contains
       real(dp), dimension(diis%n_parameters) :: x
 !
       integer :: info
-      integer :: dim_G 
+      integer :: dim_G
 !
       real(dp), dimension(:), allocatable   :: padded_H
       real(dp), dimension(:,:), allocatable :: padded_G
@@ -596,6 +599,22 @@ contains
       endif
 !
    end function get_dim_G_diis_tool
+!
+!
+   function get_dimension_diis_tool(diis)
+!!
+!!    Get dimension 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+      implicit none
+!
+      class(diis_tool) :: diis
+!
+      integer :: get_dimension_diis_tool
+!
+      get_dimension_diis_tool = diis%dimension_
+!
+   end function get_dimension_diis_tool
 !
 !
    subroutine write_e_and_x_diis_tool(diis, e, x, dim_G)
@@ -1019,6 +1038,36 @@ contains
       enddo 
 !
    end subroutine cycle_left_diis_tool
+!
+!
+   subroutine print_settings_diis_tool(diis)
+!!
+!!    Print settings
+!!    Written by Sarai D. Folkestad, 2020
+!!
+      implicit none
+!
+      class(diis_tool), intent(inout)  :: diis
+!
+      call output%printf('n', '- DIIS convergence acceleration:', fs='(/t3,a)')
+!
+      call output%printf('m', 'DIIS dimension: (i3)', &
+                         ints=[diis%dimension_], fs='(/t6,a)')
+!
+      if (diis%crop) then 
+!
+        call output%printf('m', 'Enabled CROP in the DIIS algorithm.', fs='(/t6,a)')
+!
+      endif
+!
+      if (diis%erase_history) then 
+!
+        call output%printf('v', 'DIIS history deleted when &
+              &full DIIS dimension is reached.', fs='(/t6,a)')
+!
+      endif
+!
+   end subroutine print_settings_diis_tool
 !
 !
 end module diis_tool_class

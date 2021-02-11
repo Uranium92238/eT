@@ -40,6 +40,8 @@ module hf_class
    use interval_class,        only : interval
    use omp_lib
 !
+   use stream_file_class, only: stream_file
+!
    implicit none
 !
 !  Hartree-Fock hf
@@ -47,6 +49,7 @@ module hf_class
    type, extends(wavefunction) :: hf
 !
       real(dp), dimension(:,:), allocatable :: ao_density
+      real(dp), dimension(:,:,:), allocatable :: previous_ao_density
 !
       integer :: n_densities ! For RHF, there is one AO density. 
                              ! For UHF, there are two AO densities (alpha, beta).
@@ -54,6 +57,8 @@ module hf_class
       real(dp) :: coulomb_threshold  = 1.0D-12   ! Screening threshold (Fock, Coulomb)
       real(dp) :: exchange_threshold = 1.0D-10   ! Screening threshold (Fock, exchange)
       real(dp) :: integral_cutoff    = 1.0D-12   ! Default: sqrt(epsilon) 
+!
+      real(dp) :: cumulative_fock_threshold = 1.0d0
 !
       real(dp), dimension(:,:), allocatable :: W_mo_update ! Eigenvectors for 
                                                            ! Roothan-Hall in MO basis
@@ -67,44 +72,32 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_frozen_hf
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_fc
 !
-      type(sequential_file) :: orbital_coefficients_file
-      type(sequential_file) :: orbital_energies_file
+      type(stream_file)     :: orbital_file
 !
       logical :: frozen_core
       logical :: frozen_hf_mos
 !
-!     Restart files 
-!
-      type(sequential_file) :: restart_file
-      type(sequential_file) :: orbital_information_file
+      logical :: fock_matrix_computed
 !
       logical :: plot_active_density
 !
+      integer :: gradient_dimension
       type(output_file) :: mo_information_file
 !
    contains
 !
       procedure :: print_banner                                => print_banner_hf
-!
       procedure :: print_summary                               => print_summary_hf
-!
       procedure :: print_energy                                => print_energy_hf
 !
 !     Read, save of orbital energies and coefficients 
 !
-      procedure :: read_orbital_coefficients                   => read_orbital_coefficients_hf
-      procedure :: save_orbital_coefficients                   => save_orbital_coefficients_hf
-      procedure :: read_orbital_energies                       => read_orbital_energies_hf
-      procedure :: save_orbital_energies                       => save_orbital_energies_hf
+      procedure :: read_orbitals                               => read_orbitals_hf
+      procedure :: save_orbitals                               => save_orbitals_hf
 !
 !     Read, write restart information, and check for safe restart 
 !
       procedure :: read_for_scf_restart                        => read_for_scf_restart_hf
-      procedure :: read_for_scf_restart_mo                     => read_for_scf_restart_mo_hf
-      procedure :: is_restart_safe                             => is_restart_safe_hf
-      procedure :: write_scf_restart                           => write_scf_restart_hf
-      procedure :: write_orbital_information                   => write_orbital_information_hf
-      procedure :: is_restart_possible                         => is_restart_possible_hf
 !
 !     Preparation and cleanup routines
 !
@@ -127,10 +120,8 @@ module hf_class
       procedure :: construct_coulomb_ao_G                      => construct_coulomb_ao_G_hf
       procedure :: construct_exchange_ao_G                     => construct_exchange_ao_G_hf
 !
-      procedure :: construct_mo_fock                           => construct_mo_fock_hf
       procedure :: set_ao_fock                                 => set_ao_fock_hf
       procedure :: get_ao_fock                                 => get_ao_fock_hf
-      procedure :: get_fock_ov                                 => get_fock_ov_hf
       procedure :: calculate_hf_energy_from_fock               => calculate_hf_energy_from_fock_hf
       procedure :: calculate_hf_energy_from_G                  => calculate_hf_energy_from_G_hf
       procedure :: initialize_fock                             => initialize_fock_hf
@@ -158,9 +149,7 @@ module hf_class
 !
 !     MO orbital related routines
 !
-      procedure :: do_roothan_hall                             => do_roothan_hall_hf
       procedure :: initialize_orbitals                         => initialize_orbitals_hf
-      procedure :: roothan_hall_update_orbitals                => roothan_hall_update_orbitals_hf
       procedure :: print_orbitals_and_energies                 => print_orbitals_and_energies_hf
       procedure :: save_orbital_info                           => save_orbital_info_hf
       procedure :: print_orbitals_from_coefficients            => print_orbitals_from_coefficients_hf
@@ -176,7 +165,6 @@ module hf_class
 !
       procedure :: construct_roothan_hall_gradient             => construct_roothan_hall_gradient_hf
       procedure :: get_packed_roothan_hall_gradient            => get_packed_roothan_hall_gradient_hf
-      procedure :: get_max_roothan_hall_gradient               => get_max_roothan_hall_gradient_hf
 !
       procedure :: construct_molecular_gradient                => construct_molecular_gradient_hf
 !
@@ -216,32 +204,42 @@ module hf_class
       procedure :: diagonalize_fock_frozen_hf_orbitals         => diagonalize_fock_frozen_hf_orbitals_hf
       procedure :: get_n_active_hf_atoms                       => get_n_active_hf_atoms_hf
 !
-!     MO-SCF routines
-!
-      procedure :: get_max_roothan_hall_mo_gradient            => get_max_roothan_hall_mo_gradient_hf
-!  
-      procedure :: update_fock_and_energy_mo                   => update_fock_and_energy_mo_hf
-      procedure :: get_roothan_hall_mo_gradient                => get_roothan_hall_mo_gradient_hf
-!  
-      procedure :: do_roothan_hall_mo                          => do_roothan_hall_mo_hf
-!  
-      procedure :: initialize_W_mo_update                      => initialize_W_mo_update_hf
-      procedure :: destruct_W_mo_update                        => destruct_W_mo_update_hf
-!  
-      procedure :: roothan_hall_update_orbitals_mo             => roothan_hall_update_orbitals_mo_hf
-      procedure :: prepare_for_roothan_hall_mo                 => prepare_for_roothan_hall_mo_hf
-!
       procedure :: flip_final_orbitals                         => flip_final_orbitals_hf
+!
+      procedure :: prepare_for_scf => prepare_for_scf_hf
+      procedure :: get_energy => get_energy_hf
+!
+      procedure :: get_F => get_F_hf
+      procedure :: get_gradient => get_gradient_hf
+      procedure :: set_C_and_e => set_C_and_e_hf
+      procedure :: set_orbital_coefficients_from_reduced_ao_C &
+                => set_orbital_coefficients_from_reduced_ao_C_hf
+!
+      procedure :: set_orbital_coefficients_from_orthonormal_ao_C &
+                => set_orbital_coefficients_from_orthonormal_ao_C_hf
+!
+      procedure :: construct_initial_idempotent_density &
+                => construct_initial_idempotent_density_hf
+!
+      procedure, non_overridable :: ao_to_orthonormal_ao_transformation => ao_to_orthonormal_ao_transformation_hf
+!
+      procedure :: ao_to_reduced_ao_transformation &
+                => ao_to_reduced_ao_transformation_hf
+!
+      procedure :: do_cumulative_fock => do_cumulative_fock_hf
+!
+      procedure :: is_restart_possible => is_restart_possible_hf
 !
       procedure :: calculate_frozen_dipole_moment              => calculate_frozen_dipole_moment_hf
       procedure :: calculate_frozen_quadrupole_moment          => calculate_frozen_quadrupole_moment_hf
+!
+      procedure :: control_gradient_convergence                => control_gradient_convergence_hf
 !
    end type hf
 !
    interface
 !
       include "frozen_orbital_hf_interface.F90"
-      include "mo_hf_interface.F90"
       include "ao_fock_hf_interface.F90"
       include "set_get_hf_interface.F90"
       include "file_handling_hf_interface.F90"
@@ -271,6 +269,9 @@ contains
 !
       wf%name_ = 'rhf'
 !
+      wf%cumulative_fock_threshold  = 1.0d0
+      wf%fock_matrix_computed       = .false.
+!
       call wf%read_settings()
       call wf%print_banner()
 !
@@ -286,68 +287,10 @@ contains
 !
       class(hf) :: wf
 !
-      call wf%read_orbital_coefficients()
+      call wf%read_orbitals()
       call wf%update_ao_density()
-      call wf%read_orbital_energies()
 !
    end subroutine read_for_scf_restart_hf
-!
-!
-   subroutine is_restart_safe_hf(wf)
-!!
-!!    Is restart safe?
-!!    Written by Eirik F. Kjønstad, Mar 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      integer :: n_ao, n_densities, n_electrons
-!
-      call wf%restart_file%open_('read', 'rewind')
-!
-      call wf%restart_file%read_(n_ao)
-      call wf%restart_file%read_(n_densities)
-      call wf%restart_file%read_(n_electrons)
-!
-      call wf%restart_file%close_
-!
-      if (n_ao .ne. wf%ao%n) then
-         call output%error_msg('Attempted to restart HF with an inconsistent number ' // &
-                               'of atomic orbitals.')
-      endif
-!
-      if (n_densities .ne. wf%n_densities) then
-         call output%error_msg('Attempted to restart HF with an inconsistent number ' // &
-                               'of atomic densities (likely a HF/UHF inconsistency).')
-      endif
-!
-      if (n_electrons .ne. wf%ao%get_n_electrons()) then
-         call output%error_msg('Attempted to restart HF with an inconsistent number ' // &
-                               'of electrons.')
-      endif
-!
-   end subroutine is_restart_safe_hf
-!
-!
-   function is_restart_possible_hf(wf) result(restart_is_possible)
-!!
-!!    Is restart possible
-!!    Written by Alexander C. Paul, Okt 2020
-!!
-!!    Checks if restart files exist
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      logical :: restart_is_possible
-!
-      restart_is_possible = (wf%restart_file%exists() &
-                       .and. wf%orbital_coefficients_file%exists() &
-                       .and. wf%orbital_energies_file%exists())
-!
-   end function is_restart_possible_hf
 !
 !
    subroutine print_energy_hf(wf)
@@ -522,6 +465,8 @@ contains
 !!       orbital_coefficients: (n_ao, n_mo) array containing orbital coefficients
 !!       the_file:             output file where the coefficients are to be printed
 !!
+      use output_file_class, only: output_file
+!
       implicit none
 !
       class(hf),                             intent(in) :: wf
@@ -540,9 +485,9 @@ contains
 !
 !        Print the current set of MO vectors 
 !
-         call wf%ao%print_ao_vectors(C        = orbital_coefficients(:, first_mo : last_mo),   &
-                                     out_file = wf%mo_information_file,                        &
-                                     m        = last_mo - first_mo + 1,                        &
+         call wf%ao%print_ao_vectors(C        = orbital_coefficients(:, first_mo : last_mo),&
+                                     out_file = wf%mo_information_file,                     &
+                                     m        = last_mo - first_mo + 1,                     &
                                      offset   = first_mo - 1)
 !
       enddo
@@ -585,25 +530,9 @@ contains
 !
       endif
 !
+      call zero_array(wf%previous_ao_density, wf%ao%n**2*wf%n_densities)
+!
    end subroutine set_initial_ao_density_guess_hf
-!
-!
-   subroutine roothan_hall_update_orbitals_hf(wf)
-!!
-!!    Roothan-Hall update of orbitals
-!!    Written by Eirik F. Kjønstad, Sep 2018
-!!
-!!    This routine guides the construction of new orbital coefficients
-!!    from the current AO Fock matrix (or matrices if the hf
-!!    is unrestricted).
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies)
-!
-   end subroutine roothan_hall_update_orbitals_hf
 !
 !
    subroutine update_ao_density_hf(wf)
@@ -617,6 +546,8 @@ contains
       implicit none
 !
       class(hf) :: wf
+!
+      call dcopy(wf%ao%n**2, wf%ao_density, 1, wf%previous_ao_density, 1)
 !
       call wf%construct_ao_density()
 !
@@ -641,7 +572,6 @@ contains
       call wf%destruct_fock()
       call wf%destruct_ao_density()
 !
-      call wf%destruct_W_mo_update()
       call wf%destruct_mo_fock()
 !
       call wf%destruct_mo_fock_frozen()
@@ -940,33 +870,6 @@ contains
    end subroutine get_packed_roothan_hall_gradient_hf
 !
 !
-   function get_max_roothan_hall_gradient_hf(wf) result(max_gradient)
-!!
-!!    Get max Roothan-Hall gradient
-!!    Written by Sarai D. Folkestad, 2019
-!!
-!!    Constructs and returns the absolute maximum
-!!    of the HF gradient
-!!
-      implicit none
-!
-      class(hf), intent(in) :: wf
-!
-      real(dp) :: max_gradient
-!
-      real(dp), dimension(:), allocatable :: G
-!
-      call mem%alloc(G, wf%ao%n*(wf%ao%n - 1)/2*wf%n_densities)
-!
-      call wf%get_packed_roothan_hall_gradient(G)
-!
-      max_gradient = get_abs_max(G, wf%ao%n*(wf%ao%n - 1)/2*wf%n_densities)
-!
-      call mem%dealloc(G, wf%ao%n*(wf%ao%n - 1)/2*wf%n_densities)
-!
-   end function get_max_roothan_hall_gradient_hf
-!
-!
    subroutine construct_roothan_hall_gradient_hf(wf, G, Po, Pv, F)
 !!
 !!    Construct Roothan-Hall gradient
@@ -1020,7 +923,7 @@ contains
 !
 !     Transform G_ao to OAO pivot basis: G = P^T G_ao P 
 !
-      call wf%ao%oao_pivot_basis_transformation(G_ao, G)
+      call wf%ao%orthonormal_ao_pivot_basis_transformation(G_ao, G)
 !
       call mem%dealloc(G_ao, wf%ao%n, wf%ao%n)
 !
@@ -1028,92 +931,6 @@ contains
 !
    end subroutine construct_roothan_hall_gradient_hf
 !
-!
-   subroutine do_roothan_hall_hf(wf, F, C, e)
-!!
-!!    Do Roothan-Hall
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Solves the equation F C = S C e for the orbital coefficients C.
-!!    More precisely, it solves the equation in a linearly independent
-!!    subspace,
-!!
-!!       P^T F P (P^T C) = P^T S P P^T C e = L L^T (P^T C) e,
-!!
-!!    which differs from the AO basis if linear dependence is present
-!!    to within some given threshold. The components of the equation is
-!!    given by the Cholesky decomposition
-!!
-!!       P^T S P = L L^T,
-!!
-!!    where P is referred to as the 'permutation matrix' and L the 'cholesky
-!!    ao overlap' (note that these are member variables of the solver which
-!!    must be set by a call to solver%decompose_ao_overlap(wf)). The number
-!!    of linearly independent orbitals is wf%n_mo, whereas the full number
-!!    is wf%ao%n.
-!!
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)     :: F
-      real(dp), dimension(wf%ao%n, wf%n_mo), intent(inout)  :: C
-      real(dp), dimension(wf%n_mo), intent(inout)           :: e
-!
-      real(dp), dimension(:), allocatable   :: work
-!
-      real(dp), dimension(:,:), allocatable :: S_p
-      real(dp), dimension(:,:), allocatable :: F_p
-!
-      integer :: info
-!
-      type(timings), allocatable :: timer 
-!
-      timer = timings('Solve FC = SCe', 'verbose')
-      call timer%turn_on()
-!
-!     Construct reduced space OAO pivot metric and Fock,
-!     F_p = P^T F P and S_p = P^T S P = L L^T
-!
-      call mem%alloc(S_p, wf%n_mo, wf%n_mo)
-      call mem%alloc(F_p, wf%n_mo, wf%n_mo)
-!
-      call wf%ao%oao_pivot_basis_transformation(wf%ao%s, S_p)
-      call wf%ao%oao_pivot_basis_transformation(F, F_p)
-!
-!     Solve F'C' = L L^T C' e
-!
-      info = 0
-!
-      call mem%alloc(work, 4*wf%n_mo)
-      call zero_array(work, 4*wf%n_mo)
-!
-      call dsygv(1, 'V', 'L',       &
-                  wf%n_mo,          &
-                  F_p,              & ! ao_fock on entry, orbital coefficients on exit
-                  wf%n_mo,          &
-                  S_p,              &
-                  wf%n_mo,          &
-                  e,                &
-                  work,             &
-                  4*(wf%n_mo),      &
-                  info)
-!
-      call mem%dealloc(S_p, wf%n_mo, wf%n_mo)
-      call mem%dealloc(work, 4*wf%n_mo)
-!
-      if (info .ne. 0) call output%error_msg('Could not solve Roothan-Hall equations.')
-!
-!     Transform back the solutions to original basis, C = P (P^T C) = P C'
-!
-      call wf%ao%oao_pivot_transformation(F_p, C)
-!
-      call mem%dealloc(F_p, wf%n_mo, wf%n_mo)
-!
-      call timer%turn_off()
-!
-   end subroutine do_roothan_hall_hf
 !
 !
    function get_n_electrons_in_density_hf(wf) result(n)
@@ -1158,8 +975,8 @@ contains
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: h_wx
 !
       call dcopy(wf%ao%n**2, h_wx, 1, wf%ao_fock, 1)
-      call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies)
-      call wf%construct_ao_density()
+!
+      call wf%construct_initial_idempotent_density()
 !
    end subroutine set_ao_density_to_core_guess_hf
 !
@@ -1173,6 +990,9 @@ contains
 !
       class(hf) :: wf
 !
+      call output%printf('n', '- Screening and integral thresholds:', &
+                        fs='(/t3,a)')
+!
       call output%printf('n', 'Coulomb screening threshold:  (e11.4)', &
                          reals=[wf%coulomb_threshold], fs='(/t6,a)')
 !
@@ -1181,6 +1001,9 @@ contains
 !
       call output%printf('n', 'Integral cutoff:              (e11.4)', &
                          reals=[wf%integral_cutoff], fs='(t6,a)')
+!
+      call output%printf('n', 'Cumulative Fock threshold:    (e11.4)', &
+                         reals=[wf%cumulative_fock_threshold], fs='(t6,a)')
 !
    end subroutine print_screening_settings_hf
 !
@@ -1194,7 +1017,7 @@ contains
 !
       class(hf) :: wf
 !
-      wf%n_mo = wf%ao%get_n_oao()
+      wf%n_mo = wf%ao%get_n_orthonormal_ao()
 !
       wf%n_o = (wf%ao%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
@@ -1295,7 +1118,7 @@ contains
       call h_timer%turn_on()
 !
       call wf%ao%get_oei_1der('kinetic', h_wxqk)
-
+!
       call mem%alloc(h_wxqk_nuc, wf%ao%n, wf%ao%n, 3, wf%n_atomic_centers)
 
       call wf%ao%get_oei_1der('nuclear', h_wxqk_nuc)
@@ -1413,11 +1236,7 @@ contains
       call output%printf('m', 'Number of electrons in guess: (f25.12)', &
                          reals=[n_electrons], fs='(t6, a)')
 !
-!     Update the orbitals and density to make sure the density is idempotent
-!     (not the case for the standard atomic superposition density)
-!
-      call wf%roothan_hall_update_orbitals() ! F => C
-      call wf%update_ao_density() ! C => D
+      call wf%construct_initial_idempotent_density()
 !
    end subroutine prepare_for_roothan_hall_hf
 !
@@ -1440,16 +1259,15 @@ contains
 !
       logical, intent(in), optional :: embedding 
 !
+      wf%orbital_file = stream_file('orbital_coefficients')
+!
       call wf%prepare_ao_tool_and_embedding(centers, embedding)
 !
       wf%n_densities = 1
 !
       call wf%set_n_mo()
 !
-      wf%orbital_coefficients_file = sequential_file('orbital_coefficients')
-      wf%orbital_energies_file = sequential_file('orbital_energies')
-!
-      wf%restart_file = sequential_file('scf_restart_file')
+      wf%gradient_dimension = wf%n_mo*(wf%n_mo - 1)/2
 !
    end subroutine prepare_hf
 !
@@ -1661,6 +1479,541 @@ contains
 !
       enddo
 !
+      call wf%save_orbitals()
+!
    end subroutine flip_final_orbitals_hf
+!
+!
+   subroutine prepare_for_scf_hf(wf, restart, skip, ao_density_guess, &
+      gradient_threshold, dim_, n_densities, gradient_dimension)
+!!
+!!    Prepare for SCF
+!!    Written by Sarai D. Folkestad
+!!
+!!    1. Start guess
+!!
+!!    2. Sets dimensions
+!!
+!!    3. Prints screenings
+!!
+      implicit none
+!
+      class(hf)                     :: wf
+!
+      logical, intent(in)           :: restart   
+      logical, intent(in)           :: skip   
+      character(len=*), intent(in)  :: ao_density_guess 
+      real(dp)                      :: gradient_threshold
+      integer, intent(out)          :: dim_
+      integer, intent(out)          :: n_densities
+      integer, intent(out)          :: gradient_dimension
+!
+      wf%fock_matrix_computed = .false. 
+!
+      call wf%set_screening_and_precision_thresholds(gradient_threshold)
+!
+      call wf%initialize_orbitals()
+      call wf%initialize_density()
+      call wf%initialize_fock()
+!
+      call zero_array(wf%ao_density, wf%ao%n**2)
+!
+      if (restart .or. skip) then
+!
+         call output%printf('m', '- Requested restart. Reading orbitals from file', &
+                            fs='(/t3,a)')
+!
+         call wf%read_for_scf_restart()
+!
+         if (skip) then
+
+            if (.not. wf%control_gradient_convergence(gradient_threshold)) &
+               call output%error_msg('cannot skip scf when gradient has not converged.')
+         endif
+!
+      else 
+!
+         call output%printf('m', '- Setting initial AO density to &
+                            &'//trim(ao_density_guess), fs='(/t3,a)')
+!
+         call wf%set_initial_ao_density_guess(ao_density_guess)
+         call wf%prepare_for_roothan_hall()
+!
+      endif 
+!
+      dim_ = wf%n_mo
+      n_densities = wf%n_densities
+      gradient_dimension = wf%gradient_dimension
+!
+      call wf%print_screening_settings()
+!
+   end subroutine prepare_for_scf_hf
+!
+!
+   function get_energy_hf(wf) result(E)
+!!
+!!    Get energy
+!!    Written by Sarai D. Folkestad, 2020
+!!
+      implicit none
+!
+      class(hf) :: wf
+      real(dp)  :: E
+!
+      E = wf%energy
+!
+   end function get_energy_hf
+!
+!
+   subroutine set_C_and_e_hf(wf, C, e)
+!!
+!!    Set C and e
+!!    Written by Sarai D. Folkestad, 2020
+!! 
+!!    Sets the orbital coefficients from the orbital 
+!!    coefficients in the orthonormal AO basis (C)
+!!
+!!    Sets the orbital energies (e)
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo, wf%n_densities), intent(in)  :: C
+      real(dp), dimension(wf%n_mo, wf%n_densities), intent(in)           :: e
+!
+!     Transform back the solutions to original basis, C = P L^-T (L^-1 P^T C) = P L^-T C'
+!
+      call wf%set_orbital_coefficients_from_orthonormal_ao_C(C(:,:,1), wf%orbital_coefficients)
+!
+      call dcopy(wf%n_mo, e, 1, wf%orbital_energies, 1)
+!
+      call wf%update_ao_density()! C => D
+!
+      call wf%save_orbitals()
+!
+   end subroutine set_C_and_e_hf
+!
+!
+   subroutine get_F_hf(wf, F_packed)
+!!
+!!    Get F
+!!    Written by Sarai D. Folkestad
+!!
+!!    Constructs the Fock matrix in the orthonormal AO basis
+!!    and returns it packed
+!!
+      use reordering, only: packin 
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(wf%n_mo*(wf%n_mo + 1)/2*wf%n_densities), intent(out) :: F_packed
+!
+      real(dp), dimension(:,:), allocatable :: F
+!
+      call wf%update_fock_and_energy()
+!
+      call mem%alloc(F, wf%n_mo, wf%n_mo)
+!
+      call wf%ao_to_orthonormal_ao_transformation(F, wf%ao_fock)
+      call packin(F_packed, F, wf%n_mo)
+!
+      call mem%dealloc(F, wf%n_mo, wf%n_mo)
+!
+   end subroutine get_F_hf
+!
+!
+   subroutine get_gradient_hf(wf, G)
+!!
+!!    Get gradient
+!!    Written by Sarai D. Folkestad
+!!
+!!    Returns the packed gradient
+!!
+      use reordering, only: packin 
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(wf%gradient_dimension), intent(out) :: G
+!
+      call wf%get_packed_roothan_hall_gradient(G)
+!
+   end subroutine get_gradient_hf
+!
+!
+   subroutine construct_initial_idempotent_density_hf(wf)
+!!
+!!    Construct initial idempotent density
+!!    Written by Sarai D. Folkestad
+!!
+!
+      use array_utilities, only: generalized_diagonalization_symmetric
+!
+      implicit none
+!
+      class(hf), intent(inout)               :: wf
+!
+      real(dp), dimension(:,:), allocatable :: F, S
+!
+      call mem%alloc(F, wf%n_mo, wf%n_mo)
+      call mem%alloc(S, wf%n_mo, wf%n_mo)
+!
+      call wf%ao_to_reduced_ao_transformation(F, wf%ao_fock)
+      call wf%ao%get_reduced_ao_metric(S) ! RAO metric
+!
+      call generalized_diagonalization_symmetric(F, S, wf%n_mo, wf%orbital_energies)
+      call wf%set_orbital_coefficients_from_reduced_ao_C(F, wf%orbital_coefficients)
+!
+      call wf%save_orbitals()
+!
+      call mem%dealloc(F, wf%n_mo, wf%n_mo)
+      call mem%dealloc(S, wf%n_mo, wf%n_mo)
+!
+      call wf%update_ao_density()
+!
+   end subroutine construct_initial_idempotent_density_hf
+!
+!
+   subroutine set_orbital_coefficients_from_reduced_ao_C_hf(wf, C, orbital_coefficients)
+!!
+!!    Set orbital coefficients from reduced AO C
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2020 
+!! 
+!!    Sets the orbital coefficients from the orbital coefficients
+!!    in the reduced ao basis 
+!!
+!!       orbital_coefficients = P C
+!!
+!!    where
+!!
+!!       P^T S P = L L^T
+!!
+!!    defines the Cholesky decomposition of the 
+!!    atomic orbital overlap matrix S.
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in)   :: C
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(out)  :: orbital_coefficients
+!
+      call dgemm('N','N',                 &
+                  wf%ao%n,                &
+                  wf%n_mo,                &
+                  wf%n_mo,                &
+                  one,                    &
+                  wf%ao%P,                &
+                  wf%ao%n,                &
+                  C,                      & 
+                  wf%n_mo,                &
+                  zero,                   &
+                  orbital_coefficients,   &
+                  wf%ao%n)
+!
+   end subroutine set_orbital_coefficients_from_reduced_ao_C_hf
+!
+!
+   subroutine set_orbital_coefficients_from_orthonormal_ao_C_hf(wf, C, orbital_coefficients)
+!!
+!!    Set orbital coefficients from orthonormal AO C
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2020 
+!! 
+!!    Sets the orbital coefficients from the orbital coefficients
+!!    in the reduced ao basis 
+!!
+!!       orbital_coefficients = P L^-T C
+!!
+!!    where
+!!
+!!       P^T S P = L L^T
+!!
+!!    defines the Cholesky decomposition of the 
+!!    atomic orbital overlap matrix S.
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in)  :: C
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(out)  :: orbital_coefficients
+!
+      real(dp), dimension(:,:), allocatable :: X
+      real(dp), dimension(:,:), allocatable :: Y
+!
+      integer :: info
+!
+      call mem%alloc(X, wf%n_mo, wf%n_mo)
+      call dcopy(wf%n_mo**2, wf%ao%L, 1, X, 1)
+!
+      call dtrtri('l','n', wf%n_mo, X, wf%n_mo, info)
+!
+      call mem%alloc(Y, wf%n_mo, wf%n_mo)
+!
+      call dgemm('T','N',  &
+                  wf%n_mo, &
+                  wf%n_mo, &
+                  wf%n_mo, &
+                  one,     &
+                  X,       &
+                  wf%n_mo, &
+                  C,       &
+                  wf%n_mo, &
+                  zero,    &
+                  Y,       &
+                  wf%n_mo)
+!
+      call mem%dealloc(X, wf%n_mo, wf%n_mo)
+!
+      call dgemm('N','N',                 &
+                  wf%ao%n,                &
+                  wf%n_mo,                &
+                  wf%n_mo,                &
+                  one,                    &
+                  wf%ao%P,                &
+                  wf%ao%n,                &
+                  Y,                      &
+                  wf%n_mo,                &
+                  zero,                   &
+                  orbital_coefficients,   &
+                  wf%ao%n)
+!
+      call mem%dealloc(Y, wf%n_mo, wf%n_mo)
+!
+   end subroutine set_orbital_coefficients_from_orthonormal_ao_C_hf
+!
+!
+   subroutine ao_to_reduced_ao_transformation_hf(wf, X_reduced_ao, X_ao)
+!!
+!!    AO to RAO transformation
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2020
+!!
+!!    Transforms a matrix from the AO basis to the
+!!    reduced AO (RAO) basis
+!!
+!!       X_reduced_ao = P^T X_ao P, 
+!!
+!!    where P is a projection onto the linearly idependent AO basis
+!!    and is obtained from the Cholesky decomposition  of 
+!!    the atomic orbital overlap matrix S:
+!!
+!!       P^T S P = L L^T
+!!
+      implicit none
+!
+      class(hf) :: wf
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out)  :: X_reduced_ao
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)   :: X_ao
+!
+      real(dp), dimension(:,:), allocatable :: XP
+!
+      call mem%alloc(XP, wf%ao%n, wf%n_mo)
+!
+      call dgemm('N','N',    &
+                  wf%ao%n,   &
+                  wf%n_mo,   &
+                  wf%ao%n,   &
+                  one,       &
+                  X_ao,      &
+                  wf%ao%n,   &
+                  wf%ao%P,   &
+                  wf%ao%n,   &
+                  zero,      &
+                  XP,        &
+                  wf%ao%n)
+!
+      call dgemm('T','N',    &
+                  wf%n_mo,   &
+                  wf%n_mo,   &
+                  wf%ao%n,   &
+                  one,       &
+                  wf%ao%P,   &
+                  wf%ao%n,   &
+                  XP,        &
+                  wf%ao%n,   &
+                  zero,      &
+                  X_reduced_ao,     & 
+                  wf%n_mo)
+!
+      call mem%dealloc(XP, wf%ao%n, wf%n_mo)      
+!
+   end subroutine ao_to_reduced_ao_transformation_hf
+!
+!
+   subroutine ao_to_orthonormal_ao_transformation_hf(wf, X_orthonormal_ao, X_ao)
+!!
+!!    AO to OAO transformation
+!!    Written by Sarai D. Folkestad, 2020
+!!
+!!    Transforms a matrix from the AO basis to the
+!!    orthonormal AO (OAO) basis 
+!!
+!!       X_orthonormal_ao = L^-1 P^T X_ao P L^-T, 
+!!
+!!    where
+!!
+!!       P^T S P = L L^T
+!!
+!!    defines the Cholesky decomposition of the 
+!!    atomic orbital overlap matrix S.
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: X_orthonormal_ao
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)  :: X_ao
+!
+      real(dp), dimension(:,:), allocatable :: X, L_inv
+      real(dp), dimension(:,:), allocatable :: X_reduced_ao
+!
+      integer :: info
+!
+      call mem%alloc(L_inv, wf%n_mo, wf%n_mo)
+      call dcopy(wf%n_mo**2, wf%ao%L, 1, L_inv, 1)
+!
+      call dtrtri('l','n', wf%n_mo, L_inv, wf%n_mo, info)
+!
+      if (info .ne. 0) call output%error_msg('problem with inversion of Cholesky factor of S')
+!
+!     Construct reduced AO Fock matrix, F' = P^T F P
+!
+      call mem%alloc(X_reduced_ao, wf%n_mo, wf%n_mo)
+!
+      call wf%ao_to_reduced_ao_transformation(X_reduced_ao, X_ao)
+!
+!     Construct orthogonal AO Fock matrix, X_orthonormal_ao = L^-1 X_reduced_ao L^-T
+!
+      call mem%alloc(X, wf%n_mo, wf%n_mo)
+!
+      call dgemm('N', 'N',    &
+                  wf%n_mo,    &
+                  wf%n_mo,    &
+                  wf%n_mo,    &
+                  one,        &
+                  L_inv,      &
+                  wf%n_mo,    &
+                  X_reduced_ao,      &
+                  wf%n_mo,    &
+                  zero,       &
+                  X,          &
+                  wf%n_mo)
+!
+      call mem%dealloc(X_reduced_ao, wf%n_mo, wf%n_mo)
+!
+      call dgemm('N', 'T',    &
+                  wf%n_mo,    &
+                  wf%n_mo,    &
+                  wf%n_mo,    &
+                  one,        &
+                  X,          &
+                  wf%n_mo,    &
+                  L_inv,      &
+                  wf%n_mo,    &
+                  zero,       &
+                  X_orthonormal_ao,      &
+                  wf%n_mo)
+!
+      call mem%dealloc(L_inv, wf%n_mo, wf%n_mo)
+      call mem%dealloc(X, wf%n_mo, wf%n_mo)
+!
+   end subroutine ao_to_orthonormal_ao_transformation_hf
+!
+!
+   function do_cumulative_fock_hf(wf) result(cumulative)
+!!
+!!    Do cumulative fock
+!!    Written by Sarai D. Folkestad, 2020
+!!
+!!    Returns true if we can do cumulative Fock
+!!
+      implicit none
+!
+      class(hf) :: wf
+      logical   :: cumulative
+!
+      real(dp), dimension(:), allocatable :: G
+!
+      real(dp) :: gradient_norm
+!
+      cumulative = .false.
+!
+      if (wf%gradient_dimension == 0) return ! gradient dimension is 0 if there is 1 AO
+!
+      if (wf%fock_matrix_computed) then
+!
+         call mem%alloc(G, wf%gradient_dimension)
+         call wf%get_gradient(G)
+!
+         gradient_norm  = get_abs_max(G, wf%gradient_dimension)
+         call mem%dealloc(G, wf%gradient_dimension)
+!
+         cumulative = gradient_norm .lt. wf%cumulative_fock_threshold 
+!
+      endif
+!
+   end function do_cumulative_fock_hf
+!
+!
+   function is_restart_possible_hf(wf) result(restart_is_possible)
+!!
+!!    Is restart possible
+!!    Written by Alexander C. Paul, Okt 2020
+!!
+!!    Checks if restart files exist
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      logical :: restart_is_possible
+!
+      restart_is_possible = (wf%orbital_file%exists())
+!
+   end function is_restart_possible_hf
+!
+!
+   function control_gradient_convergence_hf(wf, threshold) result(converged)
+!!
+!!    Control gradient convergence
+!!    Written by Sarai D. Folkestad, 2020
+!!
+!!    Checks if gradient has converged to the given threshold.
+!!
+!!    Prints energy and gradient.
+!!
+      implicit none
+!
+      class(hf),  intent(inout)  :: wf
+      real(dp),   intent(in)     :: threshold
+!
+      logical :: converged
+      real(dp) :: max_gradient
+!
+      real(dp), dimension(:,:), allocatable :: G
+!
+      if (wf%n_mo == 1) then
+!
+         converged = .true.
+         return
+!
+      endif
+!
+      converged = .false.
+!
+      call wf%update_fock_and_energy()
+!
+      call mem%alloc(G, wf%n_mo*(wf%n_mo-1)/2, wf%n_densities)
+!
+      call wf%get_packed_roothan_hall_gradient(G)
+      max_gradient = get_abs_max(G, wf%n_mo*(wf%n_mo-1)/2*wf%n_densities)
+!
+      call mem%dealloc(G, wf%n_mo*(wf%n_mo-1)/2, wf%n_densities)
+!
+      if (max_gradient .lt. threshold) converged = .true.
+!
+   end function control_gradient_convergence_hf
 !
 end module hf_class

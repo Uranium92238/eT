@@ -366,8 +366,8 @@ module ccs_class
 !
 !     One-electron integrals 
 !
-      procedure :: get_t1_oei          => get_t1_oei_ccs 
-      procedure :: get_t1_oei_complex  => get_t1_oei_ccs_complex
+      procedure :: get_t1_oei                                    => get_t1_oei_ccs 
+      procedure :: get_t1_oei_complex                            => get_t1_oei_ccs_complex
 !
 !     Preparation procedures
 !

@@ -78,16 +78,15 @@ module ao_tool_class
       integer, private :: n_centers
       type(atomic_center), dimension(:), allocatable, private :: centers ! AO basis centers
 !  
-      integer, private  :: n_oao            ! Orthonormal AOs (OAOs)        
+      integer, private  :: n_orthonormal_ao            ! Orthonormal AOs (OAOs)        
       real(dp), private :: lindep_threshold ! Threshold for removing linear dependency between AOs
 !
-      real(dp), dimension(:,:), allocatable, private :: P, L ! AO-to-OAO transformation matrices 
+      real(dp), dimension(:,:), allocatable, public :: P, L ! AO-to-OAO transformation matrices 
 !
-!     Active center spaces/subsets
       integer, private :: n_center_subsets
       type(named_interval), dimension(:), allocatable, private :: center_subsets
 !
-      real(dp), private :: libint_epsilon ! Libint ERI precision
+      real(dp), private :: libint_epsilon ! Default Libint ERI precision
 !
       real(dp), private :: eri_cutoff
 !
@@ -156,14 +155,17 @@ module ao_tool_class
       procedure, public :: get_libint_epsilon &
                         => get_libint_epsilon_ao_tool
 !
-      procedure, public :: oao_pivot_basis_transformation &       
-                        => oao_pivot_basis_transformation_ao_tool ! Y = P^T X P, where P are pivots
+      procedure, public :: get_reduced_ao_metric &
+                        => get_reduced_ao_metric_ao_tool
 !
-      procedure, public :: oao_pivot_transformation & 
-                        => oao_pivot_transformation_ao_tool ! Y = P X
+      procedure, public :: orthonormal_ao_pivot_basis_transformation &       
+                        => orthonormal_ao_pivot_basis_transformation_ao_tool ! Y = P^T X P, where P are pivots
 !
-      procedure, public :: get_n_oao &
-                        => get_n_oao_ao_tool
+      procedure, public :: orthonormal_ao_pivot_transformation & 
+                        => orthonormal_ao_pivot_transformation_ao_tool ! Y = P X
+!
+      procedure, public :: get_n_orthonormal_ao &
+                        => get_n_orthonormal_ao_ao_tool
 !
       procedure, public :: print_ao_vectors &
                         => print_ao_vectors_ao_tool
@@ -1399,7 +1401,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!    
 !!    This routine determines P and L, and the number of linearly 
-!!    independent/orthonormal AOs (n_oao), resulting from a Cholesky decomposition 
+!!    independent/orthonormal AOs (n_orthonormal_ao), resulting from a Cholesky decomposition 
 !!    of the AO overlap matrix S to within the linear dependency threshold:
 !!
 !!       P^T S P = L L^T.
@@ -1447,8 +1449,8 @@ contains
 !  
       endif
 !
-      if (allocated(ao%L)) call mem%dealloc(ao%L, ao%n_oao, ao%n_oao)
-      if (allocated(ao%P)) call mem%dealloc(ao%P, ao%n, ao%n_oao)
+      if (allocated(ao%L)) call mem%dealloc(ao%L, ao%n_orthonormal_ao, ao%n_orthonormal_ao)
+      if (allocated(ao%P)) call mem%dealloc(ao%P, ao%n, ao%n_orthonormal_ao)
 !
 !     Decompose AO overlap 
 !
@@ -1461,12 +1463,12 @@ contains
       call full_cholesky_decomposition_system(s_p,                   &
                                               L,                     &
                                               ao%n,                  &
-                                              ao%n_oao,              &
+                                              ao%n_orthonormal_ao,              &
                                               ao%lindep_threshold,   &
                                               pivots)
 !
-      if (    ao%n_oao   .gt. ao%n     &
-         .or. ao%n_oao   .le. 0        &
+      if (    ao%n_orthonormal_ao   .gt. ao%n     &
+         .or. ao%n_orthonormal_ao   .le. 0        &
          .or. any(pivots .gt. ao%n)    &
          .or. any(pivots .le. 0)     ) then
 !
@@ -1485,11 +1487,11 @@ contains
 !
 !     Set Cholesky factor L and pivot matrix P
 !
-      call mem%alloc(ao%L, ao%n_oao, ao%n_oao)
+      call mem%alloc(ao%L, ao%n_orthonormal_ao, ao%n_orthonormal_ao)
 !
 !$omp parallel do private(j, i)
-      do j = 1, ao%n_oao
-         do i = 1, ao%n_oao 
+      do j = 1, ao%n_orthonormal_ao
+         do i = 1, ao%n_orthonormal_ao 
 !
             ao%L(i, j) = L(i, j)
 !
@@ -1499,12 +1501,12 @@ contains
 !
       call mem%dealloc(L, ao%n, ao%n)
 !
-      call mem%alloc(ao%P, ao%n, ao%n_oao)
+      call mem%alloc(ao%P, ao%n, ao%n_orthonormal_ao)
 !
-      call zero_array(ao%P, ao%n * ao%n_oao)
+      call zero_array(ao%P, ao%n * ao%n_orthonormal_ao)
 !
 !$omp parallel do private(j)
-      do j = 1, ao%n_oao
+      do j = 1, ao%n_orthonormal_ao
 !
          ao%P(pivots(j), j) = one
 !
@@ -1520,11 +1522,11 @@ contains
                          ints=[ao%n], fs='(t6,a)')
 !
       call output%printf('m', 'Number of orthonormal atomic orbitals:   (i0)', &
-                         ints=[ao%n_oao], fs='(t6,a)')
+                         ints=[ao%n_orthonormal_ao], fs='(t6,a)')
 !
-      if (ao%n_oao .lt. ao%n) &
+      if (ao%n_orthonormal_ao .lt. ao%n) &
          call output%printf('m', 'Removed (i0) AOs due to linear dep.', &
-                            ints=[ao%n - ao%n_oao], fs='(/t6,a)')
+                            ints=[ao%n - ao%n_orthonormal_ao], fs='(/t6,a)')
 !
       call timer%turn_off()
 !
@@ -1811,7 +1813,38 @@ contains
    end function get_n_centers_ao_tool
 !
 !
-   subroutine oao_pivot_basis_transformation_ao_tool(ao, X, Y)
+   subroutine get_reduced_ao_metric_ao_tool(ao, S)
+!!
+!!    Get reduced AO metric 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2020
+!!
+!!    Constructs the AO overlap matrix in the
+!!    linearly independent ao basis
+!!
+!!       S = L L^T
+!!
+      implicit none
+!
+      class(ao_tool), intent(in) :: ao 
+      real(dp), dimension(ao%n_orthonormal_ao, ao%n_orthonormal_ao), intent(out)  :: S
+!
+      call dgemm('N','T',              &
+                  ao%n_orthonormal_ao, &
+                  ao%n_orthonormal_ao, &
+                  ao%n_orthonormal_ao, &
+                  one,                 &
+                  ao%L,                &
+                  ao%n_orthonormal_ao, &
+                  ao%L,                &
+                  ao%n_orthonormal_ao, &
+                  zero,                &
+                  S,                   &
+                  ao%n_orthonormal_ao)
+!
+   end subroutine get_reduced_ao_metric_ao_tool
+!
+!
+   subroutine orthonormal_ao_pivot_basis_transformation_ao_tool(ao, X, Y)
 !!
 !!    OAO pivot basis transformation 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020
@@ -1828,15 +1861,15 @@ contains
 !
       real(dp), dimension(ao%n, ao%n), intent(in) :: X 
 !
-      real(dp), dimension(ao%n_oao, ao%n_oao), intent(out) :: Y 
+      real(dp), dimension(ao%n_orthonormal_ao, ao%n_orthonormal_ao), intent(out) :: Y 
 !
       real(dp), dimension(:,:), allocatable :: XP
 !
-      call mem%alloc(XP, ao%n, ao%n_oao)
+      call mem%alloc(XP, ao%n, ao%n_orthonormal_ao)
 !
       call dgemm('N', 'N',  &
                   ao%n,     &
-                  ao%n_oao, &
+                  ao%n_orthonormal_ao, &
                   ao%n,     &
                   one,      &
                   X,        &
@@ -1848,8 +1881,8 @@ contains
                   ao%n)
 !
       call dgemm('T', 'N',  &
-                  ao%n_oao, &
-                  ao%n_oao, &
+                  ao%n_orthonormal_ao, &
+                  ao%n_orthonormal_ao, &
                   ao%n,     &
                   one,      &
                   ao%P,     &
@@ -1858,14 +1891,14 @@ contains
                   ao%n,     &
                   zero,     &
                   Y,        & 
-                  ao%n_oao)
+                  ao%n_orthonormal_ao)
 !
-      call mem%dealloc(XP, ao%n, ao%n_oao)
+      call mem%dealloc(XP, ao%n, ao%n_orthonormal_ao)
 !
-   end subroutine oao_pivot_basis_transformation_ao_tool
+   end subroutine orthonormal_ao_pivot_basis_transformation_ao_tool
 !
 !
-   subroutine oao_pivot_transformation_ao_tool(ao, X, Y)
+   subroutine orthonormal_ao_pivot_transformation_ao_tool(ao, X, Y)
 !!
 !!    OAO pivot transformation 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020
@@ -1880,27 +1913,27 @@ contains
 !
       class(ao_tool), intent(in) :: ao 
 !
-      real(dp), dimension(ao%n_oao, ao%n_oao), intent(in) :: X 
+      real(dp), dimension(ao%n_orthonormal_ao, ao%n_orthonormal_ao), intent(in) :: X 
 !
-      real(dp), dimension(ao%n, ao%n_oao), intent(out) :: Y 
+      real(dp), dimension(ao%n, ao%n_orthonormal_ao), intent(out) :: Y 
 !
       call dgemm('N', 'N',  &
                   ao%n,     &
-                  ao%n_oao, &
-                  ao%n_oao, &
+                  ao%n_orthonormal_ao, &
+                  ao%n_orthonormal_ao, &
                   one,      &
                   ao%P,     &
                   ao%n,     &
                   X,        &
-                  ao%n_oao, &
+                  ao%n_orthonormal_ao, &
                   zero,     &
                   Y,        &
                   ao%n)
 !
-   end subroutine oao_pivot_transformation_ao_tool
+   end subroutine orthonormal_ao_pivot_transformation_ao_tool
 !
 !
-   function get_n_oao_ao_tool(ao) result(n_oao)
+   function get_n_orthonormal_ao_ao_tool(ao) result(n_orthonormal_ao)
 !!
 !!    Get number of OAOs 
 !!    Written by Eirik F. Kjønstad, 2020 
@@ -1909,11 +1942,11 @@ contains
 !
       class(ao_tool), intent(in) :: ao 
 !
-      integer :: n_oao
+      integer :: n_orthonormal_ao
 !
-      n_oao = ao%n_oao
+      n_orthonormal_ao = ao%n_orthonormal_ao
 !
-   end function get_n_oao_ao_tool
+   end function get_n_orthonormal_ao_ao_tool
 !
 !
    subroutine print_ao_vectors_ao_tool(ao, C, out_file, m, offset)
@@ -2635,8 +2668,8 @@ contains
       if (allocated(ao%ao_to_center))     call mem%dealloc(ao%ao_to_center, ao%n)
       if (allocated(ao%ao_to_shell))      call mem%dealloc(ao%ao_to_shell, ao%n)
 !
-      if (allocated(ao%L)) call mem%dealloc(ao%L, ao%n_oao, ao%n_oao)
-      if (allocated(ao%P)) call mem%dealloc(ao%P, ao%n, ao%n_oao)
+      if (allocated(ao%L)) call mem%dealloc(ao%L, ao%n_orthonormal_ao, ao%n_orthonormal_ao)
+      if (allocated(ao%P)) call mem%dealloc(ao%P, ao%n, ao%n_orthonormal_ao)
 !
       if (allocated(ao%cs_eri_max)) &
          call mem%dealloc(ao%cs_eri_max, ao%n_sh*(ao%n_sh + 1)/2, 2)

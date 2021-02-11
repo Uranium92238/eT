@@ -27,6 +27,7 @@
 using namespace std;
 
 #include "eri.h"
+#include "extract_integrals.h"
 #include "globals.h"
 #include "omp_control.h"
 
@@ -54,7 +55,7 @@ void get_eri(double *g,
 
   electronic_repulsion[thread].set_precision(epsilon_);
 
-  const auto& buf_vec = electronic_repulsion[thread].results(); // will reference computed shell sets
+  const auto& buf_vec = electronic_repulsion[thread].results(); // will point to computed shell sets
 
   electronic_repulsion[thread].compute(basis[s1 - 1], basis[s2 - 1], basis[s3 - 1], basis[s4 - 1]);
 
@@ -78,7 +79,6 @@ void get_eri(double *g,
 
                   *(g + i) = ints_1234[f1234];
                   ++i;
-
                }
             }
          }
@@ -142,12 +142,14 @@ void get_eri_1der(double *g, const int s1, const int s2, const int s3, const int
         }
         else
         {
-          for(std::size_t f4=0; f4!=n4; ++f4){
-            for(std::size_t f3=0; f3!=n3; ++f3){
-              for(std::size_t f2=0; f2!=n2; ++f2){
-                for(std::size_t f1=0; f1!=n1; ++f1){
-
-                  auto f1234 = (n4)*((n3)*((n2)*f1+f2)+f3)+f4;
+          for(std::size_t f1=0, f1234=0; f1!=n1; ++f1){
+  
+            for(std::size_t f2=0; f2!=n2; ++f2){
+  
+              for(std::size_t f3=0; f3!=n3; ++f3){
+  
+                for(std::size_t f4=0; f4!=n4; ++f4, ++f1234){
+  
                   g[offset + n1*(n2*(n3*f4+f3)+f2)+f1] = ints[f1234];
 
                 }

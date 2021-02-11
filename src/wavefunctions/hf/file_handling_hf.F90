@@ -33,140 +33,52 @@ submodule (hf_class) file_handling_hf
 contains
 !
 !
-   module subroutine save_orbital_coefficients_hf(wf)
+   module subroutine save_orbitals_hf(wf)
 !!
-!!    Save orbital coefficients
+!!    Save orbitals
 !!    Written by Eirik F. Kjønstad, Oct 2018
 !!
       implicit none
 !
       class(hf), intent(inout) :: wf
 !
-      call wf%orbital_coefficients_file%open_('write', 'rewind')
+      call wf%orbital_file%open_('write')
+      call wf%orbital_file%write_(int(wf%ao%n,kind=i64))
+      call wf%orbital_file%write_(int(wf%n_mo,kind=i64))
+      call wf%orbital_file%write_(wf%orbital_energies, wf%n_mo)
+      call wf%orbital_file%write_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
+      call wf%orbital_file%close_('keep')
 !
-      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
-!
-      call wf%orbital_coefficients_file%close_
-!
-   end subroutine save_orbital_coefficients_hf
+   end subroutine save_orbitals_hf
 !
 !
-   module subroutine read_orbital_coefficients_hf(wf)
+   module subroutine read_orbitals_hf(wf)
 !!
-!!    Save orbital coefficients
+!!    Save orbitals
 !!    Written by Eirik F. Kjønstad, Oct 2018
 !!
       implicit none
 !
       class(hf), intent(inout) :: wf
 !
-      call wf%orbital_coefficients_file%open_('read', 'rewind')
+      integer :: n_ao, n_mo
+      integer(i64) :: n
 !
-      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
+      call wf%orbital_file%open_('read', 'rewind')
 !
-      call wf%orbital_coefficients_file%close_
+      call wf%orbital_file%read_(n)
+      n_ao = int(n)
+      call wf%orbital_file%read_(n)
+      n_mo = int(n)
 !
-   end subroutine read_orbital_coefficients_hf
+      if (n_ao .ne. wf%ao%n) call output%error_msg('Number of AOs does not match')
+      if (n_mo .ne. wf%n_mo) call output%error_msg('Number of MOs does not match')
 !
+      call wf%orbital_file%read_(wf%orbital_energies, wf%n_mo)
+      call wf%orbital_file%read_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
+      call wf%orbital_file%close_('keep')
 !
-   module subroutine save_orbital_energies_hf(wf)
-!!
-!!    Save orbital energies
-!!    Written by Eirik F. Kjønstad, Oct 2018
-!!
-      implicit none
-!
-      class(hf), intent(inout) :: wf
-!
-      call wf%orbital_energies_file%open_('write', 'rewind')
-!
-      call wf%orbital_energies_file%write_(wf%orbital_energies, wf%n_mo)
-!
-      call wf%orbital_energies_file%close_
-!
-   end subroutine save_orbital_energies_hf
-!
-!
-   module subroutine read_orbital_energies_hf(wf)
-!!
-!!    Save orbital energies
-!!    Written by Eirik F. Kjønstad, Oct 2018
-!!
-      implicit none
-!
-      class(hf), intent(inout) :: wf
-!
-      call wf%orbital_energies_file%open_('read', 'rewind')
-!
-      call wf%orbital_energies_file%read_(wf%orbital_energies, wf%n_mo)
-!
-      call wf%orbital_energies_file%close_
-!
-   end subroutine read_orbital_energies_hf
-!
-!
-   module subroutine write_scf_restart_hf(wf)
-!!
-!!    Write HF restart file
-!!    Written by Linda Goletto, Oct 2019
-!!
-!!    Writes a file used for consistency checks when restarting
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      call wf%restart_file%open_('write', 'rewind')
-!
-      call wf%restart_file%write_(wf%ao%n)
-      call wf%restart_file%write_(wf%n_densities)
-      call wf%restart_file%write_(wf%ao%get_n_electrons())
-!
-      call wf%restart_file%close_
-!
-   end subroutine write_scf_restart_hf
-!
-!
-   module subroutine write_orbital_information_hf(wf)
-!!
-!!    Write HF information file
-!!    Written by Linda Goletto, Oct 2019
-!!
-!!    Writes orbital information
-!!    Used for CC and MP2 and for restarting MLHF
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      type(sequential_file) :: CC_orbitals_file, CC_orbital_energies_file
-!
-      wf%orbital_information_file = sequential_file('orbital_information')
-      call wf%orbital_information_file%open_('write', 'rewind')
-!
-      call wf%orbital_information_file%write_(wf%n_o)
-      call wf%orbital_information_file%write_(wf%n_v)
-      call wf%orbital_information_file%write_(wf%ao%n)
-      call wf%orbital_information_file%write_(wf%n_mo)
-      call wf%orbital_information_file%write_(wf%energy)
-!
-      call wf%orbital_information_file%close_
-!
-      CC_orbitals_file = sequential_file('cc_orbital_coefficients')
-      call CC_orbitals_file%open_('write', 'rewind')
-!
-      call CC_orbitals_file%write_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
-!
-      call CC_orbitals_file%close_('keep')
-!
-      CC_orbital_energies_file = sequential_file('cc_orbital_energies')
-      call CC_orbital_energies_file%open_('write', 'rewind')
-!
-      call CC_orbital_energies_file%write_(wf%orbital_energies, wf%n_mo)
-!
-      call CC_orbital_energies_file%close_('keep')
-!
-   end subroutine write_orbital_information_hf
+   end subroutine read_orbitals_hf
 !
 !
    module subroutine save_ao_density_hf(wf)

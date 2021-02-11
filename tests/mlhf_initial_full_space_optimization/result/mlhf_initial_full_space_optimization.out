@@ -154,29 +154,15 @@
 
   2) Calculation of reference state (MO-SCF-DIIS algorithm)
 
-   - MO Self-consistent field DIIS Hartree-Fock solver
-  -------------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
+     Maximum iterations:                     100
+     Gradient threshold:              0.1000E-10
+     Acceleration type:                     diis
 
-  - Hartree-Fock solver settings:
+  - Setting initial AO density to sad
 
-     DIIS dimension:                         8
-
-     Energy threshold:              0.1000E-10
-     Gradient threshold:            0.1000E-10
-
-     Coulomb screening threshold:   0.1000E-13
-     Exchange screening threshold:  0.1000E-13
-     Fock precision:                0.1000E-27
-     Integral cutoff:               0.1000E-13
-
-  - Setting initial AO density to SAD
-
-     Energy of initial guess:              -151.796506244372
+     Energy of initial guess:              -151.796506244193
      Number of electrons in guess:           20.000000000000
 
   - Initial full hf optimization to a gradient threshold of  0.10E-02
@@ -187,52 +173,57 @@
       Number of active virtual orbitals:        23
       Number of active orbitals:                28
 
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-13
+     Exchange screening threshold:  0.1000E-13
+     Fock precision:                0.1000E-27
+     Integral cutoff:               0.1000E-13
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS convergence acceleration:
+
+     DIIS dimension:   8
+
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -152.058302372948     0.4887E-03     0.1521E+03
-     2          -152.058302453673     0.2378E-03     0.8073E-07
-     3          -152.058302467956     0.1073E-03     0.1428E-07
-     4          -152.058302471810     0.5797E-05     0.3854E-08
-     5          -152.058302471828     0.1508E-05     0.1762E-10
-     6          -152.058302471829     0.1316E-06     0.1080E-11
-     7          -152.058302471829     0.3156E-07     0.2842E-13
-     8          -152.058302471829     0.9885E-08     0.8527E-13
-     9          -152.058302471829     0.2147E-08     0.2842E-13
-    10          -152.058302471829     0.1097E-08     0.2842E-13
-    11          -152.058302471829     0.1339E-09     0.5684E-13
-    12          -152.058302471829     0.4603E-10     0.5684E-13
-    13          -152.058302471829     0.5447E-11     0.0000E+00
+     1          -152.058301854943     0.1282E-02     0.1521E+03
+     2          -152.058302372948     0.4887E-03     0.5180E-06
+     3          -152.058302450120     0.2451E-03     0.7717E-07
+     4          -152.058302467141     0.9905E-04     0.1702E-07
+     5          -152.058302470118     0.7346E-04     0.2977E-08
+     6          -152.058302471261     0.3342E-04     0.1143E-08
+     7          -152.058302471669     0.1612E-04     0.4088E-09
+     8          -152.058302471796     0.8949E-05     0.1270E-09
+     9          -152.058302471812     0.5881E-05     0.1580E-10
+    10          -152.058302471826     0.2517E-05     0.1376E-10
+    11          -152.058302471829     0.6118E-07     0.3070E-11
+    12          -152.058302471829     0.3465E-08     0.5684E-13
+    13          -152.058302471829     0.9526E-09     0.5684E-13
+    14          -152.058302471829     0.1387E-09     0.8527E-13
+    15          -152.058302471829     0.1879E-10     0.8527E-13
+    16          -152.058302471829     0.8277E-12     0.8527E-13
   ---------------------------------------------------------------
-  Convergence criterion met in 13 iterations!
+  Convergence criterion met in 16 iterations!
 
   - Summary of MLHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.692362579345
+     HOMO-LUMO gap:                  0.692362579343
      Nuclear repulsion energy:      37.386395233393
      Electronic energy:           -189.444697705222
      Total energy:                -152.058302471829
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
-     Active energy:               -104.799496148303
-     Active-inactive energy:        19.316431789642
+     Active energy:               -104.799496148302
+     Active-inactive energy:        19.316431789641
      Inactive energy:             -103.961633346561
-
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.593437951159   8   0.442842797188  15   1.446996831416  22   2.378723031441
-   2  -1.368823439137   9   0.620406364247  16   1.493063377784  23   2.425051975218
-   3  -0.726206562778  10   0.735883377230  17   1.548778098885  24   3.238215042172
-   4  -0.613885093650  11   0.823947836246  18   1.615822925290  25   3.276827367585
-   5  -0.533657592844  12   1.163687850876  19   1.752070217763  26   3.461016905093
-   6   0.158704986501  13   1.186731497014  20   1.871937071808  27   3.827867960685
-   7   0.232567028346  14   1.235840095129  21   1.927285312733  28   4.107199995126
-  -----------------------------------------------------------------------------------
 
   - Timings for the MLHF ground state calculation
 
-     Total wall time (sec):              1.27700
-     Total cpu time (sec):               2.40342
+     Total wall time (sec):              2.84900
+     Total cpu time (sec):               5.48543
+
+     Peak memory usage during the execution of eT: 636.928 KB
 
   eT terminated successfully!

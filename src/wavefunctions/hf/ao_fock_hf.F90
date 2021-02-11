@@ -31,7 +31,7 @@ submodule (hf_class) ao_fock
 contains
 !
 !
-   module subroutine update_fock_and_energy_hf(wf, prev_ao_density)
+   module subroutine update_fock_and_energy_hf(wf)
 !!
 !!    Wrapper for Update Fock and energy
 !!    Written by Tommaso Giovannini, July 2019
@@ -42,15 +42,13 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in), optional :: prev_ao_density
+      if (.not. wf%do_cumulative_fock()) then
 !
-     if (present(prev_ao_density)) then
-!
-         call wf%update_G_cumulative(prev_ao_density)
+         call wf%update_G_non_cumulative()
 !
      else
 !
-         call wf%update_G_non_cumulative()
+         call wf%update_G_cumulative(wf%previous_ao_density)
 !
      endif
 !
@@ -75,6 +73,8 @@ contains
          call daxpy(wf%ao%n**2, one, wf%ao%v, 1, wf%ao_fock, 1)
 !
       endif
+!
+      wf%fock_matrix_computed = .true.
 !
 !     Energy
 !
@@ -110,6 +110,8 @@ contains
 !
       timer = timings('AO G construction', pl='normal')
       call timer%turn_on()
+!
+      call output%printf('v', 'Fock matrix construction using density differences')
 !
 !     Determine density differences
 !

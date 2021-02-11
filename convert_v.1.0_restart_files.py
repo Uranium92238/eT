@@ -68,7 +68,11 @@ def path_resolver(args):
 
 def read_record(file_, endian):
     """
-    Read a single record. Endian specifies the byte order (big or little).
+    Read a single record of the shape:
+        4 bytes representing length of the record
+        Data
+        4 bytes representing length of the record
+    Endian specifies the byte order (big or little).
     """
     bytes_ = file_.read(4)
     record_length = int.from_bytes(bytes_, endian)
@@ -101,6 +105,22 @@ def get_dimensionalities(dir_, endian):
             n2 = n1 * (n1 + 1) // 2
 
     return n1, n2, n_gs
+
+
+def get_reference_dimensionalities(dir_, endian):
+    """
+    Read the scf_restart_file to get the number of amplitudes.
+    Endian specifies the byte order (big or little).
+    """
+    file_ = Path(dir_ / "scf_restart_file")
+
+    if not file_.exists():
+        raise Exception(f"scf_restart_file not found in {dir_}")
+
+    with file_.open("rb") as f:
+        n_ao = int.from_bytes(read_record(f, endian), endian)
+
+    return n_ao
 
 
 def read_excitation_energies(dir_, endian):
@@ -240,6 +260,61 @@ def update_es_files(dir_, n1, n2, endian):
             make_new_es_file(file_, ee[i - 1], n1, n2, endian)
 
 
+def update_reference_files(dir_, n_ao, endian):
+    file_orbitals = Path(dir_ / "orbital_coefficients")
+    file_energies = Path(dir_ / "orbital_energies")
+
+    if file_orbitals.exists() and file_energies.exists():
+        make_new_orbital_file(file_orbitals, file_energies, n_ao, endian)
+
+
+def make_new_orbital_file(file_path_orbitals, file_path_energies, n_ao, endian):
+
+    n_ao_b = n_ao.to_bytes(8, byteorder=endian)
+
+    n_records = 1
+
+    file_size = file_path_orbitals.stat().st_size
+
+    if (file_size - 4 * 2 * n_records) > 8 * n_ao ** 2:
+        n_records = 2
+
+    # Each record has 4 bytes at the beginning and end
+    n_mo = int((file_size - 4 * 2 * n_records) / (n_ao * 8 * n_records))
+    n_mo_b = n_mo.to_bytes(8, byteorder=endian)
+
+    temp = Path("temp")
+    with temp.open("w+b") as temp_file:
+        temp_file.write(n_ao_b)
+        temp_file.write(n_mo_b)
+
+        if n_records == 1:
+
+            with file_path_energies.open("rb") as data:
+                energies = read_record(data, endian)
+                temp_file.write(energies)
+
+            with file_path_orbitals.open("rb") as data:
+                orbitals = read_record(data, endian)
+                temp_file.write(orbitals)
+        else:
+
+            with file_path_energies.open("rb") as data_1:
+                energies_a = read_record(data_1, endian)
+                energies_b = read_record(data_1, endian)
+
+            with file_path_orbitals.open("rb") as data_2:
+                orbitals_a = read_record(data_2, endian)
+                orbitals_b = read_record(data_2, endian)
+
+            temp_file.write(energies_a)
+            temp_file.write(orbitals_a)
+            temp_file.write(energies_b)
+            temp_file.write(orbitals_b)
+
+    shutil.move(temp, file_path_orbitals)
+
+
 def main(argv):
     """
     Read path to restart directory.
@@ -253,8 +328,12 @@ def main(argv):
     # or is the smallest address the most significat byte (big endian)?
     endian = sys.byteorder
 
-    n1, n2, n_gs = get_dimensionalities(translate_path, endian)
-    update_gs_files(translate_path, n1, n2, n_gs, endian)
+    n_ao = get_reference_dimensionalities(translate_path, endian)
+    update_reference_files(translate_path, n_ao, endian)
+
+    if Path(translate_path / "t").exists():
+        n1, n2, n_gs = get_dimensionalities(translate_path, endian)
+        update_gs_files(translate_path, n1, n2, n_gs, endian)
 
     if Path(translate_path / "excitation_energies").exists():
         update_es_files(translate_path, n1, n2, endian)

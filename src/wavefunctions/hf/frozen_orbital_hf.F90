@@ -62,7 +62,6 @@ contains
 !     before n_mo changes
 !
       call wf%destruct_mo_fock()
-      call wf%destruct_W_mo_update()
 !
 !     Eliminate the core orbitals if frozen core requested
 !
@@ -522,9 +521,16 @@ contains
 !!    the frozen HF orbitals entails mixing of occupied orbitals 
 !!    and mixing of virtual orbitals, respectively.
 !!
+!
+      use array_utilities, only: block_diagonalize_symmetric
+!
       implicit none
 !
       class(hf) :: wf
+!
+      real(dp), dimension(:,:), allocatable  :: C_copy
+      integer, dimension(2)                  :: block_dim
+      integer                                :: n_blocks
 !
 !     We do one Roothan-Hall step to get a diagonal Fock matrix 
 !     (this should only entail occupied-occupied and virtual-virtual orbital mixing.)
@@ -532,15 +538,49 @@ contains
       call wf%initialize_mo_fock()
       call wf%mo_transform(wf%ao_fock, wf%mo_fock)
 !
-      call wf%initialize_W_mo_update()
-!
 !     Find active C that diagonalizes Fock in mo basis
 !     also updates the orbital energies
 !
-      call wf%roothan_hall_update_orbitals_mo()
+      n_blocks    = 2
+      block_dim   = [wf%n_o, wf%n_v]
+!
+      call block_diagonalize_symmetric(wf%mo_fock,  wf%n_mo, n_blocks, block_dim, wf%orbital_energies)
+!
+!     Transform orbitals
+!
+      call mem%alloc(C_copy, wf%ao%n, wf%n_mo)
+      call dcopy(wf%n_mo*wf%ao%n, wf%orbital_coefficients, 1, C_copy, 1)
+      call zero_array(wf%orbital_coefficients, wf%n_mo*wf%ao%n)
+!
+      call dgemm('N', 'N',                &
+                  wf%ao%n,                &
+                  wf%n_o,                 &
+                  wf%n_o,                 &
+                  one,                    &
+                  C_copy,                 &
+                  wf%ao%n,                &
+                  wf%mo_fock,             &
+                  wf%n_mo,                &
+                  one,                    &
+                  wf%orbital_coefficients,&
+                  wf%ao%n) 
+!
+      call dgemm('N', 'N',                                &
+                  wf%ao%n,                                &
+                  wf%n_v,                                 &
+                  wf%n_v,                                 &
+                  one,                                    &
+                  C_copy(1, wf%n_o + 1),                  &
+                  wf%ao%n,                                &
+                  wf%mo_fock(wf%n_o + 1, wf%n_o + 1),     &
+                  wf%n_mo,                                &
+                  one,                                    &
+                  wf%orbital_coefficients(1, wf%n_o + 1), &
+                  wf%ao%n)    
+!
+      call mem%dealloc(C_copy, wf%ao%n, wf%n_mo)
 !
       call wf%destruct_mo_fock()
-      call wf%destruct_W_mo_update()
 !
    end subroutine diagonalize_fock_frozen_hf_orbitals_hf
 !
