@@ -196,6 +196,22 @@ def get_quadrupole_filter(tolerance):
     return f
 
 
+def get_cube_filter(tolerance):
+    """
+    Returns filters for a calculation of .cube
+    """
+
+    from runtest import get_filter
+
+    f = [
+        get_filter(
+            from_string="Integrated density", num_lines=25, abs_tolerance=tolerance
+        )
+    ]
+
+    return f
+
+
 def get_spin_filter(tolerance):
     """
     Returns filters for spin summary

@@ -354,14 +354,14 @@ for i, (inpf, outf) in enumerate(zip(args.input_file, args.output_file)):
         file_dest = cwd / file_name
         shutil.copyfile(file_src, file_dest)
 
-    # Check if there are any .plt files
-    pltfiles = scratch.glob("*.plt")
-    for pltfile in pltfiles:
-        pltfile = pltfile.name
-        pltsrc = scratch / pltfile
-        pltname = str(pltfile).replace("eT", f"{out_name}")
-        pltdest = cwd / pltname
-        shutil.copyfile(pltsrc, pltdest)
+    # Check if there are any visualization files
+    plot_files = [i.name for i in scratch.glob("*.plt")]
+    plot_files += [i.name for i in scratch.glob("*.cube")]
+    for plot_file in plot_files:
+        plot_src = scratch / plot_file
+        plot_name = str(plot_file).replace("eT", f"{out_name}")
+        plot_dest = cwd / plot_name
+        shutil.copyfile(plot_src, plot_dest)
 
     # Save restart files somewhere if requested
     if args.save_restart_dir != "off":
