@@ -577,11 +577,14 @@ contains
       visualization%keywords = [character(len=30) ::        &
                                'grid spacing',              &
                                'grid buffer',               &
+                               'grid min',                  &
+                               'grid max',                  &
                                'plot cc density',           &
                                'plot hf orbitals',          &
                                'plot hf density',           &
                                'plot hf active density',    &
                                'plot transition densities', &
+                               'file format',               &
                                'states to plot']
 !
 !     Gather all sections into the file's section array

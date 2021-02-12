@@ -14,6 +14,7 @@
 - SAD guess can be used for elements up to Dubnium. See merge request eT-program/eT:!707
 - Frozen core can be used for elements up to Dubnium. See merge request eT-program/eT:!709
 - `eT_launch` now returns the lanczos files. See merge request eT-program/eT:!710
+- Gaussian .cube format for density and orbital visualization. See merge request eT-program/eT:!603
 
 ### Structure
 - Omega and Jacobian routines have separate in and out vectors and call the corresponding parent routines. See merge request eT-program/eT:!684
