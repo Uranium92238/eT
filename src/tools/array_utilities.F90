@@ -2519,7 +2519,7 @@ contains
                   lwork,            &
                   info)
 !
-      lwork = int(work(1))
+      lwork = ceiling(work(1))
       call mem%dealloc(work, 1)
 !
 !     Diagonalization
@@ -3288,7 +3288,7 @@ contains
       real(dp), dimension(:), allocatable :: eigenvalues
 !
       integer  :: info, i, block_, offset, index_max
-      real(dp) :: worksize 
+      real(dp), dimension(1) :: worksize
       logical  :: local_flip_vectors
 !
       local_flip_vectors = .true.
@@ -3317,15 +3317,15 @@ contains
 !
 !           Diagonalize block
 !
-            call mem%alloc(work, int(worksize))
+            call mem%alloc(work, ceiling(worksize(1)))
 !
-            call dsyev('V','U',              &
-                        block_dim(block_),   &
-                        A(offset, offset),   &
-                        n_total,             &
-                        eigenvalues,         &
-                        work,                &
-                        int(worksize),       &
+            call dsyev('V','U',               &
+                        block_dim(block_),    &
+                        A(offset, offset),    &
+                        n_total,              &
+                        eigenvalues,          &
+                        work,                 &
+                        ceiling(worksize(1)), &
                         info)
 !
             if (info .ne. 0) then
@@ -3333,7 +3333,7 @@ contains
                                     ' "Dsyev" finished with info: (i0)', ints=[info])
             end if
 !
-            call mem%dealloc(work, int(worksize))
+            call mem%dealloc(work, ceiling(worksize(1)))
 !
 !           Convention for eigenvectors of block, maximum element is positive
 !
