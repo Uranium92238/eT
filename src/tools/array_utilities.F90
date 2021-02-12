@@ -2519,7 +2519,7 @@ contains
                   lwork,            &
                   info)
 !
-      lwork = int(work(1))
+      lwork = ceiling(work(1))
       call mem%dealloc(work, 1)
 !
 !     Diagonalization
