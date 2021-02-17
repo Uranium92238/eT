@@ -6,6 +6,7 @@
 - Fock matrix construction at CC level, in terms of T1-transformed integrals, is now N^4 scaling. Only the necessary blocks for a given task are constructed. See merge request eT-program/eT!678
 - Removed one construction of the Coulomb fock matrix per iteration. See merge request eT-program/eT!677
 - CCS Jacobian is now N^4 scaling (Cholesky vector algorithm) See merge request eT-program/eT!592
+- CC3 optimization using covariant/contravariant amplitudes and integrals are resorted on the fly. See merge request eT-program/eT:!685
 
 ### Features
 - printf accepts complex numbers and possible to repeat formats. See merge request eT-program/eT!674
@@ -36,6 +37,7 @@
 
 ### Structure
 - `mo_information_file` now part of `hf_class` as workaround for ifort segfault. See merge request eT-program/eT:!681
+
 
 # eT v1.1
 ### Bugfixes
@@ -118,4 +120,3 @@
 - runtest now has a separate file that defines filters
 - Python code follows the black code style
 - Additional davidson timers
-
