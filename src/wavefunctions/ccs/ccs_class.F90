@@ -193,6 +193,7 @@ module ccs_class
 !
       procedure :: read_settings                                 => read_settings_ccs
       procedure :: read_cvs_settings                             => read_cvs_settings_ccs
+      procedure :: read_rm_core_settings                         => read_rm_core_settings_ccs
 !
       procedure :: read_singles_vector                           => read_singles_vector_ccs
       procedure :: save_singles_vector                           => save_singles_vector_ccs
@@ -398,6 +399,8 @@ module ccs_class
 !
       procedure :: get_cvs_projector                             => get_cvs_projector_ccs
       procedure :: set_cvs_start_indices                         => set_cvs_start_indices_ccs
+! 
+      procedure :: get_rm_core_projector                         => get_rm_core_projector_ccs
 !
 !     Other procedures
 !
@@ -917,6 +920,7 @@ contains
 !
    end subroutine construct_Jacobian_transform_ccs
 !
+!
    subroutine get_cvs_projector_ccs(wf, projector, n_cores, core_MOs)
 !!
 !!    Get CVS projector
@@ -949,6 +953,43 @@ contains
      enddo
 !
    end subroutine get_cvs_projector_ccs
+!
+!
+   subroutine get_rm_core_projector_ccs(wf, projector, n_cores, core_MOs)
+!!
+!!    Get remove core projector
+!!    Written by Sarai D. Folkestad, Oct 2018
+!!
+!
+      use array_utilities, only: constant_array
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
+!
+      integer, intent(in) :: n_cores
+!
+      integer, dimension(n_cores), intent(in) :: core_MOs
+!
+      integer :: core, i, a, ai
+!
+      call constant_array(projector, wf%n_es_amplitudes, one)
+!
+      do core = 1, n_cores
+!
+        i = core_MOs(core)
+!
+        do a = 1, wf%n_v
+!
+           ai = wf%n_v*(i - 1) + a
+           projector(ai) = zero
+!
+        enddo
+     enddo
+!
+   end subroutine get_rm_core_projector_ccs
 !
 !
    subroutine print_dominant_amplitudes_ccs(wf)
@@ -1892,6 +1933,45 @@ contains
       endif
 !
    end subroutine read_cvs_settings_ccs
+!
+!
+   subroutine read_rm_core_settings_ccs(wf)
+!!
+!!    Read remove core settings 
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      if (input%is_keyword_present('remove core', 'solver cc es')) then 
+!  
+!        Determine the number of core MOs 
+!
+         wf%n_core_MOs = input%get_n_elements_for_keyword('remove core', 'solver cc es')
+!
+!        Then read the vector of core MOs
+!
+         call wf%initialize_core_MOs()
+!
+         call input%get_array_for_keyword('remove core', 'solver cc es', wf%n_core_MOs, wf%core_MOs)
+!
+      else
+!
+         call output%error_msg('found no specified core MOs to remove!')
+!
+      endif 
+!
+!     Consistency check
+!
+      if (input%is_keyword_present('remove core', 'solver cc es') .and. &
+          input%is_keyword_present('core', 'frozen orbitals')) then 
+!
+         call output%error_msg('No support for removal of core with frozen core yet. Turn off frozen core.')
+!
+      endif
+!
+   end subroutine read_rm_core_settings_ccs
 !
 !
    subroutine mo_preparations_ccs(wf)

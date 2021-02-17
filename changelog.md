@@ -17,6 +17,7 @@
 - Frozen core can be used for elements up to Dubnium. See merge request eT-program/eT:!709
 - `eT_launch` now returns the lanczos files. See merge request eT-program/eT:!710
 - Gaussian .cube format for density and orbital visualization. See merge request eT-program/eT:!603
+- Specific cores can now be removed (by projection) in CC valence excited states. See merge request eT-program/eT:!713
 - Default threshold to check for degnerate states reduced to 1.0d-3. See merge request eT-program/eT!724
 
 ### Structure

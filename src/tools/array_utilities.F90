@@ -3553,6 +3553,34 @@ contains
    end subroutine diagonalize_symmetric
 !
 !
+   subroutine constant_array(x, n, const)
+!!
+!!    Constant array 
+!!    Written by Sarai D. Folkestad, 2021
+!!
+!!    Sets the array x of length n to const.
+!!
+      implicit none 
+!
+      integer, intent(in) :: n 
+!
+      real(dp), dimension(n), intent(out) :: x 
+!
+      real(dp), intent(in) :: const
+!
+      integer :: I 
+!
+!$omp parallel do private(I) schedule(static)
+      do I = 1, n 
+!
+         x(I) = const
+!
+      enddo
+!$omp end parallel do
+!
+   end subroutine constant_array
+!
+!
    subroutine generalized_diagonalization_symmetric(A, S, dim_, e)
 !!
 !!    Generalized diagonalization symmetric matrix

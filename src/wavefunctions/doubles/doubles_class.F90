@@ -122,6 +122,7 @@ module doubles_class
 !     Projectors for excited and ionized states
 !
       procedure :: get_cvs_projector                     => get_cvs_projector_doubles
+      procedure :: get_rm_core_projector                 => get_rm_core_projector_doubles
       procedure :: get_ip_projector                      => get_ip_projector_doubles
 !
 !     Properties and densities
@@ -255,6 +256,56 @@ contains
      enddo
 !
    end subroutine get_cvs_projector_doubles
+!
+!
+   subroutine get_rm_core_projector_doubles(wf, projector, n_cores, core_MOs)
+!!
+!!    Get remove core projector
+!!    Written by Sarai D. Folkestad, 2021
+!!
+!
+      use array_utilities, only: constant_array
+!
+      implicit none
+!
+      class(doubles), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
+!
+      integer, intent(in) :: n_cores
+!
+      integer, dimension(n_cores), intent(in) :: core_MOs
+!
+      integer :: core, i, a, ai, j, b, bj, aibj
+!
+      call constant_array(projector, wf%n_es_amplitudes, one)
+!
+      do core = 1, n_cores
+!
+        i = core_MOs(core)
+!
+!$omp parallel do private (a, ai, j, b, bj, aibj)
+        do a = 1, wf%n_v
+!
+           ai = wf%n_v*(i - 1) + a
+           projector(ai) = zero
+!
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v
+!
+                  bj = wf%n_v*(j - 1) + b
+                  aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
+!
+                  projector(aibj + (wf%n_o)*(wf%n_v)) = zero
+!
+               enddo
+            enddo
+        enddo
+!$omp end parallel do
+!
+     enddo
+!
+   end subroutine get_rm_core_projector_doubles
 !
 !
    subroutine get_ip_projector_doubles(wf, projector)

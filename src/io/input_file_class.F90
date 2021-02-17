@@ -491,7 +491,8 @@ contains
                               'max micro iterations',     &
                               'rel micro threshold',      &
                               'chain length',             &
-                              'lanczos normalization']
+                              'lanczos normalization',    &
+                              'remove core']
 !
 !
       solver_cc_gs%name_    = 'solver cc gs'

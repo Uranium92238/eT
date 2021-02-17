@@ -78,6 +78,7 @@ set(eT_fortran_sources
    src/solver_tools/es_start_vectors/es_ip_start_vector_tool_class.F90
    src/solver_tools/es_projectors/es_projection_tool_class.F90
    src/solver_tools/es_projectors/es_cvs_projection_tool_class.F90
+   src/solver_tools/es_projectors/es_rm_core_projection_tool_class.F90
    src/solver_tools/es_projectors/es_valence_projection_tool_class.F90
    src/solver_tools/es_projectors/es_ip_projection_tool_class.F90
    src/fields/electric_field_class.F90
