@@ -151,7 +151,7 @@ contains
           wf%name_ .eq. 'low memory cc2') then
 !
          engine%multipliers_algorithm = 'diis'
-         engine%es_algorithm          = 'diis'
+         engine%es_algorithm          = 'non-linear davidson'
 !
       else if (wf%name_ .eq. 'ccs' .or. &
                wf%name_ .eq. 'cc2' .or. &
@@ -1260,7 +1260,7 @@ contains
 !
 !     Set default values and overwrite if specified in input
 !
-      energy_threshold = 1.0d-6
+      energy_threshold = 1.0d-3
       residual_threshold = energy_threshold
 !
 !     Set thresholds for the sanity checks if the roots are ordered correctly

@@ -90,7 +90,7 @@ contains
           wf%name_ .eq. 'low memory cc2') then
 !
          engine%multipliers_algorithm = 'diis'
-         engine%es_algorithm          = 'diis'
+         engine%es_algorithm          = 'non-linear davidson'
 !
       else if (wf%name_ .eq. 'ccs' .or. &
                wf%name_ .eq. 'cc2' .or. &

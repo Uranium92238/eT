@@ -7,6 +7,7 @@
 - Removed one construction of the Coulomb fock matrix per iteration. See merge request eT-program/eT!677
 - CCS Jacobian is now N^4 scaling (Cholesky vector algorithm) See merge request eT-program/eT!592
 - CC3 optimization using covariant/contravariant amplitudes and integrals are resorted on the fly. See merge request eT-program/eT:!685
+- Non-linear davidson now default solver for CC3 and low-mem CC2. See merge request eT-program/eT!724
 
 ### Features
 - printf accepts complex numbers and possible to repeat formats. See merge request eT-program/eT!674
@@ -16,6 +17,7 @@
 - Frozen core can be used for elements up to Dubnium. See merge request eT-program/eT:!709
 - `eT_launch` now returns the lanczos files. See merge request eT-program/eT:!710
 - Gaussian .cube format for density and orbital visualization. See merge request eT-program/eT:!603
+- Default threshold to check for degnerate states reduced to 1.0d-3. See merge request eT-program/eT!724
 
 ### Structure
 - Omega and Jacobian routines have separate in and out vectors and call the corresponding parent routines. See merge request eT-program/eT:!684
