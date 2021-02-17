@@ -49,21 +49,6 @@ module reordering
                    add_two_132_min_231_min_123_complex
    end interface add_two_132_min_231_min_123
 !
-   interface add_two_213_min_231_min_312
-      procedure :: add_two_213_min_231_min_312, &
-                   add_two_213_min_231_min_312_complex
-   end interface add_two_213_min_231_min_312
-!
-   interface add_two_321_min_312_min_123
-      procedure :: add_two_321_min_312_min_123, &
-                   add_two_321_min_312_min_123_complex
-   end interface add_two_321_min_312_min_123
-!
-   interface add_two_312_min_321_min_213
-      procedure :: add_two_312_min_321_min_213, &
-                   add_two_312_min_321_min_213_complex
-   end interface add_two_312_min_321_min_213
-!
    interface sort_12_to_21
       procedure :: sort_12_to_21, &
                    sort_12_to_21_complex
@@ -95,11 +80,6 @@ module reordering
       procedure :: sort_123_to_231, &
                    sort_123_to_231_complex
    end interface sort_123_to_231
-!
-   interface sort_123_to_312_and_add
-      procedure :: sort_123_to_312_and_add, &
-                   sort_123_to_312_and_add_complex
-   end interface sort_123_to_312_and_add
 !
    interface add_312_to_123
       procedure :: add_312_to_123, &
@@ -176,11 +156,6 @@ module reordering
                    construct_213_minus_312_complex
    end interface construct_213_minus_312
 !
-   interface sort_123_to_321_and_add
-      procedure :: sort_123_to_321_and_add, &
-                   sort_123_to_321_and_add_complex
-   end interface sort_123_to_321_and_add
-!
    interface sort_123_to_132
       procedure :: sort_123_to_132, &
                    sort_123_to_132_complex
@@ -201,15 +176,25 @@ module reordering
                    sort_123_to_213_and_add_complex
    end interface sort_123_to_213_and_add
 !
+   interface add_132_to_123
+      procedure :: add_132_to_123, &
+                   add_132_to_123_complex
+   end interface add_132_to_123
+!
    interface add_213_to_123
       procedure :: add_213_to_123, &
                    add_213_to_123_complex
    end interface add_213_to_123
 !
-   interface add_132_to_123
-      procedure :: add_132_to_123, &
-                   add_132_to_123_complex
-   end interface add_132_to_123
+   interface add_231_to_123
+      procedure :: add_231_to_123, &
+                   add_231_to_123_complex
+   end interface add_231_to_123
+!
+   interface add_321_to_123
+      procedure :: add_321_to_123, &
+                   add_321_to_123_complex
+   end interface add_321_to_123
 !
    interface add_3124_to_1234
       procedure :: add_3124_to_1234, &
@@ -386,6 +371,13 @@ module reordering
                    add_2134_to_1234_complex
    end interface add_2134_to_1234
 !
+!
+   interface add_2314_to_1234
+      procedure :: add_2314_to_1234, &
+                   add_2314_to_1234_complex
+   end interface add_2314_to_1234
+!
+!
    interface add_3214_to_1234
       procedure :: add_3214_to_1234, &
                    add_3214_to_1234_complex
@@ -523,11 +515,6 @@ module reordering
                    packin_4_from_1324_order_real, &
                    packin_4_from_1324_order_complex
    end interface packin
-!
-   interface packin_and_add
-      procedure :: packin_and_add, &
-                   packin_and_add_from_1324
-   end interface packin_and_add
 !
    interface packin_anti
       procedure :: packin_anti, &
@@ -749,208 +736,6 @@ contains
 !$omp end parallel do
 !
    end subroutine add_two_132_min_231_min_123_complex
-!
-!
-   subroutine add_two_213_min_231_min_312(x_pqr, y_pqr, dim_)
-!!
-!!    Add two*213 minus 231 minus 312
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, May 2019
-!!
-!!    Performs:
-!!
-!!       y_pqr(p,q,r) += 2*x_pqr(q,p,r) - x_pqr(q,r,p) - x_pqr(r,p,q)
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-!
-      real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
-      real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
-!
-      integer :: p,q,r
-!
-!$omp parallel do schedule(static) private(p,q,r)
-      do r = 1, dim_
-         do q = 1, dim_
-            do p = 1, dim_
-!
-               y_pqr(p,q,r) = y_pqr(p,q,r) + two*x_pqr(q,p,r) - x_pqr(q,r,p) - x_pqr(r,p,q)
-!
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine add_two_213_min_231_min_312
-!
-!
-   subroutine add_two_213_min_231_min_312_complex(x_pqr, y_pqr, dim_)
-!!
-!!    Add two_complex*213 minus 231 minus 312
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, May 2019
-!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
-!!
-!!    Performs:
-!!
-!!       y_pqr(p,q,r) += 2*x_pqr(q,p,r) - x_pqr(q,r,p) - x_pqr(r,p,q)
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-!
-      complex(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
-      complex(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
-!
-      integer :: p,q,r
-!
-!$omp parallel do schedule(static) private(p,q,r)
-      do r = 1, dim_
-         do q = 1, dim_
-            do p = 1, dim_
-!
-               y_pqr(p,q,r) = y_pqr(p,q,r) + two_complex*x_pqr(q,p,r) - x_pqr(q,r,p) - x_pqr(r,p,q)
-!
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine add_two_213_min_231_min_312_complex
-!
-!
-   subroutine add_two_321_min_312_min_123(x_pqr, y_pqr, dim_)
-!!
-!!    Add two*321 minus 312 minus 123
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, May 2019
-!!
-!!    Performs:
-!!
-!!       y_pqr(p,q,r) += 2*x_pqr(r,q,p) - x_pqr(r,p,q) - x_pqr(p,q,r)
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-!
-      real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
-      real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
-!
-      integer :: p,q,r
-!
-!$omp parallel do schedule(static) private(p,q,r)
-      do r = 1, dim_
-         do q = 1, dim_
-            do p = 1, dim_
-!
-               y_pqr(p,q,r) = y_pqr(p,q,r) + two*x_pqr(r,q,p) - x_pqr(r,p,q) - x_pqr(p,q,r)
-!
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine add_two_321_min_312_min_123
-!
-!
-   subroutine add_two_321_min_312_min_123_complex(x_pqr, y_pqr, dim_)
-!!
-!!    Add two_complex*321 minus 312 minus 123
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, May 2019
-!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
-!!
-!!    Performs:
-!!
-!!       y_pqr(p,q,r) += 2*x_pqr(r,q,p) - x_pqr(r,p,q) - x_pqr(p,q,r)
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-!
-      complex(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
-      complex(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
-!
-      integer :: p,q,r
-!
-!$omp parallel do schedule(static) private(p,q,r)
-      do r = 1, dim_
-         do q = 1, dim_
-            do p = 1, dim_
-!
-               y_pqr(p,q,r) = y_pqr(p,q,r) + two_complex*x_pqr(r,q,p) - x_pqr(r,p,q) - x_pqr(p,q,r)
-!
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine add_two_321_min_312_min_123_complex
-!
-!
-   subroutine add_two_312_min_321_min_213(x_pqr, y_pqr, dim_)
-!!
-!!    Add two*312 minus 321 minus 213
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, May 2019
-!!
-!!    Performs:
-!!
-!!       y_pqr(p,q,r) += 2*x_pqr(r,p,q) - x_pqr(r,q,p) - x_pqr(q,p,r)
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-!
-      real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
-      real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
-!
-      integer :: p,q,r
-!
-!$omp parallel do schedule(static) private(p,q,r)
-      do r = 1, dim_
-         do q = 1, dim_
-            do p = 1, dim_
-!
-               y_pqr(p,q,r) = y_pqr(p,q,r) + two*x_pqr(r,p,q) - x_pqr(r,q,p) - x_pqr(q,p,r)
-!
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine add_two_312_min_321_min_213
-!
-!
-   subroutine add_two_312_min_321_min_213_complex(x_pqr, y_pqr, dim_)
-!!
-!!    Add two_complex*312 minus 321 minus 213
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, May 2019
-!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
-!!
-!!    Performs:
-!!
-!!       y_pqr(p,q,r) += 2*x_pqr(r,p,q) - x_pqr(r,q,p) - x_pqr(q,p,r)
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-!
-      complex(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
-      complex(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
-!
-      integer :: p,q,r
-!
-!$omp parallel do schedule(static) private(p,q,r)
-      do r = 1, dim_
-         do q = 1, dim_
-            do p = 1, dim_
-!
-               y_pqr(p,q,r) = y_pqr(p,q,r) + two_complex*x_pqr(r,p,q) - x_pqr(r,q,p) - x_pqr(q,p,r)
-!
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine add_two_312_min_321_min_213_complex
-!
 !
 !     -::- Two-index re-sort and re-sort-add routines -::-
 !     ----------------------------------------------------
@@ -1439,6 +1224,39 @@ contains
    end subroutine sort_123_to_312_complex
 !
 !
+   subroutine sort_123_to_312_and_add(x_pqr, x_rpq, dim_p, dim_q, dim_r)
+!!
+!!    Sort 123 to 231 and add
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
+!!
+!!    Performs:
+!!
+!!       x_qrp(q,r,p) = x_qrp(q,r,p) + x_pqr(p,q,r)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(dim_p, dim_q, dim_r), intent(in)    :: x_pqr
+      real(dp), dimension(dim_r, dim_p, dim_q), intent(inout) :: x_rpq
+!
+      integer :: r, q, p
+!
+!$omp parallel do schedule(static) private(r,q,p)
+      do q = 1, dim_q
+         do p = 1, dim_p
+            do r = 1, dim_r
+!
+               x_rpq(r,p,q) = x_rpq(r,p,q) + x_pqr(p,q,r)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_123_to_312_and_add
+!
+!
    subroutine sort_123_to_231(x_pqr, x_qrp, dim_p, dim_q, dim_r)
 !!
 !!    Sort 123 to 312
@@ -1504,73 +1322,6 @@ contains
 !$omp end parallel do
 !
    end subroutine sort_123_to_231_complex
-!
-!
-   subroutine sort_123_to_312_and_add(x_pqr, x_rpq, dim_p, dim_q, dim_r)
-!!
-!!    Sort 123 to 312 and add
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
-!!
-!!    Performs:
-!!
-!!       x_rpq(r,p,q) = x_rpq(r,p,q) + x_pqr(p,q,r)
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_p, dim_q, dim_r
-!
-      real(dp), dimension(dim_p, dim_q, dim_r), intent(in)    :: x_pqr
-      real(dp), dimension(dim_r, dim_p, dim_q), intent(inout) :: x_rpq
-!
-      integer :: r, q, p
-!
-!$omp parallel do schedule(static) private(r,q,p)
-      do q = 1, dim_q
-         do p = 1, dim_p
-            do r = 1, dim_r
-!
-               x_rpq(r,p,q) = x_rpq(r,p,q) + x_pqr(p,q,r)
-!
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine sort_123_to_312_and_add
-!
-!
-   subroutine sort_123_to_312_and_add_complex(x_pqr, x_rpq, dim_p, dim_q, dim_r)
-!!
-!!    Sort 123 to 312 and add
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
-!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
-!!
-!!    Performs:
-!!
-!!       x_rpq(r,p,q) = x_rpq(r,p,q) + x_pqr(p,q,r)
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_p, dim_q, dim_r
-!
-      complex(dp), dimension(dim_p, dim_q, dim_r), intent(in)    :: x_pqr
-      complex(dp), dimension(dim_r, dim_p, dim_q), intent(inout) :: x_rpq
-!
-      integer :: r, q, p
-!
-!$omp parallel do schedule(static) private(r,q,p)
-      do q = 1, dim_q
-         do p = 1, dim_p
-            do r = 1, dim_r
-!
-               x_rpq(r,p,q) = x_rpq(r,p,q) + x_pqr(p,q,r)
-!
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine sort_123_to_312_and_add_complex
 !
 !
    subroutine add_312_to_123(scalar, x_rpq, x_pqr, dim_p, dim_q, dim_r)
@@ -2581,73 +2332,6 @@ contains
    end subroutine construct_213_minus_312_complex
 !
 !
-   subroutine sort_123_to_321_and_add(x_pqr, x_rqp, dim_p, dim_q, dim_r)
-!!
-!!    Sort 123 to 321 and add
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
-!!
-!!    Performs:
-!!
-!!       x_rqp(r,q,p) = x_rqp(r,q,p) + x_pqr(p,q,r)
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_p, dim_q, dim_r
-!
-      real(dp), dimension(dim_p, dim_q, dim_r), intent(in)    :: x_pqr
-      real(dp), dimension(dim_r, dim_q, dim_p), intent(inout) :: x_rqp
-!
-      integer :: r, q, p
-!
-!$omp parallel do schedule(static) private(r, q, p)
-      do p = 1, dim_p
-         do q = 1, dim_q
-            do r = 1, dim_r
-!
-              x_rqp(r,q,p) = x_rqp(r,q,p) + x_pqr(p,q,r)
-!
-           enddo
-        enddo
-     enddo
-!$omp end parallel do
-!
-   end subroutine sort_123_to_321_and_add
-!
-!
-   subroutine sort_123_to_321_and_add_complex(x_pqr, x_rqp, dim_p, dim_q, dim_r)
-!!
-!!    Sort 123 to 321 and add
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
-!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
-!!
-!!    Performs:
-!!
-!!       x_rqp(r,q,p) = x_rqp(r,q,p) + x_pqr(p,q,r)
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_p, dim_q, dim_r
-!
-      complex(dp), dimension(dim_p, dim_q, dim_r), intent(in)    :: x_pqr
-      complex(dp), dimension(dim_r, dim_q, dim_p), intent(inout) :: x_rqp
-!
-      integer :: r, q, p
-!
-!$omp parallel do schedule(static) private(r, q, p)
-      do p = 1, dim_p
-         do q = 1, dim_q
-            do r = 1, dim_r
-!
-              x_rqp(r,q,p) = x_rqp(r,q,p) + x_pqr(p,q,r)
-!
-           enddo
-        enddo
-     enddo
-!$omp end parallel do
-!
-   end subroutine sort_123_to_321_and_add_complex
-!
-!
    subroutine sort_123_to_132(x_pqr, x_prq, dim_p, dim_q, dim_r)
 !!
 !!    Sort 123 to 132
@@ -2989,6 +2673,152 @@ contains
    end subroutine add_213_to_123_complex
 !
 !
+   subroutine add_231_to_123(scalar, x_qrp, y_pqr, dim_p, dim_q, dim_r)
+!!
+!!    Add 231 to 123
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pqr(pqr) = y_pqr(pqr) + scalar*x(qrp)
+!!
+!!
+      implicit none
+!
+      real(dp), intent(in) :: scalar
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(dim_p, dim_q, dim_r) :: y_pqr
+      real(dp), dimension(dim_q, dim_p, dim_r), intent(in) :: x_qrp
+!
+      integer :: r, q, p
+!
+!$omp parallel do schedule(static) private(r,q,p)
+      do r = 1, dim_r
+         do q = 1, dim_q
+            do p = 1, dim_p
+!
+               y_pqr(p,q,r) = y_pqr(p,q,r) + scalar*x_qrp(q,r,p)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_231_to_123
+!
+!
+   subroutine add_231_to_123_complex(scalar, x_qrp, y_pqr, dim_p, dim_q, dim_r)
+!!
+!!    Add 231 to 123
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
+!!
+!!    Performs:
+!!
+!!       y_pqr(pqr) = y_pqr(pqr) + scalar*x(qrp)
+!!
+!!
+      implicit none
+!
+      complex(dp), intent(in) :: scalar
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r
+!
+      complex(dp), dimension(dim_p, dim_q, dim_r) :: y_pqr
+      complex(dp), dimension(dim_q, dim_p, dim_r), intent(in) :: x_qrp
+!
+      integer :: r, q, p
+!
+!$omp parallel do schedule(static) private(r,q,p)
+      do r = 1, dim_r
+         do q = 1, dim_q
+            do p = 1, dim_p
+!
+               y_pqr(p,q,r) = y_pqr(p,q,r) + scalar*x_qrp(q,r,p)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_231_to_123_complex
+!
+!
+   subroutine add_321_to_123(scalar, x_rqp, y_pqr, dim_p, dim_q, dim_r)
+!!
+!!    Add 321 to 123
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pqr(pqr) = y_pqr(pqr) + scalar*x(rqp)
+!!
+!!
+      implicit none
+!
+      real(dp), intent(in) :: scalar
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(dim_p, dim_q, dim_r) :: y_pqr
+      real(dp), dimension(dim_q, dim_p, dim_r), intent(in) :: x_rqp
+!
+      integer :: r, q, p
+!
+!$omp parallel do schedule(static) private(r,q,p)
+      do r = 1, dim_r
+         do q = 1, dim_q
+            do p = 1, dim_p
+!
+               y_pqr(p,q,r) = y_pqr(p,q,r) + scalar*x_rqp(r,q,p)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_321_to_123
+!
+!
+   subroutine add_321_to_123_complex(scalar, x_rqp, y_pqr, dim_p, dim_q, dim_r)
+!!
+!!    Add 321 to 123
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
+!!
+!!    Performs:
+!!
+!!       y_pqr(pqr) = y_pqr(pqr) + scalar*x(rqp)
+!!
+!!
+      implicit none
+!
+      complex(dp), intent(in) :: scalar
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r
+!
+      complex(dp), dimension(dim_p, dim_q, dim_r) :: y_pqr
+      complex(dp), dimension(dim_q, dim_p, dim_r), intent(in) :: x_rqp
+!
+      integer :: r, q, p
+!
+!$omp parallel do schedule(static) private(r,q,p)
+      do r = 1, dim_r
+         do q = 1, dim_q
+            do p = 1, dim_p
+!
+               y_pqr(p,q,r) = y_pqr(p,q,r) + scalar*x_rqp(r,q,p)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_321_to_123_complex
+!
+!
    subroutine add_132_to_123(scalar, x_prq, y_pqr, dim_p, dim_q, dim_r)
 !!
 !!    Add 132 to 123
@@ -3136,6 +2966,80 @@ contains
 !$omp end parallel do
 !
    end subroutine add_3124_to_1234_complex
+!
+!
+   subroutine add_2314_to_1234(scalar, x_qrps, y_pqrs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 2314 to 1234
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pqrs(p,q,r,s) = y_pqrs(p,q,r,s) + scalar * x_qrps(q,r,p,s)
+!!
+      implicit none
+!
+      real(dp), intent(in) :: scalar
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(inout) :: y_pqrs
+      real(dp), dimension(dim_q, dim_r, dim_p, dim_s), intent(in) :: x_qrps
+!
+      integer :: p, q, r, s
+!
+!$omp parallel do schedule(static) private(s,r,q,p)
+      do s = 1, dim_s
+         do r = 1, dim_r
+            do q = 1, dim_q
+               do p = 1, dim_p
+!
+                  y_pqrs(p,q,r,s) = y_pqrs(p,q,r,s) + scalar*x_qrps(q,r,p,s)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_2314_to_1234
+!
+!
+   subroutine add_2314_to_1234_complex(scalar, x_qrps, y_pqrs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 2314 to 1234
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pqrs(p,q,r,s) = y_pqrs(p,q,r,s) + scalar * x_qrps(q,r,p,s)
+!!
+      implicit none
+!
+      real(dp), intent(in) :: scalar
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      complex(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(inout) :: y_pqrs
+      complex(dp), dimension(dim_q, dim_r, dim_p, dim_s), intent(in) :: x_qrps
+!
+      integer :: p, q, r, s
+!
+!$omp parallel do schedule(static) private(s,r,q,p)
+      do s = 1, dim_s
+         do r = 1, dim_r
+            do q = 1, dim_q
+               do p = 1, dim_p
+!
+                  y_pqrs(p,q,r,s) = y_pqrs(p,q,r,s) + scalar*x_qrps(q,r,p,s)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_2314_to_1234_complex
 !
 !
    subroutine sort_1234_to_3412(x_pqrs, x_rspq, dim_p, dim_q, dim_r, dim_s)
@@ -7345,6 +7249,107 @@ contains
    end subroutine symmetrize_and_add_4_to_packed_complex
 !
 !
+   subroutine symmetrize_add_contra_to_packed(x, y, dim_p, dim_q)
+!!
+!!    Symmetrize and add contra to packed
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Aug 2020
+!!
+!!    Symmetrize and add an unsymmetric unpacked pq x rs matrix ordered prqs
+!!       (2 X_pqrs - X_rqps)
+!!    to a packed symmetric matrix Y_pqrs
+!!
+!!    Performs:
+!!
+!!       Y_pqrs = 1/3(2X_pqrs + X_rqps + 2X_rspq + X_psrq)
+!!
+!!    Note that this routine requires dim_p = dim_r and dim_q = dim_s
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      real(dp), dimension(dim_p, dim_p, dim_q, dim_q), intent(in)       :: x
+      real(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(inout) :: y
+!
+      integer :: p, q, r, s, pq, rs, pqrs, p_end
+!
+!$omp parallel do schedule(static) collapse(2) private(s,r,q,p,pq,rs,pqrs)
+      do s = 1, dim_q
+         do r = 1, dim_p
+            do q = 1, s
+!
+               if (s .ne. q) then
+                  p_end = dim_p
+               else
+                  p_end = r
+               end if
+!
+               do p = 1, p_end
+!
+                  pq = dim_p*(q-1)+p
+                  rs = dim_p*(s-1)+r
+                  pqrs = max(pq,rs)*(max(pq,rs)-3)/2 + pq + rs
+!
+                  y(pqrs) = y(pqrs) &
+                          + third*(two*x(p,r,q,s) + x(r,p,q,s) & 
+                          +        two*x(r,p,s,q) + x(p,r,s,q))
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine symmetrize_add_contra_to_packed
+!
+!
+   subroutine symmetrize_add_to_packed(x, y, dim_p, dim_q)
+!!
+!!    Symmetrize and add to packed
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Aug 2020
+!!
+!!    Symmetrize and add an unsymmetric unpacked pq x rs matrix X_prqs
+!!    to a packed symmetric matrix Y_pqrs
+!!
+!!    Note that this routine requires dim_p = dim_r and dim_q = dim_s
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      real(dp), dimension(dim_p, dim_p, dim_q, dim_q), intent(in)       :: x
+      real(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(inout) :: y
+!
+      integer :: p, q, r, s, pq, rs, pqrs, p_end
+!
+!$omp parallel do schedule(static) collapse(2) private(s,r,q,p,pq,rs,pqrs)
+      do s = 1, dim_q
+         do r = 1, dim_p
+            do q = 1, s
+!
+               if (s .ne. q) then
+                  p_end = dim_p
+               else
+                  p_end = r
+               end if
+!
+               do p = 1, p_end
+!
+                  pq = dim_p*(q-1)+p
+                  rs = dim_p*(s-1)+r
+                  pqrs = max(pq,rs)*(max(pq,rs)-3)/2 + pq + rs
+!
+                  y(pqrs) = y(pqrs) + (x(p,r,q,s) + x(r,p,s,q))
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine symmetrize_add_to_packed
+!
+!
    subroutine squareup_anti(packed, unpacked, N)
 !!
 !!    Square up packed antisymmetric matrix
@@ -7818,7 +7823,7 @@ contains
 !$omp end parallel do
 !
    end subroutine construct_packed_contravariant_real
-   !
+!
 !
    subroutine construct_packed_contravariant_complex(x, y, dim_p, dim_q)
 !!
@@ -7977,74 +7982,43 @@ contains
    end subroutine construct_packed_covariant_complex
 !
 !
-   subroutine packin_and_add(packed,unpacked,N)
+   subroutine construct_squared_covariant_1324(x_pqrs, y_prqs, dim_p, dim_q)
 !!
-!!    Pack in and add
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
+!!    Construct squared covariant 1324
+!!    Written by Alexander C. Paul, Jan 2021
 !!
-!!    Pack down full square matrix of dimension N x N.
+!!    Constructs:
+!!       Y_prqs = 1/3(2X_pqrs + X_rqps)
+!!    from packed vector x_pqrs
 !!
-      implicit none
-!
-      integer, intent(in) :: N
-!
-      real(dp), dimension(N*(N+1)/2), intent(inout) :: packed
-      real(dp), dimension(N,N), intent(in)          :: unpacked
-!
-      integer :: i, j
-!
-!$omp parallel do schedule(static) private(i,j)
-      do i = 1, N
-         do j = 1, i
-!
-            packed((i*(i-1))/2 + j) = packed((i*(i-1))/2 + j) + unpacked(i, j)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine packin_and_add
-!
-!
-   subroutine packin_and_add_from_1324(packed, unpacked, dim_p, dim_q)
-!!
-!!    Pack in and add from 1324
-!!    Written by Rolf H. Myhre, Dec 2020
-!!
-!!    Pack in unpacked array X_prqs to packed array Y_pqrs
-!!    where dim_p = dim_r and dim_q = dim_s
+!!    Note that this routine requires dim_p = dim_r and dim_q = dim_s
 !!
       implicit none
 !
-      integer, intent(in) :: dim_p
-      integer, intent(in) :: dim_q
+      integer, intent(in) :: dim_p, dim_q
 !
-      real(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(inout) :: packed
-      real(dp), dimension(dim_p,dim_p,dim_q,dim_q), intent(in)          :: unpacked
+      real(dp), dimension(((dim_p*dim_q+1)*(dim_p*dim_q)/2)), intent(in) :: x_pqrs
+      real(dp), dimension(dim_p, dim_p, dim_q, dim_q), intent(out)       :: y_prqs
 !
-      integer :: p, q, r, s, pq, rs, pqrs, r_end
+      integer :: p, q, r, s, pq, rs, ps, rq, pqrs, rqps
 !
-!$omp parallel do schedule(static) private(p, q, r, s, pq, rs, pqrs, r_end)
-      do q = 1, dim_q
-         do p = 1, dim_p
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,pqrs)
+      do s = 1, dim_q
+         do q = 1, dim_q
+            do r = 1, dim_p
 !
-            pq = dim_p*(q - 1) + p
+               rs = dim_p*(s-1) + r
+               rq = dim_p*(q-1) + r
 !
-            do s = 1, q
+               do p = 1, dim_p
 !
-               if (s .ne. q) then
-                  r_end = dim_p
-               else
-                  r_end = p
-               endif
+                  pq = dim_p*(q-1) + p
+                  ps = dim_p*(s-1) + p
 !
-               do r = 1, r_end
+                  pqrs = max(pq,rs)*(max(pq,rs)-3)/2 + pq + rs
+                  rqps = max(rq,ps)*(max(rq,ps)-3)/2 + rq + ps
 !
-                  rs = dim_p*(s - 1) + r
-!
-                  pqrs = (pq*(pq-1))/2 + rs
-!
-                  packed(pqrs) = packed(pqrs) + unpacked(p,r,q,s)
+                  y_prqs(p,r,q,s) = third*(two*x_pqrs(pqrs) + x_pqrs(rqps))
 !
                enddo
             enddo
@@ -8052,7 +8026,35 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine packin_and_add_from_1324
+   end subroutine construct_squared_covariant_1324
+!
+!
+   subroutine construct_contravariant_t3(t, u, dim_)
+!!
+!!    Construct contravariant t
+!!    Written by Rolf H. Myhre and Alexander C. Paul, August 2020
+!!
+!!    Construct:
+!!       t_pqr = 4t_pqr - 2t_qpr - 2t_rqp - 2t_prq + t_qrp + t_rpq
+!!
+      use array_utilities, only: copy_and_scale
+!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_, dim_, dim_), intent(inout) :: t
+      real(dp), dimension(dim_, dim_, dim_), intent(out)   :: u
+!
+      call copy_and_scale( two, t, u, dim_**3)
+      call add_132_to_123(-one, t, u, dim_, dim_, dim_)
+      call add_321_to_123(-one, t, u, dim_, dim_, dim_)
+!
+      call copy_and_scale( two, u, t, dim_**3)
+!
+      call add_213_to_123(-one, u, t, dim_, dim_, dim_)
+!
+   end subroutine construct_contravariant_t3
 !
 !
 end module reordering

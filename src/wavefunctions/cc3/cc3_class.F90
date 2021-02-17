@@ -39,42 +39,20 @@ module cc3_class
 !
    type, extends(triples) :: cc3
 !
-!     Ground state integral files
-!
-      type(direct_stream_file) :: g_bdck_t
-      type(direct_stream_file) :: g_ljck_t
-      type(direct_stream_file) :: g_dbkc_t
-      type(direct_stream_file) :: g_jlkc_t
-      type(direct_stream_file) :: L_jbkc_t
-!
-!     Right Jacobian integral files
-!
-      type(direct_stream_file) :: g_bdck_c
-      type(direct_stream_file) :: g_ljck_c
-!
 !     Jacobian intermediates files
 !
-      type(direct_stream_file) :: g_lbkc_t
-      type(direct_stream_file) :: X_abdi
+!     X_abid = - sum_jck u^abc_ijk g_kcjd
+!     X_ajil = - sum_bck u^abc_ijk g_lbkc
+      type(direct_stream_file) :: X_dbai
       type(direct_stream_file) :: X_abid
-      type(direct_stream_file) :: Y_bcek
       type(direct_stream_file) :: X_ajil
 !
-!     Files for batching of the virtual indices
-!
-      type(direct_stream_file) :: g_bdck_t_v
-      type(direct_stream_file) :: g_ljck_t_v
-      type(direct_stream_file) :: g_dbkc_t_v
-      type(direct_stream_file) :: g_jlkc_t_v
-      type(direct_stream_file) :: L_jbkc_t_v
-!
-      type(direct_stream_file) :: g_bdck_c_v
-      type(direct_stream_file) :: g_ljck_c_v
+!     Y_ebck = sum_aij L^abc_ijk t^ae_ij
+      type(direct_stream_file) :: Y_ebck
 !
 !     Density intermediates files
-!
-      type(direct_stream_file) :: Y_clik_tbar
-      type(direct_stream_file) :: Z_bcjk
+!     Y_cmjk = sum_aij tbar^abc_ijk t^ab_im
+      type(direct_stream_file) :: Y_cmjk_tbar
 !
       real(dp), dimension(:,:), allocatable :: GS_cc3_density_oo
       real(dp), dimension(:,:), allocatable :: GS_cc3_density_vv
@@ -89,24 +67,22 @@ module cc3_class
 !     Routines related to omega
 !
       procedure :: construct_omega                      => construct_omega_cc3
-!
       procedure :: omega_cc3_a                          => omega_cc3_a_cc3
-      procedure :: omega_cc3_integrals                  => omega_cc3_integrals_cc3
-      procedure :: omega_cc3_a_n6                       => omega_cc3_a_n6_cc3
-      procedure :: omega_cc3_a_n7                       => omega_cc3_a_n7_cc3
+      procedure :: omega_cc3_contractions               => omega_cc3_contractions_cc3
+      procedure :: omega1_cc3_permutation               => omega1_cc3_permutation_cc3
+      procedure :: omega2_cc3_permutation               => omega2_cc3_permutation_cc3
+      procedure :: omega2_fock_cc3_permutation          => omega2_fock_cc3_permutation_cc3
+!
+      procedure :: estimate_mem_integral_setup          => estimate_mem_integral_setup_cc3
+      procedure :: estimate_mem_c1_integral_setup       => estimate_mem_c1_integral_setup_cc3
 !
 !     Routines used for prepare, both left and right
 !
       procedure :: prepare_for_jacobian                 => prepare_for_jacobian_cc3
       procedure :: prepare_for_jacobian_transpose       => prepare_for_jacobian_transpose_cc3
-      procedure :: prepare_cc3_g_lbkc_t_file            => prepare_cc3_g_lbkc_t_file_cc3
       procedure :: prepare_cc3_jacobian_intermediates   => prepare_cc3_jacobian_intermediates_cc3
       procedure :: construct_x_intermediates            => construct_x_intermediates_cc3
       procedure :: sort_x_to_abid_and_write             => sort_x_to_abid_and_write_cc3
-!
-!     Routines for CVS
-      procedure :: get_cvs_projector                    => get_cvs_projector_cc3
-      procedure :: get_triples_cvs_projector_abc        => get_triples_cvs_projector_abc_cc3
 !
 !     Routines related to the jacobian
 !
@@ -121,22 +97,28 @@ module cc3_class
       procedure :: construct_c1_fock                    => construct_c1_fock_cc3
       procedure :: jacobian_cc3_b2_fock                 => jacobian_cc3_b2_fock_cc3
       procedure :: jacobian_cc3_c3_a                    => jacobian_cc3_c3_a_cc3
-      procedure :: construct_c1_integrals               => construct_c1_integrals_cc3
+      procedure :: rho2_fock_cc3_permutation            => rho2_fock_cc3_permutation_cc3
 !
 !     Routines related to the transpose of the jacobian
 !
       procedure :: effective_jacobian_transpose_transformation  &
-                   => effective_jacobian_transpose_transformation_cc3
+                => effective_jacobian_transpose_transformation_cc3
 !
       procedure :: jacobian_transpose_cc3_t3_a1         => jacobian_transpose_cc3_t3_a1_cc3
       procedure :: jacobian_transpose_cc3_t3_b1         => jacobian_transpose_cc3_t3_b1_cc3
+      procedure :: jacobian_transpose_cc3_b1_x_ai       => jacobian_transpose_cc3_b1_x_ai_cc3
       procedure :: construct_x_ai_intermediate          => construct_x_ai_intermediate_cc3
       procedure :: jacobian_transpose_cc3_c3_a          => jacobian_transpose_cc3_c3_a_cc3
-      procedure :: jacobian_transpose_cc3_c3_calc       => jacobian_transpose_cc3_c3_calc_cc3
-      procedure :: jacobian_transpose_cc3_a_n7          => jacobian_transpose_cc3_a_n7_cc3
-      procedure :: construct_y_intermediates            => construct_y_intermediates_cc3
+      procedure :: outer_product_terms_l3               => outer_product_terms_l3_cc3
+      procedure :: jacobian_transpose_cc3_contractions  => jacobian_transpose_cc3_contractions_cc3
       procedure :: jacobian_transpose_cc3_c3_a1_y_o     => jacobian_transpose_cc3_c3_a1_y_o_cc3
       procedure :: jacobian_transpose_cc3_c3_a1_y_v     => jacobian_transpose_cc3_c3_a1_y_v_cc3
+      procedure :: construct_Y_vvvo_permutation &
+                => construct_Y_vvvo_permutation_cc3
+      procedure :: construct_Y_vooo_permutation &
+                => construct_Y_vooo_permutation_cc3
+      procedure :: construct_X_vo_permutation &
+                => construct_X_vo_permutation_cc3
 !
 !     Routines related to the multipliers
 !
@@ -146,19 +128,29 @@ module cc3_class
 !
 !     Routines to construct triples amplitudes in batches of a,b,c
 !
-      procedure :: prepare_cc3_integrals_t3_abc         => prepare_cc3_integrals_t3_abc_cc3
-      procedure :: prepare_cc3_integrals_R3_abc         => prepare_cc3_integrals_R3_abc_cc3
-      procedure :: prepare_cc3_integrals_L3_abc         => prepare_cc3_integrals_L3_abc_cc3
-      procedure :: omega_cc3_W_calc_abc                 => omega_cc3_W_calc_abc_cc3
-      procedure :: omega_cc3_eps_abc                    => omega_cc3_eps_abc_cc3
-      procedure :: jacobian_transpose_cc3_c3_calc_abc   => jacobian_transpose_cc3_c3_calc_abc_cc3
+      procedure :: setup_oovo_abc                       => setup_oovo_abc_cc3
+      procedure :: point_oovo_abc                       => point_oovo_abc_cc3
+      procedure :: setup_ooov_abc                       => setup_ooov_abc_cc3
+      procedure :: point_ooov_abc                       => point_ooov_abc_cc3
+      procedure :: setup_vvvo_abc                       => setup_vvvo_abc_cc3
+      procedure :: point_vvvo_abc                       => point_vvvo_abc_cc3
+      procedure :: setup_vvov_abc                       => setup_vvov_abc_cc3
+      procedure :: point_vvov_abc                       => point_vvov_abc_cc3
+      procedure :: setup_ovov_abc                       => setup_ovov_abc_cc3
+      procedure :: point_ovov_abc                       => point_ovov_abc_cc3
+!
+      procedure :: estimate_mem_integral_setup_abc      => estimate_mem_integral_setup_abc_cc3
+      procedure :: estimate_mem_c1_integral_setup_abc   => estimate_mem_c1_integral_setup_abc_cc3
+!
+      procedure :: construct_W_abc                      => construct_W_abc_cc3
+      procedure :: outer_product_terms_l3_abc           => outer_product_terms_l3_abc_cc3
+      procedure :: divide_by_orbital_differences_abc    => divide_by_orbital_differences_abc_cc3
 !
 !     Routines related to density matrices
 !
       procedure :: initialize_gs_density                => initialize_gs_density_cc3
       procedure :: destruct_gs_density                  => destruct_gs_density_cc3
 !
-      procedure :: prepare_for_density                  => prepare_for_density_cc3
       procedure :: construct_gs_density                 => construct_gs_density_cc3
       procedure :: construct_left_transition_density    => construct_left_transition_density_cc3
       procedure :: construct_right_transition_density   => construct_right_transition_density_cc3
@@ -167,7 +159,8 @@ module cc3_class
       procedure :: density_cc3_mu_ref_oo                => density_cc3_mu_ref_oo_cc3
       procedure :: density_cc3_mu_ref_ijk               => density_cc3_mu_ref_ijk_cc3
       procedure :: density_cc3_mu_ref_vv                => density_cc3_mu_ref_vv_cc3
-      procedure :: construct_y_intermediate_vo3         => construct_y_intermediate_vo3_cc3
+      procedure :: construct_y_vooo_intermediate &
+                => construct_y_vooo_intermediate_cc3
 !
       procedure :: density_cc3_mu_nu_ov                 => density_cc3_mu_nu_ov_cc3
       procedure :: density_cc3_mu_nu_oo_ov_vv           => density_cc3_mu_nu_oo_ov_vv_cc3
@@ -178,6 +171,11 @@ module cc3_class
       procedure :: density_cc3_mu_nu_vo                 => density_cc3_mu_nu_vo_cc3
       procedure :: construct_Z_intermediate             => construct_Z_intermediate_cc3
 !
+      procedure, nopass :: density_cc3_oo_vv_N7_TN_permutation &
+                        => density_cc3_oo_vv_N7_TN_permutation_cc3
+      procedure, nopass :: density_cc3_oo_vv_N7_NT_permutation &
+                        => density_cc3_oo_vv_N7_NT_permutation_cc3
+!
 !     Routines related to the biorthonormalization
 !
       procedure :: L_R_overlap                          => L_R_overlap_cc3
@@ -185,7 +183,7 @@ module cc3_class
 !
 !     Initialize wavefunction
 !
-      procedure :: initialize             => initialize_cc3
+      procedure :: initialize                           => initialize_cc3
 !
    end type cc3
 !
@@ -227,8 +225,8 @@ contains
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
-      wf%n_t1 = (wf%n_o)*(wf%n_v)
-      wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
+      wf%n_t1 = wf%n_o*wf%n_v
+      wf%n_t2 = wf%n_o*wf%n_v*(wf%n_o*wf%n_v + 1)/2
 !
       wf%n_gs_amplitudes = wf%n_t1 + wf%n_t2
       wf%n_es_amplitudes = wf%n_t1 + wf%n_t2
@@ -269,18 +267,7 @@ contains
 !
       class(cc3) :: wf
 !
-      type(direct_stream_file) :: Y_bcek_tbar
-!
-!     Delete files for GS
-      if (wf%g_bdck_t%exists()) then
-!
-         call wf%g_bdck_t%delete_
-         call wf%g_ljck_t%delete_
-         call wf%g_dbkc_t%delete_
-         call wf%g_jlkc_t%delete_
-         call wf%L_jbkc_t%delete_
-!
-      end if
+      type(direct_stream_file) :: Y_ebck_tbar
 !
 !     Delete Intermediate files for the jacobian transformations
       if (wf%X_abid%exists()) then
@@ -290,47 +277,27 @@ contains
 !
       end if
 !
-!     Delete additional files for jacobian transformation
-      if (wf%g_bdck_c%exists()) then
-!
-         call wf%g_bdck_c%delete_
-         call wf%g_ljck_c%delete_
-!
-      end if
-!
 !     Delete additional files for jacobian transpose transformation
-      if (wf%Y_bcek%exists()) then
+      if (wf%Y_ebck%exists()) then
 !
-         call wf%Y_bcek%delete_
+         call wf%Y_ebck%delete_
 !
       end if
 !
 !     Intermediates created for/in zop
-      if (wf%g_bdck_t_v%exists()) then
+      if (wf%Y_cmjk_tbar%exists()) then
 !
-!        Integral files needed for t3, tbar3 (L3) in batches of a,b,c
-         call wf%g_bdck_t_v%delete_
-         call wf%g_ljck_t_v%delete_
-         call wf%g_dbkc_t_v%delete_
-         call wf%g_jlkc_t_v%delete_
-         call wf%L_jbkc_t_v%delete_
-!
-         call wf%Y_clik_tbar%delete_
+         call wf%Y_cmjk_tbar%delete_
 !
       end if
 !
 !     Intermediates created for fop
-      if (wf%g_bdck_c_v%exists()) then
+      Y_ebck_tbar = direct_stream_file('Y_ebck_tbar', wf%n_v**3)
 !
-!        Integral files needed for R3 in batches of a,b,c
-         call wf%g_bdck_c_v%delete_
-         call wf%g_ljck_c_v%delete_
+      if (Y_ebck_tbar%exists()) then
 !
-         call wf%Z_bcjk%delete_
-!
-         Y_bcek_tbar = direct_stream_file('Y_bcek_tbar', wf%n_v**3)
-         call Y_bcek_tbar%open_('write')
-         call Y_bcek_tbar%delete_
+         call Y_ebck_tbar%open_('write')
+         call Y_ebck_tbar%delete_
 !
       end if
 !
@@ -407,7 +374,7 @@ contains
 !!
 !!    jacobian_transpose_transformation is used 
 !!    for multipliers and left excited states
-!!    Copy the intermediate Y_bcek after solving
+!!    Copy the intermediate Y_ebck after solving
 !!    for the multipliers to reuse it 
 !!    in the right transition densities
 !!
@@ -415,25 +382,25 @@ contains
 !
       class(cc3) :: wf
 !
-      type(direct_stream_file) :: Y_bcek_tbar
+      type(direct_stream_file) :: Y_ebck_tbar
 !
       type(batching_index) :: batch_k
       integer :: k_batch, req_0, req_1
 !
-      real(dp), dimension(:,:), allocatable :: Y_bcek
+      real(dp), dimension(:,:), allocatable :: Y_ebck
 !
-!     Copy the intermediate Y_bcek constructed as follows:
-!     Y_bcek = sum_aij tbar^abc_ijk * t^ae_ij
+!     Copy the intermediate Y_ebck constructed as follows:
+!     Y_ebck = sum_aij tbar^abc_ijk * t^ae_ij
 !
 !     Later used in the right transition density matrix
 !
-      Y_bcek_tbar = direct_stream_file('Y_bcek_tbar', wf%n_v**3)
+      Y_ebck_tbar = direct_stream_file('Y_ebck_tbar', wf%n_v**3)
 !
 !     Delete if the file already exists 
 !     e.g. when restarting a crashed CC3 calculation
 !
-      if(Y_bcek_tbar%exists()) then
-         call Y_bcek_tbar%delete_
+      if(Y_ebck_tbar%exists()) then
+         call Y_ebck_tbar%delete_
       end if
 !
 !     We want to read and write as much as possible at once,
@@ -444,23 +411,23 @@ contains
 !
       batch_k = batching_index(wf%n_o)
       call mem%batch_setup(batch_k, req_0, req_1)
-      call mem%alloc(Y_bcek, wf%n_v**3, batch_k%max_length)
+      call mem%alloc(Y_ebck, wf%n_v**3, batch_k%max_length)
 !
-      call Y_bcek_tbar%open_('write')
-      call wf%Y_bcek%open_('read')
+      call Y_ebck_tbar%open_('write')
+      call wf%Y_ebck%open_('read')
 !
       do k_batch = 1, batch_k%num_batches
          call batch_k%determine_limits(k_batch)
 !
-         call wf%Y_bcek%read_interval(Y_bcek, batch_k)
-         call Y_bcek_tbar%write_interval(Y_bcek, batch_k)
+         call wf%Y_ebck%read_interval(Y_ebck, batch_k)
+         call Y_ebck_tbar%write_interval(Y_ebck, batch_k)
 !
       enddo
 !
-      call wf%Y_bcek%close_()
-      call Y_bcek_tbar%close_()
+      call wf%Y_ebck%close_()
+      call Y_ebck_tbar%close_()
 !
-      call mem%dealloc(Y_bcek, wf%n_v**3, batch_k%max_length)
+      call mem%dealloc(Y_ebck, wf%n_v**3, batch_k%max_length)
 !
    end subroutine save_tbar_intermediates_cc3
 !
@@ -472,6 +439,10 @@ contains
 !!
 !!    Computes L^T * R for full space L and R (singles, doubles, triples)
 !!
+      use array_utilities, only: copy_and_scale
+!
+      implicit none
+!
       class(cc3), intent(in) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: L
@@ -480,8 +451,8 @@ contains
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: R
       integer, intent(in) :: right_state
 !
-      real(dp), dimension(:,:), allocatable :: L_ai, R_ai
-      real(dp), dimension(:,:,:,:), allocatable :: L_abij, R_abij
+      real(dp), dimension(:,:), allocatable :: L1, R1
+      real(dp), dimension(:,:,:,:), allocatable :: L2, R2
 !
       real(dp) :: ddot
 !
@@ -491,27 +462,24 @@ contains
 !
 !     :: Triples contribution to the overlap ::
 !
-!     Allocate unpacked doubles Vectors of the left and right vector
+      call mem%alloc(L1, wf%n_v, wf%n_o)
+      call mem%alloc(R1, wf%n_v, wf%n_o)
 !
-      call mem%alloc(L_ai, wf%n_v, wf%n_o)
-      call mem%alloc(R_ai, wf%n_v, wf%n_o)
+      call dcopy(wf%n_t1, L, 1, L1, 1)
+      call dcopy(wf%n_t1, R, 1, R1, 1)
 !
-      call dcopy(wf%n_t1, L, 1, L_ai, 1)
-      call dcopy(wf%n_t1, R, 1, R_ai, 1)
+      call mem%alloc(L2, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%alloc(R2, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-!     need to reconstruct the c1-transformed integrals for the respective right state
-      if (wf%n_singlet_states .gt. 1) then
-         call wf%construct_c1_integrals(R_ai)
-      end if
-      call mem%dealloc(R_ai, wf%n_v, wf%n_o)
+!     Construct covariant L2 - use R2 as help array
 !
-      call mem%alloc(L_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%alloc(R_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call squareup_and_sort_1234_to_1324(L(wf%n_t1 + 1 : wf%n_es_amplitudes), L_abij, &
+      call squareup_and_sort_1234_to_1324(L(wf%n_t1 + 1 : wf%n_es_amplitudes), R2, &
                                           wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call squareup_and_sort_1234_to_1324(R(wf%n_t1 + 1 : wf%n_es_amplitudes), R_abij, &
+      call copy_and_scale(two*third, R2, L2, wf%n_t1**2)
+      call add_1243_to_1234(third, R2, L2, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call squareup_and_sort_1234_to_1324(R(wf%n_t1 + 1 : wf%n_es_amplitudes), R2, &
                                           wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Scale the right doubles vector by 1 + delta_ai,bj
@@ -520,7 +488,7 @@ contains
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
-            R_abij(a,a,i,i) = two*R_abij(a,a,i,i)
+            R2(a,a,i,i) = two*R2(a,a,i,i)
 !
          enddo
       enddo
@@ -528,11 +496,12 @@ contains
 !
       call wf%L_R_overlap_triples(wf%left_excitation_energies(left_state),  &
                                   wf%right_excitation_energies(right_state),&
-                                  L_ai, L_abij, R_abij, L_R_overlap_cc3)
+                                  L1, L2, R1, R2, L_R_overlap_cc3)
 !
-      call mem%dealloc(L_ai, wf%n_v, wf%n_o)
-      call mem%dealloc(L_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%dealloc(R_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(L1, wf%n_v, wf%n_o)
+      call mem%dealloc(L2, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(R1, wf%n_v, wf%n_o)
+      call mem%dealloc(R2, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call output%printf('debug', 'Overlap of (i0). left and (i0). right state: (f15.10)', &
                          ints=[left_state, right_state], &
@@ -541,10 +510,9 @@ contains
    end function L_R_overlap_cc3
 !
 !
-   subroutine L_R_overlap_triples_cc3(wf, omega_L, omega_R, L_ai, &
-                                      L_abij, R_abij, LT_R)
+   subroutine L_R_overlap_triples_cc3(wf, omega_L, omega_R, L1, L2, R1, R2, LT_R)
 !!
-!!    Left right overlap triples contribution
+!!    Left right overlap triples
 !!    Written by Alexander C. Paul, August 2019
 !!
 !!    Calculates the overlap of the triples part 
@@ -567,23 +535,16 @@ contains
 !
       real(dp), intent(inout) :: LT_R
 !
-!     Unpacked Left vector
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: L_ai
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: L_abij
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: L1, R1
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: L2, R2
 !
-!     Unpacked R2-amplitudes
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: R_abij
+      real(dp), dimension(:,:,:,:), allocatable :: t2
 !
-!     Unpacked t2-amplitudes
-      real(dp), dimension(:,:,:,:), allocatable :: t_abij
-!
-!     Arrays for triples amplitudes and multipliers
       real(dp), dimension(:,:,:), allocatable :: R_abc
       real(dp), dimension(:,:,:), allocatable :: L_abc
-      real(dp), dimension(:,:,:), allocatable :: u_abc
-      real(dp), dimension(:,:,:), allocatable :: v_abc
 !
-      real(dp), dimension(:,:), allocatable :: F_ov_ck ! Transpose of the fock matrix ov block
+!     Help array used for sorting integrals and amplitudes
+      real(dp), dimension(:,:,:,:), allocatable :: sorting
 !
 !     Integrals for the construction of the R3-amplitudes
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdci
@@ -606,7 +567,6 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_lick_p => null()
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ljck_p => null()
 !
-!     C1 transformed integrals
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdci_c1
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdcj_c1
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdck_c1
@@ -648,188 +608,164 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ilkc_p => null()
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_jlkc_p => null()
 !
-      real(dp), dimension(:,:,:,:), allocatable, target  :: L_ibjc
-      real(dp), dimension(:,:,:,:), allocatable, target  :: L_ibkc
-      real(dp), dimension(:,:,:,:), allocatable, target  :: L_jbkc
-      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_ibjc_p => null()
-      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_ibkc_p => null()
-      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_jbkc_p => null()
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_ibjc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_ibkc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_jbkc
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ibjc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ibkc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_jbkc_p => null()
 !
-      integer :: i, j, k, i_rel, j_rel, k_rel
       type(batching_index) :: batch_i, batch_j, batch_k
-      integer :: i_batch, j_batch, k_batch
-      integer :: req_0, req_1, req_2, req_3
-!
-!     for CVS
-      logical :: ijk_core
-!
+      integer  :: i, j, k, i_rel, j_rel, k_rel
+      integer  :: i_batch, j_batch, k_batch
+      integer  :: req_0, req_1, req_2, req_3, req_1_eri, req_i
       real(dp) :: ddot
+      integer :: req_single_batch
 !
-!     Set up arrays for amplitudes
-      call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Setup and Batching loops
-!
-      req_0 = 4*(wf%n_v)**3 + (wf%n_v)*(wf%n_o)
-      req_1 = 3*(wf%n_v)**3
-      req_2 = 3*(wf%n_o)*(wf%n_v) + (wf%n_v)**2
-      req_3 = 0
+      call mem%alloc(t2, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call squareup_and_sort_1234_to_1324(wf%t2, t2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       batch_i = batching_index(wf%n_o)
       batch_j = batching_index(wf%n_o)
       batch_k = batching_index(wf%n_o)
 !
-      call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                           req_0, req_1, req_2, req_3)
+!     Memory for sorting array and getting the integrals
+      call wf%estimate_mem_c1_integral_setup(req_0, req_1_eri)
+      req_0 = req_0 + 2*wf%n_v**3
+      req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
-!     Allocate integral arrays
+!     Need less memory if we don't need to batch, so we overwrite the maximum 
+!     required memory in batch_setup
 !
-!     Split up so that the integral and amplitude arrays are closer in mem
+      req_single_batch = req_0 + req_1_eri*wf%n_o + 3*wf%n_v**3*wf%n_o &
+                       + 3*wf%n_v*wf%n_o**3 + (wf%n_v*wf%n_o)**2
+!
+      req_1 = 3*wf%n_v**3
+      req_i = req_1 + req_1_eri ! Mem for integral setup only needed for 1 index.
+      req_2 = 6*wf%n_o*wf%n_v + wf%n_v**2
+      req_3 = 0
+!
+      call mem%batch_setup(batch_i, batch_j, batch_k,  &
+                           req_0, req_i, req_1, req_1, &
+                           req_2, req_2, req_2, req_3, &
+                           req_single_batch=req_single_batch)
+!
+      call mem%alloc(R_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%alloc(L_abc, wf%n_v, wf%n_v, wf%n_v)
 !
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!
          call mem%alloc(g_bdci_c1, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%alloc(g_ljci_c1, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!
-      else ! batching
-!
-         call batch_i%determine_limits(1)
-!
-         call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%alloc(g_bdcj, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%alloc(g_bdck, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-!
-         call mem%alloc(g_ljci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_lkci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_lkcj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_licj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_lick, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_ljck, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-!
-         call mem%alloc(g_bdci_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%alloc(g_bdcj_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%alloc(g_bdck_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-!
-         call mem%alloc(g_ljci_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_lkci_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_lkcj_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_licj_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_lick_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_ljck_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-!
-      end if
-!
-!     Arrays for the triples amplitudes and intermediates
-      call mem%alloc(R_abc, wf%n_v, wf%n_v, wf%n_v)
-      call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
-!
-      call mem%alloc(L_abc, wf%n_v, wf%n_v, wf%n_v)
-      call mem%alloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
-!
-!     Fock matrix subblock: Resorting for easier contractions later
-      call mem%alloc(F_ov_ck, wf%n_v, wf%n_o)
-      call sort_12_to_21(wf%fock_ia, F_ov_ck, wf%n_o, wf%n_v)
-!
-!     Remaining integral arrays
-!
-      if (batch_i%num_batches .eq. 1) then ! no batching
-!
          call mem%alloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+!
+         call mem%alloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         call mem%alloc(g_ljci_c1, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
          call mem%alloc(g_jlic, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-         call mem%alloc(L_ibjc, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+         call mem%alloc(g_ibjc, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+         if (wf%n_o .le. wf%n_v) then
+            call mem%alloc(sorting, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         else
+            call mem%alloc(sorting, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         end if
 !
       else ! batching
 !
-         call batch_i%determine_limits(1)
+         call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         call mem%alloc(g_bdcj, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         call mem%alloc(g_bdck, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
 !
-!        Ordered such that batching indices are at the end
+         call mem%alloc(g_ljci, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_lkci, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_lkcj, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_licj, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_lick, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_ljck, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
 !
-         call mem%alloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%alloc(g_dbjc, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%alloc(g_dbkc, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_bdci_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         call mem%alloc(g_bdcj_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         call mem%alloc(g_bdck_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
 !
-         call mem%alloc(g_jlic, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%alloc(g_klic, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%alloc(g_kljc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%alloc(g_iljc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%alloc(g_ilkc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%alloc(g_jlkc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_ljci_c1, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_lkci_c1, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_lkcj_c1, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_licj_c1, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_lick_c1, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_ljck_c1, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
 !
-         call mem%alloc(L_ibjc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(L_ibkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(L_jbkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         call mem%alloc(g_dbjc, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         call mem%alloc(g_dbkc, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+!
+         call mem%alloc(g_jlic, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_klic, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_kljc, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_iljc, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_ilkc, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_jlkc, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+!
+         call mem%alloc(g_ibjc, wf%n_v, wf%n_v, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_ibkc, wf%n_v, wf%n_v, batch_i%max_length, batch_i%max_length)
+         call mem%alloc(g_jbkc, wf%n_v, wf%n_v, batch_i%max_length, batch_i%max_length)
+!
+         if (wf%n_o .le. wf%n_v) then
+            call mem%alloc(sorting, wf%n_v, wf%n_v, wf%n_v,batch_i%max_length)
+         else
+            call mem%alloc(sorting, wf%n_v, wf%n_o, wf%n_o,batch_i%max_length)
+         end if
 !
       endif
 !
-      call wf%g_bdck_t%open_('read')
-      call wf%g_ljck_t%open_('read')
-      call wf%g_dbkc_t%open_('read')
-      call wf%g_jlkc_t%open_('read')
-      call wf%L_jbkc_t%open_('read')
-!
-      call wf%g_bdck_c%open_('read')
-      call wf%g_ljck_c%open_('read')
+!     Loop over the batches in i,j,k
+!     Read integrals and assign pointers
+!     Without pointers we'll have to use three times as much
+!     memory for the non-batching case
 !
       do i_batch = 1, batch_i%num_batches
 !
          call batch_i%determine_limits(i_batch)
 !
-         call wf%g_bdck_t%read_interval(g_bdci, batch_i)
-         call wf%g_dbkc_t%read_interval(g_dbic, batch_i)
-         call wf%g_bdck_c%read_interval(g_bdci_c1, batch_i)
+         call wf%setup_vvvo(g_bdci, g_bdci_p, sorting, batch_i)
+         call wf%setup_vvvo(g_bdci_c1, g_bdci_c1_p, sorting, batch_i, c_ai=R1)
 !
-         g_bdci_p => g_bdci
-         g_dbic_p => g_dbic
-         g_bdci_c1_p => g_bdci_c1
+         call wf%setup_vvov(g_dbic, g_dbic_p, sorting, batch_i, left=.true.)
 !
          do j_batch = 1, i_batch
 !
             call batch_j%determine_limits(j_batch)
 !
-            call wf%g_ljck_t%read_compound(g_ljci, batch_j, batch_i)
-            call wf%g_jlkc_t%read_compound(g_jlic, batch_j, batch_i)
-            call wf%g_ljck_c%read_compound(g_ljci_c1, batch_j, batch_i)
-
-            g_ljci_p => g_ljci
-            g_jlic_p => g_jlic
-            g_ljci_c1_p => g_ljci_c1
+            call wf%setup_oovo(g_ljci, g_ljci_p, sorting, batch_j, batch_i)
+            call wf%setup_oovo(g_ljci_c1, g_ljci_c1_p, sorting, batch_j, batch_i, c_ai=R1)
 !
-            call wf%L_jbkc_t%read_compound(L_ibjc, batch_i, batch_j)
-            L_ibjc_p => L_ibjc
+            call wf%setup_ooov(g_jlic, g_jlic_p, sorting, batch_j, batch_i)
+!
+            call wf%setup_ovov(g_ibjc, g_ibjc_p, sorting, batch_i, batch_j)
 !
             if (j_batch .ne. i_batch) then
 !
-               call wf%g_bdck_t%read_interval(g_bdcj, batch_j)
-               call wf%g_dbkc_t%read_interval(g_dbjc, batch_j)
-               call wf%g_bdck_c%read_interval(g_bdcj_c1, batch_j)
+               call wf%setup_vvvo(g_bdcj, g_bdcj_p, sorting, batch_j)
+               call wf%setup_vvvo(g_bdcj_c1, g_bdcj_c1_p, sorting, batch_j, c_ai=R1)
 !
-               g_bdcj_p => g_bdcj
-               g_dbjc_p => g_dbjc
-               g_bdcj_c1_p => g_bdcj_c1
+               call wf%setup_vvov(g_dbjc, g_dbjc_p, sorting, batch_j, left=.true.)
 !
-               call wf%g_ljck_t%read_compound(g_licj, batch_i, batch_j)
-               call wf%g_jlkc_t%read_compound(g_iljc, batch_i, batch_j)
-               call wf%g_ljck_c%read_compound(g_licj_c1, batch_i, batch_j)
+               call wf%setup_oovo(g_licj, g_licj_p, sorting, batch_i, batch_j)
+               call wf%setup_oovo(g_licj_c1, g_licj_c1_p, sorting, batch_i, batch_j, c_ai=R1)
 !
-               g_licj_p => g_licj
-               g_iljc_p => g_iljc
-               g_licj_c1_p => g_licj_c1
+               call wf%setup_ooov(g_iljc, g_iljc_p, sorting, batch_i, batch_j)
 !
             else
 !
-               g_bdcj_p => g_bdci
-               g_dbjc_p => g_dbic
+               call wf%point_vvvo(g_bdcj_p, g_bdci, batch_j%length)
+               call wf%point_vvvo(g_bdcj_c1_p, g_bdci_c1, batch_j%length)
 !
-               g_licj_p => g_ljci
-               g_iljc_p => g_jlic
+               call wf%point_vvvo(g_dbjc_p, g_dbic, batch_j%length)
 !
-               g_bdcj_c1_p => g_bdci_c1
+               call wf%point_vooo(g_licj_p, g_ljci, batch_i%length, batch_j%length)
+               call wf%point_vooo(g_licj_c1_p, g_ljci_c1, batch_i%length, batch_j%length)
 !
-               g_licj_c1_p => g_ljci_c1
+               call wf%point_vooo(g_iljc_p, g_jlic, batch_i%length, batch_j%length)
 !
             endif
 !
@@ -839,103 +775,78 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call wf%g_bdck_t%read_interval(g_bdck, batch_k)
-                  call wf%g_dbkc_t%read_interval(g_dbkc, batch_k)
-                  call wf%g_bdck_c%read_interval(g_bdck_c1, batch_k)
+                  call wf%setup_vvvo(g_bdck, g_bdck_p, sorting, batch_k)
+                  call wf%setup_vvvo(g_bdck_c1, g_bdck_c1_p, sorting, batch_k, c_ai=R1)
 !
-                  g_bdck_p => g_bdck
-                  g_dbkc_p => g_dbkc
-                  g_bdck_c1_p => g_bdck_c1
-! 
-                  call wf%g_ljck_t%read_compound(g_lkci, batch_k, batch_i)
-                  call wf%g_jlkc_t%read_compound(g_klic, batch_k, batch_i)
-                  call wf%g_ljck_c%read_compound(g_lkci_c1, batch_k, batch_i)
+                  call wf%setup_vvov(g_dbkc, g_dbkc_p, sorting, batch_k, left=.true.)
 !
-                  g_lkci_p => g_lkci
-                  g_klic_p => g_klic
-                  g_lkci_c1_p => g_lkci_c1
+                  call wf%setup_oovo(g_lick, g_lick_p, sorting, batch_i, batch_k)
+                  call wf%setup_oovo(g_ljck, g_ljck_p, sorting, batch_j, batch_k)
+                  call wf%setup_oovo(g_lkci, g_lkci_p, sorting, batch_k, batch_i)
+                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
 !
-                  call wf%g_ljck_t%read_compound(g_lick, batch_i, batch_k)
-                  call wf%g_jlkc_t%read_compound(g_ilkc, batch_i, batch_k)
-                  call wf%L_jbkc_t%read_compound(L_ibkc, batch_i, batch_k)
-                  call wf%g_ljck_c%read_compound(g_lick_c1, batch_i, batch_k)
+                  call wf%setup_oovo(g_lick_c1, g_lick_c1_p, sorting, batch_i, batch_k, c_ai=R1)
+                  call wf%setup_oovo(g_ljck_c1, g_ljck_c1_p, sorting, batch_j, batch_k, c_ai=R1)
+                  call wf%setup_oovo(g_lkci_c1, g_lkci_c1_p, sorting, batch_k, batch_i, c_ai=R1)
+                  call wf%setup_oovo(g_lkcj_c1, g_lkcj_c1_p, sorting, batch_k, batch_j, c_ai=R1)
 !
-                  g_lick_p => g_lick
-                  g_ilkc_p => g_ilkc
-                  L_ibkc_p => L_ibkc
-                  g_lick_c1_p => g_lick_c1
+                  call wf%setup_ooov(g_ilkc, g_ilkc_p, sorting, batch_i, batch_k)
+                  call wf%setup_ooov(g_jlkc, g_jlkc_p, sorting, batch_j, batch_k)
+                  call wf%setup_ooov(g_klic, g_klic_p, sorting, batch_k, batch_i)
+                  call wf%setup_ooov(g_kljc, g_kljc_p, sorting, batch_k, batch_j)
 !
-                  call wf%g_ljck_t%read_compound(g_lkcj, batch_k, batch_j)
-                  call wf%g_jlkc_t%read_compound(g_kljc, batch_k, batch_j)
-                  call wf%g_ljck_c%read_compound(g_lkcj_c1, batch_k, batch_j)
-!
-                  g_lkcj_p => g_lkcj
-                  g_kljc_p => g_kljc
-                  g_lkcj_c1_p => g_lkcj_c1
-!
-                  call wf%g_ljck_t%read_compound(g_ljck, batch_j, batch_k)
-                  call wf%g_jlkc_t%read_compound(g_jlkc, batch_j, batch_k)
-                  call wf%L_jbkc_t%read_compound(L_jbkc, batch_j, batch_k)
-                  call wf%g_ljck_c%read_compound(g_ljck_c1, batch_j, batch_k)
-!
-                  g_ljck_p => g_ljck
-                  g_jlkc_p => g_jlkc
-                  L_jbkc_p => L_jbkc
-                  g_ljck_c1_p => g_ljck_c1
+                  call wf%setup_ovov(g_ibkc, g_ibkc_p, sorting, batch_i, batch_k)
+                  call wf%setup_ovov(g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
 !
                else if (k_batch .eq. i_batch) then ! k_batch == j_batch == i_batch
 !
-                  g_bdck_p => g_bdci
-                  g_dbkc_p => g_dbic
-                  g_bdck_c1_p => g_bdci_c1
+                  call wf%point_vvvo(g_bdck_p, g_bdci, batch_k%length)
+                  call wf%point_vvvo(g_bdck_c1_p, g_bdci_c1, batch_k%length)
 !
-                  g_lkci_p => g_ljci
-                  g_klic_p => g_jlic
-                  g_lkci_c1_p => g_ljci_c1
+                  call wf%point_vvvo(g_dbkc_p, g_dbic, batch_k%length)
 !
-                  g_lick_p => g_ljci
-                  g_ilkc_p => g_jlic
-                  L_ibkc_p => L_ibjc
-                  g_lick_c1_p => g_ljci_c1
+                  call wf%point_vooo(g_lick_p, g_ljci, batch_i%length, batch_k%length)
+                  call wf%point_vooo(g_ljck_p, g_ljci, batch_j%length, batch_k%length)
+                  call wf%point_vooo(g_lkci_p, g_ljci, batch_k%length, batch_i%length)
+                  call wf%point_vooo(g_lkcj_p, g_ljci, batch_k%length, batch_j%length)
 !
-                  g_lkcj_p => g_ljci
-                  g_kljc_p => g_jlic
-                  g_lkcj_c1_p => g_ljci_c1
+                  call wf%point_vooo(g_lick_c1_p, g_ljci_c1, batch_i%length, batch_k%length)
+                  call wf%point_vooo(g_ljck_c1_p, g_ljci_c1, batch_j%length, batch_k%length)
+                  call wf%point_vooo(g_lkci_c1_p, g_ljci_c1, batch_k%length, batch_i%length)
+                  call wf%point_vooo(g_lkcj_c1_p, g_ljci_c1, batch_k%length, batch_j%length)
 !
-                  g_ljck_p => g_ljci
-                  g_jlkc_p => g_jlic
-                  L_jbkc_p => L_ibjc
-                  g_ljck_c1_p => g_ljci_c1
+                  call wf%point_vooo(g_ilkc_p, g_jlic, batch_i%length, batch_k%length)
+                  call wf%point_vooo(g_jlkc_p, g_jlic, batch_j%length, batch_k%length)
+                  call wf%point_vooo(g_klic_p, g_jlic, batch_k%length, batch_i%length)
+                  call wf%point_vooo(g_kljc_p, g_jlic, batch_k%length, batch_j%length)
+!
+                  call wf%point_vvoo(g_ibkc_p, g_ibjc, batch_i%length, batch_k%length)
+                  call wf%point_vvoo(g_jbkc_p, g_ibjc, batch_j%length, batch_k%length)
 !
                else ! k_batch == j_batch != i_batch
 !
-                  g_bdck_p => g_bdcj
-                  g_dbkc_p => g_dbjc
-                  g_bdck_c1_p => g_bdcj_c1
+                  call wf%point_vvvo(g_bdck_p, g_bdcj, batch_k%length)
+                  call wf%point_vvvo(g_bdck_c1_p, g_bdcj_c1, batch_k%length)
 !
-                  g_lkci_p => g_ljci
-                  g_klic_p => g_jlic
-                  g_lkci_c1_p => g_ljci_c1
+                  call wf%point_vvvo(g_dbkc_p, g_dbjc, batch_k%length)
 !
-                  g_lick_p => g_licj
-                  g_ilkc_p => g_iljc
-                  L_ibkc_p => L_ibjc
-                  g_lick_c1_p => g_licj_c1
+                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%point_vooo(g_lick_p, g_licj, batch_i%length, batch_k%length)
+                  call wf%point_vooo(g_ljck_p, g_lkcj, batch_j%length, batch_k%length)
+                  call wf%point_vooo(g_lkci_p, g_ljci, batch_k%length, batch_i%length)
 !
-                  call wf%g_ljck_t%read_compound(g_lkcj, batch_k, batch_j)
-                  call wf%g_jlkc_t%read_compound(g_kljc, batch_k, batch_j)
-                  call wf%L_jbkc_t%read_compound(L_jbkc, batch_k, batch_j) !L_jbkc = L_kbjc
-                  call wf%g_ljck_c%read_compound(g_lkcj_c1, batch_k, batch_j)
+                  call wf%setup_oovo(g_lkcj_c1, g_lkcj_c1_p, sorting, batch_k, batch_j, c_ai=R1)
+                  call wf%point_vooo(g_lick_c1_p, g_licj_c1, batch_i%length, batch_k%length)
+                  call wf%point_vooo(g_ljck_c1_p, g_lkcj_c1, batch_j%length, batch_k%length)
+                  call wf%point_vooo(g_lkci_c1_p, g_ljci_c1, batch_k%length, batch_i%length)
 !
-                  g_lkcj_p => g_lkcj
-                  g_kljc_p => g_kljc
-                  g_lkcj_c1_p => g_lkcj_c1
+                  call wf%setup_ooov(g_kljc, g_kljc_p, sorting, batch_k, batch_j)
+                  call wf%point_vooo(g_ilkc_p, g_iljc, batch_i%length, batch_k%length)
+                  call wf%point_vooo(g_jlkc_p, g_kljc, batch_j%length, batch_k%length)
+                  call wf%point_vooo(g_klic_p, g_jlic, batch_k%length, batch_i%length)
 !
-                  g_ljck_p => g_lkcj
-                  g_jlkc_p => g_kljc
-                  L_jbkc_p => L_jbkc
-                  g_ljck_c1_p => g_lkcj_c1
-!
+                  call wf%setup_ovov(g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
+                  call wf%point_vvoo(g_ibkc_p, g_ibjc, batch_i%length, batch_k%length)
 !
                endif
 !
@@ -956,21 +867,11 @@ contains
                         k_rel = k - batch_k%first + 1
 !
 !                       Check if at least one index i,j,k is a core orbital
-!
                         if(wf%cvs) then
 !
-                           ijk_core = .false.
-!
-                           if(     any(wf%core_MOs .eq. i) &
-                              .or. any(wf%core_MOs .eq. j) &
-                              .or. any(wf%core_MOs .eq. k)) then
-!
-                              ijk_core = .true.
-!
-                           end if
-!
-!                          Cycle if i,j,k are not core orbitals
-                           if (.not. ijk_core) cycle
+                           if(.not. (any(wf%core_MOs .eq. i) &
+                              .or.   any(wf%core_MOs .eq. j) &
+                              .or.   any(wf%core_MOs .eq. k))) cycle
 !
                         end if
 !
@@ -978,54 +879,52 @@ contains
 !                       Using c1-transformed integrals the terms have the same form 
 !                       as the omega terms (where t_abc = R_abc)
 !
-!                       Therefore the contributions to the R3-amplitudes can be computed 
-!                       using the same routine once for t1-transformed and once for 
-!                       c1-transformed integrals
-!
-                        call wf%construct_W(i, j, k, R_abc, u_abc, R_abij,  &
-                                            g_bdci_p(:,:,:,i_rel),          &
-                                            g_bdcj_p(:,:,:,j_rel),          &
-                                            g_bdck_p(:,:,:,k_rel),          &
-                                            g_ljci_p(:,:,j_rel,i_rel),      &
-                                            g_lkci_p(:,:,k_rel,i_rel),      &
-                                            g_lkcj_p(:,:,k_rel,j_rel),      &
-                                            g_licj_p(:,:,i_rel,j_rel),      &
-                                            g_lick_p(:,:,i_rel,k_rel),      &
-                                            g_ljck_p(:,:,j_rel,k_rel))
-!
-                        call wf%construct_W(i, j, k, R_abc, u_abc, t_abij,  &
-                                            g_bdci_c1_p(:,:,:,i_rel),       &
-                                            g_bdcj_c1_p(:,:,:,j_rel),       &
-                                            g_bdck_c1_p(:,:,:,k_rel),       &
-                                            g_ljci_c1_p(:,:,j_rel,i_rel),   &
-                                            g_lkci_c1_p(:,:,k_rel,i_rel),   &
-                                            g_lkcj_c1_p(:,:,k_rel,j_rel),   &
-                                            g_licj_c1_p(:,:,i_rel,j_rel),   &
-                                            g_lick_c1_p(:,:,i_rel,k_rel),   &
-                                            g_ljck_c1_p(:,:,j_rel,k_rel),   &
-                                            overwrite = .false.) ! overwrite R_abc
+                        call wf%construct_V(i, j, k, sorting,              &
+                                            R_abc, t2, R2,                &
+                                            g_bdci_p(:,:,:,i_rel),        &
+                                            g_bdcj_p(:,:,:,j_rel),        &
+                                            g_bdck_p(:,:,:,k_rel),        &
+                                            g_bdci_c1_p(:,:,:,i_rel),     &
+                                            g_bdcj_c1_p(:,:,:,j_rel),     &
+                                            g_bdck_c1_p(:,:,:,k_rel),     &
+                                            g_ljci_p(:,:,j_rel,i_rel),    &
+                                            g_lkci_p(:,:,k_rel,i_rel),    &
+                                            g_lkcj_p(:,:,k_rel,j_rel),    &
+                                            g_licj_p(:,:,i_rel,j_rel),    &
+                                            g_lick_p(:,:,i_rel,k_rel),    &
+                                            g_ljck_p(:,:,j_rel,k_rel),    &
+                                            g_ljci_c1_p(:,:,j_rel,i_rel), &
+                                            g_lkci_c1_p(:,:,k_rel,i_rel), &
+                                            g_lkcj_c1_p(:,:,k_rel,j_rel), &
+                                            g_licj_c1_p(:,:,i_rel,j_rel), &
+                                            g_lick_c1_p(:,:,i_rel,k_rel), &
+                                            g_ljck_c1_p(:,:,j_rel,k_rel))
 !
                         call wf%divide_by_orbital_differences(i, j, k, R_abc, omega_R)
 !
-!                       c3_calc does not zero out the array
-                        call zero_array(L_abc, wf%n_v**3)
+!                       Construct covariant W_abc for given i,j,k
+!                       L_abc is obtained by dividing the linear combination
+!                       4W_abc - 2W_bac - 2W_cba - 2W_acb + W_bca + W_cab
+!                       by omega - eps^abc_ijk
 !
-!                       construct L3 for fixed i,j,k
-                        call wf%jacobian_transpose_cc3_c3_calc(i, j ,k, L_ai, L_abij,     &
-                                                               L_abc, u_abc, v_abc,       &
-                                                               F_ov_ck,                   &
-                                                               L_ibjc_p(:,:,i_rel,j_rel), &
-                                                               L_ibkc_p(:,:,i_rel,k_rel), &
-                                                               L_jbkc_p(:,:,j_rel,k_rel), &
-                                                               g_dbic_p(:,:,:,i_rel),     &
-                                                               g_dbjc_p(:,:,:,j_rel),     &
-                                                               g_dbkc_p(:,:,:,k_rel),     &
-                                                               g_jlic_p(:,:,j_rel,i_rel), &
-                                                               g_klic_p(:,:,k_rel,i_rel), &
-                                                               g_kljc_p(:,:,k_rel,j_rel), &
-                                                               g_iljc_p(:,:,i_rel,j_rel), &
-                                                               g_ilkc_p(:,:,i_rel,k_rel), &
-                                                               g_jlkc_p(:,:,j_rel,k_rel))
+                        call wf%construct_W(i, j, k, sorting, L_abc, L2, &
+                                            g_dbic_p(:,:,:,i_rel),      &
+                                            g_dbjc_p(:,:,:,j_rel),      &
+                                            g_dbkc_p(:,:,:,k_rel),      &
+                                            g_jlic_p(:,:,j_rel,i_rel),  &
+                                            g_klic_p(:,:,k_rel,i_rel),  &
+                                            g_kljc_p(:,:,k_rel,j_rel),  &
+                                            g_iljc_p(:,:,i_rel,j_rel),  &
+                                            g_ilkc_p(:,:,i_rel,k_rel),  &
+                                            g_jlkc_p(:,:,j_rel,k_rel))
+!
+                        call wf%outer_product_terms_l3(i, j, k, L1, L2, L_abc,    &
+                                                       wf%fock_ia,                &
+                                                       g_ibjc_p(:,:,i_rel,j_rel), &
+                                                       g_ibkc_p(:,:,i_rel,k_rel), &
+                                                       g_jbkc_p(:,:,j_rel,k_rel))
+!
+                        call construct_contravariant_t3(L_abc, sorting, wf%n_v)
 !
                         call wf%divide_by_orbital_differences(i, j, k, L_abc, omega_L)
 !
@@ -1051,131 +950,158 @@ contains
          enddo ! batch_j
       enddo ! batch_i
 !
-      call wf%g_bdck_t%close_()
-      call wf%g_ljck_t%close_()
-      call wf%g_dbkc_t%close_()
-      call wf%g_jlkc_t%close_()
-      call wf%L_jbkc_t%close_()
+      call mem%dealloc(R_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%dealloc(L_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call wf%g_bdck_c%close_()
-      call wf%g_ljck_c%close_()
-!
-!     Deallocate the integral arrays
+      call mem%dealloc(t2, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
          call mem%dealloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%dealloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+         call mem%dealloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
          call mem%dealloc(g_jlic, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-         call mem%dealloc(L_ibjc, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+         call mem%dealloc(g_ibjc, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
          call mem%dealloc(g_bdci_c1, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%dealloc(g_ljci_c1, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+         call mem%dealloc(g_ljci_c1, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+         if (wf%n_o .le. wf%n_v) then
+            call mem%dealloc(sorting, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         else
+            call mem%dealloc(sorting, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+         end if
 !
       else ! batching
 !
-         call batch_i%determine_limits(1)
+         call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         call mem%dealloc(g_bdcj, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         call mem%dealloc(g_bdck, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
 !
-         call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%dealloc(g_bdcj, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%dealloc(g_bdck, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%dealloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         call mem%dealloc(g_dbjc, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         call mem%dealloc(g_dbkc, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
 !
-         call mem%dealloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%dealloc(g_dbjc, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%dealloc(g_dbkc, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%dealloc(g_ljci, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_lkci, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_lkcj, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_licj, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_lick, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_ljck, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
 !
-         call mem%dealloc(g_ljci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(g_lkci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(g_lkcj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(g_licj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(g_lick, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(g_ljck, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%dealloc(g_jlic, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_klic, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_kljc, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_iljc, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_ilkc, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_jlkc, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
 !
-         call mem%dealloc(g_jlic, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%dealloc(g_klic, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%dealloc(g_kljc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%dealloc(g_iljc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%dealloc(g_ilkc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%dealloc(g_jlkc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%dealloc(g_ibjc, wf%n_v, wf%n_v, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_ibkc, wf%n_v, wf%n_v, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_jbkc, wf%n_v, wf%n_v, batch_i%max_length, batch_i%max_length)
 !
-         call mem%dealloc(L_ibjc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(L_ibkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(L_jbkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
+         call mem%dealloc(g_bdci_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         call mem%dealloc(g_bdcj_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         call mem%dealloc(g_bdck_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
 !
-         call mem%dealloc(g_bdci_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%dealloc(g_bdcj_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%dealloc(g_bdck_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%dealloc(g_ljci_c1, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_lkci_c1, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_lkcj_c1, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_licj_c1, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_lick_c1, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
+         call mem%dealloc(g_ljck_c1, wf%n_v, wf%n_o, batch_i%max_length, batch_i%max_length)
 !
-         call mem%dealloc(g_ljci_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(g_lkci_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(g_lkcj_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(g_licj_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(g_lick_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(g_ljck_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         if (wf%n_o .le. wf%n_v) then
+            call mem%dealloc(sorting, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         else
+            call mem%dealloc(sorting, wf%n_v, wf%n_o, wf%n_o, batch_i%max_length)
+         end if
 !
       endif
-!
-!     Deallocate amplitudes arrays and Fock matrix
-!
-      call mem%dealloc(R_abc, wf%n_v, wf%n_v, wf%n_v)
-      call mem%dealloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
-      call mem%dealloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
-!
-      call mem%dealloc(L_abc, wf%n_v, wf%n_v, wf%n_v)
-!
-      call mem%dealloc(F_ov_ck, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
    end subroutine L_R_overlap_triples_cc3
 !
 !
-   subroutine get_cvs_projector_cc3(wf, projector, n_cores, core_MOs)
+   subroutine estimate_mem_integral_setup_cc3(wf, req0, req1)
 !!
-!!    Get CVS projector
-!!    Written by Sarai D. Folkestad, Oct 2018
+!!    Estimate memory integrals setup
+!!    Written by Alexander C. Paul, Dec 2020
+!!
+!!    Estimate maximum memory needed for cc3 integral setup
+!!
+!!    get_eri_t1_mem returns the memory needed to construct the requested integral
+!!    The dimensions sent in specify if an index is batched (1) or of 
+!!    full dimension (n_o/n_v)
+!!    The memory estimate for the first and second pair of indices
+!!    is added to the integers req*. 
+!!
+!!    The memory needed to get vvov and vvvo is identical
+!!    The memory needed to get oovo and ooov is identical
 !!
       implicit none
 !
-      class(cc3), intent(inout) :: wf
+      class(cc3), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
+      integer, intent(out) :: req0, req1
 !
-      integer, intent(in) :: n_cores
+      integer :: req_vvvo, req_ovov, req_oovo
 !
-      integer, dimension(n_cores), intent(in) :: core_MOs
+      req0  = 0
+      req_vvvo = 0
+      req_ovov = 0
+      req_oovo = 0
 !
-      integer :: core, i, a, ai, j, b, bj, aibj
+      call wf%eri%get_eri_t1_mem('vvvo', req0, req_vvvo, wf%n_v, wf%n_v, wf%n_v, 1)
+      call wf%eri%get_eri_t1_mem('ovov', req_ovov, req_ovov, 1, wf%n_v, 1, wf%n_v)
+      call wf%eri%get_eri_t1_mem('oovo', req_oovo, req_oovo, wf%n_o, 1, wf%n_v, 1)
 !
-      call zero_array(projector, wf%n_es_amplitudes)
+      req1 = max(req_vvvo, req_ovov, req_oovo)
 !
-      do core = 1, n_cores
+   end subroutine estimate_mem_integral_setup_cc3
 !
-        i = core_MOs(core)
 !
-!$omp parallel do private (a, ai, j, b, bj, aibj)
-        do a = 1, wf%n_v
+   subroutine estimate_mem_c1_integral_setup_cc3(wf, req0, req1)
+!!
+!!    Estimate memory C1 transformed integrals setup
+!!    Written by Alexander C. Paul, Dec 2020
+!!
+!!    Estimate maximum memory needed for cc3 integral setup
+!!    for the C1-transformed integrals
+!!
+!!    get_eri_c1_mem returns the memory needed to construct the requested 
+!!    c1-transformed integral
+!!    The dimensions sent in specify if an index is batched (1) or of 
+!!    full dimension (n_o/n_v)
+!!
+!!    6 memory estimates are returned:
+!!    1 for each index added to the first 4 req* variables sent in
+!!    1 for the first and 1 for the second pair of indices (last 2 req* variables)
+!!
+!!    NB: The memory requirement is overestimated by the routines.
+!!
+      implicit none
+      class(cc3), intent(in) :: wf
 !
-           ai = wf%n_v*(i - 1) + a
-           projector(ai) = one
+      integer, intent(out) :: req0, req1
 !
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
+      integer :: req0_vvvo, req0_oovo
+      integer :: req1_vvvo, req1_oovo
 !
-                  bj = wf%n_v*(j - 1) + b
-                  aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
+      req0_vvvo = 0
+      req1_vvvo = 0
+      req0_oovo = 0
+      req1_oovo = 0
 !
-                  projector(aibj + (wf%n_o)*(wf%n_v)) = one
+      call wf%eri%get_eri_c1_mem('vvvo', req0_vvvo, req0_vvvo, req0_vvvo, req1_vvvo, &
+                                 req0_vvvo, req1_vvvo, wf%n_v, wf%n_v, wf%n_v, 1)
 !
-               enddo
-            enddo
-        enddo
-!$omp end parallel do
+      call wf%eri%get_eri_c1_mem('oovo', req0_oovo, req1_oovo, req0_oovo, req1_oovo, &
+                                 req1_oovo, req1_oovo, wf%n_o, 1, wf%n_v, 1)
 !
-     enddo
+      req0 = max(req0_vvvo, req0_oovo)
+      req1 = max(req1_vvvo, req1_oovo)
 !
-   end subroutine get_cvs_projector_cc3
+   end subroutine estimate_mem_c1_integral_setup_cc3
 !
 !
 end module cc3_class
