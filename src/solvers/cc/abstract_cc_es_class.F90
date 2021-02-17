@@ -58,6 +58,7 @@ module abstract_cc_es_class
    use es_valence_projection_tool_class, only: es_valence_projection_tool
    use es_cvs_projection_tool_class, only: es_cvs_projection_tool
    use es_ip_projection_tool_class, only: es_ip_projection_tool
+   use es_rm_core_projection_tool_class, only: es_rm_core_projection_tool
 !
    use abstract_convergence_tool_class, only: abstract_convergence_tool 
 !
@@ -223,6 +224,8 @@ contains
 !
       if (input%is_keyword_present('ionization', 'solver cc es') .and. .not. &
           input%is_keyword_present('core excitation', 'solver cc es')) solver%es_type = 'ionize'
+!
+      if (input%is_keyword_present('remove core', 'solver cc es')) solver%es_type = 'remove core'
 !
       call input%get_keyword('storage', 'solver cc es', solver%storage)
 !
@@ -442,6 +445,11 @@ contains
 !
          solver%start_vectors = es_ip_start_vector_tool(wf)
 !
+      elseif (trim(solver%es_type) == 'remove core') then
+!
+         call wf%read_rm_core_settings()
+         solver%start_vectors = es_valence_start_vector_tool(wf)
+!
       else 
 !
          call output%error_msg('could not recognize excited state type in abstract_cc_es')
@@ -473,6 +481,10 @@ contains
       elseif (trim(solver%es_type) == 'ionize') then 
 !
          solver%projector = es_ip_projection_tool(wf)
+!
+      elseif (trim(solver%es_type) == 'remove core') then 
+!
+         solver%projector = es_rm_core_projection_tool(wf)
 !
       else 
 !
@@ -506,6 +518,8 @@ contains
                                        solver%energies(state), &
                                        solver%transformation,  &
                                        solver%restart)
+!
+         if (solver%projector%active) call solver%projector%do_(X(:,state))
 !
       enddo 
 !

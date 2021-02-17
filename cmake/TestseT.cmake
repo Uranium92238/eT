@@ -155,6 +155,7 @@ add_eT_runtest(ccsd_right_cvs_es_energies_diis              "eT;short;ccsd;es;ri
 add_eT_runtest(ccsd_right_ip_energies                       "eT;short;ccsd;ip;right")
 add_eT_runtest(ccsd_right_ip_diis                           "eT;short;ccsd;ip;right;diis")
 add_eT_runtest(ccsd_right_es_energies_cartgauss             "eT;short;ccsd;es;right;cartesian gaussians")
+add_eT_runtest(ccsd_es_remove_core                          "eT;short;ccsd;es")
 add_eT_runtest(ccsd_left_ip_energies                        "eT;short;ccsd;ip;left")
 add_eT_runtest(ccsd_left_ip_diis                            "eT;short;ccsd;ip;left;diis")
 add_eT_runtest(ccsd_left_es_energies                        "eT;short;ccsd;es;left")
