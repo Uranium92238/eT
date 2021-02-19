@@ -31,12 +31,6 @@ module array_utilities
 !
    implicit none
 !
-   interface copy_
-      procedure :: copy_real,    &
-                   copy_complex, &
-                   copy_real_to_complex
-   end interface copy_
-!
    interface sandwich
       procedure :: sandwich_real, &
                    sandwich_complex
@@ -180,7 +174,7 @@ contains
    end subroutine identity_array
 !
 !
-   pure logical function is_significant(x, n, threshold, screening)
+   pure function is_significant(x, n, threshold, screening) result(is_significant_)
 !!
 !!    Is significant
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
@@ -202,7 +196,9 @@ contains
 !
       integer :: i
 !
-      is_significant = .false.
+      logical :: is_significant_
+!
+      is_significant_ = .false.
 !
       if (present(screening)) then
 !
@@ -210,19 +206,20 @@ contains
 !
             if (abs(x(i)*screening(i)) .gt. threshold) then
 !
-               is_significant = .true.
+               is_significant_ = .true.
                return
 !
             endif
 !
          enddo
+!
       else
 !
          do i = 1, n
 !
             if (abs(x(i)) .gt. threshold) then
 !
-               is_significant = .true.
+               is_significant_ = .true.
                return
 !
             endif
@@ -233,7 +230,7 @@ contains
    end function is_significant
 !
 !
-   integer function n_significant(x, n, threshold)
+   function n_significant(x, n, threshold) result(n_significant_)
 !!
 !!    Number of significant
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
@@ -249,15 +246,15 @@ contains
 !
       real(dp), intent(in)  :: threshold
 !
-      integer :: i = 0
+      integer :: n_significant_, i = 0
 !
-      n_significant = 0
+      n_significant_ = 0
 !
       do i = 1, n
 !
          if (abs(x(i)) .gt. threshold) then
 !
-            n_significant = n_significant + 1
+            n_significant_ = n_significant_ + 1
 !
          endif
 !
@@ -664,8 +661,8 @@ contains
    end subroutine cholesky_decomposition_limited_diagonal
 !
 !
- subroutine full_cholesky_decomposition_system(matrix, cholesky_vectors, dim_, &
-                                                n_vectors, threshold, used_diag)
+   subroutine full_cholesky_decomposition_system(matrix, cholesky_vectors, dim_, &
+                                                 n_vectors, threshold, used_diag)
 !!
 !!    Cholesky decomposition
 !!    Written by Sarai Dery Folkestad, June 2017.
@@ -734,8 +731,8 @@ contains
    end subroutine full_cholesky_decomposition_system
 !
 !
-   subroutine full_cholesky_decomposition_effective(matrix, cholesky_vectors, dim_, n_vectors,&
-                                        threshold, used_diag)
+   subroutine full_cholesky_decomposition_effective(matrix, cholesky_vectors, dim_, &
+                                                    n_vectors, threshold, used_diag)
 !!
 !!    Cholesky decomposition,
 !!    Written by Sarai Dery Folkestad, June 2017.
@@ -997,76 +994,6 @@ contains
       end if
 !
    end subroutine invert_lower_triangular
-!
-!
-   subroutine symmetrize(M, n)
-!!
-!!    Symmetrize matrix
-!!    Written by Eirik F. Kjønstad, 2018
-!!
-!!    Symmetrize n x n - matrix M:
-!!
-!!       M <- 1/2 * (M + M^T)
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      integer :: i, j
-!
-      real(dp), dimension(n, n) :: M
-      real(dp), dimension(:, :), allocatable :: MT
-!
-      call mem%alloc(MT, n, n)
-!
-      MT = transpose(M)
-!
-      do j = 1, n
-         do i = 1, n
-!
-            M(i, j) = half*(M(i, j) + MT(i, j))
-!
-         enddo
-      enddo
-!
-      call mem%dealloc(MT, n, n)
-!
-   end subroutine symmetrize
-!
-!
-   subroutine anti_symmetrize(M, n)
-!!
-!!    Antisymmetrize matrix
-!!    Written by Eirik F. Kjønstad, 2018
-!!
-!!    Antisymmetrize n x n - matrix M:
-!!
-!!       M <- 1/2 * (M - M^T)
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      integer :: i, j
-!
-      real(dp), dimension(n, n) :: M
-      real(dp), dimension(:, :), allocatable :: MT
-!
-      call mem%alloc(MT, n, n)
-!
-      MT = transpose(M)
-!
-      do j = 1, n
-         do i = 1, n
-!
-            M(i, j) = half*(M(i, j) - MT(i, j))
-!
-         enddo
-      enddo
-!
-      call mem%dealloc(MT, n, n)
-!
-   end subroutine anti_symmetrize
 !
 !
    real(dp) function get_abs_max(X, n)
@@ -1651,52 +1578,6 @@ contains
    end subroutine symmetric_sandwich_right_transposition_replace
 !
 !
-   subroutine commute(A, B, AcB, n)
-!!
-!!    Commute 
-!!    Written by Eirik F. Kjønstad, 2018
-!!
-!!    Calculates the commutator of A and B, two n x n matrices, 
-!!    and places the result in AcB. 
-!!
-      implicit none 
-!
-      integer, intent(in) :: n 
-!
-      real(dp), dimension(n, n), intent(in) :: A 
-      real(dp), dimension(n, n), intent(in) :: B
-!
-      real(dp), dimension(n, n) :: AcB ! [A, B] = AB - BA on exit 
-!
-      call dgemm('N', 'N', &
-                  n,       &
-                  n,       &
-                  n,       &
-                  one,     &   
-                  A,       &
-                  n,       &
-                  B,       &
-                  n,       &
-                  zero,    &
-                  AcB,     & ! AcB = AB 
-                  n)
-!
-      call dgemm('N', 'N', &
-                  n,       &
-                  n,       &
-                  n,       &
-                  -one,    &   
-                  B,       &
-                  n,       &
-                  A,       &
-                  n,       &
-                  one,     &
-                  AcB,     & ! AcB = AcB - BA = AB - BA 
-                  n)      
-!
-   end subroutine commute
-!
-!
    real(dp) function get_l2_norm(X, n)
 !!
 !!    Get L^2 norm 
@@ -1745,88 +1626,6 @@ contains
 !$omp end parallel do
 !
    end subroutine transpose_
-!
-!
-   subroutine copy_real(X, Y, n, m)
-!!
-!!    Copy real
-!!    Written by Andreas Skeidsvoll, Oct 2019
-!!
-!!    Sets Y as:
-!!
-!!       Y = X
-!!
-!!    where X and Y are real vectors of length n x m.
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-      integer, intent(in) :: m
-!
-      real(dp), dimension(n,m), intent(in)  :: X
-      real(dp), dimension(n,m), intent(out) :: Y
-!
-      call dcopy(n*m, X, 1, Y, 1)
-!
-   end subroutine copy_real
-!
-!
-   subroutine copy_complex(X, Y, n, m)
-!!
-!!    Copy complex
-!!    Written by Andreas Skeidsvoll, Oct 2019
-!!
-!!    Sets Y as:
-!!
-!!       Y = X
-!!
-!!    where X and Y are complex vectors of length n.
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-      integer, intent(in) :: m
-!
-      complex(dp), dimension(n,m), intent(in)  :: X
-      complex(dp), dimension(n,m), intent(out) :: Y
-!
-      call zcopy(n*m, X, 1, Y, 1)
-!
-   end subroutine copy_complex
-!
-!
-   subroutine copy_real_to_complex(X, Y, n, m)
-!!
-!!    Copy real to complex
-!!    Written by Andreas Skeidsvoll, Oct 2019
-!!
-!!    Sets Y as:
-!!
-!!       Y = X
-!!
-!!    where X is a real and Y is a complex vector of length n.
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-      integer, intent(in) :: m
-!
-      real(dp),    dimension(n,m), intent(in) :: X
-      complex(dp), dimension(n,m), intent(out) :: Y
-!
-      integer :: i, j
-!
-!$omp parallel do private(i,j)
-      do j = 1, m
-         do i = 1, n
-!
-            Y(i, j) = cmplx(X(i, j), zero, dp)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine copy_real_to_complex
 !
 !
    subroutine copy_and_scale(alpha, X, Y, n)

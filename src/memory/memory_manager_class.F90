@@ -175,8 +175,6 @@ module memory_manager_class
 !
 !     Routines for determining the number of batches
 !
-      procedure :: enough_memory_available &
-                => enough_memory_available_memory_manager
       procedure :: batch_setup_1_memory_manager
       procedure :: batch_setup_2_memory_manager
       procedure :: batch_setup_3_memory_manager
@@ -2705,24 +2703,6 @@ contains
       endif 
 !
    end subroutine batch_setup_3_memory_manager
-!
-!
-   pure function enough_memory_available_memory_manager(mem, required) result(enough_mem)
-!!
-!!    Enough memory for single batch?
-!!    Written by Alexander C. Paul, Jan 2021
-!!
-      implicit none
-!
-      class(memory_manager), intent(in) :: mem
-!
-      integer(i64), intent(in) :: required
-!
-      logical :: enough_mem
-!
-      enough_mem = (mem%available .ge. required)
-!
-   end function enough_memory_available_memory_manager
 !
 !
 end module memory_manager_class
