@@ -656,7 +656,7 @@ contains
                   wf%n_o**2)
 !
 !
-      call sort_123_to_132_and_add(u_ijk, t_ijk, wf%n_o, wf%n_o, wf%n_o)
+      call add_132_to_123(one, u_ijk, t_ijk, wf%n_o, wf%n_o, wf%n_o)
 !
 !
 !     u_jik terms
@@ -695,7 +695,7 @@ contains
                   u_ijk,            &
                   wf%n_o**2)
 !
-      call sort_123_to_213_and_add(u_ijk, t_ijk, wf%n_o, wf%n_o, wf%n_o)
+      call add_213_to_123(one, u_ijk, t_ijk, wf%n_o, wf%n_o, wf%n_o)
 !
 !
 !     u_kij terms
@@ -733,7 +733,7 @@ contains
                   u_ijk,            &
                   wf%n_o**2)
 !
-      call sort_123_to_231_and_add(u_ijk, t_ijk, wf%n_o, wf%n_o, wf%n_o)
+      call add_312_to_123(one, u_ijk, t_ijk, wf%n_o, wf%n_o, wf%n_o)
 !
    end subroutine construct_W_abc_cc3
 !

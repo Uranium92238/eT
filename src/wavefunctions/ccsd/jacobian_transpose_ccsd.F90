@@ -2058,7 +2058,6 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: sigma_aibj
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: t_lckd ! t_kl^cd
       real(dp), dimension(:,:,:,:), allocatable :: t_ckdl ! t_kl^cd
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_jbid
@@ -2078,29 +2077,27 @@ contains
 !
 !     :: Term 1. - sum_ckdl b_alck t_kl^cd L_jbid ::
 !
-!     X_ad = b_a_lck t_lckd
+!     X_ad = b_a_lck t_d_lck
 !
-!     Form t_lckd = t_kl^cd
+      call mem%alloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%alloc(t_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call squareup_and_sort_1234_to_4123(wf%t2, t_lckd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_ckdl, wf%n_t1)
 !
 !     Form the intermediate X_ad = sum_lck b_a_lck t_lck_d
 !
       call mem%alloc(X_ad, wf%n_v, wf%n_v)
 !
-      call dgemm('N','N',               &
-                  wf%n_v,               &
-                  wf%n_v,               &
-                  (wf%n_v)*(wf%n_o)**2, &
-                  one,                  &
-                  b_aibj,               & ! "b_a_lck"
-                  wf%n_v,               &
-                  t_lckd,               & ! t_lck_d
-                  (wf%n_v)*(wf%n_o)**2, &
-                  zero,                 &
-                  X_ad,                 &
+      call dgemm('N','T',           &
+                  wf%n_v,           &
+                  wf%n_v,           &
+                  wf%n_v*wf%n_o**2, &
+                  one,              &
+                  b_aibj,           & ! "b_a_lck"
+                  wf%n_v,           &
+                  t_ckdl,           & ! t_d_lck
+                  wf%n_v,           &
+                  zero,             &
+                  X_ad,             &
                   wf%n_v)
 !
 !     Form g_jbid
@@ -2141,14 +2138,6 @@ contains
 !     :: Term 2. - sum_ckdl b_ajck t_kl^cd L_ldib ::
 !
 !     X_ckbi = sum_dl t_ck_dl L_dl_bi
-!
-!     Reorder to t_ckdl = t_lckd = t_kl^cd
-!
-      call mem%alloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call sort_1234_to_2341(t_lckd, t_ckdl, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call mem%dealloc(t_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     We have L_dibj = L_jbid => L_dibj(b,i,d,l) = L_ldib
 !
@@ -2196,33 +2185,25 @@ contains
 !
 !     X_lj = sum_ckd t_l_ckd b_ckd_j
 !
-!     Reorder to t_ckdl = t_kl^cd
-!
-      call mem%alloc(t_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call sort_1234_to_4123(t_ckdl, t_lckd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
 !     Form the intermediate X_lj = sum_ckd t_kl^cd b_ckdj
-!                                 = sum_ckd t_l_ckd b_ckd_j
+!                                 = sum_ckd t_ckd_l b_ckd_j
 !
       call mem%alloc(X_lj, wf%n_o, wf%n_o)
 !
-      call dgemm('N','N',               &
-                  wf%n_o,               &
-                  wf%n_o,               &
-                  (wf%n_o)*(wf%n_v)**2, &
-                  one,                  &
-                  t_lckd,               & ! t_l_ckd
-                  wf%n_o,               &
-                  b_aibj,               & ! b_ckd_j
-                  (wf%n_o)*(wf%n_v)**2, &
-                  zero,                 &
-                  X_lj,                 &
+      call dgemm('T','N',           &
+                  wf%n_o,           &
+                  wf%n_o,           &
+                  wf%n_o*wf%n_v**2, &
+                  one,              &
+                  t_ckdl,           & ! t_ckd_l
+                  wf%n_o*wf%n_v**2, &
+                  b_aibj,           & ! b_ckd_j
+                  wf%n_o*wf%n_v**2, &
+                  zero,             &
+                  X_lj,             &
                   wf%n_o)
 !
-      call mem%dealloc(t_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     - sum_ckdl b_ckdj t_kl^cd L_ialb = - sum_l L_ialb X_lj
 !

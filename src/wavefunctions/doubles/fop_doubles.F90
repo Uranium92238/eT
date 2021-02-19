@@ -586,7 +586,7 @@ contains
       real(dp), dimension(:,:), allocatable :: X_id ! X_la
 !
       real(dp), dimension(:,:,:,:), allocatable :: tb_ckal ! tb_ckdi
-      real(dp), dimension(:,:,:,:), allocatable :: t_lckd
+      real(dp), dimension(:,:,:,:), allocatable :: t_ckdl
 !
       real(dp), dimension(:,:), allocatable :: I_ad    ! intermediate, first term
       real(dp), dimension(:,:), allocatable :: I_li    ! intermediate, second term
@@ -608,12 +608,12 @@ contains
 !     Squareup multipliers
 !
       call mem%alloc(tb_ckal, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2bar, tb_ckal, (wf%n_v)*(wf%n_o))
+      call squareup(wf%t2bar, tb_ckal, wf%n_t1)
 !      
 !     Read amplitudes and order as t_lck_d = t_kl^cd
 !
-      call mem%alloc(t_lckd, (wf%n_o), (wf%n_v), (wf%n_o), wf%n_v)
-      call squareup_and_sort_1234_to_2341(wf%t2, t_lckd, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
+      call mem%alloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_ckdl, wf%n_t1)
 !      
 !     :: First term: - sum_ckdl tb_ckal X_id t_ckdl
 !
@@ -621,17 +621,17 @@ contains
 !  
       call mem%alloc(I_ad, wf%n_v, wf%n_v)
 !
-      call dgemm('N','N',               &
-                  wf%n_v,               &
-                  wf%n_v,               &
-                  (wf%n_v)*(wf%n_o)**2, &
-                  one,                  &
-                  tb_ckal,              & 
-                  wf%n_v,               &
-                  t_lckd,               &
-                  (wf%n_v)*(wf%n_o)**2, &
-                  zero,                 &
-                  I_ad,                 &
+      call dgemm('N','T',           &
+                  wf%n_v,           &
+                  wf%n_v,           &
+                  wf%n_v*wf%n_o**2, &
+                  one,              &
+                  tb_ckal,          & ! tbar_a_lck
+                  wf%n_v,           &
+                  t_ckdl,           & ! t_d_lck
+                  wf%n_v,           &
+                  zero,             &
+                  I_ad,             &
                   wf%n_v)
 !
 !     Add   - sum_ckdl tb_ckal X_id t_kl^cd
@@ -659,20 +659,20 @@ contains
 !
       call mem%alloc(I_li, wf%n_o, wf%n_o)
 !
-      call dgemm('N','N',               &
-                  wf%n_o,               &
-                  wf%n_o,               &
-                  (wf%n_o)*(wf%n_v)**2, &
-                  one,                  &
-                  t_lckd,               & ! t_l_ckd
-                  (wf%n_o),             &
-                  tb_ckal,              & ! tbar_ckd_i
-                  (wf%n_o)*(wf%n_v)**2, &
-                  zero,                 &
-                  I_li,                 &
+      call dgemm('T','N',           &
+                  wf%n_o,           &
+                  wf%n_o,           &
+                  wf%n_v**2*wf%n_o, &
+                  one,              &
+                  t_ckdl,           & ! t_ckd_l
+                  wf%n_v**2*wf%n_o, &
+                  tb_ckal,          & ! tbar_ckd_i
+                  wf%n_v**2*wf%n_o, &
+                  zero,             &
+                  I_li,             &
                   wf%n_o)
 !
-      call mem%dealloc(t_lckd, (wf%n_o), (wf%n_v), (wf%n_o), wf%n_v)
+      call mem%dealloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(tb_ckal, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Add - sum_ckdl b_ckdi X_la t_kl^cd = - sum_l X_la I_l_i = - sum_l X_i_a^T(a,l) I_l_i(l,i)

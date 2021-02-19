@@ -37,7 +37,7 @@ module ccs_class
    use string_utilities,         only : convert_to_uppercase
    use array_utilities,          only : zero_array, zero_array_complex
    use array_utilities,          only : sandwich
-   use array_utilities,          only : get_l2_norm, copy_and_scale, copy_and_scale_complex, copy_, our_zdotu
+   use array_utilities,          only : get_l2_norm, copy_and_scale, copy_and_scale_complex, our_zdotu
    use array_utilities,          only : get_abs_max_w_index, get_n_lowest, get_n_highest
    use array_utilities,          only : quicksort_with_index_descending, are_vectors_parallel
    use index_invert,             only : invert_compound_index, invert_packed_index

@@ -122,7 +122,7 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
-      call copy_(wf%mo_fock_frozen, F_pq, wf%n_mo, wf%n_mo)
+      call dcopy(wf%n_mo**2, wf%mo_fock_frozen, 1, F_pq, 1)
 !
       call wf%t1_transform(F_pq)
 !
@@ -809,4 +809,3 @@ contains
    end subroutine construct_fock_ij_t1_ccs
 !
 end submodule fock_ccs
-

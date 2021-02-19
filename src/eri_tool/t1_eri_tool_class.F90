@@ -963,7 +963,7 @@ contains
                L_J_ij_p(1:eri%n_J, 1:eri%n_o, 1:batch_o%length) => L_J_ij
                call eri%get_cholesky_mo(L_J_ij_p, 1, eri%n_o, batch_o%first, batch_o%last)
 !
-               call sort_123_to_132_and_add(L_J_ji_p, L_J_ij_p, eri%n_J, batch_o%length, eri%n_o)
+               call add_132_to_123(one, L_J_ji_p, L_J_ij_p, eri%n_J, eri%n_o, batch_o%length)
 !
 !              L_J_ai_t1 -= sum_j t_aj L'_J_ji
                L_J_ia_p(1:eri%n_J, 1:eri%n_o, 1:batch_v%length) => L_J_ab
@@ -976,7 +976,7 @@ contains
                           zero,                                            &
                           L_J_ia_p, eri%n_J*eri%n_o)
 !
-               call sort_123_to_132_and_add(L_J_ia_p, L_J_ai_p, eri%n_J, eri%n_o, batch_v%length)
+               call add_132_to_123(one, L_J_ia_p, L_J_ai_p, eri%n_J, batch_v%length, eri%n_o)
 !
             enddo
 !
@@ -1043,9 +1043,9 @@ contains
                        zero,                                               &
                        L_J_vv, eri%n_J*batch_v%length)
 !
-            call sort_123_to_132_and_add(L_J_vv, &
-                                         eri%L_J_vv_t1(:,:,batch_v%first:batch_v%last), &
-                                         eri%n_J, batch_v%length, eri%n_v)
+            call add_132_to_123(one, L_J_vv, &
+                                eri%L_J_vv_t1(:,:,batch_v%first:batch_v%last), &
+                                eri%n_J, eri%n_v, batch_v%length)
 !
          enddo
 !
@@ -1079,7 +1079,7 @@ contains
             call eri%get_cholesky_mo(L_J_xv, eri%n_o + 1, eri%n_mo, &
                                      eri%n_o + batch_v%first, eri%n_o + batch_v%last)
 !
-            call sort_123_to_132_and_add(L_J_vv, L_J_xv, eri%n_J, batch_v%length, eri%n_v)
+            call add_132_to_123(one, L_J_vv, L_J_xv, eri%n_J, eri%n_v, batch_v%length)
 !
             call eri%set_cholesky_t1(L_J_xv, eri%n_o+1, eri%n_mo, &
                                      eri%n_o + batch_v%first, eri%n_o + batch_v%last)
@@ -1908,7 +1908,7 @@ contains
       endif
 !
       if(qp) then
-         call sort_123_to_132_and_add(L_J_ia_p, L_J_ai_c1, eri%n_J, length_a, length_i)
+         call add_132_to_123(one, L_J_ia_p, L_J_ai_c1, eri%n_J, length_a, length_i)
          call mem%dealloc(L_J_ia, eri%n_J, length_i, length_a)
       endif
 !
