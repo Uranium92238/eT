@@ -18,7 +18,8 @@
 - `eT_launch` now returns the lanczos files. See merge request eT-program/eT:!710
 - Gaussian .cube format for density and orbital visualization. See merge request eT-program/eT:!603
 - Specific cores can now be removed (by projection) in CC valence excited states. See merge request eT-program/eT:!713
-- Default threshold to check for degnerate states reduced to 1.0d-3. See merge request eT-program/eT!724
+- Default threshold to check for degenerate states reduced to 1.0d-3. See merge request eT-program/eT!724
+- Parallel excited states are now removed from the wavefunction if found eT-program/eT:!717
 
 ### Structure
 - Omega and Jacobian routines have separate in and out vectors and call the corresponding parent routines. See merge request eT-program/eT:!684

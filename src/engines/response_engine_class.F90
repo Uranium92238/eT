@@ -93,8 +93,6 @@ module response_engine_class
       procedure :: read_settings                    => read_settings_response_engine
       procedure :: read_response_settings           => read_response_settings_response_engine
 !
-      procedure, nopass :: get_thresholds           => get_thresholds_response_engine
-!
       procedure :: print_transition_moment_summary  => print_transition_moment_summary_response_engine
 !
       procedure :: set_printables                   => set_printables_response_engine
@@ -208,8 +206,6 @@ contains
 !
       real(dp) :: energy_threshold, residual_threshold
 !
-      logical, dimension(:), allocatable :: skip_states
-!
       if (trim(wf%name_) == 'low memory cc2') then
 !
          call output%printf('m', 'Requested response calculation with lowmem-cc2.', &
@@ -266,27 +262,27 @@ contains
                                       transformation='left',                                    &
                                       restart = .true.)
 !
-!        Biorthornormalize and look for duplicate states 
-!
-         call mem%alloc(skip_states, wf%n_singlet_states)
-!
          call engine%get_thresholds(energy_threshold, residual_threshold)
 !
-         call wf%biorthonormalize_L_and_R(energy_threshold, residual_threshold, skip_states)
+         if (engine%es_algorithm .eq. 'diis') then
+            call wf%remove_parallel_states(residual_threshold, 'both')
+         end if
+!
+!        Biorthornormalize and look for duplicate states 
+!
+         call wf%biorthonormalize_L_and_R(energy_threshold, residual_threshold)
 !  
 !        Compute transition moments 
 !
          if (engine%eom) then 
 !
-            call engine%do_eom_transition_moments(wf, skip_states)
+            call engine%do_eom_transition_moments(wf)
 !
          elseif (engine%lr) then 
 !
-            call engine%do_lr_transition_moments(wf, skip_states)
+            call engine%do_lr_transition_moments(wf)
 !
          endif 
-!
-         call mem%dealloc(skip_states, wf%n_singlet_states)
 !
       endif 
 !
@@ -962,7 +958,7 @@ contains
    end subroutine read_response_settings_response_engine
 !
 !
-   subroutine do_lr_transition_moments_response_engine(engine, wf, skip_states)
+   subroutine do_lr_transition_moments_response_engine(engine, wf)
 !!
 !!    Do LR transition moments 
 !!    Written by Eirik F. Kjønstad, Nov 2019
@@ -983,13 +979,13 @@ contains
 !!    (Josefine H. Andersen, Sarai D. Folkestad, June 2019). Reintroduced
 !!    with M vector contributions and making use of skip_states array  
 !!    (Eirik F. Kjønstad, Nov 2019).
+!!    Removed skip_states array as the parallel states are removed by the engine 
+!!    (Alexander C. Paul Sep 2020)
 !!
       implicit none
 !
       class(response_engine) :: engine
       class(ccs)        :: wf
-!
-      logical, dimension(wf%n_singlet_states), intent(in) :: skip_states
 !
       real(dp), dimension(3) :: transition_strength, transition_moment_left, transition_moment_right
 !
@@ -1010,15 +1006,6 @@ contains
       call mem%alloc(M, wf%n_es_amplitudes)
 !
       do state = 1, wf%n_singlet_states
-!
-         if (skip_states(state)) then
-!
-            call output%warning_msg('Skipped state (i0) because it is parallel to the &
-                                    &previous state', ints=[state], fs='(/t3,a)')
-!
-            cycle
-!
-         endif
 !
          call engine%M_vectors(state)%open_('read', 'rewind')
          call engine%M_vectors(state)%read_(M, wf%n_es_amplitudes)
@@ -1050,7 +1037,7 @@ contains
    end subroutine do_lr_transition_moments_response_engine
 !
 !
-   subroutine do_eom_transition_moments_response_engine(engine, wf, skip_states)
+   subroutine do_eom_transition_moments_response_engine(engine, wf)
 !!
 !!    Do EOM transition moments 
 !!    Written by Josefine H. Andersen, Sarai D. Folkestad 
@@ -1065,8 +1052,6 @@ contains
 !
       class(response_engine) :: engine
       class(ccs)             :: wf
-!
-      logical, dimension(wf%n_singlet_states), intent(in) :: skip_states
 !
       real(dp), dimension(:,:,:), allocatable :: operator
       real(dp), dimension(:,:),   allocatable :: c_D_ct
@@ -1114,14 +1099,6 @@ contains
                             fs='(/t3,a)')
 !
          do state = 1, wf%n_singlet_states
-!
-            if (skip_states(state)) then
-!
-               call output%warning_msg('Skipped state (i0) because it is parallel to the &
-                                       &previous state', ints=[state], fs='(/t3,a)')
-               cycle
-!
-            end if
 !
 !           Construct right tdm and write to file
 !
@@ -1244,46 +1221,6 @@ contains
       if (engine%plot_tdm) call mem%dealloc(engine%states_to_plot, engine%n_states_to_plot)
 !
    end subroutine do_eom_transition_moments_response_engine
-!
-!
-   subroutine get_thresholds_response_engine(energy_threshold, residual_threshold)
-!!
-!!    Get thresholds from input
-!!    Written by Alexander C. Paul, Oct 2019
-!!
-!!    Get thresholds from input to perform checks for parallel states and 
-!!    to check that the left and right states are consistent
-!!
-      implicit none
-!
-      real(dp), intent(out) :: energy_threshold, residual_threshold
-!
-!     Set default values and overwrite if specified in input
-!
-      energy_threshold = 1.0d-3
-      residual_threshold = energy_threshold
-!
-!     Set thresholds for the sanity checks if the roots are ordered correctly
-!
-      if (input%is_keyword_present('energy threshold', 'solver cc es') .and. &
-          input%is_keyword_present('residual threshold', 'solver cc es')) then 
-!
-        call input%get_keyword('energy threshold', 'solver cc es', energy_threshold)
-        call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
-!
-      else if (input%is_keyword_present('residual threshold', 'solver cc es')) then 
-!
-        call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
-        energy_threshold = residual_threshold
-!
-      else if (input%is_keyword_present('energy threshold', 'solver cc es')) then 
-!
-         call input%get_keyword('energy threshold', 'solver cc es', energy_threshold)
-         residual_threshold = energy_threshold
-!
-      endif
-!
-   end subroutine get_thresholds_response_engine
 !
 !
    subroutine print_transition_moment_summary_response_engine(engine, transition_strength, &

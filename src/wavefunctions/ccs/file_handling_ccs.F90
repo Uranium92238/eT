@@ -38,7 +38,7 @@ contains
 !!    Initialize files 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
-!!    Initializes the wavefucntion files for wavefunction parameters.
+!!    Initializes the wavefunction files for wavefunction parameters.
 !!
       class(ccs) :: wf 
 !
@@ -106,7 +106,7 @@ contains
 !!    Read singles vector
 !!    Written by Alexander C. Paul, Oct 2019 
 !!
-!!    read_n: optionally adds the number of amplitudes read to read_n
+!!    read_n: adds the number of amplitudes read to read_n
 !!
       implicit none 
 !
@@ -585,6 +585,193 @@ contains
       call do_nothing(wf) 
 !
    end subroutine save_tbar_intermediates_ccs
+!
+!
+   module subroutine remove_parallel_states_ccs(wf, threshold, transformation)
+!!
+!!    Remove parallel states
+!!    Written by Alexander C. Paul, Sep 2020
+!!
+!!    Find parallel left and right vectors and remove them
+!!    from the corresponding files and wf variables.
+!!
+!!    NB: This routine may only be called once during the execution of eT,
+!!        otherwise n_singlet_states is reduced twice.
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      real(dp), intent(in) :: threshold
+!
+      character(len=*), intent(in) :: transformation
+!
+      real(dp), dimension(:), allocatable :: left_energies, right_energies
+!
+      logical, dimension(:), allocatable :: parallel
+!
+      integer :: n_parallel_left, n_parallel_right, n_parallel
+!
+      character(len=20) :: warning_print
+!
+      call mem%alloc(parallel, wf%n_singlet_states)
+!
+      if (trim(transformation) == 'left' .or. trim(transformation) == 'both') then
+!
+         call mem%alloc(left_energies, wf%n_singlet_states)
+         call dcopy(wf%n_singlet_states, wf%left_excitation_energies, 1, left_energies, 1)
+!
+         call wf%check_for_parallel_states('left', threshold, parallel)
+!
+         call wf%remove_parallel_states_from_file(parallel, n_parallel_left, &
+                                                  left_energies, wf%l_files, 'left')
+!
+         deallocate(wf%l_files)
+         call wf%destruct_left_excitation_energies
+!
+      end if
+!
+      if (trim(transformation) == 'right' .or. trim(transformation) == 'both') then
+!
+         call mem%alloc(right_energies, wf%n_singlet_states)
+         call dcopy(wf%n_singlet_states, wf%right_excitation_energies, 1, right_energies, 1)
+!
+         call wf%check_for_parallel_states('right', threshold, parallel)
+!
+         call wf%remove_parallel_states_from_file(parallel, n_parallel_right, &
+                                                  right_energies, wf%r_files, 'right')
+!
+         deallocate(wf%r_files)
+         call wf%destruct_right_excitation_energies
+!
+      end if
+!
+      call mem%dealloc(parallel, wf%n_singlet_states)
+!
+!     Reinitialize excited state variables
+!
+      if (trim(transformation) == 'left') then
+!
+         n_parallel = n_parallel_left
+         wf%n_singlet_states = wf%n_singlet_states - n_parallel
+!
+         call wf%initialize_left_excitation_energies()
+         call dcopy(wf%n_singlet_states, left_energies, 1, wf%left_excitation_energies, 1)
+         call mem%dealloc(left_energies, wf%n_singlet_states+n_parallel)
+!
+      else if (trim(transformation) == 'right') then
+!
+         n_parallel = n_parallel_right
+         wf%n_singlet_states = wf%n_singlet_states - n_parallel
+!
+         call wf%initialize_right_excitation_energies()
+         call dcopy(wf%n_singlet_states, right_energies, 1, wf%right_excitation_energies, 1)
+         call mem%dealloc(right_energies, wf%n_singlet_states+n_parallel_right)
+!
+      else if (trim(transformation) == 'both') then
+!
+         if (n_parallel_left .ne. n_parallel_right) then
+!
+            call output%printf('n', 'Obtained different number of parallel left/right states.')
+!
+            call output%error_msg('Inconsistent number of left and right states.')
+!
+         end if
+!
+         n_parallel = n_parallel_right
+         wf%n_singlet_states = wf%n_singlet_states - n_parallel
+!
+         call wf%initialize_left_excitation_energies()
+         call wf%initialize_right_excitation_energies()
+         call dcopy(wf%n_singlet_states, left_energies, 1, wf%left_excitation_energies, 1)
+         call dcopy(wf%n_singlet_states, right_energies, 1, wf%right_excitation_energies, 1)
+         call mem%dealloc(left_energies, wf%n_singlet_states+n_parallel)
+         call mem%dealloc(right_energies, wf%n_singlet_states+n_parallel)
+!
+      end if
+!
+      call wf%initialize_excited_state_files()
+!
+      if (n_parallel > 0) then
+!
+         if (n_parallel == 1) then
+            write(warning_print,'(i0,a)') n_parallel, ' parallel state' 
+         else 
+            write(warning_print,'(i0,a)') n_parallel, ' parallel states' 
+         end if
+!
+         call output%warning_msg('(a0) removed. Number of states reduced to: (i0)', &
+                                 chars=[trim(warning_print)], &
+                                 ints=[wf%n_singlet_states])
+      end if
+!
+   end subroutine remove_parallel_states_ccs
+!
+!
+   module subroutine remove_parallel_states_from_file_ccs(wf, parallel, n_parallel, &
+                                                          energies, es_files, side)
+!!
+!!    Remove parallel states from file
+!!    Written by Alexander C. Paul, Sep 2020
+!!
+!!    Send in vector of logicals determining which states are parallel.
+!!    If a parallel states is found among the non-parallel ones,
+!!    the file with the parallel state is overwritten with the following
+!!    non-parallel states. Afterwards the last n_parallel files are deleted.
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      logical, dimension(wf%n_singlet_states), intent(in) :: parallel
+!
+      integer, intent(out) :: n_parallel
+!
+      real(dp), dimension(wf%n_singlet_states), intent(out) :: energies
+!
+      character(len=*), intent(in) :: side
+!
+      type(stream_file), dimension(wf%n_singlet_states), intent(inout) :: es_files
+!
+      real(dp), dimension(:), allocatable :: vector
+!
+      integer :: state
+!
+      n_parallel = 0
+!
+      call mem%alloc(vector, wf%n_es_amplitudes)
+!
+      do state = 1, wf%n_singlet_states
+!
+         if (parallel(state)) then
+!
+            n_parallel = n_parallel + 1
+!
+            call output%printf('v', 'Removed (a0) state (i0) as it was parallel &
+                                &to another state.', ints=[state], chars=[trim(side)])
+!
+            cycle
+!
+         else if (n_parallel > 0) then
+!
+            call wf%read_excited_state(vector, state, state, side, &
+                                       energies(state-n_parallel))
+            call wf%save_excited_state(vector, state-n_parallel, state-n_parallel, &
+                                       side, energies(state-n_parallel))
+!
+         end if
+!
+      end do
+!
+      call mem%dealloc(vector, wf%n_es_amplitudes)
+!
+      do state = wf%n_singlet_states - n_parallel + 1, wf%n_singlet_states
+!
+         call es_files(state)%delete_
+!
+      end do
+!
+   end subroutine remove_parallel_states_from_file_ccs
 !
 !
 end submodule file_handling_ccs
