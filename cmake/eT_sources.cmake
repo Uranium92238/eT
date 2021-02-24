@@ -118,6 +118,7 @@ set(eT_fortran_sources
    src/tools/reordering.F90
    src/tools/timings_class.F90
    src/tools/array_utilities.F90
+   src/tools/packed_array_utilities.F90
    src/tools/math_utilities.F90
    src/tools/linked_list/array_list_class.F90
    src/tools/linked_list/array_node_class.F90

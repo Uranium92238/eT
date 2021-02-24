@@ -9,6 +9,7 @@
 - CCS energy is now N^4 scaling (Cholesky vector algorithm) See merge request eT-program/eT!715
 - CC3 optimization using covariant/contravariant amplitudes and integrals are resorted on the fly. See merge request eT-program/eT:!685
 - Non-linear davidson now default solver for CC3 and low-mem CC2. See merge request eT-program/eT!724
+- Only necessary (vv|vv) integrals computed in CCSD and transpose Jacobian transformation now uses the optimized v^4o^2 routine. See merge request eT-program/eT!711
 
 ### Features
 - printf accepts complex numbers and possible to repeat formats. See merge request eT-program/eT!674

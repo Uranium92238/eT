@@ -692,6 +692,11 @@ def autogenerate_complex_files(source_directory):
                     line = sub(
                         r"\b" + "copy_and_scale" + r"\b", "copy_and_scale_complex", line
                     )
+                    line = sub(
+                        r"\b" + "packed_array_utilities_r" + r"\b",
+                        "packed_array_utilities_c",
+                        line,
+                    )
 
                     # Change parameters
 

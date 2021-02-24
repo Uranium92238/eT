@@ -71,49 +71,51 @@ module mo_eri_tool_class
 !
 !     Read, print settings
 !
-      procedure :: print_settings       => print_settings_mo_eri_tool
-      procedure :: read_settings        => read_settings_mo_eri_tool
+      procedure :: print_settings            => print_settings_mo_eri_tool
+      procedure :: read_settings             => read_settings_mo_eri_tool
 !
 !     Cleanup
 !
-      procedure :: cleanup              => cleanup_mo_eri_tool
+      procedure :: cleanup                   => cleanup_mo_eri_tool
 !
 !     Initialization
 !
-      procedure :: initialize           => initialize_mo_eri_tool
-      procedure :: copy_from_mo         => copy_from_mo_mo_eri_tool
+      procedure :: initialize                => initialize_mo_eri_tool
+      procedure :: copy_from_mo              => copy_from_mo_mo_eri_tool
 !
 !     write, read, copy_in, copy_out vectors
 !
-      procedure :: write_cholesky       => write_cholesky_mo_eri_tool
-      procedure :: read_cholesky        => read_cholesky_mo_eri_tool
+      procedure :: write_cholesky            => write_cholesky_mo_eri_tool
+      procedure :: read_cholesky             => read_cholesky_mo_eri_tool
 !
-      procedure :: copy_in_cholesky     => copy_in_cholesky_mo_eri_tool
-      procedure :: copy_out_cholesky    => copy_out_cholesky_mo_eri_tool
+      procedure :: copy_in_cholesky          => copy_in_cholesky_mo_eri_tool
+      procedure :: copy_out_cholesky         => copy_out_cholesky_mo_eri_tool
 !
 !     MO Cholesky veectors
 !
-      procedure :: set_cholesky_mo      => set_cholesky_mo_mo_eri_tool
-      procedure :: get_cholesky_mo      => get_cholesky_mo_mo_eri_tool
+      procedure :: set_cholesky_mo           => set_cholesky_mo_mo_eri_tool
+      procedure :: get_cholesky_mo           => get_cholesky_mo_mo_eri_tool
 !
-      procedure :: update_cholesky_mo   => update_cholesky_mo_mo_eri_tool
+      procedure :: update_cholesky_mo        => update_cholesky_mo_mo_eri_tool
 !
 !     Get and construct routines for g_pqrs in MO basis
 !
-      procedure :: get_eri_mo_mem       => get_eri_mo_mem_mo_eri_tool
-      procedure :: get_eri_mo           => get_eri_mo_mo_eri_tool
-      procedure :: get_g_pqrs_mo        => get_g_pqrs_mo_mo_eri_tool
-      procedure :: construct_g_pqrs_mo  => construct_g_pqrs_mo_mo_eri_tool
+      procedure :: get_eri_mo_mem            => get_eri_mo_mem_mo_eri_tool
+      procedure :: get_eri_mo                => get_eri_mo_mo_eri_tool
+      procedure :: get_g_pqrs_mo             => get_g_pqrs_mo_mo_eri_tool
+      procedure :: construct_g_pqrs_mo       => construct_g_pqrs_mo_mo_eri_tool
 !
-      procedure :: copy_g_pqrs          => copy_g_pqrs_mo_eri_tool
+      procedure :: copy_g_pqrs               => copy_g_pqrs_mo_eri_tool
+      procedure :: copy_g_pqrs_to_packed     => copy_g_pqrs_to_packed_mo_eri_tool
 !
 !     Various routines
 !
-      procedure :: place_g_mo_in_memory => place_g_mo_in_memory_mo_eri_tool
+      procedure :: place_g_mo_in_memory      => place_g_mo_in_memory_mo_eri_tool
 !
-      procedure :: set_pointer_mo       => set_pointer_mo_mo_eri_tool
-      procedure :: L_pointer_setup_mo   => L_pointer_setup_mo_mo_eri_tool
-      procedure :: construct_g_from_L   => construct_g_from_L_mo_eri_tool
+      procedure :: set_pointer_mo            => set_pointer_mo_mo_eri_tool
+      procedure :: L_pointer_setup_mo        => L_pointer_setup_mo_mo_eri_tool
+      procedure :: construct_g_from_L        => construct_g_from_L_mo_eri_tool
+      procedure :: construct_g_packed_from_L => construct_g_packed_from_L_mo_eri_tool
 !
    end type mo_eri_tool
 !
@@ -1166,7 +1168,7 @@ contains
                                       first_r, last_r, first_s, last_s, &
                                       qp, sr, rspq)
 !!
-!!    Copy g_pqrs MO
+!!    Copy g_pqrs
 !!    Written by Rolf H. Myhre, Jun 2020
 !!
 !!    q_to: array to copy integrals to
@@ -1340,6 +1342,99 @@ contains
    end subroutine copy_g_pqrs_mo_eri_tool
 !
 !
+   subroutine copy_g_pqrs_to_packed_mo_eri_tool(eri, g_to, g_from, &
+                                             first_p, first_q, &
+                                             dim_p, dim_q, qp)
+!!
+!!    Copy packed g_pqrs
+!!    Written by Rolf H. Myhre, Jun 2020
+!!
+!!    g_to: 2d array in RFP format to copy integrals to
+!!    g_from: 4d array to copy integrals from
+!!    first_p, first_q.: absolute first indices of integrals
+!!    dim_p, dim_q: length of p and q range
+!!
+!!    Optional reordering logicals (default = .false.):
+!!    qp:   switches order of p and q, i.e., reorders to g_qpqp
+!!
+      implicit none
+!
+      class(mo_eri_tool), intent(in) :: eri
+!
+      integer, intent(in) :: first_p, first_q
+      integer, intent(in) :: dim_p, dim_q
+!
+      real(dp), intent(out), &
+                dimension(dim_p*dim_q + mod(dim_p*dim_q+1,2), (dim_p*dim_q+1)/2) :: g_to
+!
+      real(dp), intent(in), dimension(eri%n_mo, eri%n_mo, eri%n_mo, eri%n_mo) :: g_from
+!
+      logical, optional, intent(in) :: qp
+!
+      integer :: p, q, r, s, pq, rs, x, y
+      integer :: tridim
+      logical :: qp_
+!
+      tridim = dim_p*dim_q/2
+!
+      qp_ = .false.
+      if(present(qp)) qp_ = qp
+!
+      if(.not. qp_) then !pqpq
+!
+!$omp parallel do private(x, y, pq, rs, p, q, r, s)
+      do y = 1, (dim_p*dim_q+1)/2
+         do x = 1, dim_p*dim_q + mod(dim_p*dim_q+1,2)
+!
+            if (x .le. y + tridim) then
+               pq = x
+               rs = y + tridim
+            else
+               pq = y
+               rs = x - tridim - 1
+            endif
+!
+            p = mod(pq-1,dim_p)
+            r = mod(rs-1,dim_p)
+            q = (pq-1)/dim_p
+            s = (rs-1)/dim_p
+!
+            g_to(x,y) = g_from(first_p+p, first_q+q, first_p+r, first_q+s)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+      else !qpqp
+!
+!$omp parallel do private(x, y, pq, rs, p, q, r, s)
+      do y = 1, (dim_p*dim_q+1)/2
+         do x = 1, dim_p*dim_q + mod(dim_p*dim_q+1,2)
+!
+            if (x .le. y + tridim) then
+               pq = x
+               rs = y + tridim
+            else
+               pq = y
+               rs = x - tridim - 1
+            endif
+!
+            q = mod(pq-1,dim_q)
+            s = mod(rs-1,dim_q)
+            p = (pq-1)/dim_q
+            r = (rs-1)/dim_q
+!
+            g_to(x,y) = g_from(first_p+p, first_q+q, first_p+r, first_q+s)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+      endif
+!
+   end subroutine copy_g_pqrs_to_packed_mo_eri_tool
+!
+!
    subroutine place_g_mo_in_memory_mo_eri_tool(eri)
 !!
 !!    Place g MO in memory
@@ -1362,7 +1457,7 @@ contains
    subroutine construct_g_from_L_mo_eri_tool(eri, L_J_pq, L_J_rs, g_pqrs, beta, &
                                              dim_p, dim_q, dim_r, dim_s, rspq)
 !!
-!!    contract L
+!!    construct g from L
 !!    written by Rolf H. Myhre, Jun 2020
 !!
 !!    Contract the Cholesky vectors L_J_pq and L_J_rs to construct g_pqrs or g_rspq
@@ -1415,6 +1510,31 @@ contains
       endif
 !
    end subroutine construct_g_from_L_mo_eri_tool
+!
+!
+   subroutine construct_g_packed_from_L_mo_eri_tool(eri, L_J_pq, g_pqpq, beta, &
+                                                    dim_p, dim_q)
+!!
+!!    construct packed g from L
+!!    written by Rolf H. Myhre, Jan 2021
+!!
+!!    Contract the Cholesky vector L_J_pq to construct g_pqpq
+!!
+      implicit none
+!
+      class(mo_eri_tool), intent(in) :: eri
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      real(dp), dimension(eri%n_J, dim_p*dim_q), intent(in) :: L_J_pq
+!
+      real(dp), intent(inout), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2) :: g_pqpq
+!
+      real(dp), intent(in) :: beta
+!
+      call dsfrk('N', 'U', 'T', dim_p*dim_q, eri%n_J, one, L_J_pq, eri%n_J, beta, g_pqpq)
+!
+   end subroutine construct_g_packed_from_L_mo_eri_tool
 !
 !
    subroutine set_pointer_mo_mo_eri_tool(eri, point, last_p, last_q, first_q)

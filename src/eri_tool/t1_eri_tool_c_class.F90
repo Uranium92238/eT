@@ -101,7 +101,6 @@ module t1_eri_tool_c_class
       procedure :: construct_cholesky_t1_oo  => construct_cholesky_t1_oo_t1_eri_tool_c
       procedure :: construct_cholesky_t1_vo  => construct_cholesky_t1_vo_t1_eri_tool_c
       procedure :: construct_cholesky_t1_vv  => construct_cholesky_t1_vv_t1_eri_tool_c
-      procedure :: construct_g_t1_from_mo    => construct_g_t1_from_mo_t1_eri_tool
 !
 !     Get and construct routines for g_pqrs in T1 basis
 !
@@ -109,6 +108,14 @@ module t1_eri_tool_c_class
       procedure :: get_eri_t1                => get_eri_t1_t1_eri_tool_c
       procedure :: get_g_pqrs_t1             => get_g_pqrs_t1_t1_eri_tool_c
       procedure :: construct_g_pqrs_t1       => construct_g_pqrs_t1_t1_eri_tool_c
+      procedure :: construct_g_t1_from_mo    => construct_g_t1_from_mo_t1_eri_tool
+!
+!     Get and construct routines for packed g_pqrs in T1 basis
+!
+      procedure :: get_eri_t1_packed_mem      => get_eri_t1_packed_mem_t1_eri_tool_c
+      procedure :: get_eri_t1_packed          => get_eri_t1_packed_t1_eri_tool_c
+      procedure :: get_g_pqrs_t1_packed       => get_g_pqrs_t1_packed_t1_eri_tool_c
+      procedure :: construct_g_pqrs_t1_packed => construct_g_pqrs_t1_packed_t1_eri_tool_c
 !
 !     Construction of C1 Cholesky vectors from T1 Cholesky
 !
@@ -1539,6 +1546,201 @@ contains
       endif
 !
    end subroutine construct_g_pqrs_t1_t1_eri_tool_c
+!
+!
+   pure subroutine get_eri_t1_packed_mem_t1_eri_tool_c(eri, string, req_pq, &
+                                                       dim_p, dim_q, qp)
+!!
+!!    Get ERI T1 packed mem
+!!    Written by Rolf H. Myhre Jun 2020
+!!
+!!    Adds the memory usage for get ERI that depends on 
+!!    dimensions p and q to req_pq
+!!    Note that req_pq must be initialized outside
+!!    This routine is meant for estimates for the batching manager.
+!!    If you are batching over index q, dim_q will typically be 1
+!!    and the other dimensions should be full.
+!!
+!!    Temporary arrays needed for reordering, triggered by optional qp,
+!!    are not allocated simultaneously in construct_g, so this routine may
+!!    overestimate total memory usage
+!!
+!!    See get_eri_t1 for additional documentation
+!!
+      implicit none
+!
+      class(t1_eri_tool_c), intent(in) :: eri
+!
+      character(len=2), intent(in) :: string
+!
+      integer, intent(inout) :: req_pq
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      logical, optional, intent(in) :: qp
+!
+!     No extra memory needed if integrals in mem
+      if(.not. (eri%t1_eri_mem)) then
+!
+         call eri%get_packed_eri_mem(string, req_pq, dim_p, dim_q, qp)
+!
+      endif
+!
+   end subroutine get_eri_t1_packed_mem_t1_eri_tool_c
+!
+!
+   subroutine get_eri_t1_packed_t1_eri_tool_c(eri, string, g_pqpq, &
+                                              first_p, last_p, first_q, last_q, qp)
+!!
+!!    Get ERI T1 packed
+!!    Written by Rolf H. Myhre, Jan 2021
+!!
+!!    based on routines by Sarai D. Folkestad and Eirik F. Kjønstad
+!!
+!!    Returns packed eri integrals in the rectangular full packed (RFP) normal upper format
+!!    The leading upper triangular matrix is transposed and tucked
+!!    in with the trailing upper triangular matrix
+!!
+!!    x x x y y y    y y y      x x x y y y y    y y y y
+!!      x x y y y    y y y        x x y y y y    y y y y
+!!        x y y y -> y y y          x y y y y -> y y y y
+!!          z z z    z z z            y y y y    y y y y
+!!            z z    x z z              z z z    x z z z
+!!              z    x x z                z z    x x z z
+!!                   x x x                  z    x x x z
+!!
+!!    Note the difference between even and odd dimensions.
+!!    Make sure to test both when using this routine.
+!!
+!!    See: ACM Transactions on Mathematical Software, Vol. 37, No. 2, Article 18
+!!         http://doi.acm.org/10.1145/1731022.1731028
+!!
+!!    string: two character string indicating integral block. Example: "vo"
+!!            o: occupied, v: virtual, f: full
+!!    q_pqpq: array to contain the integral
+!!    first_p, last_p, etc.: first and last index of integrals
+!!                           in range determined by string
+!!    qp:   switches order of p and q, i.e., reorders to g_qpqp
+!!
+      implicit none
+!
+      class(t1_eri_tool_c), intent(inout) :: eri
+!
+      character(len=2), intent(in) :: string
+!
+      complex(dp), intent(out), dimension(1) :: g_pqpq
+!
+      integer, optional, intent(in) :: first_p, last_p
+      integer, optional, intent(in) :: first_q, last_q
+!
+      logical, optional, intent(in) :: qp
+!
+      integer :: full_first_p, full_last_p, full_first_q, full_last_q, dim_p, dim_q
+!
+      call eri%index_setup(string(1:1), full_first_p, full_last_p, first_p, last_p)
+      call eri%index_setup(string(2:2), full_first_q, full_last_q, first_q, last_q)
+!
+      dim_p = full_last_p - full_first_p + 1
+      dim_q = full_last_q - full_first_q + 1
+!
+      call eri%get_g_pqrs_t1_packed(g_pqpq, full_first_p, full_last_p, &
+                                            full_first_q, full_last_q, dim_p, dim_q, qp)
+!
+!
+   end subroutine get_eri_t1_packed_t1_eri_tool_c
+!
+!
+   subroutine get_g_pqrs_t1_packed_t1_eri_tool_c(eri, g_pqpq, first_p, last_p, first_q, last_q, &
+                                                              dim_p, dim_q, qp)
+!!
+!!    Get g_pqrs T1 packed
+!!    Written by Rolf H. Myhre, Jan 2021
+!!
+!!    based on routines by Sarai D. Folkestad and Eirik F. Kjønstad
+!!
+!!    q_pqpq: array to contain the integral
+!!    first_p, last_p, etc.: absolute first and last index of integrals
+!!    dim_p, dim_q: length of p and q range
+!!
+!!    Optional reordering logicals (default = .false.):
+!!    qp:   switches order of p and q, i.e., g_qpqp
+!!
+      implicit none
+!
+      class(t1_eri_tool_c), intent(inout) :: eri
+!
+      integer, intent(in) :: first_p, last_p
+      integer, intent(in) :: first_q, last_q
+      integer, intent(in) :: dim_p, dim_q
+!
+      complex(dp), intent(out), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2) :: g_pqpq
+!
+      logical, optional, intent(in) :: qp
+!
+      if (eri%t1_eri_mem) then
+!
+         call eri%copy_g_pqrs_to_packed(g_pqpq, eri%g_pqrs_t1, &
+                                        first_p, first_q, &
+                                        dim_p, dim_q, qp)
+!
+      else
+!
+         call eri%construct_g_pqrs_t1_packed(g_pqpq, first_p, last_p, first_q, last_q, &
+                                             dim_p, dim_q, qp)
+!
+      endif
+!
+!
+   end subroutine get_g_pqrs_t1_packed_t1_eri_tool_c
+!
+!
+   subroutine construct_g_pqrs_t1_packed_t1_eri_tool_c(eri, g_pqpq, &
+                                                       first_p, last_p, first_q, last_q, &
+                                                       dim_p, dim_q, qp)
+!!
+!!    Construct g_pqrs T1 packed
+!!    Written by Rolf H. Myhre, Jan 2021
+!!
+!!    q_pqpq: array to contain the integral
+!!    first_p, last_p, etc.: absolute first and last index of integrals
+!!    dim_p, dim_q: length of p and q range
+!!
+!!    Optional reordering logicals (default = .false.):
+!!    qp:   switches order of p and q, i.e., reorders to g_qpqp
+!!
+      implicit none
+!
+      class(t1_eri_tool_c), intent(inout) :: eri
+!
+      integer, intent(in) :: first_p, last_p
+      integer, intent(in) :: first_q, last_q
+      integer, intent(in) :: dim_p, dim_q
+!
+      complex(dp), intent(out), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2) :: g_pqpq
+!
+      logical, optional, intent(in) :: qp
+!
+      complex(dp), dimension(:,:,:), pointer, contiguous :: L_J_pq_p
+!
+      logical :: switch_pq,  pq_alloced
+!
+      L_J_pq_p => null()
+!
+      switch_pq = .false.
+      if(present(qp)) switch_pq = qp
+!
+      call eri%L_pointer_setup_t1(L_J_pq_p, switch_pq, &
+                                  first_p, last_p, first_q, last_q, pq_alloced)
+!
+      call eri%construct_g_packed_from_L(L_J_pq_p, g_pqpq, zero_complex, dim_p, dim_q)
+!
+      if (pq_alloced) then
+         call mem%dealloc(L_J_pq_p, eri%n_J, dim_p, dim_q)
+      endif
+!
+      L_J_pq_p => null()
+!
+   end subroutine construct_g_pqrs_t1_packed_t1_eri_tool_c
 !
 !
    pure subroutine get_eri_c1_mem_t1_eri_tool_c(eri, string, &
