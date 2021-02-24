@@ -500,7 +500,7 @@ contains
 !
          call mem%dealloc(X_order, solver%n_singlet_states)
 !
-         call wf%check_for_parallel_states(solver%transformation, solver%convergence_checker%residual_threshold)
+         call wf%set_excitation_energies(solver%energies, solver%transformation)
 !
       else 
 !

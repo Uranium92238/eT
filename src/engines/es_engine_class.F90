@@ -51,6 +51,9 @@ module es_engine_class
 !
       procedure :: set_printables            => set_printables_es_engine
 !
+      procedure, nopass :: get_thresholds &
+                        => get_thresholds_response_engine
+!
    end type es_engine
 !
 !
@@ -192,6 +195,8 @@ contains
       class(es_engine)  :: engine
       class(ccs)        :: wf
 !
+      real(dp) :: energy_threshold, residual_threshold
+!
       call engine%tasks%print_('cholesky')
 !
       call engine%do_cholesky(wf)
@@ -214,6 +219,13 @@ contains
       else 
 !
          call engine%do_excited_state(wf, engine%es_transformation, engine%es_restart)
+!
+      end if
+!
+      if (engine%es_algorithm .eq. 'diis') then
+!
+         call engine%get_thresholds(energy_threshold, residual_threshold)
+         call wf%remove_parallel_states(residual_threshold, engine%es_transformation)
 !
       end if
 !
@@ -356,6 +368,42 @@ contains
       engine%description  = 'Calculates the coupled cluster excitation vectors and excitation energies'
 !
    end subroutine set_printables_es_engine
+!
+!
+   subroutine get_thresholds_response_engine(energy_threshold, residual_threshold)
+!!
+!!    Get thresholds
+!!    Written by Alexander C. Paul, Oct 2019
+!!
+!!    Get thresholds from input to perform checks for parallel states and 
+!!    to check that the left and right states are consistent
+!!
+      implicit none
+!
+      real(dp), intent(out) :: energy_threshold, residual_threshold
+!
+      energy_threshold = 1.0d-3
+      residual_threshold = energy_threshold
+!
+      if (input%is_keyword_present('energy threshold', 'solver cc es') .and. &
+          input%is_keyword_present('residual threshold', 'solver cc es')) then 
+!
+        call input%get_keyword('energy threshold', 'solver cc es', energy_threshold)
+        call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
+!
+      else if (input%is_keyword_present('residual threshold', 'solver cc es')) then 
+!
+        call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
+        energy_threshold = residual_threshold
+!
+      else if (input%is_keyword_present('energy threshold', 'solver cc es')) then 
+!
+         call input%get_keyword('energy threshold', 'solver cc es', energy_threshold)
+         residual_threshold = energy_threshold
+!
+      endif
+!
+   end subroutine get_thresholds_response_engine
 !
 !
 end module es_engine_class

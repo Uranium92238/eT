@@ -351,6 +351,8 @@ module ccs_class
       procedure :: L_R_overlap                                   => L_R_overlap_ccs
       procedure :: get_degree_of_degeneracy                      => get_degree_of_degeneracy_ccs
       procedure :: check_for_parallel_states                     => check_for_parallel_states_ccs
+      procedure :: remove_parallel_states                        => remove_parallel_states_ccs
+      procedure :: remove_parallel_states_from_file              => remove_parallel_states_from_file_ccs
 !
 !     One-electron interals
 !
@@ -2072,7 +2074,7 @@ contains
                          .gt. threshold)) then
 !
                call output%error_msg('Different degree of degeneracy in the &
-               & left excited states compared to the right excited states')
+                  &left excited states compared to the right excited states')
 !
             end if
 !
@@ -2091,9 +2093,9 @@ contains
    end subroutine get_degree_of_degeneracy_ccs
 !
 !
-   subroutine check_for_parallel_states_ccs(wf, transformation, threshold)
+   subroutine check_for_parallel_states_ccs(wf, side, threshold, parallel_states)
 !!
-!!    Check for degenerate states
+!!    Check for parallel states
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Oct 2019
 !!
 !!    The solver might not ensure orthogonality of the states (e.g. in DIIS).
@@ -2106,11 +2108,13 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      character(len=*), intent(in) :: transformation
+      character(len=*), intent(in) :: side
 !
       real(dp), intent(in) :: threshold
 !
-      real(dp), dimension(:,:), allocatable  :: R
+      logical, dimension(wf%n_singlet_states), intent(out), optional :: parallel_states
+!
+      real(dp), dimension(:,:), allocatable  :: vector
       logical, dimension(:), allocatable :: parallel, degenerate, checked
 !
       integer, dimension(:), allocatable :: degenerate_states
@@ -2118,6 +2122,8 @@ contains
       integer :: n_degeneracy, reduced_degeneracy
 !
       character(len=100) :: print_states
+!
+      parallel_states = .false.
 !
       call mem%alloc(degenerate, wf%n_singlet_states)
 !
@@ -2136,8 +2142,8 @@ contains
 !
 !        Get the number of states degenerate with current_state (at least 1)
 !
-         call wf%get_degree_of_degeneracy(current_state, transformation,      &
-                                          threshold, n_degeneracy, degenerate)
+         call wf%get_degree_of_degeneracy(current_state, side,threshold, &
+                                          n_degeneracy, degenerate)
 !
 !        If degeneracies are found:
 !           - read all degenerate states
@@ -2147,7 +2153,7 @@ contains
 !
          if (n_degeneracy .gt. 1) then
 !
-            call mem%alloc(R, wf%n_es_amplitudes, n_degeneracy)
+            call mem%alloc(vector, wf%n_es_amplitudes, n_degeneracy)
 !
             call mem%alloc(degenerate_states, n_degeneracy)
 !
@@ -2166,13 +2172,13 @@ contains
 !              This state won't be checked again
                checked(p) = .true.
 !
-               call wf%read_excited_state(R(:, counter), p, p,'right')
+               call wf%read_excited_state(vector(:, counter), p, p, side)
 !
             end do
 !
             call mem%alloc(parallel, n_degeneracy)
 !
-            call check_for_parallel_vectors(R, wf%n_es_amplitudes, n_degeneracy, &
+            call check_for_parallel_vectors(vector, wf%n_es_amplitudes, n_degeneracy, &
                                             reduced_degeneracy, threshold, parallel)
 !
             if(reduced_degeneracy .gt. 1) then
@@ -2198,15 +2204,20 @@ contains
 !
             do p = 1, n_degeneracy
                if(parallel(p)) then
-                  call output%warning_msg('State (i0) is parallel to state (i0).', &
-                                           ints=[current_state,degenerate_states(p)])
+!
+                  call output%warning_msg('(a0) state (i0) is parallel to (a0) state (i0).', &
+                                           ints=[current_state,degenerate_states(p)],&
+                                           chars=[trim(side),trim(side)])
+!
+                  if (present(parallel_states)) parallel_states(degenerate_states(p)) = .true.
+!
                end if
             end do
 !
             call mem%dealloc(degenerate_states, n_degeneracy)
 !
             call mem%dealloc(parallel, n_degeneracy)
-            call mem%dealloc(R, wf%n_es_amplitudes, n_degeneracy)
+            call mem%dealloc(vector, wf%n_es_amplitudes, n_degeneracy)
 !
          end if
 !
@@ -2218,7 +2229,7 @@ contains
    end subroutine check_for_parallel_states_ccs
 !
 !
-   subroutine biorthonormalize_L_and_R_ccs(wf, energy_threshold, residual_threshold, skip_states)
+   subroutine biorthonormalize_L_and_R_ccs(wf, energy_threshold, residual_threshold)
 !!
 !!    Biorthonormalize the left and right eigenvectors
 !!    Written by Alexander C. Paul, Sep 2019
@@ -2240,40 +2251,35 @@ contains
 !
       real(dp), intent(in) :: energy_threshold, residual_threshold
 !
-      logical, dimension(wf%n_singlet_states), intent(inout) :: skip_states
-!
       real(dp), dimension(:,:), allocatable :: R, L
 !
-      logical, dimension(:), allocatable :: parallel, degenerate, biorthonormalized
+      logical, dimension(:), allocatable :: degenerate, biorthonormalized
 !
       real(dp) :: LT_R
 !
       integer, dimension(:), allocatable :: degenerate_states
 !
-      integer :: state, current_state, unique_state, counter
-      integer :: n_degeneracy, reduced_degeneracy_r, reduced_degeneracy_l
+      integer :: state, current_state, counter
+      integer :: n_degeneracy
 !
       type(timings) :: timer
 !
       timer = timings('Biorthonormalization of left and right states', pl='n')
       call timer%turn_on()
 !
-!     Loop through states look for degenerate states (skip degeneracy)
-!     discard parallel states biorthonormalize degenerate states
-!
       call output%printf('v', 'Biorthonormalization of left and right excited &
                          &state vectors', fs='(/t3,a)')
 !
-!     Prepare logicals to skip prallel states outside of the routine,
-!     keep track of which states have already been biorthonormalized
-!     and which states are degenerate to the current_state
-!
-      skip_states = .false.
+!     Prepare logicals to keep track of which states have already been 
+!     biorthonormalized and which states are degenerate to the current_state
 !
       call mem%alloc(biorthonormalized, wf%n_singlet_states)
       biorthonormalized = .false.
 !
-      call mem%alloc(degenerate, wf%n_singlet_states)      
+      call mem%alloc(degenerate, wf%n_singlet_states)
+!
+!     Loop through states look for degeneracies and
+!     biorthonormalize degenerate states
 !
       do current_state = 1, wf%n_singlet_states
 !
@@ -2337,91 +2343,15 @@ contains
 !
          end do
 !
-!        :: Check for and remove parallel "right" states ::
-!
-         call mem%alloc(parallel, n_degeneracy)
-!
-         call check_for_parallel_vectors(R, wf%n_es_amplitudes, n_degeneracy,     &
-                                         reduced_degeneracy_r, residual_threshold,&
-                                         parallel=parallel)
-!
-!        Remove parallel states from array R
-!
-         if(reduced_degeneracy_r .ne. n_degeneracy) then
-!
-            unique_state = 0
-!
-            do state = 1, n_degeneracy
-!
-               if(parallel(state)) then
-!
-!                 skipped state that is parallel to one of the other degenerate states
-                  skip_states(degenerate_states(state)) = .true.
-                  cycle
-               end if
-!
-               unique_state = unique_state + 1
-!
-               if (state .ne. unique_state) then
-!
-                  call dcopy(wf%n_es_amplitudes, &
-                             R(:,state), 1,      &
-                             R(:,unique_state), 1)
-!
-               end if
-!
-            end do
-!
-         end if
-!
          call mem%dealloc(degenerate_states, n_degeneracy)
 !
-!        :: Check for and remove parallel "left" states ::
-!
-         call check_for_parallel_vectors(L, wf%n_es_amplitudes, n_degeneracy,     &
-                                         reduced_degeneracy_l, residual_threshold,&
-                                         parallel=parallel)
-!
-         if(reduced_degeneracy_l .ne. reduced_degeneracy_r) then
-            call output%error_msg('Different degree of degeneracy in the &
-                                  &left excited states compared to the &
-                                  &right excited states')
-         end if
-!
-!        Remove parallel states from array L
-!
-         if(reduced_degeneracy_l .ne. n_degeneracy) then
-!
-            unique_state = 0
-!
-            do state = 1, n_degeneracy
-!
-!              skip state that is parallel to one of the other degenerate states
-               if(parallel(state)) cycle
-!
-               unique_state = unique_state + 1
-!
-               if(unique_state .ne. state) then
-!
-                  call dcopy(wf%n_es_amplitudes, &
-                             L(:,state), 1,      &
-                             L(:,unique_state), 1)
-!
-               end if
-!
-            end do
-!
-         end if
-!
-         if (reduced_degeneracy_r .gt. 1) then
+         if (n_degeneracy .gt. 1) then
 !
             call output%printf('n', 'Found states that are close in energy:', fs='(/t6,a)')
             call output%print_separator('n', 38,'-', fs='(t6,a)')
             call output%printf('n', 'State     Excitation Energy', fs='(t6,a)')
 !
             do state = 1, n_degeneracy
-!
-               if(parallel(state)) cycle
 !
                call output%printf('n', ' (i2)     (f19.12)', &
                                   ints=[current_state + state - 1], &
@@ -2432,19 +2362,16 @@ contains
 !
          end if
 !
-         call mem%dealloc(parallel, n_degeneracy)
-!
 !        :: Biorthonormalize states ::
 !        -----------------------------
 !
-         call gram_schmidt_biorthonormalization(L, R, wf%n_es_amplitudes,  &
-                                                reduced_degeneracy_r,      &
-                                                residual_threshold)
+         call gram_schmidt_biorthonormalization(L, R, wf%n_es_amplitudes, &
+                                                n_degeneracy, residual_threshold)
 !
 !        We binormalize again to include the doubles/triples contributions
 !        in low-memory CC2 and CC3.
 !
-         do state = 1, reduced_degeneracy_r
+         do state = 1, n_degeneracy
 !
             LT_R = wf%L_R_overlap(L(:,state),                &
                                   current_state + state - 1, &
@@ -2460,8 +2387,7 @@ contains
          do state = current_state, wf%n_singlet_states
 !
 !           Only save the states that we currently consider
-!           and that are not parallel to another state
-            if (.not. degenerate(state) .or. skip_states(state)) cycle
+            if (.not. degenerate(state)) cycle
 !
             counter = counter + 1
 !
