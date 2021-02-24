@@ -169,7 +169,6 @@ contains
 !
       call wf%jacobian_ccsd_j2(rho_abij, c_abij)
       call wf%jacobian_ccsd_k2(rho_abij, c_abij)
-      call wf%omega_ccsd_a2(rho_abij, c_abij)
 !
       call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -182,6 +181,8 @@ contains
       call packin(rho(wf%n_t1+1:), rho_abij, wf%n_v, wf%n_o)
 !
       call mem%dealloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call wf%omega_ccsd_a2(rho(wf%n_t1+1:), c(wf%n_t1+1:), right=.true., diagonal_factor=two)
 !
       call timer%turn_off()
 !

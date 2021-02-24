@@ -213,7 +213,6 @@ contains
 !
 !     Add the last two terms
 !
-      call wf%jacobian_transpose_ccsd_h2(sigma_abij, b_abij)
       call wf%jacobian_transpose_ccsd_i2(sigma_abij, b_abij)
 !
       call mem%dealloc(b_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -221,6 +220,8 @@ contains
       call packin(sigma(wf%n_t1+1:), sigma_abij, wf%n_v, wf%n_o)
 !
       call mem%dealloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call wf%omega_ccsd_a2(sigma(wf%n_t1+1:), b(wf%n_t1+1:), right=.false., diagonal_factor=two)
 !
       call timer%turn_off()
 !
@@ -2469,186 +2470,6 @@ contains
    end subroutine jacobian_transpose_ccsd_g2_ccsd
 !
 !
-   module subroutine jacobian_transpose_ccsd_h2_ccsd(wf, sigma_abij, b_abij)
-!!
-!!    Jacobian transpose CCSD H2
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
-!!
-!!    Calculates the H2 term,
-!!
-!!       sum_kl b_akbl g_ikjl + sum_cd b_cidj g_cadb
-!!
-!!    and adds it to the transformed vector sigma_abij.
-!!
-!!    In this routine, the b and sigma vectors are ordered as
-!!
-!!       b_abij = b_aibj
-!!       sigma_abij = sigma_abij
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o) :: sigma_abij
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o) :: b_abij
-!
-      real(dp), dimension(:,:,:,:), allocatable :: sigma_abij_batch
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_cadb
-      real(dp), dimension(:,:,:,:), allocatable :: g_abcd ! g_cadb
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_ikjl
-      real(dp), dimension(:,:,:,:), allocatable :: g_klij ! g_ikjl
-!
-      integer :: a, i, b, j, aa, bb
-!
-!     Batching variables
-!
-      integer :: rec2, rec0, rec1_a, rec1_b
-!
-      integer :: current_a_batch = 0
-      integer :: current_b_batch = 0
-!
-      type(batching_index) :: batch_a
-      type(batching_index) :: batch_b
-!
-      type(timings), allocatable :: timer 
-!
-      timer = timings('Jacobian transpose CCSD H2', pl='verbose')
-      call timer%turn_on()
-!
-!     :: Term 1. sum_kl b_akbl g_ikjl ::
-!
-!     Form g_ikjl
-!
-      call mem%alloc(g_ikjl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
-!
-      call wf%eri%get_eri_t1('oooo', g_ikjl)
-!
-!     Reorder to g_klij = g_ikjl
-!
-      call mem%alloc(g_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
-!
-      call sort_1234_to_2413(g_ikjl, g_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
-!
-      call mem%dealloc(g_ikjl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
-!
-!     Add sum_kl b_akbl g_ikjl = sum_kl b_ab_kl g_kl_ij
-!
-      call dgemm('N','N',      &
-                  (wf%n_v)**2, &
-                  (wf%n_o)**2, &
-                  (wf%n_o)**2, &
-                  one,         &
-                  b_abij,      & ! b_ab_kl
-                  (wf%n_v)**2, &
-                  g_klij,      & ! g_kl_ij
-                  (wf%n_o)**2, &
-                  one,         &
-                  sigma_abij,  &
-                  (wf%n_v)**2)
-!
-      call mem%dealloc(g_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
-!
-!     :: Term 2. sum_cd b_cidj g_cadb ::
-!
-!     sum_cd b_cidj g_cadb = sum_cd g_cadb b_cd_ij
-!                          = sum_cd g_ab_cd b_cd_ij
-!
-!     Prepare batching over a and b
-!
-      rec0 = 0
-      rec1_a = wf%n_v*wf%eri%n_J
-      rec1_b = wf%n_v*wf%eri%n_J
-      rec2 = 2*wf%n_v**2 + wf%n_o**2
-!
-!     Initialize batching indices
-!
-      batch_a = batching_index(wf%n_v)
-      batch_b = batching_index(wf%n_v)
-!
-      call mem%batch_setup(batch_a, batch_b, rec0, rec1_a, rec1_b, rec2)
-!
-!     Loop over a-batches
-!
-      do current_a_batch = 1, batch_a%num_batches
-!
-!        For each a batch, get the limits for the a index
-!
-         call batch_a%determine_limits(current_a_batch)
-!
-!        Loop over b-batches
-!
-         do current_b_batch = 1, batch_b%num_batches
-!
-!           For each b batch, get the limits for the b index
-!
-            call batch_b%determine_limits(current_b_batch)
-!
-!           Form g_cadb
-!
-            call mem%alloc(g_cadb, wf%n_v, batch_a%length, wf%n_v, batch_b%length)
-!
-            call wf%eri%get_eri_t1('vvvv', g_cadb,              &
-                                   1, wf%n_v,                   &
-                                   batch_a%first, batch_a%last, &
-                                   1, wf%n_v,                   &
-                                   batch_b%first, batch_b%last)
-!
-!           Reorder to g_abcd = g_cadb
-!
-            call mem%alloc(g_abcd, batch_a%length, batch_b%length, wf%n_v, wf%n_v)
-!
-            call sort_1234_to_2413(g_cadb, g_abcd, wf%n_v, batch_a%length, wf%n_v, batch_b%length)
-!
-            call mem%dealloc(g_cadb, wf%n_v, batch_a%length, wf%n_v, batch_b%length)
-!
-!           Calculate sigma_abij_batch = sum_cd g_abcd b_cd_ij
-!           and add it to the full space sigma vector
-!
-            call mem%alloc(sigma_abij_batch, batch_a%length, batch_b%length, wf%n_o, wf%n_o)
-!
-            call dgemm('N','N',                            &
-                        (batch_a%length)*(batch_b%length), &
-                        (wf%n_o)**2,                       &
-                        (wf%n_v)**2,                       &
-                        one,                               &
-                        g_abcd,                            & ! g_ab_cd
-                        (batch_a%length)*(batch_b%length), &
-                        b_abij,                            & ! "b_cd_ij"
-                        (wf%n_v)**2,                       &
-                        zero,                              &
-                        sigma_abij_batch,                  &
-                        (batch_a%length)*(batch_b%length))
-!
-            call mem%dealloc(g_abcd, batch_a%length, batch_b%length, wf%n_v, wf%n_v)
-!
-!$omp parallel do schedule(static) private(j,i,b,a,aa,bb)
-            do j = 1, wf%n_o
-               do i = 1, wf%n_o
-                  do b = 1, batch_b%length
-                     do a = 1, batch_a%length
-!
-                        aa = a + batch_a%first - 1
-                        bb = b + batch_b%first - 1
-!
-                        sigma_abij(aa,bb,i,j) = sigma_abij(aa,bb,i,j) + sigma_abij_batch(a,b,i,j)
-!
-                     enddo
-                  enddo
-               enddo
-            enddo
-!
-            call mem%dealloc(sigma_abij_batch, batch_a%length, batch_b%length, wf%n_o, wf%n_o)
-!
-         enddo ! End of batches over b
-      enddo ! End of batches over a
-!
-      call timer%turn_off()
-!
-   end subroutine jacobian_transpose_ccsd_h2_ccsd
-!
-!
    module subroutine save_jacobian_transpose_i2_intermediates_ccsd(wf, t_aibj, g_ovov)
 !!
 !!    Save Jacobian transpose i2 intermediates
@@ -2657,7 +2478,7 @@ contains
 !!
 !!    Construct intermediate
 !!
-!!       X_klij = sum_cd t_kl^cd g_icjd
+!!       X_klij = sum_cd t_kl^cd g_icjd + g_ikjl
 !!
 !!       (E. F. K. and S. D. F. 2017-2018)
 !!
@@ -2673,7 +2494,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_klcd ! t_kl^cd
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_cdij ! g_kalb
+      real(dp), dimension(:,:,:,:), allocatable :: g_cdij, g_ikjl, g_klij
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_klij ! An intermediate, terms 1 & 2
 !
@@ -2709,6 +2530,22 @@ contains
                   X_klij,      & ! X_kl_ij
                   (wf%n_o)**2)
 !
+      call mem%dealloc(g_cdij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(t_klcd, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+!
+!     Add g_ikjl
+!
+      call mem%alloc(g_ikjl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+      call mem%alloc(g_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+!
+      call wf%eri%get_eri_t1('oooo', g_ikjl)
+      call sort_1234_to_2413(g_ikjl, g_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+!
+      call daxpy(wf%n_o**4, one, g_klij, 1, X_klij, 1)
+!
+      call mem%dealloc(g_ikjl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+      call mem%dealloc(g_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+!
 !     Write X_klij to file
 !
       wf%jacobian_transpose_i2_intermediate = sequential_file('jacobian_transpose_i2_intermediate')
@@ -2718,10 +2555,6 @@ contains
 !
       call wf%jacobian_transpose_i2_intermediate%close_()
 !
-!     Cleanup
-!
-      call mem%dealloc(g_cdij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%dealloc(t_klcd, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
       call mem%dealloc(X_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
       call timer%turn_off()

@@ -2123,7 +2123,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('User-specified memory insufficient.')
+         call output%error_msg('User-specified memory insufficient in mem%alloc.')
 !
       endif
 !
@@ -2151,7 +2151,7 @@ contains
 !
    subroutine batch_setup_1_memory_manager(mem, batch_p, req0, req1, element_size)
 !!
-!!    Setup batching
+!!    Batch setup 1
 !!    Written by Rolf H. Myhre and Eirik F. Kjønstad, December 2018
 !!
 !!    Batching setup for a single index.
@@ -2241,7 +2241,7 @@ contains
    subroutine batch_setup_2_memory_manager(mem, batch_p, batch_q, req0, req1_p, req1_q, &
                                            req2, element_size, req_single_batch)
 !!
-!!    Setup batching
+!!    Batch setup 2
 !!    Written by Rolf H. Myhre and Eirik F. Kjønstad, Dec 2018
 !!
 !!    Batching setup for two batching indices.
@@ -2463,8 +2463,8 @@ contains
                                            req2_pr, req2_qr, req3, element_size, &
                                            req_single_batch)
 !!
-!!    Setup batching
-!!    This is setup for two batch indices
+!!    Batch setup 3
+!!    This is setup for three batch indices
 !!    Written by Rolf H. Myhre December 2018
 !!
 !!    Batching setup for three batching indices.

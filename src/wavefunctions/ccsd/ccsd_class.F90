@@ -169,9 +169,6 @@ module ccsd_class
       procedure :: jacobian_transpose_ccsd_g2                 => jacobian_transpose_ccsd_g2_ccsd
       procedure :: jacobian_transpose_ccsd_g2_complex         => jacobian_transpose_ccsd_g2_ccsd_complex
 !
-      procedure :: jacobian_transpose_ccsd_h2                 => jacobian_transpose_ccsd_h2_ccsd
-      procedure :: jacobian_transpose_ccsd_h2_complex         => jacobian_transpose_ccsd_h2_ccsd_complex
-!
       procedure :: jacobian_transpose_ccsd_i2                 => jacobian_transpose_ccsd_i2_ccsd
       procedure :: jacobian_transpose_ccsd_i2_complex         => jacobian_transpose_ccsd_i2_ccsd_complex
 !
@@ -215,28 +212,28 @@ module ccsd_class
 !
 !     Other procedures
 !
-      procedure :: set_initial_amplitudes_guess               => set_initial_amplitudes_guess_ccsd
-      procedure :: set_initial_multipliers_guess              => set_initial_multipliers_guess_ccsd
-      procedure :: set_t2_to_cc2_guess                        => set_t2_to_cc2_guess_ccsd
+      procedure :: set_initial_amplitudes_guess     => set_initial_amplitudes_guess_ccsd
+      procedure :: set_initial_multipliers_guess    => set_initial_multipliers_guess_ccsd
+      procedure :: set_t2_to_cc2_guess              => set_t2_to_cc2_guess_ccsd
 !
-      procedure :: read_amplitudes                            => read_amplitudes_ccsd
-      procedure :: save_amplitudes                            => save_amplitudes_ccsd
+      procedure :: read_amplitudes                  => read_amplitudes_ccsd
+      procedure :: save_amplitudes                  => save_amplitudes_ccsd
 !
-      procedure :: save_multipliers                           => save_multipliers_ccsd
-      procedure :: read_multipliers                           => read_multipliers_ccsd
+      procedure :: save_multipliers                 => save_multipliers_ccsd
+      procedure :: read_multipliers                 => read_multipliers_ccsd
 !
-      procedure :: print_dominant_x2                          => print_dominant_x2_ccsd
-      procedure :: print_dominant_amplitudes                  => print_dominant_amplitudes_ccsd
-      procedure :: print_dominant_x_amplitudes                => print_dominant_x_amplitudes_ccsd
+      procedure :: print_dominant_x2                => print_dominant_x2_ccsd
+      procedure :: print_dominant_amplitudes        => print_dominant_amplitudes_ccsd
+      procedure :: print_dominant_x_amplitudes      => print_dominant_x_amplitudes_ccsd
 !
-      procedure :: form_newton_raphson_t_estimate             => form_newton_raphson_t_estimate_ccsd
+      procedure :: form_newton_raphson_t_estimate   => form_newton_raphson_t_estimate_ccsd
 !
-      procedure :: get_gs_orbital_differences                 => get_gs_orbital_differences_ccsd
+      procedure :: get_gs_orbital_differences       => get_gs_orbital_differences_ccsd
 !
-      procedure :: get_es_orbital_differences                 => get_gs_orbital_differences_ccsd
+      procedure :: get_es_orbital_differences       => get_gs_orbital_differences_ccsd
 !
-      procedure :: calculate_energy                           => calculate_energy_ccsd
-      procedure :: calculate_energy_complex                   => calculate_energy_ccsd_complex
+      procedure :: calculate_energy                 => calculate_energy_ccsd
+      procedure :: calculate_energy_complex         => calculate_energy_ccsd_complex
 !
 !     Procedures related to time dependency
 !

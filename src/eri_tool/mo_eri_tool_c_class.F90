@@ -72,50 +72,52 @@ module mo_eri_tool_c_class
 !
 !     Read, print settings
 !
-      procedure :: print_settings       => print_settings_mo_eri_tool_c
-      procedure :: read_settings        => read_settings_mo_eri_tool_c
+      procedure :: print_settings            => print_settings_mo_eri_tool_c
+      procedure :: read_settings             => read_settings_mo_eri_tool_c
 !
 !     Cleanup
 !
-      procedure :: cleanup              => cleanup_mo_eri_tool_c
+      procedure :: cleanup                   => cleanup_mo_eri_tool_c
 !
 !     Initialization
 !
-      procedure :: initialize           => initialize_mo_eri_tool_c
-      procedure :: copy_from_mo         => copy_from_mo_mo_eri_tool_c
-      procedure :: copy_from_real_mo    => copy_from_real_mo_mo_eri_tool_c
+      procedure :: initialize                => initialize_mo_eri_tool_c
+      procedure :: copy_from_mo              => copy_from_mo_mo_eri_tool_c
+      procedure :: copy_from_real_mo         => copy_from_real_mo_mo_eri_tool_c
 !
 !     write, read, copy_in, copy_out vectors
 !
-      procedure :: write_cholesky       => write_cholesky_mo_eri_tool_c
-      procedure :: read_cholesky        => read_cholesky_mo_eri_tool_c
+      procedure :: write_cholesky            => write_cholesky_mo_eri_tool_c
+      procedure :: read_cholesky             => read_cholesky_mo_eri_tool_c
 !
-      procedure :: copy_in_cholesky     => copy_in_cholesky_mo_eri_tool_c
-      procedure :: copy_out_cholesky    => copy_out_cholesky_mo_eri_tool_c
+      procedure :: copy_in_cholesky          => copy_in_cholesky_mo_eri_tool_c
+      procedure :: copy_out_cholesky         => copy_out_cholesky_mo_eri_tool_c
 !
 !     MO Cholesky veectors
 !
-      procedure :: set_cholesky_mo      => set_cholesky_mo_mo_eri_tool_c
-      procedure :: get_cholesky_mo      => get_cholesky_mo_mo_eri_tool_c
+      procedure :: set_cholesky_mo           => set_cholesky_mo_mo_eri_tool_c
+      procedure :: get_cholesky_mo           => get_cholesky_mo_mo_eri_tool_c
 !
-      procedure :: update_cholesky_mo   => update_cholesky_mo_mo_eri_tool_c
+      procedure :: update_cholesky_mo        => update_cholesky_mo_mo_eri_tool_c
 !
 !     Get and construct routines for g_pqrs in MO basis
 !
-      procedure :: get_eri_mo_mem       => get_eri_mo_mem_mo_eri_tool_c
-      procedure :: get_eri_mo           => get_eri_mo_mo_eri_tool_c
-      procedure :: get_g_pqrs_mo        => get_g_pqrs_mo_mo_eri_tool_c
-      procedure :: construct_g_pqrs_mo  => construct_g_pqrs_mo_mo_eri_tool_c
+      procedure :: get_eri_mo_mem            => get_eri_mo_mem_mo_eri_tool_c
+      procedure :: get_eri_mo                => get_eri_mo_mo_eri_tool_c
+      procedure :: get_g_pqrs_mo             => get_g_pqrs_mo_mo_eri_tool_c
+      procedure :: construct_g_pqrs_mo       => construct_g_pqrs_mo_mo_eri_tool_c
 !
-      procedure :: copy_g_pqrs          => copy_g_pqrs_mo_eri_tool_c
+      procedure :: copy_g_pqrs               => copy_g_pqrs_mo_eri_tool_c
+      procedure :: copy_g_pqrs_to_packed     => copy_g_pqrs_to_packed_mo_eri_tool_c
 !
 !     Various routines
 !
-      procedure :: place_g_mo_in_memory => place_g_mo_in_memory_mo_eri_tool
+      procedure :: place_g_mo_in_memory      => place_g_mo_in_memory_mo_eri_tool_c
 !
-      procedure :: set_pointer_mo       => set_pointer_mo_mo_eri_tool_c
-      procedure :: L_pointer_setup_mo   => L_pointer_setup_mo_mo_eri_tool_c
-      procedure :: construct_g_from_L   => construct_g_from_L_mo_eri_tool_c
+      procedure :: set_pointer_mo            => set_pointer_mo_mo_eri_tool_c
+      procedure :: L_pointer_setup_mo        => L_pointer_setup_mo_mo_eri_tool_c
+      procedure :: construct_g_from_L        => construct_g_from_L_mo_eri_tool_c
+      procedure :: construct_g_packed_from_L => construct_g_packed_from_L_mo_eri_tool_c
 !
    end type mo_eri_tool_c
 !
@@ -1428,7 +1430,100 @@ contains
    end subroutine copy_g_pqrs_mo_eri_tool_c
 !
 !
-   subroutine place_g_mo_in_memory_mo_eri_tool(eri)
+   subroutine copy_g_pqrs_to_packed_mo_eri_tool_c(eri, g_to, g_from, &
+                                               first_p, first_q, &
+                                               dim_p, dim_q, qp)
+!!
+!!    Copy packed g_pqrs
+!!    Written by Rolf H. Myhre, Jun 2020
+!!
+!!    g_to: 2d array in RFP format to copy integrals to
+!!    g_from: 4d array to copy integrals from
+!!    first_p, first_q.: absolute first indices of integrals
+!!    dim_p, dim_q: length of p and q range
+!!
+!!    Optional reordering logicals (default = .false.):
+!!    qp:   switches order of p and q, i.e., reorders to g_qpqp
+!!
+      implicit none
+!
+      class(mo_eri_tool_c), intent(in) :: eri
+!
+      integer, intent(in) :: first_p, first_q
+      integer, intent(in) :: dim_p, dim_q
+!
+      complex(dp), intent(out), &
+                   dimension(dim_p*dim_q + mod(dim_p*dim_q+1,2), (dim_p*dim_q+1)/2) :: g_to
+!
+      complex(dp), intent(in), dimension(eri%n_mo, eri%n_mo, eri%n_mo, eri%n_mo) :: g_from
+!
+      logical, optional, intent(in) :: qp
+!
+      integer :: p, q, r, s, pq, rs, x, y
+      integer :: tridim
+      logical :: qp_
+!
+      tridim = dim_p*dim_q/2
+!
+      qp_ = .false.
+      if(present(qp)) qp_ = qp
+!
+      if(.not. qp_) then !pqpq
+!
+!$omp parallel do private(x, y, pq, rs, p, q, r, s)
+      do y = 1, (dim_p*dim_q+1)/2
+         do x = 1, dim_p*dim_q + mod(dim_p*dim_q+1,2)
+!
+            if (x .le. y + tridim) then
+               pq = x
+               rs = y + tridim
+            else
+               pq = y
+               rs = x - tridim - 1
+            endif
+!
+            p = mod(pq-1,dim_p)
+            r = mod(rs-1,dim_p)
+            q = (pq-1)/dim_p
+            s = (rs-1)/dim_p
+!
+            g_to(x,y) = g_from(first_p+p, first_q+q, first_p+r, first_q+s)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+      else !qpqp
+!
+!$omp parallel do private(x, y, pq, rs, p, q, r, s)
+      do y = 1, (dim_p*dim_q+1)/2
+         do x = 1, dim_p*dim_q + mod(dim_p*dim_q+1,2)
+!
+            if (x .le. y + tridim) then
+               pq = x
+               rs = y + tridim
+            else
+               pq = y
+               rs = x - tridim - 1
+            endif
+!
+            q = mod(pq-1,dim_q)
+            s = mod(rs-1,dim_q)
+            p = (pq-1)/dim_q
+            r = (rs-1)/dim_q
+!
+            g_to(x,y) = g_from(first_p+p, first_q+q, first_p+r, first_q+s)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+      endif
+!
+   end subroutine copy_g_pqrs_to_packed_mo_eri_tool_c
+!
+!
+   subroutine place_g_mo_in_memory_mo_eri_tool_c(eri)
 !!
 !!    Place g MO in memory
 !!    Written by Rolf H. Myhre, Aug 2020
@@ -1444,13 +1539,13 @@ contains
 !
       endif
 !
-   end subroutine place_g_mo_in_memory_mo_eri_tool
+   end subroutine place_g_mo_in_memory_mo_eri_tool_c
 !
 !
    subroutine construct_g_from_L_mo_eri_tool_c(eri, L_J_pq, L_J_rs, g_pqrs, beta, &
                                                dim_p, dim_q, dim_r, dim_s, rspq)
 !!
-!!    contract L
+!!    construct g from L
 !!    written by Rolf H. Myhre, Jun 2020
 !!
 !!    Contract the Cholesky vectors L_J_pq and L_J_rs to construct g_pqrs or g_rspq
@@ -1503,6 +1598,47 @@ contains
       endif
 !
    end subroutine construct_g_from_L_mo_eri_tool_c
+!
+!
+   subroutine construct_g_packed_from_L_mo_eri_tool_c(eri, L_J_pq, g_pqpq, beta, &
+                                                      dim_p, dim_q)
+!!
+!!    construct packed g from L
+!!    written by Rolf H. Myhre, Jan 2021
+!!
+!!    Contract the Cholesky vectors L_J_pq to construct g_pqpq
+!!
+!!    Note, no zsrfk routine, so have to call zsyrk twice and dgemm once
+!!
+      implicit none
+!
+      class(mo_eri_tool_c), intent(in) :: eri
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      complex(dp), dimension(eri%n_J, dim_p*dim_q), intent(in) :: L_J_pq
+!
+      complex(dp), intent(inout), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2) :: g_pqpq
+!
+      complex(dp), intent(in) :: beta
+!
+      integer :: n, n1, n2, off
+!
+      n = dim_p*dim_q
+      n1 = n/2
+      n2 = n - n1
+      off = mod(n+1,2)
+!
+      call zsyrk('L', 'T', n1, eri%n_J, one_complex, L_J_pq(1, 1), eri%n_J, &
+                 beta, g_pqpq(n2+1+off), n+off)
+!
+      call zsyrk('U', 'T', n2, eri%n_J, one_complex, L_J_pq(1, n2+off), eri%n_J, &
+                 beta, g_pqpq(n1+1), n+off)
+!
+      call zgemm('T', 'N', n1, n2, eri%n_J, one_complex, L_J_pq(1, 1), &
+                 eri%n_J, L_J_pq(1, n2+off), eri%n_J, beta, g_pqpq(1), n+off)
+!
+   end subroutine construct_g_packed_from_L_mo_eri_tool_c
 !
 !
    subroutine set_pointer_mo_mo_eri_tool_c(eri, point, last_p, last_q, first_q)
