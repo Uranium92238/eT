@@ -6,6 +6,7 @@
 - Fock matrix construction at CC level, in terms of T1-transformed integrals, is now N^4 scaling. Only the necessary blocks for a given task are constructed. See merge request eT-program/eT!678
 - Removed one construction of the Coulomb fock matrix per iteration. See merge request eT-program/eT!677
 - CCS Jacobian is now N^4 scaling (Cholesky vector algorithm) See merge request eT-program/eT!592
+- CCS energy is now N^4 scaling (Cholesky vector algorithm) See merge request eT-program/eT!715
 - CC3 optimization using covariant/contravariant amplitudes and integrals are resorted on the fly. See merge request eT-program/eT:!685
 - Non-linear davidson now default solver for CC3 and low-mem CC2. See merge request eT-program/eT!724
 

@@ -222,78 +222,180 @@ contains
 !!    energy when the ground state equations are solved, of course.
 !!
 !!       E = E_hf + sum_aibj t_i^a t_j^b L_iajb
+!!         = E_hf + sum_aibj 2 t_i^a L^J_ia L^J_jb t_j^b 
+!!                - sum_aibj t_i^a L^J_ja L^J_ib t_j^b
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_iajb
+      real(dp), dimension(:,:,:), allocatable :: L_Jai, L_Jia, L_Jjb, X_Jij, X_Jji
+      real(dp), dimension(:), allocatable :: X_J
 !
-      real(dp) :: omp_correlation_energy
-!
-      integer :: a, i, b, j
-!
-      integer :: req0, req1_i, req1_j, req2
+      integer :: req0, req1_i, req1_j, req2, req_single_batch
 !
       integer :: current_i_batch, current_j_batch
 !
       type(batching_index) :: batch_i, batch_j
 !
+      type(timings), allocatable :: timer
+!
+      real(dp) :: ddot
+      real(dp) :: correlation_energy
+!
+      integer :: i, j, JJ
+!
+      timer = timings('Calculate energy', 'n')
+      call timer%turn_on()
+
+      call mem%alloc(X_J, wf%eri%n_J)
+      call zero_array(X_J, wf%eri%n_J)
+!
       req0 = 0
 !
-      req1_i = (wf%n_v)*(wf%eri%n_J)
-      req1_j = (wf%n_v)*(wf%eri%n_J)
-!
-      req2 = (wf%n_v**2)
+      req1_i = wf%eri%n_J*wf%n_v
 !
       batch_i = batching_index(wf%n_o)
-      batch_j = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
-!
-      omp_correlation_energy = zero
+      call mem%batch_setup(batch_i, req0, req1_i)
 !
       do current_i_batch = 1, batch_i%num_batches
 !
          call batch_i%determine_limits(current_i_batch)
 !
+         call mem%alloc(L_Jai, wf%eri%n_J, wf%n_v, batch_i%length)
+         call wf%eri%get_cholesky_mo(L_Jai, wf%n_o + 1, wf%n_mo, batch_i%first, batch_i%last)
+!
+         call dgemm('N', 'N',                &
+                     wf%eri%n_J,             &
+                     1,                      &
+                     wf%n_v*batch_i%length,  &
+                     one,                    &
+                     L_Jai,                  &
+                     wf%eri%n_J,             &
+                     wf%t1(1,batch_i%first), &
+                     wf%n_v*wf%n_o,          &
+                     one,                    &
+                     X_J,                    &
+                     wf%eri%n_J)
+!
+         call mem%dealloc(L_Jai, wf%eri%n_J, wf%n_v, batch_i%length)
+!
+      enddo
+!
+      correlation_energy = two*ddot(wf%eri%n_J, X_J, 1, X_J, 1)
+!
+      call mem%dealloc(X_J, wf%eri%n_J)    
+!
+      req0 = 0
+!
+      req1_i = wf%eri%n_J*wf%n_v
+      req1_j = wf%eri%n_J*wf%n_v
+!
+      batch_i = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+!
+      req2 = 3*wf%eri%n_J
+!
+      req_single_batch = wf%eri%n_J*wf%n_v*wf%n_o + wf%eri%n_J*(wf%n_o**2)
+!
+      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2, req_single_batch)
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+         call mem%alloc(L_Jia, wf%eri%n_J, batch_i%length, wf%n_v)
+         call wf%eri%get_cholesky_mo(L_Jia, batch_i%first, batch_i%last, wf%n_o + 1, wf%n_mo)
+ !           
          do current_j_batch = 1, batch_j%num_batches
 !
             call batch_j%determine_limits(current_j_batch)
 !
-            call mem%alloc(g_iajb, batch_i%length, wf%n_v, batch_j%length, wf%n_v)
+            call mem%alloc(X_Jij, wf%eri%n_J, batch_i%length, batch_j%length)
 !
-            call wf%eri%get_eri_t1('ovov', g_iajb, &
-                                   batch_i%first, batch_i%last, &
-                                   1, wf%n_v, &
-                                   batch_j%first, batch_j%last, &
-                                   1, wf%n_v)
+            call dgemm('N', 'N',                         &
+                        wf%eri%n_J*batch_i%length,       &
+                        batch_j%length,                  &
+                        wf%n_v,                          &
+                        one,                             &
+                        L_Jia,                           &
+                        wf%eri%n_J*batch_i%length,       &
+                        wf%t1(1, batch_j%first),         &
+                        wf%n_v,                          & 
+                        zero,                            &
+                        X_Jij,                           &
+                        wf%eri%n_J*batch_i%length)
 !
-!$omp parallel do private(b,i,j,a) reduction(+:omp_correlation_energy)
-            do b = 1, wf%n_v
-               do i = 1, batch_i%length
-                  do j = 1, batch_j%length
-                     do a = 1, wf%n_v
+            if (current_j_batch .ne. current_i_batch) then
 !
-                        omp_correlation_energy = omp_correlation_energy +     &
-                                              wf%t1(a, i + batch_i%first - 1) &
-                                             *wf%t1(b, j + batch_j%first - 1) &
-                                             *(two*g_iajb(i, a, j, b)-g_iajb(i, b, j, a))
+               call mem%alloc(L_Jjb, wf%eri%n_J, batch_j%length, wf%n_v)
+!
+               call wf%eri%get_cholesky_mo(L_Jjb,        &
+                                          batch_j%first, &
+                                          batch_j%last,  &
+                                          wf%n_o + 1, wf%n_mo)
+!
+               call mem%alloc(X_Jji, wf%eri%n_J, batch_j%length, batch_i%length)
+!
+               call dgemm('N', 'N',                         &
+                           wf%eri%n_J*batch_j%length,       &
+                           batch_i%length,                  &
+                           wf%n_v,                          &
+                           one,                             &
+                           L_Jjb,                           &
+                           wf%eri%n_J*batch_j%length,       &
+                           wf%t1(1, batch_i%first),         &
+                           wf%n_v,                          & 
+                           zero,                            &
+                           X_Jji,                           &
+                           wf%eri%n_J*batch_j%length)
+!
+               call mem%dealloc(L_Jjb, wf%eri%n_J, batch_j%length, wf%n_v)
+!
+!$omp parallel do private(j, i, JJ) reduction(+:correlation_energy)
+               do j = 1, batch_j%length
+                  do i = 1, batch_i%length
+                     do JJ = 1, wf%eri%n_J
+!
+                        correlation_energy = correlation_energy - X_Jij(JJ,i,j)*X_Jji(JJ,j,i)
 !
                      enddo
                   enddo
                enddo
-            enddo
 !$omp end parallel do
 !
-            call mem%dealloc(g_iajb, batch_i%length, wf%n_v, batch_j%length, wf%n_v)
+               call mem%dealloc(X_Jji, wf%eri%n_J, batch_j%length, batch_i%length)
+!
+            else
+!
+!$omp parallel do private(j, i, JJ) reduction(+:correlation_energy)
+               do j = 1, batch_j%length
+                  do i = 1, batch_i%length
+                     do JJ = 1, wf%eri%n_J
+!
+                        correlation_energy = correlation_energy - X_Jij(JJ,i,j)*X_Jij(JJ,j,i)
+!
+                     enddo
+                  enddo
+               enddo
+!$omp end parallel do
+!
+            endif
+!
+            call mem%dealloc(X_Jij, wf%eri%n_J, batch_i%length, batch_j%length)
 !
          enddo
+!
+         call mem%dealloc(L_Jia, wf%eri%n_J, batch_i%length, wf%n_v)
+!
       enddo
 !
-      wf%correlation_energy = omp_correlation_energy
+      wf%correlation_energy = correlation_energy
 !
-      wf%energy = wf%hf_energy + wf%correlation_energy
+      wf%energy = wf%hf_energy + wf%correlation_energy  
+!
+      call timer%turn_off()
 !
    end subroutine calculate_energy_ccs
 !
