@@ -614,6 +614,8 @@ contains
 !
       character(len=20) :: warning_print
 !
+      n_parallel = 0
+!
       call mem%alloc(parallel, wf%n_singlet_states)
 !
       if (trim(transformation) == 'left' .or. trim(transformation) == 'both') then
