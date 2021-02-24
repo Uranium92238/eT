@@ -1688,7 +1688,7 @@ contains
       batch_c = batching_index(wf%n_v)
 !
 !     Memory for sorting array and getting the integrals
-      call wf%estimate_mem_integral_setup_abc(req_0, req_1_eri)
+      call wf%estimate_mem_c1_integral_setup_abc(req_0, req_1_eri)
       req_1_eri = req_1_eri + max(wf%n_v**2*wf%n_o, wf%n_o**2*wf%n_v)
       req_0 = req_0 + 4*wf%n_o**3*n_threads
 !
