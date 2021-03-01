@@ -1261,7 +1261,9 @@ contains
 !
       wf%orbital_file = stream_file('orbital_coefficients')
 !
-      call wf%prepare_ao_tool_and_embedding(centers, embedding)
+      call wf%prepare_ao_tool(centers)
+      call wf%prepare_embedding(embedding)
+      if (wf%embedded) call wf%embedding%print_description
 !
       wf%n_densities = 1
 !

@@ -492,7 +492,7 @@ contains
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
-      wf%n_t1            = (wf%n_o)*(wf%n_v)
+      wf%n_t1            = wf%n_o*wf%n_v
       wf%n_gs_amplitudes = wf%n_t1
       wf%n_es_amplitudes = wf%n_t1
       wf%need_g_abcd     = .false.
@@ -520,8 +520,6 @@ contains
       wf%need_g_abcd = .false.
 !
       call wf%read_settings()
-!
-      call wf%prepare_ao_tool_and_embedding()
 !
    end subroutine general_cc_preparations_ccs
 !
@@ -599,6 +597,9 @@ contains
       class(ccs) :: wf
 
       class(wavefunction), intent(in) :: template_wf
+!
+      call wf%prepare_ao_tool(template = template_wf%ao)
+      call wf%prepare_embedding()
 !
       wf%n_o = template_wf%n_o
       wf%n_v = template_wf%n_v

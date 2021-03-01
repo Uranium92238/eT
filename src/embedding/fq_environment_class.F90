@@ -61,10 +61,10 @@ module fq_environment_class
       procedure :: print_energy &
                 => print_energy_fq_environment
 !
-!     Private class routines
+      procedure :: print_description & 
+                => print_description_fq_environment
 !
-      procedure, private :: print_description &
-                         => print_description_fq_environment
+!     Private class routines
 !
       procedure, private :: set_chi_and_eta &
                          => set_chi_and_eta_fq_environment
@@ -149,9 +149,6 @@ contains
       integer :: last_atom
       integer :: atom_offset
 !
-      call embedding%print_description()
-!
-!
 !     Read number of atoms and molecules
 !
       embedding%n_charges = input%get_n_mm_atoms()
@@ -208,9 +205,6 @@ contains
       call mem%dealloc(eta, embedding%n_charges)
 !
       call embedding%construct_D()
-!
-      call embedding%print_geometry('angstrom')
-      call embedding%print_geometry('bohr')
 !
       call ao%initialize_oei('electrostatic potential')
 !
@@ -345,8 +339,7 @@ contains
    end subroutine update_fq_environment
 !
 !
-   function get_energy_fq_environment&
-                     (embedding, ao, density) result(embedding_energy)
+   function get_energy_fq_environment(embedding, ao, density) result(embedding_energy)
 !!
 !!    Get energy
 !!    Written by Sarai D. Folkestad
@@ -678,6 +671,9 @@ contains
          call output%printf('n', 'CC calculation: zero-order approximation',  fs='(t6,a)') 
          call output%printf('n', 'FQ charges only affect MOs and Fock',  fs='(t6,a/)') 
       endif
+!
+      call embedding%print_geometry('angstrom')
+      call embedding%print_geometry('bohr')
 !
    end subroutine print_description_fq_environment
 !

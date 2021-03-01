@@ -3426,4 +3426,56 @@ contains
    end subroutine generalized_diagonalization_symmetric
 !
 !
+   subroutine copy_integer(X, Y, n, alpha, beta)
+!!
+!!    Copy integer
+!!    Written by Alexander C. Paul, Feb 2021
+!!
+!!    Sets Y as:
+!!
+!!       Y = X
+!!
+!!    X and Y are vectors of length n
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+!
+      integer, dimension(n), intent(out) :: Y
+      integer, dimension(n), intent(in) :: X
+!
+      integer, optional, intent(in) :: alpha, beta
+      integer :: alpha_, beta_
+!
+      integer :: i
+!
+      alpha_ = 1
+      beta_  = 0
+      if (present(alpha)) alpha_ = alpha
+      if (present(beta))  beta_  = beta
+!
+      if (beta_ .eq. 0) then
+!
+!$omp parallel do private(i)
+         do i = 1, n
+!
+            Y(i) = alpha_*X(i)
+!
+         enddo
+!$omp end parallel do 
+!
+      else
+!
+!$omp parallel do private(i)
+         do i = 1, n
+!
+            Y(i) = beta_*Y(i) + alpha_*X(i)
+!
+         enddo
+!$omp end parallel do 
+!
+      end if
+!
+   end subroutine copy_integer
+!
 end module array_utilities

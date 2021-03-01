@@ -78,8 +78,9 @@ module ao_tool_class
       integer, private :: n_centers
       type(atomic_center), dimension(:), allocatable, private :: centers ! AO basis centers
 !  
-      integer, private  :: n_orthonormal_ao            ! Orthonormal AOs (OAOs)        
-      real(dp), private :: lindep_threshold ! Threshold for removing linear dependency between AOs
+      integer, private  :: n_orthonormal_ao ! Orthonormal AOs (OAOs)
+!     Threshold for removing linear dependency between AOs n_orthonormal_ao
+      real(dp), private :: lindep_threshold
 !
       real(dp), dimension(:,:), allocatable, public :: P, L ! AO-to-OAO transformation matrices 
 !
@@ -96,6 +97,8 @@ module ao_tool_class
 !
       procedure, public :: initialize &
                         => initialize_ao_tool 
+!
+      procedure, public :: initialize_ao_tool_from_template
 !
       generic :: initialize_external_charges &
               => initialize_external_charges_ao_tool, &
@@ -205,6 +208,7 @@ module ao_tool_class
 !
       procedure, private :: determine_linearly_independent_aos
       procedure, private :: initialize_centers_from_template
+      procedure, private :: initialize_centers_from_ao_tool
       procedure, private :: set_atomic_center_positions
 !
       procedure, private :: calculate_n_shells
@@ -217,6 +221,8 @@ module ao_tool_class
       procedure, private :: construct_ao_to_center 
 !
       procedure, private :: calculate_geometry_dependent_variables ! h, s, ERI screening lists, ...
+      procedure, private :: copy_geometry_dependent_variables
+!
       procedure, private :: initialize_centers 
 !
       procedure, private :: get_subset_index
@@ -328,7 +334,51 @@ contains
    end subroutine initialize_ao_tool
 !
 !
-   subroutine initialize_centers(ao, centers)
+   subroutine initialize_ao_tool_from_template(ao, template)
+!!
+!!    Initialize ao_tool from template
+!!    Written by Alexander C. Paul, Feb. 2021
+!!
+!!    Makes the AO tool ready to use, copying from an ao_tool template
+!!
+      use array_utilities, only: copy_integer
+!
+      implicit none 
+!
+      class(ao_tool), intent(inout) :: ao
+      class(ao_tool), intent(in)    :: template
+
+      call ao%initialize_centers(ao_template=template)
+!  
+      ao%n = template%n
+      ao%n_sh = template%n_sh
+!
+      allocate(ao%shells(ao%n_sh))
+      ao%shells = template%shells
+!
+      call mem%alloc(ao%shell_to_center, ao%n_sh)
+      call copy_integer(template%shell_to_center, ao%shell_to_center, ao%n_sh)
+!
+      call mem%alloc(ao%ao_to_center, ao%n)
+      call copy_integer(template%ao_to_center, ao%ao_to_center, ao%n)
+!
+      call mem%alloc(ao%ao_to_shell, ao%n)
+      call copy_integer(template%ao_to_shell, ao%ao_to_shell, ao%n)
+!
+      ao%max_sh_size = template%max_sh_size
+!
+      call ao%initialize_oei('hamiltonian') 
+      call ao%initialize_oei('overlap')
+!
+      call mem%alloc(ao%cs_eri_max,         ao%n_sh*(ao%n_sh + 1)/2, 2)
+      call mem%alloc(ao%cs_eri_max_indices, ao%n_sh*(ao%n_sh + 1)/2, 3)
+!
+      call ao%copy_geometry_dependent_variables(template)
+!
+   end subroutine initialize_ao_tool_from_template
+!
+!
+   subroutine initialize_centers(ao, centers, ao_template)
 !!
 !!    Initialize centers 
 !!    Written by Eirik F. Kjønstad, 2020 
@@ -341,6 +391,8 @@ contains
 !
       class(atomic_center), dimension(:), optional, intent(in) :: centers 
 !
+      type(ao_tool), optional, intent(in) :: ao_template 
+!
       integer :: I
 !
       class(atomic_center_reader), allocatable :: center_reader
@@ -348,6 +400,10 @@ contains
       if (present(centers)) then 
 !
          call ao%initialize_centers_from_template(centers)
+!
+      else if (present(ao_template)) then
+!
+         call ao%initialize_centers_from_ao_tool(ao_template)
 !
       else 
 !
@@ -460,6 +516,41 @@ contains
                                             last  = ao%n_centers)
 !
    end subroutine initialize_centers_from_template
+!
+!
+   subroutine initialize_centers_from_ao_tool(ao, ao_template)
+!!
+!!    Initialize centers from ao tool
+!!    Written by Alexander C. Paul, Feb 2021
+!!
+      implicit none  
+!
+      class(ao_tool), intent(inout) :: ao
+      class(ao_tool), intent(in)    :: ao_template 
+!
+      integer :: I
+!
+      ao%n_centers = ao_template%n_centers
+!
+      allocate(ao%centers(ao%n_centers))
+!
+      do I = 1, ao%n_centers
+!
+         ao%centers(I) = atomic_center(ao_template%centers(i)%libint_number, &
+                                       ao_template%centers(i)%input_number,  &
+                                       ao_template%centers(i)%symbol,        &
+                                       ao_template%centers(i)%coordinates,   &
+                                       ao_template%centers(i)%basis,         &
+                                       ao_template%basis_type_)
+!
+      enddo
+!
+      ao%n_center_subsets = ao_template%n_center_subsets
+      allocate(ao%center_subsets(ao%n_center_subsets))
+!
+      ao%center_subsets = ao_template%center_subsets   
+!
+   end subroutine initialize_centers_from_ao_tool
 !
 !
    subroutine export_centers_to_libint_ao_tool(ao)
@@ -715,11 +806,6 @@ contains
 !
       timer = timings('One-electron integrals (' // trim(oei_type) // ')', 'v')
       call timer%turn_on()
-!
-      call output%printf('v',                                           &
-                         'Constructing one-electron integrals ((a0))',  &
-                         chars=[oei_type],                              &
-                         fs='(/t3,a)')
 !
       n_components = ao%get_n_oei_components(oei_type)
 !
@@ -2635,6 +2721,38 @@ contains
       n = n - Q
 !
    end function get_n_electrons_ao_tool
+!
+!
+   subroutine copy_geometry_dependent_variables(ao, template)
+!!
+!!    Copy geometry dependent variables
+!!    Written by Alexander C. Paul, Feb 2021
+!!
+      use array_utilities, only: copy_integer
+!
+      class(ao_tool), intent(inout) :: ao
+      type(ao_tool),  intent(in)    :: template
+!
+      call dcopy(ao%n**2, template%h, 1, ao%h, 1)
+      call dcopy(ao%n**2, template%s, 1, ao%s, 1)
+!
+      ao%n_orthonormal_ao = template%n_orthonormal_ao
+!
+      call mem%alloc(ao%L, ao%n_orthonormal_ao, ao%n_orthonormal_ao)
+      call mem%alloc(ao%P, ao%n, ao%n_orthonormal_ao)
+!
+      call dcopy(ao%n_orthonormal_ao**2, template%L, 1, ao%L, 1)
+      call dcopy(ao%n*ao%n_orthonormal_ao, template%P, 1, ao%P, 1)
+!
+      ao%n_sig_eri_shp = template%n_sig_eri_shp
+!
+      call dcopy(2*ao%n_sh*(ao%n_sh + 1)/2, template%cs_eri_max, 1, &
+                 ao%cs_eri_max, 1)
+!
+      call copy_integer(template%cs_eri_max_indices, ao%cs_eri_max_indices, &
+                        3*ao%n_sh*(ao%n_sh + 1)/2)
+!
+   end subroutine copy_geometry_dependent_variables
 !
 !
    subroutine destructor(ao)

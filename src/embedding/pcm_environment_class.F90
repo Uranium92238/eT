@@ -32,6 +32,7 @@ module pcm_environment_class
    use environment_class,    only: environment
 !
 #ifdef HAS_PCMSOLVER
+!
    use point_charges_class,  only: point_charges
    use global_in,            only: input 
 !
@@ -66,10 +67,10 @@ module pcm_environment_class
       procedure :: print_energy &
                 => print_energy_pcm_environment
 !
-!     Private class routines
+      procedure :: print_description &
+                => print_description_pcm_environment
 !
-      procedure, private :: print_description &
-                         => print_description_pcm_environment
+!     Private class routines
 !
       procedure, private :: read_parameters &
                          => read_parameters_pcm_environment
@@ -138,7 +139,6 @@ contains
 !
       symmetry_info = [int(0,c_int),int(0,c_int),int(0,c_int),int(0,c_int)]
 !
-      call embedding%print_description()
       call embedding%read_parameters()
 !
       if (.not. pcmsolver_is_compatible_library()) &
@@ -193,8 +193,6 @@ contains
       call mem%dealloc(r, 3*embedding%n_charges)
 !
       call zero_array(embedding%pcm_points%q, embedding%n_charges)
-!
-      call pcmsolver_print(embedding%pcm_context)
 !
       call ao%initialize_oei('electrostatic potential')
 !
@@ -295,9 +293,8 @@ contains
                          fs='(t6,a)')
       call output%printf('m', 'For details on PCMSolver, see:', fs='(/t6,a)')
       call output%printf('m', 'Di Remigio et al., IJQC, 2019, 119, e25685', fs='(t6,a)')
-!      
 !
-      if(embedding%input.eq.'external') then 
+      if(embedding%input .eq. 'external') then 
 !
          call output%printf('m', 'PCM Solver was set via external file', fs='(/t6,a)')
 !
@@ -311,17 +308,17 @@ contains
 !
       endif
 !
-!
       if(input%requested_cc_calculation()) then 
          call output%printf('m', 'CC calculation: zero-order approximation', fs='(/t6,a)')
          call output%printf('m', 'PCM charges only affect MOs and Fock', fs='(t6,a/)')
       endif
 !
+      call pcmsolver_print(embedding%pcm_context)
+!
    end subroutine print_description_pcm_environment
 !
 !
-   function get_energy_pcm_environment&
-                     (embedding, ao, density) result(embedding_energy)
+   function get_energy_pcm_environment(embedding, ao, density) result(embedding_energy)
 !!
 !!    Get energy
 !!    Written by Sarai D. Folkestad
@@ -661,6 +658,9 @@ contains
       procedure :: print_energy &
                 => print_energy_pcm_environment
 !
+      procedure :: print_description &
+                => print_description_pcm_environment
+!
    end type pcm_environment
 !
    interface pcm_environment
@@ -769,6 +769,23 @@ contains
       call do_nothing(embedding)
       call do_nothing(ao)
       call do_nothing(density)
+!
+   end subroutine
+!
+!
+   subroutine print_description_pcm_environment(embedding)
+!
+      use warning_suppressor, only: do_nothing
+!
+      implicit none
+!
+      class(pcm_environment), intent(in) :: embedding
+!
+      call output%error_msg('print_description was called for pcm environment, &
+                           &, but eT is not compiled with pcm. &
+                           &Use --pcm when running setup to link to PCMSolver.')
+!
+      call do_nothing(embedding)
 !
    end subroutine
 !

@@ -591,34 +591,34 @@ contains
 !     Gather all sections into the file's section array
 !
       this%sections = [active_atoms,              &
-                           calculations,              &
-                           cc,                        &
-                           cc_mean_value,             &
-                           cc_response,               &
-                           cc_td,                     &
-                           electric_field,            &
-                           frozen_orbitals,           &
-                           global_print,              &
-                           hf_mean_value,             &
-                           integrals,                 &
-                           mlcc,                      &
-                           mlhf,                      &
-                           mm,                        &
-                           memory,                    &
-                           method,                    &
-                           pcm,                       &
-                           solver_cholesky,           &
-                           solver_cc_gs,              &
-                           solver_cc_es,              &
-                           solver_cc_multipliers,     &
-                           solver_cc_response,        &
-                           solver_cc_propagation,     &
-                           solver_fft_dipole_moment,  &
-                           solver_fft_electric_field, &
-                           solver_scf,                &
-                           solver_scf_geoopt,         &
-                           system,                    &
-                           visualization]
+                       calculations,              &
+                       cc,                        &
+                       cc_mean_value,             &
+                       cc_response,               &
+                       cc_td,                     &
+                       electric_field,            &
+                       frozen_orbitals,           &
+                       global_print,              &
+                       hf_mean_value,             &
+                       integrals,                 &
+                       mlcc,                      &
+                       mlhf,                      &
+                       mm,                        &
+                       memory,                    &
+                       method,                    &
+                       pcm,                       &
+                       solver_cholesky,           &
+                       solver_cc_gs,              &
+                       solver_cc_es,              &
+                       solver_cc_multipliers,     &
+                       solver_cc_response,        &
+                       solver_cc_propagation,     &
+                       solver_fft_dipole_moment,  &
+                       solver_fft_electric_field, &
+                       solver_scf,                &
+                       solver_scf_geoopt,         &
+                       system,                    &
+                       visualization]
 !
       this%is_open = .false.
       this%unit_ = -1

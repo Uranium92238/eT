@@ -42,10 +42,11 @@ module environment_class
 !
 !     Public deferred class routines
 !
-      procedure (initialize_environment),    deferred :: initialize
-      procedure (update_environment),        deferred :: update
-      procedure (get_energy_environment),    deferred :: get_energy
-      procedure (print_energy_environment),  deferred :: print_energy
+      procedure (initialize_environment),        deferred :: initialize
+      procedure (update_environment),            deferred :: update
+      procedure (get_energy_environment),        deferred :: get_energy
+      procedure (print_description_environment), deferred :: print_description
+      procedure (print_energy_environment),      deferred :: print_energy
 !
    end type  environment
 !
@@ -106,6 +107,16 @@ module environment_class
          class(environment)                           :: embedding
          type(ao_tool),                   intent(in)  :: ao
          real(dp), dimension(ao%n, ao%n), intent(in)  :: density
+!
+      end subroutine
+!
+      subroutine print_description_environment(embedding)
+!
+         import environment
+!
+         implicit none
+!
+         class(environment), intent(in) :: embedding
 !
       end subroutine
 !

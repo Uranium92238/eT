@@ -37,6 +37,7 @@ module named_interval_class
    interface named_interval
 !
       procedure :: new_named_interval 
+      procedure :: new_named_interval_from_template 
 !
    end interface named_interval 
 !
@@ -63,6 +64,23 @@ contains
       this%length = last - first + 1
 !
    end function new_named_interval
+!
+!
+   pure function new_named_interval_from_template(that) result(this) 
+!!
+!!    New named interval from template 
+!!    Written by Eirik F. Kjønstad, 2020
+!!
+      implicit none 
+!
+      class(named_interval), intent(in) :: that
+!
+      type(named_interval) :: this 
+!
+      this%name_ = trim(that%name_)
+      call this%set_interval(that%first, that%last)
+!
+   end function new_named_interval_from_template
 !
 !
 end module named_interval_class
