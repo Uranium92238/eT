@@ -136,8 +136,8 @@ module wavefunction_class
       procedure :: set_mo_fock &
                 => set_mo_fock_wavefunction
 !
-      procedure :: prepare_ao_tool_and_embedding &
-                => prepare_ao_tool_and_embedding_wavefunction
+      procedure :: prepare_ao_tool &
+                => prepare_ao_tool_wavefunction
 !
       procedure :: set_geometry &
                 => set_geometry_wavefunction
@@ -168,51 +168,45 @@ module wavefunction_class
 !
 contains
 !
-   subroutine prepare_ao_tool_and_embedding_wavefunction(wf, centers, embedding)
+!
+   subroutine prepare_ao_tool_wavefunction(wf, centers, template)
 !!
-!!    Prepare AOs and embedding 
+!!    Prepare AO tool
 !!    Written by Eirik F. Kjønstad, 2020 
 !!
-!!    Initializes the AO tool, which handles the atomic orbital integrals in eT,
-!!    as well as the embedding object, which handles the calculation of PCM and QM/MM
-!!    contributions.
+!!    Initializes the AO tool, which handles the atomic orbital integrals in eT.
 !!
 !!    centers:   Optional set of 'atomic_center' objects that represents the atomic orbital 
 !!               basis used by the AO tool and the integral program (Libint). The default 
 !!               centers are those specified by the QM geometry in the eT input file.
+!!
+!!    template: Optional template_ao_tool from which the ao_tool is initialized.
 !!               
-!!    embedding: Optional logical. Default is given by the eT input file.
-!!
-!!
       use atomic_center_class, only: atomic_center
 !
       implicit none 
 !
       class(wavefunction) :: wf 
 !
-      class(atomic_center), dimension(:), optional, intent(in) :: centers 
+      class(atomic_center), dimension(:), optional, intent(in) :: centers
 !
-      logical, intent(in), optional :: embedding
+      type(ao_tool), optional, intent(in) :: template
 !
       wf%ao = ao_tool()
 !
-      call wf%ao%initialize(centers)
+      if (present(template)) then
+!
+         call wf%ao%initialize_ao_tool_from_template(template)
+!
+      else 
+!
+         call wf%ao%initialize(centers)
+!
+      end if
 !
       wf%n_atomic_centers = wf%ao%get_n_centers()
 !
-      if (present(embedding)) then
-!
-         wf%embedded = embedding
-!
-      else
-!
-         wf%embedded = input%is_embedding_on()
-!
-      endif
-!
-      if (wf%embedded) call wf%prepare_embedding()
-!
-   end subroutine prepare_ao_tool_and_embedding_wavefunction
+   end subroutine prepare_ao_tool_wavefunction
 !
 !
    subroutine set_geometry_wavefunction(wf, R, units)
@@ -866,12 +860,12 @@ contains
    end subroutine set_mo_fock_wavefunction
 !
 !
-   subroutine prepare_embedding_wavefunction(wf)
+   subroutine prepare_embedding_wavefunction(wf, embedding)
 !!
 !!    Prepare embedding
 !!    Written by Sarai D. Folkestad
 !!
-!!    Initializes the embedding 
+!!    Initializes the embedding object
 !!    Embedding is either non-polarizable
 !!    or polarizable (QM/FQ or PCM)
 !!
@@ -882,10 +876,26 @@ contains
       class(wavefunction), intent(inout)        :: wf
       type(environment_factory), allocatable    :: factory
 !
-      factory = environment_factory()
+      logical, intent(in), optional :: embedding
 !
-      wf%embedding = factory%create()
-      call wf%embedding%initialize(wf%ao)
+      if (present(embedding)) then
+!
+         wf%embedded = embedding
+!
+      else
+!
+         wf%embedded = input%is_embedding_on()
+!
+      endif
+!
+      if (wf%embedded) then
+!
+         factory = environment_factory()
+!
+         wf%embedding = factory%create()
+         call wf%embedding%initialize(wf%ao)
+!
+      end if
 !
    end subroutine prepare_embedding_wavefunction
 !

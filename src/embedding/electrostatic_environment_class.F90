@@ -39,6 +39,8 @@ module electrostatic_environment_class
 !
       type(point_charges), private :: mm_points
 !
+      character(len=2), dimension(:), allocatable, private  :: symbols
+!
    contains
 !
 !     Public class routines
@@ -55,10 +57,10 @@ module electrostatic_environment_class
       procedure :: print_energy &
                 => print_energy_electrostatic_environment
 !
-!     Private class routines
+      procedure :: print_description &
+                => print_description_electrostatic_environment
 !
-      procedure, private :: print_description &
-                         => print_description_electrostatic_environment
+!     Private class routines
 !
       procedure, private :: get_mm_mm_energy &
                          => get_mm_mm_energy_electrostatic_environment
@@ -118,10 +120,6 @@ contains
       class(electrostatic_environment), intent(inout) :: embedding
       type(ao_tool),                    intent(inout) :: ao
 !
-      character(len=2), dimension(:), allocatable  :: symbol
-!
-      call embedding%print_description()
-!
 !     Read number of atoms and molecules
 !
       embedding%n_charges = input%get_n_mm_atoms()
@@ -131,19 +129,12 @@ contains
       embedding%mm_points = point_charges(embedding%n_charges)
       call embedding%mm_points%initialize()
 !
-      allocate(symbol(embedding%n_charges))
+      allocate(embedding%symbols(embedding%n_charges))
 !
       call input%get_mm_geometry_non_polarizable(embedding%n_charges,     &
-                                                 symbol,                  &
+                                                 embedding%symbols,       &
                                                  embedding%mm_points%r,   &
                                                  embedding%mm_points%q)
-!
-!     Print geometry 
-!  
-      call embedding%print_geometry(symbol, 'angstrom')
-      call embedding%print_geometry(symbol, 'bohr')
-!
-      deallocate(symbol)
 !
 !     Initialize integrals 
 !
@@ -180,8 +171,7 @@ contains
    end subroutine update_electrostatic_environment
 !
 !
-   function get_energy_electrostatic_environment&
-                     (embedding, ao, density) result(embedding_energy)
+   function get_energy_electrostatic_environment(embedding, ao, density) result(embedding_energy)
 !!
 !!    Get energy
 !!    Written by Sarai D. Folkestad
@@ -233,8 +223,7 @@ contains
    end function get_energy_electrostatic_environment
 !
 !
-   subroutine print_energy_electrostatic_environment&
-                     (embedding, ao, density)
+   subroutine print_energy_electrostatic_environment(embedding, ao, density)
 !!
 !!    Print energy
 !!    Written by Sarai D. Folkestad
@@ -290,7 +279,7 @@ contains
 !
       call output%printf('m', 'This is a QM/MM calculation', fs='(/t3,a)')     
 !
-      call output%printf('n', 'Emedding type: (a0)', chars=[trim(embedding%type_)], fs='(/t6,a)')
+      call output%printf('n', 'Embedding type: (a0)', chars=[trim(embedding%type_)], fs='(/t6,a)')
       call output%printf('n', 'Each atom of the MM portion is endowed with a charge which &
                          &value is a fixed external parameter.', &
                            ffs='(/t6,a)', fs='(t6,a)')
@@ -309,6 +298,9 @@ contains
 !
       if(input%requested_cc_calculation()) &
          call output%printf('n','CC calculation: MM charges only affect MOs and Fock', fs='(t6,a/)')
+!
+      call embedding%print_geometry('angstrom')
+      call embedding%print_geometry('bohr')
 !
    end subroutine print_description_electrostatic_environment
 !
@@ -358,7 +350,7 @@ contains
    end function get_nuclei_mm_energy_electrostatic_environment
 !
 !
-   subroutine print_geometry_electrostatic_environment(embedding, symbols, units)
+   subroutine print_geometry_electrostatic_environment(embedding, units)
 !!
 !!    Print geometry
 !!    Written by Tommaso Giovannini, Eirik F. Kjønstad and Sarai D. Folkestad, 2020
@@ -368,7 +360,6 @@ contains
       implicit none 
 !
       class(electrostatic_environment),                  intent(in)  :: embedding
-      character(len=2), dimension(embedding%n_charges),  intent(in)  :: symbols
       character(len=*),                                  intent(in)  :: units
 !
       integer  :: k
@@ -394,7 +385,7 @@ contains
       do k = 1, embedding%n_charges
 !
          call output%printf('m', '(a2)              (f11.6)(f11.6)(f11.6)    &
-                            & (f11.6)', chars=[symbols(k)], &
+                            & (f11.6)', chars=[embedding%symbols(k)], &
                             reals=[embedding%mm_points%r(1, k)*conversion_factor, &
                             embedding%mm_points%r(2, k)*conversion_factor,        &
                             embedding%mm_points%r(3, k)*conversion_factor,        &
