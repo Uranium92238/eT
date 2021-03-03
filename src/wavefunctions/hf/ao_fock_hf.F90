@@ -31,7 +31,7 @@ submodule (hf_class) ao_fock
 contains
 !
 !
-   module subroutine update_fock_and_energy_hf(wf)
+   module subroutine update_fock_and_energy_hf(wf, cumulative)
 !!
 !!    Wrapper for Update Fock and energy
 !!    Written by Tommaso Giovannini, July 2019
@@ -40,9 +40,10 @@ contains
 !!
       implicit none
 !
-      class(hf) :: wf
+      class(hf), intent(inout) :: wf
+      logical, intent(in) :: cumulative
 !
-      if (.not. wf%do_cumulative_fock()) then
+      if (.not. cumulative) then
 !
          call wf%update_G_non_cumulative()
 !
@@ -74,8 +75,6 @@ contains
 !
       endif
 !
-      wf%fock_matrix_computed = .true.
-!
 !     Energy
 !
       wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao%h)
@@ -100,7 +99,7 @@ contains
 !!
       implicit none
 !
-      class(hf) :: wf
+      class(hf), intent(inout) :: wf
 !
       real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in) :: prev_ao_density
 !
@@ -143,7 +142,7 @@ contains
 !!
       implicit none
 !
-      class(hf) :: wf
+      class(hf), intent(inout) :: wf
 !
       type(timings) :: timer
 !
@@ -180,7 +179,7 @@ contains
 !!                 Coulomb and exchange screening will target the MO basis G(D). Used in 
 !!                 MLHF when constructing G(Da). Default: false.
 !!
-      class(hf)   :: wf
+      class(hf), intent(inout):: wf
 !
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)    :: D
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(inout) :: G

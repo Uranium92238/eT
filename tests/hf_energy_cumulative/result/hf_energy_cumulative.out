@@ -1,16 +1,39 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.1 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.1.0, Bastion
+  ------------------------------------------------------------
+  Compiled by:        sarai
+  Compiled on:        dhcp-10-24-4-67.wlan.ntnu.no
+  Configuration date: 2021-02-24 15:29:49 UTC +01:00
+  Git branch:         fix_cumulative
+  Git hash:           1dd7ea08b19e7577ea3ddffe8f7b86a442529b8c
+  Fortran compiler:   GNU 10.2.0
+  C compiler:         GNU 10.2.0
+  C++ compiler:       GNU 10.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-02-24 15:56:08 UTC +01:00
 
 
   :: Input file
@@ -47,24 +70,14 @@
      end method
 
 
-  Running on 2 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
+  :: RHF wavefunction
+  ======================
 
-     Name:             hof he
-     Charge:           0
-     Multiplicity:     1
-     Coordinate units: angstrom
-
-     Pure basis functions:         38
-     Cartesian basis functions:    40
-     Primitive basis functions:    84
-
-     Nuclear repulsion energy (a.u.):             48.518317619727
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
+  Libint electron repulsion integral precision:  0.1000E-23
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -72,9 +85,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H      0.866810000000     0.601440000000     5.000000000000        1
-        2 F     -0.866810000000     0.601440000000     5.000000000000        2
-        3 O      0.000000000000    -0.075790000000     5.000000000000        3
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  F    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
         4 He     0.000000000000     0.000000000000     7.500000000000        4
      ==============================================================================
 
@@ -84,24 +97,27 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H      1.638033502034     1.136556880358     9.448630622825        1
-        2 F     -1.638033502034     1.136556880358     9.448630622825        2
-        3 O      0.000000000000    -0.143222342981     9.448630622825        3
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  F    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
         4 He     0.000000000000     0.000000000000    14.172945934238        4
      ==============================================================================
 
+  Constructing one-electron integrals (hamiltonian)
 
-  :: RHF wavefunction
-  ======================
+  Constructing one-electron integrals (overlap)
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  - Orbital details:
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               38
+     Number of orthonormal atomic orbitals:   38
+
+  - Molecular orbital details:
 
      Number of occupied orbitals:        10
      Number of virtual orbitals:         28
      Number of molecular orbitals:       38
-     Number of atomic orbitals:          38
 
 
   :: Hartree-Fock engine
@@ -127,42 +143,38 @@
 
   - SCF solver settings:
 
-     Maximum iterations:                     100
-     Gradient threshold:              0.1000E-09
-     Acceleration type:                     diis
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:              -178.316362503954
+     Energy of initial guess:              -178.316362504350
      Number of electrons in guess:           20.000000000000
 
   - Screening and integral thresholds:
 
      Coulomb screening threshold:   0.1000E-15
      Exchange screening threshold:  0.1000E-13
-     Fock precision:                0.1000E-31
      Integral cutoff:               0.1000E-15
-     Cumulative Fock threshold:     0.1000E+01
+     Cumulative Fock threshold:     0.1000E-02
 
   - DIIS convergence acceleration:
 
      DIIS dimension:   8
 
-  scf solver_e is stored in memory.
+  solver scf_e is stored in memory.
 
-  scf solver_x is stored in memory.
+  solver scf_x is stored in memory.
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-  Fock matrix construction using density differences
-     1          -177.452442672057     0.7565E-01     0.1775E+03
-  Fock matrix construction using density differences
+     1          -177.452442672055     0.7565E-01     0.1775E+03
      2          -177.479038695766     0.1346E-01     0.2660E-01
-  Fock matrix construction using density differences
-     3          -177.480034970238     0.4311E-02     0.9963E-03
-  Fock matrix construction using density differences
+     3          -177.480034970237     0.4311E-02     0.9963E-03
      4          -177.480161392961     0.1845E-02     0.1264E-03
-  Fock matrix construction using density differences
      5          -177.480175069916     0.3629E-03     0.1368E-04
   Fock matrix construction using density differences
      6          -177.480176290419     0.7402E-04     0.1221E-05
@@ -171,23 +183,23 @@
   Fock matrix construction using density differences
      8          -177.480176376357     0.5096E-05     0.1023E-07
   Fock matrix construction using density differences
-     9          -177.480176377183     0.1218E-05     0.8255E-09
+     9          -177.480176377183     0.1218E-05     0.8254E-09
   Fock matrix construction using density differences
-    10          -177.480176377209     0.2536E-06     0.2672E-10
+    10          -177.480176377209     0.2536E-06     0.2657E-10
   Fock matrix construction using density differences
-    11          -177.480176377210     0.4399E-07     0.7390E-12
+    11          -177.480176377210     0.4399E-07     0.9663E-12
   Fock matrix construction using density differences
-    12          -177.480176377210     0.8545E-08     0.8527E-13
+    12          -177.480176377210     0.8545E-08     0.2842E-13
   Fock matrix construction using density differences
-    13          -177.480176377210     0.2855E-08     0.2842E-13
+    13          -177.480176377210     0.2855E-08     0.1705E-12
   Fock matrix construction using density differences
-    14          -177.480176377210     0.1321E-08     0.1137E-12
+    14          -177.480176377210     0.1321E-08     0.2274E-12
   Fock matrix construction using density differences
-    15          -177.480176377210     0.3976E-09     0.5684E-13
+    15          -177.480176377210     0.3976E-09     0.8527E-13
   Fock matrix construction using density differences
-    16          -177.480176377210     0.1465E-09     0.5684E-13
+    16          -177.480176377210     0.1465E-09     0.1990E-12
   Fock matrix construction using density differences
-    17          -177.480176377210     0.5394E-10     0.0000E+00
+    17          -177.480176377210     0.5394E-10     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -200,9 +212,11 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.66000
-     Total cpu time (sec):               3.12396
+     Total wall time (sec):              1.55800
+     Total cpu time (sec):               2.95491
 
-     Peak memory usage during the execution of eT: 289.780 KB
+     Peak memory usage during the execution of eT: 296.012 KB
+
+  Calculation ended: 2021-02-24 15:56:10 UTC +01:00
 
   eT terminated successfully!

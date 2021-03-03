@@ -177,7 +177,7 @@ contains
       wf%minimal_basis_diagonalization = .false.
       wf%cholesky_virtuals             = .false.
       wf%print_initial_hf              = .false.
-      wf%fock_matrix_computed          = .false.
+      wf%cumulative_fock               = .false.
 !
       wf%cumulative_fock_threshold = 1.0d0
 !
@@ -333,7 +333,7 @@ contains
    end subroutine prepare_for_roothan_hall_mlhf
 !
 !
-   subroutine update_fock_and_energy_mlhf(wf)
+   subroutine update_fock_and_energy_mlhf(wf, cumulative)
 !!
 !!    Update Fock and energy
 !!    Written by Linda Goletto and Sarai D. Folkestad, 2019
@@ -358,7 +358,8 @@ contains
 !
       implicit none
 !
-      class(mlhf) :: wf
+      class(mlhf), intent(inout) :: wf
+      logical, intent(in) :: cumulative 
 !
       real(dp), dimension(:,:), allocatable :: G
 !
@@ -367,7 +368,7 @@ contains
       timer = timings('AO Fock construction', pl='normal')
       call timer%turn_on()
 !
-      if (wf%do_cumulative_fock()) then
+      if (cumulative) then
 !
          call output%printf('v', 'Fock matrix construction using density differences')
 !
@@ -425,8 +426,6 @@ contains
 !
       call daxpy(wf%n_mo**2, one, wf%G_De_mo, 1, wf%mo_fock, 1)
       call daxpy(wf%n_mo**2, one, wf%G_De_imo, 1, wf%imo_fock, 1)
-!
-      wf%fock_matrix_computed = .true.
 !
 !     Add the Tr[Da * G(De)] and inactive energy contributions to the energy
 !
@@ -1829,7 +1828,7 @@ contains
 !
       real(dp), dimension(wf%n_mo*(wf%n_mo + 1)/2*wf%n_densities), intent(out) :: F_packed
 !
-      call wf%update_fock_and_energy()
+      call wf%update_fock_and_energy(cumulative = wf%cumulative_fock)
 !
       call packin(F_packed, wf%imo_fock, wf%n_mo)
 !
@@ -1905,6 +1904,9 @@ contains
 !!
 !!    Returns the gradient F_ov in the initial MO basis
 !!
+!!    If the gradient norm is sufficiently small, 
+!!    'cumulative_fock' is enabled
+!!
       use reordering, only: packin 
       use array_utilities, only: symmetric_sandwich
       implicit none
@@ -1958,6 +1960,8 @@ contains
 !
       call mem%dealloc(X, wf%n_o,wf%n_mo)
       call mem%dealloc(F, wf%n_o, wf%n_v)
+!
+      wf%cumulative_fock = wf%can_do_cumulative_fock(G)
 !
    end subroutine get_gradient_mlhf
 !
