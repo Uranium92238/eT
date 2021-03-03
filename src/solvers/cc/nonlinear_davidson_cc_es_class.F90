@@ -191,23 +191,6 @@ contains
 !
       wf%n_singlet_states = solver%n_singlet_states
 !
-!     Determine whether to store records in memory or on file
-!
-      if (trim(solver%storage) == 'memory') then 
-!
-         solver%records_in_memory = .true.
-!
-      elseif (trim(solver%storage) == 'disk') then 
-!
-         solver%records_in_memory = .false.
-!
-      else 
-!
-         call output%error_msg('Could not recognize keyword storage in solver: ' // &
-                                 trim(solver%storage))
-!
-      endif 
-!
    end function new_nonlinear_davidson_cc_es
 !
 !
@@ -285,23 +268,6 @@ contains
 !
       call solver%print_settings()
 !
-!     Determine whether to store records in memory or on file
-!
-      if (trim(solver%storage) == 'memory') then 
-!
-         solver%records_in_memory = .true.
-!
-      elseif (trim(solver%storage) == 'disk') then 
-!
-         solver%records_in_memory = .false.
-!
-      else 
-!
-         call output%error_msg('Could not recognize keyword storage in solver: ' // &
-                                 trim(solver%storage))
-!
-      endif 
-!
    end function new_nonlinear_davidson_cc_es_preconvergence
 !
 !
@@ -315,9 +281,6 @@ contains
       class(nonlinear_davidson_cc_es) :: solver 
 !
       call solver%print_es_settings()
-!
-      call output%printf('m', 'Max reduced space dimension:         (i4)',  &
-                         ints=[solver%max_dim_red], fs='(/t6,a)')
 !
       call output%printf('m', 'Max micro iterations:                (i4)',  &
                          ints=[solver%max_micro_iterations], fs='(t6,a)')

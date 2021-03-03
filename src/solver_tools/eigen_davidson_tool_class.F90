@@ -167,7 +167,18 @@ contains
 !
       davidson%n_parameters = n_parameters
       davidson%n_solutions  = n_solutions
-      davidson%max_dim_red  = max_dim_red
+!
+      if (davidson%n_solutions == 0) call output%error_msg('number of solutions must be specified.')
+!
+      if (davidson%n_solutions .gt. davidson%n_parameters) &
+         call output%error_msg('specified number of solutions exceeds the actual ' // &
+                               'number of solutions.')
+!
+!     max reduced dimension must be larger than or equal to the number of requested solutions
+      davidson%max_dim_red  = max(n_solutions, max_dim_red)
+!      
+!     max reduced dimension must be smaler than or equal to the number of parameters 
+      davidson%max_dim_red  = min(davidson%max_dim_red, n_parameters)
 !
       davidson%lindep_threshold = lindep_threshold  
 !
@@ -180,6 +191,8 @@ contains
 !
       davidson%dim_red      = 0
       davidson%n_new_trials = n_solutions
+!
+      call davidson%print_settings()
 !
    end function new_eigen_davidson_tool
 !  
