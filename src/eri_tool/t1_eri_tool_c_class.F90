@@ -773,7 +773,8 @@ contains
                                       1, eri%n_mo,   &
                                       1, eri%n_mo,   &
                                       1, eri%n_mo,   &
-                                      1, eri%n_mo)
+                                      1, eri%n_mo,   &
+                                      one_complex, zero_complex)
 !
          call construct_eri_timer%turn_off()
 !
@@ -824,7 +825,8 @@ contains
                                          1, eri%n_mo,   &
                                          1, eri%n_mo,   &
                                          1, eri%n_mo,   &
-                                         1, eri%n_mo)
+                                         1, eri%n_mo,   &
+                                         one_complex, zero_complex)
 !
          endif
 !
@@ -1375,7 +1377,7 @@ contains
    subroutine get_eri_t1_t1_eri_tool_c(eri, string, g_pqrs, &
                                        first_p, last_p, first_q, last_q, &
                                        first_r, last_r, first_s, last_s, &
-                                       qp, sr, rspq)
+                                       alpha, beta, qp, sr, rspq)
 !!
 !!    Get ERI T1
 !!    Written by Rolf H. Myhre Jun 2020
@@ -1386,6 +1388,9 @@ contains
 !!            o: occupied, v: virtual, f: full
 !!    q_pqrs: array to contain the integral
 !!    first_p, last_p, etc.: first and last index of integrals in range determined by string
+!!
+!!    alpha: scales data added to g_pqrs (default = 1.0)
+!!    beta : scales data already in g_pqrs (default = 0.0)
 !!
 !!    Optional reordering logicals (default = .false.):
 !!    qp:   switches order of p and q, i.e., g_qprs
@@ -1404,12 +1409,22 @@ contains
       integer, optional, intent(in) :: first_r, last_r
       integer, optional, intent(in) :: first_s, last_s
 !
-      complex(dp), intent(out), dimension(1) :: g_pqrs
+      complex(dp), intent(inout), dimension(1) :: g_pqrs
+!
+      complex(dp), optional, intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp, sr, rspq
 !
       integer :: full_first_p, full_last_p, full_first_q, full_last_q
       integer :: full_first_r, full_last_r, full_first_s, full_last_s
+!
+      complex(dp) :: alpha_, beta_
+!
+      alpha_ = one_complex
+      if(present(alpha)) alpha_ = alpha
+!
+      beta_ = zero_complex
+      if(present(beta)) beta_ = beta
 !
       call eri%index_setup(string(1:1), full_first_p, full_last_p, first_p, last_p)
       call eri%index_setup(string(2:2), full_first_q, full_last_q, first_q, last_q)
@@ -1420,14 +1435,14 @@ contains
                                      full_first_q, full_last_q, &
                                      full_first_r, full_last_r, &
                                      full_first_s, full_last_s, &
-                                     qp, sr, rspq)
+                                     alpha_, beta_, qp, sr, rspq)
 !
    end subroutine get_eri_t1_t1_eri_tool_c
 !
 !
    subroutine get_g_pqrs_t1_t1_eri_tool_c(eri, g_pqrs, first_p, last_p, first_q, last_q, &
                                                        first_r, last_r, first_s, last_s, &
-                                                       qp, sr, rspq)
+                                                       alpha, beta, qp, sr, rspq)
 !!
 !!    Get g_pqrs T1
 !!    Written by Rolf H. Myhre, Jun 2020
@@ -1452,8 +1467,10 @@ contains
       integer, intent(in) :: first_r, last_r
       integer, intent(in) :: first_s, last_s
 !
-      complex(dp), intent(out), &
+      complex(dp), intent(inout), &
                 dimension(first_p:last_p,first_q:last_q,first_r:last_r,first_s:last_s) :: g_pqrs
+!
+      complex(dp), intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp, sr, rspq
 !
@@ -1462,13 +1479,13 @@ contains
          call eri%copy_g_pqrs(g_pqrs, eri%g_pqrs_t1, &
                               first_p, last_p, first_q, last_q, &
                               first_r, last_r, first_s, last_s, &
-                              qp, sr, rspq)
+                              alpha, beta, qp, sr, rspq)
 !
       else
 !
          call eri%construct_g_pqrs_t1(g_pqrs, first_p, last_p, first_q, last_q, &
                                               first_r, last_r, first_s, last_s, &
-                                              qp, sr, rspq)
+                                              alpha, beta, qp, sr, rspq)
 !
       endif
 !
@@ -1478,7 +1495,7 @@ contains
    subroutine construct_g_pqrs_t1_t1_eri_tool_c(eri, g_pqrs, &
                                            first_p, last_p, first_q, last_q, &
                                            first_r, last_r, first_s, last_s, &
-                                           qp, sr, rspq)
+                                           alpha, beta, qp, sr, rspq)
 !!
 !!    Construct g_pqrs T1
 !!    Written by Rolf H. Myhre, Jun 2020
@@ -1503,8 +1520,10 @@ contains
       integer, intent(in) :: first_r, last_r
       integer, intent(in) :: first_s, last_s
 !
-      complex(dp), intent(out), &
+      complex(dp), intent(inout), &
                 dimension(first_p:last_p,first_q:last_q,first_r:last_r,first_s:last_s) :: g_pqrs
+!
+      complex(dp), intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp, sr, rspq
 !
@@ -1535,7 +1554,7 @@ contains
       call eri%L_pointer_setup_t1(L_J_rs_p, switch_rs, &
                                   first_r, last_r, first_s, last_s, rs_alloced)
 !
-      call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, zero_complex, &
+      call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, alpha, beta, &
                                   dim_p, dim_q, dim_r, dim_s, rspq)
 !
       if (rs_alloced) then
@@ -1589,8 +1608,9 @@ contains
    end subroutine get_eri_t1_packed_mem_t1_eri_tool_c
 !
 !
-   subroutine get_eri_t1_packed_t1_eri_tool_c(eri, string, g_pqpq, &
-                                              first_p, last_p, first_q, last_q, qp)
+   subroutine get_eri_t1_packed_t1_eri_tool_c(eri, string, g_pqpq,              &
+                                              first_p, last_p, first_q, last_q, &
+                                              alpha, beta, qp)
 !!
 !!    Get ERI T1 packed
 !!    Written by Rolf H. Myhre, Jan 2021
@@ -1617,9 +1637,15 @@ contains
 !!
 !!    string: two character string indicating integral block. Example: "vo"
 !!            o: occupied, v: virtual, f: full
+!!
 !!    q_pqpq: array to contain the integral
+!!
 !!    first_p, last_p, etc.: first and last index of integrals
 !!                           in range determined by string
+!!
+!!    alpha: scales data added to g_pqrs (default = 1.0)
+!!    beta : scales data already in g_pqrs (default = 0.0)
+!!
 !!    qp:   switches order of p and q, i.e., reorders to g_qpqp
 !!
       implicit none
@@ -1628,14 +1654,24 @@ contains
 !
       character(len=2), intent(in) :: string
 !
-      complex(dp), intent(out), dimension(1) :: g_pqpq
+      complex(dp), intent(inout), dimension(1) :: g_pqpq
 !
       integer, optional, intent(in) :: first_p, last_p
       integer, optional, intent(in) :: first_q, last_q
 !
+      complex(dp), optional, intent(in) :: alpha, beta
+!
       logical, optional, intent(in) :: qp
 !
+      complex(dp) :: alpha_, beta_
+!
       integer :: full_first_p, full_last_p, full_first_q, full_last_q, dim_p, dim_q
+!
+      alpha_ = one_complex
+      if(present(alpha)) alpha_ = alpha
+!
+      beta_ = zero_complex
+      if(present(beta)) beta_ = beta
 !
       call eri%index_setup(string(1:1), full_first_p, full_last_p, first_p, last_p)
       call eri%index_setup(string(2:2), full_first_q, full_last_q, first_q, last_q)
@@ -1643,15 +1679,15 @@ contains
       dim_p = full_last_p - full_first_p + 1
       dim_q = full_last_q - full_first_q + 1
 !
-      call eri%get_g_pqrs_t1_packed(g_pqpq, full_first_p, full_last_p, &
-                                            full_first_q, full_last_q, dim_p, dim_q, qp)
-!
+      call eri%get_g_pqrs_t1_packed(g_pqpq, full_first_p, full_last_p,               &
+                                            full_first_q, full_last_q, dim_p, dim_q, &
+                                            alpha_, beta_, qp)
 !
    end subroutine get_eri_t1_packed_t1_eri_tool_c
 !
 !
    subroutine get_g_pqrs_t1_packed_t1_eri_tool_c(eri, g_pqpq, first_p, last_p, first_q, last_q, &
-                                                              dim_p, dim_q, qp)
+                                                              dim_p, dim_q, alpha, beta, qp)
 !!
 !!    Get g_pqrs T1 packed
 !!    Written by Rolf H. Myhre, Jan 2021
@@ -1673,20 +1709,22 @@ contains
       integer, intent(in) :: first_q, last_q
       integer, intent(in) :: dim_p, dim_q
 !
-      complex(dp), intent(out), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2) :: g_pqpq
+      complex(dp), intent(inout), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2) :: g_pqpq
+!
+      complex(dp), intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp
 !
       if (eri%t1_eri_mem) then
 !
          call eri%copy_g_pqrs_to_packed(g_pqpq, eri%g_pqrs_t1, &
-                                        first_p, first_q, &
-                                        dim_p, dim_q, qp)
+                                        first_p, first_q,      &
+                                        dim_p, dim_q, alpha, beta, qp)
 !
       else
 !
          call eri%construct_g_pqrs_t1_packed(g_pqpq, first_p, last_p, first_q, last_q, &
-                                             dim_p, dim_q, qp)
+                                             dim_p, dim_q, alpha, beta, qp)
 !
       endif
 !
@@ -1696,7 +1734,7 @@ contains
 !
    subroutine construct_g_pqrs_t1_packed_t1_eri_tool_c(eri, g_pqpq, &
                                                        first_p, last_p, first_q, last_q, &
-                                                       dim_p, dim_q, qp)
+                                                       dim_p, dim_q, alpha, beta, qp)
 !!
 !!    Construct g_pqrs T1 packed
 !!    Written by Rolf H. Myhre, Jan 2021
@@ -1718,6 +1756,8 @@ contains
 !
       complex(dp), intent(out), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2) :: g_pqpq
 !
+      complex(dp), intent(in) :: alpha, beta
+!
       logical, optional, intent(in) :: qp
 !
       complex(dp), dimension(:,:,:), pointer, contiguous :: L_J_pq_p
@@ -1732,7 +1772,7 @@ contains
       call eri%L_pointer_setup_t1(L_J_pq_p, switch_pq, &
                                   first_p, last_p, first_q, last_q, pq_alloced)
 !
-      call eri%construct_g_packed_from_L(L_J_pq_p, g_pqpq, zero_complex, dim_p, dim_q)
+      call eri%construct_g_packed_from_L(L_J_pq_p, g_pqpq, alpha, beta, dim_p, dim_q)
 !
       if (pq_alloced) then
          call mem%dealloc(L_J_pq_p, eri%n_J, dim_p, dim_q)
@@ -1798,7 +1838,7 @@ contains
    subroutine get_eri_c1_t1_eri_tool_c(eri, string, g_pqrs, c_ai,        &
                                        first_p, last_p, first_q, last_q, &
                                        first_r, last_r, first_s, last_s, &
-                                       qp, sr, rspq)
+                                       alpha, beta, qp, sr, rspq)
 !!
 !!    Get ERI C1
 !!    Written by Rolf H. Myhre Jun 2020
@@ -1812,6 +1852,9 @@ contains
 !!    q_pqrs: array to contain the integral
 !!    c_ai  : T1 like array used in the construction
 !!    first_p, last_p, etc.: first and last index of integrals in range determined by string
+!!
+!!    alpha: scales data added to g_pqrs (default = 1.0)
+!!    beta : scales data already in g_pqrs (default = 0.0)
 !!
 !!    qp:   optional logical, switches order of p and q, i.e., g_qprs, default: false
 !!    sr:   optional logical, switches order of r and s, i.e., g_pqsr, default: false
@@ -1831,12 +1874,22 @@ contains
       integer, optional, intent(in) :: first_r, last_r
       integer, optional, intent(in) :: first_s, last_s
 !
-      complex(dp), intent(out), dimension(1) :: g_pqrs
+      complex(dp), intent(inout), dimension(1) :: g_pqrs
+!
+      complex(dp), optional, intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp, sr, rspq
 !
       integer :: full_first_p, full_last_p, full_first_q, full_last_q
       integer :: full_first_r, full_last_r, full_first_s, full_last_s
+!
+      complex(dp) :: alpha_, beta_
+!
+      alpha_ = one_complex
+      if(present(alpha)) alpha_ = alpha
+!
+      beta_ = zero_complex
+      if(present(beta)) beta_ = beta
 !
       call eri%index_setup(string(1:1), full_first_p, full_last_p, first_p, last_p)
       call eri%index_setup(string(2:2), full_first_q, full_last_q, first_q, last_q)
@@ -1848,7 +1901,7 @@ contains
                                    full_first_q, full_last_q, &
                                    full_first_r, full_last_r, &
                                    full_first_s, full_last_s, &
-                                   qp, sr, rspq)
+                                   alpha_, beta_, qp, sr, rspq)
 !
    end subroutine get_eri_c1_t1_eri_tool_c
 !
@@ -1856,7 +1909,7 @@ contains
    subroutine construct_g_pqrs_c1_t1_eri_tool_c(eri, g_pqrs, c_ai,                &
                                                 first_p, last_p, first_q, last_q, &
                                                 first_r, last_r, first_s, last_s, &
-                                                qp, sr, rspq)
+                                                alpha, beta, qp, sr, rspq)
 !!
 !!    Construct g_pqrs C1
 !!    Written by Rolf H. Myhre, Jun 2020
@@ -1885,10 +1938,12 @@ contains
       integer, intent(in) :: first_r, last_r
       integer, intent(in) :: first_s, last_s
 !
-      complex(dp), intent(out), &
+      complex(dp), intent(inout), &
                 dimension(first_p:last_p,first_q:last_q,first_r:last_r,first_s:last_s) :: g_pqrs
 !
       complex(dp), dimension(eri%n_v, eri%n_o), intent(in) :: c_ai
+!
+      complex(dp), intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp, sr, rspq
 !
@@ -1900,7 +1955,7 @@ contains
 
       logical :: alloced
 !
-      complex(dp) :: zero_one
+      complex(dp) :: beta_one
 !
       L_J_pq_p => null()
       L_J_rs_p => null()
@@ -1910,7 +1965,7 @@ contains
       if(present(qp)) switch_pq = qp
       if(present(sr)) switch_rs = sr
 !
-      zero_one = zero
+      beta_one = beta
 !
       if ((last_p .le. eri%n_o) .and. (last_q .gt. eri%n_o) .and. &
           (last_r .le. eri%n_o) .and. (last_s .gt. eri%n_o)) then
@@ -1929,10 +1984,10 @@ contains
          call mem%alloc(L_J_pq_p, eri%n_J, dim_p, dim_q)
          call eri%construct_cholesky_c1(L_J_pq_p, c_ai, first_p,last_p, first_q,last_q, switch_pq)
 !
-         call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, zero_complex, &
+         call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, alpha, beta, &
                                      dim_p, dim_q, dim_r, dim_s, rspq)
 !
-         zero_one = one
+         beta_one = one
 !
          call mem%dealloc(L_J_pq_p, eri%n_J, dim_p, dim_q)
          if (alloced) then
@@ -1949,7 +2004,7 @@ contains
          call mem%alloc(L_J_rs_p, eri%n_J, dim_r, dim_s)
          call eri%construct_cholesky_c1(L_J_rs_p, c_ai, first_r,last_r, first_s,last_s, switch_rs)
 !
-         call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, zero_one, &
+         call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, alpha, beta_one, &
                                      dim_p, dim_q, dim_r, dim_s, rspq)
 !
          call mem%dealloc(L_J_rs_p, eri%n_J, dim_r, dim_s)

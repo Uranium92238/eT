@@ -221,7 +221,6 @@ contains
 !!
 !!    See get_eri_mo for additional documentation
 !!
-!!
       implicit none
 !
       class(abstract_eri_tool), intent(in) :: eri

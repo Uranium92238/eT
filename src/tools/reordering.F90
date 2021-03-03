@@ -396,6 +396,11 @@ module reordering
                    packin_anti_complex
    end interface packin_anti
 !
+   interface construct_contravariant
+      procedure :: construct_contravariant_r, &
+                   construct_contravariant_c
+   end interface construct_contravariant
+!
    interface construct_packed_contravariant
       procedure :: construct_packed_contravariant_real, &
                    construct_packed_contravariant_complex
@@ -5924,6 +5929,162 @@ contains
       enddo
 !
    end subroutine packin_anti_complex
+!
+!
+   subroutine construct_contravariant_r(x, y, dim_p, dim_q, psrq, alpha, beta)
+!!
+!!    Construct packed contravariant
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Feb 2021
+!!
+!!    if .not. psrq
+!!       y(p,q,r,s) = beta*y(p,q,r,s) + alpha*(2*x(p,q,r,s) - x(p,s,r,q))
+!!    else
+!!       y(p,q,r,s) = beta*y(p,q,r,s) + alpha*(2*x(p,s,r,q) - x(p,q,r,s))
+!!    endif
+!!
+!!    defaults: psrq = .false., alpha = one, beta = zero
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      real(dp), dimension(dim_p, dim_q, dim_p, dim_q), intent(in)  :: x
+      real(dp), dimension(dim_p, dim_q, dim_p, dim_q), intent(out) :: y
+!
+      logical, optional, intent(in) :: psrq
+      real(dp), optional, intent(in) :: alpha, beta
+!
+      integer :: p, q, r, s
+      logical :: psrq_
+      real(dp) :: factor1, factor2
+      real(dp) :: alpha_, beta_
+!
+      psrq_ = .false.
+      if(present(psrq)) psrq_ = psrq
+!
+      alpha_ = one
+      if(present(alpha)) alpha_ = alpha
+      beta_ = zero
+      if(present(beta)) beta_ = beta
+!
+      if(psrq_) then
+         factor1 = -one
+         factor2 = two
+      else
+         factor1 = two
+         factor2 = -one
+      endif
+!
+      if(beta_ .eq. zero) then
+!$omp parallel do schedule(static) collapse(2) private(p,q,r,s)
+         do s = 1, dim_q
+            do r = 1, dim_p
+               do q = 1, dim_q
+                  do p = 1, dim_p
+!
+                     y(p,q,r,s) = alpha_*(factor1*x(p,q,r,s) + factor2*x(p,s,r,q))
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+      else
+!$omp parallel do schedule(static) collapse(2) private(p,q,r,s)
+         do s = 1, dim_q
+            do r = 1, dim_p
+               do q = 1, dim_q
+                  do p = 1, dim_p
+!
+                     y(p,q,r,s) = beta_*y(p,q,r,s) &
+                                + alpha_*(factor1*x(p,q,r,s) + factor2*x(p,s,r,q))
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+      endif
+!
+   end subroutine construct_contravariant_r
+!
+!
+   subroutine construct_contravariant_c(x, y, dim_p, dim_q, psrq, alpha, beta)
+!!
+!!    Construct packed contravariant
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Feb 2021
+!!
+!!    if .not. psrq
+!!       y(p,q,r,s) = 2*x(p,q,r,s) - x(p,s,r,q)
+!!    else
+!!       y(p,q,r,s) = 2*x(p,s,r,q) - x(p,q,r,s)
+!!    endif
+!!
+!!    default: psrq = .false.
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      complex(dp), dimension(dim_p, dim_q, dim_p, dim_q), intent(in)  :: x
+      complex(dp), dimension(dim_p, dim_q, dim_p, dim_q), intent(out) :: y
+!
+      logical, optional, intent(in) :: psrq
+      complex(dp), optional, intent(in) :: alpha, beta
+!
+      integer :: p, q, r, s
+      logical :: psrq_
+      complex(dp) :: factor1, factor2
+      complex(dp) :: alpha_, beta_
+!
+      psrq_ = .false.
+      if(present(psrq)) psrq_ = psrq
+!
+      alpha_ = one_complex
+      if(present(alpha)) alpha_ = alpha
+      beta_ = zero_complex
+      if(present(beta)) beta_ = beta
+!
+      if(psrq_) then
+         factor1 = -one_complex
+         factor2 = two_complex
+      else
+         factor1 = two_complex
+         factor2 = -one_complex
+      endif
+!
+      if(beta_ .eq. zero_complex) then
+!$omp parallel do schedule(static) collapse(2) private(p,q,r,s)
+         do s = 1, dim_q
+            do r = 1, dim_p
+               do q = 1, dim_q
+                  do p = 1, dim_p
+!
+                     y(p,q,r,s) = alpha_*(factor1*x(p,q,r,s) + factor2*x(p,s,r,q))
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+      else
+!$omp parallel do schedule(static) collapse(2) private(p,q,r,s)
+         do s = 1, dim_q
+            do r = 1, dim_p
+               do q = 1, dim_q
+                  do p = 1, dim_p
+!
+                     y(p,q,r,s) = beta_*y(p,q,r,s) &
+                                + alpha_*(factor1*x(p,q,r,s) + factor2*x(p,s,r,q))
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+      endif
+!
+   end subroutine construct_contravariant_c
 !
 !
    subroutine construct_packed_contravariant_real(x, y, dim_p, dim_q)
