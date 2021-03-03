@@ -76,6 +76,8 @@ module davidson_tool_class
       procedure :: red_dim_exceeds_max  => red_dim_exceeds_max_davidson_tool
       procedure :: update_reduced_dim   => update_reduced_dim_davidson_tool
 !
+      procedure :: print_settings       => print_settings_davidson_tool
+!
 !     Other routines 
 !
       procedure :: construct_solution                          &
@@ -965,6 +967,21 @@ contains
       exceeds_max = (davidson%dim_red + davidson%n_new_trials .gt. davidson%max_dim_red)
 !
    end function red_dim_exceeds_max_davidson_tool
+!
+!
+   subroutine print_settings_davidson_tool(davidson)
+!!
+!!    Print settings  
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(davidson_tool), intent(inout) :: davidson 
+!
+      call output%printf('m', 'Max reduced space dimension:  (i11)', &
+                         ints=[davidson%max_dim_red], fs='(/t6,a/)')
+!
+   end subroutine print_settings_davidson_tool
 !
 !
 end module davidson_tool_class

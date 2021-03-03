@@ -229,6 +229,23 @@ contains
 !
       call input%get_keyword('storage', 'solver cc es', solver%storage)
 !
+!     Determine whether to store records in memory or on file
+!
+      if (trim(solver%storage) == 'memory') then 
+!
+         solver%records_in_memory = .true.
+!
+      elseif (trim(solver%storage) == 'disk') then 
+!
+         solver%records_in_memory = .false.
+!
+      else 
+!
+         call output%error_msg('Could not recognize keyword storage in solver: ' // &
+                                 trim(solver%storage))
+!
+      endif 
+!
    end subroutine read_es_settings_abstract_cc_es
 !
 !

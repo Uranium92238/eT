@@ -135,7 +135,7 @@ contains
       solver%n_singlet_states     = 0
       solver%max_iterations       = 100
       solver%restart              = restart
-      solver%max_dim_red          = 100 
+      solver%max_dim_red          = max(100, 10*solver%n_singlet_states)
       solver%transformation       = trim(transformation)
       solver%es_type              = 'valence'
       solver%records_in_memory    = .false.  
@@ -149,57 +149,9 @@ contains
 !
       call solver%read_settings()
 !
-!     Value of max_dim_red is set greater than or equal to 10*n_singlet_states
-!     (if value is not specified in input), and less than or equal to number of
-!     excited state amplitudes (always).
-!
-      if (.not. input%is_keyword_present('max reduced dimension', 'solver cc es')) &
-         solver%max_dim_red = max(solver%max_dim_red, 10*solver%n_singlet_states)
-!
-      if (solver%max_dim_red .gt. wf%n_es_amplitudes) then
-!
-         solver%max_dim_red = wf%n_es_amplitudes
-!
-         if (input%is_keyword_present('max reduced dimension', 'solver cc es')) then
-!
-            call output%warning_msg('specified maximum reduced dimension exceeds the number ' // &
-                                    'of independent solutions. It has been changed to the '   // &
-                                    'number of excited state amplitudes.')
-!
-         endif
-!
-      endif
-!
-      call solver%print_settings()
-!
-      if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
-!
-      if (solver%n_singlet_states .gt. wf%n_es_amplitudes) &
-         call output%error_msg('specified number of excitations exceeds the number of ' // &
-                               'independent solutions.')
-!
-      if (solver%n_singlet_states .gt. solver%max_dim_red) &
-         call output%error_msg('number of excitations exceeds the specified maximum ' // &
-                               'reduced dimension.')
-!
       wf%n_singlet_states = solver%n_singlet_states
 !
-!     Determine whether to store records in memory or on file
-!
-      if (trim(solver%storage) == 'memory') then 
-!
-         solver%records_in_memory = .true.
-!
-      elseif (trim(solver%storage) == 'disk') then 
-!
-         solver%records_in_memory = .false.
-!
-      else 
-!
-         call output%error_msg('Could not recognize keyword storage in solver: ' // &
-                                 trim(solver%storage))
-!
-      endif 
+      call solver%print_settings()
 !
    end function new_davidson_cc_es
 !
@@ -214,9 +166,6 @@ contains
       class(davidson_cc_es) :: solver 
 !
       call solver%print_es_settings()
-!
-      call output%printf('m', 'Max reduced space dimension:  (i11)', &
-                         ints=[solver%max_dim_red], fs='(/t6,a/)')
 !
    end subroutine print_settings_davidson_cc_es
 !

@@ -249,7 +249,7 @@ contains
       davidson%name_ = trim(name_)
       davidson%n_parameters = n_parameters
       davidson%n_solutions = n_equations
-      davidson%max_dim_red = max_dim_red
+      davidson%max_dim_red = min(max_dim_red, n_parameters)
       davidson%lindep_threshold = lindep_threshold
       davidson%n_rhs = n_rhs
 !
@@ -259,6 +259,8 @@ contains
 !
       davidson%dim_red      = 0    
       davidson%n_new_trials = davidson%n_solutions 
+!
+      call davidson%print_settings()
 !
    end subroutine general_preparations_linear_davidson_tool
 !

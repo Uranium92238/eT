@@ -173,23 +173,6 @@ contains
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
       wf%n_singlet_states = solver%n_singlet_states
-!
-!     Determine whether to store records in memory or on file
-!
-      if (trim(solver%storage) == 'memory') then 
-!
-         solver%records_in_memory = .true.
-!
-      elseif (trim(solver%storage) == 'disk') then 
-!
-         solver%records_in_memory = .false.
-!
-      else 
-!
-         call output%error_msg('Could not recognize keyword storage in solver: ' // &
-                                 trim(solver%storage))
-!
-      endif
 ! 
    end function new_diis_cc_es
 !
