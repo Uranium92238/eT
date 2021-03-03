@@ -992,7 +992,7 @@ contains
    subroutine get_eri_mo_mo_eri_tool(eri, string, g_pqrs, &
                                      first_p, last_p, first_q, last_q, &
                                      first_r, last_r, first_s, last_s, &
-                                     qp, sr, rspq)
+                                     alpha, beta, qp, sr, rspq)
 !!
 !!    Get ERI MO
 !!    Written by Rolf H. Myhre Jun 2020
@@ -1003,6 +1003,9 @@ contains
 !!            o: occupied, v: virtual, f: full
 !!    q_pqrs: array to contain the integral
 !!    first_p, last_p, etc.: first and last index of integrals in range determined by string
+!!
+!!    alpha: scales data added to g_pqrs (default = 1.0)
+!!    beta : scales data already in g_pqrs (default = 0.0)
 !!
 !!    Optional reordering logicals (default = .false.):
 !!    qp:   switches order of p and q, i.e., g_qprs
@@ -1021,12 +1024,22 @@ contains
       integer, optional, intent(in) :: first_r, last_r
       integer, optional, intent(in) :: first_s, last_s
 !
-      real(dp), intent(out), dimension(1) :: g_pqrs
+      real(dp), intent(inout), dimension(1) :: g_pqrs
 !
       logical, optional, intent(in) :: qp, sr, rspq
 !
+      real(dp), optional, intent(in) :: alpha, beta
+!
       integer :: full_first_p, full_last_p, full_first_q, full_last_q
       integer :: full_first_r, full_last_r, full_first_s, full_last_s
+!
+      real(dp) :: alpha_, beta_
+!
+      alpha_ = one
+      if(present(alpha)) alpha_ = alpha
+!
+      beta_ = zero
+      if(present(beta)) beta_ = beta
 !
       call eri%index_setup(string(1:1), full_first_p, full_last_p, first_p, last_p)
       call eri%index_setup(string(2:2), full_first_q, full_last_q, first_q, last_q)
@@ -1037,14 +1050,14 @@ contains
                                      full_first_q, full_last_q, &
                                      full_first_r, full_last_r, &
                                      full_first_s, full_last_s, &
-                                     qp, sr, rspq)
+                                     alpha_, beta_, qp, sr, rspq)
 !
    end subroutine get_eri_mo_mo_eri_tool
 !
 !
    subroutine get_g_pqrs_mo_mo_eri_tool(eri, g_pqrs, first_p, last_p, first_q, last_q, &
                                                      first_r, last_r, first_s, last_s, &
-                                                     qp, sr, rspq)
+                                                     alpha, beta, qp, sr, rspq)
 !!
 !!    Get g_pqrs MO
 !!    Written by Rolf H. Myhre, Jun 2020
@@ -1069,8 +1082,10 @@ contains
       integer, intent(in) :: first_r, last_r
       integer, intent(in) :: first_s, last_s
 !
-      real(dp), intent(out), &
+      real(dp), intent(inout), &
                 dimension(first_p:last_p,first_q:last_q,first_r:last_r,first_s:last_s) :: g_pqrs
+!
+      real(dp), intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp, sr, rspq
 !
@@ -1079,13 +1094,13 @@ contains
          call eri%copy_g_pqrs(g_pqrs, eri%g_pqrs_mo, &
                               first_p, last_p, first_q, last_q, &
                               first_r, last_r, first_s, last_s, &
-                              qp, sr, rspq)
+                              alpha, beta, qp, sr, rspq)
 !
       else
 !
          call eri%construct_g_pqrs_mo(g_pqrs, first_p, last_p, first_q, last_q, &
                                               first_r, last_r, first_s, last_s, &
-                                              qp, sr, rspq)
+                                              alpha, beta, qp, sr, rspq)
 !
       endif
 !
@@ -1095,7 +1110,7 @@ contains
    subroutine construct_g_pqrs_mo_mo_eri_tool(eri, g_pqrs, &
                                               first_p, last_p, first_q, last_q, &
                                               first_r, last_r, first_s, last_s, &
-                                              qp, sr, rspq)
+                                              alpha, beta, qp, sr, rspq)
 !!
 !!    Construct g_pqrs MO
 !!    Written by Rolf H. Myhre, Jun 2020
@@ -1118,8 +1133,10 @@ contains
       integer, intent(in) :: first_r, last_r
       integer, intent(in) :: first_s, last_s
 !
-      real(dp), intent(out), &
+      real(dp), intent(inout), &
                 dimension(first_p:last_p,first_q:last_q,first_r:last_r,first_s:last_s) :: g_pqrs
+!
+      real(dp), intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp, sr, rspq
 !
@@ -1150,7 +1167,7 @@ contains
       call eri%L_pointer_setup_mo(L_J_rs_p, switch_rs, &
                                   first_r, last_r, first_s, last_s, rs_alloced)
 !
-      call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, zero, &
+      call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, alpha, beta, &
                                   dim_p, dim_q, dim_r, dim_s, rspq)
 !
       if (rs_alloced) then
@@ -1166,7 +1183,7 @@ contains
    subroutine copy_g_pqrs_mo_eri_tool(eri, g_to, g_from, &
                                       first_p, last_p, first_q, last_q, &
                                       first_r, last_r, first_s, last_s, &
-                                      qp, sr, rspq)
+                                      alpha, beta, qp, sr, rspq)
 !!
 !!    Copy g_pqrs
 !!    Written by Rolf H. Myhre, Jun 2020
@@ -1183,17 +1200,19 @@ contains
 !!
       implicit none
 !
-      class(mo_eri_tool), intent(in) :: eri
+      class(mo_eri_tool), intent(inout) :: eri
 !
       integer, intent(in) :: first_p, last_p
       integer, intent(in) :: first_q, last_q
       integer, intent(in) :: first_r, last_r
       integer, intent(in) :: first_s, last_s
 !
-      real(dp), target, intent(out), &
+      real(dp), target, intent(inout), &
              dimension(first_p:last_p, first_q:last_q, first_r:last_r, first_s:last_s) :: g_to
 !
       real(dp), intent(in), dimension(eri%n_mo, eri%n_mo, eri%n_mo, eri%n_mo) :: g_from
+!
+      real(dp), intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp, sr, rspq
 !
@@ -1211,140 +1230,274 @@ contains
       if(present(sr)) sr_ = sr
       if(present(rspq)) rspq_ = rspq
 !
-      if(.not. qp_ .and. .not. sr_ .and. .not. rspq_) then !pqrs
+      if (beta .eq. zero) then
+!
+         if(.not. qp_ .and. .not. sr_ .and. .not. rspq_) then !pqrs
 !
 !$omp parallel do private(s, r, q, p)
-         do s = first_s, last_s
-            do r = first_r, last_r
-               do q = first_q, last_q
-                  do p = first_p, last_p
-                     g_to(p,q,r,s) = g_from(p,q,r,s)
-                  enddo
-               enddo
-            enddo
-         enddo
-!$omp end parallel do
-!
-      elseif(qp_ .and. .not. sr_ .and. .not. rspq_) then !qprs
-!
-         g_to_p(first_q:last_q, first_p:last_p, first_r:last_r, first_s:last_s) => g_to
-!
-!$omp parallel do private(s, r, q, p)
-         do s = first_s, last_s
-            do r = first_r, last_r
-               do p = first_p, last_p
-                  do q = first_q, last_q
-                     g_to_p(q,p,r,s) = g_from(p,q,r,s)
-                  enddo
-               enddo
-            enddo
-         enddo
-!$omp end parallel do
-!
-      elseif(.not. qp_ .and. sr_ .and. .not. rspq_) then !pqsr
-!
-         g_to_p(first_p:last_p, first_q:last_q, first_s:last_s, first_r:last_r) => g_to
-!
-!$omp parallel do private(s, r, q, p)
-         do r = first_r, last_r
             do s = first_s, last_s
-               do q = first_q, last_q
-                  do p = first_p, last_p
-                     g_to_p(p,q,s,r) = g_from(p,q,r,s)
-                  enddo
-               enddo
-            enddo
-         enddo
-!$omp end parallel do
-!
-      elseif(qp_ .and. sr_ .and. .not. rspq_) then !qpsr
-!
-         g_to_p(first_q:last_q, first_p:last_p, first_s:last_s, first_r:last_r) => g_to
-!
-!$omp parallel do private(s, r, q, p)
-         do r = first_r, last_r
-            do s = first_s, last_s
-               do p = first_p, last_p
+               do r = first_r, last_r
                   do q = first_q, last_q
-                     g_to_p(q,p,s,r) = g_from(p,q,r,s)
+                     do p = first_p, last_p
+                        g_to(p,q,r,s) = alpha*g_from(p,q,r,s)
+                     enddo
                   enddo
                enddo
             enddo
-         enddo
 !$omp end parallel do
 !
-      elseif(.not. qp_ .and. .not. sr_ .and. rspq_) then !rspq
+         elseif(qp_ .and. .not. sr_ .and. .not. rspq_) then !qprs
 !
-         g_to_p(first_r:last_r, first_s:last_s, first_p:last_p, first_q:last_q) => g_to
-!
-!$omp parallel do private(s, r, q, p)
-         do q = first_q, last_q
-            do p = first_p, last_p
-               do s = first_s, last_s
-                  do r = first_r, last_r
-                     g_to_p(r,s,p,q) = g_from(p,q,r,s)
-                  enddo
-               enddo
-            enddo
-         enddo
-!$omp end parallel do
-!
-      elseif(qp_ .and. .not. sr_ .and. rspq_) then !rsqp
-!
-         g_to_p(first_r:last_r, first_s:last_s, first_q:last_q, first_p:last_p) => g_to
+            g_to_p(first_q:last_q, first_p:last_p, first_r:last_r, first_s:last_s) => g_to
 !
 !$omp parallel do private(s, r, q, p)
-         do p = first_p, last_p
-            do q = first_q, last_q
-               do s = first_s, last_s
-                  do r = first_r, last_r
-                     g_to_p(r,s,q,p) = g_from(p,q,r,s) !srpq
-                  enddo
-               enddo
-            enddo
-         enddo
-!$omp end parallel do
-!
-      elseif(.not. qp_ .and. sr_ .and. rspq_) then !srpq
-!
-         g_to_p(first_s:last_s, first_r:last_r, first_p:last_p, first_q:last_q) => g_to
-!
-!$omp parallel do private(s, r, q, p)
-         do q = first_q, last_q
-            do p = first_p, last_p
+            do s = first_s, last_s
                do r = first_r, last_r
-                  do s = first_s, last_s
-                     g_to_p(s,r,p,q) = g_from(p,q,r,s)
+                  do p = first_p, last_p
+                     do q = first_q, last_q
+                        g_to_p(q,p,r,s) = alpha*g_from(p,q,r,s)
+                     enddo
                   enddo
                enddo
             enddo
-         enddo
 !$omp end parallel do
 !
-      elseif(qp_ .and. sr_ .and. rspq_) then !srqp
+         elseif(.not. qp_ .and. sr_ .and. .not. rspq_) then !pqsr
 !
-         g_to_p(first_s:last_s, first_r:last_r, first_q:last_q, first_p:last_p) => g_to
+            g_to_p(first_p:last_p, first_q:last_q, first_s:last_s, first_r:last_r) => g_to
 !
 !$omp parallel do private(s, r, q, p)
-         do p = first_p, last_p
-            do q = first_q, last_q
-               do r = first_r, last_r
-                  do s = first_s, last_s
-                     g_to_p(s,r,q,p) = g_from(p,q,r,s)
+            do r = first_r, last_r
+               do s = first_s, last_s
+                  do q = first_q, last_q
+                     do p = first_p, last_p
+                        g_to_p(p,q,s,r) = alpha*g_from(p,q,r,s)
+                     enddo
                   enddo
                enddo
             enddo
-         enddo
 !$omp end parallel do
 !
-      endif
+         elseif(qp_ .and. sr_ .and. .not. rspq_) then !qpsr
+!
+            g_to_p(first_q:last_q, first_p:last_p, first_s:last_s, first_r:last_r) => g_to
+!
+!$omp parallel do private(s, r, q, p)
+            do r = first_r, last_r
+               do s = first_s, last_s
+                  do p = first_p, last_p
+                     do q = first_q, last_q
+                        g_to_p(q,p,s,r) = alpha*g_from(p,q,r,s)
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+         elseif(.not. qp_ .and. .not. sr_ .and. rspq_) then !rspq
+!
+            g_to_p(first_r:last_r, first_s:last_s, first_p:last_p, first_q:last_q) => g_to
+!
+!$omp parallel do private(s, r, q, p)
+            do q = first_q, last_q
+               do p = first_p, last_p
+                  do s = first_s, last_s
+                     do r = first_r, last_r
+                        g_to_p(r,s,p,q) = alpha*g_from(p,q,r,s)
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+         elseif(qp_ .and. .not. sr_ .and. rspq_) then !rsqp
+!
+            g_to_p(first_r:last_r, first_s:last_s, first_q:last_q, first_p:last_p) => g_to
+!
+!$omp parallel do private(s, r, q, p)
+            do p = first_p, last_p
+               do q = first_q, last_q
+                  do s = first_s, last_s
+                     do r = first_r, last_r
+                        g_to_p(r,s,q,p) = alpha*g_from(p,q,r,s) !srpq
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+         elseif(.not. qp_ .and. sr_ .and. rspq_) then !srpq
+!
+            g_to_p(first_s:last_s, first_r:last_r, first_p:last_p, first_q:last_q) => g_to
+!
+!$omp parallel do private(s, r, q, p)
+            do q = first_q, last_q
+               do p = first_p, last_p
+                  do r = first_r, last_r
+                     do s = first_s, last_s
+                        g_to_p(s,r,p,q) = alpha*g_from(p,q,r,s)
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+         elseif(qp_ .and. sr_ .and. rspq_) then !srqp
+!
+            g_to_p(first_s:last_s, first_r:last_r, first_q:last_q, first_p:last_p) => g_to
+!
+!$omp parallel do private(s, r, q, p)
+            do p = first_p, last_p
+               do q = first_q, last_q
+                  do r = first_r, last_r
+                     do s = first_s, last_s
+                        g_to_p(s,r,q,p) = alpha*g_from(p,q,r,s)
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+         endif
+!
+      else !beta .ne. zero
+!
+         if(.not. qp_ .and. .not. sr_ .and. .not. rspq_) then !pqrs
+!
+!$omp parallel do private(s, r, q, p)
+            do s = first_s, last_s
+               do r = first_r, last_r
+                  do q = first_q, last_q
+                     do p = first_p, last_p
+                        g_to(p,q,r,s) = beta*g_to(p,q,r,s) + alpha*g_from(p,q,r,s)
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+         elseif(qp_ .and. .not. sr_ .and. .not. rspq_) then !qprs
+!
+            g_to_p(first_q:last_q, first_p:last_p, first_r:last_r, first_s:last_s) => g_to
+!
+!$omp parallel do private(s, r, q, p)
+            do s = first_s, last_s
+               do r = first_r, last_r
+                  do p = first_p, last_p
+                     do q = first_q, last_q
+                        g_to_p(q,p,r,s) = beta*g_to_p(q,p,r,s) + alpha*g_from(p,q,r,s)
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+         elseif(.not. qp_ .and. sr_ .and. .not. rspq_) then !pqsr
+!
+            g_to_p(first_p:last_p, first_q:last_q, first_s:last_s, first_r:last_r) => g_to
+!
+!$omp parallel do private(s, r, q, p)
+            do r = first_r, last_r
+               do s = first_s, last_s
+                  do q = first_q, last_q
+                     do p = first_p, last_p
+                        g_to_p(p,q,s,r) = beta*g_to_p(p,q,s,r) + alpha*g_from(p,q,r,s)
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+         elseif(qp_ .and. sr_ .and. .not. rspq_) then !qpsr
+!
+            g_to_p(first_q:last_q, first_p:last_p, first_s:last_s, first_r:last_r) => g_to
+!
+!$omp parallel do private(s, r, q, p)
+            do r = first_r, last_r
+               do s = first_s, last_s
+                  do p = first_p, last_p
+                     do q = first_q, last_q
+                        g_to_p(q,p,s,r) = beta*g_to_p(q,p,s,r) + alpha*g_from(p,q,r,s)
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+         elseif(.not. qp_ .and. .not. sr_ .and. rspq_) then !rspq
+!
+            g_to_p(first_r:last_r, first_s:last_s, first_p:last_p, first_q:last_q) => g_to
+!
+!$omp parallel do private(s, r, q, p)
+            do q = first_q, last_q
+               do p = first_p, last_p
+                  do s = first_s, last_s
+                     do r = first_r, last_r
+                        g_to_p(r,s,p,q) = beta*g_to_p(r,s,p,q) + alpha*g_from(p,q,r,s)
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+         elseif(qp_ .and. .not. sr_ .and. rspq_) then !rsqp
+!
+            g_to_p(first_r:last_r, first_s:last_s, first_q:last_q, first_p:last_p) => g_to
+!
+!$omp parallel do private(s, r, q, p)
+            do p = first_p, last_p
+               do q = first_q, last_q
+                  do s = first_s, last_s
+                     do r = first_r, last_r
+                        g_to_p(r,s,q,p) = beta*g_to_p(r,s,q,p) + alpha*g_from(p,q,r,s) !srpq
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+         elseif(.not. qp_ .and. sr_ .and. rspq_) then !srpq
+!
+            g_to_p(first_s:last_s, first_r:last_r, first_p:last_p, first_q:last_q) => g_to
+!
+!$omp parallel do private(s, r, q, p)
+            do q = first_q, last_q
+               do p = first_p, last_p
+                  do r = first_r, last_r
+                     do s = first_s, last_s
+                        g_to_p(s,r,p,q) = beta*g_to_p(s,r,p,q) + alpha*g_from(p,q,r,s)
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+         elseif(qp_ .and. sr_ .and. rspq_) then !srqp
+!
+            g_to_p(first_s:last_s, first_r:last_r, first_q:last_q, first_p:last_p) => g_to
+!
+!$omp parallel do private(s, r, q, p)
+            do p = first_p, last_p
+               do q = first_q, last_q
+                  do r = first_r, last_r
+                     do s = first_s, last_s
+                        g_to_p(s,r,q,p) = beta*g_to_p(s,r,q,p) + alpha*g_from(p,q,r,s)
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+         endif
+!
+      endif !beta .eq. zero
 !
    end subroutine copy_g_pqrs_mo_eri_tool
 !
 !
    subroutine copy_g_pqrs_to_packed_mo_eri_tool(eri, g_to, g_from, &
-                                             first_p, first_q, &
-                                             dim_p, dim_q, qp)
+                                                first_p, first_q,  &
+                                                dim_p, dim_q, alpha, beta, qp)
 !!
 !!    Copy packed g_pqrs
 !!    Written by Rolf H. Myhre, Jun 2020
@@ -1364,10 +1517,12 @@ contains
       integer, intent(in) :: first_p, first_q
       integer, intent(in) :: dim_p, dim_q
 !
-      real(dp), intent(out), &
+      real(dp), intent(inout), &
                 dimension(dim_p*dim_q + mod(dim_p*dim_q+1,2), (dim_p*dim_q+1)/2) :: g_to
 !
       real(dp), intent(in), dimension(eri%n_mo, eri%n_mo, eri%n_mo, eri%n_mo) :: g_from
+!
+      real(dp), intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp
 !
@@ -1380,57 +1535,117 @@ contains
       qp_ = .false.
       if(present(qp)) qp_ = qp
 !
-      if(.not. qp_) then !pqpq
+      if(beta .eq. zero) then
+!
+         if(.not. qp_) then !pqpq
 !
 !$omp parallel do private(x, y, pq, rs, p, q, r, s)
-      do y = 1, (dim_p*dim_q+1)/2
-         do x = 1, dim_p*dim_q + mod(dim_p*dim_q+1,2)
-!
-            if (x .le. y + tridim) then
-               pq = x
-               rs = y + tridim
-            else
-               pq = y
-               rs = x - tridim - 1
-            endif
-!
-            p = mod(pq-1,dim_p)
-            r = mod(rs-1,dim_p)
-            q = (pq-1)/dim_p
-            s = (rs-1)/dim_p
-!
-            g_to(x,y) = g_from(first_p+p, first_q+q, first_p+r, first_q+s)
-!
-         enddo
-      enddo
+            do y = 1, (dim_p*dim_q+1)/2
+               do x = 1, dim_p*dim_q + mod(dim_p*dim_q+1,2)
+!         
+                  if (x .le. y + tridim) then
+                     pq = x
+                     rs = y + tridim
+                  else
+                     pq = y
+                     rs = x - tridim - 1
+                  endif
+!         
+                  p = mod(pq-1,dim_p)
+                  r = mod(rs-1,dim_p)
+                  q = (pq-1)/dim_p
+                  s = (rs-1)/dim_p
+!         
+                  g_to(x,y) = alpha*g_from(first_p+p, first_q+q, first_p+r, first_q+s)
+!         
+               enddo
+            enddo
 !$omp end parallel do
 !
-      else !qpqp
+         else !qpqp
 !
 !$omp parallel do private(x, y, pq, rs, p, q, r, s)
-      do y = 1, (dim_p*dim_q+1)/2
-         do x = 1, dim_p*dim_q + mod(dim_p*dim_q+1,2)
-!
-            if (x .le. y + tridim) then
-               pq = x
-               rs = y + tridim
-            else
-               pq = y
-               rs = x - tridim - 1
-            endif
-!
-            q = mod(pq-1,dim_q)
-            s = mod(rs-1,dim_q)
-            p = (pq-1)/dim_q
-            r = (rs-1)/dim_q
-!
-            g_to(x,y) = g_from(first_p+p, first_q+q, first_p+r, first_q+s)
-!
-         enddo
-      enddo
+            do y = 1, (dim_p*dim_q+1)/2
+               do x = 1, dim_p*dim_q + mod(dim_p*dim_q+1,2)
+!         
+                  if (x .le. y + tridim) then
+                     pq = x
+                     rs = y + tridim
+                  else
+                     pq = y
+                     rs = x - tridim - 1
+                  endif
+!         
+                  q = mod(pq-1,dim_q)
+                  s = mod(rs-1,dim_q)
+                  p = (pq-1)/dim_q
+                  r = (rs-1)/dim_q
+!         
+                  g_to(x,y) = alpha*g_from(first_p+p, first_q+q, first_p+r, first_q+s)
+!         
+               enddo
+            enddo
 !$omp end parallel do
 !
-      endif
+         endif !qp
+!
+      else !beta not zero
+!
+         if(.not. qp_) then !pqpq
+!
+!$omp parallel do private(x, y, pq, rs, p, q, r, s)
+            do y = 1, (dim_p*dim_q+1)/2
+               do x = 1, dim_p*dim_q + mod(dim_p*dim_q+1,2)
+!         
+                  if (x .le. y + tridim) then
+                     pq = x
+                     rs = y + tridim
+                  else
+                     pq = y
+                     rs = x - tridim - 1
+                  endif
+!         
+                  p = mod(pq-1,dim_p)
+                  r = mod(rs-1,dim_p)
+                  q = (pq-1)/dim_p
+                  s = (rs-1)/dim_p
+!         
+                  g_to(x,y) =  beta*g_to(x,y) &
+                            + alpha*g_from(first_p+p,first_q+q,first_p+r,first_q+s)
+!         
+               enddo
+            enddo
+!$omp end parallel do
+!
+         else !qpqp
+!
+!$omp parallel do private(x, y, pq, rs, p, q, r, s)
+            do y = 1, (dim_p*dim_q+1)/2
+               do x = 1, dim_p*dim_q + mod(dim_p*dim_q+1,2)
+!         
+                  if (x .le. y + tridim) then
+                     pq = x
+                     rs = y + tridim
+                  else
+                     pq = y
+                     rs = x - tridim - 1
+                  endif
+!         
+                  q = mod(pq-1,dim_q)
+                  s = mod(rs-1,dim_q)
+                  p = (pq-1)/dim_q
+                  r = (rs-1)/dim_q
+!         
+                  g_to(x,y) =  beta*g_to(x,y) &
+                            + alpha*g_from(first_p+p,first_q+q,first_p+r,first_q+s)
+!         
+               enddo
+            enddo
+!$omp end parallel do
+!
+         endif
+!
+      endif !beta .eq. zero
 !
    end subroutine copy_g_pqrs_to_packed_mo_eri_tool
 !
@@ -1447,14 +1662,14 @@ contains
       if (eri%mo_eri_mem) then
 !
          call eri%construct_g_pqrs_mo(eri%g_pqrs_mo, 1, eri%n_mo, 1, eri%n_mo, &
-                                                     1, eri%n_mo, 1, eri%n_mo)
+                                                     1, eri%n_mo, 1, eri%n_mo, one, zero)
 !
       endif
 !
    end subroutine place_g_mo_in_memory_mo_eri_tool
 !
 !
-   subroutine construct_g_from_L_mo_eri_tool(eri, L_J_pq, L_J_rs, g_pqrs, beta, &
+   subroutine construct_g_from_L_mo_eri_tool(eri, L_J_pq, L_J_rs, g_pqrs, alpha, beta, &
                                              dim_p, dim_q, dim_r, dim_s, rspq)
 !!
 !!    construct g from L
@@ -1471,9 +1686,9 @@ contains
       real(dp), dimension(eri%n_J*dim_p*dim_q), intent(in) :: L_J_pq
       real(dp), dimension(eri%n_J*dim_r*dim_s), intent(in) :: L_J_rs
 !
-      real(dp), dimension(dim_p*dim_q*dim_r*dim_s), intent(out) :: g_pqrs
+      real(dp), dimension(dim_p*dim_q*dim_r*dim_s), intent(inout) :: g_pqrs
 !
-      real(dp), intent(in) :: beta
+      real(dp), intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: rspq
       logical :: switch_pq_rs
@@ -1486,7 +1701,7 @@ contains
                      dim_p*dim_q,   &
                      dim_r*dim_s,   &
                      eri%n_J,       &
-                     one,           &
+                     alpha,         &
                      L_J_pq,        &
                      eri%n_J,       &
                      L_J_rs,        &
@@ -1499,7 +1714,7 @@ contains
                      dim_r*dim_s,   &
                      dim_p*dim_q,   &
                      eri%n_J,       &
-                     one,           &
+                     alpha,         &
                      L_J_rs,        &
                      eri%n_J,       &
                      L_J_pq,        &
@@ -1512,7 +1727,7 @@ contains
    end subroutine construct_g_from_L_mo_eri_tool
 !
 !
-   subroutine construct_g_packed_from_L_mo_eri_tool(eri, L_J_pq, g_pqpq, beta, &
+   subroutine construct_g_packed_from_L_mo_eri_tool(eri, L_J_pq, g_pqpq, alpha, beta, &
                                                     dim_p, dim_q)
 !!
 !!    construct packed g from L
@@ -1530,9 +1745,9 @@ contains
 !
       real(dp), intent(inout), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2) :: g_pqpq
 !
-      real(dp), intent(in) :: beta
+      real(dp), intent(in) :: alpha, beta
 !
-      call dsfrk('N', 'U', 'T', dim_p*dim_q, eri%n_J, one, L_J_pq, eri%n_J, beta, g_pqpq)
+      call dsfrk('N', 'U', 'T', dim_p*dim_q, eri%n_J, alpha, L_J_pq, eri%n_J, beta, g_pqpq)
 !
    end subroutine construct_g_packed_from_L_mo_eri_tool
 !

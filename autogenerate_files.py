@@ -656,6 +656,7 @@ def autogenerate_complex_files(source_directory):
                     line = sub(r"\b" + "dscal" + r"\b", "zscal", line)
                     line = sub(r"\b" + "dgemv" + r"\b", "zgemv", line)
                     line = sub(r"\b" + "dger" + r"\b", "zgeru", line)
+                    line = sub(r"\b" + "dsymm" + r"\b", "zsymm", line)
 
                     # Change to custom zdotu routine,
                     # since the bundled zdotu routine fails on Macs

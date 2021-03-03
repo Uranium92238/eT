@@ -61,7 +61,7 @@ module packed_array_utilities_r
 !!
 !!
 !
-      use kinds
+      use parameters
 !
 contains
 !
@@ -464,6 +464,260 @@ contains
    end subroutine add_single_packed_plus_minus
 !
 !
+   subroutine construct_1432_and_contra(x, y, dim_1, dim_2)
+!!
+!!    Construct 1432 and contra
+!!    Written by Rolf H. Myhre Jan. 2021
+!!
+!!    x :: double packed 4d array
+!!    y :: Full 4d array
+!!
+!!    On exit, the upper triangular part of y will contain x ordered as 1432
+!!    while the lower triangular part will contain contravariant x, i.e. 2*x_1234 - x_1423
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_1, dim_2
+!
+      real(dp), dimension(dim_1*dim_2*(dim_1*dim_2+1)/2), intent(in) :: x
+      real(dp), dimension(dim_1*dim_2, dim_1*dim_2), intent(out) :: y
+!
+      integer :: p, q, r, s, pq, rs, rq, ps, pqrs, psrq, p_end
+!
+!$omp parallel do private(p,q,r,s,pq,rs,pqrs,ps,rq,psrq, p_end) collapse(2) schedule(guided)
+      do s = 1, dim_2
+         do r = 1, dim_1
+            do q = 1, s
+               if (q .ne. s) then
+                  p_end = dim_1
+               else
+                  p_end = r
+               endif
+               do p = 1, p_end
+!
+                  pq = p + (q-1)*dim_1
+                  rs = r + (s-1)*dim_1
+                  ps = p + (s-1)*dim_1
+                  rq = r + (q-1)*dim_1
+                  pqrs = pq + rs*(rs-1)/2
+                  psrq = max(ps,rq)*(max(ps,rq)-3)/2 + ps + rq
+!
+                  y(pq,rs) = x(psrq)
+                  y(rs,pq) = two*x(pqrs) - x(psrq)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine construct_1432_and_contra
+!
+!
+   subroutine construct_full_contra_in_place(x, dim_1, dim_2, psrq)
+!!
+!!    Construct full contra in place
+!!    Written by Rolf H. Myhre Feb. 2021
+!!
+!!    x :: Full 4D array
+!!    
+!!    on exit:
+!!    if psrq .eq. .false. (default)
+!!       x(p,q,r,s) = 2*x(p,q,r,s) - x(p,s,r,q)
+!!    else
+!!       x(p,q,r,s) = 2*x(p,s,r,q) - x(p,q,r,s)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_1, dim_2
+!
+      real(dp), dimension(dim_1, dim_2, dim_1, dim_2), intent(inout) :: x
+!
+      logical, optional, intent(in) :: psrq
+!
+      real(dp) :: factor1, factor2
+      logical :: psrq_
+      integer :: p, q, r, s
+!
+      psrq_ = .false.
+      if(present(psrq)) psrq_ = psrq
+!
+      if(psrq_) then
+         factor1 = -one
+         factor2 = two
+      else
+         factor1 = two
+         factor2 = -one
+      endif
+!
+!$omp parallel
+!$omp do private(p,q,r,s) collapse(2) schedule(guided)
+      do s = 1, dim_2
+         do r = 1, dim_1
+            do q = 1, s-1
+               do p = 1, dim_1
+!
+                  x(p,q,r,s) = factor1*x(r,s,p,q) + factor2*x(p,s,r,q)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end do
+!
+!$omp do private(p,q,r,s) collapse(2) schedule(guided)
+      do s = 1, dim_2
+         do r = 1, dim_1
+            do q = s+1, dim_2
+               do p = 1, dim_1 
+!
+                  x(p,q,r,s) = x(r,s,p,q)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end do
+!$omp end parallel
+!
+   end subroutine construct_full_contra_in_place
+!
+!
+   subroutine symmetrize_and_pack(x, y, dim_1, dim_2, alpha, contra, psrq)
+!!
+!!    Symmetrize and pack
+!!    Written by Rolf H. Myhre Feb. 2021
+!!
+!!    x :: Full 4D array
+!!    y :: Packed 4D array
+!!    
+!!    if contra .eq. .false. (default)
+!!       if psrq .eq. .false. (default)
+!!          y(pqrs) = y(pqrs) 
+!!                  + alpha*(1-1/2*delta_(pq,rs))(x(p,q,r,s) + x(r,s,p,q))
+!!       else
+!!          y(pqrs) = y(pqrs) 
+!!                  + alpha*(1-1/2*delta_(pq,rs))(x(p,s,r,q) + x(r,q,p,s))
+!!       endif
+!!    else
+!!       if psrq .eq. .false
+!!          y(pqrs) = y(pqrs) 
+!!                  + alpha*(1-1/2*delta_(pq,rs))(2*x(p,q,r,s) + x(p,s,r,q))/3
+!!                  + alpha*(1-1/2*delta_(pq,rs))(2*x(r,s,p,q) + x(r,q,p,s))/3
+!!       else
+!!          y(pqrs) = y(pqrs) 
+!!                  + alpha*(1-1/2*delta_(pq,rs))(x(p,q,r,s) + 2*x(p,s,r,q))/3
+!!                  + alpha*(1-1/2*delta_(pq,rs))(x(r,s,p,q) + 2*x(r,q,p,s))/3
+!!       endif
+!!    endif
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_1, dim_2
+!
+      real(dp), dimension(dim_1, dim_2, dim_1, dim_2), intent(in) :: x
+      real(dp), dimension(dim_1*dim_2*(dim_1*dim_2+1)/2), intent(inout) :: y
+!
+      real(dp), optional, intent(in) :: alpha
+!
+      logical, optional, intent(in) :: psrq, contra
+!
+      logical :: psrq_, contra_
+      integer :: p, q, r, s, pq, rs, pqrs, p_end
+      real(dp) :: factor1, factor2, alpha_
+!
+      psrq_ = .false.
+      if(present(psrq)) psrq_ = psrq
+      contra_ = .false.
+      if(present(contra)) contra_ = contra
+      alpha_ = one
+      if(present(alpha)) alpha_ = alpha
+!
+!$omp parallel do private(p,q), schedule(guided)
+      do q=1,dim_2
+         do p=1,dim_1
+            pq = p + (q-1)*dim_1
+            pqrs = pq*(pq+1)/2
+            y(pqrs) = y(pqrs) + alpha_*x(p,q,p,q)
+         enddo
+      enddo
+!$omp end parallel do
+!
+      if(.not. contra_) then
+         if(.not. psrq_) then
+!$omp parallel do private(p,q,r,s,pq,rs,pqrs,p_end), schedule(guided)
+            do s = 1,dim_2
+               do r = 1,dim_1
+                  rs = r + (s-1)*dim_1
+                  do q = 1,s
+                     if(q .ne. s) then 
+                        p_end = dim_1
+                     else
+                        p_end = r-1
+                     endif
+                     do p = 1,p_end
+                        pq = p + (q-1)*dim_1
+                        pqrs = pq + rs*(rs-1)/2
+                        y(pqrs) = y(pqrs) + alpha_*(x(p,q,r,s) + x(r,s,p,q))
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+         else !psrq
+!$omp parallel do private(p,q,r,s,pq,rs,pqrs,p_end), schedule(guided)
+            do s = 1,dim_2
+               do r = 1,dim_1
+                  rs = r + (s-1)*dim_1
+                  do q = 1,s
+                     if(q .ne. s) then 
+                        p_end = dim_1
+                     else
+                        p_end = r-1
+                     endif
+                     do p = 1,p_end
+                        pq = p + (q-1)*dim_1
+                        pqrs = pq + rs*(rs-1)/2
+                        y(pqrs) = y(pqrs) + alpha_*(x(p,s,r,q) + x(r,q,p,s))
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+         endif
+      else !contra
+         if(psrq_) then
+            factor1 = alpha_*one/three
+            factor2 = alpha_*two/three
+         else
+            factor1 = alpha_*two/three
+            factor2 = alpha_*one/three
+         endif
+!$omp parallel do private(p,q,r,s,pq,rs,pqrs,p_end), schedule(guided)
+         do s = 1,dim_2
+            do r = 1,dim_1
+               rs = r + (s-1)*dim_1
+               do q = 1,s
+                  if(q .ne. s) then 
+                     p_end = dim_1
+                  else
+                     p_end = r-1
+                  endif
+                  do p = 1, p_end
+                     pq = p + (q-1)*dim_1
+                     pqrs = pq + rs*(rs-1)/2
+                     y(pqrs) = y(pqrs) + factor1*x(p,q,r,s) + factor2*x(p,s,r,q) &
+                                       + factor1*x(r,s,p,q) + factor2*x(r,q,p,s)
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+      endif
+!
+   end subroutine symmetrize_and_pack
+!
+!
 end module packed_array_utilities_r
 !
 !
@@ -511,7 +765,7 @@ module packed_array_utilities_c
 !!         http://doi.acm.org/10.1145/1731022.1731028
 !!
 !
-      use kinds
+      use parameters
 !
 contains
 !
@@ -912,6 +1166,260 @@ contains
 !$omp end parallel do
 !
    end subroutine add_single_packed_plus_minus
+!
+!
+   subroutine construct_1432_and_contra(x, y, dim_1, dim_2)
+!!
+!!    Construct 1432 and contra
+!!    Written by Rolf H. Myhre Jan. 2021
+!!
+!!    x :: double packed 4d array
+!!    y :: Full 4d array
+!!
+!!    On exit, the upper triangular part of y will contain x ordered as 1432
+!!    while the lower triangular part will contain contravariant x, i.e. 2*x_1234 - x_1423
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_1, dim_2
+!
+      complex(dp), dimension(dim_1*dim_2*(dim_1*dim_2+1)/2), intent(in) :: x
+      complex(dp), dimension(dim_1*dim_2, dim_1*dim_2), intent(out) :: y
+!
+      integer :: p, q, r, s, pq, rs, rq, ps, pqrs, psrq, p_end
+!
+!$omp parallel do private(p,q,r,s,pq,rs,pqrs,ps,rq,psrq, p_end) collapse(2) schedule(guided)
+      do s = 1, dim_2
+         do r = 1, dim_1
+            do q = 1, s
+               if (q .ne. s) then
+                  p_end = dim_1
+               else
+                  p_end = r
+               endif
+               do p = 1, p_end
+!
+                  pq = p + (q-1)*dim_1
+                  rs = r + (s-1)*dim_1
+                  ps = p + (s-1)*dim_1
+                  rq = r + (q-1)*dim_1
+                  pqrs = pq + rs*(rs-1)/2
+                  psrq = max(ps,rq)*(max(ps,rq)-3)/2 + ps + rq
+!
+                  y(pq,rs) = x(psrq)
+                  y(rs,pq) = two_complex*x(pqrs) - x(psrq)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine construct_1432_and_contra
+!
+!
+   subroutine construct_full_contra_in_place(x, dim_1, dim_2, psrq)
+!!
+!!    Construct full contra in place
+!!    Written by Rolf H. Myhre Feb. 2021
+!!
+!!    x :: Full 4D array
+!!    
+!!    on exit:
+!!    if psrq .eq. .false. (default)
+!!       x(p,q,r,s) = 2*x(p,q,r,s) - x(p,s,r,q)
+!!    else
+!!       x(p,q,r,s) = 2*x(p,s,r,q) - x(p,q,r,s)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_1, dim_2
+!
+      complex(dp), dimension(dim_1, dim_2, dim_1, dim_2), intent(inout) :: x
+!
+      logical, optional, intent(in) :: psrq
+!
+      complex(dp) :: factor1, factor2
+      logical :: psrq_
+      integer :: p, q, r, s
+!
+      psrq_ = .false.
+      if(present(psrq)) psrq_ = psrq
+!
+      if(psrq_) then
+         factor1 = -one_complex
+         factor2 = two_complex
+      else
+         factor1 = two_complex
+         factor2 = -one_complex
+      endif
+!
+!$omp parallel
+!$omp do private(p,q,r,s) collapse(2) schedule(guided)
+      do s = 1, dim_2
+         do r = 1, dim_1
+            do q = 1, s-1
+               do p = 1, dim_1
+!
+                  x(p,q,r,s) = factor1*x(r,s,p,q) + factor2*x(p,s,r,q)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end do
+!
+!$omp do private(p,q,r,s) collapse(2) schedule(guided)
+      do s = 1, dim_2
+         do r = 1, dim_1
+            do q = s+1, dim_2
+               do p = 1, dim_1 
+!
+                  x(p,q,r,s) = x(r,s,p,q)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end do
+!$omp end parallel
+!
+   end subroutine construct_full_contra_in_place
+!
+!
+   subroutine symmetrize_and_pack(x, y, dim_1, dim_2, alpha, contra, psrq)
+!!
+!!    Symmetrize and pack
+!!    Written by Rolf H. Myhre Feb. 2021
+!!
+!!    x :: Full 4D array
+!!    y :: Packed 4D array
+!!    
+!!    if contra .eq. .false. (default)
+!!       if psrq .eq. .false. (default)
+!!          y(pqrs) = y(pqrs) 
+!!                  + alpha*(1-1/2*delta_(pq,rs))(x(p,q,r,s) + x(r,s,p,q))
+!!       else
+!!          y(pqrs) = y(pqrs) 
+!!                  + alpha*(1-1/2*delta_(pq,rs))(x(p,s,r,q) + x(r,q,p,s))
+!!       endif
+!!    else
+!!       if psrq .eq. .false
+!!          y(pqrs) = y(pqrs) 
+!!                  + alpha*(1-1/2*delta_(pq,rs))(2*x(p,q,r,s) + x(p,s,r,q))/3
+!!                  + alpha*(1-1/2*delta_(pq,rs))(2*x(r,s,p,q) + x(r,q,p,s))/3
+!!       else
+!!          y(pqrs) = y(pqrs) 
+!!                  + alpha*(1-1/2*delta_(pq,rs))(x(p,q,r,s) + 2*x(p,s,r,q))/3
+!!                  + alpha*(1-1/2*delta_(pq,rs))(x(r,s,p,q) + 2*x(r,q,p,s))/3
+!!       endif
+!!    endif
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_1, dim_2
+!
+      complex(dp), dimension(dim_1, dim_2, dim_1, dim_2), intent(in) :: x
+      complex(dp), dimension(dim_1*dim_2*(dim_1*dim_2+1)/2), intent(inout) :: y
+!
+      complex(dp), optional, intent(in) :: alpha
+!
+      logical, optional, intent(in) :: psrq, contra
+!
+      logical :: psrq_, contra_
+      integer :: p, q, r, s, pq, rs, pqrs, p_end
+      complex(dp) :: factor1, factor2, alpha_
+!
+      psrq_ = .false.
+      if(present(psrq)) psrq_ = psrq
+      contra_ = .false.
+      if(present(contra)) contra_ = contra
+      alpha_ = one_complex
+      if(present(alpha)) alpha_ = alpha
+!
+!$omp parallel do private(p,q), schedule(guided)
+      do q=1,dim_2
+         do p=1,dim_1
+            pq = p + (q-1)*dim_1
+            pqrs = pq*(pq+1)/2
+            y(pqrs) = y(pqrs) + alpha_*x(p,q,p,q)
+         enddo
+      enddo
+!$omp end parallel do
+!
+      if(.not. contra_) then
+         if(.not. psrq_) then
+!$omp parallel do private(p,q,r,s,pq,rs,pqrs,p_end), schedule(guided)
+            do s = 1,dim_2
+               do r = 1,dim_1
+                  rs = r + (s-1)*dim_1
+                  do q = 1,s
+                     if(q .ne. s) then 
+                        p_end = dim_1
+                     else
+                        p_end = r-1
+                     endif
+                     do p = 1,p_end
+                        pq = p + (q-1)*dim_1
+                        pqrs = pq + rs*(rs-1)/2
+                        y(pqrs) = y(pqrs) + alpha_*(x(p,q,r,s) + x(r,s,p,q))
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+         else !psrq
+!$omp parallel do private(p,q,r,s,pq,rs,pqrs,p_end), schedule(guided)
+            do s = 1,dim_2
+               do r = 1,dim_1
+                  rs = r + (s-1)*dim_1
+                  do q = 1,s
+                     if(q .ne. s) then 
+                        p_end = dim_1
+                     else
+                        p_end = r-1
+                     endif
+                     do p = 1,p_end
+                        pq = p + (q-1)*dim_1
+                        pqrs = pq + rs*(rs-1)/2
+                        y(pqrs) = y(pqrs) + alpha_*(x(p,s,r,q) + x(r,q,p,s))
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+         endif
+      else !contra
+         if(psrq_) then
+            factor1 = alpha_*one_complex/three
+            factor2 = alpha_*two_complex/three
+         else
+            factor1 = alpha_*two_complex/three
+            factor2 = alpha_*one_complex/three
+         endif
+!$omp parallel do private(p,q,r,s,pq,rs,pqrs,p_end), schedule(guided)
+         do s = 1,dim_2
+            do r = 1,dim_1
+               rs = r + (s-1)*dim_1
+               do q = 1,s
+                  if(q .ne. s) then 
+                     p_end = dim_1
+                  else
+                     p_end = r-1
+                  endif
+                  do p = 1, p_end
+                     pq = p + (q-1)*dim_1
+                     pqrs = pq + rs*(rs-1)/2
+                     y(pqrs) = y(pqrs) + factor1*x(p,q,r,s) + factor2*x(p,s,r,q) &
+                                       + factor1*x(r,s,p,q) + factor2*x(r,q,p,s)
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+      endif
+!
+   end subroutine symmetrize_and_pack
 !
 !
 end module packed_array_utilities_c

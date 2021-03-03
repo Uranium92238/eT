@@ -95,11 +95,8 @@ module ccsd_class
       procedure :: omega_ccsd_b2                              => omega_ccsd_b2_ccsd
       procedure :: omega_ccsd_b2_complex                      => omega_ccsd_b2_ccsd_complex
 !
-      procedure :: omega_ccsd_c2                              => omega_ccsd_c2_ccsd
-      procedure :: omega_ccsd_c2_complex                      => omega_ccsd_c2_ccsd_complex
-!
-      procedure :: omega_ccsd_d2                              => omega_ccsd_d2_ccsd
-      procedure :: omega_ccsd_d2_complex                      => omega_ccsd_d2_ccsd_complex
+      procedure :: omega_ccsd_c2_d2                           => omega_ccsd_c2_d2_ccsd
+      procedure :: omega_ccsd_c2_d2_complex                   => omega_ccsd_c2_d2_ccsd_complex
 !
       procedure :: omega_ccsd_e2                              => omega_ccsd_e2_ccsd
       procedure :: omega_ccsd_e2_complex                      => omega_ccsd_e2_ccsd_complex
