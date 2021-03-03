@@ -82,16 +82,11 @@ def read_record(file_, endian):
     return record
 
 
-def get_dimensionalities(dir_, endian):
+def get_dimensionalities(file_, endian):
     """
     Read the cc_restart_file to get the number of amplitudes.
     Endian specifies the byte order (big or little).
     """
-    file_ = Path(dir_ / "cc_restart_file")
-
-    if not file_.exists():
-        raise Exception(f"cc_restart_file not found in {dir_}")
-
     with file_.open("rb") as f:
         n_o = int.from_bytes(read_record(f, endian), endian)
         n_v = int.from_bytes(read_record(f, endian), endian)
@@ -107,16 +102,11 @@ def get_dimensionalities(dir_, endian):
     return n1, n2, n_gs
 
 
-def get_reference_dimensionalities(dir_, endian):
+def get_reference_dimensionalities(file_, endian):
     """
     Read the scf_restart_file to get the number of amplitudes.
     Endian specifies the byte order (big or little).
     """
-    file_ = Path(dir_ / "scf_restart_file")
-
-    if not file_.exists():
-        raise Exception(f"scf_restart_file not found in {dir_}")
-
     with file_.open("rb") as f:
         n_ao = int.from_bytes(read_record(f, endian), endian)
 
@@ -318,6 +308,7 @@ def make_new_orbital_file(file_path_orbitals, file_path_energies, n_ao, endian):
 def main(argv):
     """
     Read path to restart directory.
+    Read scf_restart_file and update orbital files.
     Read cc_restart_file and update ground state files
     Read excitation_energies_file and update excited state files if present.
     """
@@ -328,15 +319,36 @@ def main(argv):
     # or is the smallest address the most significat byte (big endian)?
     endian = sys.byteorder
 
-    n_ao = get_reference_dimensionalities(translate_path, endian)
-    update_reference_files(translate_path, n_ao, endian)
+    restart_file = Path(translate_path / "scf_restart_file")
 
-    if Path(translate_path / "t").exists():
-        n1, n2, n_gs = get_dimensionalities(translate_path, endian)
-        update_gs_files(translate_path, n1, n2, n_gs, endian)
+    if restart_file.exists():
+        print("Updating Hartree-Fock files.")
+        n_ao = get_reference_dimensionalities(restart_file, endian)
+        update_reference_files(translate_path, n_ao, endian)
+    else:
+        print(
+            f"scf_restart_file not found in {translate_path}.\n",
+            "Did not update Hartree-Fock restart files.",
+        )
 
-    if Path(translate_path / "excitation_energies").exists():
-        update_es_files(translate_path, n1, n2, endian)
+    restart_file = Path(translate_path / "cc_restart_file")
+
+    if restart_file.exists():
+        n1, n2, n_gs = get_dimensionalities(restart_file, endian)
+
+        if Path(translate_path / "t").exists():
+            print("Updating ground state files.")
+            update_gs_files(translate_path, n1, n2, n_gs, endian)
+
+        if Path(translate_path / "excitation_energies").exists():
+            print("Updating excited state files.")
+            update_es_files(translate_path, n1, n2, endian)
+
+    else:
+        print(
+            f"cc_restart_file not found in {translate_path}.\n",
+            "Did not update coupled cluster restart files.",
+        )
 
 
 if __name__ == "__main__":
