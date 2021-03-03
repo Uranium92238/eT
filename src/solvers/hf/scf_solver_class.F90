@@ -477,6 +477,8 @@ contains
       call output%printf('m', 'Acceleration type:             (a11)', &
                          chars=[trim(solver%acceleration_type)], fs='(t6,a)')
 !
+      call solver%convergence_checker%print_settings()
+!
    end subroutine print_settings_scf_solver
 !
 !

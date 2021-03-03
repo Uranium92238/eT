@@ -176,7 +176,7 @@ contains
       type(uhf) :: wf
 !
       wf%name_ = 'uhf'
-      wf%fock_matrix_computed = .false.
+      wf%cumulative_fock = .false.
 !
       call wf%read_settings()
 !
@@ -201,7 +201,7 @@ contains
       wf%name_ = 'uhf'
 !
       wf%cumulative_fock_threshold  = 1.0d0
-      wf%fock_matrix_computed       = .false.
+      wf%cumulative_fock            = .false.
 !
       wf%fractional_uniform_valence = fractional_uniform_valence
 !
@@ -881,7 +881,7 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable :: F
 !
-      call wf%update_fock_and_energy()
+      call wf%update_fock_and_energy(cumulative = wf%cumulative_fock)
 !
       call mem%alloc(F, wf%n_mo, wf%n_mo, wf%n_densities)
 !

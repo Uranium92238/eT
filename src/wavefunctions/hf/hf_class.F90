@@ -77,7 +77,7 @@ module hf_class
       logical :: frozen_core
       logical :: frozen_hf_mos
 !
-      logical :: fock_matrix_computed
+      logical :: cumulative_fock
 !
       logical :: plot_active_density
 !
@@ -212,6 +212,7 @@ module hf_class
       procedure :: get_F => get_F_hf
       procedure :: get_gradient => get_gradient_hf
       procedure :: set_C_and_e => set_C_and_e_hf
+      procedure :: can_do_cumulative_fock => can_do_cumulative_fock_hf
       procedure :: set_orbital_coefficients_from_reduced_ao_C &
                 => set_orbital_coefficients_from_reduced_ao_C_hf
 !
@@ -225,8 +226,6 @@ module hf_class
 !
       procedure :: ao_to_reduced_ao_transformation &
                 => ao_to_reduced_ao_transformation_hf
-!
-      procedure :: do_cumulative_fock => do_cumulative_fock_hf
 !
       procedure :: is_restart_possible => is_restart_possible_hf
 !
@@ -270,7 +269,7 @@ contains
       wf%name_ = 'rhf'
 !
       wf%cumulative_fock_threshold  = 1.0d0
-      wf%fock_matrix_computed       = .false.
+      wf%cumulative_fock            = .false.
 !
       call wf%read_settings()
       call wf%print_banner()
@@ -360,17 +359,21 @@ contains
 !
       class(hf) :: wf
 !
-      call input%get_keyword('coulomb threshold',   &
+      call input%get_keyword('coulomb threshold',              &
                                         'solver scf',          &
                                         wf%coulomb_threshold)
 !
-      call input%get_keyword('exchange threshold',  &
+      call input%get_keyword('exchange threshold',             &
                                         'solver scf',          &
                                         wf%exchange_threshold)
 !
-      call input%get_keyword('integral cutoff',     &
+      call input%get_keyword('integral cutoff',                &
                                         'solver scf',          &
                                         wf%integral_cutoff)      
+!
+      call input%get_keyword('cumulative fock threshold',      &
+                                        'solver scf',          &
+                                        wf%cumulative_fock_threshold)  
 !
    end subroutine read_hf_settings_hf
 !
@@ -1227,7 +1230,7 @@ contains
 !
       real(dp) :: n_electrons
 !
-      call wf%update_fock_and_energy()
+      call wf%update_fock_and_energy(cumulative = .false.)
 !
       n_electrons = wf%get_n_electrons_in_density()
 !
@@ -1510,7 +1513,7 @@ contains
       integer, intent(out)          :: n_densities
       integer, intent(out)          :: gradient_dimension
 !
-      wf%fock_matrix_computed = .false. 
+      wf%cumulative_fock = .false. 
 !
       call wf%set_screening_and_precision_thresholds(gradient_threshold)
 !
@@ -1614,7 +1617,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: F
 !
-      call wf%update_fock_and_energy()
+      call wf%update_fock_and_energy(wf%cumulative_fock)
 !
       call mem%alloc(F, wf%n_mo, wf%n_mo)
 !
@@ -1633,14 +1636,16 @@ contains
 !!
 !!    Returns the packed gradient
 !!
-      use reordering, only: packin 
-      implicit none
-!
+!!    If the gradient norm is sufficiently small, 
+!!    'cumulative_fock' is enabled
+!!
       class(hf) :: wf
 !
       real(dp), dimension(wf%gradient_dimension), intent(out) :: G
 !
       call wf%get_packed_roothan_hall_gradient(G)
+!
+      wf%cumulative_fock = wf%can_do_cumulative_fock(G)
 !
    end subroutine get_gradient_hf
 !
@@ -1924,41 +1929,6 @@ contains
    end subroutine ao_to_orthonormal_ao_transformation_hf
 !
 !
-   function do_cumulative_fock_hf(wf) result(cumulative)
-!!
-!!    Do cumulative fock
-!!    Written by Sarai D. Folkestad, 2020
-!!
-!!    Returns true if we can do cumulative Fock
-!!
-      implicit none
-!
-      class(hf) :: wf
-      logical   :: cumulative
-!
-      real(dp), dimension(:), allocatable :: G
-!
-      real(dp) :: gradient_norm
-!
-      cumulative = .false.
-!
-      if (wf%gradient_dimension == 0) return ! gradient dimension is 0 if there is 1 AO
-!
-      if (wf%fock_matrix_computed) then
-!
-         call mem%alloc(G, wf%gradient_dimension)
-         call wf%get_gradient(G)
-!
-         gradient_norm  = get_abs_max(G, wf%gradient_dimension)
-         call mem%dealloc(G, wf%gradient_dimension)
-!
-         cumulative = gradient_norm .lt. wf%cumulative_fock_threshold 
-!
-      endif
-!
-   end function do_cumulative_fock_hf
-!
-!
    function is_restart_possible_hf(wf) result(restart_is_possible)
 !!
 !!    Is restart possible
@@ -2005,7 +1975,7 @@ contains
 !
       converged = .false.
 !
-      call wf%update_fock_and_energy()
+      call wf%update_fock_and_energy(cumulative = .false.)
 !
       call mem%alloc(G, wf%n_mo*(wf%n_mo-1)/2, wf%n_densities)
 !
@@ -2017,5 +1987,25 @@ contains
       if (max_gradient .lt. threshold) converged = .true.
 !
    end function control_gradient_convergence_hf
+!
+!
+   pure function can_do_cumulative_fock_hf(wf, G) result(cumulative)
+!!
+!!    Do cumulative Fock
+!!    Written by Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+      real(dp), dimension(wf%gradient_dimension), intent(in) :: G
+!
+      logical :: cumulative
+!
+      cumulative = .false.
+      if (get_abs_max(G, wf%gradient_dimension) .lt. wf%cumulative_fock_threshold) &
+         cumulative = .true.
+!
+   end function can_do_cumulative_fock_hf
+!
 !
 end module hf_class

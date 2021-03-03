@@ -43,7 +43,7 @@ contains
 !!
       implicit none
 !
-      class(uhf) :: wf
+      class(uhf), intent(inout) :: wf
 !
       real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in) :: prev_ao_density
 !
@@ -88,7 +88,7 @@ contains
 !!
       implicit none
 !
-      class(uhf) :: wf
+      class(uhf), intent(inout) :: wf
 !      
       real(dp), dimension(:,:), allocatable :: h_wx_eff
 !
@@ -122,7 +122,7 @@ contains
    end subroutine update_fock_and_energy_non_cumulative_uhf
 !
 !
-   module subroutine update_fock_and_energy_uhf(wf)
+   module subroutine update_fock_and_energy_uhf(wf, cumulative)
 !!
 !!    Update Fock and energy wrapper
 !!    Written by Tommaso Giovannini, July 2019
@@ -132,9 +132,10 @@ contains
 !!
       implicit none
 !
-      class(uhf) :: wf
+      class(uhf), intent(inout) :: wf
+      logical, intent(in) :: cumulative
 !
-      if (.not. wf%do_cumulative_fock()) then
+      if (.not. cumulative) then
 !
           call wf%update_fock_and_energy_non_cumulative()
 !
@@ -151,8 +152,6 @@ contains
          endif
 !
       endif
-!
-      wf%fock_matrix_computed = .true.
 !
       call wf%calculate_uhf_energy(wf%ao%h)
 !      
@@ -176,7 +175,7 @@ contains
 !!
       implicit none
 !
-      class(uhf) :: wf
+      class(uhf), intent(inout) :: wf
 !
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D_alpha, D_beta

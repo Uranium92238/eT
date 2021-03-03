@@ -996,7 +996,7 @@ contains
    end subroutine invert_lower_triangular
 !
 !
-   real(dp) function get_abs_max(X, n)
+   pure real(dp) function get_abs_max(X, n)
 !!
 !!    Get absolute maximum value of vector
 !!    Written by Eirik F. Kjønstad, 2018
