@@ -11,6 +11,7 @@
 - Non-linear davidson now default solver for CC3 and low-mem CC2. See merge request eT-program/eT!724
 - Only necessary (vv|vv) integrals computed in CCSD and transpose Jacobian transformation now uses the optimized v^4o^2 routine. See merge request eT-program/eT!711
 - Some cleanup in C2 and D2 terms in CCSD. See merge request eT-program/eT!727
+- ERI tools use xsyrk to compute symmetric integrals. See merge request eT-program/eT!730
 
 ### Features
 - printf accepts complex numbers and possible to repeat formats. See merge request eT-program/eT!674

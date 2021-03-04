@@ -115,6 +115,7 @@ module mo_eri_tool_class
       procedure :: set_pointer_mo            => set_pointer_mo_mo_eri_tool
       procedure :: L_pointer_setup_mo        => L_pointer_setup_mo_mo_eri_tool
       procedure :: construct_g_from_L        => construct_g_from_L_mo_eri_tool
+      procedure :: construct_g_symm_from_L   => construct_g_symm_from_L_mo_eri_tool
       procedure :: construct_g_packed_from_L => construct_g_packed_from_L_mo_eri_tool
 !
    end type mo_eri_tool
@@ -1164,15 +1165,24 @@ contains
       call eri%L_pointer_setup_mo(L_J_pq_p, switch_pq, &
                                   first_p, last_p, first_q, last_q, pq_alloced)
 !
-      call eri%L_pointer_setup_mo(L_J_rs_p, switch_rs, &
-                                  first_r, last_r, first_s, last_s, rs_alloced)
+      if((first_p .eq. first_r) .and. (last_p .eq. last_r) .and. &
+         (first_q .eq. first_s) .and. (last_q .eq. last_s) .and. &
+         (switch_pq .eqv. switch_rs)) then
 !
-      call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, alpha, beta, &
-                                  dim_p, dim_q, dim_r, dim_s, rspq)
+         call eri%construct_g_symm_from_L(L_J_pq_p, g_pqrs, alpha, beta, dim_p, dim_q)
 !
-      if (rs_alloced) then
-         call mem%dealloc(L_J_rs_p, eri%n_J, dim_r, dim_s)
+      else
+         call eri%L_pointer_setup_mo(L_J_rs_p, switch_rs, &
+                                     first_r, last_r, first_s, last_s, rs_alloced)
+!
+         call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, alpha, beta, &
+                                     dim_p, dim_q, dim_r, dim_s, rspq)
+!
+         if (rs_alloced) then
+            call mem%dealloc(L_J_rs_p, eri%n_J, dim_r, dim_s)
+         endif
       endif
+!
       if (pq_alloced) then
          call mem%dealloc(L_J_pq_p, eri%n_J, dim_p, dim_q)
       endif
@@ -1725,6 +1735,59 @@ contains
       endif
 !
    end subroutine construct_g_from_L_mo_eri_tool
+!
+!
+   subroutine construct_g_symm_from_L_mo_eri_tool(eri, L_J_pq, g_pqpq, alpha, beta, &
+                                                  dim_p, dim_q)
+!!
+!!    construct packed g from L
+!!    written by Rolf H. Myhre, Jan 2021
+!!
+!!    Contract the Cholesky vector L_J_pq to construct g_pqpq
+!!
+      implicit none
+!
+      class(mo_eri_tool), intent(in) :: eri
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      real(dp), dimension(eri%n_J, dim_p*dim_q), intent(in) :: L_J_pq
+!
+      real(dp), intent(inout), dimension(dim_p*dim_q, dim_p*dim_q) :: g_pqpq
+!
+      real(dp), intent(in) :: alpha, beta
+!
+      integer :: p, q
+!
+      call dsyrk('U', 'T',    &
+                 dim_p*dim_q, &
+                 eri%n_J,     &
+                 alpha,       &
+                 L_J_pq,      &
+                 eri%n_J,     &
+                 beta,        &
+                 g_pqpq,      &
+                 dim_p*dim_q)
+!
+      if(beta .eq. zero) then
+!$omp parallel do private(p,q)
+         do q = 1, dim_p*dim_q
+            do p = q+1, dim_p*dim_q
+               g_pqpq(p,q) = g_pqpq(q,p)
+            enddo
+         enddo
+!$omp end parallel do
+      else
+!$omp parallel do private(p,q)
+         do q = 1, dim_p*dim_q
+            do p = q+1, dim_p*dim_q
+               g_pqpq(p,q) = beta*g_pqpq(p,q) + g_pqpq(q,p)
+            enddo
+         enddo
+!$omp end parallel do
+      endif
+!
+   end subroutine construct_g_symm_from_L_mo_eri_tool
 !
 !
    subroutine construct_g_packed_from_L_mo_eri_tool(eri, L_J_pq, g_pqpq, alpha, beta, &

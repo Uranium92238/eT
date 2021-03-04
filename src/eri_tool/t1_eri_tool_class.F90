@@ -1385,15 +1385,25 @@ contains
       call eri%L_pointer_setup_t1(L_J_pq_p, switch_pq, &
                                   first_p, last_p, first_q, last_q, pq_alloced)
 !
-      call eri%L_pointer_setup_t1(L_J_rs_p, switch_rs, &
-                                  first_r, last_r, first_s, last_s, rs_alloced)
+      if((first_p .eq. first_r) .and. (last_p .eq. last_r) .and. &
+         (first_q .eq. first_s) .and. (last_q .eq. last_s) .and. &
+         (switch_pq .eqv. switch_rs)) then
 !
-      call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, alpha, beta, &
-                                  dim_p, dim_q, dim_r, dim_s, rspq)
+         call eri%construct_g_symm_from_L(L_J_pq_p, g_pqrs, alpha, beta, dim_p, dim_q)
 !
-      if (rs_alloced) then
-         call mem%dealloc(L_J_rs_p, eri%n_J, dim_r, dim_s)
+      else
+!
+         call eri%L_pointer_setup_t1(L_J_rs_p, switch_rs, &
+                                     first_r, last_r, first_s, last_s, rs_alloced)
+!
+         call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, alpha, beta, &
+                                     dim_p, dim_q, dim_r, dim_s, rspq)
+!
+         if (rs_alloced) then
+            call mem%dealloc(L_J_rs_p, eri%n_J, dim_r, dim_s)
+         endif
       endif
+!
       if (pq_alloced) then
          call mem%dealloc(L_J_pq_p, eri%n_J, dim_p, dim_q)
       endif
