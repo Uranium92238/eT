@@ -40,15 +40,6 @@ module diis_cc_gs_class
 !! and the errors and finds a least-squares solution to the error being 
 !! zero (see diis_tool solver tool for more details). 
 !!
-!! The amplitude estimates that are used to DIIS-extrapolate are the quasi-Newton 
-!! update estimates for t_mu: 
-!!
-!!    t_mu <- t_mu - Omega_mu/epsilon_mu.
-!!
-!! See davidson_cc_es solver for the definition of the orbital differences 
-!! vector epsilon_mu and "Molecular Electronic Structure Theory", by Helgaker,
-!! Jørgensen, and Olsen, for details regarding this t-estimate. 
-!!
 !
    use parameters
 !
@@ -64,6 +55,8 @@ module diis_cc_gs_class
    use precondition_tool_class,           only : precondition_tool
    use abstract_convergence_tool_class,   only : abstract_convergence_tool
    use convergence_tool_class,            only : convergence_tool
+!
+   use amplitude_updater_class,     only: amplitude_updater
 !
    implicit none
 !
@@ -87,7 +80,7 @@ module diis_cc_gs_class
 !
       type(timings) :: timer
 !
-      class(precondition_tool), allocatable :: preconditioner 
+      class(amplitude_updater), allocatable :: t_updater
 !
       class(abstract_convergence_tool), allocatable :: convergence_checker
 !
@@ -114,10 +107,13 @@ module diis_cc_gs_class
 contains
 !
 !
-   function new_diis_cc_gs(wf, restart) result(solver)
+   function new_diis_cc_gs(wf, restart, t_updater, storage) result(solver)
 !!
 !!    New DIIS CC GS 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    restart:   read amplitudes instead of generating an initial guess
+!!    t_updater: object for calculating the t-update (i.e. dt_mu), see 'amplitude_updater' class.
 !!
       implicit none
 !
@@ -125,9 +121,11 @@ contains
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(:), allocatable :: eps
-!
       logical, intent(in) :: restart
+!
+      class(amplitude_updater), intent(in) :: t_updater
+!
+      character(len=*), intent(in) :: storage 
 !
       solver%timer = timings('DIIS CC GS solver time', pl='minimal')
       call solver%timer%turn_on()
@@ -138,11 +136,12 @@ contains
 !
 !     Set standard settings 
 !
-      solver%diis_dimension      = 8 
-      solver%max_iterations      = 100
-      solver%restart             = restart
-      solver%storage             = 'disk'
-      solver%crop                = .false.
+      solver%diis_dimension   = 8 
+      solver%max_iterations   = 100
+      solver%restart          = restart
+      solver%storage          = storage
+      solver%crop             = .false.
+      solver%t_updater        = t_updater
 !
 !     Initialize convergence checker with default threshols
 !
@@ -181,15 +180,6 @@ contains
                                  trim(solver%storage))
 !
       endif 
-!
-!     Initialize preconditioner 
-!
-      call mem%alloc(eps, wf%n_gs_amplitudes)
-      call wf%get_gs_orbital_differences(eps, wf%n_gs_amplitudes)
-!
-      solver%preconditioner = precondition_tool(eps, wf%n_gs_amplitudes)
-!
-      call mem%dealloc(eps, wf%n_gs_amplitudes)
 !
    end function new_diis_cc_gs
 !
@@ -238,7 +228,7 @@ contains
 !
       logical :: converged
 !
-      real(dp) :: energy, prev_energy
+      real(dp) :: energy, previous_energy
       real(dp) :: omega_norm
 !
       real(dp), dimension(:), allocatable :: omega 
@@ -259,7 +249,7 @@ contains
       call mem%alloc(omega, wf%n_gs_amplitudes)
       call mem%alloc(amplitudes, wf%n_gs_amplitudes)
 !
-      converged          = .false.
+      converged = .false.
 !
       call output%printf('n', 'Iteration    Energy (a.u.)        |omega|       &
                          &Delta E (a.u.) ', fs='(/t3,a)')
@@ -267,8 +257,10 @@ contains
 !
       iteration_timer = timings('DIIS CC GS iteration time', pl='normal')
 !
-      prev_energy = zero
-      iteration   = 0
+      iteration = 0
+      previous_energy = zero
+!
+      call wf%save_amplitudes()
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)
 !
@@ -288,9 +280,13 @@ contains
 !
          call output%printf('n', '(i3)  (f25.12)    (e11.4)    (e11.4)', &
                             ints=[iteration], reals=[wf%energy, omega_norm, &
-                            abs(wf%energy-prev_energy)], fs='(t3, a)')
+                            abs(wf%energy-previous_energy)], fs='(t3, a)')
 !
-         converged = solver%convergence_checker%has_converged(omega_norm, wf%energy-prev_energy, iteration)
+!        Test for convergence & prepare for next iteration if not yet converged
+!
+         converged = solver%convergence_checker%has_converged(omega_norm,                    &
+                                                              wf%energy - previous_energy,   &
+                                                              iteration)
 !
          if (converged) then
 !
@@ -301,27 +297,24 @@ contains
 !
          else
 !
-!           Precondition omega, shift amplitudes by preconditioned omega, 
-!           then ask for the DIIS update of the amplitudes 
-!
-            call solver%preconditioner%do_(omega, &
-                                           prefactor=-one)
+!           Calculate the next guess for the amplitudes,
+!           and improve it with DIIS extrapolation
 !
             call wf%get_amplitudes(amplitudes)
-            call wf%form_newton_raphson_t_estimate(amplitudes, omega)
+!
+            call solver%t_updater%update(wf, amplitudes, omega)
 !
             call diis%update(omega, amplitudes)
+!
             call wf%set_amplitudes(amplitudes)
 !
-            prev_energy = energy 
-!
-!           Update the Cholesky (and electron repulsion integrals, if in memory) 
-!           to new T1 amplitudes 
+!           Update t1-transformed electron repulsion integrals
 !
             call wf%eri%update_t1_integrals(wf%t1)
 !
          endif
 !
+         previous_energy = energy 
          call wf%save_amplitudes()
 !
          call iteration_timer%turn_off()         
@@ -332,17 +325,10 @@ contains
       call mem%dealloc(omega, wf%n_gs_amplitudes)
       call mem%dealloc(amplitudes, wf%n_gs_amplitudes)
 !
-      if (.not. converged) then 
-!   
-         call output%print_separator('n', 63,'-')
-!
+      if (.not. converged) &
          call output%error_msg('Did not converge in the max number of iterations.')
 !
-      else
-!
-         call wf%print_gs_summary()
-!
-      endif 
+      call wf%print_gs_summary()
 !
       call diis%finalize_storers()
 !
@@ -358,8 +344,6 @@ contains
 !
       class(diis_cc_gs) :: solver
       class(ccs) :: wf
-!
-      call solver%preconditioner%destruct_precondition_vector()
 !
       call wf%save_amplitudes()
 !
@@ -420,8 +404,6 @@ contains
 !      
       call input%get_keyword('diis dimension', 'solver cc gs', solver%diis_dimension)
       call input%get_keyword('max iterations', 'solver cc gs', solver%max_iterations)
-!
-      call input%get_keyword('storage', 'solver cc gs', solver%storage)
 !
       if (input%is_keyword_present('crop', 'solver cc gs')) then 
 !

@@ -39,7 +39,7 @@ f = [
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_gs_energy_NR.inp']:
+for inp in ['ccsd_gs_energy_NR_storage.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

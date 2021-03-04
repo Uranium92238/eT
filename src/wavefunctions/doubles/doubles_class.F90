@@ -69,6 +69,8 @@ module doubles_class
 !
 !     Jacobian transformation procedures in common for doubles and doubles
 !
+      procedure :: get_orbital_differences               => get_orbital_differences_doubles
+!
       procedure :: jacobian_doubles_a1                   => jacobian_doubles_a1_doubles
       procedure :: jacobian_doubles_b1                   => jacobian_doubles_b1_doubles
       procedure :: jacobian_doubles_c1                   => jacobian_doubles_c1_doubles
@@ -348,6 +350,58 @@ contains
       enddo
 !
    end subroutine get_ip_projector_doubles
+!
+!
+   subroutine get_orbital_differences_doubles(wf, orbital_differences, N)
+!!
+!!    Get orbital differences 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
+!!    and Andreas Skeidsvoll, 2018
+!!
+      implicit none
+!
+      class(doubles), intent(in) :: wf
+!
+      integer, intent(in) :: N 
+!
+      real(dp), dimension(N), intent(out) :: orbital_differences
+!
+      integer :: a, i, ai, b, j, bj, aibj
+!
+      call wf%ccs%get_orbital_differences(orbital_differences, wf%n_t1)
+!
+      if (N .eq. wf%n_t1) return ! Requested only singles orbital differences
+!
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            do j = 1, wf%n_o 
+               do b = 1, wf%n_v
+!
+                  bj = wf%n_v*(j-1) + b 
+!
+                  if (ai .ge. bj) then
+!
+                     aibj = (ai*(ai-3)/2) + ai + bj
+!
+                     orbital_differences(aibj + wf%n_t1) = wf%orbital_energies(a + wf%n_o)      &
+                                                         - wf%orbital_energies(i)               &
+                                                         + wf%orbital_energies(b + wf%n_o)      &
+                                                         - wf%orbital_energies(j)
+!
+                  endif
+!
+               enddo
+            enddo  
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine get_orbital_differences_doubles
 !
 !
 end module doubles_class

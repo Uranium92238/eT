@@ -601,7 +601,7 @@ contains
 !
       call mem%alloc(eps, wf%n_es_amplitudes)
 !
-      call wf%get_es_orbital_differences(eps, wf%n_es_amplitudes)
+      call wf%get_orbital_differences(eps, wf%n_es_amplitudes)
       call davidson%set_preconditioner(eps)
 !
       call mem%dealloc(eps, wf%n_es_amplitudes)

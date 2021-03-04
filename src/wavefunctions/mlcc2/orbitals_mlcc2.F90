@@ -1149,8 +1149,10 @@ contains
 !!    construction.
 !!
 !
-      use diis_cc_gs_class, only: diis_cc_gs
-      use davidson_cc_es_class, only: davidson_cc_es
+      use amplitude_updater_class,        only: amplitude_updater
+      use quasi_newton_updater_class,     only: quasi_newton_updater
+      use diis_cc_gs_class,               only: diis_cc_gs
+      use davidson_cc_es_class,           only: davidson_cc_es
 !
       implicit none
 !
@@ -1166,11 +1168,15 @@ contains
 !
       real(dp), dimension(n_cnto_states), intent(out), optional :: omega_ccs
 !
+      character(len=200) :: storage 
+!
 !     Local variables
 !
       type(ccs), allocatable :: ccs_wf
 !
       type(diis_cc_gs), allocatable :: cc_gs_solver_diis
+      class(amplitude_updater), allocatable :: t_updater 
+!
       type(davidson_cc_es), allocatable :: cc_es_solver_davidson
 !
       type(timings) :: timer, timer_gs, timer_es
@@ -1204,7 +1210,18 @@ contains
       timer_gs = timings('Ground state CCS calculation for NTOs/CNTOs')
       call timer_gs%turn_on()
 !
-      cc_gs_solver_diis = diis_cc_gs(ccs_wf, restart=.false.)
+      t_updater = quasi_newton_updater(n_amplitudes     = ccs_wf%n_gs_amplitudes, &
+                                       scale_amplitudes = .true., &
+                                       scale_residual   = .true.)
+!
+      storage = 'disk'
+      call input%get_keyword('storage', 'solver cc gs', storage)
+!
+      cc_gs_solver_diis = diis_cc_gs(wf        = ccs_wf,    &
+                                     restart   = .false.,   &
+                                     t_updater = t_updater, &
+                                     storage   = storage)
+!
       call cc_gs_solver_diis%run(ccs_wf)
       call cc_gs_solver_diis%cleanup(ccs_wf)
 !

@@ -130,7 +130,7 @@ module mlcc2_class
 !
 !     Set and get
 !
-      procedure :: get_es_orbital_differences                        => get_es_orbital_differences_mlcc2
+      procedure :: get_orbital_differences                           => get_orbital_differences_mlcc2
 !
       procedure :: determine_n_x2_amplitudes                         => determine_n_x2_amplitudes_mlcc2
       procedure :: determine_n_es_amplitudes                         => determine_n_es_amplitudes_mlcc2
@@ -653,7 +653,7 @@ contains
    end subroutine check_orbital_space_mlcc2
 !
 !
-   subroutine get_es_orbital_differences_mlcc2(wf, orbital_differences, N)
+   subroutine get_orbital_differences_mlcc2(wf, orbital_differences, N)
 !!
 !!    Get orbital differences 
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2019
@@ -663,21 +663,13 @@ contains
       class(mlcc2), intent(in) :: wf
 !
       integer, intent(in) :: N 
-      real(dp), dimension(N), intent(inout) :: orbital_differences
+      real(dp), dimension(N), intent(out) :: orbital_differences
 !
       integer :: a, i, ai, b, j, bj, aibj
 !
-!$omp parallel do schedule(static) private(a, i, ai) 
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      call wf%ccs%get_orbital_differences(orbital_differences, wf%n_t1)
 !
-            ai = wf%n_v*(i - 1) + a
-!
-            orbital_differences(ai) = wf%orbital_energies(a + wf%n_o) - wf%orbital_energies(i)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      if (N .eq. wf%n_t1) return ! Requested only singles orbital differences
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
       do a = 1, wf%n_cc2_v
@@ -709,7 +701,7 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine get_es_orbital_differences_mlcc2
+   end subroutine get_orbital_differences_mlcc2
 !
 !
    subroutine construct_multiplier_equation_mlcc2(wf, equation)

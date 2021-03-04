@@ -375,7 +375,7 @@ contains
       real(dp), dimension(:), allocatable :: preconditioner
 !
       call mem%alloc(preconditioner, wf%n_gs_amplitudes)
-      call wf%get_gs_orbital_differences(preconditioner, wf%n_gs_amplitudes)
+      call wf%get_orbital_differences(preconditioner, wf%n_gs_amplitudes)
       call davidson%set_preconditioner(preconditioner)
       call mem%dealloc(preconditioner, wf%n_gs_amplitudes)
 !

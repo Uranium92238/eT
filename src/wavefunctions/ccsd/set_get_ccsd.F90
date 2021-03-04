@@ -60,7 +60,7 @@ contains
       real(dp), dimension(wf%n_gs_amplitudes) :: amplitudes
 !
       call dcopy(wf%n_t1, wf%t1, 1, amplitudes, 1)
-      call dcopy(wf%n_t2, wf%t2, 1,  amplitudes(wf%n_t1 + 1), 1)
+      call dcopy(wf%n_t2, wf%t2, 1, amplitudes(wf%n_t1 + 1), 1)
 !
    end subroutine get_amplitudes_ccsd
 !

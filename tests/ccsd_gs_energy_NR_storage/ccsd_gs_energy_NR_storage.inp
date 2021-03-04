@@ -1,0 +1,49 @@
+system
+   name: H2O He
+   charge: 0
+end system
+
+do
+   ground state
+end do
+
+print
+   output print level: verbose
+end print
+
+memory
+   available: 8
+end memory
+
+solver cholesky
+   threshold: 1.0d-10
+end solver cholesky
+
+solver scf
+   algorithm:          scf-diis
+   energy threshold:   1.0d-10
+   gradient threshold: 1.0d-10
+end solver scf
+
+method
+   hf
+   ccsd
+end method
+
+solver cc gs
+   algorithm: newton-raphson
+   storage: disk
+   micro iteration storage: memory
+   rel micro threshold: 1.0d-2
+   omega threshold:  1.0d-10
+   energy threshold: 1.0d-10
+end solver cc gs
+
+
+geometry
+basis: cc-pVDZ
+ H          0.86681        0.60144        5.00000
+ H         -0.86681        0.60144        5.00000
+ O          0.00000       -0.07579        5.00000
+ He         0.10000       -0.02000        7.53000
+end geometry
