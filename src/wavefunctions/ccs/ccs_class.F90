@@ -233,8 +233,7 @@ module ccs_class
       procedure :: set_fock                                      => set_fock_ccs
       procedure :: set_fock_complex                              => set_fock_ccs_complex
 !
-      procedure :: get_gs_orbital_differences                    => get_gs_orbital_differences_ccs
-      procedure :: get_es_orbital_differences                    => get_gs_orbital_differences_ccs
+      procedure :: get_orbital_differences                       => get_orbital_differences_ccs
 !
       procedure :: set_excitation_energies                       => set_excitation_energies_ccs
 !
@@ -415,7 +414,7 @@ module ccs_class
       procedure :: set_ip_start_indices                          => set_ip_start_indices_ccs
       procedure :: get_ip_projector                              => get_ip_projector_ccs
 !
-      procedure :: form_newton_raphson_t_estimate                => form_newton_raphson_t_estimate_ccs
+      procedure :: scale_amplitudes                              => scale_amplitudes_ccs
 !
       procedure :: print_dominant_x_amplitudes                   => print_dominant_x_amplitudes_ccs
       procedure :: print_dominant_amplitudes                     => print_dominant_amplitudes_ccs
@@ -832,7 +831,7 @@ contains
    end subroutine set_initial_multipliers_guess_ccs
 !
 !
-   subroutine get_gs_orbital_differences_ccs(wf, orbital_differences, N)
+   subroutine get_orbital_differences_ccs(wf, orbital_differences, N)
 !!
 !!    Get orbital differences
 !!    Written by Sarai D. Folkestad, Sep 2018
@@ -848,11 +847,12 @@ contains
       class(ccs), intent(in) :: wf
 !
       integer, intent(in) :: N
-      real(dp), dimension(N), intent(inout) :: orbital_differences
+!
+      real(dp), dimension(N), intent(out) :: orbital_differences
 !
       integer :: a, i, ai
 !
-!$omp parallel do private(i,a)
+!$omp parallel do private(i,a,ai)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -864,7 +864,7 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine get_gs_orbital_differences_ccs
+   end subroutine get_orbital_differences_ccs
 !
 !
    subroutine construct_Jacobian_transform_ccs(wf, r_or_l, X, R, w)
@@ -1174,39 +1174,28 @@ contains
    end function L_R_overlap_ccs
 !
 !
-   subroutine form_newton_raphson_t_estimate_ccs(wf, t, dt)
+   subroutine scale_amplitudes_ccs(wf, t)
 !!
-!!    Form Newton-Raphson t estimate 
+!!    Scale amplitudes 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
 !!
-!!    Here, t is the full amplitude vector and dt is the correction to the amplitude vector.
+!!    Scales t to conform with the convention used in the wavefunction:
 !!
-!!    The correction is assumed to be obtained from either 
-!!    solving the Newton-Raphson equation
+!!       t1 <- t1 
+!!       t2_aiai <- two * t2_aiai
+!!       ...
 !!
-!!       A dt = -omega, 
-!!
-!!    where A and omega are given in the biorthonormal basis,
-!!    or from the quasi-Newton equation (A ~ diagonal with diagonal = epsilon) 
-!!
-!!        dt = -omega/epsilon
-!!
-!!    Epsilon is the vector of orbital differences. 
-!!
-!!    On exit, t = t + dt, where the appropriate basis change has been accounted 
-!!    for (in particular for the double amplitudes in CCSD wavefunctions). Also,
-!!    dt is expressed in the basis compatible with t.
-!!
+      use warning_suppressor
+!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: dt 
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t 
 !
-      call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)
+      call do_nothing(t)
 !
-   end subroutine form_newton_raphson_t_estimate_ccs
+   end subroutine scale_amplitudes_ccs
 !
 !
    subroutine make_bath_orbital_ccs(wf)

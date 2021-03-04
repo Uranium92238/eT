@@ -18,7 +18,7 @@
   ------------------------------------------------------------
   Compiled by:        eirikfad
   Compiled on:        eirikfad-Alienware-Aurora-R7
-  Configuration date: 2021-03-03 14:33:56 UTC +01:00
+  Configuration date: 2021-03-03 14:27:24 UTC +01:00
   Git branch:         cc_gs_diis_t_updater
   Git hash:           d2318702e235a167495aae19f9c834abd74aef8c
   Fortran compiler:   GNU 9.3.0
@@ -33,7 +33,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-03 14:36:01 UTC +01:00
+  Calculation started: 2021-03-03 14:28:59 UTC +01:00
 
 
   :: Input file
@@ -46,34 +46,42 @@
         charge: 0
      end system
 
-     method
-       hf
-       cc3
-     end method
+     do
+        ground state
+     end do
+
+     print
+        output print level: verbose
+     end print
 
      memory
         available: 8
      end memory
 
      solver cholesky
-        threshold: 1.0d-12
+        threshold: 1.0d-10
      end solver cholesky
 
      solver scf
         algorithm:          scf-diis
-        energy threshold:   1.0d-11
-        gradient threshold: 1.0d-11
+        energy threshold:   1.0d-10
+        gradient threshold: 1.0d-10
      end solver scf
+
+     method
+        hf
+        ccsd
+     end method
 
      solver cc gs
         algorithm: newton-raphson
-        energy threshold: 1.0d-11
-        omega threshold:  1.0d-11
+        storage: disk
+        micro iteration storage: memory
+        rel micro threshold: 1.0d-2
+        omega threshold:  1.0d-10
+        energy threshold: 1.0d-10
      end solver cc gs
 
-     do
-        ground state
-     end do
 
 
   Running on 2 OMP threads
@@ -82,6 +90,8 @@
 
   :: RHF wavefunction
   ======================
+
+  Libint electron repulsion integral precision:  0.1000E-23
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -133,6 +143,9 @@
 
 
   1) Generate initial SAD density
+     Generated atomic density for H  using UHF/cc-pvdz
+     Generated atomic density for O  using UHF/cc-pvdz
+     Generated atomic density for He using UHF/cc-pvdz
 
 
   2) Calculation of reference state (SCF-DIIS algorithm)
@@ -141,62 +154,84 @@
 
      Maximum iterations:                    100
 
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
      Acceleration type:                    diis
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:               -78.492022836321
+     Energy of initial guess:               -78.492022836338
      Number of electrons in guess:           12.000000000000
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Integral cutoff:               0.1000E-16
+     Coulomb screening threshold:   0.1000E-15
+     Exchange screening threshold:  0.1000E-13
+     Integral cutoff:               0.1000E-15
      Cumulative Fock threshold:     0.1000E+01
 
   - DIIS convergence acceleration:
 
      DIIS dimension:   8
 
+  solver scf_e is stored in memory.
+
+  solver scf_x is stored in memory.
+
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.796606592593     0.9053E-01     0.7880E+02
-     2           -78.828675852657     0.7128E-01     0.3207E-01
+  Fock matrix construction using density differences
+     1           -78.796606592630     0.9053E-01     0.7880E+02
+  Fock matrix construction using density differences
+     2           -78.828675852673     0.7128E-01     0.3207E-01
+  Fock matrix construction using density differences
      3           -78.843428154462     0.8290E-02     0.1475E-01
+  Fock matrix construction using density differences
      4           -78.843809541675     0.2414E-02     0.3814E-03
+  Fock matrix construction using density differences
      5           -78.843850846799     0.3301E-03     0.4131E-04
+  Fock matrix construction using density differences
      6           -78.843851669326     0.5527E-04     0.8225E-06
+  Fock matrix construction using density differences
      7           -78.843851692851     0.5865E-05     0.2353E-07
+  Fock matrix construction using density differences
      8           -78.843851693557     0.2356E-05     0.7055E-09
-     9           -78.843851693630     0.2071E-06     0.7377E-10
-    10           -78.843851693631     0.1594E-07     0.3837E-12
-    11           -78.843851693631     0.3322E-08     0.2842E-13
-    12           -78.843851693631     0.1197E-08     0.0000E+00
-    13           -78.843851693631     0.4264E-09     0.5684E-13
-    14           -78.843851693631     0.1280E-09     0.2842E-13
-    15           -78.843851693631     0.1479E-10     0.5684E-13
-    16           -78.843851693631     0.2909E-11     0.2842E-13
+  Fock matrix construction using density differences
+     9           -78.843851693630     0.2071E-06     0.7373E-10
+  Fock matrix construction using density differences
+    10           -78.843851693631     0.1594E-07     0.3979E-12
+  Fock matrix construction using density differences
+    11           -78.843851693631     0.3322E-08     0.4263E-13
+  Fock matrix construction using density differences
+    12           -78.843851693631     0.1197E-08     0.8527E-13
+  Fock matrix construction using density differences
+    13           -78.843851693631     0.4264E-09     0.1421E-12
+  Fock matrix construction using density differences
+    14           -78.843851693631     0.1280E-09     0.7105E-13
+  Fock matrix construction using density differences
+    15           -78.843851693631     0.1479E-10     0.1421E-13
   ---------------------------------------------------------------
-  Convergence criterion met in 16 iterations!
+  Convergence criterion met in 15 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.645629080248
+     HOMO-LUMO gap:                  0.645629080236
      Nuclear repulsion energy:      12.116100574587
      Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.44119
-     Total cpu time (sec):               0.84000
+     Total wall time (sec):              0.39646
+     Total cpu time (sec):               0.76110
+
+  No frozen fock contributions!
+
+  Libint electron repulsion integral precision:  0.1000E-23
 
 
-  :: CC3 wavefunction
-  ======================
+  :: CCSD wavefunction
+  =======================
 
      Bath orbital(s):         False
      Core-valence separation: False
@@ -219,7 +254,7 @@
 
   Calculates the ground state CC wavefunction | CC > = exp(T) | R >
 
-  This is a CC3 ground state calculation.
+  This is a CCSD ground state calculation.
   The following tasks will be performed:
 
      1) Cholesky decomposition of the electron repulsion integrals
@@ -228,6 +263,7 @@
 
 
   1) Cholesky decomposition of the electron repulsion integrals
+  Doing Cholesky decomposition of the ERIs.
 
    - Cholesky decomposition of electronic repulsion integrals solver
   ---------------------------------------------------------------------
@@ -244,7 +280,7 @@
 
   - Cholesky decomposition settings:
 
-     Target threshold is:   0.10E-11
+     Target threshold is:   0.10E-09
      Span factor:           0.10E-01
      Max qual:                  1000
 
@@ -254,30 +290,31 @@
      Total number of shell pairs:           120
      Total number of AO pairs:              435
 
-     Significant shell pairs:               118
-     Significant AO pairs:                  431
+  - Preparing diagonal for decomposition:
+
+     Significant shell pairs:               116
+     Significant AO pairs:                  427
 
      Construct shell pairs:                 120
      Construct AO pairs:                    435
 
   Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
   -------------------------------------------------------------------------------------------------------
-     1               406 /     108       0.47383E+01         147             42             17052
-     2               319 /      93       0.47165E-01         234            111             35409
-     3               250 /      76       0.46944E-03         178            183             45750
-     4               187 /      55       0.38270E-05         145            265             49555
-     5                87 /      25       0.38106E-07          78            324             28188
-     6                21 /       3       0.37202E-09          43            349              7329
-     7                 0 /       0       0.36652E-11           7            354                 0
+     1               391 /     103       0.47383E+01         147             42             16422
+     2               303 /      87       0.47165E-01         234            111             33633
+     3               230 /      68       0.46944E-03         178            183             42090
+     4               156 /      44       0.38270E-05         145            265             41340
+     5                37 /       7       0.38106E-07          78            324             11988
+     6                 0 /       0       0.37202E-09          10            330                 0
   -------------------------------------------------------------------------------------------------------
 
   - Summary of Cholesky decomposition of electronic repulsion integrals:
 
-     Final number of Cholesky vectors: 354
+     Final number of Cholesky vectors: 330
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.7161E-12
+     Maximal difference between approximate and actual diagonal:              0.8462E-10
      Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
 
   - Settings for integral handling:
@@ -288,11 +325,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.17109
-     Total cpu time (sec):               0.33799
+     Total wall time (sec):              0.15341
+     Total cpu time (sec):               0.30541
 
 
   2) Preparation of MO basis and integrals
+  No MO preparations for ccsd
 
 
   3) Calculation of the ground state (newton-raphson algorithm)
@@ -307,134 +345,150 @@
 
   - DIIS CC ground state solver settings:
 
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
 
      DIIS dimension:                   8
      Max number of iterations:       100
 
      Storage: disk
 
+  cc_gs_diis_e is stored on file.
+
+  cc_gs_diis_x is stored on file.
+
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -79.084241931608     0.9358E-01     0.7908E+02
+    1           -79.084241931608     0.9391E-01     0.7908E+02
+
+  newton_raphson_amplitude_updator_trials is stored in memory.
+
+  newton_raphson_amplitude_updator_transforms is stored in memory.
 
      Iteration     Residual norm
      -----------------------------
-       1           0.2323E-01
-       2           0.5910E-02
-       3           0.1640E-02
-       4           0.5758E-03
+       1           0.2413E-01
+       2           0.6171E-02
+       3           0.1677E-02
+       4           0.5979E-03
      -----------------------------
 
-    2           -79.104321650749     0.6497E-03     0.2008E-01
+    2           -79.100197477414     0.7117E-03     0.1596E-01
 
-     Iteration     Residual norm
-     -----------------------------
-       1           0.1843E-03
-       2           0.4238E-04
-       3           0.1345E-04
-       4           0.6342E-05
-     -----------------------------
+  newton_raphson_amplitude_updator_trials is stored in memory.
 
-    3           -79.104388570209     0.6474E-05     0.6692E-04
+  newton_raphson_amplitude_updator_transforms is stored in memory.
 
      Iteration     Residual norm
      -----------------------------
-       1           0.2575E-05
-       2           0.1337E-05
-       3           0.3661E-06
-       4           0.1380E-06
-       5           0.6206E-07
+       1           0.2100E-03
+       2           0.7154E-04
+       3           0.2104E-04
+       4           0.7312E-05
+       5           0.2068E-05
      -----------------------------
 
-    4           -79.104388524003     0.6903E-07     0.4621E-07
+    3           -79.100383352298     0.2119E-05     0.1859E-03
 
-     Iteration     Residual norm
-     -----------------------------
-       1           0.2555E-07
-       2           0.1405E-07
-       3           0.2274E-08
-       4           0.1015E-08
-       5           0.4368E-09
-     -----------------------------
+  newton_raphson_amplitude_updator_trials is stored in memory.
 
-    5           -79.104388532992     0.6077E-09     0.8989E-08
+  newton_raphson_amplitude_updator_transforms is stored in memory.
 
      Iteration     Residual norm
      -----------------------------
-       1           0.2836E-09
-       2           0.1353E-09
-       3           0.5395E-10
-       4           0.1921E-10
-       5           0.4351E-11
+       1           0.9049E-06
+       2           0.5684E-06
+       3           0.1712E-06
+       4           0.3172E-07
+       5           0.7688E-08
      -----------------------------
 
-    6           -79.104388533033     0.5948E-11     0.4073E-10
+    4           -79.100383481151     0.7531E-08     0.1289E-06
+
+  newton_raphson_amplitude_updator_trials is stored in memory.
+
+  newton_raphson_amplitude_updator_transforms is stored in memory.
 
      Iteration     Residual norm
      -----------------------------
-       1           0.2631E-11
-       2           0.1303E-11
-       3           0.4264E-12
-       4           0.2021E-12
-       5           0.5345E-13
+       1           0.2432E-08
+       2           0.9579E-09
+       3           0.2963E-09
+       4           0.1340E-09
+       5           0.4229E-10
      -----------------------------
 
-    7           -79.104388533033     0.4244E-13     0.1421E-12
+    5           -79.100383481553     0.4166E-10     0.4021E-09
+
+  newton_raphson_amplitude_updator_trials is stored in memory.
+
+  newton_raphson_amplitude_updator_transforms is stored in memory.
+
+     Iteration     Residual norm
+     -----------------------------
+       1           0.1894E-10
+       2           0.1069E-10
+       3           0.3227E-11
+       4           0.7948E-12
+       5           0.3453E-12
+     -----------------------------
+
+    6           -79.100383481554     0.3289E-12     0.1137E-11
   ---------------------------------------------------------------
-  Convergence criterion met in 7 iterations!
+  Convergence criterion met in 6 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):   -79.104388533033
+     Final ground state energy (a.u.):   -79.100383481554
 
-     Correlation energy (a.u.):           -0.260536839402
+     Correlation energy (a.u.):           -0.256531787923
 
      Largest single amplitudes:
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        1      5        0.015274304437
-       14      4       -0.008970023658
-        7      4        0.007312583244
-        4      5        0.006872684673
-        2      4        0.006012921702
-       15      5       -0.005704150040
-        6      2        0.005025576014
-       13      5        0.004933889031
-        5      6        0.004366074638
-        3      4        0.004126391913
+        1      5        0.014740597474
+       14      4       -0.009546856217
+        7      4        0.008284826478
+       15      5       -0.006124828874
+        4      5        0.005606072708
+        6      2        0.005476844297
+        2      4        0.005318591720
+       13      5        0.005269818335
+        5      6        0.004933006894
+       11      6       -0.003454309402
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         t(ai,bj)
      --------------------------------------------------
-        2      4       2      4       -0.049931914504
-        5      6       5      6       -0.046567925291
-        9      3       9      3       -0.041349512985
-        3      4       3      4       -0.037778342513
-        1      5       1      5       -0.037299297230
-        6      5       6      5       -0.034903296771
-       16      3      16      3       -0.032107572471
-       17      3      17      3       -0.032051843284
-        2      4       1      5       -0.031565942819
-       18      3      18      3       -0.031349888894
+        2      4       2      4       -0.047351708919
+        5      6       5      6       -0.046240574403
+        9      3       9      3       -0.041367012245
+        3      4       3      4       -0.036659067517
+        6      5       6      5       -0.034554012170
+        1      5       1      5       -0.034177347744
+       16      3      16      3       -0.032108235347
+       17      3      17      3       -0.032052553603
+       18      3      18      3       -0.031351828684
+        2      4       3      4       -0.029701270697
      --------------------------------------------------
 
-  - Finished solving the CC3 ground state equations
+  - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.16151
-     Total cpu time (sec):               2.31889
+     Total wall time (sec):              0.19427
+     Total cpu time (sec):               0.39028
 
-  - Timings for the CC3 ground state calculation
+  - Timings for the CCSD ground state calculation
 
-     Total wall time (sec):              1.33299
-     Total cpu time (sec):               2.66128
+     Total wall time (sec):              0.34799
+     Total cpu time (sec):               0.69600
 
-     Peak memory usage during the execution of eT: 17.783248 MB
+  - Cleaning up ccsd wavefunction
 
-  Calculation ended: 2021-03-03 14:36:03 UTC +01:00
+     Peak memory usage during the execution of eT: 21.215192 MB
+
+  Calculation ended: 2021-03-03 14:28:59 UTC +01:00
 
   eT terminated successfully!

@@ -45,10 +45,6 @@ module cc2_class
 !
       procedure :: construct_t2bar                             => construct_t2bar_cc2
 !
-!     Excited state 
-!
-      procedure :: get_es_orbital_differences                  => get_es_orbital_differences_cc2
-!
 !     Jacobian
 !
       procedure :: prepare_for_jacobian                        => prepare_for_jacobian_cc2
@@ -303,55 +299,6 @@ contains
       call timer%turn_off()
 !
    end subroutine construct_u_aibj_cc2
-!
-!
-   subroutine get_es_orbital_differences_cc2(wf, orbital_differences, N)
-!!
-!!    Get orbital differences 
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    and Andreas Skeidsvoll, 2018
-!!
-      implicit none
-!
-      class(cc2), intent(in) :: wf
-!
-      integer, intent(in) :: N 
-      real(dp), dimension(N), intent(inout) :: orbital_differences
-!
-      integer :: a, i, ai, b, j, bj, aibj
-!
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            orbital_differences(ai) = wf%orbital_energies(a + wf%n_o) - wf%orbital_energies(i)
-!
-            do j = 1, wf%n_o 
-               do b = 1, wf%n_v
-!
-                  bj = wf%n_v*(j-1) + b 
-!
-                  if (ai .ge. bj) then
-!
-                     aibj = (ai*(ai-3)/2) + ai + bj
-!
-                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%orbital_energies(a + wf%n_o)     &
-                                                                     - wf%orbital_energies(i) &
-                                                                     +  wf%orbital_energies(b + wf%n_o)  &
-                                                                     - wf%orbital_energies(j)
-!
-                  endif
-!
-               enddo
-            enddo  
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine get_es_orbital_differences_cc2
 !
 !
 end module cc2_class

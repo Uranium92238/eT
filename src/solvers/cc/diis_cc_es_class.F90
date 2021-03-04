@@ -300,7 +300,7 @@ contains
 !     Initialize solver tools 
 !
       call mem%alloc(eps, wf%n_es_amplitudes)
-      call wf%get_es_orbital_differences(eps, wf%n_es_amplitudes)
+      call wf%get_orbital_differences(eps, wf%n_es_amplitudes)
 !
       solver%preconditioner = precondition_tool(eps, wf%n_es_amplitudes)
 !

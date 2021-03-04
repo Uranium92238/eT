@@ -54,6 +54,8 @@ module gs_engine_class
 !
       procedure :: do_ground_state                       => do_ground_state_gs_engine
 !
+      procedure, private :: initialize_amplitude_updater => initialize_amplitude_updater_gs_engine
+!
       procedure :: do_multipliers                        => do_multipliers_gs_engine
 !
       procedure, nopass :: calculate_dipole_moment       => calculate_dipole_moment_gs_engine
@@ -184,24 +186,21 @@ contains
 !
       class(gs_engine) :: engine
 !
-      call input%get_keyword('algorithm', 'solver cc multipliers', &
-                                                            engine%multipliers_algorithm)
+      call input%get_keyword('algorithm', 'solver cc multipliers', engine%multipliers_algorithm)
+      call input%get_keyword('algorithm', 'solver cc gs',          engine%gs_algorithm)
 !
-      call input%get_keyword('algorithm', 'solver cc gs', engine%gs_algorithm )
-!
-      engine%gs_restart = input%is_keyword_present('restart', 'solver cc gs')
-!
-      engine%multipliers_restart = &
-               input%is_keyword_present('restart', 'solver cc multipliers')
+      engine%gs_restart          = input%is_keyword_present('restart', 'solver cc gs')
+      engine%multipliers_restart = input%is_keyword_present('restart', 'solver cc multipliers')
 !
 !     global restart
       if (input%is_keyword_present('restart', 'do')) then 
+!
          engine%gs_restart = .true.
          engine%multipliers_restart = .true.
+!
       end if
 !
-      engine%plot_density = &
-               input%is_keyword_present('plot cc density', 'visualization')
+      engine%plot_density = input%is_keyword_present('plot cc density', 'visualization')
 !
    end subroutine read_gs_settings_gs_engine
 !
@@ -255,8 +254,8 @@ contains
 !!    stored in memory.
 !!
       use diis_cc_gs_class,            only: diis_cc_gs
-      use newton_raphson_cc_gs_class,  only: newton_raphson_cc_gs
-      use string_utilities,            only: convert_to_uppercase
+!
+      use amplitude_updater_class,     only: amplitude_updater
 !
       implicit none
 !
@@ -265,7 +264,10 @@ contains
       class(ccs), intent(inout) :: wf
 !
       type(diis_cc_gs), allocatable :: diis_solver
-      type(newton_raphson_cc_gs), allocatable :: newton_raphson_solver
+!
+      class(amplitude_updater), allocatable :: t_updater
+!
+      character(len=200) :: storage 
 !
       call engine%tasks%print_('gs solver')
 !
@@ -275,38 +277,95 @@ contains
 !
          call wf%calculate_energy()
 !
-         call wf%print_gs_summary
+         call wf%print_gs_summary()
+
 !
       else
 !
-         if (trim(engine%gs_algorithm) == 'diis') then
+         storage = 'disk'
+         call input%get_keyword('storage', 'solver cc gs', storage)
 !
-            diis_solver = diis_cc_gs(wf, engine%gs_restart)
-            call diis_solver%run(wf)
-            call diis_solver%cleanup(wf)
+         call engine%initialize_amplitude_updater(wf, t_updater, storage)
 !
-         elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
-!
-               if (trim(wf%name_) == 'cc2') then
-!
-                  call output%error_msg('Newton-Raphson not implemented for CC2')
-!
-               end if
-!
-            newton_raphson_solver = newton_raphson_cc_gs(wf, engine%gs_restart)
-            call newton_raphson_solver%run(wf)
-            call newton_raphson_solver%cleanup(wf)
-!
-         else 
-!
-            call output%error_msg('(a0) is not a valid ground state algorithm.', &
-                                  chars=[engine%gs_algorithm])
-!
-         endif 
+         diis_solver = diis_cc_gs(wf, engine%gs_restart, t_updater, storage)
+         call diis_solver%run(wf)
+         call diis_solver%cleanup(wf)
 !
       endif
 !
    end subroutine do_ground_state_gs_engine
+!
+!
+   subroutine initialize_amplitude_updater_gs_engine(engine, wf, t_updater, global_storage)
+!!
+!!    Initialize amplitude updater
+!!    Written by Eirik F. Kjønstad, 2020
+!!
+!!    Allocates/initializes the amplitude updater algorithm used by the ground state solver.
+!!
+      use amplitude_updater_class,      only: amplitude_updater
+!
+      use quasi_newton_updater_class,   only: quasi_newton_updater
+      use newton_raphson_updater_class, only: newton_raphson_updater
+!
+      implicit none 
+!
+      class(gs_engine), intent(in) :: engine 
+!
+      class(ccs), intent(in) :: wf 
+!
+      character(len=*), intent(in) :: global_storage
+!
+      class(amplitude_updater), allocatable :: t_updater
+!
+      real(dp) :: relative_threshold
+!
+      integer :: max_iterations
+!
+      logical :: records_in_memory
+      character(len=200) :: storage
+!
+      if (trim(engine%gs_algorithm) == 'diis') then
+!
+         t_updater = quasi_newton_updater(n_amplitudes     = wf%n_gs_amplitudes, &
+                                          scale_amplitudes = .true.,             &
+                                          scale_residual   = .true.)
+!
+      elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
+!
+         if (trim(wf%name_) == 'cc2') &
+            call output%error_msg('Newton-Raphson not implemented for CC2')
+!
+         relative_threshold = 1.0d-2
+         max_iterations     = 100
+         storage            = 'disk'
+!
+         call input%get_keyword('rel micro threshold',     'solver cc gs', relative_threshold)
+         call input%get_keyword('max micro iterations',    'solver cc gs', max_iterations)
+         call input%get_keyword('micro iteration storage', 'solver cc gs', storage)
+!
+         records_in_memory = .false.
+!
+         if (trim(global_storage) == 'memory') records_in_memory = .true.
+         if (trim(storage) == 'memory') records_in_memory = .true.
+!
+         call input%get_keyword('micro iteration storage', 'solver cc gs', storage)
+!
+         t_updater = newton_raphson_updater(n_amplitudes       = wf%n_gs_amplitudes,  &
+                                            scale_amplitudes   = .true.,              &
+                                            scale_residual     = .false.,             &
+                                            relative_threshold = relative_threshold,  &   
+                                            records_in_memory  = records_in_memory,   & 
+                                            max_iterations     = max_iterations)
+!
+      else 
+!
+         call output%error_msg('(a0) is not a valid ground state algorithm.', &
+                                  chars=[engine%gs_algorithm])
+!
+      endif       
+!
+   end subroutine initialize_amplitude_updater_gs_engine
 !
 !
    subroutine do_multipliers_gs_engine(engine, wf)

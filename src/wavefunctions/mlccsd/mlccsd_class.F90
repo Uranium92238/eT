@@ -138,7 +138,7 @@ module mlccsd_class
 !
       procedure :: construct_x2                 => construct_x2_mlccsd
       procedure :: construct_u_aibj             => construct_u_aibj_mlccsd
-      procedure :: get_gs_orbital_differences   => get_gs_orbital_differences_mlccsd
+      procedure :: get_orbital_differences      => get_orbital_differences_mlccsd
       procedure :: construct_cc2_amplitudes     => construct_cc2_amplitudes_mlccsd
 !
       procedure :: calculate_energy             => calculate_energy_mlccsd
@@ -195,7 +195,6 @@ module mlccsd_class
 !     Excited state
 !
       procedure :: print_X1_diagnostics       =>  print_X1_diagnostics_mlccsd
-      procedure :: get_es_orbital_differences =>  get_es_orbital_differences_mlccsd
 !
 !     CVS
 !
@@ -648,44 +647,51 @@ contains
    end subroutine construct_u_aibj_mlccsd
 !
 !
-   subroutine get_gs_orbital_differences_mlccsd(wf, orbital_differences, N)
+   subroutine get_orbital_differences_mlccsd(wf, orbital_differences, N)
 !!
-!!    Get ground state orbital differences 
+!!    Get orbital differences 
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2019
-!!
-!!    Calculate the orbital differences for the ground state calculation 
 !!
       implicit none
 !
       class(mlccsd), intent(in) :: wf
 !
       integer, intent(in) :: N 
-      real(dp), dimension(N), intent(inout) :: orbital_differences
+      real(dp), dimension(N), intent(out) :: orbital_differences
 !
-      integer :: a, i, ai, b, j, bj, aibj
+      integer :: a, i, ai, b, j, bj, aibj, n_o, n_v 
 !
-!$omp parallel do schedule(static) private(a, i, ai) 
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      call wf%ccs%get_orbital_differences(orbital_differences, wf%n_t1)
 !
-            ai = wf%n_v*(i - 1) + a
+      n_o = 0
+      n_v = 0
 !
-            orbital_differences(ai) = wf%orbital_energies(a + wf%n_o) - wf%orbital_energies(i)
+      if (N .eq. wf%n_gs_amplitudes) then 
 !
-         enddo
-      enddo
-!$omp end parallel do
+         n_o = wf%n_ccsd_o
+         n_v = wf%n_ccsd_v 
+!
+      elseif (N .eq. wf%n_es_amplitudes) then 
+!
+         n_o = wf%n_cc2_o + wf%n_ccsd_o
+         n_v = wf%n_cc2_v + wf%n_ccsd_v
+!
+      else 
+!
+         call output%error_msg('Could not recognize length of orbital differences vector')
+!
+      endif
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
-      do a = 1, wf%n_ccsd_v
-         do i = 1, wf%n_ccsd_o
+      do a = 1, n_v
+         do i = 1, n_o 
 !
-            ai = wf%n_ccsd_v*(i - 1) + a
+            ai = n_v*(i - 1) + a
 !
-            do j = 1, wf%n_ccsd_o 
-               do b = 1, wf%n_ccsd_v
+            do j = 1, n_o 
+               do b = 1, n_v
 !
-                  bj = wf%n_ccsd_v*(j-1) + b 
+                  bj = n_v*(j-1) + b 
 !
                   if (ai .ge. bj) then
 !
@@ -706,7 +712,7 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine get_gs_orbital_differences_mlccsd
+   end subroutine get_orbital_differences_mlccsd
 !
 !
    subroutine construct_cc2_amplitudes_mlccsd(wf, s_aibj)
@@ -1217,65 +1223,6 @@ contains
       if (wf%embedded) deallocate(wf%embedding)
 !
    end subroutine cleanup_mlccsd
-!
-!
-   subroutine get_es_orbital_differences_mlccsd(wf, orbital_differences, N)
-!!
-!!    Get orbital differences 
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2019
-!!
-      implicit none
-!
-      class(mlccsd), intent(in) :: wf
-!
-      integer, intent(in) :: N 
-      real(dp), dimension(N), intent(inout) :: orbital_differences
-!
-      integer :: a, i, ai, b, j, bj, aibj
-!
-!$omp parallel do schedule(static) private(a, i, ai) collapse(2)
-         do i = 1, wf%n_o
-            do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            orbital_differences(ai) = wf%orbital_energies(a + wf%n_o) - wf%orbital_energies(i)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) collapse(2)
-      do j = 1, wf%n_cc2_o + wf%n_ccsd_o
-         do b = 1, wf%n_cc2_v + wf%n_ccsd_v
-!
-            bj = (wf%n_cc2_v + wf%n_ccsd_v)*(j-1) + b 
-!
-            do i = 1, wf%n_cc2_o + wf%n_ccsd_o
-               do a = 1, wf%n_cc2_v + wf%n_ccsd_v
-!
-                  ai = (wf%n_cc2_v + wf%n_ccsd_v)*(i - 1) + a
-!
-                  if (ai .ge. bj) then
-!
-                     aibj = (ai*(ai-3)/2) + ai + bj
-!
-                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) =                      &
-                                                      wf%orbital_energies(a + wf%n_o)     &
-                                                      - wf%orbital_energies(i)            &
-                                                      + wf%orbital_energies(b + wf%n_o)   &
-                                                      - wf%orbital_energies(j)
-!
-                  endif
-!
-               enddo
-            enddo  
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine get_es_orbital_differences_mlccsd
 !
 !
    subroutine print_X1_diagnostics_mlccsd(wf, X, label)

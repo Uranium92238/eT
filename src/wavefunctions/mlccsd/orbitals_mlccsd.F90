@@ -886,6 +886,7 @@ contains
 !!    construction.
 !!
 !
+      use quasi_newton_updater_class, only: quasi_newton_updater
       use diis_cc_gs_class, only: diis_cc_gs
       use davidson_cc_es_class, only: davidson_cc_es
       use cc2_class, only: cc2
@@ -906,6 +907,8 @@ contains
       type(cc2), allocatable :: cc2_wf
 !
       type(diis_cc_gs), allocatable :: cc_gs_solver_diis
+      type(quasi_newton_updater), allocatable :: t_updater 
+!
       type(davidson_cc_es), allocatable :: cc_es_solver_davidson
 !
       type(timings) :: timer_gs, timer_es
@@ -913,6 +916,8 @@ contains
       real(dp), dimension(:), allocatable :: R
 !  
       integer :: n, n_es
+!
+      character(len=200) :: storage 
 !
       call output%printf('m', 'Running CC2 calculation for CNTOs.', fs='(/t3,a)')
 !
@@ -935,7 +940,18 @@ contains
       timer_gs = timings('Ground state CC2 calculation for CNTOs')
       call timer_gs%turn_on()
 !
-      cc_gs_solver_diis = diis_cc_gs(cc2_wf, restart=.false.)
+      t_updater = quasi_newton_updater(n_amplitudes = cc2_wf%n_gs_amplitudes, &
+                                       scale_amplitudes = .true., &
+                                       scale_residual = .true.)
+!
+      storage = 'disk'
+      call input%get_keyword('storage', 'solver cc gs', storage)
+!
+      cc_gs_solver_diis = diis_cc_gs(wf=cc2_wf, &
+                                     restart=.false., &
+                                     t_updater=t_updater, &
+                                     storage = storage)
+!
       call cc_gs_solver_diis%run(cc2_wf)
       call cc_gs_solver_diis%cleanup(cc2_wf)
       call timer_gs%turn_off()

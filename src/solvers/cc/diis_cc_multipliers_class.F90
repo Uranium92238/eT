@@ -176,7 +176,7 @@ contains
 !     Initialize preconditioner 
 !
       call mem%alloc(eps, wf%n_gs_amplitudes)
-      call wf%get_gs_orbital_differences(eps, wf%n_gs_amplitudes)
+      call wf%get_orbital_differences(eps, wf%n_gs_amplitudes)
 !
       solver%preconditioner = precondition_tool(eps, wf%n_gs_amplitudes)
 !
@@ -252,7 +252,7 @@ contains
       call mem%alloc(multipliers, wf%n_gs_amplitudes)
       call mem%alloc(epsilon, wf%n_gs_amplitudes)
 !
-      call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
+      call wf%get_orbital_differences(epsilon, wf%n_gs_amplitudes)
 !
       call wf%set_initial_multipliers_guess(solver%restart)
       call wf%get_multipliers(multipliers) 

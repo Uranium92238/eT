@@ -81,6 +81,11 @@ set(eT_fortran_sources
    src/solver_tools/es_projectors/es_rm_core_projection_tool_class.F90
    src/solver_tools/es_projectors/es_valence_projection_tool_class.F90
    src/solver_tools/es_projectors/es_ip_projection_tool_class.F90
+#
+   src/solver_tools/amplitude_updaters/amplitude_updater_class.F90
+   src/solver_tools/amplitude_updaters/quasi_newton_updater_class.F90
+   src/solver_tools/amplitude_updaters/newton_raphson_updater_class.F90
+#
    src/fields/electric_field_class.F90
    src/solver_tools/precondition_tool_class.F90
    src/solver_tools/asymmetric_lanczos_tool_class.F90
@@ -101,7 +106,6 @@ set(eT_fortran_sources
    src/solvers/cc/nonlinear_davidson_cc_es_class.F90
    src/solvers/cc/davidson_cc_es_class.F90
    src/solvers/cc/abstract_cc_es_class.F90
-   src/solvers/cc/newton_raphson_cc_gs_class.F90
    src/solvers/cholesky/eri_cd_class.F90
    src/solvers/tdcc/cc_propagation_class.F90
    src/solvers/tdcc/euler_cc_propagation_class.F90
