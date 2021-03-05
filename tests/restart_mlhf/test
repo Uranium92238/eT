@@ -23,10 +23,7 @@ assert version_info.major == 2
 
 # construct filter(s)
 threshold = 1.0e-10
-convergence = True
-restart = True
-
-f = get_mlhf_filter(threshold, convergence, restart)
+f = get_mlhf_filter(threshold, convergence=True, restart=True)
 
 # invoke the command line interface parser which returns options
 options = cli()
@@ -58,7 +55,7 @@ ierr = 0
 # Run the second mlhf calculation with the keyword "restart"
 # and without a fixed maximum number of iterations
 #
-for inp in ['mlhf_restart.inp']:
+for inp in ['restart_mlhf.inp']:
     #
     # the run function runs the code and filters the outputs
     # don't provide -ks to delete scratch after succesful run

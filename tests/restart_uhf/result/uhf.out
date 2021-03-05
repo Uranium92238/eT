@@ -16,24 +16,24 @@
 
    This is eT version 1.1.0, Bastion
   ------------------------------------------------------------
-  Compiled by:        sarai
-  Compiled on:        dhcp-10-24-4-67.wlan.ntnu.no
-  Configuration date: 2021-02-02 16:14:29 UTC +01:00
-  Git branch:         streamline-scf-solvers
-  Git hash:           a900638093b46082636ec80a4f6b906744d93820
-  Fortran compiler:   GNU 9.2.0
-  C compiler:         GNU 9.2.0
-  C++ compiler:       GNU 9.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Compiled by:        rolf
+  Compiled on:        Stomoxys
+  Configuration date: 2021-03-05 16:12:43 UTC +01:00
+  Git branch:         convergence-tests-in-restart
+  Git hash:           f7f224bac8cd25b4b5ce6c4a2441147f15dd0908
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-02-02 16:17:48 UTC +01:00
+  Calculation started: 2021-03-05 16:16:09 UTC +01:00
 
 
   :: Input file
@@ -44,6 +44,7 @@
      system
         name: H2O He
         charge: 0
+        multiplicity: 3
      end system
 
      do
@@ -61,15 +62,15 @@
      end solver scf
 
      method
-        hf
+        uhf
      end method
 
 
-  Running on 8 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
-  :: RHF wavefunction
+  :: UHF wavefunction
   ======================
 
      ==============================================================================
@@ -104,9 +105,11 @@
 
   - Molecular orbital details:
 
-     Number of occupied orbitals:         6
-     Number of virtual orbitals:         23
-     Number of molecular orbitals:       29
+     Number of alpha electrons:               7
+     Number of beta electrons:                5
+     Number of virtual alpha orbitals:       22
+     Number of virtual beta orbitals:        24
+     Number of molecular orbitals:           29
 
 
   :: Hartree-Fock engine
@@ -114,7 +117,7 @@
 
   Drives the calculation of the Hartree-Fock state.
 
-  This is a RHF ground state calculation.
+  This is a UHF ground state calculation.
   The following tasks will be performed:
 
      1) Generate initial SAD density
@@ -128,13 +131,15 @@
 
   - SCF solver settings:
 
-     Maximum iterations:                       5
-     Gradient threshold:              0.1000E-10
-     Acceleration type:                     diis
+     Maximum iterations:                     5
+     Acceleration type:                   diis
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:               -78.492022836321
+     Energy of initial guess:               -78.755091995809
      Number of electrons in guess:           12.000000000000
 
   - Screening and integral thresholds:
@@ -144,17 +149,20 @@
      Integral cutoff:               0.1000E-16
      Cumulative Fock threshold:     0.1000E+01
 
-  - DIIS convergence acceleration:
+  - DIIS tool settings:
 
      DIIS dimension:   8
 
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
+
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.796606592593     0.9053E-01     0.7880E+02
-     2           -78.828675852657     0.7128E-01     0.3207E-01
-     3           -78.843428154462     0.8290E-02     0.1475E-01
-     4           -78.843809541675     0.2414E-02     0.3814E-03
-     5           -78.843850846799     0.3301E-03     0.4131E-04
+     1           -78.636386138861     0.3625E-01     0.7864E+02
+     2           -78.653293795583     0.1336E-01     0.1691E-01
+     3           -78.655538844441     0.5379E-02     0.2245E-02
+     4           -78.656115043943     0.2588E-02     0.5762E-03
+     5           -78.656257948645     0.1011E-02     0.1429E-03
   ---------------------------------------------------------------
 
   Error: Was not able to converge the equations in the given number of 

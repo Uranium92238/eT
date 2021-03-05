@@ -25,13 +25,6 @@ from filters import get_hf_filter, get_spin_filter
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
 
-# construct filter(s)
-n_states = 3
-threshold = 1.0e-10
-convergence = True
-restart = True
-
-
 # invoke the command line interface parser which returns options
 options = cli()
 
@@ -56,7 +49,9 @@ p = subprocess.run(
     stderr=subprocess.PIPE,
 )
 
-f = get_hf_filter(threshold, restart=restart)
+# construct filter(s)
+threshold=1.0e-10
+f = get_hf_filter(threshold, convergence=True, restart=True)
 
 g = get_spin_filter(threshold)
 f.extend(g)

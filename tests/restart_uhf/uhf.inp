@@ -1,6 +1,7 @@
 system
    name: H2O He
    charge: 0
+   multiplicity: 3
 end system
 
 do
@@ -18,7 +19,7 @@ solver scf
 end solver scf
 
 method
-   hf
+   uhf
 end method
 
 geometry

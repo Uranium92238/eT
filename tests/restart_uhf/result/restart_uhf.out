@@ -16,24 +16,24 @@
 
    This is eT version 1.1.0, Bastion
   ------------------------------------------------------------
-  Compiled by:        sarai
-  Compiled on:        dhcp-10-24-4-67.wlan.ntnu.no
-  Configuration date: 2021-02-02 16:14:29 UTC +01:00
-  Git branch:         streamline-scf-solvers
-  Git hash:           a900638093b46082636ec80a4f6b906744d93820
-  Fortran compiler:   GNU 9.2.0
-  C compiler:         GNU 9.2.0
-  C++ compiler:       GNU 9.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Compiled by:        rolf
+  Compiled on:        Stomoxys
+  Configuration date: 2021-03-05 16:12:43 UTC +01:00
+  Git branch:         convergence-tests-in-restart
+  Git hash:           f7f224bac8cd25b4b5ce6c4a2441147f15dd0908
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-02-02 16:18:47 UTC +01:00
+  Calculation started: 2021-03-05 16:16:10 UTC +01:00
 
 
   :: Input file
@@ -44,6 +44,7 @@
      system
         name: H2O He
         charge: 0
+        multiplicity: 3
      end system
 
      do
@@ -61,15 +62,15 @@
      end solver scf
 
      method
-        hf
+        uhf
      end method
 
 
-  Running on 8 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
-  :: RHF wavefunction
+  :: UHF wavefunction
   ======================
 
      ==============================================================================
@@ -104,9 +105,11 @@
 
   - Molecular orbital details:
 
-     Number of occupied orbitals:         6
-     Number of virtual orbitals:         23
-     Number of molecular orbitals:       29
+     Number of alpha electrons:               7
+     Number of beta electrons:                5
+     Number of virtual alpha orbitals:       22
+     Number of virtual beta orbitals:        24
+     Number of molecular orbitals:           29
 
 
   :: Hartree-Fock engine
@@ -114,7 +117,7 @@
 
   Drives the calculation of the Hartree-Fock state.
 
-  This is a RHF ground state calculation.
+  This is a UHF ground state calculation.
   The following tasks will be performed:
 
      1) Calculation of reference state (SCF-DIIS algorithm)
@@ -124,9 +127,11 @@
 
   - SCF solver settings:
 
-     Maximum iterations:                     100
-     Gradient threshold:              0.1000E-10
-     Acceleration type:                     diis
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
 
   - Requested restart. Reading orbitals from file
 
@@ -137,40 +142,63 @@
      Integral cutoff:               0.1000E-16
      Cumulative Fock threshold:     0.1000E+01
 
-  - DIIS convergence acceleration:
+  - DIIS tool settings:
 
      DIIS dimension:   8
 
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
+
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851669326     0.5527E-04     0.7884E+02
-     2           -78.843851689003     0.2098E-04     0.1968E-07
-     3           -78.843851693436     0.6101E-05     0.4433E-08
-     4           -78.843851693596     0.2640E-05     0.1600E-09
-     5           -78.843851693628     0.4376E-06     0.3216E-10
-     6           -78.843851693631     0.5306E-07     0.2217E-11
-     7           -78.843851693631     0.3406E-08     0.1279E-12
-     8           -78.843851693631     0.7875E-09     0.8527E-13
-     9           -78.843851693631     0.4130E-09     0.2842E-13
-    10           -78.843851693631     0.6583E-10     0.2842E-13
-    11           -78.843851693631     0.8635E-11     0.1421E-13
+     1           -78.656318329600     0.2952E-03     0.7866E+02
+     2           -78.656321621174     0.1802E-03     0.3292E-05
+     3           -78.656323947203     0.1058E-03     0.2326E-05
+     4           -78.656324308710     0.6046E-04     0.3615E-06
+     5           -78.656324392203     0.8164E-05     0.8349E-07
+     6           -78.656324395871     0.6883E-05     0.3668E-08
+     7           -78.656324398545     0.5475E-05     0.2674E-08
+     8           -78.656324402780     0.2097E-05     0.4236E-08
+     9           -78.656324403943     0.3404E-06     0.1162E-08
+    10           -78.656324403971     0.2814E-06     0.2778E-10
+    11           -78.656324403998     0.2249E-06     0.2738E-10
+    12           -78.656324404023     0.6940E-07     0.2520E-10
+    13           -78.656324404025     0.3174E-07     0.1947E-11
+    14           -78.656324404025     0.2253E-07     0.5684E-13
+    15           -78.656324404025     0.1306E-07     0.4263E-13
+    16           -78.656324404025     0.6474E-08     0.1421E-13
+    17           -78.656324404025     0.2552E-08     0.4263E-13
+    18           -78.656324404025     0.1026E-08     0.5684E-13
+    19           -78.656324404025     0.2059E-09     0.0000E+00
+    20           -78.656324404025     0.6545E-10     0.0000E+00
+    21           -78.656324404025     0.6197E-10     0.1421E-13
+    22           -78.656324404025     0.3285E-10     0.0000E+00
+    23           -78.656324404025     0.9875E-11     0.4263E-13
   ---------------------------------------------------------------
-  Convergence criterion met in 11 iterations!
+  Convergence criterion met in 23 iterations!
 
-  - Summary of RHF wavefunction energetics (a.u.):
+  - Summary of UHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.645629080251
+     HOMO-LUMO gap (alpha):          0.329592118302
+     HOMO-LUMO gap (beta):           0.699081248392
      Nuclear repulsion energy:      12.116100574587
-     Electronic energy:            -90.959952268218
-     Total energy:                 -78.843851693631
+     Electronic energy:            -90.772424978612
+     Total energy:                 -78.656324404025
 
-  - Timings for the RHF ground state calculation
+  - UHF wavefunction spin expectation values:
 
-     Total wall time (sec):              0.09600
-     Total cpu time (sec):               0.63074
+     Sz:                   1.00000000
+     Sz(Sz + 1):           2.00000000
+     S^2:                  2.00764752
+     Spin contamination:   0.00764752
 
-     Peak memory usage during the execution of eT: 195.468 KB
+  - Timings for the UHF ground state calculation
 
-  Calculation ended: 2021-02-02 16:18:47 UTC +01:00
+     Total wall time (sec):              1.09839
+     Total cpu time (sec):               2.18988
+
+     Peak memory usage during the execution of eT: 293.600 KB
+
+  Calculation ended: 2021-03-05 16:16:11 UTC +01:00
 
   eT terminated successfully!
