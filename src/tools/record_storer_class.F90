@@ -191,13 +191,11 @@ contains
 !
       if (storer%in_memory) then 
 !
-         call output%printf('v', trim(storer%name_) // &
-                                 ' is stored in memory.', fs='(/t3,a)')
+         call output%printf('n', 'Storage ('// trim(storer%name_)//'): memory', fs='(t6,a)')
 !
       else 
 !
-         call output%printf('v', trim(storer%name_) // &
-                                 ' is stored on file.', fs='(/t3,a)')
+         call output%printf('n', 'Storage ('//trim(storer%name_)//'): file', fs='(t6,a)')
 !
       endif
 !

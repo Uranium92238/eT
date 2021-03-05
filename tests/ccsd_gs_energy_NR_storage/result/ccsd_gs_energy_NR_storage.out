@@ -16,24 +16,24 @@
 
    This is eT version 1.1.0, Bastion
   ------------------------------------------------------------
-  Compiled by:        alexancp
-  Compiled on:        NTNU16748
-  Configuration date: 2021-03-04 17:32:30 UTC +01:00
-  Git branch:         move-reordering-routines
-  Git hash:           97d48f5fb5cad495d04a0bf289bbe9a4b4afca30
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Compiled by:        sarai
+  Compiled on:        Sarais-MBP.home
+  Configuration date: 2021-03-04 20:04:35 UTC +01:00
+  Git branch:         es_solver_cleanup
+  Git hash:           199981043132112c51344e7424fba65be1d1dc24
+  Fortran compiler:   GNU 10.2.0
+  C compiler:         GNU 10.2.0
+  C++ compiler:       GNU 10.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
-  Runtime checks:     OFF
+  Runtime checks:     ON
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-04 18:31:04 UTC +01:00
+  Calculation started: 2021-03-04 22:59:00 UTC +01:00
 
 
   :: Input file
@@ -153,9 +153,6 @@
   - SCF solver settings:
 
      Maximum iterations:                    100
-
-     Residual threshold:            0.1000E-09
-     Energy threshold:              0.1000E-09
      Acceleration type:                    diis
 
      Residual threshold:            0.1000E-09
@@ -173,13 +170,12 @@
      Integral cutoff:               0.1000E-15
      Cumulative Fock threshold:     0.1000E+01
 
-  - DIIS convergence acceleration:
+  - DIIS tool settings:
 
      DIIS dimension:   8
-
-  solver scf_e is stored in memory.
-
-  solver scf_x is stored in memory.
+ 
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -199,19 +195,19 @@
   Fock matrix construction using density differences
      8           -78.843851693557     0.2356E-05     0.7054E-09
   Fock matrix construction using density differences
-     9           -78.843851693630     0.2071E-06     0.7381E-10
+     9           -78.843851693630     0.2071E-06     0.7378E-10
   Fock matrix construction using density differences
-    10           -78.843851693631     0.1594E-07     0.4121E-12
+    10           -78.843851693631     0.1594E-07     0.4547E-12
   Fock matrix construction using density differences
     11           -78.843851693631     0.3322E-08     0.1421E-13
   Fock matrix construction using density differences
-    12           -78.843851693631     0.1197E-08     0.0000E+00
+    12           -78.843851693631     0.1197E-08     0.1421E-13
   Fock matrix construction using density differences
-    13           -78.843851693631     0.4264E-09     0.2842E-13
+    13           -78.843851693631     0.4264E-09     0.1421E-13
   Fock matrix construction using density differences
-    14           -78.843851693631     0.1280E-09     0.2842E-13
+    14           -78.843851693631     0.1280E-09     0.1421E-13
   Fock matrix construction using density differences
-    15           -78.843851693631     0.1479E-10     0.0000E+00
+    15           -78.843851693631     0.1479E-10     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -224,8 +220,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.39970
-     Total cpu time (sec):               0.79492
+     Total wall time (sec):              0.50500
+     Total cpu time (sec):               0.90825
 
   No frozen fock contributions!
 
@@ -327,8 +323,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.16658
-     Total cpu time (sec):               0.33054
+     Total wall time (sec):              0.33000
+     Total cpu time (sec):               0.56658
 
 
   2) Preparation of MO basis and integrals
@@ -336,6 +332,15 @@
 
 
   3) Calculation of the ground state (newton-raphson algorithm)
+
+   - Davidson tool settings:
+
+     Number of parameters:                 9729
+     Number of requested solutions:           1
+     Max reduced space dimension:            50
+ 
+     Storage (newton_raphson_amplitude_updator_trials): memory
+     Storage (newton_raphson_amplitude_updator_transforms): memory
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -349,26 +354,18 @@
 
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
+     Max number of iterations:      100
 
-     DIIS dimension:                   8
-     Max number of iterations:       100
+  - DIIS tool settings:
 
-     Storage: disk
-
-  cc_gs_diis_e is stored on file.
-
-  cc_gs_diis_x is stored on file.
+     DIIS dimension:   8
+ 
+     Storage (cc_gs_diis_e): file
+     Storage (cc_gs_diis_x): file
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
     1           -79.084241931608     0.9391E-01     0.7908E+02
-
-     Max reduced space dimension:           50
-
-
-  newton_raphson_amplitude_updator_trials is stored in memory.
-
-  newton_raphson_amplitude_updator_transforms is stored in memory.
 
      Iteration     Residual norm
      -----------------------------
@@ -379,13 +376,6 @@
      -----------------------------
 
     2           -79.100197477414     0.7117E-03     0.1596E-01
-
-     Max reduced space dimension:           50
-
-
-  newton_raphson_amplitude_updator_trials is stored in memory.
-
-  newton_raphson_amplitude_updator_transforms is stored in memory.
 
      Iteration     Residual norm
      -----------------------------
@@ -398,13 +388,6 @@
 
     3           -79.100383352298     0.2119E-05     0.1859E-03
 
-     Max reduced space dimension:           50
-
-
-  newton_raphson_amplitude_updator_trials is stored in memory.
-
-  newton_raphson_amplitude_updator_transforms is stored in memory.
-
      Iteration     Residual norm
      -----------------------------
        1           0.9049E-06
@@ -416,13 +399,6 @@
 
     4           -79.100383481151     0.7531E-08     0.1289E-06
 
-     Max reduced space dimension:           50
-
-
-  newton_raphson_amplitude_updator_trials is stored in memory.
-
-  newton_raphson_amplitude_updator_transforms is stored in memory.
-
      Iteration     Residual norm
      -----------------------------
        1           0.2432E-08
@@ -433,13 +409,6 @@
      -----------------------------
 
     5           -79.100383481553     0.4166E-10     0.4021E-09
-
-     Max reduced space dimension:           50
-
-
-  newton_raphson_amplitude_updator_trials is stored in memory.
-
-  newton_raphson_amplitude_updator_transforms is stored in memory.
 
      Iteration     Residual norm
      -----------------------------
@@ -494,18 +463,18 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.16779
-     Total cpu time (sec):               0.33570
+     Total wall time (sec):              0.66000
+     Total cpu time (sec):               1.32479
 
   - Timings for the CCSD ground state calculation
 
-     Total wall time (sec):              0.33469
-     Total cpu time (sec):               0.66656
+     Total wall time (sec):              0.99000
+     Total cpu time (sec):               1.89220
 
   - Cleaning up ccsd wavefunction
 
-     Peak memory usage during the execution of eT: 21.215192 MB
+     Peak memory usage during the execution of eT: 21.211664 MB
 
-  Calculation ended: 2021-03-04 18:31:04 UTC +01:00
+  Calculation ended: 2021-03-04 22:59:02 UTC +01:00
 
   eT terminated successfully!

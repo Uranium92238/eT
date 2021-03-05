@@ -69,20 +69,17 @@ module diis_cc_gs_class
                                            &estimates of the next amplitudes. See Helgaker et al., Molecular & 
                                            &Electronic Structure Theory, Chapter 13.'
 !
-      integer :: diis_dimension
-!
       integer :: max_iterations 
 !
-      logical :: crop ! Standard DIIS if false; CROP variant of DIIS if true
-!
-      character(len=200) :: storage 
-      logical :: restart, records_in_memory 
+      logical :: restart
 !
       type(timings) :: timer
 !
       class(amplitude_updater), allocatable :: t_updater
 !
       class(abstract_convergence_tool), allocatable :: convergence_checker
+!
+      type(diis_tool), allocatable :: diis
 !
    contains
 !     
@@ -127,7 +124,11 @@ contains
 !
       character(len=*), intent(in) :: storage 
 !
-      solver%timer = timings('DIIS CC GS solver time', pl='minimal')
+      integer :: diis_dimension
+      logical :: crop ! Standard DIIS if false; CROP variant of DIIS if true
+      logical :: records_in_memory
+!
+      solver%timer = timings('CC GS solver time', pl='minimal')
       call solver%timer%turn_on()
 !
 !     Print solver banner
@@ -136,12 +137,13 @@ contains
 !
 !     Set standard settings 
 !
-      solver%diis_dimension   = 8 
       solver%max_iterations   = 100
       solver%restart          = restart
-      solver%storage          = storage
-      solver%crop             = .false.
       solver%t_updater        = t_updater
+!
+      diis_dimension    = 8 
+      crop              = .false.
+      records_in_memory = .false.
 !
 !     Initialize convergence checker with default threshols
 !
@@ -151,8 +153,7 @@ contains
 !
 !     Read & print settings (thresholds, etc.)
 !
-      call solver%read_settings()
-!      
+      call solver%read_settings(crop, diis_dimension)
       call solver%print_settings()
 !
 !     Set the amplitudes to the initial guess or read if restart
@@ -166,21 +167,29 @@ contains
 !
 !     Determine whether to store records in memory or on file
 !
-      if (trim(solver%storage) == 'memory') then 
+      if (trim(storage) == 'memory') then 
 !
-         solver%records_in_memory = .true.
+         records_in_memory = .true.
 !
-      elseif (trim(solver%storage) == 'disk') then 
+      elseif (trim(storage) == 'disk') then 
 !
-         solver%records_in_memory = .false.
+         records_in_memory = .false.
 !
       else 
 !
          call output%error_msg('Could not recognize keyword storage in solver: ' // &
-                                 trim(solver%storage))
+                                 trim(storage))
 !
-      endif 
+      endif
 !
+!
+      solver%diis = diis_tool('cc_gs_diis',          &
+                        wf%n_gs_amplitudes,          &
+                        wf%n_gs_amplitudes,          &
+                        dimension_=diis_dimension,   &
+                        crop=crop,                   &
+                        records_in_memory=records_in_memory)
+! 
    end function new_diis_cc_gs
 !
 !
@@ -193,22 +202,12 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      call output%printf('m', '- DIIS CC ground state solver settings:', fs='(/t3,a)')
+      call output%printf('m', '- CC ground state solver settings:', fs='(/t3,a)')
 !
       call solver%convergence_checker%print_settings()
 !
-      call output%printf('m', 'DIIS dimension:           (i9)', &
-                         ints=[solver%diis_dimension], fs='(/t6, a)')
-      call output%printf('m', 'Max number of iterations: (i9)', &
+      call output%printf('m', 'Max number of iterations: (i8)', &
                          ints=[solver%max_iterations], fs='(t6, a)')
-!
-      call output%printf('m', 'Storage: '//trim(solver%storage), fs='(/t6, a)')
-!
-      if (solver%crop) then 
-!
-         call output%printf('m', 'Enabled CROP in the DIIS algorithm.', fs='(/t6,a)')
-!
-      endif
 !
    end subroutine print_settings_diis_cc_gs
 !
@@ -224,8 +223,6 @@ contains
 !
       class(ccs) :: wf
 !
-      type(diis_tool) :: diis
-!
       logical :: converged
 !
       real(dp) :: energy, previous_energy
@@ -238,13 +235,7 @@ contains
 !
       type(timings), allocatable :: iteration_timer 
 !
-      diis = diis_tool('cc_gs_diis',                        &
-                        wf%n_gs_amplitudes,                 &
-                        wf%n_gs_amplitudes,                 &
-                        dimension_=solver%diis_dimension,   &
-                        crop=solver%crop)
-!
-      call diis%initialize_storers(solver%records_in_memory)
+      call solver%diis%initialize_storers()
 !
       call mem%alloc(omega, wf%n_gs_amplitudes)
       call mem%alloc(amplitudes, wf%n_gs_amplitudes)
@@ -304,7 +295,7 @@ contains
 !
             call solver%t_updater%update(wf, amplitudes, omega)
 !
-            call diis%update(omega, amplitudes)
+            call solver%diis%update(omega, amplitudes)
 !
             call wf%set_amplitudes(amplitudes)
 !
@@ -330,7 +321,7 @@ contains
 !
       call wf%print_gs_summary()
 !
-      call diis%finalize_storers()
+      call solver%diis%finalize_storers()
 !
    end subroutine run_diis_cc_gs
 !
@@ -377,14 +368,16 @@ contains
    end subroutine print_banner_diis_cc_gs
 !
 !
-   subroutine read_settings_diis_cc_gs(solver)
+   subroutine read_settings_diis_cc_gs(solver, crop, diis_dimension)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
 !
-      class(diis_cc_gs) :: solver 
+      class(diis_cc_gs)      :: solver 
+      logical, intent(inout) :: crop
+      integer, intent(inout) :: diis_dimension
 !
       real(dp) :: energy_threshold, omega_threshold
 !
@@ -402,14 +395,10 @@ contains
 !
       endif
 !      
-      call input%get_keyword('diis dimension', 'solver cc gs', solver%diis_dimension)
       call input%get_keyword('max iterations', 'solver cc gs', solver%max_iterations)
 !
-      if (input%is_keyword_present('crop', 'solver cc gs')) then 
-!
-         solver%crop = .true.
-!
-      endif
+      crop = input%is_keyword_present('crop', 'solver cc gs')
+      call input%get_keyword('diis dimension', 'solver cc gs', diis_dimension)
 !
    end subroutine read_settings_diis_cc_gs
 !

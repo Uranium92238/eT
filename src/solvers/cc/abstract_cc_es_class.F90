@@ -76,9 +76,6 @@ module abstract_cc_es_class
 !
       class(abstract_convergence_tool), allocatable :: convergence_checker
 !
-      character(len=200) :: storage 
-      logical :: records_in_memory 
-!
       logical :: restart
 !
       integer :: n_singlet_states
@@ -190,7 +187,7 @@ contains
    end subroutine print_banner_abstract_cc_es
 !
 !
-   subroutine read_es_settings_abstract_cc_es(solver)
+   subroutine read_es_settings_abstract_cc_es(solver, records_in_memory)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -198,6 +195,8 @@ contains
       implicit none 
 !
       class(abstract_cc_es) :: solver 
+!
+      logical, intent(inout) :: records_in_memory
 !
       real(dp) :: eigenvalue_threshold, residual_threshold
 !
@@ -227,24 +226,7 @@ contains
 !
       if (input%is_keyword_present('remove core', 'solver cc es')) solver%es_type = 'remove core'
 !
-      call input%get_keyword('storage', 'solver cc es', solver%storage)
-!
-!     Determine whether to store records in memory or on file
-!
-      if (trim(solver%storage) == 'memory') then 
-!
-         solver%records_in_memory = .true.
-!
-      elseif (trim(solver%storage) == 'disk') then 
-!
-         solver%records_in_memory = .false.
-!
-      else 
-!
-         call output%error_msg('Could not recognize keyword storage in solver: ' // &
-                                 trim(solver%storage))
-!
-      endif 
+      call input%place_records_in_memory('solver cc es', records_in_memory)
 !
    end subroutine read_es_settings_abstract_cc_es
 !

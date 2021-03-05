@@ -627,16 +627,18 @@ contains
                                'component (i0) and ((a1))-frequencies.', &
                                ints=[k], chars=[sign_character], fs='(t3,a)')
 !
-            t_response_solver = davidson_cc_linear_equations(wf,                             &
-                                                             section='cc response',          &
-                                                             eq_description='Solving for the &
-                                                             &amplitude response vectors in CC &
-                                                             &response theory.')
+            t_response_solver = davidson_cc_linear_equations(wf,                                   &
+                                                             section='cc response',                &
+                                                             eq_description='Solving for the       &
+                                                             &amplitude response vectors in CC     &
+                                                             &response theory.',                   &
+                                                             n_frequencies=engine%n_frequencies,   &
+                                                             n_rhs=1)
 !
             prefactor = real((-1)**sign, kind=dp) ! for frequencies 
 !
-            call t_response_solver%run(wf, rhs, 1, prefactor*engine%frequencies, &
-                              engine%n_frequencies, engine%t_responses(:,k,sign), 'right')
+            call t_response_solver%run(wf, rhs, prefactor*engine%frequencies, &
+                              engine%t_responses(:,k,sign), 'right')
 !
             call t_response_solver%cleanup(wf)
 !
@@ -719,10 +721,12 @@ contains
       M_vectors_solver = davidson_cc_linear_equations(wf,                                       &
                                                       section='cc response',                    &
                                                       eq_description='Solving for the M vectors &
-                                                      &in CC response theory.')
+                                                      &in CC response theory.',                 &
+                                                      n_frequencies=wf%n_singlet_states,        &
+                                                      n_rhs=wf%n_singlet_states)
 !
-      call M_vectors_solver%run(wf, minus_FR, wf%n_singlet_states, -wf%right_excitation_energies, &
-                           wf%n_singlet_states, engine%M_vectors, 'left')
+      call M_vectors_solver%run(wf, minus_FR, -wf%right_excitation_energies, &
+                              engine%M_vectors, 'left')
 !
       call M_vectors_solver%cleanup(wf)   
 !

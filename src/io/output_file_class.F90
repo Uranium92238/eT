@@ -50,6 +50,8 @@ module output_file_class
       procedure, public :: print_separator   => print_separator_output_file
       procedure, public :: print_vector      => print_vector_output_file
 !
+      procedure, public :: newline           => newline_output_file
+!
       procedure, public :: set_global_print_level  => set_global_print_level_output_file 
       procedure, public :: set_local_print_level   => set_local_print_level_output_file  
       procedure, public :: reset_local_print_level => reset_local_print_level_output_file  
@@ -788,6 +790,21 @@ contains
       
 !
    end subroutine print_vector_output_file
+!
+!
+   subroutine newline_output_file(the_file, pl)
+!!
+!!    Newline
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none
+
+      class(output_file), intent(inout) :: the_file
+      character(len=*),   intent(in)    :: pl
+!
+      call the_file%printf(pl, '')
+!
+   end subroutine newline_output_file
 !
 !
 end module output_file_class

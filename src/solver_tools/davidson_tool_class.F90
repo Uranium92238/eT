@@ -110,13 +110,19 @@ module davidson_tool_class
       procedure :: destruct_reduced_space_quantities           &
                 => destruct_reduced_space_quantities_davidson_tool
 !
+      procedure :: set_lindep_threshold                        &
+                => set_lindep_threshold_davidson_tool
+!
+      procedure :: reset_reduced_space                         &
+                => reset_reduced_space_davidson_tool
+!
    end type davidson_tool
 !
 !
 contains
 !
 !
-   subroutine initialize_davidson_tool(davidson, records_in_memory)
+   subroutine initialize_davidson_tool(davidson)
 !!
 !!    Initialize 
 !!    Written by Eirik F. Kjønstad, Nov 2019 
@@ -133,19 +139,7 @@ contains
 !
       class(davidson_tool) :: davidson 
 !
-      logical, intent(in) :: records_in_memory
-!
-      davidson%trials = record_storer(trim(davidson%name_) // '_trials',            &
-                                      davidson%n_parameters,                        &
-                                      davidson%max_dim_red + davidson%n_solutions,  &
-                                      records_in_memory,                            &
-                                      delete=.true.)
-!
-      davidson%transforms = record_storer(trim(davidson%name_) // '_transforms',       &
-                                          davidson%n_parameters,                       &
-                                          davidson%max_dim_red + davidson%n_solutions, &
-                                          records_in_memory,                           &
-                                          delete=.true.)
+      call davidson%reset_reduced_space()
 !
       call davidson%trials%initialize_storer()
       call davidson%transforms%initialize_storer()
@@ -176,6 +170,9 @@ contains
 !
       call mem%dealloc(davidson%omega_re, davidson%n_solutions)
       call mem%dealloc(davidson%omega_im, davidson%n_solutions)
+!
+      call davidson%destruct_reduced_space_quantities()
+      if (davidson%do_precondition) call davidson%preconditioner%destruct_precondition_vector()
 !
    end subroutine cleanup_davidson_tool
 !
@@ -868,7 +865,8 @@ contains
       real(dp), dimension(davidson%n_parameters), intent(in) :: preconditioner 
 !
       davidson%do_precondition = .true.
-      davidson%preconditioner = precondition_tool(preconditioner, davidson%n_parameters)
+      davidson%preconditioner = precondition_tool(davidson%n_parameters)
+      call davidson%preconditioner%initialize_and_set_precondition_vector(preconditioner)
 !
    end subroutine set_preconditioner_davidson_tool
 !  
@@ -978,10 +976,51 @@ contains
 !
       class(davidson_tool), intent(inout) :: davidson 
 !
-      call output%printf('m', 'Max reduced space dimension:  (i11)', &
-                         ints=[davidson%max_dim_red], fs='(/t6,a/)')
+      call output%printf('n', ' - Davidson tool settings:' , fs='(/t3,a)')
 !
-   end subroutine print_settings_davidson_tool
+      call output%printf('n', 'Number of parameters:          (i11)', &
+                         ints=[davidson%n_parameters], fs='(/t6,a)')
+!
+      call output%printf('n', 'Number of requested solutions: (i11)', &
+                         ints=[davidson%n_solutions], fs='(t6,a)')
+!
+      call output%printf('n', 'Max reduced space dimension:   (i11)', &
+                         ints=[davidson%max_dim_red], fs='(t6,a)')
+!
+      call output%newline('n')
+!
+    end subroutine print_settings_davidson_tool
+!
+!
+    subroutine set_lindep_threshold_davidson_tool(davidson, lindep_threshold)
+!!
+!!    Set lindep threshold
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none
+!
+      class(davidson_tool), intent(inout) :: davidson 
+!
+      real(dp), intent(in) :: lindep_threshold
+!
+      davidson%lindep_threshold = lindep_threshold
+!
+    end subroutine set_lindep_threshold_davidson_tool
+!
+!
+   subroutine reset_reduced_space_davidson_tool(davidson)
+!!
+!!    Reset reduced space
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none
+!
+      class(davidson_tool), intent(inout) :: davidson 
+!
+      davidson%dim_red      = 0
+      davidson%n_new_trials = davidson%n_solutions
+!
+   end subroutine reset_reduced_space_davidson_tool
 !
 !
 end module davidson_tool_class

@@ -66,7 +66,9 @@ module amplitude_updater_class
 !!
          import :: ccs, dp, amplitude_updater
 !
-         class(amplitude_updater), intent(in) :: this 
+         implicit none
+!
+         class(amplitude_updater), intent(inout) :: this 
 !
          class(ccs), intent(inout) :: wf 
 !
@@ -93,7 +95,7 @@ contains
 !!
       implicit none 
 !
-      class(amplitude_updater), intent(in) :: this  
+      class(amplitude_updater), intent(inout) :: this  
 !
       class(ccs), intent(inout) :: wf 
 !

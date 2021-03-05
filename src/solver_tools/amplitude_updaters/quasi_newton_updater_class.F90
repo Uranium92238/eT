@@ -92,7 +92,10 @@ contains
 !!    also preconditions the residual - which is not strictly necessary but
 !!    has been kept for now. Disabling it will require regeneration of tests.
 !!
-      class(quasi_newton_updater), intent(in) :: this  
+!
+      implicit none
+!
+      class(quasi_newton_updater), intent(inout) :: this  
 !
       class(ccs), intent(inout) :: wf 
 !

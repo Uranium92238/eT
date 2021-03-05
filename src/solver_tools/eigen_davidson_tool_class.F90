@@ -130,8 +130,9 @@ module eigen_davidson_tool_class
 contains
 !
 !
-   function new_eigen_davidson_tool(name_, n_parameters, n_solutions, &
-                        lindep_threshold, max_dim_red, non_unit_metric) result(davidson)
+   function new_eigen_davidson_tool(name_, n_parameters, n_solutions,   &
+                        lindep_threshold, max_dim_red, &
+                        records_in_memory, non_unit_metric) result(davidson)
 !!
 !!    New eigen Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -165,6 +166,8 @@ contains
 !
       logical, optional, intent(in) :: non_unit_metric
 !
+      logical, intent(in) :: records_in_memory
+!
       davidson%n_parameters = n_parameters
       davidson%n_solutions  = n_solutions
 !
@@ -193,6 +196,18 @@ contains
       davidson%n_new_trials = n_solutions
 !
       call davidson%print_settings()
+!
+      davidson%trials = record_storer(trim(davidson%name_) // '_trials',            &
+                                      davidson%n_parameters,                        &
+                                      davidson%max_dim_red + davidson%n_solutions,  &
+                                      records_in_memory,                            &
+                                      delete=.true.)
+!
+      davidson%transforms = record_storer(trim(davidson%name_) // '_transforms',       &
+                                          davidson%n_parameters,                       &
+                                          davidson%max_dim_red + davidson%n_solutions, &
+                                          records_in_memory,                           &
+                                          delete=.true.)
 !
    end function new_eigen_davidson_tool
 !  
