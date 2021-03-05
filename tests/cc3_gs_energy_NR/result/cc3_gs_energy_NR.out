@@ -16,11 +16,11 @@
 
    This is eT version 1.1.0, Bastion
   ------------------------------------------------------------
-  Compiled by:        eirikfad
-  Compiled on:        eirikfad-Alienware-Aurora-R7
-  Configuration date: 2021-03-03 14:33:56 UTC +01:00
-  Git branch:         cc_gs_diis_t_updater
-  Git hash:           d2318702e235a167495aae19f9c834abd74aef8c
+  Compiled by:        alexancp
+  Compiled on:        NTNU16748
+  Configuration date: 2021-03-04 17:32:30 UTC +01:00
+  Git branch:         move-reordering-routines
+  Git hash:           97d48f5fb5cad495d04a0bf289bbe9a4b4afca30
   Fortran compiler:   GNU 9.3.0
   C compiler:         GNU 9.3.0
   C++ compiler:       GNU 9.3.0
@@ -33,7 +33,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-03 14:36:01 UTC +01:00
+  Calculation started: 2021-03-04 17:37:26 UTC +01:00
 
 
   :: Input file
@@ -145,6 +145,9 @@
      Energy threshold:              0.1000E-10
      Acceleration type:                    diis
 
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
   - Setting initial AO density to sad
 
      Energy of initial guess:               -78.492022836321
@@ -170,15 +173,15 @@
      5           -78.843850846799     0.3301E-03     0.4131E-04
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
-     8           -78.843851693557     0.2356E-05     0.7055E-09
-     9           -78.843851693630     0.2071E-06     0.7377E-10
-    10           -78.843851693631     0.1594E-07     0.3837E-12
-    11           -78.843851693631     0.3322E-08     0.2842E-13
-    12           -78.843851693631     0.1197E-08     0.0000E+00
-    13           -78.843851693631     0.4264E-09     0.5684E-13
-    14           -78.843851693631     0.1280E-09     0.2842E-13
-    15           -78.843851693631     0.1479E-10     0.5684E-13
-    16           -78.843851693631     0.2909E-11     0.2842E-13
+     8           -78.843851693557     0.2356E-05     0.7054E-09
+     9           -78.843851693630     0.2071E-06     0.7371E-10
+    10           -78.843851693631     0.1594E-07     0.3979E-12
+    11           -78.843851693631     0.3322E-08     0.1421E-13
+    12           -78.843851693631     0.1197E-08     0.8527E-13
+    13           -78.843851693631     0.4264E-09     0.1563E-12
+    14           -78.843851693631     0.1280E-09     0.4263E-13
+    15           -78.843851693631     0.1479E-10     0.1421E-13
+    16           -78.843851693631     0.2908E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -191,8 +194,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.44119
-     Total cpu time (sec):               0.84000
+     Total wall time (sec):              0.64142
+     Total cpu time (sec):               1.27003
 
 
   :: CC3 wavefunction
@@ -288,8 +291,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.17109
-     Total cpu time (sec):               0.33799
+     Total wall time (sec):              0.27746
+     Total cpu time (sec):               0.55306
 
 
   2) Preparation of MO basis and integrals
@@ -319,6 +322,9 @@
   ---------------------------------------------------------------
     1           -79.084241931608     0.9358E-01     0.7908E+02
 
+     Max reduced space dimension:           50
+
+
      Iteration     Residual norm
      -----------------------------
        1           0.2323E-01
@@ -329,6 +335,9 @@
 
     2           -79.104321650749     0.6497E-03     0.2008E-01
 
+     Max reduced space dimension:           50
+
+
      Iteration     Residual norm
      -----------------------------
        1           0.1843E-03
@@ -337,7 +346,10 @@
        4           0.6342E-05
      -----------------------------
 
-    3           -79.104388570209     0.6474E-05     0.6692E-04
+    3           -79.104388570210     0.6474E-05     0.6692E-04
+
+     Max reduced space dimension:           50
+
 
      Iteration     Residual norm
      -----------------------------
@@ -350,6 +362,9 @@
 
     4           -79.104388524003     0.6903E-07     0.4621E-07
 
+     Max reduced space dimension:           50
+
+
      Iteration     Residual norm
      -----------------------------
        1           0.2555E-07
@@ -360,6 +375,9 @@
      -----------------------------
 
     5           -79.104388532992     0.6077E-09     0.8989E-08
+
+     Max reduced space dimension:           50
+
 
      Iteration     Residual norm
      -----------------------------
@@ -372,16 +390,19 @@
 
     6           -79.104388533033     0.5948E-11     0.4073E-10
 
+     Max reduced space dimension:           50
+
+
      Iteration     Residual norm
      -----------------------------
-       1           0.2631E-11
+       1           0.2632E-11
        2           0.1303E-11
        3           0.4264E-12
        4           0.2021E-12
        5           0.5345E-13
      -----------------------------
 
-    7           -79.104388533033     0.4244E-13     0.1421E-12
+    7           -79.104388533033     0.4266E-13     0.1421E-12
   ---------------------------------------------------------------
   Convergence criterion met in 7 iterations!
 
@@ -425,16 +446,16 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              1.16151
-     Total cpu time (sec):               2.31889
+     Total wall time (sec):              1.70782
+     Total cpu time (sec):               3.41461
 
   - Timings for the CC3 ground state calculation
 
-     Total wall time (sec):              1.33299
-     Total cpu time (sec):               2.66128
+     Total wall time (sec):              1.98574
+     Total cpu time (sec):               3.96812
 
      Peak memory usage during the execution of eT: 17.783248 MB
 
-  Calculation ended: 2021-03-03 14:36:03 UTC +01:00
+  Calculation ended: 2021-03-04 17:37:29 UTC +01:00
 
   eT terminated successfully!

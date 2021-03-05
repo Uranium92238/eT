@@ -90,7 +90,7 @@ contains
 !     Construct covariant _b_abij = 1/3 (2 b^ab_ij + b^ba_ij)
 !
       call mem%alloc(b_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call construct_squared_covariant_1324(b(wf%n_t1+1:), b_abij, wf%n_v, wf%n_o)
+      call construct_covariant_1324(b(wf%n_t1+1:), b_abij, wf%n_v, wf%n_o)
 !
 !     CC3-Contributions from the C3-amplitudes
       call wf%jacobian_transpose_cc3_c3_a(omega, b(1:wf%n_t1), b_abij, &

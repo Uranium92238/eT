@@ -16,11 +16,11 @@
 
    This is eT version 1.1.0, Bastion
   ------------------------------------------------------------
-  Compiled by:        eirikfad
-  Compiled on:        eirikfad-Alienware-Aurora-R7
-  Configuration date: 2021-03-03 14:33:56 UTC +01:00
-  Git branch:         cc_gs_diis_t_updater
-  Git hash:           d2318702e235a167495aae19f9c834abd74aef8c
+  Compiled by:        alexancp
+  Compiled on:        NTNU16748
+  Configuration date: 2021-03-04 17:32:30 UTC +01:00
+  Git branch:         move-reordering-routines
+  Git hash:           97d48f5fb5cad495d04a0bf289bbe9a4b4afca30
   Fortran compiler:   GNU 9.3.0
   C compiler:         GNU 9.3.0
   C++ compiler:       GNU 9.3.0
@@ -33,7 +33,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-03 14:35:59 UTC +01:00
+  Calculation started: 2021-03-04 18:31:03 UTC +01:00
 
 
   :: Input file
@@ -147,6 +147,9 @@
      Energy threshold:              0.1000E-09
      Acceleration type:                    diis
 
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
   - Setting initial AO density to sad
 
      Energy of initial guess:               -78.492022836338
@@ -173,13 +176,13 @@
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
      8           -78.843851693557     0.2356E-05     0.7054E-09
-     9           -78.843851693630     0.2071E-06     0.7375E-10
-    10           -78.843851693631     0.1594E-07     0.3837E-12
-    11           -78.843851693631     0.3322E-08     0.2842E-13
+     9           -78.843851693630     0.2071E-06     0.7380E-10
+    10           -78.843851693631     0.1594E-07     0.3553E-12
+    11           -78.843851693631     0.3322E-08     0.4263E-13
     12           -78.843851693631     0.1197E-08     0.0000E+00
-    13           -78.843851693631     0.4264E-09     0.5684E-13
-    14           -78.843851693631     0.1280E-09     0.5684E-13
-    15           -78.843851693631     0.1479E-10     0.5684E-13
+    13           -78.843851693631     0.4264E-09     0.8527E-13
+    14           -78.843851693631     0.1280E-09     0.1137E-12
+    15           -78.843851693631     0.1479E-10     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -192,8 +195,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.40875
-     Total cpu time (sec):               0.76623
+     Total wall time (sec):              0.41828
+     Total cpu time (sec):               0.82561
 
 
   :: CCSD wavefunction
@@ -288,8 +291,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.15494
-     Total cpu time (sec):               0.30692
+     Total wall time (sec):              0.17066
+     Total cpu time (sec):               0.34266
 
 
   2) Preparation of MO basis and integrals
@@ -319,6 +322,9 @@
   ---------------------------------------------------------------
     1           -79.084241931608     0.9391E-01     0.7908E+02
 
+     Max reduced space dimension:           50
+
+
      Iteration     Residual norm
      -----------------------------
        1           0.2413E-01
@@ -328,6 +334,9 @@
      -----------------------------
 
     2           -79.100197477414     0.7117E-03     0.1596E-01
+
+     Max reduced space dimension:           50
+
 
      Iteration     Residual norm
      -----------------------------
@@ -340,6 +349,9 @@
 
     3           -79.100383352298     0.2119E-05     0.1859E-03
 
+     Max reduced space dimension:           50
+
+
      Iteration     Residual norm
      -----------------------------
        1           0.9049E-06
@@ -350,6 +362,9 @@
      -----------------------------
 
     4           -79.100383481151     0.7531E-08     0.1289E-06
+
+     Max reduced space dimension:           50
+
 
      Iteration     Residual norm
      -----------------------------
@@ -362,6 +377,9 @@
 
     5           -79.100383481553     0.4166E-10     0.4021E-09
 
+     Max reduced space dimension:           50
+
+
      Iteration     Residual norm
      -----------------------------
        1           0.1894E-10
@@ -371,7 +389,7 @@
        5           0.3453E-12
      -----------------------------
 
-    6           -79.100383481554     0.3288E-12     0.1137E-11
+    6           -79.100383481554     0.3287E-12     0.1137E-11
   ---------------------------------------------------------------
   Convergence criterion met in 6 iterations!
 
@@ -415,16 +433,16 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.19268
-     Total cpu time (sec):               0.38866
+     Total wall time (sec):              0.17240
+     Total cpu time (sec):               0.34438
 
   - Timings for the CCSD ground state calculation
 
-     Total wall time (sec):              0.34796
-     Total cpu time (sec):               0.69592
+     Total wall time (sec):              0.34337
+     Total cpu time (sec):               0.68736
 
      Peak memory usage during the execution of eT: 15.572568 MB
 
-  Calculation ended: 2021-03-03 14:36:00 UTC +01:00
+  Calculation ended: 2021-03-04 18:31:03 UTC +01:00
 
   eT terminated successfully!
