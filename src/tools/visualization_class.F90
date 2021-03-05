@@ -430,7 +430,8 @@ contains
       do ix=1, plotter%n_x
          do iy=1, plotter%n_y
             do iz=1, plotter%n_z
-               call cube_file%printf('m', "(e12.6)", fs='(a,1x)', reals=[vector(ix, iy, iz)], adv=.false.)
+               call cube_file%printf('m', "(e12.6)(x1)", fs='(a)', &
+                                     reals=[vector(ix, iy, iz)], adv=.false.)
             enddo
          enddo
          call cube_file%printf('m', "", fs='(a)')
