@@ -186,6 +186,11 @@ contains
 !
       call engine%read_settings()
 !
+      if (any(engine%compute_polarizability) .and. &
+          wf%name_ .eq. 'cc2') then
+         call output%error_msg("Polarizabilities not implemented for CC2")
+      endif
+!
       call engine%set_printables()
 !
       engine%timer = timings(trim(engine%name_))
