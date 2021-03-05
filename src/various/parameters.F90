@@ -53,12 +53,11 @@ module parameters
 !
 !  Fractions
 !
-   real(dp), parameter :: half      = one/two
-   real(dp), parameter :: third     = one/three
-   real(dp), parameter :: quarter   = one/four
-   real(dp), parameter :: sixth     = one/six
-   real(dp), parameter :: eighth    = one/eight
-   real(dp), parameter :: tenth     = one/ten
+   real(dp), parameter :: half    = one/two
+   real(dp), parameter :: third   = one/three
+   real(dp), parameter :: quarter = one/four
+   real(dp), parameter :: eighth  = one/eight
+   real(dp), parameter :: tenth   = one/ten
 !
 !  Pi
 !

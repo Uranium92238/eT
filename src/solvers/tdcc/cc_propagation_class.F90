@@ -48,7 +48,7 @@ module cc_propagation_class
    use sequential_file_class, only: sequential_file
    use ccs_class, only: ccs
    use electric_field_class, only: electric_field
-   use array_utilities, only: our_zdotu
+   use array_utilities, only: zdot
 !
    implicit none
 !
@@ -505,9 +505,9 @@ contains
       call mem%alloc(mu, wf%n_mo, wf%n_mo, 3)
       call wf%get_t1_oei_complex('dipole', mu)
 !
-      wf%dipole_moment_complex(1) = our_zdotu(wf%n_mo*wf%n_mo, wf%density_complex, 1, mu(:,:,1), 1)
-      wf%dipole_moment_complex(2) = our_zdotu(wf%n_mo*wf%n_mo, wf%density_complex, 1, mu(:,:,2), 1)
-      wf%dipole_moment_complex(3) = our_zdotu(wf%n_mo*wf%n_mo, wf%density_complex, 1, mu(:,:,3), 1)
+      wf%dipole_moment_complex(1) = zdot(wf%n_mo*wf%n_mo, wf%density_complex, 1, mu(:,:,1), 1)
+      wf%dipole_moment_complex(2) = zdot(wf%n_mo*wf%n_mo, wf%density_complex, 1, mu(:,:,2), 1)
+      wf%dipole_moment_complex(3) = zdot(wf%n_mo*wf%n_mo, wf%density_complex, 1, mu(:,:,3), 1)
 !
       call mem%dealloc(mu, wf%n_mo, wf%n_mo, 3)
 !

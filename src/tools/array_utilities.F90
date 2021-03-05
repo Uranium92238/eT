@@ -3023,9 +3023,9 @@ contains
    end subroutine scale_complex_packed_4_diagonal_by_complex
 !
 !
-   complex(dp) function our_zdotu(n, zx, incx, zy, incy)
+   function zdot(n, zx, incx, zy, incy) result(dot)
 !!
-!!    Our zdotu
+!!    zdot
 !!    Written by Andreas Skeidsvoll, Nov 2019
 !!
 !!    A custom zdotu routine, to make zdotu work on Macs
@@ -3035,22 +3035,23 @@ contains
       integer :: incx, incy, n
 !
       complex(dp) :: zx(*), zy(*)
+      complex(dp) :: dot
 !
       integer :: i
 !
       if ((incx .ne. 0) .and. (incy .ne. 0)) continue
 !
-      our_zdotu = zero_complex
+      dot = zero_complex
 !
-!$omp parallel do schedule(static) private(i) reduction(+:our_zdotu)
+!$omp parallel do schedule(static) private(i) reduction(+:dot)
       do i = 1, n
 !
-         our_zdotu = our_zdotu + zx(i)*zy(i)
+         dot = dot + zx(i)*zy(i)
 !
       enddo
 !$omp end parallel do
 !
-   end function our_zdotu
+   end function zdot
 !
 !
    subroutine block_diagonalize_symmetric(A,  n_total, n_blocks, block_dim, diagonal, flip_vectors)
