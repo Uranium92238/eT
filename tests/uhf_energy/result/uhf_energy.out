@@ -14,16 +14,16 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Nachspiel
+   This is eT version 1.1.0, Bastion
   ------------------------------------------------------------
-  Compiled by:        alexancp
-  Compiled on:        NTNU16748
-  Configuration date: 2020-11-26 19:47:10 UTC +01:00
-  Git branch:         always-restart-l-from-r
-  Git hash:           b27c502fa8a19f78bb56d8c82213e7b5136821fe
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
+  Compiled by:        rolf
+  Compiled on:        Stomoxys
+  Configuration date: 2021-03-05 13:44:53 UTC +01:00
+  Git branch:         uhf-spin-tests
+  Git hash:           efc7ac087df0e2726fdb6e2a6e8776210bcce8cf
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -33,7 +33,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2020-11-27 09:07:47 UTC +01:00
+  Calculation started: 2021-03-05 13:45:11 UTC +01:00
 
 
   :: Input file
@@ -70,20 +70,8 @@
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
-
-     Name:             h2o he
-     Charge:           0
-     Multiplicity:     3
-     Coordinate units: angstrom
-
-     Pure basis functions:         29
-     Cartesian basis functions:    30
-     Primitive basis functions:    56
-
-     Nuclear repulsion energy (a.u.):             12.116100574587
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
+  :: UHF wavefunction
+  ======================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -91,9 +79,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H      0.866810000000     0.601440000000     5.000000000000        1
-        2 H     -0.866810000000     0.601440000000     5.000000000000        2
-        3 O      0.000000000000    -0.075790000000     5.000000000000        3
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  H    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
         4 He     0.100000000000    -0.020000000000     7.530000000000        4
      ==============================================================================
 
@@ -103,26 +91,25 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H      1.638033502034     1.136556880358     9.448630622825        1
-        2 H     -1.638033502034     1.136556880358     9.448630622825        2
-        3 O      0.000000000000    -0.143222342981     9.448630622825        3
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  H    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
         4 He     0.188972612457    -0.037794522491    14.229637717975        4
      ==============================================================================
 
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  :: UHF wavefunction
-  ======================
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               29
+     Number of orthonormal atomic orbitals:   29
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of alpha electrons:               7
      Number of beta electrons:                5
      Number of virtual alpha orbitals:       22
      Number of virtual beta orbitals:        24
      Number of molecular orbitals:           29
-     Number of atomic orbitals:              29
 
 
   :: Hartree-Fock engine
@@ -142,31 +129,32 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
+     Maximum iterations:                    100
 
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+     Acceleration type:                    diis
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
-     Integral cutoff:               0.1000E-16
-
-  - Setting initial AO density to SAD
+  - Setting initial AO density to sad
 
      Energy of initial guess:               -78.755091995809
      Number of electrons in guess:           12.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS convergence acceleration:
+
+     DIIS dimension:   8
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -182,21 +170,21 @@
     10           -78.656324392676     0.8298E-05     0.4698E-08
     11           -78.656324402198     0.2642E-05     0.9522E-08
     12           -78.656324403841     0.6399E-06     0.1644E-08
-    13           -78.656324403923     0.3803E-06     0.8220E-10
-    14           -78.656324403960     0.2770E-06     0.3622E-10
-    15           -78.656324403999     0.2210E-06     0.3897E-10
-    16           -78.656324404022     0.9437E-07     0.2302E-10
-    17           -78.656324404025     0.5280E-07     0.2970E-11
-    18           -78.656324404025     0.3805E-07     0.4832E-12
-    19           -78.656324404025     0.1762E-07     0.5684E-13
-    20           -78.656324404025     0.5746E-08     0.2842E-13
-    21           -78.656324404025     0.1892E-08     0.0000E+00
-    22           -78.656324404025     0.8109E-09     0.4263E-13
-    23           -78.656324404025     0.4098E-09     0.0000E+00
-    24           -78.656324404025     0.1701E-09     0.2842E-13
+    13           -78.656324403923     0.3803E-06     0.8215E-10
+    14           -78.656324403960     0.2770E-06     0.3620E-10
+    15           -78.656324403999     0.2210E-06     0.3898E-10
+    16           -78.656324404022     0.9437E-07     0.2304E-10
+    17           -78.656324404025     0.5280E-07     0.3027E-11
+    18           -78.656324404025     0.3805E-07     0.4690E-12
+    19           -78.656324404025     0.1762E-07     0.2842E-13
+    20           -78.656324404025     0.5746E-08     0.1421E-13
+    21           -78.656324404025     0.1892E-08     0.4263E-13
+    22           -78.656324404025     0.8109E-09     0.5684E-13
+    23           -78.656324404025     0.4098E-09     0.5684E-13
+    24           -78.656324404025     0.1701E-09     0.1421E-13
     25           -78.656324404025     0.6925E-10     0.0000E+00
-    26           -78.656324404025     0.2248E-10     0.2842E-13
-    27           -78.656324404025     0.6544E-11     0.1421E-13
+    26           -78.656324404025     0.2248E-10     0.1421E-13
+    27           -78.656324404025     0.6543E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 27 iterations!
 
@@ -208,39 +196,20 @@
      Electronic energy:            -90.772424978612
      Total energy:                 -78.656324404025
 
-  - Alpha orbital energies
+  - UHF wavefunction spin expectation values:
 
-  -----------------------------------------------------------------------------------
-   1 -20.752916092575   9   0.650419395293  17   1.606231286653  25   2.967019020983
-   2  -1.505967568664  10   0.657530502145  18   1.754984153532  26   3.008850066834
-   3  -0.925405252204  11   0.973240407144  19   1.760255080426  27   3.179774830237
-   4  -0.768794025155  12   1.041500223668  20   2.073728873893  28   3.541739626616
-   5  -0.754147914715  13   1.154068819765  21   2.092439468957  29   3.854512525201
-   6  -0.732654435139  14   1.387252930384  22   2.516282976311
-   7  -0.196899725149  15   1.395473311377  23   2.517654154797
-   8   0.132692393159  16   1.422359499426  24   2.530028247073
-  -----------------------------------------------------------------------------------
-
-  - Beta orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.695648049026   9   0.682643025690  17   1.654480058256  25   3.097845698489
-   2  -1.300367748290  10   0.746729876116  18   1.785934096442  26   3.121242083092
-   3  -0.921911256736  11   1.092093651821  19   1.834190744758  27   3.230171728838
-   4  -0.724043740374  12   1.180113398520  20   2.102860228291  28   3.641256751623
-   5  -0.644654139370  13   1.188316188809  21   2.176153209180  29   3.888537932105
-   6   0.054427109004  14   1.425358826625  22   2.516827618501
-   7   0.165852945935  15   1.434932856631  23   2.518204307055
-   8   0.223123095617  16   1.447392734598  24   2.532369773884
-  -----------------------------------------------------------------------------------
+     Sz:                   1.00000000
+     Sz(Sz + 1):           2.00000000
+     S^2:                  2.00764752
+     Spin contamination:   0.00764752
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):              3.67391
-     Total cpu time (sec):               7.27800
+     Total wall time (sec):              1.54123
+     Total cpu time (sec):               3.04193
 
-     Peak memory usage during the execution of eT: 279.448 KB
+     Peak memory usage during the execution of eT: 293.600 KB
 
-  Calculation ended: 2020-11-27 09:07:51 UTC +01:00
+  Calculation ended: 2021-03-05 13:45:13 UTC +01:00
 
   eT terminated successfully!
