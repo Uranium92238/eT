@@ -1,16 +1,39 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.1 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.1.0, Bastion
+  ------------------------------------------------------------
+  Compiled by:        rolf
+  Compiled on:        Stomoxys
+  Configuration date: 2021-03-05 13:56:01 UTC +01:00
+  Git branch:         uhf-spin-tests
+  Git hash:           efc7ac087df0e2726fdb6e2a6e8776210bcce8cf
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-03-05 13:57:54 UTC +01:00
 
 
   :: Input file
@@ -47,24 +70,12 @@
      end method
 
 
-  Running on 2 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
-
-     Name:             h2o-pcm-uhf
-     Charge:           0
-     Multiplicity:     3
-     Coordinate units: angstrom
-
-     Pure basis functions:         24
-     Cartesian basis functions:    25
-     Primitive basis functions:    49
-
-     Nuclear repulsion energy (a.u.):              9.307879526626
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
+  :: UHF wavefunction
+  ======================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -72,9 +83,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 O      0.009319000000     1.133156000000     0.000000000000        1
-        2 H      0.023452000000     0.185621000000     0.000000000000        2
-        3 H      0.906315000000     1.422088000000     0.000000000000        3
+        1  O     0.009319000000     1.133156000000     0.000000000000        1
+        2  H     0.023452000000     0.185621000000     0.000000000000        2
+        3  H     0.906315000000     1.422088000000     0.000000000000        3
      ==============================================================================
 
      ==============================================================================
@@ -83,10 +94,28 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 O      0.017610357755     2.141354496408     0.000000000000        1
-        2 H      0.044317857073     0.350772852968     0.000000000000        2
-        3 H      1.712687132585     2.687356845030     0.000000000000        3
+        1  O     0.017610357755     2.141354496408     0.000000000000        1
+        2  H     0.044317857073     0.350772852968     0.000000000000        2
+        3  H     1.712687132585     2.687356845030     0.000000000000        3
      ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
+
+  This is a PCM calculation
+
+     Polarizable Continuum Solver via PCMSolver
+
+     For details on PCM, see:
+     Tomasi, Mennucci, Cammi, Chem. Rev. 2005, 105, 2999-3094.
+
+     For details on PCMSolver, see:
+     Di Remigio et al., IJQC, 2019, 119, e25685
+
+     PCM Solver was set via external file
      ~~~~~~~~~~ PCMSolver ~~~~~~~~~~
      Using CODATA 2010 set of constants.
      Input parsing done API-side
@@ -119,32 +148,13 @@
      Green's function type: uniform dielectric
      Permittivity = 78.39
 
-
-  :: UHF wavefunction
-  ======================
-
-  This is a PCM calculation
-
-     Polarizable Continuum Solver via PCMSolver
-
-     For details on PCM, see:
-     Tomasi, Mennucci, Cammi, Chem. Rev. 2005, 105, 2999-3094.
-
-     For details on PCMSolver, see:
-     Di Remigio et al., IJQC, 2019, 119, e25685
-
-     PCM Solver was set via external file
-
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of alpha electrons:               6
      Number of beta electrons:                4
      Number of virtual alpha orbitals:       18
      Number of virtual beta orbitals:        20
      Number of molecular orbitals:           24
-     Number of atomic orbitals:              24
 
 
   :: Hartree-Fock engine
@@ -164,31 +174,32 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
+     Maximum iterations:                    100
 
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
-
+     Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
-     Gradient threshold:            0.1000E-09
+     Acceleration type:                    diis
 
-     Coulomb screening threshold:   0.1000E-15
-     Exchange screening threshold:  0.1000E-13
-     Fock precision:                0.1000E-31
-     Integral cutoff:               0.1000E-15
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
 
-  - Setting initial AO density to SAD
+  - Setting initial AO density to sad
 
      Energy of initial guess:               -76.262959744268
      Number of electrons in guess:           10.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-15
+     Exchange screening threshold:  0.1000E-13
+     Integral cutoff:               0.1000E-15
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS convergence acceleration:
+
+     DIIS dimension:   8
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -203,11 +214,11 @@
      9           -75.775955750782     0.3203E-04     0.6044E-04
     10           -75.775955661746     0.8607E-05     0.8904E-07
     11           -75.775955664976     0.1417E-05     0.3230E-08
-    12           -75.775955665110     0.3961E-06     0.1339E-09
-    13           -75.775955665114     0.1154E-06     0.4505E-11
-    14           -75.775955665114     0.3010E-07     0.2842E-12
-    15           -75.775955665114     0.7961E-08     0.1421E-13
-    16           -75.775955665115     0.1233E-08     0.4263E-13
+    12           -75.775955665110     0.3961E-06     0.1340E-09
+    13           -75.775955665114     0.1154E-06     0.4519E-11
+    14           -75.775955665115     0.3010E-07     0.2984E-12
+    15           -75.775955665115     0.7961E-08     0.1421E-13
+    16           -75.775955665115     0.1233E-08     0.5684E-13
     17           -75.775955665115     0.6779E-09     0.1421E-13
     18           -75.775955665115     0.7189E-10     0.1421E-13
   ---------------------------------------------------------------
@@ -223,34 +234,23 @@
 
   - Summary of QM/PCM energetics:
                                          a.u.             eV     kcal/mol
-     QM/PCM SCF Contribution:       -0.000930462056
-     QM/PCM Electrostatic Energy:   -0.001860924112    -0.05064    -1.168
+     QM/PCM SCF Contribution:        -0.000930462056    -0.02532    -0.584
+     QM/PCM Electrostatic Energy:    -0.001860924112    -0.05064    -1.168
 
-  - Alpha orbital energies
+  - UHF wavefunction spin expectation values:
 
-  -----------------------------------------------------------------------------------
-   1 -20.771892247164   7   0.171382500666  13   1.368749402904  19   2.385165460312
-   2  -1.587151680675   8   0.729396006337  14   1.381385278330  20   3.058054430974
-   3  -0.876831757597   9   0.747552042272  15   1.595288241824  21   3.139824339512
-   4  -0.787726873179  10   0.980303622481  16   1.710735067421  22   3.336758425093
-   5  -0.769223227583  11   1.014425913240  17   1.874808693049  23   3.711285950342
-   6  -0.141946219791  12   1.125922084683  18   2.367573538177  24   3.989626626957
-  -----------------------------------------------------------------------------------
-
-  - Beta orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.715845198891   7   0.258100142605  13   1.396860979852  19   2.462492132046
-   2  -1.393923147954   8   0.751498740619  14   1.432384442448  20   3.176432351165
-   3  -0.831883078764   9   0.825729712953  15   1.642694442758  21   3.248448248228
-   4  -0.699292293876  10   1.063648310358  16   1.779585688206  22   3.391373374972
-   5   0.027454654195  11   1.162291386914  17   1.892295858193  23   3.788899231618
-   6   0.191379863511  12   1.206031785946  18   2.408635636410  24   4.018795366936
-  -----------------------------------------------------------------------------------
+     Sz:                   1.00000000
+     Sz(Sz + 1):           2.00000000
+     S^2:                  2.00526645
+     Spin contamination:   0.00526645
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):              2.49700
-     Total cpu time (sec):               3.27624
+     Total wall time (sec):              3.25329
+     Total cpu time (sec):               5.39926
+
+     Peak memory usage during the execution of eT: 215.760 KB
+
+  Calculation ended: 2021-03-05 13:57:58 UTC +01:00
 
   eT terminated successfully!
