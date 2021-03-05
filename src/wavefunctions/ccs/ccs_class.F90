@@ -37,7 +37,7 @@ module ccs_class
    use string_utilities,         only : convert_to_uppercase
    use array_utilities,          only : zero_array, zero_array_complex
    use array_utilities,          only : sandwich
-   use array_utilities,          only : get_l2_norm, copy_and_scale, copy_and_scale_complex, our_zdotu
+   use array_utilities,          only : get_l2_norm, copy_and_scale, copy_and_scale_complex, zdot
    use array_utilities,          only : get_abs_max_w_index, get_n_lowest, get_n_highest
    use array_utilities,          only : quicksort_with_index_descending, are_vectors_parallel
    use index_invert,             only : invert_compound_index, invert_packed_index
@@ -362,9 +362,6 @@ module ccs_class
       procedure :: add_t1_terms_complex                          => add_t1_terms_ccs_complex
       procedure :: add_t1_terms_and_transform                    => add_t1_terms_and_transform_ccs
       procedure :: add_t1_terms_and_transform_complex            => add_t1_terms_and_transform_ccs_complex
-!
-      procedure :: ao_to_t1_transformation                       => ao_to_t1_transformation_ccs
-      procedure :: ao_to_t1_transformation_complex               => ao_to_t1_transformation_ccs_complex
 !
 !     One-electron integrals 
 !

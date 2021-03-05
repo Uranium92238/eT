@@ -523,7 +523,7 @@ contains
    end subroutine jacobian_transpose_cc3_t3_b1_cc3
 !
 !
-   module subroutine construct_x_ai_intermediate_cc3(wf, i, j, k, u_abc, v_abc, L2, x_ai)
+   module subroutine construct_x_ai_intermediate_cc3(wf, i, j, k, u_abc, v_abc, L2, X_ai)
 !!
 !!    Construct X_ai intermediate
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019

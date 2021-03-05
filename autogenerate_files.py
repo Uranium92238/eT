@@ -17,36 +17,43 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
+"""
+Simple script to autogenerate complex files and interfaces in eT
 
-# Simple script to autogenerate complex files and interfaces in eT
+Usage: call
+$ python3 autogenerate_interfaces.py
+in the main eT directory (where this file is found).
 
-# Usage: call
-# $ python3 autogenerate_interfaces.py
-# in the main eT directory (where this file is found).
+Written by Alice Balbi and Andreas Skeidsvoll, Sep 2019
+Restructured by Sander Roet, Feb 2020
+Combined in autogenerate_files.py by Alexander C. Paul, Nov 2020
+Cleaned and optimized by Rolf H. Myhre, Mar 2021
+"""
 
-# Written by Alice Balbi and Andreas Skeidsvoll, Sep 2019
-# Restructured by Sander Roet, Feb 2020
-# Combined in autogenerate_files.py by Alexander C. Paul, Nov 2020
-from re import search, sub, findall
+from re import sub, findall
 from pathlib import Path
-from shutil import rmtree
+
+# Set of modules that can be complexified.
+# Add any new modules here and the script should handle the rest.
+complexifiable_modules = {"packed_array_utilities_r"}
 
 
-def is_submodule(file_name):
-    # List all submodules found in the wavefunction folders
-    # This should be defined as the first not-comment line of the F90 file
-    file_name = Path(file_name)
-    with file_name.open("r") as f:
-        for line in f.readlines():
-            # Skip comment lines
-            if line.startswith("!"):
-                continue
-            # First non-comment line start with submodule
-            elif line.startswith("submodule"):
-                return True
-            # First non-comment line does not start with submodule
-            else:
-                return False
+def is_submodule(file_path):
+    # Checks if first non comment line in file starts with "submodule"
+
+    with file_path.open("r") as f:
+        lines = f.readlines()
+
+    for line in lines:
+        # Skip comment lines
+        if line.startswith("!"):
+            continue
+        # First non-comment line start with submodule
+        elif line.startswith("submodule"):
+            return True
+        # First non-comment line does not start with submodule
+        else:
+            return False
 
 
 def write_license(f):
@@ -78,648 +85,510 @@ def write_license(f):
     )
 
 
-def fix_line_continuation(lines):
-    lines_out = []
-    lines_without_comments = []
+def create_code_to_line_map(lines):
+    """
+    Iterates over lines and returns two strings,
+    the first with concatenated lines in case of line continuation
+    and the second with the concatenated lines
+    without comments and continuation symbols ("&").
+    """
+
+    full_lines = []
+    code_lines = []
     for line in lines:
-        temp_line = line.rstrip(" ")
-        temp_line_without_comments = line.partition("!")[0].strip()
+        full_line = line.rstrip(" ")
+        code_line = line.partition("!")[0].strip()
 
-        while temp_line_without_comments.endswith("&"):
-            try:
-                line_addition = next(lines).rstrip(" ")
-            except StopIteration:
-                break
-            temp_line = temp_line + line_addition
-            temp_line_without_comments = (
-                temp_line_without_comments.strip("&").strip()
-                + line_addition.partition("!")[0].strip()
+        while code_line.endswith("&"):
+            add_line = next(lines).rstrip(" ")
+
+            full_line = full_line + add_line
+            code_line = (
+                f"{code_line.split('&')[0].strip()} "
+                f"{add_line.split('!')[0].strip()}"
             )
-        lines_out.append(temp_line)
-        lines_without_comments.append(temp_line_without_comments)
 
-    return lines_out, lines_without_comments
+        full_lines.append(full_line)
+        code_lines.append(code_line)
+
+    return full_lines, code_lines
 
 
 def find_arguments(line):
-    #  Make list of arguments in subroutine or function
+    """
+    Returns a list of strings that are inside parenthesis "()" in string.
+    """
+
+    # Finds the strings inside parentheses in the given line using regex
+    # and returns a list of such groups
+    groups = findall(r"\((.*?)\)", line)
 
     argument_list = []
+    for group in groups:
+        arguments = group.split(",")
 
-    #  Finds the text all inside brackets in the given line using regex
-
-    all_inside_brackets = findall(r"\((.*?)\)", line)
-
-    for inside_single_brackets in all_inside_brackets:
-        arguments_inside_single_brackets = inside_single_brackets.split(",")
-        for argument_name in arguments_inside_single_brackets:
-            if argument_name.strip() != "":
-                argument_list.append(argument_name.strip().lower())
+        for argument in arguments:
+            argument_list.append(argument.strip())
 
     return argument_list
 
 
 def write_function_interface(iterator, arguments, outfile):
-    #
-    for line, line_without_comments in iterator:
+    """
+    Loop over iterator until reaching end of function or subroutine
+    and print header line (starts with "!!"), "implicit none", and
+    argument declarations for arguments in argument_list.
+    Iterator is generated by a zip of a list of concatenated full lines
+    (with newlines), and the corresponding code line without comments and &.
+    """
+
+    for line, code_line in iterator:
+
         # Write header lines
-        if line[:2] == "!!":
+        if line.startswith("!!"):
             outfile.write(line)
-
-        # Reached end of subroutine
-        if search(r"\b" + "end" + r"\b", line_without_comments) and search(
-            r"\b" + "subroutine" + r"\b", line_without_comments
-        ):
-            outfile.write("!\n" + line)
-            break
-
-        # Reached end of function
-
-        if search(r"\b" + "end" + r"\b", line_without_comments) and search(
-            r"\b" + "function" + r"\b", line_without_comments
-        ):
-            outfile.write("!\n" + line)
-            break
+            continue
 
         # Reached implicit none
-
-        if search(r"\b" + "implicit none" + r"\b", line_without_comments):
+        if code_line.startswith("implicit none"):
             outfile.write(line + "!\n")
+            continue
 
-        # Reached declaration of variable(s)
+        # Write out variable declarations if they are in the argument list
+        if "::" in code_line:
+            after_dots = code_line.split("::")[1]
+            variable = after_dots.split(",")[0].strip()
 
-        if search("::", line_without_comments):
-            after_dots = line_without_comments.partition("::")[2].strip()
-            variable_list = [
-                variable_name.strip() for variable_name in after_dots.split(",")
-            ]
-            # Look through all declared variables for the declaration
-            # of any subroutine or function arguments
-
-            found_argument = False
-            for variable_name in variable_list:
-                if variable_name.lower() in arguments:
-                    found_argument = True
-                    break
-
-            if found_argument:
+            if variable in arguments:
                 outfile.write(line)
+                continue
+
+        # Reached end of subroutine
+        if code_line.startswith(("end subroutine", "end function")):
+            outfile.write("!\n" + line)
+            break
 
 
-def autogenerate_interfaces(source_directory):
-    # Autogenerate interfaces
-    # Written by Alice Balbi and Andreas Skeidsvoll, Sep 2019
-    # Restructured by Sander Roet , Feb 2020
-    # Converted to use pathlib.Path and f-strings by Sander Roet, Sep 2020
-    # This script reads relevant Fortran files in eT, and makes interfaces.
+def autogenerate_interfaces(src_dir):
+    """
+    Autogenerate interfaces
+    Written by Alice Balbi and Andreas Skeidsvoll, Sep 2019
+    Restructured by Sander Roet , Feb 2020
+    Converted to use pathlib.Path and f-strings by Sander Roet, Sep 2020
+    This script reads relevant Fortran files, and makes interfaces.
+    Cleaned up Rolf H. Myhre, Mar 2021
+    """
 
-    wavefunction_directory = source_directory / "wavefunctions"
+    # Get all .F90 files under src_dir and check if submodule
+    f90_files = set(src_dir.glob("**/*.F90"))
+    all_submodules = {i for i in f90_files if is_submodule(i)}
 
-    # Preparation section
-    remove_files = set(wavefunction_directory.glob("*/*_interface*.F90"))
-    remove_files.update(set(wavefunction_directory.glob("*/*/*_interface*.F90")))
+    for submodule_path in all_submodules:
+
+        # Make a generator
+        with submodule_path.open("r") as f:
+            lines = (i for i in f.readlines())
+
+        lines, code_lines = create_code_to_line_map(lines)
+        iterator = zip(lines, code_lines)
+
+        interface_path = Path(f"{submodule_path.with_suffix('')}_interface.F90")
+        with interface_path.open("w") as interface_file:
+
+            write_license(interface_file)
+
+            for line, code_line in iterator:
+                if code_line.startswith(("module subroutine", "module function")):
+
+                    interface_file.write("!\n!\n" + line)
+
+                    argument_list = find_arguments(code_line)
+
+                    # Loop until reaching end of subroutine or function
+                    write_function_interface(iterator, argument_list, interface_file)
+
+
+def get_code_line(lines):
+    """
+    Strip away comments and concatenate lines with
+    line continuation (lines ending with "&")
+    """
+
+    line = next(lines)
+
+    code_line = line.partition("!")[0].strip()
+    while (len(code_line) > 0) and (code_line[-1] == "&"):
+        add_line = next(lines)
+        code_line = (
+            f"{code_line.split('&')[0].strip()} " f"{add_line.split('!')[0].strip()}"
+        )
+
+    return code_line
+
+
+def delete_autogenerated(src_dir):
+    """
+    Delete all directories starting with "autogenerated"
+    and files ending with _interface.F90
+    """
 
     # Remove all interface files
-    for f in remove_files:
+    interface_files = set(src_dir.glob("**/*_interface.F90"))
+    for f in interface_files:
         f.unlink()
 
-    # Get all .F90 files in the directory
-    f90_files = set(wavefunction_directory.glob("*/*.F90"))
-    f90_files.update(set(wavefunction_directory.glob("*/*/*.F90")))
+    # Remove autogenerated directories
+    auto_dirs = set(src_dir.glob("**/autogenerated*"))
+    for auto_dir in auto_dirs:
 
-    wave_function_all_submodules = {i for i in f90_files if is_submodule(i)}
+        auto_files = set(auto_dir.glob("*.F90"))
+        for auto_file in auto_files:
+            auto_file.unlink()
 
-    # Interface generation
-    for submodule_name in wave_function_all_submodules:
-        with submodule_name.open("r") as f:
-            # Make a generator
-            lines = (i for i in f.readlines())
-        lines, lines_without_comments = fix_line_continuation(lines)
-        iterator = zip(lines, lines_without_comments)
-        # Strip .F90 and add "_interface.F90"
-        interface_name = Path(f"{submodule_name.with_suffix('')}_interface.F90")
-        interface_file = interface_name.open("w")
-        write_license(interface_file)
-
-        for line, line_without_comments in iterator:
-            if search(r"\b" + "module" + r"\b", line_without_comments) and (
-                search(r"\b" + "subroutine" + r"\b", line_without_comments)
-                or search(r"\b" + "function" + r"\b", line_without_comments)
-            ):
-
-                interface_file.write("!\n!\n" + line)
-
-                argument_list = find_arguments(line_without_comments)
-
-                # Loop until reaching end of subroutine or function
-                write_function_interface(iterator, argument_list, interface_file)
-
-        interface_file.close()
+        auto_dir.rmdir()
 
 
-def autogenerate_complex_files(source_directory):
-    # Autogenerate complex files
-    # Written by Alice Balbi and Andreas Skeidsvoll, Sep 2019
-    # Converted to use pathlib.Path and f-strings by Sander Roet, Sep 2020
-    # This script reads relevant real Fortran files in eT, and writes complex
-    # versions.
+def get_complex_mod_variables(file_path):
+    """
+    Find all complex variables in module ending in "_complex" before "contains"
+    and return them as a list
+    """
 
-    parameters_file_directory = source_directory / "various"
-    wavefunction_directory = source_directory / "wavefunctions"
-    autogenerated_directory_name = Path("autogenerated_complex_files")
+    variable_list = []
 
-    # Dictionary with wavefunction directory as key and the corresponding class
-    # file as value
+    # Loop over lines in class_file until "contains"
+    # If line starts with "complex(dp) and contains "_complex"
+    # add the word preceding "complex" to variable list.
+    mod_file = file_path.open("r")
+    with mod_file as lines:
+        while True:
+            try:
+                line = get_code_line(lines)
+            except StopIteration:
+                break
 
-    wavefunction_classes = {
+            if line.startswith("contains"):
+                break
+            elif len(line) > 0:
+                if line.startswith("complex(dp)") and "_complex" in line:
+                    variable_list.append(line.split("_complex")[0].split()[-1])
+
+    mod_file.close()
+
+    return variable_list
+
+
+def get_complex_class_procedures(file_path):
+    """
+    Find all procedures ending in "_complex" in a module before "end type"
+    and return a list of the procedures and the corresponding procedure pointers
+    """
+
+    pointer_list = []
+    procedure_list = []
+
+    # Loop over lines in class_file until "end type"
+    # If the first string in line is "procedure" and the third ends with "_complex",
+    # add pointer and procedure to the list
+    class_file = file_path.open("r")
+    with class_file as lines:
+        while True:
+            try:
+                line = get_code_line(lines)
+            except StopIteration:
+                break
+
+            if line.startswith("end type"):
+                break
+            elif len(line) > 0:
+                split_line = line.split()
+                if split_line[0] == "procedure" and split_line[2].endswith("_complex"):
+
+                    pointer_list.append(split_line[2].split("_complex")[0])
+                    procedure_list.append(split_line[4].split("_complex")[0])
+
+    class_file.close()
+
+    return pointer_list, procedure_list
+
+
+def skip_to_procedure_end(lines):
+    """
+    Iterate through the iterator lines until we find a line
+    starting with "end subroutine" or "end function"
+    """
+    while True:
+        line = next(lines)
+        code_line = line.partition("!")[0].strip()
+        if code_line.startswith(("end subroutine", "end function")):
+            break
+
+
+def complexify_from_set(line, real_set):
+    """
+    Loop over set of strings, search for them in line
+    and replace with (string)_complex if present
+    """
+    for item in real_set:
+        if item in line:
+            line = sub(r"\b" + item + r"\b", item + "_complex", line)
+    return line
+
+
+def complexify_line(line, parameter_list):
+    """
+    Check line for strings that have to be replaced for
+    complexification and replace them
+    """
+
+    # BLAS translations
+    blas_translation = [
+        ("dgemm", "zgemm"),
+        ("dsymm", "zsymm"),
+        ("dsyrk", "zsyrk"),
+        ("dcopy", "zcopy"),
+        ("daxpy", "zaxpy"),
+        ("dscal", "zscal"),
+        ("dgemv", "zgemv"),
+        ("dger", "zgeru"),
+        ("ddot", "zdot"),
+    ]
+
+    # Complexify BLAS routines
+    for blas in blas_translation:
+        if blas[0] in line:
+            line = sub(r"\b" + blas[0] + r"\b", blas[1], line)
+
+    # Complexify parameters
+    line = complexify_from_set(line, parameter_list)
+
+    # Change variable declarations
+    if "real" in line:
+        line = sub(r"\b" + "real" + r"\b", "complex", line)
+
+    # Change Real in comments
+    if "Real" in line:
+        line = sub(r"\b" + "Real" + r"\b", "Complex", line)
+
+    # Change wf%eri to wf%eri_c
+    if "wf%eri" in line:
+        line = sub(r"\b" + "wf%eri" + r"\b", "wf%eri_complex", line)
+
+    # Change array utilities
+    if "zero_array" in line:
+        line = sub(r"\b" + "zero_array" + r"\b", "zero_array_complex", line)
+    if "copy_and_scale" in line:
+        line = sub(r"\b" + "copy_and_scale" + r"\b", "copy_and_scale_complex", line)
+
+    # Change complexifiable submodules to complex version
+    for module in complexifiable_modules:
+        if module in line:
+            line = sub(
+                r"\b" + module + r"\b",
+                module.rpartition("_r")[0] + "_c",
+                line,
+            )
+
+    return line
+
+
+def get_parameter_list(source_directory):
+    """
+    Read the parameter file and extract the complex variables
+    ending in '_complex' before contains
+    """
+    parameter_path = source_directory / "various" / "parameters.F90"
+    parameter_list = get_complex_mod_variables(parameter_path)
+    return parameter_list
+
+
+def autogenerate_complex_files(source_directory, parameter_list):
+    """
+    Autogenerate complex files
+    Written by Alice Balbi and Andreas Skeidsvoll, Sep 2019
+    Converted to use pathlib.Path and f-strings by Sander Roet, Sep 2020
+    Cleaned up and optimized by Rolf H. Myhre, Mar 2021
+    This script reads relevant real Fortran files and writes complex versions.
+    """
+
+    wf_root = source_directory / "wavefunctions"
+    auto_dir_name = Path("autogenerated_complex_files")
+
+    # List of wavefunctions
+    wfs = ["ccs", "doubles", "ccsd"]
+
+    wf_classes = {
         "ccs": ["ccs_class.F90"],
         "doubles": ["doubles_class.F90"],
         "ccsd": ["ccsd_class.F90"],
     }
 
     # Dictionary with wavefunction directory as key and the corresponding
-    # complexified file as value
-
-    wavefunction_complexified_submodules = {
+    # complexified submodules as value
+    complex_submodules = {
         "ccs": [
-            "fock_ccs.F90",
-            "initialize_destruct_ccs.F90",
-            "jacobian_transpose_ccs.F90",
-            "multiplier_equation_ccs.F90",
-            "omega_ccs.F90",
-            "set_get_ccs.F90",
-            "zop_ccs.F90",
-            "t1_ccs.F90",
+            "fock_ccs",
+            "initialize_destruct_ccs",
+            "jacobian_transpose_ccs",
+            "multiplier_equation_ccs",
+            "omega_ccs",
+            "set_get_ccs",
+            "zop_ccs",
+            "t1_ccs",
         ],
         "doubles": [
-            "initialize_destruct_doubles.F90",
-            "jacobian_transpose_doubles.F90",
-            "omega_doubles.F90",
-            "zop_doubles.F90",
+            "initialize_destruct_doubles",
+            "jacobian_transpose_doubles",
+            "omega_doubles",
+            "zop_doubles",
         ],
         "ccsd": [
-            "initialize_destruct_ccsd.F90",
-            "jacobian_transpose_ccsd.F90",
-            "multiplier_equation_ccsd.F90",
-            "omega_ccsd.F90",
-            "set_get_ccsd.F90",
-            "zop_ccsd.F90",
-            "fock_ccsd.F90",
+            "initialize_destruct_ccsd",
+            "jacobian_transpose_ccsd",
+            "multiplier_equation_ccsd",
+            "omega_ccsd",
+            "set_get_ccsd",
+            "zop_ccsd",
+            "fock_ccsd",
         ],
     }
 
-    excluded_procedures = [
-        "initialize_transition_densities_ccs",
-        "destruct_transition_densities_ccs",
-        "initialize_right_excitation_energies_ccs",
-        "destruct_right_excitation_energies_ccs",
-        "initialize_left_excitation_energies_ccs",
-        "destruct_left_excitation_energies_ccs",
-        "ao_to_t1_transformation_ccs",
-        "ao_to_t1_transformation_ccs_complex",
-        "set_excitation_energies_ccs",
-    ]
+    # Initialize variable set with complex variables from wavefunction_class
+    variable_set = {"energy", "dipole_moment"}
+    procedure_set = set()
 
-    # Parameter listing section
+    pointer_set = set()
+    wf_procedure_set = set()
 
-    parameters_file = (parameters_file_directory / "parameters.F90").open("r")
+    for wf in wfs:
 
-    parameter_list = []
+        wf_dir = wf_root / wf
 
-    # Read until end of file
+        auto_dir = wf_dir / auto_dir_name
+        auto_dir.mkdir()
 
-    with parameters_file as lines:
-        while True:
+        # Expand _complex variable set with variables from wf
+        variable_set |= set(get_complex_mod_variables(wf_dir / wf_classes[wf][0]))
 
-            try:
-                line = next(lines)
+        # Get _complex pointers and procedures in wf.
+        # Pointer_set requires lower level pointers,
+        # while we only require procedures from current wf
+        pointers, procedures = get_complex_class_procedures(wf_dir / wf_classes[wf][0])
+        pointer_set |= set(pointers)
+        wf_procedure_set = set(procedures)
+        procedure_set = pointer_set | set(procedures)
 
-            except StopIteration:
-                break
+        for submodule_name in complex_submodules[wf]:
 
-            line_without_comments = line.partition("!")[0].strip()
+            with (wf_dir / f"{submodule_name}.F90").open("r") as r_file:
+                line_list = r_file.readlines()
 
-            # In case line contains an ampersand, read next line(s)
+            # Make an iterator
+            lines = (i for i in line_list)
 
-            while (len(line_without_comments) > 0) and (
-                line_without_comments[-1] == "&"
-            ):
-
-                try:
-                    line_addition = next(lines)
-
-                except StopIteration:
-                    break
-
-                line = line + line_addition
-                line_without_comments = (
-                    line_without_comments.strip("&").strip()
-                    + line_addition.partition("!")[0].strip()
-                )
-
-            # Reached a real parameter declaration, add the parameter name to the list
-            # of parameters
-
-            if (search(r"\b" + "real" + r"\b", line_without_comments)) and (
-                search("::", line_without_comments)
-            ):
-                #
-                after_dots = line_without_comments.partition("::")[2].strip()
-                parameter_name = after_dots.partition("=")[0].strip()
-                parameter_list.append(parameter_name)
-
-    parameters_file.close()
-
-    # Preparation section
-
-    # Remove autogenerated directories
-
-    for directory_name in wavefunction_classes:
-
-        autogenerated_directory = (
-            wavefunction_directory / directory_name / autogenerated_directory_name
-        )
-
-        if autogenerated_directory.exists():
-            rmtree(autogenerated_directory)
-
-    # List all submodules found in the wavefunction folders
-
-    wavefunction_all_submodules = {}
-
-    for directory_name in wavefunction_classes:
-
-        file_names = []
-
-        for file_name in (wavefunction_directory / directory_name).iterdir():
-
-            file_path = wavefunction_directory / directory_name / file_name
-
-            if file_path.is_file() and (
-                file_path.name not in wavefunction_classes[directory_name]
-            ):
-                file_names.append(file_name)
-
-        wavefunction_all_submodules[directory_name] = file_names
-
-    # Create autogenerated directories
-
-    for directory_name in wavefunction_classes:
-        (wavefunction_directory / directory_name / autogenerated_directory_name).mkdir()
-
-    # Make a list containing the name of the real type-bound variables that
-    # should be changed to complex, by looking for the type-bound variables
-    # before 'contains' in the wavefunction class files
-
-    variable_list = []
-
-    for directory_name in wavefunction_classes:
-
-        class_name = wavefunction_classes[directory_name][0]
-
-        class_file = (wavefunction_directory / directory_name / class_name).open("r")
-
-        # Read until 'contains' or end of file
-
-        with class_file as lines:
-            while True:
-
-                try:
-                    line = next(lines)
-
-                except StopIteration:
-                    break
-
-                line_without_comments = line.partition("!")[0].strip()
-
-                # In case line contains an ampersand, read next line(s)
-
-                while (len(line_without_comments) > 0) and (
-                    line_without_comments[-1] == "&"
-                ):
-
-                    try:
-                        line_addition = next(lines)
-
-                    except StopIteration:
-                        break
-
-                    line = line + line_addition
-                    line_without_comments = (
-                        line_without_comments.strip("&").strip()
-                        + line_addition.partition("!")[0].strip()
-                    )
-
-                # Reached a variable declaration, add the variable name to the list of
-                # real type-bound variables
-
-                if (search(r"\b" + "real" + r"\b", line_without_comments)) and (
-                    search("::", line_without_comments)
-                ):
-
-                    after_dots = line_without_comments.partition("::")[2].strip()
-                    varibles_after_dots = after_dots.split(",")
-
-                    for variable in varibles_after_dots:
-                        variable_list.append(variable.strip())
-
-                # Reached the end of type-bound variable declarations
-
-                elif "contains" in line_without_comments:
-                    break
-
-        class_file.close()
-
-    # Remove duplicates from the list of variables
-
-    variable_list = list(dict.fromkeys(variable_list))
-
-    # Make a list containing the name of the routines that should be changed to
-    # complex, by looking inside the wavefunction submodule files
-
-    procedure_list = []
-
-    for directory_name in wavefunction_complexified_submodules:
-        for submodule_name in wavefunction_complexified_submodules[directory_name]:
-
-            real_submodule_file = (
-                wavefunction_directory / directory_name / submodule_name
-            ).open("r")
-
-            # Read until 'contains' or end of file
-
-            with real_submodule_file as lines:
+            with (auto_dir / f"{submodule_name}_complex.F90").open("w") as c_file:
                 while True:
 
                     try:
                         line = next(lines)
-
                     except StopIteration:
                         break
 
-                    line_without_comments = line.partition("!")[0].strip()
+                    if len(line.strip()) > 1:
 
-                    # In case line contains an ampersand, read next line(s)
+                        # Skip ddot definitions due to issues on mac
+                        # Will fail in case of line continuation
+                        if ("::" in line) and ("ddot" in line):
+                            line = next(lines)
 
-                    while (len(line_without_comments) > 0) and (
-                        line_without_comments[-1] == "&"
-                    ):
+                        code_line = line.split("!")[0].strip()
 
-                        try:
-                            line_addition = next(lines)
-
-                        except StopIteration:
-                            break
-
-                        line = line + line_addition
-                        line_without_comments = (
-                            line_without_comments.strip("&").strip()
-                            + line_addition.partition("!")[0].strip()
-                        )
-
-                    # Reached a subroutine, add the subroutine name to the list of routines
-
-                    if search(
-                        r"\b" + "module" + r"\b", line_without_comments
-                    ) and search(r"\b" + "subroutine" + r"\b", line_without_comments):
-
-                        before_left_bracket = line_without_comments.partition("(")[
-                            0
-                        ].strip()
-
-                        subroutine_and_directory_name = before_left_bracket.partition(
-                            " subroutine "
-                        )[2].strip()
-
-                        if subroutine_and_directory_name != "":
-                            procedure_list.append(subroutine_and_directory_name)
-
-                        subroutine_name = subroutine_and_directory_name.rstrip(
-                            directory_name
-                        ).rstrip("_")
-
-                        if subroutine_name != "":
-                            procedure_list.append(subroutine_name)
-
-                    # Reached a function, add the function name to the list of routines
-
-                    if search(
-                        r"\b" + "module" + r"\b", line_without_comments
-                    ) and search(r"\b" + "function" + r"\b", line_without_comments):
-
-                        before_left_bracket = line_without_comments.partition("(")[
-                            0
-                        ].strip()
-
-                        function_and_directory_name = before_left_bracket.partition(
-                            " function "
-                        )[2].strip()
-
-                        if function_and_directory_name != "":
-                            procedure_list.append(function_and_directory_name)
-
-                        function_name = function_and_directory_name.rstrip(
-                            directory_name
-                        ).rstrip("_")
-
-                        if function_name != "":
-                            procedure_list.append(function_name)
-
-            real_submodule_file.close()
-
-    procedure_list = list(dict.fromkeys(procedure_list))
-
-    # Submodule section
-
-    for directory_name in wavefunction_complexified_submodules:
-        for submodule_name in wavefunction_complexified_submodules[directory_name]:
-
-            real_submodule_file = (
-                wavefunction_directory / directory_name / submodule_name
-            ).open("r")
-            complex_submodule_file = (
-                wavefunction_directory
-                / directory_name
-                / autogenerated_directory_name
-                / f"{submodule_name.rstrip('.F90')}_complex.F90"
-            ).open("w")
-
-            with real_submodule_file as lines:
-                while True:
-
-                    try:
-                        line = next(lines)
-
-                    except StopIteration:
-                        break
-
-                    line_without_comments = line.partition("!")[0].strip()
-
-                    if ("::" in line_without_comments) and (
-                        "ddot" in line_without_comments
-                    ):
-                        #
-                        line = next(lines)
-                        line_without_comments = line.partition("!")[0].strip()
-
-                    # Skip excluded procedures
-
-                    if search(r"\b" + "module" + r"\b", line_without_comments) and (
-                        search(r"\b" + "subroutine" + r"\b", line_without_comments)
-                        or search(r"\b" + "function" + r"\b", line_without_comments)
-                    ):
-
-                        for procedure_name in excluded_procedures:
-
-                            if search(
-                                r"\b" + procedure_name + r"\b", line_without_comments
+                        # Skip non complex procedures
+                        while True:
+                            if (
+                                code_line.startswith(
+                                    ("module subroutine", "module function")
+                                )
+                            ) and (
+                                code_line.split()[2].split("(")[0]
+                                not in wf_procedure_set
                             ):
 
-                                while True:
+                                skip_to_procedure_end(lines)
 
-                                    try:
-                                        line = next(lines)
+                                line = next(lines)
+                                while line.strip() == "!":
+                                    line = next(lines)
+                                code_line = line.split("!")[0].strip()
+                            else:
+                                break
 
-                                    except StopIteration:
-                                        break
-
-                                    line_without_comments = line.partition("!")[
-                                        0
-                                    ].strip()
-
-                                    if (
-                                        search(
-                                            r"\b" + "end" + r"\b", line_without_comments
-                                        )
-                                        and (
-                                            search(
-                                                r"\b" + "subroutine" + r"\b",
-                                                line_without_comments,
-                                            )
-                                            or search(
-                                                r"\b" + "function" + r"\b",
-                                                line_without_comments,
-                                            )
-                                        )
-                                        and search(
-                                            r"\b" + procedure_name + r"\b",
-                                            line_without_comments,
-                                        )
-                                    ):
-
-                                        line = next(lines)
-
-                                        while line.strip() == "!":
-                                            line = next(lines)
-
-                                        line_without_comments = line.partition("!")[
-                                            0
-                                        ].strip()
-                                        break
-
-                    # Change submodule names
-
-                    if search(r"\b" + "submodule" + r"\b", line_without_comments):
-                        line = line.strip() + "_complex\n"
-
-                    # Change variable declarations
-
-                    line = sub(r"\b" + "real" + r"\b", "complex", line)
-
-                    # Change variable names
-
-                    for variable_name in variable_list:
-                        line = sub(
-                            r"\b" + "wf%" + variable_name + r"\b",
-                            "wf%" + variable_name + "_complex",
-                            line,
-                        )
-
-                    # Change routine names
-
-                    for procedure_name in procedure_list:
-                        line = sub(
-                            r"\b" + procedure_name + r"\b",
-                            procedure_name + "_complex",
-                            line,
-                        )
-
-                    # Change wf%eri to wf%eri_c
-
-                    line = sub(r"\b" + "wf%eri" + r"\b", "wf%eri_complex", line)
-
-                    # Change BLAS/LAPACK routines
-
-                    line = sub(r"\b" + "dgemm" + r"\b", "zgemm", line)
-                    line = sub(r"\b" + "dcopy" + r"\b", "zcopy", line)
-                    line = sub(r"\b" + "daxpy" + r"\b", "zaxpy", line)
-                    line = sub(r"\b" + "dscal" + r"\b", "zscal", line)
-                    line = sub(r"\b" + "dgemv" + r"\b", "zgemv", line)
-                    line = sub(r"\b" + "dger" + r"\b", "zgeru", line)
-                    line = sub(r"\b" + "dsymm" + r"\b", "zsymm", line)
-
-                    # Change to custom zdotu routine,
-                    # since the bundled zdotu routine fails on Macs
-
-                    line = sub(r"\b" + "ddot" + r"\b", "our_zdotu", line)
-
-                    # Change energy and dipole moment
-
-                    line = sub(r"\b" + "energy" + r"\b", "energy_complex", line)
-                    line = sub(
-                        r"\b" + "dipole_moment" + r"\b", "dipole_moment_complex", line
-                    )
-                    line = sub(
-                        r"\b" + "correlation_energy" + r"\b",
-                        "correlation_energy_complex",
-                        line,
-                    )
-
-                    # Change integral and t1 transformation routines
-
-                    line = sub(r"\b" + "get_t1_oei" + r"\b", "get_t1_oei_complex", line)
-                    line = sub(
-                        r"\b" + "get_g_pqrs_t1" + r"\b", "get_g_pqrs_t1_complex", line
-                    )
-                    line = sub(
-                        r"\b" + "ao_to_t1_transformation" + r"\b",
-                        "ao_to_t1_transformation_complex",
-                        line,
-                    )
-
-                    # Change array utilities
-
-                    line = sub(r"\b" + "zero_array" + r"\b", "zero_array_complex", line)
-                    line = sub(
-                        r"\b" + "copy_and_scale" + r"\b", "copy_and_scale_complex", line
-                    )
-                    line = sub(
-                        r"\b" + "packed_array_utilities_r" + r"\b",
-                        "packed_array_utilities_c",
-                        line,
-                    )
-
-                    # Change parameters
-
-                    for parameter_name in parameter_list:
-                        if search(
-                            r"\b" + parameter_name + r"\b", line_without_comments
-                        ):
+                        # Change submodule names
+                        if submodule_name in line:
                             line = sub(
-                                r"\b" + parameter_name + r"\b",
-                                parameter_name + "_complex",
+                                r"\b" + submodule_name + r"\b",
+                                submodule_name + "_complex",
                                 line,
                             )
 
-                    complex_submodule_file.write(line)
+                        # Complexify variables, procedures and general complexification
+                        line = complexify_from_set(line, variable_set)
+                        line = complexify_from_set(line, procedure_set)
+                        line = complexify_line(line, parameter_list)
 
-            real_submodule_file.close()
-            complex_submodule_file.close()
+                    c_file.write(line)
+
+
+def complexify_modules(src_dir, parameter_list):
+    """
+    Create complex versions of modules listed in complexifiable_modules.
+    """
+
+    # Get files in src and subdirectories
+    f_paths = set(src_dir.glob("**/*.F90"))
+
+    # Loop over all files and check if complexifiable
+    for f_path in f_paths:
+        if f_path.stem in complexifiable_modules:
+
+            # Get name of autodir and make it if it does not exist yet
+            dir_name = f_path.parent.name
+            auto_dir = f_path.parent / f"autogenerated_{dir_name}"
+            auto_dir.mkdir(exist_ok=True)
+
+            # Generate _c name
+            split_name = str(f_path.name).rpartition("_r")
+            c_path = auto_dir / (split_name[0] + "_c" + split_name[2])
+
+            with f_path.open("r") as r_file:
+                lines = r_file.readlines()
+
+            # Loop over lines, complexify if longer than 1 and write
+            with c_path.open("w") as c_file:
+                for line in lines:
+
+                    if len(line.strip()) > 1:
+                        line = complexify_line(line, parameter_list)
+                    c_file.write(line)
 
 
 def main(root_dir):
+
     source_directory = Path(root_dir / "src")
-    autogenerate_complex_files(source_directory)
+
+    # Delete all autogenerated directories
+    delete_autogenerated(source_directory)
+
+    # Get a list of parameters to complexify
+    parameter_list = get_parameter_list(source_directory)
+
+    # Generate complex modules
+    complexify_modules(source_directory, parameter_list)
+
+    # Generate complex wavefunction files
+    autogenerate_complex_files(source_directory, parameter_list)
+
+    # Finally, generate all the submodule interfaces
     autogenerate_interfaces(source_directory)
 
 
