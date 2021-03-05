@@ -71,17 +71,17 @@ module davidson_cc_es_class
    type, extends(abstract_cc_es) :: davidson_cc_es
 !
       integer :: max_dim_red
+      type(eigen_davidson_tool), allocatable :: davidson
 !
    contains
 !     
-      procedure, non_overridable :: run              => run_davidson_cc_es
+      procedure, non_overridable :: run => run_davidson_cc_es
 !
-      procedure, nopass :: set_precondition_vector   => set_precondition_vector_davidson_cc_es
+      procedure :: set_precondition_vector  &
+                => set_precondition_vector_davidson_cc_es
 !
-      procedure :: read_settings                     => read_settings_davidson_cc_es
-      procedure :: read_davidson_settings            => read_davidson_settings_davidson_cc_es
-!
-      procedure :: print_settings                    => print_settings_davidson_cc_es
+      procedure :: read_settings &
+                => read_settings_davidson_cc_es
 !       
    end type davidson_cc_es
 !
@@ -107,11 +107,14 @@ contains
       implicit none
 !
       type(davidson_cc_es) :: solver
-      class(ccs), intent(inout) :: wf
 !
-      character(len=*), intent(in) :: transformation
+      class(ccs),       intent(inout)  :: wf
+      character(len=*), intent(in)     :: transformation
+      logical,          intent(in)     :: restart
 !
-      logical, intent(in) :: restart
+      real(dp) :: lindep_threshold
+      integer  :: max_dim_red
+      logical  :: records_in_memory
 !
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state (' &
                      // trim(transformation) //')')
@@ -135,11 +138,11 @@ contains
       solver%n_singlet_states     = 0
       solver%max_iterations       = 100
       solver%restart              = restart
-      solver%max_dim_red          = max(100, 10*solver%n_singlet_states)
       solver%transformation       = trim(transformation)
       solver%es_type              = 'valence'
-      solver%records_in_memory    = .false.  
-      solver%storage              = 'disk'
+!
+      records_in_memory           = .false.  
+      max_dim_red                 = max(100, 10*solver%n_singlet_states)
 !
 !     Initialize convergence checker with default threshols
 !
@@ -147,27 +150,21 @@ contains
                                                     residual_threshold = 1.0d-3,   &
                                                     energy_convergence = .false.)
 !
-      call solver%read_settings()
-!
-      wf%n_singlet_states = solver%n_singlet_states
-!
-      call solver%print_settings()
-!
-   end function new_davidson_cc_es
-!
-!
-   subroutine print_settings_davidson_cc_es(solver)
-!!
-!!    Print settings    
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
-!!
-      implicit none 
-!
-      class(davidson_cc_es) :: solver 
+      call solver%read_settings(max_dim_red, records_in_memory)
 !
       call solver%print_es_settings()
 !
-   end subroutine print_settings_davidson_cc_es
+      wf%n_singlet_states = solver%n_singlet_states
+!
+      lindep_threshold = min(1.0d-11, 0.1d0*solver%convergence_checker%residual_threshold)
+      solver%davidson = eigen_davidson_tool('cc_es_davidson',        &
+                                             wf%n_es_amplitudes,     &
+                                             solver%n_singlet_states,&
+                                             lindep_threshold,       &
+                                             max_dim_red,            &
+                                             records_in_memory)
+!
+   end function new_davidson_cc_es
 !
 !
    subroutine run_davidson_cc_es(solver, wf)
@@ -194,10 +191,6 @@ contains
       real(dp), dimension(:), allocatable :: residual
       real(dp), dimension(:), allocatable :: solution 
 !
-      type(eigen_davidson_tool) :: davidson 
-!  
-      real(dp) :: lindep_threshold
-!
       type(timings) :: construct_new_trial, iteration_time
 !
       iteration_time = timings("Davidson: CC ES iteration time", pl="n")
@@ -210,17 +203,9 @@ contains
 !
       call solver%prepare_wf_for_excited_state(wf)
 !
-      lindep_threshold = min(1.0d-11, 0.1d0*solver%convergence_checker%residual_threshold)
+      call solver%davidson%initialize()
 !
-      davidson = eigen_davidson_tool('cc_es_davidson',                           &
-                                       wf%n_es_amplitudes,                       &
-                                       solver%n_singlet_states,                  &
-                                       lindep_threshold,                         &
-                                       solver%max_dim_red)
-!
-      call davidson%initialize(solver%records_in_memory)
-!
-      call solver%set_precondition_vector(wf, davidson)
+      call solver%set_precondition_vector(wf)
 !
 !     :: Set start vectors and handle restart ::
 !
@@ -231,7 +216,7 @@ contains
       do trial = 1, solver%n_singlet_states
 !
          call solver%set_initial_guesses(wf, c, trial, trial)
-         call davidson%set_trial(c, trial)
+         call solver%davidson%set_trial(c, trial)
 !
       enddo
 !
@@ -255,32 +240,32 @@ contains
 !
 !        Reduced space preparations 
 !
-         if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+         if (solver%davidson%red_dim_exceeds_max()) call solver%davidson%set_trials_to_solutions()
 !
-         call davidson%update_reduced_dim()
+         call solver%davidson%update_reduced_dim()
 !
-         call davidson%orthonormalize_trial_vecs() 
+         call solver%davidson%orthonormalize_trial_vecs() 
 !
 !        Print iteration information 
 !
          call output%printf('n', 'Iteration:               (i4)', &
                             ints=[iteration], fs='(/t3,a)')
-         call output%printf('n', 'Reduced space dimension: (i4)', ints=[davidson%dim_red])
+         call output%printf('n', 'Reduced space dimension: (i4)', ints=[solver%davidson%dim_red])
 !
 !        Transform new trial vectors and write them to file
 !
          call mem%alloc(c, wf%n_es_amplitudes)
          call mem%alloc(residual, wf%n_es_amplitudes)
 !
-         do trial = davidson%first_new_trial(), davidson%last_new_trial()
+         do trial = solver%davidson%first_new_trial(), solver%davidson%last_new_trial()
 !
-            call davidson%get_trial(c, trial)
+            call solver%davidson%get_trial(c, trial)
 !
             call wf%construct_jacobian_transform(solver%transformation, c, residual)
 !
             if (solver%projector%active) call solver%projector%do_(residual)
 !
-            call davidson%set_transform(residual, trial)
+            call solver%davidson%set_transform(residual, trial)
 !
          enddo ! Done transforming new trials 
 !
@@ -288,7 +273,7 @@ contains
 !
 !        Solve problem in the reduced space
 !
-         call davidson%solve_reduced_problem()
+         call solver%davidson%solve_reduced_problem()
 !
 !        Construct the full space solutions, test for convergence, 
 !        and use the residuals to construct the next trial vectors 
@@ -303,11 +288,11 @@ contains
 !
          do n = 1, solver%n_singlet_states
 !
-            call davidson%construct_solution(solution, n) 
+            call solver%davidson%construct_solution(solution, n) 
 !
             call wf%save_excited_state(solution, n, n, solver%transformation, solver%energies(n)) 
 !
-            call davidson%construct_residual(residual, solution, n) 
+            call solver%davidson%construct_residual(residual, solution, n) 
 !
             if (solver%projector%active) call solver%projector%do_(residual) ! CVS projection, 
                                                                              ! for instance
@@ -315,9 +300,9 @@ contains
             residual_norm = get_l2_norm(residual, wf%n_es_amplitudes)
 !
             converged(n) = solver%convergence_checker%has_converged(residual_norm, &
-                                 davidson%omega_re(n)-solver%energies(n), iteration)
+                                 solver%davidson%omega_re(n)-solver%energies(n), iteration)
 !
-            residual_lt_lindep(n) = (residual_norm <= lindep_threshold)
+            residual_lt_lindep(n) = (residual_norm <= solver%davidson%lindep_threshold)
 !
             if (.not. converged(n)) then 
 !
@@ -330,18 +315,18 @@ contains
 !
                else
 !
-                  call davidson%add_new_trial(residual, n)
+                  call solver%davidson%add_new_trial(residual, n)
 !
                endif
 !
             endif
 !
-            call output%printf('n', '(i4) (f16.12)  (f16.12)    (e11.4)  (e11.4) ',       &
-                               ints=[n],                                                  &
-                               reals=[davidson%omega_re(n),                               &
-                                      davidson%omega_im(n),                               &
-                                      residual_norm,                                      &
-                                      dabs(davidson%omega_re(n) - solver%energies(n))],   &
+            call output%printf('n', '(i4) (f16.12)  (f16.12)    (e11.4)  (e11.4) ',             &
+                               ints=[n],                                                        &
+                               reals=[solver%davidson%omega_re(n),                              &
+                                      solver%davidson%omega_im(n),                              &
+                                      residual_norm,                                            &
+                                      dabs(solver%davidson%omega_re(n) - solver%energies(n))],  &
                                ll=120)
 !
          enddo ! Done constructing new trials from residuals
@@ -355,7 +340,7 @@ contains
 !
 !        Update energies and save them
 !
-         solver%energies = davidson%omega_re
+         solver%energies = solver%davidson%omega_re
 !
 !        Special case when residuals converge in first iteration, e.g. on restart
 !        => Exit without testing energy convergence 
@@ -394,7 +379,7 @@ contains
 !
          do state = 1, solver%n_singlet_states
 !
-            call davidson%construct_solution(r(:,state), state) 
+            call solver%davidson%construct_solution(r(:,state), state) 
 !
          enddo 
 !
@@ -404,7 +389,7 @@ contains
 !
       endif
 !
-      call davidson%cleanup()
+      call solver%davidson%cleanup()
 !
       call mem%dealloc(converged, solver%n_singlet_states)
       call mem%dealloc(residual_lt_lindep, solver%n_singlet_states)
@@ -412,7 +397,7 @@ contains
    end subroutine run_davidson_cc_es
 !
 !
-   subroutine set_precondition_vector_davidson_cc_es(wf, davidson)
+   subroutine set_precondition_vector_davidson_cc_es(solver, wf)
 !!
 !!    Set precondition vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
@@ -421,21 +406,20 @@ contains
 !!
       implicit none
 !
-      class(eigen_davidson_tool) :: davidson
-!
+      class(davidson_cc_es) :: solver 
       class(ccs) :: wf
 !
       real(dp), dimension(:), allocatable :: preconditioner
 !
       call mem%alloc(preconditioner, wf%n_es_amplitudes)
       call wf%get_orbital_differences(preconditioner, wf%n_es_amplitudes)
-      call davidson%set_preconditioner(preconditioner)
+      call solver%davidson%set_preconditioner(preconditioner)
       call mem%dealloc(preconditioner, wf%n_es_amplitudes)
 !
    end subroutine set_precondition_vector_davidson_cc_es
 !
 !
-   subroutine read_settings_davidson_cc_es(solver)
+   subroutine read_settings_davidson_cc_es(solver, max_dim_red, records_in_memory)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -443,25 +427,13 @@ contains
       implicit none 
 !
       class(davidson_cc_es) :: solver 
+      integer, intent(inout) :: max_dim_red
+      logical, intent(inout) :: records_in_memory
 !
-      call solver%read_es_settings()
-      call solver%read_davidson_settings()
+      call solver%read_es_settings(records_in_memory)
+      call input%get_keyword('max reduced dimension', 'solver cc es', max_dim_red)
 !
    end subroutine read_settings_davidson_cc_es
-!
-!
-   subroutine read_davidson_settings_davidson_cc_es(solver)
-!!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!!
-      implicit none 
-!
-      class(davidson_cc_es) :: solver 
-!
-      call input%get_keyword('max reduced dimension', 'solver cc es', solver%max_dim_red)
-!
-   end subroutine read_davidson_settings_davidson_cc_es
 !
 !
 end module davidson_cc_es_class

@@ -68,10 +68,11 @@ module davidson_cc_multipliers_class
 !
       real(dp) :: residual_threshold
 !
-      character(len=200) :: storage 
-      logical :: restart, records_in_memory
-!
       type(timings) :: timer
+!
+      type(linear_davidson_tool), allocatable :: davidson
+!
+      logical :: restart
 !
    contains
 !
@@ -112,6 +113,8 @@ contains
 !
       logical, intent(in) :: restart
 !
+      logical :: records_in_memory
+!
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' multipliers')
       call solver%timer%turn_on()
 !
@@ -125,11 +128,16 @@ contains
       solver%residual_threshold  = 1.0d-5
       solver%restart             = restart
       solver%max_dim_red         = 50
-      solver%records_in_memory   = .false.
-      solver%storage             = 'disk'
+      records_in_memory          = .false.
 !
-      call solver%read_settings()
+      call solver%read_settings(records_in_memory)
       call solver%print_settings()
+!
+      solver%davidson = linear_davidson_tool('multipliers',                           &
+                                       wf%n_gs_amplitudes,                            &
+                                       min(1.0d-11, tenth*solver%residual_threshold), &
+                                       solver%max_dim_red,                            &
+                                       1, records_in_memory)
 !
    end function new_davidson_cc_multipliers
 !
@@ -163,8 +171,6 @@ contains
       class(davidson_cc_multipliers) :: solver
 !
       class(ccs) :: wf
-!
-      type(linear_davidson_tool), allocatable :: davidson
 !
       logical :: converged_residual
 !
@@ -204,22 +210,17 @@ contains
 !
       call dscal(wf%n_gs_amplitudes, -one, eta, 1)
 !
-      davidson = linear_davidson_tool('multipliers',                                  &
-                                       wf%n_gs_amplitudes,                            &
-                                       min(1.0d-11, tenth*solver%residual_threshold), &
-                                       solver%max_dim_red,                            &
-                                       eta, 1)
+      call solver%davidson%set_rhs(eta)
+      call solver%davidson%initialize()
 !
-      call davidson%initialize(solver%records_in_memory)
-!
-      call solver%set_precondition_vector(wf, davidson) 
+      call solver%set_precondition_vector(wf, solver%davidson) 
 !
 !     :: Set start vector / initial guess ::
 !
       call wf%set_initial_multipliers_guess(solver%restart)
       call mem%alloc(X, wf%n_gs_amplitudes)
       call wf%get_multipliers(X)
-      call davidson%set_trial(X, 1)
+      call solver%davidson%set_trial(X, 1)
 !
 !     :: Iterative loop ::
 !
@@ -229,7 +230,7 @@ contains
       iteration = 0
       converged_residual = .false.
 !
-      call mem%alloc(c, davidson%n_parameters)
+      call mem%alloc(c, solver%davidson%n_parameters)
 !
       do while (.not. converged_residual .and. (iteration .le. solver%max_iterations))
 !
@@ -237,35 +238,35 @@ contains
 !
 !        Reduced space preparations 
 !
-         if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+         if (solver%davidson%red_dim_exceeds_max()) call solver%davidson%set_trials_to_solutions()
 !
-         call davidson%update_reduced_dim()
+         call solver%davidson%update_reduced_dim()
 !
-         call davidson%orthonormalize_trial_vecs() 
+         call solver%davidson%orthonormalize_trial_vecs() 
 !
 !        Transform new trial vector and write to file
 !
-         call davidson%get_trial(c, davidson%dim_red)
+         call solver%davidson%get_trial(c, solver%davidson%dim_red)
 !
          call wf%construct_Jacobian_transform('left', c, X, zero)
 !
-         call davidson%set_transform(X, davidson%dim_red)
+         call solver%davidson%set_transform(X, solver%davidson%dim_red)
 !
 !        Solve problem in reduced space
 !
-         call davidson%solve_reduced_problem()
+         call solver%davidson%solve_reduced_problem()
 !
 !        Check if convergence criterion on residual is satisfied,
 !        and, if not, construct a new trial vector using the residual vector
 !
-         call davidson%construct_residual(X, 1)
+         call solver%davidson%construct_residual(X, 1)
          residual_norm = get_l2_norm(X, wf%n_gs_amplitudes)
 !
          converged_residual = .true.
          if (residual_norm >= solver%residual_threshold) then 
 !
             converged_residual = .false.
-            call davidson%add_new_trial(X, 1)
+            call solver%davidson%add_new_trial(X, 1)
 !
          endif 
 !
@@ -273,7 +274,7 @@ contains
 !
          call output%printf('n', '(i3)            (e11.4)', ints=[iteration], reals=[residual_norm])
 !
-         call davidson%construct_solution(X, 1)
+         call solver%davidson%construct_solution(X, 1)
          call wf%set_multipliers(X)
          call wf%save_multipliers()
 !
@@ -309,7 +310,7 @@ contains
 !
       call mem%dealloc(eta, wf%n_gs_amplitudes)
 !
-      call davidson%cleanup()
+      call solver%davidson%cleanup()
 !
    end subroutine run_davidson_cc_multipliers
 !
@@ -382,7 +383,7 @@ contains
    end subroutine set_precondition_vector_davidson_cc_multipliers
 !
 !
-   subroutine read_settings_davidson_cc_multipliers(solver)
+   subroutine read_settings_davidson_cc_multipliers(solver, records_in_memory)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -390,29 +391,13 @@ contains
       implicit none 
 !
       class(davidson_cc_multipliers) :: solver 
+      logical, intent(inout)         :: records_in_memory
 !
       call input%get_keyword('threshold', 'solver cc multipliers', solver%residual_threshold)
       call input%get_keyword('max iterations', 'solver cc multipliers', solver%max_iterations)
       call input%get_keyword('max reduced dimension', 'solver cc multipliers', solver%max_dim_red)
 !
-      call input%get_keyword('storage', 'solver cc multipliers', solver%storage)
-!
-!     Determine whether to store records in memory or on file
-!
-      if (trim(solver%storage) == 'memory') then 
-!
-         solver%records_in_memory = .true.
-!
-      elseif (trim(solver%storage) == 'disk') then 
-!
-         solver%records_in_memory = .false.
-!
-      else 
-!
-         call output%error_msg('Could not recognize keyword storage in solver: ' // &
-                                 trim(solver%storage))
-!
-      endif 
+      call input%place_records_in_memory('solver cc multipliers', records_in_memory)
 !
    end subroutine read_settings_davidson_cc_multipliers
 !

@@ -131,6 +131,9 @@ module input_file_class
       procedure :: is_embedding_on                          &
                 => is_embedding_on_input_file
 !
+      procedure :: place_records_in_memory                  &
+                => place_records_in_memory_input_file
+!
       procedure, private :: get_wf
       procedure, private :: requested_calculation 
 !
@@ -2491,6 +2494,51 @@ contains
                   this%is_section_present('pcm')
 !
    end function is_embedding_on_input_file
+!
+!
+  subroutine place_records_in_memory_input_file(this, section, records_in_memory)
+!!
+!!    Place records in memory
+!!    Written by Sarai D. Folkestad, 2021
+!!
+!!    Checks if storage for 'section' is in memory or on disk
+!!
+!!    records_in_mem is intent(inout) because it should be set 
+!!    to a default value before a call to this routine
+!!
+      implicit none
+!
+      class(input_file), intent(in) :: this
+      character(len=*),  intent(in) :: section
+!
+      logical, intent(inout) :: records_in_memory
+!
+      character(len=200) :: storage
+!
+      if (this%is_keyword_present('storage', trim(section))) then
+!
+         call this%get_keyword('storage', trim(section), storage)
+!  
+!        Determine whether to store records in memory or on file
+!  
+         if (trim(storage) == 'memory') then 
+!  
+            records_in_memory = .true.
+!  
+         elseif (trim(storage) == 'disk') then 
+!  
+            records_in_memory = .false.
+!  
+         else 
+!  
+            call output%error_msg('Could not recognize keyword storage in solver: ' // &
+                                    trim(storage))
+!  
+         endif 
+!
+      endif
+!
+    end subroutine place_records_in_memory_input_file
 !
 !
 end module input_file_class

@@ -28,11 +28,12 @@ module newton_raphson_updater_class
 !!
 !!    where A is the Jacobian matrix.
 !!
-   use kinds 
-   use amplitude_updater_class,  only: amplitude_updater
-   use ccs_class,                only: ccs
-   use memory_manager_class,     only: mem
-   use global_out,               only: output
+   use parameters
+   use amplitude_updater_class,    only: amplitude_updater
+   use ccs_class,                  only: ccs
+   use memory_manager_class,       only: mem
+   use global_out,                 only: output
+   use linear_davidson_tool_class, only: linear_davidson_tool
 !
    implicit none
 !
@@ -42,6 +43,8 @@ module newton_raphson_updater_class
       logical, private  :: records_in_memory
       integer, private  :: max_dim_red
       integer, private  :: max_iterations
+!
+      type(linear_davidson_tool), allocatable :: davidson 
 !
    contains
 !
@@ -60,7 +63,7 @@ module newton_raphson_updater_class
 contains 
 !
 !
-   pure function new_newton_raphson_updater(n_amplitudes,        &
+   function new_newton_raphson_updater(n_amplitudes,             &
                                             scale_amplitudes,    &
                                             scale_residual,      &
                                             relative_threshold,  &
@@ -97,6 +100,13 @@ contains
       this%max_dim_red        = 50
       this%max_iterations     = max_iterations
 !
+      this%davidson = linear_davidson_tool(name_        = 'newton_raphson_amplitude_updator', &
+                                      n_parameters      = this%n_amplitudes,                  &
+                                      lindep_threshold  = 1.0d-11,                            &
+                                      max_dim_red       = this%max_dim_red,                   &
+                                      n_equations       = 1,                                  &
+                                      records_in_memory = this%records_in_memory)
+!
    end function new_newton_raphson_updater
 !
 !
@@ -107,9 +117,13 @@ contains
 !!
 !!    Solves the equation A (update) = - (residual) for the update vector.
 !!
-      use linear_davidson_tool_class
 !
-      class(newton_raphson_updater), intent(in) :: this  
+      use timings_class, only: timings
+      use array_utilities, only: get_l2_norm
+!
+      implicit none 
+!
+      class(newton_raphson_updater), intent(inout) :: this  
 !
       class(ccs), intent(inout) :: wf 
 !
@@ -119,8 +133,6 @@ contains
       real(dp), dimension(:), allocatable :: preconditioner, c, x
 !
       real(dp) :: rho_norm, rho_threshold
-!
-      type(linear_davidson_tool), allocatable :: davidson 
 !
       integer :: iteration, trial
       logical :: converged
@@ -134,22 +146,18 @@ contains
 !
       rho_threshold = get_l2_norm(residual, this%n_amplitudes) * this%relative_threshold
 !
-      davidson = linear_davidson_tool(name_            = 'newton_raphson_amplitude_updator', &
-                                      n_parameters     = this%n_amplitudes,                  &
-                                      lindep_threshold = min(1.0d-11, rho_threshold),        &
-                                      max_dim_red      = this%max_dim_red,                   &
-                                      F                = residual,                           & 
-                                      n_equations      = 1) 
+      call this%davidson%set_lindep_threshold(min(1.0d-11, rho_threshold))
 !
-      call davidson%initialize(this%records_in_memory)
+      call this%davidson%initialize()
+      call this%davidson%set_rhs(residual)
 !
       call mem%alloc(preconditioner, this%n_amplitudes)
       call wf%get_orbital_differences(preconditioner, this%n_amplitudes)
 !
-      call davidson%set_preconditioner(preconditioner)
+      call this%davidson%set_preconditioner(preconditioner)
       call mem%dealloc(preconditioner, this%n_amplitudes)
 !
-      call davidson%set_trials_to_preconditioner_guess()
+      call this%davidson%set_trials_to_preconditioner_guess()
 !
       call wf%prepare_for_jacobian() 
 !
@@ -159,8 +167,8 @@ contains
       iteration = 0
       converged = .false.
 !
-      call mem%alloc(c, davidson%n_parameters)
-      call mem%alloc(x, davidson%n_parameters)
+      call mem%alloc(c, this%davidson%n_parameters)
+      call mem%alloc(x, this%davidson%n_parameters)
 !
       iteration_timer = timings('Newton-Raphson iteration time', pl='v')
 !
@@ -173,36 +181,36 @@ contains
 !
 !        Reduced space preparations 
 !
-         if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+         if (this%davidson%red_dim_exceeds_max()) call this%davidson%set_trials_to_solutions()
 !
-         call davidson%update_reduced_dim()
+         call this%davidson%update_reduced_dim()
 !
-         call davidson%orthonormalize_trial_vecs() 
+         call this%davidson%orthonormalize_trial_vecs() 
 !
 !        Transform new trial vector and set transform
 !
-         trial = davidson%first_new_trial() ! only one new trial, so first = last
+         trial = this%davidson%first_new_trial() ! only one new trial, so first = last
 !
-         call davidson%get_trial(c, trial)
+         call this%davidson%get_trial(c, trial)
 !
          call wf%construct_Jacobian_transform('right', c, x, w = zero)
 !
-         call davidson%set_transform(x, trial)
+         call this%davidson%set_transform(x, trial)
 !
 !        Solve equation in the trial space
 !
-         call davidson%solve_reduced_problem()
+         call this%davidson%solve_reduced_problem()
 !
 !        Test for convergence - and add residual to trial space if not converged
 !
-         call davidson%construct_residual(x, 1)
+         call this%davidson%construct_residual(x, 1)
          rho_norm = get_l2_norm(x, this%n_amplitudes)
 !
          converged = .true.
          if (rho_norm >= rho_threshold) then 
 !
             converged = .false.
-            call davidson%add_new_trial(x, 1)
+            call this%davidson%add_new_trial(x, 1)
 !
          endif 
 !
@@ -223,13 +231,13 @@ contains
 !
       endif
 !
-      call mem%dealloc(x, davidson%n_parameters)
-      call mem%dealloc(c, davidson%n_parameters)
+      call mem%dealloc(x, this%davidson%n_parameters)
+      call mem%dealloc(c, this%davidson%n_parameters)
 !
-      call davidson%construct_solution(update, 1)
+      call this%davidson%construct_solution(update, 1)
       call dscal(this%n_amplitudes, -one, update, 1)
 !
-      call davidson%cleanup()
+      call this%davidson%cleanup()
 !
       call timer%turn_off()
 !

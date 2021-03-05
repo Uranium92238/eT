@@ -469,12 +469,10 @@ contains
 !
       call output%printf('m', '- SCF solver settings:',fs='(/t3,a)')
 !
-      call output%printf('m', 'Maximum iterations:            (i11)', &
+      call output%printf('m', 'Maximum iterations:           (i11)', &
                          ints=[solver%max_iterations], fs='(/t6,a)')
 !
-      call solver%convergence_checker%print_settings()
-!
-      call output%printf('m', 'Acceleration type:             (a11)', &
+      call output%printf('m', 'Acceleration type:            (a11)', &
                          chars=[trim(solver%acceleration_type)], fs='(t6,a)')
 !
       call solver%convergence_checker%print_settings()

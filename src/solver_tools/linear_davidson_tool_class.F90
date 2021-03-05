@@ -103,6 +103,8 @@ module linear_davidson_tool_class
 !
       procedure :: set_frequencies                    => set_frequencies_linear_davidson_tool
 !
+      procedure :: set_rhs                            => set_rhs_linear_davidson_tool
+!
       procedure :: set_trials_to_preconditioner_guess => set_trials_to_preconditioner_guess_linear_davidson
 !
       procedure :: destruct_reduced_space_quantities  => destruct_reduced_space_quantities_linear_davidson_tool
@@ -124,7 +126,8 @@ contains
 !
 !
    function new_linear_davidson_tool_one_rhs(name_, n_parameters, lindep_threshold, &
-                                             max_dim_red, F, n_equations) result(davidson)
+                                             max_dim_red, n_equations, &
+                                             records_in_memory) result(davidson)
 !!
 !!    New linear Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -161,24 +164,21 @@ contains
 !
       integer, intent(in) :: n_parameters, max_dim_red, n_equations
 !
-      real(dp), dimension(n_parameters), target, intent(in) :: F 
-!
       real(dp), intent(in) :: lindep_threshold
+!
+      logical, intent(in) :: records_in_memory
 !
 !     Perform tasks common to constructor 
 !
       call davidson%general_preparations(name_, n_parameters, n_equations, &
-                           lindep_threshold, max_dim_red, 1)
-!
-!     Set F 
-!
-      davidson%F(1:n_parameters, 1:davidson%n_rhs) => F(1:n_parameters)
+                           lindep_threshold, max_dim_red, 1, records_in_memory)
 !
    end function new_linear_davidson_tool_one_rhs
 !
 !
    function new_linear_davidson_tool_multiple_rhs(name_, n_parameters, lindep_threshold, &
-                                             max_dim_red, F, n_rhs, n_frequencies) result(davidson)
+                                             max_dim_red, n_rhs, n_frequencies, &
+                                             records_in_memory) result(davidson)
 !!
 !!    New linear Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -209,25 +209,21 @@ contains
 !
       integer, intent(in) :: n_parameters, max_dim_red, n_rhs, n_frequencies
 !
-      real(dp), dimension(n_parameters, n_rhs), target, intent(in) :: F 
-!
       real(dp), intent(in) :: lindep_threshold
+!
+      logical, intent(in) :: records_in_memory
 !
 !     Perform tasks common to constructor 
 !
       call davidson%general_preparations(name_, n_parameters, n_frequencies, &
-                              lindep_threshold, max_dim_red, n_rhs)
-!
-!     Set F  
-!
-      davidson%F(1:n_parameters, 1:n_rhs) => F
+                              lindep_threshold, max_dim_red, n_rhs, records_in_memory)
 !
    end function new_linear_davidson_tool_multiple_rhs
 !
 !
    subroutine general_preparations_linear_davidson_tool(davidson, name_, &
                                              n_parameters, n_equations, lindep_threshold, &
-                                             max_dim_red, n_rhs)
+                                             max_dim_red, n_rhs, records_in_memory)
 !!
 !!    General preparations  
 !!    Written by Eirik F. Kjønstad, 2019 
@@ -243,6 +239,8 @@ contains
       integer, intent(in) :: n_parameters, n_equations, max_dim_red, n_rhs
 !
       real(dp), intent(in) :: lindep_threshold
+!
+      logical, intent(in) :: records_in_memory
 !
 !     Set tool parameters 
 !
@@ -262,6 +260,19 @@ contains
 !
       call davidson%print_settings()
 !
+      davidson%trials = record_storer(trim(davidson%name_) // '_trials',            &
+                                      davidson%n_parameters,                        &
+                                      davidson%max_dim_red + davidson%n_solutions,  &
+                                      records_in_memory,                            &
+                                      delete=.true.)
+!
+      davidson%transforms = record_storer(trim(davidson%name_) // '_transforms',       &
+                                          davidson%n_parameters,                       &
+                                          davidson%max_dim_red + davidson%n_solutions, &
+                                          records_in_memory,                           &
+                                          delete=.true.)
+!
+!
    end subroutine general_preparations_linear_davidson_tool
 !
 !
@@ -279,6 +290,24 @@ contains
       call dcopy(davidson%n_solutions, frequencies, 1, davidson%omega_re, 1)
 !
    end subroutine set_frequencies_linear_davidson_tool
+!
+!
+   subroutine set_rhs_linear_davidson_tool(davidson, rhs)
+!!
+!!    Set rhs
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none 
+!
+      class(linear_davidson_tool), intent(inout) :: davidson 
+
+      real(dp), dimension(davidson%n_parameters, davidson%n_rhs), target, intent(in) :: rhs
+!
+!     Set F  
+!
+      davidson%F(1:davidson%n_parameters, 1:davidson%n_rhs) => rhs
+!
+   end subroutine set_rhs_linear_davidson_tool
 !
 !
    subroutine set_trials_to_preconditioner_guess_linear_davidson(davidson)

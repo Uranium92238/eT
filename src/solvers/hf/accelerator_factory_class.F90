@@ -117,12 +117,12 @@ contains
          call this%read_diis_settings(diis_dimension, crop, records_in_memory)
 !
          accelerator = diis_accelerator_tool(x_dimension, e_dimension,                 &
-                                             records_in_memory,                        &
                                              diis_tool(name_        = diis_name,       &
                                                        n_parameters = x_dimension,     &
                                                        n_equations  = e_dimension,     &
                                                        dimension_   = diis_dimension,  &
-                                                       crop         = crop))
+                                                       crop         = crop,            &
+                                                       records_in_memory = records_in_memory))
 !
       else
 !

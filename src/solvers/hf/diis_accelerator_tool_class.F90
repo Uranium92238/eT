@@ -40,15 +40,12 @@ module diis_accelerator_tool_class
    type, extends(accelerator_tool) :: diis_accelerator_tool
 !
       type(diis_tool), private :: diis
-      logical,         private :: records_in_memory
 !
    contains
 !
       procedure :: do_        => do_diis_accelerator_tool
       procedure :: initialize => initialize_diis_accelerator_tool
       procedure :: finalize   => finalize_diis_accelerator_tool
-!
-      procedure, private :: print_accelerator_info => print_accelerator_info_diis_accelerator_tool
 !
    end type diis_accelerator_tool
 !
@@ -62,7 +59,6 @@ contains
 !
    function new_diis_accelerator_tool(x_dimension,       &
                                       e_dimension,       &
-                                      records_in_memory, &
                                       diis) result(this)
 !!
 !!    New diis accelerator tool
@@ -73,17 +69,12 @@ contains
       type(diis_accelerator_tool)        :: this
       integer,                intent(in) :: x_dimension
       integer,                intent(in) :: e_dimension
-      logical,                intent(in) :: records_in_memory
       type(diis_tool),        intent(in) :: diis
 !
       this%x_dimension = x_dimension
       this%e_dimension = e_dimension
 !
-      this%records_in_memory = records_in_memory
-!
       this%diis = diis
-!
-      call this%print_accelerator_info()
 !
    end function new_diis_accelerator_tool
 !
@@ -116,7 +107,7 @@ contains
 !
       class(diis_accelerator_tool), intent(inout) :: this
 !
-      call this%diis%initialize_storers(this%records_in_memory)
+      call this%diis%initialize_storers()
 !
    end subroutine initialize_diis_accelerator_tool
 !
@@ -133,19 +124,5 @@ contains
       call this%diis%finalize_storers()
 !
    end subroutine finalize_diis_accelerator_tool
-!
-!
-   subroutine print_accelerator_info_diis_accelerator_tool(this)
-!!
-!!    Print
-!!    Written by Sarai D. Folkestad, 2020
-!!
-      implicit none
-!
-      class(diis_accelerator_tool), intent(inout)  :: this
-!
-      call this%diis%print_settings()
-!
-   end subroutine print_accelerator_info_diis_accelerator_tool
 !
 end module diis_accelerator_tool_class

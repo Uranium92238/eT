@@ -58,7 +58,10 @@ module precondition_tool_class
 !
       procedure :: do_ => do_precondition_tool 
 !
-      procedure :: destruct_precondition_vector => destruct_precondition_vector_precondition_tool
+      procedure :: initialize_and_set_precondition_vector &
+                => initialize_and_set_precondition_vector_precondition_tool
+      procedure :: destruct_precondition_vector &
+                => destruct_precondition_vector_precondition_tool
 !
    end type precondition_tool
 !
@@ -73,7 +76,7 @@ module precondition_tool_class
 contains 
 !
 !
-   function new_precondition_tool(preconditioner, dim_) result(tool)
+   pure function new_precondition_tool(dim_) result(tool)
 !!
 !!    New precondition tool 
 !!    Written by Eirik F. Kjønstad, 2019
@@ -88,12 +91,8 @@ contains
       type(precondition_tool) :: tool 
 !
       integer, intent(in) :: dim_ 
-      real(dp), dimension(dim_), intent(in) :: preconditioner 
 !
       tool%dim_ = dim_ 
-!
-      call mem%alloc(tool%preconditioner, tool%dim_)
-      call dcopy(tool%dim_, preconditioner, 1, tool%preconditioner, 1)
 !
    end function new_precondition_tool
 !
@@ -173,6 +172,22 @@ contains
       if (allocated(tool%preconditioner)) call mem%dealloc(tool%preconditioner, tool%dim_)
 !
    end subroutine destruct_precondition_vector_precondition_tool
+!
+!
+   subroutine initialize_and_set_precondition_vector_precondition_tool(tool, preconditioner)
+!!
+!!    Set precondition vector
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none 
+!
+      class(precondition_tool), intent(inout) :: tool
+      real(dp), dimension(tool%dim_), intent(in) :: preconditioner  
+!
+      call mem%alloc(tool%preconditioner, tool%dim_)
+      call dcopy(tool%dim_, preconditioner, 1, tool%preconditioner, 1)
+!
+   end subroutine initialize_and_set_precondition_vector_precondition_tool
 !
 !
 end module precondition_tool_class
