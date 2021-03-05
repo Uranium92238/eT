@@ -574,9 +574,10 @@ contains
       call output%printf('n', 'Starting on microiterations', fs='(/t6,a)')
 !
 !     The residual threshold in the microiterations is taken to be proportional to the maximum 
-!     residual norm in the current macroiteration
+!     residual norm in the current macroiteration or the final residual threshold
 !
-      micro_residual_threshold = solver%relative_micro_residual_threshold*maxval(residual_norms) 
+      micro_residual_threshold = max(half*solver%convergence_checker%residual_threshold, &
+                                     solver%relative_micro_residual_threshold*maxval(residual_norms))
       lindep_threshold         = min(default_lindep_threshold, micro_residual_threshold)
 !
       if (lindep_threshold .lt. default_lindep_threshold) then

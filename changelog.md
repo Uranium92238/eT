@@ -25,6 +25,7 @@
 - Default threshold to check for degenerate states reduced to 1.0d-3. See merge request eT-program/eT!724
 - Parallel excited states are now removed from the wavefunction if found eT-program/eT:!717
 - Added keyword to control storage in micro iterations of Newton-Raphson ground state solver (`micro iterations storage`). See merge request eT-program/eT:!651
+- Non-linear davidson: minimal threshold in the microiterations set to half the residual threshold. See merge request eT-program/eT!738
 
 ### Structure
 - Omega and Jacobian routines have separate in and out vectors and call the corresponding parent routines. See merge request eT-program/eT:!684
