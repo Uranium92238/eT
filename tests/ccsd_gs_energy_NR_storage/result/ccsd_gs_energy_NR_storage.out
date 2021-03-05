@@ -16,11 +16,11 @@
 
    This is eT version 1.1.0, Bastion
   ------------------------------------------------------------
-  Compiled by:        eirikfad
-  Compiled on:        eirikfad-Alienware-Aurora-R7
-  Configuration date: 2021-03-03 14:27:24 UTC +01:00
-  Git branch:         cc_gs_diis_t_updater
-  Git hash:           d2318702e235a167495aae19f9c834abd74aef8c
+  Compiled by:        alexancp
+  Compiled on:        NTNU16748
+  Configuration date: 2021-03-04 17:32:30 UTC +01:00
+  Git branch:         move-reordering-routines
+  Git hash:           97d48f5fb5cad495d04a0bf289bbe9a4b4afca30
   Fortran compiler:   GNU 9.3.0
   C compiler:         GNU 9.3.0
   C++ compiler:       GNU 9.3.0
@@ -33,7 +33,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-03 14:28:59 UTC +01:00
+  Calculation started: 2021-03-04 18:31:04 UTC +01:00
 
 
   :: Input file
@@ -158,6 +158,9 @@
      Energy threshold:              0.1000E-09
      Acceleration type:                    diis
 
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
   - Setting initial AO density to sad
 
      Energy of initial guess:               -78.492022836338
@@ -180,7 +183,6 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-  Fock matrix construction using density differences
      1           -78.796606592630     0.9053E-01     0.7880E+02
   Fock matrix construction using density differences
      2           -78.828675852673     0.7128E-01     0.3207E-01
@@ -195,21 +197,21 @@
   Fock matrix construction using density differences
      7           -78.843851692851     0.5865E-05     0.2353E-07
   Fock matrix construction using density differences
-     8           -78.843851693557     0.2356E-05     0.7055E-09
+     8           -78.843851693557     0.2356E-05     0.7054E-09
   Fock matrix construction using density differences
-     9           -78.843851693630     0.2071E-06     0.7373E-10
+     9           -78.843851693630     0.2071E-06     0.7381E-10
   Fock matrix construction using density differences
-    10           -78.843851693631     0.1594E-07     0.3979E-12
+    10           -78.843851693631     0.1594E-07     0.4121E-12
   Fock matrix construction using density differences
-    11           -78.843851693631     0.3322E-08     0.4263E-13
+    11           -78.843851693631     0.3322E-08     0.1421E-13
   Fock matrix construction using density differences
-    12           -78.843851693631     0.1197E-08     0.8527E-13
+    12           -78.843851693631     0.1197E-08     0.0000E+00
   Fock matrix construction using density differences
-    13           -78.843851693631     0.4264E-09     0.1421E-12
+    13           -78.843851693631     0.4264E-09     0.2842E-13
   Fock matrix construction using density differences
-    14           -78.843851693631     0.1280E-09     0.7105E-13
+    14           -78.843851693631     0.1280E-09     0.2842E-13
   Fock matrix construction using density differences
-    15           -78.843851693631     0.1479E-10     0.1421E-13
+    15           -78.843851693631     0.1479E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -222,8 +224,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.39646
-     Total cpu time (sec):               0.76110
+     Total wall time (sec):              0.39970
+     Total cpu time (sec):               0.79492
 
   No frozen fock contributions!
 
@@ -325,8 +327,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.15341
-     Total cpu time (sec):               0.30541
+     Total wall time (sec):              0.16658
+     Total cpu time (sec):               0.33054
 
 
   2) Preparation of MO basis and integrals
@@ -361,6 +363,9 @@
   ---------------------------------------------------------------
     1           -79.084241931608     0.9391E-01     0.7908E+02
 
+     Max reduced space dimension:           50
+
+
   newton_raphson_amplitude_updator_trials is stored in memory.
 
   newton_raphson_amplitude_updator_transforms is stored in memory.
@@ -374,6 +379,9 @@
      -----------------------------
 
     2           -79.100197477414     0.7117E-03     0.1596E-01
+
+     Max reduced space dimension:           50
+
 
   newton_raphson_amplitude_updator_trials is stored in memory.
 
@@ -390,6 +398,9 @@
 
     3           -79.100383352298     0.2119E-05     0.1859E-03
 
+     Max reduced space dimension:           50
+
+
   newton_raphson_amplitude_updator_trials is stored in memory.
 
   newton_raphson_amplitude_updator_transforms is stored in memory.
@@ -404,6 +415,9 @@
      -----------------------------
 
     4           -79.100383481151     0.7531E-08     0.1289E-06
+
+     Max reduced space dimension:           50
+
 
   newton_raphson_amplitude_updator_trials is stored in memory.
 
@@ -420,6 +434,9 @@
 
     5           -79.100383481553     0.4166E-10     0.4021E-09
 
+     Max reduced space dimension:           50
+
+
   newton_raphson_amplitude_updator_trials is stored in memory.
 
   newton_raphson_amplitude_updator_transforms is stored in memory.
@@ -433,7 +450,7 @@
        5           0.3453E-12
      -----------------------------
 
-    6           -79.100383481554     0.3289E-12     0.1137E-11
+    6           -79.100383481554     0.3287E-12     0.1137E-11
   ---------------------------------------------------------------
   Convergence criterion met in 6 iterations!
 
@@ -477,18 +494,18 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.19427
-     Total cpu time (sec):               0.39028
+     Total wall time (sec):              0.16779
+     Total cpu time (sec):               0.33570
 
   - Timings for the CCSD ground state calculation
 
-     Total wall time (sec):              0.34799
-     Total cpu time (sec):               0.69600
+     Total wall time (sec):              0.33469
+     Total cpu time (sec):               0.66656
 
   - Cleaning up ccsd wavefunction
 
      Peak memory usage during the execution of eT: 21.215192 MB
 
-  Calculation ended: 2021-03-03 14:28:59 UTC +01:00
+  Calculation ended: 2021-03-04 18:31:04 UTC +01:00
 
   eT terminated successfully!

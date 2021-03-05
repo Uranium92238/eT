@@ -28,7 +28,7 @@ f = [
     get_filter(string="Final ground state energy (a.u.):", abs_tolerance=threshold),
     get_filter(
         from_string="Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)",
-        num_lines=13,
+        num_lines=17,
         abs_tolerance=threshold,
         mask=[3],
         ignore_sign=True,
