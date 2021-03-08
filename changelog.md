@@ -26,6 +26,7 @@
 - Parallel excited states are now removed from the wavefunction if found eT-program/eT:!717
 - Added keyword to control storage in micro iterations of Newton-Raphson ground state solver (`micro iterations storage`). See merge request eT-program/eT:!651
 - Non-linear davidson: minimal threshold in the microiterations set to half the residual threshold. See merge request eT-program/eT!738
+- The conversion script removes `scf_restart_file` and `cc_restart_file` after it has been used. See merge request eT-program/eT!745
 
 ### Structure
 - Omega and Jacobian routines have separate in and out vectors and call the corresponding parent routines. See merge request eT-program/eT:!684

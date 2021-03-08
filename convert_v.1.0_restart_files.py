@@ -325,6 +325,7 @@ def main(argv):
         print("Updating Hartree-Fock files.")
         n_ao = get_reference_dimensionalities(restart_file, endian)
         update_reference_files(translate_path, n_ao, endian)
+        restart_file.unlink()
     else:
         print(
             f"scf_restart_file not found in {translate_path}.\n",
@@ -343,6 +344,8 @@ def main(argv):
         if Path(translate_path / "excitation_energies").exists():
             print("Updating excited state files.")
             update_es_files(translate_path, n1, n2, endian)
+
+        restart_file.unlink()
 
     else:
         print(
