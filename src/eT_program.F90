@@ -537,12 +537,6 @@ subroutine print_compilation_info()
 !
    call output%print_separator('n',60,'-', fs='(t3,a)')
 !
-   call get_username(string)
-   call output%printf("m", "Compiled by:        (a0)", chars =[string]) 
-!
-   call get_hostname(string)
-   call output%printf("m", "Compiled on:        (a0)", chars =[string]) 
-!
    call get_configuration_time(string)
    call output%printf("m", "Configuration date: (a0)", chars =[string]) 
 !

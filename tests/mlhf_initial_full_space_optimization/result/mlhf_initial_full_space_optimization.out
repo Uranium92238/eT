@@ -1,16 +1,37 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.1 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.1.3, Bastion
+  ------------------------------------------------------------
+  Configuration date: 2021-03-08 15:01:10 UTC +01:00
+  Git branch:         test-generator
+  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-03-08 15:04:13 UTC +01:00
 
 
   :: Input file
@@ -55,7 +76,7 @@
      end active atoms
 
 
-  Running on 2 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -166,8 +187,8 @@
 
      DIIS dimension:                         8
 
+     Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
-     Gradient threshold:            0.1000E-10
 
      Coulomb screening threshold:   0.1000E-13
      Exchange screening threshold:  0.1000E-13
@@ -191,17 +212,17 @@
   ---------------------------------------------------------------
      1          -152.058302372948     0.4887E-03     0.1521E+03
      2          -152.058302453673     0.2378E-03     0.8073E-07
-     3          -152.058302467956     0.1073E-03     0.1428E-07
+     3          -152.058302467957     0.1073E-03     0.1428E-07
      4          -152.058302471810     0.5797E-05     0.3854E-08
      5          -152.058302471828     0.1508E-05     0.1762E-10
      6          -152.058302471829     0.1316E-06     0.1080E-11
      7          -152.058302471829     0.3156E-07     0.2842E-13
-     8          -152.058302471829     0.9885E-08     0.8527E-13
+     8          -152.058302471829     0.9885E-08     0.2842E-13
      9          -152.058302471829     0.2147E-08     0.2842E-13
     10          -152.058302471829     0.1097E-08     0.2842E-13
-    11          -152.058302471829     0.1339E-09     0.5684E-13
+    11          -152.058302471829     0.1338E-09     0.2842E-13
     12          -152.058302471829     0.4603E-10     0.5684E-13
-    13          -152.058302471829     0.5447E-11     0.0000E+00
+    13          -152.058302471829     0.5445E-11     0.8527E-13
   ---------------------------------------------------------------
   Convergence criterion met in 13 iterations!
 
@@ -214,25 +235,17 @@
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
-     Active energy:               -104.799496148303
-     Active-inactive energy:        19.316431789642
+     Active energy:               -104.799496148304
+     Active-inactive energy:        19.316431789643
      Inactive energy:             -103.961633346561
-
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.593437951159   8   0.442842797188  15   1.446996831416  22   2.378723031441
-   2  -1.368823439137   9   0.620406364247  16   1.493063377784  23   2.425051975218
-   3  -0.726206562778  10   0.735883377230  17   1.548778098885  24   3.238215042172
-   4  -0.613885093650  11   0.823947836246  18   1.615822925290  25   3.276827367585
-   5  -0.533657592844  12   1.163687850876  19   1.752070217763  26   3.461016905093
-   6   0.158704986501  13   1.186731497014  20   1.871937071808  27   3.827867960685
-   7   0.232567028346  14   1.235840095129  21   1.927285312733  28   4.107199995126
-  -----------------------------------------------------------------------------------
 
   - Timings for the MLHF ground state calculation
 
-     Total wall time (sec):              1.27700
-     Total cpu time (sec):               2.40342
+     Total wall time (sec):              4.30165
+     Total cpu time (sec):               8.51075
+
+     Peak memory usage during the execution of eT: 607.424 KB
+
+  Calculation ended: 2021-03-08 15:04:17 UTC +01:00
 
   eT terminated successfully!
