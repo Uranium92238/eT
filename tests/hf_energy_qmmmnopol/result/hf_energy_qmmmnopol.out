@@ -1,16 +1,37 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.1 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.1.3, Bastion
+  ------------------------------------------------------------
+  Configuration date: 2021-03-08 15:01:10 UTC +01:00
+  Git branch:         test-generator
+  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-03-08 15:05:14 UTC +01:00
 
 
   :: Input file
@@ -47,7 +68,7 @@
      end method
 
 
-  Running on 2 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -169,8 +190,8 @@
      DIIS dimension:                         8
      Cumulative Fock threshold:       0.10E+01
 
+     Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
-     Gradient threshold:            0.1000E-09
 
      Coulomb screening threshold:   0.1000E-15
      Exchange screening threshold:  0.1000E-13
@@ -191,13 +212,13 @@
      5           -76.390968941723     0.1389E-03     0.1291E-04
      6           -76.390969292992     0.3025E-04     0.3513E-06
      7           -76.390969304853     0.4093E-05     0.1186E-07
-     8           -76.390969305100     0.2872E-06     0.2471E-09
-     9           -76.390969305103     0.6221E-07     0.2913E-11
-    10           -76.390969305103     0.5084E-08     0.5684E-13
+     8           -76.390969305100     0.2872E-06     0.2472E-09
+     9           -76.390969305103     0.6221E-07     0.2842E-11
+    10           -76.390969305103     0.5084E-08     0.7105E-13
     11           -76.390969305103     0.8413E-09     0.2842E-13
-    12           -76.390969305103     0.2940E-09     0.4263E-13
-    13           -76.390969305103     0.1133E-09     0.4263E-13
-    14           -76.390969305103     0.1553E-10     0.7105E-13
+    12           -76.390969305103     0.2940E-09     0.5684E-13
+    13           -76.390969305103     0.1134E-09     0.4263E-13
+    14           -76.390969305103     0.1554E-10     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -213,25 +234,13 @@
      QM/MM SCF Contribution:         0.323022340866
      QM/MM Electrostatic Energy:    -0.021442359436    -0.58348   -13.455
 
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.537641633859  12   0.341344708291  23   1.138829898331  34   2.697388019757
-   2  -1.325522427448  13   0.386909374869  24   1.178197186622  35   2.768486960281
-   3  -0.693980962249  14   0.410869537003  25   1.362794243623  36   2.986524479069
-   4  -0.549464306798  15   0.457325418794  26   1.506087737710  37   3.704506769982
-   5  -0.475799725922  16   0.470896090632  27   1.521792278597  38   3.723866101329
-   6   0.041690321526  17   0.576360187417  28   1.617345664382  39   3.740273298954
-   7   0.058339726062  18   0.677384757083  29   2.047420897897  40   4.099251263832
-   8   0.194432176959  19   0.720119480656  30   2.064203309042  41   4.366119707790
-   9   0.208019513218  20   0.873528833372  31   2.150850213458
-  10   0.240647058867  21   0.964853416185  32   2.441151801407
-  11   0.247741660727  22   1.122981840147  33   2.545861011404
-  -----------------------------------------------------------------------------------
-
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.75500
-     Total cpu time (sec):               1.34652
+     Total wall time (sec):              2.16855
+     Total cpu time (sec):               4.13378
+
+     Peak memory usage during the execution of eT: 339.112 KB
+
+  Calculation ended: 2021-03-08 15:05:17 UTC +01:00
 
   eT terminated successfully!

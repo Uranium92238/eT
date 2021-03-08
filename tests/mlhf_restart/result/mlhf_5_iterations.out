@@ -14,26 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Nachspiel
+   This is eT version 1.1.3, Bastion
   ------------------------------------------------------------
-  Compiled by:        alexancp
-  Compiled on:        NTNU16748
-  Configuration date: 2020-11-26 19:47:10 UTC +01:00
-  Git branch:         always-restart-l-from-r
-  Git hash:           b27c502fa8a19f78bb56d8c82213e7b5136821fe
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
+  Configuration date: 2021-03-08 15:01:10 UTC +01:00
+  Git branch:         test-generator
+  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2020-11-27 09:07:49 UTC +01:00
+  Calculation started: 2021-03-08 15:03:56 UTC +01:00
 
 
   :: Input file

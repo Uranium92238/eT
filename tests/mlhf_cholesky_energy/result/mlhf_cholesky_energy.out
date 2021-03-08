@@ -14,26 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Nachspiel
+   This is eT version 1.1.3, Bastion
   ------------------------------------------------------------
-  Compiled by:        alexancp
-  Compiled on:        NTNU16748
-  Configuration date: 2020-11-26 19:47:10 UTC +01:00
-  Git branch:         always-restart-l-from-r
-  Git hash:           b27c502fa8a19f78bb56d8c82213e7b5136821fe
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
+  Configuration date: 2021-03-08 15:01:10 UTC +01:00
+  Git branch:         test-generator
+  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2020-11-27 09:07:41 UTC +01:00
+  Calculation started: 2021-03-08 15:04:18 UTC +01:00
 
 
   :: Input file
@@ -213,14 +211,14 @@
      6          -152.016971832111     0.3184E-04     0.3181E-07
      7          -152.016971832864     0.7545E-05     0.7530E-09
      8          -152.016971832907     0.1175E-05     0.4272E-10
-     9          -152.016971832907     0.2576E-06     0.9663E-12
+     9          -152.016971832908     0.2576E-06     0.9663E-12
     10          -152.016971832908     0.1298E-06     0.2842E-13
-    11          -152.016971832908     0.6354E-07     0.5684E-13
-    12          -152.016971832908     0.5340E-08     0.2842E-13
+    11          -152.016971832908     0.6354E-07     0.2842E-13
+    12          -152.016971832908     0.5340E-08     0.0000E+00
     13          -152.016971832908     0.1092E-08     0.0000E+00
-    14          -152.016971832907     0.2472E-09     0.5684E-13
-    15          -152.016971832907     0.5211E-10     0.0000E+00
-    16          -152.016971832907     0.6813E-11     0.0000E+00
+    14          -152.016971832908     0.2472E-09     0.2842E-13
+    15          -152.016971832908     0.5211E-10     0.0000E+00
+    16          -152.016971832908     0.6821E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -229,7 +227,7 @@
      HOMO-LUMO gap:                  0.699919643155
      Nuclear repulsion energy:      37.386395233393
      Electronic energy:           -189.403367066301
-     Total energy:                -152.016971832907
+     Total energy:                -152.016971832908
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
@@ -237,25 +235,13 @@
      Active-inactive energy:        19.301183622836
      Inactive energy:             -103.861874602348
 
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.601053281558   8   0.644140731687  15   1.441538538688  22   3.244119853725
-   2  -1.375371119210   9   0.743053259542  16   1.601482926044  23   3.268966835736
-   3  -0.733397117025  10   0.819447047669  17   1.836359630452  24   3.456648668120
-   4  -0.621324281934  11   1.171804190919  18   1.904443919965  25   3.822303055528
-   5  -0.541067981338  12   1.197719272710  19   2.104237562842  26   4.101398556774
-   6   0.158851661817  13   1.243268135517  20   2.372105660955
-   7   0.229166089393  14   1.272098967622  21   2.421338376457
-  -----------------------------------------------------------------------------------
-
   - Timings for the MLHF ground state calculation
 
-     Total wall time (sec):              3.78740
-     Total cpu time (sec):               7.43230
+     Total wall time (sec):              4.29564
+     Total cpu time (sec):               8.55052
 
      Peak memory usage during the execution of eT: 301.016 KB
 
-  Calculation ended: 2020-11-27 09:07:45 UTC +01:00
+  Calculation ended: 2021-03-08 15:04:23 UTC +01:00
 
   eT terminated successfully!

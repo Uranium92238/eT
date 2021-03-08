@@ -1,3 +1,7 @@
+# eT v1.1.3
+### Structure
+- Made Python script to update all test refences and updated the files. See merge request eT-program/eT:!746
+
 # eT v1.1.2
 ### Bugfixes
 - Fixed incorrect memory estimate in Jacobian transpose ccsd. See merge request eT-program/eT:!718

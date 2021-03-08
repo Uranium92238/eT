@@ -1,16 +1,37 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.1 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.1.3, Bastion
+  ------------------------------------------------------------
+  Configuration date: 2021-03-08 15:01:10 UTC +01:00
+  Git branch:         test-generator
+  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-03-08 15:05:43 UTC +01:00
 
 
   :: Input file
@@ -63,7 +84,7 @@
      end active atoms
 
 
-  Running on 2 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 16.000000 GB
 
 
@@ -121,6 +142,177 @@
         6 N     -0.143675877251     1.284484641389    -0.089610812827        6
      ==============================================================================
 
+
+  :: RHF wavefunction
+  ======================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+  - Orbital details:
+
+     Number of occupied orbitals:        12
+     Number of virtual orbitals:          6
+     Number of molecular orbitals:       18
+     Number of atomic orbitals:          18
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF algorithm)
+
+   - Self-consistent field solver
+  ----------------------------------
+
+  Warning: We recommend to use the SCF-DIIS algorithm instead, which supports 
+  a gradient threshold and typically converges much faster. Use only when 
+  absolutely necessary!
+
+  A Roothan-Hall self-consistent field solver. In each iteration, the 
+  Roothan-Hall equation (or equations for unrestricted HF theory) are 
+  solved to provide the next orbital coefficients. From the new orbitals, 
+  a new density provides the next Fock matrix. The cycle repeats until 
+  the solution is self-consistent (as measured by the energy change).
+
+  - Hartree-Fock solver settings:
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Fock precision:                0.1000E-33
+     Integral cutoff:               0.1000E-16
+
+  - Setting initial AO density to SAD
+
+     Energy of initial guess:              -166.757656556164
+     Number of electrons in guess:           24.000000000000
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1          -166.526025276883     0.1457E+00     0.1665E+03
+     2          -166.615837132106     0.1011E+00     0.8981E-01
+     3          -166.653902505872     0.6370E-01     0.3807E-01
+     4          -166.666439535201     0.3849E-01     0.1254E-01
+     5          -166.671637703802     0.2505E-01     0.5198E-02
+     6          -166.673477847056     0.1442E-01     0.1840E-02
+     7          -166.674186528525     0.9471E-02     0.7087E-03
+     8          -166.674444686187     0.5389E-02     0.2582E-03
+     9          -166.674541899503     0.3536E-02     0.9721E-04
+    10          -166.674577779784     0.2015E-02     0.3588E-04
+    11          -166.674591192949     0.1315E-02     0.1341E-04
+    12          -166.674596170634     0.7535E-03     0.4978E-05
+    13          -166.674598026917     0.4884E-03     0.1856E-05
+    14          -166.674598717325     0.2819E-03     0.6904E-06
+    15          -166.674598974593     0.1814E-03     0.2573E-06
+    16          -166.674599070369     0.1054E-03     0.9578E-07
+    17          -166.674599106051     0.6737E-04     0.3568E-07
+    18          -166.674599119340     0.3942E-04     0.1329E-07
+    19          -166.674599124291     0.2503E-04     0.4951E-08
+    20          -166.674599126136     0.1473E-04     0.1844E-08
+    21          -166.674599126823     0.9303E-05     0.6872E-09
+    22          -166.674599127079     0.5504E-05     0.2560E-09
+    23          -166.674599127174     0.3459E-05     0.9535E-10
+    24          -166.674599127210     0.2056E-05     0.3567E-10
+    25          -166.674599127223     0.1286E-05     0.1313E-10
+    26          -166.674599127228     0.7676E-06     0.4860E-11
+    27          -166.674599127230     0.4785E-06     0.1904E-11
+    28          -166.674599127230     0.2865E-06     0.6821E-12
+    29          -166.674599127231     0.1781E-06     0.2558E-12
+    30          -166.674599127231     0.1069E-06     0.8527E-13
+    31          -166.674599127231     0.6627E-07     0.0000E+00
+    32          -166.674599127231     0.3989E-07     0.5684E-13
+    33          -166.674599127231     0.2467E-07     0.2842E-13
+    34          -166.674599127231     0.1488E-07     0.0000E+00
+    35          -166.674599127231     0.9185E-08     0.1421E-12
+    36          -166.674599127231     0.5550E-08     0.1421E-12
+    37          -166.674599127231     0.3420E-08     0.8527E-13
+    38          -166.674599127231     0.2070E-08     0.1137E-12
+    39          -166.674599127231     0.1274E-08     0.5684E-13
+    40          -166.674599127231     0.7718E-09     0.5684E-13
+    41          -166.674599127231     0.4744E-09     0.2842E-13
+    42          -166.674599127231     0.2878E-09     0.8527E-13
+    43          -166.674599127231     0.1767E-09     0.8527E-13
+    44          -166.674599127231     0.1073E-09     0.1990E-12
+    45          -166.674599127231     0.6581E-10     0.8527E-13
+    46          -166.674599127231     0.3999E-10     0.2842E-13
+    47          -166.674599127231     0.2452E-10     0.1705E-12
+    48          -166.674599127231     0.1490E-10     0.8527E-13
+    49          -166.674599127231     0.9125E-11     0.1137E-12
+  ---------------------------------------------------------------
+  Convergence criterion met in 49 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.638568161217
+     Nuclear repulsion energy:      71.772502337484
+     Electronic energy:           -238.447101464715
+     Total energy:                -166.674599127231
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              1.04212
+     Total cpu time (sec):               2.06842
+
+  - Preparation for frozen core approximation
+
+     There are 3 frozen core orbitals.
+
+     The smallest diagonal after decomposition is:  -0.3224E-15
+
+  - Preparation for frozen Hartree-Fock orbitals
+
+     There are 4 frozen occupied orbitals.
+     There are 1 frozen virtual orbitals.
+
+
+  :: CCSD wavefunction
+  =======================
+
+     Bath orbital(s):         False
+     Core-valence separation: False
+
+   - Number of orbitals:
+
+     Occupied orbitals:    5
+     Virtual orbitals:     5
+     Molecular orbitals:   10
+     Atomic orbitals:      18
+
+   - Number of ground state amplitudes:
+
+     Single excitation amplitudes:  25
+     Double excitation amplitudes:  325
+
+
+  :: Ground state coupled cluster engine
+  =========================================
+
+  Calculates the ground state CC wavefunction | CC > = exp(T) | R >
+
+  This is a CCSD ground state calculation.
+  The following tasks will be performed:
+
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
+
+
+  1) Cholesky decomposition of the electron repulsion integrals
+
    - Cholesky decomposition of electronic repulsion integrals solver
   ---------------------------------------------------------------------
 
@@ -169,200 +361,24 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.4557E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.3331E-15
-
-  - Finished decomposing the ERIs.
-
-     Total wall time (sec):              0.06400
-     Total cpu time (sec):               0.10997
-
-
-  :: RHF wavefunction
-  ======================
-
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
-
-     Number of occupied orbitals:        12
-     Number of virtual orbitals:          6
-     Number of molecular orbitals:       18
-     Number of atomic orbitals:          18
-
-
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF algorithm)
-
-
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF algorithm)
-
-   - Self-consistent field solver
-  ----------------------------------
-
-  Warning: We recommend to use the SCF-DIIS algorithm instead, which supports 
-  a gradient threshold and typically converges much faster. Use only when 
-  absolutely necessary!
-
-  A Roothan-Hall self-consistent field solver. In each iteration, the 
-  Roothan-Hall equation (or equations for unrestricted HF theory) are 
-  solved to provide the next orbital coefficients. From the new orbitals, 
-  a new density provides the next Fock matrix. The cycle repeats until 
-  the solution is self-consistent (as measured by the energy change).
-
-  - Hartree-Fock solver settings:
-
-     Energy threshold:              0.1000E-10
-     Gradient threshold:            0.1000E-10
-
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
-     Integral cutoff:               0.1000E-16
-
-  - Setting initial AO density to SAD
-
-     Energy of initial guess:              -166.757656556164
-     Number of electrons in guess:           24.000000000000
-
-  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
-  ---------------------------------------------------------------
-     1          -166.526025276884     0.1457E+00     0.1665E+03
-     2          -166.615837132106     0.1011E+00     0.8981E-01
-     3          -166.653902505872     0.6370E-01     0.3807E-01
-     4          -166.666439535201     0.3849E-01     0.1254E-01
-     5          -166.671637703803     0.2505E-01     0.5198E-02
-     6          -166.673477847056     0.1442E-01     0.1840E-02
-     7          -166.674186528525     0.9471E-02     0.7087E-03
-     8          -166.674444686187     0.5389E-02     0.2582E-03
-     9          -166.674541899503     0.3536E-02     0.9721E-04
-    10          -166.674577779784     0.2015E-02     0.3588E-04
-    11          -166.674591192949     0.1315E-02     0.1341E-04
-    12          -166.674596170634     0.7535E-03     0.4978E-05
-    13          -166.674598026917     0.4884E-03     0.1856E-05
-    14          -166.674598717325     0.2819E-03     0.6904E-06
-    15          -166.674598974593     0.1814E-03     0.2573E-06
-    16          -166.674599070369     0.1054E-03     0.9578E-07
-    17          -166.674599106051     0.6737E-04     0.3568E-07
-    18          -166.674599119340     0.3942E-04     0.1329E-07
-    19          -166.674599124291     0.2503E-04     0.4951E-08
-    20          -166.674599126136     0.1473E-04     0.1844E-08
-    21          -166.674599126823     0.9303E-05     0.6870E-09
-    22          -166.674599127079     0.5504E-05     0.2561E-09
-    23          -166.674599127174     0.3459E-05     0.9547E-10
-    24          -166.674599127210     0.2056E-05     0.3564E-10
-    25          -166.674599127223     0.1286E-05     0.1296E-10
-    26          -166.674599127228     0.7676E-06     0.5031E-11
-    27          -166.674599127230     0.4785E-06     0.1677E-11
-    28          -166.674599127231     0.2865E-06     0.9379E-12
-    29          -166.674599127231     0.1781E-06     0.1421E-12
-    30          -166.674599127231     0.1069E-06     0.1421E-12
-    31          -166.674599127231     0.6627E-07     0.0000E+00
-    32          -166.674599127231     0.3989E-07     0.8527E-13
-    33          -166.674599127231     0.2467E-07     0.2842E-13
-    34          -166.674599127231     0.1488E-07     0.1137E-12
-    35          -166.674599127231     0.9185E-08     0.1705E-12
-    36          -166.674599127231     0.5550E-08     0.5684E-13
-    37          -166.674599127231     0.3420E-08     0.5684E-13
-    38          -166.674599127231     0.2070E-08     0.1137E-12
-    39          -166.674599127231     0.1274E-08     0.1137E-12
-    40          -166.674599127231     0.7718E-09     0.5684E-13
-    41          -166.674599127231     0.4744E-09     0.5684E-13
-    42          -166.674599127231     0.2878E-09     0.1990E-12
-    43          -166.674599127231     0.1767E-09     0.1137E-12
-    44          -166.674599127231     0.1073E-09     0.2842E-13
-    45          -166.674599127231     0.6582E-10     0.5684E-13
-    46          -166.674599127231     0.3999E-10     0.5684E-13
-    47          -166.674599127231     0.2452E-10     0.0000E+00
-    48          -166.674599127231     0.1491E-10     0.5684E-13
-    49          -166.674599127231     0.9124E-11     0.0000E+00
-  ---------------------------------------------------------------
-  Convergence criterion met in 49 iterations!
-
-  - Summary of RHF wavefunction energetics (a.u.):
-
-     HOMO-LUMO gap:                  0.638568161217
-     Nuclear repulsion energy:      71.772502337484
-     Electronic energy:           -238.447101464715
-     Total energy:                -166.674599127231
-
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.214057803116   6  -0.798454864799  11  -0.324911768338  16   0.775366247136
-   2 -15.358101177383   7  -0.691484493151  12  -0.302671704350  17   0.894224520218
-   3 -11.145807412295   8  -0.617763554350  13   0.335896456867  18   1.004290373347
-   4  -1.302327485658   9  -0.502951821705  14   0.607154252586
-   5  -1.148024507133  10  -0.488650579642  15   0.663384623611
-  -----------------------------------------------------------------------------------
-
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.45100
-     Total cpu time (sec):               0.82449
-
-  - Preparation for frozen core approximation
-
-     There are 3 frozen core orbitals.
-
-     The smallest diagonal after decomposition is:  -0.1026E-15
-
-  - Preparation for frozen Hartree-Fock orbitals
-
-     There are 4 frozen occupied orbitals.
-     There are 1 frozen virtual orbitals.
-
-
-  :: CCSD wavefunction
-  =======================
-
-     Bath orbital(s):         False
-     Core-valence separation: False
-
-   - Number of orbitals:
-
-     Occupied orbitals:    5
-     Virtual orbitals:     5
-     Molecular orbitals:   10
-     Atomic orbitals:      18
-
-   - Number of ground state amplitudes:
-
-     Single excitation amplitudes:  25
-     Double excitation amplitudes:  325
-
-
-  :: Ground state coupled cluster engine
-  =========================================
-
-  Calculates the ground state CC wavefunction | CC > = exp(T) | R >
-
-  This is a CCSD ground state calculation.
-  The following tasks will be performed:
-
-     1) Preparation of MO basis and integrals
-     2) Calculation of the ground state (diis algorithm)
-
-
-  1) Preparation of MO basis and integrals
+     Minimal element of difference between approximate and actual diagonal:  -0.1392E-15
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       True
+     ERI matrix in memory:       False
+     T1 ERI matrix in memory:    True
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.17776
+     Total cpu time (sec):               0.35739
 
 
-  2) Calculation of the ground state (diis algorithm)
+  2) Preparation of MO basis and integrals
+
+
+  3) Calculation of the ground state (diis algorithm)
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -374,8 +390,8 @@
 
   - DIIS CC ground state solver settings:
 
-     Omega threshold:           0.10E-10
-     Energy threshold:          0.10E-10
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
 
      DIIS dimension:                   8
      Max number of iterations:       100
@@ -384,7 +400,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -166.764536146194     0.6750E-01     0.1668E+03
+    1          -166.764536146195     0.6750E-01     0.1668E+03
     2          -166.780354354756     0.2427E-01     0.1582E-01
     3          -166.787423492651     0.4111E-02     0.7069E-02
     4          -166.787823189133     0.1017E-02     0.3997E-03
@@ -417,13 +433,13 @@
         1      5       -0.013740327587
         2      4       -0.002370572850
         2      3       -0.001794827849
-        2      2        0.001647663357
+        2      2       -0.001647663357
         2      1        0.001388943120
         5      2       -0.001211074159
-        5      1        0.000877552811
-        3      2        0.000725795073
-        4      4       -0.000700010466
-        4      1       -0.000528063774
+        5      1       -0.000877552811
+        3      2       -0.000725795073
+        4      4        0.000700010466
+        4      1        0.000528063774
      ------------------------------------
 
      Largest double amplitudes:
@@ -431,7 +447,7 @@
         a      i       b      j         t(ai,bj)
      --------------------------------------------------
         1      5       1      5       -0.154606467336
-        5      4       1      5       -0.043452554180
+        5      4       1      5        0.043452554180
         4      3       4      3       -0.037303065961
         2      2       2      2       -0.037130437729
         5      4       5      4       -0.035935760462
@@ -446,12 +462,16 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.04700
-     Total cpu time (sec):               0.05299
+     Total wall time (sec):              0.02460
+     Total cpu time (sec):               0.04835
 
   - Timings for the CCSD ground state calculation
 
-     Total wall time (sec):              0.04900
-     Total cpu time (sec):               0.05464
+     Total wall time (sec):              0.20270
+     Total cpu time (sec):               0.40609
+
+     Peak memory usage during the execution of eT: 855.008 KB
+
+  Calculation ended: 2021-03-08 15:05:45 UTC +01:00
 
   eT terminated successfully!
