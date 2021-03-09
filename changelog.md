@@ -37,7 +37,13 @@
 - A single SCF solver now handles all SCF calculations, it can be used with different types of convergence acceleration (none, DIIS, CROP). See merge request eT-program/eT:!654
 - Removed some unused routines from reordering and array utilities. See merge request eT-program/eT:!725
 - Newton-Raphson solver for coupled cluster ground state is now handled by the same solver as the default DIIS solver. See merge request eT-program/eT:!651
-+ Optimized the autogenerate script and added functionality to generate complex modules from real modules. See merge request eT-program/eT:!735
+- Optimized the autogenerate script and added functionality to generate complex modules from real modules. See merge request eT-program/eT:!735
+
+
+# eT v1.1.3
+### Structure
+- Made Python script to update all test refences and updated the files. See merge request eT-program/eT:!746
+
 
 # eT v1.1.2
 ### Bugfixes

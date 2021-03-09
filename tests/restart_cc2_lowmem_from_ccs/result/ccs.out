@@ -1,16 +1,37 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.1 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.1.3, Bastion
+  ------------------------------------------------------------
+  Configuration date: 2021-03-08 15:01:10 UTC +01:00
+  Git branch:         test-generator
+  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-03-08 15:04:55 UTC +01:00
 
 
   :: Input file
@@ -59,7 +80,7 @@
      end solver cc es
 
 
-  Running on 2 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -101,6 +122,131 @@
         3 O      0.000000000000    -0.143222342981     9.448630622825        3
         4 He     0.188972612457    -0.037794522491    14.229637717975        4
      ==============================================================================
+
+
+  :: RHF wavefunction
+  ======================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+  - Orbital details:
+
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:         23
+     Number of molecular orbitals:       29
+     Number of atomic orbitals:          29
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+   - Self-consistent field DIIS Hartree-Fock solver
+  ----------------------------------------------------
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
+  matrix is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:                         8
+     Cumulative Fock threshold:       0.10E+01
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Fock precision:                0.1000E-33
+     Integral cutoff:               0.1000E-16
+
+  - Setting initial AO density to SAD
+
+     Energy of initial guess:               -78.492022836321
+     Number of electrons in guess:           12.000000000000
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -78.796606592593     0.9053E-01     0.7880E+02
+     2           -78.828675852657     0.7128E-01     0.3207E-01
+     3           -78.843428154462     0.8290E-02     0.1475E-01
+     4           -78.843809541675     0.2414E-02     0.3814E-03
+     5           -78.843850846799     0.3301E-03     0.4131E-04
+     6           -78.843851669326     0.5527E-04     0.8225E-06
+     7           -78.843851692851     0.5865E-05     0.2353E-07
+     8           -78.843851693557     0.2356E-05     0.7053E-09
+     9           -78.843851693630     0.2071E-06     0.7374E-10
+    10           -78.843851693631     0.1594E-07     0.3553E-12
+    11           -78.843851693631     0.3322E-08     0.2842E-13
+    12           -78.843851693631     0.1197E-08     0.0000E+00
+    13           -78.843851693631     0.4264E-09     0.0000E+00
+    14           -78.843851693631     0.1280E-09     0.5684E-13
+    15           -78.843851693631     0.1479E-10     0.2842E-13
+    16           -78.843851693631     0.2906E-11     0.0000E+00
+  ---------------------------------------------------------------
+  Convergence criterion met in 16 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.645629080248
+     Nuclear repulsion energy:      12.116100574587
+     Electronic energy:            -90.959952268218
+     Total energy:                 -78.843851693631
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              1.02221
+     Total cpu time (sec):               1.97451
+
+
+  :: CCS wavefunction
+  ======================
+
+     Bath orbital(s):         False
+     Core-valence separation: False
+
+   - Number of orbitals:
+
+     Occupied orbitals:    6
+     Virtual orbitals:     23
+     Molecular orbitals:   29
+     Atomic orbitals:      29
+
+   - Number of ground state amplitudes:
+
+     Single excitation amplitudes:  138
+
+
+  :: Excited state coupled cluster engine
+  ==========================================
+
+  Calculates the coupled cluster excitation vectors and excitation energies
+
+  This is a CCS excited state calculation.
+  The following tasks will be performed:
+
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
+     4) Calculation of the excited state (davidson algorithm)
+
+
+  1) Cholesky decomposition of the electron repulsion integrals
 
    - Cholesky decomposition of electronic repulsion integrals solver
   ---------------------------------------------------------------------
@@ -151,157 +297,24 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.7161E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1110E-14
-
-  - Finished decomposing the ERIs.
-
-     Total wall time (sec):              0.10600
-     Total cpu time (sec):               0.16881
-
-
-  :: RHF wavefunction
-  ======================
-
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
-
-     Number of occupied orbitals:         6
-     Number of virtual orbitals:         23
-     Number of molecular orbitals:       29
-     Number of atomic orbitals:          29
-
-
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
-
-
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
-
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
-
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
-
-     Energy threshold:              0.1000E-10
-     Gradient threshold:            0.1000E-10
-
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
-     Integral cutoff:               0.1000E-16
-
-  - Setting initial AO density to SAD
-
-     Energy of initial guess:               -78.492022836321
-     Number of electrons in guess:           12.000000000000
-
-  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
-  ---------------------------------------------------------------
-     1           -78.796606592593     0.9053E-01     0.7880E+02
-     2           -78.828675852657     0.7128E-01     0.3207E-01
-     3           -78.843428154462     0.8290E-02     0.1475E-01
-     4           -78.843809541675     0.2414E-02     0.3814E-03
-     5           -78.843850846799     0.3301E-03     0.4131E-04
-     6           -78.843851669326     0.5527E-04     0.8225E-06
-     7           -78.843851692851     0.5865E-05     0.2353E-07
-     8           -78.843851693557     0.2356E-05     0.7053E-09
-     9           -78.843851693630     0.2071E-06     0.7377E-10
-    10           -78.843851693631     0.1594E-07     0.4263E-12
-    11           -78.843851693631     0.3322E-08     0.1421E-13
-    12           -78.843851693631     0.1197E-08     0.4263E-13
-    13           -78.843851693631     0.4264E-09     0.0000E+00
-    14           -78.843851693631     0.1280E-09     0.1421E-13
-    15           -78.843851693631     0.1479E-10     0.2842E-13
-    16           -78.843851693631     0.2907E-11     0.0000E+00
-  ---------------------------------------------------------------
-  Convergence criterion met in 16 iterations!
-
-  - Summary of RHF wavefunction energetics (a.u.):
-
-     HOMO-LUMO gap:                  0.645629080248
-     Nuclear repulsion energy:      12.116100574587
-     Electronic energy:            -90.959952268218
-     Total energy:                 -78.843851693631
-
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.574269195145   9   0.704416610867  17   1.682695299877  25   3.175416260660
-   2  -1.277667044968  10   0.746260122914  18   1.804186820052  26   3.209661156313
-   3  -0.898849406810  11   1.155862024383  19   1.902641648742  27   3.328173215200
-   4  -0.629870222690  12   1.170770887076  20   2.148883457168  28   3.721936473470
-   5  -0.541641772852  13   1.267961746552  21   2.200395756969  29   3.985492632586
-   6  -0.485872762832  14   1.449847537220  22   2.540321860021
-   7   0.159756317416  15   1.463234913438  23   2.541517310547
-   8   0.229311906283  16   1.474444394527  24   2.559338707350
-  -----------------------------------------------------------------------------------
-
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.45700
-     Total cpu time (sec):               0.77938
-
-
-  :: CCS wavefunction
-  ======================
-
-     Bath orbital(s):         False
-     Core-valence separation: False
-
-   - Number of orbitals:
-
-     Occupied orbitals:    6
-     Virtual orbitals:     23
-     Molecular orbitals:   29
-     Atomic orbitals:      29
-
-   - Number of ground state amplitudes:
-
-     Single excitation amplitudes:  138
-
-
-  :: Excited state coupled cluster engine
-  ==========================================
-
-  Calculates the coupled cluster excitation vectors and excitation energies
-
-  This is a CCS excited state calculation.
-  The following tasks will be performed:
-
-     1) Preparation of MO basis and integrals
-     2) Calculation of the ground state (diis algorithm)
-     3) Calculation of the excited state (davidson algorithm)
-
-
-  1) Preparation of MO basis and integrals
+     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
+     T1 ERI matrix in memory:    False
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.42383
+     Total cpu time (sec):               0.76918
 
 
-  2) Calculation of the ground state (diis algorithm)
+  2) Preparation of MO basis and integrals
+
+
+  3) Calculation of the ground state (diis algorithm)
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -313,8 +326,8 @@
 
   - DIIS CC ground state solver settings:
 
-     Omega threshold:           0.10E-10
-     Energy threshold:          0.10E-10
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
 
      DIIS dimension:                   8
      Max number of iterations:       100
@@ -323,12 +336,9 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -78.843851693631     0.5453E-11     0.7884E+02
+    1           -78.843851693631     0.5458E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
-
-  Note: the omega vector converged in the first iteration,  so the energy 
-  convergence has not been tested!
 
   - Ground state summary:
 
@@ -356,22 +366,22 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.00900
-     Total cpu time (sec):               0.01608
+     Total wall time (sec):              0.00445
+     Total cpu time (sec):               0.01225
 
 
-  3) Calculation of the excited state (davidson algorithm)
+  4) Calculation of the excited state (davidson algorithm)
      Calculating right vectors
 
    - Davidson coupled cluster excited state solver
   ---------------------------------------------------
 
-  A Davidson solver that calculates the lowest eigenvalues and  the right 
-  or left eigenvectors of the Jacobian matrix, A. The eigenvalue  problem 
-  is solved in a reduced space, the dimension of which is  expanded until 
+  A Davidson solver that calculates the lowest eigenvalues and the right 
+  or left eigenvectors of the Jacobian matrix, A. The eigenvalue problem 
+  is solved in a reduced space, the dimension of which is expanded until 
   the convergence criteria are met.
 
-  A complete description of the algorithm can be found in  E. R. Davidson, 
+  A complete description of the algorithm can be found in E. R. Davidson, 
   J. Comput. Phys. 17, 87 (1975).
 
   - Settings for coupled cluster excited state solver (Davidson):
@@ -379,15 +389,14 @@
      Calculation type:    valence
      Excitation vectors:  right
 
-     Energy threshold:                0.10E-10
-     Residual threshold:              0.10E-10
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
 
      Number of singlet states:               1
      Max number of iterations:             100
 
      Max reduced space dimension:          100
 
-     Reduced space basis and transforms are stored on disk.
 
   Iteration:                  1
   Reduced space dimension:    1
@@ -482,7 +491,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803895    0.000000000000     0.1607E-06   0.4139E-12
+     1   0.283140803895    0.000000000000     0.1607E-06   0.4142E-12
   ------------------------------------------------------------------------
 
   Iteration:                 13
@@ -490,7 +499,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803895    0.000000000000     0.8925E-07   0.2454E-13
+     1   0.283140803895    0.000000000000     0.8925E-07   0.2548E-13
   ------------------------------------------------------------------------
 
   Iteration:                 14
@@ -498,7 +507,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803895    0.000000000000     0.2529E-07   0.3442E-14
+     1   0.283140803895    0.000000000000     0.2529E-07   0.2054E-14
   ------------------------------------------------------------------------
 
   Iteration:                 15
@@ -506,7 +515,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803895    0.000000000000     0.1169E-07   0.6106E-15
+     1   0.283140803895    0.000000000000     0.1169E-07   0.0000E+00
   ------------------------------------------------------------------------
 
   Iteration:                 16
@@ -514,7 +523,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803895    0.000000000000     0.1664E-08   0.7772E-15
+     1   0.283140803895    0.000000000000     0.1664E-08   0.6661E-15
   ------------------------------------------------------------------------
 
   Iteration:                 17
@@ -522,7 +531,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803895    0.000000000000     0.2267E-09   0.7772E-15
+     1   0.283140803895    0.000000000000     0.2267E-09   0.2776E-15
   ------------------------------------------------------------------------
 
   Iteration:                 18
@@ -530,7 +539,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803895    0.000000000000     0.3544E-10   0.7216E-15
+     1   0.283140803895    0.000000000000     0.3544E-10   0.1554E-14
   ------------------------------------------------------------------------
 
   Iteration:                 19
@@ -538,7 +547,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803895    0.000000000000     0.3103E-11   0.1166E-14
+     1   0.283140803895    0.000000000000     0.3102E-11   0.2109E-14
   ------------------------------------------------------------------------
   Convergence criterion met in 19 iterations!
 
@@ -553,16 +562,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      6       -0.983643739611
-        4      6       -0.157041269777
+        1      6        0.983643739611
+        4      6        0.157041269777
         6      6       -0.065052447145
-       13      6        0.047162913485
-       15      6       -0.020463284034
-        1      3        0.011446417248
+       13      6       -0.047162913485
+       15      6        0.020463284034
+        1      3       -0.011446417247
         9      6       -0.011160558004
-       10      6       -0.009804553971
-       22      6       -0.009439702303
-       19      5        0.009153283040
+       10      6        0.009804553971
+       22      6        0.009439702303
+       19      5       -0.009153283040
      ------------------------------------
 
      - Electronic excitation energies:
@@ -577,12 +586,16 @@
 
   - Finished solving the CCS excited state equations (right)
 
-     Total wall time (sec):              0.02900
-     Total cpu time (sec):               0.05548
+     Total wall time (sec):              0.02527
+     Total cpu time (sec):               0.04914
 
   - Timings for the CCS excited state calculation
 
-     Total wall time (sec):              0.04300
-     Total cpu time (sec):               0.07981
+     Total wall time (sec):              0.45401
+     Total cpu time (sec):               0.83503
+
+     Peak memory usage during the execution of eT: 10.648832 MB
+
+  Calculation ended: 2021-03-08 15:04:57 UTC +01:00
 
   eT terminated successfully!

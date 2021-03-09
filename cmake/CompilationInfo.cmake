@@ -1,19 +1,5 @@
 
 execute_process(
-    COMMAND whoami
-    TIMEOUT 1
-    OUTPUT_VARIABLE USER_NAME
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-
-execute_process(
-    COMMAND hostname
-    TIMEOUT 1
-    OUTPUT_VARIABLE HOST_NAME
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-
-execute_process(
     COMMAND git rev-parse --abbrev-ref HEAD
     TIMEOUT 1
     OUTPUT_VARIABLE BRANCH_NAME

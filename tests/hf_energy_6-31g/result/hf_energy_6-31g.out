@@ -1,16 +1,37 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.1 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.1.3, Bastion
+  ------------------------------------------------------------
+  Configuration date: 2021-03-08 15:01:10 UTC +01:00
+  Git branch:         test-generator
+  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-03-08 15:05:49 UTC +01:00
 
 
   :: Input file
@@ -42,7 +63,7 @@
      end method
 
 
-  Running on 2 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -53,8 +74,6 @@
      Charge:           0
      Multiplicity:     1
      Coordinate units: angstrom
-
-     Using Cartesian gaussians.
 
      Pure basis functions:         22
      Cartesian basis functions:    22
@@ -131,8 +150,8 @@
      DIIS dimension:                         8
      Cumulative Fock threshold:       0.10E+01
 
+     Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
-     Gradient threshold:            0.1000E-09
 
      Coulomb screening threshold:   0.1000E-15
      Exchange screening threshold:  0.1000E-13
@@ -149,19 +168,19 @@
      1          -177.356080045603     0.4712E-01     0.1774E+03
      2          -177.377821959496     0.1455E-01     0.2174E-01
      3          -177.378995853025     0.4402E-02     0.1174E-02
-     4          -177.379064370233     0.1447E-02     0.6852E-04
+     4          -177.379064370234     0.1447E-02     0.6852E-04
      5          -177.379075785347     0.1660E-03     0.1142E-04
      6          -177.379076284370     0.8625E-04     0.4990E-06
      7          -177.379076321837     0.1138E-04     0.3747E-07
-     8          -177.379076324290     0.1612E-05     0.2454E-08
+     8          -177.379076324291     0.1612E-05     0.2454E-08
      9          -177.379076324395     0.2714E-06     0.1044E-09
-    10          -177.379076324396     0.6997E-07     0.1535E-11
-    11          -177.379076324396     0.1360E-07     0.5684E-13
-    12          -177.379076324396     0.5177E-08     0.8527E-13
-    13          -177.379076324396     0.1106E-08     0.5684E-13
-    14          -177.379076324396     0.3151E-09     0.5684E-13
+    10          -177.379076324396     0.6997E-07     0.1279E-11
+    11          -177.379076324396     0.1360E-07     0.1421E-12
+    12          -177.379076324396     0.5177E-08     0.1137E-12
+    13          -177.379076324396     0.1106E-08     0.1137E-12
+    14          -177.379076324396     0.3151E-09     0.8527E-13
     15          -177.379076324396     0.1139E-09     0.2842E-13
-    16          -177.379076324396     0.2117E-10     0.1705E-12
+    16          -177.379076324396     0.2117E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -169,23 +188,16 @@
 
      HOMO-LUMO gap:                  0.627561422279
      Nuclear repulsion energy:      48.518317619727
-     Electronic energy:           -225.897393944124
+     Electronic energy:           -225.897393944123
      Total energy:                -177.379076324396
-
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -26.339465574619   7  -0.843048065144  13   0.974683556870  19   1.527532077125
-   2 -20.662711160368   8  -0.781911503912  14   1.084969383791  20   1.532719100301
-   3  -1.925584584405   9  -0.509164038755  15   1.124057288827  21   1.670895361095
-   4  -1.208822823896  10  -0.459197263870  16   1.213442401170  22   2.377942959631
-   5  -0.912176685668  11   0.168364158409  17   1.436767724072
-   6  -0.874167195300  12   0.529328212120  18   1.509793671728
-  -----------------------------------------------------------------------------------
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.25300
-     Total cpu time (sec):               0.41051
+     Total wall time (sec):              0.38525
+     Total cpu time (sec):               0.75834
+
+     Peak memory usage during the execution of eT: 96.784 KB
+
+  Calculation ended: 2021-03-08 15:05:49 UTC +01:00
 
   eT terminated successfully!
