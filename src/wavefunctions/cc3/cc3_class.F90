@@ -198,7 +198,7 @@ module cc3_class
       include "jacobian_transpose_cc3_interface.F90"
       include "abc_batching_cc3_interface.F90"
       include "zop_cc3_interface.F90"
-      include "fop_cc3_interface.F90"
+      include "response_cc3_interface.F90"
 !
    end interface
 !
