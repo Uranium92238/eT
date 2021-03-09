@@ -14,26 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Nachspiel
+   This is eT version 1.1.3, Bastion
   ------------------------------------------------------------
-  Compiled by:        alexancp
-  Compiled on:        NTNU16748
-  Configuration date: 2020-11-27 09:33:39 UTC +01:00
-  Git branch:         speedup-of-tests
-  Git hash:           8c21e529e365b13ed1e9193264a7eb1a530e7451
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
+  Configuration date: 2021-03-08 15:01:10 UTC +01:00
+  Git branch:         test-generator
+  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2020-11-27 09:51:33 UTC +01:00
+  Calculation started: 2021-03-08 15:03:48 UTC +01:00
 
 
   :: Input file
@@ -193,14 +191,14 @@
      6           -78.843676312828     0.5524E-04     0.8236E-06
      7           -78.843676336350     0.5855E-05     0.2352E-07
      8           -78.843676337053     0.2353E-05     0.7030E-09
-     9           -78.843676337126     0.2069E-06     0.7363E-10
-    10           -78.843676337127     0.1582E-07     0.4121E-12
-    11           -78.843676337127     0.3956E-08     0.4263E-13
-    12           -78.843676337127     0.1341E-08     0.5684E-13
-    13           -78.843676337127     0.4647E-09     0.0000E+00
-    14           -78.843676337127     0.1354E-09     0.0000E+00
-    15           -78.843676337127     0.1584E-10     0.2842E-13
-    16           -78.843676337127     0.3044E-11     0.2842E-13
+     9           -78.843676337127     0.2069E-06     0.7370E-10
+    10           -78.843676337127     0.1582E-07     0.3411E-12
+    11           -78.843676337127     0.3956E-08     0.2842E-13
+    12           -78.843676337127     0.1341E-08     0.4263E-13
+    13           -78.843676337127     0.4647E-09     0.7105E-13
+    14           -78.843676337127     0.1355E-09     0.7105E-13
+    15           -78.843676337127     0.1584E-10     0.7105E-13
+    16           -78.843676337127     0.3046E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -211,23 +209,10 @@
      Electronic energy:            -91.007350275948
      Total energy:                 -78.843676337127
 
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.574161720883   9   0.704387759569  17   1.680115020157  25   3.175802280618
-   2  -1.277649761715  10   0.746901100079  18   1.804193350625  26   3.209692713503
-   3  -0.899902596944  11   1.154728902868  19   1.904213902493  27   3.328283990654
-   4  -0.629830825440  12   1.170784555105  20   2.148837823370  28   3.722330385569
-   5  -0.541608797265  13   1.267987483216  21   2.200396855907  29   3.985536398833
-   6  -0.485759965504  14   1.449812798732  22   2.539474155966
-   7   0.160079154577  15   1.465208505809  23   2.540985376002
-   8   0.229286143882  16   1.477689924381  24   2.561261268944
-  -----------------------------------------------------------------------------------
-
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.59853
-     Total cpu time (sec):               1.16001
+     Total wall time (sec):              1.16810
+     Total cpu time (sec):               2.17919
 
 
   :: CCSD wavefunction
@@ -327,8 +312,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.27992
-     Total cpu time (sec):               0.55994
+     Total wall time (sec):              0.35722
+     Total cpu time (sec):               0.71296
 
 
   2) Preparation of MO basis and integrals
@@ -373,8 +358,8 @@
    16           -79.100220193154     0.2110E-08     0.2131E-09
    17           -79.100220193343     0.6412E-09     0.1894E-09
    18           -79.100220193403     0.1569E-09     0.5976E-10
-   19           -79.100220193410     0.5326E-10     0.7674E-11
-   20           -79.100220193412     0.2038E-10     0.1052E-11
+   19           -79.100220193410     0.5326E-10     0.7660E-11
+   20           -79.100220193412     0.2038E-10     0.1066E-11
    21           -79.100220193412     0.7823E-11     0.6395E-12
   ---------------------------------------------------------------
   Convergence criterion met in 21 iterations!
@@ -421,8 +406,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.24127
-     Total cpu time (sec):               0.48126
+     Total wall time (sec):              0.43162
+     Total cpu time (sec):               0.86348
 
 
   4) Calculation of the multipliers (davidson algorithm)
@@ -502,8 +487,8 @@
 
   - Finished solving the CCSD multipliers equations
 
-     Total wall time (sec):               0.18079
-     Total cpu time (sec):                0.26186
+     Total wall time (sec):               0.22815
+     Total cpu time (sec):                0.45614
 
   Determining amplitude response...
   Asking solver to get response for component 1 and (-)-frequencies.
@@ -717,8 +702,8 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.26449
-     Total cpu time (sec):                0.52847
+     Total wall time (sec):               0.53401
+     Total cpu time (sec):                1.06967
 
   Determining amplitude response...
   Asking solver to get response for component 1 and (+)-frequencies.
@@ -942,8 +927,8 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.27238
-     Total cpu time (sec):                0.54440
+     Total wall time (sec):               0.56122
+     Total cpu time (sec):                1.11608
 
   Determining amplitude response...
   Asking solver to get response for component 3 and (-)-frequencies.
@@ -1147,8 +1132,8 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.29571
-     Total cpu time (sec):                0.59156
+     Total wall time (sec):               0.51445
+     Total cpu time (sec):                1.02977
 
   Determining amplitude response...
   Asking solver to get response for component 3 and (+)-frequencies.
@@ -1362,8 +1347,8 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.35532
-     Total cpu time (sec):                0.71123
+     Total wall time (sec):               0.54797
+     Total cpu time (sec):                1.09013
 
 
   6) Calculation of the EOM polarizabilities
@@ -1376,11 +1361,11 @@
 
   - Timings for the CCSD response calculation
 
-     Total wall time (sec):              1.89401
-     Total cpu time (sec):               3.68687
+     Total wall time (sec):              3.18348
+     Total cpu time (sec):               6.35618
 
      Peak memory usage during the execution of eT: 16.013176 MB
 
-  Calculation ended: 2020-11-27 09:51:35 UTC +01:00
+  Calculation ended: 2021-03-08 15:03:52 UTC +01:00
 
   eT terminated successfully!

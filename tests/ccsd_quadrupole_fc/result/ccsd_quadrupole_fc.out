@@ -14,26 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Nachspiel
+   This is eT version 1.1.3, Bastion
   ------------------------------------------------------------
-  Compiled by:        sarai
-  Compiled on:        dhcp-10-24-5-153.wlan.ntnu.no
-  Configuration date: 2020-11-26 10:54:10 UTC +01:00
-  Git branch:         fc-fhf-dipole
-  Git hash:           9fddc59ed8a585e1ad901ad344729f0e55a87ca5
-  Fortran compiler:   GNU 9.2.0
-  C compiler:         GNU 6.3.0
-  C++ compiler:       GNU 9.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-03-08 15:01:10 UTC +01:00
+  Git branch:         test-generator
+  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
-  Runtime checks:     ON
+  Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2020-11-26 10:56:07 UTC +01:00
+  Calculation started: 2021-03-08 15:05:49 UTC +01:00
 
 
   :: Input file
@@ -42,7 +40,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O He
+        name: H2O
         charge: 0
      end system
 
@@ -91,14 +89,14 @@
      end solver cholesky
 
 
-  Running on 8 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: Molecular system specifications
   =====================================
 
-     Name:             h2o he
+     Name:             h2o
      Charge:           0
      Multiplicity:     1
      Coordinate units: bohr
@@ -198,13 +196,13 @@
      5           -75.952528940935     0.1297E-03     0.1361E-04
      6           -75.952529042757     0.1070E-04     0.1018E-06
      7           -75.952529044529     0.2782E-05     0.1772E-08
-     8           -75.952529044735     0.8424E-06     0.2055E-09
+     8           -75.952529044735     0.8424E-06     0.2056E-09
      9           -75.952529044742     0.1319E-06     0.6722E-11
-    10           -75.952529044742     0.3674E-08     0.8527E-13
-    11           -75.952529044742     0.6219E-09     0.1421E-13
-    12           -75.952529044742     0.9153E-10     0.5684E-13
-    13           -75.952529044742     0.1795E-10     0.5684E-13
-    14           -75.952529044742     0.3152E-11     0.1421E-13
+    10           -75.952529044742     0.3674E-08     0.0000E+00
+    11           -75.952529044742     0.6219E-09     0.2842E-13
+    12           -75.952529044742     0.9153E-10     0.0000E+00
+    13           -75.952529044742     0.1795E-10     0.4263E-13
+    14           -75.952529044742     0.3148E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -215,19 +213,10 @@
      Electronic energy:            -83.954895495461
      Total energy:                 -75.952529044742
 
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.588529451558   5  -0.496642505018   9   1.028442746413  13   1.678201807864
-   2  -1.293835102310   6   0.166557012797  10   1.163404324925
-   3  -0.637495052561   7   0.254875774726  11   1.233523458291
-   4  -0.540232248076   8   1.005235183644  12   1.363460291874
-  -----------------------------------------------------------------------------------
-
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.10200
-     Total cpu time (sec):               0.32239
+     Total wall time (sec):              0.16551
+     Total cpu time (sec):               0.30793
 
   - Preparation for frozen core approximation
 
@@ -318,8 +307,8 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.7564E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.7564E-15
+     Maximal difference between approximate and actual diagonal:              0.4740E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.3529E-15
 
   - Settings for integral handling:
 
@@ -329,8 +318,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.03500
-     Total cpu time (sec):               0.09395
+     Total wall time (sec):              0.03992
+     Total cpu time (sec):               0.07954
 
 
   2) Preparation of MO basis and integrals
@@ -420,8 +409,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.09600
-     Total cpu time (sec):               0.20583
+     Total wall time (sec):              0.01585
+     Total cpu time (sec):               0.03185
 
 
   4) Calculation of the multipliers (davidson algorithm)
@@ -456,7 +445,7 @@
    13             0.7302E-09
    14             0.1496E-09
    15             0.2533E-10
-   16             0.4812E-11
+   16             0.4813E-11
   ---------------------------
 
   Convergence criterion met in 16 iterations!
@@ -497,8 +486,8 @@
 
   - Finished solving the CCSD multipliers equations
 
-     Total wall time (sec):               0.09300
-     Total cpu time (sec):                0.17725
+     Total wall time (sec):               0.01633
+     Total cpu time (sec):                0.03233
 
 
   5) Calculation of ground state properties
@@ -507,18 +496,18 @@
 
      xx:        -5.6349517
      xy:         0.0000000
-     xz:        -0.0000000
+     xz:         0.0000000
      yy:        -3.1625188
-     yz:         0.0000000
+     yz:        -0.0000000
      zz:        -4.4494437
 
   - Operator: quadrupole moment (with trace) [Debye*Ang]
 
      xx:        -7.5792034
      xy:         0.0000000
-     xz:        -0.0000000
+     xz:         0.0000000
      yy:        -4.2536963
-     yz:         0.0000000
+     yz:        -0.0000000
      zz:        -5.9846545
 
      The traceless quadrupole is calculated as:
@@ -531,27 +520,27 @@
 
      xx:        -1.8289705
      xy:         0.0000000
-     xz:        -0.0000000
+     xz:         0.0000000
      yy:         1.8796789
-     yz:         0.0000000
+     yz:        -0.0000000
      zz:        -0.0507085
 
   - Operator: traceless quadrupole moment [Debye*Ang]
 
      xx:        -2.4600280
      xy:         0.0000000
-     xz:        -0.0000000
+     xz:         0.0000000
      yy:         2.5282326
-     yz:         0.0000000
+     yz:        -0.0000000
      zz:        -0.0682046
 
   - Timings for the CCSD mean value calculation
 
-     Total wall time (sec):              0.22600
-     Total cpu time (sec):               0.48061
+     Total wall time (sec):              0.07311
+     Total cpu time (sec):               0.14472
 
-     Peak memory usage during the execution of eT: 654.804 KB
+     Peak memory usage during the execution of eT: 660.936 KB
 
-  Calculation ended: 2020-11-26 10:56:07 UTC +01:00
+  Calculation ended: 2021-03-08 15:05:49 UTC +01:00
 
   eT terminated successfully!

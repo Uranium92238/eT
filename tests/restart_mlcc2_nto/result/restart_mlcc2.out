@@ -14,26 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Nachspiel
+   This is eT version 1.1.3, Bastion
   ------------------------------------------------------------
-  Compiled by:        sarai
-  Compiled on:        dhcp-10-24-7-39.wlan.ntnu.no
-  Configuration date: 2020-12-01 14:13:18 UTC +01:00
-  Git branch:         nto-restart
-  Git hash:           f5f9a0feb45243e994e87ad509be6e94b7aa407a
-  Fortran compiler:   GNU 9.2.0
-  C compiler:         GNU 6.3.0
-  C++ compiler:       GNU 9.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-03-08 15:01:10 UTC +01:00
+  Git branch:         test-generator
+  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
-  Runtime checks:     ON
+  Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2020-12-01 14:35:36 UTC +01:00
+  Calculation started: 2021-03-08 15:05:22 UTC +01:00
 
 
   :: Input file
@@ -94,7 +92,7 @@
      end mlcc
 
 
-  Running on 8 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -189,7 +187,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.6422E-12     0.7884E+02
+     1           -78.843851693631     0.6421E-12     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -197,13 +195,13 @@
 
      HOMO-LUMO gap:                  0.645629080251
      Nuclear repulsion energy:      12.116100574587
-     Electronic energy:            -90.959952268217
+     Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.01100
-     Total cpu time (sec):               0.06954
+     Total wall time (sec):              0.04617
+     Total cpu time (sec):               0.07386
 
 
   :: MLCC2 wavefunction
@@ -295,11 +293,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.25200
-     Total cpu time (sec):               1.00081
+     Total wall time (sec):              0.29753
+     Total cpu time (sec):               0.59244
 
 
   2) Preparation of MO basis and integrals
+  Requested restart for NTOs, reading orbital transformation matrix
 
   - MLCC2 orbital partitioning:
 
@@ -336,7 +335,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -78.870509609883     0.4264E-12     0.7887E+02
+    1           -78.870509609883     0.4258E-12     0.7887E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -366,8 +365,8 @@
 
   - Finished solving the MLCC2 ground state equations
 
-     Total wall time (sec):              0.00800
-     Total cpu time (sec):               0.01771
+     Total wall time (sec):              0.00367
+     Total cpu time (sec):               0.00767
 
 
   4) Calculation of the excited state (diis algorithm)
@@ -404,8 +403,8 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.260537408846       0.2613E-12
-     2      0.329538704894       0.6563E-12
+     1      0.260537408846       0.2620E-12
+     2      0.329538704894       0.6581E-12
   -----------------------------------------------
 
   Note: residual of all states converged  in first iteration.
@@ -478,22 +477,22 @@
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
         1                  0.260537408846        7.089584004762
-        2                  0.329538704894        8.967204907410
+        2                  0.329538704894        8.967204907409
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the MLCC2 excited state equations (right)
 
-     Total wall time (sec):              0.01100
-     Total cpu time (sec):               0.02081
+     Total wall time (sec):              0.00283
+     Total cpu time (sec):               0.00283
 
   - Timings for the MLCC2 excited state calculation
 
-     Total wall time (sec):              0.28000
-     Total cpu time (sec):               1.06193
+     Total wall time (sec):              0.31399
+     Total cpu time (sec):               0.62490
 
-     Peak memory usage during the execution of eT: 10.620876 MB
+     Peak memory usage during the execution of eT: 10.648848 MB
 
-  Calculation ended: 2020-12-01 14:35:36 UTC +01:00
+  Calculation ended: 2021-03-08 15:05:23 UTC +01:00
 
   eT terminated successfully!

@@ -14,26 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Nachspiel
+   This is eT version 1.1.3, Bastion
   ------------------------------------------------------------
-  Compiled by:        alexancp
-  Compiled on:        NTNU16748
-  Configuration date: 2020-11-26 18:25:10 UTC +01:00
-  Git branch:         always-restart-l-from-r
-  Git hash:           74c9e82429f4cd737ace79ccb65d5f6ee702df4f
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
+  Configuration date: 2021-03-08 15:01:10 UTC +01:00
+  Git branch:         test-generator
+  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2020-11-26 18:35:31 UTC +01:00
+  Calculation started: 2021-03-08 15:04:01 UTC +01:00
 
 
   :: Input file
@@ -190,7 +188,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.2899E-11     0.7884E+02
+     1           -78.843851693631     0.2910E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -201,23 +199,10 @@
      Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.574269195145   9   0.704416610867  17   1.682695299877  25   3.175416260660
-   2  -1.277667044968  10   0.746260122914  18   1.804186820052  26   3.209661156313
-   3  -0.898849406810  11   1.155862024383  19   1.902641648742  27   3.328173215200
-   4  -0.629870222690  12   1.170770887076  20   2.148883457168  28   3.721936473470
-   5  -0.541641772852  13   1.267961746552  21   2.200395756969  29   3.985492632586
-   6  -0.485872762832  14   1.449847537220  22   2.540321860021
-   7   0.159756317416  15   1.463234913438  23   2.541517310547
-   8   0.229311906283  16   1.474444394527  24   2.559338707350
-  -----------------------------------------------------------------------------------
-
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.05192
-     Total cpu time (sec):               0.05419
+     Total wall time (sec):              0.08357
+     Total cpu time (sec):               0.08370
 
 
   :: CCSD wavefunction
@@ -318,8 +303,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.25484
-     Total cpu time (sec):               0.50684
+     Total wall time (sec):              0.40821
+     Total cpu time (sec):               0.81467
 
 
   2) Preparation of MO basis and integrals
@@ -395,8 +380,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.02322
-     Total cpu time (sec):               0.04722
+     Total wall time (sec):              0.03628
+     Total cpu time (sec):               0.07218
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -483,8 +468,8 @@
 
   - Finished solving the ccsd multipliers equations
 
-     Total wall time (sec):              0.11715
-     Total cpu time (sec):               0.23314
+     Total wall time (sec):              0.18098
+     Total cpu time (sec):               0.36424
 
 
   5) Calculation of the excited state (diis algorithm)
@@ -618,7 +603,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194258909       0.6243E-05
+     1      0.247194258910       0.6243E-05
      2      0.356085294615       0.9903E-04
      3      0.312716770306       0.8463E-04
   -----------------------------------------------
@@ -927,7 +912,7 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.247194255572        6.726498310302
+        1                  0.247194255572        6.726498310303
         2                  0.312716698779        8.509454805378
         3                  0.356085057592        9.689567958101
      ---------------------------------------------------------------
@@ -935,8 +920,8 @@
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              0.41889
-     Total cpu time (sec):               0.83834
+     Total wall time (sec):              0.75267
+     Total cpu time (sec):               1.43269
 
 
   5) Calculation of the excited state (diis algorithm)
@@ -1381,8 +1366,8 @@
 
   - Finished solving the CCSD excited state equations (left)
 
-     Total wall time (sec):              0.49250
-     Total cpu time (sec):               0.98450
+     Total wall time (sec):              0.66873
+     Total cpu time (sec):               1.33621
 
 
   6) Calculation of the transition moments (EOM)
@@ -1395,7 +1380,7 @@
      ----------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.247194255572
-     Excitation energy [eV]:            6.726498310302
+     Excitation energy [eV]:            6.726498310303
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
@@ -1444,11 +1429,11 @@
 
   - Timings for the CCSD response calculation
 
-     Total wall time (sec):              1.31022
-     Total cpu time (sec):               2.62166
+     Total wall time (sec):              2.05141
+     Total cpu time (sec):               4.02856
 
      Peak memory usage during the execution of eT: 16.307080 MB
 
-  Calculation ended: 2020-11-26 18:35:33 UTC +01:00
+  Calculation ended: 2021-03-08 15:04:04 UTC +01:00
 
   eT terminated successfully!
