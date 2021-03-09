@@ -16,24 +16,22 @@
 
    This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Compiled by:        
-  Compiled on:        
-  Configuration date: 2021-03-09 13:33:56 UTC +01:00
-  Git branch:         convergence-testing
-  Git hash:           9e131bef2f80d4c8206ed6aaa69f6e7005b14f93
-  Fortran compiler:   GNU 10.2.0
-  C compiler:         GNU 10.2.0
-  C++ compiler:       GNU 10.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 13:35:47 UTC +01:00
+  Calculation started: 2021-03-09 17:28:40 UTC +01:00
 
 
   :: Input file
@@ -191,14 +189,14 @@
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
      8           -78.843851693557     0.2356E-05     0.7054E-09
-     9           -78.843851693630     0.2071E-06     0.7374E-10
-    10           -78.843851693631     0.1594E-07     0.4832E-12
-    11           -78.843851693631     0.3322E-08     0.5684E-13
-    12           -78.843851693631     0.1197E-08     0.1421E-13
+     9           -78.843851693630     0.2071E-06     0.7373E-10
+    10           -78.843851693631     0.1594E-07     0.4121E-12
+    11           -78.843851693631     0.3322E-08     0.2842E-13
+    12           -78.843851693631     0.1197E-08     0.2842E-13
     13           -78.843851693631     0.4264E-09     0.1421E-13
-    14           -78.843851693631     0.1280E-09     0.1421E-13
-    15           -78.843851693631     0.1479E-10     0.4263E-13
-    16           -78.843851693631     0.2905E-11     0.2842E-13
+    14           -78.843851693631     0.1280E-09     0.2842E-13
+    15           -78.843851693631     0.1479E-10     0.1421E-13
+    16           -78.843851693631     0.2907E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -211,8 +209,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.54500
-     Total cpu time (sec):               0.98993
+     Total wall time (sec):              0.53290
+     Total cpu time (sec):               1.02528
 
 
   :: CCSD wavefunction
@@ -313,8 +311,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.25700
-     Total cpu time (sec):               0.41743
+     Total wall time (sec):              0.20922
+     Total cpu time (sec):               0.41722
 
 
   2) Preparation of MO basis and integrals
@@ -409,8 +407,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.44200
-     Total cpu time (sec):               0.98953
+     Total wall time (sec):              0.25925
+     Total cpu time (sec):               0.51806
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -502,8 +500,8 @@
 
   - Finished solving the ccsd multipliers equations
 
-     Total wall time (sec):              0.26600
-     Total cpu time (sec):               0.42568
+     Total wall time (sec):              0.11924
+     Total cpu time (sec):               0.23924
 
 
   5) Calculation of the excited state (diis algorithm)
@@ -619,7 +617,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194258910       0.6243E-05
+     1      0.247194258909       0.6243E-05
   -----------------------------------------------
 
   Iteration:                 13
@@ -777,14 +775,14 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.247194255572        6.726498310303
+        1                  0.247194255572        6.726498310302
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              0.32200
-     Total cpu time (sec):               0.59192
+     Total wall time (sec):              0.14111
+     Total cpu time (sec):               0.28057
 
 
   5) Calculation of the excited state (diis algorithm)
@@ -1058,8 +1056,8 @@
 
   - Finished solving the CCSD excited state equations (left)
 
-     Total wall time (sec):              0.27500
-     Total cpu time (sec):               0.43706
+     Total wall time (sec):              0.14159
+     Total cpu time (sec):               0.28112
 
 
   6) Calculation of the transition moments (EOM)
@@ -1072,7 +1070,7 @@
      ----------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.247194255572
-     Excitation energy [eV]:            6.726498310303
+     Excitation energy [eV]:            6.726498310302
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
@@ -1087,11 +1085,11 @@
 
   - Timings for the CCSD response calculation
 
-     Total wall time (sec):              1.57400
-     Total cpu time (sec):               2.88063
+     Total wall time (sec):              0.87635
+     Total cpu time (sec):               1.75016
 
-     Peak memory usage during the execution of eT: 16.323960 MB
+     Peak memory usage during the execution of eT: 16.353888 MB
 
-  Calculation ended: 2021-03-09 13:35:49 UTC +01:00
+  Calculation ended: 2021-03-09 17:28:42 UTC +01:00
 
   eT terminated successfully!

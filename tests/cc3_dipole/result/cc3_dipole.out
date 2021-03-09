@@ -16,24 +16,22 @@
 
    This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Compiled by:        
-  Compiled on:        
-  Configuration date: 2021-03-09 11:28:52 UTC +01:00
-  Git branch:         convergence-testing
-  Git hash:           daee21ad27f80e9163798f173753a967992b1d8a
-  Fortran compiler:   GNU 10.2.0
-  C compiler:         GNU 10.2.0
-  C++ compiler:       GNU 10.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 11:32:17 UTC +01:00
+  Calculation started: 2021-03-09 17:28:13 UTC +01:00
 
 
   :: Input file
@@ -186,14 +184,14 @@
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
      8           -78.843851693557     0.2356E-05     0.7054E-09
-     9           -78.843851693630     0.2071E-06     0.7370E-10
-    10           -78.843851693631     0.1594E-07     0.5258E-12
-    11           -78.843851693631     0.3322E-08     0.8527E-13
-    12           -78.843851693631     0.1197E-08     0.1421E-13
-    13           -78.843851693631     0.4264E-09     0.4263E-13
+     9           -78.843851693630     0.2071E-06     0.7371E-10
+    10           -78.843851693631     0.1594E-07     0.4121E-12
+    11           -78.843851693631     0.3322E-08     0.2842E-13
+    12           -78.843851693631     0.1197E-08     0.5684E-13
+    13           -78.843851693631     0.4264E-09     0.8527E-13
     14           -78.843851693631     0.1280E-09     0.5684E-13
-    15           -78.843851693631     0.1479E-10     0.0000E+00
-    16           -78.843851693631     0.2908E-11     0.8527E-13
+    15           -78.843851693631     0.1479E-10     0.7105E-13
+    16           -78.843851693631     0.2906E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -206,8 +204,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.57400
-     Total cpu time (sec):               1.02458
+     Total wall time (sec):              0.54541
+     Total cpu time (sec):               1.03856
 
 
   :: CC3 wavefunction
@@ -306,8 +304,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.25300
-     Total cpu time (sec):               0.40644
+     Total wall time (sec):              0.20407
+     Total cpu time (sec):               0.40806
 
 
   2) Preparation of MO basis and integrals
@@ -342,7 +340,7 @@
     2           -79.096425668901     0.2799E-01     0.1218E-01
     3           -79.103829958623     0.6335E-02     0.7404E-02
     4           -79.104336097469     0.1982E-02     0.5061E-03
-    5           -79.104390774596     0.5221E-03     0.5468E-04
+    5           -79.104390774595     0.5221E-03     0.5468E-04
     6           -79.104398749304     0.1995E-03     0.7975E-05
     7           -79.104389483792     0.4719E-04     0.9266E-05
     8           -79.104389091837     0.1106E-04     0.3920E-06
@@ -352,12 +350,12 @@
    12           -79.104388534799     0.2615E-06     0.3526E-08
    13           -79.104388539782     0.9950E-07     0.4982E-08
    14           -79.104388532667     0.3238E-07     0.7114E-08
-   15           -79.104388532456     0.8372E-08     0.2118E-09
+   15           -79.104388532455     0.8372E-08     0.2118E-09
    16           -79.104388532882     0.2052E-08     0.4269E-09
    17           -79.104388532982     0.6454E-09     0.9983E-10
-   18           -79.104388533024     0.1406E-09     0.4208E-10
-   19           -79.104388533030     0.4351E-10     0.5286E-11
-   20           -79.104388533032     0.1632E-10     0.1918E-11
+   18           -79.104388533024     0.1406E-09     0.4209E-10
+   19           -79.104388533030     0.4351E-10     0.5272E-11
+   20           -79.104388533031     0.1632E-10     0.1918E-11
    21           -79.104388533032     0.5182E-11     0.8100E-12
   ---------------------------------------------------------------
   Convergence criterion met in 21 iterations!
@@ -402,8 +400,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              1.61200
-     Total cpu time (sec):               4.26739
+     Total wall time (sec):              0.55515
+     Total cpu time (sec):               1.11102
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -494,8 +492,8 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              2.77900
-     Total cpu time (sec):               7.96621
+     Total wall time (sec):              0.82326
+     Total cpu time (sec):               1.64722
 
 
   5) Calculation of ground state properties
@@ -518,11 +516,11 @@
 
   - Timings for the CC3 mean value calculation
 
-     Total wall time (sec):              4.77700
-     Total cpu time (sec):              12.96812
+     Total wall time (sec):              1.66107
+     Total cpu time (sec):               3.32489
 
-     Peak memory usage during the execution of eT: 16.030728 MB
+     Peak memory usage during the execution of eT: 16.059960 MB
 
-  Calculation ended: 2021-03-09 11:32:22 UTC +01:00
+  Calculation ended: 2021-03-09 17:28:15 UTC +01:00
 
   eT terminated successfully!

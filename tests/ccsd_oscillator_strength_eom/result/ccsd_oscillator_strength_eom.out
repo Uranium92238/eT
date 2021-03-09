@@ -16,24 +16,22 @@
 
    This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Compiled by:        
-  Compiled on:        
-  Configuration date: 2021-03-09 11:19:58 UTC +01:00
-  Git branch:         convergence-testing
-  Git hash:           daee21ad27f80e9163798f173753a967992b1d8a
-  Fortran compiler:   GNU 10.2.0
-  C compiler:         GNU 10.2.0
-  C++ compiler:       GNU 10.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 11:21:46 UTC +01:00
+  Calculation started: 2021-03-09 17:26:49 UTC +01:00
 
 
   :: Input file
@@ -174,22 +172,22 @@
   ---------------------------------------------------------------
      1          -177.452460025510     0.7565E-01     0.1775E+03
      2          -177.479057956533     0.1346E-01     0.2660E-01
-     3          -177.480054154998     0.4309E-02     0.9962E-03
+     3          -177.480054154999     0.4309E-02     0.9962E-03
      4          -177.480180562238     0.1844E-02     0.1264E-03
-     5          -177.480194220840     0.3631E-03     0.1366E-04
+     5          -177.480194220839     0.3631E-03     0.1366E-04
      6          -177.480195441222     0.7394E-04     0.1220E-05
-     7          -177.480195516819     0.2206E-04     0.7560E-07
+     7          -177.480195516818     0.2206E-04     0.7560E-07
      8          -177.480195527024     0.5084E-05     0.1021E-07
-     9          -177.480195527847     0.1218E-05     0.8232E-09
-    10          -177.480195527874     0.2531E-06     0.2669E-10
-    11          -177.480195527875     0.4375E-07     0.9948E-12
-    12          -177.480195527875     0.9241E-08     0.1421E-12
-    13          -177.480195527875     0.4370E-08     0.1137E-12
-    14          -177.480195527875     0.1744E-08     0.1990E-12
-    15          -177.480195527875     0.3643E-09     0.1705E-12
-    16          -177.480195527875     0.1712E-09     0.2842E-13
-    17          -177.480195527875     0.5855E-10     0.0000E+00
-    18          -177.480195527875     0.5042E-11     0.8527E-13
+     9          -177.480195527848     0.1218E-05     0.8233E-09
+    10          -177.480195527874     0.2531E-06     0.2638E-10
+    11          -177.480195527875     0.4375E-07     0.1137E-11
+    12          -177.480195527875     0.9241E-08     0.1705E-12
+    13          -177.480195527875     0.4370E-08     0.1705E-12
+    14          -177.480195527875     0.1744E-08     0.1137E-12
+    15          -177.480195527875     0.3643E-09     0.8527E-13
+    16          -177.480195527875     0.1712E-09     0.1705E-12
+    17          -177.480195527875     0.5855E-10     0.8527E-13
+    18          -177.480195527875     0.5043E-11     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -202,8 +200,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.75300
-     Total cpu time (sec):               3.30539
+     Total wall time (sec):              1.65463
+     Total cpu time (sec):               3.27424
 
 
   :: CCSD wavefunction
@@ -293,7 +291,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9471E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.1128E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1084E-14
 
   - Settings for integral handling:
 
@@ -303,8 +301,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.81200
-     Total cpu time (sec):               1.46485
+     Total wall time (sec):              0.69582
+     Total cpu time (sec):               1.35838
 
 
   2) Preparation of MO basis and integrals
@@ -400,8 +398,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.26400
-     Total cpu time (sec):               3.64476
+     Total wall time (sec):              0.93878
+     Total cpu time (sec):               1.87847
 
 
   4) Calculation of the multipliers (davidson algorithm)
@@ -450,7 +448,7 @@
    18             0.1691E-09
    19             0.4902E-10
    20             0.1407E-10
-   21             0.4175E-11
+   21             0.4176E-11
   ---------------------------
 
   Convergence criterion met in 21 iterations!
@@ -491,8 +489,8 @@
 
   - Finished solving the CCSD multipliers equations
 
-     Total wall time (sec):               0.83500
-     Total cpu time (sec):                1.52360
+     Total wall time (sec):               0.55814
+     Total cpu time (sec):                1.11399
 
 
   5) Calculation of the excited state (davidson algorithm)
@@ -709,7 +707,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.1010E-09   0.1496E-11
+     1   0.204566001066    0.000000000000     0.1010E-09   0.1497E-11
   ------------------------------------------------------------------------
 
   Iteration:                 24
@@ -717,7 +715,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.2675E-10   0.1424E-12
+     1   0.204566001066    0.000000000000     0.2675E-10   0.1434E-12
   ------------------------------------------------------------------------
 
   Iteration:                 25
@@ -725,7 +723,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.7214E-11   0.7083E-13
+     1   0.204566001066    0.000000000000     0.7214E-11   0.7030E-13
   ------------------------------------------------------------------------
   Convergence criterion met in 25 iterations!
 
@@ -780,8 +778,8 @@
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              1.02800
-     Total cpu time (sec):               2.04985
+     Total wall time (sec):              0.64403
+     Total cpu time (sec):               1.28783
 
 
   5) Calculation of the excited state (davidson algorithm)
@@ -975,7 +973,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001070    0.000000000000     0.7446E-09   0.4995E-12
+     1   0.204566001070    0.000000000000     0.7446E-09   0.4977E-12
   ------------------------------------------------------------------------
 
   Iteration:                 21
@@ -983,7 +981,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.2327E-09   0.3934E-11
+     1   0.204566001066    0.000000000000     0.2327E-09   0.3932E-11
   ------------------------------------------------------------------------
 
   Iteration:                 22
@@ -991,7 +989,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.8312E-10   0.8443E-12
+     1   0.204566001066    0.000000000000     0.8312E-10   0.8441E-12
   ------------------------------------------------------------------------
 
   Iteration:                 23
@@ -999,7 +997,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.2665E-10   0.1077E-13
+     1   0.204566001066    0.000000000000     0.2665E-10   0.1193E-13
   ------------------------------------------------------------------------
 
   Iteration:                 24
@@ -1007,7 +1005,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.7792E-11   0.8202E-13
+     1   0.204566001066    0.000000000000     0.7793E-11   0.8427E-13
   ------------------------------------------------------------------------
   Convergence criterion met in 24 iterations!
 
@@ -1062,8 +1060,8 @@
 
   - Finished solving the CCSD excited state equations (left)
 
-     Total wall time (sec):              0.97200
-     Total cpu time (sec):               1.76366
+     Total wall time (sec):              0.65777
+     Total cpu time (sec):               1.31607
 
 
   6) Calculation of the transition moments (EOM)
@@ -1091,11 +1089,11 @@
 
   - Timings for the CCSD response calculation
 
-     Total wall time (sec):              4.93300
-     Total cpu time (sec):              10.48114
+     Total wall time (sec):              3.50543
+     Total cpu time (sec):               6.97764
 
-     Peak memory usage during the execution of eT: 44.747752 MB
+     Peak memory usage during the execution of eT: 44.798928 MB
 
-  Calculation ended: 2021-03-09 11:21:53 UTC +01:00
+  Calculation ended: 2021-03-09 17:26:54 UTC +01:00
 
   eT terminated successfully!

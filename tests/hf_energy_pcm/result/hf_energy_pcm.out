@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.1 - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,11 +14,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.3, Bastion
+   This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Configuration date: 2021-03-08 15:01:10 UTC +01:00
-  Git branch:         test-generator
-  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
   Fortran compiler:   GNU 8.4.0
   C compiler:         GNU 8.4.0
   C++ compiler:       GNU 8.4.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-08 15:04:40 UTC +01:00
+  Calculation started: 2021-03-09 17:29:43 UTC +01:00
 
 
   :: Input file
@@ -74,20 +74,8 @@
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
-
-     Name:             h2o
-     Charge:           0
-     Multiplicity:     1
-     Coordinate units: angstrom
-
-     Pure basis functions:         24
-     Cartesian basis functions:    25
-     Primitive basis functions:    49
-
-     Nuclear repulsion energy (a.u.):              9.307879526626
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
+  :: RHF wavefunction
+  ======================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -95,9 +83,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 O      0.009319000000     1.133156000000     0.000000000000        1
-        2 H      0.023452000000     0.185621000000     0.000000000000        2
-        3 H      0.906315000000     1.422088000000     0.000000000000        3
+        1  O     0.009319000000     1.133156000000     0.000000000000        1
+        2  H     0.023452000000     0.185621000000     0.000000000000        2
+        3  H     0.906315000000     1.422088000000     0.000000000000        3
      ==============================================================================
 
      ==============================================================================
@@ -106,10 +94,32 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 O      0.017610357755     2.141354496408     0.000000000000        1
-        2 H      0.044317857073     0.350772852968     0.000000000000        2
-        3 H      1.712687132585     2.687356845030     0.000000000000        3
+        1  O     0.017610357755     2.141354496408     0.000000000000        1
+        2  H     0.044317857073     0.350772852968     0.000000000000        2
+        3  H     1.712687132585     2.687356845030     0.000000000000        3
      ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
+
+  This is a PCM calculation
+
+     Polarizable Continuum Solver via PCMSolver
+
+     For details on PCM, see:
+     Tomasi, Mennucci, Cammi, Chem. Rev. 2005, 105, 2999-3094.
+
+     For details on PCMSolver, see:
+     Di Remigio et al., IJQC, 2019, 119, e25685
+
+     PCM Solver was set via internal parameters
+     Solver Type:   iefpcm
+     Solvent:       water
+     Tesserae Area: 0.300 Å
+
      ~~~~~~~~~~ PCMSolver ~~~~~~~~~~
      Using CODATA 2010 set of constants.
      Input parsing done host-side
@@ -142,34 +152,11 @@
      Green's function type: uniform dielectric
      Permittivity = 78.39
 
-
-  :: RHF wavefunction
-  ======================
-
-  This is a PCM calculation
-
-     Polarizable Continuum Solver via PCMSolver
-
-     For details on PCM, see:
-     Tomasi, Mennucci, Cammi, Chem. Rev. 2005, 105, 2999-3094.
-
-     For details on PCMSolver, see:
-     Di Remigio et al., IJQC, 2019, 119, e25685
-
-     PCM Solver was set via internal parameters
-     Solver Type:   iefpcm
-     Solvent:       water
-     Tesserae Area: 0.300 Å
-
-
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of occupied orbitals:         5
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
-     Number of atomic orbitals:          24
 
 
   :: Hartree-Fock engine
@@ -189,46 +176,47 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
 
-     Coulomb screening threshold:   0.1000E-15
-     Exchange screening threshold:  0.1000E-13
-     Fock precision:                0.1000E-31
-     Integral cutoff:               0.1000E-15
-
-  - Setting initial AO density to SAD
+  - Setting initial AO density to sad
 
      Energy of initial guess:               -75.916824923907
      Number of electrons in guess:           10.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-15
+     Exchange screening threshold:  0.1000E-13
+     Integral cutoff:               0.1000E-15
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1           -76.001683148260     0.8228E-01     0.7600E+02
      2           -76.027650726027     0.4857E-01     0.2597E-01
-     3           -76.035332285657     0.5102E-02     0.7682E-02
+     3           -76.035332285656     0.5102E-02     0.7682E-02
      4           -76.035487691814     0.9052E-03     0.1554E-03
      5           -76.035497680607     0.1549E-03     0.9989E-05
      6           -76.035497969967     0.3113E-04     0.2894E-06
      7           -76.035497980733     0.1816E-05     0.1077E-07
-     8           -76.035497980819     0.6847E-06     0.8623E-10
-     9           -76.035497980826     0.1044E-06     0.6466E-11
-    10           -76.035497980826     0.1055E-07     0.1137E-12
-    11           -76.035497980826     0.8555E-09     0.2842E-13
-    12           -76.035497980826     0.1803E-09     0.5684E-13
+     8           -76.035497980819     0.6847E-06     0.8626E-10
+     9           -76.035497980826     0.1044E-06     0.6423E-11
+    10           -76.035497980826     0.1055E-07     0.8527E-13
+    11           -76.035497980826     0.8555E-09     0.1421E-13
+    12           -76.035497980826     0.1803E-09     0.1421E-13
     13           -76.035497980826     0.6723E-10     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 13 iterations!
@@ -242,16 +230,16 @@
 
   - Summary of QM/PCM energetics:
                                          a.u.             eV     kcal/mol
-     QM/PCM SCF Contribution:       -0.009387191615
-     QM/PCM Electrostatic Energy:   -0.018774383230    -0.51088   -11.781
+     QM/PCM SCF Contribution:        -0.009387191615    -0.25544    -5.891
+     QM/PCM Electrostatic Energy:    -0.018774383230    -0.51088   -11.781
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              2.37560
-     Total cpu time (sec):               3.60186
+     Total wall time (sec):              2.17935
+     Total cpu time (sec):               3.54249
 
-     Peak memory usage during the execution of eT: 125.232 KB
+     Peak memory usage during the execution of eT: 131.088 KB
 
-  Calculation ended: 2021-03-08 15:04:43 UTC +01:00
+  Calculation ended: 2021-03-09 17:29:46 UTC +01:00
 
   eT terminated successfully!

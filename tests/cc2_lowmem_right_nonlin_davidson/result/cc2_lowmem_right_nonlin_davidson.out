@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.1 - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,26 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Bastion
+   This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Compiled by:        alexancp
-  Compiled on:        NTNU16748
-  Configuration date: 2021-03-04 10:36:08 UTC +01:00
-  Git branch:         micro-threshold-nl-davidson
-  Git hash:           361433390dfd19b81f30fd4b730a9b0f95ffc4a6
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-04 10:38:00 UTC +01:00
+  Calculation started: 2021-03-09 17:25:30 UTC +01:00
 
 
   :: Input file
@@ -137,11 +135,8 @@
 
   - SCF solver settings:
 
-     Maximum iterations:                    100
-
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
-     Acceleration type:                    diis
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
@@ -158,9 +153,12 @@
      Integral cutoff:               0.1000E-16
      Cumulative Fock threshold:     0.1000E+01
 
-  - DIIS convergence acceleration:
+  - DIIS tool settings:
 
      DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -171,14 +169,14 @@
      5           -76.025035861617     0.1576E-03     0.1619E-04
      6           -76.025036231032     0.3045E-04     0.3694E-06
      7           -76.025036241563     0.1832E-05     0.1053E-07
-     8           -76.025036241596     0.1527E-06     0.3322E-10
-     9           -76.025036241597     0.5016E-07     0.8811E-12
-    10           -76.025036241597     0.1200E-07     0.2842E-13
-    11           -76.025036241597     0.1345E-08     0.8527E-13
-    12           -76.025036241597     0.1576E-09     0.4263E-13
-    13           -76.025036241597     0.5025E-10     0.4263E-13
-    14           -76.025036241597     0.1109E-10     0.8527E-13
-    15           -76.025036241597     0.1252E-11     0.2842E-13
+     8           -76.025036241596     0.1527E-06     0.3338E-10
+     9           -76.025036241597     0.5016E-07     0.8100E-12
+    10           -76.025036241597     0.1200E-07     0.0000E+00
+    11           -76.025036241597     0.1345E-08     0.2842E-13
+    12           -76.025036241597     0.1576E-09     0.1421E-13
+    13           -76.025036241597     0.5025E-10     0.5684E-13
+    14           -76.025036241597     0.1109E-10     0.4263E-13
+    15           -76.025036241597     0.1251E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -191,8 +189,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.40967
-     Total cpu time (sec):               0.77019
+     Total wall time (sec):              0.44075
+     Total cpu time (sec):               0.83319
 
 
   :: LOW MEMORY CC2 wavefunction
@@ -276,8 +274,8 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.2123E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1814E-14
+     Maximal difference between approximate and actual diagonal:              0.2122E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.1397E-14
 
   - Settings for integral handling:
 
@@ -287,8 +285,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.14406
-     Total cpu time (sec):               0.28795
+     Total wall time (sec):              0.15549
+     Total cpu time (sec):               0.31148
 
 
   2) Preparation of MO basis and integrals
@@ -304,15 +302,18 @@
   See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
   13.
 
-  - DIIS CC ground state solver settings:
+  - CC ground state solver settings:
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
+     Max number of iterations:      100
 
-     DIIS dimension:                   8
-     Max number of iterations:       100
+  - DIIS tool settings:
 
-     Storage: disk
+     DIIS dimension:   8
+
+     Storage (cc_gs_diis_e): file
+     Storage (cc_gs_diis_x): file
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
@@ -327,7 +328,7 @@
     9           -76.230297137514     0.1408E-08     0.3389E-10
    10           -76.230297137525     0.1401E-09     0.1060E-10
    11           -76.230297137525     0.2253E-10     0.5826E-12
-   12           -76.230297137525     0.2285E-11     0.1847E-12
+   12           -76.230297137525     0.2286E-11     0.1847E-12
   ---------------------------------------------------------------
   Convergence criterion met in 12 iterations!
 
@@ -355,8 +356,8 @@
 
   - Finished solving the LOW MEMORY CC2 ground state equations
 
-     Total wall time (sec):              0.02946
-     Total cpu time (sec):               0.06002
+     Total wall time (sec):              0.02952
+     Total cpu time (sec):               0.05751
 
 
   4) Calculation of the excited state (non-linear davidson algorithm)
@@ -386,6 +387,15 @@
      Relative micro threshold:        0.10E+00
 
 
+   - Davidson tool settings:
+
+     Number of parameters:                   95
+     Number of requested solutions:           8
+     Max reduced space dimension:            95
+
+     Storage (nonlin_cc_es_davidson_trials): file
+     Storage (nonlin_cc_es_davidson_transforms): file
+
   Macro iteration: 1
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
@@ -401,9 +411,6 @@
   ------------------------------------------------------------
 
      Starting on microiterations
-
-     Max reduced space dimension:           95
-
 
      Number of micro iterations: 3
      Number of transformations:  12
@@ -425,9 +432,6 @@
 
      Starting on microiterations
 
-     Max reduced space dimension:           95
-
-
      Number of micro iterations: 3
      Number of transformations:  11
 
@@ -447,9 +451,6 @@
   ------------------------------------------------------------
 
      Starting on microiterations
-
-     Max reduced space dimension:           95
-
 
      Number of micro iterations: 3
      Number of transformations:  12
@@ -471,9 +472,6 @@
 
      Starting on microiterations
 
-     Max reduced space dimension:           95
-
-
      Number of micro iterations: 3
      Number of transformations:  11
 
@@ -493,9 +491,6 @@
   ------------------------------------------------------------
 
      Starting on microiterations
-
-     Max reduced space dimension:           95
-
 
      Number of micro iterations: 3
      Number of transformations:  12
@@ -517,9 +512,6 @@
 
      Starting on microiterations
 
-     Max reduced space dimension:           95
-
-
      Number of micro iterations: 3
      Number of transformations:  14
 
@@ -539,9 +531,6 @@
   ------------------------------------------------------------
 
      Starting on microiterations
-
-     Max reduced space dimension:           95
-
 
      Number of micro iterations: 4
      Number of transformations:  10
@@ -563,9 +552,6 @@
 
      Starting on microiterations
 
-     Max reduced space dimension:           95
-
-
      Number of micro iterations: 3
      Number of transformations:  12
 
@@ -576,18 +562,15 @@
   ------------------------------------------------------------
    1       0.293220969372      0.9140E-09        0.5109E-11
    2       0.367474512523      0.1389E-08        0.1375E-10
-   3       0.381243768931      0.1055E-09        0.9794E-11
+   3       0.381243768931      0.1056E-09        0.9794E-11
    4       0.456801087009      0.1003E-08        0.1936E-10
    5       0.548684465850      0.3054E-09        0.1386E-11
    6       0.657552697769      0.7600E-09        0.2209E-10
-   7       0.805779228457      0.4855E-09        0.1588E-10
+   7       0.805779228457      0.4851E-09        0.1588E-10
    8       0.836498257865      0.9612E-09        0.1662E-10
   ------------------------------------------------------------
 
      Starting on microiterations
-
-     Max reduced space dimension:           95
-
 
      Number of micro iterations: 3
      Number of transformations:  13
@@ -597,37 +580,34 @@
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1       0.293220969371      0.6558E-11        0.9080E-12
-   2       0.367474512523      0.1240E-10        0.3504E-12
-   3       0.381243768930      0.9703E-10        0.4752E-12
-   4       0.456801087009      0.6480E-11        0.1176E-12
-   5       0.548684465851      0.1012E-09        0.3724E-12
+   1       0.293220969371      0.6559E-11        0.9084E-12
+   2       0.367474512523      0.1049E-10        0.3484E-12
+   3       0.381243768930      0.9703E-10        0.4745E-12
+   4       0.456801087009      0.6846E-11        0.1168E-12
+   5       0.548684465851      0.1008E-09        0.3729E-12
    6       0.657552697764      0.7393E-10        0.4420E-11
-   7       0.805779228458      0.4637E-10        0.1371E-11
-   8       0.836498257868      0.6756E-10        0.2861E-11
+   7       0.805779228458      0.5347E-10        0.1374E-11
+   8       0.836498257868      0.6756E-10        0.2862E-11
   ------------------------------------------------------------
 
      Starting on microiterations
 
-     Max reduced space dimension:           95
-
-
      Number of micro iterations: 2
-     Number of transformations:  4
+     Number of transformations:  5
 
 
   Macro iteration: 11
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1       0.293220969371      0.6542E-11        0.4208E-13
-   2       0.367474512523      0.1232E-10        0.2198E-13
-   3       0.381243768930      0.8820E-11        0.4163E-13
-   4       0.456801087009      0.6148E-11        0.5218E-14
-   5       0.548684465851      0.2909E-10        0.2631E-13
+   1       0.293220969371      0.6543E-11        0.4252E-13
+   2       0.367474512523      0.1079E-10        0.2076E-13
+   3       0.381243768930      0.8820E-11        0.4141E-13
+   4       0.456801087009      0.6168E-11        0.7772E-14
+   5       0.548684465851      0.2897E-10        0.2665E-13
    6       0.657552697764      0.2419E-10        0.8016E-13
-   7       0.805779228458      0.4558E-10        0.1100E-12
-   8       0.836498257867      0.2527E-10        0.2529E-12
+   7       0.805779228458      0.2076E-10        0.1297E-12
+   8       0.836498257867      0.2527E-10        0.2542E-12
   ------------------------------------------------------------
   Convergence criterion met in 11 iterations!
 
@@ -642,16 +622,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      5        0.994016987608
-        4      5       -0.096374767026
-        5      5        0.036359242966
-       11      5       -0.028679142459
-        9      5       -0.014236017136
-       15      4        0.007389583978
-       14      5       -0.007376774757
-       18      5        0.007313247174
-        8      3        0.006338812512
-       16      3        0.006257918125
+        1      5       -0.994016987608
+        4      5        0.096374767026
+        5      5       -0.036359242966
+       11      5        0.028679142459
+        9      5        0.014236017136
+       15      4       -0.007389583978
+       14      5        0.007376774757
+       18      5       -0.007313247174
+        8      3       -0.006338812512
+       16      3       -0.006257918125
      ------------------------------------
 
      Electronic state nr. 2
@@ -684,16 +664,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      4        0.991896061064
-        4      4       -0.079110826960
-        2      3       -0.058701125593
-        1      2        0.047291566529
-        6      5       -0.034531692723
-        3      3       -0.029292274596
-       11      4       -0.028714351226
-        7      3       -0.019787949875
-        9      4       -0.019183459014
-        4      2       -0.015059230604
+        1      4       -0.991896061064
+        4      4        0.079110826960
+        2      3        0.058701125593
+        1      2       -0.047291566529
+        6      5        0.034531692723
+        3      3        0.029292274596
+       11      4        0.028714351226
+        7      3        0.019787949875
+        9      4        0.019183459014
+        4      2        0.015059230604
      ------------------------------------
 
      Electronic state nr. 4
@@ -705,16 +685,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        2      4       -0.990263296480
-        3      4       -0.095338970347
-        7      4       -0.080240284523
-        1      3        0.040934780065
-        4      3       -0.035537146376
-        8      5        0.016279669447
-        2      2       -0.014817889755
-        9      3        0.009125916183
-       13      4       -0.009071766080
-       14      3       -0.008438425790
+        2      4        0.990263296480
+        3      4        0.095338970347
+        7      4        0.080240284522
+        1      3       -0.040934780065
+        4      3        0.035537146376
+        8      5       -0.016279669447
+        2      2        0.014817889755
+        9      3       -0.009125916183
+       13      4        0.009071766080
+       14      3        0.008438425790
      ------------------------------------
 
      Electronic state nr. 5
@@ -726,16 +706,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      3        0.993932269056
-        4      3       -0.070773365641
-        2      4        0.049668991348
-        5      3        0.039994510465
-        3      4       -0.035581319549
-        2      2       -0.024493487209
-       11      3       -0.021940977108
-        9      3       -0.017062459946
-       14      3       -0.010650498611
-        8      5       -0.010032841047
+        1      3       -0.993932269056
+        4      3        0.070773365642
+        2      4       -0.049668991348
+        5      3       -0.039994510465
+        3      4        0.035581319550
+        2      2        0.024493487210
+       11      3        0.021940977108
+        9      3        0.017062459946
+       14      3        0.010650498611
+        8      5        0.010032841047
      ------------------------------------
 
      Electronic state nr. 6
@@ -747,16 +727,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        2      3        0.983997885368
-        6      5       -0.105728556560
-        5      4       -0.086620296370
-        4      4        0.067111983445
-        1      4        0.056017669343
-        3      3        0.054108835475
-        7      3        0.027948302874
-       11      2       -0.018681955765
-        1      2        0.018540992304
-        9      2       -0.016582719601
+        2      3       -0.983997885368
+        6      5        0.105728556560
+        5      4        0.086620296370
+        4      4       -0.067111983445
+        1      4       -0.056017669343
+        3      3       -0.054108835474
+        7      3       -0.027948302874
+       11      2        0.018681955765
+        1      2       -0.018540992304
+        9      2        0.016582719601
      ------------------------------------
 
      Electronic state nr. 7
@@ -769,14 +749,14 @@
         a       i         R(a,i)
      -----------------------------------
         3      5       -0.990902208574
-        2      5        0.121749945458
-       13      5       -0.046825499111
-        7      5       -0.030126942651
-        8      2        0.008467297028
-        6      3        0.008393425176
-       12      5       -0.004644963941
-       10      3       -0.004613958696
-        8      4       -0.001408331814
+        2      5        0.121749945457
+       13      5       -0.046825499113
+        7      5       -0.030126942630
+        8      2        0.008467297026
+        6      3        0.008393425193
+       12      5       -0.004644963942
+       10      3       -0.004613958694
+        8      4       -0.001408331816
        16      2       -0.001040317003
      ------------------------------------
 
@@ -807,9 +787,9 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.293220969371        7.978948986712
+        1                  0.293220969371        7.978948986711
         2                  0.367474512523        9.999490812785
-        3                  0.381243768930       10.374171364083
+        3                  0.381243768930       10.374171364082
         4                  0.456801087009       12.430190712951
         5                  0.548684465851       14.930464803444
         6                  0.657552697764       17.892920287355
@@ -820,16 +800,16 @@
 
   - Finished solving the LOW MEMORY CC2 excited state equations (right)
 
-     Total wall time (sec):              0.68166
-     Total cpu time (sec):               1.35597
+     Total wall time (sec):              0.61211
+     Total cpu time (sec):               1.22408
 
   - Timings for the LOW MEMORY CC2 excited state calculation
 
-     Total wall time (sec):              0.85572
-     Total cpu time (sec):               1.70448
+     Total wall time (sec):              0.79758
+     Total cpu time (sec):               1.59353
 
      Peak memory usage during the execution of eT: 5.881736 MB
 
-  Calculation ended: 2021-03-04 10:38:01 UTC +01:00
+  Calculation ended: 2021-03-09 17:25:31 UTC +01:00
 
   eT terminated successfully!

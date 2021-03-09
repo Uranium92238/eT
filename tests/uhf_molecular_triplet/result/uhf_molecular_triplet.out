@@ -1,16 +1,37 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.2.0, Cobra
+  ------------------------------------------------------------
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-03-09 17:24:01 UTC +01:00
 
 
   :: Input file
@@ -43,24 +64,12 @@
      end do
 
 
-  Running on 8 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
-
-     Name:             o2
-     Charge:           0
-     Multiplicity:     3
-     Coordinate units: angstrom
-
-     Pure basis functions:         28
-     Cartesian basis functions:    30
-     Primitive basis functions:    70
-
-     Nuclear repulsion energy (a.u.):             28.035878724238
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
+  :: UHF wavefunction
+  ======================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -68,8 +77,8 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 O      0.000000000000     0.000000000000     0.000000000000        1
-        2 O      0.000000000000     0.000000000000     1.208000000000        2
+        1  O     0.000000000000     0.000000000000     0.000000000000        1
+        2  O     0.000000000000     0.000000000000     1.208000000000        2
      ==============================================================================
 
      ==============================================================================
@@ -78,24 +87,23 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 O      0.000000000000     0.000000000000     0.000000000000        1
-        2 O      0.000000000000     0.000000000000     2.282789158475        2
+        1  O     0.000000000000     0.000000000000     0.000000000000        1
+        2  O     0.000000000000     0.000000000000     2.282789158475        2
      ==============================================================================
 
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  :: UHF wavefunction
-  ======================
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               28
+     Number of orthonormal atomic orbitals:   28
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of alpha electrons:               9
      Number of beta electrons:                7
      Number of virtual alpha orbitals:       19
      Number of virtual beta orbitals:        21
      Number of molecular orbitals:           28
-     Number of atomic orbitals:              28
 
 
   :: Hartree-Fock engine
@@ -115,31 +123,32 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
-
+     Residual threshold:            0.1000E-11
      Energy threshold:              0.1000E-11
-     Gradient threshold:            0.1000E-11
 
-     Coulomb screening threshold:   0.1000E-17
-     Exchange screening threshold:  0.1000E-15
-     Fock precision:                0.1000E-35
-     Integral cutoff:               0.1000E-17
-
-  - Setting initial AO density to SAD
+  - Setting initial AO density to sad
 
      Energy of initial guess:              -149.807063350854
      Number of electrons in guess:           16.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-17
+     Exchange screening threshold:  0.1000E-15
+     Integral cutoff:               0.1000E-17
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -150,14 +159,14 @@
      5          -149.627666590457     0.1973E-03     0.4045E-04
      6          -149.627668983139     0.1356E-04     0.2393E-05
      7          -149.627668990353     0.2116E-05     0.7214E-08
-     8          -149.627668990686     0.1000E-06     0.3332E-09
-     9          -149.627668990687     0.1929E-07     0.6821E-12
-    10          -149.627668990687     0.4758E-08     0.2842E-13
-    11          -149.627668990687     0.9281E-09     0.1137E-12
-    12          -149.627668990687     0.9799E-10     0.5684E-13
-    13          -149.627668990687     0.1444E-10     0.0000E+00
-    14          -149.627668990687     0.2483E-11     0.2842E-13
-    15          -149.627668990687     0.6233E-12     0.1137E-12
+     8          -149.627668990686     0.1000E-06     0.3333E-09
+     9          -149.627668990687     0.1929E-07     0.6537E-12
+    10          -149.627668990687     0.4758E-08     0.5684E-13
+    11          -149.627668990687     0.9281E-09     0.2842E-13
+    12          -149.627668990687     0.9798E-10     0.8527E-13
+    13          -149.627668990687     0.1444E-10     0.1421E-12
+    14          -149.627668990687     0.2479E-11     0.2842E-13
+    15          -149.627668990687     0.6161E-12     0.8527E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -169,30 +178,6 @@
      Electronic energy:           -177.663547714926
      Total energy:                -149.627668990687
 
-  - Alpha orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.750747075410   8  -0.549376004795  15   1.164573865811  22   2.626348741475
-   2 -20.750107960297   9  -0.549376004795  16   1.164573865811  23   2.935936656487
-   3  -1.717920769338  10   0.427350291551  17   1.314930609271  24   2.935936656487
-   4  -1.201566933305  11   1.054278634023  18   1.948859303688  25   3.144487984513
-   5  -0.837264311045  12   1.054278634023  19   2.368067733370  26   3.641032451988
-   6  -0.837264311045  13   1.065850450465  20   2.368067733370  27   3.641032451988
-   7  -0.757648019335  14   1.145526802281  21   2.626348741475  28   4.170997478062
-  -----------------------------------------------------------------------------------
-
-  - Beta orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.696040731346   8   0.114818690184  15   1.290765750723  22   2.743989663113
-   2 -20.694861158565   9   0.114818690184  16   1.290765750723  23   3.084147159875
-   3  -1.587022620041  10   0.504511322034  17   1.346506556500  24   3.084147159875
-   4  -0.994405286062  11   1.096244552379  18   2.000852192769  25   3.216580772811
-   5  -0.697049135690  12   1.164117913831  19   2.441641654758  26   3.718023460539
-   6  -0.572229355986  13   1.175653727640  20   2.441641654758  27   3.718023460539
-   7  -0.572229355986  14   1.175653727640  21   2.743989663113  28   4.217350374970
-  -----------------------------------------------------------------------------------
-
   - UHF wavefunction spin expectation values:
 
      Sz:                   1.00000000
@@ -202,9 +187,11 @@
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):              1.15000
-     Total cpu time (sec):               7.08107
+     Total wall time (sec):              1.71155
+     Total cpu time (sec):               3.40335
 
-     Peak memory usage during the execution of eT: 276.856 KB
+     Peak memory usage during the execution of eT: 272.576 KB
+
+  Calculation ended: 2021-03-09 17:24:03 UTC +01:00
 
   eT terminated successfully!

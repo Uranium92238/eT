@@ -16,24 +16,22 @@
 
    This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Compiled by:        
-  Compiled on:        
-  Configuration date: 2021-03-09 10:32:28 UTC +01:00
-  Git branch:         convergence-testing
-  Git hash:           daee21ad27f80e9163798f173753a967992b1d8a
-  Fortran compiler:   GNU 10.2.0
-  C compiler:         GNU 10.2.0
-  C++ compiler:       GNU 10.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 10:40:30 UTC +01:00
+  Calculation started: 2021-03-09 17:24:09 UTC +01:00
 
 
   :: Input file
@@ -186,15 +184,15 @@
      5          -152.018703912219     0.1006E-02     0.1389E-04
      6          -152.018704702597     0.1890E-03     0.7904E-06
      7          -152.018704720008     0.2445E-04     0.1741E-07
-     8          -152.018704720379     0.5552E-05     0.3711E-09
-     9          -152.018704720403     0.1150E-05     0.2410E-10
-    10          -152.018704720404     0.2301E-06     0.7390E-12
-    11          -152.018704720404     0.7198E-07     0.2842E-13
-    12          -152.018704720404     0.1570E-07     0.2842E-13
+     8          -152.018704720379     0.5552E-05     0.3710E-09
+     9          -152.018704720403     0.1150E-05     0.2396E-10
+    10          -152.018704720404     0.2301E-06     0.6537E-12
+    11          -152.018704720404     0.7198E-07     0.8527E-13
+    12          -152.018704720404     0.1570E-07     0.8527E-13
     13          -152.018704720404     0.2151E-08     0.1137E-12
     14          -152.018704720404     0.5725E-09     0.2842E-13
-    15          -152.018704720404     0.4648E-10     0.8527E-13
-    16          -152.018704720404     0.8082E-11     0.0000E+00
+    15          -152.018704720404     0.4648E-10     0.1990E-12
+    16          -152.018704720404     0.8080E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -213,11 +211,11 @@
 
   - Timings for the MLHF ground state calculation
 
-     Total wall time (sec):              3.80400
-     Total cpu time (sec):               6.86060
+     Total wall time (sec):              2.00749
+     Total cpu time (sec):               3.96241
 
-     Peak memory usage during the execution of eT: 389.408 KB
+     Peak memory usage during the execution of eT: 393.552 KB
 
-  Calculation ended: 2021-03-09 10:40:34 UTC +01:00
+  Calculation ended: 2021-03-09 17:24:11 UTC +01:00
 
   eT terminated successfully!

@@ -16,24 +16,22 @@
 
    This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Compiled by:        
-  Compiled on:        
-  Configuration date: 2021-03-09 11:14:18 UTC +01:00
-  Git branch:         convergence-testing
-  Git hash:           daee21ad27f80e9163798f173753a967992b1d8a
-  Fortran compiler:   GNU 10.2.0
-  C compiler:         GNU 10.2.0
-  C++ compiler:       GNU 10.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 11:14:45 UTC +01:00
+  Calculation started: 2021-03-09 17:24:47 UTC +01:00
 
 
   :: Input file
@@ -167,22 +165,22 @@
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1           -78.796606592587     0.9053E-01     0.7880E+02
-     2           -78.828675852654     0.7128E-01     0.3207E-01
+     2           -78.828675852655     0.7128E-01     0.3207E-01
      3           -78.843428154462     0.8290E-02     0.1475E-01
      4           -78.843809541675     0.2414E-02     0.3814E-03
      5           -78.843850846799     0.3301E-03     0.4131E-04
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
      8           -78.843851693557     0.2356E-05     0.7054E-09
-     9           -78.843851693630     0.2071E-06     0.7378E-10
-    10           -78.843851693631     0.1594E-07     0.4405E-12
-    11           -78.843851693631     0.3322E-08     0.1421E-13
-    12           -78.843851693631     0.1197E-08     0.1421E-13
-    13           -78.843851693631     0.4264E-09     0.4263E-13
-    14           -78.843851693631     0.1280E-09     0.0000E+00
-    15           -78.843851693631     0.1479E-10     0.4263E-13
-    16           -78.843851693631     0.2907E-11     0.1421E-13
-    17           -78.843851693631     0.6424E-12     0.0000E+00
+     9           -78.843851693630     0.2071E-06     0.7370E-10
+    10           -78.843851693631     0.1594E-07     0.3837E-12
+    11           -78.843851693631     0.3322E-08     0.7105E-13
+    12           -78.843851693631     0.1197E-08     0.2842E-13
+    13           -78.843851693631     0.4264E-09     0.5684E-13
+    14           -78.843851693631     0.1280E-09     0.5684E-13
+    15           -78.843851693631     0.1479E-10     0.2842E-13
+    16           -78.843851693631     0.2909E-11     0.7105E-13
+    17           -78.843851693631     0.6422E-12     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -195,8 +193,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.59900
-     Total cpu time (sec):               1.09029
+     Total wall time (sec):              0.57607
+     Total cpu time (sec):               1.13683
 
 
   :: CC2 wavefunction
@@ -294,8 +292,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.25300
-     Total cpu time (sec):               0.40983
+     Total wall time (sec):              0.21209
+     Total cpu time (sec):               0.42396
 
 
   2) Preparation of MO basis and integrals
@@ -329,7 +327,7 @@
     1           -79.084241931608     0.3734E-01     0.7908E+02
     2           -79.085431671928     0.7567E-02     0.1190E-02
     3           -79.085759807020     0.9940E-03     0.3281E-03
-    4           -79.085768585649     0.1833E-03     0.8779E-05
+    4           -79.085768585650     0.1833E-03     0.8779E-05
     5           -79.085769937826     0.3615E-04     0.1352E-05
     6           -79.085769725742     0.6004E-05     0.2121E-06
     7           -79.085769729164     0.2063E-05     0.3422E-08
@@ -341,7 +339,7 @@
    13           -79.085769729575     0.4926E-10     0.4547E-12
    14           -79.085769729575     0.6368E-11     0.3979E-12
    15           -79.085769729575     0.1345E-11     0.9948E-13
-   16           -79.085769729575     0.3279E-12     0.1421E-13
+   16           -79.085769729575     0.3282E-12     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -369,16 +367,16 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.12000
-     Total cpu time (sec):               0.21317
+     Total wall time (sec):              0.06660
+     Total cpu time (sec):               0.13449
 
   - Timings for the CC2 ground state calculation
 
-     Total wall time (sec):              0.37300
-     Total cpu time (sec):               0.62362
+     Total wall time (sec):              0.27905
+     Total cpu time (sec):               0.55880
 
-     Peak memory usage during the execution of eT: 10.600568 MB
+     Peak memory usage during the execution of eT: 10.630472 MB
 
-  Calculation ended: 2021-03-09 11:14:46 UTC +01:00
+  Calculation ended: 2021-03-09 17:24:48 UTC +01:00
 
   eT terminated successfully!
