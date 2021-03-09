@@ -17,10 +17,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (cc2_class) zop_cc2
+submodule (cc2_class) mean_value_cc2
 !
 !!
-!!    Zeroth order properties submodule 
+!!    Mean-value submodule 
 !!
 !!    Contains routines related to the mean values, i.e. 
 !!    the construction of density matrices as well as expectation 
@@ -104,4 +104,4 @@ contains
    end subroutine calculate_energy_cc2
 !
 !
-end submodule zop_cc2
+end submodule mean_value_cc2

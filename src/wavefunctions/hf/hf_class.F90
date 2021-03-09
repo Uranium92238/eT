@@ -178,7 +178,7 @@ module hf_class
       procedure :: prepare_for_roothan_hall                    => prepare_for_roothan_hall_hf
       procedure :: prepare                                     => prepare_hf
 !
-!     Zop
+!     Properties
 !
       procedure :: calculate_expectation_value                 => calculate_expectation_value_hf
 !

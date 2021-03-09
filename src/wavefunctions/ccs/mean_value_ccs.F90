@@ -17,10 +17,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (ccs_class) zop_ccs
+submodule (ccs_class) mean_value_ccs
 !
 !!
-!!    Zeroth order properties submodule 
+!!    Mean-value submodule 
 !!
 !!    Contains routines related to the mean values, i.e. 
 !!    the construction of density matrices as well as expectation 
@@ -481,4 +481,4 @@ contains
    end subroutine calculate_energy_length_dipole_term_ccs
 !
 !
-end submodule zop_ccs
+end submodule mean_value_ccs

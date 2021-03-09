@@ -17,10 +17,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (doubles_class) zop_doubles
+submodule (doubles_class) mean_value_doubles
 !
 !!
-!!    Zeroth order properties submodule 
+!!    Mean-value submodule 
 !!
 !!    Contains routines related to the mean values, i.e. 
 !!    the construction of density matrices as well as expectation 
@@ -262,4 +262,4 @@ contains
    end subroutine density_doubles_mu_ref_ov_doubles
 !
 !
-end submodule zop_doubles
+end submodule mean_value_doubles

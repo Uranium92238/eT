@@ -17,10 +17,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (ccsd_class) zop_ccsd
+submodule (ccsd_class) mean_value_ccsd
 !
 !!
-!!    Zeroth order properties submodule 
+!!    Mean-value submodule 
 !!
 !!    Contains routines related to the mean values, i.e. 
 !!    the construction of density matrices as well as expectation 
@@ -92,4 +92,4 @@ contains
    end subroutine calculate_energy_ccsd
 !
 !
-end submodule zop_ccsd
+end submodule mean_value_ccsd

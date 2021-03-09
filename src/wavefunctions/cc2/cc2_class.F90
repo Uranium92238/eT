@@ -87,7 +87,7 @@ module cc2_class
       include "multiplier_equation_cc2_interface.F90"
       include "jacobian_cc2_interface.F90"
       include "jacobian_transpose_cc2_interface.F90"
-      include "zop_cc2_interface.F90"
+      include "mean_value_cc2_interface.F90"
       include "fock_cc2_interface.F90"
 !
    end interface

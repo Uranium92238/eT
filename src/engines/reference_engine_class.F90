@@ -166,7 +166,7 @@ contains
 !
       if (engine%plot_orbitals .or. engine%plot_density) call engine%do_visualization(wf)
 !
-!     Calculate the zeroth order properties
+!     Calculate properties
 !
       if(engine%requested_mean_value) call engine%calculate_mean_values(wf)
 !
@@ -561,7 +561,7 @@ contains
 !
    subroutine read_mean_value_settings_reference_engine(engine)
 !!
-!!    Read ZOP settings
+!!    Read mean value settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!    Modified by Tommaso Giovannini and Linda Goletto
 !!
