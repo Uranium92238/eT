@@ -54,9 +54,7 @@ for inp in ['ccsd.inp']:
                 extra_args='-ks --scratch ./scratch',
                 filters={'out': f}) 
 
-# reset ierr: helpful if the first calculation is supposed to crash
-# e.g. if the calculations has to little iterations to converge
-ierr = 0
+
 #
 #
 for inp in ['restart_ccs.inp']:

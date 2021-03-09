@@ -34,7 +34,7 @@ end solver cc gs
 
 solver cc es
    ionization
-   residual threshold: 1.0d-11
+   residual threshold: 1.0d-10
    singlet states: 2
    algorithm: diis
    left eigenvectors

@@ -54,9 +54,6 @@ for inp in ['ccs_eom.inp']:
                 extra_args='-ks --scratch ./scratch',
                 filters={'out': f}) 
 
-# reset ierr: helpful if the first calculation is supposed to crash
-# e.g. if the calculations has to little iterations to converge
-ierr = 0
 #
 #  Run CC3 calculation with the same filter list f
 #  We could also provide a different filter list g
