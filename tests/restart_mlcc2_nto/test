@@ -46,9 +46,6 @@ for inp in ['mlcc2_nto.inp']:
                 extra_args='-save ./',
                 filters={'out': f}) 
 
-# reset ierr: helpful if the first calculation is supposed to crash
-# e.g. if the calculations has to little iterations to converge
-ierr = 0
 #
 for inp in ['restart_mlcc2.inp']:
     #

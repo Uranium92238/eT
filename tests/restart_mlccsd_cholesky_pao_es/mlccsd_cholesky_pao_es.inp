@@ -27,15 +27,15 @@ method
 end method
 
 solver cc gs
-   omega threshold:  1.0d-12
-   energy threshold: 1.0d-12
+   omega threshold:  1.0d-11
+   energy threshold: 1.0d-11
 end solver cc gs
 
 solver cc es
    algorithm:          davidson
    singlet states:     4
-   residual threshold: 1.0d-12
-   energy threshold:   1.0d-12
+   residual threshold: 1.0d-11
+   energy threshold:   1.0d-11
    right eigenvectors
 end solver cc es
 
