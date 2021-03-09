@@ -253,6 +253,8 @@ module mlccsd_class
 !
       procedure :: mo_preparations_from_restart   => mo_preparations_from_restart_mlccsd
 !
+      procedure :: scale_amplitudes => scale_amplitudes_mlccsd
+!
    end type mlccsd
 !
    interface
@@ -659,39 +661,35 @@ contains
       integer, intent(in) :: N 
       real(dp), dimension(N), intent(out) :: orbital_differences
 !
-      integer :: a, i, ai, b, j, bj, aibj, n_o, n_v 
+      integer :: a, i, ai, b, j, bj, aibj, n_a_o, n_a_v 
 !
-      call wf%ccs%get_orbital_differences(orbital_differences, wf%n_t1)
-!
-      n_o = 0
-      n_v = 0
-!
-      if (N .eq. wf%n_gs_amplitudes) then 
-!
-         n_o = wf%n_ccsd_o
-         n_v = wf%n_ccsd_v 
-!
-      elseif (N .eq. wf%n_es_amplitudes) then 
-!
-         n_o = wf%n_cc2_o + wf%n_ccsd_o
-         n_v = wf%n_cc2_v + wf%n_ccsd_v
-!
-      else 
-!
+      if ((N .ne. wf%n_gs_amplitudes) .and. (N .ne. wf%n_es_amplitudes)) &
          call output%error_msg('Could not recognize length of orbital differences vector')
+!
+      call wf%ccs%get_orbital_differences(orbital_differences(1:wf%n_t1), wf%n_t1)
+!
+      if (N .eq. wf%n_es_amplitudes) then
+!
+         n_a_o = wf%n_ccsd_o + wf%n_cc2_o
+         n_a_v = wf%n_ccsd_v + wf%n_cc2_v
+!
+      else ! do_cc2 = .true. and N = wf%n_gs_amplitudes 
+!
+         n_a_o = wf%n_ccsd_o
+         n_a_v = wf%n_ccsd_v
 !
       endif
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
-      do a = 1, n_v
-         do i = 1, n_o 
+      do a = 1, n_a_v
+         do i = 1, n_a_o 
 !
-            ai = n_v*(i - 1) + a
+            ai = n_a_v*(i - 1) + a
 !
-            do j = 1, n_o 
-               do b = 1, n_v
+            do j = 1, n_a_o 
+               do b = 1, n_a_v
 !
-                  bj = n_v*(j-1) + b 
+                  bj = n_a_v*(j - 1) + b 
 !
                   if (ai .ge. bj) then
 !
@@ -1314,8 +1312,8 @@ contains
          enddo
 !$omp end parallel do
 !
-   n_a_o = wf%n_ccsd_o + wf%n_cc2_o
-   n_a_v = wf%n_ccsd_v + wf%n_cc2_v
+      n_a_o = wf%n_ccsd_o + wf%n_cc2_o
+      n_a_v = wf%n_ccsd_v + wf%n_cc2_v
 !
 !$omp parallel do private (a, ai, j, b, bj, aibj)
          do a = 1, n_a_v
@@ -1413,6 +1411,33 @@ contains
       call mem%dealloc(canonical_orbitals, wf%ao%n, wf%n_mo)
 !
    end subroutine mo_preparations_from_restart_mlccsd
+!
+!
+   subroutine scale_amplitudes_mlccsd(wf, t)
+!!
+!!    Scale amplitudes 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Scales t to conform with the convention used in the wavefunction:
+!!
+!!       t1 <- t1 
+!!       t2_aiai <- two * t2_aiai
+!!       ...
+!!
+!
+      use array_utilities, only: scale_diagonal
+!
+      implicit none 
+!
+      class(mlccsd), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t 
+!
+      call scale_diagonal(two,                                    &
+                          t(wf%n_t1 + 1 : wf%n_gs_amplitudes),    &
+                          wf%n_ccsd_o*wf%n_ccsd_v)
+!
+   end subroutine scale_amplitudes_mlccsd
 !
 !
 end module mlccsd_class
