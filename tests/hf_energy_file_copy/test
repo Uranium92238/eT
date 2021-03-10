@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 
-# provides os.path.join
-import os
-
-# provides exit
+from pathlib import Path
 import sys
 
 # we make sure we can import runtest and runtest_config
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(str(Path(__file__).parents[1]))
 
 # we import essential functions from the runtest library
-from runtest import version_info, get_filter, cli, run
+from runtest import version_info, cli, run
 
 # this tells runtest how to run your code
 from runtest_config import configure
@@ -29,13 +26,14 @@ f = get_hf_filter(threshold)
 # invoke the command line interface parser which returns options
 options = cli()
 
-checkfiles = ["hf_energy.AO_density.plt", 
-              "hf_energy.MO_0001.plt", 
-              "hf_energy.MO_0002.plt", 
-              "hf_energy.MO_0003.plt", 
+checkfiles = ["hf_energy.AO_density.plt",
+              "hf_energy.MO_0001.plt",
+              "hf_energy.MO_0002.plt",
+              "hf_energy.MO_0003.plt",
               "hf_energy_mo_information.out"]
 
-checkfiles = [os.path.join(os.path.dirname(__file__), i) for i in checkfiles]
+test_dir = Path(__file__).parent
+checkfiles = [test_dir / i for i in checkfiles]
 
 ierr = 0
 for inp in ['hf_energy.inp']:
@@ -46,11 +44,11 @@ for inp in ['hf_energy.inp']:
                 extra_args='-xyz',
                 filters={'out': f})
 
-missing_files = [i for i in checkfiles if not os.path.exists(i)]
+missing_files = [i for i in checkfiles if not i.exists()]
 filerror = len(missing_files)
 
 if filerror > 0:
     print("Missing files:")
-    print("\n".join(missing_files))
+    print("\n".join([i.name for i in missing_files]))
 
 sys.exit(ierr + filerror)

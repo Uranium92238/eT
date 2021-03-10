@@ -121,7 +121,7 @@ def read_excitation_energies(dir_, endian):
     with file_.open("rb") as f:
         n_states = int.from_bytes(read_record(f, endian), endian)
 
-        _ = f.read(4)
+        f.read(4)
         ee = []
         for i in range(n_states):
             ee.append(f.read(8))
@@ -195,7 +195,7 @@ def make_new_es_file(file_path, energy, n1, n2, endian):
 
         with file_path.open("rb") as data:
             # skip record specifier
-            _ = data.read(4)
+            data.read(4)
             t1 = data.read(n1 * 8)
             temp_file.write(t1)
 
