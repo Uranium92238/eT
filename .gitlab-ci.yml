@@ -11,7 +11,7 @@ pystyle:
   needs: []
   script:
     - pip install black
-    - black --check .
+    - black --check --diff .
   only:
     - master
     - development
