@@ -97,7 +97,7 @@ program eT_program
 !
    call print_program_banner()
 !
-   call output%printf('m', "This is eT version (i0).(i0).(i0), (a0)", &
+   call output%printf('m', "This is eT (i0).(i0).(i0) (a0)", &
                       ints=[major_version, minor_version, patch_version], &
                       chars = [version_name], fs='(//t4,a)')
 !
