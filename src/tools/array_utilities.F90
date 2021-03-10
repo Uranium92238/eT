@@ -31,12 +31,6 @@ module array_utilities
 !
    implicit none
 !
-   interface copy_
-      procedure :: copy_real,    &
-                   copy_complex, &
-                   copy_real_to_complex
-   end interface copy_
-!
    interface sandwich
       procedure :: sandwich_real, &
                    sandwich_complex
@@ -126,6 +120,32 @@ contains
    end subroutine zero_array_complex
 !
 !
+   subroutine zero_array_int(x, n)
+!!
+!!    Zero array int
+!!    Written by Eirik F. Kjønstad, 2020 
+!!
+!!    Sets the integer array x of length n to zero.
+!!
+      implicit none 
+!
+      integer, intent(in) :: n 
+!
+      integer, dimension(n), intent(out) :: x 
+!
+      integer :: I 
+!
+!$omp parallel do private(I) schedule(static)
+      do I = 1, n 
+!
+         x(I) = 0 
+!
+      enddo
+!$omp end parallel do
+!
+   end subroutine zero_array_int
+!
+!
    subroutine identity_array(x, n)
 !!
 !!    Identity array 
@@ -154,7 +174,7 @@ contains
    end subroutine identity_array
 !
 !
-   pure logical function is_significant(x, n, threshold, screening)
+   pure function is_significant(x, n, threshold, screening) result(is_significant_)
 !!
 !!    Is significant
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
@@ -176,7 +196,9 @@ contains
 !
       integer :: i
 !
-      is_significant = .false.
+      logical :: is_significant_
+!
+      is_significant_ = .false.
 !
       if (present(screening)) then
 !
@@ -184,19 +206,20 @@ contains
 !
             if (abs(x(i)*screening(i)) .gt. threshold) then
 !
-               is_significant = .true.
+               is_significant_ = .true.
                return
 !
             endif
 !
          enddo
+!
       else
 !
          do i = 1, n
 !
             if (abs(x(i)) .gt. threshold) then
 !
-               is_significant = .true.
+               is_significant_ = .true.
                return
 !
             endif
@@ -207,7 +230,7 @@ contains
    end function is_significant
 !
 !
-   integer function n_significant(x, n, threshold)
+   function n_significant(x, n, threshold) result(n_significant_)
 !!
 !!    Number of significant
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
@@ -223,15 +246,15 @@ contains
 !
       real(dp), intent(in)  :: threshold
 !
-      integer :: i = 0
+      integer :: n_significant_, i = 0
 !
-      n_significant = 0
+      n_significant_ = 0
 !
       do i = 1, n
 !
          if (abs(x(i)) .gt. threshold) then
 !
-            n_significant = n_significant + 1
+            n_significant_ = n_significant_ + 1
 !
          endif
 !
@@ -638,8 +661,8 @@ contains
    end subroutine cholesky_decomposition_limited_diagonal
 !
 !
- subroutine full_cholesky_decomposition_system(matrix, cholesky_vectors, dim_, &
-                                                n_vectors, threshold, used_diag)
+   subroutine full_cholesky_decomposition_system(matrix, cholesky_vectors, dim_, &
+                                                 n_vectors, threshold, used_diag)
 !!
 !!    Cholesky decomposition
 !!    Written by Sarai Dery Folkestad, June 2017.
@@ -708,8 +731,8 @@ contains
    end subroutine full_cholesky_decomposition_system
 !
 !
-   subroutine full_cholesky_decomposition_effective(matrix, cholesky_vectors, dim_, n_vectors,&
-                                        threshold, used_diag)
+   subroutine full_cholesky_decomposition_effective(matrix, cholesky_vectors, dim_, &
+                                                    n_vectors, threshold, used_diag)
 !!
 !!    Cholesky decomposition,
 !!    Written by Sarai Dery Folkestad, June 2017.
@@ -895,34 +918,49 @@ contains
 !
       real(dp), dimension(n,n), intent(in) :: A
       real(dp), dimension(n,n), intent(inout) :: Ainv
-
+!
+!     Store A in Ainv to prevent it from being overwritten by LAPACK
+      call dcopy(n**2, A, 1, Ainv, 1)
+!
+      call invert_in_place(Ainv, n)
+!
+   end subroutine invert
+!
+!
+   subroutine invert_in_place(A, n)
+!!
+!!    Invert in place
+!!    Written by Sarai D. Folkestad, 2018
+!!
+!!    Inverts n x n - matrix A and places the result in A.
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+!
+      real(dp), dimension(n,n), intent(inout) :: A
+!
       real(dp), dimension(n) :: work  ! work array for LAPACK
       integer, dimension(n) :: ipiv   ! pivot indices
       integer :: info
 !
-!     Store A in Ainv to prevent it from being overwritten by LAPACK
-!
-      Ainv = A
-!
 !     DGETRF computes an LU factorization of a general M-by-N matrix A
 !     using partial pivoting with row interchanges.
 !
-      call DGETRF(n, n, Ainv, n, ipiv, info)
+      call dgetrf(n, n, A, n, ipiv, info)
 !
-      if (info /= 0) then
-         stop 'Matrix is numerically singular!'
-      end if
+      if (info /= 0) &
+         call output%error_msg('Matrix is numerically singular! dgetrf error integer: (i0)', ints=[info])
 !
 !     DGETRI computes the inverse of a matrix using the LU factorization
 !     computed by DGETRF.
 !
-      call DGETRI(n, Ainv, n, ipiv, work, n, info)
+      call dgetri(n, A, n, ipiv, work, n, info)
 !
-      if (info /= 0) then
-         stop 'Matrix inversion failed!'
-      end if
+      if (info /= 0) &
+         call output%error_msg('Matrix inversion failed! dgetri error integer: (i0)', ints=[info])
 !
-   end subroutine invert
+   end subroutine invert_in_place
 !
 !
    subroutine invert_lower_triangular(Ainv, A, n)
@@ -958,77 +996,7 @@ contains
    end subroutine invert_lower_triangular
 !
 !
-   subroutine symmetrize(M, n)
-!!
-!!    Symmetrize matrix
-!!    Written by Eirik F. Kjønstad, 2018
-!!
-!!    Symmetrize n x n - matrix M:
-!!
-!!       M <- 1/2 * (M + M^T)
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      integer :: i, j
-!
-      real(dp), dimension(n, n) :: M
-      real(dp), dimension(:, :), allocatable :: MT
-!
-      call mem%alloc(MT, n, n)
-!
-      MT = transpose(M)
-!
-      do j = 1, n
-         do i = 1, n
-!
-            M(i, j) = half*(M(i, j) + MT(i, j))
-!
-         enddo
-      enddo
-!
-      call mem%dealloc(MT, n, n)
-!
-   end subroutine symmetrize
-!
-!
-   subroutine anti_symmetrize(M, n)
-!!
-!!    Antisymmetrize matrix
-!!    Written by Eirik F. Kjønstad, 2018
-!!
-!!    Antisymmetrize n x n - matrix M:
-!!
-!!       M <- 1/2 * (M - M^T)
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      integer :: i, j
-!
-      real(dp), dimension(n, n) :: M
-      real(dp), dimension(:, :), allocatable :: MT
-!
-      call mem%alloc(MT, n, n)
-!
-      MT = transpose(M)
-!
-      do j = 1, n
-         do i = 1, n
-!
-            M(i, j) = half*(M(i, j) - MT(i, j))
-!
-         enddo
-      enddo
-!
-      call mem%dealloc(MT, n, n)
-!
-   end subroutine anti_symmetrize
-!
-!
-   real(dp) function get_abs_max(X, n)
+   pure real(dp) function get_abs_max(X, n)
 !!
 !!    Get absolute maximum value of vector
 !!    Written by Eirik F. Kjønstad, 2018
@@ -1610,52 +1578,6 @@ contains
    end subroutine symmetric_sandwich_right_transposition_replace
 !
 !
-   subroutine commute(A, B, AcB, n)
-!!
-!!    Commute 
-!!    Written by Eirik F. Kjønstad, 2018
-!!
-!!    Calculates the commutator of A and B, two n x n matrices, 
-!!    and places the result in AcB. 
-!!
-      implicit none 
-!
-      integer, intent(in) :: n 
-!
-      real(dp), dimension(n, n), intent(in) :: A 
-      real(dp), dimension(n, n), intent(in) :: B
-!
-      real(dp), dimension(n, n) :: AcB ! [A, B] = AB - BA on exit 
-!
-      call dgemm('N', 'N', &
-                  n,       &
-                  n,       &
-                  n,       &
-                  one,     &   
-                  A,       &
-                  n,       &
-                  B,       &
-                  n,       &
-                  zero,    &
-                  AcB,     & ! AcB = AB 
-                  n)
-!
-      call dgemm('N', 'N', &
-                  n,       &
-                  n,       &
-                  n,       &
-                  -one,    &   
-                  B,       &
-                  n,       &
-                  A,       &
-                  n,       &
-                  one,     &
-                  AcB,     & ! AcB = AcB - BA = AB - BA 
-                  n)      
-!
-   end subroutine commute
-!
-!
    real(dp) function get_l2_norm(X, n)
 !!
 !!    Get L^2 norm 
@@ -1704,88 +1626,6 @@ contains
 !$omp end parallel do
 !
    end subroutine transpose_
-!
-!
-   subroutine copy_real(X, Y, n, m)
-!!
-!!    Copy real
-!!    Written by Andreas Skeidsvoll, Oct 2019
-!!
-!!    Sets Y as:
-!!
-!!       Y = X
-!!
-!!    where X and Y are real vectors of length n x m.
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-      integer, intent(in) :: m
-!
-      real(dp), dimension(n,m), intent(in)  :: X
-      real(dp), dimension(n,m), intent(out) :: Y
-!
-      call dcopy(n*m, X, 1, Y, 1)
-!
-   end subroutine copy_real
-!
-!
-   subroutine copy_complex(X, Y, n, m)
-!!
-!!    Copy complex
-!!    Written by Andreas Skeidsvoll, Oct 2019
-!!
-!!    Sets Y as:
-!!
-!!       Y = X
-!!
-!!    where X and Y are complex vectors of length n.
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-      integer, intent(in) :: m
-!
-      complex(dp), dimension(n,m), intent(in)  :: X
-      complex(dp), dimension(n,m), intent(out) :: Y
-!
-      call zcopy(n*m, X, 1, Y, 1)
-!
-   end subroutine copy_complex
-!
-!
-   subroutine copy_real_to_complex(X, Y, n, m)
-!!
-!!    Copy real to complex
-!!    Written by Andreas Skeidsvoll, Oct 2019
-!!
-!!    Sets Y as:
-!!
-!!       Y = X
-!!
-!!    where X is a real and Y is a complex vector of length n.
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-      integer, intent(in) :: m
-!
-      real(dp),    dimension(n,m), intent(in) :: X
-      complex(dp), dimension(n,m), intent(out) :: Y
-!
-      integer :: i, j
-!
-!$omp parallel do private(i,j)
-      do j = 1, m
-         do i = 1, n
-!
-            Y(i, j) = cmplx(X(i, j), zero, dp)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine copy_real_to_complex
 !
 !
    subroutine copy_and_scale(alpha, X, Y, n)
@@ -2478,7 +2318,7 @@ contains
                   lwork,            &
                   info)
 !
-      lwork = int(work(1))
+      lwork = ceiling(work(1))
       call mem%dealloc(work, 1)
 !
 !     Diagonalization
@@ -3183,9 +3023,9 @@ contains
    end subroutine scale_complex_packed_4_diagonal_by_complex
 !
 !
-   complex(dp) function our_zdotu(n, zx, incx, zy, incy)
+   function zdot(n, zx, incx, zy, incy) result(dot)
 !!
-!!    Our zdotu
+!!    zdot
 !!    Written by Andreas Skeidsvoll, Nov 2019
 !!
 !!    A custom zdotu routine, to make zdotu work on Macs
@@ -3195,25 +3035,26 @@ contains
       integer :: incx, incy, n
 !
       complex(dp) :: zx(*), zy(*)
+      complex(dp) :: dot
 !
       integer :: i
 !
       if ((incx .ne. 0) .and. (incy .ne. 0)) continue
 !
-      our_zdotu = zero_complex
+      dot = zero_complex
 !
-!$omp parallel do schedule(static) private(i) reduction(+:our_zdotu)
+!$omp parallel do schedule(static) private(i) reduction(+:dot)
       do i = 1, n
 !
-         our_zdotu = our_zdotu + zx(i)*zy(i)
+         dot = dot + zx(i)*zy(i)
 !
       enddo
 !$omp end parallel do
 !
-   end function our_zdotu
+   end function zdot
 !
 !
-   subroutine block_diagonalize_symmetric(A,  n_total, n_blocks, block_dim, diagonal)
+   subroutine block_diagonalize_symmetric(A,  n_total, n_blocks, block_dim, diagonal, flip_vectors)
 !!
 !!    Block diagonalize symmetric
 !!    Written by Sarai D. Folkestad, Mar 2020
@@ -3240,11 +3081,18 @@ contains
       real(dp), dimension(n_total, n_total), intent(inout) :: A
       real(dp), dimension(n_total), intent(out) :: diagonal
 !
+      logical, intent(in), optional :: flip_vectors
+!
       real(dp), dimension(:), allocatable :: work
 !
       real(dp), dimension(:), allocatable :: eigenvalues
 !
-      integer :: info, i, block_, offset, index_max
+      integer  :: info, i, block_, offset, index_max
+      real(dp), dimension(1) :: worksize
+      logical  :: local_flip_vectors
+!
+      local_flip_vectors = .true.
+      if (present(flip_vectors)) local_flip_vectors = flip_vectors
 !
       offset = 1
 !
@@ -3252,40 +3100,58 @@ contains
 !
          if (block_dim(block_) .gt. 0) then
 !
-!           Diagonalize block
-!
-            call mem%alloc(work, 4*block_dim(block_))
             call mem%alloc(eigenvalues, block_dim(block_))
-!
+!  
+!           Work size query
+!  
             call dsyev('V','U',              &
                         block_dim(block_),   &
                         A(offset, offset),   &
                         n_total,             &
                         eigenvalues,         &
-                        work,                &
-                        4*block_dim(block_), &
+                        worksize,            &
+                        -1,                  &
                         info)
+!  
+            if (info .ne. 0) call output%error_msg('could not perform DSYEV worksize query')
 !
-!           Convention for eigenvectors of block, maximum element is positive
+!           Diagonalize block
 !
-            do i = offset, offset + block_dim(block_) - 1
+            call mem%alloc(work, ceiling(worksize(1)))
 !
-               index_max = maxloc(abs(A(offset : offset + block_dim(block_) - 1, i)), dim=1)
-               index_max = index_max + offset - 1
-!
-               if (A(index_max, i) .lt. zero) &
-                  call dscal(block_dim(block_), &
-                            -one,               &
-                            A(offset : offset + block_dim(block_) - 1, i), 1)
-!
-            enddo
-!
-            call mem%dealloc(work, 4*block_dim(block_))
+            call dsyev('V','U',               &
+                        block_dim(block_),    &
+                        A(offset, offset),    &
+                        n_total,              &
+                        eigenvalues,          &
+                        work,                 &
+                        ceiling(worksize(1)), &
+                        info)
 !
             if (info .ne. 0) then
                call output%error_msg('Diagonalization of block failed.' // &
                                     ' "Dsyev" finished with info: (i0)', ints=[info])
             end if
+!
+            call mem%dealloc(work, ceiling(worksize(1)))
+!
+!           Convention for eigenvectors of block, maximum element is positive
+!
+            if (local_flip_vectors) then
+!
+               do i = offset, offset + block_dim(block_) - 1
+!
+                  index_max = maxloc(abs(A(offset : offset + block_dim(block_) - 1, i)), dim=1)
+                  index_max = index_max + offset - 1
+!
+                  if (A(index_max, i) .lt. zero) &
+                     call dscal(block_dim(block_), &
+                               -one,               &
+                               A(offset : offset + block_dim(block_) - 1, i), 1)
+!
+               enddo
+!
+            endif
 !
 !           Setting diagonal
 !
@@ -3485,5 +3351,132 @@ contains
       endif
 !
    end subroutine diagonalize_symmetric
+!
+!
+   subroutine constant_array(x, n, const)
+!!
+!!    Constant array 
+!!    Written by Sarai D. Folkestad, 2021
+!!
+!!    Sets the array x of length n to const.
+!!
+      implicit none 
+!
+      integer, intent(in) :: n 
+!
+      real(dp), dimension(n), intent(out) :: x 
+!
+      real(dp), intent(in) :: const
+!
+      integer :: I 
+!
+!$omp parallel do private(I) schedule(static)
+      do I = 1, n 
+!
+         x(I) = const
+!
+      enddo
+!$omp end parallel do
+!
+   end subroutine constant_array
+!
+!
+   subroutine generalized_diagonalization_symmetric(A, S, dim_, e)
+!!
+!!    Generalized diagonalization symmetric matrix
+!!    Written by Sarai D. Folkestad,  2020
+!!
+!!    Solves the linear equation
+!!
+!!       A X = S X e.
+!!    
+!!    On exit the vectors (X) are stored in A
+!!    On exit S is overwritten
+!! 
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_, dim_), intent(inout)   :: A
+      real(dp), dimension(dim_, dim_), intent(inout)   :: S
+      real(dp), dimension(dim_), optional, intent(out) :: e
+!
+      real(dp), dimension(:), allocatable :: work
+!
+      integer :: info
+!
+      info = 0
+!
+      call mem%alloc(work, 4*dim_)
+!
+      call dsygv(1, 'V', 'L', &
+                  dim_,       &
+                  A,          & 
+                  dim_,       &
+                  S,          &
+                  dim_,       &
+                  e,          &
+                  work,       &
+                  4*(dim_),   &
+                  info)
+!
+      call mem%dealloc(work, 4*dim_)   
+!
+      if (info .ne. 0) call output%error_msg('in generalized diagonalization (array_utilities.F90)')   
+!
+   end subroutine generalized_diagonalization_symmetric
+!
+!
+   subroutine copy_integer(X, Y, n, alpha, beta)
+!!
+!!    Copy integer
+!!    Written by Alexander C. Paul, Feb 2021
+!!
+!!    Sets Y as:
+!!
+!!       Y = X
+!!
+!!    X and Y are vectors of length n
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+!
+      integer, dimension(n), intent(out) :: Y
+      integer, dimension(n), intent(in) :: X
+!
+      integer, optional, intent(in) :: alpha, beta
+      integer :: alpha_, beta_
+!
+      integer :: i
+!
+      alpha_ = 1
+      beta_  = 0
+      if (present(alpha)) alpha_ = alpha
+      if (present(beta))  beta_  = beta
+!
+      if (beta_ .eq. 0) then
+!
+!$omp parallel do private(i)
+         do i = 1, n
+!
+            Y(i) = alpha_*X(i)
+!
+         enddo
+!$omp end parallel do 
+!
+      else
+!
+!$omp parallel do private(i)
+         do i = 1, n
+!
+            Y(i) = beta_*Y(i) + alpha_*X(i)
+!
+         enddo
+!$omp end parallel do 
+!
+      end if
+!
+   end subroutine copy_integer
 !
 end module array_utilities

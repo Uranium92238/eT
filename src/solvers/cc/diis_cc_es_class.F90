@@ -81,14 +81,12 @@ module diis_cc_es_class
 !
    type, extends(abstract_cc_es) :: diis_cc_es
 !
-      integer :: diis_dimension
-!
-      logical :: crop ! Standard DIIS if false; CROP variant of DIIS if true
-!
       logical :: davidson_preconvergence     ! Perform non-linear Davidson first, then go over 
                                              ! to DIIS to converge below the residual threshold 
 !
       real(dp) :: preconvergence_threshold   ! Non-linear Davidson threshold
+!
+      type(diis_tool), dimension(:), allocatable :: diis
 !
    contains
 !     
@@ -128,6 +126,12 @@ contains
 !
       logical, intent(in) :: restart
 !
+      integer :: state
+
+      character(len=3) :: string_state
+      logical :: records_in_memory, crop
+      integer :: diis_dimension
+!
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
       call solver%timer%turn_on()
 !
@@ -150,15 +154,15 @@ contains
 !
       solver%n_singlet_states          = 0
       solver%max_iterations            = 100
-      solver%diis_dimension            = 20
       solver%restart                   = restart
       solver%transformation            = trim(transformation)
       solver%es_type                   = 'valence'
-      solver%records_in_memory         = .false.
-      solver%storage                   = 'disk'
-      solver%crop                      = .false.
       solver%davidson_preconvergence   = .false.
       solver%preconvergence_threshold  = 1.0d-2
+!
+      crop               = .false.
+      diis_dimension     = 20
+      records_in_memory  = .false.
 !
 !     Initialize convergence checker with default threshols
 !
@@ -166,7 +170,7 @@ contains
                                                     residual_threshold = 1.0d-3,   &
                                                     energy_convergence = .false.)
 !
-      call solver%read_settings()
+      call solver%read_settings(records_in_memory, crop, diis_dimension)
 !
       call solver%print_settings()
 !
@@ -174,23 +178,23 @@ contains
 !
       wf%n_singlet_states = solver%n_singlet_states
 !
-!     Determine whether to store records in memory or on file
+!     Make DIIS tools array & initialize the individual DIIS tools 
 !
-      if (trim(solver%storage) == 'memory') then 
+      allocate(solver%diis(solver%n_singlet_states))
 !
-         solver%records_in_memory = .true.
+      do state = 1, solver%n_singlet_states
 !
-      elseif (trim(solver%storage) == 'disk') then 
+         write(string_state, '(i3.3)') state
+         solver%diis(state) = diis_tool('diis_cc_es_' // string_state,      &
+                                        wf%n_es_amplitudes,                 &
+                                        wf%n_es_amplitudes,                 &
+                                        dimension_=diis_dimension,          &
+                                        crop=crop,                          &
+                                        records_in_memory=records_in_memory)
 !
-         solver%records_in_memory = .false.
+      enddo  
 !
-      else 
 !
-         call output%error_msg('Could not recognize keyword storage in solver: ' // &
-                                 trim(solver%storage))
-!
-      endif
-! 
    end function new_diis_cc_es
 !
 !
@@ -205,15 +209,6 @@ contains
 !
       call solver%print_es_settings()
 !
-      call output%printf('m', 'DIIS dimension:               (i11)', &
-                         ints=[solver%diis_dimension], fs='(/t6,a/)')
-!
-      if (solver%crop) then 
-!
-         call output%printf('m', 'Enabled CROP in the DIIS algorithm.', fs='(t6,a/)')
-!
-      endif
-!
       if (solver%davidson_preconvergence) then 
 !
          call output%printf('m', 'Enabled preconvergence using&
@@ -227,45 +222,44 @@ contains
    end subroutine print_settings_diis_cc_es
 !
 !
-   subroutine read_settings_diis_cc_es(solver)
+   subroutine read_settings_diis_cc_es(solver, records_in_memory, crop, diis_dimension)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
 !
-      class(diis_cc_es) :: solver 
+      class(diis_cc_es)          :: solver 
+      logical, intent(inout)     :: records_in_memory, crop
+      integer, intent(inout)     :: diis_dimension 
 !
-      call solver%read_es_settings()
-      call solver%read_diis_settings()
+      call solver%read_es_settings(records_in_memory)
+      call solver%read_diis_settings(crop, diis_dimension)
 !
    end subroutine read_settings_diis_cc_es
 !
 !
-   subroutine read_diis_settings_diis_cc_es(solver)
+   subroutine read_diis_settings_diis_cc_es(solver, crop, diis_dimension)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
 !
-      class(diis_cc_es) :: solver 
+      class(diis_cc_es)           :: solver
+      logical, intent(inout)      :: crop
+      integer, intent(inout)      :: diis_dimension 
 !
-      call input%get_keyword_in_section('diis dimension', 'solver cc es', solver%diis_dimension)
+      call input%get_keyword('diis dimension', 'solver cc es', diis_dimension)
+      crop = input%is_keyword_present('crop', 'solver cc es')
 !
-      if (input%requested_keyword_in_section('crop', 'solver cc es')) then 
-!
-         solver%crop = .true.
-!
-      endif
-!
-      if (input%requested_keyword_in_section('davidson preconvergence', 'solver cc es')) then 
+      if (input%is_keyword_present('davidson preconvergence', 'solver cc es')) then 
 !
          solver%davidson_preconvergence = .true.
 !
       endif
 !
-      call input%get_keyword_in_section('preconvergence threshold',  &
+      call input%get_keyword('preconvergence threshold',  &
                                         'solver cc es',              &
                                         solver%preconvergence_threshold)
 !
@@ -290,11 +284,7 @@ contains
 !
       integer, dimension(:), allocatable :: X_order
 !
-      type(diis_tool), dimension(:), allocatable :: diis 
-!
       integer :: iteration, state
-!
-      character(len=3) :: string_state
 !
       real(dp) :: norm_X
 !
@@ -314,12 +304,19 @@ contains
 !
       endif
 !
-!     Initialize solver tools 
+!     Initialize solver tools
 !
+      do state = 1, solver%n_singlet_states
+!
+         call solver%diis(state)%initialize_storers()
+!
+      enddo  
+! 
       call mem%alloc(eps, wf%n_es_amplitudes)
-      call wf%get_es_orbital_differences(eps, wf%n_es_amplitudes)
+      call wf%get_orbital_differences(eps, wf%n_es_amplitudes)
 !
-      solver%preconditioner = precondition_tool(eps, wf%n_es_amplitudes)
+      solver%preconditioner = precondition_tool(wf%n_es_amplitudes)
+      call solver%preconditioner%initialize_and_set_precondition_vector(eps)
 !
       call mem%dealloc(eps, wf%n_es_amplitudes)
 !
@@ -337,23 +334,6 @@ contains
       call mem%alloc(converged, (solver%n_singlet_states))
 !
       converged = .false.
-!
-!     Make DIIS tools array & initialize the individual DIIS tools 
-!
-      allocate(diis(solver%n_singlet_states))
-!
-      do state = 1, solver%n_singlet_states
-!
-         write(string_state, '(i3.3)') state
-         diis(state) = diis_tool('diis_cc_es_' // string_state,      &
-                                 wf%n_es_amplitudes,                 &
-                                 wf%n_es_amplitudes,                 &
-                                 dimension_=solver%diis_dimension,   &
-                                 crop=solver%crop)
-!
-         call diis(state)%initialize_storers(solver%records_in_memory)
-!
-      enddo 
 !
 !     Make initial guess on the eigenvectors X = [X1 X2 X3 ...]
 !
@@ -384,9 +364,8 @@ contains
 !
 !              Construct R = AX 
 !
-               call dcopy(wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
-!
                call wf%construct_Jacobian_transform(solver%transformation, &
+                                                      X(:,state),          &
                                                       R(:,state),          &
                                                       solver%energies(state))
 !
@@ -424,7 +403,7 @@ contains
 !
 !                 DIIS extrapolate using previous quasi-Newton estimates
 !
-                  call diis(state)%update(R(:,state), X(:,state))
+                  call solver%diis(state)%update(R(:,state), X(:,state))
 !
 !                 Renormalize X 
 !
@@ -501,7 +480,7 @@ contains
 !
          call mem%dealloc(X_order, solver%n_singlet_states)
 !
-         call wf%check_for_parallel_states(solver%transformation, solver%convergence_checker%residual_threshold)
+         call wf%set_excitation_energies(solver%energies, solver%transformation)
 !
       else 
 !
@@ -519,7 +498,7 @@ contains
 !
       do state = 1, solver%n_singlet_states
 !
-         call diis(state)%finalize_storers()
+         call solver%diis(state)%finalize_storers()
 !
       enddo 
 !
@@ -549,6 +528,8 @@ contains
       real(dp) :: relative_micro_residual_threshold
       integer  :: max_dim_red, max_micro_iterations
 !
+      logical :: records_in_memory
+!
       call output%printf('m', 'Running the non-linear Davidson solver to produce&
                               & first guesses for the DIIS solver. When finished,&
                               & the DIIS solver will restart from the preconverged&
@@ -562,17 +543,20 @@ contains
 !
 !     Read non-default values, if provided by user 
 !
-      call input%get_keyword_in_section('max reduced dimension',  &
-                                        'solver cc es',           &
+      call input%get_keyword('max reduced dimension',  &
+                                        'solver cc es',&
                                         max_dim_red)
 !
-      call input%get_keyword_in_section('max micro iterations',  &
-                                        'solver cc es',           &
+      call input%get_keyword('max micro iterations',   &
+                                        'solver cc es',&
                                         max_micro_iterations)
 !
-      call input%get_keyword_in_section('rel micro threshold',    &
-                                        'solver cc es',           &
+      call input%get_keyword('rel micro threshold',    &
+                                        'solver cc es',&
                                         relative_micro_residual_threshold)
+!
+      records_in_memory = .false.
+      call input%place_records_in_memory('solver cc es', records_in_memory)
 !
 !     Allocate non-linear Davidson solver & run it
 !
@@ -586,13 +570,13 @@ contains
                                                  max_micro_iterations,              & 
                                                  max_dim_red,                       & 
                                                  solver%es_type,                    &
-                                                 solver%storage,                    &
+                                                 records_in_memory,                 &
                                                  solver%n_singlet_states,           &
                                                  prepare_wf=.false.,                &
-                                                 energy_convergence=solver%convergence_checker%energy_convergence)
+                                                 energy_convergence=                &
+                                                 solver%convergence_checker%energy_convergence)
 !
       call davidson_solver%run(wf)
-!
       call davidson_solver%cleanup(wf)
 !
       call output%printf('m', 'Finished preconvergence! The DIIS solver will now restart&

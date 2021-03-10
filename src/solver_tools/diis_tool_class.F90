@@ -135,6 +135,9 @@ module diis_tool_class
       procedure :: finalize_storers                => finalize_storers_diis_tool
 !
       procedure :: get_dim_G                       => get_dim_G_diis_tool
+      procedure :: get_dimension                   => get_dimension_diis_tool
+!
+      procedure :: print_settings                  => print_settings_diis_tool
 !
       procedure, private :: construct_padded_G              &
                          => construct_padded_G_diis_tool
@@ -171,7 +174,8 @@ contains
 !
 !
    function new_diis_tool(name_, n_parameters, n_equations, &
-                  dimension_, accumulate, erase_history, crop) result(diis)
+                  dimension_, accumulate, erase_history, crop, &
+                  records_in_memory) result(diis)
 !!
 !!    New DIIS tool
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
@@ -213,17 +217,18 @@ contains
       logical, intent(in), optional :: accumulate
       logical, intent(in), optional :: erase_history
       logical, intent(in), optional :: crop
+      logical, intent(in), optional :: records_in_memory
 !
-      diis%name_            = trim(name_)
-      diis%n_parameters     = n_parameters
-      diis%n_equations      = n_equations
+      diis%name_           = trim(name_)
+      diis%n_parameters    = n_parameters
+      diis%n_equations     = n_equations
  !
-      diis%iteration        = 1 
-      diis%dimension_       = 8
+      diis%iteration       = 1 
+      diis%dimension_      = 8
 !
-      diis%accumulate       = .true. 
-      diis%erase_history    = .false. 
-      diis%crop             = .false. 
+      diis%accumulate      = .true. 
+      diis%erase_history   = .false. 
+      diis%crop            = .false. 
 !
       if (present(accumulate)) then 
 !
@@ -256,10 +261,24 @@ contains
 !
       endif
 !
+      call diis%print_settings()
+!
+      diis%e_vectors = record_storer(trim(diis%name_) // '_e',    &
+                                     diis%n_equations,            &
+                                     diis%dimension_,             &
+                                     records_in_memory,           &
+                                     delete=.true.)
+!
+      diis%x_vectors = record_storer(trim(diis%name_) // '_x',    &
+                                     diis%n_parameters,           &
+                                     diis%dimension_,             &
+                                     records_in_memory,           &
+                                     delete=.true.)
+!
    end function new_diis_tool
 !
 !
-   subroutine initialize_storers_diis_tool(diis, records_in_memory)
+   subroutine initialize_storers_diis_tool(diis)
 !!
 !!    Prepare storers 
 !!    Written by Eirik F. Kjønstad, Nov 2019 
@@ -273,21 +292,7 @@ contains
 !
       class(diis_tool) :: diis
 !
-      logical, intent(in) :: records_in_memory
-!
       integer :: I
-!
-      diis%e_vectors = record_storer(trim(diis%name_) // '_e',    &
-                                     diis%n_equations,            &
-                                     diis%dimension_,             &
-                                     records_in_memory,           &
-                                     delete=.true.)
-!
-      diis%x_vectors = record_storer(trim(diis%name_) // '_x',    &
-                                     diis%n_parameters,           &
-                                     diis%dimension_,             &
-                                     records_in_memory,           &
-                                     delete=.true.)
 !
       call diis%e_vectors%initialize_storer()
       call diis%x_vectors%initialize_storer()
@@ -361,7 +366,7 @@ contains
       real(dp), dimension(diis%n_parameters) :: x
 !
       integer :: info
-      integer :: dim_G 
+      integer :: dim_G
 !
       real(dp), dimension(:), allocatable   :: padded_H
       real(dp), dimension(:,:), allocatable :: padded_G
@@ -596,6 +601,22 @@ contains
       endif
 !
    end function get_dim_G_diis_tool
+!
+!
+   function get_dimension_diis_tool(diis)
+!!
+!!    Get dimension 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+      implicit none
+!
+      class(diis_tool) :: diis
+!
+      integer :: get_dimension_diis_tool
+!
+      get_dimension_diis_tool = diis%dimension_
+!
+   end function get_dimension_diis_tool
 !
 !
    subroutine write_e_and_x_diis_tool(diis, e, x, dim_G)
@@ -1019,6 +1040,38 @@ contains
       enddo 
 !
    end subroutine cycle_left_diis_tool
+!
+!
+   subroutine print_settings_diis_tool(diis)
+!!
+!!    Print settings
+!!    Written by Sarai D. Folkestad, 2020
+!!
+      implicit none
+!
+      class(diis_tool), intent(inout)  :: diis
+!
+      call output%printf('n', '- DIIS tool settings:', fs='(/t3,a)')
+!
+      call output%printf('n', 'DIIS dimension: (i3)', &
+                         ints=[diis%dimension_], fs='(/t6,a)')
+!
+      if (diis%crop) then 
+!
+        call output%printf('n', 'Enabled CROP in the DIIS algorithm.', fs='(/t6,a)')
+!
+      endif
+!
+      if (diis%erase_history) then 
+!
+        call output%printf('v', 'DIIS history deleted when &
+              &full DIIS dimension is reached.', fs='(/t6,a)')
+!
+      endif
+!
+      call output%newline('n')
+!
+   end subroutine print_settings_diis_tool
 !
 !
 end module diis_tool_class

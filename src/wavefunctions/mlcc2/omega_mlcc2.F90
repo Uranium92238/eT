@@ -47,25 +47,28 @@ contains
 !
       class(mlcc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(out) :: omega
 !
       type(timings) :: timer
 !
-      timer = timings('omega MLCC2')
+      timer       = timings('Construct MLCC2 Omega', pl='normal')
       call timer%turn_on()
 !
       call zero_array(omega,wf%n_gs_amplitudes)
 !
-      call wf%omega_ccs_a1(omega)
+      call wf%ccs%construct_omega(omega(1 : wf%n_t1))
 !
       call wf%construct_x2()
       call wf%construct_u_aibj()
 !
-      call wf%omega_cc2_a1(omega, wf%n_cc2_o, wf%n_cc2_v, wf%first_cc2_o, wf%first_cc2_v, &
-                           wf%last_cc2_o, wf%last_cc2_v)
-      call wf%omega_cc2_b1(omega, wf%n_cc2_o, wf%n_cc2_v, wf%first_cc2_o, wf%first_cc2_v, &
-                           wf%last_cc2_o, wf%last_cc2_v)
-      call wf%omega_cc2_c1(omega, wf%n_cc2_o, wf%n_cc2_v, wf%first_cc2_o, wf%first_cc2_v)
+      call wf%omega_cc2_a1(omega(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
+                           wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+!
+      call wf%omega_cc2_b1(omega(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
+                           wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+!
+      call wf%omega_cc2_c1(omega(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
+                           wf%first_cc2_o, wf%first_cc2_v)
 !
       call timer%turn_off()
 !
@@ -335,72 +338,6 @@ contains
       call timer%turn_off()
 !
     end subroutine omega_cc2_c1_mlcc2
-!
-!
-   module subroutine construct_omega_doubles_mlcc2(wf, omega2)
-!!
-!!    Construct Omega doubles
-!!    Written by Sarai D. Folkestad, Sep 2019
-!!
-!!    Constructs the doubles part of omega for MLCC2
-!!
-!!    Note that this is not used to solve MLCC2 equations, 
-!!    but it is only used for debug of Jacobian matrix
-!!
-!!    omega_aibj = 1/Δ_aibj g_aibj + e_aibj s_aibj 
-!!
-!!    Note that it is calculated in the biorthonormal basis!
-!!
-      implicit none
-!
-      class(mlcc2) :: wf
-!
-      real(dp), dimension(wf%n_x2), intent(out) :: omega2
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj
-!
-      integer :: a, i, b, j, ai, bj, aibj, aiai
-!
-      call mem%alloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
-!
-      call wf%eri%get_eri_t1('vovo', g_aibj, wf%first_cc2_v, wf%last_cc2_v, &
-                                             wf%first_cc2_o, wf%last_cc2_o, &
-                                             wf%first_cc2_v, wf%last_cc2_v, &
-                                             wf%first_cc2_o, wf%last_cc2_o)
-!
-      call packin(omega2, g_aibj, wf%n_cc2_v*wf%n_cc2_o)
-!
-      call mem%dealloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
-!
-      do a = 1, wf%n_cc2_v
-         do i = 1, wf%n_cc2_o
-            do b = 1, wf%n_cc2_v
-               do j = 1, wf%n_cc2_o
-!
-                  ai = wf%n_cc2_v*(i - 1) + a
-                  bj = wf%n_cc2_v*(j - 1) + b
-                  aibj = max(ai, bj)*(max(ai,bj) - 3)/2 + ai + bj
-!
-                  omega2(aibj) = omega2(aibj) + wf%x2(aibj)*&
-                        (wf%orbital_energies(a + wf%first_cc2_v - 1 + wf%n_o)&
-                        +wf%orbital_energies(b + wf%first_cc2_v - 1 + wf%n_o)&
-                        -wf%orbital_energies(i + wf%first_cc2_o - 1)&
-                        -wf%orbital_energies(j + wf%first_cc2_o - 1))
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-      do ai = 1, wf%n_cc2_v*wf%n_cc2_o
-!
-         aiai = ai*(ai - 3)/2 + ai*2
-!
-         omega2(aiai) = half*omega2(aiai)
-!
-      enddo
-!
-   end subroutine construct_omega_doubles_mlcc2
 !
 !
 end submodule omega_mlcc2

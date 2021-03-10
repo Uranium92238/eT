@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.1 - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,11 +14,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.3, Bastion
+   This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Configuration date: 2021-03-08 15:01:10 UTC +01:00
-  Git branch:         test-generator
-  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
   Fortran compiler:   GNU 8.4.0
   C compiler:         GNU 8.4.0
   C++ compiler:       GNU 8.4.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-08 15:04:00 UTC +01:00
+  Calculation started: 2021-03-09 17:28:11 UTC +01:00
 
 
   :: Input file
@@ -78,20 +78,8 @@
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
-
-     Name:             h2o he
-     Charge:           0
-     Multiplicity:     1
-     Coordinate units: angstrom
-
-     Pure basis functions:         29
-     Cartesian basis functions:    30
-     Primitive basis functions:    56
-
-     Nuclear repulsion energy (a.u.):             12.116100574587
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
+  :: RHF wavefunction
+  ======================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -99,9 +87,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H      0.866810000000     0.601440000000     5.000000000000        1
-        2 H     -0.866810000000     0.601440000000     5.000000000000        2
-        3 O      0.000000000000    -0.075790000000     5.000000000000        3
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  H    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
         4 He     0.100000000000    -0.020000000000     7.530000000000        4
      ==============================================================================
 
@@ -111,24 +99,23 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H      1.638033502034     1.136556880358     9.448630622825        1
-        2 H     -1.638033502034     1.136556880358     9.448630622825        2
-        3 O      0.000000000000    -0.143222342981     9.448630622825        3
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  H    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
         4 He     0.188972612457    -0.037794522491    14.229637717975        4
      ==============================================================================
 
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  :: RHF wavefunction
-  ======================
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               29
+     Number of orthonormal atomic orbitals:   29
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of occupied orbitals:         6
      Number of virtual orbitals:         23
      Number of molecular orbitals:       29
-     Number of atomic orbitals:          29
 
 
   :: Hartree-Fock engine
@@ -148,31 +135,32 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
-     Integral cutoff:               0.1000E-16
-
-  - Setting initial AO density to SAD
+  - Setting initial AO density to sad
 
      Energy of initial guess:               -78.492022836321
      Number of electrons in guess:           12.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -184,14 +172,14 @@
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
      8           -78.843851693557     0.2356E-05     0.7053E-09
-     9           -78.843851693630     0.2071E-06     0.7383E-10
-    10           -78.843851693631     0.1594E-07     0.4263E-12
-    11           -78.843851693631     0.3322E-08     0.5684E-13
-    12           -78.843851693631     0.1197E-08     0.1421E-13
-    13           -78.843851693631     0.4264E-09     0.7105E-13
-    14           -78.843851693631     0.1280E-09     0.4263E-13
-    15           -78.843851693631     0.1479E-10     0.5684E-13
-    16           -78.843851693631     0.2905E-11     0.0000E+00
+     9           -78.843851693630     0.2071E-06     0.7378E-10
+    10           -78.843851693631     0.1594E-07     0.3837E-12
+    11           -78.843851693631     0.3322E-08     0.4263E-13
+    12           -78.843851693631     0.1197E-08     0.2842E-13
+    13           -78.843851693631     0.4264E-09     0.0000E+00
+    14           -78.843851693631     0.1280E-09     0.1421E-13
+    15           -78.843851693631     0.1479E-10     0.1421E-13
+    16           -78.843851693631     0.2908E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -204,8 +192,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.26391
-     Total cpu time (sec):               2.31387
+     Total wall time (sec):              0.52901
+     Total cpu time (sec):               1.01951
 
 
   :: CC3 wavefunction
@@ -261,7 +249,7 @@
      Span factor:           0.10E-01
      Max qual:                  1000
 
-  - Cholesky decomposition system details:
+  - Cholesky decomposition ao details:
 
      Total number of AOs:                    29
      Total number of shell pairs:           120
@@ -301,8 +289,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.39475
-     Total cpu time (sec):               0.78066
+     Total wall time (sec):              0.21315
+     Total cpu time (sec):               0.42514
 
 
   2) Preparation of MO basis and integrals
@@ -310,109 +298,104 @@
 
   3) Calculation of the ground state (newton-raphson algorithm)
 
-   - DIIS Newton-Raphson coupled cluster ground state solver
-  -------------------------------------------------------------
+   - Davidson tool settings:
 
-  A Newton-Raphson CC ground state equations solver. Solves the ground 
-  state equation using updates Δt based on the Newton equation, A Δt 
-  = -Ω, where the A is the Jacobian and Ω the omega vector.
+     Number of parameters:                 9729
+     Number of requested solutions:           1
+     Max reduced space dimension:            50
 
-  - DIIS accelerated Newton-Raphson CC ground state solver settings:
+     Storage (newton_raphson_amplitude_updator_trials): file
+     Storage (newton_raphson_amplitude_updator_transforms): file
+
+   - DIIS coupled cluster ground state solver
+  ----------------------------------------------
+
+  A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
+  of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
+  13.
+
+  - CC ground state solver settings:
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
-     Relative micro threshold:      0.100E-01
+     Max number of iterations:      100
 
-     DIIS dimension:                        8
-     Max number of iterations:            100
-     Max number of micro-iterations:      100
+  - DIIS tool settings:
 
-  Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)
-  ----------------------------------------------------------------
-      1          -79.084241931608     0.9358E-01     0.7908E+02
-  ----------------------------------------------------------------
+     DIIS dimension:   8
 
-     Micro-iter.  Residual norm
-     --------------------------
+     Storage (cc_gs_diis_e): file
+     Storage (cc_gs_diis_x): file
+
+  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ---------------------------------------------------------------
+    1           -79.084241931608     0.9358E-01     0.7908E+02
+
+     Iteration     Residual norm
+     -----------------------------
        1           0.2323E-01
        2           0.5910E-02
        3           0.1640E-02
        4           0.5758E-03
-     --------------------------
+     -----------------------------
 
-  Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)
-  ----------------------------------------------------------------
-      2          -79.104321650749     0.6497E-03     0.2008E-01
-  ----------------------------------------------------------------
+    2           -79.104321650749     0.6497E-03     0.2008E-01
 
-     Micro-iter.  Residual norm
-     --------------------------
+     Iteration     Residual norm
+     -----------------------------
        1           0.1843E-03
        2           0.4238E-04
        3           0.1345E-04
        4           0.6342E-05
-     --------------------------
+     -----------------------------
 
-  Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)
-  ----------------------------------------------------------------
-      3          -79.104388570210     0.6474E-05     0.6692E-04
-  ----------------------------------------------------------------
+    3           -79.104388570210     0.6474E-05     0.6692E-04
 
-     Micro-iter.  Residual norm
-     --------------------------
+     Iteration     Residual norm
+     -----------------------------
        1           0.2575E-05
        2           0.1337E-05
        3           0.3661E-06
        4           0.1380E-06
        5           0.6206E-07
-     --------------------------
+     -----------------------------
 
-  Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)
-  ----------------------------------------------------------------
-      4          -79.104388524003     0.6903E-07     0.4621E-07
-  ----------------------------------------------------------------
+    4           -79.104388524003     0.6903E-07     0.4621E-07
 
-     Micro-iter.  Residual norm
-     --------------------------
+     Iteration     Residual norm
+     -----------------------------
        1           0.2555E-07
        2           0.1405E-07
        3           0.2274E-08
        4           0.1015E-08
        5           0.4368E-09
-     --------------------------
+     -----------------------------
 
-  Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)
-  ----------------------------------------------------------------
-      5          -79.104388532992     0.6077E-09     0.8989E-08
-  ----------------------------------------------------------------
+    5           -79.104388532992     0.6077E-09     0.8989E-08
 
-     Micro-iter.  Residual norm
-     --------------------------
+     Iteration     Residual norm
+     -----------------------------
        1           0.2836E-09
        2           0.1353E-09
        3           0.5395E-10
        4           0.1921E-10
        5           0.4351E-11
-     --------------------------
+     -----------------------------
 
-  Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)
-  ----------------------------------------------------------------
-      6          -79.104388533033     0.5948E-11     0.4073E-10
-  ----------------------------------------------------------------
+    6           -79.104388533033     0.5948E-11     0.4073E-10
 
-     Micro-iter.  Residual norm
-     --------------------------
+     Iteration     Residual norm
+     -----------------------------
        1           0.2631E-11
        2           0.1303E-11
        3           0.4264E-12
        4           0.2021E-12
-       5           0.5345E-13
-     --------------------------
+       5           0.5344E-13
+     -----------------------------
 
-  Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)
-  ----------------------------------------------------------------
-      7          -79.104388533033     0.4280E-13     0.1421E-12
-  ----------------------------------------------------------------
+    7           -79.104388533033     0.4263E-13     0.1421E-12
+  ---------------------------------------------------------------
   Convergence criterion met in 7 iterations!
 
   - Ground state summary:
@@ -453,17 +436,18 @@
        18      3      18      3       -0.031349888894
      --------------------------------------------------
 
-     T1 diagnostic (|T1|/sqrt(N_e)): 0.007219544905
-
   - Finished solving the CC3 ground state equations
+
+     Total wall time (sec):              1.30667
+     Total cpu time (sec):               2.61445
 
   - Timings for the CC3 ground state calculation
 
-     Total wall time (sec):              2.62357
-     Total cpu time (sec):               5.24077
+     Total wall time (sec):              1.52021
+     Total cpu time (sec):               3.03999
 
-     Peak memory usage during the execution of eT: 16.307080 MB
+     Peak memory usage during the execution of eT: 17.783248 MB
 
-  Calculation ended: 2021-03-08 15:04:04 UTC +01:00
+  Calculation ended: 2021-03-09 17:28:13 UTC +01:00
 
   eT terminated successfully!

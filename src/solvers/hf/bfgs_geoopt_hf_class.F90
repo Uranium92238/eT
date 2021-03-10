@@ -31,7 +31,7 @@ module bfgs_geoopt_hf_class
    use memory_manager_class,  only: mem
 !
    use hf_class,              only: hf
-   use scf_diis_hf_class,     only: scf_diis_hf
+   use scf_solver_class,      only: scf_solver
    use bfgs_tool_class,       only: bfgs_tool
    use timings_class,         only: timings
 !
@@ -155,20 +155,20 @@ contains
       real(dp), intent(inout) :: energy_threshold, gradient_threshold
       logical, intent(inout)  :: energy_convergence
 !
-      call input%get_keyword_in_section('gradient threshold', &
+      call input%get_keyword('gradient threshold', &
                                         'solver scf geoopt', gradient_threshold)
 !
-      if (input%requested_keyword_in_section('energy threshold', 'solver scf geoopt')) then
+      if (input%is_keyword_present('energy threshold', 'solver scf geoopt')) then
 !
          energy_convergence = .true.
-         call input%get_keyword_in_section('energy threshold', &
+         call input%get_keyword('energy threshold', &
                                         'solver scf geoopt', energy_threshold)
       endif
 !
-      call input%get_keyword_in_section('max iterations', &
+      call input%get_keyword('max iterations', &
                                         'solver scf geoopt', solver%max_iterations)
 !
-      call input%get_keyword_in_section('max step', &
+      call input%get_keyword('max step', &
                                         'solver scf geoopt', solver%max_step)
 !
    end subroutine read_settings_bfgs_geoopt_hf
@@ -206,33 +206,17 @@ contains
 !  
       class(hf) :: wf 
 !
-      real(dp), dimension(3, wf%system%n_atoms) :: geometry, gradient 
+      real(dp), dimension(3, wf%n_atomic_centers) :: geometry, gradient 
 !
-      type(scf_diis_hf), allocatable :: hf_gs_solver
+      type(scf_solver), allocatable :: hf_gs_solver
 !
       logical :: restart
 !
       if (solver%iteration > 1) then
 !
-!        Update geometry to the one requested
-!
-         call wf%system%set_geometry(geometry)
-         call wf%system%write_xyz_file(append=.true.)
-!
-!        Re-decompose the AO overlap 
-!
-         call wf%destruct_pivot_matrix_ao_overlap()
-         call wf%destruct_cholesky_ao_overlap()
+         call wf%set_geometry(geometry, 'bohr')
 !
          call wf%set_n_mo() 
-!
-!        Re-compute the AO h matrix 
-!
-         call wf%get_ao_h_wx(wf%ao_h)
-!
-!        Update Cauchy Schwarz screening list 
-!
-         call wf%construct_shp_eri_schwarz()
 !
       endif
 !
@@ -242,7 +226,7 @@ contains
 !
       if (solver%restart .or. solver%iteration > 1) restart = .true.
 !
-      hf_gs_solver = scf_diis_hf(wf, restart, skip=.false.)
+      hf_gs_solver = scf_solver(restart = restart, acceleration_type = 'diis', skip = .false.)
       call hf_gs_solver%run(wf)
       call wf%print_summary(print_mo_info=.false.)
 !
@@ -271,15 +255,15 @@ contains
 !
       real(dp) :: energy, prev_energy, max_gradient
 !
-      real(dp), dimension(3,wf%system%n_atoms) :: gradient
-      real(dp), dimension(3,wf%system%n_atoms) :: step
-      real(dp), dimension(3,wf%system%n_atoms) :: geometry
+      real(dp), dimension(3,wf%n_atomic_centers) :: gradient
+      real(dp), dimension(3,wf%n_atomic_centers) :: step
+      real(dp), dimension(3,wf%n_atomic_centers) :: geometry
 !
       type(bfgs_tool) :: bfgs
 !
       type(timings), allocatable :: iteration_timer  
 !
-      bfgs = bfgs_tool(3*wf%system%n_atoms, solver%max_step)
+      bfgs = bfgs_tool(3*wf%n_atomic_centers, solver%max_step)
       call bfgs%initialize_arrays()
 !
       iteration_timer = timings('BFGS geoopt iteration time', pl='normal')
@@ -291,7 +275,7 @@ contains
       energy = zero
       prev_energy = zero
 !
-      geometry = wf%system%get_geometry()
+      geometry = wf%get_molecular_geometry()
 !
       do while (.not. converged .and. solver%iteration <= solver%max_iterations)        
 !
@@ -301,7 +285,7 @@ contains
          gradient = solver%determine_gradient(wf, geometry)
 !
          energy = wf%energy 
-         max_gradient = get_abs_max(gradient, 3*wf%system%n_atoms)
+         max_gradient = get_abs_max(gradient, 3*wf%n_atomic_centers)
 !
          call output%printf('n', 'Geometry optimization iteration: (i4)', &
                             ints=[solver%iteration], fs='(//t3,a)')
@@ -331,8 +315,8 @@ contains
 !
          endif
 !
-         call wf%system%print_geometry('angstrom')
-         call wf%system%print_geometry('bohr')
+         call wf%ao%print_centers('angstrom')
+         call wf%ao%print_centers('bohr')
 !
          prev_energy = energy 
          call iteration_timer%turn_off()

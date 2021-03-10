@@ -215,8 +215,8 @@ contains
       batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
 !
       call output%printf('debug', 'Forced batch of index with dimension: (i0). &
-                         &Number of batches: (i0), Max length of batch: (i0)',   &
-                         ints=[batch_p%index_dimension, batch_p%num_batches,     &
+                         &Number of batches: (i0), Max length of batch: (i0)', &
+                         ints=[batch_p%index_dimension, batch_p%num_batches,   &
                          batch_p%max_length], ll=90)
 !
    end subroutine force_batch_batching_index
@@ -246,14 +246,18 @@ contains
 !!    Written by Eirik F. Kjønstad, Apr 2020 
 !!
 !!    Does initialization needed to do one batch with entire range, 
-!!    i.e. settings the number of batches to 1.
+!!    i.e. setting the number of batches to 1.
 !!
       implicit none 
 !
       class(batching_index), intent(inout) :: batch_p 
 !
       batch_p%max_length  = batch_p%index_dimension
-      batch_p%num_batches = 1      
+      batch_p%num_batches = 1
+!
+      batch_p%first  = 1      
+      batch_p%last   = batch_p%index_dimension
+      batch_p%length = batch_p%index_dimension
 !
    end subroutine do_single_batch_batching_index
 !

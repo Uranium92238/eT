@@ -26,7 +26,10 @@ n_states = 6
 threshold = 1.0e-10
 f = get_eom_filter(n_states, threshold)
 
-f.append(get_filter(string='Warning: Skipped state',
+# Test the warning messages
+f.append(get_filter(re=r'.*is parallel to',
+                    abs_tolerance=1.0e-10))
+f.append(get_filter(re=r'.*Number of states reduced to',
                     abs_tolerance=1.0e-10))
 
 # invoke the command line interface parser which returns options

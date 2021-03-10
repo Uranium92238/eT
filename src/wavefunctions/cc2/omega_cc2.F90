@@ -45,16 +45,16 @@ contains
 !
       class(cc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1), intent(out) :: omega
 !
       type(timings) :: timer
 !
-      timer = timings('Construct cc2 omega', pl='normal')
+      timer = timings('Construct CC2 omega', pl='normal')
       call timer%turn_on()
 !
-      call zero_array(omega, wf%n_gs_amplitudes)
+      call zero_array(omega, wf%n_t1)
 !
-      call wf%omega_ccs_a1(omega)
+      call wf%ccs%construct_omega(omega)
 !
       call wf%construct_u_aibj()
 !
@@ -65,70 +65,6 @@ contains
       call timer%turn_off()
 !
    end subroutine construct_omega_cc2
-!
-!
-   module subroutine construct_omega2_cc2(wf, omega2, t)
-!!
-!!    Construct Omega2
-!!    Written by Sarai D. Folkestad, Sep 2019
-!!
-!!    Constructs the doubles part of omega for CC2
-!!
-!!    Note that this is not used to solve CC2 equations, 
-!!    but used for debug of Jacobian matrix.
-!!
-!!    omega2 = 1/Δ_aibj (g_aibj + e_aibj t_aibj)
-!! 
-!!    NOTE: made in the biorthonormal basis
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      real(dp), dimension(wf%n_t2), intent(out) :: omega2
-      real(dp), dimension(wf%n_t2), intent(in) :: t
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj
-!
-      integer :: a, i, b, j, ai, bj, aibj, aiai
-!
-      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call wf%eri%get_eri_t1('vovo', g_aibj)
-!
-      call packin(omega2, g_aibj, wf%n_v*wf%n_o)
-!
-      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-            do b = 1, wf%n_v
-               do j = 1, wf%n_o
-!
-                  ai = wf%n_v*(i - 1) + a
-                  bj = wf%n_v*(j - 1) + b
-                  aibj = max(ai, bj)*(max(ai,bj) - 3)/2 + ai + bj
-!
-                  omega2(aibj) = omega2(aibj) + t(aibj)*&
-                        (wf%orbital_energies(a + wf%n_o)&
-                        +wf%orbital_energies(b + wf%n_o)&
-                        -wf%orbital_energies(i)&
-                        -wf%orbital_energies(j))
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-      do ai = 1, wf%n_v*wf%n_o
-!
-         aiai = ai*(ai - 3)/2 + ai*2
-!
-         omega2(aiai) = half*omega2(aiai)
-!
-      enddo
-!
-   end subroutine construct_omega2_cc2
 !
 !
 end submodule omega_cc2

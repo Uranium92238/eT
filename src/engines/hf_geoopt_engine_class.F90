@@ -92,6 +92,9 @@ contains
 !
       type(bfgs_geoopt_hf) :: bfgs_geoopt
 !
+      if (wf%embedded) &
+         call output%error_msg('geometry optimization with embedding is not supported')
+!
       if (.not. engine%restart .and. (trim(engine%ao_density_guess) == 'sad')) then
 !
 !        Generate SAD if requested
@@ -126,12 +129,12 @@ contains
 !
       class(hf_geoopt_engine) :: engine 
 !
-      call input%get_keyword_in_section('algorithm', 'solver scf geoopt', engine%algorithm)
+      call input%get_keyword('algorithm', 'solver scf geoopt', engine%algorithm)
 !
-      if (input%requested_keyword_in_section('restart', 'solver scf geoopt')) engine%restart = .true.
-      if (input%requested_keyword_in_section('restart', 'do')) engine%restart = .true.
+      if (input%is_keyword_present('restart', 'solver scf geoopt')) engine%restart = .true.
+      if (input%is_keyword_present('restart', 'do')) engine%restart = .true.
 !
-      if (input%requested_keyword_in_section('print orbitals', 'solver scf')) then
+      if (input%is_keyword_present('print orbitals', 'solver scf')) then
          engine%print_mo_info = .true.
       end if
 !

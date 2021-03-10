@@ -26,11 +26,6 @@
 
 */
 #include <libint2.hpp>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
-#include <ctime>
 #include <libint2/basis.h>
 #include <libint2/shell.h>
 

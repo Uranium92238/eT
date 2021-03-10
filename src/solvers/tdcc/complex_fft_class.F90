@@ -378,11 +378,11 @@ contains
 !
       class(complex_fft) :: solver
 !
-      call input%get_required_keyword_in_section( &
+      call input%get_required_keyword( &
          'initial time', 'solver fft ' // trim(solver%tag), solver%ti)
-      call input%get_required_keyword_in_section( &
+      call input%get_required_keyword( &
          'final time', 'solver fft ' // trim(solver%tag), solver%tf)
-      call input%get_required_keyword_in_section( &
+      call input%get_required_keyword( &
          'time step', 'solver fft ' // trim(solver%tag), solver%h)
 !
    end subroutine read_settings_complex_fft

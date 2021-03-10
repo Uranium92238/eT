@@ -24,60 +24,34 @@
 
 */
 #include "libint_initialization.h"
-#include "eT_basis.h"
 #include "omp_control.h"
 
-#include <libint2.hpp>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
-#include <ctime>
+#include "eT_basis.h"
 
-using namespace libint2;
-using namespace std;
 
+
+// Global variables declared in this file
+
+// Basis set and atoms
 eTBasis basis;
-extern eTBasis basis;
-
-vector<Engine> electronic_repulsion_engines(omp_get_max_threads());
-extern vector<Engine> electronic_repulsion_engines;
-
-vector<Engine> electronic_repulsion_1der(omp_get_max_threads());
-extern vector<Engine> electronic_repulsion_1der;
-
-vector<Engine> kinetic(omp_get_max_threads());
-extern vector<Engine> kinetic;
-
-Engine kinetic_1der;
-extern Engine kinetic_1der;
-
-vector<Engine> nuclear(omp_get_max_threads());
-extern vector<Engine> nuclear;
-
-Engine nuclear_1der;
-extern Engine nuclear_1der;
-
-Engine overlap_1der;
-extern Engine overlap_1der;
-
-vector<Engine> overlap(omp_get_max_threads());
-extern vector<Engine> overlap;
-
-vector<Engine> dipole(omp_get_max_threads());
-extern vector<Engine> dipole;
-
-vector<Engine> quadrupole(omp_get_max_threads());
-extern vector<Engine> quadrupole;
-
 vector<Atom> atoms;
-extern vector<Atom> atoms;
 
-vector<Engine> potential(omp_get_max_threads());
-extern vector<Engine> potential;
-
-vector<int> shell2atom;
-extern vector<int> shell2atom;
+/*
+   Vectors of Libint engines.
+   Length of vectors is equal to number of threads
+*/
+vector<Engine> electronic_repulsion(omp_get_max_threads());
+vector<Engine> electronic_repulsion_1der(omp_get_max_threads());
+vector<Engine> kinetic(omp_get_max_threads());
+vector<Engine> kinetic_1der(omp_get_max_threads());
+vector<Engine> nuclear(omp_get_max_threads());
+vector<Engine> nuclear_1der(omp_get_max_threads());
+vector<Engine> overlap(omp_get_max_threads());
+vector<Engine> overlap_1der(omp_get_max_threads());
+vector<Engine> dipole(omp_get_max_threads());
+vector<Engine> quadrupole(omp_get_max_threads());
+vector<Engine> coulomb_external_charges(omp_get_max_threads());
+vector<Engine> coulomb_external_unit_charges(omp_get_max_threads());
 
 
 void export_geometry_and_basis_to_libint(const int nAtoms,
@@ -130,7 +104,7 @@ void export_geometry_and_basis_to_libint(const int nAtoms,
     nBasis = 1;
 
     //Loop over the atoms
-    for (int i=0; i < nAtoms; i++)
+    for (int i = 0; i < nAtoms; i++)
     {
         //set atomic number and coordinates in temporaryAtoms coordinates
         temporaryAtoms[i].atomic_number = atomicNumbers[i];
@@ -143,9 +117,10 @@ void export_geometry_and_basis_to_libint(const int nAtoms,
 
         //Check if there's a new basis
         newBasis = true;
-        for (int j=0; j < nBasis; j++){
+        for (int j = 0; j < nBasis; j++){
             if(uniqueBasis[j] == basisString &&
                uniqueCartesians[j] == cartesians[i]){
+
                 newBasis = false;
                 currentBasis = j;
                 break;
@@ -155,6 +130,7 @@ void export_geometry_and_basis_to_libint(const int nAtoms,
         //If we found a new basis, add it to the list,
         //else just add the index to the list for the current basis
         if(newBasis){
+
             nBasis++;
             uniqueBasis.push_back(basisString);
             uniqueCartesians.push_back(cartesians[i]);
@@ -175,7 +151,7 @@ void export_geometry_and_basis_to_libint(const int nAtoms,
     //Set up the new temporary basis
     BasisSet temporary;
 
-    for(int i=0; i<nBasis; i++){
+    for(int i = 0; i < nBasis; i++){
 
         //clear temporary atoms
         temporaryAtoms.clear();
@@ -191,6 +167,7 @@ void export_geometry_and_basis_to_libint(const int nAtoms,
         //Set pure or cartesian for uniqueBasis i
         for(auto& shell: temporary) {
             for(auto& contraction: shell.contr) {
+
                 if (contraction.l >= 2 && uniqueCartesians[i] != 0){
                     contraction.pure = false;
                 }
@@ -202,12 +179,6 @@ void export_geometry_and_basis_to_libint(const int nAtoms,
     }
 }
 
-
-void initialize_shell2atom(){
-
-    shell2atom = basis.shell2atom(atoms);
-
-}
 
 
 void initialize_libint(){
@@ -222,28 +193,30 @@ void finalize_libint(){
 
 }
 
-void initialize_coulomb(){
+void initialize_eri(const double eri_precision){
 
+    electronic_repulsion[0] = Engine(Operator::coulomb, basis.max_nprim(), basis.max_l());
+    electronic_repulsion_1der[0] = Engine(Operator::coulomb, basis.max_nprim(), basis.max_l(), 1);
 
-    Engine temporary(Operator::coulomb, basis.max_nprim(), basis.max_l());
-    temporary.set_precision(1.0e-25);
+    electronic_repulsion[0].set_precision(eri_precision);
+    electronic_repulsion_1der[0].set_precision(eri_precision);
 
-    for (int i = 0; i != omp_get_max_threads(); i++){
-        electronic_repulsion_engines[i] = temporary;
+    for (int i = 1; i < omp_get_max_threads(); i++){
+
+        electronic_repulsion[i] = electronic_repulsion[0];
+        electronic_repulsion_1der[i] = electronic_repulsion_1der[0];
+
     }
 
-    Engine temporary_1der(Operator::coulomb, basis.max_nprim(), basis.max_l(), 1);
-    temporary_1der.set_precision(1.0e-25);
-
-    for (int i = 0; i != omp_get_max_threads(); i++){
-        electronic_repulsion_1der[i] = temporary_1der;
-    }
 }
 
-void set_coulomb_precision(double *prec){
+void set_eri_precision(const double eri_precision){
 
-    for (int i = 0; i != omp_get_max_threads(); i++){
-        electronic_repulsion_engines[i].set_precision(*prec);
+    for (int i = 0; i < omp_get_max_threads(); i++){
+
+        electronic_repulsion[i].set_precision(eri_precision);
+        electronic_repulsion_1der[i].set_precision(eri_precision);
+
     }
 
 }
@@ -251,14 +224,15 @@ void set_coulomb_precision(double *prec){
 void initialize_kinetic(){
 
 
-    Engine temporary(Operator::kinetic, basis.max_nprim(), basis.max_l());
+    kinetic[0] = Engine(Operator::kinetic, basis.max_nprim(), basis.max_l());
+    kinetic_1der[0] = Engine(Operator::kinetic, basis.max_nprim(), basis.max_l(),1);
 
-    for (int i = 0; i != omp_get_max_threads(); i++){
-        kinetic[i] = temporary;
+    for (int i = 1; i < omp_get_max_threads(); i++){
+
+        kinetic[i] = kinetic[0];
+        kinetic_1der[i] = kinetic_1der[0];
+
     }
-
-    Engine temporary_1der(Operator::kinetic, basis.max_nprim(), basis.max_l(),1);
-    kinetic_1der = temporary_1der;
 
 }
 
@@ -270,68 +244,101 @@ void initialize_nuclear(){
                    {{atom.x, atom.y, atom.z}}});
     }
 
-    Engine temporary(Operator::nuclear, basis.max_nprim(), basis.max_l());
+    nuclear[0] = Engine(Operator::nuclear, basis.max_nprim(), basis.max_l());
+    nuclear_1der[0] = Engine(Operator::nuclear, basis.max_nprim(), basis.max_l(), 1);
 
-    temporary.set_params(q);
+    nuclear[0].set_params(q);
+    nuclear_1der[0].set_params(q);
 
-    for (int i = 0; i != omp_get_max_threads(); i++){
-        nuclear[i] = temporary;
+    for (int i = 1; i < omp_get_max_threads(); i++){
+
+        nuclear[i] = nuclear[0];
+        nuclear_1der[i] = nuclear_1der[0];
+
     }
-
-    Engine temporary_1der(Operator::nuclear, basis.max_nprim(), basis.max_l(),1);
-    temporary_1der.set_params(q);
-    nuclear_1der = temporary_1der;
 
 }
 
 void initialize_overlap(){
 
-    Engine temporary(Operator::overlap, basis.max_nprim(), basis.max_l());
+    overlap[0] = Engine(Operator::overlap, basis.max_nprim(), basis.max_l());
+    overlap_1der[0] = Engine(Operator::overlap, basis.max_nprim(), basis.max_l(),1);
 
-    for (int i = 0; i != omp_get_max_threads(); i++){
-        overlap[i] = temporary;
+    for (int i = 1; i < omp_get_max_threads(); i++){
+
+        overlap[i] = overlap[0];
+        overlap_1der[i] = overlap_1der[0];
+
     }
-
-    Engine temporary_1der(Operator::overlap, basis.max_nprim(), basis.max_l(),1);
-    overlap_1der = temporary_1der;
 
 }
 
 void initialize_dipole(){
 
-    Engine temporary(Operator::emultipole1, basis.max_nprim(), basis.max_l()); // Note that expansion point = (0,0,0) by default
+    dipole[0] = Engine(Operator::emultipole1, basis.max_nprim(), basis.max_l()); // Note that expansion point = (0,0,0) by default
 
-    for (int i = 0; i != omp_get_max_threads(); i++){
-        dipole[i] = temporary;
+    for (int i = 1; i < omp_get_max_threads(); i++){
+        dipole[i] = dipole[0];
     }
 
 }
 
 void initialize_quadrupole(){
 
-    Engine temporary(Operator::emultipole2, basis.max_nprim(), basis.max_l()); // Note that expansion point = (0,0,0) by default
+    quadrupole[0] = Engine(Operator::emultipole2, basis.max_nprim(), basis.max_l()); // Note that expansion point = (0,0,0) by default
 
-    for (int i = 0; i != omp_get_max_threads(); i++){
-        quadrupole[i] = temporary;
+    for (int i = 0; i < omp_get_max_threads(); i++){
+        quadrupole[i] = quadrupole[0];
     }
 
 }
 
-void initialize_potential(double *charges, double *coordinates, int *n_points){
+void initialize_coulomb_external_charges(const double *charges, const double *coordinates,
+                                         const int n_points){
 
-    Engine temporary(Operator::nuclear, basis.max_nprim(), basis.max_l());
+    coulomb_external_charges[0] = Engine(Operator::nuclear, basis.max_nprim(), basis.max_l());
 
     vector<pair<double, array<double, 3>>> points;
-    for (int i = 0; i <= *n_points - 1; i++) {
+
+    for (int i = 0; i < n_points; i++) {
+
       int offset = (i-1)*3 + 3;
-      points.push_back({static_cast<double>(charges[i]),
-                   {{*(coordinates+offset),*(coordinates+offset+1),*(coordinates+offset+2)}}});
+      points.push_back({(charges[i]),
+                   {{*(coordinates+offset),*(coordinates+offset+1),
+                    *(coordinates+offset+2)}}});
+
     }
 
-    temporary.set_params(points); // Tell the engine where the atomic charges are
+    coulomb_external_charges[0].set_params(points);
 
-    for (int i = 0; i != omp_get_max_threads(); i++){
-        potential[i] = temporary;
+    for (int i = 1; i < omp_get_max_threads(); i++){
+
+        coulomb_external_charges[i] = coulomb_external_charges[0];
+
+    }
+
+}
+
+void initialize_coulomb_external_unit_charges(const double *coordinates, const int n_points){
+
+    coulomb_external_unit_charges[0] = Engine(Operator::nuclear, basis.max_nprim(), basis.max_l());
+
+    vector<pair<double, array<double, 3>>> points;
+
+    for (int i = 0; i < n_points; i++) {
+
+      int offset = (i-1)*3 + 3;
+      points.push_back({static_cast<double>(1.0e0),
+                   {{*(coordinates+offset),*(coordinates+offset+1),
+                    *(coordinates+offset+2)}}});
+    }
+
+    coulomb_external_unit_charges[0].set_params(points);
+
+    for (int i = 1; i < omp_get_max_threads(); i++){
+
+        coulomb_external_unit_charges[i] = coulomb_external_unit_charges[0];
+
     }
 
 }

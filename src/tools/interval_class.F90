@@ -22,35 +22,34 @@ module interval_class
 !!    Interval class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-   use kinds
-!
    implicit none
 !
    type interval
 !
-      integer :: first = -1
-      integer :: last  = -1
-      integer :: length = -1
+      integer :: first  = -1
+      integer :: last   = -1
+      integer :: length = 0
 !
    contains
 !
       procedure :: is_subset              => is_subset_interval
       procedure :: empty_intersection     => empty_intersection_interval 
       procedure :: element_is_member      => element_is_member_interval
+      procedure :: set_interval           => set_interval_interval
 !
    end type interval
 !
    interface interval
 !
       procedure :: new_interval 
-      procedure :: new_interval_copy
+      procedure :: new_interval_from_template 
 !
    end interface interval 
 !
 contains 
 !
 !
-   function new_interval(first, last) result(intval)
+   pure function new_interval(first, last) result(this)
 !!
 !!    New interval 
 !!    Written by Eirik F. Kjønstad, 2019 
@@ -59,34 +58,30 @@ contains
 !
       integer, intent(in) :: first, last 
 !
-      type(interval) :: intval 
+      type(interval) :: this 
 !
-      intval%first = first 
-      intval%last  = last 
-      intval%length = last - first + 1
+      call this%set_interval(first, last)
 !
    end function new_interval
 !
 !
-   function new_interval_copy(intval_copy) result(intval)
+   pure function new_interval_from_template(that) result(this) 
 !!
-!!    New interval 
-!!    Written by Eirik F. Kjønstad, 2019 
+!!    New interval from template 
+!!    Written by Eirik F. Kjønstad, 2020
 !!
       implicit none 
 !
-      class(interval), intent(in) :: intval_copy 
+      class(interval), intent(in) :: that
 !
-      type(interval) :: intval 
+      type(interval) :: this 
 !
-      intval%first  = intval_copy%first 
-      intval%last   = intval_copy%last  
-      intval%length = intval_copy%length
+      call this%set_interval(that%first, that%last)
 !
-   end function new_interval_copy
+   end function new_interval_from_template
 !
 !
-   pure function is_subset_interval(intval, first, last) result(is_subset)
+   pure function is_subset_interval(this, first, last) result(is_subset)
 !!
 !!    Is subset 
 !!    Written by Eirik F. Kjønstad, Apr 2020 
@@ -95,19 +90,19 @@ contains
 !!
       implicit none 
 !
-      class(interval), intent(in) :: intval 
+      class(interval), intent(in) :: this 
 !
       integer, intent(in) :: first, last 
 !
       logical :: is_subset
 !
       is_subset = .false.
-      if (first .ge. intval%first .and. last .le. intval%last) is_subset = .true.
+      if (first .ge. this%first .and. last .le. this%last) is_subset = .true.
 !
    end function is_subset_interval
 !
 !
-   pure function empty_intersection_interval(intval, first, last) result(empty)
+   pure function empty_intersection_interval(this, first, last) result(empty)
 !!
 !!    Empty intersection 
 !!    Written by Eirik F. Kjønstad, Apr 2020 
@@ -116,7 +111,7 @@ contains
 !!
       implicit none 
 !
-      class(interval), intent(in) :: intval 
+      class(interval), intent(in) :: this 
 !
       integer, intent(in) :: first, last 
 !
@@ -126,8 +121,8 @@ contains
 !
 !     Is first or last in the interval? 
 !
-      if (first .ge. intval%first .and. first .le. intval%last .or. &
-          last  .ge. intval%first .and. last .le. intval%last) then 
+      if (first .ge. this%first .and. first .le. this%last .or. &
+          last  .ge. this%first .and. last  .le. this%last) then 
 !
          empty = .false.
          return 
@@ -136,12 +131,12 @@ contains
 !
 !     Is interval contained in [first, last]? 
 !
-      if (first .lt. intval%first .and. last .gt. intval%last) empty = .false.
+      if (first .lt. this%first .and. last .gt. this%last) empty = .false.
 !
    end function empty_intersection_interval
 !
 !
-   pure function element_is_member_interval(intval, n) result(member)
+   pure function element_is_member_interval(this, n) result(member)
 !!
 !!    Element is member 
 !!    Written by Eirik F. Kjønstad, Mar 2020
@@ -150,16 +145,36 @@ contains
 !!
       implicit none 
 !
-      class(interval), intent(in) :: intval 
+      class(interval), intent(in) :: this 
 !
       integer, intent(in) :: n  
 !
       logical :: member
 !
       member = .false.
-      if (n .ge. intval%first .and. n .le. intval%last) member = .true.
+      if (n .ge. this%first .and. n .le. this%last) member = .true.
 !
    end function element_is_member_interval
+!
+!
+   pure subroutine set_interval_interval(this, first, last)
+!!
+!!    Set interval
+!!    Written by Eirik F. Kjønstad, Jan 2021
+!!
+!!    Sets the interval (first, last, length) from specified first and last.
+!!
+      implicit none 
+!
+      class(interval), intent(inout) :: this 
+!
+      integer, intent(in) :: first, last 
+!
+      this%first  = first 
+      this%last   = last 
+      this%length = last - first + 1 
+!
+   end subroutine set_interval_interval
 !
 !
 end module interval_class

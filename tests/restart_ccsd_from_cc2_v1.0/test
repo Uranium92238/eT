@@ -7,20 +7,22 @@ import os
 import sys
 
 import shutil
-import subprocess
 from pathlib import Path
 
 # we make sure we can import runtest and runtest_config
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 # we import essential functions from the runtest library
-from runtest import version_info, get_filter, cli, run
+from runtest import version_info, cli, run
 
 # this tells runtest how to run your code
 from runtest_config import configure
 
 # functions to get the filters
-from filters import get_es_filter 
+from filters import get_es_filter
+
+# functions to convert v1.0 files
+from convert_v1_0_restart_files import convert_files_in_dir
 
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
@@ -39,23 +41,16 @@ options = cli()
 ierr = 0
 
 # Copy old_restart_files to converted_files
-src = os.path.join(os.path.dirname(__file__), "old_restart_files")
-dest = os.path.join(os.path.dirname(__file__), "converted_files")
+test_dir = Path(__file__).parent
+src = Path(test_dir / "old_restart_files")
+dest = Path(test_dir / "converted_files")
 
-if os.path.exists(dest):
-    shutil.rmtree(dest)
-shutil.copytree(src, dest)
+if dest.exists():
+    shutil.rmtree(dest.resolve())
+shutil.copytree(src.resolve(), dest.resolve())
 
 # Use the script on converted_files
-script = Path.cwd().parent / "convert_v.1.0_restart_files.py" 
-py_exe_ = sys.executable # use the correct python executable
-call_script = f"{py_exe_} {script} {dest}"
-
-p = subprocess.run(
-    call_script,
-    shell=True,
-    stderr=subprocess.PIPE,
-)
+convert_files_in_dir(dest)
 
 for inp in ['restart_ccsd.inp']:
     #

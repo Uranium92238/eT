@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.1 - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,11 +14,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.3, Bastion
+   This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Configuration date: 2021-03-08 15:01:10 UTC +01:00
-  Git branch:         test-generator
-  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
   Fortran compiler:   GNU 8.4.0
   C compiler:         GNU 8.4.0
   C++ compiler:       GNU 8.4.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-08 15:04:32 UTC +01:00
+  Calculation started: 2021-03-09 17:23:59 UTC +01:00
 
 
   :: Input file
@@ -44,10 +44,6 @@
         charge: 0
         multiplicity: 3
      end system
-
-     print
-        output print level: verbose
-     end print
 
      method
         uhf
@@ -76,20 +72,8 @@
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
-
-     Name:             hoh he
-     Charge:           0
-     Multiplicity:     3
-     Coordinate units: angstrom
-
-     Pure basis functions:         29
-     Cartesian basis functions:    30
-     Primitive basis functions:    56
-
-     Nuclear repulsion energy (a.u.):             12.116100574587
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
+  :: UHF wavefunction
+  ======================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -97,9 +81,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H      0.866810000000     0.601440000000     5.000000000000        1
-        2 H     -0.866810000000     0.601440000000     5.000000000000        2
-        3 O      0.000000000000    -0.075790000000     5.000000000000        3
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  H    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
         4 He     0.100000000000    -0.020000000000     7.530000000000        4
      ==============================================================================
 
@@ -109,26 +93,25 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H      1.638033502034     1.136556880358     9.448630622825        1
-        2 H     -1.638033502034     1.136556880358     9.448630622825        2
-        3 O      0.000000000000    -0.143222342981     9.448630622825        3
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  H    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
         4 He     0.188972612457    -0.037794522491    14.229637717975        4
      ==============================================================================
 
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  :: UHF wavefunction
-  ======================
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               29
+     Number of orthonormal atomic orbitals:   29
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of alpha electrons:               7
      Number of beta electrons:                5
      Number of virtual alpha orbitals:       22
      Number of virtual beta orbitals:        24
      Number of molecular orbitals:           29
-     Number of atomic orbitals:              29
 
 
   :: Hartree-Fock engine
@@ -145,47 +128,40 @@
 
 
   1) Generate initial SAD density
-     Generated atomic density for H  using UHF/cc-pvdz
-     Generated atomic density for O  using UHF/cc-pvdz
-     Generated atomic density for He using UHF/cc-pvdz
 
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
-     Integral cutoff:               0.1000E-16
-
-  - Setting initial AO density to SAD
+  - Setting initial AO density to sad
 
      Energy of initial guess:               -78.755091995809
      Number of electrons in guess:           12.000000000000
 
-  hf_diis_e is stored in memory.
+  - Screening and integral thresholds:
 
-  hf_diis_x is stored in memory.
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1           -78.636386138861     0.3625E-01     0.7864E+02
-  Switching to Fock construction using density differences.
      2           -78.653293795583     0.1336E-01     0.1691E-01
      3           -78.655538844441     0.5379E-02     0.2245E-02
      4           -78.656115043943     0.2588E-02     0.5762E-03
@@ -194,24 +170,24 @@
      7           -78.656324250241     0.8493E-04     0.5921E-05
      8           -78.656324376428     0.1689E-04     0.1262E-06
      9           -78.656324387977     0.1002E-04     0.1155E-07
-    10           -78.656324392676     0.8298E-05     0.4699E-08
+    10           -78.656324392676     0.8298E-05     0.4698E-08
     11           -78.656324402198     0.2642E-05     0.9522E-08
     12           -78.656324403841     0.6399E-06     0.1644E-08
     13           -78.656324403923     0.3803E-06     0.8217E-10
-    14           -78.656324403960     0.2770E-06     0.3620E-10
-    15           -78.656324403999     0.2210E-06     0.3901E-10
-    16           -78.656324404022     0.9437E-07     0.2306E-10
-    17           -78.656324404025     0.5280E-07     0.2927E-11
-    18           -78.656324404025     0.3805E-07     0.4974E-12
-    19           -78.656324404025     0.1762E-07     0.4263E-13
-    20           -78.656324404025     0.5746E-08     0.1421E-13
-    21           -78.656324404025     0.1892E-08     0.4263E-13
-    22           -78.656324404025     0.8109E-09     0.2842E-13
-    23           -78.656324404025     0.4098E-09     0.1421E-13
-    24           -78.656324404025     0.1701E-09     0.2842E-13
-    25           -78.656324404025     0.6925E-10     0.5684E-13
-    26           -78.656324404025     0.2248E-10     0.4263E-13
-    27           -78.656324404025     0.6542E-11     0.1421E-13
+    14           -78.656324403960     0.2770E-06     0.3622E-10
+    15           -78.656324403999     0.2210E-06     0.3898E-10
+    16           -78.656324404022     0.9437E-07     0.2304E-10
+    17           -78.656324404025     0.5280E-07     0.2998E-11
+    18           -78.656324404025     0.3805E-07     0.4121E-12
+    19           -78.656324404025     0.1762E-07     0.7105E-13
+    20           -78.656324404025     0.5746E-08     0.0000E+00
+    21           -78.656324404025     0.1892E-08     0.0000E+00
+    22           -78.656324404025     0.8109E-09     0.4263E-13
+    23           -78.656324404025     0.4098E-09     0.0000E+00
+    24           -78.656324404025     0.1701E-09     0.1421E-13
+    25           -78.656324404025     0.6925E-10     0.2842E-13
+    26           -78.656324404025     0.2248E-10     0.1421E-13
+    27           -78.656324404025     0.6542E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 27 iterations!
 
@@ -223,17 +199,17 @@
      Electronic energy:            -90.772424978612
      Total energy:                 -78.656324404025
 
+  - UHF wavefunction spin expectation values:
+
+     Sz:                   1.00000000
+     Sz(Sz + 1):           2.00000000
+     S^2:                  2.00764752
+     Spin contamination:   0.00764752
+
 
   3) Calculate dipole and/or quadrupole moments
 
   - Operator: dipole moment [a.u.]
-
-      Comp.   Electronic        Nuclear          Total
-     ------------------------------------------------------
-        x   -0.3690451E+00   0.3779452E+00   0.8900143E-02
-        y   -0.1105328E+01   0.1051746E+01  -0.5358252E-01
-        z   -0.1229246E+03   0.1229456E+03   0.2094896E-01
-     ------------------------------------------------------
 
      x:          0.0089001
      y:         -0.0535825
@@ -243,13 +219,6 @@
 
   - Operator: dipole moment [Debye]
 
-      Comp.   Electronic        Nuclear          Total
-     ------------------------------------------------------
-        x   -0.9380190E+00   0.9606409E+00   0.2262191E-01
-        y   -0.2809465E+01   0.2673272E+01  -0.1361932E+00
-        z   -0.3124433E+03   0.3124965E+03   0.5324694E-01
-     ------------------------------------------------------
-
      x:          0.0226219
      y:         -0.1361932
      z:          0.0532469
@@ -258,11 +227,11 @@
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):              3.55466
-     Total cpu time (sec):               7.01920
+     Total wall time (sec):              1.59667
+     Total cpu time (sec):               3.15363
 
-     Peak memory usage during the execution of eT: 279.448 KB
+     Peak memory usage during the execution of eT: 293.600 KB
 
-  Calculation ended: 2021-03-08 15:04:35 UTC +01:00
+  Calculation ended: 2021-03-09 17:24:00 UTC +01:00
 
   eT terminated successfully!

@@ -1,5 +1,4 @@
 !
-!
 !  eT - a coupled cluster program
 !  Copyright (C) 2016-2021 the authors of eT
 !
@@ -29,6 +28,7 @@ module triples_class
 !!
 !
    use ccsd_class, only: ccsd
+   use batching_index_class, only : batching_index
    use parameters
 !
    implicit none
@@ -37,8 +37,21 @@ module triples_class
 !
    contains
 !
-      procedure :: construct_W            => construct_W_triples
-      procedure :: divide_by_orbital_differences => divide_by_orbital_differences_triples
+      procedure :: construct_W                    => construct_W_triples
+      procedure :: construct_V                    => construct_V_triples
+      procedure :: construct_W_permutation        => construct_W_permutation_triples
+!
+      procedure :: divide_by_orbital_differences  => divide_by_orbital_differences_triples
+!
+      procedure :: setup_vvvo                     => setup_vvvo_triples
+      procedure :: setup_vvov                     => setup_vvov_triples
+      procedure :: setup_ovov                     => setup_ovov_triples
+      procedure :: setup_oovo                     => setup_oovo_triples
+      procedure :: setup_ooov                     => setup_ooov_triples
+!
+      procedure :: point_vvvo                     => point_vvvo_triples
+      procedure :: point_vooo                     => point_vooo_triples
+      procedure :: point_vvoo                     => point_vvoo_triples
 !
    end type triples
 !
@@ -46,21 +59,23 @@ module triples_class
 contains
 !
 !
-   subroutine construct_W_triples(wf, i, j, k, t_abc, u_abc, t_abij, &
-                             g_bdci, g_bdcj, g_bdck, &
-                             g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck, &
-                             overwrite)
+   subroutine construct_W_triples(wf, i, j, k, u_abc, v_abc, t_abij, &
+                                  g_bdci, g_bdcj, g_bdck, &
+                                  g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck)
 !!
-!!    Construct W intermediate
-!!    Written by Rolf H. Myhre, January 2019
+!!    Construct W
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Oct 2020
 !!
 !!    Calculate the intermediate W for occupied indices i,j,k
 !!
 !!    Contributions to W
 !!    W^abc_ijk = P^abc_ijk(sum_d t^ad_ij(bd|ck) - sum_l t^ab_il (lj|ck))
 !!
+!!    Each permutation is obtained by a call to construct_W_permutation
+!!
 !!    T^abc_ijk = W^abc_ijk/eps^abc_ijk
-!!    R^abc_ijk = (W^abc_ijk + W^abc_ijk(C1))/(eps^abc_ijk-omega)
+!!
+!!    Note: v_abc contains W^abc in the end
 !!
       use reordering
 !
@@ -70,253 +85,282 @@ contains
 !
       integer, intent(in) :: i, j, k
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: t_abc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: v_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abij
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: t_abij
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck
+!     (bd,ci) ordered dbc,i
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdci
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdcj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdck
 !
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljci
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lkci
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lkcj
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_licj
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lick
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljck
-!
-!     If present and true, t_abc is not overwritten by first dgemm
-!     Needed to calculate triples part of the right excitation vector
-      logical, optional, intent(in) :: overwrite
-!
-      real(dp) :: alpha
-!
-      if (.not. present(overwrite)) then
-         alpha = zero
-      elseif (overwrite) then
-         alpha = zero
-      else
-         alpha = one
-      endif
-!
-!
-!     u_abc terms
-!     -----------
-!
-!     t^ad_ij*(bd|ck)
-!     ---------------
-!
-      call dgemm('N', 'N',        &
-                 wf%n_v,          &
-                 wf%n_v**2,       &
-                 wf%n_v,          &
-                 one,             &
-                 t_abij(:,:,i,j), & !t_a_d,ij
-                 wf%n_v,          &
-                 g_bdck,          & !g_d_bc,k
-                 wf%n_v,          &
-                 alpha,           &
-                 t_abc,           &
-                 wf%n_v)
-!
-!     t^ab_lj*(li|ck)
-!     ---------------
-!
-      call dgemm('N', 'N',        &
-                 wf%n_v**2,       &
-                 wf%n_v,          &
-                 wf%n_o,          &
-                 -one,            &
-                 t_abij(:,:,:,j), & !t_ab_l,j
-                 wf%n_v**2,       &
-                 g_lick,          & !g_l_c,ik
-                 wf%n_o,          &
-                 one,             &
-                 t_abc,           &
-                 wf%n_v**2)
-!
-!
-!     t^cd_ki*(ad|bj)
-!     ---------------
-!
-      call dgemm('T', 'T',        &
-                 wf%n_v**2,       &
-                 wf%n_v,          &
-                 wf%n_v,          &
-                 one,             &
-                 g_bdcj,          & !g_d_ab,j
-                 wf%n_v,          &
-                 t_abij(:,:,k,i), & !t_c_d,ki
-                 wf%n_v,          &
-                 one,             &
-                 t_abc,           &
-                 wf%n_v**2)
-!
-!     t^bc_lk*(lj|ai)
-!     ---------------
-!
-      call dgemm('T', 'T',        &
-                 wf%n_v,          &
-                 wf%n_v**2,       &
-                 wf%n_o,          &
-                 -one,            &
-                 g_ljci,          & !g_l_a,ji
-                 wf%n_o,          &
-                 t_abij(:,:,:,k), & !t_bc_l,k
-                 wf%n_v**2,       &
-                 one,             &
-                 t_abc,           &
-                 wf%n_v)
-!
-!     u_acb terms
-!     -----------
-!
-!     t^ad_ik*(cd|bj)
-!     ---------------
-!
-      call dgemm('N', 'N',        &
-                 wf%n_v,          &
-                 wf%n_v**2,       &
-                 wf%n_v,          &
-                 one,             &
-                 t_abij(:,:,i,k), & !t_a_d,ik
-                 wf%n_v,          &
-                 g_bdcj,          & !g_d_cb,j
-                 wf%n_v,          &
-                 zero,            &
-                 u_abc,           &
-                 wf%n_v)
-!
-!     t^ac_lk*(li|bj)
-!     ---------------
-!
-      call dgemm('N', 'N',        &
-                 wf%n_v**2,       &
-                 wf%n_v,          &
-                 wf%n_o,          &
-                 -one,            &
-                 t_abij(:,:,:,k), & !t_ac_l,k
-                 wf%n_v**2,       &
-                 g_licj,          & !g_l_b,ij
-                 wf%n_o,          &
-                 one,             &
-                 u_abc,           &
-                 wf%n_v**2)
-!
-!
-!     t^bd_ji*(ad|ck)
-!     ---------------
-!
-      call dgemm('T', 'T',        &
-                 wf%n_v**2,       &
-                 wf%n_v,          &
-                 wf%n_v,          &
-                 one,             &
-                 g_bdck,          & !g_d_ac,k
-                 wf%n_v,          &
-                 t_abij(:,:,j,i), & !t_b_d,ji
-                 wf%n_v,          &
-                 one,             &
-                 u_abc,           &
-                 wf%n_v**2)
-!
-!     t^cb_lj*(lk|ai)
-!     ---------------
-!
-      call dgemm('T', 'T',        &
-                 wf%n_v,          &
-                 wf%n_v**2,       &
-                 wf%n_o,          &
-                 -one,            &
-                 g_lkci,          & !g_l_a,ki
-                 wf%n_o,          &
-                 t_abij(:,:,:,j), & !t_cb_l,j
-                 wf%n_v**2,       &
-                 one,             &
-                 u_abc,           &
-                 wf%n_v)
-!
-!
-      call sort_123_to_132_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
-!
+!     (lj,ck) ordered cl,jk
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_ljci
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_lkci
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_lkcj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_licj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_lick
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_ljck
 !
 !     u_bac terms
 !     -----------
 !
-!     t^cd_kj*(bd|ai)
-!     ---------------
+!     t^bd_ji*(ad|ck)- t^ac_lk*(li|bj)
+!     --------------------------------
 !
-      call dgemm('T', 'T',        &
-                 wf%n_v**2,       &
-                 wf%n_v,          &
-                 wf%n_v,          &
-                 one,             &
-                 g_bdci,          & !g_d_ba,i
-                 wf%n_v,          &
-                 t_abij(:,:,k,j), & !t_c_d,kj
-                 wf%n_v,          &
-                 zero,            &
-                 u_abc,           &
-                 wf%n_v**2)
+      call wf%construct_W_permutation(j, i, k, u_abc, t_abij, g_bdck, g_licj, zero)
 !
-!     t^ba_li*(lj|ck)
-!     ---------------
+!     bac -> cba
+      call sort_123_to_312(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call dgemm('N', 'N',        &
-                 wf%n_v**2,       &
-                 wf%n_v,          &
-                 wf%n_o,          &
-                 -one,            &
-                 t_abij(:,:,:,i), & !t_ba_l,i
-                 wf%n_v**2,       &
-                 g_ljck,          & !g_l_c,jk
-                 wf%n_o,          &
-                 one,             &
-                 u_abc,           &
-                 wf%n_v**2)
-!
-      call sort_123_to_213_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
-!
-!
-!     u_cab terms
+!     v_cba terms
 !     -----------
 !
-!     t^bd_jk*(cd|ai)
-!     ---------------
+!     t^cd_kj*(bd|ai) - t^ba_li*(lj|ck)
+!     ---------------------------------
 !
-      call dgemm('T', 'T',        &
-                 wf%n_v**2,       &
-                 wf%n_v,          &
-                 wf%n_v,          &
-                 one,             &
-                 g_bdci,          & !g_d_ca,i
-                 wf%n_v,          &
-                 t_abij(:,:,j,k), & !t_b_d,jk
-                 wf%n_v,          &
-                 zero,            &
-                 u_abc,           &
-                 wf%n_v**2)
+      call wf%construct_W_permutation(k, j, i, v_abc, t_abij, g_bdci, g_ljck, one)
 !
-!     t^ca_li*(lk|bj)
-!     ---------------
+!     cba -> acb
+      call sort_123_to_312(v_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call dgemm('N', 'N',        &
-                 wf%n_v**2,       &
-                 wf%n_v,          &
-                 wf%n_o,          &
-                 -one,            &
-                 t_abij(:,:,:,i), & !t_ca_l,i
-                 wf%n_v**2,       &
-                 g_lkcj,          & !g_l_c,kj
-                 wf%n_o,          &
-                 one,             &
-                 u_abc,           &
-                 wf%n_v**2)
+!     u_acb terms
+!     -----------
 !
-      call sort_123_to_231_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
+!     t^ad_ik*(cd|bj) - t^cb_lj*(lk|ai)
+!     ---------------------------------
+!
+      call wf%construct_W_permutation(i, k, j, u_abc, t_abij, g_bdcj, g_lkci, one)
+!
+!     acb -> cab
+      call sort_123_to_213(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     v_cab terms
+!     -----------
+!
+!     t^cd_ki*(ad|bj) - t^ab_lj*(li|ck)
+!     ---------------------------------
+!
+      call wf%construct_W_permutation(k, i, j, v_abc, t_abij, g_bdcj, g_lick, one)
+!
+!     cab -> bca
+      call sort_123_to_312(v_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     u_bca terms
+!     -----------
+!
+!     t^bd_jk*(cd|ai) - t^ca_li*(lk|bj)
+!     ---------------------------------
+!
+      call wf%construct_W_permutation(j, k, i, u_abc, t_abij, g_bdci, g_lkcj, one)
+!
+!     bca -> abc
+      call sort_123_to_312(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     v_abc terms
+!     -----------
+!
+!     t^ad_ij*(bd|ck) - t^bc_lk*(lj|ai)
+!     ---------------------------------
+!
+      call wf%construct_W_permutation(i, j, k, v_abc, t_abij, g_bdck, g_ljci, one)
 !
    end subroutine construct_W_triples
+!
+!
+   subroutine construct_V_triples(wf, i, j, k, u_abc, v_abc, t2, R2, &
+                                  g_bdci, g_bdcj, g_bdck, &
+                                  g_bdci_c1, g_bdcj_c1, g_bdck_c1, &
+                                  g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck, &
+                                  g_ljci_c1, g_lkci_c1, g_lkcj_c1, g_licj_c1, g_lick_c1, g_ljck_c1)
+!!
+!!    Construct V
+!!    Written by Rolf H. Myhre and Alexander C. Paul, Oct 2020
+!!
+!!    Calculate the intermediate W for occupied indices i,j,k
+!!
+!!    Contributions to W
+!!    V^abc_ijk = P^abc_ijk(sum_d t^ad_ij(bd|ck)    - sum_l t^ab_il (lj|ck)
+!!                         +sum_d t^ad_ij(bd|ck)_c1 - sum_l t^ab_il (lj|ck)_c1)
+!!
+!!    R^abc_ijk = V^abc_ijk/(eps^abc_ijk-omega)
+!!
+!!    Note: v_abc contains V^abc in the end
+!!    Note: This routine does the same as calling construct_W twice:
+!!          once with t2 and c1-transformed integrals and 
+!!          once with R2 and t1-transformed integrals
+!!
+!!    Each permutation is obtained by two calls to construct_W_permutation
+!!
+      use reordering
+!
+      implicit none
+!
+      class(triples) :: wf
+!
+      integer, intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: v_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: t2
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: R2
+!
+!     (bd,ci) ordered dbc,i
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdci
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdcj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdck
+!
+!     c1-transformed (bd,ci) ordered dbc,i
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdci_c1
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdcj_c1
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdck_c1
+!
+!     (lj,ck) ordered cl,jk
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_ljci
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_lkci
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_lkcj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_licj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_lick
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_ljck
+!
+!     c1-transformed (lj,ck) ordered cl,jk
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_ljci_c1
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_lkci_c1
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_lkcj_c1
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_licj_c1
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_lick_c1
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_ljck_c1
+!
+!     u_bac terms
+!     -----------
+!
+!     t^bd_ji*(ad|ck)^c1 - t^ac_lk*(li|bj)^c1 + R^bd_ji*(ad|ck) - R^ac_lk*(li|bj)
+!     ---------------------------------------------------------------------------
+!
+      call wf%construct_W_permutation(j, i, k, u_abc, t2, g_bdck_c1, g_licj_c1, zero)
+      call wf%construct_W_permutation(j, i, k, u_abc, R2, g_bdck, g_licj, one)
+!
+!     bac -> cba
+      call sort_123_to_312(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     v_cba terms
+!     -----------
+!
+!     t^cd_kj*(bd|ai)^c1 - t^ba_li*(lj|ck)^c1 + R^cd_kj*(bd|ai) - R^ba_li*(lj|ck)
+!     ---------------------------------------------------------------------------
+!
+      call wf%construct_W_permutation(k, j, i, v_abc, t2, g_bdci_c1, g_ljck_c1, one)
+      call wf%construct_W_permutation(k, j, i, v_abc, R2, g_bdci, g_ljck, one)
+!
+!     cba -> acb
+      call sort_123_to_312(v_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     u_acb terms
+!     -----------
+!
+!     t^ad_ik*(cd|bj)^c1 - t^cb_lj*(lk|ai)^c1 + R^ad_ik*(cd|bj) - R^cb_lj*(lk|ai)
+!     ---------------------------------------------------------------------------
+!
+      call wf%construct_W_permutation(i, k, j, u_abc, t2, g_bdcj_c1, g_lkci_c1, one)
+      call wf%construct_W_permutation(i, k, j, u_abc, R2, g_bdcj, g_lkci, one)
+!
+!     acb -> cab
+      call sort_123_to_213(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     v_cab terms
+!     -----------
+!
+!     t^cd_ki*(ad|bj)^c1 - t^ab_lj*(li|ck)^c1 + R^cd_ki*(ad|bj) - R^ab_lj*(li|ck)
+!     ---------------------------------------------------------------------------
+!
+      call wf%construct_W_permutation(k, i, j, v_abc, t2, g_bdcj_c1, g_lick_c1, one)
+      call wf%construct_W_permutation(k, i, j, v_abc, R2, g_bdcj, g_lick, one)
+!
+!     cab -> bca
+      call sort_123_to_312(v_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     u_bca terms
+!     -----------
+!
+!     t^bd_jk*(cd|ai)^c1 - t^ca_li*(lk|bj)^c1 + R^bd_jk*(cd|ai) - R^ca_li*(lk|bj)
+!     ---------------------------------------------------------------------------
+!
+      call wf%construct_W_permutation(j, k, i, u_abc, t2, g_bdci_c1, g_lkcj_c1, one)
+      call wf%construct_W_permutation(j, k, i, u_abc, R2, g_bdci, g_lkcj, one)
+!
+!     bca -> abc
+      call sort_123_to_312(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     v_abc terms
+!     -----------
+!
+!     t^ad_ij*(bd|ck)^c1 - t^bc_lk*(lj|ai)^c1 + R^ad_ij*(bd|ck) - R^bc_lk*(lj|ai)
+!     ---------------------------------------------------------------------------
+!
+      call wf%construct_W_permutation(i, j, k, v_abc, t2, g_bdck_c1, g_ljci_c1, one)
+      call wf%construct_W_permutation(i, j, k, v_abc, R2, g_bdck, g_ljci, one)
+!
+   end subroutine construct_V_triples
+!
+!
+   subroutine construct_W_permutation_triples(wf, o1, o2, o3, W, t2, g_vvv_o, g_vo_oo, alpha)
+!!
+!!    Construct W permutation
+!!    Written by Alexander C. Paul and Rolf H. Myhre, Jan 2021
+!!
+!!    Calculates one permutation of the triples amplitudes:
+!!    These contributions are: 
+!!    1. Contraction of a doubles amplitude and a v^3o integral over a virtual index
+!!    W_bac = t^bd_ji*(ad|ck)
+!!
+!!    2. Contraction of a doubles amplitude and a o^3v integral over an occupied index
+!!    W_bac = - t^ac_lk*(li|bj)
+!!
+      implicit none
+!
+      class(triples) :: wf
+!
+      integer, intent(in) :: o1, o2, o3
+      real(dp), intent(in) :: alpha
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout) :: W
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: t2
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_vvv_o
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_vo_oo
+!
+!     W_v1v2v3 += sum_v4 t^v1v4_o1o2 g_v4_v1v2o3
+!
+      call dgemm('N', 'N',      &
+                 wf%n_v,        &
+                 wf%n_v**2,     &
+                 wf%n_v,        &
+                 one,           &
+                 t2(:,:,o1,o2), & ! t_b_d,ji
+                 wf%n_v,        &
+                 g_vvv_o,       & ! g_d_ac,k
+                 wf%n_v,        &
+                 alpha,         &
+                 W, wf%n_v)
+!
+!     W_v1v2v3 += sum_o4 g_v1o4_o2o2 t^v2v3_o4o3
+!
+      call dgemm('N', 'T',     &
+                 wf%n_v,       &
+                 wf%n_v**2,    &
+                 wf%n_o,       &
+                 -one,         &
+                 g_vo_oo,      & ! g_b_l,ij
+                 wf%n_v,       &
+                 t2(:,:,:,o3), & ! t_ac_l,k
+                 wf%n_v**2,    &
+                 one,          &
+                 W, wf%n_v)
+!
+   end subroutine construct_W_permutation_triples
 !
 !
    subroutine divide_by_orbital_differences_triples(wf, i, j, k, t_abc, omega)
@@ -327,7 +371,7 @@ contains
 !!    Divide an array of triples amplitudes (single i,j,k) 
 !!    by the respective orbital energy differences eps^abc_ijk
 !!
-!!    If present divide by eps^abc_ijk - omega instead of eps^abc_ijk
+!!    omega: If present divide by eps^abc_ijk - omega instead of eps^abc_ijk
 !!
       implicit none
 !
@@ -352,14 +396,6 @@ contains
 !
       end if 
 !
-!$omp parallel do schedule(static) private(a)
-      do a = 1,wf%n_v
-!
-         t_abc(a,a,a) = zero
-!
-      enddo
-!$omp end parallel do
-!
 !$omp parallel do schedule(static) private(c,b,a,epsilon_c,epsilon_cb)
       do c = 1,wf%n_v
 !
@@ -380,6 +416,382 @@ contains
 !
 !
    end subroutine divide_by_orbital_differences_triples
+!
+!
+   subroutine setup_vvvo_triples(wf, g_vvvo, point, unordered_g_vvvo, batch_s, &
+                                 c_ai, mo, left)
+!!
+!!    Setup vvvo
+!!    Written by Alexander C. Paul, Oct 2020
+!!
+!!    Setups the vvvo integral and the pointer for a triples calculation
+!!    The integral is given in batches over the occupied index
+!!
+!!    The integral is returned in 2134 order:
+!!
+!!    g_vvvo:           final sorted integral array
+!!    point:            pointer to g_vvvo integral
+!!    unordered_g_vvvo: help array for reordering
+!!    c_ai:             use the c1-transformed integral
+!!    mo:               use the "normal" MO integral (for CCSD(T))
+!!    left:             return integral in 1324 order (for the transpose Jacobian)
+!!
+      use reordering, only: sort_1234_to_1324, sort_1234_to_2134
+!
+      implicit none
+!
+      class(triples) :: wf
+!
+      type(batching_index), intent(in) :: batch_s
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_s%length), target, intent(out)  :: g_vvvo
+      real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
+!
+      real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_vvvo
+      real(dp), dimension(wf%n_v, wf%n_o), optional, intent(in)  :: c_ai
+!
+      logical, optional, intent(in) :: mo, left
+      logical :: mo_, left_
+!
+      mo_   = .false.
+      left_ = .false.
+      if (present(mo)) mo_ = mo
+      if (present(left)) left_ = left
+!
+      if (.not. (mo_ .or. present(c_ai))) then
+!
+         call wf%eri%get_eri_t1('vvvo', unordered_g_vvvo, &
+                                 first_s=batch_s%first, last_s=batch_s%last)
+!
+      else if(present(c_ai)) then
+!
+         call wf%eri%get_eri_c1('vvvo', unordered_g_vvvo, c_ai, &
+                                 first_s=batch_s%first, last_s=batch_s%last)
+!
+      else if(mo_) then
+!
+         call wf%eri%get_eri_mo('vvvo', unordered_g_vvvo, &
+                                 first_s=batch_s%first, last_s=batch_s%last)
+!
+      end if
+!
+      if (.not. left_) then
+!
+         call sort_1234_to_2134(unordered_g_vvvo, g_vvvo, wf%n_v, wf%n_v, &
+                                                          wf%n_v, batch_s%length)
+!
+      else
+!
+         call sort_1234_to_1324(unordered_g_vvvo, g_vvvo, wf%n_v, wf%n_v, &
+                                                          wf%n_v, batch_s%length)
+!
+      end if
+!
+      point(1:wf%n_v, 1:wf%n_v, 1:wf%n_v, 1:batch_s%length) => g_vvvo
+!
+   end subroutine setup_vvvo_triples
+!
+!
+   subroutine setup_vvov_triples(wf, g_vvov, point, unordered_g_vvov, batch_r, left)
+!!
+!!    Setup vvov
+!!    Written by Alexander C. Paul, Oct 2020
+!!
+!!    Setups the vvov integral and the pointer for a triples calculation
+!!    The integral is given in batches over the occupied indices
+!!
+!!    The integral is returned in 2413 order 
+!!
+!!    g_vvov:           final sorted integral array
+!!    point:            pointer to g_vvov integral
+!!    unordered_g_vvov: help array for reordering
+!!    left:             The integral is returned in 1243 order
+!!                      (for the transpose Jacobian)
+!!
+      use reordering, only: sort_1234_to_2413, sort_1234_to_1243
+!
+      implicit none
+!
+      class(triples) :: wf
+!
+      type(batching_index), intent(in) :: batch_r
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_r%length), target, intent(out)  :: g_vvov
+      real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
+!
+      real(dp), dimension(:,:,:,:), optional, intent(out) :: unordered_g_vvov
+!
+      logical, optional, intent(in) :: left
+      logical :: left_
+!
+      left_ = .false.
+      if(present(left)) left_ = left
+!
+      if (.not. left_) then ! Omega and Jacobian
+!
+         call wf%eri%get_eri_t1('vvov', unordered_g_vvov, &
+                                 first_r=batch_r%first, last_r=batch_r%last)
+!
+         call sort_1234_to_2413(unordered_g_vvov, g_vvov, &
+                                wf%n_v, wf%n_v, batch_r%length, wf%n_v)
+!
+      else ! transpose Jacobian
+!
+         call wf%eri%get_eri_t1('vvov', unordered_g_vvov, &
+                                 first_r=batch_r%first, last_r=batch_r%last)
+!
+         call sort_1234_to_1243(unordered_g_vvov, g_vvov, &
+                                wf%n_v, wf%n_v, batch_r%length, wf%n_v)
+!            
+      end if
+!
+      point(1:wf%n_v, 1:wf%n_v, 1:wf%n_v, 1:batch_r%length) => g_vvov
+!
+   end subroutine setup_vvov_triples
+!
+!
+   subroutine setup_ovov_triples(wf, g_ovov, point, unordered_g_ovov, batch_p, batch_r, mo)
+!!
+!!    Setup ovov
+!!    Written by Alexander C. Paul and Rolf H. Myhre, Dec 2020
+!!
+!!    Setups the ovov integral and the pointer for a triples calculation
+!!    The integral is given in batches over the occupied indices
+!!
+!!    The integral is returned in 2413 order:
+!!
+!!    g_ovov:           final sorted integral array
+!!    point:            pointer to g_ovov integral
+!!    unordered_g_ovov: help array for reordering
+!!    mo:               if present and true use the "normal" MO integral
+!!
+      use reordering, only: sort_1234_to_2413
+!
+      implicit none
+!
+      class(triples) :: wf
+!
+      type(batching_index), intent(in) :: batch_p, batch_r
+!
+      real(dp), dimension(wf%n_v, wf%n_v, batch_p%length, batch_r%length), &
+                                                         target, intent(out) :: g_ovov
+!
+      real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
+!
+      real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_ovov
+!
+      logical, optional, intent(in) :: mo
+      logical :: mo_
+!
+      mo_ = .false.
+      if (present(mo)) mo_ = mo
+!
+      if(.not. mo_) then
+!
+         call wf%eri%get_eri_t1('ovov', unordered_g_ovov, &
+                                first_p=batch_p%first, last_p=batch_p%last, &
+                                first_r=batch_r%first, last_r=batch_r%last)
+!
+      else
+!
+         call wf%eri%get_eri_mo('ovov', unordered_g_ovov, &
+                                first_p=batch_p%first, last_p=batch_p%last, &
+                                first_r=batch_r%first, last_r=batch_r%last)
+!
+      end if
+!
+      call sort_1234_to_2413(unordered_g_ovov, g_ovov, batch_p%length, wf%n_v, &
+                                                       batch_r%length, wf%n_v)
+!
+      point(1:wf%n_v, 1:wf%n_v, 1:batch_p%length, 1:batch_r%length) => g_ovov
+!
+   end subroutine setup_ovov_triples
+!
+!
+   subroutine setup_oovo_triples(wf, g_oovo, point, unordered_g_oovo, batch_q, batch_s, &
+                                 c_ai, mo)
+!!
+!!    Setup oovo
+!!    Written by Alexander C. Paul and Rolf H. Myhre, Dec 2020
+!!
+!!    Setups the oovo integral and the pointer for a triples calculation
+!!    The integral is given in batches over the occupied indices
+!!
+!!    The integral is returned in 3124 order:
+!!
+!!    g_oovo:           final sorted integral array
+!!    point:            pointer to g_oovo integral
+!!    unordered_g_oovo: help array for reordering
+!!    c_ai:             if present and true use the c1-transformed integral
+!!    mo:               if present and true use the "normal" MO integral
+!!
+      use reordering, only: sort_1234_to_3124
+!
+      implicit none
+!
+      class(triples) :: wf
+!
+      type(batching_index), intent(in) :: batch_q, batch_s
+!
+      real(dp), dimension(wf%n_v, wf%n_o, batch_q%length, batch_s%length), &
+                                                         target, intent(out) :: g_oovo
+!
+      real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
+!
+      real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_oovo
+!
+      real(dp), dimension(wf%n_v, wf%n_o), optional, intent(in)  :: c_ai
+!
+      logical, optional, intent(in) :: mo
+      logical :: mo_
+!
+      mo_ = .false.
+      if (present(mo)) mo_ = mo
+!
+      if(.not. (mo_ .or. present(c_ai))) then
+!
+         call wf%eri%get_eri_t1('oovo', unordered_g_oovo, &
+                                first_q=batch_q%first, last_q=batch_q%last, &
+                                first_s=batch_s%first, last_s=batch_s%last)
+!
+      else if(present(c_ai)) then
+!
+         call wf%eri%get_eri_c1('oovo', unordered_g_oovo, c_ai, &
+                                first_q=batch_q%first, last_q=batch_q%last, &
+                                first_s=batch_s%first, last_s=batch_s%last)
+!
+      else if(mo_) then
+!
+         call wf%eri%get_eri_mo('oovo', unordered_g_oovo, &
+                                first_q=batch_q%first, last_q=batch_q%last, &
+                                first_s=batch_s%first, last_s=batch_s%last)
+!
+      end if
+!
+      call sort_1234_to_3124(unordered_g_oovo, g_oovo, wf%n_o, batch_q%length, &
+                                                       wf%n_v, batch_s%length)
+!
+      point(1:wf%n_v, 1:wf%n_o, 1:batch_q%length, 1:batch_s%length) => g_oovo
+!
+   end subroutine setup_oovo_triples
+!
+!
+   subroutine setup_ooov_triples(wf, g_ooov, point, unordered_g_ooov, batch_p, batch_r)
+!!
+!!    Setup ooov
+!!    Written by Alexander C. Paul and Rolf H. Myhre, Dec 2020
+!!
+!!    Setups the ooov integral and the pointer for a triples calculation
+!!    The integral is given in batches over the occupied indices
+!!
+!!    The integral is returned in 4213 order
+!!
+!!    g_oovo:           final sorted integral array
+!!    point:            pointer to g_ooov integral
+!!    unordered_g_ooov: help array for reordering
+!!
+      use reordering, only: sort_1234_to_4213
+!
+      implicit none
+!
+      class(triples) :: wf
+!
+      type(batching_index), intent(in) :: batch_p, batch_r
+!
+      real(dp), dimension(wf%n_v, wf%n_o, batch_p%length, batch_r%length), &
+                                                         target, intent(out) :: g_ooov
+!
+      real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
+!
+      real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_ooov
+!
+      call wf%eri%get_eri_t1('ooov', unordered_g_ooov, &
+                             first_p=batch_p%first, last_p=batch_p%last, &
+                             first_r=batch_r%first, last_r=batch_r%last)
+!
+      call sort_1234_to_4213(unordered_g_ooov, g_ooov, batch_p%length, wf%n_o, &
+                                                       batch_r%length, wf%n_v)
+!
+      point(1:wf%n_v, 1:wf%n_o, 1:batch_p%length, 1:batch_r%length) => g_ooov
+!
+   end subroutine setup_ooov_triples
+!
+!
+   subroutine point_vvvo_triples(wf, point, g_vvvo, length)
+!!
+!!    Point vvvo
+!!    Written by Alexander C. Paul and Rolf H. Myhre, Dec 2020
+!!
+!!    Sets a pointer to a v3o integral 
+!!    where the occupied index can be batched over
+!!    NB: The occupied index needs to be the last index
+!!
+!!    point:  pointer to g_vvvo integral
+!!    g_vvvo: Integral array in vvvo order
+!!    length: length of the batch
+!!
+      class(triples), intent(in) :: wf
+!
+      integer, intent(in) :: length
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, length), target, intent(in)  :: g_vvvo
+      real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
+!
+      point(1:wf%n_v, 1:wf%n_v, 1:wf%n_v, 1:length) => g_vvvo
+!
+   end subroutine point_vvvo_triples
+!
+!
+   subroutine point_vooo_triples(wf, point, g_ooov, length1, length2)
+!!
+!!    Point vooo
+!!    Written by Alexander C. Paul and Rolf H. Myhre, Dec 2020
+!!
+!!    Sets a pointer to a o^3v integral where two occupied indices are batched
+!!    NB: The integral is sorted v, o, batch1, batch2 
+!!        and the batches are equally long
+!!
+!!    point:   pointer to g_ooov integral
+!!    g_ooov:  Integral array in vooo order
+!!    length1: length of the batch for the second to last index
+!!    length2: length of the batch for the last index
+!!
+      class(triples), intent(in) :: wf
+!
+      integer, intent(in) :: length1, length2
+!
+      real(dp), dimension(wf%n_v, wf%n_o, length1, length2), target, intent(in)  :: g_ooov
+      real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
+!
+      point(1:wf%n_v, 1:wf%n_o, 1:length1, 1:length2) => g_ooov
+!
+   end subroutine point_vooo_triples
+!
+!
+   subroutine point_vvoo_triples(wf, point, g_ovov, length1, length2)
+!!
+!!    Point vvoo
+!!    Written by Alexander C. Paul and Rolf H. Myhre, Dec 2020
+!!
+!!    Sets a pointer to a v^2o^2 integral where both occupied indices are batched
+!!    NB: The occupied indices need to be the last ones 
+!!        and the batches are equally long
+!!
+!!    point:   pointer to g_ovov integral
+!!    g_ovov:  Integral array in vvoo order
+!!    length1: length of the batch for the second to last index
+!!    length2: length of the batch for the last index
+!!
+      class(triples), intent(in) :: wf
+!
+      integer, intent(in) :: length1, length2
+!
+      real(dp), dimension(wf%n_v, wf%n_v, length1, length2), target, intent(in)  :: g_ovov
+      real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
+!
+      point(1:wf%n_v, 1:wf%n_v, 1:length1, 1:length2) => g_ovov
+!
+   end subroutine point_vvoo_triples
 !
 !
 end module triples_class

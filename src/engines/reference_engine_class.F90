@@ -26,18 +26,15 @@ module reference_engine_class
 !
    use abstract_engine_class, only: abstract_engine
 !
-   use global_in,            only: input
-   use global_out,           only: output
-   use timings_class,        only: timings
-   use memory_manager_class, only: mem
-   use task_list_class,      only: task_list
+   use global_in,                   only: input
+   use global_out,                  only: output
+   use timings_class,               only: timings
+   use memory_manager_class,        only: mem
+   use task_list_class,             only: task_list
 !
-   use hf_class,          only: hf
+   use hf_class,                    only: hf
 !
-   use scf_hf_class,      only: scf_hf
-   use scf_diis_hf_class, only: scf_diis_hf
-   use mo_scf_diis_class, only: mo_scf_diis
-!
+   use scf_solver_class,            only: scf_solver
 !
    type, extends(abstract_engine) :: reference_engine
 !
@@ -74,6 +71,8 @@ module reference_engine_class
 !
       procedure :: do_ground_state                     => do_ground_state_reference_engine
 !
+      procedure, private :: check_algorithm            => check_algorithm_reference_engine
+!
    end type reference_engine 
 !
 !
@@ -107,6 +106,7 @@ contains
       engine%skip_scf         = .false.
 !  
       call engine%read_settings()
+      call engine%check_algorithm()
 !
    end function new_reference_engine
 !
@@ -159,13 +159,14 @@ contains
 !
       call engine%do_ground_state(wf)
 !
+      if (.not. engine%skip_scf) call wf%flip_final_orbitals()
       call wf%print_summary(engine%print_mo_info)
 !
 !     Plot orbitals and/or density
 !
       if (engine%plot_orbitals .or. engine%plot_density) call engine%do_visualization(wf)
 !
-!     Calculate the zeroth order properties
+!     Calculate properties
 !
       if(engine%requested_mean_value) call engine%calculate_mean_values(wf)
 !
@@ -181,27 +182,27 @@ contains
 !
       class(reference_engine) :: engine 
 !
-      call input%get_keyword_in_section('algorithm', 'solver scf', engine%algorithm)
+      call input%get_keyword('algorithm', 'solver scf', engine%algorithm)
 !
-      engine%restart = input%requested_keyword_in_section('restart', 'solver scf')
-      engine%skip_scf = input%requested_keyword_in_section('skip', 'solver scf')
+      engine%restart = input%is_keyword_present('restart', 'solver scf')
+      engine%skip_scf = input%is_keyword_present('skip', 'solver scf')
 !
-      call input%get_keyword_in_section('ao density guess', 'solver scf', engine%ao_density_guess)
+      call input%get_keyword('ao density guess', 'solver scf', engine%ao_density_guess)
 !
-      if (input%requested_keyword_in_section('print orbitals', 'solver scf')) then
+      if (input%is_keyword_present('print orbitals', 'solver scf')) then
          engine%print_mo_info = .true.
       end if
 !
-      if (input%requested_keyword_in_section('plot hf orbitals', 'visualization')) then
+      if (input%is_keyword_present('plot hf orbitals', 'visualization')) then
          engine%plot_orbitals = .true.
       end if
 !
-      if (input%requested_keyword_in_section('plot hf density', 'visualization')) then 
+      if (input%is_keyword_present('plot hf density', 'visualization')) then 
          engine%plot_density = .true.
       end if
 !
 !     Global restart
-      if (input%requested_keyword_in_section('restart', 'do')) then 
+      if (input%is_keyword_present('restart', 'do')) then 
          engine%restart = .true.
       end if
 !
@@ -269,11 +270,9 @@ contains
 !!
       use sequential_file_class,  only: sequential_file
 !
-      use atomic_class,           only: atomic
-      use molecular_system_class, only: molecular_system
+      use atomic_center_class,    only: atomic_center
 !
       use uhf_class,              only: uhf
-      use scf_hf_class,           only: scf_hf
 !
       use string_utilities,       only: index_of_unique_strings
 !
@@ -285,10 +284,8 @@ contains
 !
       class(hf)                        :: wf
 !
-      type(atomic), allocatable              :: atom
-      type(molecular_system), allocatable    :: sad_system
       type(uhf),         allocatable         :: sad_wf
-      type(scf_hf), allocatable              :: sad_solver
+      type(scf_solver), allocatable          :: sad_solver
 !
       character(len=200)    :: ao_density_guess
       real(dp)              :: energy_threshold
@@ -304,10 +301,12 @@ contains
       type(sequential_file) :: beta_density_file
 !
       integer :: I
-      character(len=50), dimension(wf%system%n_atoms) :: atom_and_basis
-      integer,           dimension(wf%system%n_atoms) :: unique_atom_index
+      character(len=50), dimension(wf%n_atomic_centers) :: atom_and_basis
+      integer,           dimension(wf%n_atomic_centers) :: unique_atom_index
 !
       type(timings), allocatable :: sad_generation_timer
+!
+      type(atomic_center), allocatable :: center 
 !
       call engine%tasks%print_('sad')
 !
@@ -320,36 +319,41 @@ contains
       max_iterations     = 100
 !
       energy_threshold   = 1.0D-6
-      call input%get_keyword_in_section('energy threshold', 'solver scf', energy_threshold)
+      call input%get_keyword('energy threshold', 'solver scf', energy_threshold)
       energy_threshold   = min(1.0D-6, energy_threshold)
 !
       gradient_threshold = 1.0D-6
-      call input%get_keyword_in_section('gradient threshold', 'solver scf', gradient_threshold)
+      call input%get_keyword('gradient threshold', 'solver scf', gradient_threshold)
       gradient_threshold = min(1.0D-6, gradient_threshold)
 !
 !     Find atomic index of unique atom/basis combinations
 !
-      do I = 1, wf%system%n_atoms
+      allocate(center)
 !
-         atom_and_basis(I) = trim(wf%system%atoms(I)%symbol) // trim(wf%system%atoms(I)%basis)
+      do I = 1, wf%n_atomic_centers
+!
+         call wf%ao%get_center(I, center)
+!
+         atom_and_basis(I) = trim(center%symbol) // trim(center%basis)
 !
       enddo
 !
-      call index_of_unique_strings(unique_atom_index, wf%system%n_atoms, atom_and_basis)
+      call index_of_unique_strings(unique_atom_index, wf%n_atomic_centers, atom_and_basis)
 !
 !     For every unique atom, generate SAD density to file
 !
       call timing%mute()
 !
-      do I = 1, wf%system%n_atoms
+      do I = 1, wf%n_atomic_centers
 !
 !        Check unique
 !
          if ( all(unique_atom_index /= I)) cycle
 !
-         atom = wf%system%atoms(I)
+         call wf%ao%get_center(I, center)
 !
-         name_       = "sad_" // trim(atom%basis) // "_" // trim(atom%symbol)
+         name_ = "sad_" // trim(center%basis) // "_" // trim(center%symbol)
+!
          alpha_fname = trim(name_) // '_alpha'
          beta_fname  = trim(name_) // '_beta'
 !
@@ -357,44 +361,38 @@ contains
 !
          call output%mute()
 !
-         multiplicity = atom%get_multiplicity()
-         sad_system   = molecular_system(atoms=[atom],              &
-                                         name_=name_,               &
-                                         charge=0,                  &
-                                         multiplicity=multiplicity, &
-                                         mm_calculation=.false.,    &
-                                         pcm_calculation=.false.     )
+         multiplicity = center%get_ground_state_multiplicity()
 !
 !        Prepare SAD wavefunction
 !
-         sad_wf = uhf(sad_system, fractional_uniform_valence=.true.)
+         sad_wf = uhf(fractional_uniform_valence=.true., &
+                      multiplicity=multiplicity)
+!
+         call sad_wf%prepare([center],  embedding=.false.)
 !
 !        Prepare and run solver
 !
-         sad_solver = scf_hf(wf=sad_wf,                           &
-                           restart=.false.,                       &
+         sad_solver = scf_solver(restart=.false.,                 &
                            ao_density_guess=ao_density_guess,     &
-                           energy_threshold=energy_threshold,     &
                            max_iterations=max_iterations,         &
-                           residual_threshold=gradient_threshold, &
-                           energy_convergence=.false.,            &
-                           skip=.false.)
+                           gradient_threshold=gradient_threshold, &
+                           acceleration_type='none',              &
+                           skip = .false.)
 !
          call sad_solver%run(sad_wf)
 !
 !        Cleanup and generate ao_density_a and ao_density_b
 !
+         call sad_wf%orbital_file%delete_() 
          call sad_wf%cleanup()
-         call sad_system%cleanup()
 !
          deallocate(sad_wf)
-         deallocate(sad_system)
 !
          call output%unmute()
 !
          call output%printf('v', 'Generated atomic density for ' //  &
-                            adjustl(atom%symbol) // ' using UHF/(a0)', &
-                            chars=[atom%basis], fs='(t6,a)')
+                            adjustl(center%symbol) // ' using UHF/(a0)', &
+                            chars=[center%basis], fs='(t6,a)')
 !
 !        Move densities to where "set_ao_density_sad" can use them,
 !        but first delete SAD if it already exists.
@@ -413,14 +411,13 @@ contains
          call beta_density_file%copy(beta_fname)
          call beta_density_file%delete_()
 !
-         deallocate(atom)
-!
       enddo
+!
+      deallocate(center)
 !
 !     Libint is overwritten by SAD. Re-initialize.
 !
-      call wf%system%initialize_libint_atoms_and_bases()
-      call wf%system%initialize_libint_integral_engines()
+      call wf%ao%export_centers_to_libint()
 !
       call timing%unmute()
       call sad_generation_timer%turn_off()
@@ -457,8 +454,8 @@ contains
 !
 !     Initialize the plotter
 !
-      plotter = visualization(wf%system, wf%n_ao)
-      call plotter%initialize(wf%system)
+      plotter = visualization(wf%ao)
+      call plotter%initialize(wf%ao)
 !
       if (engine%plot_orbitals) then
 !
@@ -472,7 +469,7 @@ contains
          call density_plotting_timer%turn_on()
 !
          density_file_tag = 'AO_density'
-         call plotter%plot_density(wf%system, wf%ao_density, density_file_tag)
+         call plotter%plot_density(wf%ao, wf%ao_density, density_file_tag)
 !
          call density_plotting_timer%turn_off()
 !
@@ -518,20 +515,20 @@ contains
 !
 !     Read orbital plotting settings
 !
-      n_orbitals_to_plot = input%get_n_elements_for_keyword_in_section('plot hf orbitals', &
+      n_orbitals_to_plot = input%get_n_elements_for_keyword('plot hf orbitals', &
                                                                         'visualization')
 !
       call mem%alloc(orbitals_to_plot, n_orbitals_to_plot)
-      call input%get_array_for_keyword_in_section('plot hf orbitals', 'visualization', &
+      call input%get_array_for_keyword('plot hf orbitals', 'visualization', &
             n_orbitals_to_plot, orbitals_to_plot)
 !
 !     Extract the orbitals we will plot from the full orbital coefficient matrix
 !
-      call mem%alloc(orbital_coefficients, wf%n_ao, n_orbitals_to_plot)
+      call mem%alloc(orbital_coefficients, wf%ao%n, n_orbitals_to_plot)
 !
       do i = 1, n_orbitals_to_plot
 !
-         call dcopy(wf%n_ao, wf%orbital_coefficients(1, orbitals_to_plot(i)), &
+         call dcopy(wf%ao%n, wf%orbital_coefficients(1, orbitals_to_plot(i)), &
                1, orbital_coefficients(1, i), 1)
 !
       enddo
@@ -551,10 +548,10 @@ contains
 !
 !     Plot orbitals
 !
-      call plotter%plot_orbitals(wf%system, orbital_coefficients, &
+      call plotter%plot_orbitals(wf%ao, orbital_coefficients, &
                                        n_orbitals_to_plot, orbital_file_tags)
 !
-      call mem%dealloc(orbital_coefficients, wf%n_ao, n_orbitals_to_plot)
+      call mem%dealloc(orbital_coefficients, wf%ao%n, n_orbitals_to_plot)
       deallocate(orbital_file_tags)
 !
       call timer%turn_off()
@@ -564,7 +561,7 @@ contains
 !
    subroutine read_mean_value_settings_reference_engine(engine)
 !!
-!!    Read ZOP settings
+!!    Read mean value settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!    Modified by Tommaso Giovannini and Linda Goletto
 !!
@@ -572,14 +569,14 @@ contains
 !
       class(reference_engine) :: engine
 !
-      engine%requested_mean_value = input%requested_section('hf mean value')
+      engine%requested_mean_value = input%is_section_present('hf mean value')
 !
       if (engine%requested_mean_value) then 
 !
-         if (input%requested_keyword_in_section('dipole','hf mean value')) &
+         if (input%is_keyword_present('dipole','hf mean value')) &
              engine%dipole = .true.
 !
-         if (input%requested_keyword_in_section('quadrupole','hf mean value')) &
+         if (input%is_keyword_present('quadrupole','hf mean value')) &
              engine%quadrupole = .true.
 !
       endif
@@ -692,10 +689,14 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable :: mu_pqk
 !
+      if(wf%name_.eq.'mlhf') &
+         call output%warning_msg('dipole moments are size-extensive and&
+                                 & are not well defined in MLHF.')
+!
 !     Get the integrals mu_pqk for components k = 1, 2, 3
 !
-      call mem%alloc(mu_pqk, wf%n_ao, wf%n_ao, 3)
-      call wf%get_ao_mu_wx(mu_pqk(:,:,1), mu_pqk(:,:,2), mu_pqk(:,:,3))
+      call mem%alloc(mu_pqk, wf%ao%n, wf%ao%n, 3)
+      call wf%ao%get_oei('dipole', mu_pqk)
 !
 !     Get electronic expectation value contribution
 !
@@ -705,22 +706,11 @@ contains
 !
       enddo
 !
-      call mem%dealloc(mu_pqk, wf%n_ao, wf%n_ao, 3)
+      call mem%dealloc(mu_pqk, wf%ao%n, wf%ao%n, 3)
 !
 !     Get nuclear expectation value contribution, then sum the two
 !
-      if(wf%name_.eq.'mlhf') then
-!
-         call output%printf('m', 'In MLHF the dipole moment is computed only in &
-                            &the active space', fs='(/t6,a)')
-!
-         call wf%system%get_nuclear_dipole_active(nuclear)
-!
-      else
-!
-         call wf%system%get_nuclear_dipole(nuclear)
-!
-      endif
+      nuclear = wf%get_nuclear_dipole()
 !
       total = electronic + nuclear
 !
@@ -752,9 +742,9 @@ contains
 !
 !     Get the integrals q_pqk for components k = 1, 2, ..., 6 in the T1-transformed basis
 !
-      call mem%alloc(q_pqk, wf%n_ao, wf%n_ao, 6)
-      call wf%get_ao_q_wx(q_pqk(:,:,1), q_pqk(:,:,2), q_pqk(:,:,3), &
-                          q_pqk(:,:,4), q_pqk(:,:,5), q_pqk(:,:,6))
+      call mem%alloc(q_pqk, wf%ao%n, wf%ao%n, 6)
+!
+      call wf%ao%get_oei('quadrupole', q_pqk)
 !
 !     Get electronic expectation value contribution
 !
@@ -764,22 +754,15 @@ contains
 !
       enddo
 !
-      call mem%dealloc(q_pqk, wf%n_ao, wf%n_ao, 6)
+      call mem%dealloc(q_pqk, wf%ao%n, wf%ao%n, 6)
 !
 !     Get nuclear expectation value contribution, then sum the two
 !
-      if(wf%name_.eq.'mlhf') then
+      if(wf%name_.eq.'mlhf') &
+         call output%warning_msg('quadrupole moments are size-extensive&
+                                 &and are not well defined in MLHF.')
 !
-         call output%printf('m', 'In MLHF the quadrupole moment is computed &
-                            &only in the active space', fs='(/t6,a)')
-!
-         call wf%system%get_nuclear_quadrupole_active(nuclear)
-!
-      else
-!
-         call wf%system%get_nuclear_quadrupole(nuclear)
-!
-      endif
+      nuclear = wf%get_nuclear_quadrupole()
 !
       total = electronic + nuclear
 !
@@ -796,45 +779,43 @@ contains
 !!
       implicit none
 !
-      class(reference_engine), intent(in)    :: engine 
-      class(hf), intent(inout)               :: wf 
+      class(reference_engine), intent(in)       :: engine 
+      class(hf), intent(inout)                  :: wf 
 !
-      type(scf_hf),      allocatable :: scf
-      type(scf_diis_hf), allocatable :: scf_diis
-      type(mo_scf_diis), allocatable :: mo_scf_diis_
+      class(scf_solver),  allocatable           :: scf
+      character(len=200)                        :: acceleration_type
 !
       call engine%tasks%print_('gs solver')
 !
-      if (trim(engine%algorithm) .eq. 'scf-diis' .and. trim(wf%name_) .eq. 'mlhf') then
+      acceleration_type = 'none'
 !
-         call output%error_msg('MLHF can not run with scf-diis, try mo-scf-diis.')
+      if (trim(engine%algorithm) == 'scf-diis' .or. &
+          trim(engine%algorithm) == 'mo-scf-diis') acceleration_type = 'diis'
 !
-      elseif (trim(engine%algorithm) .eq. 'mo-scf-diis' .and. trim(wf%name_) .eq. 'uhf') then
+      scf = scf_solver(engine%restart, acceleration_type, engine%skip_scf)     
+      call scf%run(wf)
 !
-         call output%error_msg('UHF can not run with mo-scf-diis, try scf-diis.')
+   end subroutine do_ground_state_reference_engine
 !
-      elseif (trim(engine%algorithm) == 'scf-diis') then
 !
-         scf_diis = scf_diis_hf(wf, engine%restart, engine%skip_scf)
-         call scf_diis%run(wf)
+   subroutine check_algorithm_reference_engine(engine)
+!!
+!!    Check algorithm 
+!!    Written by Sarai D. Folkestad, 2020
+!!
+      implicit none
+
+      class(reference_engine), intent(in) :: engine
 !
-      elseif (trim(engine%algorithm) == 'mo-scf-diis') then
+      if (trim(engine%algorithm) .ne. 'scf-diis'    .and. &
+          trim(engine%algorithm) .ne. 'scf'         .and. &
+          trim(engine%algorithm) .ne. 'mo-scf-diis') then
 !
-         mo_scf_diis_ = mo_scf_diis(wf, engine%restart, engine%skip_scf)
-         call mo_scf_diis_%run(wf)
-!
-      elseif (trim(engine%algorithm) == 'scf') then 
-!
-         scf = scf_hf(wf, engine%restart, engine%skip_scf)
-         call scf%run(wf)
-!
-      else
-!
-         call output%error_msg('did not recognize hf algorithm: '// engine%algorithm)
+         call output%error_msg('did not recognize SCF algorithm')
 !
       endif
 !
-   end subroutine do_ground_state_reference_engine
+   end subroutine check_algorithm_reference_engine
 !
 !
 end module reference_engine_class

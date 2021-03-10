@@ -71,7 +71,7 @@ contains
       tool%vector_length = wf%n_es_amplitudes
 !
       call mem%alloc(eps, tool%vector_length)
-      call wf%get_es_orbital_differences(eps, tool%vector_length)
+      call wf%get_orbital_differences(eps, tool%vector_length)
 !
       call mem%alloc(lowest_eps, tool%n_vectors)
 !

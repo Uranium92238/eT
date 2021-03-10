@@ -35,6 +35,7 @@ module mp2_class
    contains
 !
       procedure :: calculate_energy           => calculate_energy_mp2
+      procedure :: print_gs_summary           => print_gs_summary_mp2
 !
       procedure :: initialize                 => initialize_mp2
 !
@@ -44,7 +45,7 @@ module mp2_class
 !
    interface
 !
-      include "zop_mp2_interface.F90"
+      include "mean_value_mp2_interface.F90"
 !
    end interface
 !
@@ -56,6 +57,8 @@ contains
 !!    Initialize
 !!    Written by Andreas Skeidsvoll, 2018
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(mp2), intent(inout) :: wf
@@ -80,6 +83,29 @@ contains
       call wf%print_amplitude_info()
 !
    end subroutine initialize_mp2
+!
+!
+   subroutine print_gs_summary_mp2(wf)
+!!
+!!    Print ground state summary 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(mp2), intent(inout) :: wf 
+!
+      call output%printf('m', '- Ground state summary:', fs='(/t3,a)')
+!
+      call output%printf('m', 'HF energy:                (f19.12)', &
+                         reals=[wf%hf_energy], fs='(/t6,a)')
+!
+      call output%printf('m', 'MP2 correction:           (f19.12)', &
+                         reals=[ (wf%energy - wf%hf_energy) ], fs='(t6,a)')
+!
+      call output%printf('m', 'MP2 energy:               (f19.12)', &
+                         reals=[wf%energy], fs='(t6,a)')
+!
+   end subroutine print_gs_summary_mp2
 !
 !
 end module mp2_class

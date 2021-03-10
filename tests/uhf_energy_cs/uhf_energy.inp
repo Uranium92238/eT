@@ -1,0 +1,29 @@
+system
+   name: Cs
+   charge: 0
+   multiplicity: 2
+end system
+
+do
+   ground state
+end do
+
+method
+   uhf
+end method
+
+memory
+   available: 8
+end memory
+
+solver scf
+  algorithm:          scf-diis
+  energy threshold:   1.0d-11
+  gradient threshold: 1.0d-11
+end solver scf
+
+geometry
+basis: 3-21G
+   Cs         0.00000        0.00000        0.00000
+end geometry
+

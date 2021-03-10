@@ -25,70 +25,64 @@
 */
 #include "atom_init.h"
 
-#include <libint2.hpp>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
+void get_shell_numbers(int *atom, int *n_shells){
 
-using namespace libint2;
-using namespace std;
+	auto a2s = basis.atom2shell(atoms); 
+	for (std::size_t j = 0; j < a2s[*atom - 1].size(); j++){ 
 
-#include "globals.h"
+		auto shell = a2s[*atom - 1][j];
 
-void get_shell_numbers(int *atom, int *sn){
-
-	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
-
-	for (std::size_t j = 0; j < a2s_list[*atom-1].size(); j++){ // loop over shells on atom
-
-		auto the_shell = a2s_list[*atom-1][j];
-
-		*(sn + j) = the_shell + 1;
+		n_shells[j] = shell + 1;
 
 	}
 
 }
 
-void get_first_ao_in_shells(int *atom, int *faois){
+void get_first_ao_in_shells(int *atom, int *first_ao_in_shell){
 
-	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
-	auto shell2bf = basis.shell2bf(); // shell2bf[0] -> first AO index of shell 0
-	for (std::size_t j = 0; j < a2s_list[*atom-1].size(); j++){ // loop over shells on atom
+	auto a2s = basis.atom2shell(atoms); 
+	vector<int> stofao = basis.shell2bf(); 
+	for (std::size_t j = 0; j < a2s[*atom-1].size(); j++){ 
 
-		auto the_shell = a2s_list[*atom-1][j];
-		auto the_first_ao = shell2bf[the_shell];
+		auto shell = a2s[*atom - 1][j];
+		auto first_ao = stofao[shell];
 
-		*(faois + j) = the_first_ao + 1;
-	}
-
-}
-
-void get_n_basis_in_shells(int *atom, int *nbis){
-
-	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
-
-	for (std::size_t j = 0; j < a2s_list[*atom-1].size(); j++){
-
-		auto n = basis[a2s_list[*atom-1][j]].size();
-
-		*(nbis + j) = n;
+		first_ao_in_shell[j] = first_ao + 1;
 
 	}
 
 }
 
-void get_n_shells_on_atoms(int *nsoa){
+void get_n_aos_in_shell(int *atom, int *n_aos_in_shell){
 
-	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
-	int n_shells = 0;
+	auto a2s = basis.atom2shell(atoms); 
+	for (std::size_t j = 0; j < a2s[*atom - 1].size(); j++){
 
-	for (std::size_t j = 0; j < atoms.size(); j++){
+		auto n = basis[a2s[*atom - 1][j]].size();
 
-		n_shells = a2s_list[j].size();
-
-		*(nsoa + j) = n_shells;
+		n_aos_in_shell[j] = n;
 
 	}
+
+}
+
+void get_n_shells_on_atom(int *atom, int *n_shells){
+
+	auto a2s = basis.atom2shell(atoms); 
+		*n_shells = a2s[*atom - 1].size();
+
+}
+
+void initialize_atom_to_shell_list(){
+
+ 	// Don't know why this doesnt work, but we should avoid recalculating these -- see above
+	vector<vector<int>> atom_to_shell_list = basis.atom2shell(atoms); 
+
+}
+
+void initialize_shell_to_first_ao(){
+
+ 	// Don't know why this doesnt work, but we should avoid recalculating these -- see above
+	vector<int> shell_to_first_ao = basis.shell2bf(); 
 
 }

@@ -75,8 +75,6 @@ module direct_stream_file_class
 !
       procedure :: read_interval            => read_interval_direct_stream_file
       procedure :: read_compound_full_batch => read_compound_full_batch_direct_stream_file
-      procedure :: read_compound_batch_full => read_compound_batch_full_direct_stream_file
-      procedure :: read_compound            => read_compound_direct_stream_file
 !
 !     Write routines
 !
@@ -108,9 +106,7 @@ module direct_stream_file_class
 !     Specialized write routines
 !
       procedure :: write_interval            => write_interval_direct_stream_file
-      procedure :: write_compound_full_batch => write_compound_full_batch_direct_stream_file
       procedure :: write_compound_batch_full => write_compound_batch_full_direct_stream_file
-      procedure :: write_compound            => write_compound_direct_stream_file
 !
       procedure :: get_n_records             => get_n_records_direct_stream_file
 !
@@ -413,11 +409,8 @@ contains
 !!    dim_y   :: integer, full dimension of first component of batching index
 !!    batch_z :: batching index
 !!
-!!    Wrapper for read_1 that loops over batch_z
-!!    and reads all compound records in dim_y
-!!
-!!    Similar to read_compound, but takes the full y dimension
-!!    for cases where y is not batched.
+!!    Reads a file whose records are represented by a compound index yz.
+!!    Reads full y dimension and batches of z.
 !!
       use interval_class, only : interval
 !
@@ -435,106 +428,6 @@ contains
                             batch_z%last*dim_y)
 !
    end subroutine read_compound_full_batch_direct_stream_file
-!
-!
-   subroutine read_compound_batch_full_direct_stream_file(the_file, array, batch_y, dim_z)
-!!
-!!    read compound batch full direct stream
-!!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
-!!
-!!    array :: real(dp) to dump file contents in
-!!             Only real(dp) allowed until GFortran figures out explicit shape
-!!
-!!    batch_y :: batching index
-!!    dim_z   :: integer, full dimension of second component of batching index
-!!
-!!    Wrapper for read_1 that loops over dim_z
-!!    and reads all compound records in batch_y
-!!
-!!    Note! There are very few safeguards in these routines and the compiler/runtime
-!!          won't tell you if you mess up. Make very sure that you're batching
-!!          dimensions are correct.
-!!
-!!    Note! This routine assumes that array is allocated something like (: ,batch_y%max_length, :)
-!!          If array is reallocated in the batching loop and the second to last dimension
-!!          changes, the routine will fail!
-!!
-      use batching_index_class, only : batching_index
-!
-      implicit none
-!
-      class(direct_stream_file), intent(in) :: the_file
-!
-      class(batching_index), intent(in) :: batch_y
-      integer, intent(in) :: dim_z
-!
-      real(dp),dimension(the_file%record_dim*batch_y%max_length, dim_z) :: array
-!
-      integer :: z
-!
-!     Check if we can do a single continuous write, else we have to loop
-      if (batch_y%length .eq. batch_y%index_dimension) then
-!
-         call the_file%read_1_real_dp_direct_stream_file(array, 1, batch_y%index_dimension*dim_z)
-!
-      else
-         do z = 1, dim_z
-!
-            call the_file%read_1_real_dp_direct_stream_file(array(:, z), &
-                                  batch_y%index_dimension*(z-1) + batch_y%first, &
-                                  batch_y%index_dimension*(z-1) + batch_y%last)
-         enddo
-      endif
-!
-   end subroutine read_compound_batch_full_direct_stream_file
-!
-!
-   subroutine read_compound_direct_stream_file(the_file, array, batch_y, batch_z)
-!!
-!!    read compound direct stream
-!!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
-!!
-!!    array :: real(dp) to dump file contents in.
-!!             Only real(dp) allowed until GFortran figures out explicit shape
-!!
-!!    batch_y :: batching index
-!!    batch_z :: batching index
-!!
-!!    Wrapper for read_1_real_dp that loops over batch_z
-!!    and reads all compound records in batch y
-!!
-!!    This routine is useful for coumpund records were the record number
-!!    is calculated from two batched indexes
-!!
-      use batching_index_class, only : batching_index
-!
-      implicit none
-!
-      class(direct_stream_file), intent(in) :: the_file
-!
-      class(batching_index), intent(in) :: batch_y, batch_z
-!
-      real(dp), &
-      dimension(the_file%record_dim*batch_y%max_length, batch_z%first:batch_z%last) :: array
-!
-      integer :: z
-!
-!     Check if we can do a single continuous read, else we have to loop
-      if (batch_y%length .eq. batch_y%index_dimension) then
-!
-         call the_file%read_1_real_dp_direct_stream_file(array, &
-                              batch_y%index_dimension*(batch_z%first-1) + 1, &
-                              batch_y%index_dimension*batch_z%last)
-      else
-         do z = batch_z%first, batch_z%last
-!
-            call the_file%read_1_real_dp_direct_stream_file(array(:, z), &
-                                 batch_y%index_dimension*(z-1) + batch_y%first, &
-                                 batch_y%index_dimension*(z-1) + batch_y%last)
-         enddo
-      endif
-!
-   end subroutine read_compound_direct_stream_file
 !
 !
    subroutine write_1_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
@@ -735,41 +628,6 @@ contains
    end subroutine write_interval_direct_stream_file
 !
 !
-   subroutine write_compound_full_batch_direct_stream_file(the_file, array, dim_y, batch_z)
-!!
-!!    write compound full direct stream
-!!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
-!!
-!!    array :: real(dp) to dump to file
-!!             Only real(dp) allowed until GFortran figures out explicit shape
-!!
-!!    dim_y   :: integer, full dimension of first component of batching index
-!!    batch_z :: batching index
-!!
-!!    Wrapper for write_1_real_dp that loops over batch_z
-!!    and writes all compound records in dim_y
-!!
-!!    Similar to write_compound above, but takes the full y dimension
-!!    for cases where y is not batched.
-!!
-      use interval_class, only : interval
-!
-      implicit none
-!
-      class(direct_stream_file), intent(in) :: the_file
-!
-      class(interval), intent(in) :: batch_z
-      integer, intent(in) :: dim_y
-!
-      real(dp), dimension(the_file%record_dim*dim_y*batch_z%length) :: array
-!
-      call the_file%write_1_real_dp_direct_stream_file(array, &
-                                                       (batch_z%first-1)*dim_y + 1, &
-                                                        batch_z%last*dim_y)
-!
-   end subroutine write_compound_full_batch_direct_stream_file
-!
-!
    subroutine write_compound_batch_full_direct_stream_file(the_file, array, batch_y, dim_z)
 !!
 !!    write compound batch full direct stream
@@ -781,8 +639,8 @@ contains
 !!    batch_y :: batching index
 !!    dim_z   :: integer, full dimension of second component of batching index
 !!
-!!    Wrapper for write_1_real_dp that loops over dim_z
-!!    and writes all compound records in batch_y
+!!    Writes a file whose records are represented by a compound index yz.
+!!    Writes data in batches of y and full dimension of z.
 !!
       use batching_index_class, only : batching_index
 !
@@ -812,54 +670,6 @@ contains
       endif
 !
    end subroutine write_compound_batch_full_direct_stream_file
-!
-!
-   subroutine write_compound_direct_stream_file(the_file, array, batch_y, batch_z)
-!!
-!!    write compound direct stream
-!!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
-!!
-!!    array :: real double precision array
-!!
-!!    batch_y :: batching index
-!!    batch_z :: batching index
-!!
-!!    Wrapper for write_1_real_dp that loops over batch_z
-!!    and writes all compound records in batch y
-!!
-!!    This routine is useful for coumpund records were the record number
-!!    is calculated from two batched indexes
-!!
-      use batching_index_class, only : batching_index
-!
-      implicit none
-!
-      class(direct_stream_file), intent(in) :: the_file
-!
-      class(batching_index), intent(in) :: batch_y, batch_z
-!
-      real(dp), &
-      dimension(the_file%record_dim*batch_y%max_length, batch_z%first:batch_z%last) :: array
-!
-      integer :: z
-!
-!     Check if we can do a single continuous write, else we have to loop
-      if (batch_y%length .eq. batch_y%index_dimension) then
-!
-         call the_file%write_1_real_dp_direct_stream_file(array, &
-                               batch_y%index_dimension*(batch_z%first-1) + 1, &
-                               batch_y%index_dimension*batch_z%last)
-      else
-         do z = batch_z%first, batch_z%last
-!
-            call the_file%write_1_real_dp_direct_stream_file(array(:, z), &
-                                  batch_y%index_dimension*(z-1) + batch_y%first, &
-                                  batch_y%index_dimension*(z-1) + batch_y%last)
-         enddo
-      endif
-!
-!
-   end subroutine write_compound_direct_stream_file
 !
 !
    function get_n_records_direct_stream_file(the_file) result(n_records)

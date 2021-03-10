@@ -25,14 +25,11 @@ module wavefunction_class
 !!
 !
    use parameters
-   use array_utilities, only : zero_array
-   use global_out, only : output
-   use sequential_file_class, only : sequential_file
-   use memory_manager_class, only : mem
-   use molecular_system_class, only : molecular_system
-   use interval_class, only : interval
-   use libint_initialization, only : initialize_potential_c
-   use global_in, only: input
+   use global_out,            only: output
+   use memory_manager_class,  only: mem
+   use global_in,             only: input
+   use ao_tool_class,         only: ao_tool
+   use environment_class,     only: environment
 !
    implicit none
 !
@@ -44,36 +41,26 @@ module wavefunction_class
       real(dp)    :: hf_energy
       complex(dp) :: energy_complex
 !
-      real(dp)    :: correlation_energy
-      complex(dp) :: correlation_energy_complex
-!
-      real(dp),    dimension(3) :: dipole_moment
       complex(dp), dimension(3) :: dipole_moment_complex
 !
-      integer :: n_ao ! Number of atomic orbitals
-      integer :: n_mo ! Number of molecular orbitals
-      integer :: n_o  ! Number of occupied orbitals
-      integer :: n_v  ! Number of virtual orbbitals
+      integer :: n_atomic_centers 
 !
-      type(molecular_system), pointer :: system
+      integer :: n_mo ! Number of molecular orbitals 
+      integer :: n_o  ! Number of occupied orbitals 
+      integer :: n_v  ! Number of virtual orbbitals 
+!
+      logical :: embedded
+!
+      class(environment), allocatable :: embedding
+
+      class(ao_tool), allocatable :: ao
 !
       real(dp), dimension(:,:), allocatable :: orbital_coefficients
       real(dp), dimension(:), allocatable   :: orbital_energies
 !
-!     QMMM matrices
-!
-      real(dp), dimension(:,:), allocatable :: nopol_h_wx   ! one-electron for non-polarizable QM/MM
-      real(dp), dimension(:,:), allocatable :: pol_emb_fock ! Fock for polarizable QM/MM
-!
-!     QMPCM matrices
-!
-      real(dp), dimension(:,:), allocatable :: pcm_fock     ! Fock for QM/PCM
-!
 !     Frozen orbital variables. Frozen orbitals are typically frozen core or frozen HF orbitals.
 !
       real(dp), dimension(:,:), allocatable :: mo_fock_frozen
-!
-      type(sequential_file) :: mm_matrices_file, pcm_matrices_file
 !
       real(dp) :: cholesky_orbital_threshold = 1.0D-2
 !
@@ -84,6 +71,7 @@ module wavefunction_class
                                                             ! PAO construction follows (e.g in mlcc)
                                                             ! other reducrtion of orbitals
       real(dp), dimension(:,:), allocatable :: ao_fock
+      real(dp), dimension(:,:), allocatable :: ao_G
       real(dp), dimension(:,:), allocatable :: mo_fock
 !
       real(dp), dimension(3) :: frozen_dipole
@@ -91,290 +79,160 @@ module wavefunction_class
 !
    contains
 !
-      procedure :: initialize_orbital_coefficients => initialize_orbital_coefficients_wavefunction
-      procedure :: initialize_orbital_energies     => initialize_orbital_energies_wavefunction
+      procedure :: initialize_orbital_coefficients &
+                => initialize_orbital_coefficients_wavefunction
 !
-      procedure :: destruct_orbital_coefficients   => destruct_orbital_coefficients_wavefunction
-      procedure :: destruct_orbital_energies       => destruct_orbital_energies_wavefunction
+      procedure :: initialize_orbital_energies &    
+                => initialize_orbital_energies_wavefunction
 !
-      procedure :: initialize_mm_matrices          => initialize_mm_matrices_wavefunction
-      procedure :: initialize_pcm_matrices         => initialize_pcm_matrices_wavefunction
+      procedure :: destruct_orbital_coefficients &
+                => destruct_orbital_coefficients_wavefunction
 !
-      procedure :: destruct_mm_matrices            => destruct_mm_matrices_wavefunction
-      procedure :: destruct_pcm_matrices           => destruct_pcm_matrices_wavefunction
+      procedure :: destruct_orbital_energies &
+                => destruct_orbital_energies_wavefunction
 !
-      procedure :: initialize_frozen_CCT           => initialize_frozen_CCT_wavefunction
-      procedure :: destruct_frozen_CCT             => destruct_frozen_CCT_wavefunction
+      procedure :: initialize_frozen_CCT &
+                => initialize_frozen_CCT_wavefunction
 !
-      procedure :: initialize_ao_fock              => initialize_ao_fock_wavefunction
-      procedure :: destruct_ao_fock                => destruct_ao_fock_wavefunction
+      procedure :: destruct_frozen_CCT &
+                => destruct_frozen_CCT_wavefunction
 !
-      procedure :: initialize_mo_fock              => initialize_mo_fock_wavefunction
-      procedure :: destruct_mo_fock                => destruct_mo_fock_wavefunction
+      procedure :: initialize_ao_fock &
+                => initialize_ao_fock_wavefunction
 !
-      procedure :: get_ao_x_wx                     => get_ao_x_wx_wavefunction
-      procedure :: get_ao_x_wx_1der                => get_ao_x_wx_1der_wavefunction
+      procedure :: destruct_ao_fock &
+                => destruct_ao_fock_wavefunction
 !
-      procedure :: get_ao_h_wx                     => get_ao_h_wx_wavefunction
-      procedure :: get_ao_h_wx_1der                => get_ao_h_wx_1der_wavefunction
+      procedure :: initialize_mo_fock &
+                => initialize_mo_fock_wavefunction
 !
-      procedure :: get_ao_s_wx                     => get_ao_s_wx_wavefunction
-      procedure :: get_ao_s_wx_1der                => get_ao_s_wx_1der_wavefunction
+      procedure :: destruct_mo_fock &
+                => destruct_mo_fock_wavefunction
 !
-      procedure :: get_ao_mu_wx                    => get_ao_mu_wx_wavefunction
-      procedure :: get_ao_q_wx                     => get_ao_q_wx_wavefunction
-      procedure :: get_ao_v_wx                     => get_ao_v_wx_wavefunction
+      procedure :: mo_transform &
+                => mo_transform_wavefunction
 !
-      procedure :: get_mo_mu                       => get_mo_mu_wavefunction
-      procedure :: get_mo_h                        => get_mo_h_wavefunction
-      procedure :: get_mo_q                        => get_mo_q_wavefunction
+      procedure :: project_atomic_orbitals  &
+                => project_atomic_orbitals_wavefunction
 !
-      procedure :: mo_transform                    => mo_transform_wavefunction
+      procedure :: get_orbital_overlap &
+                => get_orbital_overlap_wavefunction
 !
-      procedure :: is_restart_safe                 => is_restart_safe_wavefunction
+      procedure :: lowdin_orthonormalization &
+                => lowdin_orthonormalization_wavefunction
 !
-      procedure(gradient_function), deferred :: &
-               construct_molecular_gradient
+      procedure :: construct_orbital_block_by_density_cd &
+                => construct_orbital_block_by_density_cd_wavefunction
 !
-      procedure :: project_atomic_orbitals   => project_atomic_orbitals_wavefunction
-      procedure :: get_orbital_overlap       => get_orbital_overlap_wavefunction
-      procedure :: lowdin_orthonormalization => lowdin_orthonormalization_wavefunction
+      procedure :: initialize_mo_fock_frozen &
+                => initialize_mo_fock_frozen_wavefunction
 !
-      procedure :: construct_ao_electrostatics &
-                => construct_ao_electrostatics_wavefunction       ! V_wx, E_wx, V(D), E(D)
+      procedure :: destruct_mo_fock_frozen &
+                => destruct_mo_fock_frozen_wavefunction
 !
-      procedure :: construct_orbital_block_by_density_cd       => construct_orbital_block_by_density_cd_wavefunction
+      procedure :: get_mo_fock &
+                => get_mo_fock_wavefunction
 !
-      procedure :: initialize_mo_fock_frozen                   => initialize_mo_fock_frozen_wavefunction
-      procedure :: destruct_mo_fock_frozen                     => destruct_mo_fock_frozen_wavefunction
+      procedure :: set_mo_fock &
+                => set_mo_fock_wavefunction
 !
-      procedure :: get_mo_fock => get_mo_fock_wavefunction
-      procedure :: set_mo_fock => set_mo_fock_wavefunction
+      procedure :: prepare_ao_tool &
+                => prepare_ao_tool_wavefunction
+!
+      procedure :: set_geometry &
+                => set_geometry_wavefunction
+!
+      procedure :: prepare_embedding &
+                => prepare_embedding_wavefunction 
 !
       procedure :: contruct_mo_basis_transformation &
                 => contruct_mo_basis_transformation_wavefunction
 !
-   end type wavefunction
+      procedure :: get_nuclear_dipole &
+                => get_nuclear_dipole_wavefunction
+!  
+      procedure :: get_nuclear_quadrupole &
+                => get_nuclear_quadrupole_wavefunction
+!  
+      procedure :: get_nuclear_repulsion &
+                => get_nuclear_repulsion_wavefunction
+!  
+      procedure :: get_nuclear_repulsion_1der &
+                => get_nuclear_repulsion_1der_wavefunction
 !
+      procedure :: get_molecular_geometry &
+                => get_molecular_geometry_wavefunction
 !
-   abstract interface
-!
-      subroutine gradient_function(wf, E_qk)
-!!
-!!       Gradient function
-!!       Written by Eirik F. Kjønstad, 2019
-!!
-!!       Deferred routine to compute molecular derivative E_qk of the energy E.
-!!
-!!       q refers to x, y, z (q = 1,2,3)
-!!       k refers to atom number (k = 1,2,3,...,n_atoms)
-!!
-         import :: wavefunction, dp
-!
-         implicit none
-!
-         class(wavefunction), intent(in) :: wf
-!
-         real(dp), dimension(3, wf%system%n_atoms), intent(inout) :: E_qk
-!
-      end subroutine gradient_function
-!
-!
-      subroutine construct_ao_x_wx(molecule, X, A, B)
-!!
-!!       Construct AO x_wx
-!!       Written by Eirik F. Kjønstad, 2019
-!!
-!!       Abstract interface for routines, belonging to molecular system,
-!!       that calculates integrals X for the shell pair (A, B).
-!!
-         use kinds, only: dp
-         use molecular_system_class, only: molecular_system
-!
-         implicit none
-!
-         class(molecular_system), intent(in) :: molecule
-!
-         integer, intent(in) :: A, B
-!
-         real(dp), dimension(molecule%shell_limits(A)%length, &
-                     molecule%shell_limits(B)%length), intent(out) :: X
-!
-      end subroutine construct_ao_x_wx
-!
-!
-      subroutine construct_ao_x_wx_1der(molecule, X_Ax, X_Ay, X_Az, X_Bx, X_By, X_Bz, A, B)
-!!
-!!       Construct AO x_wx_1der
-!!       Written by Eirik F. Kjønstad, 2019
-!!
-!!       Abstract interface for routines, belonging to molecular system,
-!!       that calculates first-derivative integral contributions X for the shell pair (A, B).
-!!
-!!       Ax: derivative with respect to the x coordinate of the nuclei that shell A is centered on
-!!       Ay: derivative with respect to the y coordinate of the nuclei that shell A is centered on
-!!       Az: derivative with respect to the z coordinate of the nuclei that shell A is centered on
-!!       Bx: derivative with respect to the x coordinate of the nuclei that shell B is centered on
-!!       By: derivative with respect to the y coordinate of the nuclei that shell B is centered on
-!!       Bz: derivative with respect to the z coordinate of the nuclei that shell B is centered on
-!!
-         use kinds, only: dp
-         use molecular_system_class, only: molecular_system
-!
-         implicit none
-!
-         class(molecular_system), intent(in) :: molecule
-!
-         integer, intent(in) :: A, B
-!
-         real(dp), dimension(molecule%shell_limits(A)%length, molecule%shell_limits(B)%length), intent(out) :: X_Ax
-         real(dp), dimension(molecule%shell_limits(A)%length, molecule%shell_limits(B)%length), intent(out) :: X_Ay
-         real(dp), dimension(molecule%shell_limits(A)%length, molecule%shell_limits(B)%length), intent(out) :: X_Az
-         real(dp), dimension(molecule%shell_limits(A)%length, molecule%shell_limits(B)%length), intent(out) :: X_Bx
-         real(dp), dimension(molecule%shell_limits(A)%length, molecule%shell_limits(B)%length), intent(out) :: X_By
-         real(dp), dimension(molecule%shell_limits(A)%length, molecule%shell_limits(B)%length), intent(out) :: X_Bz
-!
-      end subroutine construct_ao_x_wx_1der
-!
-   end interface
+   end type wavefunction 
 !
 !
 contains
 !
 !
-   subroutine get_ao_x_wx_wavefunction(wf, construct_ao_x_AB, x_wx)
+   subroutine prepare_ao_tool_wavefunction(wf, centers, template)
 !!
-!!    Get AO X
-!!    Written by Eirik F. Kjønstad, 2019
+!!    Prepare AO tool
+!!    Written by Eirik F. Kjønstad, 2020 
 !!
-!!    Computes the AO integral matrix x_wx using
-!!    the construction routine construct_ao_x_AB. This routine
-!!    constructs the x_AB contributions to x_wx for the shells A and B
+!!    Initializes the AO tool, which handles the atomic orbital integrals in eT.
 !!
-      implicit none
-!
-      class(wavefunction), intent(in) :: wf
-!
-      procedure(construct_ao_x_wx) :: construct_ao_x_AB
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: x_wx
-!
-      type(interval) :: A_interval, B_interval
-!
-      integer :: x, y, A, B
-!
-      real(dp), dimension(:,:), pointer                        :: x_AB_p
-      real(dp), dimension(wf%system%max_shell_size**2), target :: x_AB
-!
-!$omp parallel do private(A, B, x_AB, x_AB_p, A_interval, B_interval, x, y) schedule(static)
-      do A = 1, wf%system%n_s
-!
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, A
-!
-            B_interval = wf%system%shell_limits(B)
-!
-            call construct_ao_x_AB(wf%system, x_AB, A, B)
-!
-            x_AB_p(1 : A_interval%length, 1 : B_interval%length) &
-                                    => x_AB(1 : A_interval%length*B_interval%length)
-!
-            do x = 1, A_interval%length
-               do y = 1, B_interval%length
-!
-                  x_wx(A_interval%first - 1 + x, B_interval%first - 1 + y) = x_AB_p(x, y)
-                  x_wx(B_interval%first - 1 + y, A_interval%first - 1 + x) = x_AB_p(x, y)
-!
-               enddo
-            enddo
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine get_ao_x_wx_wavefunction
-!
-!
-   subroutine get_ao_x_wx_1der_wavefunction(wf, construct_ao_x_AB_1der, x_wxqk)
+!!    centers:   Optional set of 'atomic_center' objects that represents the atomic orbital 
+!!               basis used by the AO tool and the integral program (Libint). The default 
+!!               centers are those specified by the QM geometry in the eT input file.
 !!
-!!    Get AO X 1der
-!!    Written by Eirik F. Kjønstad, 2019
+!!    template: Optional template_ao_tool from which the ao_tool is initialized.
+!!               
+      use atomic_center_class, only: atomic_center
+!
+      implicit none 
+!
+      class(wavefunction) :: wf 
+!
+      class(atomic_center), dimension(:), optional, intent(in) :: centers
+!
+      type(ao_tool), optional, intent(in) :: template
+!
+      wf%ao = ao_tool()
+!
+      if (present(template)) then
+!
+         call wf%ao%initialize_ao_tool_from_template(template)
+!
+      else 
+!
+         call wf%ao%initialize(centers)
+!
+      end if
+!
+      wf%n_atomic_centers = wf%ao%get_n_centers()
+!
+   end subroutine prepare_ao_tool_wavefunction
+!
+!
+   subroutine set_geometry_wavefunction(wf, R, units)
 !!
-!!    Computes the geometrically differentiated AO integral matrix x_wxqk using
-!!    the construction routine construct_ao_x_AB_1der. This routine
-!!    constructs the x_ABqk contributions to x_wxqk for the shells A and B.
+!!    Set geometry 
+!!    Written by Eirik F. Kjønstad, 2020 
 !!
-!!    The derivative indices for the nuclei are:
+!!    Sets the position of the atomic nuclei. 
 !!
-!!    q = 1, 2, 3 (x, y, z)
-!!    k = 1, 2, 3, ..., n_atoms
+!!       R:     (3 x n_atoms) array containing the Cartesian coordinates of the atoms 
+!!       units: specifies units of R ('angstrom' or 'bohr')
 !!
-!!    w and x are AO indices.
+!!    This includes updating the atomic centers of the AO tool 
+!!    and the atomic positions of the molecule.
 !!
       implicit none
 !
-      class(wavefunction), intent(in) :: wf
+      class(wavefunction), intent(inout) :: wf 
 !
-      procedure(construct_ao_x_wx_1der) :: construct_ao_x_AB_1der
+      character(len=*), intent(in) :: units
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms) :: x_wxqk
+      real(dp), dimension(3, wf%n_atomic_centers) :: R 
 !
-      integer :: A, B, A_atom, B_atom, w, x, q, w_f, x_f
+      call wf%ao%set_atomic_centers(R, units)
 !
-      real(dp), dimension((wf%system%max_shell_size**2)*6), target :: x_ABqk
-!
-      real(dp), dimension(:,:,:,:), pointer, contiguous :: x_ABqk_p
-!
-      type(interval) :: A_interval, B_interval
-!
-      call zero_array(x_wxqk, 3*(wf%system%n_atoms)*(wf%n_ao)**2)
-!
-      do A = 1, wf%system%n_s
-!
-         A_atom     = wf%system%shell2atom(A)
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, A
-!
-            B_atom     = wf%system%shell2atom(B)
-            B_interval = wf%system%shell_limits(B)
-!
-            x_ABqk_p(1 : A_interval%length, 1 : B_interval%length, 1 : 3, 1 : 2) &
-                                 => x_ABqk(1 : (A_interval%length)*(B_interval%length)*6)
-!
-            call construct_ao_x_AB_1der(wf%system,             &
-                                       x_ABqk_p(:,:,1,1),      &
-                                       x_ABqk_p(:,:,2,1),      &
-                                       x_ABqk_p(:,:,3,1),      &
-                                       x_ABqk_p(:,:,1,2),      &
-                                       x_ABqk_p(:,:,2,2),      &
-                                       x_ABqk_p(:,:,3,2),      &
-                                       A, B)
-!
-            do q = 1, 3
-               do w = 1, A_interval%length
-                  do x = 1, B_interval%length
-!
-                     w_f = A_interval%first - 1 + w
-                     x_f = B_interval%first - 1 + x
-!
-                     x_wxqk(w_f, x_f, q, A_atom) = x_wxqk(w_f, x_f, q, A_atom) + x_ABqk_p(w, x, q, 1)
-                     x_wxqk(x_f, w_f, q, A_atom) = x_wxqk(x_f, w_f, q, A_atom) + x_ABqk_p(w, x, q, 1)
-!
-                     x_wxqk(w_f, x_f, q, B_atom) = x_wxqk(w_f, x_f, q, B_atom) + x_ABqk_p(w, x, q, 2)
-                     x_wxqk(x_f, w_f, q, B_atom) = x_wxqk(x_f, w_f, q, B_atom) + x_ABqk_p(w, x, q, 2)
-!
-                  enddo
-               enddo
-            enddo
-!
-            nullify(x_ABqk_p)
-!
-         enddo
-      enddo
-!
-   end subroutine get_ao_x_wx_1der_wavefunction
+   end subroutine set_geometry_wavefunction
 !
 !
    subroutine initialize_orbital_coefficients_wavefunction(wf)
@@ -386,7 +244,7 @@ contains
 !
       class(wavefunction) :: wf
 !
-      if (.not. allocated(wf%orbital_coefficients)) call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
+      if (.not. allocated(wf%orbital_coefficients)) call mem%alloc(wf%orbital_coefficients, wf%ao%n, wf%n_mo)
 !
    end subroutine initialize_orbital_coefficients_wavefunction
 !
@@ -400,7 +258,7 @@ contains
 !
       class(wavefunction) :: wf
 !
-      if (allocated(wf%orbital_coefficients)) call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
+      if (allocated(wf%orbital_coefficients)) call mem%dealloc(wf%orbital_coefficients, wf%ao%n, wf%n_mo)
 !
    end subroutine destruct_orbital_coefficients_wavefunction
 !
@@ -446,410 +304,42 @@ contains
 !
       class(wavefunction), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: X_wx
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Y_pq
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)    :: X_wx 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Y_pq  
 !
       real(dp), dimension(:,:), allocatable :: Z_wq ! = sum_x X_wx C_xq
 !
-      call mem%alloc(Z_wq, wf%n_ao, wf%n_mo)
+      call mem%alloc(Z_wq, wf%ao%n, wf%n_mo)
 !
       call dgemm('N', 'N',                 &
-                  wf%n_ao,                 &
+                  wf%ao%n,                 &
                   wf%n_mo,                 &
-                  wf%n_ao,                 &
+                  wf%ao%n,                 &
                   one,                     &
                   X_wx,                    &
-                  wf%n_ao,                 &
+                  wf%ao%n,                 &
                   wf%orbital_coefficients, & ! C_xq
-                  wf%n_ao,                 &
+                  wf%ao%n,                 &
                   zero,                    &
                   Z_wq,                    &
-                  wf%n_ao)
+                  wf%ao%n)
 !
       call dgemm('T', 'N',                 &
                   wf%n_mo,                 &
                   wf%n_mo,                 &
-                  wf%n_ao,                 &
+                  wf%ao%n,                 &
                   one,                     &
-                  wf%orbital_coefficients, & ! C_wp
-                  wf%n_ao,                 &
+                  wf%orbital_coefficients, & ! C_wp 
+                  wf%ao%n,                 &
                   Z_wq,                    &
-                  wf%n_ao,                 &
+                  wf%ao%n,                 &
                   zero,                    &
                   Y_pq,                    &
                   wf%n_mo)
 !
-      call mem%dealloc(Z_wq, wf%n_ao, wf%n_mo)
+      call mem%dealloc(Z_wq, wf%ao%n, wf%n_mo)
 !
    end subroutine mo_transform_wavefunction
-!
-!
-   subroutine get_ao_h_wx_wavefunction(wf, h)
-!!
-!!    Get AO h
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-!!    Constructs the one-electron Hamiltonian integrals h_pq
-!!    in the AO basis.
-!!
-      use molecular_system_class, only: construct_ao_h_wx_molecular_system
-!
-      implicit none
-!
-      class(wavefunction), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: h
-!
-      call wf%get_ao_x_wx(construct_ao_h_wx_molecular_system, h)
-!
-   end subroutine get_ao_h_wx_wavefunction
-!
-!
-   subroutine get_ao_s_wx_wavefunction(wf, s)
-!!
-!!    Get AO s
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-!!    Constructs the one-electron overlap matrix s
-!!    in the AO basis.
-!!
-      use molecular_system_class, only: construct_ao_s_wx_molecular_system
-!
-      implicit none
-!
-      class(wavefunction), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: s
-!
-      call wf%get_ao_x_wx(construct_ao_s_wx_molecular_system, s)
-!
-   end subroutine get_ao_s_wx_wavefunction
-!
-!
-   subroutine get_ao_s_wx_1der_wavefunction(wf, s_wxqk)
-!!
-!!    Get AO s 1st derivative
-!!    Written by Eirik F. Kjønstad, June 2019
-!!
-!!    Constructs the derivative of the AO overlap matrix.
-!!
-      use molecular_system_class, only: construct_ao_s_wx_1der_molecular_system
-!
-      implicit none
-!
-      class(wavefunction), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms), intent(out) :: s_wxqk
-!
-      call wf%get_ao_x_wx_1der(construct_ao_s_wx_1der_molecular_system, s_wxqk)
-!
-   end subroutine get_ao_s_wx_1der_wavefunction
-!
-!
-   subroutine get_ao_h_wx_1der_wavefunction(wf, h_wxqk)
-!!
-!!    Get AO h 1st derivative
-!!    Written by Eirik F. Kjønstad, June 2019
-!!
-!!    Constructs the 1st derivative of the nuclear-electron attraction integrals.
-!!
-      use molecular_system_class, only: construct_ao_h_wx_kinetic_1der_molecular_system
-!
-      implicit none
-!
-      class(wavefunction), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms), intent(out) :: h_wxqk
-!
-      real(dp), dimension(:,:,:,:), allocatable :: h_wxqk_nuclear
-!
-      call wf%get_ao_x_wx_1der(construct_ao_h_wx_kinetic_1der_molecular_system, h_wxqk)
-!
-      call mem%alloc(h_wxqk_nuclear, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
-!
-      call wf%system%construct_ao_h_wx_nuclear_1der(h_wxqk_nuclear, wf%n_ao)
-!
-      call daxpy(3*(wf%system%n_atoms)*wf%n_ao**2, one, h_wxqk_nuclear, 1, h_wxqk, 1)
-!
-      call mem%dealloc(h_wxqk_nuclear, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
-!
-   end subroutine get_ao_h_wx_1der_wavefunction
-!
-!
-   subroutine get_ao_mu_wx_wavefunction(wf, mu_X, mu_Y, mu_Z)
-!!
-!!    Get AO mu
-!!    Written by Eirik F. Kjønstad, Sep 2018
-!!
-!!    Constructs the full dipole integrals mu
-!!    for the X, Y, and Z components.
-!!
-      implicit none
-!
-      class(wavefunction), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: mu_X
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: mu_Y
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: mu_Z
-!
-      type(interval) :: A_interval, B_interval
-!
-      integer :: x, y, A, B
-!
-      real(dp), dimension(:,:), pointer :: mu_AB_X_p
-      real(dp), dimension(:,:), pointer :: mu_AB_Y_p
-      real(dp), dimension(:,:), pointer :: mu_AB_Z_p
-!
-      real(dp), dimension(wf%system%max_shell_size**2), target :: mu_AB_X
-      real(dp), dimension(wf%system%max_shell_size**2), target :: mu_AB_Y
-      real(dp), dimension(wf%system%max_shell_size**2), target :: mu_AB_Z
-!
-!$omp parallel do private(A, B, A_interval, B_interval, x, y, mu_AB_X, mu_AB_Y, mu_AB_Z, &
-!$omp                       &   mu_AB_X_p, mu_AB_Y_p, mu_AB_Z_p)
-      do A = 1, wf%system%n_s
-!
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, A
-!
-            B_interval = wf%system%shell_limits(B)
-!
-            call wf%system%construct_ao_mu_wx(mu_AB_X, mu_AB_Y, mu_AB_Z, A, B)
-!
-            mu_AB_X_p(1 : A_interval%length, 1 : B_interval%length) => mu_AB_X(1 : A_interval%length*B_interval%length)
-            mu_AB_Y_p(1 : A_interval%length, 1 : B_interval%length) => mu_AB_Y(1 : A_interval%length*B_interval%length)
-            mu_AB_Z_p(1 : A_interval%length, 1 : B_interval%length) => mu_AB_Z(1 : A_interval%length*B_interval%length)
-!
-            do x = 1, A_interval%length
-               do y = 1, B_interval%length
-!
-                  mu_X(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_X_p(x, y)
-                  mu_X(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_X_p(x, y)
-!
-                  mu_Y(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_Y_p(x, y)
-                  mu_Y(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_Y_p(x, y)
-!
-                  mu_Z(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_Z_p(x, y)
-                  mu_Z(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_Z_p(x, y)
-!
-               enddo
-            enddo
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine get_ao_mu_wx_wavefunction
-!
-!
-   subroutine get_ao_q_wx_wavefunction(wf, q_xx, q_xy, q_xz, q_yy, q_yz, q_zz)
-!!
-!!    Get AO q
-!!    Written by Eirik F. Kjønstad, Sep 2018
-!!
-!!    Uses the integral tool to construct the quadrupole integrals.
-!!
-      implicit none
-!
-      class(wavefunction), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: q_xx
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: q_xy
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: q_xz
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: q_yy
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: q_yz
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: q_zz
-!
-      type(interval) :: A_interval, B_interval
-!
-      integer :: x, y, A, B
-!
-      real(dp), dimension(:,:), pointer :: q_AB_xx_p
-      real(dp), dimension(:,:), pointer :: q_AB_xy_p
-      real(dp), dimension(:,:), pointer :: q_AB_xz_p
-      real(dp), dimension(:,:), pointer :: q_AB_yy_p
-      real(dp), dimension(:,:), pointer :: q_AB_yz_p
-      real(dp), dimension(:,:), pointer :: q_AB_zz_p
-!
-      real(dp), dimension(wf%system%max_shell_size**2), target :: q_AB_xx
-      real(dp), dimension(wf%system%max_shell_size**2), target :: q_AB_xy
-      real(dp), dimension(wf%system%max_shell_size**2), target :: q_AB_xz
-      real(dp), dimension(wf%system%max_shell_size**2), target :: q_AB_yy
-      real(dp), dimension(wf%system%max_shell_size**2), target :: q_AB_yz
-      real(dp), dimension(wf%system%max_shell_size**2), target :: q_AB_zz
-!
-!$omp parallel do private (A, B, x, y, A_interval, B_interval, q_AB_xx, q_AB_xy, q_AB_xz, q_AB_yy, &
-!$omp   & q_AB_yz, q_AB_zz, q_AB_xx_p, q_AB_xy_p, q_AB_xz_p, q_AB_yy_p, q_AB_yz_p, q_AB_zz_p)
-      do A = 1, wf%system%n_s
-!
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, A
-!
-            B_interval = wf%system%shell_limits(B)
-!
-            call wf%system%construct_ao_q_wx(q_AB_xx, q_AB_xy, q_AB_xz, &
-                                             q_AB_yy, q_AB_yz, q_AB_zz, A, B)
-!
-            q_AB_xx_p(1 : A_interval%length, 1 : B_interval%length) &
-                                             => q_AB_xx(1 : A_interval%length*B_interval%length)
-!
-            q_AB_xy_p(1 : A_interval%length, 1 : B_interval%length) &
-                                             => q_AB_xy(1 : A_interval%length*B_interval%length)
-!
-            q_AB_xz_p(1 : A_interval%length, 1 : B_interval%length) &
-                                             => q_AB_xz(1 : A_interval%length*B_interval%length)
-!
-            q_AB_yy_p(1 : A_interval%length, 1 : B_interval%length) &
-                                             => q_AB_yy(1 : A_interval%length*B_interval%length)
-!
-            q_AB_yz_p(1 : A_interval%length, 1 : B_interval%length) &
-                                             => q_AB_yz(1 : A_interval%length*B_interval%length)
-!
-            q_AB_zz_p(1 : A_interval%length, 1 : B_interval%length) &
-                                             => q_AB_zz(1 : A_interval%length*B_interval%length)
-!
-!
-             do x = 1, A_interval%length
-                do y = 1, B_interval%length
-!
-                   q_xx(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_xx_p(x, y)
-                   q_xx(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_xx_p(x, y)
-!
-                   q_xy(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_xy_p(x, y)
-                   q_xy(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_xy_p(x, y)
-!
-                   q_xz(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_xz_p(x, y)
-                   q_xz(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_xz_p(x, y)
-!
-                   q_yy(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_yy_p(x, y)
-                   q_yy(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_yy_p(x, y)
-!
-                   q_yz(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_yz_p(x, y)
-                   q_yz(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_yz_p(x, y)
-!
-                   q_zz(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_zz_p(x, y)
-                   q_zz(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_zz_p(x, y)
-!
-                enddo
-             enddo
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine get_ao_q_wx_wavefunction
-!
-!
-   subroutine is_restart_safe_wavefunction(wf)
-!!
-!!    Is restart safe?
-!!    Written by Eirik F. Kjønstad, Mar 2019
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      call output%error_msg('Cannot restart for abstract wavefunction (a0)', &
-                             chars=[trim(wf%name_)])
-!
-   end subroutine is_restart_safe_wavefunction
-!
-!
-   subroutine get_mo_mu_wavefunction(wf, mu_pqk)
-!!
-!!    Get MO dipole operator
-!!    Written by Sarai D. Folekstad, Apr 2019
-!!
-!!    Constructs
-!!
-!!       mu_pqk, k = 1, 2, 3 (x, y, z)
-!!
-!!    in the MO basis.
-!!
-      implicit none
-!
-      class(wavefunction), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(out) :: mu_pqk
-!
-      real(dp), dimension(:,:,:), allocatable :: mu_wxk
-!
-      integer :: k
-!
-      call mem%alloc(mu_wxk, wf%n_ao, wf%n_ao, 3)
-!
-      call wf%get_ao_mu_wx(mu_wxk(:,:,1), mu_wxk(:,:,2), mu_wxk(:,:,3))
-!
-      do k = 1, 3
-!
-         call wf%mo_transform(mu_wxk(:,:,k), mu_pqk(:,:,k))
-!
-      enddo
-!
-      call mem%dealloc(mu_wxk, wf%n_ao, wf%n_ao, 3)
-!
-   end subroutine get_mo_mu_wavefunction
-!
-!
-   subroutine get_mo_q_wavefunction(wf, q_pqk)
-!!
-!!    Get MO quadrupole operator
-!!    Written by Eirik F. Kjønstad, 2019
-!!
-!!    Constructs
-!!
-!!       q_pqk, k = 1, 2, 3, 4, 5, 6 (xx, xy, xz, yy, yz, and zz)
-!!
-!!    in the MO basis.
-!!
-      implicit none
-!
-      class(wavefunction), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo, 6) :: q_pqk
-!
-      real(dp), dimension(:,:,:), allocatable :: q_wxk
-!
-      integer :: k
-!
-      call mem%alloc(q_wxk, wf%n_ao, wf%n_ao, 6)
-!
-      call wf%get_ao_q_wx(q_wxk(:,:,1), q_wxk(:,:,2), q_wxk(:,:,3), &
-                          q_wxk(:,:,4), q_wxk(:,:,5), q_wxk(:,:,6))
-!
-      do k = 1, 6
-!
-         call wf%mo_transform(q_wxk(:,:,k), q_pqk(:,:,k))
-!
-      enddo
-!
-      call mem%dealloc(q_wxk, wf%n_ao, wf%n_ao, 6)
-!
-   end subroutine get_mo_q_wavefunction
-!
-!
-   subroutine get_mo_h_wavefunction(wf, h)
-!!
-!!    Get MO h
-!!    Written by Sarai D. Folekstad, Apr 2019
-!!
-      implicit none
-!
-      class(wavefunction), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo) :: h
-      real(dp), dimension(:,:), allocatable :: h_wx
-!
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-!
-      call wf%get_ao_h_wx(h_wx)
-!
-      call wf%mo_transform(h_wx, h)
-!
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
-!
-   end subroutine get_mo_h_wavefunction
 !
 !
    subroutine project_atomic_orbitals_wavefunction(wf, D, PAO_coeff, n_orbitals, first_ao)
@@ -874,9 +364,9 @@ contains
       class(wavefunction), intent(in) :: wf
 !
       integer, intent(in) :: n_orbitals
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)      :: D
-      real(dp), dimension(wf%n_ao, n_orbitals), intent(out)  :: PAO_coeff
+!  
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)      :: D
+      real(dp), dimension(wf%ao%n, n_orbitals), intent(out)  :: PAO_coeff
 !
       integer, intent(in), optional :: first_ao
 !
@@ -895,13 +385,13 @@ contains
 !
 !     Sanity checks and safety guards
 !
-      if (n_orbitals .gt. wf%n_ao) call output%error_msg('number of orbitals for PAOs exceeds number of AOs')
-      if ((local_first .lt. 1) .or. (local_first .gt. wf%n_ao)) call output%error_msg('First PAO exceeds number of AOs')
-      if ((local_last .lt. 1) .or. (local_last .gt. wf%n_ao)) call output%error_msg('Last PAO exceeds number of AOs')
+      if (n_orbitals .gt. wf%ao%n) call output%error_msg('number of orbitals for PAOs exceeds number of AOs')
+      if ((local_first .lt. 1) .or. (local_first .gt. wf%ao%n)) call output%error_msg('First PAO exceeds number of AOs')
+      if ((local_last .lt. 1) .or. (local_last .gt. wf%ao%n)) call output%error_msg('Last PAO exceeds number of AOs')
 !
 !     Construct PAO coefficients
 !
-      call zero_array(PAO_coeff, (wf%n_ao)*(n_orbitals))
+      call zero_array(PAO_coeff, (wf%ao%n)*(n_orbitals))
 !
 !$omp parallel do private(i)
       do i = 1, n_orbitals
@@ -910,25 +400,25 @@ contains
 !
       enddo
 !$omp end parallel do
+!  
+      call mem%alloc(S, wf%ao%n, wf%ao%n)
 !
-      call mem%alloc(S, wf%n_ao, wf%n_ao)
-!
-      call wf%get_ao_s_wx(S)
+      call wf%ao%get_oei('overlap', S)
 !
       call dgemm('N', 'N',             &
-                  wf%n_ao,             &
+                  wf%ao%n,             &
                   n_orbitals,          &
-                  wf%n_ao,             &
+                  wf%ao%n,             &
                   -one,                &
                   D,                   &
-                  wf%n_ao,             &
+                  wf%ao%n,             &
                   S(1,local_first),    &
-                  wf%n_ao,             &
+                  wf%ao%n,             &
                   one,                 &
                   PAO_coeff,           &
-                  wf%n_ao)
+                  wf%ao%n)
 !
-      call mem%dealloc(S, wf%n_ao, wf%n_ao)
+      call mem%dealloc(S, wf%ao%n, wf%ao%n)
 !
    end subroutine project_atomic_orbitals_wavefunction
 !
@@ -950,46 +440,46 @@ contains
 !
       integer, intent(in) :: n_orbitals
 !
-      real(dp), dimension(wf%n_ao, n_orbitals), intent(in) :: orbital_coeff
+      real(dp), dimension(wf%ao%n, n_orbitals), intent(in) :: orbital_coeff
 !
       real(dp), dimension(n_orbitals, n_orbitals), intent(out) :: S
 !
       real(dp), dimension(:,:), allocatable :: S_ao, X
 !
-      call mem%alloc(S_ao, wf%n_ao, wf%n_ao)
-      call wf%get_ao_s_wx(S_ao)
+      call mem%alloc(S_ao, wf%ao%n, wf%ao%n)
+      call wf%ao%get_oei('overlap', S_ao)
 !
-      call mem%alloc(X, n_orbitals, wf%n_ao)
+      call mem%alloc(X, n_orbitals, wf%ao%n)
 !
       call dgemm('T', 'N',       &
                   n_orbitals,    &
-                  wf%n_ao,       &
-                  wf%n_ao,       &
+                  wf%ao%n,       &
+                  wf%ao%n,       &
                   one,           &
                   orbital_coeff, &
-                  wf%n_ao,       &
+                  wf%ao%n,       &
                   S_ao,          &
-                  wf%n_ao,       &
+                  wf%ao%n,       &
                   zero,          &
                   X,             &
                   n_orbitals)
 !
-      call mem%dealloc(S_ao, wf%n_ao, wf%n_ao)
+      call mem%dealloc(S_ao, wf%ao%n, wf%ao%n)
 !
       call dgemm('N', 'N',       &
                   n_orbitals,    &
                   n_orbitals,    &
-                  wf%n_ao,       &
+                  wf%ao%n,       &
                   one,           &
                   X,             &
                   n_orbitals,    &
                   orbital_coeff, &
-                  wf%n_ao,       &
+                  wf%ao%n,       &
                   zero,          &
                   S,             &
                   n_orbitals)
 !
-      call mem%dealloc(X, n_orbitals, wf%n_ao)
+      call mem%dealloc(X, n_orbitals, wf%ao%n)
 !
    end subroutine get_orbital_overlap_wavefunction
 !
@@ -1031,7 +521,7 @@ contains
       integer, intent(in)  :: n_orbitals
       integer, intent(out) :: rank
 !
-      real(dp), dimension(wf%n_ao, n_orbitals), intent(in)     :: orbital_coeff
+      real(dp), dimension(wf%ao%n, n_orbitals), intent(in)     :: orbital_coeff
       real(dp), dimension(n_orbitals, n_orbitals), intent(inout)  :: S
 !
       real(dp), dimension(:), allocatable :: eigenvalues, inv_sqrt_eig
@@ -1090,233 +580,26 @@ contains
 !
 !     Transform orbital coefficients
 !
-      call mem%alloc(orbital_coeff_copy, wf%n_ao, n_orbitals)
+      call mem%alloc(orbital_coeff_copy, wf%ao%n, n_orbitals)
 !
-      call copy_and_scale(one, orbital_coeff, orbital_coeff_copy, (n_orbitals)*(wf%n_ao))
+      call copy_and_scale(one, orbital_coeff, orbital_coeff_copy, (n_orbitals)*(wf%ao%n))
 !
       call dgemm('N', 'N',                   &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   rank,                      &
                   n_orbitals,                &
                   one,                       &
                   orbital_coeff_copy,        &
-                  wf%n_ao,                   &
+                  wf%ao%n,                   &
                   S,                         &
                   n_orbitals,                &
                   zero,                      &
                   orbital_coeff,             &
-                  wf%n_ao)
+                  wf%ao%n)
 !
-      call mem%dealloc(orbital_coeff_copy, wf%n_ao, n_orbitals)
+      call mem%dealloc(orbital_coeff_copy, wf%ao%n, n_orbitals)
 !
    end subroutine lowdin_orthonormalization_wavefunction
-!
-!
-   subroutine get_ao_v_wx_wavefunction(wf, V)
-!!
-!!    Get AO v
-!!    Written by Tommaso Giovannini, May 2019
-!!
-!!    Constructs the elecrostatic potential integral matrix v.
-!!
-      use molecular_system_class
-!
-      implicit none
-!
-      class(wavefunction), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: V
-!
-      call wf%get_ao_x_wx(construct_ao_v_wx_molecular_system, V)
-      call dscal(wf%n_ao**2, two, V, 1)
-!
-   end subroutine get_ao_v_wx_wavefunction
-!
-!
-   subroutine construct_ao_electrostatics_wavefunction(wf, multipole, elec_nucl, what, n_points, points_coord, &
-                                                       elec_fock, property_points, ao_density, charges)
-!!
-!!    Construct electrostatic properties
-!!    Written by Tommaso Giovannini, April 2019
-!!
-!!-------------------------------------------------------------------------------
-!!
-!!    multipole       = 0          potential
-!!                      1          electric field
-!!
-!!    elec_nucl       = 0          do only electronic contribution to property
-!!                      1          do both electronic and nuclear contribution
-!!
-!!    what            = 'fock'     fock contribution, i.e. q*V_αβ or mu*E_αβ
-!!                      'prop'     requested property calculated at MM points V(D) or E(D)
-!!
-!!    n_points                     number of points in the classical region
-!!
-!!    points_coord                 coordinates of the points
-!!
-!!    charges                      charges (PCM or QM/MM)
-!!
-!!-------------------------------------------------------------------------------
-!!    optional arguments
-!!
-!!    elec_fock       = matrix for fock contribution (dimension wf%n_ao, wf%n_ao)
-!!                      MANDATORY if what.eq.'fock'
-!!
-!!    property_points = array for property contribution
-!!                      (dimension n_points if multipole = 0 or
-!!                       dimension 3*n_points if multipole = 1)
-!!                      MANDATORY if what.eq.'prop'
-!!
-!!-------------------------------------------------------------------------------
-!!
-!!    Implementation through LibInt interface
-!!
-      use iso_c_binding
-!
-      implicit none
-!
-!     input variables
-!
-      class(wavefunction) :: wf
-      integer :: multipole
-      integer :: elec_nucl
-      character(len=4) :: what
-      integer :: n_points
-      real(dp), dimension(3,n_points) :: points_coord
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout), optional :: elec_fock
-      real(dp), dimension(:), intent(inout), optional :: property_points
-      real(dp), dimension(:,:), intent(inout), optional :: ao_density
-      real(dp), dimension(:), intent(inout), optional :: charges
-!
-!     stuff for libint
-!
-      integer(c_int) :: n_variables_c
-      real(dp), dimension(1) :: fake_charge
-!
-!     internal variables
-!
-      integer  :: point
-      integer  :: qm_atom
-!
-      real(dp) :: ddot
-      real(dp) :: distQMpoints
-      real(dp), dimension(wf%n_ao,wf%n_ao) :: fock_internal_ao
-!
-!     Sanity check for Fock creation
-!
-      if(elec_nucl.eq.1.and.what.eq.'fock') &
-         call output%error_msg('Do both electronic and nuclear and what = fock')
-!
-!     checking informations on elec_fock and property_points
-!
-      if(what.eq.'fock') then
-!
-         if(.not.present(elec_fock)) &
-            call output%error_msg('Error in call electrostatic fock creation')
-!
-         if(.not.present(charges)) &
-            call output%error_msg('Missing charges in call electrostatic fock creation')
-!
-      else if(what.eq.'prop') then
-!
-         if(.not.present(property_points)) then
-!
-            call output%error_msg('Error in call electrostatic property points creation')
-!
-         else
-!
-            if (.not.present(ao_density)) &
-               call output%error_msg('Error in call electrostatic property points creation: no ao density')
-!
-         endif
-!
-         if(multipole.eq.0) then
-!
-            if(size(property_points).ne.n_points) &
-               call output%error_msg('Wrong dimension of property points in electrostatics integral')
-!
-         else if(multipole.ge.1) then
-!
-            call output%error_msg('Multipoles integral greater than 1 NYI')
-!
-         endif
-!
-      endif
-!
-!
-!     Interface with LibInt for calculation of Fock
-!
-      if(what.eq.'fock') then
-!
-         if(multipole.eq.0) then
-!
-            n_variables_c = int(size(charges), kind=c_int)
-!
-            call initialize_potential_c(charges, &
-                                        points_coord*angstrom_to_bohr, &
-                                        n_variables_c)
-            call wf%get_ao_v_wx(elec_fock)
-!
-         else if(multipole.ge.1) then
-!
-            call output%error_msg('Multipole greater than 1 NYI')
-!
-         endif
-!
-!     Calculation of properties @ points
-!
-!     Electronic part: interface to LibInt
-!     Nuclear part   : explicit calculation
-!
-      else if(what.eq.'prop') then
-!
-         if(multipole.eq.0) then
-!
-            call zero_array(property_points,n_points)
-!
-            do point = 1, n_points
-!
-               call zero_array(fock_internal_ao,wf%n_ao*wf%n_ao)
-!
-               n_variables_c = int(1, kind=c_int)
-               fake_charge(1) = 1.0d0
-!
-               call initialize_potential_c(fake_charge, &
-                                           points_coord(:,point)*angstrom_to_bohr, &
-                                           n_variables_c)
-               call wf%get_ao_v_wx(fock_internal_ao)
-!
-               property_points(point) = -one/two * ddot((wf%n_ao)**2,ao_density,1,fock_internal_ao,1)
-!
-               if(elec_nucl.eq.1) then
-!
-                  do qm_atom = 1, wf%system%n_atoms
-!
-                     distQMpoints =  dsqrt((wf%system%atoms(qm_atom)%x - points_coord(1,point))**2 + &
-                                       (wf%system%atoms(qm_atom)%y - points_coord(2,point))**2 + &
-                                       (wf%system%atoms(qm_atom)%z - points_coord(3,point))**2)
-!
-                     distQMpoints = angstrom_to_bohr*distQMpoints
-!
-                     property_points(point) = property_points(point) &
-                                              - (wf%system%atoms(qm_atom)%number_)/distQMpoints
-!
-                  enddo
-!
-               endif
-!
-            enddo
-!
-         else if (multipole.ge.1) then
-!
-            call output%error_msg('Multipole greater than 1 NYI')
-!
-         endif
-!
-      endif
-!
-!
-   end subroutine construct_ao_electrostatics_wavefunction
 !
 !
    subroutine construct_orbital_block_by_density_cd_wavefunction(wf, D, n_vectors, threshold, mo_offset, active_aos)
@@ -1354,7 +637,7 @@ contains
 !
       class(wavefunction), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_ao,wf%n_ao), intent(inout) :: D
+      real(dp), dimension(wf%ao%n,wf%ao%n), intent(inout) :: D
 !
       integer, intent(out) :: n_vectors
 !
@@ -1369,7 +652,7 @@ contains
       real(dp), dimension(:,:), allocatable :: cholesky_vec
       integer, dimension(:), allocatable  :: keep_vectors
 !
-      call mem%alloc(cholesky_vec, wf%n_ao, wf%n_ao)
+      call mem%alloc(cholesky_vec, wf%ao%n, wf%ao%n)
 !
       if (present(active_aos)) then
 !
@@ -1378,9 +661,9 @@ contains
 !
          n_active_aos = size(active_aos)
 !
-         if (n_active_aos .gt. wf%n_ao) call output%error_msg('More active AOs than total AOs')
-!
-         call cholesky_decomposition_limited_diagonal(D, cholesky_vec, wf%n_ao, &
+         if (n_active_aos .gt. wf%ao%n) call output%error_msg('More active AOs than total AOs')
+!      
+         call cholesky_decomposition_limited_diagonal(D, cholesky_vec, wf%ao%n, &
                                                       n_vectors, threshold, &
                                                       n_active_aos, active_aos)
 !
@@ -1388,7 +671,7 @@ contains
 !
 !$omp parallel do private(ao, mo)
          do mo = 1, n_vectors
-            do ao = 1, wf%n_ao
+            do ao = 1, wf%ao%n
 !
                wf%orbital_coefficients(ao, mo_offset + mo) = cholesky_vec(ao, mo)
 !
@@ -1398,21 +681,21 @@ contains
 !
       else
 !
-         call mem%alloc(keep_vectors, wf%n_ao)
+         call mem%alloc(keep_vectors, wf%ao%n)
 !
 !        Full CD of density (used for inactive densities)
 !
          call full_cholesky_decomposition_effective(D, cholesky_vec, &
-                                             wf%n_ao, n_vectors, &
+                                             wf%ao%n, n_vectors, &
                                              threshold, keep_vectors)
 !
 !
-         call mem%dealloc(keep_vectors, wf%n_ao)
+         call mem%dealloc(keep_vectors, wf%ao%n)
 !
 !
 !$omp parallel do private(ao, mo)
          do mo = 1, n_vectors
-            do ao = 1, wf%n_ao
+            do ao = 1, wf%ao%n
 !
                wf%orbital_coefficients(ao, mo_offset + mo) = cholesky_vec(ao, mo)
 !
@@ -1422,7 +705,7 @@ contains
 !
       endif
 !
-      call mem%dealloc(cholesky_vec, wf%n_ao, wf%n_ao)
+      call mem%dealloc(cholesky_vec, wf%ao%n, wf%ao%n)
 !
    end subroutine construct_orbital_block_by_density_cd_wavefunction
 !
@@ -1455,80 +738,6 @@ contains
    end subroutine destruct_mo_fock_frozen_wavefunction
 !
 !
-   subroutine initialize_mm_matrices_wavefunction(wf)
-!!
-!!    Initialize MM matrices
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      if(wf%system%mm%forcefield.eq.'fq') then
-!
-         call mem%alloc(wf%pol_emb_fock, wf%n_ao, wf%n_ao)
-!
-      endif
-!
-      if(wf%system%mm%forcefield .eq. 'non-polarizable') then
-!
-         call mem%alloc(wf%nopol_h_wx, wf%n_ao, wf%n_ao)
-!
-      endif
-!
-   end subroutine initialize_mm_matrices_wavefunction
-!
-!
-   subroutine destruct_mm_matrices_wavefunction(wf)
-!!
-!!    Destruct MM matrices
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      if(wf%system%mm%forcefield.eq.'non-polarizable') then
-!
-         if(allocated(wf%nopol_h_wx)) call mem%dealloc(wf%nopol_h_wx, wf%n_ao,wf%n_ao)
-!
-      else if(wf%system%mm%forcefield.eq.'fq') then
-!
-         if(allocated(wf%pol_emb_fock))  call mem%dealloc(wf%pol_emb_fock, wf%n_ao,wf%n_ao)
-!
-      endif
-!
-   end subroutine destruct_mm_matrices_wavefunction
-!
-!
-   subroutine initialize_pcm_matrices_wavefunction(wf)
-!!
-!!    Initialize PCM matrices
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      if(.not.allocated(wf%pcm_fock))   call mem%alloc(wf%pcm_fock, wf%n_ao, wf%n_ao)
-!
-   end subroutine initialize_pcm_matrices_wavefunction
-!
-!
-   subroutine destruct_pcm_matrices_wavefunction(wf)
-!!
-!!    Destruct PCM matrices
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      if(allocated(wf%pcm_fock))  call mem%dealloc(wf%pcm_fock, wf%n_ao,wf%n_ao)
-!
-   end subroutine destruct_pcm_matrices_wavefunction
-!
-!
    subroutine initialize_frozen_CCT_wavefunction(wf)
 !!
 !!    Initialize frozen CC^T
@@ -1538,7 +747,7 @@ contains
 !
       class(wavefunction) :: wf
 !
-      call mem%alloc(wf%frozen_CCT, wf%n_ao, wf%n_ao)
+      call mem%alloc(wf%frozen_CCT, wf%ao%n, wf%ao%n)
 !
    end subroutine initialize_frozen_CCT_wavefunction
 !
@@ -1552,7 +761,7 @@ contains
 !
       class(wavefunction) :: wf
 !
-      if (allocated(wf%frozen_CCT)) call mem%dealloc(wf%frozen_CCT, wf%n_ao, wf%n_ao)
+      if (allocated(wf%frozen_CCT)) call mem%dealloc(wf%frozen_CCT, wf%ao%n, wf%ao%n)
 !
    end subroutine destruct_frozen_CCT_wavefunction
 !
@@ -1566,7 +775,8 @@ contains
 !
       class(wavefunction) :: wf
 !
-      if (.not. allocated(wf%ao_fock)) call mem%alloc(wf%ao_fock, wf%n_ao, wf%n_ao)
+      if (.not. allocated(wf%ao_fock)) call mem%alloc(wf%ao_fock, wf%ao%n, wf%ao%n)
+      if (.not. allocated(wf%ao_G)) call mem%alloc(wf%ao_G, wf%ao%n, wf%ao%n)
 !
    end subroutine initialize_ao_fock_wavefunction
 !
@@ -1580,7 +790,8 @@ contains
 !
       class(wavefunction) :: wf
 !
-      if (allocated(wf%ao_fock)) call mem%dealloc(wf%ao_fock, wf%n_ao, wf%n_ao)
+      if (allocated(wf%ao_fock)) call mem%dealloc(wf%ao_fock, wf%ao%n, wf%ao%n)
+      if (allocated(wf%ao_G)) call mem%dealloc(wf%ao_G, wf%ao%n, wf%ao%n)
 !
    end subroutine destruct_ao_fock_wavefunction
 !
@@ -1649,6 +860,46 @@ contains
    end subroutine set_mo_fock_wavefunction
 !
 !
+   subroutine prepare_embedding_wavefunction(wf, embedding)
+!!
+!!    Prepare embedding
+!!    Written by Sarai D. Folkestad
+!!
+!!    Initializes the embedding object
+!!    Embedding is either non-polarizable
+!!    or polarizable (QM/FQ or PCM)
+!!
+      use environment_factory_class, only: environment_factory
+!      
+      implicit none
+!
+      class(wavefunction), intent(inout)        :: wf
+      type(environment_factory), allocatable    :: factory
+!
+      logical, intent(in), optional :: embedding
+!
+      if (present(embedding)) then
+!
+         wf%embedded = embedding
+!
+      else
+!
+         wf%embedded = input%is_embedding_on()
+!
+      endif
+!
+      if (wf%embedded) then
+!
+         factory = environment_factory()
+!
+         wf%embedding = factory%create()
+         call wf%embedding%initialize(wf%ao)
+!
+      end if
+!
+   end subroutine prepare_embedding_wavefunction
+!
+!
    subroutine contruct_mo_basis_transformation_wavefunction(wf, C1, C2, T)
 !!
 !!    Construct MO basis transformation
@@ -1672,52 +923,157 @@ contains
 !
       class(wavefunction), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_mo), intent(in) :: C1, C2
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(in) :: C1, C2
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: T
 !
-      real(dp), dimension(:,:), allocatable :: S, X
+      real(dp), dimension(:,:), allocatable :: X, S
 !
-      call mem%alloc(S, wf%n_ao, wf%n_ao)
-      call wf%get_ao_s_wx(S)
+      call mem%alloc(S, wf%ao%n, wf%ao%n)
+      call wf%ao%get_oei('overlap', S)
 !
 !     X = C1^T S
 !
-      call mem%alloc(X, wf%n_mo, wf%n_ao)
+      call mem%alloc(X, wf%n_mo, wf%ao%n)
 !
       call dgemm('T', 'N', &
                   wf%n_mo, &
-                  wf%n_ao, &
-                  wf%n_ao, &
+                  wf%ao%n, &
+                  wf%ao%n, &
                   one,     &
                   C1,      &
-                  wf%n_ao, &
+                  wf%ao%n, &
                   S,       &
-                  wf%n_ao, &
+                  wf%ao%n, &
                   zero,    &
                   X,       &
                   wf%n_mo)
 !
-      call mem%dealloc(S, wf%n_ao, wf%n_ao)
+      call mem%dealloc(S, wf%ao%n, wf%ao%n)
 !
 !     T = X C2
 !
       call dgemm('N', 'N', &
                   wf%n_mo, &
                   wf%n_mo, &
-                  wf%n_ao, &
+                  wf%ao%n, &
                   one,     &
                   X,       &
                   wf%n_mo, &
                   C2,      &
-                  wf%n_ao, &
+                  wf%ao%n, &
                   zero,    &
                   T,       &
                   wf%n_mo)
 !
-      call mem%dealloc(X, wf%n_mo, wf%n_ao)
+      call mem%dealloc(X, wf%n_mo, wf%ao%n)
 !
    end subroutine contruct_mo_basis_transformation_wavefunction
+!
+!
+   function get_nuclear_dipole_wavefunction(wf) result(d)
+!!
+!!    Get nuclear dipole 
+!!    Written by Eirik F. Kjønstad, Oct 2020
+!!
+      use point_charges_class,         only: point_charges
+!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      real(dp), dimension(3) :: d 
+!
+      type(point_charges) :: pc
+!
+      call wf%ao%get_point_charges(pc)
+      d  = pc%get_dipole()
+!
+   end function get_nuclear_dipole_wavefunction
+!
+!
+   function get_nuclear_quadrupole_wavefunction(wf) result(q)
+!!
+!!    Get nuclear quadrupole 
+!!    Written by Eirik F. Kjønstad, Oct 2020
+!!
+      use point_charges_class,         only: point_charges
+!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      real(dp), dimension(6) :: q 
+!
+      type(point_charges) :: pc
+!
+      call wf%ao%get_point_charges(pc)
+      q  = pc%get_quadrupole()
+!
+   end function get_nuclear_quadrupole_wavefunction
+!
+!
+   function get_nuclear_repulsion_wavefunction(wf) result(E)
+!!
+!!    Get nuclear repulsion 
+!!    Written by Eirik F. Kjønstad, Oct 2020
+!!
+      use point_charges_class, only: point_charges
+!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      real(dp) :: E 
+!
+      type(point_charges) :: pc
+!
+      call wf%ao%get_point_charges(pc)
+      E = pc%get_coulomb_interaction()
+!
+   end function get_nuclear_repulsion_wavefunction
+!
+!
+   function get_nuclear_repulsion_1der_wavefunction(wf) result(E)
+!!
+!!    Get nuclear repulsion 1der
+!!    Written by Eirik F. Kjønstad, Oct 2020
+!!
+!!    Gets first derivative of nuclear repulsion
+!!
+      use point_charges_class,         only: point_charges
+!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      real(dp), dimension(3, wf%ao%get_n_centers()) :: E 
+!
+      type(point_charges) :: pc
+!
+      call wf%ao%get_point_charges(pc)
+      E  = pc%get_coulomb_interaction_1der()
+!
+   end function get_nuclear_repulsion_1der_wavefunction
+!
+!
+   function get_molecular_geometry_wavefunction(wf) result(R)
+!!
+!!    Get molecular geometry 
+!!    Written by Eirik F. Kjønstad, June 2019 
+!!
+      use parameters, only: angstrom_to_bohr
+!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      real(dp), dimension(3, wf%n_atomic_centers) :: R
+!
+      R = wf%ao%get_center_coordinates() 
+      R = R * angstrom_to_bohr     
+!
+   end function get_molecular_geometry_wavefunction
 !
 !
 end module wavefunction_class

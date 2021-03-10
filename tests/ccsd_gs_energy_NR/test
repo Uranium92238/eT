@@ -24,7 +24,16 @@ assert version_info.major == 2
 # construct filter(s)
 threshold = 1.0e-10
 
-f = get_gs_filter(threshold)
+f = [
+    get_filter(string="Final ground state energy (a.u.):", abs_tolerance=threshold),
+    get_filter(
+        from_string="Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)",
+        num_lines=13,
+        abs_tolerance=threshold,
+        mask=[3],
+        ignore_sign=True,
+    ),
+]
 
 # invoke the command line interface parser which returns options
 options = cli()

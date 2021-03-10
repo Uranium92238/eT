@@ -32,23 +32,26 @@ module ccs_class
    use reordering
 !
    use direct_stream_file_class, only : direct_stream_file
-   use stream_file_class, only: stream_file
-   use sequential_file_class, only : sequential_file
-   use string_utilities, only : convert_to_uppercase
-   use array_utilities, only : zero_array_complex
-   use array_utilities, only: sandwich
-   use array_utilities, only : get_l2_norm, copy_and_scale, copy_and_scale_complex, copy_, our_zdotu
-   use array_utilities, only : get_abs_max_w_index, get_n_lowest, get_n_highest
-   use array_utilities, only: quicksort_with_index_descending, are_vectors_parallel
-   use index_invert, only : invert_compound_index, invert_packed_index
-   use batching_index_class, only : batching_index
-   use timings_class, only : timings
+   use stream_file_class,        only : stream_file
+   use sequential_file_class,    only : sequential_file
+   use string_utilities,         only : convert_to_uppercase
+   use array_utilities,          only : zero_array, zero_array_complex
+   use array_utilities,          only : sandwich
+   use array_utilities,          only : get_l2_norm, copy_and_scale, copy_and_scale_complex, zdot
+   use array_utilities,          only : get_abs_max_w_index, get_n_lowest, get_n_highest
+   use array_utilities,          only : quicksort_with_index_descending, are_vectors_parallel
+   use index_invert,             only : invert_compound_index, invert_packed_index
+   use batching_index_class,     only : batching_index
+   use timings_class,            only : timings
 !
    use hf_class, only : hf
 !
    implicit none
 !
    type, extends(wavefunction) :: ccs
+!
+      real(dp)    :: correlation_energy
+      complex(dp) :: correlation_energy_complex
 !
       integer :: n_gs_amplitudes
       integer :: n_es_amplitudes
@@ -190,6 +193,7 @@ module ccs_class
 !
       procedure :: read_settings                                 => read_settings_ccs
       procedure :: read_cvs_settings                             => read_cvs_settings_ccs
+      procedure :: read_rm_core_settings                         => read_rm_core_settings_ccs
 !
       procedure :: read_singles_vector                           => read_singles_vector_ccs
       procedure :: save_singles_vector                           => save_singles_vector_ccs
@@ -229,8 +233,7 @@ module ccs_class
       procedure :: set_fock                                      => set_fock_ccs
       procedure :: set_fock_complex                              => set_fock_ccs_complex
 !
-      procedure :: get_gs_orbital_differences                    => get_gs_orbital_differences_ccs
-      procedure :: get_es_orbital_differences                    => get_gs_orbital_differences_ccs
+      procedure :: get_orbital_differences                       => get_orbital_differences_ccs
 !
       procedure :: set_excitation_energies                       => set_excitation_energies_ccs
 !
@@ -244,6 +247,16 @@ module ccs_class
 !
       procedure :: add_t1_fock_length_dipole_term                => add_t1_fock_length_dipole_term_ccs
       procedure :: add_t1_fock_length_dipole_term_complex        => add_t1_fock_length_dipole_term_ccs_complex
+!
+      procedure :: construct_fock_ai_t1                          => construct_fock_ai_t1_ccs
+      procedure :: construct_fock_ia_t1                          => construct_fock_ia_t1_ccs
+      procedure :: construct_fock_ij_t1                          => construct_fock_ij_t1_ccs
+      procedure :: construct_fock_ab_t1                          => construct_fock_ab_t1_ccs
+!
+      procedure :: construct_fock_ai_t1_complex                  => construct_fock_ai_t1_ccs_complex
+      procedure :: construct_fock_ia_t1_complex                  => construct_fock_ia_t1_ccs_complex
+      procedure :: construct_fock_ij_t1_complex                  => construct_fock_ij_t1_ccs_complex
+      procedure :: construct_fock_ab_t1_complex                  => construct_fock_ab_t1_ccs_complex
 !
 !     Procedures related to the omega vector
 !
@@ -337,6 +350,8 @@ module ccs_class
       procedure :: L_R_overlap                                   => L_R_overlap_ccs
       procedure :: get_degree_of_degeneracy                      => get_degree_of_degeneracy_ccs
       procedure :: check_for_parallel_states                     => check_for_parallel_states_ccs
+      procedure :: remove_parallel_states                        => remove_parallel_states_ccs
+      procedure :: remove_parallel_states_from_file              => remove_parallel_states_from_file_ccs
 !
 !     One-electron interals
 !
@@ -348,17 +363,10 @@ module ccs_class
       procedure :: add_t1_terms_and_transform                    => add_t1_terms_and_transform_ccs
       procedure :: add_t1_terms_and_transform_complex            => add_t1_terms_and_transform_ccs_complex
 !
-      procedure :: ao_to_t1_transformation                       => ao_to_t1_transformation_ccs
-      procedure :: ao_to_t1_transformation_complex               => ao_to_t1_transformation_ccs_complex
+!     One-electron integrals 
 !
-      procedure :: construct_h                                   => construct_h_ccs
-      procedure :: construct_h_complex                           => construct_h_ccs_complex
-!
-      procedure :: construct_mu                                  => construct_mu_ccs
-      procedure :: construct_mu_complex                          => construct_mu_ccs_complex
-!
-      procedure :: construct_q                                   => construct_q_ccs
-      procedure :: construct_q_complex                           => construct_q_ccs_complex
+      procedure :: get_t1_oei                                    => get_t1_oei_ccs 
+      procedure :: get_t1_oei_complex                            => get_t1_oei_ccs_complex
 !
 !     Preparation procedures
 !
@@ -384,18 +392,13 @@ module ccs_class
 !
       procedure :: mo_preparations                               => mo_preparations_ccs
       procedure :: construct_MO_screening_for_cd                 => construct_MO_screening_for_cd_ccs
-!   
-!     Debug 
-!
-      procedure :: omega_for_jacobian_debug                      => omega_for_jacobian_debug_ccs
-      procedure :: amplitudes_for_jacobian_debug                 => amplitudes_for_jacobian_debug_ccs
-      procedure :: normalization_for_jacobian_debug              => normalization_for_jacobian_debug_ccs
-      procedure :: numerical_test_jacobian                       => numerical_test_jacobian_ccs
-!
+! 
 !     Core-valence separation procedures
 !
       procedure :: get_cvs_projector                             => get_cvs_projector_ccs
       procedure :: set_cvs_start_indices                         => set_cvs_start_indices_ccs
+! 
+      procedure :: get_rm_core_projector                         => get_rm_core_projector_ccs
 !
 !     Other procedures
 !
@@ -407,17 +410,14 @@ module ccs_class
       procedure :: set_initial_multipliers_guess                 => set_initial_multipliers_guess_ccs
       procedure :: set_ip_start_indices                          => set_ip_start_indices_ccs
       procedure :: get_ip_projector                              => get_ip_projector_ccs
-      procedure :: get_t1_diagnostic                             => get_t1_diagnostic_ccs
 !
-      procedure :: form_newton_raphson_t_estimate                => form_newton_raphson_t_estimate_ccs
+      procedure :: scale_amplitudes                              => scale_amplitudes_ccs
 !
       procedure :: print_dominant_x_amplitudes                   => print_dominant_x_amplitudes_ccs
       procedure :: print_dominant_amplitudes                     => print_dominant_amplitudes_ccs
       procedure :: print_dominant_x1                             => print_dominant_x1_ccs
 !
       procedure :: make_bath_orbital                             => make_bath_orbital_ccs
-!
-      procedure :: construct_molecular_gradient                  => construct_molecular_gradient_ccs
 !
 !     Procedures related to time dependency
 !
@@ -449,12 +449,11 @@ module ccs_class
       include "F_ccs_interface.F90"
       include "jacobian_ccs_interface.F90"
       include "jacobian_transpose_ccs_interface.F90"
-      include "zop_ccs_interface.F90"
-      include "fop_ccs_interface.F90"
+      include "mean_value_ccs_interface.F90"
+      include "response_ccs_interface.F90"
       include "oei_ccs_interface.F90"
       include "t1_ccs_interface.F90"
       include "fock_ccs_interface.F90"
-      include "debug_jacobian_ccs_interface.F90"
 !
       include "complex_ccs_interface.F90"
 !
@@ -465,7 +464,7 @@ module ccs_class
       include "autogenerated_complex_files/omega_ccs_complex_interface.F90"
       include "autogenerated_complex_files/set_get_ccs_complex_interface.F90"
       include "autogenerated_complex_files/t1_ccs_complex_interface.F90"
-      include "autogenerated_complex_files/zop_ccs_complex_interface.F90"
+      include "autogenerated_complex_files/mean_value_ccs_complex_interface.F90"
 !
    end interface
 !
@@ -489,7 +488,7 @@ contains
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
-      wf%n_t1            = (wf%n_o)*(wf%n_v)
+      wf%n_t1            = wf%n_o*wf%n_v
       wf%n_gs_amplitudes = wf%n_t1
       wf%n_es_amplitudes = wf%n_t1
       wf%need_g_abcd     = .false.
@@ -510,17 +509,11 @@ contains
 !
       class(ccs) :: wf
 !
-!     Initialize CC files
-!
       call wf%initialize_files()
-!
-!     Logicals for special methods
 !
       wf%bath_orbital = .false.
       wf%cvs = .false.
       wf%need_g_abcd = .false.
-!
-!     Read CC settings from eT.inp (from cc section)
 !
       call wf%read_settings()
 !
@@ -562,7 +555,7 @@ contains
       call output%printf('m', 'Molecular orbitals:   (i0)', &
                          ints=[wf%n_mo], fs='(t6,a)')
       call output%printf('m', 'Atomic orbitals:      (i0)', &
-                         ints=[wf%n_ao], fs='(t6,a)')
+                         ints=[wf%ao%n], fs='(t6,a)')
 !
    end subroutine print_banner_ccs
 !
@@ -571,7 +564,6 @@ contains
 !!
 !!    Print amplitude info
 !!    Written by Sarai D. Folkestad, Dec 2019
-!!
 !!
       implicit none
 !
@@ -602,12 +594,18 @@ contains
 
       class(wavefunction), intent(in) :: template_wf
 !
-      wf%system => template_wf%system
+      call wf%prepare_ao_tool(template = template_wf%ao)
+      call wf%prepare_embedding()
 !
       wf%n_o = template_wf%n_o
       wf%n_v = template_wf%n_v
 !
-      wf%n_ao = template_wf%n_ao
+      if (wf%n_v == 0) then
+         call output%error_msg('Number of virtual orbitals is zero. &
+                               &Cannot run post-HF methods')
+      end if
+!
+      wf%ao%n = template_wf%ao%n
       wf%n_mo = template_wf%n_mo
 !
 #ifdef HAS_32BIT_INTEGERS  
@@ -623,7 +621,7 @@ contains
 !
       call dcopy(wf%n_mo, template_wf%orbital_energies, 1, wf%orbital_energies, 1)
 !
-      call dcopy(wf%n_ao*wf%n_mo, template_wf%orbital_coefficients, 1, wf%orbital_coefficients, 1)
+      call dcopy(wf%ao%n*wf%n_mo, template_wf%orbital_coefficients, 1, wf%orbital_coefficients, 1)
 !
 !     Handle changes in the number of MOs as a result of 
 !     special methods
@@ -640,7 +638,7 @@ contains
 !
          call wf%initialize_frozen_CCT()
 !
-         call dcopy(wf%n_ao**2, template_wf%frozen_CCT, 1, wf%frozen_CCT, 1)
+         call dcopy(wf%ao%n**2, template_wf%frozen_CCT, 1, wf%frozen_CCT, 1)
 !
          wf%frozen_dipole = template_wf%frozen_dipole
          wf%frozen_quadrupole = template_wf%frozen_quadrupole
@@ -676,6 +674,9 @@ contains
 !
       call wf%destruct_core_MOs()
 !
+      deallocate(wf%ao)
+      if (wf%embedded) deallocate(wf%embedding)
+!
       call output%printf('v', '- Cleaning up ' // trim(wf%name_) // ' wavefunction', &
                          fs='(/t3,a)')
 !
@@ -693,9 +694,9 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      if (input%requested_section('cc')) then
+      if (input%is_section_present('cc')) then
 !
-         if (input%requested_keyword_in_section('bath orbital','cc')) then 
+         if (input%is_keyword_present('bath orbital','cc')) then 
 !
             wf%bath_orbital = .true.
             wf%n_bath_orbitals = 1 ! May want to expand the number of bath orbitals later on
@@ -725,7 +726,7 @@ contains
 !
       call orbital_information_file%read_(wf%n_o)     
       call orbital_information_file%read_(wf%n_v)         
-      call orbital_information_file%read_(wf%n_ao)     
+      call orbital_information_file%read_(wf%ao%n)     
       call orbital_information_file%read_(wf%n_mo)     
       call orbital_information_file%read_(wf%hf_energy)    
 !
@@ -739,7 +740,7 @@ contains
       CC_orbitals_file = sequential_file('cc_orbital_coefficients')
       call CC_orbitals_file%open_('read', 'rewind')
 !
-      call CC_orbitals_file%read_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
+      call CC_orbitals_file%read_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
 !
       call CC_orbitals_file%close_('keep')
 !
@@ -751,24 +752,6 @@ contains
       call CC_orbital_energies_file%close_('keep')
 !
    end subroutine read_hf_ccs
-!
-!
-   subroutine construct_molecular_gradient_ccs(wf, E_qk)
-!!
-!!    Construct molecular gradient 
-!!    Written by Eirik F. Kjønstad, June 2019 
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      real(dp), dimension(3, wf%system%n_atoms), intent(inout) :: E_qk 
-!
-      E_qk = zero 
-!
-      call output%error_msg('Molecular gradient not implemented for ' // trim(wf%name_))
-!
-   end subroutine construct_molecular_gradient_ccs
 !
 !
    subroutine set_initial_amplitudes_guess_ccs(wf, restart)
@@ -845,7 +828,7 @@ contains
    end subroutine set_initial_multipliers_guess_ccs
 !
 !
-   subroutine get_gs_orbital_differences_ccs(wf, orbital_differences, N)
+   subroutine get_orbital_differences_ccs(wf, orbital_differences, N)
 !!
 !!    Get orbital differences
 !!    Written by Sarai D. Folkestad, Sep 2018
@@ -861,11 +844,12 @@ contains
       class(ccs), intent(in) :: wf
 !
       integer, intent(in) :: N
-      real(dp), dimension(N), intent(inout) :: orbital_differences
+!
+      real(dp), dimension(N), intent(out) :: orbital_differences
 !
       integer :: a, i, ai
 !
-!$omp parallel do private(i,a)
+!$omp parallel do private(i,a,ai)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -877,10 +861,10 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine get_gs_orbital_differences_ccs
+   end subroutine get_orbital_differences_ccs
 !
 !
-   subroutine construct_Jacobian_transform_ccs(wf, r_or_l, X, w)
+   subroutine construct_Jacobian_transform_ccs(wf, r_or_l, X, R, w)
 !!
 !!    Construct Jacobian transform
 !!    Written by Eirik F. Kjønstad, Dec 2018
@@ -897,7 +881,8 @@ contains
 !!            determines if Jacobian or Jacobian transpose is called
 !!
 !!    X: On input contains the vector to transform, 
-!!       on output contains the transformed vector
+!!
+!!    R: On output contains the transformed vector
 !!
 !!    w: Excitation energy. Only used for debug prints for CCS, CCSD etc.
 !!       but is passed to the effective_jacobian_transform for lowmem_CC2 and CC3
@@ -910,7 +895,8 @@ contains
 !
       character(len=*), intent(in) :: r_or_l
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout)   :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)  :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: R
 !
       real(dp), intent(in), optional :: w
 !
@@ -920,11 +906,11 @@ contains
 !     Compute the transformed matrix
       if (r_or_l .eq. "right") then
 !
-         call wf%jacobian_transformation(X) ! X <- AX
+         call wf%jacobian_transformation(X, R) ! X <- AX
 !
       elseif (r_or_l .eq. 'left') then
 !
-         call wf%jacobian_transpose_transformation(X) ! X <- XA
+         call wf%jacobian_transpose_transformation(X, R) ! X <- XA
 !
       else
 !
@@ -967,6 +953,43 @@ contains
      enddo
 !
    end subroutine get_cvs_projector_ccs
+!
+!
+   subroutine get_rm_core_projector_ccs(wf, projector, n_cores, core_MOs)
+!!
+!!    Get remove core projector
+!!    Written by Sarai D. Folkestad, Oct 2018
+!!
+!
+      use array_utilities, only: constant_array
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
+!
+      integer, intent(in) :: n_cores
+!
+      integer, dimension(n_cores), intent(in) :: core_MOs
+!
+      integer :: core, i, a, ai
+!
+      call constant_array(projector, wf%n_es_amplitudes, one)
+!
+      do core = 1, n_cores
+!
+        i = core_MOs(core)
+!
+        do a = 1, wf%n_v
+!
+           ai = wf%n_v*(i - 1) + a
+           projector(ai) = zero
+!
+        enddo
+     enddo
+!
+   end subroutine get_rm_core_projector_ccs
 !
 !
    subroutine print_dominant_amplitudes_ccs(wf)
@@ -1073,21 +1096,6 @@ contains
    end subroutine print_dominant_x1_ccs
 !
 !
-   real(dp) function get_t1_diagnostic_ccs(wf)
-!!
-!!    Get t1 diagnostic
-!!    Written by Eirik F. Kjønstad
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      get_t1_diagnostic_ccs = get_l2_norm(wf%t1, wf%n_t1)
-      get_t1_diagnostic_ccs = get_t1_diagnostic_ccs/sqrt(real(wf%system%n_electrons,kind=dp))
-!
-   end function get_t1_diagnostic_ccs
-!
-!
    subroutine set_cvs_start_indices_ccs(wf, start_indices)
 !!
 !!    Set CVS start indices
@@ -1163,39 +1171,28 @@ contains
    end function L_R_overlap_ccs
 !
 !
-   subroutine form_newton_raphson_t_estimate_ccs(wf, t, dt)
+   subroutine scale_amplitudes_ccs(wf, t)
 !!
-!!    Form Newton-Raphson t estimate 
+!!    Scale amplitudes 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
 !!
-!!    Here, t is the full amplitude vector and dt is the correction to the amplitude vector.
+!!    Scales t to conform with the convention used in the wavefunction:
 !!
-!!    The correction is assumed to be obtained from either 
-!!    solving the Newton-Raphson equation
+!!       t1 <- t1 
+!!       t2_aiai <- two * t2_aiai
+!!       ...
 !!
-!!       A dt = -omega, 
-!!
-!!    where A and omega are given in the biorthonormal basis,
-!!    or from the quasi-Newton equation (A ~ diagonal with diagonal = epsilon) 
-!!
-!!        dt = -omega/epsilon
-!!
-!!    Epsilon is the vector of orbital differences. 
-!!
-!!    On exit, t = t + dt, where the appropriate basis change has been accounted 
-!!    for (in particular for the double amplitudes in CCSD wavefunctions). Also,
-!!    dt is expressed in the basis compatible with t.
-!!
+      use warning_suppressor
+!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: dt 
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t 
 !
-      call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)
+      call do_nothing(t)
 !
-   end subroutine form_newton_raphson_t_estimate_ccs
+   end subroutine scale_amplitudes_ccs
 !
 !
    subroutine make_bath_orbital_ccs(wf)
@@ -1213,18 +1210,18 @@ contains
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_copy
       real(dp), dimension(:), allocatable :: orbital_energies_copy
 !
-      call mem%alloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
+      call mem%alloc(orbital_coefficients_copy, wf%ao%n, wf%n_mo)
 !
-      call copy_and_scale(one, wf%orbital_coefficients, orbital_coefficients_copy, wf%n_mo*wf%n_ao)
+      call copy_and_scale(one, wf%orbital_coefficients, orbital_coefficients_copy, wf%n_mo*wf%ao%n)
 !
       call wf%destruct_orbital_coefficients()
 !
-      call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo + wf%n_bath_orbitals)
-      call zero_array(wf%orbital_coefficients, wf%n_ao*(wf%n_mo + wf%n_bath_orbitals))
+      call mem%alloc(wf%orbital_coefficients, wf%ao%n, wf%n_mo + wf%n_bath_orbitals)
+      call zero_array(wf%orbital_coefficients, wf%ao%n*(wf%n_mo + wf%n_bath_orbitals))
 !
-      wf%orbital_coefficients(1:wf%n_ao, 1:wf%n_mo) = orbital_coefficients_copy(:,:)
+      wf%orbital_coefficients(1:wf%ao%n, 1:wf%n_mo) = orbital_coefficients_copy(:,:)
 !
-      call mem%dealloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
+      call mem%dealloc(orbital_coefficients_copy, wf%ao%n, wf%n_mo)
 !
       call mem%alloc(orbital_energies_copy, wf%n_mo)
 !
@@ -1895,17 +1892,17 @@ contains
 !
       class(ccs) :: wf 
 !
-      if (input%requested_keyword_in_section('core excitation', 'solver cc es')) then 
+      if (input%is_keyword_present('core excitation', 'solver cc es')) then 
 !  
 !        Determine the number of core MOs 
 !
-         wf%n_core_MOs = input%get_n_elements_for_keyword_in_section('core excitation', 'solver cc es')
+         wf%n_core_MOs = input%get_n_elements_for_keyword('core excitation', 'solver cc es')
 !
 !        Then read the vector of core MOs
 !
          call wf%initialize_core_MOs()
 !
-         call input%get_array_for_keyword_in_section('core excitation', 'solver cc es', wf%n_core_MOs, wf%core_MOs)
+         call input%get_array_for_keyword('core excitation', 'solver cc es', wf%n_core_MOs, wf%core_MOs)
 !
       else
 !
@@ -1917,14 +1914,53 @@ contains
 !
 !     Consistency check (given currently implemented CVS capabilities)
 !
-      if (input%requested_keyword_in_section('core excitation', 'solver cc es') .and. &
-          input%requested_keyword_in_section('core', 'frozen orbitals')) then 
+      if (input%is_keyword_present('core excitation', 'solver cc es') .and. &
+          input%is_keyword_present('core', 'frozen orbitals')) then 
 !
          call output%error_msg('No support for CVS with frozen core yet. Turn off frozen core.')
 !
       endif
 !
    end subroutine read_cvs_settings_ccs
+!
+!
+   subroutine read_rm_core_settings_ccs(wf)
+!!
+!!    Read remove core settings 
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      if (input%is_keyword_present('remove core', 'solver cc es')) then 
+!  
+!        Determine the number of core MOs 
+!
+         wf%n_core_MOs = input%get_n_elements_for_keyword('remove core', 'solver cc es')
+!
+!        Then read the vector of core MOs
+!
+         call wf%initialize_core_MOs()
+!
+         call input%get_array_for_keyword('remove core', 'solver cc es', wf%n_core_MOs, wf%core_MOs)
+!
+      else
+!
+         call output%error_msg('found no specified core MOs to remove!')
+!
+      endif 
+!
+!     Consistency check
+!
+      if (input%is_keyword_present('remove core', 'solver cc es') .and. &
+          input%is_keyword_present('core', 'frozen orbitals')) then 
+!
+         call output%error_msg('No support for removal of core with frozen core yet. Turn off frozen core.')
+!
+      endif
+!
+   end subroutine read_rm_core_settings_ccs
 !
 !
    subroutine mo_preparations_ccs(wf)
@@ -2025,7 +2061,7 @@ contains
                          .gt. threshold)) then
 !
                call output%error_msg('Different degree of degeneracy in the &
-               & left excited states compared to the right excited states')
+                  &left excited states compared to the right excited states')
 !
             end if
 !
@@ -2044,9 +2080,9 @@ contains
    end subroutine get_degree_of_degeneracy_ccs
 !
 !
-   subroutine check_for_parallel_states_ccs(wf, transformation, threshold)
+   subroutine check_for_parallel_states_ccs(wf, side, threshold, parallel_states)
 !!
-!!    Check for degenerate states
+!!    Check for parallel states
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Oct 2019
 !!
 !!    The solver might not ensure orthogonality of the states (e.g. in DIIS).
@@ -2059,11 +2095,13 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      character(len=*), intent(in) :: transformation
+      character(len=*), intent(in) :: side
 !
       real(dp), intent(in) :: threshold
 !
-      real(dp), dimension(:,:), allocatable  :: R
+      logical, dimension(wf%n_singlet_states), intent(out), optional :: parallel_states
+!
+      real(dp), dimension(:,:), allocatable  :: vector
       logical, dimension(:), allocatable :: parallel, degenerate, checked
 !
       integer, dimension(:), allocatable :: degenerate_states
@@ -2071,6 +2109,8 @@ contains
       integer :: n_degeneracy, reduced_degeneracy
 !
       character(len=100) :: print_states
+!
+      parallel_states = .false.
 !
       call mem%alloc(degenerate, wf%n_singlet_states)
 !
@@ -2089,8 +2129,8 @@ contains
 !
 !        Get the number of states degenerate with current_state (at least 1)
 !
-         call wf%get_degree_of_degeneracy(current_state, transformation,      &
-                                          threshold, n_degeneracy, degenerate)
+         call wf%get_degree_of_degeneracy(current_state, side,threshold, &
+                                          n_degeneracy, degenerate)
 !
 !        If degeneracies are found:
 !           - read all degenerate states
@@ -2100,7 +2140,7 @@ contains
 !
          if (n_degeneracy .gt. 1) then
 !
-            call mem%alloc(R, wf%n_es_amplitudes, n_degeneracy)
+            call mem%alloc(vector, wf%n_es_amplitudes, n_degeneracy)
 !
             call mem%alloc(degenerate_states, n_degeneracy)
 !
@@ -2119,13 +2159,13 @@ contains
 !              This state won't be checked again
                checked(p) = .true.
 !
-               call wf%read_excited_state(R(:, counter), p, p,'right')
+               call wf%read_excited_state(vector(:, counter), p, p, side)
 !
             end do
 !
             call mem%alloc(parallel, n_degeneracy)
 !
-            call check_for_parallel_vectors(R, wf%n_es_amplitudes, n_degeneracy, &
+            call check_for_parallel_vectors(vector, wf%n_es_amplitudes, n_degeneracy, &
                                             reduced_degeneracy, threshold, parallel)
 !
             if(reduced_degeneracy .gt. 1) then
@@ -2151,15 +2191,20 @@ contains
 !
             do p = 1, n_degeneracy
                if(parallel(p)) then
-                  call output%warning_msg('State (i0) is parallel to state (i0).', &
-                                           ints=[current_state,degenerate_states(p)])
+!
+                  call output%warning_msg('(a0) state (i0) is parallel to (a0) state (i0).', &
+                                           ints=[current_state,degenerate_states(p)],&
+                                           chars=[trim(side),trim(side)])
+!
+                  if (present(parallel_states)) parallel_states(degenerate_states(p)) = .true.
+!
                end if
             end do
 !
             call mem%dealloc(degenerate_states, n_degeneracy)
 !
             call mem%dealloc(parallel, n_degeneracy)
-            call mem%dealloc(R, wf%n_es_amplitudes, n_degeneracy)
+            call mem%dealloc(vector, wf%n_es_amplitudes, n_degeneracy)
 !
          end if
 !
@@ -2171,7 +2216,7 @@ contains
    end subroutine check_for_parallel_states_ccs
 !
 !
-   subroutine biorthonormalize_L_and_R_ccs(wf, energy_threshold, residual_threshold, skip_states)
+   subroutine biorthonormalize_L_and_R_ccs(wf, energy_threshold, residual_threshold)
 !!
 !!    Biorthonormalize the left and right eigenvectors
 !!    Written by Alexander C. Paul, Sep 2019
@@ -2193,40 +2238,35 @@ contains
 !
       real(dp), intent(in) :: energy_threshold, residual_threshold
 !
-      logical, dimension(wf%n_singlet_states), intent(inout) :: skip_states
-!
       real(dp), dimension(:,:), allocatable :: R, L
 !
-      logical, dimension(:), allocatable :: parallel, degenerate, biorthonormalized
+      logical, dimension(:), allocatable :: degenerate, biorthonormalized
 !
       real(dp) :: LT_R
 !
       integer, dimension(:), allocatable :: degenerate_states
 !
-      integer :: state, current_state, unique_state, counter
-      integer :: n_degeneracy, reduced_degeneracy_r, reduced_degeneracy_l
+      integer :: state, current_state, counter
+      integer :: n_degeneracy
 !
       type(timings) :: timer
 !
       timer = timings('Biorthonormalization of left and right states', pl='n')
       call timer%turn_on()
 !
-!     Loop through states look for degenerate states (skip degeneracy)
-!     discard parallel states biorthonormalize degenerate states
-!
       call output%printf('v', 'Biorthonormalization of left and right excited &
                          &state vectors', fs='(/t3,a)')
 !
-!     Prepare logicals to skip prallel states outside of the routine,
-!     keep track of which states have already been biorthonormalized
-!     and which states are degenerate to the current_state
-!
-      skip_states = .false.
+!     Prepare logicals to keep track of which states have already been 
+!     biorthonormalized and which states are degenerate to the current_state
 !
       call mem%alloc(biorthonormalized, wf%n_singlet_states)
       biorthonormalized = .false.
 !
-      call mem%alloc(degenerate, wf%n_singlet_states)      
+      call mem%alloc(degenerate, wf%n_singlet_states)
+!
+!     Loop through states look for degeneracies and
+!     biorthonormalize degenerate states
 !
       do current_state = 1, wf%n_singlet_states
 !
@@ -2290,91 +2330,15 @@ contains
 !
          end do
 !
-!        :: Check for and remove parallel "right" states ::
-!
-         call mem%alloc(parallel, n_degeneracy)
-!
-         call check_for_parallel_vectors(R, wf%n_es_amplitudes, n_degeneracy,     &
-                                         reduced_degeneracy_r, residual_threshold,&
-                                         parallel=parallel)
-!
-!        Remove parallel states from array R
-!
-         if(reduced_degeneracy_r .ne. n_degeneracy) then
-!
-            unique_state = 0
-!
-            do state = 1, n_degeneracy
-!
-               if(parallel(state)) then
-!
-!                 skipped state that is parallel to one of the other degenerate states
-                  skip_states(degenerate_states(state)) = .true.
-                  cycle
-               end if
-!
-               unique_state = unique_state + 1
-!
-               if (state .ne. unique_state) then
-!
-                  call dcopy(wf%n_es_amplitudes, &
-                             R(:,state), 1,      &
-                             R(:,unique_state), 1)
-!
-               end if
-!
-            end do
-!
-         end if
-!
          call mem%dealloc(degenerate_states, n_degeneracy)
 !
-!        :: Check for and remove parallel "left" states ::
-!
-         call check_for_parallel_vectors(L, wf%n_es_amplitudes, n_degeneracy,     &
-                                         reduced_degeneracy_l, residual_threshold,&
-                                         parallel=parallel)
-!
-         if(reduced_degeneracy_l .ne. reduced_degeneracy_r) then
-            call output%error_msg('Different degree of degeneracy in the &
-                                  &left excited states compared to the &
-                                  &right excited states')
-         end if
-!
-!        Remove parallel states from array L
-!
-         if(reduced_degeneracy_l .ne. n_degeneracy) then
-!
-            unique_state = 0
-!
-            do state = 1, n_degeneracy
-!
-!              skip state that is parallel to one of the other degenerate states
-               if(parallel(state)) cycle
-!
-               unique_state = unique_state + 1
-!
-               if(unique_state .ne. state) then
-!
-                  call dcopy(wf%n_es_amplitudes, &
-                             L(:,state), 1,      &
-                             L(:,unique_state), 1)
-!
-               end if
-!
-            end do
-!
-         end if
-!
-         if (reduced_degeneracy_r .gt. 1) then
+         if (n_degeneracy .gt. 1) then
 !
             call output%printf('n', 'Found states that are close in energy:', fs='(/t6,a)')
             call output%print_separator('n', 38,'-', fs='(t6,a)')
             call output%printf('n', 'State     Excitation Energy', fs='(t6,a)')
 !
             do state = 1, n_degeneracy
-!
-               if(parallel(state)) cycle
 !
                call output%printf('n', ' (i2)     (f19.12)', &
                                   ints=[current_state + state - 1], &
@@ -2385,19 +2349,16 @@ contains
 !
          end if
 !
-         call mem%dealloc(parallel, n_degeneracy)
-!
 !        :: Biorthonormalize states ::
 !        -----------------------------
 !
-         call gram_schmidt_biorthonormalization(L, R, wf%n_es_amplitudes,  &
-                                                reduced_degeneracy_r,      &
-                                                residual_threshold)
+         call gram_schmidt_biorthonormalization(L, R, wf%n_es_amplitudes, &
+                                                n_degeneracy, residual_threshold)
 !
 !        We binormalize again to include the doubles/triples contributions
 !        in low-memory CC2 and CC3.
 !
-         do state = 1, reduced_degeneracy_r
+         do state = 1, n_degeneracy
 !
             LT_R = wf%L_R_overlap(L(:,state),                &
                                   current_state + state - 1, &
@@ -2413,8 +2374,7 @@ contains
          do state = current_state, wf%n_singlet_states
 !
 !           Only save the states that we currently consider
-!           and that are not parallel to another state
-            if (.not. degenerate(state) .or. skip_states(state)) cycle
+            if (.not. degenerate(state)) cycle
 !
             counter = counter + 1
 !
@@ -2448,8 +2408,6 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      real(dp) :: t1_diagnostic 
-!
       call output%printf('m', '- Ground state summary:', fs='(/t3,a)')
 !
       call output%printf('m', 'Final ground state energy (a.u.): (f18.12)', &
@@ -2459,10 +2417,6 @@ contains
                          reals=[wf%correlation_energy], fs='(/t6,a)')
 !
       call wf%print_dominant_amplitudes()
-!
-      t1_diagnostic = wf%get_t1_diagnostic() 
-      call output%printf('m', 'T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', &
-                         reals=[t1_diagnostic], fs='(/t6,a)')
 !
    end subroutine print_gs_summary_ccs
 !
@@ -2512,17 +2466,17 @@ contains
       implicit none
 !
       class(ccs), intent(in) :: wf
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: screening_vector
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(out) :: screening_vector
 !
       integer :: x, p, y
 !
       real(dp), dimension(:), allocatable :: v
 !
-      call mem%alloc(v, wf%n_ao)
-      call zero_array(v, wf%n_ao)
+      call mem%alloc(v, wf%ao%n)
+      call zero_array(v, wf%ao%n)
 !
 !$omp parallel do private(x, p)
-      do x = 1, wf%n_ao
+      do x = 1, wf%ao%n
          do p = 1, wf%n_mo
 !
             if (wf%orbital_coefficients(x,p)**2 .gt. v(x)) &
@@ -2534,8 +2488,8 @@ contains
 !$omp end parallel do
 !
 !$omp parallel do private(x, y)
-      do x = 1, wf%n_ao
-         do y = 1, wf%n_ao
+      do x = 1, wf%ao%n
+         do y = 1, wf%ao%n
 !
             screening_vector(x, y) = v(x)*v(y)
 !
@@ -2543,7 +2497,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(v, wf%n_ao)
+      call mem%dealloc(v, wf%ao%n)
 !
    end subroutine construct_MO_screening_for_cd_ccs
 !

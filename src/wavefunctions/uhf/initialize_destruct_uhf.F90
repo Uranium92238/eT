@@ -133,7 +133,7 @@ contains
 !
       class(uhf) :: wf
 !
-      if (.not. allocated(wf%ao_density_a)) call mem%alloc(wf%ao_density_a, wf%n_ao, wf%n_ao)
+      if (.not. allocated(wf%ao_density_a)) call mem%alloc(wf%ao_density_a, wf%ao%n, wf%ao%n)
 !
    end subroutine initialize_ao_density_a_uhf
 !
@@ -170,7 +170,7 @@ contains
 !
       class(uhf) :: wf
 !
-      if (allocated(wf%ao_density_a)) call mem%dealloc(wf%ao_density_a, wf%n_ao, wf%n_ao)
+      if (allocated(wf%ao_density_a)) call mem%dealloc(wf%ao_density_a, wf%ao%n, wf%ao%n)
 !
    end subroutine destruct_ao_density_a_uhf
 !
@@ -184,7 +184,7 @@ contains
 !
       class(uhf) :: wf
 !
-      if (.not. allocated(wf%ao_density_b)) call mem%alloc(wf%ao_density_b, wf%n_ao, wf%n_ao)
+      if (.not. allocated(wf%ao_density_b)) call mem%alloc(wf%ao_density_b, wf%ao%n, wf%ao%n)
 !
    end subroutine initialize_ao_density_b_uhf
 !
@@ -198,7 +198,7 @@ contains
 !
       class(uhf) :: wf
 !
-      if (allocated(wf%ao_density_b)) call mem%dealloc(wf%ao_density_b, wf%n_ao, wf%n_ao)
+      if (allocated(wf%ao_density_b)) call mem%dealloc(wf%ao_density_b, wf%ao%n, wf%ao%n)
 !
    end subroutine destruct_ao_density_b_uhf
 !
@@ -212,7 +212,7 @@ contains
 !
       class(uhf) :: wf
 !
-      if (.not. allocated(wf%ao_fock_a)) call mem%alloc(wf%ao_fock_a, wf%n_ao, wf%n_ao)
+      if (.not. allocated(wf%ao_fock_a)) call mem%alloc(wf%ao_fock_a, wf%ao%n, wf%ao%n)
 !
    end subroutine initialize_ao_fock_a_uhf
 !
@@ -226,7 +226,7 @@ contains
 !
       class(uhf) :: wf
 !
-      if (allocated(wf%ao_fock_a)) call mem%dealloc(wf%ao_fock_a, wf%n_ao, wf%n_ao)
+      if (allocated(wf%ao_fock_a)) call mem%dealloc(wf%ao_fock_a, wf%ao%n, wf%ao%n)
 !
    end subroutine destruct_ao_fock_a_uhf
 !
@@ -240,7 +240,7 @@ contains
 !
       class(uhf) :: wf
 !
-      if (.not. allocated(wf%ao_fock_b)) call mem%alloc(wf%ao_fock_b, wf%n_ao, wf%n_ao)
+      if (.not. allocated(wf%ao_fock_b)) call mem%alloc(wf%ao_fock_b, wf%ao%n, wf%ao%n)
 !
    end subroutine initialize_ao_fock_b_uhf
 !
@@ -254,7 +254,7 @@ contains
 !
       class(uhf) :: wf
 !
-      if (allocated(wf%ao_fock_b)) call mem%dealloc(wf%ao_fock_b, wf%n_ao, wf%n_ao)
+      if (allocated(wf%ao_fock_b)) call mem%dealloc(wf%ao_fock_b, wf%ao%n, wf%ao%n)
 !
    end subroutine destruct_ao_fock_b_uhf
 !
@@ -291,7 +291,7 @@ contains
 !
       class(uhf) :: wf
 !
-      if (.not. allocated(wf%orbital_coefficients_a)) call mem%alloc(wf%orbital_coefficients_a, wf%n_ao, wf%n_mo)
+      if (.not. allocated(wf%orbital_coefficients_a)) call mem%alloc(wf%orbital_coefficients_a, wf%ao%n, wf%n_mo)
 !
    end subroutine initialize_orbital_coefficients_a_uhf
 !
@@ -305,7 +305,7 @@ contains
 !
       class(uhf) :: wf
 !
-      if (allocated(wf%orbital_coefficients_a)) call mem%dealloc(wf%orbital_coefficients_a, wf%n_ao, wf%n_mo)
+      if (allocated(wf%orbital_coefficients_a)) call mem%dealloc(wf%orbital_coefficients_a, wf%ao%n, wf%n_mo)
 !
    end subroutine destruct_orbital_coefficients_a_uhf
 !
@@ -319,7 +319,7 @@ contains
 !
       class(uhf) :: wf
 !
-      if (.not. allocated(wf%orbital_coefficients_b)) call mem%alloc(wf%orbital_coefficients_b, wf%n_ao, wf%n_mo)
+      if (.not. allocated(wf%orbital_coefficients_b)) call mem%alloc(wf%orbital_coefficients_b, wf%ao%n, wf%n_mo)
 !
    end subroutine initialize_orbital_coefficients_b_uhf
 !
@@ -333,7 +333,7 @@ contains
 !
       class(uhf) :: wf
 !
-      if (allocated(wf%orbital_coefficients_b)) call mem%dealloc(wf%orbital_coefficients_b, wf%n_ao, wf%n_mo)
+      if (allocated(wf%orbital_coefficients_b)) call mem%dealloc(wf%orbital_coefficients_b, wf%ao%n, wf%n_mo)
 !
    end subroutine destruct_orbital_coefficients_b_uhf
 !

@@ -56,6 +56,7 @@ module abstract_eri_tool_class
 !     Get ERI mem
 !
       procedure :: get_eri_mem           => get_eri_mem_abstract_eri_tool
+      procedure :: get_packed_eri_mem    => get_packed_eri_mem_abstract_eri_tool
 !
 !     Various routines
 !
@@ -87,9 +88,9 @@ contains
       character(len=200) :: cholesky_storage
       character(len=200) :: eri_storage
 !
-      if (input%requested_keyword_in_section('cholesky storage', 'integrals')) then
+      if (input%is_keyword_present('cholesky storage', 'integrals')) then
 !
-         call input%get_keyword_in_section('cholesky storage', &
+         call input%get_keyword('cholesky storage', &
                                            'integrals',        &
                                            cholesky_storage)
 !
@@ -110,9 +111,9 @@ contains
 !
       endif
 !
-      if (input%requested_keyword_in_section('eri storage', 'integrals')) then
+      if (input%is_keyword_present('eri storage', 'integrals')) then
 !
-         call input%get_keyword_in_section('eri storage',     &
+         call input%get_keyword('eri storage',     &
                                            'integrals',       &
                                             eri_storage)
 !
@@ -133,7 +134,7 @@ contains
 !
       endif
 !
-      if (input%requested_keyword_in_section('mo eri in memory', 'integrals')) then
+      if (input%is_keyword_present('mo eri in memory', 'integrals')) then
 !
             eri%mo_eri_mem = .true.
 !
@@ -149,8 +150,12 @@ contains
 !!    Get ERI mem
 !!    Written by Rolf H. Myhre Jun 2020
 !!
-!!    Adds the memory usage for get ERI depending on pq and rs to req_pq and req_rs
-!!    Note that req_pq and req_rs must be initialized outside
+!!    Estimates the memory required to construct ERIs from block determined by string 
+!!    and size (dim_p, dim_q, dim_r, dim_s), and adds it to req_pq and req_rs, 
+!!    corresponding to the Cholesky vectors that may be allocated.
+!!    Memory requirements will depend on whether the cholesky blocks are reordered, 
+!!    so the optional reordering logicals qp and sr arerequired.
+!!
 !!    This routine is meant for estimates for the batching manager.
 !!    If you are batching over index r, dim_r will typically be 1
 !!    and the other dimensions should be full.
@@ -175,6 +180,7 @@ contains
 !
       logical :: full_p, full_r
 !
+!     Is the middle index complete, i.e., we need a contiguous L_Jpq vector?
       full_p = ((string(1:1) .eq. 'v' .and. dim_p .eq. eri%n_v) .or. &
                 (string(1:1) .eq. 'o' .and. dim_p .eq. eri%n_o))
 !
@@ -194,6 +200,54 @@ contains
       endif
 !
    end subroutine get_eri_mem_abstract_eri_tool
+!
+!
+   pure subroutine get_packed_eri_mem_abstract_eri_tool(eri, string, req_pq, &
+                                                        dim_p, dim_q, qp)
+!!
+!!    Get packed ERI mem
+!!    Written by Rolf H. Myhre Jun 2020
+!!
+!!    Estimates the memory required to construct the packed symmetric ERIs 
+!!    from block determined by string 
+!!    and size (dim_p, dim_q, dim_p, dim_q), and adds it to req_pq, 
+!!    corresponding to the Cholesky vector that may be allocated.
+!!    Memory requirements will depend on whether the cholesky blocks are reordered, 
+!!    so the optional reordering logical qp is required.
+!!
+!!    This routine is meant for estimates for the batching manager.
+!!    If you are batching over index q, dim_q will typically be 1
+!!    and the other dimensions should be full.
+!!
+!!    See get_eri_mo for additional documentation
+!!
+      implicit none
+!
+      class(abstract_eri_tool), intent(in) :: eri
+!
+      character(len=2), intent(in) :: string
+!
+      integer, intent(inout) :: req_pq
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      logical, optional, intent(in) :: qp
+!
+      logical :: full_p
+!
+!     Is the middle index complete, i.e., we need a contiguous L_Jpq vector?
+      full_p = ((string(1:1) .eq. 'v' .and. dim_p .eq. eri%n_v) .or. &
+                (string(1:1) .eq. 'o' .and. dim_p .eq. eri%n_o))
+!
+!     Can we use vectors in mem directly
+      if(.not. (eri%cholesky_mem .and. full_p)) req_pq = req_pq + eri%n_J*dim_p*dim_q
+!
+!     Do we need temporary arrays for reordering
+      if(present(qp)) then
+         if(qp) req_pq = req_pq + eri%n_J*dim_p*dim_q
+      endif
+!
+   end subroutine get_packed_eri_mem_abstract_eri_tool
 !
 !
    pure function room_for_cholesky_abstract_eri_tool(eri, float_size) result(is_room)

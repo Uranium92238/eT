@@ -109,6 +109,13 @@ module t1_eri_tool_class
       procedure :: construct_g_pqrs_t1       => construct_g_pqrs_t1_t1_eri_tool
       procedure :: construct_g_t1_from_mo    => construct_g_t1_from_mo_t1_eri_tool
 !
+!     Get and construct routines for packed g_pqrs in T1 basis
+!
+      procedure :: get_eri_t1_packed_mem      => get_eri_t1_packed_mem_t1_eri_tool
+      procedure :: get_eri_t1_packed          => get_eri_t1_packed_t1_eri_tool
+      procedure :: get_g_pqrs_t1_packed       => get_g_pqrs_t1_packed_t1_eri_tool
+      procedure :: construct_g_pqrs_t1_packed => construct_g_pqrs_t1_packed_t1_eri_tool
+!
 !     Construction of C1 Cholesky vectors from T1 Cholesky
 !
       procedure :: get_eri_c1_mem            => get_eri_c1_mem_t1_eri_tool
@@ -307,7 +314,7 @@ contains
 !
       call eri%read_general_settings(eri%t1_eri_mem)
 !
-      if (input%requested_keyword_in_section('t1 eri in memory', 'integrals')) then
+      if (input%is_keyword_present('t1 eri in memory', 'integrals')) then
 !
             eri%t1_eri_mem = .true.
 !
@@ -622,7 +629,7 @@ contains
                                       1, eri%n_mo,   &
                                       1, eri%n_mo,   &
                                       1, eri%n_mo,   &
-                                      1, eri%n_mo)
+                                      1, eri%n_mo, one, zero)
 !
          call construct_eri_timer%turn_off()
 !
@@ -673,7 +680,7 @@ contains
                                          1, eri%n_mo,   &
                                          1, eri%n_mo,   &
                                          1, eri%n_mo,   &
-                                         1, eri%n_mo)
+                                         1, eri%n_mo, one, zero)
 !
          endif
 !
@@ -963,7 +970,7 @@ contains
                L_J_ij_p(1:eri%n_J, 1:eri%n_o, 1:batch_o%length) => L_J_ij
                call eri%get_cholesky_mo(L_J_ij_p, 1, eri%n_o, batch_o%first, batch_o%last)
 !
-               call sort_123_to_132_and_add(L_J_ji_p, L_J_ij_p, eri%n_J, batch_o%length, eri%n_o)
+               call add_132_to_123(one, L_J_ji_p, L_J_ij_p, eri%n_J, eri%n_o, batch_o%length)
 !
 !              L_J_ai_t1 -= sum_j t_aj L'_J_ji
                L_J_ia_p(1:eri%n_J, 1:eri%n_o, 1:batch_v%length) => L_J_ab
@@ -976,7 +983,7 @@ contains
                           zero,                                            &
                           L_J_ia_p, eri%n_J*eri%n_o)
 !
-               call sort_123_to_132_and_add(L_J_ia_p, L_J_ai_p, eri%n_J, eri%n_o, batch_v%length)
+               call add_132_to_123(one, L_J_ia_p, L_J_ai_p, eri%n_J, batch_v%length, eri%n_o)
 !
             enddo
 !
@@ -1043,9 +1050,9 @@ contains
                        zero,                                               &
                        L_J_vv, eri%n_J*batch_v%length)
 !
-            call sort_123_to_132_and_add(L_J_vv, &
-                                         eri%L_J_vv_t1(:,:,batch_v%first:batch_v%last), &
-                                         eri%n_J, batch_v%length, eri%n_v)
+            call add_132_to_123(one, L_J_vv, &
+                                eri%L_J_vv_t1(:,:,batch_v%first:batch_v%last), &
+                                eri%n_J, eri%n_v, batch_v%length)
 !
          enddo
 !
@@ -1079,7 +1086,7 @@ contains
             call eri%get_cholesky_mo(L_J_xv, eri%n_o + 1, eri%n_mo, &
                                      eri%n_o + batch_v%first, eri%n_o + batch_v%last)
 !
-            call sort_123_to_132_and_add(L_J_vv, L_J_xv, eri%n_J, batch_v%length, eri%n_v)
+            call add_132_to_123(one, L_J_vv, L_J_xv, eri%n_J, eri%n_v, batch_v%length)
 !
             call eri%set_cholesky_t1(L_J_xv, eri%n_o+1, eri%n_mo, &
                                      eri%n_o + batch_v%first, eri%n_o + batch_v%last)
@@ -1205,12 +1212,15 @@ contains
    subroutine get_eri_t1_t1_eri_tool(eri, string, g_pqrs, &
                                      first_p, last_p, first_q, last_q, &
                                      first_r, last_r, first_s, last_s, &
-                                     qp, sr, rspq)
+                                     alpha, beta, qp, sr, rspq)
 !!
 !!    Get ERI T1
 !!    Written by Rolf H. Myhre Jun 2020
 !!
 !!    based on routines by Sarai D. Folkestad and Eirik F. Kjønstad
+!!
+!!    alpha: scales data added to g_pqrs (default = 1.0)
+!!    beta : scales data already in g_pqrs (default = 0.0)
 !!
 !!    string: four character string indicating integral block. Example: "vovo"
 !!            o: occupied, v: virtual, f: full
@@ -1235,12 +1245,22 @@ contains
       integer, optional, intent(in) :: first_r, last_r
       integer, optional, intent(in) :: first_s, last_s
 !
-      real(dp), intent(out), dimension(1) :: g_pqrs
+      real(dp), intent(inout), dimension(1) :: g_pqrs
+!
+      real(dp), optional, intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp, sr, rspq
 !
       integer :: full_first_p, full_last_p, full_first_q, full_last_q
       integer :: full_first_r, full_last_r, full_first_s, full_last_s
+!
+      real(dp) :: alpha_, beta_
+!
+      alpha_ = one
+      if(present(alpha)) alpha_ = alpha
+!
+      beta_ = zero
+      if(present(beta)) beta_ = beta
 !
       call eri%index_setup(string(1:1), full_first_p, full_last_p, first_p, last_p)
       call eri%index_setup(string(2:2), full_first_q, full_last_q, first_q, last_q)
@@ -1251,14 +1271,14 @@ contains
                                      full_first_q, full_last_q, &
                                      full_first_r, full_last_r, &
                                      full_first_s, full_last_s, &
-                                     qp, sr, rspq)
+                                     alpha_, beta_, qp, sr, rspq)
 !
    end subroutine get_eri_t1_t1_eri_tool
 !
 !
    subroutine get_g_pqrs_t1_t1_eri_tool(eri, g_pqrs, first_p, last_p, first_q, last_q, &
                                                      first_r, last_r, first_s, last_s, &
-                                                     qp, sr, rspq)
+                                                     alpha, beta, qp, sr, rspq)
 !!
 !!    Get g_pqrs T1
 !!    Written by Rolf H. Myhre, Jun 2020
@@ -1283,8 +1303,10 @@ contains
       integer, intent(in) :: first_r, last_r
       integer, intent(in) :: first_s, last_s
 !
-      real(dp), intent(out), &
+      real(dp), intent(inout), &
                 dimension(first_p:last_p,first_q:last_q,first_r:last_r,first_s:last_s) :: g_pqrs
+!
+      real(dp), intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp, sr, rspq
 !
@@ -1293,13 +1315,13 @@ contains
          call eri%copy_g_pqrs(g_pqrs, eri%g_pqrs_t1, &
                               first_p, last_p, first_q, last_q, &
                               first_r, last_r, first_s, last_s, &
-                              qp, sr, rspq)
+                              alpha, beta, qp, sr, rspq)
 !
       else
 !
          call eri%construct_g_pqrs_t1(g_pqrs, first_p, last_p, first_q, last_q, &
                                               first_r, last_r, first_s, last_s, &
-                                              qp, sr, rspq)
+                                              alpha, beta, qp, sr, rspq)
 !
       endif
 !
@@ -1309,7 +1331,7 @@ contains
    subroutine construct_g_pqrs_t1_t1_eri_tool(eri, g_pqrs, &
                                               first_p, last_p, first_q, last_q, &
                                               first_r, last_r, first_s, last_s, &
-                                              qp, sr, rspq)
+                                              alpha, beta, qp, sr, rspq)
 !!
 !!    Construct g_pqrs T1
 !!    Written by Rolf H. Myhre, Jun 2020
@@ -1332,8 +1354,10 @@ contains
       integer, intent(in) :: first_r, last_r
       integer, intent(in) :: first_s, last_s
 !
-      real(dp), intent(out), &
+      real(dp), intent(inout), &
                 dimension(first_p:last_p,first_q:last_q,first_r:last_r,first_s:last_s) :: g_pqrs
+!
+      real(dp), intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp, sr, rspq
 !
@@ -1361,20 +1385,247 @@ contains
       call eri%L_pointer_setup_t1(L_J_pq_p, switch_pq, &
                                   first_p, last_p, first_q, last_q, pq_alloced)
 !
-      call eri%L_pointer_setup_t1(L_J_rs_p, switch_rs, &
-                                  first_r, last_r, first_s, last_s, rs_alloced)
+      if((first_p .eq. first_r) .and. (last_p .eq. last_r) .and. &
+         (first_q .eq. first_s) .and. (last_q .eq. last_s) .and. &
+         (switch_pq .eqv. switch_rs)) then
 !
-      call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, zero, &
-                                  dim_p, dim_q, dim_r, dim_s, rspq)
+         call eri%construct_g_symm_from_L(L_J_pq_p, g_pqrs, alpha, beta, dim_p, dim_q)
 !
-      if (rs_alloced) then
-         call mem%dealloc(L_J_rs_p, eri%n_J, dim_r, dim_s)
+      else
+!
+         call eri%L_pointer_setup_t1(L_J_rs_p, switch_rs, &
+                                     first_r, last_r, first_s, last_s, rs_alloced)
+!
+         call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, alpha, beta, &
+                                     dim_p, dim_q, dim_r, dim_s, rspq)
+!
+         if (rs_alloced) then
+            call mem%dealloc(L_J_rs_p, eri%n_J, dim_r, dim_s)
+         endif
       endif
+!
       if (pq_alloced) then
          call mem%dealloc(L_J_pq_p, eri%n_J, dim_p, dim_q)
       endif
 !
    end subroutine construct_g_pqrs_t1_t1_eri_tool
+!
+!
+   pure subroutine get_eri_t1_packed_mem_t1_eri_tool(eri, string, req_pq, &
+                                                     dim_p, dim_q, qp)
+!!
+!!    Get ERI T1 packed mem
+!!    Written by Rolf H. Myhre Jun 2020
+!!
+!!    Adds the memory usage for get ERI that depends on 
+!!    dimensions p and q to req_pq
+!!    Note that req_pq must be initialized outside
+!!    This routine is meant for estimates for the batching manager.
+!!    If you are batching over index q, dim_q will typically be 1
+!!    and the other dimensions should be full.
+!!
+!!    Temporary arrays needed for reordering, triggered by optional qp, 
+!!    are not allocated simultaneously in construct_g, so this routine may
+!!    overestimate total memory usage
+!!
+!!    See get_eri_t1 for additional documentation
+!!
+      implicit none
+!
+      class(t1_eri_tool), intent(in) :: eri
+!
+      character(len=2), intent(in) :: string
+!
+      integer, intent(inout) :: req_pq
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      logical, optional, intent(in) :: qp
+!
+!     No extra memory needed if integrals in mem
+      if(.not. (eri%t1_eri_mem)) then
+!
+         call eri%get_packed_eri_mem(string, req_pq, dim_p, dim_q, qp)
+!
+      endif
+!
+   end subroutine get_eri_t1_packed_mem_t1_eri_tool
+!
+!
+   subroutine get_eri_t1_packed_t1_eri_tool(eri, string, g_pqpq,              &
+                                            first_p, last_p, first_q, last_q, &
+                                            alpha, beta, qp)
+!!
+!!    Get ERI T1 packed
+!!    Written by Rolf H. Myhre, Jan 2021
+!!
+!!    based on routines by Sarai D. Folkestad and Eirik F. Kjønstad
+!!
+!!    Returns packed eri integrals in the rectangular full packed (RFP) normal upper format
+!!    The leading upper triangular matrix is transposed and tucked
+!!    in with the trailing upper triangular matrix
+!!
+!!    x x x y y y    y y y      x x x y y y y    y y y y
+!!      x x y y y    y y y        x x y y y y    y y y y
+!!        x y y y -> y y y          x y y y y -> y y y y
+!!          z z z    z z z            y y y y    y y y y
+!!            z z    x z z              z z z    x z z z
+!!              z    x x z                z z    x x z z
+!!                   x x x                  z    x x x z
+!!
+!!    Note the difference between even and odd dimensions.
+!!    Make sure to test both when using this routine.
+!!
+!!    See: ACM Transactions on Mathematical Software, Vol. 37, No. 2, Article 18
+!!         http://doi.acm.org/10.1145/1731022.1731028
+!!
+!!    string: two character string indicating integral block. Example: "vo"
+!!            o: occupied, v: virtual, f: full
+!!
+!!    q_pqpq: array to contain the integral
+!!
+!!    first_p, last_p, etc.: first and last index of integrals
+!!                           in range determined by string
+!!
+!!    alpha: scales data added to g_pqrs (default = 1.0)
+!!    beta : scales data already in g_pqrs (default = 0.0)
+!!
+!!    qp:   switches order of p and q, i.e., g_qpqp
+!!
+      implicit none
+!
+      class(t1_eri_tool), intent(inout) :: eri
+!
+      character(len=2), intent(in) :: string
+!
+      real(dp), intent(inout), dimension(1) :: g_pqpq
+!
+      integer, optional, intent(in) :: first_p, last_p
+      integer, optional, intent(in) :: first_q, last_q
+!
+      real(dp), optional, intent(in) :: alpha, beta
+!
+      logical, optional, intent(in) :: qp
+!
+      integer :: full_first_p, full_last_p, full_first_q, full_last_q, dim_p, dim_q
+!
+      real(dp) :: alpha_, beta_
+!
+      alpha_ = one
+      if(present(alpha)) alpha_ = alpha
+!
+      beta_ = zero
+      if(present(beta)) beta_ = beta
+!
+      call eri%index_setup(string(1:1), full_first_p, full_last_p, first_p, last_p)
+      call eri%index_setup(string(2:2), full_first_q, full_last_q, first_q, last_q)
+!
+      dim_p = full_last_p - full_first_p + 1
+      dim_q = full_last_q - full_first_q + 1
+!
+      call eri%get_g_pqrs_t1_packed(g_pqpq, full_first_p, full_last_p,               &
+                                            full_first_q, full_last_q, dim_p, dim_q, &
+                                            alpha_, beta_, qp)
+!
+!
+   end subroutine get_eri_t1_packed_t1_eri_tool
+!
+!
+   subroutine get_g_pqrs_t1_packed_t1_eri_tool(eri, g_pqpq, first_p, last_p, first_q, last_q, &
+                                                            dim_p, dim_q, alpha, beta, qp)
+!!
+!!    Get g_pqrs T1 packed
+!!    Written by Rolf H. Myhre, Jan 2021
+!!
+!!    based on routines by Sarai D. Folkestad and Eirik F. Kjønstad
+!!
+!!    q_pqpq: array to contain the integral
+!!    first_p, last_p, etc.: absolute first and last index of integrals
+!!    dim_p, dim_q: length of p and q range
+!!
+!!    Optional reordering logicals (default = .false.):
+!!    qp:   switches order of p and q, i.e., reorders to g_qpqp
+!!
+      implicit none
+!
+      class(t1_eri_tool), intent(inout) :: eri
+!
+      integer, intent(in) :: first_p, last_p
+      integer, intent(in) :: first_q, last_q
+      integer, intent(in) :: dim_p, dim_q
+!
+      real(dp), intent(inout), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2) :: g_pqpq
+!
+      real(dp), intent(in) :: alpha, beta
+!
+      logical, optional, intent(in) :: qp
+!
+      if (eri%t1_eri_mem) then
+!
+         call eri%copy_g_pqrs_to_packed(g_pqpq, eri%g_pqrs_t1, &
+                                        first_p, first_q,      &
+                                        dim_p, dim_q, alpha, beta, qp)
+!
+      else
+!
+         call eri%construct_g_pqrs_t1_packed(g_pqpq, first_p, last_p, first_q, last_q, &
+                                             dim_p, dim_q, alpha, beta, qp)
+!
+      endif
+!
+!
+   end subroutine get_g_pqrs_t1_packed_t1_eri_tool
+!
+!
+   subroutine construct_g_pqrs_t1_packed_t1_eri_tool(eri, g_pqpq, &
+                                                     first_p, last_p, first_q, last_q, &
+                                                     dim_p, dim_q, alpha, beta, qp)
+!!
+!!    Construct g_pqrs T1 packed
+!!    Written by Rolf H. Myhre, Jan 2021
+!!
+!!    q_pqpq: array to contain the integral
+!!    first_p, last_p, etc.: absolute first and last index of integrals
+!!    dim_p, dim_q: length of p and q range
+!!
+!!    Optional reordering logicals (default = .false.):
+!!    qp:   switches order of p and q, i.e., reorders to g_qpqp
+!!
+      implicit none
+!
+      class(t1_eri_tool), intent(inout) :: eri
+!
+      integer, intent(in) :: first_p, last_p
+      integer, intent(in) :: first_q, last_q
+      integer, intent(in) :: dim_p, dim_q
+!
+      real(dp), intent(inout), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2) :: g_pqpq
+!
+      real(dp), intent(in) :: alpha, beta
+!
+      logical, optional, intent(in) :: qp
+!
+      real(dp), dimension(:,:,:), pointer, contiguous :: L_J_pq_p
+!
+      logical :: switch_pq,  pq_alloced
+!
+      L_J_pq_p => null()
+!
+      switch_pq = .false.
+      if(present(qp)) switch_pq = qp
+!
+      call eri%L_pointer_setup_t1(L_J_pq_p, switch_pq, &
+                                  first_p, last_p, first_q, last_q, pq_alloced)
+!
+      call eri%construct_g_packed_from_L(L_J_pq_p, g_pqpq, alpha, beta, dim_p, dim_q)
+!
+      if (pq_alloced) then
+         call mem%dealloc(L_J_pq_p, eri%n_J, dim_p, dim_q)
+      endif
+!
+      L_J_pq_p => null()
+!
+   end subroutine construct_g_pqrs_t1_packed_t1_eri_tool
 !
 !
    pure subroutine get_eri_c1_mem_t1_eri_tool(eri, string, &
@@ -1432,7 +1683,7 @@ contains
    subroutine get_eri_c1_t1_eri_tool(eri, string, g_pqrs, c_ai,        &
                                      first_p, last_p, first_q, last_q, &
                                      first_r, last_r, first_s, last_s, &
-                                     qp, sr, rspq)
+                                     alpha, beta, qp, sr, rspq)
 !!
 !!    Get ERI C1
 !!    Written by Rolf H. Myhre Jun 2020
@@ -1446,6 +1697,9 @@ contains
 !!    q_pqrs: array to contain the integral
 !!    c_ai  : T1 like array used in the construction
 !!    first_p, last_p, etc.: first and last index of integrals in range determined by string
+!!
+!!    alpha: scales data added to g_pqrs (default = 1.0)
+!!    beta : scales data already in g_pqrs (default = 0.0)
 !!
 !!    qp:   optional logical, switches order of p and q, i.e., g_qprs, default: false
 !!    sr:   optional logical, switches order of r and s, i.e., g_pqsr, default: false
@@ -1465,12 +1719,22 @@ contains
       integer, optional, intent(in) :: first_r, last_r
       integer, optional, intent(in) :: first_s, last_s
 !
-      real(dp), intent(out), dimension(1) :: g_pqrs
+      real(dp), intent(inout), dimension(1) :: g_pqrs
+!
+      real(dp), optional, intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp, sr, rspq
 !
       integer :: full_first_p, full_last_p, full_first_q, full_last_q
       integer :: full_first_r, full_last_r, full_first_s, full_last_s
+!
+      real(dp) :: alpha_, beta_
+!
+      alpha_ = one
+      if(present(alpha)) alpha_ = alpha
+!
+      beta_ = zero
+      if(present(beta)) beta_ = beta
 !
       call eri%index_setup(string(1:1), full_first_p, full_last_p, first_p, last_p)
       call eri%index_setup(string(2:2), full_first_q, full_last_q, first_q, last_q)
@@ -1482,7 +1746,7 @@ contains
                                    full_first_q, full_last_q, &
                                    full_first_r, full_last_r, &
                                    full_first_s, full_last_s, &
-                                   qp, sr, rspq)
+                                   alpha_, beta_, qp, sr, rspq)
 !
    end subroutine get_eri_c1_t1_eri_tool
 !
@@ -1490,7 +1754,7 @@ contains
    subroutine construct_g_pqrs_c1_t1_eri_tool(eri, g_pqrs, c_ai,                &
                                               first_p, last_p, first_q, last_q, &
                                               first_r, last_r, first_s, last_s, &
-                                              qp, sr, rspq)
+                                              alpha, beta, qp, sr, rspq)
 !!
 !!    Construct g_pqrs C1
 !!    Written by Rolf H. Myhre, Jun 2020
@@ -1519,10 +1783,12 @@ contains
       integer, intent(in) :: first_r, last_r
       integer, intent(in) :: first_s, last_s
 !
-      real(dp), intent(out), &
+      real(dp), intent(inout), &
                 dimension(first_p:last_p,first_q:last_q,first_r:last_r,first_s:last_s) :: g_pqrs
 !
       real(dp), dimension(eri%n_v, eri%n_o), intent(in) :: c_ai
+!
+      real(dp), intent(in) :: alpha, beta
 !
       logical, optional, intent(in) :: qp, sr, rspq
 !
@@ -1534,7 +1800,7 @@ contains
 
       logical :: alloced
 !
-      real(dp) :: zero_one
+      real(dp) :: beta_one
 !
       L_J_pq_p => null()
       L_J_rs_p => null()
@@ -1544,7 +1810,7 @@ contains
       if(present(qp)) switch_pq = qp
       if(present(sr)) switch_rs = sr
 !
-      zero_one = zero
+      beta_one = beta
 !
       if ((last_p .le. eri%n_o) .and. (last_q .gt. eri%n_o) .and. &
           (last_r .le. eri%n_o) .and. (last_s .gt. eri%n_o)) then
@@ -1563,10 +1829,10 @@ contains
          call mem%alloc(L_J_pq_p, eri%n_J, dim_p, dim_q)
          call eri%construct_cholesky_c1(L_J_pq_p, c_ai, first_p,last_p, first_q,last_q, switch_pq)
 !
-         call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, zero, &
+         call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, alpha, beta, &
                                      dim_p, dim_q, dim_r, dim_s, rspq)
 !
-         zero_one = one
+         beta_one = one
 !
          call mem%dealloc(L_J_pq_p, eri%n_J, dim_p, dim_q)
          if (alloced) then
@@ -1583,7 +1849,7 @@ contains
          call mem%alloc(L_J_rs_p, eri%n_J, dim_r, dim_s)
          call eri%construct_cholesky_c1(L_J_rs_p, c_ai, first_r,last_r, first_s,last_s, switch_rs)
 !
-         call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, zero_one, &
+         call eri%construct_g_from_L(L_J_pq_p, L_J_rs_p, g_pqrs, alpha, beta_one, &
                                      dim_p, dim_q, dim_r, dim_s, rspq)
 !
          call mem%dealloc(L_J_rs_p, eri%n_J, dim_r, dim_s)
@@ -1908,7 +2174,7 @@ contains
       endif
 !
       if(qp) then
-         call sort_123_to_132_and_add(L_J_ia_p, L_J_ai_c1, eri%n_J, length_a, length_i)
+         call add_132_to_123(one, L_J_ia_p, L_J_ai_c1, eri%n_J, length_a, length_i)
          call mem%dealloc(L_J_ia, eri%n_J, length_i, length_a)
       endif
 !

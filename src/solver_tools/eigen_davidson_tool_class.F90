@@ -73,7 +73,7 @@ module eigen_davidson_tool_class
 !!                
 !!                ...
 !!
-!!                if (residual_norm >= thr) call davidson%construct_next_trial(R, state)
+!!                if (residual_norm >= thr) call davidson%add_new_trial(R, state)
 !!
 !!             enddo 
 !!
@@ -86,9 +86,6 @@ module eigen_davidson_tool_class
    use array_utilities, only: get_n_lowest
 !
    type, extends(davidson_tool) :: eigen_davidson_tool 
-!
-      real(dp), dimension(:), allocatable :: omega_re 
-      real(dp), dimension(:), allocatable :: omega_im
 !
       logical :: non_unit_metric                     ! If trial vectors are not orthonormal,
                                                      ! then the metric is not the unit matrix 
@@ -103,18 +100,11 @@ module eigen_davidson_tool_class
 !
       procedure :: solve_reduced_problem          => solve_reduced_problem_eigen_davidson_tool
       procedure :: construct_residual             => construct_residual_eigen_davidson_tool
-      procedure :: construct_next_trial           => construct_next_trial_eigen_davidson_tool
 !
 !     Other routines 
 !
       procedure, private :: construct_re_residual => construct_re_residual_eigen_davidson_tool
       procedure, private :: construct_im_residual => construct_im_residual_eigen_davidson_tool
-!  
-      procedure, private :: initialize_omega_re   => initialize_omega_re_eigen_davidson_tool
-      procedure, private :: initialize_omega_im   => initialize_omega_im_eigen_davidson_tool
-!  
-      procedure, private :: destruct_omega_re     => destruct_omega_re_eigen_davidson_tool
-      procedure, private :: destruct_omega_im     => destruct_omega_im_eigen_davidson_tool
 !  
       procedure :: construct_reduced_metric           &
                 => construct_reduced_metric_eigen_davidson_tool
@@ -140,8 +130,9 @@ module eigen_davidson_tool_class
 contains
 !
 !
-   function new_eigen_davidson_tool(name_, n_parameters, n_solutions, &
-                        lindep_threshold, max_dim_red, non_unit_metric) result(davidson)
+   function new_eigen_davidson_tool(name_, n_parameters, n_solutions,   &
+                        lindep_threshold, max_dim_red, &
+                        records_in_memory, non_unit_metric) result(davidson)
 !!
 !!    New eigen Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -175,9 +166,22 @@ contains
 !
       logical, optional, intent(in) :: non_unit_metric
 !
+      logical, intent(in) :: records_in_memory
+!
       davidson%n_parameters = n_parameters
       davidson%n_solutions  = n_solutions
-      davidson%max_dim_red  = max_dim_red
+!
+      if (davidson%n_solutions == 0) call output%error_msg('number of solutions must be specified.')
+!
+      if (davidson%n_solutions .gt. davidson%n_parameters) &
+         call output%error_msg('specified number of solutions exceeds the actual ' // &
+                               'number of solutions.')
+!
+!     max reduced dimension must be larger than or equal to the number of requested solutions
+      davidson%max_dim_red  = max(n_solutions, max_dim_red)
+!      
+!     max reduced dimension must be smaler than or equal to the number of parameters 
+      davidson%max_dim_red  = min(davidson%max_dim_red, n_parameters)
 !
       davidson%lindep_threshold = lindep_threshold  
 !
@@ -191,83 +195,22 @@ contains
       davidson%dim_red      = 0
       davidson%n_new_trials = n_solutions
 !
+      call davidson%print_settings()
+!
+      davidson%trials = record_storer(trim(davidson%name_) // '_trials',            &
+                                      davidson%n_parameters,                        &
+                                      davidson%max_dim_red + davidson%n_solutions,  &
+                                      records_in_memory,                            &
+                                      delete=.true.)
+!
+      davidson%transforms = record_storer(trim(davidson%name_) // '_transforms',       &
+                                          davidson%n_parameters,                       &
+                                          davidson%max_dim_red + davidson%n_solutions, &
+                                          records_in_memory,                           &
+                                          delete=.true.)
+!
    end function new_eigen_davidson_tool
-!
-!
-   subroutine destructor_eigen_davidson_tool(davidson)
-!!
-!!    Destructor  
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!!
-      implicit none 
-!
-      type(eigen_davidson_tool), intent(inout) :: davidson 
-!
-      call davidson%destruct_reduced_space_quantities()
-!
-      call davidson%destruct_omega_re()
-      call davidson%destruct_omega_im()
-!
-      if (davidson%do_precondition) call davidson%preconditioner%destruct_precondition_vector()
-!
-   end subroutine destructor_eigen_davidson_tool
 !  
-!
-   subroutine initialize_omega_im_eigen_davidson_tool(davidson)
-!!
-!!    Initialize omega im 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(eigen_davidson_tool), intent(inout) :: davidson 
-!
-      if (.not. allocated(davidson%omega_im)) call mem%alloc(davidson%omega_im, davidson%n_solutions)
-!
-   end subroutine initialize_omega_im_eigen_davidson_tool
-!  
-!
-   subroutine initialize_omega_re_eigen_davidson_tool(davidson)
-!!
-!!    Initialize omega re 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(eigen_davidson_tool), intent(inout) :: davidson 
-!
-      if (.not. allocated(davidson%omega_re)) call mem%alloc(davidson%omega_re, davidson%n_solutions)
-!
-   end subroutine initialize_omega_re_eigen_davidson_tool
-!  
-!
-   subroutine destruct_omega_im_eigen_davidson_tool(davidson)
-!!
-!!    Destruct omega im 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(eigen_davidson_tool), intent(inout) :: davidson 
-!
-      if (allocated(davidson%omega_im)) call mem%dealloc(davidson%omega_im, davidson%n_solutions)
-!
-   end subroutine destruct_omega_im_eigen_davidson_tool
-!  
-!
-   subroutine destruct_omega_re_eigen_davidson_tool(davidson)
-!!
-!!    Destruct omega re 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(eigen_davidson_tool), intent(inout) :: davidson 
-!
-      if (allocated(davidson%omega_re)) call mem%dealloc(davidson%omega_re, davidson%n_solutions)
-!
-   end subroutine destruct_omega_re_eigen_davidson_tool
-!
 !
    subroutine solve_reduced_problem_eigen_davidson_tool(davidson)
 !!
@@ -402,9 +345,6 @@ contains
 !
 !     Find lowest n_solutions eigenvalues and sort them (the corresponding indices
 !     are placed in the integer array index_list)
-!
-      call davidson%initialize_omega_im()
-      call davidson%initialize_omega_re()
 !
       call mem%alloc(index_list, davidson%n_solutions)
 !
@@ -639,53 +579,6 @@ contains
    end subroutine construct_im_residual_eigen_davidson_tool
 !
 !
-   subroutine construct_next_trial_eigen_davidson_tool(davidson, R, n)
-!!
-!!    Construct next trial  
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
-!!
-!!    R: nth residual, AX - omega*X 
-!!    n: state number 
-!!
-!!    Preconditions the residual and adds it to the trial space.
-!!    
-      implicit none 
-!
-      class(eigen_davidson_tool) :: davidson 
-!
-      real(dp), dimension(davidson%n_parameters), intent(in) :: R
-!
-      integer, intent(in) :: n 
-!
-      real(dp) :: norm_trial
-!
-      real(dp), dimension(:), allocatable :: trial 
-!
-!     Precondition 
-!
-      call mem%alloc(trial, davidson%n_parameters)
-      call dcopy(davidson%n_parameters, R, 1, trial, 1)
-!
-      if (davidson%do_precondition) &
-         call davidson%preconditioner%do_(trial,                        &
-                                          shift=davidson%omega_re(n),   &
-                                          prefactor=-one)
-!
-!     Renormalize 
-!
-      norm_trial = get_l2_norm(trial, davidson%n_parameters)
-      call dscal(davidson%n_parameters, one/norm_trial, trial, 1)
-!
-!     Add to trial space 
-!
-      davidson%n_new_trials = davidson%n_new_trials + 1
-      call davidson%set_trial(trial, davidson%dim_red + davidson%n_new_trials)
-!
-      call mem%dealloc(trial, davidson%n_parameters)
-!
-   end subroutine construct_next_trial_eigen_davidson_tool
-!
-!
    subroutine construct_reduced_metric_eigen_davidson_tool(davidson)
 !!
 !!    Construct reduced metric 
@@ -854,14 +747,32 @@ contains
 !
       class(eigen_davidson_tool) :: davidson
 !
-      if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, &
-         davidson%dim_red, davidson%dim_red)
-      if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, &
-         davidson%dim_red, davidson%n_solutions)
+      if (allocated(davidson%A_red)) &
+         call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
+!
+      if (allocated(davidson%X_red)) &
+         call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
+!
       if (allocated(davidson%S_red)) &
          call mem%dealloc(davidson%S_red, davidson%dim_red, davidson%dim_red)
 !
    end subroutine destruct_reduced_space_quantities_eigen_davidson_tool
+!
+!
+   subroutine destructor_eigen_davidson_tool(davidson)
+!!
+!!    Destructor  
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      type(eigen_davidson_tool), intent(inout) :: davidson 
+!
+      call davidson%destruct_reduced_space_quantities()
+!
+      if (davidson%do_precondition) call davidson%preconditioner%destruct_precondition_vector()
+!
+   end subroutine destructor_eigen_davidson_tool
 !
 !
 end module eigen_davidson_tool_class

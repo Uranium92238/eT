@@ -34,6 +34,7 @@ module cc2_class
 !
 !     Ground state
 !
+      procedure :: construct_fock                              => construct_fock_cc2
       procedure :: construct_omega                             => construct_omega_cc2
       procedure :: calculate_energy                            => calculate_energy_cc2
 !
@@ -43,10 +44,6 @@ module cc2_class
       procedure :: construct_u_aibj                            => construct_u_aibj_cc2
 !
       procedure :: construct_t2bar                             => construct_t2bar_cc2
-!
-!     Excited state 
-!
-      procedure :: get_es_orbital_differences                  => get_es_orbital_differences_cc2
 !
 !     Jacobian
 !
@@ -77,13 +74,6 @@ module cc2_class
 !
       procedure :: prepare_for_density                         => prepare_for_density_cc2
 !
-!     Debug 
-!
-      procedure :: omega_for_jacobian_debug                    => omega_for_jacobian_debug_cc2
-      procedure :: amplitudes_for_jacobian_debug               => amplitudes_for_jacobian_debug_cc2
-      procedure :: normalization_for_jacobian_debug            => normalization_for_jacobian_debug_cc2
-      procedure :: construct_omega2                            => construct_omega2_cc2
-!
 !     Initialize wavefunction
 !
       procedure :: initialize                                  => initialize_cc2
@@ -97,8 +87,8 @@ module cc2_class
       include "multiplier_equation_cc2_interface.F90"
       include "jacobian_cc2_interface.F90"
       include "jacobian_transpose_cc2_interface.F90"
-      include "zop_cc2_interface.F90"
-      include "debug_jacobian_cc2_interface.F90"
+      include "mean_value_cc2_interface.F90"
+      include "fock_cc2_interface.F90"
 !
    end interface
 !
@@ -309,55 +299,6 @@ contains
       call timer%turn_off()
 !
    end subroutine construct_u_aibj_cc2
-!
-!
-   subroutine get_es_orbital_differences_cc2(wf, orbital_differences, N)
-!!
-!!    Get orbital differences 
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    and Andreas Skeidsvoll, 2018
-!!
-      implicit none
-!
-      class(cc2), intent(in) :: wf
-!
-      integer, intent(in) :: N 
-      real(dp), dimension(N), intent(inout) :: orbital_differences
-!
-      integer :: a, i, ai, b, j, bj, aibj
-!
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            orbital_differences(ai) = wf%orbital_energies(a + wf%n_o) - wf%orbital_energies(i)
-!
-            do j = 1, wf%n_o 
-               do b = 1, wf%n_v
-!
-                  bj = wf%n_v*(j-1) + b 
-!
-                  if (ai .ge. bj) then
-!
-                     aibj = (ai*(ai-3)/2) + ai + bj
-!
-                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%orbital_energies(a + wf%n_o)     &
-                                                                     - wf%orbital_energies(i) &
-                                                                     +  wf%orbital_energies(b + wf%n_o)  &
-                                                                     - wf%orbital_energies(j)
-!
-                  endif
-!
-               enddo
-            enddo  
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine get_es_orbital_differences_cc2
 !
 !
 end module cc2_class

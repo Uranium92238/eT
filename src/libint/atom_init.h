@@ -17,16 +17,22 @@
 //  along with this program. If not, see <https://www.gnu.org/licenses/>.
 //
 // -----------------------------------------------------------------------
+#include <vector>
+#include "globals.h"
+
 #ifdef __cplusplus
 // Are we compiling this with a C++ compiler? Add extern "C" { ... }
 extern "C" {
 #else
 #endif
 
-void get_shell_numbers(int *atom, int *sn);
-void get_first_ao_in_shells(int *atom, int *faois);
+void get_shell_numbers(int *atom, int *shells);
+void get_first_ao_in_shells(int *atom, int *first_ao_in_shell);
 void get_n_shells_on_atoms(int *nsoa);
-void get_n_basis_in_shells(int *atom, int *nbis);
+void get_n_shells_on_atom(int *atom, int *n_shells);
+void get_n_aos_in_shell(int *atom, int *n_aos_in_shell);
+void initialize_shell_to_first_ao();
+void initialize_atom_to_shell_list();
 
 #ifdef __cplusplus
 }

@@ -71,6 +71,8 @@ module davidson_cc_linear_equations_class
 !
       type(timings) :: timer
 !
+      type(linear_davidson_tool), allocatable :: davidson
+!
    contains
 !
       procedure :: cleanup                         => cleanup_davidson_cc_linear_equations
@@ -82,7 +84,7 @@ module davidson_cc_linear_equations_class
 !
       procedure :: run                             => run_davidson_cc_linear_equations
 !
-      procedure, nopass :: set_precondition_vector => set_precondition_vector_davidson_cc_linear_equations     
+      procedure :: set_precondition_vector => set_precondition_vector_davidson_cc_linear_equations     
 !
    end type davidson_cc_linear_equations
 !
@@ -97,7 +99,7 @@ module davidson_cc_linear_equations_class
 contains
 !
 !
-   function new_davidson_cc_linear_equations(wf, section, eq_description) result(solver)
+   function new_davidson_cc_linear_equations(wf, section, eq_description, n_frequencies, n_rhs) result(solver)
 !!
 !!    New Davidson CC linear equations 
 !!    Written by Eirik F. Kjønstad, 2019
@@ -119,7 +121,9 @@ contains
       class(ccs) :: wf
 !
       character(len=*), intent(in) :: section 
-      character(len=*), intent(in) :: eq_description 
+      character(len=*), intent(in) :: eq_description !
+      integer,          intent(in) :: n_rhs 
+      integer,          intent(in) :: n_frequencies
 !
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' linear equations solver')
       call solver%timer%turn_on()
@@ -161,6 +165,14 @@ contains
 !
       endif 
 !
+!     :: Initialize solver tool and set preconditioner and start vectors ::
+!
+      solver%davidson = linear_davidson_tool('davidson_t_response',                 &
+                                       wf%n_gs_amplitudes,                          &
+                                       min(1.0d-11, solver%residual_threshold),     &
+                                       solver%max_dim_red, n_rhs,                   &
+                                       n_frequencies, solver%records_in_memory)
+!
    end function new_davidson_cc_linear_equations
 !
 !
@@ -183,8 +195,8 @@ contains
    end subroutine print_settings_davidson_cc_linear_equations
 !
 !
-   subroutine run_davidson_cc_linear_equations(solver, wf, G, n_rhs,          &
-                                 frequencies, n_frequencies, solution_files,  &
+   subroutine run_davidson_cc_linear_equations(solver, wf, G,  &
+                                 frequencies, solution_files,  &
                                  transformation)
 !!
 !!    Run 
@@ -219,40 +231,29 @@ contains
 !
       class(ccs) :: wf
 !
-      integer, intent(in) :: n_rhs 
-      real(dp), dimension(wf%n_es_amplitudes, n_rhs), intent(in) :: G
+      real(dp), dimension(wf%n_es_amplitudes, solver%davidson%n_rhs), intent(in) :: G
 !
-      integer, intent(in) :: n_frequencies
-!
-      real(dp), dimension(n_frequencies), intent(in) :: frequencies
+      real(dp), dimension(solver%davidson%n_solutions), intent(in) :: frequencies
 !
       character(len=*), intent(in) :: transformation
 !
-      type(sequential_file), dimension(n_frequencies) :: solution_files
-!
-      class(linear_davidson_tool), allocatable :: davidson
+      type(sequential_file), dimension(solver%davidson%n_solutions) :: solution_files
 !
       logical :: converged_residual
 !
-      real(dp), dimension(:), allocatable :: c, residual, solution
+      real(dp), dimension(:), allocatable :: c, X, solution
 !
       integer :: iteration, root, trial
 !
       real(dp) :: residual_norm
 !
-!     :: Initialize solver tool and set preconditioner and start vectors ::
+      call solver%davidson%initialize()
+      call solver%davidson%set_rhs(G)
+      call solver%davidson%set_frequencies(frequencies)
 !
-      davidson = linear_davidson_tool('davidson_t_response',                        &
-                                       wf%n_gs_amplitudes,                          &
-                                       min(1.0d-11, solver%residual_threshold),     &
-                                       solver%max_dim_red, G, n_rhs,                &
-                                       frequencies, n_frequencies)
+      call solver%set_precondition_vector(wf)
 !
-      call davidson%initialize_trials_and_transforms(solver%records_in_memory)
-!
-      call solver%set_precondition_vector(wf, davidson)
-!
-      call davidson%set_trials_to_preconditioner_guess()
+      call solver%davidson%set_trials_to_preconditioner_guess()
 !
 !     :: Iterative loop ::
 !
@@ -267,27 +268,28 @@ contains
 !
 !        Reduced space preparations 
 !
-         if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+         if (solver%davidson%red_dim_exceeds_max()) call solver%davidson%set_trials_to_solutions()
 !
-         call davidson%update_reduced_dim()
+         call solver%davidson%update_reduced_dim()
 !
-         call davidson%orthonormalize_trial_vecs() 
+         call solver%davidson%orthonormalize_trial_vecs() 
 !
          call output%printf('n', 'Iteration:               (i0)', &
                             ints=[iteration], fs='(/t3,a)')
-         call output%printf('n', 'Reduced space dimension: (i0)', ints=[davidson%dim_red])
+         call output%printf('n', 'Reduced space dimension: (i0)', ints=[solver%davidson%dim_red])
 !
 !        Transform new trial vectors 
 !
+         call mem%alloc(X, wf%n_gs_amplitudes)
          call mem%alloc(c, wf%n_gs_amplitudes)
 !
-         do trial = davidson%first_new_trial(), davidson%last_new_trial()
+         do trial = solver%davidson%first_new_trial(), solver%davidson%last_new_trial()
 !
-            call davidson%get_trial(c, trial)
+            call solver%davidson%get_trial(c, trial)
 !
-            call wf%construct_Jacobian_transform(trim(transformation), c)
+            call wf%construct_Jacobian_transform(trim(transformation), c, X)
 !
-            call davidson%set_transform(c, trial)
+            call solver%davidson%set_transform(X, trial)
 !
          enddo
 !
@@ -295,7 +297,7 @@ contains
 !
 !        Solve linear equation(s) in reduced space 
 !
-         call davidson%solve_reduced_problem()
+         call solver%davidson%solve_reduced_problem()
 !
 !        Loop over roots and check residuals, 
 !        then generate new trial vectors for roots not yet converged 
@@ -303,20 +305,18 @@ contains
          call output%printf('n', 'Frequency      Residual norm', fs='(/t3,a)')
          call output%print_separator('n', 30, '-')
 !
-         call mem%alloc(residual, wf%n_gs_amplitudes)
-!
          converged_residual = .true.
 !
-         do root = 1, n_frequencies
+         do root = 1, solver%davidson%n_solutions
 !
-            call davidson%construct_residual(residual, root)
+            call solver%davidson%construct_residual(X, root)
 !
-            residual_norm = get_l2_norm(residual, wf%n_gs_amplitudes)
+            residual_norm = get_l2_norm(X, wf%n_gs_amplitudes)
 !
             if (residual_norm > solver%residual_threshold) then 
 !
                converged_residual = .false.
-               call davidson%construct_next_trial(residual, root)
+               call solver%davidson%add_new_trial(X, root)
 !
             endif
 !
@@ -325,7 +325,7 @@ contains
 !
          enddo 
 !
-         call mem%dealloc(residual, wf%n_gs_amplitudes)
+         call mem%dealloc(X, wf%n_gs_amplitudes)
 !
          call output%print_separator('n', 30, '-')
 !
@@ -340,9 +340,9 @@ contains
 !
          call mem%alloc(solution, wf%n_gs_amplitudes)
 !
-         do root = 1, n_frequencies
+         do root = 1, solver%davidson%n_solutions
 !
-            call davidson%construct_solution(solution, root)
+            call solver%davidson%construct_solution(solution, root)
 !
             call solution_files(root)%open_('write', 'rewind')
             call solution_files(root)%write_(solution, wf%n_gs_amplitudes)
@@ -359,7 +359,7 @@ contains
 !
       endif
 !
-      call davidson%finalize_trials_and_transforms()
+      call solver%davidson%cleanup()
 !
    end subroutine run_davidson_cc_linear_equations
 !
@@ -407,7 +407,7 @@ contains
    end subroutine print_banner_davidson_cc_linear_equations
 !
 !
-   subroutine set_precondition_vector_davidson_cc_linear_equations(wf, davidson)
+   subroutine set_precondition_vector_davidson_cc_linear_equations(solver, wf)
 !!
 !!    Set precondition vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
@@ -416,15 +416,14 @@ contains
 !!
       implicit none
 !
+      class(davidson_cc_linear_equations) :: solver
       class(ccs) :: wf
-!
-      type(linear_davidson_tool) :: davidson
 !
       real(dp), dimension(:), allocatable :: preconditioner
 !
       call mem%alloc(preconditioner, wf%n_gs_amplitudes)
-      call wf%get_gs_orbital_differences(preconditioner, wf%n_gs_amplitudes)
-      call davidson%set_preconditioner(preconditioner)
+      call wf%get_orbital_differences(preconditioner, wf%n_gs_amplitudes)
+      call solver%davidson%set_preconditioner(preconditioner)
       call mem%dealloc(preconditioner, wf%n_gs_amplitudes)
 !
    end subroutine set_precondition_vector_davidson_cc_linear_equations
@@ -439,15 +438,15 @@ contains
 !
       class(davidson_cc_linear_equations) :: solver 
 !
-      call input%get_keyword_in_section('threshold',                       &
+      call input%get_keyword('threshold',                                  &
                                         'solver ' // trim(solver%section), &
                                         solver%residual_threshold)
 !
-      call input%get_keyword_in_section('max iterations',                  &
+      call input%get_keyword('max iterations',                             &
                                         'solver ' // trim(solver%section), &
                                         solver%max_iterations)
 !
-      call input%get_keyword_in_section('storage',                         &
+      call input%get_keyword('storage',                                    &
                                         'solver ' // trim(solver%section), &
                                          solver%storage)
 !

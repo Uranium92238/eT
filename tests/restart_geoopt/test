@@ -23,9 +23,9 @@ assert version_info.major == 2
 
 # construct filter(s)
 threshold = 1.0e-6
-f1 = get_hf_filter(threshold)
+f1 = get_hf_filter(threshold, convergence=True)
 threshold = 1.0e-10
-f2 = get_hf_filter(threshold, restart=True)
+f2 = get_hf_filter(threshold, convergence=True, restart=True)
 
 # invoke the command line interface parser which returns options
 options = cli()

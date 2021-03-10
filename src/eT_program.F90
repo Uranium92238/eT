@@ -29,8 +29,7 @@ program eT_program
    use global_out
    use timings_class, only : timings, timing
    use memory_manager_class, only : mem, memory_manager
-   use libint_initialization, only : initialize_libint, finalize_libint
-   use molecular_system_class, only : molecular_system
+   use libint_initialization, only : initialize_libint_c, finalize_libint_c
 !
    use hf_class, only: hf
    use uhf_class, only: uhf
@@ -42,17 +41,17 @@ program eT_program
 !
    integer :: n_threads
 !
-!  Molecular system object
-!
-   type(molecular_system) :: system
-!
-!  Timer object
-!
    type(timings) :: eT_timer
 !
-!  Reference wavefunction
-!
    class(hf), allocatable  :: ref_wf
+!
+!  Memory manager information
+!
+   character(len=200) :: mem_unit
+   integer :: mem_total
+!
+!  Interface reference and CC wavefunction calculation,
+!  as well as for starting and stopping Libint 
 !
    character(len=50) :: timestamp
 !
@@ -60,21 +59,17 @@ program eT_program
 !
    interface
 !
-      subroutine reference_calculation(system, ref_wf)
+      subroutine reference_calculation(ref_wf)
 !
-         use molecular_system_class, only: molecular_system
          use hf_class, only: hf
 !
          implicit none
 !
-         type(molecular_system), intent(inout)  :: system
          class(hf), allocatable, intent(inout)  :: ref_wf
 !
       end subroutine reference_calculation
 !
       subroutine cc_calculation(ref_wf)
-!
-         use molecular_system_class, only: molecular_system
 !
          use hf_class, only: hf
 !
@@ -99,8 +94,6 @@ program eT_program
 !
    eT_timer = timings("Total time in eT", pl='minimal')
    call eT_timer%turn_on()
-!
-!  Print program banner
 !
    call print_program_banner()
 !
@@ -132,28 +125,26 @@ program eT_program
 !
 !  Create memory manager
 !
-   mem = memory_manager()
+   mem_total = 8 
+   mem_unit  = 'gb'
 !
-   call initialize_libint() ! Safe to use Libint from now on
+   call input%get_keyword('available', 'memory', mem_total)
+   call input%get_keyword('unit', 'memory', mem_unit)
 !
-!  Create molecular system
+   mem = memory_manager(total=mem_total, &
+                        units=mem_unit)
 !
-   system = molecular_system()
-!
-!  Write xyz and deallocate geometry in input
-!
-   call system%write_xyz_file()
-   call input%cleanup_geometry()
+   call initialize_libint_c() ! Safe to use Libint from now on
 !
 !  Cholesky decomposition of electron repulsion integrals (ERIs)
 !
-   if (input%requested_keyword_in_section('cholesky eri', 'do')) call do_eri_cholesky(system) 
+   if (input%is_keyword_present('cholesky eri', 'do')) call do_eri_cholesky() 
 !
 !  Hartree-Fock calculation
 !
    if (input%requested_reference_calculation()) then
 !
-      call reference_calculation(system, ref_wf)
+      call reference_calculation(ref_wf)
 !
 !     Coupled cluster calculation
 !
@@ -166,6 +157,8 @@ program eT_program
 !
       call ref_wf%cleanup()
 !
+      deallocate(ref_wf)
+!
    else
 !
       if (input%requested_cc_calculation()) &
@@ -173,13 +166,11 @@ program eT_program
 !
    endif
 !
-   call finalize_libint() ! No longer safe to use Libint
+   call finalize_libint_c() ! No longer safe to use Libint
 !
    call timing%printf('m', ":: Total time", fs='(//t3,a)')
    call timing%print_separator('m', 16, '=')
    call eT_timer%turn_off()
-!
-   call system%cleanup()
 !
    call mem%check_for_leak()
    call mem%print_max_used()
@@ -193,20 +184,19 @@ program eT_program
 !
    call output%close_()
    call timing%close_()
+   call input%cleanup_geometry()
    call input%cleanup_keywords()
 !
 end program eT_program
 !
 !
-subroutine reference_calculation(system, ref_wf)
+subroutine reference_calculation(ref_wf)
 !!
 !! Reference calculation
 !! Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
 !! Directs the reference state calculation for eT
 !!
-   use molecular_system_class, only: molecular_system
-!
    use global_in,  only: input
    use global_out, only: output
 !
@@ -219,8 +209,6 @@ subroutine reference_calculation(system, ref_wf)
 !
    implicit none
 !
-   type(molecular_system), intent(inout) :: system
-!
    class(hf), allocatable, intent(inout)  :: ref_wf
 !
    class(reference_engine), allocatable :: ref_engine
@@ -231,15 +219,15 @@ subroutine reference_calculation(system, ref_wf)
 !
    if (trim(ref_wf_name) == 'hf') then
 !
-      ref_wf = hf(system)
+      ref_wf = hf()
 !
    elseif (trim(ref_wf_name) == 'uhf') then
 !
-      ref_wf = uhf(system)
+      ref_wf = uhf()
 !
    elseif (trim(ref_wf_name) == 'mlhf') then
 !
-      ref_wf = mlhf(system)
+      ref_wf = mlhf()
 !
    else
 !
@@ -248,7 +236,9 @@ subroutine reference_calculation(system, ref_wf)
 !
    endif
 !
-   if (input%requested_keyword_in_section('ground state geoopt', 'do')) then
+   call ref_wf%prepare()
+!
+   if (input%is_keyword_present('ground state geoopt', 'do')) then
 !
       ref_engine = hf_geoopt_engine()
 !
@@ -350,23 +340,23 @@ subroutine cc_calculation(ref_wf)
 !
    call cc_wf%initialize(ref_wf)
 !
-   if (input%requested_keyword_in_section('response', 'do')) then
+   if (input%is_keyword_present('response', 'do')) then
 !
       cc_engine = response_engine(cc_wf)
 !
-   elseif (input%requested_keyword_in_section('excited state', 'do')) then
+   elseif (input%is_keyword_present('excited state', 'do')) then
 !
       cc_engine = es_engine(cc_wf)
 !
-   elseif (input%requested_keyword_in_section('mean value', 'do')) then
+   elseif (input%is_keyword_present('mean value', 'do')) then
 !
       cc_engine = mean_value_engine(cc_wf)
 !
-   elseif (input%requested_keyword_in_section('ground state', 'do')) then
+   elseif (input%is_keyword_present('ground state', 'do')) then
 !
       cc_engine = gs_engine(cc_wf)
 !
-   elseif (input%requested_keyword_in_section('time dependent state', 'do')) then
+   elseif (input%is_keyword_present('time dependent state', 'do')) then
 !
       cc_engine = td_engine(cc_wf)
 !
@@ -382,7 +372,7 @@ subroutine cc_calculation(ref_wf)
 end subroutine cc_calculation
 !
 !
-subroutine do_eri_cholesky(system)
+subroutine do_eri_cholesky()
 !!
 !! Do ERI Cholesky
 !! Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019 and Dec 2019
@@ -390,21 +380,23 @@ subroutine do_eri_cholesky(system)
 !! Performs Cholesky decomposition of the atomic orbital (AO) electron repulsion
 !! integrals.
 !!
-   use eri_cd_class,             only: eri_cd
-   use molecular_system_class,   only: molecular_system
+   use eri_cd_class,  only: eri_cd
+   use ao_tool_class, only: ao_tool 
 !
    implicit none
 !
-   type(molecular_system), intent(inout) :: system
+   type(eri_cd), allocatable  :: eri_cholesky_solver
+   type(ao_tool), allocatable :: ao 
 !
-   type(eri_cd), allocatable :: eri_cholesky_solver
+   ao = ao_tool()
+   call ao%initialize()
 !
-   eri_cholesky_solver = eri_cd(system)
+   eri_cholesky_solver = eri_cd(ao)
 !
-   call eri_cholesky_solver%run(system)
+   call eri_cholesky_solver%run(ao)
 !
-   call eri_cholesky_solver%diagonal_test(system)  ! Determine the largest 
-                                                   ! deviation in the ERI matrix 
+   call eri_cholesky_solver%diagonal_test(ao)  ! Determine the largest 
+                                               ! deviation in the ERI matrix 
 !
    call eri_cholesky_solver%cleanup()
 !
@@ -429,7 +421,7 @@ subroutine set_global_print_levels()
    print_level = 'normal'
 !
 !  Overwrite print_level if keyword is present
-   call input%get_keyword_in_section('output print level', 'print', print_level)
+   call input%get_keyword('output print level', 'print', print_level)
 !
 !  This is the only place this routine is allowed to be called
    call output%set_global_print_level(print_level)
@@ -439,7 +431,7 @@ subroutine set_global_print_levels()
    print_level = 'normal'
 !
 !  Overwrite print_level if keyword is present
-   call input%get_keyword_in_section('timing print level', 'print', print_level)
+   call input%get_keyword('timing print level', 'print', print_level)
 !
 !  This is the only place this routine is allowed to be called
    call timing%set_global_print_level(print_level)

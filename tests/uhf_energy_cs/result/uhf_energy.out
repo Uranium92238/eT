@@ -1,0 +1,191 @@
+
+
+
+                     eT 1.2 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.2.0, Cobra
+  ------------------------------------------------------------
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-03-09 17:23:47 UTC +01:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: Cs
+        charge: 0
+        multiplicity: 2
+     end system
+
+     do
+        ground state
+     end do
+
+     method
+        uhf
+     end method
+
+     memory
+        available: 8
+     end memory
+
+     solver scf
+       algorithm:          scf-diis
+       energy threshold:   1.0d-11
+       gradient threshold: 1.0d-11
+     end solver scf
+
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: UHF wavefunction
+  ======================
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: 3-21g
+        1 Cs     0.000000000000     0.000000000000     0.000000000000        1
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: 3-21g
+        1 Cs     0.000000000000     0.000000000000     0.000000000000        1
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               37
+     Number of orthonormal atomic orbitals:   37
+
+  - Molecular orbital details:
+
+     Number of alpha electrons:              28
+     Number of beta electrons:               27
+     Number of virtual alpha orbitals:        9
+     Number of virtual beta orbitals:        10
+     Number of molecular orbitals:           37
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a UHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:             -7530.568190922064
+     Number of electrons in guess:           55.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1         -7530.542527047887     0.1562E-02     0.7531E+04
+     2         -7530.543242039050     0.6254E-03     0.7150E-03
+     3         -7530.543345749135     0.2859E-03     0.1037E-03
+     4         -7530.543363707358     0.1677E-04     0.1796E-04
+     5         -7530.543363803163     0.3497E-05     0.9580E-07
+     6         -7530.543363806696     0.1160E-05     0.3533E-08
+     7         -7530.543363807132     0.8127E-07     0.4356E-09
+     8         -7530.543363807136     0.3141E-08     0.4547E-11
+     9         -7530.543363807134     0.4896E-10     0.2728E-11
+    10         -7530.543363807136     0.1118E-10     0.2728E-11
+    11         -7530.543363807134     0.4128E-12     0.2728E-11
+  ---------------------------------------------------------------
+  Convergence criterion met in 11 iterations!
+
+  - Summary of UHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap (alpha):          0.289543124715
+     HOMO-LUMO gap (beta):           0.696523627790
+     Nuclear repulsion energy:       0.000000000000
+     Electronic energy:          -7530.543363807134
+     Total energy:               -7530.543363807134
+
+  - UHF wavefunction spin expectation values:
+
+     Sz:                   0.50000000
+     Sz(Sz + 1):           0.75000000
+     S^2:                  0.75022793
+     Spin contamination:   0.00022793
+
+  - Timings for the UHF ground state calculation
+
+     Total wall time (sec):              8.25096
+     Total cpu time (sec):              16.45564
+
+     Peak memory usage during the execution of eT: 473.520 KB
+
+  Calculation ended: 2021-03-09 17:23:55 UTC +01:00
+
+  eT terminated successfully!

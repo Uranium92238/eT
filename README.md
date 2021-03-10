@@ -156,6 +156,8 @@ Go to this directory and use the `make` command to compile.
 cd build
 make
 ```
+Note that either the `setup` or `autogenerate_files.py` script have to be run before
+compiling, as the script generates necessary interfaces and files handling complex variables in eT.
 Use `make -j n`, where `n` is the number of processors, to make the compilation run in parallel.
 
 If successful, the directory now contains the executable, `eT`, as well as a Python launch script 

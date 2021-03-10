@@ -294,7 +294,7 @@ contains
 !!
       implicit none
 !
-      character(len=200), intent(inout) :: string
+      character(len=*), intent(in) :: string
 !
       character(len=1), intent(in), optional :: final_character
 !
@@ -303,8 +303,6 @@ contains
 !!    internal variables
 !!
       character(len=1) :: look_character
-!      
-      string = adjustl(string)
 !
       if (present(final_character)) then
 !      
@@ -318,16 +316,57 @@ contains
 !
       cursor = 1
 !
-      do while (cursor .lt. 200)
+      do while (cursor .lt. len(string))
          if (string(cursor:cursor) .eq. look_character) then
-            exit
+            return
          else
             cursor = cursor + 1
-            cycle
+         endif
+      enddo
+
+      call output%error_msg('Could not find character (a0)', chars=[trim(look_character)])
+!
+   end function set_cursor_to_character
+!
+!
+   function set_cursor_to_substring(string, substring) result(cursor)
+!!
+!!    Set cursor to substring
+!!    Written by Sarai D. Folkestad, Dec 2020
+!!
+!!    Sets cursor to the final character of the first occurrence
+!!    of the provided substring.
+!!
+      implicit none
+!
+      character(len=*), intent(in) :: string
+!
+      character(len=*), intent(in) :: substring
+!
+      integer :: cursor, start_, substring_length
+!
+      substring_length = len(trim(substring))
+!
+      start_ = 1
+      cursor = start_ + substring_length - 1
+!
+      do while (cursor .lt. len(string))
+!
+         if (string(start_ : cursor) == trim(substring)) then
+!
+            return
+!
+         else
+!
+            start_ = start_ + 1
+            cursor = cursor + 1
+!
          endif
       enddo
 !
-   end function set_cursor_to_character
+      call output%error_msg('Could not find substring (a0)', chars=[trim(substring)])
+!
+   end function set_cursor_to_substring
 !
 !
    subroutine convert_to_lowercase(string)

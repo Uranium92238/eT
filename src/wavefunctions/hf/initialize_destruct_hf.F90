@@ -40,125 +40,11 @@ contains
 !
       class(hf) :: wf
 !
-      if (.not. allocated(wf%ao_density)) call mem%alloc(wf%ao_density, wf%n_ao, wf%n_ao)
+      if (.not. allocated(wf%ao_density)) call mem%alloc(wf%ao_density, wf%ao%n, wf%ao%n)
+      if (.not. allocated(wf%previous_ao_density)) &
+         call mem%alloc(wf%previous_ao_density, wf%ao%n, wf%ao%n, wf%n_densities)
 !
    end subroutine initialize_ao_density_hf
-!
-!
-   module subroutine initialize_ao_overlap_hf(wf)
-!!
-!!    Initialize AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (.not. allocated(wf%ao_overlap)) call mem%alloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
-!
-   end subroutine initialize_ao_overlap_hf
-!
-!
-   module subroutine initialize_pivot_matrix_ao_overlap_hf(wf)
-!!
-!!    Initialize pivot matrix AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (.not. allocated(wf%pivot_matrix_ao_overlap)) call mem%alloc(wf%pivot_matrix_ao_overlap, wf%n_ao, wf%n_mo)
-!
-   end subroutine initialize_pivot_matrix_ao_overlap_hf
-!
-!
-   module subroutine initialize_cholesky_ao_overlap_hf(wf)
-!!
-!!    Initialize cholesky vectors AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (.not. allocated(wf%cholesky_ao_overlap)) call mem%alloc(wf%cholesky_ao_overlap, wf%n_mo, wf%n_mo)
-!
-   end subroutine initialize_cholesky_ao_overlap_hf
-!
-!
-   module subroutine initialize_shp_eri_schwarz_hf(wf)
-!!
-!!    Initialize shell pair eri schwarz
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (.not. allocated(wf%shp_eri_schwarz)) &
-         call mem%alloc(wf%shp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2, 2)
-!
-   end subroutine initialize_shp_eri_schwarz_hf
-!
-!
-   module subroutine destruct_shp_eri_schwarz_hf(wf)
-!!
-!!    Destruct shell pair eri schwarz
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (allocated(wf%shp_eri_schwarz)) &
-         call mem%dealloc(wf%shp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2, 2)
-!
-   end subroutine destruct_shp_eri_schwarz_hf
-!
-!
-   module subroutine initialize_shp_eri_schwarz_list_hf(wf)
-!!
-!!    Initialize shell pair eri schwarz list
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (.not. allocated(wf%shp_eri_schwarz_list)) &
-         call mem%alloc(wf%shp_eri_schwarz_list,wf%system%n_s*(wf%system%n_s + 1)/2, 3)
-!
-   end subroutine initialize_shp_eri_schwarz_list_hf
-!
-!
-   module subroutine destruct_shp_eri_schwarz_list_hf(wf)
-!!
-!!    Destruct shell pair eri schwarz list
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (allocated(wf%shp_eri_schwarz_list)) &
-         call mem%dealloc(wf%shp_eri_schwarz_list, wf%system%n_s*(wf%system%n_s + 1)/2, 3)
-!
-   end subroutine destruct_shp_eri_schwarz_list_hf
-!
-!
-   module subroutine destruct_ao_overlap_hf(wf)
-!!
-!!    Destruct AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (allocated(wf%ao_overlap)) call mem%dealloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
-!
-   end subroutine destruct_ao_overlap_hf
 !
 !
    module subroutine destruct_ao_density_hf(wf)
@@ -170,37 +56,11 @@ contains
 !
       class(hf) :: wf
 !
-      if (allocated(wf%ao_density)) call mem%dealloc(wf%ao_density, wf%n_ao, wf%n_ao)
+      if (allocated(wf%ao_density)) call mem%dealloc(wf%ao_density, wf%ao%n, wf%ao%n)
+      if (allocated(wf%previous_ao_density)) &
+         call mem%dealloc(wf%previous_ao_density, wf%ao%n, wf%ao%n, wf%n_densities)
 !
    end subroutine destruct_ao_density_hf
-!
-!
-   module subroutine destruct_pivot_matrix_ao_overlap_hf(wf)
-!!
-!!    Destruct pivot matrix AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (allocated(wf%pivot_matrix_ao_overlap)) call mem%dealloc(wf%pivot_matrix_ao_overlap, wf%n_ao, wf%n_mo)
-!
-   end subroutine destruct_pivot_matrix_ao_overlap_hf
-!
-!
-   module subroutine destruct_cholesky_ao_overlap_hf(wf)
-!!
-!!    Initialize cholesky vectors AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (allocated(wf%cholesky_ao_overlap)) call mem%dealloc(wf%cholesky_ao_overlap, wf%n_mo, wf%n_mo)
-!
-   end subroutine destruct_cholesky_ao_overlap_hf
 !
 !
    module subroutine initialize_orbitals_hf(wf)
@@ -288,34 +148,6 @@ contains
    end subroutine destruct_fock_hf
 !
 !
-   module subroutine initialize_ao_h_hf(wf)
-!!
-!!    Initialize AO h
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      call mem%alloc(wf%ao_h, wf%n_ao, wf%n_ao)
-!
-   end subroutine initialize_ao_h_hf
-!
-!
-   module subroutine destruct_ao_h_hf(wf)
-!!
-!!    Destruct AO h
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      call mem%dealloc(wf%ao_h, wf%n_ao, wf%n_ao)
-!
-   end subroutine destruct_ao_h_hf
-!
-!
    module subroutine initialize_orbital_coefficients_frozen_hf_hf(wf)
 !!
 !!    Initialize orbital coefficients frozen core
@@ -326,7 +158,7 @@ contains
       class(hf) :: wf
 !
       if (.not. allocated(wf%orbital_coefficients_frozen_hf)) &
-            call mem%alloc(wf%orbital_coefficients_frozen_hf, wf%n_ao, wf%n_frozen_hf_o)
+            call mem%alloc(wf%orbital_coefficients_frozen_hf, wf%ao%n, wf%n_frozen_hf_o)
 !
    end subroutine initialize_orbital_coefficients_frozen_hf_hf
 !
@@ -341,7 +173,7 @@ contains
       class(hf) :: wf
 !
       if (allocated(wf%orbital_coefficients_frozen_hf)) &
-            call mem%dealloc(wf%orbital_coefficients_frozen_hf, wf%n_ao, wf%n_frozen_hf_o)
+            call mem%dealloc(wf%orbital_coefficients_frozen_hf, wf%ao%n, wf%n_frozen_hf_o)
 !
    end subroutine destruct_orbital_coefficients_frozen_hf_hf
 !
@@ -356,7 +188,7 @@ contains
       class(hf) :: wf
 !
       if (.not. allocated(wf%orbital_coefficients_fc)) &
-            call mem%alloc(wf%orbital_coefficients_fc, wf%n_ao, wf%n_frozen_core_orbitals)
+            call mem%alloc(wf%orbital_coefficients_fc, wf%ao%n, wf%n_frozen_core_orbitals)
 !
    end subroutine initialize_orbital_coefficients_fc_hf
 !
@@ -371,49 +203,9 @@ contains
       class(hf) :: wf
 !
       if (allocated(wf%orbital_coefficients_fc)) &
-            call mem%dealloc(wf%orbital_coefficients_fc, wf%n_ao, wf%n_frozen_core_orbitals)
+            call mem%dealloc(wf%orbital_coefficients_fc, wf%ao%n, wf%n_frozen_core_orbitals)
 !
    end subroutine destruct_orbital_coefficients_fc_hf
-!
-!
-   module subroutine initialize_W_mo_update_hf(wf)
-!!
-!!    Initialize W MO update
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
-!!    and Linda Goletto, Jan 2019
-!!
-!!    Modified by Ida-Marie Hoyvik, Oct 2019
-!!
-!!    Initializes the eigenvectors W 
-!!    for Roothan-Hall in the mo basis (FW = We)
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (.not. allocated(wf%W_mo_update)) call mem%alloc(wf%W_mo_update, wf%n_mo, wf%n_mo)
-!
-   end subroutine initialize_W_mo_update_hf
-!
-!
-   module subroutine destruct_W_mo_update_hf(wf)
-!!
-!!    Destruct W MO update 
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
-!!    and Linda Goletto, Jan 2019
-!!
-!!    Destructs the eigenvectors W 
-!!    for Roothan-Hall in the mo basis (FW = We)
-!!
-!!    Modified by Ida-Marie Hoyvik, Oct 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (allocated(wf%W_mo_update)) call mem%dealloc(wf%W_mo_update, wf%n_mo, wf%n_mo)
-!
-   end subroutine destruct_W_mo_update_hf
 !
 !
    module subroutine initialize_frozen_CCT_hf(wf)
@@ -426,7 +218,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%frozen_CCT, wf%n_ao, wf%n_ao)
+      call mem%alloc(wf%frozen_CCT, wf%ao%n, wf%ao%n)
 !
    end subroutine initialize_frozen_CCT_hf
 !
@@ -441,7 +233,7 @@ contains
 !
       class(hf) :: wf
 !
-      if (allocated(wf%frozen_CCT)) call mem%dealloc(wf%frozen_CCT, wf%n_ao, wf%n_ao)
+      if (allocated(wf%frozen_CCT)) call mem%dealloc(wf%frozen_CCT, wf%ao%n, wf%ao%n)
 !
    end subroutine destruct_frozen_CCT_hf
 !

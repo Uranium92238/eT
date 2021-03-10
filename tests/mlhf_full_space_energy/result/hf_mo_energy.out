@@ -7,20 +7,20 @@
   ----------------------------------------------------------------------------------
    Author:                Contribution(s):
   ----------------------------------------------------------------------------------
-   Josefine H. Andersen   first order properties
+   Josefine H. Andersen   Response properties
    Sarai D. Folkestad     program design, HF, CCS, CC2, CCSD, libint-interface,
                           Cholesky decomposition, Davidson-tool, CVS, DIIS-tool
-                          zeroth order properties, first order properties, IP
+                          zeroth order properties, Response properties, IP
                           frozen core, MLCC2
    Tommaso Giovannini     QM/MM
    Linda Goletto          CC2
    Tor S. Haugland        SAD
    Eirik F. Kjønstad      program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,
                           Cholesky decomposition, Libint-interface, Davidson-tool
-                          zeroth order properties, first order properties, SAD   
+                          zeroth order properties, Response properties, SAD   
                           BFGS-tool                                              
    Rolf H. Myhre          CC3, Runtest-interface, launch script, file system
-   Alexander Paul         CC2, CC3, first order properties
+   Alexander Paul         CC2, CC3, Response properties
    Andreas Skeidsvoll     MP2
    Åsmund H. Tveten       HF
   ----------------------------------------------------------------------------------

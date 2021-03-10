@@ -93,8 +93,6 @@ module response_engine_class
       procedure :: read_settings                    => read_settings_response_engine
       procedure :: read_response_settings           => read_response_settings_response_engine
 !
-      procedure, nopass :: get_thresholds           => get_thresholds_response_engine
-!
       procedure :: print_transition_moment_summary  => print_transition_moment_summary_response_engine
 !
       procedure :: set_printables                   => set_printables_response_engine
@@ -151,7 +149,7 @@ contains
           wf%name_ .eq. 'low memory cc2') then
 !
          engine%multipliers_algorithm = 'diis'
-         engine%es_algorithm          = 'diis'
+         engine%es_algorithm          = 'non-linear davidson'
 !
       else if (wf%name_ .eq. 'ccs' .or. &
                wf%name_ .eq. 'cc2' .or. &
@@ -188,6 +186,11 @@ contains
 !
       call engine%read_settings()
 !
+      if (any(engine%compute_polarizability) .and. &
+          wf%name_ .eq. 'cc2') then
+         call output%error_msg("Polarizabilities not implemented for CC2")
+      endif
+!
       call engine%set_printables()
 !
       engine%timer = timings(trim(engine%name_))
@@ -207,8 +210,6 @@ contains
       class(ccs)         :: wf
 !
       real(dp) :: energy_threshold, residual_threshold
-!
-      logical, dimension(:), allocatable :: skip_states
 !
       if (trim(wf%name_) == 'low memory cc2') then
 !
@@ -266,27 +267,27 @@ contains
                                       transformation='left',                                    &
                                       restart = .true.)
 !
-!        Biorthornormalize and look for duplicate states 
-!
-         call mem%alloc(skip_states, wf%n_singlet_states)
-!
          call engine%get_thresholds(energy_threshold, residual_threshold)
 !
-         call wf%biorthonormalize_L_and_R(energy_threshold, residual_threshold, skip_states)
+         if (engine%es_algorithm .eq. 'diis') then
+            call wf%remove_parallel_states(residual_threshold, 'both')
+         end if
+!
+!        Biorthornormalize and look for duplicate states 
+!
+         call wf%biorthonormalize_L_and_R(energy_threshold, residual_threshold)
 !  
 !        Compute transition moments 
 !
          if (engine%eom) then 
 !
-            call engine%do_eom_transition_moments(wf, skip_states)
+            call engine%do_eom_transition_moments(wf)
 !
          elseif (engine%lr) then 
 !
-            call engine%do_lr_transition_moments(wf, skip_states)
+            call engine%do_lr_transition_moments(wf)
 !
          endif 
-!
-         call mem%dealloc(skip_states, wf%n_singlet_states)
 !
       endif 
 !
@@ -346,7 +347,7 @@ contains
 !     Compute the operator X = mu, the dipole operator
 !
       call mem%alloc(X, wf%n_mo, wf%n_mo, 3)
-      call wf%construct_mu(X)
+      call wf%get_t1_oei('dipole', X)
 !
 !     Construct the right-hand-side vector for operator X,
 !     i.e. xiX_mu = < mu | X-bar | HF >.
@@ -626,16 +627,18 @@ contains
                                'component (i0) and ((a1))-frequencies.', &
                                ints=[k], chars=[sign_character], fs='(t3,a)')
 !
-            t_response_solver = davidson_cc_linear_equations(wf,                             &
-                                                             section='cc response',          &
-                                                             eq_description='Solving for the &
-                                                             &amplitude response vectors in CC &
-                                                             &response theory.')
+            t_response_solver = davidson_cc_linear_equations(wf,                                   &
+                                                             section='cc response',                &
+                                                             eq_description='Solving for the       &
+                                                             &amplitude response vectors in CC     &
+                                                             &response theory.',                   &
+                                                             n_frequencies=engine%n_frequencies,   &
+                                                             n_rhs=1)
 !
             prefactor = real((-1)**sign, kind=dp) ! for frequencies 
 !
-            call t_response_solver%run(wf, rhs, 1, prefactor*engine%frequencies, &
-                              engine%n_frequencies, engine%t_responses(:,k,sign), 'right')
+            call t_response_solver%run(wf, rhs, prefactor*engine%frequencies, &
+                              engine%t_responses(:,k,sign), 'right')
 !
             call t_response_solver%cleanup(wf)
 !
@@ -718,10 +721,12 @@ contains
       M_vectors_solver = davidson_cc_linear_equations(wf,                                       &
                                                       section='cc response',                    &
                                                       eq_description='Solving for the M vectors &
-                                                      &in CC response theory.')
+                                                      &in CC response theory.',                 &
+                                                      n_frequencies=wf%n_singlet_states,        &
+                                                      n_rhs=wf%n_singlet_states)
 !
-      call M_vectors_solver%run(wf, minus_FR, wf%n_singlet_states, -wf%right_excitation_energies, &
-                           wf%n_singlet_states, engine%M_vectors, 'left')
+      call M_vectors_solver%run(wf, minus_FR, -wf%right_excitation_energies, &
+                              engine%M_vectors, 'left')
 !
       call M_vectors_solver%cleanup(wf)   
 !
@@ -760,29 +765,29 @@ contains
 !
       character(len=200) :: restart_string
 !
-      if (input%requested_keyword_in_section('eom','cc response')) then 
+      if (input%is_keyword_present('eom','cc response')) then 
 !
          engine%eom = .true.
 !
       endif 
 !
-      if (input%requested_keyword_in_section('lr','cc response')) then 
+      if (input%is_keyword_present('lr','cc response')) then 
 !
          engine%lr = .true.
 !
       endif 
 !
-      if (input%requested_keyword_in_section('transition moments','cc response')) then 
+      if (input%is_keyword_present('transition moments','cc response')) then 
 !
          engine%transition_moments = .true.
 !
       endif 
 !
-      if (input%requested_keyword_in_section('polarizabilities','cc response')) then 
+      if (input%is_keyword_present('polarizabilities','cc response')) then 
 !
          engine%polarizabilities = .true.
 !
-         n_polarizabilities = input%get_n_elements_for_keyword_in_section('polarizabilities', &
+         n_polarizabilities = input%get_n_elements_for_keyword('polarizabilities', &
                                                                            'cc response')
 !
          if (n_polarizabilities == 0) then 
@@ -799,7 +804,7 @@ contains
 !
             call mem%alloc(polarizabilities, n_polarizabilities)
 !
-            call input%get_array_for_keyword_in_section('polarizabilities', 'cc response', &
+            call input%get_array_for_keyword('polarizabilities', 'cc response', &
                                                          n_polarizabilities, polarizabilities)
 !
             do k = 1, n_polarizabilities
@@ -858,13 +863,13 @@ contains
 !
 !        Read in for which frequencies to compute the polarizability
 !
-         if (input%requested_keyword_in_section('frequencies', 'cc response')) then 
+         if (input%is_keyword_present('frequencies', 'cc response')) then 
 !
-            engine%n_frequencies = input%get_n_elements_for_keyword_in_section('frequencies', 'cc response')
+            engine%n_frequencies = input%get_n_elements_for_keyword('frequencies', 'cc response')
 !  
             call mem%alloc(engine%frequencies, engine%n_frequencies)
 !
-            call input%get_array_for_keyword_in_section('frequencies', 'cc response', &
+            call input%get_array_for_keyword('frequencies', 'cc response', &
                                                    engine%n_frequencies, engine%frequencies) 
 !
          else 
@@ -877,7 +882,7 @@ contains
 !
 !     Set operator
 !
-      engine%dipole_length = input%requested_keyword_in_section('dipole length','cc response')
+      engine%dipole_length = input%is_keyword_present('dipole length','cc response')
 !
 !     Sanity checks
 !
@@ -895,9 +900,9 @@ contains
 !     Check if the user wants to restart the right or left states in particular,
 !     and not do restart on both 
 !
-      if (input%requested_keyword_in_section('restart', 'solver cc es')) then 
+      if (input%is_keyword_present('restart', 'solver cc es')) then 
 !
-         call input%get_keyword_in_section('restart',       &
+         call input%get_keyword('restart',       &
                                            'solver cc es',  &
                                            restart_string)
 !
@@ -924,28 +929,28 @@ contains
 !                      the transition densities shall be plotted (default all states)
 !
       engine%plot_density = &
-               input%requested_keyword_in_section('plot cc density', 'visualization')
+               input%is_keyword_present('plot cc density', 'visualization')
 !
       engine%plot_tdm = &
-               input%requested_keyword_in_section('plot transition densities', 'visualization')
+               input%is_keyword_present('plot transition densities', 'visualization')
 !
       if (engine%plot_tdm) then
 !
-         if (input%requested_keyword_in_section('states to plot', 'visualization')) then
+         if (input%is_keyword_present('states to plot', 'visualization')) then
 !
-            engine%n_states_to_plot = input%get_n_elements_for_keyword_in_section(&
+            engine%n_states_to_plot = input%get_n_elements_for_keyword(&
                                       'states to plot', 'visualization')
 !
             call mem%alloc(engine%states_to_plot, engine%n_states_to_plot)
 !
-            call input%get_array_for_keyword_in_section('states to plot',         &
+            call input%get_array_for_keyword('states to plot',         &
                                                         'visualization',          &
                                                          engine%n_states_to_plot, &
                                                          engine%states_to_plot)
 !
          else
 !
-            call input%get_required_keyword_in_section('singlet states',   &
+            call input%get_required_keyword('singlet states',   &
                                                        'solver cc es',     &
                                                         engine%n_states_to_plot)
 !
@@ -962,7 +967,7 @@ contains
    end subroutine read_response_settings_response_engine
 !
 !
-   subroutine do_lr_transition_moments_response_engine(engine, wf, skip_states)
+   subroutine do_lr_transition_moments_response_engine(engine, wf)
 !!
 !!    Do LR transition moments 
 !!    Written by Eirik F. Kjønstad, Nov 2019
@@ -983,13 +988,13 @@ contains
 !!    (Josefine H. Andersen, Sarai D. Folkestad, June 2019). Reintroduced
 !!    with M vector contributions and making use of skip_states array  
 !!    (Eirik F. Kjønstad, Nov 2019).
+!!    Removed skip_states array as the parallel states are removed by the engine 
+!!    (Alexander C. Paul Sep 2020)
 !!
       implicit none
 !
       class(response_engine) :: engine
       class(ccs)        :: wf
-!
-      logical, dimension(wf%n_singlet_states), intent(in) :: skip_states
 !
       real(dp), dimension(3) :: transition_strength, transition_moment_left, transition_moment_right
 !
@@ -1010,15 +1015,6 @@ contains
       call mem%alloc(M, wf%n_es_amplitudes)
 !
       do state = 1, wf%n_singlet_states
-!
-         if (skip_states(state)) then
-!
-            call output%warning_msg('Skipped state (i0) because it is parallel to the &
-                                    &previous state', ints=[state], fs='(/t3,a)')
-!
-            cycle
-!
-         endif
 !
          call engine%M_vectors(state)%open_('read', 'rewind')
          call engine%M_vectors(state)%read_(M, wf%n_es_amplitudes)
@@ -1050,7 +1046,7 @@ contains
    end subroutine do_lr_transition_moments_response_engine
 !
 !
-   subroutine do_eom_transition_moments_response_engine(engine, wf, skip_states)
+   subroutine do_eom_transition_moments_response_engine(engine, wf)
 !!
 !!    Do EOM transition moments 
 !!    Written by Josefine H. Andersen, Sarai D. Folkestad 
@@ -1065,8 +1061,6 @@ contains
 !
       class(response_engine) :: engine
       class(ccs)             :: wf
-!
-      logical, dimension(wf%n_singlet_states), intent(in) :: skip_states
 !
       real(dp), dimension(:,:,:), allocatable :: operator
       real(dp), dimension(:,:),   allocatable :: c_D_ct
@@ -1105,7 +1099,7 @@ contains
 !
 !        Constructs dipole operator in t1-transformed basis.
 !
-         call wf%construct_mu(operator)
+         call wf%get_t1_oei('dipole', operator)
 !
 !        Loop over excited states, construct transition density
 !        and calculate transition strength
@@ -1114,14 +1108,6 @@ contains
                             fs='(/t3,a)')
 !
          do state = 1, wf%n_singlet_states
-!
-            if (skip_states(state)) then
-!
-               call output%warning_msg('Skipped state (i0) because it is parallel to the &
-                                       &previous state', ints=[state], fs='(/t3,a)')
-               cycle
-!
-            end if
 !
 !           Construct right tdm and write to file
 !
@@ -1189,15 +1175,15 @@ contains
 !
          call engine%tasks%print_('plotting')
 !
-         visualizer = visualization(wf%system, wf%n_ao)
+         visualizer = visualization(wf%ao)
+         call visualizer%initialize(wf%ao)
 !
-         call visualizer%initialize(wf%system)
-         call mem%alloc(c_D_ct, wf%n_ao, wf%n_ao)
+         call mem%alloc(c_D_ct, wf%ao%n, wf%ao%n)
 !
          if (engine%plot_density) then
 !
             call wf%add_t1_terms_and_transform(wf%density, c_D_ct)
-            call visualizer%plot_density(wf%system, c_D_ct, 'cc_gs_density')
+            call visualizer%plot_density(wf%ao, c_D_ct, 'cc_gs_density')
 !
          end if
 !
@@ -1213,7 +1199,7 @@ contains
                call density_file%read_(wf%right_transition_density, wf%n_mo**2)
 !
                call wf%add_t1_terms_and_transform(wf%right_transition_density, c_D_ct)
-               call visualizer%plot_density(wf%system, c_D_ct, file_name)
+               call visualizer%plot_density(wf%ao, c_D_ct, file_name)
 !
                call density_file%close_()
 !
@@ -1223,7 +1209,7 @@ contains
                call density_file%read_(wf%left_transition_density, wf%n_mo**2)
 !
                call wf%add_t1_terms_and_transform(wf%left_transition_density, c_D_ct)
-               call visualizer%plot_density(wf%system, c_D_ct, file_name)
+               call visualizer%plot_density(wf%ao, c_D_ct, file_name)
 !
                call density_file%close_
 !            
@@ -1231,7 +1217,7 @@ contains
 !
          end if
 !         
-         call mem%dealloc(c_D_ct, wf%n_ao, wf%n_ao)
+         call mem%dealloc(c_D_ct, wf%ao%n, wf%ao%n)
          call visualizer%cleanup()
 !
       end if
@@ -1244,46 +1230,6 @@ contains
       if (engine%plot_tdm) call mem%dealloc(engine%states_to_plot, engine%n_states_to_plot)
 !
    end subroutine do_eom_transition_moments_response_engine
-!
-!
-   subroutine get_thresholds_response_engine(energy_threshold, residual_threshold)
-!!
-!!    Get thresholds from input
-!!    Written by Alexander C. Paul, Oct 2019
-!!
-!!    Get thresholds from input to perform checks for parallel states and 
-!!    to check that the left and right states are consistent
-!!
-      implicit none
-!
-      real(dp), intent(out) :: energy_threshold, residual_threshold
-!
-!     Set default values and overwrite if specified in input
-!
-      energy_threshold = 1.0d-6
-      residual_threshold = energy_threshold
-!
-!     Set thresholds for the sanity checks if the roots are ordered correctly
-!
-      if (input%requested_keyword_in_section('energy threshold', 'solver cc es') .and. &
-          input%requested_keyword_in_section('residual threshold', 'solver cc es')) then 
-!
-        call input%get_keyword_in_section('energy threshold', 'solver cc es', energy_threshold)
-        call input%get_keyword_in_section('residual threshold', 'solver cc es', residual_threshold)
-!
-      else if (input%requested_keyword_in_section('residual threshold', 'solver cc es')) then 
-!
-        call input%get_keyword_in_section('residual threshold', 'solver cc es', residual_threshold)
-        energy_threshold = residual_threshold
-!
-      else if (input%requested_keyword_in_section('energy threshold', 'solver cc es')) then 
-!
-         call input%get_keyword_in_section('energy threshold', 'solver cc es', energy_threshold)
-         residual_threshold = energy_threshold
-!
-      endif
-!
-   end subroutine get_thresholds_response_engine
 !
 !
    subroutine print_transition_moment_summary_response_engine(engine, transition_strength, &

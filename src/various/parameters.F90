@@ -34,9 +34,9 @@ module parameters
 !  Version
 !
    integer, parameter :: major_version = 1
-   integer, parameter :: minor_version = 1
-   integer, parameter :: patch_version = 3
-   character(len=7), parameter :: version_name = "Bastion"
+   integer, parameter :: minor_version = 2
+   integer, parameter :: patch_version = 0
+   character(len=7), parameter :: version_name = "Cobra"
 !
 !  Integers 
 !
@@ -53,12 +53,11 @@ module parameters
 !
 !  Fractions
 !
-   real(dp), parameter :: half      = one/two
-   real(dp), parameter :: third     = one/three
-   real(dp), parameter :: quarter   = one/four
-   real(dp), parameter :: sixth     = one/six
-   real(dp), parameter :: eighth    = one/eight
-   real(dp), parameter :: tenth     = one/ten
+   real(dp), parameter :: half    = one/two
+   real(dp), parameter :: third   = one/three
+   real(dp), parameter :: quarter = one/four
+   real(dp), parameter :: eighth  = one/eight
+   real(dp), parameter :: tenth   = one/ten
 !
 !  Pi
 !
@@ -95,5 +94,81 @@ module parameters
    real(dp), parameter :: au_to_debye        = 2.541746473D0      ! 2018 CODATA
 !
    integer, parameter :: int32_mo_limit = 215
+!
+!
+contains
+!
+!
+   pure function get_conversion_factor(from, to) result(conversion_factor)
+!!
+!!    Get conversion factor 
+!!    Written by Eirik F. Kjønstad, 2020
+!!
+!!    Returns the conversion factor needed to convert from units 
+!!    'from' to units 'to' (angstrom/bohr).
+!!
+!!    Returns zero if from or two are not recognized units.
+!!
+      implicit none 
+!
+      character(len=*), intent(in) :: from, to  
+!
+      real(dp) :: conversion_factor
+!
+      if (trim(from) .eq. 'bohr' .and. trim(to) .eq. 'angstrom') then 
+!
+         conversion_factor = bohr_to_angstrom
+!
+      elseif (trim(from) .eq. 'angstrom' .and. trim(to) .eq. 'bohr') then 
+!
+         conversion_factor = angstrom_to_bohr
+!
+      else
+!
+         conversion_factor = one
+!
+      endif      
+!
+      if (trim(from) .ne. 'angstrom' .and. trim(from) .ne. 'bohr' .or. &
+          trim(to)   .ne. 'angstrom' .and. trim(to)   .ne. 'bohr') then 
+!
+         conversion_factor = zero
+!
+      endif
+!
+   end function get_conversion_factor
+!
+!
+   pure function get_units_label(units) result(label)
+!!
+!!    Get units label 
+!!    Written by Eirik F. Kjønstad, 2020
+!!
+!!    Returns 'a.u.' if units = 'bohr'
+!!    Returns 'angstrom' if units = 'angstrom'
+!!    Returns 'unknown' otherwise
+!!
+      implicit none 
+!
+      character(len=*), intent(in) :: units 
+!
+      character(len=100) :: label 
+!
+      if (trim(units) == 'angstrom') then
+!
+         label = 'angstrom'
+!
+      elseif (trim(units) == 'bohr') then
+!
+         label = 'a.u.'
+!
+      else
+!
+         label = 'unknown'
+!
+      endif      
+!
+   end function get_units_label
+!
 !
 end module parameters

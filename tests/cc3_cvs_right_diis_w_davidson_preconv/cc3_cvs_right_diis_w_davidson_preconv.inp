@@ -30,9 +30,9 @@ end solver cc gs
 solver cc es
   restart
   davidson preconvergence
-  preconvergence threshold: 1.0d-2
+  preconvergence threshold: 1.0d-3
   algorithm:                diis
-  singlet states:           10
+  singlet states:           5
   residual threshold:       1.0d-6
   energy threshold:         1.0d-6
   core excitation:          {1}

@@ -124,7 +124,7 @@ contains
       call wf%orbital_coefficients_mlcc_file%write_(wf%n_cc2_o)
       call wf%orbital_coefficients_mlcc_file%write_(wf%n_cc2_v)
 !
-      call wf%orbital_coefficients_mlcc_file%write_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
+      call wf%orbital_coefficients_mlcc_file%write_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
       call wf%orbital_coefficients_mlcc_file%close_('keep')
 !
 !     Print MLCC orbital energies to file
@@ -157,7 +157,7 @@ contains
       call wf%orbital_coefficients_mlcc_file%read_(wf%n_cc2_o)
       call wf%orbital_coefficients_mlcc_file%read_(wf%n_cc2_v) 
 !
-      call wf%orbital_coefficients_mlcc_file%read_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
+      call wf%orbital_coefficients_mlcc_file%read_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
       call wf%orbital_coefficients_mlcc_file%close_('keep')
 !
 !     Print MLCC orbital energies to file

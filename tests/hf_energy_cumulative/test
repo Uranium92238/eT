@@ -24,11 +24,11 @@ assert version_info.major == 2
 # construct filter(s)
 threshold = 1.0e-10
 
-f = get_hf_filter(threshold)
+f = get_hf_filter(threshold,idempotent=False)
 
 # iterations after switch to cumulative Fock construction
-f.append(get_filter(from_string=' Switching to Fock construction using density differences', 
-                                  num_lines=12,
+f.append(get_filter(from_string=' Fock matrix construction using density differences', 
+                                  num_lines=2,
                                   abs_tolerance=1.0e-10,
                                   mask=[2]))
 

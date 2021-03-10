@@ -130,7 +130,7 @@ module mlcc2_class
 !
 !     Set and get
 !
-      procedure :: get_es_orbital_differences                        => get_es_orbital_differences_mlcc2
+      procedure :: get_orbital_differences                           => get_orbital_differences_mlcc2
 !
       procedure :: determine_n_x2_amplitudes                         => determine_n_x2_amplitudes_mlcc2
       procedure :: determine_n_es_amplitudes                         => determine_n_es_amplitudes_mlcc2
@@ -196,6 +196,7 @@ module mlcc2_class
 !
 !     Ground state routines
 !
+      procedure :: construct_fock                                    => construct_fock_mlcc2
       procedure :: calculate_energy                                  => calculate_energy_mlcc2
       procedure :: construct_omega                                   => construct_omega_mlcc2
 !
@@ -233,13 +234,6 @@ module mlcc2_class
       procedure :: construct_t2bar                                   => construct_t2bar_mlcc2
       procedure :: construct_u_aibj                                  => construct_u_aibj_mlcc2
 !
-!     Debug 
-!
-      procedure :: omega_for_jacobian_debug                          => omega_for_jacobian_debug_mlcc2
-      procedure :: amplitudes_for_jacobian_debug                     => amplitudes_for_jacobian_debug_mlcc2
-      procedure :: normalization_for_jacobian_debug                  => normalization_for_jacobian_debug_mlcc2
-      procedure :: construct_omega_doubles                           => construct_omega_doubles_mlcc2
-!
 !     Restart
 !
       procedure :: read_doubles_vector                               => read_doubles_vector_mlcc2
@@ -271,7 +265,7 @@ module mlcc2_class
       include "./jacobian_mlcc2_interface.F90"
       include "./jacobian_transpose_mlcc2_interface.F90"
       include "./initialize_destruct_mlcc2_interface.F90"
-      include "./debug_jacobian_mlcc2_interface.F90"
+      include "./fock_mlcc2_interface.F90"
 !
    end interface 
 !
@@ -378,13 +372,13 @@ contains
 !
       class(mlcc2), intent(inout) :: wf
 !
-      if (.not. input%requested_section('mlcc')) &
+      if (.not. input%is_section_present('mlcc')) &
          call output%error_msg('cannot do mlcc calculation without mlcc section in eT.inp')
 !
-      wf%restart_orbitals = input%requested_keyword_in_section('orbital restart', 'mlcc') .or. &
-                            input%requested_keyword_in_section('restart', 'do')
+      wf%restart_orbitals = input%is_keyword_present('orbital restart', 'mlcc') .or. &
+                            input%is_keyword_present('restart', 'do')
 !
-      call input%get_required_keyword_in_section('cc2 orbitals', 'mlcc', wf%cc2_orbital_type)
+      call input%get_required_keyword('cc2 orbitals', 'mlcc', wf%cc2_orbital_type)
 !
 !     Read orbital settings
 !
@@ -429,60 +423,60 @@ contains
 !
          wf%cnto_restart = .false.
 !
-         if (input%requested_keyword_in_section('cnto restart', 'mlcc') .or. &
-            input%requested_keyword_in_section('restart', 'do')) wf%cnto_restart = .true.
+         if (input%is_keyword_present('cnto restart', 'mlcc') .or. &
+            input%is_keyword_present('restart', 'do')) wf%cnto_restart = .true.
 !
-         wf%n_cnto_states = input%get_n_elements_for_keyword_in_section('cnto states', 'mlcc')
+         wf%n_cnto_states = input%get_n_elements_for_keyword('cnto states', 'mlcc')
 !
          if (wf%n_cnto_states == 0) &
                call output%error_msg('to construct CNTOs excitation vectors must be specified.')
 !
          call wf%initialize_cnto_states()
 !
-         call input%get_array_for_keyword_in_section('cnto states', 'mlcc', &
+         call input%get_array_for_keyword('cnto states', 'mlcc', &
                wf%n_cnto_states, wf%cnto_states)
 !
 !
-         call input%get_required_keyword_in_section('cnto occupied ' // trim(level_string), &
+         call input%get_required_keyword('cnto occupied ' // trim(level_string), &
                'mlcc', n_level_o)
 !
          n_level_v = n_level_o*(wf%n_v/wf%n_o)
 !
-         call input%get_keyword_in_section('cnto virtual ' // trim(level_string), 'mlcc', n_level_v)
+         call input%get_keyword('cnto virtual ' // trim(level_string), 'mlcc', n_level_v)
 !
 !
       elseif (trim(orbital_type) == 'cholesky') then
 !
-         call input%get_keyword_in_section('cholesky threshold', 'mlcc', &
+         call input%get_keyword('cholesky threshold', 'mlcc', &
                   wf%cholesky_orbital_threshold)
 !
       elseif (trim(orbital_type) == 'nto-canonical') then
 !
          wf%nto_restart = .false.
 !
-         if (input%requested_keyword_in_section('nto restart', 'mlcc') .or. &
-            input%requested_keyword_in_section('restart', 'do')) wf%nto_restart = .true.
+         if (input%is_keyword_present('nto restart', 'mlcc') .or. &
+            input%is_keyword_present('restart', 'do')) wf%nto_restart = .true.
 !
-         wf%n_nto_states = input%get_n_elements_for_keyword_in_section('nto states', 'mlcc')
+         wf%n_nto_states = input%get_n_elements_for_keyword('nto states', 'mlcc')
 !
          if (wf%n_nto_states == 0) &
                call output%error_msg('to construct NTOs excitation vectors must be specified.')
 !
          call wf%initialize_nto_states()
-         call input%get_array_for_keyword_in_section('nto states', 'mlcc', &
+         call input%get_array_for_keyword('nto states', 'mlcc', &
                wf%n_nto_states, wf%nto_states)
 !
-         call input%get_required_keyword_in_section('nto occupied ' // trim(level_string), &
+         call input%get_required_keyword('nto occupied ' // trim(level_string), &
                'mlcc', n_level_o)
 !
          n_level_v = n_level_o*(wf%n_v/wf%n_o)
 !
-         call input%get_keyword_in_section('canonical virtual ' // trim(level_string), &
+         call input%get_keyword('canonical virtual ' // trim(level_string), &
                'mlcc', n_level_v)
 !
       elseif (trim(orbital_type) == 'cholesky-pao') then
 !
-         call input%get_keyword_in_section('cholesky threshold', 'mlcc', &
+         call input%get_keyword('cholesky threshold', 'mlcc', &
                wf%cholesky_orbital_threshold)
 !
       else 
@@ -659,7 +653,7 @@ contains
    end subroutine check_orbital_space_mlcc2
 !
 !
-   subroutine get_es_orbital_differences_mlcc2(wf, orbital_differences, N)
+   subroutine get_orbital_differences_mlcc2(wf, orbital_differences, N)
 !!
 !!    Get orbital differences 
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2019
@@ -669,21 +663,13 @@ contains
       class(mlcc2), intent(in) :: wf
 !
       integer, intent(in) :: N 
-      real(dp), dimension(N), intent(inout) :: orbital_differences
+      real(dp), dimension(N), intent(out) :: orbital_differences
 !
       integer :: a, i, ai, b, j, bj, aibj
 !
-!$omp parallel do schedule(static) private(a, i, ai) 
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      call wf%ccs%get_orbital_differences(orbital_differences, wf%n_t1)
 !
-            ai = wf%n_v*(i - 1) + a
-!
-            orbital_differences(ai) = wf%orbital_energies(a + wf%n_o) - wf%orbital_energies(i)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      if (N .eq. wf%n_t1) return ! Requested only singles orbital differences
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
       do a = 1, wf%n_cc2_v
@@ -715,7 +701,7 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine get_es_orbital_differences_mlcc2
+   end subroutine get_orbital_differences_mlcc2
 !
 !
    subroutine construct_multiplier_equation_mlcc2(wf, equation)
@@ -1113,8 +1099,8 @@ contains
 !
 !      Keep canonical orbitals (for transformation of frozen MO fock terms)
 !
-      call mem%alloc(canonical_orbitals, wf%n_ao, wf%n_mo)
-      call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, canonical_orbitals, 1)
+      call mem%alloc(canonical_orbitals, wf%ao%n, wf%n_mo)
+      call dcopy(wf%ao%n*wf%n_mo, wf%orbital_coefficients, 1, canonical_orbitals, 1)
 !
 !     Construct partitioning orbital basis, and determine active spaces
 !
@@ -1134,19 +1120,19 @@ contains
       if (wf%exists_frozen_fock_terms) &
          call wf%update_MO_fock_contributions(canonical_orbitals)
 !
-      call mem%dealloc(canonical_orbitals, wf%n_ao, wf%n_mo)
+      call mem%dealloc(canonical_orbitals, wf%ao%n, wf%n_mo)
 !
       call wf%initialize_t1()
       call zero_array(wf%t1, wf%n_t1)
       call wf%eri%set_t1_to_mo()
 !
-      call wf%construct_fock()
+      call wf%construct_fock(task = 'block diagonalize fock')
       call wf%destruct_t1()
 !
 !     Keep partitioning orbital basis (for transformation of frozen MO fock terms)
 !
-      call mem%alloc(partitioning_orbitals, wf%n_ao, wf%n_mo)
-      call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, partitioning_orbitals, 1)
+      call mem%alloc(partitioning_orbitals, wf%ao%n, wf%n_mo)
+      call dcopy(wf%ao%n*wf%n_mo, wf%orbital_coefficients, 1, partitioning_orbitals, 1)
 !
 !     Construct MLCC orbital basis
 !
@@ -1162,7 +1148,7 @@ contains
       if (wf%exists_frozen_fock_terms) &
          call wf%update_MO_fock_contributions(partitioning_orbitals)
 !
-      call mem%dealloc(partitioning_orbitals, wf%n_ao, wf%n_mo)
+      call mem%dealloc(partitioning_orbitals, wf%ao%n, wf%n_mo)
 !
 !     Print MLCC orbital coefficients to file
 !
@@ -1203,6 +1189,9 @@ contains
 !
       call wf%destruct_nto_states()
       call wf%destruct_cnto_states()
+!
+      deallocate(wf%ao)
+      if (wf%embedded) deallocate(wf%embedding)
 !
    end subroutine cleanup_mlcc2
 !
@@ -1264,7 +1253,7 @@ contains
 !
       class(mlcc2) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_mo), intent(in) :: C_old
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(in) :: C_old
 !
       real(dp), dimension(:,:), allocatable :: T
 !
@@ -1354,8 +1343,8 @@ contains
 !
 !     Keep canonical orbitals (for transformation of frozen MO fock terms)
 !
-      call mem%alloc(canonical_orbitals, wf%n_ao, wf%n_mo)
-      call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, canonical_orbitals, 1)
+      call mem%alloc(canonical_orbitals, wf%ao%n, wf%n_mo)
+      call dcopy(wf%ao%n*wf%n_mo, wf%orbital_coefficients, 1, canonical_orbitals, 1)
 !
 !     Read partitionings from restart file
 !
@@ -1390,7 +1379,7 @@ contains
       if (wf%exists_frozen_fock_terms) &
          call wf%update_MO_fock_contributions(canonical_orbitals)
 !
-      call mem%dealloc(canonical_orbitals, wf%n_ao, wf%n_mo)
+      call mem%dealloc(canonical_orbitals, wf%ao%n, wf%n_mo)
 !
    end subroutine mo_preparations_from_restart_mlcc2
 !

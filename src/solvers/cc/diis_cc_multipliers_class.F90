@@ -81,20 +81,17 @@ module diis_cc_multipliers_class
       character(len=500) :: description2 = 'See Helgaker et al., Molecular Electronic Structure Theory, &
                                            &Chapter 13, for the more details on this algorithm.'
 !
-      integer :: diis_dimension
-!
       integer :: max_iterations
 !
       real(dp) :: residual_threshold
 !
-      logical :: crop ! Standard DIIS if false; CROP variant of DIIS if true
-!
-      character(len=200) :: storage 
-      logical :: restart, records_in_memory 
+      logical :: restart
 !
       type(timings) :: timer
 !
       class(precondition_tool), allocatable :: preconditioner 
+!
+      type(diis_tool), allocatable :: diis
 !
    contains
 !     
@@ -134,7 +131,8 @@ contains
 !
       logical, intent(in) :: restart
 !
-      real(dp), dimension(:), allocatable :: eps
+      logical :: records_in_memory, crop
+      integer :: diis_dimension
 !
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' multipliers')
       call solver%timer%turn_on()
@@ -145,44 +143,23 @@ contains
 !
 !     Set default settings
 !
-      solver%diis_dimension      = 8
       solver%max_iterations      = 100
       solver%residual_threshold  = 1.0d-5
       solver%restart             = restart
-      solver%storage             = 'disk'
-      solver%crop                = .false.
 !
-      call solver%read_settings()
+      records_in_memory   = .false.
+      diis_dimension      = 8
+      crop                = .false.
 !
+      call solver%read_settings(records_in_memory, crop, diis_dimension)
       call solver%print_settings()
 !
-      call wf%construct_fock()
-!
-!     Determine whether to store records in memory or on file
-!
-      if (trim(solver%storage) == 'memory') then 
-!
-         solver%records_in_memory = .true.
-!
-      elseif (trim(solver%storage) == 'disk') then 
-!
-         solver%records_in_memory = .false.
-!
-      else 
-!
-         call output%error_msg('Could not recognize keyword storage in solver: ' // &
-                                 trim(solver%storage))
-!
-      endif 
-!
-!     Initialize preconditioner 
-!
-      call mem%alloc(eps, wf%n_gs_amplitudes)
-      call wf%get_gs_orbital_differences(eps, wf%n_gs_amplitudes)
-!
-      solver%preconditioner = precondition_tool(eps, wf%n_gs_amplitudes)
-!
-      call mem%dealloc(eps, wf%n_gs_amplitudes)
+      solver%diis = diis_tool('cc_multipliers_diis',      &
+                               wf%n_gs_amplitudes,        &
+                               wf%n_gs_amplitudes,        &
+                               dimension_=diis_dimension, &
+                               crop=crop,                 &
+                               records_in_memory=records_in_memory)
 !
    end function new_diis_cc_multipliers
 !
@@ -201,17 +178,8 @@ contains
       call output%printf('m', 'Residual threshold:       (e9.2)', &
                          reals=[solver%residual_threshold], fs='(/t6,a)')
 !
-      call output%printf('m', 'DIIS dimension:           (i9)', &
-                         ints=[solver%diis_dimension], fs='(/t6,a)')
-!
       call output%printf('m', 'Max number of iterations: (i9)', &
                          ints=[solver%max_iterations], fs='(t6,a)')
-!
-      if (solver%crop) then 
-!
-         call output%printf('m', 'Enabled CROP in the DIIS algorithm.', fs='(/t6,a)')
-!
-      endif
 !
    end subroutine print_settings_diis_cc_multipliers
 !
@@ -227,8 +195,6 @@ contains
 !
       class(ccs) :: wf
 !
-      type(diis_tool) :: diis
-!
       logical :: converged_residual 
 !
       real(dp) :: residual_norm
@@ -242,19 +208,18 @@ contains
       call wf%initialize_multipliers()
       call wf%prepare_for_multiplier_equation()
 !
-      diis = diis_tool('cc_multipliers_diis',             &
-                        wf%n_gs_amplitudes,               &
-                        wf%n_gs_amplitudes,               &
-                        dimension_=solver%diis_dimension, &
-                        crop=solver%crop)
-!
-      call diis%initialize_storers(solver%records_in_memory)
+      call solver%diis%initialize_storers()
 !
       call mem%alloc(residual, wf%n_gs_amplitudes)
       call mem%alloc(multipliers, wf%n_gs_amplitudes)
       call mem%alloc(epsilon, wf%n_gs_amplitudes)
 !
-      call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
+      call wf%get_orbital_differences(epsilon, wf%n_gs_amplitudes)
+!
+!     Initialize preconditioner 
+!
+      solver%preconditioner = precondition_tool(wf%n_gs_amplitudes)
+      call solver%preconditioner%initialize_and_set_precondition_vector(epsilon)
 !
       call wf%set_initial_multipliers_guess(solver%restart)
       call wf%get_multipliers(multipliers) 
@@ -296,7 +261,7 @@ contains
             call wf%get_multipliers(multipliers)
             call daxpy(wf%n_gs_amplitudes, one, residual, 1, multipliers, 1)
 !
-            call diis%update(residual, multipliers)
+            call solver%diis%update(residual, multipliers)
             call wf%set_multipliers(multipliers)
             call wf%save_multipliers()
 !
@@ -322,7 +287,7 @@ contains
       call mem%dealloc(multipliers, wf%n_gs_amplitudes)
       call mem%dealloc(epsilon, wf%n_gs_amplitudes)
 !
-      call diis%finalize_storers()
+      call solver%diis%finalize_storers()
 !
    end subroutine run_diis_cc_multipliers
 !
@@ -389,7 +354,7 @@ contains
    end subroutine print_summary_diis_cc_multipliers
 !
 !
-   subroutine read_settings_diis_cc_multipliers(solver)
+   subroutine read_settings_diis_cc_multipliers(solver, records_in_memory, crop, diis_dimension)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -397,28 +362,26 @@ contains
       implicit none 
 !
       class(diis_cc_multipliers) :: solver 
+      logical, intent(inout)     :: records_in_memory, crop
+      integer, intent(inout)     :: diis_dimension
 !
-      call input%get_keyword_in_section('threshold',              & 
+      call input%get_keyword('threshold',                         & 
                                         'solver cc multipliers',  &
                                         solver%residual_threshold)
 !
-      call input%get_keyword_in_section('max iterations',         &
+      call input%get_keyword('max iterations',                    &
                                         'solver cc multipliers',  &
                                         solver%max_iterations)   
 !
-      call input%get_keyword_in_section('storage',                &
+      call input%get_keyword('diis dimension',                    &
                                         'solver cc multipliers',  &
-                                        solver%storage)
+                                        diis_dimension)
 !
-      call input%get_keyword_in_section('diis dimension',         &
-                                        'solver cc multipliers',  &
-                                        solver%diis_dimension)
+      crop = input%is_keyword_present('crop', 'solver cc multipliers')
 !
-      if (input%requested_keyword_in_section('crop', 'solver cc multipliers')) then 
+!     Determine whether to store records in memory or on file
 !
-         solver%crop = .true.
-!
-      endif
+      call input%place_records_in_memory('solver cc multipliers', records_in_memory)
 !
    end subroutine read_settings_diis_cc_multipliers
 !

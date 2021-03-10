@@ -33,7 +33,7 @@ submodule (uhf_class) file_handling_uhf
 contains
 !
 !
-   module subroutine save_orbital_coefficients_uhf(wf)
+   module subroutine save_orbitals_uhf(wf)
 !!
 !!    Save orbital coefficients
 !!    Written by Eirik F. Kjønstad, Oct 2018
@@ -42,18 +42,19 @@ contains
 !
       class(uhf), intent(inout) :: wf
 !
+      call wf%orbital_file%open_('write')
+      call wf%orbital_file%write_(int(wf%ao%n,kind=i64))
+      call wf%orbital_file%write_(int(wf%n_mo,kind=i64))
+      call wf%orbital_file%write_(wf%orbital_energies_a, wf%n_mo)
+      call wf%orbital_file%write_(wf%orbital_coefficients_a, wf%ao%n*wf%n_mo)
+      call wf%orbital_file%write_(wf%orbital_energies_b, wf%n_mo)
+      call wf%orbital_file%write_(wf%orbital_coefficients_b, wf%ao%n*wf%n_mo)
+      call wf%orbital_file%close_('keep')
 !
-      call wf%orbital_coefficients_file%open_('write', 'rewind')
-!
-      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients_a, wf%n_ao*wf%n_mo)
-      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients_b, wf%n_ao*wf%n_mo)
-!
-      call wf%orbital_coefficients_file%close_
-!
-   end subroutine save_orbital_coefficients_uhf
+   end subroutine save_orbitals_uhf
 !
 !
-   module subroutine read_orbital_coefficients_uhf(wf)
+   module subroutine read_orbitals_uhf(wf)
 !!
 !!    Read orbital coefficients
 !!    Written by Eirik F. Kjønstad, Oct 2018
@@ -61,57 +62,27 @@ contains
       implicit none
 !
       class(uhf), intent(inout) :: wf
+      integer :: n_ao, n_mo
+      integer(i64) :: n
 !
-      call wf%is_restart_safe
+      call wf%orbital_file%open_('read', 'rewind')
 !
-      call wf%orbital_coefficients_file%open_('read', 'rewind')
+      call wf%orbital_file%read_(n)
+      n_ao = int(n)
+      call wf%orbital_file%read_(n)
+      n_mo = int(n)
 !
-      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients_a, wf%n_ao*wf%n_mo)
-      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients_b, wf%n_ao*wf%n_mo)
+      if (n_ao .ne. wf%ao%n) call output%error_msg('Number of AOs does not match')
+      if (n_mo .ne. wf%n_mo) call output%error_msg('Number of MOs does not match')
 !
-      call wf%orbital_coefficients_file%close_
+      call wf%orbital_file%read_(wf%orbital_energies_a, wf%n_mo)
+      call wf%orbital_file%read_(wf%orbital_coefficients_a, wf%ao%n*wf%n_mo)
+      call wf%orbital_file%read_(wf%orbital_energies_b, wf%n_mo)
+      call wf%orbital_file%read_(wf%orbital_coefficients_b, wf%ao%n*wf%n_mo)
 !
-   end subroutine read_orbital_coefficients_uhf
+      call wf%orbital_file%close_('keep')
 !
-!
-   module subroutine save_orbital_energies_uhf(wf)
-!!
-!!    Save orbital energies
-!!    Written by Eirik F. Kjønstad, Mar 2019
-!!
-      implicit none
-!
-      class(uhf), intent(inout) :: wf
-!
-      call wf%orbital_energies_file%open_('write', 'rewind')
-!
-      call wf%orbital_energies_file%write_(wf%orbital_energies_a, wf%n_mo)
-      call wf%orbital_energies_file%write_(wf%orbital_energies_b, wf%n_mo)
-!
-      call wf%orbital_energies_file%close_
-!
-   end subroutine save_orbital_energies_uhf
-!
-!
-   module subroutine read_orbital_energies_uhf(wf)
-!!
-!!    Save orbital energies
-!!    Written by Eirik F. Kjønstad, Mar 2019
-!!
-      implicit none
-!
-      class(uhf), intent(inout) :: wf
-!
-      call wf%is_restart_safe
-!
-      call wf%orbital_energies_file%open_('read', 'rewind')
-!
-      call wf%orbital_energies_file%read_(wf%orbital_energies_a, wf%n_mo)
-      call wf%orbital_energies_file%read_(wf%orbital_energies_b, wf%n_mo)
-!
-      call wf%orbital_energies_file%close_
-!
-   end subroutine read_orbital_energies_uhf
+   end subroutine read_orbitals_uhf
 !
 !
    module subroutine save_ao_density_uhf(wf)
@@ -135,15 +106,15 @@ contains
       ao_density_file_b = sequential_file('ao_density_b')
 !
       call ao_density_file%open_('write', 'rewind')
-      call ao_density_file%write_(wf%ao_density, wf%n_ao*wf%n_ao)
+      call ao_density_file%write_(wf%ao_density, wf%ao%n*wf%ao%n)
       call ao_density_file%close_
 !
       call ao_density_file_a%open_('write', 'rewind')
-      call ao_density_file_a%write_(wf%ao_density_a, wf%n_ao*wf%n_ao)
+      call ao_density_file_a%write_(wf%ao_density_a, wf%ao%n*wf%ao%n)
       call ao_density_file_a%close_
 !
       call ao_density_file_b%open_('write', 'rewind')
-      call ao_density_file_b%write_(wf%ao_density_b, wf%n_ao*wf%n_ao)
+      call ao_density_file_b%write_(wf%ao_density_b, wf%ao%n*wf%ao%n)
       call ao_density_file_b%close_
 !
    end subroutine save_ao_density_uhf

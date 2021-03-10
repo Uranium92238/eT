@@ -414,7 +414,7 @@ contains
    end subroutine save_jacobian_a1_3_intermediate_lowmem_cc2
 !
 !
-   module subroutine effective_jacobian_transformation_lowmem_cc2(wf, omega, c)
+   module subroutine effective_jacobian_transformation_lowmem_cc2(wf, omega, c, rho)
 !!
 !!    Effective jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
@@ -430,11 +430,8 @@ contains
       class(lowmem_cc2) :: wf
 !
       real(dp), intent(in) :: omega
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
-!
-      real(dp), dimension(:,:), allocatable :: c_a_i
-!
-      real(dp), dimension(:,:), allocatable :: rho_a_i
+      real(dp), dimension(wf%n_t1), intent(in)  :: c
+      real(dp), dimension(wf%n_t1), intent(out) :: rho
 !
       real(dp), dimension(:), allocatable :: eps_o
       real(dp), dimension(:), allocatable :: eps_v
@@ -444,17 +441,13 @@ contains
       timer = timings('Effective Jacobian transformation lowmem-CC2', pl='normal')
       call timer%turn_on()
 !
-!     Allocate and zero the transformed vector (singles part)
+!     Zero the transformed vector
 !
-      call mem%alloc(rho_a_i, wf%n_v, wf%n_o)
-      call zero_array(rho_a_i, wf%n_o*wf%n_v)
-!
-      call mem%alloc(c_a_i, wf%n_v, wf%n_o)
-      call dcopy(wf%n_t1, c, 1, c_a_i, 1)
+      call zero_array(rho, wf%n_t1)
 !
 !     :: CCS contributions to the singles c vector ::
 !
-      call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
+      call wf%ccs%jacobian_transformation(c, rho)
 !
 !     :: CC2 contributions to the transformed singles vector ::
 !
@@ -464,23 +457,17 @@ contains
       eps_o = wf%orbital_energies(1:wf%n_o)
       eps_v = wf%orbital_energies(wf%n_o + 1 : wf%n_mo)
 !
-      call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
-      call wf%jacobian_cc2_a1(rho_a_i, c_a_i, eps_o, eps_v)
+      call wf%jacobian_cc2_a1(rho, c, eps_o, eps_v)
 !
-      call wf%effective_jacobian_cc2_a1(omega, rho_a_i, c_a_i, eps_o, eps_v)
-      call wf%effective_jacobian_cc2_b1(omega, rho_a_i, c_a_i, eps_o, eps_v)
-      call wf%effective_jacobian_cc2_c1(omega, rho_a_i, c_a_i, eps_o, eps_v)
-      call wf%effective_jacobian_cc2_d1(omega, rho_a_i, c_a_i, eps_o, eps_v)
-      call wf%effective_jacobian_cc2_e1(omega, rho_a_i, c_a_i, eps_o, eps_v)
-      call wf%effective_jacobian_cc2_f1(omega, rho_a_i, c_a_i, eps_o, eps_v)
+      call wf%effective_jacobian_cc2_a1(omega, rho, c, eps_o, eps_v)
+      call wf%effective_jacobian_cc2_b1(omega, rho, c, eps_o, eps_v)
+      call wf%effective_jacobian_cc2_c1(omega, rho, c, eps_o, eps_v)
+      call wf%effective_jacobian_cc2_d1(omega, rho, c, eps_o, eps_v)
+      call wf%effective_jacobian_cc2_e1(omega, rho, c, eps_o, eps_v)
+      call wf%effective_jacobian_cc2_f1(omega, rho, c, eps_o, eps_v)
 !
       call mem%dealloc(eps_o, wf%n_o)
       call mem%dealloc(eps_v, wf%n_v)
-!
-      call dcopy(wf%n_es_amplitudes, rho_a_i, 1, c, 1)
-!
-      call mem%dealloc(c_a_i, wf%n_v, wf%n_o)
-      call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
       call timer%turn_off()
 !

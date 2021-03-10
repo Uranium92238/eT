@@ -1,4 +1,4 @@
-def get_hf_filter(tolerance, convergence=False, restart=False):
+def get_hf_filter(tolerance, convergence=True, restart=False, idempotent=True):
     """
     Returns filters for a HF calculation.
     """
@@ -10,14 +10,17 @@ def get_hf_filter(tolerance, convergence=False, restart=False):
         get_filter(string="Nuclear repulsion energy:", abs_tolerance=tolerance),
         get_filter(string="HOMO-LUMO gap", abs_tolerance=tolerance),
         get_filter(string="Total energy:", abs_tolerance=tolerance),
-        # idempotent SAD
-        get_filter(
-            from_string="Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)",
-            num_lines=3,
-            abs_tolerance=tolerance,
-            mask=[2],
-        ),
     ]
+
+    if idempotent:
+        f.append(
+            get_filter(
+                from_string="Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)",
+                num_lines=3,
+                abs_tolerance=tolerance,
+                mask=[2],
+            )
+        )
 
     if convergence:
         f.append(
@@ -27,20 +30,20 @@ def get_hf_filter(tolerance, convergence=False, restart=False):
     if not restart:
         f.append(
             # non-idempotent SAD
-            get_filter(string="Energy of initial guess:", abs_tolerance=tolerance)
+            get_filter(string="Energy of initial guess:", abs_tolerance=1.0e-6)
         )
 
     return f
 
 
-def get_mlhf_filter(tolerance, convergence=False, restart=False):
+def get_mlhf_filter(tolerance, convergence=True, restart=False, idempotent=True):
     """
     Returns filters for a MLHF calculation.
     """
 
     from runtest import get_filter
 
-    f = get_hf_filter(tolerance, convergence, restart)
+    f = get_hf_filter(tolerance, convergence, restart, idempotent)
 
     g = [
         # active energy
@@ -56,7 +59,7 @@ def get_mlhf_filter(tolerance, convergence=False, restart=False):
     return f
 
 
-def get_gs_filter(tolerance, convergence=False, restart=False):
+def get_gs_filter(tolerance, convergence=True, restart=False):
     """
     Returns filters for a GS calculation.
     """
@@ -81,7 +84,7 @@ def get_gs_filter(tolerance, convergence=False, restart=False):
     return f
 
 
-def get_es_filter(n_states, tolerance, convergence=False, restart=False):
+def get_es_filter(n_states, tolerance, convergence=True, restart=False):
     """
     Returns filters for an ES calculation.
     """
@@ -104,7 +107,7 @@ def get_es_filter(n_states, tolerance, convergence=False, restart=False):
     return f
 
 
-def get_eom_filter(n_states, tolerance, convergence=False, restart=False):
+def get_eom_filter(n_states, tolerance, convergence=True, restart=False):
     """
     Returns filters for an EOM calculation.
     """
@@ -188,6 +191,39 @@ def get_quadrupole_filter(tolerance):
         get_filter(string=" yy: ", abs_tolerance=tolerance),
         get_filter(string=" yz: ", abs_tolerance=tolerance),
         get_filter(string=" zz: ", abs_tolerance=tolerance),
+    ]
+
+    return f
+
+
+def get_cube_filter(tolerance):
+    """
+    Returns filters for a calculation of .cube
+    """
+
+    from runtest import get_filter
+
+    f = [
+        get_filter(
+            from_string="Integrated density", num_lines=25, abs_tolerance=tolerance
+        )
+    ]
+
+    return f
+
+
+def get_spin_filter(tolerance):
+    """
+    Returns filters for spin summary
+    """
+
+    from runtest import get_filter
+
+    f = [
+        get_filter(string="Sz:", abs_tolerance=tolerance),
+        get_filter(string="Sz(Sz + 1):", abs_tolerance=tolerance),
+        get_filter(string="S^2:", abs_tolerance=tolerance),
+        get_filter(string="Spin contamination:", abs_tolerance=tolerance),
     ]
 
     return f

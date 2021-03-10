@@ -42,14 +42,14 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      real(dp), dimension(wf%n_t1), intent(out) :: omega
 !
       type(timings), allocatable :: timer 
 !
-      timer = timings('Construct ccs omega', pl='normal')
+      timer = timings('Construct CCS Omega', pl='normal')
       call timer%turn_on()
 !
-      call zero_array(omega, wf%n_gs_amplitudes)
+      call zero_array(omega, wf%n_t1)
       call wf%omega_ccs_a1(omega)
 !
       call timer%turn_off()

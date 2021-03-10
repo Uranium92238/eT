@@ -51,6 +51,9 @@ module es_engine_class
 !
       procedure :: set_printables            => set_printables_es_engine
 !
+      procedure, nopass :: get_thresholds &
+                        => get_thresholds_response_engine
+!
    end type es_engine
 !
 !
@@ -90,7 +93,7 @@ contains
           wf%name_ .eq. 'low memory cc2') then
 !
          engine%multipliers_algorithm = 'diis'
-         engine%es_algorithm          = 'diis'
+         engine%es_algorithm          = 'non-linear davidson'
 !
       else if (wf%name_ .eq. 'ccs' .or. &
                wf%name_ .eq. 'cc2' .or. &
@@ -147,22 +150,22 @@ contains
 !
       class(es_engine) :: engine
 !
-      call input%get_keyword_in_section('algorithm', 'solver cc es', engine%es_algorithm)
+      call input%get_keyword('algorithm', 'solver cc es', engine%es_algorithm)
 !
-      if (input%requested_keyword_in_section('core excitation', 'solver cc es') .and. .not. &
-          input%requested_keyword_in_section('ionization', 'solver cc es')) engine%es_type = 'core'
+      if (input%is_keyword_present('core excitation', 'solver cc es') .and. .not. &
+          input%is_keyword_present('ionization', 'solver cc es')) engine%es_type = 'core'
 !
-      if (input%requested_keyword_in_section('ionization', 'solver cc es') .and. .not. &
-         input%requested_keyword_in_section('core excitation', 'solver cc es')) engine%es_type = 'ionize'
+      if (input%is_keyword_present('ionization', 'solver cc es') .and. .not. &
+         input%is_keyword_present('core excitation', 'solver cc es')) engine%es_type = 'ionize'
 !
-      if (input%requested_keyword_in_section('ionization', 'solver cc es') .and.    &
-         input%requested_keyword_in_section('core excitation', 'solver cc es'))     &
+      if (input%is_keyword_present('ionization', 'solver cc es') .and.    &
+         input%is_keyword_present('core excitation', 'solver cc es'))     &
             call output%error_msg('XPS still not implemented.')
 !
-      if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) &
+      if (input%is_keyword_present('left eigenvectors', 'solver cc es')) &
                                                 engine%es_transformation = 'left'
 !
-      if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) then
+      if (input%is_keyword_present('right eigenvectors', 'solver cc es')) then
          if (engine%es_transformation == 'left') then
 !
             engine%es_transformation = 'both'
@@ -174,10 +177,10 @@ contains
          end if
       end if
 !
-      engine%es_restart = input%requested_keyword_in_section('restart', 'solver cc es')
+      engine%es_restart = input%is_keyword_present('restart', 'solver cc es')
 !
 !     global restart
-      if (input%requested_keyword_in_section('restart', 'do')) engine%es_restart = .true.
+      if (input%is_keyword_present('restart', 'do')) engine%es_restart = .true.
 !
    end subroutine read_es_settings_es_engine
 !
@@ -191,6 +194,8 @@ contains
 !
       class(es_engine)  :: engine
       class(ccs)        :: wf
+!
+      real(dp) :: energy_threshold, residual_threshold
 !
       call engine%tasks%print_('cholesky')
 !
@@ -214,6 +219,13 @@ contains
       else 
 !
          call engine%do_excited_state(wf, engine%es_transformation, engine%es_restart)
+!
+      end if
+!
+      if (engine%es_algorithm .eq. 'diis') then
+!
+         call engine%get_thresholds(energy_threshold, residual_threshold)
+         call wf%remove_parallel_states(residual_threshold, engine%es_transformation)
 !
       end if
 !
@@ -292,6 +304,10 @@ contains
                                     &algorithm is not implemented for the method specified.')
          endif
 !
+!        Calculate the terms of the Fock matrix that was not needed for ground state
+!
+         call wf%construct_fock(task = 'es')
+!
          call cc_es_solver%run(wf)
          call cc_es_solver%cleanup(wf)
 !
@@ -352,6 +368,42 @@ contains
       engine%description  = 'Calculates the coupled cluster excitation vectors and excitation energies'
 !
    end subroutine set_printables_es_engine
+!
+!
+   subroutine get_thresholds_response_engine(energy_threshold, residual_threshold)
+!!
+!!    Get thresholds
+!!    Written by Alexander C. Paul, Oct 2019
+!!
+!!    Get thresholds from input to perform checks for parallel states and 
+!!    to check that the left and right states are consistent
+!!
+      implicit none
+!
+      real(dp), intent(out) :: energy_threshold, residual_threshold
+!
+      energy_threshold = 1.0d-3
+      residual_threshold = energy_threshold
+!
+      if (input%is_keyword_present('energy threshold', 'solver cc es') .and. &
+          input%is_keyword_present('residual threshold', 'solver cc es')) then 
+!
+        call input%get_keyword('energy threshold', 'solver cc es', energy_threshold)
+        call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
+!
+      else if (input%is_keyword_present('residual threshold', 'solver cc es')) then 
+!
+        call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
+        energy_threshold = residual_threshold
+!
+      else if (input%is_keyword_present('energy threshold', 'solver cc es')) then 
+!
+         call input%get_keyword('energy threshold', 'solver cc es', energy_threshold)
+         residual_threshold = energy_threshold
+!
+      endif
+!
+   end subroutine get_thresholds_response_engine
 !
 !
 end module es_engine_class

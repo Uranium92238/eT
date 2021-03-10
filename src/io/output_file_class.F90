@@ -50,6 +50,8 @@ module output_file_class
       procedure, public :: print_separator   => print_separator_output_file
       procedure, public :: print_vector      => print_vector_output_file
 !
+      procedure, public :: newline           => newline_output_file
+!
       procedure, public :: set_global_print_level  => set_global_print_level_output_file 
       procedure, public :: set_local_print_level   => set_local_print_level_output_file  
       procedure, public :: reset_local_print_level => reset_local_print_level_output_file  
@@ -275,7 +277,7 @@ contains
 !
 !
    subroutine error_msg_output_file(the_file, error_specs, &
-                                    reals, ints, chars, logs, fs, ffs, ll, padd)
+                                    reals, complexs, ints, chars, logs, fs, ffs, ll, padd)
 !!
 !!    Error message
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -321,6 +323,7 @@ contains
       character(len=*) :: error_specs
 !
       real(dp)        , dimension(:), intent(in), optional  :: reals 
+      complex(dp)     , dimension(:), intent(in), optional  :: complexs
       integer         , dimension(:), intent(in), optional  :: ints
       character(len=*), dimension(:), intent(in), optional  :: chars
       logical         , dimension(:), intent(in), optional  :: logs
@@ -350,12 +353,12 @@ contains
          f_string = '(t10,a)'
       endif
 !
-!     Option advance from format_print shall always be true for for errors
+!     Option advance from format_print shall always be true for errors
 !
-      call the_file%format_print('Error: ' // trim(error_specs),  &
-                                 reals, ints, chars, logs,        &
-                                 fs = f_string, ffs = ff_string,  &
-                                 ll = ll, padd = padd,            &
+      call the_file%format_print('Error: ' // trim(error_specs),     &
+                                 reals, complexs, ints, chars, logs, &
+                                 fs = f_string, ffs = ff_string,     &
+                                 ll = ll, padd = padd,               &
                                  adv = .true.)
 !
       call the_file%flush_()
@@ -366,7 +369,7 @@ contains
 !
 !
    subroutine warning_msg_output_file(the_file, warning_specs, &
-                                      reals, ints, chars, logs, fs, ffs, ll, padd)
+                                      reals, complexs, ints, chars, logs, fs, ffs, ll, padd)
 !!
 !!    Warning message
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -412,6 +415,7 @@ contains
       character(len=*) :: warning_specs
 !
       real(dp)        , dimension(:), intent(in), optional  :: reals 
+      complex(dp)     , dimension(:), intent(in), optional  :: complexs
       integer         , dimension(:), intent(in), optional  :: ints
       character(len=*), dimension(:), intent(in), optional  :: chars
       logical         , dimension(:), intent(in), optional  :: logs
@@ -443,10 +447,10 @@ contains
          f_string = '(t12,a)'
       endif
 !
-!     Option advance from format_print shall always be true for for errors
+!     Option advance from format_print shall always be true for warnings
 !
       call the_file%format_print('Warning: ' // trim(warning_specs), &
-                                 reals, ints, chars, logs,           &
+                                 reals, complexs, ints, chars, logs, &
                                  fs = f_string, ffs = ff_string,     &
                                  ll = ll, padd = padd,               &
                                  adv = .true.)
@@ -486,7 +490,8 @@ contains
 !
 !  
    subroutine printf_output_file(the_file, pl, string, &
-                                 reals, ints, chars, logs, fs, ffs, ll, padd, adv)
+                                 reals, complexs, ints, chars, logs, &
+                                 fs, ffs, ll, padd, adv)
 !!
 !!    printf
 !!    Written by Rolf H. Myhre, May 2019
@@ -551,6 +556,7 @@ contains
       character(len=*), intent(in)                          :: string 
       character(len=*), intent(in)                          :: pl
       real(dp), dimension(:), intent(in), optional          :: reals 
+      complex(dp), dimension(:), intent(in), optional       :: complexs 
       integer, dimension(:), intent(in), optional           :: ints
       character(len=*), dimension(:), intent(in), optional  :: chars
       logical, dimension(:), intent(in), optional           :: logs
@@ -571,14 +577,10 @@ contains
 !
       if (the_file%should_print(pl)) then
 !
-         call the_file%format_print(string, reals, ints, chars, logs, fs, ffs, ll, padd, adv)
+         call the_file%preformat_print(string, reals, complexs, ints, chars, logs, &
+                                       fs, ffs, ll, padd, adv)
 !
-!        Flush if not a verbose print
-         if (trim(pl) .ne. 'verbose' .and. trim(pl) .ne. 'v') then 
-!
-            call the_file%flush_()
-!
-         endif 
+         call the_file%flush_()
 !
       endif
       
@@ -788,6 +790,21 @@ contains
       
 !
    end subroutine print_vector_output_file
+!
+!
+   subroutine newline_output_file(the_file, pl)
+!!
+!!    Newline
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none
+
+      class(output_file), intent(inout) :: the_file
+      character(len=*),   intent(in)    :: pl
+!
+      call the_file%printf(pl, '')
+!
+   end subroutine newline_output_file
 !
 !
 end module output_file_class

@@ -95,11 +95,8 @@ module ccsd_class
       procedure :: omega_ccsd_b2                              => omega_ccsd_b2_ccsd
       procedure :: omega_ccsd_b2_complex                      => omega_ccsd_b2_ccsd_complex
 !
-      procedure :: omega_ccsd_c2                              => omega_ccsd_c2_ccsd
-      procedure :: omega_ccsd_c2_complex                      => omega_ccsd_c2_ccsd_complex
-!
-      procedure :: omega_ccsd_d2                              => omega_ccsd_d2_ccsd
-      procedure :: omega_ccsd_d2_complex                      => omega_ccsd_d2_ccsd_complex
+      procedure :: omega_ccsd_c2_d2                           => omega_ccsd_c2_d2_ccsd
+      procedure :: omega_ccsd_c2_d2_complex                   => omega_ccsd_c2_d2_ccsd_complex
 !
       procedure :: omega_ccsd_e2                              => omega_ccsd_e2_ccsd
       procedure :: omega_ccsd_e2_complex                      => omega_ccsd_e2_ccsd_complex
@@ -169,9 +166,6 @@ module ccsd_class
       procedure :: jacobian_transpose_ccsd_g2                 => jacobian_transpose_ccsd_g2_ccsd
       procedure :: jacobian_transpose_ccsd_g2_complex         => jacobian_transpose_ccsd_g2_ccsd_complex
 !
-      procedure :: jacobian_transpose_ccsd_h2                 => jacobian_transpose_ccsd_h2_ccsd
-      procedure :: jacobian_transpose_ccsd_h2_complex         => jacobian_transpose_ccsd_h2_ccsd_complex
-!
       procedure :: jacobian_transpose_ccsd_i2                 => jacobian_transpose_ccsd_i2_ccsd
       procedure :: jacobian_transpose_ccsd_i2_complex         => jacobian_transpose_ccsd_i2_ccsd_complex
 !
@@ -215,30 +209,24 @@ module ccsd_class
 !
 !     Other procedures
 !
-      procedure :: set_initial_amplitudes_guess               => set_initial_amplitudes_guess_ccsd
-      procedure :: set_initial_multipliers_guess              => set_initial_multipliers_guess_ccsd
-      procedure :: set_t2_to_cc2_guess                        => set_t2_to_cc2_guess_ccsd
+      procedure :: set_initial_amplitudes_guess     => set_initial_amplitudes_guess_ccsd
+      procedure :: set_initial_multipliers_guess    => set_initial_multipliers_guess_ccsd
+      procedure :: set_t2_to_cc2_guess              => set_t2_to_cc2_guess_ccsd
 !
-      procedure :: read_amplitudes                            => read_amplitudes_ccsd
-      procedure :: save_amplitudes                            => save_amplitudes_ccsd
+      procedure :: read_amplitudes                  => read_amplitudes_ccsd
+      procedure :: save_amplitudes                  => save_amplitudes_ccsd
 !
-      procedure :: save_multipliers                           => save_multipliers_ccsd
-      procedure :: read_multipliers                           => read_multipliers_ccsd
+      procedure :: save_multipliers                 => save_multipliers_ccsd
+      procedure :: read_multipliers                 => read_multipliers_ccsd
 !
-      procedure :: print_dominant_x2                          => print_dominant_x2_ccsd
-      procedure :: print_dominant_amplitudes                  => print_dominant_amplitudes_ccsd
-      procedure :: print_dominant_x_amplitudes                => print_dominant_x_amplitudes_ccsd
+      procedure :: print_dominant_x2                => print_dominant_x2_ccsd
+      procedure :: print_dominant_amplitudes        => print_dominant_amplitudes_ccsd
+      procedure :: print_dominant_x_amplitudes      => print_dominant_x_amplitudes_ccsd
 !
-      procedure :: form_newton_raphson_t_estimate             => form_newton_raphson_t_estimate_ccsd
+      procedure :: scale_amplitudes                           => scale_amplitudes_ccsd
 !
-      procedure :: normalization_for_jacobian_debug           => normalization_for_jacobian_debug_ccsd
-!
-      procedure :: get_gs_orbital_differences                 => get_gs_orbital_differences_ccsd
-!
-      procedure :: get_es_orbital_differences                 => get_gs_orbital_differences_ccsd
-!
-      procedure :: calculate_energy                           => calculate_energy_ccsd
-      procedure :: calculate_energy_complex                   => calculate_energy_ccsd_complex
+      procedure :: calculate_energy                 => calculate_energy_ccsd
+      procedure :: calculate_energy_complex         => calculate_energy_ccsd_complex
 !
 !     Procedures related to time dependency
 !
@@ -247,6 +235,11 @@ module ccsd_class
 !
       procedure :: construct_complex_time_derivative_amplitudes       => construct_complex_time_derivative_amplitudes_ccsd
       procedure :: construct_complex_time_derivative_multipliers      => construct_complex_time_derivative_multipliers_ccsd
+!
+!     Fock
+!
+      procedure :: construct_fock         => construct_fock_ccsd
+      procedure :: construct_fock_complex => construct_fock_ccsd_complex
 !
 !     Initialize wavefunction
 !
@@ -264,16 +257,17 @@ module ccsd_class
       include "multiplier_equation_ccsd_interface.F90"
       include "jacobian_ccsd_interface.F90"
       include "jacobian_transpose_ccsd_interface.F90"
-      include "zop_ccsd_interface.F90"
-      include "debug_jacobian_ccsd_interface.F90"
+      include "mean_value_ccsd_interface.F90"
       include "complex_ccsd_interface.F90"
+      include "fock_ccsd_interface.F90"
 !
       include "autogenerated_complex_files/initialize_destruct_ccsd_complex_interface.F90"
       include "autogenerated_complex_files/jacobian_transpose_ccsd_complex_interface.F90"
       include "autogenerated_complex_files/multiplier_equation_ccsd_complex_interface.F90"
       include "autogenerated_complex_files/omega_ccsd_complex_interface.F90"
       include "autogenerated_complex_files/set_get_ccsd_complex_interface.F90"
-      include "autogenerated_complex_files/zop_ccsd_complex_interface.F90"
+      include "autogenerated_complex_files/mean_value_ccsd_complex_interface.F90"
+      include "autogenerated_complex_files/fock_ccsd_complex_interface.F90"
 !
    end interface
 !
@@ -491,63 +485,6 @@ contains
    end subroutine set_t2_to_cc2_guess_ccsd
 !
 !
-   subroutine get_gs_orbital_differences_ccsd(wf, orbital_differences, N)
-!!
-!!    Get orbital differences
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    and Andreas Skeidsvoll, 2018
-!!
-!!    Sets the (ground state) orbital differences vector:
-!!
-!!       epsilon_ai     = epsilon_a - epsilon_i 
-!!       epsilon_aibj   = epsilon_a + epsilon_b - epsilon_i - epsilon_j 
-!!
-!!    Here, the epsilon vector has dimensionality N = n_t1 + n_t2, i.e. 
-!!    the doubles part of the vector is packed. 
-!!
-      implicit none
-!
-      class(ccsd), intent(in) :: wf
-!
-      integer, intent(in) :: N
-      real(dp), dimension(N), intent(inout) :: orbital_differences
-!
-      integer :: a, i, ai, b, j, bj, aibj
-!
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            orbital_differences(ai) = wf%orbital_energies(a + wf%n_o) - wf%orbital_energies(i)
-!
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
-!
-                  bj = wf%n_v*(j-1) + b
-!
-                  if (ai .ge. bj) then
-!
-                     aibj = (ai*(ai-3)/2) + ai + bj
-!
-                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%orbital_energies(a + wf%n_o) &
-                                                                   - wf%orbital_energies(i) &
-                                                                   +  wf%orbital_energies(b + wf%n_o) &
-                                                                   - wf%orbital_energies(j)
-!
-                  endif
-!
-               enddo
-            enddo
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine get_gs_orbital_differences_ccsd
-!
-!
    subroutine print_dominant_amplitudes_ccsd(wf)
 !!
 !!    Print dominant amplitudes
@@ -658,55 +595,28 @@ contains
    end subroutine print_dominant_x2_ccsd
 !
 !
-   subroutine form_newton_raphson_t_estimate_ccsd(wf, t, dt)
+   subroutine scale_amplitudes_ccsd(wf, t)
 !!
-!!    Form Newton-Raphson t estimate 
+!!    Scale amplitudes 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
 !!
-!!    Here, t is the full amplitude vector and dt is the correction to the amplitude vector.
+!!    Scales t to conform with the convention used in the wavefunction:
 !!
-!!    The correction is assumed to be obtained from either 
-!!    solving the Newton-Raphson equation
-!!
-!!       A dt = -omega, 
-!!
-!!    where A and omega are given in the biorthonormal basis,
-!!    or from the quasi-Newton equation (A ~ diagonal with diagonal = epsilon) 
-!!
-!!        dt = -omega/epsilon
-!!
-!!    Epsilon is the vector of orbital differences. 
-!!
-!!    On exit, t = t + dt, where the appropriate basis change has been accounted 
-!!    for (in particular for the double amplitudes in CCSD wavefunctions). Also,
-!!    dt is expressed in the basis compatible with t.
+!!       t1 <- t1 
+!!       t2_aiai <- two * t2_aiai
+!!       ...
 !!
       implicit none 
 !
       class(ccsd), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: dt 
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t 
 !
-      integer :: ai, aiai 
+      call scale_diagonal(two,                                    &
+                          t(wf%n_t1 + 1 : wf%n_gs_amplitudes),    &
+                          wf%n_t1)
 !
-!     Change dt doubles diagonal to match the definition of the 
-!     double amplitudes 
-!
-!$omp parallel do private(ai, aiai)
-      do ai = 1, wf%n_t1
-!
-         aiai = ai*(ai - 3)/2 + 2*ai
-         dt(wf%n_t1 + aiai) = two*dt(wf%n_t1 + aiai)
-!
-      enddo 
-!$omp end parallel do 
-!
-!     Add the dt vector to the t vector 
-!
-      call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)    
-!
-   end subroutine form_newton_raphson_t_estimate_ccsd
+   end subroutine scale_amplitudes_ccsd
 !
 !
 end module ccsd_class

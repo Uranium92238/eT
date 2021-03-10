@@ -1,0 +1,188 @@
+
+
+
+                     eT 1.2 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.2.0, Cobra
+  ------------------------------------------------------------
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-03-09 17:24:24 UTC +01:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: 2 H2O close
+        charge: 0
+        multiplicity: 1
+     end system
+
+     do
+        ground state
+     end do
+
+     memory
+        available: 8
+     end memory
+
+     solver scf
+        max iterations: 5
+        algorithm: mo-scf-diis
+        energy threshold:   1.0d-11
+        gradient threshold: 1.0d-11
+     end solver scf
+
+     method
+        mlhf
+     end method
+
+     active atoms
+        selection type: list
+        hf: {1, 2, 3}
+     end active atoms
+
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: MLHF wavefunction
+  =======================
+
+  - MLHF settings:
+
+     Occupied orbitals:    Cholesky
+     Virtual orbitals:     PAOs
+
+     Cholesky decomposition threshold:  0.10E-01
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  O    -0.573030000000     2.189950000000    -0.052560000000        1
+        2  H     0.347690000000     2.485980000000     0.050490000000        2
+        3  H    -1.075800000000     3.019470000000     0.020240000000        3
+        4  O    -1.567030000000    -0.324500000000     0.450780000000        4
+        5  H    -1.211220000000     0.588750000000     0.375890000000        5
+        6  H    -1.604140000000    -0.590960000000    -0.479690000000        6
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  O    -1.082869761160     4.138405726491    -0.099324005107        1
+        2  H     0.657038876250     4.697821351146     0.095412272029        2
+        3  H    -2.032967364807     5.705971341340     0.038248056761        3
+        4  O    -2.961257528977    -0.613216127421     0.851850742431        4
+        5  H    -2.288874076596     1.112576255838     0.710329152963        5
+        6  H    -3.031385265460    -1.116752550573    -0.906482724693        6
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               48
+     Number of orthonormal atomic orbitals:   48
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         38
+     Number of molecular orbitals:       48
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a MLHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (MO-SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (MO-SCF-DIIS algorithm)
+
+  - SCF solver settings:
+
+     Maximum iterations:                     5
+     Acceleration type:                   diis
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:              -151.796506244372
+     Number of electrons in guess:           20.000000000000
+
+  - Active orbital space:
+
+      Number of active occupied orbitals:        5
+      Number of active virtual orbitals:        23
+      Number of active orbitals:                28
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1          -151.986254697214     0.3356E+00     0.1520E+03
+     2          -152.011877032066     0.1366E+00     0.2562E-01
+     3          -152.018448490310     0.2167E-01     0.6571E-02
+     4          -152.018690017983     0.5645E-02     0.2415E-03
+     5          -152.018703912219     0.1006E-02     0.1389E-04
+  ---------------------------------------------------------------
+
+  Error: Was not able to converge the equations in the given number of 
+         maximum iterations.

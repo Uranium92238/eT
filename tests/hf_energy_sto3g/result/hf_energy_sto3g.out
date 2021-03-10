@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.1 - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,11 +14,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.3, Bastion
+   This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Configuration date: 2021-03-08 15:01:10 UTC +01:00
-  Git branch:         test-generator
-  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
   Fortran compiler:   GNU 8.4.0
   C compiler:         GNU 8.4.0
   C++ compiler:       GNU 8.4.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-08 15:05:49 UTC +01:00
+  Calculation started: 2021-03-09 17:23:17 UTC +01:00
 
 
   :: Input file
@@ -67,20 +67,8 @@
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
-
-     Name:             hof he
-     Charge:           0
-     Multiplicity:     1
-     Coordinate units: angstrom
-
-     Pure basis functions:         12
-     Cartesian basis functions:    12
-     Primitive basis functions:    36
-
-     Nuclear repulsion energy (a.u.):             48.518317619727
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
+  :: RHF wavefunction
+  ======================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -88,9 +76,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: sto-3g
-        1 H      0.866810000000     0.601440000000     5.000000000000        1
-        2 F     -0.866810000000     0.601440000000     5.000000000000        2
-        3 O      0.000000000000    -0.075790000000     5.000000000000        3
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  F    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
         4 He     0.000000000000     0.000000000000     7.500000000000        4
      ==============================================================================
 
@@ -100,24 +88,23 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: sto-3g
-        1 H      1.638033502034     1.136556880358     9.448630622825        1
-        2 F     -1.638033502034     1.136556880358     9.448630622825        2
-        3 O      0.000000000000    -0.143222342981     9.448630622825        3
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  F    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
         4 He     0.000000000000     0.000000000000    14.172945934238        4
      ==============================================================================
 
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  :: RHF wavefunction
-  ======================
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               12
+     Number of orthonormal atomic orbitals:   12
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of occupied orbitals:        10
      Number of virtual orbitals:          2
      Number of molecular orbitals:       12
-     Number of atomic orbitals:          12
 
 
   :: Hartree-Fock engine
@@ -137,31 +124,32 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
 
-     Coulomb screening threshold:   0.1000E-15
-     Exchange screening threshold:  0.1000E-13
-     Fock precision:                0.1000E-31
-     Integral cutoff:               0.1000E-15
-
-  - Setting initial AO density to SAD
+  - Setting initial AO density to sad
 
      Energy of initial guess:              -175.480886791665
      Number of electrons in guess:           20.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-15
+     Exchange screening threshold:  0.1000E-13
+     Integral cutoff:               0.1000E-15
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -171,11 +159,11 @@
      4          -175.020716449899     0.2219E-03     0.1876E-04
      5          -175.020717274448     0.3658E-04     0.8245E-06
      6          -175.020717303643     0.5285E-05     0.2919E-07
-     7          -175.020717304289     0.7976E-06     0.6459E-09
-     8          -175.020717304297     0.6121E-07     0.8271E-11
-     9          -175.020717304297     0.1466E-07     0.1137E-12
-    10          -175.020717304297     0.5180E-08     0.0000E+00
-    11          -175.020717304297     0.1501E-08     0.8527E-13
+     7          -175.020717304289     0.7976E-06     0.6461E-09
+     8          -175.020717304297     0.6121E-07     0.8043E-11
+     9          -175.020717304297     0.1466E-07     0.2274E-12
+    10          -175.020717304297     0.5180E-08     0.5684E-13
+    11          -175.020717304297     0.1501E-08     0.2842E-13
     12          -175.020717304297     0.2670E-09     0.2842E-13
     13          -175.020717304297     0.2577E-10     0.8527E-13
   ---------------------------------------------------------------
@@ -190,11 +178,11 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.07466
-     Total cpu time (sec):               0.13863
+     Total wall time (sec):              0.08905
+     Total cpu time (sec):               0.13562
 
-     Peak memory usage during the execution of eT: 29.744 KB
+     Peak memory usage during the execution of eT: 31.712 KB
 
-  Calculation ended: 2021-03-08 15:05:49 UTC +01:00
+  Calculation ended: 2021-03-09 17:23:17 UTC +01:00
 
   eT terminated successfully!

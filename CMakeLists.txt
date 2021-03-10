@@ -117,6 +117,9 @@ file(COPY ${CMAKE_SOURCE_DIR}/eT_launch
      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ WORLD_READ)
 file(REMOVE  ${CMAKE_SOURCE_DIR}/eT_launch)
 
+#Copy conversion script into tests directory
+file(COPY ${CMAKE_SOURCE_DIR}/convert_v1_0_restart_files.py  DESTINATION ${CMAKE_BINARY_DIR}/tests)
+
 #Configure get_complilation_info library
 include(CompilationInfo)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/get_compilation_info.in ${CMAKE_BINARY_DIR}/get_compilation_info.F90)

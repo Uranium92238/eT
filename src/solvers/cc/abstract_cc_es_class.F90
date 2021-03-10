@@ -58,6 +58,7 @@ module abstract_cc_es_class
    use es_valence_projection_tool_class, only: es_valence_projection_tool
    use es_cvs_projection_tool_class, only: es_cvs_projection_tool
    use es_ip_projection_tool_class, only: es_ip_projection_tool
+   use es_rm_core_projection_tool_class, only: es_rm_core_projection_tool
 !
    use abstract_convergence_tool_class, only: abstract_convergence_tool 
 !
@@ -74,9 +75,6 @@ module abstract_cc_es_class
       integer :: max_iterations
 !
       class(abstract_convergence_tool), allocatable :: convergence_checker
-!
-      character(len=200) :: storage 
-      logical :: records_in_memory 
 !
       logical :: restart
 !
@@ -189,7 +187,7 @@ contains
    end subroutine print_banner_abstract_cc_es
 !
 !
-   subroutine read_es_settings_abstract_cc_es(solver)
+   subroutine read_es_settings_abstract_cc_es(solver, records_in_memory)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -198,33 +196,37 @@ contains
 !
       class(abstract_cc_es) :: solver 
 !
+      logical, intent(inout) :: records_in_memory
+!
       real(dp) :: eigenvalue_threshold, residual_threshold
 !
-      if (input%requested_keyword_in_section('energy threshold', 'solver cc es')) then
+      if (input%is_keyword_present('energy threshold', 'solver cc es')) then
 !
-         call input%get_keyword_in_section('energy threshold', 'solver cc es', eigenvalue_threshold)
+         call input%get_keyword('energy threshold', 'solver cc es', eigenvalue_threshold)
          call solver%convergence_checker%set_energy_threshold(eigenvalue_threshold)
 !
       endif
 !
-      if (input%requested_keyword_in_section('residual threshold', 'solver cc es')) then
+      if (input%is_keyword_present('residual threshold', 'solver cc es')) then
 !
-         call input%get_keyword_in_section('residual threshold', 'solver cc es', residual_threshold)
+         call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
          call solver%convergence_checker%set_residual_threshold(residual_threshold)
 !
       endif
 !
-      call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
+      call input%get_keyword('max iterations', 'solver cc es', solver%max_iterations)
 !               
-      call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
+      call input%get_required_keyword('singlet states', 'solver cc es', solver%n_singlet_states)
 !  
-      if (input%requested_keyword_in_section('core excitation', 'solver cc es') .and. .not. &
-          input%requested_keyword_in_section('ionization', 'solver cc es')) solver%es_type = 'core'
+      if (input%is_keyword_present('core excitation', 'solver cc es') .and. .not. &
+          input%is_keyword_present('ionization', 'solver cc es')) solver%es_type = 'core'
 !
-      if (input%requested_keyword_in_section('ionization', 'solver cc es') .and. .not. &
-          input%requested_keyword_in_section('core excitation', 'solver cc es')) solver%es_type = 'ionize'
+      if (input%is_keyword_present('ionization', 'solver cc es') .and. .not. &
+          input%is_keyword_present('core excitation', 'solver cc es')) solver%es_type = 'ionize'
 !
-      call input%get_keyword_in_section('storage', 'solver cc es', solver%storage)
+      if (input%is_keyword_present('remove core', 'solver cc es')) solver%es_type = 'remove core'
+!
+      call input%place_records_in_memory('solver cc es', records_in_memory)
 !
    end subroutine read_es_settings_abstract_cc_es
 !
@@ -442,6 +444,11 @@ contains
 !
          solver%start_vectors = es_ip_start_vector_tool(wf)
 !
+      elseif (trim(solver%es_type) == 'remove core') then
+!
+         call wf%read_rm_core_settings()
+         solver%start_vectors = es_valence_start_vector_tool(wf)
+!
       else 
 !
          call output%error_msg('could not recognize excited state type in abstract_cc_es')
@@ -473,6 +480,10 @@ contains
       elseif (trim(solver%es_type) == 'ionize') then 
 !
          solver%projector = es_ip_projection_tool(wf)
+!
+      elseif (trim(solver%es_type) == 'remove core') then 
+!
+         solver%projector = es_rm_core_projection_tool(wf)
 !
       else 
 !
@@ -506,6 +517,8 @@ contains
                                        solver%energies(state), &
                                        solver%transformation,  &
                                        solver%restart)
+!
+         if (solver%projector%active) call solver%projector%do_(X(:,state))
 !
       enddo 
 !

@@ -54,6 +54,8 @@ module gs_engine_class
 !
       procedure :: do_ground_state                       => do_ground_state_gs_engine
 !
+      procedure, private :: initialize_amplitude_updater => initialize_amplitude_updater_gs_engine
+!
       procedure :: do_multipliers                        => do_multipliers_gs_engine
 !
       procedure, nopass :: calculate_dipole_moment       => calculate_dipole_moment_gs_engine
@@ -184,24 +186,21 @@ contains
 !
       class(gs_engine) :: engine
 !
-      call input%get_keyword_in_section('algorithm', 'solver cc multipliers', &
-                                                            engine%multipliers_algorithm)
+      call input%get_keyword('algorithm', 'solver cc multipliers', engine%multipliers_algorithm)
+      call input%get_keyword('algorithm', 'solver cc gs',          engine%gs_algorithm)
 !
-      call input%get_keyword_in_section('algorithm', 'solver cc gs', engine%gs_algorithm )
-!
-      engine%gs_restart = input%requested_keyword_in_section('restart', 'solver cc gs')
-!
-      engine%multipliers_restart = &
-               input%requested_keyword_in_section('restart', 'solver cc multipliers')
+      engine%gs_restart          = input%is_keyword_present('restart', 'solver cc gs')
+      engine%multipliers_restart = input%is_keyword_present('restart', 'solver cc multipliers')
 !
 !     global restart
-      if (input%requested_keyword_in_section('restart', 'do')) then 
+      if (input%is_keyword_present('restart', 'do')) then 
+!
          engine%gs_restart = .true.
          engine%multipliers_restart = .true.
+!
       end if
 !
-      engine%plot_density = &
-               input%requested_keyword_in_section('plot cc density', 'visualization')
+      engine%plot_density = input%is_keyword_present('plot cc density', 'visualization')
 !
    end subroutine read_gs_settings_gs_engine
 !
@@ -255,8 +254,8 @@ contains
 !!    stored in memory.
 !!
       use diis_cc_gs_class,            only: diis_cc_gs
-      use newton_raphson_cc_gs_class,  only: newton_raphson_cc_gs
-      use string_utilities,            only: convert_to_uppercase
+!
+      use amplitude_updater_class,     only: amplitude_updater
 !
       implicit none
 !
@@ -265,7 +264,10 @@ contains
       class(ccs), intent(inout) :: wf
 !
       type(diis_cc_gs), allocatable :: diis_solver
-      type(newton_raphson_cc_gs), allocatable :: newton_raphson_solver
+!
+      class(amplitude_updater), allocatable :: t_updater
+!
+      character(len=200) :: storage 
 !
       call engine%tasks%print_('gs solver')
 !
@@ -275,48 +277,95 @@ contains
 !
          call wf%calculate_energy()
 !
-         call output%printf('m', ':: Summary of (a0) wavefunction energetics (a.u.)', &
-                            chars=[convert_to_uppercase(wf%name_)], fs='(/t3,a)')
-!
-         call output%printf('m', 'HF energy:                (f19.12)', &
-                            reals=[wf%hf_energy], fs='(/t6,a)')
-!
-         call output%printf('m', 'MP2 correction:           (f19.12)', &
-                            reals=[ (wf%energy - wf%hf_energy) ], fs='(t6,a)')
-!
-         call output%printf('m', 'MP2 energy:               (f19.12)', &
-                            reals=[wf%energy], fs='(t6,a)')
+         call wf%print_gs_summary()
+
 !
       else
 !
-         if (trim(engine%gs_algorithm) == 'diis') then
+         storage = 'disk'
+         call input%get_keyword('storage', 'solver cc gs', storage)
 !
-            diis_solver = diis_cc_gs(wf, engine%gs_restart)
-            call diis_solver%run(wf)
-            call diis_solver%cleanup(wf)
+         call engine%initialize_amplitude_updater(wf, t_updater, storage)
 !
-         elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
-!
-               if (trim(wf%name_) == 'cc2') then
-!
-                  call output%error_msg('Newton-Raphson not implemented for CC2')
-!
-               end if
-!
-            newton_raphson_solver = newton_raphson_cc_gs(wf, engine%gs_restart)
-            call newton_raphson_solver%run(wf)
-            call newton_raphson_solver%cleanup(wf)
-!
-         else 
-!
-            call output%error_msg('(a0) is not a valid ground state algorithm.', &
-                                  chars=[engine%gs_algorithm])
-!
-         endif 
+         diis_solver = diis_cc_gs(wf, engine%gs_restart, t_updater, storage)
+         call diis_solver%run(wf)
+         call diis_solver%cleanup(wf)
 !
       endif
 !
    end subroutine do_ground_state_gs_engine
+!
+!
+   subroutine initialize_amplitude_updater_gs_engine(engine, wf, t_updater, global_storage)
+!!
+!!    Initialize amplitude updater
+!!    Written by Eirik F. Kjønstad, 2020
+!!
+!!    Allocates/initializes the amplitude updater algorithm used by the ground state solver.
+!!
+      use amplitude_updater_class,      only: amplitude_updater
+!
+      use quasi_newton_updater_class,   only: quasi_newton_updater
+      use newton_raphson_updater_class, only: newton_raphson_updater
+!
+      implicit none 
+!
+      class(gs_engine), intent(in) :: engine 
+!
+      class(ccs), intent(in) :: wf 
+!
+      character(len=*), intent(in) :: global_storage
+!
+      class(amplitude_updater), allocatable :: t_updater
+!
+      real(dp) :: relative_threshold
+!
+      integer :: max_iterations
+!
+      logical :: records_in_memory
+      character(len=200) :: storage
+!
+      if (trim(engine%gs_algorithm) == 'diis') then
+!
+         t_updater = quasi_newton_updater(n_amplitudes     = wf%n_gs_amplitudes, &
+                                          scale_amplitudes = .true.,             &
+                                          scale_residual   = .true.)
+!
+      elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
+!
+         if (trim(wf%name_) == 'cc2') &
+            call output%error_msg('Newton-Raphson not implemented for CC2')
+!
+         relative_threshold = 1.0d-2
+         max_iterations     = 100
+         storage            = 'disk'
+!
+         call input%get_keyword('rel micro threshold',     'solver cc gs', relative_threshold)
+         call input%get_keyword('max micro iterations',    'solver cc gs', max_iterations)
+         call input%get_keyword('micro iteration storage', 'solver cc gs', storage)
+!
+         records_in_memory = .false.
+!
+         if (trim(global_storage) == 'memory') records_in_memory = .true.
+         if (trim(storage) == 'memory') records_in_memory = .true.
+!
+         call input%get_keyword('micro iteration storage', 'solver cc gs', storage)
+!
+         t_updater = newton_raphson_updater(n_amplitudes       = wf%n_gs_amplitudes,  &
+                                            scale_amplitudes   = .true.,              &
+                                            scale_residual     = .false.,             &
+                                            relative_threshold = relative_threshold,  &   
+                                            records_in_memory  = records_in_memory,   & 
+                                            max_iterations     = max_iterations)
+!
+      else 
+!
+         call output%error_msg('(a0) is not a valid ground state algorithm.', &
+                                  chars=[engine%gs_algorithm])
+!
+      endif       
+!
+   end subroutine initialize_amplitude_updater_gs_engine
 !
 !
    subroutine do_multipliers_gs_engine(engine, wf)
@@ -341,6 +390,8 @@ contains
 !
       type(diis_cc_multipliers), allocatable     :: diis_solver
       type(davidson_cc_multipliers), allocatable :: davidson_solver
+!
+      call wf%construct_fock(task = 'multipliers')
 !
       call engine%tasks%print_('multipliers solver')
 !
@@ -398,7 +449,7 @@ contains
 !     Get the integrals mu_pqk for components k = 1, 2, 3 in the T1-transformed basis
 !
       call mem%alloc(mu_pqk, wf%n_mo, wf%n_mo, 3)
-      call wf%construct_mu(mu_pqk)
+      call wf%get_t1_oei('dipole', mu_pqk)
 !
 !     Get electronic expectation value contribution
 !
@@ -413,7 +464,7 @@ contains
 !
 !     Get nuclear expectation value contribution, then sum the two
 !
-      call wf%system%get_nuclear_dipole(nuclear)
+      nuclear = wf%get_nuclear_dipole()
 !
       total = electronic + nuclear
 !
@@ -444,7 +495,7 @@ contains
 !     Get the integrals q_pqk for components k = 1, 2, ..., 6 in the T1-transformed basis
 !
       call mem%alloc(q_pqk, wf%n_mo, wf%n_mo, 6)
-      call wf%construct_q(q_pqk)
+      call wf%get_t1_oei('quadrupole', q_pqk)
 !
 !     Get electronic expectation value contribution
 !
@@ -459,7 +510,7 @@ contains
 !
 !     Get nuclear expectation value contribution, then sum the two
 !
-      call wf%system%get_nuclear_quadrupole(nuclear)
+      nuclear = wf%get_nuclear_quadrupole()
 !
       total = electronic + nuclear
 !
@@ -495,38 +546,38 @@ contains
 !
       call output%printf('v', 'Doing Cholesky decomposition of the ERIs.')
 !
-      do_MO_screening = input%requested_keyword_in_section('mo screening', 'solver cholesky')
+      do_MO_screening = input%is_keyword_present('mo screening', 'solver cholesky')
 !
-      eri_cholesky_solver = eri_cd(wf%system)
+      eri_cholesky_solver = eri_cd(wf%ao)
 !
       if (do_MO_screening) then
 !
          call output%printf('m', 'Using the MO screening for the Cholesky decomposition', &
                         fs='(/t3,a)')
 !
-         call mem%alloc(screening_vector, wf%n_ao, wf%n_ao)
+         call mem%alloc(screening_vector, wf%ao%n, wf%ao%n)
          call wf%construct_MO_screening_for_cd(screening_vector)
 !
-         call eri_cholesky_solver%run(wf%system, screening_vector)   ! Do the Cholesky decomposition
+         call eri_cholesky_solver%run(wf%ao, screening_vector)   ! Do the Cholesky decomposition
                                                                      ! using the MO screening
 !
-         call mem%dealloc(screening_vector, wf%n_ao, wf%n_ao) 
+         call mem%dealloc(screening_vector, wf%ao%n, wf%ao%n) 
 !
       else
 !
-         call eri_cholesky_solver%run(wf%system) ! Do the Cholesky decomposition 
+         call eri_cholesky_solver%run(wf%ao) ! Do the Cholesky decomposition 
 !
       endif
 !
-      call eri_cholesky_solver%diagonal_test(wf%system)  ! Determine the largest 
+      call eri_cholesky_solver%diagonal_test(wf%ao)  ! Determine the largest 
                                                          ! deviation in the ERI matrix 
 !
       wf%eri = t1_eri_tool(wf%n_o, wf%n_v, eri_cholesky_solver%n_cholesky, wf%need_g_abcd)
 !
       call wf%eri%initialize()
 !
-      call eri_cholesky_solver%construct_cholesky_mo_vectors(wf%system, wf%n_ao, wf%n_mo, &
-                                                             wf%orbital_coefficients, wf%eri)
+      call eri_cholesky_solver%construct_cholesky_mo_vectors(wf%ao, wf%ao%n, wf%n_mo, &
+                                                   wf%orbital_coefficients, wf%eri)
 !
       call eri_cholesky_solver%cleanup()
 !
