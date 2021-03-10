@@ -197,8 +197,8 @@ module cc3_class
       include "jacobian_cc3_interface.F90"
       include "jacobian_transpose_cc3_interface.F90"
       include "abc_batching_cc3_interface.F90"
-      include "zop_cc3_interface.F90"
-      include "fop_cc3_interface.F90"
+      include "mean_value_cc3_interface.F90"
+      include "response_cc3_interface.F90"
 !
    end interface
 !
@@ -284,14 +284,14 @@ contains
 !
       end if
 !
-!     Intermediates created for/in zop
+!     Intermediates created for/in mean_value
       if (wf%Y_cmjk_tbar%exists()) then
 !
          call wf%Y_cmjk_tbar%delete_
 !
       end if
 !
-!     Intermediates created for fop
+!     Intermediates created for/in response
       Y_ebck_tbar = direct_stream_file('Y_ebck_tbar', wf%n_v**3)
 !
       if (Y_ebck_tbar%exists()) then

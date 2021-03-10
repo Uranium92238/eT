@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.1 - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,26 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Bastion
+   This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Compiled by:        sarai
-  Compiled on:        Sarais-MacBook-Pro.local
-  Configuration date: 2020-12-18 18:58:33 UTC +01:00
-  Git branch:         skip-scf
-  Git hash:           333908b29fcc839adef44b350a5d04acb9624c77
-  Fortran compiler:   GNU 9.2.0
-  C compiler:         GNU 9.2.0
-  C++ compiler:       GNU 9.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2020-12-18 18:58:56 UTC +01:00
+  Calculation started: 2021-03-09 17:27:54 UTC +01:00
 
 
   :: Input file
@@ -88,20 +86,8 @@
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
-
-     Name:             h2o he
-     Charge:           0
-     Multiplicity:     1
-     Coordinate units: angstrom
-
-     Pure basis functions:         29
-     Cartesian basis functions:    30
-     Primitive basis functions:    56
-
-     Nuclear repulsion energy (a.u.):             12.116100574587
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
+  :: RHF wavefunction
+  ======================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -109,9 +95,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H      0.866810000000     0.601440000000     5.000000000000        1
-        2 H     -0.866810000000     0.601440000000     5.000000000000        2
-        3 O      0.000000000000    -0.075790000000     5.000000000000        3
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  H    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
         4 He     0.100000000000    -0.020000000000     7.530000000000        4
      ==============================================================================
 
@@ -121,24 +107,23 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H      1.638033502034     1.136556880358     9.448630622825        1
-        2 H     -1.638033502034     1.136556880358     9.448630622825        2
-        3 O      0.000000000000    -0.143222342981     9.448630622825        3
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  H    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
         4 He     0.188972612457    -0.037794522491    14.229637717975        4
      ==============================================================================
 
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  :: RHF wavefunction
-  ======================
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               29
+     Number of orthonormal atomic orbitals:   29
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of occupied orbitals:         6
      Number of virtual orbitals:         23
      Number of molecular orbitals:       29
-     Number of atomic orbitals:          29
 
 
   :: Hartree-Fock engine
@@ -155,34 +140,28 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
+  - Requested restart. Reading orbitals from file
+
+  - Screening and integral thresholds:
+
      Coulomb screening threshold:   0.1000E-16
      Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
      Integral cutoff:               0.1000E-16
-
-  - Requested restart. Reading orbitals from file
+     Cumulative Fock threshold:     0.1000E+01
 
   Warning: skipping SCF solver!
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.2910E-11     0.7884E+02
+     1           -78.843851693631     0.2905E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -195,8 +174,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.02000
-     Total cpu time (sec):               0.03865
+     Total wall time (sec):              0.02999
+     Total cpu time (sec):               0.04791
 
 
   :: CCSD wavefunction
@@ -253,7 +232,7 @@
      Span factor:           0.10E-01
      Max qual:                  1000
 
-  - Cholesky decomposition system details:
+  - Cholesky decomposition ao details:
 
      Total number of AOs:                    29
      Total number of shell pairs:           120
@@ -293,8 +272,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.24900
-     Total cpu time (sec):               0.40144
+     Total wall time (sec):              0.20840
+     Total cpu time (sec):               0.41640
 
 
   2) Preparation of MO basis and integrals
@@ -310,17 +289,20 @@
   See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
   13.
 
-  - DIIS CC ground state solver settings:
+  - CC ground state solver settings:
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
-
-     DIIS dimension:                   8
-     Max number of iterations:       100
-
-     Storage: disk
+     Max number of iterations:      100
 
   Requested restart. Reading in solution from file.
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (cc_gs_diis_e): file
+     Storage (cc_gs_diis_x): file
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
@@ -386,12 +368,10 @@
         2      4       3      4       -0.029701270698
      --------------------------------------------------
 
-     T1 diagnostic (|T1|/sqrt(N_e)): 0.007226152112
-
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.38800
-     Total cpu time (sec):               1.11783
+     Total wall time (sec):              0.25887
+     Total cpu time (sec):               0.51874
 
 
   4) Calculation of the excited state (davidson algorithm)
@@ -419,8 +399,14 @@
      Number of singlet states:               3
      Max number of iterations:             100
 
-     Max reduced space dimension:          100
+   - Davidson tool settings:
 
+     Number of parameters:                 9729
+     Number of requested solutions:           3
+     Max reduced space dimension:           100
+
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
      Restarting right vector 1 from file r_001.
      Restarting right vector 2 from file r_002.
      Restarting right vector 3 from file r_003.
@@ -570,7 +556,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.247194255535    0.000000000000     0.2424E-08   0.1454E-11
+     1   0.247194255535    0.000000000000     0.2424E-08   0.1453E-11
      2   0.312716699856    0.000000000000     0.7779E-07   0.2019E-08
      3   0.356085057923    0.000000000000     0.6478E-07   0.7535E-09
   ------------------------------------------------------------------------
@@ -590,7 +576,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.247194255574    0.000000000000     0.3084E-09   0.1164E-11
+     1   0.247194255574    0.000000000000     0.3084E-09   0.1166E-11
      2   0.312716698663    0.000000000000     0.1419E-07   0.3753E-09
      3   0.356085057452    0.000000000000     0.1653E-07   0.1070E-09
   ------------------------------------------------------------------------
@@ -600,7 +586,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.247194255572    0.000000000000     0.8020E-10   0.2164E-11
+     1   0.247194255572    0.000000000000     0.8020E-10   0.2165E-11
      2   0.312716698774    0.000000000000     0.3771E-08   0.1111E-09
      3   0.356085057585    0.000000000000     0.4740E-08   0.1325E-09
   ------------------------------------------------------------------------
@@ -610,9 +596,9 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.247194255572    0.000000000000     0.1873E-10   0.1674E-12
-     2   0.312716698773    0.000000000000     0.9046E-09   0.9005E-12
-     3   0.356085057593    0.000000000000     0.1173E-08   0.8497E-11
+     1   0.247194255572    0.000000000000     0.1873E-10   0.1711E-12
+     2   0.312716698773    0.000000000000     0.9046E-09   0.9043E-12
+     3   0.356085057593    0.000000000000     0.1173E-08   0.8501E-11
   ------------------------------------------------------------------------
 
   Iteration:                 20
@@ -620,9 +606,9 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.247194255572    0.000000000000     0.4464E-11   0.8921E-13
-     2   0.312716698778    0.000000000000     0.2306E-09   0.5212E-11
-     3   0.356085057594    0.000000000000     0.3083E-09   0.2783E-12
+     1   0.247194255572    0.000000000000     0.4464E-11   0.9034E-13
+     2   0.312716698778    0.000000000000     0.2306E-09   0.5210E-11
+     3   0.356085057594    0.000000000000     0.3083E-09   0.2793E-12
   ------------------------------------------------------------------------
 
   Iteration:                 21
@@ -630,9 +616,9 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.247194255572    0.000000000000     0.1854E-11   0.1957E-13
-     2   0.312716698779    0.000000000000     0.6100E-10   0.1006E-11
-     3   0.356085057592    0.000000000000     0.8461E-10   0.1525E-11
+     1   0.247194255572    0.000000000000     0.1854E-11   0.1849E-13
+     2   0.312716698779    0.000000000000     0.6100E-10   0.1007E-11
+     3   0.356085057592    0.000000000000     0.8461E-10   0.1527E-11
   ------------------------------------------------------------------------
 
   Iteration:                 22
@@ -640,9 +626,9 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.247194255572    0.000000000000     0.1544E-11   0.3025E-14
-     2   0.312716698779    0.000000000000     0.1635E-10   0.7910E-13
-     3   0.356085057592    0.000000000000     0.2339E-10   0.2009E-12
+     1   0.247194255572    0.000000000000     0.1544E-11   0.9437E-15
+     2   0.312716698779    0.000000000000     0.1635E-10   0.7899E-13
+     3   0.356085057592    0.000000000000     0.2339E-10   0.2023E-12
   ------------------------------------------------------------------------
 
   Iteration:                 23
@@ -650,9 +636,9 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.247194255572    0.000000000000     0.1542E-11   0.1027E-14
-     2   0.312716698779    0.000000000000     0.4211E-11   0.1765E-13
-     3   0.356085057592    0.000000000000     0.6282E-11   0.6167E-13
+     1   0.247194255572    0.000000000000     0.1541E-11   0.7494E-15
+     2   0.312716698779    0.000000000000     0.4211E-11   0.7716E-14
+     3   0.356085057592    0.000000000000     0.6281E-11   0.5762E-13
   ------------------------------------------------------------------------
   Convergence criterion met in 23 iterations!
 
@@ -783,18 +769,18 @@
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              0.97400
-     Total cpu time (sec):               1.60530
+     Total wall time (sec):              0.47827
+     Total cpu time (sec):               0.95822
 
   - Timings for the CCSD excited state calculation
 
-     Total wall time (sec):              1.61200
-     Total cpu time (sec):               3.12512
+     Total wall time (sec):              0.94604
+     Total cpu time (sec):               1.89386
 
-     Peak memory usage during the execution of eT: 16.279116 MB
+     Peak memory usage during the execution of eT: 16.353888 MB
 
   :: There was 1 warning during the execution of eT. ::
 
-  Calculation ended: 2020-12-18 18:58:58 UTC +01:00
+  Calculation ended: 2021-03-09 17:27:55 UTC +01:00
 
   eT terminated successfully!

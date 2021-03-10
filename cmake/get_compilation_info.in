@@ -1,13 +1,3 @@
-pure subroutine get_username(string)
-   character(len=*), intent(out) :: string
-   string = "@USER_NAME@"
-end subroutine get_username
-
-pure subroutine get_hostname(string)
-   character(len=*), intent(out) :: string
-   string = "@HOST_NAME@"
-end subroutine get_hostname
-
 pure subroutine get_fortran_compiler(string)
    character(len=*), intent(out) :: string
    string = "@CMAKE_Fortran_COMPILER_ID@ @CMAKE_Fortran_COMPILER_VERSION@"

@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.1 - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,13 +14,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Bastion
+   This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Compiled by:        rolf
-  Compiled on:        Stomoxys
-  Configuration date: 2021-03-05 13:56:01 UTC +01:00
-  Git branch:         uhf-spin-tests
-  Git hash:           efc7ac087df0e2726fdb6e2a6e8776210bcce8cf
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
   Fortran compiler:   GNU 8.4.0
   C compiler:         GNU 8.4.0
   C++ compiler:       GNU 8.4.0
@@ -33,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-05 13:57:54 UTC +01:00
+  Calculation started: 2021-03-09 17:29:53 UTC +01:00
 
 
   :: Input file
@@ -176,11 +174,8 @@
 
   - SCF solver settings:
 
-     Maximum iterations:                    100
-
-     Residual threshold:            0.1000E-09
-     Energy threshold:              0.1000E-09
-     Acceleration type:                    diis
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
@@ -197,9 +192,12 @@
      Integral cutoff:               0.1000E-15
      Cumulative Fock threshold:     0.1000E+01
 
-  - DIIS convergence acceleration:
+  - DIIS tool settings:
 
      DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -215,12 +213,12 @@
     10           -75.775955661746     0.8607E-05     0.8904E-07
     11           -75.775955664976     0.1417E-05     0.3230E-08
     12           -75.775955665110     0.3961E-06     0.1340E-09
-    13           -75.775955665114     0.1154E-06     0.4519E-11
-    14           -75.775955665115     0.3010E-07     0.2984E-12
+    13           -75.775955665114     0.1154E-06     0.4547E-11
+    14           -75.775955665115     0.3010E-07     0.2700E-12
     15           -75.775955665115     0.7961E-08     0.1421E-13
-    16           -75.775955665115     0.1233E-08     0.5684E-13
+    16           -75.775955665115     0.1233E-08     0.1421E-13
     17           -75.775955665115     0.6779E-09     0.1421E-13
-    18           -75.775955665115     0.7189E-10     0.1421E-13
+    18           -75.775955665115     0.7189E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -246,11 +244,11 @@
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):              3.25329
-     Total cpu time (sec):               5.39926
+     Total wall time (sec):              3.31532
+     Total cpu time (sec):               5.47616
 
      Peak memory usage during the execution of eT: 215.760 KB
 
-  Calculation ended: 2021-03-05 13:57:58 UTC +01:00
+  Calculation ended: 2021-03-09 17:29:56 UTC +01:00
 
   eT terminated successfully!

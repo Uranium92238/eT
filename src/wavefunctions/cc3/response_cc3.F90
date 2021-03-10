@@ -16,10 +16,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (cc3_class) fop_cc3
+submodule (cc3_class) response_cc3
 !
 !!
-!!    First order properties submodule
+!!    Response properties submodule
 !!
 !!    Routines for construction of the CC3 transition densities.
 !!

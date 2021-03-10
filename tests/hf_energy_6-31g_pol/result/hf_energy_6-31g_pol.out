@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.1 - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,26 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Nachspiel
+   This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Compiled by:        alexancp
-  Compiled on:        NTNU16748
-  Configuration date: 2020-11-26 19:47:10 UTC +01:00
-  Git branch:         always-restart-l-from-r
-  Git hash:           b27c502fa8a19f78bb56d8c82213e7b5136821fe
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2020-11-27 09:07:20 UTC +01:00
+  Calculation started: 2021-03-09 17:23:17 UTC +01:00
 
 
   :: Input file
@@ -70,20 +68,8 @@
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
-
-     Name:             h2o he
-     Charge:           0
-     Multiplicity:     1
-     Coordinate units: angstrom
-
-     Pure basis functions:         88
-     Cartesian basis functions:    88
-     Primitive basis functions:   107
-
-     Nuclear repulsion energy (a.u.):             12.167611407170
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
+  :: RHF wavefunction
+  ======================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -91,9 +77,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: 6-31g(3df,3pd)
-        1 H      0.866810000000     0.601440000000     5.000000000000        1
-        2 H     -0.866810000000     0.601440000000     5.000000000000        2
-        3 O      0.000000000000    -0.075790000000     5.000000000000        3
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  H    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
         4 He     0.000000000000     0.000000000000     7.500000000000        4
      ==============================================================================
 
@@ -103,24 +89,23 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: 6-31g(3df,3pd)
-        1 H      1.638033502034     1.136556880358     9.448630622825        1
-        2 H     -1.638033502034     1.136556880358     9.448630622825        2
-        3 O      0.000000000000    -0.143222342981     9.448630622825        3
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  H    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
         4 He     0.000000000000     0.000000000000    14.172945934238        4
      ==============================================================================
 
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  :: RHF wavefunction
-  ======================
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               88
+     Number of orthonormal atomic orbitals:   88
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of occupied orbitals:         6
      Number of virtual orbitals:         82
      Number of molecular orbitals:       88
-     Number of atomic orbitals:          88
 
 
   :: Hartree-Fock engine
@@ -140,31 +125,32 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
 
-     Coulomb screening threshold:   0.1000E-15
-     Exchange screening threshold:  0.1000E-13
-     Fock precision:                0.1000E-31
-     Integral cutoff:               0.1000E-15
-
-  - Setting initial AO density to SAD
+  - Setting initial AO density to sad
 
      Energy of initial guess:               -78.483627481644
      Number of electrons in guess:           12.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-15
+     Exchange screening threshold:  0.1000E-13
+     Integral cutoff:               0.1000E-15
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -175,13 +161,13 @@
      5           -78.851813545882     0.4493E-03     0.4262E-04
      6           -78.851815724514     0.6309E-04     0.2179E-05
      7           -78.851815775481     0.8433E-05     0.5097E-07
-     8           -78.851815775911     0.7743E-06     0.4304E-09
-     9           -78.851815775919     0.1967E-06     0.7716E-11
-    10           -78.851815775919     0.3022E-07     0.1279E-12
-    11           -78.851815775919     0.7395E-08     0.2984E-12
-    12           -78.851815775919     0.1993E-08     0.1421E-13
-    13           -78.851815775919     0.6635E-09     0.2416E-12
-    14           -78.851815775919     0.4706E-10     0.8527E-13
+     8           -78.851815775911     0.7743E-06     0.4305E-09
+     9           -78.851815775919     0.1967E-06     0.7816E-11
+    10           -78.851815775919     0.3022E-07     0.1421E-12
+    11           -78.851815775919     0.7395E-08     0.0000E+00
+    12           -78.851815775919     0.1993E-08     0.2842E-13
+    13           -78.851815775919     0.6635E-09     0.9948E-13
+    14           -78.851815775919     0.4706E-10     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -192,40 +178,13 @@
      Electronic energy:            -91.019427183089
      Total energy:                 -78.851815775919
 
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.585119507551  23   1.162790453625  45   3.451392905208  67   6.507494498567
-   2  -1.287106762921  24   1.242806812670  46   3.675255778850  68   6.518959706241
-   3  -0.898372192600  25   1.270839804823  47   3.760855085053  69   6.646329838458
-   4  -0.639004244706  26   1.345629450977  48   3.876299688271  70   7.165412265642
-   5  -0.551741107251  27   1.453386906711  49   4.119185645775  71   7.202416207518
-   6  -0.494463984685  28   1.689604269772  50   4.188482291878  72   7.446914679490
-   7   0.169072354271  29   1.811405752448  51   4.216197000711  73   8.111250333066
-   8   0.241483864186  30   1.939363472086  52   4.266199955214  74   8.118920879061
-   9   0.367320940410  31   1.940278900202  53   4.348472899972  75   8.157918822352
-  10   0.381986437275  32   1.997587101428  54   4.587264034951  76   8.646396848997
-  11   0.394826104819  33   2.043607784547  55   4.945575480044  77   8.719420663526
-  12   0.446782522385  34   2.127607200921  56   5.046039225403  78   8.738208919027
-  13   0.474268511110  35   2.144432175100  57   5.241088651524  79   8.807420985252
-  14   0.485779621506  36   2.267269684391  58   5.745822517737  80   9.155012915322
-  15   0.544722365795  37   2.391851824525  59   5.822214636854  81   9.209657244134
-  16   0.562063909974  38   2.475084317084  60   5.931212399939  82   9.381652551382
-  17   0.724916207613  39   3.187028296056  61   6.220828228524  83  15.074424436722
-  18   0.780493058219  40   3.242638985013  62   6.361869101390  84  15.158320268188
-  19   0.807756732778  41   3.334234982607  63   6.484667946776  85  15.179704545578
-  20   0.987481997998  42   3.337246430881  64   6.485441580142  86  15.722585640408
-  21   1.009112658181  43   3.412510681592  65   6.489493559311  87  16.152239059968
-  22   1.086758609988  44   3.448224401213  66   6.491613449050  88  25.034515031562
-  -----------------------------------------------------------------------------------
-
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              6.62479
-     Total cpu time (sec):              13.17372
+     Total wall time (sec):              3.64838
+     Total cpu time (sec):               7.28723
 
-     Peak memory usage during the execution of eT: 1.473576 MB
+     Peak memory usage during the execution of eT: 1.568264 MB
 
-  Calculation ended: 2020-11-27 09:07:26 UTC +01:00
+  Calculation ended: 2021-03-09 17:23:21 UTC +01:00
 
   eT terminated successfully!

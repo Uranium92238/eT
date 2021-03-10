@@ -45,7 +45,7 @@ module mp2_class
 !
    interface
 !
-      include "zop_mp2_interface.F90"
+      include "mean_value_mp2_interface.F90"
 !
    end interface
 !

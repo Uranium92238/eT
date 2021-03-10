@@ -1,16 +1,37 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.2.0, Cobra
+  ------------------------------------------------------------
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-03-09 17:29:57 UTC +01:00
 
 
   :: Input file
@@ -63,24 +84,12 @@
      end do
 
 
-  Running on 2 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
-
-     Name:             h2o
-     Charge:           0
-     Multiplicity:     1
-     Coordinate units: angstrom
-
-     Pure basis functions:         24
-     Cartesian basis functions:    25
-     Primitive basis functions:    49
-
-     Nuclear repulsion energy (a.u.):              9.307879526626
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
+  :: RHF wavefunction
+  ======================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -88,9 +97,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 O      0.009319000000     1.133156000000     0.000000000000        1
-        2 H      0.023452000000     0.185621000000     0.000000000000        2
-        3 H      0.906315000000     1.422088000000     0.000000000000        3
+        1  O     0.009319000000     1.133156000000     0.000000000000        1
+        2  H     0.023452000000     0.185621000000     0.000000000000        2
+        3  H     0.906315000000     1.422088000000     0.000000000000        3
      ==============================================================================
 
      ==============================================================================
@@ -99,10 +108,36 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 O      0.017610357755     2.141354496408     0.000000000000        1
-        2 H      0.044317857073     0.350772852968     0.000000000000        2
-        3 H      1.712687132585     2.687356845030     0.000000000000        3
+        1  O     0.017610357755     2.141354496408     0.000000000000        1
+        2  H     0.044317857073     0.350772852968     0.000000000000        2
+        3  H     1.712687132585     2.687356845030     0.000000000000        3
      ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
+
+  This is a PCM calculation
+
+     Polarizable Continuum Solver via PCMSolver
+
+     For details on PCM, see:
+     Tomasi, Mennucci, Cammi, Chem. Rev. 2005, 105, 2999-3094.
+
+     For details on PCMSolver, see:
+     Di Remigio et al., IJQC, 2019, 119, e25685
+
+     PCM Solver was set via internal parameters
+     Solver Type:   iefpcm
+     Solvent:       water
+     Tesserae Area: 0.300 Å
+
+
+     CC calculation: zero-order approximation
+     PCM charges only affect MOs and Fock
+
      ~~~~~~~~~~ PCMSolver ~~~~~~~~~~
      Using CODATA 2010 set of constants.
      Input parsing done host-side
@@ -135,93 +170,11 @@
      Green's function type: uniform dielectric
      Permittivity = 78.39
 
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
-
-  Performs a Cholesky decomposition of the two-electron electronic repulsion 
-  integrals in the atomic orbital basis,
-
-  (ab|cd) = sum_J L_ab^J L_cd^J.
-
-  Once the Cholesky basis has been determined, the vectors L^J are constructed 
-  and stored to disk. These may either be used directly, or be transformed 
-  to the MO basis for use in post-HF calculations. For more information, 
-  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
-
-  - Cholesky decomposition settings:
-
-     Target threshold is:   0.10E-11
-     Span factor:           0.10E-01
-     Max qual:                  1000
-
-  - Cholesky decomposition system details:
-
-     Total number of AOs:                    24
-     Total number of shell pairs:            78
-     Total number of AO pairs:              300
-
-     Significant shell pairs:                78
-     Significant AO pairs:                  300
-
-     Construct shell pairs:                  78
-     Construct AO pairs:                    300
-
-  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
-  -------------------------------------------------------------------------------------------------------
-     1               285 /      71       0.47383E+01         150             29              8265
-     2               220 /      60       0.46828E-01         242             99             21780
-     3               141 /      47       0.46528E-03         158            157             22137
-     4               105 /      33       0.45055E-05         122            226             23730
-     5                12 /       8       0.45032E-07          55            271              3252
-     6                 0 /       0       0.23634E-09           9            279                 0
-  -------------------------------------------------------------------------------------------------------
-
-  - Summary of Cholesky decomposition of electronic repulsion integrals:
-
-     Final number of Cholesky vectors: 279
-
- - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
-
-     Maximal difference between approximate and actual diagonal:              0.1995E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.8882E-15
-
-  - Finished decomposing the ERIs.
-
-     Total wall time (sec):              0.10000
-     Total cpu time (sec):               0.14165
-
-
-  :: RHF wavefunction
-  ======================
-
-  This is a PCM calculation
-
-     Polarizable Continuum Solver via PCMSolver
-
-     For details on PCM, see:
-     Tomasi, Mennucci, Cammi, Chem. Rev. 2005, 105, 2999-3094.
-
-     For details on PCMSolver, see:
-     Di Remigio et al., IJQC, 2019, 119, e25685
-
-     PCM Solver was set via internal parameters
-     Solver Type:   iefpcm
-     Solvent:       water
-     Tesserae Area: 0.300 Å
-
-
-     CC calculation: zero-order approximation
-     PCM charges only affect MOs and Fock
-
-
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of occupied orbitals:         5
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
-     Number of atomic orbitals:          24
 
 
   :: Hartree-Fock engine
@@ -241,45 +194,46 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
-
+     Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
-     Gradient threshold:            0.1000E-09
 
-     Coulomb screening threshold:   0.1000E-15
-     Exchange screening threshold:  0.1000E-13
-     Fock precision:                0.1000E-31
-     Integral cutoff:               0.1000E-15
-
-  - Setting initial AO density to SAD
+  - Setting initial AO density to sad
 
      Energy of initial guess:               -75.916824923907
      Number of electrons in guess:           10.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-15
+     Exchange screening threshold:  0.1000E-13
+     Integral cutoff:               0.1000E-15
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1           -76.001683148260     0.8228E-01     0.7600E+02
      2           -76.027650726027     0.4857E-01     0.2597E-01
-     3           -76.035332285656     0.5102E-02     0.7682E-02
+     3           -76.035332285657     0.5102E-02     0.7682E-02
      4           -76.035487691814     0.9052E-03     0.1554E-03
      5           -76.035497680607     0.1549E-03     0.9989E-05
      6           -76.035497969967     0.3113E-04     0.2894E-06
      7           -76.035497980733     0.1816E-05     0.1077E-07
      8           -76.035497980819     0.6847E-06     0.8619E-10
-     9           -76.035497980826     0.1044E-06     0.6452E-11
-    10           -76.035497980826     0.1055E-07     0.1563E-12
-    11           -76.035497980826     0.8555E-09     0.1421E-13
+     9           -76.035497980826     0.1044E-06     0.6480E-11
+    10           -76.035497980826     0.1055E-07     0.9948E-13
+    11           -76.035497980826     0.8555E-09     0.7105E-13
     12           -76.035497980826     0.1803E-09     0.7105E-13
     13           -76.035497980826     0.6723E-10     0.4263E-13
   ---------------------------------------------------------------
@@ -294,24 +248,13 @@
 
   - Summary of QM/PCM energetics:
                                          a.u.             eV     kcal/mol
-     QM/PCM SCF Contribution:       -0.009387191615
-     QM/PCM Electrostatic Energy:   -0.018774383230    -0.51088   -11.781
-
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.546744331369   7   0.275148310949  13   1.464566153880  19   2.526295693073
-   2  -1.340860449892   8   0.811737292078  14   1.479426134170  20   3.280216596208
-   3  -0.709505925404   9   0.863779241489  15   1.694808355597  21   3.359419487728
-   4  -0.569195794239  10   1.155116551842  16   1.869320703401  22   3.510584475595
-   5  -0.496469923735  11   1.194578299681  17   1.941723501361  23   3.901945769601
-   6   0.201099946447  12   1.247059869190  18   2.496316625118  24   4.144240039379
-  -----------------------------------------------------------------------------------
+     QM/PCM SCF Contribution:        -0.009387191615    -0.25544    -5.891
+     QM/PCM Electrostatic Energy:    -0.018774383230    -0.51088   -11.781
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.54500
-     Total cpu time (sec):               1.93984
+     Total wall time (sec):              2.23168
+     Total cpu time (sec):               3.60053
 
 
   :: CCSD wavefunction
@@ -341,19 +284,79 @@
   This is a CCSD ground state calculation.
   The following tasks will be performed:
 
-     1) Preparation of MO basis and integrals
-     2) Calculation of the ground state (diis algorithm)
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
 
 
-  1) Preparation of MO basis and integrals
+  1) Cholesky decomposition of the electron repulsion integrals
+
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-11
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition ao details:
+
+     Total number of AOs:                    24
+     Total number of shell pairs:            78
+     Total number of AO pairs:              300
+
+     Significant shell pairs:                78
+     Significant AO pairs:                  300
+
+     Construct shell pairs:                  78
+     Construct AO pairs:                    300
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               285 /      71       0.47383E+01         150             29              8265
+     2               220 /      60       0.46828E-01         242             99             21780
+     3               141 /      47       0.46528E-03         158            157             22137
+     4               105 /      33       0.45055E-05         122            226             23730
+     5                12 /       8       0.45032E-07          55            271              3252
+     6                 0 /       0       0.23634E-09           9            279                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 279
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.1995E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       True
+     ERI matrix in memory:       False
+     T1 ERI matrix in memory:    True
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.15569
+     Total cpu time (sec):               0.30928
 
 
-  2) Calculation of the ground state (diis algorithm)
+  2) Preparation of MO basis and integrals
+
+
+  3) Calculation of the ground state (diis algorithm)
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -363,15 +366,18 @@
   See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
   13.
 
-  - DIIS CC ground state solver settings:
+  - CC ground state solver settings:
 
-     Omega threshold:           0.10E-09
-     Energy threshold:          0.10E-09
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+     Max number of iterations:      100
 
-     DIIS dimension:                   8
-     Max number of iterations:       100
+  - DIIS tool settings:
 
-     Storage: disk
+     DIIS dimension:   8
+
+     Storage (cc_gs_diis_e): file
+     Storage (cc_gs_diis_x): file
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
@@ -388,7 +394,7 @@
    11           -76.246969886193     0.4420E-07     0.1292E-07
    12           -76.246969885189     0.7204E-08     0.1004E-08
    13           -76.246969885536     0.1495E-08     0.3469E-09
-   14           -76.246969885452     0.3311E-09     0.8335E-10
+   14           -76.246969885453     0.3311E-09     0.8335E-10
    15           -76.246969885439     0.8299E-10     0.1383E-10
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
@@ -403,15 +409,15 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-       13      3        0.006717198932
+       13      3       -0.006717198932
         2      3       -0.005978930376
-        1      4        0.005585943702
+        1      4       -0.005585943702
         1      2        0.004834313095
        14      4       -0.004423592413
-        7      3       -0.003904626055
-        5      2        0.003888505129
+        7      3        0.003904626055
+        5      2       -0.003888505129
        10      5       -0.003002942370
-        8      4       -0.002862130003
+        8      4        0.002862130003
         4      4        0.002741308714
      ------------------------------------
 
@@ -426,21 +432,23 @@
         4      3       4      3       -0.028349904409
         2      3       2      3       -0.026683237501
         3      4       3      4       -0.024717474985
-        7      3       6      5        0.022998454493
+        7      3       6      5       -0.022998454493
         7      3       7      3       -0.022503656468
         2      3       6      5       -0.021090002470
      --------------------------------------------------
 
-     T1 diagnostic (|T1|/sqrt(N_e)): 0.004856204800
-
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.12900
-     Total cpu time (sec):               0.31847
+     Total wall time (sec):              0.09702
+     Total cpu time (sec):               0.19302
 
   - Timings for the CCSD ground state calculation
 
-     Total wall time (sec):              0.13300
-     Total cpu time (sec):               0.32368
+     Total wall time (sec):              0.25306
+     Total cpu time (sec):               0.50264
+
+     Peak memory usage during the execution of eT: 8.575880 MB
+
+  Calculation ended: 2021-03-09 17:30:00 UTC +01:00
 
   eT terminated successfully!

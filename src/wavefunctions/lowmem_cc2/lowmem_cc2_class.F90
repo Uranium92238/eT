@@ -89,7 +89,7 @@ module lowmem_cc2_class
       include "omega_lowmem_cc2_interface.F90"
       include "jacobian_lowmem_cc2_interface.F90"
       include "jacobian_transpose_lowmem_cc2_interface.F90"
-      include "zop_lowmem_cc2_interface.F90"
+      include "mean_value_lowmem_cc2_interface.F90"
       include "fock_lowmem_cc2_interface.F90"
 !
    end interface

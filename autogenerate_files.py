@@ -383,11 +383,7 @@ def complexify_line(line, parameter_list):
     # Change complexifiable submodules to complex version
     for module in complexifiable_modules:
         if module in line:
-            line = sub(
-                r"\b" + module + r"\b",
-                module.rpartition("_r")[0] + "_c",
-                line,
-            )
+            line = sub(r"\b" + module + r"\b", module.rpartition("_r")[0] + "_c", line)
 
     return line
 
@@ -433,14 +429,14 @@ def autogenerate_complex_files(source_directory, parameter_list):
             "multiplier_equation_ccs",
             "omega_ccs",
             "set_get_ccs",
-            "zop_ccs",
+            "mean_value_ccs",
             "t1_ccs",
         ],
         "doubles": [
             "initialize_destruct_doubles",
             "jacobian_transpose_doubles",
             "omega_doubles",
-            "zop_doubles",
+            "mean_value_doubles",
         ],
         "ccsd": [
             "initialize_destruct_ccsd",
@@ -448,7 +444,7 @@ def autogenerate_complex_files(source_directory, parameter_list):
             "multiplier_equation_ccsd",
             "omega_ccsd",
             "set_get_ccsd",
-            "zop_ccsd",
+            "mean_value_ccsd",
             "fock_ccsd",
         ],
     }

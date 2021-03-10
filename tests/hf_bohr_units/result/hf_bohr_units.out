@@ -1,16 +1,37 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.2.0, Cobra
+  ------------------------------------------------------------
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-03-09 17:23:43 UTC +01:00
 
 
   :: Input file
@@ -42,24 +63,12 @@
      end method
 
 
-  Running on 2 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
-
-     Name:             hof he
-     Charge:           0
-     Multiplicity:     1
-     Coordinate units: bohr
-
-     Pure basis functions:         38
-     Cartesian basis functions:    40
-     Primitive basis functions:    84
-
-     Nuclear repulsion energy (a.u.):             48.518087408280
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
+  :: RHF wavefunction
+  ======================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -67,9 +76,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H      0.866813438575     0.601441650843     5.000010253959        1
-        2 F     -0.866813438575     0.601441650843     5.000010253959        2
-        3 O      0.000000000000    -0.075788760148     4.999962628010        3
+        1  H     0.866813438575     0.601441650843     5.000010253959        1
+        2  F    -0.866813438575     0.601441650843     5.000010253959        2
+        3  O     0.000000000000    -0.075788760148     4.999962628010        3
         4 He     0.000000000000     0.000000000000     7.500028610369        4
      ==============================================================================
 
@@ -79,24 +88,23 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H      1.638040000000     1.136560000000     9.448650000000        1
-        2 F     -1.638040000000     1.136560000000     9.448650000000        2
-        3 O      0.000000000000    -0.143220000000     9.448560000000        3
+        1  H     1.638040000000     1.136560000000     9.448650000000        1
+        2  F    -1.638040000000     1.136560000000     9.448650000000        2
+        3  O     0.000000000000    -0.143220000000     9.448560000000        3
         4 He     0.000000000000     0.000000000000    14.173000000000        4
      ==============================================================================
 
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  :: RHF wavefunction
-  ======================
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               38
+     Number of orthonormal atomic orbitals:   38
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of occupied orbitals:        10
      Number of virtual orbitals:         28
      Number of molecular orbitals:       38
-     Number of atomic orbitals:          38
 
 
   :: Hartree-Fock engine
@@ -116,31 +124,32 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
-
+     Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
-     Gradient threshold:            0.1000E-09
 
-     Coulomb screening threshold:   0.1000E-15
-     Exchange screening threshold:  0.1000E-13
-     Fock precision:                0.1000E-31
-     Integral cutoff:               0.1000E-15
-
-  - Setting initial AO density to SAD
+  - Setting initial AO density to sad
 
      Energy of initial guess:              -178.316344758045
      Number of electrons in guess:           20.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-15
+     Exchange screening threshold:  0.1000E-13
+     Integral cutoff:               0.1000E-15
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -148,19 +157,19 @@
      2          -177.479041706176     0.1346E-01     0.2660E-01
      3          -177.480037982875     0.4311E-02     0.9963E-03
      4          -177.480164406711     0.1845E-02     0.1264E-03
-     5          -177.480178084240     0.3629E-03     0.1368E-04
+     5          -177.480178084239     0.3629E-03     0.1368E-04
      6          -177.480179304765     0.7402E-04     0.1221E-05
      7          -177.480179380475     0.2207E-04     0.7571E-07
      8          -177.480179390705     0.5096E-05     0.1023E-07
      9          -177.480179391531     0.1218E-05     0.8253E-09
-    10          -177.480179391557     0.2536E-06     0.2683E-10
-    11          -177.480179391559     0.4399E-07     0.1137E-11
-    12          -177.480179391559     0.8545E-08     0.5684E-13
-    13          -177.480179391558     0.2857E-08     0.1421E-12
-    14          -177.480179391558     0.1322E-08     0.2842E-13
-    15          -177.480179391558     0.3976E-09     0.5684E-13
+    10          -177.480179391557     0.2536E-06     0.2666E-10
+    11          -177.480179391558     0.4399E-07     0.1080E-11
+    12          -177.480179391559     0.8545E-08     0.1421E-12
+    13          -177.480179391558     0.2857E-08     0.2558E-12
+    14          -177.480179391558     0.1322E-08     0.1137E-12
+    15          -177.480179391559     0.3976E-09     0.1137E-12
     16          -177.480179391559     0.1465E-09     0.5684E-13
-    17          -177.480179391558     0.5395E-10     0.8527E-13
+    17          -177.480179391558     0.5395E-10     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -171,24 +180,13 @@
      Electronic energy:           -225.998266799838
      Total energy:                -177.480179391558
 
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -26.334215561006  11   0.160498991119  21   1.561375438202  31   3.061113033117
-   2 -20.644676832458  12   0.548521755797  22   1.686295555997  32   3.534193644881
-   3  -1.894510478389  13   0.716120575322  23   1.771729158048  33   3.762913806485
-   4  -1.204324022486  14   1.106563102764  24   2.108003635846  34   3.962288303716
-   5  -0.910582659193  15   1.130677400062  25   2.501254614004  35   4.000545006535
-   6  -0.866357843820  16   1.195127555535  26   2.530941511695  36   4.553967213826
-   7  -0.832529661662  17   1.332305614791  27   2.531183686149  37   4.580617644177
-   8  -0.790124148753  18   1.423086693652  28   2.601414481716  38   5.083706630529
-   9  -0.497922437712  19   1.453321682700  29   2.725832145202
-  10  -0.439637697926  20   1.486909997221  30   2.888291629218
-  -----------------------------------------------------------------------------------
-
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.09500
-     Total cpu time (sec):               1.97594
+     Total wall time (sec):              1.52302
+     Total cpu time (sec):               3.00451
+
+     Peak memory usage during the execution of eT: 298.504 KB
+
+  Calculation ended: 2021-03-09 17:23:45 UTC +01:00
 
   eT terminated successfully!

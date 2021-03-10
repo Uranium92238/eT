@@ -1,16 +1,37 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.2.0, Cobra
+  ------------------------------------------------------------
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-03-09 17:28:04 UTC +01:00
 
 
   :: Input file
@@ -62,64 +83,8 @@
      end active atoms
 
 
-  Running on 2 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
-
-
-  :: Molecular system specifications
-  =====================================
-
-     Name:             2 h2o
-     Charge:           0
-     Multiplicity:     1
-     Coordinate units: angstrom
-
-     Pure basis functions:         48
-     Cartesian basis functions:    50
-     Primitive basis functions:    98
-
-     Nuclear repulsion energy (a.u.):             37.386395233393
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
-
-     Active atoms:
-
-     ====================================
-        Atom              Basis   Method
-     ====================================
-        1 O             cc-pvdz    hf
-        2 H             cc-pvdz    hf
-        3 H             cc-pvdz    hf
-     ====================================
-     Total number of active atoms: 3
-     OBS: Atoms will be reordered, active atoms first
-
-     ==============================================================================
-                                     Geometry (angstrom)
-     ==============================================================================
-        Atom           X                  Y                  Z         # in input
-     ==============================================================================
-        Basis: cc-pvdz
-        1 O     -0.573030000000     2.189950000000    -0.052560000000        1
-        2 H      0.347690000000     2.485980000000     0.050490000000        2
-        3 H     -1.075800000000     3.019470000000     0.020240000000        3
-        4 O     -1.567030000000    -0.324500000000     0.450780000000        4
-        5 H     -1.211220000000     0.588750000000     0.375890000000        5
-        6 H     -1.604140000000    -0.590960000000    -0.479690000000        6
-     ==============================================================================
-
-     ==============================================================================
-                                     Geometry (a.u.)
-     ==============================================================================
-        Atom           X                  Y                  Z         # in input
-     ==============================================================================
-        Basis: cc-pvdz
-        1 O     -1.082869761160     4.138405726491    -0.099324005107        1
-        2 H      0.657038876250     4.697821351146     0.095412272029        2
-        3 H     -2.032967364807     5.705971341340     0.038248056761        3
-        4 O     -2.961257528977    -0.613216127421     0.851850742431        4
-        5 H     -2.288874076596     1.112576255838     0.710329152963        5
-        6 H     -3.031385265460    -1.116752550573    -0.906482724693        6
-     ==============================================================================
 
 
   :: MLHF wavefunction
@@ -132,14 +97,45 @@
 
      Cholesky decomposition threshold:  0.10E-01
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  O    -0.573030000000     2.189950000000    -0.052560000000        1
+        2  H     0.347690000000     2.485980000000     0.050490000000        2
+        3  H    -1.075800000000     3.019470000000     0.020240000000        3
+        4  O    -1.567030000000    -0.324500000000     0.450780000000        4
+        5  H    -1.211220000000     0.588750000000     0.375890000000        5
+        6  H    -1.604140000000    -0.590960000000    -0.479690000000        6
+     ==============================================================================
 
-  - Orbital details:
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  O    -1.082869761160     4.138405726491    -0.099324005107        1
+        2  H     0.657038876250     4.697821351146     0.095412272029        2
+        3  H    -2.032967364807     5.705971341340     0.038248056761        3
+        4  O    -2.961257528977    -0.613216127421     0.851850742431        4
+        5  H    -2.288874076596     1.112576255838     0.710329152963        5
+        6  H    -3.031385265460    -1.116752550573    -0.906482724693        6
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               48
+     Number of orthonormal atomic orbitals:   48
+
+  - Molecular orbital details:
 
      Number of occupied orbitals:        10
      Number of virtual orbitals:         38
      Number of molecular orbitals:       48
-     Number of atomic orbitals:          48
 
 
   :: Hartree-Fock engine
@@ -161,13 +157,15 @@
 
   - SCF solver settings:
 
-     Maximum iterations:                     100
-     Gradient threshold:              0.1000E-10
-     Acceleration type:                     diis
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:              -151.796506244357
+     Energy of initial guess:              -151.796506244372
      Number of electrons in guess:           20.000000000000
 
   - Active orbital space:
@@ -180,54 +178,54 @@
 
      Coulomb screening threshold:   0.1000E-16
      Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
      Integral cutoff:               0.1000E-16
      Cumulative Fock threshold:     0.1000E+01
 
-  - DIIS convergence acceleration:
+  - DIIS tool settings:
 
      DIIS dimension:   8
 
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
+
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -151.986254697206     0.3356E+00     0.1520E+03
-     2          -152.011877032060     0.1544E+00     0.2562E-01
-     3          -152.017802734147     0.4892E-01     0.5926E-02
-     4          -152.018627387893     0.1817E-01     0.8247E-03
-     5          -152.018702064762     0.2447E-02     0.7468E-04
-     6          -152.018704292500     0.8243E-03     0.2228E-05
-     7          -152.018704595169     0.6086E-03     0.3027E-06
-     8          -152.018704690458     0.2318E-03     0.9529E-07
-     9          -152.018704711944     0.1497E-03     0.2149E-07
-    10          -152.018704720393     0.3349E-05     0.8449E-08
-    11          -152.018704720399     0.8463E-06     0.6793E-11
-    12          -152.018704720400     0.1763E-06     0.6253E-12
-    13          -152.018704720400     0.3224E-07     0.8527E-13
-    14          -152.018704720400     0.7834E-08     0.2842E-13
-    15          -152.018704720400     0.8847E-09     0.1705E-12
-    16          -152.018704720400     0.1398E-09     0.1137E-12
-    17          -152.018704720400     0.1373E-10     0.0000E+00
-    18          -152.018704720400     0.2293E-11     0.2842E-13
+     1          -151.986254697214     0.3356E+00     0.1520E+03
+     2          -152.011877032065     0.1366E+00     0.2562E-01
+     3          -152.018448490310     0.2167E-01     0.6571E-02
+     4          -152.018690017983     0.5645E-02     0.2415E-03
+     5          -152.018703912219     0.1006E-02     0.1389E-04
+     6          -152.018704702597     0.1890E-03     0.7904E-06
+     7          -152.018704720008     0.2445E-04     0.1741E-07
+     8          -152.018704720379     0.5552E-05     0.3712E-09
+     9          -152.018704720403     0.1150E-05     0.2404E-10
+    10          -152.018704720404     0.2301E-06     0.6821E-12
+    11          -152.018704720404     0.7198E-07     0.5684E-13
+    12          -152.018704720404     0.1570E-07     0.5684E-13
+    13          -152.018704720404     0.2151E-08     0.2842E-13
+    14          -152.018704720404     0.5725E-09     0.5684E-13
+    15          -152.018704720404     0.4648E-10     0.0000E+00
+    16          -152.018704720404     0.8079E-11     0.2842E-13
   ---------------------------------------------------------------
-  Convergence criterion met in 18 iterations!
+  Convergence criterion met in 16 iterations!
 
   - Summary of MLHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.695204742951
+     HOMO-LUMO gap:                  0.695204742952
      Nuclear repulsion energy:      37.386395233393
-     Electronic energy:           -189.405099953793
-     Total energy:                -152.018704720400
+     Electronic energy:           -189.405099953797
+     Total energy:                -152.018704720404
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
-     Active energy:               -104.805789875474
-     Active-inactive energy:        19.262564524022
-     Inactive energy:             -103.861874602341
+     Active energy:               -104.805789875470
+     Active-inactive energy:        19.262564524020
+     Inactive energy:             -103.861874602348
 
   - Timings for the MLHF ground state calculation
 
-     Total wall time (sec):              3.05700
-     Total cpu time (sec):               5.83892
+     Total wall time (sec):              2.01591
+     Total cpu time (sec):               3.97849
 
   - Preparation for frozen core approximation
 
@@ -287,7 +285,7 @@
      Span factor:           0.10E-01
      Max qual:                  1000
 
-  - Cholesky decomposition system details:
+  - Cholesky decomposition ao details:
 
      Total number of AOs:                    48
      Total number of shell pairs:           300
@@ -317,7 +315,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9407E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1593E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
 
   - Settings for integral handling:
 
@@ -327,8 +325,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              2.66500
-     Total cpu time (sec):               5.08376
+     Total wall time (sec):              1.30934
+     Total cpu time (sec):               2.56182
 
 
   2) Preparation of MO basis and integrals
@@ -344,43 +342,46 @@
   See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
   13.
 
-  - DIIS CC ground state solver settings:
+  - CC ground state solver settings:
 
-     Omega threshold:           0.10E-10
-     Energy threshold:          0.10E-10
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+     Max number of iterations:      100
 
-     DIIS dimension:                   8
-     Max number of iterations:       100
+  - DIIS tool settings:
 
-     Storage: disk
+     DIIS dimension:   8
+
+     Storage (cc_gs_diis_e): file
+     Storage (cc_gs_diis_x): file
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -152.222360840138     0.7515E-01     0.1522E+03
-    2          -152.226872604276     0.2176E-01     0.4512E-02
-    3          -152.230824346670     0.5726E-02     0.3952E-02
-    4          -152.231429800469     0.1216E-02     0.6055E-03
-    5          -152.231430243215     0.2550E-03     0.4427E-06
-    6          -152.231442258379     0.7073E-04     0.1202E-04
-    7          -152.231442402204     0.1827E-04     0.1438E-06
-    8          -152.231441969141     0.5368E-05     0.4331E-06
-    9          -152.231441886855     0.1668E-05     0.8229E-07
-   10          -152.231441801599     0.5943E-06     0.8526E-07
-   11          -152.231441829120     0.2010E-06     0.2752E-07
-   12          -152.231441830583     0.7015E-07     0.1463E-08
-   13          -152.231441834048     0.1956E-07     0.3465E-08
-   14          -152.231441833563     0.4143E-08     0.4847E-09
-   15          -152.231441833472     0.8359E-09     0.9132E-10
-   16          -152.231441833472     0.2756E-09     0.5684E-13
-   17          -152.231441833479     0.4608E-10     0.7503E-11
-   18          -152.231441833478     0.1211E-10     0.1421E-11
-   19          -152.231441833477     0.3064E-11     0.5969E-12
+    1          -152.222360840142     0.7515E-01     0.1522E+03
+    2          -152.226872604280     0.2176E-01     0.4512E-02
+    3          -152.230824346675     0.5726E-02     0.3952E-02
+    4          -152.231429800473     0.1216E-02     0.6055E-03
+    5          -152.231430243219     0.2550E-03     0.4427E-06
+    6          -152.231442258383     0.7073E-04     0.1202E-04
+    7          -152.231442402208     0.1827E-04     0.1438E-06
+    8          -152.231441969146     0.5368E-05     0.4331E-06
+    9          -152.231441886859     0.1668E-05     0.8229E-07
+   10          -152.231441801603     0.5943E-06     0.8526E-07
+   11          -152.231441829124     0.2010E-06     0.2752E-07
+   12          -152.231441830587     0.7015E-07     0.1463E-08
+   13          -152.231441834052     0.1956E-07     0.3465E-08
+   14          -152.231441833567     0.4143E-08     0.4847E-09
+   15          -152.231441833476     0.8359E-09     0.9132E-10
+   16          -152.231441833476     0.2756E-09     0.5684E-13
+   17          -152.231441833483     0.4608E-10     0.7503E-11
+   18          -152.231441833482     0.1211E-10     0.1421E-11
+   19          -152.231441833481     0.3064E-11     0.5969E-12
   ---------------------------------------------------------------
   Convergence criterion met in 19 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):  -152.231441833477
+     Final ground state energy (a.u.):  -152.231441833481
 
      Correlation energy (a.u.):           -0.212737113077
 
@@ -389,15 +390,15 @@
         a       i         t(a,i)
      -----------------------------------
        17      2        0.007394825095
-        1      3       -0.006288371519
-        2      2       -0.006247227009
-        3      3       -0.005640351993
+        1      3       -0.006288371520
+        2      2       -0.006247227007
+        3      3       -0.005640351995
        18      3       -0.004968917655
-        8      2        0.004506425253
-        1      1        0.004033650772
+        8      2        0.004506425254
+        1      1        0.004033650770
         3      1       -0.003864981448
-       14      3       -0.003292882328
-        3      4        0.002841366999
+       14      3       -0.003292882327
+        3      4        0.002841367001
      ------------------------------------
 
      Largest double amplitudes:
@@ -416,18 +417,18 @@
         7      4       9      4       -0.019223447130
      --------------------------------------------------
 
-     T1 diagnostic (|T1|/sqrt(N_e)): 0.004037156120
-
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.00600
-     Total cpu time (sec):               2.33188
+     Total wall time (sec):              0.43240
+     Total cpu time (sec):               0.86366
 
   - Timings for the CCSD ground state calculation
 
-     Total wall time (sec):              3.67300
-     Total cpu time (sec):               7.41697
+     Total wall time (sec):              1.74206
+     Total cpu time (sec):               3.42580
 
-     Peak memory usage during the execution of eT: 26.923924 MB
+     Peak memory usage during the execution of eT: 27.127064 MB
+
+  Calculation ended: 2021-03-09 17:28:08 UTC +01:00
 
   eT terminated successfully!

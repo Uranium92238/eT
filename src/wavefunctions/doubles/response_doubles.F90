@@ -17,10 +17,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (doubles_class) fop_doubles
+submodule (doubles_class) response_doubles
 !
 !!
-!!    First order properties submodule
+!!    Response properties submodule
 !!
 !!    Routines for construction of the right-hand-side, eta^X, 
 !!    and left-hand-side, xi^X vectors and the left-hand-side (D^L)
@@ -1250,4 +1250,4 @@ contains
    end subroutine etaX_eom_a_doubles
 !
 !
-end submodule fop_doubles
+end submodule response_doubles

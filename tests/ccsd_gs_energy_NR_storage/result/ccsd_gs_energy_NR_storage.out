@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.1 - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,26 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Bastion
+   This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Compiled by:        sarai
-  Compiled on:        Sarais-MBP.home
-  Configuration date: 2021-03-04 20:04:35 UTC +01:00
-  Git branch:         es_solver_cleanup
-  Git hash:           199981043132112c51344e7424fba65be1d1dc24
-  Fortran compiler:   GNU 10.2.0
-  C compiler:         GNU 10.2.0
-  C++ compiler:       GNU 10.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
-  Runtime checks:     ON
+  Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-04 22:59:00 UTC +01:00
+  Calculation started: 2021-03-09 17:25:48 UTC +01:00
 
 
   :: Input file
@@ -152,8 +150,8 @@
 
   - SCF solver settings:
 
-     Maximum iterations:                    100
-     Acceleration type:                    diis
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
@@ -173,7 +171,7 @@
   - DIIS tool settings:
 
      DIIS dimension:   8
- 
+
      Storage (solver scf_e): memory
      Storage (solver scf_x): memory
 
@@ -187,25 +185,25 @@
   Fock matrix construction using density differences
      4           -78.843809541675     0.2414E-02     0.3814E-03
   Fock matrix construction using density differences
-     5           -78.843850846799     0.3301E-03     0.4131E-04
+     5           -78.843850846800     0.3301E-03     0.4131E-04
   Fock matrix construction using density differences
      6           -78.843851669326     0.5527E-04     0.8225E-06
   Fock matrix construction using density differences
      7           -78.843851692851     0.5865E-05     0.2353E-07
   Fock matrix construction using density differences
-     8           -78.843851693557     0.2356E-05     0.7054E-09
+     8           -78.843851693557     0.2356E-05     0.7055E-09
   Fock matrix construction using density differences
-     9           -78.843851693630     0.2071E-06     0.7378E-10
+     9           -78.843851693630     0.2071E-06     0.7370E-10
   Fock matrix construction using density differences
-    10           -78.843851693631     0.1594E-07     0.4547E-12
+    10           -78.843851693631     0.1594E-07     0.4121E-12
   Fock matrix construction using density differences
-    11           -78.843851693631     0.3322E-08     0.1421E-13
+    11           -78.843851693631     0.3322E-08     0.0000E+00
   Fock matrix construction using density differences
-    12           -78.843851693631     0.1197E-08     0.1421E-13
+    12           -78.843851693631     0.1197E-08     0.2842E-13
   Fock matrix construction using density differences
     13           -78.843851693631     0.4264E-09     0.1421E-13
   Fock matrix construction using density differences
-    14           -78.843851693631     0.1280E-09     0.1421E-13
+    14           -78.843851693631     0.1280E-09     0.0000E+00
   Fock matrix construction using density differences
     15           -78.843851693631     0.1479E-10     0.2842E-13
   ---------------------------------------------------------------
@@ -220,8 +218,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.50500
-     Total cpu time (sec):               0.90825
+     Total wall time (sec):              0.49599
+     Total cpu time (sec):               0.93554
 
   No frozen fock contributions!
 
@@ -323,8 +321,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.33000
-     Total cpu time (sec):               0.56658
+     Total wall time (sec):              0.18988
+     Total cpu time (sec):               0.38189
 
 
   2) Preparation of MO basis and integrals
@@ -338,7 +336,7 @@
      Number of parameters:                 9729
      Number of requested solutions:           1
      Max reduced space dimension:            50
- 
+
      Storage (newton_raphson_amplitude_updator_trials): memory
      Storage (newton_raphson_amplitude_updator_transforms): memory
 
@@ -350,7 +348,7 @@
   See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
   13.
 
-  - DIIS CC ground state solver settings:
+  - CC ground state solver settings:
 
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
@@ -359,7 +357,7 @@
   - DIIS tool settings:
 
      DIIS dimension:   8
- 
+
      Storage (cc_gs_diis_e): file
      Storage (cc_gs_diis_x): file
 
@@ -463,18 +461,18 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.66000
-     Total cpu time (sec):               1.32479
+     Total wall time (sec):              0.19894
+     Total cpu time (sec):               0.39879
 
   - Timings for the CCSD ground state calculation
 
-     Total wall time (sec):              0.99000
-     Total cpu time (sec):               1.89220
+     Total wall time (sec):              0.38927
+     Total cpu time (sec):               0.78113
 
   - Cleaning up ccsd wavefunction
 
-     Peak memory usage during the execution of eT: 21.211664 MB
+     Peak memory usage during the execution of eT: 21.215192 MB
 
-  Calculation ended: 2021-03-04 22:59:02 UTC +01:00
+  Calculation ended: 2021-03-09 17:25:49 UTC +01:00
 
   eT terminated successfully!

@@ -1,4 +1,4 @@
-def get_hf_filter(tolerance, convergence=False, restart=False, idempotent=True):
+def get_hf_filter(tolerance, convergence=True, restart=False, idempotent=True):
     """
     Returns filters for a HF calculation.
     """
@@ -36,7 +36,7 @@ def get_hf_filter(tolerance, convergence=False, restart=False, idempotent=True):
     return f
 
 
-def get_mlhf_filter(tolerance, convergence=False, restart=False, idempotent=True):
+def get_mlhf_filter(tolerance, convergence=True, restart=False, idempotent=True):
     """
     Returns filters for a MLHF calculation.
     """
@@ -59,7 +59,7 @@ def get_mlhf_filter(tolerance, convergence=False, restart=False, idempotent=True
     return f
 
 
-def get_gs_filter(tolerance, convergence=False, restart=False):
+def get_gs_filter(tolerance, convergence=True, restart=False):
     """
     Returns filters for a GS calculation.
     """
@@ -84,7 +84,7 @@ def get_gs_filter(tolerance, convergence=False, restart=False):
     return f
 
 
-def get_es_filter(n_states, tolerance, convergence=False, restart=False):
+def get_es_filter(n_states, tolerance, convergence=True, restart=False):
     """
     Returns filters for an ES calculation.
     """
@@ -107,7 +107,7 @@ def get_es_filter(n_states, tolerance, convergence=False, restart=False):
     return f
 
 
-def get_eom_filter(n_states, tolerance, convergence=False, restart=False):
+def get_eom_filter(n_states, tolerance, convergence=True, restart=False):
     """
     Returns filters for an EOM calculation.
     """

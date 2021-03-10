@@ -17,10 +17,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (cc3_class) zop_cc3
+submodule (cc3_class) mean_value_cc3
 !
 !!
-!!    Zeroth order properties submodule 
+!!    Mean-value submodule 
 !!
 !!    Contains routines related to the mean values, i.e. 
 !!    the construction of density matrices as well as expectation 
@@ -157,7 +157,7 @@ contains
       call zero_array(wf%GS_cc3_density_vv, wf%n_v**2)
 !
 !     Call with omega = zero and cvs=.false. for GS density
-!     Save the Y_vooo intermediate for FOP
+!     Save the Y_vooo intermediate for response properties
 !
       call cc3_ijk_timer%turn_on()
       call wf%density_cc3_mu_ref_ijk(density_ov, wf%GS_cc3_density_vv,  &
@@ -1451,4 +1451,4 @@ contains
    end subroutine density_cc3_oo_vv_N7_NT_permutation_cc3
 !
 !
-end submodule zop_cc3
+end submodule mean_value_cc3

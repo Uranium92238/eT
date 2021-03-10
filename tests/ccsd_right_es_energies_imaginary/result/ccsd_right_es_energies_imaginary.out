@@ -1,16 +1,37 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.2.0, Cobra
+  ------------------------------------------------------------
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-03-09 17:26:07 UTC +01:00
 
 
   :: Input file
@@ -58,24 +79,12 @@
      end solver cc es
 
 
-  Running on 2 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
-
-     Name:             hof
-     Charge:           0
-     Multiplicity:     1
-     Coordinate units: angstrom
-
-     Pure basis functions:         55
-     Cartesian basis functions:    59
-     Primitive basis functions:   101
-
-     Nuclear repulsion energy (a.u.):             35.827084182759
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
+  :: RHF wavefunction
+  ======================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -83,9 +92,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: aug-cc-pvdz
-        1 O      0.000001366400     0.000000000000    -0.000039640155        1
-        2 H      1.089989888926     0.000000000000    -0.000001945621        2
-        3 F     -0.020596536778     0.000000000000     1.306169602322        3
+        1  O     0.000001366400     0.000000000000    -0.000039640155        1
+        2  H     1.089989888926     0.000000000000    -0.000001945621        2
+        3  F    -0.020596536778     0.000000000000     1.306169602322        3
      ==============================================================================
 
      ==============================================================================
@@ -94,76 +103,22 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: aug-cc-pvdz
-        1 O      0.000002582122     0.000000000000    -0.000074909036        1
-        2 H      2.059782368615     0.000000000000    -0.000003676691        2
-        3 F     -0.038921813625     0.000000000000     2.468302820621        3
+        1  O     0.000002582122     0.000000000000    -0.000074909036        1
+        2  H     2.059782368615     0.000000000000    -0.000003676691        2
+        3  F    -0.038921813625     0.000000000000     2.468302820621        3
      ==============================================================================
 
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  Performs a Cholesky decomposition of the two-electron electronic repulsion 
-  integrals in the atomic orbital basis,
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               55
+     Number of orthonormal atomic orbitals:   55
 
-  (ab|cd) = sum_J L_ab^J L_cd^J.
-
-  Once the Cholesky basis has been determined, the vectors L^J are constructed 
-  and stored to disk. These may either be used directly, or be transformed 
-  to the MO basis for use in post-HF calculations. For more information, 
-  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
-
-  - Cholesky decomposition settings:
-
-     Target threshold is:   0.10E-05
-     Span factor:           0.10E-01
-     Max qual:                  1000
-
-  - Cholesky decomposition system details:
-
-     Total number of AOs:                    55
-     Total number of shell pairs:           276
-     Total number of AO pairs:             1540
-
-     Significant shell pairs:               275
-     Significant AO pairs:                 1539
-
-     Construct shell pairs:                 276
-     Construct AO pairs:                   1540
-
-  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
-  -------------------------------------------------------------------------------------------------------
-     1              1504 /     260       0.53537E+01         307             47             70688
-     2              1310 /     216       0.50434E-01        1000            199            260690
-     3               554 /      69       0.49494E-03         913            346            191684
-     4                 0 /       0       0.49066E-05         233            421                 0
-  -------------------------------------------------------------------------------------------------------
-
-  - Summary of Cholesky decomposition of electronic repulsion integrals:
-
-     Final number of Cholesky vectors: 421
-
- - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
-
-     Maximal difference between approximate and actual diagonal:              0.9861E-06
-     Minimal element of difference between approximate and actual diagonal:  -0.1332E-14
-
-  - Finished decomposing the ERIs.
-
-     Total wall time (sec):              0.33100
-     Total cpu time (sec):               0.58728
-
-
-  :: RHF wavefunction
-  ======================
-
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of occupied orbitals:         9
      Number of virtual orbitals:         46
      Number of molecular orbitals:       55
-     Number of atomic orbitals:          55
 
 
   :: Hartree-Fock engine
@@ -183,35 +138,36 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
-
+     Residual threshold:            0.1000E-05
      Energy threshold:              0.1000E-05
-     Gradient threshold:            0.1000E-05
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:              -174.707256718164
+     Number of electrons in guess:           18.000000000000
+
+  - Screening and integral thresholds:
 
      Coulomb screening threshold:   0.1000E-11
      Exchange screening threshold:  0.1000E-09
-     Fock precision:                0.1000E-23
      Integral cutoff:               0.1000E-11
+     Cumulative Fock threshold:     0.1000E+01
 
-  - Setting initial AO density to SAD
+  - DIIS tool settings:
 
-     Energy of initial guess:              -174.707256718163
-     Number of electrons in guess:           18.000000000000
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -174.714266393171     0.5999E-01     0.1747E+03
+     1          -174.714266393170     0.5999E-01     0.1747E+03
      2          -174.737074160278     0.1483E-01     0.2281E-01
      3          -174.738381681690     0.8526E-02     0.1308E-02
      4          -174.738615402359     0.3188E-02     0.2337E-03
@@ -220,41 +176,22 @@
      7          -174.738692378570     0.5864E-04     0.8023E-06
      8          -174.738692507423     0.2314E-04     0.1289E-06
      9          -174.738692518556     0.7747E-05     0.1113E-07
-    10          -174.738692519457     0.1837E-05     0.9009E-09
-    11          -174.738692519489     0.2637E-06     0.3197E-10
+    10          -174.738692519457     0.1837E-05     0.9011E-09
+    11          -174.738692519489     0.2637E-06     0.3186E-10
   ---------------------------------------------------------------
   Convergence criterion met in 11 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.547232088772
+     HOMO-LUMO gap:                  0.547232088771
      Nuclear repulsion energy:      35.827084182759
      Electronic energy:           -210.565776702249
      Total energy:                -174.738692519489
 
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -26.355542030085  15   0.257169688925  29   1.245713122176  43   2.519552773733
-   2 -20.693520948867  16   0.288680981918  30   1.354596620294  44   2.834237998591
-   3  -1.720122172502  17   0.296824640884  31   1.386821176307  45   3.448311608129
-   4  -1.267730981696  18   0.303496701928  32   1.426175391985  46   3.529669609461
-   5  -0.794266844456  19   0.355197576301  33   1.483866825075  47   3.590141030750
-   6  -0.755770661155  20   0.369822475049  34   1.577661174778  48   3.606326120270
-   7  -0.721769223434  21   0.464155160144  35   1.585835608649  49   3.885214404630
-   8  -0.572753378810  22   0.539627683772  36   1.625515438787  50   4.186614232130
-   9  -0.513954569220  23   0.576864919990  37   1.814985083443  51   4.853597387813
-  10   0.033277519551  24   0.834729564780  38   1.919659042528  52   4.897728854640
-  11   0.128574500194  25   1.065625960719  39   1.978349311745  53   5.014282201031
-  12   0.164644516974  26   1.080630580044  40   2.054874165603  54   5.037888209052
-  13   0.195422392543  27   1.112911985291  41   2.107319581458  55   5.186420658018
-  14   0.204656140737  28   1.143688594417  42   2.287339532988
-  -----------------------------------------------------------------------------------
-
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.27100
-     Total cpu time (sec):               2.36123
+     Total wall time (sec):              2.14506
+     Total cpu time (sec):               4.24292
 
 
   :: CCSD wavefunction
@@ -284,20 +221,78 @@
   This is a CCSD excited state calculation.
   The following tasks will be performed:
 
-     1) Preparation of MO basis and integrals
-     2) Calculation of the ground state (diis algorithm)
-     3) Calculation of the excited state (davidson algorithm)
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
+     4) Calculation of the excited state (davidson algorithm)
 
 
-  1) Preparation of MO basis and integrals
+  1) Cholesky decomposition of the electron repulsion integrals
+
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-05
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition ao details:
+
+     Total number of AOs:                    55
+     Total number of shell pairs:           276
+     Total number of AO pairs:             1540
+
+     Significant shell pairs:               275
+     Significant AO pairs:                 1539
+
+     Construct shell pairs:                 276
+     Construct AO pairs:                   1540
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1              1504 /     260       0.53537E+01         307             47             70688
+     2              1310 /     216       0.50434E-01        1000            199            260690
+     3               554 /      69       0.49494E-03         913            346            191684
+     4                 0 /       0       0.49066E-05         233            421                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 421
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.9861E-06
+     Minimal element of difference between approximate and actual diagonal:  -0.1127E-14
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       True
+     ERI matrix in memory:       False
+     T1 ERI matrix in memory:    True
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.88200
+     Total cpu time (sec):               1.70409
 
 
-  2) Calculation of the ground state (diis algorithm)
+  2) Preparation of MO basis and integrals
+
+
+  3) Calculation of the ground state (diis algorithm)
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -307,15 +302,18 @@
   See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
   13.
 
-  - DIIS CC ground state solver settings:
+  - CC ground state solver settings:
 
-     Omega threshold:           0.10E-03
-     Energy threshold:          0.10E-03
+     Residual threshold:            0.1000E-03
+     Energy threshold:              0.1000E-03
+     Max number of iterations:      100
 
-     DIIS dimension:                   8
-     Max number of iterations:       100
+  - DIIS tool settings:
 
-     Storage: memory
+     DIIS dimension:   8
+
+     Storage (cc_gs_diis_e): memory
+     Storage (cc_gs_diis_x): memory
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
@@ -341,14 +339,14 @@
         a       i         t(a,i)
      -----------------------------------
         4      9       -0.017332027201
-        4      6        0.016018041814
+        4      6       -0.016018041814
         8      6        0.013133512596
         7      8        0.012310602939
-        8      9        0.011504910778
+        8      9       -0.011504910778
         9      7       -0.011086038043
        11      9       -0.010905377371
         7      5       -0.009960751883
-       34      7        0.009761191935
+       34      7       -0.009761191935
         3      5        0.009700937916
      ------------------------------------
 
@@ -356,7 +354,7 @@
      --------------------------------------------------
         a      i       b      j         t(ai,bj)
      --------------------------------------------------
-       10      7      10      7       -0.042550417457
+       10      7      10      7       -0.042550417458
         9      7      10      7       -0.035687821341
         9      7       9      7       -0.031826879189
        21      9      21      9       -0.029615762734
@@ -368,26 +366,24 @@
        10      7      13      7        0.015156571783
      --------------------------------------------------
 
-     T1 diagnostic (|T1|/sqrt(N_e)): 0.012347630210
-
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.27000
-     Total cpu time (sec):               4.96815
+     Total wall time (sec):              1.28138
+     Total cpu time (sec):               2.50812
 
 
-  3) Calculation of the excited state (davidson algorithm)
+  4) Calculation of the excited state (davidson algorithm)
      Calculating right vectors
 
    - Davidson coupled cluster excited state solver
   ---------------------------------------------------
 
-  A Davidson solver that calculates the lowest eigenvalues and  the right 
-  or left eigenvectors of the Jacobian matrix, A. The eigenvalue  problem 
-  is solved in a reduced space, the dimension of which is  expanded until 
+  A Davidson solver that calculates the lowest eigenvalues and the right 
+  or left eigenvectors of the Jacobian matrix, A. The eigenvalue problem 
+  is solved in a reduced space, the dimension of which is expanded until 
   the convergence criteria are met.
 
-  A complete description of the algorithm can be found in  E. R. Davidson, 
+  A complete description of the algorithm can be found in E. R. Davidson, 
   J. Comput. Phys. 17, 87 (1975).
 
   - Settings for coupled cluster excited state solver (Davidson):
@@ -395,15 +391,19 @@
      Calculation type:    valence
      Excitation vectors:  right
 
-     Energy threshold:                0.10E-05
-     Residual threshold:              0.10E-03
+     Residual threshold:            0.1000E-03
 
      Number of singlet states:               4
      Max number of iterations:             100
 
-     Max reduced space dimension:          100
+   - Davidson tool settings:
 
-     Reduced space basis and transforms are stored in memory.
+     Number of parameters:                86319
+     Number of requested solutions:           4
+     Max reduced space dimension:           100
+
+     Storage (cc_es_davidson_trials): memory
+     Storage (cc_es_davidson_transforms): memory
 
   Iteration:                  1
   Reduced space dimension:    4
@@ -423,8 +423,8 @@
   ------------------------------------------------------------------------
      1   0.253163172817    0.000000000000     0.1390E+00   0.1697E+00
      2   0.309580520417    0.000000000000     0.1800E+00   0.1826E+00
-     3   0.357210282926    0.000000000000     0.1457E+00   0.1557E+00
-     4   0.377068959915    0.000000000000     0.1233E+00   0.1594E+00
+     3   0.357210282927    0.000000000000     0.1457E+00   0.1557E+00
+     4   0.377068959916    0.000000000000     0.1233E+00   0.1594E+00
   ------------------------------------------------------------------------
 
   Iteration:                  3
@@ -567,7 +567,7 @@
      1   0.237030049212    0.000000000000     0.3760E-04   0.1531E-07
      2   0.252178836853    0.000000000000     0.3627E-04   0.1290E-06
      3   0.327859729040    0.000000000000     0.8021E-03   0.9712E-05
-     4   0.359012898499    0.000000000000     0.1386E+00   0.2533E-02
+     4   0.359012898500    0.000000000000     0.1386E+00   0.2533E-02
   ------------------------------------------------------------------------
 
   Iteration:                 16
@@ -575,10 +575,10 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.237030049212    0.000000000000     0.3760E-04   0.1166E-14
-     2   0.252178836853    0.000000000000     0.3627E-04   0.2054E-14
+     1   0.237030049212    0.000000000000     0.3760E-04   0.2220E-15
+     2   0.252178836853    0.000000000000     0.3627E-04   0.3220E-14
      3   0.327897347585    0.000000000000     0.1285E-02   0.3762E-04
-     4   0.341620222348    0.000000000000     0.1010E+00   0.1739E-01
+     4   0.341620222349    0.000000000000     0.1010E+00   0.1739E-01
   ------------------------------------------------------------------------
 
   Iteration:                 17
@@ -586,10 +586,10 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.237030049212    0.000000000000     0.3760E-04   0.1221E-14
-     2   0.252178836853    0.000000000000     0.3627E-04   0.2220E-15
+     1   0.237030049212    0.000000000000     0.3760E-04   0.5551E-16
+     2   0.252178836853    0.000000000000     0.3627E-04   0.1332E-14
      3   0.327877490995    0.000000000000     0.2266E-02   0.1986E-04
-     4   0.332630202386    0.000000000000     0.6461E-01   0.8990E-02
+     4   0.332630202387    0.000000000000     0.6461E-01   0.8990E-02
   ------------------------------------------------------------------------
 
   Iteration:                 18
@@ -597,8 +597,8 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.237030049212    0.000000000000     0.3760E-04   0.7216E-15
-     2   0.252178836853    0.000000000000     0.3627E-04   0.3164E-14
+     1   0.237030049212    0.000000000000     0.3760E-04   0.1416E-14
+     2   0.252178836853    0.000000000000     0.3627E-04   0.2220E-15
      3   0.327860741778    0.000000000000     0.1104E-01   0.1675E-04
      4   0.328364347623    0.000000000000     0.3546E-01   0.4266E-02
   ------------------------------------------------------------------------
@@ -608,8 +608,8 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.237030049212    0.000000000000     0.3760E-04   0.2776E-16
-     2   0.252178836853    0.000000000000     0.3627E-04   0.3164E-14
+     1   0.237030049212    0.000000000000     0.3760E-04   0.2415E-14
+     2   0.252178836853    0.000000000000     0.3627E-04   0.2054E-14
      3   0.327791611928   -0.000148965246     0.1027E-01   0.6913E-04
      4   0.327791611928    0.000148965246     0.5151E-02   0.5727E-03
   ------------------------------------------------------------------------
@@ -619,10 +619,10 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.237030049212    0.000000000000     0.3760E-04   0.1027E-14
-     2   0.252178836853    0.000000000000     0.3627E-04   0.3664E-14
-     3   0.327787216397   -0.000200036001     0.3712E-02   0.4396E-05
-     4   0.327787216397    0.000200036001     0.1467E-02   0.4396E-05
+     1   0.237030049212    0.000000000000     0.3760E-04   0.1221E-14
+     2   0.252178836853    0.000000000000     0.3627E-04   0.2109E-14
+     3   0.327787216397    0.000200036001     0.1467E-02   0.4396E-05
+     4   0.327787216397   -0.000200036001     0.3712E-02   0.4396E-05
   ------------------------------------------------------------------------
 
   Iteration:                 21
@@ -630,8 +630,8 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.237030049212    0.000000000000     0.3760E-04   0.1638E-14
-     2   0.252178836853    0.000000000000     0.3627E-04   0.3997E-14
+     1   0.237030049212    0.000000000000     0.3760E-04   0.1110E-15
+     2   0.252178836853    0.000000000000     0.3627E-04   0.2887E-14
      3   0.327749465187   -0.000175892480     0.1571E-02   0.3775E-04
      4   0.327749465187    0.000175892480     0.1044E-02   0.3775E-04
   ------------------------------------------------------------------------
@@ -641,10 +641,10 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.237030049212    0.000000000000     0.3760E-04   0.1638E-14
-     2   0.252178836853    0.000000000000     0.3627E-04   0.3886E-14
-     3   0.327739152275    0.000158168994     0.6048E-03   0.1031E-04
-     4   0.327739152275   -0.000158168994     0.7515E-03   0.1031E-04
+     1   0.237030049212    0.000000000000     0.3760E-04   0.3886E-15
+     2   0.252178836853    0.000000000000     0.3627E-04   0.2665E-14
+     3   0.327739152275   -0.000158168994     0.7515E-03   0.1031E-04
+     4   0.327739152275    0.000158168994     0.6048E-03   0.1031E-04
   ------------------------------------------------------------------------
 
   Iteration:                 23
@@ -652,8 +652,8 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.237030049212    0.000000000000     0.3760E-04   0.2165E-14
-     2   0.252178836853    0.000000000000     0.3627E-04   0.5052E-14
+     1   0.237030049212    0.000000000000     0.3760E-04   0.2776E-16
+     2   0.252178836853    0.000000000000     0.3627E-04   0.1665E-15
      3   0.327739919991    0.000163913662     0.2719E-03   0.7677E-06
      4   0.327739919991   -0.000163913662     0.3521E-03   0.7677E-06
   ------------------------------------------------------------------------
@@ -663,8 +663,8 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.237030049212    0.000000000000     0.3760E-04   0.2220E-14
-     2   0.252178836853    0.000000000000     0.3627E-04   0.1332E-14
+     1   0.237030049212    0.000000000000     0.3760E-04   0.1110E-14
+     2   0.252178836853    0.000000000000     0.3627E-04   0.3830E-14
      3   0.327740160171   -0.000166735627     0.1640E-03   0.2402E-06
      4   0.327740160171    0.000166735627     0.1244E-03   0.2402E-06
   ------------------------------------------------------------------------
@@ -674,10 +674,10 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.237030049212    0.000000000000     0.3760E-04   0.9992E-15
-     2   0.252178836853    0.000000000000     0.3627E-04   0.3719E-14
-     3   0.327739196693   -0.000164423603     0.7644E-04   0.9635E-06
-     4   0.327739196693    0.000164423603     0.5932E-04   0.9635E-06
+     1   0.237030049212    0.000000000000     0.3760E-04   0.1721E-14
+     2   0.252178836853    0.000000000000     0.3627E-04   0.1998E-14
+     3   0.327739196693    0.000164423603     0.5932E-04   0.9635E-06
+     4   0.327739196693   -0.000164423603     0.7644E-04   0.9635E-06
   ------------------------------------------------------------------------
   Convergence criterion met in 25 iterations!
 
@@ -693,15 +693,15 @@
         a       i         R(a,i)
      -----------------------------------
         1      9       -0.757037189512
-        3      9        0.420967950558
-        5      9        0.342795872030
-        2      9       -0.177897298820
-       14      9       -0.133326072756
-        9      9       -0.130977394651
-       10      9       -0.072248899793
+        3      9       -0.420967950558
+        5      9       -0.342795872030
+        2      9        0.177897298824
+       14      9        0.133326072755
+        9      9        0.130977394652
+       10      9        0.072248899794
         3      6       -0.030376868290
         5      6       -0.024199202990
-       13      9       -0.022232968932
+       13      9        0.022232968936
      ------------------------------------
 
      Largest double amplitudes:
@@ -709,15 +709,15 @@
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
         3      8       1      9        0.040695642411
-        1      6      10      7       -0.040542972113
-        1      6       9      7       -0.036256931036
+        1      6      10      7        0.040542972113
+        1      6       9      7        0.036256931036
         3      5       1      9        0.036109418129
         1      9       4      9       -0.034904789526
-        1      9      21      9        0.034859472906
-        3      8       3      9       -0.030363017441
-        3      5       3      9       -0.025533700334
-        5      8       3      9       -0.025201950501
-        4      6       1      9        0.024630453277
+        1      9      21      9       -0.034859472906
+        3      8       3      9        0.030363017441
+        3      5       3      9        0.025533700334
+        5      8       3      9        0.025201950501
+        4      6       1      9       -0.024630453277
      --------------------------------------------------
 
      Electronic state nr. 2
@@ -729,72 +729,35 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        2      9       -0.619090486676
-        9      9       -0.504589269639
-       10      9       -0.465253064045
-        1      9        0.208412507158
+        2      9       -0.619090486674
+        9      9       -0.504589269635
+       10      9       -0.465253064048
+        1      9       -0.208412507159
        12      9        0.110512991206
-        6      9       -0.108155296224
-        5      9       -0.095515187202
-        3      9       -0.077793919871
-        7      9       -0.074780837483
-       13      9        0.073382106427
+        6      9       -0.108155296229
+        5      9       -0.095515187203
+        3      9       -0.077793919877
+        7      9       -0.074780837482
+       13      9        0.073382106426
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        2      6      10      7       -0.039048667563
-        9      6      10      7       -0.035950027543
-        2      6       9      7       -0.034729113358
-       10      6      10      7       -0.034381015684
-        9      6       9      7       -0.032044050565
-       10      6       9      7       -0.031289301841
-        2      9      21      9        0.020793166777
-        9      6       2      7       -0.020765174707
-       10      6       2      7       -0.020564088207
+        2      6      10      7        0.039048667563
+        9      6      10      7        0.035950027543
+        2      6       9      7        0.034729113358
+       10      6      10      7        0.034381015684
+        9      6       9      7        0.032044050565
+       10      6       9      7        0.031289301841
+        2      9      21      9       -0.020793166777
+        9      6       2      7        0.020765174706
+       10      6       2      7        0.020564088207
         2      9       4      9       -0.020220241054
      --------------------------------------------------
 
      Electronic state nr. 3
-
-     Energy (Hartree):                  0.327739196693
-     Fraction singles (|R1|/|R|):       0.975797589498
-
-     Largest single amplitudes:
-     -----------------------------------
-        a       i         R(a,i)
-     -----------------------------------
-        2      8        0.310700496989
-        9      8        0.244751637282
-       10      8        0.226559505937
-        2      5       -0.050318559734
-       12      8       -0.049577948576
-        9      5       -0.045732703102
-        7      8        0.043129319355
-        6      8        0.042359739066
-       10      5       -0.038546274589
-       13      8       -0.032037920967
-     ------------------------------------
-
-     Largest double amplitudes:
-     --------------------------------------------------
-        a      i       b      j         R(ai,bj)
-     --------------------------------------------------
-        2      5      10      7       -0.019585355702
-       10      5      10      7       -0.016856590421
-        2      5       9      7       -0.016165763894
-        9      5      10      7       -0.015611226960
-       10      5       9      7       -0.014170425767
-        9      7      10      7       -0.012608145663
-        9      5       9      7       -0.012278300978
-        2      7      10      7       -0.012269087108
-        9      5      10      5        0.010285333186
-        2      7       9      7       -0.010224800640
-     --------------------------------------------------
-
-     Electronic state nr. 4
 
      Energy (Hartree):                  0.327739196693
      Fraction singles (|R1|/|R|):       0.973622425074
@@ -803,32 +766,69 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      8       -0.641810244883
-        2      8       -0.296331475564
-        3      8        0.280179469853
-        5      8        0.242717400501
-        9      8       -0.164245134581
-       10      8       -0.161370209433
-        1      5        0.076434740029
-        4      9        0.075295640558
+        1      8        0.641810244888
+        2      8       -0.296331475573
+        3      8        0.280179469854
+        5      8        0.242717400503
+        9      8       -0.164245134585
+       10      8       -0.161370209438
+        1      5       -0.076434740030
+        4      9        0.075295640559
        14      8       -0.074415188778
-        2      5        0.066327156940
+        2      5        0.066327156941
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        1      5      10      7        0.037272450039
-        1      8       3      8        0.036813147804
-        1      5       9      7        0.031207465443
-        3      5       1      8        0.027575310618
+        1      5      10      7       -0.037272450040
+        1      8       3      8       -0.036813147804
+        1      5       9      7       -0.031207465443
+        3      5       1      8       -0.027575310619
         3      8       5      8       -0.026723703550
-        1      8       7      8        0.025886105470
-        1      8       9      8       -0.024069207428
-        1      8       5      8        0.021323113046
-        2      5      10      7        0.018617176788
+        1      8       7      8       -0.025886105470
+        1      8       9      8        0.024069207428
+        1      8       5      8       -0.021323113046
+        2      5      10      7        0.018617176789
         3      5       3      8       -0.018182122429
+     --------------------------------------------------
+
+     Electronic state nr. 4
+
+     Energy (Hartree):                  0.327739196693
+     Fraction singles (|R1|/|R|):       0.975797589498
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         R(a,i)
+     -----------------------------------
+        2      8        0.310700496977
+        9      8        0.244751637271
+       10      8        0.226559505930
+        2      5       -0.050318559733
+       12      8       -0.049577948575
+        9      5       -0.045732703100
+        7      8        0.043129319352
+        6      8        0.042359739067
+       10      5       -0.038546274588
+       13      8       -0.032037920965
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         R(ai,bj)
+     --------------------------------------------------
+        2      5      10      7       -0.019585355701
+       10      5      10      7       -0.016856590420
+        2      5       9      7       -0.016165763893
+        9      5      10      7       -0.015611226959
+       10      5       9      7       -0.014170425766
+        9      7      10      7       -0.012608145662
+        9      5       9      7       -0.012278300978
+        2      7      10      7       -0.012269087107
+        9      5      10      5        0.010285333186
+        2      7       9      7       -0.010224800640
      --------------------------------------------------
 
      - Electronic excitation energies:
@@ -846,12 +846,16 @@
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):             12.69600
-     Total cpu time (sec):              23.99936
+     Total wall time (sec):              6.98942
+     Total cpu time (sec):              13.97615
 
   - Timings for the CCSD excited state calculation
 
-     Total wall time (sec):             13.99800
-     Total cpu time (sec):              29.02483
+     Total wall time (sec):              9.15339
+     Total cpu time (sec):              18.18896
+
+     Peak memory usage during the execution of eT: 278.688168 MB
+
+  Calculation ended: 2021-03-09 17:26:18 UTC +01:00
 
   eT terminated successfully!

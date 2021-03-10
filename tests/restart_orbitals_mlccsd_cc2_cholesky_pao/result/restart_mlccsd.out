@@ -1,16 +1,37 @@
 
 
 
-                     eT - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, M. Scavino, A. Skeidsvoll, 
-   Å. H. Tveten
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT version 1.2.0, Cobra
+  ------------------------------------------------------------
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-03-09 17:29:42 UTC +01:00
 
 
   :: Input file
@@ -74,34 +95,12 @@
      end mlcc
 
 
-  Running on 8 OMP thread(s)
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
-
-     Name:             h2o he
-     Charge:           0
-     Multiplicity:     1
-     Coordinate units: angstrom
-
-     Pure basis functions:         29
-     Cartesian basis functions:    30
-     Primitive basis functions:    56
-
-     Nuclear repulsion energy (a.u.):             12.116100574587
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
-
-     Active atoms:
-
-     ====================================
-        Atom              Basis   Method
-     ====================================
-        3 O             cc-pvdz    ccsd
-     ====================================
-     Total number of active atoms: 1
-     OBS: Atoms will be reordered, active atoms first
+  :: RHF wavefunction
+  ======================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -109,9 +108,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 O      0.000000000000    -0.075790000000     5.000000000000        3
-        2 H      0.866810000000     0.601440000000     5.000000000000        1
-        3 H     -0.866810000000     0.601440000000     5.000000000000        2
+        1  O     0.000000000000    -0.075790000000     5.000000000000        3
+        2  H     0.866810000000     0.601440000000     5.000000000000        1
+        3  H    -0.866810000000     0.601440000000     5.000000000000        2
         4 He     0.100000000000    -0.020000000000     7.530000000000        4
      ==============================================================================
 
@@ -121,24 +120,23 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 O      0.000000000000    -0.143222342981     9.448630622825        3
-        2 H      1.638033502034     1.136556880358     9.448630622825        1
-        3 H     -1.638033502034     1.136556880358     9.448630622825        2
+        1  O     0.000000000000    -0.143222342981     9.448630622825        3
+        2  H     1.638033502034     1.136556880358     9.448630622825        1
+        3  H    -1.638033502034     1.136556880358     9.448630622825        2
         4 He     0.188972612457    -0.037794522491    14.229637717975        4
      ==============================================================================
 
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  :: RHF wavefunction
-  ======================
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               29
+     Number of orthonormal atomic orbitals:   29
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of occupied orbitals:         6
      Number of virtual orbitals:         23
      Number of molecular orbitals:       29
-     Number of atomic orbitals:          29
 
 
   :: Hartree-Fock engine
@@ -154,37 +152,35 @@
 
   1) Calculation of reference state (SCF-DIIS algorithm)
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
-
+     Residual threshold:            0.1000E-11
      Energy threshold:              0.1000E-11
-     Gradient threshold:            0.1000E-11
-
-     Coulomb screening threshold:   0.1000E-17
-     Exchange screening threshold:  0.1000E-15
-     Fock precision:                0.1000E-35
-     Integral cutoff:               0.1000E-17
 
   - Requested restart. Reading orbitals from file
 
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-17
+     Exchange screening threshold:  0.1000E-15
+     Integral cutoff:               0.1000E-17
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
+
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.6424E-12     0.7884E+02
+     1           -78.843851693631     0.6423E-12     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
-
-  Note: the gradient converged in the first iteration,  so the energy 
-  convergence has not been tested!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
@@ -193,23 +189,10 @@
      Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
-  - Molecular orbital energies
-
-  -----------------------------------------------------------------------------------
-   1 -20.574269195142   9   0.704416610867  17   1.682695299878  25   3.175416260660
-   2  -1.277667044967  10   0.746260122915  18   1.804186820053  26   3.209661156313
-   3  -0.898849406811  11   1.155862024381  19   1.902641648743  27   3.328173215200
-   4  -0.629870222687  12   1.170770887076  20   2.148883457169  28   3.721936473470
-   5  -0.541641772852  13   1.267961746552  21   2.200395756970  29   3.985492632586
-   6  -0.485872762834  14   1.449847537220  22   2.540321860021
-   7   0.159756317417  15   1.463234913437  23   2.541517310547
-   8   0.229311906285  16   1.474444394527  24   2.559338707349
-  -----------------------------------------------------------------------------------
-
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.01100
-     Total cpu time (sec):               0.06393
+     Total wall time (sec):              0.05480
+     Total cpu time (sec):               0.05723
 
 
   :: MLCCSD wavefunction
@@ -261,7 +244,7 @@
      Span factor:           0.10E-01
      Max qual:                  1000
 
-  - Cholesky decomposition system details:
+  - Cholesky decomposition ao details:
 
      Total number of AOs:                    29
      Total number of shell pairs:           120
@@ -297,18 +280,20 @@
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
+     T1 ERI matrix in memory:    False
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.22100
-     Total cpu time (sec):               0.95810
+     Total wall time (sec):              0.22091
+     Total cpu time (sec):               0.44091
 
 
   2) Preparation of MO basis and integrals
+  Requested orbital restart, reading orbitals and orbital energies
 
   Warning: Number of orbitals in active and inactive spaces read from 
-           cc_restart_file. Make sure restarted calculation and restart 
-           files are consistent!
+           orbital_coefficients_mlcc. Make sure restarted calculation 
+           and restart files are consistent!
 
   - MLCCSD orbital partitioning:
 
@@ -334,26 +319,26 @@
   See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
   13.
 
-  - DIIS CC ground state solver settings:
+  - CC ground state solver settings:
 
-     Omega threshold:           0.10E-09
-     Energy threshold:          0.10E-09
-
-     DIIS dimension:                   8
-     Max number of iterations:       100
-
-     Storage: disk
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+     Max number of iterations:      100
 
   Requested restart. Reading in solution from file.
 
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (cc_gs_diis_e): file
+     Storage (cc_gs_diis_x): file
+
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -79.093161259465     0.9267E-12     0.7909E+02
+    1           -79.093161259465     0.1045E-11     0.7909E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
-
-  Note: the omega vector converged in the first iteration,  so the energy 
-  convergence has not been tested!
 
   - Ground state summary:
 
@@ -365,24 +350,22 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        1      4        0.016127176453
-        5      3       -0.010020008332
-       23      3        0.006082097112
+        1      4       -0.016127176452
+        5      3        0.010020008332
+       23      3       -0.006082097112
        12      3       -0.005932315868
-        8      4        0.005813016363
-        2      3        0.005063177613
+        8      4       -0.005813016363
+        2      3       -0.005063177613
         4      5        0.004870436137
         6      2        0.004562503304
-        8      2        0.003852475909
-       14      3        0.003741984247
+        8      2       -0.003852475909
+       14      3       -0.003741984247
      ------------------------------------
-
-     T1 diagnostic (|T1|/sqrt(N_e)): 0.007285991880
 
   - Finished solving the MLCCSD ground state equations
 
-     Total wall time (sec):              0.01900
-     Total cpu time (sec):               0.06336
+     Total wall time (sec):              0.00911
+     Total cpu time (sec):               0.02112
 
 
   4) Calculation of the excited state (davidson algorithm)
@@ -391,12 +374,12 @@
    - Davidson coupled cluster excited state solver
   ---------------------------------------------------
 
-  A Davidson solver that calculates the lowest eigenvalues and  the right 
-  or left eigenvectors of the Jacobian matrix, A. The eigenvalue  problem 
-  is solved in a reduced space, the dimension of which is  expanded until 
+  A Davidson solver that calculates the lowest eigenvalues and the right 
+  or left eigenvectors of the Jacobian matrix, A. The eigenvalue problem 
+  is solved in a reduced space, the dimension of which is expanded until 
   the convergence criteria are met.
 
-  A complete description of the algorithm can be found in  E. R. Davidson, 
+  A complete description of the algorithm can be found in E. R. Davidson, 
   J. Comput. Phys. 17, 87 (1975).
 
   - Settings for coupled cluster excited state solver (Davidson):
@@ -404,30 +387,35 @@
      Calculation type:    valence
      Excitation vectors:  right
 
-     Energy threshold:                0.10E-09
-     Residual threshold:              0.10E-09
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
 
      Number of singlet states:               4
      Max number of iterations:             100
 
-     Max reduced space dimension:          100
+   - Davidson tool settings:
 
-     Reduced space basis and transforms are stored on disk.
+     Number of parameters:                 9729
+     Number of requested solutions:           4
+     Max reduced space dimension:           100
 
-  Requested restart - restarting 4 right eigenvectors from file.
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
+     Restarting right vector 1 from file r_001.
+     Restarting right vector 2 from file r_002.
+     Restarting right vector 3 from file r_003.
+     Restarting right vector 4 from file r_004.
 
   Iteration:                  1
   Reduced space dimension:    4
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.245946715752    0.000000000000     0.6252E-12   0.2459E+00
-     2   0.307084362658    0.000000000000     0.3909E-12   0.3071E+00
-     3   0.355706692610    0.000000000000     0.5221E-12   0.3557E+00
-     4   0.413866997258    0.000000000000     0.3077E-11   0.4139E+00
+     1   0.245946715752    0.000000000000     0.6269E-12   0.1721E-13
+     2   0.307084362658    0.000000000000     0.3520E-12   0.7516E-13
+     3   0.355706692610    0.000000000000     0.4933E-12   0.2903E-13
+     4   0.413866997258    0.000000000000     0.7567E-12   0.4402E-13
   ------------------------------------------------------------------------
-  Note: Residual(s) converged in first iteration. Energy convergence therefore 
-  not tested in this calculation.
   Convergence criterion met in 1 iterations!
 
   - Excitation vector amplitudes:
@@ -446,14 +434,14 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      5        0.932226011269
-       16      5       -0.237732531559
-       15      5       -0.117946196268
+        1      5       -0.932226011269
+       16      5        0.237732531559
+       15      5        0.117946196268
        10      5        0.054863584308
-        6      5        0.046352217908
-        3      5       -0.036650631151
-       13      5        0.028805012547
-        8      5       -0.015706906502
+        6      5        0.046352217907
+        3      5        0.036650631151
+       13      5       -0.028805012547
+        8      5        0.015706906502
        19      5       -0.015187083677
         1      6        0.012169378872
      ------------------------------------
@@ -472,16 +460,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        2      5       -0.794477010602
-       14      5       -0.504334666724
-        5      5       -0.173909686647
-       23      5       -0.148877399804
+        2      5        0.794477010602
+       14      5        0.504334666724
+        5      5        0.173909686647
+       23      5        0.148877399804
        12      5        0.091623750789
        18      5       -0.039440535575
-       22      5       -0.012299762365
+       22      5        0.012299762365
         2      6       -0.009595744195
        14      6       -0.007785668538
-        6      5        0.005875384419
+        6      5       -0.005875384419
      ------------------------------------
 
      Electronic state nr. 3
@@ -498,15 +486,15 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      4       -0.915147365098
-       16      4        0.250877046661
-        2      3        0.135834053786
-       15      4        0.124221136911
+        1      4        0.915147365098
+       16      4       -0.250877046661
+        2      3       -0.135834053786
+       15      4       -0.124221136911
         6      4       -0.084933724932
-        1      2        0.073374273461
+        1      2       -0.073374273461
        10      4       -0.052860812468
-       14      3        0.047488211984
-       13      4       -0.043515417323
+       14      3       -0.047488211984
+       13      4        0.043515417323
         4      5        0.040237403984
      ------------------------------------
 
@@ -524,16 +512,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        2      4       -0.746723244614
-       14      4       -0.525164332638
-        1      3        0.208729119475
-        5      4       -0.179232324568
+        2      4       -0.746723244613
+       14      4       -0.525164332637
+        1      3        0.208729119477
+        5      4       -0.179232324567
        23      4       -0.149099781933
-       12      4        0.105067617968
-       16      3       -0.048138913109
-       18      4       -0.036350607706
+       12      4       -0.105067617968
+       16      3       -0.048138913110
+       18      4        0.036350607706
        15      3       -0.021569336842
-       10      3        0.021105133701
+       10      3       -0.021105133702
      ------------------------------------
 
      - Electronic excitation energies:
@@ -542,23 +530,27 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.245946715752        6.692551022681
-        2                  0.307084362658        8.356191133003
-        3                  0.355706692610        9.679272122498
-        4                  0.413866997258       11.261894623329
+        1                  0.245946715752        6.692551022682
+        2                  0.307084362658        8.356191133005
+        3                  0.355706692610        9.679272122496
+        4                  0.413866997258       11.261894623328
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the MLCCSD excited state equations (right)
 
-     Total wall time (sec):              0.07600
-     Total cpu time (sec):               0.22116
+     Total wall time (sec):              0.03045
+     Total cpu time (sec):               0.05844
 
   - Timings for the MLCCSD excited state calculation
 
-     Total wall time (sec):              0.32000
-     Total cpu time (sec):               1.25318
+     Total wall time (sec):              0.26980
+     Total cpu time (sec):               0.53779
+
+     Peak memory usage during the execution of eT: 10.722784 MB
 
   :: There was 1 warning during the execution of eT. ::
+
+  Calculation ended: 2021-03-09 17:29:43 UTC +01:00
 
   eT terminated successfully!

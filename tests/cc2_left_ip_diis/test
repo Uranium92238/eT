@@ -23,7 +23,7 @@ assert version_info.major == 2
 
 # construct filter(s)
 n_states = 2
-threshold = 1.0e-10
+threshold = 1.0e-9
 
 f = get_es_filter(n_states, threshold)
 

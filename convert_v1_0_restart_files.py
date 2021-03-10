@@ -22,7 +22,6 @@
 """
 
 import sys
-import shutil
 from argparse import ArgumentParser
 from pathlib import Path
 
@@ -122,7 +121,7 @@ def read_excitation_energies(dir_, endian):
     with file_.open("rb") as f:
         n_states = int.from_bytes(read_record(f, endian), endian)
 
-        bytes_ = f.read(4)
+        _ = f.read(4)
         ee = []
         for i in range(n_states):
             ee.append(f.read(8))
@@ -154,7 +153,7 @@ def make_new_gs_file(file_path, energy, n1, n2, endian):
             f"Number of amplitudes does not match in file {file_path.name}."
         )
 
-    temp = Path("temp")
+    temp = Path(file_path.parent / "temp")
     with temp.open("w+b") as temp_file:
         temp_file.write(energy)
         temp_file.write(n1_b)
@@ -168,7 +167,7 @@ def make_new_gs_file(file_path, energy, n1, n2, endian):
                 t2 = read_record(data, endian)
                 temp_file.write(t2)
 
-    shutil.move(temp, file_path)
+    temp.replace(file_path)
 
 
 def make_new_es_file(file_path, energy, n1, n2, endian):
@@ -189,14 +188,14 @@ def make_new_es_file(file_path, energy, n1, n2, endian):
             f"Number of amplitudes does not match in file {file_path.name}."
         )
 
-    temp = Path("temp")
+    temp = Path(file_path.parent / "temp")
     with temp.open("w+b") as temp_file:
         temp_file.write(energy)
         temp_file.write(n1_b)
 
         with file_path.open("rb") as data:
             # skip record specifier
-            bytes_ = data.read(4)
+            _ = data.read(4)
             t1 = data.read(n1 * 8)
             temp_file.write(t1)
 
@@ -205,7 +204,7 @@ def make_new_es_file(file_path, energy, n1, n2, endian):
                 t2 = data.read(8 * n2)
                 temp_file.write(t2)
 
-    shutil.move(temp, file_path)
+    temp.replace(file_path)
 
 
 def update_gs_files(dir_, n1, n2, n_gs, endian):
@@ -259,6 +258,11 @@ def update_reference_files(dir_, n_ao, endian):
 
 
 def make_new_orbital_file(file_path_orbitals, file_path_energies, n_ao, endian):
+    """
+    Make new orbital file.
+    Old format: separate files for energies, coefficients and dimensions
+    New format: n_ao, n_mo, energies, coefficients, (energies, coefficients)
+    """
 
     n_ao_b = n_ao.to_bytes(8, byteorder=endian)
 
@@ -273,7 +277,7 @@ def make_new_orbital_file(file_path_orbitals, file_path_energies, n_ao, endian):
     n_mo = int((file_size - 4 * 2 * n_records) / (n_ao * 8 * n_records))
     n_mo_b = n_mo.to_bytes(8, byteorder=endian)
 
-    temp = Path("temp")
+    temp = Path(file_path_orbitals.parent / "temp")
     with temp.open("w+b") as temp_file:
         temp_file.write(n_ao_b)
         temp_file.write(n_mo_b)
@@ -302,53 +306,61 @@ def make_new_orbital_file(file_path_orbitals, file_path_energies, n_ao, endian):
             temp_file.write(energies_b)
             temp_file.write(orbitals_b)
 
-    shutil.move(temp, file_path_orbitals)
+    temp.replace(file_path_orbitals)
+
+
+def convert_files_in_dir(directory):
+    """
+    Read scf_restart_file and update orbital files.
+    Read cc_restart_file and update ground state files
+    Read excitation_energies_file and update excited state files if present.
+    """
+    # Is the smallest memory address the least significant byte (little endain)
+    # or is the smallest address the most significat byte (big endian)?
+    endian = sys.byteorder
+
+    restart_file = Path(directory / "scf_restart_file")
+
+    if restart_file.exists():
+        print("Updating Hartree-Fock files.")
+        n_ao = get_reference_dimensionalities(restart_file, endian)
+        update_reference_files(directory, n_ao, endian)
+        restart_file.unlink()
+    else:
+        print(
+            f"scf_restart_file not found in {directory}.\n",
+            "Did not update Hartree-Fock restart files.",
+        )
+
+    restart_file = Path(directory / "cc_restart_file")
+
+    if restart_file.exists():
+        n1, n2, n_gs = get_dimensionalities(restart_file, endian)
+
+        if Path(directory / "t").exists():
+            print("Updating ground state files.")
+            update_gs_files(directory, n1, n2, n_gs, endian)
+
+        if Path(directory / "excitation_energies").exists():
+            print("Updating excited state files.")
+            update_es_files(directory, n1, n2, endian)
+
+        restart_file.unlink()
+
+    else:
+        print(
+            f"cc_restart_file not found in {directory}.\n",
+            "Did not update coupled cluster restart files.",
+        )
 
 
 def main(argv):
     """
     Read path to restart directory.
-    Read scf_restart_file and update orbital files.
-    Read cc_restart_file and update ground state files
-    Read excitation_energies_file and update excited state files if present.
     """
     args = input_parser()
     translate_path = path_resolver(args)
-
-    # Is the smallest memory address the least significant byte (little endain)
-    # or is the smallest address the most significat byte (big endian)?
-    endian = sys.byteorder
-
-    restart_file = Path(translate_path / "scf_restart_file")
-
-    if restart_file.exists():
-        print("Updating Hartree-Fock files.")
-        n_ao = get_reference_dimensionalities(restart_file, endian)
-        update_reference_files(translate_path, n_ao, endian)
-    else:
-        print(
-            f"scf_restart_file not found in {translate_path}.\n",
-            "Did not update Hartree-Fock restart files.",
-        )
-
-    restart_file = Path(translate_path / "cc_restart_file")
-
-    if restart_file.exists():
-        n1, n2, n_gs = get_dimensionalities(restart_file, endian)
-
-        if Path(translate_path / "t").exists():
-            print("Updating ground state files.")
-            update_gs_files(translate_path, n1, n2, n_gs, endian)
-
-        if Path(translate_path / "excitation_energies").exists():
-            print("Updating excited state files.")
-            update_es_files(translate_path, n1, n2, endian)
-
-    else:
-        print(
-            f"cc_restart_file not found in {translate_path}.\n",
-            "Did not update coupled cluster restart files.",
-        )
+    convert_files_in_dir(translate_path)
 
 
 if __name__ == "__main__":
