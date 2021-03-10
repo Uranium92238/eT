@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.1 - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,11 +14,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.3, Bastion
+   This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Configuration date: 2021-03-08 15:01:10 UTC +01:00
-  Git branch:         test-generator
-  Git hash:           e0949fa7c10242e2d4a56a5f4456aaeb2e2fd3e2
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
   Fortran compiler:   GNU 8.4.0
   C compiler:         GNU 8.4.0
   C++ compiler:       GNU 8.4.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-08 15:03:37 UTC +01:00
+  Calculation started: 2021-03-09 17:23:42 UTC +01:00
 
 
   :: Input file
@@ -72,20 +72,8 @@
   Memory available for calculation: 8.000000 GB
 
 
-  :: Molecular system specifications
-  =====================================
-
-     Name:             h2o
-     Charge:           0
-     Multiplicity:     1
-     Coordinate units: angstrom
-
-     Pure basis functions:         24
-     Cartesian basis functions:    25
-     Primitive basis functions:    49
-
-     Nuclear repulsion energy (a.u.):              9.300792597073
-     Bohr/angstrom value (CODATA 2010):            0.529177210920
+  :: RHF wavefunction
+  ======================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -93,9 +81,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.345773153501    -0.036392603072     0.000000000000        1
-        2 H      1.106549984242     0.328986445566    -0.000000000000        2
-        3 O      0.239223169259     0.707406157504    -0.000000000000        3
+        1  H    -0.345773153501    -0.036392603072     0.000000000000        1
+        2  H     1.106549984242     0.328986445566    -0.000000000000        2
+        3  O     0.239223169259     0.707406157504    -0.000000000000        3
      ==============================================================================
 
      ==============================================================================
@@ -104,23 +92,22 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.653416561344    -0.068772052766     0.000000000000        1
-        2 H      2.091076413359     0.621694280814    -0.000000000000        2
-        3 O      0.452066272550     1.336803896513    -0.000000000000        3
+        1  H    -0.653416561344    -0.068772052766     0.000000000000        1
+        2  H     2.091076413359     0.621694280814    -0.000000000000        2
+        3  O     0.452066272550     1.336803896513    -0.000000000000        3
      ==============================================================================
 
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  :: RHF wavefunction
-  ======================
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
+  - Molecular orbital details:
 
      Number of occupied orbitals:         5
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
-     Number of atomic orbitals:          24
 
 
   :: Hartree-Fock geometry optimization engine
@@ -156,58 +143,61 @@
      Max iterations:             250
      Max step size:       0.5000E+00
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
+  - Requested restart. Reading orbitals from file
+
+  - Screening and integral thresholds:
+
      Coulomb screening threshold:   0.1000E-16
      Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
      Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
 
-  - Requested restart. Reading orbitals from file
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -76.027053512766     0.3042E-07     0.7603E+02
-     2           -76.027053512765     0.1317E-07     0.1378E-11
-     3           -76.027053512765     0.8252E-08     0.2842E-13
-     4           -76.027053512765     0.9603E-09     0.7105E-13
-     5           -76.027053512765     0.2010E-09     0.4263E-13
-     6           -76.027053512765     0.3526E-10     0.1421E-13
-     7           -76.027053512765     0.2568E-11     0.2842E-13
+     1           -76.027053512784     0.3042E-07     0.7603E+02
+     2           -76.027053512765     0.1305E-07     0.1894E-10
+     3           -76.027053512765     0.8190E-08     0.1421E-13
+     4           -76.027053512765     0.8555E-09     0.1421E-13
+     5           -76.027053512765     0.1844E-09     0.4263E-13
+     6           -76.027053512765     0.3272E-10     0.4263E-13
+     7           -76.027053512765     0.7892E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 7 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.681336635391
+     HOMO-LUMO gap:                  0.681336635390
      Nuclear repulsion energy:       9.300792597073
      Electronic energy:            -85.327846109838
      Total energy:                 -76.027053512765
 
-     Molecular gradient (Hartree/bohr):
-
-      H    -0.000000037937    -0.000000047487     0.000000000000
-      H     0.000000049286    -0.000000020999    -0.000000000000
-      O    -0.000000011349     0.000000068486    -0.000000000000
+     Molecular gradient (Hartree/bohr)
+  =============================================
+          1             2             3
+   1   -0.00000004   -0.00000005    0.00000000
+   2    0.00000005   -0.00000002   -0.00000000
+   3   -0.00000001    0.00000007    0.00000000
+  =============================================
 
 
   Geometry optimization iteration:    1
   =====================================
-  Absolute maximum of molecular gradient:    0.000000068486
+  Absolute maximum of molecular gradient:    0.000000068487
 
   Geometry not yet converged. Finding next geometry.
 
@@ -221,9 +211,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.345773153501    -0.036392603072     0.000000000000        1
-        2 H      1.106549984242     0.328986445566    -0.000000000000        2
-        3 O      0.239223169259     0.707406157504    -0.000000000000        3
+        1  H    -0.345773153501    -0.036392603072     0.000000000000        1
+        2  H     1.106549984242     0.328986445566    -0.000000000000        2
+        3  O     0.239223169259     0.707406157504    -0.000000000000        3
      ==============================================================================
 
      ==============================================================================
@@ -232,72 +222,78 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.653416561344    -0.068772052766     0.000000000000        1
-        2 H      2.091076413359     0.621694280814    -0.000000000000        2
-        3 O      0.452066272550     1.336803896513    -0.000000000000        3
+        1  H    -0.653416561344    -0.068772052766     0.000000000000        1
+        2  H     2.091076413359     0.621694280814    -0.000000000000        2
+        3  O     0.452066272550     1.336803896513    -0.000000000000        3
      ==============================================================================
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  - Orbital details:
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
+
+  - Molecular orbital details:
 
      Number of occupied orbitals:         5
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
-     Number of atomic orbitals:          24
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
+  - Requested restart. Reading orbitals from file
+
+  - Screening and integral thresholds:
+
      Coulomb screening threshold:   0.1000E-16
      Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
      Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
 
-  - Requested restart. Reading orbitals from file
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1           -76.027053592512     0.9900E-07     0.7603E+02
-     2           -76.027053512765     0.9170E-08     0.7975E-07
-     3           -76.027053512765     0.4863E-08     0.8527E-13
-     4           -76.027053512765     0.9909E-09     0.2842E-13
-     5           -76.027053512765     0.2383E-09     0.2842E-13
-     6           -76.027053512765     0.7340E-10     0.5684E-13
-     7           -76.027053512765     0.5461E-11     0.2842E-13
+     2           -76.027053512765     0.9168E-08     0.7975E-07
+     3           -76.027053512765     0.4863E-08     0.7105E-13
+     4           -76.027053512765     0.9905E-09     0.2842E-13
+     5           -76.027053512765     0.2384E-09     0.1421E-13
+     6           -76.027053512765     0.7339E-10     0.1421E-13
+     7           -76.027053512765     0.5466E-11     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 7 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
      HOMO-LUMO gap:                  0.681336647557
-     Nuclear repulsion energy:       9.300793106180
-     Electronic energy:            -85.327846618945
+     Nuclear repulsion energy:       9.300793106185
+     Electronic energy:            -85.327846618950
      Total energy:                 -76.027053512765
 
-     Molecular gradient (Hartree/bohr):
-
-      H    -0.000000000081     0.000000005151    -0.000000000000
-      H     0.000000000362     0.000000003385     0.000000000000
-      O    -0.000000000281    -0.000000008535     0.000000000000
+     Molecular gradient (Hartree/bohr)
+  =============================================
+          1             2             3
+   1   -0.00000000    0.00000001    0.00000000
+   2    0.00000000    0.00000000    0.00000000
+   3   -0.00000000   -0.00000001   -0.00000000
+  =============================================
 
 
   Geometry optimization iteration:    2
   =====================================
-  Absolute maximum of molecular gradient:    0.000000008535
+  Absolute maximum of molecular gradient:    0.000000008538
 
   Geometry not yet converged. Finding next geometry.
 
@@ -309,9 +305,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.345773133426    -0.036392577943    -0.000000000000        1
-        2 H      1.106549958161     0.328986456678     0.000000000000        2
-        3 O      0.239223175265     0.707406121263     0.000000000000        3
+        1  H    -0.345773133425    -0.036392577942    -0.000000000000        1
+        2  H     1.106549958161     0.328986456678     0.000000000000        2
+        3  O     0.239223175264     0.707406121262    -0.000000000000        3
      ==============================================================================
 
      ==============================================================================
@@ -320,71 +316,77 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.653416523407    -0.068772005279    -0.000000000000        1
-        2 H      2.091076364073     0.621694301813     0.000000000000        2
-        3 O      0.452066283899     1.336803828028     0.000000000000        3
+        1  H    -0.653416523406    -0.068772005278    -0.000000000000        1
+        2  H     2.091076364073     0.621694301813     0.000000000000        2
+        3  O     0.452066283897     1.336803828027    -0.000000000000        3
      ==============================================================================
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  - Orbital details:
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
+
+  - Molecular orbital details:
 
      Number of occupied orbitals:         5
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
-     Number of atomic orbitals:          24
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
+  - Requested restart. Reading orbitals from file
+
+  - Screening and integral thresholds:
+
      Coulomb screening threshold:   0.1000E-16
      Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
      Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
 
-  - Requested restart. Reading orbitals from file
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -76.027053507310     0.8520E-08     0.7603E+02
-     2           -76.027053512765     0.6569E-09     0.5454E-08
-     3           -76.027053512765     0.3262E-09     0.0000E+00
-     4           -76.027053512765     0.1009E-09     0.1421E-13
-     5           -76.027053512765     0.1855E-10     0.0000E+00
-     6           -76.027053512765     0.6169E-11     0.4263E-13
+     1           -76.027053507309     0.8524E-08     0.7603E+02
+     2           -76.027053512765     0.6570E-09     0.5455E-08
+     3           -76.027053512765     0.3263E-09     0.1421E-13
+     4           -76.027053512765     0.1009E-09     0.2842E-13
+     5           -76.027053512765     0.1856E-10     0.0000E+00
+     6           -76.027053512765     0.6173E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 6 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
      HOMO-LUMO gap:                  0.681336646788
-     Nuclear repulsion energy:       9.300793072882
-     Electronic energy:            -85.327846585646
+     Nuclear repulsion energy:       9.300793072881
+     Electronic energy:            -85.327846585645
      Total energy:                 -76.027053512765
 
-     Molecular gradient (Hartree/bohr):
-
-      H    -0.000000003029     0.000000000145    -0.000000000000
-      H     0.000000001781     0.000000001919    -0.000000000000
-      O     0.000000001248    -0.000000002064     0.000000000000
+     Molecular gradient (Hartree/bohr)
+  =============================================
+          1             2             3
+   1   -0.00000000    0.00000000   -0.00000000
+   2    0.00000000    0.00000000    0.00000000
+   3    0.00000000   -0.00000000    0.00000000
+  =============================================
 
 
   Geometry optimization iteration:    3
   =====================================
-  Absolute maximum of molecular gradient:    0.000000003029
+  Absolute maximum of molecular gradient:    0.000000003028
 
   Geometry not yet converged. Finding next geometry.
 
@@ -396,9 +398,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.345773133319    -0.036392580390    -0.000000000000        1
-        2 H      1.106549957897     0.328986455051     0.000000000000        2
-        3 O      0.239223175423     0.707406125337     0.000000000000        3
+        1  H    -0.345773133319    -0.036392580391    -0.000000000000        1
+        2  H     1.106549957896     0.328986455052    -0.000000000000        2
+        3  O     0.239223175422     0.707406125338     0.000000000000        3
      ==============================================================================
 
      ==============================================================================
@@ -407,70 +409,76 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.653416523206    -0.068772009904    -0.000000000000        1
-        2 H      2.091076363574     0.621694298738     0.000000000000        2
-        3 O      0.452066284197     1.336803835727     0.000000000000        3
+        1  H    -0.653416523205    -0.068772009905    -0.000000000000        1
+        2  H     2.091076363573     0.621694298739    -0.000000000000        2
+        3  O     0.452066284197     1.336803835728     0.000000000000        3
      ==============================================================================
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  - Orbital details:
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
+
+  - Molecular orbital details:
 
      Number of occupied orbitals:         5
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
-     Number of atomic orbitals:          24
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
+  - Requested restart. Reading orbitals from file
+
+  - Screening and integral thresholds:
+
      Coulomb screening threshold:   0.1000E-16
      Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
      Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
 
-  - Requested restart. Reading orbitals from file
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -76.027053511239     0.2092E-08     0.7603E+02
-     2           -76.027053512765     0.1760E-09     0.1525E-08
-     3           -76.027053512765     0.8259E-10     0.1421E-13
-     4           -76.027053512765     0.5210E-10     0.0000E+00
-     5           -76.027053512765     0.7420E-11     0.2842E-13
+     1           -76.027053511243     0.2089E-08     0.7603E+02
+     2           -76.027053512765     0.1756E-09     0.1522E-08
+     3           -76.027053512765     0.8237E-10     0.0000E+00
+     4           -76.027053512765     0.5201E-10     0.2842E-13
+     5           -76.027053512765     0.7406E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 5 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.681336646631
-     Nuclear repulsion energy:       9.300793065183
-     Electronic energy:            -85.327846577947
+     HOMO-LUMO gap:                  0.681336646632
+     Nuclear repulsion energy:       9.300793065203
+     Electronic energy:            -85.327846577968
      Total energy:                 -76.027053512765
 
-     Molecular gradient (Hartree/bohr):
-
-      H    -0.000000002672    -0.000000000763    -0.000000000000
-      H     0.000000002448     0.000000000709     0.000000000000
-      O     0.000000000225     0.000000000053     0.000000000000
+     Molecular gradient (Hartree/bohr)
+  =============================================
+          1             2             3
+   1   -0.00000000   -0.00000000    0.00000000
+   2    0.00000000    0.00000000   -0.00000000
+   3    0.00000000    0.00000000    0.00000000
+  =============================================
 
 
   Geometry optimization iteration:    4
   =====================================
-  Absolute maximum of molecular gradient:    0.000000002672
+  Absolute maximum of molecular gradient:    0.000000002671
 
   Geometry not yet converged. Finding next geometry.
 
@@ -482,9 +490,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.345773131140    -0.036392581104     0.000000000000        1
-        2 H      1.106549956520     0.328986453301     0.000000000000        2
-        3 O      0.239223174619     0.707406127801    -0.000000000000        3
+        1  H    -0.345773131141    -0.036392581103     0.000000000000        1
+        2  H     1.106549956521     0.328986453303    -0.000000000000        2
+        3  O     0.239223174620     0.707406127798     0.000000000000        3
      ==============================================================================
 
      ==============================================================================
@@ -493,157 +501,77 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.653416519087    -0.068772011252     0.000000000000        1
-        2 H      2.091076360973     0.621694295431     0.000000000000        2
-        3 O      0.452066282679     1.336803840383    -0.000000000000        3
+        1  H    -0.653416519089    -0.068772011250     0.000000000000        1
+        2  H     2.091076360973     0.621694295435    -0.000000000000        2
+        3  O     0.452066282680     1.336803840377     0.000000000000        3
      ==============================================================================
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  - Orbital details:
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
+
+  - Molecular orbital details:
 
      Number of occupied orbitals:         5
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
-     Number of atomic orbitals:          24
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
+  - Requested restart. Reading orbitals from file
+
+  - Screening and integral thresholds:
+
      Coulomb screening threshold:   0.1000E-16
      Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
      Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
 
-  - Requested restart. Reading orbitals from file
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1           -76.027053513145     0.1308E-08     0.7603E+02
-     2           -76.027053512765     0.2561E-09     0.3801E-09
-     3           -76.027053512765     0.1328E-09     0.2842E-13
-     4           -76.027053512765     0.4613E-10     0.0000E+00
+     2           -76.027053512765     0.2562E-09     0.3802E-09
+     3           -76.027053512765     0.1328E-09     0.0000E+00
+     4           -76.027053512765     0.4613E-10     0.2842E-13
      5           -76.027053512765     0.1699E-10     0.1421E-13
-     6           -76.027053512765     0.2068E-11     0.7105E-13
+     6           -76.027053512765     0.2069E-11     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 6 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.681336646850
-     Nuclear repulsion energy:       9.300793071247
-     Electronic energy:            -85.327846584012
+     HOMO-LUMO gap:                  0.681336646851
+     Nuclear repulsion energy:       9.300793071270
+     Electronic energy:            -85.327846584034
      Total energy:                 -76.027053512765
 
-     Molecular gradient (Hartree/bohr):
-
-      H    -0.000000001156    -0.000000001090    -0.000000000000
-      H     0.000000000841    -0.000000000111     0.000000000000
-      O     0.000000000315     0.000000001201     0.000000000000
+     Molecular gradient (Hartree/bohr)
+  =============================================
+          1             2             3
+   1   -0.00000000   -0.00000000    0.00000000
+   2    0.00000000   -0.00000000    0.00000000
+   3    0.00000000    0.00000000   -0.00000000
+  =============================================
 
 
   Geometry optimization iteration:    5
   =====================================
-  Absolute maximum of molecular gradient:    0.000000001201
-
-  Geometry not yet converged. Finding next geometry.
-
-  Level shift:     -0.000000000000
-
-     ==============================================================================
-                                     Geometry (angstrom)
-     ==============================================================================
-        Atom           X                  Y                  Z         # in input
-     ==============================================================================
-        Basis: cc-pvdz
-        1 H     -0.345773126691    -0.036392581684     0.000000000000        1
-        2 H      1.106549952717     0.328986450753     0.000000000000        2
-        3 O      0.239223173974     0.707406130929    -0.000000000000        3
-     ==============================================================================
-
-     ==============================================================================
-                                     Geometry (a.u.)
-     ==============================================================================
-        Atom           X                  Y                  Z         # in input
-     ==============================================================================
-        Basis: cc-pvdz
-        1 H     -0.653416510680    -0.068772012349     0.000000000000        1
-        2 H      2.091076353785     0.621694290617     0.000000000000        2
-        3 O      0.452066281460     1.336803846294    -0.000000000000        3
-     ==============================================================================
-
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
-
-  - Orbital details:
-
-     Number of occupied orbitals:         5
-     Number of virtual orbitals:         19
-     Number of molecular orbitals:       24
-     Number of atomic orbitals:          24
-
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
-
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
-
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
-
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
-     Integral cutoff:               0.1000E-16
-
-  - Requested restart. Reading orbitals from file
-
-  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
-  ---------------------------------------------------------------
-     1           -76.027053513795     0.1653E-08     0.7603E+02
-     2           -76.027053512765     0.1354E-09     0.1030E-08
-     3           -76.027053512765     0.6775E-10     0.1421E-13
-     4           -76.027053512765     0.1282E-10     0.8527E-13
-     5           -76.027053512765     0.2523E-11     0.5684E-13
-  ---------------------------------------------------------------
-  Convergence criterion met in 5 iterations!
-
-  - Summary of RHF wavefunction energetics (a.u.):
-
-     HOMO-LUMO gap:                  0.681336647046
-     Nuclear repulsion energy:       9.300793078575
-     Electronic energy:            -85.327846591339
-     Total energy:                 -76.027053512765
-
-     Molecular gradient (Hartree/bohr):
-
-      H    -0.000000000138    -0.000000000211     0.000000000000
-      H     0.000000000294    -0.000000000151    -0.000000000000
-      O    -0.000000000156     0.000000000362     0.000000000000
-
-
-  Geometry optimization iteration:    6
-  =====================================
-  Absolute maximum of molecular gradient:    0.000000000362
+  Absolute maximum of molecular gradient:    0.000000001197
 
   Geometry not yet converged. Finding next geometry.
 
@@ -655,9 +583,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.345773125437    -0.036392581386     0.000000000000        1
-        2 H      1.106549951757     0.328986450299     0.000000000000        2
-        3 O      0.239223173680     0.707406131085    -0.000000000000        3
+        1  H    -0.345773126691    -0.036392581683     0.000000000000        1
+        2  H     1.106549952717     0.328986450755    -0.000000000000        2
+        3  O     0.239223173974     0.707406130926     0.000000000000        3
      ==============================================================================
 
      ==============================================================================
@@ -666,49 +594,145 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.653416508311    -0.068772011785     0.000000000000        1
-        2 H      2.091076351972     0.621694289757     0.000000000000        2
-        3 O      0.452066280905     1.336803846590    -0.000000000000        3
+        1  H    -0.653416510680    -0.068772012347     0.000000000000        1
+        2  H     2.091076353785     0.621694290620    -0.000000000000        2
+        3  O     0.452066281459     1.336803846289     0.000000000000        3
      ==============================================================================
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  - Orbital details:
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
+
+  - Molecular orbital details:
 
      Number of occupied orbitals:         5
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
-     Number of atomic orbitals:          24
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
+  - Requested restart. Reading orbitals from file
+
+  - Screening and integral thresholds:
+
      Coulomb screening threshold:   0.1000E-16
      Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
      Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
 
-  - Requested restart. Reading orbitals from file
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -76.027053513147     0.4991E-09     0.7603E+02
-     2           -76.027053512765     0.4607E-10     0.3820E-09
-     3           -76.027053512765     0.2400E-10     0.1421E-13
-     4           -76.027053512765     0.4355E-11     0.7105E-13
+     1           -76.027053513792     0.1649E-08     0.7603E+02
+     2           -76.027053512765     0.1352E-09     0.1028E-08
+     3           -76.027053512765     0.6762E-10     0.0000E+00
+     4           -76.027053512765     0.1281E-10     0.5684E-13
+     5           -76.027053512765     0.2512E-11     0.5684E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 5 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.681336647046
+     Nuclear repulsion energy:       9.300793078583
+     Electronic energy:            -85.327846591347
+     Total energy:                 -76.027053512765
+
+     Molecular gradient (Hartree/bohr)
+  =============================================
+          1             2             3
+   1   -0.00000000   -0.00000000    0.00000000
+   2    0.00000000   -0.00000000   -0.00000000
+   3   -0.00000000    0.00000000    0.00000000
+  =============================================
+
+
+  Geometry optimization iteration:    6
+  =====================================
+  Absolute maximum of molecular gradient:    0.000000000361
+
+  Geometry not yet converged. Finding next geometry.
+
+  Level shift:      0.000000000000
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  H    -0.345773125438    -0.036392581386     0.000000000000        1
+        2  H     1.106549951758     0.328986450300    -0.000000000000        2
+        3  O     0.239223173680     0.707406131084     0.000000000000        3
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  H    -0.653416508314    -0.068772011785     0.000000000000        1
+        2  H     2.091076351973     0.621694289760    -0.000000000000        2
+        3  O     0.452066280905     1.336803846586     0.000000000000        3
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:         5
+     Number of virtual orbitals:         19
+     Number of molecular orbitals:       24
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
+  - Requested restart. Reading orbitals from file
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:   0.1000E-16
+     Exchange screening threshold:  0.1000E-14
+     Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -76.027053513145     0.4974E-09     0.7603E+02
+     2           -76.027053512765     0.4595E-10     0.3807E-09
+     3           -76.027053512765     0.2392E-10     0.0000E+00
+     4           -76.027053512765     0.4320E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 4 iterations!
 
@@ -719,11 +743,13 @@
      Electronic energy:            -85.327846593788
      Total energy:                 -76.027053512765
 
-     Molecular gradient (Hartree/bohr):
-
-      H    -0.000000000010    -0.000000000029     0.000000000000
-      H    -0.000000000029     0.000000000001     0.000000000000
-      O     0.000000000039     0.000000000028    -0.000000000000
+     Molecular gradient (Hartree/bohr)
+  =============================================
+          1             2             3
+   1   -0.00000000   -0.00000000    0.00000000
+   2   -0.00000000    0.00000000    0.00000000
+   3    0.00000000    0.00000000   -0.00000000
+  =============================================
 
 
   Geometry optimization iteration:    7
@@ -740,9 +766,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.345773125351    -0.036392581294     0.000000000000        1
-        2 H      1.106549951592     0.328986450358     0.000000000000        2
-        3 O      0.239223173759     0.707406130933    -0.000000000000        3
+        1  H    -0.345773125351    -0.036392581294     0.000000000000        1
+        2  H     1.106549951592     0.328986450359    -0.000000000000        2
+        3  O     0.239223173759     0.707406130933     0.000000000000        3
      ==============================================================================
 
      ==============================================================================
@@ -751,62 +777,68 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.653416508148    -0.068772011611     0.000000000000        1
-        2 H      2.091076351660     0.621694289870     0.000000000000        2
-        3 O      0.452066281053     1.336803846302    -0.000000000000        3
+        1  H    -0.653416508149    -0.068772011611     0.000000000000        1
+        2  H     2.091076351660     0.621694289871    -0.000000000000        2
+        3  O     0.452066281053     1.336803846301     0.000000000000        3
      ==============================================================================
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  - Orbital details:
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
+
+  - Molecular orbital details:
 
      Number of occupied orbitals:         5
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
-     Number of atomic orbitals:          24
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
+  - Requested restart. Reading orbitals from file
+
+  - Screening and integral thresholds:
+
      Coulomb screening threshold:   0.1000E-16
      Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
      Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
 
-  - Requested restart. Reading orbitals from file
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -76.027053512773     0.6586E-10     0.7603E+02
-     2           -76.027053512765     0.3253E-11     0.8711E-11
+     1           -76.027053512772     0.6633E-10     0.7603E+02
+     2           -76.027053512765     0.3263E-11     0.7759E-11
   ---------------------------------------------------------------
   Convergence criterion met in 2 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
      HOMO-LUMO gap:                  0.681336647105
-     Nuclear repulsion energy:       9.300793081054
-     Electronic energy:            -85.327846593818
+     Nuclear repulsion energy:       9.300793081047
+     Electronic energy:            -85.327846593812
      Total energy:                 -76.027053512765
 
-     Molecular gradient (Hartree/bohr):
-
-      H     0.000000000005     0.000000000006    -0.000000000000
-      H     0.000000000008    -0.000000000003    -0.000000000000
-      O    -0.000000000014    -0.000000000004     0.000000000000
+     Molecular gradient (Hartree/bohr)
+  =============================================
+          1             2             3
+   1    0.00000000    0.00000000    0.00000000
+   2    0.00000000   -0.00000000   -0.00000000
+   3   -0.00000000   -0.00000000   -0.00000000
+  =============================================
 
 
   Geometry optimization iteration:    8
@@ -823,9 +855,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.345773125372    -0.036392581277     0.000000000000        1
-        2 H      1.106549951626     0.328986450373     0.000000000000        2
-        3 O      0.239223173746     0.707406130902    -0.000000000000        3
+        1  H    -0.345773125372    -0.036392581277     0.000000000000        1
+        2  H     1.106549951626     0.328986450374    -0.000000000000        2
+        3  O     0.239223173746     0.707406130902     0.000000000000        3
      ==============================================================================
 
      ==============================================================================
@@ -834,67 +866,73 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.653416508188    -0.068772011579     0.000000000000        1
-        2 H      2.091076351723     0.621694289898     0.000000000000        2
-        3 O      0.452066281030     1.336803846242    -0.000000000000        3
+        1  H    -0.653416508189    -0.068772011580     0.000000000000        1
+        2  H     2.091076351724     0.621694289899    -0.000000000000        2
+        3  O     0.452066281029     1.336803846242     0.000000000000        3
      ==============================================================================
 
-  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
-  - Orbital details:
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
+
+  - Molecular orbital details:
 
      Number of occupied orbitals:         5
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
-     Number of atomic orbitals:          24
 
-   - Self-consistent field DIIS Hartree-Fock solver
-  ----------------------------------------------------
+  - SCF solver settings:
 
-  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
-  DIIS fit is performed on the previous Fock matrices and associated gradients. 
-  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
-  matrix is used to get the next orbital coefficients.
-
-  - Hartree-Fock solver settings:
-
-     DIIS dimension:                         8
-     Cumulative Fock threshold:       0.10E+01
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
+  - Requested restart. Reading orbitals from file
+
+  - Screening and integral thresholds:
+
      Coulomb screening threshold:   0.1000E-16
      Exchange screening threshold:  0.1000E-14
-     Fock precision:                0.1000E-33
      Integral cutoff:               0.1000E-16
+     Cumulative Fock threshold:     0.1000E+01
 
-  - Requested restart. Reading orbitals from file
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -76.027053512764     0.1620E-10     0.7603E+02
-     2           -76.027053512765     0.1704E-11     0.2700E-12
+     1           -76.027053512765     0.1657E-10     0.7603E+02
+     2           -76.027053512765     0.1825E-11     0.4832E-12
   ---------------------------------------------------------------
   Convergence criterion met in 2 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
      HOMO-LUMO gap:                  0.681336647101
-     Nuclear repulsion energy:       9.300793081052
-     Electronic energy:            -85.327846593817
+     Nuclear repulsion energy:       9.300793081051
+     Electronic energy:            -85.327846593816
      Total energy:                 -76.027053512765
 
-     Molecular gradient (Hartree/bohr):
-
-      H    -0.000000000001    -0.000000000004     0.000000000000
-      H    -0.000000000002    -0.000000000000    -0.000000000000
-      O     0.000000000003     0.000000000005    -0.000000000000
+     Molecular gradient (Hartree/bohr)
+  =============================================
+          1             2             3
+   1   -0.00000000   -0.00000000    0.00000000
+   2   -0.00000000   -0.00000000   -0.00000000
+   3    0.00000000    0.00000000    0.00000000
+  =============================================
 
 
   Geometry optimization iteration:    9
   =====================================
-  Absolute maximum of molecular gradient:    0.000000000005
+  Absolute maximum of molecular gradient:    0.000000000004
 
   Geometry converged in 9 iterations!
 
@@ -904,9 +942,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.345773125374    -0.036392581279     0.000000000000        1
-        2 H      1.106549951623     0.328986450374     0.000000000000        2
-        3 O      0.239223173751     0.707406130903    -0.000000000000        3
+        1  H    -0.345773125373    -0.036392581279     0.000000000000        1
+        2  H     1.106549951623     0.328986450374    -0.000000000000        2
+        3  O     0.239223173751     0.707406130903     0.000000000000        3
      ==============================================================================
 
      ==============================================================================
@@ -915,9 +953,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 H     -0.653416508191    -0.068772011583     0.000000000000        1
-        2 H      2.091076351718     0.621694289899     0.000000000000        2
-        3 O      0.452066281038     1.336803846245    -0.000000000000        3
+        1  H    -0.653416508190    -0.068772011584     0.000000000000        1
+        2  H     2.091076351718     0.621694289900    -0.000000000000        2
+        3  O     0.452066281038     1.336803846246     0.000000000000        3
      ==============================================================================
 
   - Summary of geometry optimization iterations:
@@ -925,25 +963,25 @@
      Iteration       Energy                Gradient norm
      ----------------------------------------------------------
         1            -76.027053512765      0.6849E-07
-        2            -76.027053512765      0.8535E-08
-        3            -76.027053512765      0.3029E-08
-        4            -76.027053512765      0.2672E-08
-        5            -76.027053512765      0.1201E-08
-        6            -76.027053512765      0.3624E-09
-        7            -76.027053512765      0.3902E-10
-        8            -76.027053512765      0.1351E-10
-        9            -76.027053512765      0.4508E-11
+        2            -76.027053512765      0.8538E-08
+        3            -76.027053512765      0.3028E-08
+        4            -76.027053512765      0.2671E-08
+        5            -76.027053512765      0.1197E-08
+        6            -76.027053512765      0.3606E-09
+        7            -76.027053512765      0.3939E-10
+        8            -76.027053512765      0.1390E-10
+        9            -76.027053512765      0.4238E-11
      ----------------------------------------------------------
 
   - Finished optimizing the HF geometry
 
   - Timings for the RHF geometry optimization calculation
 
-     Total wall time (sec):              2.16116
-     Total cpu time (sec):               4.25737
+     Total wall time (sec):              1.11670
+     Total cpu time (sec):               2.18709
 
-     Peak memory usage during the execution of eT: 244.328 KB
+     Peak memory usage during the execution of eT: 253.928 KB
 
-  Calculation ended: 2021-03-08 15:03:39 UTC +01:00
+  Calculation ended: 2021-03-09 17:23:43 UTC +01:00
 
   eT terminated successfully!

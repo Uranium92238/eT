@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.1 - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,26 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Bastion
+   This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Compiled by:        sarai
-  Compiled on:        dhcp-10-24-7-39.wlan.ntnu.no
-  Configuration date: 2020-12-03 15:15:16 UTC +01:00
-  Git branch:         streamline-scf-solvers
-  Git hash:           3d9775e5fa78af06f0d1a16dc3fd1ab5cc193b5a
-  Fortran compiler:   GNU 9.2.0
-  C compiler:         GNU 6.3.0
-  C++ compiler:       GNU 9.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2020-12-03 15:16:10 UTC +01:00
+  Calculation started: 2021-03-09 17:24:24 UTC +01:00
 
 
   :: Input file
@@ -92,12 +90,12 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 O     -0.573030000000     2.189950000000    -0.052560000000        1
-        2 H      0.347690000000     2.485980000000     0.050490000000        2
-        3 H     -1.075800000000     3.019470000000     0.020240000000        3
-        4 O     -1.567030000000    -0.324500000000     0.450780000000        4
-        5 H     -1.211220000000     0.588750000000     0.375890000000        5
-        6 H     -1.604140000000    -0.590960000000    -0.479690000000        6
+        1  O    -0.573030000000     2.189950000000    -0.052560000000        1
+        2  H     0.347690000000     2.485980000000     0.050490000000        2
+        3  H    -1.075800000000     3.019470000000     0.020240000000        3
+        4  O    -1.567030000000    -0.324500000000     0.450780000000        4
+        5  H    -1.211220000000     0.588750000000     0.375890000000        5
+        6  H    -1.604140000000    -0.590960000000    -0.479690000000        6
      ==============================================================================
 
      ==============================================================================
@@ -106,12 +104,12 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1 O     -1.082869761160     4.138405726491    -0.099324005107        1
-        2 H      0.657038876250     4.697821351146     0.095412272029        2
-        3 H     -2.032967364807     5.705971341340     0.038248056761        3
-        4 O     -2.961257528977    -0.613216127421     0.851850742431        4
-        5 H     -2.288874076596     1.112576255838     0.710329152963        5
-        6 H     -3.031385265460    -1.116752550573    -0.906482724693        6
+        1  O    -1.082869761160     4.138405726491    -0.099324005107        1
+        2  H     0.657038876250     4.697821351146     0.095412272029        2
+        3  H    -2.032967364807     5.705971341340     0.038248056761        3
+        4  O    -2.961257528977    -0.613216127421     0.851850742431        4
+        5  H    -2.288874076596     1.112576255838     0.710329152963        5
+        6  H    -3.031385265460    -1.116752550573    -0.906482724693        6
      ==============================================================================
 
   - Cholesky decomposition of AO overlap to get linearly independent AOs:
@@ -146,9 +144,11 @@
 
   - SCF solver settings:
 
-     Maximum iterations:                       5
-     Gradient threshold:              0.1000E-10
-     Acceleration type:                     diis
+     Maximum iterations:                     5
+     Acceleration type:                   diis
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
 
   - Setting initial AO density to sad
 
@@ -168,14 +168,17 @@
      Integral cutoff:               0.1000E-16
      Cumulative Fock threshold:     0.1000E+01
 
-  - DIIS convergence acceleration:
+  - DIIS tool settings:
 
      DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1          -151.986254697214     0.3356E+00     0.1520E+03
-     2          -152.011877032065     0.1366E+00     0.2562E-01
+     2          -152.011877032066     0.1366E+00     0.2562E-01
      3          -152.018448490310     0.2167E-01     0.6571E-02
      4          -152.018690017983     0.5645E-02     0.2415E-03
      5          -152.018703912219     0.1006E-02     0.1389E-04

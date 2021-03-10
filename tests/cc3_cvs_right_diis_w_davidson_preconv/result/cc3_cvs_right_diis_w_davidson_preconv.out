@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.1 - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,26 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Bastion
+   This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Compiled by:        alexancp
-  Compiled on:        NTNU16748
-  Configuration date: 2021-03-04 20:36:00 UTC +01:00
-  Git branch:         micro-threshold-nl-davidson
-  Git hash:           300697798086e94b3a33fea0d2604914e5eaf26e
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-04 20:54:30 UTC +01:00
+  Calculation started: 2021-03-09 17:28:24 UTC +01:00
 
 
   :: Input file
@@ -139,11 +137,8 @@
 
   - SCF solver settings:
 
-     Maximum iterations:                    100
-
-     Residual threshold:            0.1000E-07
-     Energy threshold:              0.1000E-07
-     Acceleration type:                    diis
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-07
      Energy threshold:              0.1000E-07
@@ -157,9 +152,12 @@
      Integral cutoff:               0.1000E-13
      Cumulative Fock threshold:     0.1000E+01
 
-  - DIIS convergence acceleration:
+  - DIIS tool settings:
 
      DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -176,8 +174,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.04318
-     Total cpu time (sec):               0.04272
+     Total wall time (sec):              0.04478
+     Total cpu time (sec):               0.04845
 
 
   :: CC3 wavefunction
@@ -272,8 +270,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.15183
-     Total cpu time (sec):               0.30299
+     Total wall time (sec):              0.13521
+     Total cpu time (sec):               0.26720
 
 
   2) Preparation of MO basis and integrals
@@ -289,17 +287,20 @@
   See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
   13.
 
-  - DIIS CC ground state solver settings:
+  - CC ground state solver settings:
 
      Residual threshold:            0.1000E-07
      Energy threshold:              0.1000E-07
-
-     DIIS dimension:                   8
-     Max number of iterations:       100
-
-     Storage: disk
+     Max number of iterations:      100
 
   Requested restart. Reading in solution from file.
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (cc_gs_diis_e): file
+     Storage (cc_gs_diis_x): file
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
@@ -357,8 +358,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              0.14401
-     Total cpu time (sec):               0.28744
+     Total wall time (sec):              0.13687
+     Total cpu time (sec):               0.27685
 
 
   4) Calculation of the excited state (diis algorithm)
@@ -385,13 +386,45 @@
 
      Number of singlet states:               5
      Max number of iterations:             100
-
-     DIIS dimension:                        20
-
      Enabled preconvergence using the non-linear Davidson solver.
 
      Preconvergence threshold:      0.10E-02
 
+
+  - DIIS tool settings:
+
+     DIIS dimension:  20
+
+     Storage (diis_cc_es_001_e): file
+     Storage (diis_cc_es_001_x): file
+
+  - DIIS tool settings:
+
+     DIIS dimension:  20
+
+     Storage (diis_cc_es_002_e): file
+     Storage (diis_cc_es_002_x): file
+
+  - DIIS tool settings:
+
+     DIIS dimension:  20
+
+     Storage (diis_cc_es_003_e): file
+     Storage (diis_cc_es_003_x): file
+
+  - DIIS tool settings:
+
+     DIIS dimension:  20
+
+     Storage (diis_cc_es_004_e): file
+     Storage (diis_cc_es_004_x): file
+
+  - DIIS tool settings:
+
+     DIIS dimension:  20
+
+     Storage (diis_cc_es_005_e): file
+     Storage (diis_cc_es_005_x): file
 
   Running the non-linear Davidson solver to produce first guesses for 
   the DIIS solver. When finished, the DIIS solver will restart from the 
@@ -421,6 +454,15 @@
      Max micro iterations:                 100
      Relative micro threshold:        0.10E+00
 
+
+   - Davidson tool settings:
+
+     Number of parameters:                 4655
+     Number of requested solutions:           5
+     Max reduced space dimension:           100
+
+     Storage (nonlin_cc_es_davidson_trials): file
+     Storage (nonlin_cc_es_davidson_transforms): file
      Restarting right vector 1 from file r_001.
      Restarting right vector 2 from file r_002.
      Restarting right vector 3 from file r_003.
@@ -440,9 +482,6 @@
 
      Starting on microiterations
 
-     Max reduced space dimension:          100
-
-
      Number of micro iterations: 10
      Number of transformations:  22
 
@@ -459,9 +498,6 @@
   ------------------------------------------------------------
 
      Starting on microiterations
-
-     Max reduced space dimension:          100
-
 
      Number of micro iterations: 6
      Number of transformations:  16
@@ -480,9 +516,6 @@
 
      Starting on microiterations
 
-     Max reduced space dimension:          100
-
-
      Number of micro iterations: 6
      Number of transformations:  9
 
@@ -500,9 +533,6 @@
 
      Starting on microiterations
 
-     Max reduced space dimension:          100
-
-
      Number of micro iterations: 5
      Number of transformations:  11
 
@@ -519,9 +549,6 @@
   ------------------------------------------------------------
 
      Starting on microiterations
-
-     Max reduced space dimension:          100
-
 
      Number of micro iterations: 3
      Number of transformations:  2
@@ -595,7 +622,7 @@
        12      1        0.004440569069
         1      1        0.000000004294
         5      1        0.000000001259
-        4      1        0.000000000770
+        4      1        0.000000000771
        11      1       -0.000000000651
      ------------------------------------
 
@@ -624,32 +651,32 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        3      1        0.884642336834
-        2      1       -0.150174682423
-        7      1        0.098070894591
-       13      1        0.066351489980
-       19      1        0.006760334788
-       12      1        0.005954867853
-        4      1        0.000000042500
-        5      1       -0.000000007059
-        6      1        0.000000006425
-        1      1        0.000000004937
+        3      1       -0.884642336834
+        2      1        0.150174682423
+        7      1       -0.098070894591
+       13      1       -0.066351489980
+       19      1       -0.006760334788
+       12      1       -0.005954867853
+        4      1       -0.000000042500
+        5      1        0.000000007059
+        6      1       -0.000000006425
+        1      1       -0.000000004937
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        3      1       6      5        0.178340066733
-        3      1       5      4        0.149958887473
-        3      1       2      3        0.134277623830
-        3      1       3      3        0.131721816659
-        3      1       7      3        0.116823507980
-        3      1       1      4        0.091050624332
-        3      1       4      4       -0.088281414639
-        3      1       1      2       -0.087226129923
-        3      1       4      2        0.068446822837
-        3      1      13      3        0.066062860954
+        3      1       6      5       -0.178340066733
+        3      1       5      4       -0.149958887473
+        3      1       2      3       -0.134277623830
+        3      1       3      3       -0.131721816659
+        3      1       7      3       -0.116823507980
+        3      1       1      4       -0.091050624332
+        3      1       4      4        0.088281414639
+        3      1       1      2        0.087226129923
+        3      1       4      2       -0.068446822837
+        3      1      13      3       -0.066062860954
      --------------------------------------------------
 
      Electronic state nr. 4
@@ -669,7 +696,7 @@
        11      1        0.010889868638
        17      1        0.008945362406
         9      1        0.008210282882
-        3      1        0.000000043834
+        3      1        0.000000043835
         6      1        0.000000008737
      ------------------------------------
 
@@ -698,32 +725,32 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        6      1        0.017482638302
-       15      1       -0.005493558567
-       10      1       -0.004726433979
-        8      1        0.000000001754
-        5      1       -0.000000000827
-       16      1        0.000000000805
-        3      1        0.000000000752
-        9      1       -0.000000000634
-        1      1        0.000000000448
-        7      1       -0.000000000442
+        6      1       -0.017482638302
+       15      1        0.005493558567
+       10      1        0.004726433979
+        8      1       -0.000000001754
+        5      1        0.000000000827
+       16      1       -0.000000000805
+        3      1       -0.000000000752
+        9      1        0.000000000634
+        1      1       -0.000000000448
+        7      1        0.000000000442
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        1      1       1      5       -0.859271173530
-        2      1       2      5        0.331968054277
-        4      1       1      5        0.196250230341
-        1      1       4      5        0.194843502845
-        2      1       3      5        0.101078751005
-        3      1       2      5        0.099529958311
-        2      1       7      5        0.087093954157
-        1      1       5      5       -0.084510247718
-        7      1       2      5        0.082262298517
-        5      1       1      5       -0.073398656944
+        1      1       1      5        0.859271173530
+        2      1       2      5       -0.331968054277
+        4      1       1      5       -0.196250230341
+        1      1       4      5       -0.194843502845
+        2      1       3      5       -0.101078751005
+        3      1       2      5       -0.099529958311
+        2      1       7      5       -0.087093954157
+        1      1       5      5        0.084510247718
+        7      1       2      5       -0.082262298517
+        5      1       1      5        0.073398656944
      --------------------------------------------------
 
      - Electronic excitation energies:
@@ -735,15 +762,15 @@
         1                 19.734386890784      537.000019553152
         2                 19.804917241366      538.919248148959
         3                 20.244903314880      550.891879038782
-        4                 20.255813807818      551.188768673793
+        4                 20.255813807818      551.188768673792
         5                 20.386433205647      554.743103529818
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              1.08381
-     Total cpu time (sec):               2.16156
+     Total wall time (sec):              0.88367
+     Total cpu time (sec):               1.76768
 
   Finished preconvergence! The DIIS solver will now restart from the preconverged 
   solutions.
@@ -910,7 +937,7 @@
        18      1        0.006484366331
        17      1        0.001562641400
         2      1       -0.000000003998
-        7      1       -0.000000001213
+        7      1       -0.000000001212
      ------------------------------------
 
      Largest double amplitudes:
@@ -975,32 +1002,32 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        3      1        0.884648567138
-        2      1       -0.150117528956
-        7      1        0.097950450969
-       13      1        0.066347740918
-       19      1        0.006760087720
-       12      1        0.005958048284
-        4      1        0.000000042512
-        5      1       -0.000000007076
-        6      1        0.000000006466
-        1      1        0.000000004823
+        3      1       -0.884648567138
+        2      1        0.150117528956
+        7      1       -0.097950450969
+       13      1       -0.066347740918
+       19      1       -0.006760087720
+       12      1       -0.005958048284
+        4      1       -0.000000042513
+        5      1        0.000000007076
+        6      1       -0.000000006466
+        1      1       -0.000000004823
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        3      1       6      5        0.178363599221
-        3      1       5      4        0.149970300304
-        3      1       2      3        0.134413443685
-        3      1       3      3        0.131768378273
-        3      1       7      3        0.116849962780
-        3      1       1      4        0.091089251340
-        3      1       4      4       -0.088288434487
-        3      1       1      2       -0.087229583485
-        3      1       4      2        0.068448469263
-        3      1      13      3        0.066067062177
+        3      1       6      5       -0.178363599221
+        3      1       5      4       -0.149970300304
+        3      1       2      3       -0.134413443685
+        3      1       3      3       -0.131768378273
+        3      1       7      3       -0.116849962780
+        3      1       1      4       -0.091089251340
+        3      1       4      4        0.088288434487
+        3      1       1      2        0.087229583485
+        3      1       4      2       -0.068448469263
+        3      1      13      3       -0.066067062177
      --------------------------------------------------
 
      Electronic state nr. 4
@@ -1049,32 +1076,32 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        6      1        0.017547173773
-       15      1       -0.005503839312
-       10      1       -0.004678906753
-        1      1       -0.000000012499
-        2      1       -0.000000010148
-        8      1        0.000000001781
-        4      1       -0.000000001760
-        7      1       -0.000000001325
-        9      1       -0.000000000968
-       11      1       -0.000000000906
+        6      1       -0.017547173773
+       15      1        0.005503839312
+       10      1        0.004678906753
+        1      1        0.000000012499
+        2      1        0.000000010151
+        8      1       -0.000000001781
+        4      1        0.000000001760
+        7      1        0.000000001325
+        9      1        0.000000000968
+       11      1        0.000000000906
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        1      1       1      5       -0.859311836174
-        2      1       2      5        0.332144013679
-        4      1       1      5        0.196089495277
-        1      1       4      5        0.194684064203
-        2      1       3      5        0.101094746088
-        3      1       2      5        0.099545481619
-        2      1       7      5        0.087084371976
-        1      1       5      5       -0.084419853770
-        7      1       2      5        0.082250369578
-        5      1       1      5       -0.073312576890
+        1      1       1      5        0.859311836174
+        2      1       2      5       -0.332144013679
+        4      1       1      5       -0.196089495277
+        1      1       4      5       -0.194684064203
+        2      1       3      5       -0.101094746088
+        3      1       2      5       -0.099545481619
+        2      1       7      5       -0.087084371976
+        1      1       5      5        0.084419853770
+        7      1       2      5       -0.082250369578
+        5      1       1      5        0.073312576890
      --------------------------------------------------
 
      - Electronic excitation energies:
@@ -1083,9 +1110,9 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                 19.734373184370      536.999646582622
-        2                 19.804921086894      538.919352791105
-        3                 20.244874155581      550.891085573827
+        1                 19.734373184370      536.999646582623
+        2                 19.804921086894      538.919352791104
+        3                 20.244874155581      550.891085573826
         4                 20.255779792826      551.187843078709
         5                 20.386533275861      554.745826579019
      ---------------------------------------------------------------
@@ -1093,16 +1120,16 @@
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              1.69840
-     Total cpu time (sec):               3.37966
+     Total wall time (sec):              1.35057
+     Total cpu time (sec):               2.69859
 
   - Timings for the CC3 excited state calculation
 
-     Total wall time (sec):              1.99480
-     Total cpu time (sec):               3.97065
+     Total wall time (sec):              1.62322
+     Total cpu time (sec):               3.24321
 
-     Peak memory usage during the execution of eT: 16.569304 MB
+     Peak memory usage during the execution of eT: 8.748904 MB
 
-  Calculation ended: 2021-03-04 20:54:32 UTC +01:00
+  Calculation ended: 2021-03-09 17:28:26 UTC +01:00
 
   eT terminated successfully!

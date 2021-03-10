@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.1 - an electronic structure program
+                     eT 1.2 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,26 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Bastion
+   This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Compiled by:        sarai
-  Compiled on:        dhcp-10-24-4-67.wlan.ntnu.no
-  Configuration date: 2021-02-24 15:29:49 UTC +01:00
-  Git branch:         fix_cumulative
-  Git hash:           1dd7ea08b19e7577ea3ddffe8f7b86a442529b8c
-  Fortran compiler:   GNU 10.2.0
-  C compiler:         GNU 10.2.0
-  C++ compiler:       GNU 10.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-02-24 15:56:08 UTC +01:00
+  Calculation started: 2021-03-09 17:23:15 UTC +01:00
 
 
   :: Input file
@@ -103,10 +101,6 @@
         4 He     0.000000000000     0.000000000000    14.172945934238        4
      ==============================================================================
 
-  Constructing one-electron integrals (hamiltonian)
-
-  Constructing one-electron integrals (overlap)
-
   - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
      Linear dependence threshold:             0.10E-05
@@ -161,13 +155,12 @@
      Integral cutoff:               0.1000E-15
      Cumulative Fock threshold:     0.1000E-02
 
-  - DIIS convergence acceleration:
+  - DIIS tool settings:
 
      DIIS dimension:   8
 
-  solver scf_e is stored in memory.
-
-  solver scf_x is stored in memory.
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -177,29 +170,29 @@
      4          -177.480161392961     0.1845E-02     0.1264E-03
      5          -177.480175069916     0.3629E-03     0.1368E-04
   Fock matrix construction using density differences
-     6          -177.480176290419     0.7402E-04     0.1221E-05
+     6          -177.480176290418     0.7402E-04     0.1221E-05
   Fock matrix construction using density differences
      7          -177.480176366127     0.2207E-04     0.7571E-07
   Fock matrix construction using density differences
      8          -177.480176376357     0.5096E-05     0.1023E-07
   Fock matrix construction using density differences
-     9          -177.480176377183     0.1218E-05     0.8254E-09
+     9          -177.480176377183     0.1218E-05     0.8253E-09
   Fock matrix construction using density differences
     10          -177.480176377209     0.2536E-06     0.2657E-10
   Fock matrix construction using density differences
-    11          -177.480176377210     0.4399E-07     0.9663E-12
+    11          -177.480176377210     0.4399E-07     0.1137E-11
   Fock matrix construction using density differences
-    12          -177.480176377210     0.8545E-08     0.2842E-13
+    12          -177.480176377210     0.8545E-08     0.5684E-13
   Fock matrix construction using density differences
-    13          -177.480176377210     0.2855E-08     0.1705E-12
+    13          -177.480176377210     0.2855E-08     0.8527E-13
   Fock matrix construction using density differences
-    14          -177.480176377210     0.1321E-08     0.2274E-12
+    14          -177.480176377210     0.1321E-08     0.8527E-13
   Fock matrix construction using density differences
-    15          -177.480176377210     0.3976E-09     0.8527E-13
+    15          -177.480176377210     0.3976E-09     0.1137E-12
   Fock matrix construction using density differences
-    16          -177.480176377210     0.1465E-09     0.1990E-12
+    16          -177.480176377210     0.1465E-09     0.8527E-13
   Fock matrix construction using density differences
-    17          -177.480176377210     0.5394E-10     0.5684E-13
+    17          -177.480176377210     0.5394E-10     0.8527E-13
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -212,11 +205,11 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.55800
-     Total cpu time (sec):               2.95491
+     Total wall time (sec):              1.70648
+     Total cpu time (sec):               3.36613
 
-     Peak memory usage during the execution of eT: 296.012 KB
+     Peak memory usage during the execution of eT: 298.504 KB
 
-  Calculation ended: 2021-02-24 15:56:10 UTC +01:00
+  Calculation ended: 2021-03-09 17:23:16 UTC +01:00
 
   eT terminated successfully!

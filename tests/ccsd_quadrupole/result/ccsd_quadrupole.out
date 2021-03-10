@@ -16,24 +16,22 @@
 
    This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Compiled by:        
-  Compiled on:        
-  Configuration date: 2021-03-09 11:19:58 UTC +01:00
-  Git branch:         convergence-testing
-  Git hash:           daee21ad27f80e9163798f173753a967992b1d8a
-  Fortran compiler:   GNU 10.2.0
-  C compiler:         GNU 10.2.0
-  C++ compiler:       GNU 10.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-03-09 17:21:42 UTC +01:00
+  Git branch:         generate-cobra-tests
+  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 11:21:39 UTC +01:00
+  Calculation started: 2021-03-09 17:25:53 UTC +01:00
 
 
   :: Input file
@@ -177,7 +175,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -177.560921212609     0.6258E-01     0.1776E+03
+     1          -177.560921212608     0.6258E-01     0.1776E+03
      2          -177.582522954993     0.1868E-01     0.2160E-01
      3          -177.584057069750     0.1171E-01     0.1534E-02
      4          -177.584421928582     0.3222E-02     0.3649E-03
@@ -185,17 +183,17 @@
      6          -177.584491979256     0.1498E-03     0.5302E-05
      7          -177.584492508079     0.6243E-04     0.5288E-06
      8          -177.584492626216     0.2640E-04     0.1181E-06
-     9          -177.584492638214     0.9649E-05     0.1200E-07
-    10          -177.584492639694     0.1461E-05     0.1480E-08
-    11          -177.584492639729     0.1736E-06     0.3570E-10
-    12          -177.584492639730     0.4392E-07     0.8811E-12
-    13          -177.584492639730     0.2464E-07     0.1137E-12
-    14          -177.584492639730     0.7359E-08     0.3695E-12
-    15          -177.584492639730     0.1324E-08     0.1137E-12
-    16          -177.584492639730     0.1871E-09     0.1990E-12
-    17          -177.584492639730     0.8493E-10     0.2274E-12
-    18          -177.584492639730     0.1988E-10     0.1421E-12
-    19          -177.584492639730     0.6529E-11     0.1421E-12
+     9          -177.584492638213     0.9649E-05     0.1200E-07
+    10          -177.584492639693     0.1461E-05     0.1480E-08
+    11          -177.584492639729     0.1736E-06     0.3621E-10
+    12          -177.584492639730     0.4392E-07     0.7958E-12
+    13          -177.584492639730     0.2464E-07     0.0000E+00
+    14          -177.584492639730     0.7359E-08     0.5684E-13
+    15          -177.584492639730     0.1324E-08     0.5684E-13
+    16          -177.584492639730     0.1871E-09     0.2274E-12
+    17          -177.584492639730     0.8492E-10     0.5684E-13
+    18          -177.584492639730     0.1987E-10     0.2842E-13
+    19          -177.584492639730     0.6529E-11     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 19 iterations!
 
@@ -208,8 +206,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.65200
-     Total cpu time (sec):               3.07157
+     Total wall time (sec):              1.45046
+     Total cpu time (sec):               2.89203
 
 
   :: CCSD wavefunction
@@ -298,7 +296,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9635E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.1187E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1574E-14
 
   - Settings for integral handling:
 
@@ -308,8 +306,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.67100
-     Total cpu time (sec):               1.16581
+     Total wall time (sec):              0.55526
+     Total cpu time (sec):               1.09055
 
 
   2) Preparation of MO basis and integrals
@@ -341,15 +339,15 @@
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
     1          -177.999882776772     0.1268E+00     0.1780E+03
-    2          -178.004484624804     0.3684E-01     0.4602E-02
+    2          -178.004484624805     0.3684E-01     0.4602E-02
     3          -178.015143737434     0.1271E-01     0.1066E-01
-    4          -178.017548199524     0.3310E-02     0.2404E-02
-    5          -178.017423910930     0.1045E-02     0.1243E-03
+    4          -178.017548199525     0.3310E-02     0.2404E-02
+    5          -178.017423910931     0.1045E-02     0.1243E-03
     6          -178.017474506043     0.3780E-03     0.5060E-04
     7          -178.017465120939     0.1177E-03     0.9385E-05
     8          -178.017457241374     0.4582E-04     0.7880E-05
-    9          -178.017457896119     0.1763E-04     0.6547E-06
-   10          -178.017458001012     0.7877E-05     0.1049E-06
+    9          -178.017457896120     0.1763E-04     0.6547E-06
+   10          -178.017458001013     0.7877E-05     0.1049E-06
    11          -178.017458162541     0.3251E-05     0.1615E-06
    12          -178.017458245120     0.1441E-05     0.8258E-07
    13          -178.017458276670     0.4068E-06     0.3155E-07
@@ -408,8 +406,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.34600
-     Total cpu time (sec):               3.75192
+     Total wall time (sec):              0.94141
+     Total cpu time (sec):               1.87957
 
 
   4) Calculation of the multipliers (davidson algorithm)
@@ -500,8 +498,8 @@
 
   - Finished solving the CCSD multipliers equations
 
-     Total wall time (sec):               0.91000
-     Total cpu time (sec):                1.62937
+     Total wall time (sec):               0.57917
+     Total cpu time (sec):                1.15398
 
 
   5) Calculation of ground state properties
@@ -509,7 +507,7 @@
   - Operator: quadrupole moment (with trace) [a.u.]
 
      xx:        -6.8865767
-     xy:         0.0000000
+     xy:        -0.0000000
      xz:        -0.0440620
      yy:        -8.9450963
      yz:         0.0000000
@@ -518,7 +516,7 @@
   - Operator: quadrupole moment (with trace) [Debye*Ang]
 
      xx:        -9.2626819
-     xy:         0.0000000
+     xy:        -0.0000000
      xz:        -0.0592649
      yy:       -12.0314614
      yz:         0.0000000
@@ -533,7 +531,7 @@
   - Operator: traceless quadrupole moment [a.u.]
 
      xx:         2.2153432
-     xy:         0.0000000
+     xy:        -0.0000000
      xz:        -0.0660930
      yy:        -0.8724361
      yz:         0.0000000
@@ -542,7 +540,7 @@
   - Operator: traceless quadrupole moment [Debye*Ang]
 
      xx:         2.9797126
-     xy:         0.0000000
+     xy:        -0.0000000
      xz:        -0.0888973
      yy:        -1.1734565
      yz:         0.0000000
@@ -550,11 +548,11 @@
 
   - Timings for the CCSD mean value calculation
 
-     Total wall time (sec):              2.94500
-     Total cpu time (sec):               6.57664
+     Total wall time (sec):              2.08450
+     Total cpu time (sec):               4.14476
 
-     Peak memory usage during the execution of eT: 41.200128 MB
+     Peak memory usage during the execution of eT: 41.245400 MB
 
-  Calculation ended: 2021-03-09 11:21:44 UTC +01:00
+  Calculation ended: 2021-03-09 17:25:57 UTC +01:00
 
   eT terminated successfully!
