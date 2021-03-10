@@ -383,11 +383,7 @@ def complexify_line(line, parameter_list):
     # Change complexifiable submodules to complex version
     for module in complexifiable_modules:
         if module in line:
-            line = sub(
-                r"\b" + module + r"\b",
-                module.rpartition("_r")[0] + "_c",
-                line,
-            )
+            line = sub(r"\b" + module + r"\b", module.rpartition("_r")[0] + "_c", line)
 
     return line
 
