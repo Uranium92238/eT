@@ -65,7 +65,7 @@ run:
     # else           => last_test = last_test_in_batch
     - last_test=$(($CI_NODE_INDEX==$CI_NODE_TOTAL?$n_tests_total:$last_test_in_batch))
     - echo Will run test $first_test to test $last_test 
-    - ctest -I $first_test,$last_test
+    - ctest -I $first_test,$last_test --output-on-failure
     - >
       if [ "$coverage" == "true" ]; then 
         bash <(curl -s https://codecov.io/bash)
