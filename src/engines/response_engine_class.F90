@@ -429,6 +429,8 @@ contains
       character(len=4), dimension(3) :: operator = ['mu_x', 'mu_y', 'mu_z']
 !
       call engine%tasks%print_('polarizabilities')
+      call output%printf('m', 'The convention applied here defines the polarizabilities as &
+                              &the response functions, without negative sign.', fs='(t6,a)')
 !
 !     Allocate arrays to hold amplitude response vectors as well as 
 !     F-transformed response vectors (if LR)
