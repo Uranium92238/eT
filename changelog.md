@@ -2,6 +2,9 @@
 ### Structure
 - The test scripts now uses pathlib instead of os. eT-program/eT!756
 
+### Features
+- EOM polarizabilities are now available for CC2. eT-program/eT!761
+
 
 # eT v1.2
 ### Bugfixes

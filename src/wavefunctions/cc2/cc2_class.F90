@@ -66,13 +66,14 @@ module cc2_class
 !
 !     Initialize and destruct
 !
-      procedure :: initialize_amplitudes                       => initialize_amplitudes_cc2 
-      procedure :: destruct_amplitudes                         => destruct_amplitudes_cc2 
-      procedure :: destruct_multipliers                        => destruct_multipliers_cc2 
+      procedure :: initialize_amplitudes                       => initialize_amplitudes_cc2
+      procedure :: destruct_amplitudes                         => destruct_amplitudes_cc2
+      procedure :: destruct_multipliers                        => destruct_multipliers_cc2
 !
-!     Ground state density 
+!     Properties
 !
-      procedure :: prepare_for_density                         => prepare_for_density_cc2
+      procedure :: prepare_for_properties &
+                => prepare_for_properties_cc2
 !
 !     Initialize wavefunction
 !
@@ -128,7 +129,7 @@ contains
 !
    subroutine construct_t2_cc2(wf)
 !!
-!!    Construct t2 
+!!    Construct t2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
 !!
 !!    Construct
@@ -137,7 +138,7 @@ contains
 !!
 !!    where
 !!
-!!       ε_aibj = ε_a - ε_i + ε_b - ε_j 
+!!       ε_aibj = ε_a - ε_i + ε_b - ε_j
 !!
 !!    and ε_r is the r'th orbital energy.
 !!
@@ -149,14 +150,14 @@ contains
 !
       integer :: a, i, b, j
 !
-      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
-      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
+      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call wf%eri%get_eri_t1('vovo', g_aibj)
 !
 !$omp parallel do private(a, i, b, j)
-      do j = 1, wf%n_o 
-         do b = 1, wf%n_v 
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
@@ -169,14 +170,14 @@ contains
 !
                enddo
             enddo
-         enddo 
+         enddo
       enddo
 !$omp end parallel do
 !
-      call packin(wf%t2, t_aibj, wf%n_t1)    
+      call packin(wf%t2, t_aibj, wf%n_t1)
 !
-      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
-      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
+      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine construct_t2_cc2
 !
@@ -253,7 +254,7 @@ contains
 !!
 !!    where
 !!
-!!       ε_aibj = ε_a - ε_i + ε_b - ε_j 
+!!       ε_aibj = ε_a - ε_i + ε_b - ε_j
 !!
 !!    and ε_r is the r'th orbital energy.
 !!
@@ -271,12 +272,12 @@ contains
       timer = timings('Construct u_aibj CC2')
       call timer%turn_on()
 !
-      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
+      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call wf%eri%get_eri_t1('vovo', g_aibj)
 !
 !$omp parallel do private(a, i, b, j)
-      do j = 1, wf%n_o 
+      do j = 1, wf%n_o
          do b = 1, wf%n_v
             do i = 1, wf%n_o
                do a = 1, wf%n_v
@@ -284,17 +285,17 @@ contains
                   eps =   wf%orbital_energies(i)          &
                         + wf%orbital_energies(j)          &
                         - wf%orbital_energies(wf%n_o + a) &
-                        - wf%orbital_energies(wf%n_o + b) 
+                        - wf%orbital_energies(wf%n_o + b)
 !
                   wf%u_aibj(a, i, b, j) = (two*g_aibj(a, i, b, j) - g_aibj(a, j, b, i)) / eps
 !
                enddo
             enddo
-         enddo 
+         enddo
       enddo
 !$omp end parallel do
-!    
-      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
+!
+      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call timer%turn_off()
 !

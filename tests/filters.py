@@ -227,3 +227,21 @@ def get_spin_filter(tolerance):
     ]
 
     return f
+
+
+def get_polarizability_filter(tolerance):
+    """
+    Returns filter for polarizability summary
+    """
+    from runtest import get_filter
+
+    f = [
+        get_filter(string="<< mu_x, mu_x >>(0.20E-01):", abs_tolerance=tolerance),
+        get_filter(string="<< mu_z, mu_x >>(0.20E-01):", abs_tolerance=tolerance),
+        get_filter(string="<< mu_x, mu_x >>(0.40E-01):", abs_tolerance=tolerance),
+        get_filter(string="<< mu_z, mu_x >>(0.40E-01):", abs_tolerance=tolerance),
+        get_filter(string="<< mu_x, mu_x >>(0.60E-01):", abs_tolerance=tolerance),
+        get_filter(string="<< mu_z, mu_x >>(0.60E-01):", abs_tolerance=tolerance),
+    ]
+
+    return f

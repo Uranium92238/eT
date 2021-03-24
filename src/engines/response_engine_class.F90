@@ -42,7 +42,7 @@ module response_engine_class
 !
 !     Run equation-of-motion or linear response?
 !
-      logical :: eom, lr 
+      logical :: eom, lr
 !
 !     Restart left or right vectors?
 !
@@ -55,14 +55,14 @@ module response_engine_class
       logical :: polarizabilities
 !
       logical, dimension(3,3) :: compute_polarizability  ! which components to compute?
-                                                         ! xx, xy, xz; yx, yy, yz; ... 
+                                                         ! xx, xy, xz; yx, yy, yz; ...
 !
       integer :: n_frequencies
-      real(dp), dimension(:), allocatable :: frequencies ! array of frequencies for which 
-                                                         ! to evaluate the polarizability 
+      real(dp), dimension(:), allocatable :: frequencies ! array of frequencies for which
+                                                         ! to evaluate the polarizability
 !
       logical, dimension(3) :: compute_t_response        ! compute amplitude response?
-                                                         ! x, y, z; determined by true/false 
+                                                         ! x, y, z; determined by true/false
                                                          ! in compute_polarizability
 !
 !     etaX_mu = < HF | e-T X eT | mu >
@@ -71,9 +71,9 @@ module response_engine_class
       real(dp), dimension(:,:), allocatable :: etaX ! columns correspond to components of X
       real(dp), dimension(:,:), allocatable :: xiX  ! columns correspond to components of X
 !
-!     File arrays to store vectors needed for linear response 
+!     File arrays to store vectors needed for linear response
 !
-      type(sequential_file), dimension(:), allocatable     :: M_vectors   ! used for transition moments 
+      type(sequential_file), dimension(:), allocatable     :: M_vectors   ! used for transition moments
       type(sequential_file), dimension(:,:,:), allocatable :: t_responses ! used for polarizabilities
 !
 !     Operators
@@ -102,7 +102,7 @@ module response_engine_class
 !
       procedure :: construct_etaX_and_xiX           => construct_etaX_and_xiX_response_engine
       procedure :: determine_M_vectors              => determine_M_vectors_response_engine
-      procedure :: determine_amplitude_response     => determine_amplitude_response_response_engine 
+      procedure :: determine_amplitude_response     => determine_amplitude_response_response_engine
       procedure :: calculate_polarizabilities       => calculate_polarizabilities_response_engine
 !
    end type response_engine
@@ -110,7 +110,7 @@ module response_engine_class
 !
    interface response_engine
 !
-      procedure :: new_response_engine 
+      procedure :: new_response_engine
 !
    end interface response_engine
 !
@@ -186,11 +186,6 @@ contains
 !
       call engine%read_settings()
 !
-      if (any(engine%compute_polarizability) .and. &
-          wf%name_ .eq. 'cc2') then
-         call output%error_msg("Polarizabilities not implemented for CC2")
-      endif
-!
       call engine%set_printables()
 !
       engine%timer = timings(trim(engine%name_))
@@ -235,29 +230,30 @@ contains
 !
       call engine%do_multipliers(wf)
 !
-!     Construct etaX and xiX if they are going to be needed 
+!     Construct etaX and xiX if they are going to be needed
 !
       if (engine%polarizabilities .or. &
-            (engine%lr .and. engine%transition_moments)) then 
+            (engine%lr .and. engine%transition_moments)) then
 !
          call mem%alloc(engine%xiX, wf%n_es_amplitudes, 3)
          call mem%alloc(engine%etaX, wf%n_es_amplitudes, 3)
 !
+         call wf%prepare_for_properties
          call engine%construct_etaX_and_xiX(wf) ! etaX_mu = < Lambda | [X-bar, τ_mu] | HF >
-                                                ! xiX_mu = < mu | X-bar | HF >         
+                                                ! xiX_mu = < mu | X-bar | HF >
 !
-      endif 
+      endif
 !
-!     Calculate transition moments 
+!     Calculate transition moments
 !
-      if (engine%transition_moments) then 
+      if (engine%transition_moments) then
 !
-!        Save intermediates from solving the mutlipliers 
+!        Save intermediates from solving the mutlipliers
 !        needed for the transition densities
 !
          call wf%save_tbar_intermediates()
 !
-!        Excited state solutions, left & right 
+!        Excited state solutions, left & right
 !
          call engine%do_excited_state(wf,                                                       &
                                       transformation='right',                                   &
@@ -273,43 +269,43 @@ contains
             call wf%remove_parallel_states(residual_threshold, 'both')
          end if
 !
-!        Biorthornormalize and look for duplicate states 
+!        Biorthornormalize and look for duplicate states
 !
          call wf%biorthonormalize_L_and_R(energy_threshold, residual_threshold)
-!  
-!        Compute transition moments 
 !
-         if (engine%eom) then 
+!        Compute transition moments
+!
+         if (engine%eom) then
 !
             call engine%do_eom_transition_moments(wf)
 !
-         elseif (engine%lr) then 
+         elseif (engine%lr) then
 !
             call engine%do_lr_transition_moments(wf)
 !
-         endif 
+         endif
 !
-      endif 
+      endif
 !
 !     Calculate polarizabilities
 !
-      if (engine%polarizabilities) then 
+      if (engine%polarizabilities) then
 !
          if (.not. engine%transition_moments) call wf%prepare_for_jacobian()
 !
          call engine%determine_amplitude_response(wf)
          call engine%calculate_polarizabilities(wf)
 !
-      endif 
+      endif
 !
 !     Deallocate xi and eta if they were constructed
       if (engine%polarizabilities .or. &
-            (engine%lr .and. engine%transition_moments)) then 
+            (engine%lr .and. engine%transition_moments)) then
 !
          call mem%dealloc(engine%xiX, wf%n_es_amplitudes, 3)
          call mem%dealloc(engine%etaX, wf%n_es_amplitudes, 3)
 !
-      endif 
+      endif
 !
       if (engine%polarizabilities) then
          call mem%dealloc(engine%frequencies, engine%n_frequencies)
@@ -320,7 +316,7 @@ contains
 !
    subroutine construct_etaX_and_xiX_response_engine(engine, wf)
 !!
-!!    Construct etaX and xiX 
+!!    Construct etaX and xiX
 !!    Written by Eirik F. Kjønstad, Nov 2019
 !!
 !!    Allocates and constructs the vectors
@@ -330,17 +326,17 @@ contains
 !!
 !!    where
 !!
-!!       X-bar = e-T X eT.   
+!!       X-bar = e-T X eT.
 !!
-!!    These are kept as engine variables afterwards. 
+!!    These are kept as engine variables afterwards.
 !!
-      implicit none 
+      implicit none
 !
-      class(response_engine) :: engine 
+      class(response_engine) :: engine
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:), allocatable :: X 
+      real(dp), dimension(:,:,:), allocatable :: X
 !
       integer :: k
 !
@@ -356,22 +352,22 @@ contains
 !
          call wf%construct_xiX(X(:,:,k), engine%xiX(:,k))
 !
-      enddo 
+      enddo
 !
 !     Construct the left-hand-side vector for operator X,
 !     i.e. etaX_nu = < Lambda | [X-bar, τ_nu] | HF >
 !
       do k = 1, 3
 !
-         if (engine%eom) then 
+         if (engine%eom) then
 !
             call wf%construct_eom_etaX(X(:,:,k), engine%xiX(:,k), engine%etaX(:,k))
 !
-         else ! LR  
+         else ! LR
 !
             call wf%construct_etaX(X(:,:,k), engine%etaX(:,k))
 !
-         endif 
+         endif
 !
       enddo
 !
@@ -382,47 +378,47 @@ contains
 !
    subroutine calculate_polarizabilities_response_engine(engine, wf)
 !!
-!!    Calculate polarizabilities 
-!!    Written by Josefine H. Andersen, spring 2019 
+!!    Calculate polarizabilities
+!!    Written by Josefine H. Andersen, spring 2019
 !!
 !!    Calculates requested polarizabilities,
 !!
-!!       << X, Y >>(omega) = 1/2*[ eta^X (t^Y(omega) + t^Y(-omega)) 
+!!       << X, Y >>(omega) = 1/2*[ eta^X (t^Y(omega) + t^Y(-omega))
 !!                               + eta^Y (t^X(omega) + t^X(-omega))
-!!                               + t^X(-omega) F t^Y(omega) 
+!!                               + t^X(-omega) F t^Y(omega)
 !!                               + t^X(omega) F t^Y(-omega) ], (*)
 !!
-!!    for the set of requested frequencies omega. Note that only components 
+!!    for the set of requested frequencies omega. Note that only components
 !!    requested by the user are computed; see keyword "polarizabilities".
 !!
-!!    This routine is called after the amplitude response 
-!!    vectors (t^X, t^Y)  needed for the polarizability components 
-!!    have been converged. These are solutions to the equations 
+!!    This routine is called after the amplitude response
+!!    vectors (t^X, t^Y)  needed for the polarizability components
+!!    have been converged. These are solutions to the equations
 !!
 !!       (A - omega_k I) t^X(omega_k) = -xi^X
 !!
-!!    Currently, X and Y are components of the dipole operator. 
+!!    Currently, X and Y are components of the dipole operator.
 !!
-!!    The terms involving the F matrix (terms 3 and 4 in (*)) are only 
-!!    added in LR theory. These are thus ignored if EOM polarizabilities 
-!!    are requested. 
+!!    The terms involving the F matrix (terms 3 and 4 in (*)) are only
+!!    added in LR theory. These are thus ignored if EOM polarizabilities
+!!    are requested.
 !!
-!!    New storage of t response and adapted to late-2019  
+!!    New storage of t response and adapted to late-2019
 !!    program structure by Eirik F. Kjønstad, Nov 2019.
 !!
-      implicit none 
+      implicit none
 !
-      class(response_engine) :: engine 
+      class(response_engine) :: engine
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       real(dp), dimension(:,:), allocatable :: tk, tl ! holds amplitude response, components k,l
                                                       ! columns: [+, -] (positive/negative frequency)
 !
-      real(dp), dimension(:,:), allocatable :: Ftk ! holds F tk 
+      real(dp), dimension(:,:), allocatable :: Ftk ! holds F tk
                                                    ! columns: [+ -]
 !
-      integer :: k, l, freq, sign 
+      integer :: k, l, freq, sign
 !
       real(dp) :: ddot, polarizability
 !
@@ -432,17 +428,17 @@ contains
       call output%printf('m', 'The convention applied here defines the polarizabilities as &
                               &the response functions, without negative sign.', fs='(t6,a)')
 !
-!     Allocate arrays to hold amplitude response vectors as well as 
+!     Allocate arrays to hold amplitude response vectors as well as
 !     F-transformed response vectors (if LR)
 !
-      call mem%alloc(tk, wf%n_gs_amplitudes, 2)
-      call mem%alloc(tl, wf%n_gs_amplitudes, 2)
+      call mem%alloc(tk, wf%n_es_amplitudes, 2)
+      call mem%alloc(tl, wf%n_es_amplitudes, 2)
 !
-      if (engine%lr) then 
+      if (engine%lr) then
 !
-         call mem%alloc(Ftk, wf%n_gs_amplitudes, 2)
+         call mem%alloc(Ftk, wf%n_es_amplitudes, 2)
 !
-      endif 
+      endif
 !
 !     Compute polarizabilities
 !
@@ -452,33 +448,33 @@ contains
 !
 !           Compute & print diagonal polarizabilities
 !
-            if (engine%compute_polarizability(k,k)) then 
+            if (engine%compute_polarizability(k,k)) then
 !
-               polarizability = zero 
+               polarizability = zero
 !
-               do sign = 1, 2 ! +, - 
+               do sign = 1, 2 ! +, -
 !
                   call engine%t_responses(freq, k, sign)%open_('read', 'rewind')
-                  call engine%t_responses(freq, k, sign)%read_(tk(:,sign), wf%n_gs_amplitudes)
+                  call engine%t_responses(freq, k, sign)%read_(tk(:,sign), wf%n_es_amplitudes)
                   call engine%t_responses(freq, k, sign)%close_()
 !
                   polarizability = polarizability + &
-                         ddot(wf%n_gs_amplitudes, engine%etaX(:,k), 1, tk(:,sign), 1)
+                         ddot(wf%n_es_amplitudes, engine%etaX(:,k), 1, tk(:,sign), 1)
 !
                enddo
 !
-               if (engine%lr) then 
+               if (engine%lr) then
 !
-                  call dcopy(wf%n_gs_amplitudes, tk(:,1), 1, Ftk(:,1), 1)
-                  call dcopy(wf%n_gs_amplitudes, tk(:,2), 1, Ftk(:,2), 1) 
+                  call dcopy(wf%n_es_amplitudes, tk(:,1), 1, Ftk(:,1), 1)
+                  call dcopy(wf%n_es_amplitudes, tk(:,2), 1, Ftk(:,2), 1)
 !
-                  call wf%F_transformation(Ftk(:,1))                           
-                  call wf%F_transformation(Ftk(:,2))                           
+                  call wf%F_transformation(Ftk(:,1))
+                  call wf%F_transformation(Ftk(:,2))
 !
                   polarizability = polarizability + &
-                        ddot(wf%n_gs_amplitudes, Ftk(:,2), 1, tk(:,1), 1)
+                        ddot(wf%n_es_amplitudes, Ftk(:,2), 1, tk(:,1), 1)
 !
-               endif 
+               endif
 !
                call output%printf('m', '<< ' // operator(k) // ', ' //  &
                                   operator(k) // ' >>' // '((e8.2)): (f19.12)', &
@@ -491,27 +487,27 @@ contains
 !
             do l = 1, k - 1
 !
-               if (engine%compute_polarizability(k,l)) then 
+               if (engine%compute_polarizability(k,l)) then
 !
-                  polarizability = zero 
+                  polarizability = zero
 !
-                  do sign = 1, 2 ! +, - 
+                  do sign = 1, 2 ! +, -
 !
                      call engine%t_responses(freq, l, sign)%open_('read', 'rewind')
-                     call engine%t_responses(freq, l, sign)%read_(tl(:,sign), wf%n_gs_amplitudes)
+                     call engine%t_responses(freq, l, sign)%read_(tl(:,sign), wf%n_es_amplitudes)
                      call engine%t_responses(freq, l, sign)%close_()
 !
                      polarizability = polarizability +                                       &
-                         half*ddot(wf%n_gs_amplitudes, engine%etaX(:,k), 1, tl(:,sign), 1) + &
-                         half*ddot(wf%n_gs_amplitudes, engine%etaX(:,l), 1, tk(:,sign), 1)
+                         half*ddot(wf%n_es_amplitudes, engine%etaX(:,k), 1, tl(:,sign), 1) + &
+                         half*ddot(wf%n_es_amplitudes, engine%etaX(:,l), 1, tk(:,sign), 1)
 !
-                  enddo    
+                  enddo
 !
-                  if (engine%lr) then 
+                  if (engine%lr) then
 !
                      polarizability = polarizability +                              &
-                           half*ddot(wf%n_gs_amplitudes, Ftk(:,1), 1, tl(:,2), 1) + &
-                           half*ddot(wf%n_gs_amplitudes, Ftk(:,2), 1, tl(:,1), 1)
+                           half*ddot(wf%n_es_amplitudes, Ftk(:,1), 1, tl(:,2), 1) + &
+                           half*ddot(wf%n_es_amplitudes, Ftk(:,2), 1, tl(:,1), 1)
 !
                   endif
 !
@@ -521,24 +517,24 @@ contains
                                      polarizability], fs='(t6,a)')
 !
                endif
-!  
+!
             enddo
 !
          enddo
 !
       enddo
 !
-!     Deallocate arrays to hold amplitude response vectors as well as 
+!     Deallocate arrays to hold amplitude response vectors as well as
 !     F-transformed response vectors (if LR)
 !
-      call mem%dealloc(tk, wf%n_gs_amplitudes, 2)
-      call mem%dealloc(tl, wf%n_gs_amplitudes, 2)
+      call mem%dealloc(tk, wf%n_es_amplitudes, 2)
+      call mem%dealloc(tl, wf%n_es_amplitudes, 2)
 !
-      if (engine%lr) then 
+      if (engine%lr) then
 !
-         call mem%dealloc(Ftk, wf%n_gs_amplitudes, 2)
+         call mem%dealloc(Ftk, wf%n_es_amplitudes, 2)
 !
-      endif 
+      endif
 !
    end subroutine calculate_polarizabilities_response_engine
 !
@@ -546,38 +542,38 @@ contains
    subroutine determine_amplitude_response_response_engine(engine, wf)
 !!
 !!    Determine amplitude response
-!!    Written by Eirik F. Kjønstad and Josefine H. Andersen, 2019 
+!!    Written by Eirik F. Kjønstad and Josefine H. Andersen, 2019
 !!
 !!    Makes preparations for determining the amplitude response t^X(omega_k) and t^X(-omega_k),
-!!    where X is the dipole components (x,y,z) and omega_k the set of frequencies for which 
+!!    where X is the dipole components (x,y,z) and omega_k the set of frequencies for which
 !!    the polarizability is to be evaluated.
 !!
-!!    These responses are solutions of the equations 
+!!    These responses are solutions of the equations
 !!
 !!       (A - omega_k I) t^X(omega_k) = -xi^X
 !!
-!!    The amplitude response t^X(+- omega_k) are stored to file. In particular, 
-!!    these are stored in a sequential file array: 
+!!    The amplitude response t^X(+- omega_k) are stored to file. In particular,
+!!    these are stored in a sequential file array:
 !!
 !!       engine%t_responses(freq, component, sign), where:
 !!
 !!          freq:       1,2,3,...; denotes the frequency number as specified in input
-!!                      e.g., if freq = 2, the file contains an amplitude response vector 
-!!                      for the second frequency specified on input 
+!!                      e.g., if freq = 2, the file contains an amplitude response vector
+!!                      for the second frequency specified on input
 !!
-!!          component:  1,2,3 (x,y,z); the component of the dipole moment vector 
+!!          component:  1,2,3 (x,y,z); the component of the dipole moment vector
 !!
-!!          sign:       1,2 (+, -); whether it is t^X(+omega_k) or t^X(-omega_k) 
+!!          sign:       1,2 (+, -); whether it is t^X(+omega_k) or t^X(-omega_k)
 !!
-!!    This wrapper routine, and the file storage for amplitude response vectors, was made by 
-!!    Eirik F. Kjønstad, Nov 2019. It is adapted/based on the general structure set up to solve     
+!!    This wrapper routine, and the file storage for amplitude response vectors, was made by
+!!    Eirik F. Kjønstad, Nov 2019. It is adapted/based on the general structure set up to solve
 !!    amplitude response originally written by Josefine H. Andersen, spring 2019.
 !!
-      implicit none 
+      implicit none
 !
-      class(response_engine) :: engine 
+      class(response_engine) :: engine
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       real(dp), dimension(:), allocatable     :: rhs ! right-hand-side
 !
@@ -585,18 +581,18 @@ contains
 !
       real(dp) :: prefactor
 !
-      character(len=200) :: file_name 
+      character(len=200) :: file_name
       character(len=1)   :: sign_character
 !
       class(davidson_cc_linear_equations), allocatable :: t_response_solver
 !
-!     Initialize amplitude response files for storing solutions  
+!     Initialize amplitude response files for storing solutions
 !
       allocate(engine%t_responses(engine%n_frequencies, 3, 2))
 !
       do k = 1, 3
          do freq = 1, engine%n_frequencies
-            do sign = 1, 2 
+            do sign = 1, 2
 !
                write(file_name, '(a, i3.3, a, i3.3, a, i3.3)') 'dipole_t_response_component_', &
                                                             k, '_frequency_', freq, '_sign_', sign
@@ -607,25 +603,25 @@ contains
          enddo
       enddo
 !
-!     Solve response equations for one component and all frequencies 
+!     Solve response equations for one component and all frequencies
 !
       call mem%alloc(rhs, wf%n_es_amplitudes)
 !
       do k = 1, 3
 !
          if (.not. engine%compute_t_response(k)) cycle ! skip; kth component not needed
-                                                       ! for requested polarizability calculations! 
+                                                       ! for requested polarizability calculations!
 !
          call copy_and_scale(-one, engine%xiX(:,k), rhs, wf%n_es_amplitudes)
 !
          do sign = 1, 2
 !
             sign_character = '-'
-            if (sign == 2) sign_character = '+'  
+            if (sign == 2) sign_character = '+'
 !
-            call output%printf('m', 'Determining amplitude response...', fs='(/t3,a)')
+            call output%printf('v', 'Determining amplitude response...', fs='(/t3,a)')
 !
-            call output%printf('m', 'Asking solver to get response for ' //  &
+            call output%printf('v', 'Asking solver to get response for ' //  &
                                'component (i0) and ((a1))-frequencies.', &
                                ints=[k], chars=[sign_character], fs='(t3,a)')
 !
@@ -637,7 +633,7 @@ contains
                                                              n_frequencies=engine%n_frequencies,   &
                                                              n_rhs=1)
 !
-            prefactor = real((-1)**sign, kind=dp) ! for frequencies 
+            prefactor = real((-1)**sign, kind=dp) ! for frequencies
 !
             call t_response_solver%run(wf, rhs, prefactor*engine%frequencies, &
                               engine%t_responses(:,k,sign), 'right')
@@ -654,32 +650,32 @@ contains
 !
    subroutine determine_M_vectors_response_engine(engine, wf)
 !!
-!!    Determine M vectors 
-!!    Written by Eirik F. Kjønstad and Josefine H. Andersen, 2019 
+!!    Determine M vectors
+!!    Written by Eirik F. Kjønstad and Josefine H. Andersen, 2019
 !!
-!!    Determines the solutions to the equations 
+!!    Determines the solutions to the equations
 !!
 !!       (A^T + omega_k I) M_k = -F R_k,
 !!
 !!    where F is the so-called F transformation,
-!!    (F_mu,nu = < Lambda | [[H-bar,tau_mu],tau_nu] | HF > ), and 
-!!    the omega_k are the excitation energies. 
+!!    (F_mu,nu = < Lambda | [[H-bar,tau_mu],tau_nu] | HF > ), and
+!!    the omega_k are the excitation energies.
 !!
-!!    The M vectors are required to compute the transition moments 
+!!    The M vectors are required to compute the transition moments
 !!    using CC response theory.
 !!
-!!    On exit, the converged M vectors are stored in the file array 
+!!    On exit, the converged M vectors are stored in the file array
 !!    engine%M_vectors.
 !!
-!!    This solver wrapper routine, and the file storage for M vectors, was made by 
-!!    Eirik F. Kjønstad, Nov 2019. It is adapted/based on the general structure set up     
+!!    This solver wrapper routine, and the file storage for M vectors, was made by
+!!    Eirik F. Kjønstad, Nov 2019. It is adapted/based on the general structure set up
 !!    to determine M vectors originally written by Josefine H. Andersen, spring 2019.
 !!
-      implicit none 
+      implicit none
 !
-      class(response_engine) :: engine 
+      class(response_engine) :: engine
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       integer :: k
 !
@@ -706,7 +702,7 @@ contains
 !
       call dscal(wf%n_es_amplitudes*wf%n_singlet_states, -one, minus_FR, 1)
 !
-!     Initialize file array to store the converged M_vectors 
+!     Initialize file array to store the converged M_vectors
 !
       allocate(engine%M_vectors(wf%n_singlet_states))
 !
@@ -718,7 +714,7 @@ contains
 !
       enddo
 !
-!     Call solver to converge the M vectors 
+!     Call solver to converge the M vectors
 !
       M_vectors_solver = davidson_cc_linear_equations(wf,                                       &
                                                       section='cc response',                    &
@@ -730,7 +726,7 @@ contains
       call M_vectors_solver%run(wf, minus_FR, -wf%right_excitation_energies, &
                               engine%M_vectors, 'left')
 !
-      call M_vectors_solver%cleanup(wf)   
+      call M_vectors_solver%cleanup(wf)
 !
       call mem%dealloc(minus_FR, wf%n_es_amplitudes, wf%n_singlet_states)
 !
@@ -767,41 +763,41 @@ contains
 !
       character(len=200) :: restart_string
 !
-      if (input%is_keyword_present('eom','cc response')) then 
+      if (input%is_keyword_present('eom','cc response')) then
 !
          engine%eom = .true.
 !
-      endif 
+      endif
 !
-      if (input%is_keyword_present('lr','cc response')) then 
+      if (input%is_keyword_present('lr','cc response')) then
 !
          engine%lr = .true.
 !
-      endif 
+      endif
 !
-      if (input%is_keyword_present('transition moments','cc response')) then 
+      if (input%is_keyword_present('transition moments','cc response')) then
 !
          engine%transition_moments = .true.
 !
-      endif 
+      endif
 !
-      if (input%is_keyword_present('polarizabilities','cc response')) then 
+      if (input%is_keyword_present('polarizabilities','cc response')) then
 !
          engine%polarizabilities = .true.
 !
          n_polarizabilities = input%get_n_elements_for_keyword('polarizabilities', &
                                                                            'cc response')
 !
-         if (n_polarizabilities == 0) then 
+         if (n_polarizabilities == 0) then
 !
 !           Not specified means you get all components (xx, xy, xz, ...)
 !           of thee polarizability
 !
             engine%compute_polarizability(:,:) = .true.
 !
-         else 
+         else
 !
-!           Figure out which polarizabilities-components have been requested 
+!           Figure out which polarizabilities-components have been requested
 !           to set true/false in the compute_polarizability array
 !
             call mem%alloc(polarizabilities, n_polarizabilities)
@@ -811,34 +807,34 @@ contains
 !
             do k = 1, n_polarizabilities
 !
-               if (polarizabilities(k) == 11) then 
+               if (polarizabilities(k) == 11) then
 !
                   engine%compute_polarizability(1,1) = .true.
 !
-               elseif (polarizabilities(k) == 12 .or. polarizabilities(k) == 21) then 
+               elseif (polarizabilities(k) == 12 .or. polarizabilities(k) == 21) then
 !
                   engine%compute_polarizability(1,2) = .true.
                   engine%compute_polarizability(2,1) = .true.
 !
-               elseif (polarizabilities(k) == 13 .or. polarizabilities(k) == 31) then 
+               elseif (polarizabilities(k) == 13 .or. polarizabilities(k) == 31) then
 !
                   engine%compute_polarizability(1,3) = .true.
                   engine%compute_polarizability(3,1) = .true.
 !
-               elseif (polarizabilities(k) == 22) then 
+               elseif (polarizabilities(k) == 22) then
 !
                   engine%compute_polarizability(2,2) = .true.
 !
-               elseif (polarizabilities(k) == 23 .or. polarizabilities(k) == 32) then 
+               elseif (polarizabilities(k) == 23 .or. polarizabilities(k) == 32) then
 !
                   engine%compute_polarizability(2,3) = .true.
                   engine%compute_polarizability(3,2) = .true.
 !
-               elseif (polarizabilities(k) == 33) then 
+               elseif (polarizabilities(k) == 33) then
 !
                   engine%compute_polarizability(3,3) = .true.
 !
-               endif 
+               endif
 !
             enddo
 !
@@ -846,17 +842,17 @@ contains
 !
          endif
 !
-!        Based on the requested polarizabilities, 
-!        determine which amplitude response components 
-!        will be necessary to determine 
+!        Based on the requested polarizabilities,
+!        determine which amplitude response components
+!        will be necessary to determine
 !
          do k = 1, 3
             do l = 1, k
 !
-               if (engine%compute_polarizability(k,l)) then 
+               if (engine%compute_polarizability(k,l)) then
 !
                   engine%compute_t_response(k) = .true.
-                  engine%compute_t_response(l) = .true. 
+                  engine%compute_t_response(l) = .true.
 !
                endif
 !
@@ -865,16 +861,16 @@ contains
 !
 !        Read in for which frequencies to compute the polarizability
 !
-         if (input%is_keyword_present('frequencies', 'cc response')) then 
+         if (input%is_keyword_present('frequencies', 'cc response')) then
 !
             engine%n_frequencies = input%get_n_elements_for_keyword('frequencies', 'cc response')
-!  
+!
             call mem%alloc(engine%frequencies, engine%n_frequencies)
 !
             call input%get_array_for_keyword('frequencies', 'cc response', &
-                                                   engine%n_frequencies, engine%frequencies) 
+                                                   engine%n_frequencies, engine%frequencies)
 !
-         else 
+         else
 !
             call output%error_msg('Asked for polarizabilities, but no frequencies was ' // &
                                     'provided!')
@@ -900,25 +896,25 @@ contains
             call output%error_msg('no operator selected in response calculation')
 !
 !     Check if the user wants to restart the right or left states in particular,
-!     and not do restart on both 
+!     and not do restart on both
 !
-      if (input%is_keyword_present('restart', 'solver cc es')) then 
+      if (input%is_keyword_present('restart', 'solver cc es')) then
 !
          call input%get_keyword('restart',       &
                                            'solver cc es',  &
                                            restart_string)
 !
-         if (trim(restart_string) == 'right') then 
+         if (trim(restart_string) == 'right') then
 !
-            engine%es_restart = .false. ! Turn off right & left restart 
+            engine%es_restart = .false. ! Turn off right & left restart
 !
-            engine%es_restart_right = .true. ! Turn on right restart 
+            engine%es_restart_right = .true. ! Turn on right restart
 !
-         elseif (trim(restart_string) == 'left') then 
+         elseif (trim(restart_string) == 'left') then
 !
-            engine%es_restart = .false. ! Turn off right & left restart 
+            engine%es_restart = .false. ! Turn off right & left restart
 !
-            engine%es_restart_left = .true. ! Turn on left restart 
+            engine%es_restart_left = .true. ! Turn on left restart
 !
          endif
 !
@@ -927,7 +923,7 @@ contains
 !     Plotting of transition densities
 !     plot_density   - logical to enable plotting of the gs density
 !     plot_tdm       - logical to enable plotting of tranistion densities
-!     states_to_plot - list of integers containing states of which 
+!     states_to_plot - list of integers containing states of which
 !                      the transition densities shall be plotted (default all states)
 !
       engine%plot_density = &
@@ -971,26 +967,26 @@ contains
 !
    subroutine do_lr_transition_moments_response_engine(engine, wf)
 !!
-!!    Do LR transition moments 
+!!    Do LR transition moments
 !!    Written by Eirik F. Kjønstad, Nov 2019
 !!
-!!    Adapted from routines written by Josefine H. Andersen, spring 2019. 
+!!    Adapted from routines written by Josefine H. Andersen, spring 2019.
 !!
 !!    Routine that performs three tasks:
 !!
-!!       - Calls routine to determine the M vectors, which are needed to compute the 
+!!       - Calls routine to determine the M vectors, which are needed to compute the
 !!         transition moments in response theory
 !!
-!!       - Calls wavefunction routine that computes the moments and strengths from 
-!!         the etaX, xiX and M vectors. 
+!!       - Calls wavefunction routine that computes the moments and strengths from
+!!         the etaX, xiX and M vectors.
 !!
 !!       - Calls routine to print the transition moments / strengths to output
 !!
-!!    This routine was based on a deprecated routine for EOM moments  
+!!    This routine was based on a deprecated routine for EOM moments
 !!    (Josefine H. Andersen, Sarai D. Folkestad, June 2019). Reintroduced
-!!    with M vector contributions and making use of skip_states array  
+!!    with M vector contributions and making use of skip_states array
 !!    (Eirik F. Kjønstad, Nov 2019).
-!!    Removed skip_states array as the parallel states are removed by the engine 
+!!    Removed skip_states array as the parallel states are removed by the engine
 !!    (Alexander C. Paul Sep 2020)
 !!
       implicit none
@@ -1002,10 +998,10 @@ contains
 !
       integer :: state, component
 !
-      real(dp), dimension(:), allocatable :: M ! M vector associated with state 
+      real(dp), dimension(:), allocatable :: M ! M vector associated with state
 !
       type(timings) :: timer
-!     
+!
       call engine%tasks%print_('transition moments')
 !
       timer = timings('Time to converge M vectors and calculate LR transition moments.', pl='n')
@@ -1022,7 +1018,7 @@ contains
          call engine%M_vectors(state)%read_(M, wf%n_es_amplitudes)
          call engine%M_vectors(state)%close_()
 !
-         do component = 1, 3 
+         do component = 1, 3
 !
             call wf%calculate_lr_transition_strength(transition_strength(component),      &
                                                      engine%etaX(:,component),            &
@@ -1050,12 +1046,12 @@ contains
 !
    subroutine do_eom_transition_moments_response_engine(engine, wf)
 !!
-!!    Do EOM transition moments 
-!!    Written by Josefine H. Andersen, Sarai D. Folkestad 
+!!    Do EOM transition moments
+!!    Written by Josefine H. Andersen, Sarai D. Folkestad
 !!    and Alexander C. Paul, June 2019
 !!
-!!    Computes the EOM dipole transition moments using transition densities 
-!!    and dipole moment integrals. 
+!!    Computes the EOM dipole transition moments using transition densities
+!!    and dipole moment integrals.
 !!
       use visualization_class, only: visualization
 !
@@ -1087,7 +1083,7 @@ contains
 !
       call EOM_timer%turn_on()
 !
-      call wf%prepare_for_density()
+      call wf%prepare_for_properties
       call wf%initialize_gs_density()
       call wf%construct_gs_density()
 !
@@ -1214,11 +1210,11 @@ contains
                call visualizer%plot_density(wf%ao, c_D_ct, file_name)
 !
                call density_file%close_
-!            
+!
             end do
 !
          end if
-!         
+!
          call mem%dealloc(c_D_ct, wf%ao%n, wf%ao%n)
          call visualizer%cleanup()
 !
@@ -1244,10 +1240,10 @@ contains
 !!
       implicit none
 !
-      class(response_engine) :: engine 
+      class(response_engine) :: engine
 !
       real(dp), dimension(3), intent(in) :: transition_strength
-      real(dp), dimension(3), intent(in) :: transition_moment_left 
+      real(dp), dimension(3), intent(in) :: transition_moment_left
       real(dp), dimension(3), intent(in) :: transition_moment_right
       real(dp), intent(in) :: excitation_energy
       integer, intent(in)  :: state
@@ -1346,7 +1342,7 @@ contains
       call engine%tasks%add(label='gs solver',                                &
                             description='Calculation of the ground state ('// &
                            trim((engine%gs_algorithm))//' algorithm)')
-!                    
+!
       call engine%tasks%add(label='multipliers solver',                       &
                             description='Calculation of the multipliers ('    &
                             //trim((engine%multipliers_algorithm))&
