@@ -28,18 +28,18 @@ module davidson_cc_linear_equations_class
 !!       (A - omega_k I) X_k = G_k,    or     (A^T - omega_k I) X_k = G_k,
 !!
 !!    where omega_k is a set of real numbers referred to as "frequencies",
-!!    and the G_k can either be one vector, meaning that we solve 
+!!    and the G_k can either be one vector, meaning that we solve
 !!
 !!       (A - omega_k I) X_k = G,      or     (A^T - omega_k I) X_k = G,
-!! 
-!!    or there can be different right-hand-sides, G_k, for different frequencies, omega_k. 
+!!
+!!    or there can be different right-hand-sides, G_k, for different frequencies, omega_k.
 !!
 !!    The solver builds a shared reduced space for the set of linear equations,
-!!    and stores the solution(s) on file(s) provided on input. 
-!!    
+!!    and stores the solution(s) on file(s) provided on input.
+!!
 !!    This solver was set up by Eirik F. Kjønstad, Nov 2019, and is a simple generalization
-!!    of the ground state multipliers Davidson solver (authors Eirik F. Kjønstad, Sarai D. Folkestad) 
-!!    as well as the solvers for response made by Josefine H. Andersen, spring 2019. 
+!!    of the ground state multipliers Davidson solver (authors Eirik F. Kjønstad, Sarai D. Folkestad)
+!!    as well as the solvers for response made by Josefine H. Andersen, spring 2019.
 !!
 !
    use kinds
@@ -64,8 +64,8 @@ module davidson_cc_linear_equations_class
 !
       real(dp) :: residual_threshold
 !
-      character(len=200) :: storage 
-      character(len=200) :: section  
+      character(len=200) :: storage
+      character(len=200) :: section
 !
       logical :: restart, records_in_memory
 !
@@ -84,7 +84,7 @@ module davidson_cc_linear_equations_class
 !
       procedure :: run                             => run_davidson_cc_linear_equations
 !
-      procedure :: set_precondition_vector => set_precondition_vector_davidson_cc_linear_equations     
+      procedure :: set_precondition_vector => set_precondition_vector_davidson_cc_linear_equations
 !
    end type davidson_cc_linear_equations
 !
@@ -101,16 +101,16 @@ contains
 !
    function new_davidson_cc_linear_equations(wf, section, eq_description, n_frequencies, n_rhs) result(solver)
 !!
-!!    New Davidson CC linear equations 
+!!    New Davidson CC linear equations
 !!    Written by Eirik F. Kjønstad, 2019
 !!
-!!    wf:               The coupled cluster wavefunction to use for the Jacobian transformation 
+!!    wf:               The coupled cluster wavefunction to use for the Jacobian transformation
 !!
-!!    section:          Thresholds will be read from input in "solver section", i.e. if 
+!!    section:          Thresholds will be read from input in "solver section", i.e. if
 !!                      section == "cc response", then thresholds are read from the section
 !!                      in the input named "solver cc response".
 !!
-!!    eq_description:   Equation description. String describing the particular problem the 
+!!    eq_description:   Equation description. String describing the particular problem the
 !!                      solver is meant to solve. This is printed to output so that the user
 !!                      can tell which kinds of linear equations are solved.
 !!
@@ -120,9 +120,9 @@ contains
 !
       class(ccs) :: wf
 !
-      character(len=*), intent(in) :: section 
+      character(len=*), intent(in) :: section
       character(len=*), intent(in) :: eq_description !
-      integer,          intent(in) :: n_rhs 
+      integer,          intent(in) :: n_rhs
       integer,          intent(in) :: n_frequencies
 !
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' linear equations solver')
@@ -143,32 +143,32 @@ contains
 !
       call solver%print_banner()
 !
-!     Read non-default settings and print settings to output 
+!     Read non-default settings and print settings to output
 !
       call solver%read_settings()
       call solver%print_settings()
 !
 !     Determine whether to store records in memory or on file
 !
-      if (trim(solver%storage) == 'memory') then 
+      if (trim(solver%storage) == 'memory') then
 !
          solver%records_in_memory = .true.
 !
-      elseif (trim(solver%storage) == 'disk') then 
+      elseif (trim(solver%storage) == 'disk') then
 !
          solver%records_in_memory = .false.
 !
-      else 
+      else
 !
          call output%error_msg('Could not recognize keyword storage in solver: ' // &
                                  trim(solver%storage))
 !
-      endif 
+      endif
 !
 !     :: Initialize solver tool and set preconditioner and start vectors ::
 !
       solver%davidson = linear_davidson_tool('davidson_t_response',                 &
-                                       wf%n_gs_amplitudes,                          &
+                                       wf%n_es_amplitudes,                          &
                                        min(1.0d-11, solver%residual_threshold),     &
                                        solver%max_dim_red, n_rhs,                   &
                                        n_frequencies, solver%records_in_memory)
@@ -178,12 +178,12 @@ contains
 !
    subroutine print_settings_davidson_cc_linear_equations(solver)
 !!
-!!    Print settings    
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Print settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(davidson_cc_linear_equations) :: solver 
+      class(davidson_cc_linear_equations) :: solver
 !
       call output%printf('m', '- Davidson CC linear equations solver settings:', fs='(/t3,a)')
 !
@@ -199,31 +199,31 @@ contains
                                  frequencies, solution_files,  &
                                  transformation)
 !!
-!!    Run 
+!!    Run
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Josefine H. Andersen, 2018-2019
 !!
 !!    Solves the equations
 !!
 !!       (A - omega_k I) X_k = G_k,    or     (A^T - omega_k I) X_k = G_k,
 !!
-!!    where A is the coupled cluster Jacobian matrix and omega_k, G_k is specified 
-!!    by the programmer. The omega_k are the frequencies. G is referred to as the 
+!!    where A is the coupled cluster Jacobian matrix and omega_k, G_k is specified
+!!    by the programmer. The omega_k are the frequencies. G is referred to as the
 !!    right-hand-side(s).
 !!
 !!    List of arguments:
 !!
-!!       G:                The right-hand-side vector or vectors. If there are multiple 
+!!       G:                The right-hand-side vector or vectors. If there are multiple
 !!                         right-hand-sides, then G_k is placed in column k of the array G.
 !!
-!!       n_rhs:            Number of columns of G. 
-!!          
+!!       n_rhs:            Number of columns of G.
+!!
 !!       frequencies:      The vector containing the frequencies omega_k.
 !!
 !!       n_frequencies:    k = 1, 2, ..., n_frequencies
 !!
-!!       solution_files:   Sequential file array to store the solutions X_k 
+!!       solution_files:   Sequential file array to store the solutions X_k
 !!
-!!       transformation:   Whether to use A or A^T ("right" or "left", respectively).       
+!!       transformation:   Whether to use A or A^T ("right" or "left", respectively).
 !!
       implicit none
 !
@@ -264,24 +264,24 @@ contains
 !
       do while (.not. converged_residual .and. (iteration .le. solver%max_iterations))
 !
-         iteration = iteration + 1       
+         iteration = iteration + 1
 !
-!        Reduced space preparations 
+!        Reduced space preparations
 !
          if (solver%davidson%red_dim_exceeds_max()) call solver%davidson%set_trials_to_solutions()
 !
          call solver%davidson%update_reduced_dim()
 !
-         call solver%davidson%orthonormalize_trial_vecs() 
+         call solver%davidson%orthonormalize_trial_vecs()
 !
          call output%printf('n', 'Iteration:               (i0)', &
                             ints=[iteration], fs='(/t3,a)')
          call output%printf('n', 'Reduced space dimension: (i0)', ints=[solver%davidson%dim_red])
 !
-!        Transform new trial vectors 
+!        Transform new trial vectors
 !
-         call mem%alloc(X, wf%n_gs_amplitudes)
-         call mem%alloc(c, wf%n_gs_amplitudes)
+         call mem%alloc(X, wf%n_es_amplitudes)
+         call mem%alloc(c, wf%n_es_amplitudes)
 !
          do trial = solver%davidson%first_new_trial(), solver%davidson%last_new_trial()
 !
@@ -293,14 +293,14 @@ contains
 !
          enddo
 !
-         call mem%dealloc(c, wf%n_gs_amplitudes)
+         call mem%dealloc(c, wf%n_es_amplitudes)
 !
-!        Solve linear equation(s) in reduced space 
+!        Solve linear equation(s) in reduced space
 !
          call solver%davidson%solve_reduced_problem()
 !
-!        Loop over roots and check residuals, 
-!        then generate new trial vectors for roots not yet converged 
+!        Loop over roots and check residuals,
+!        then generate new trial vectors for roots not yet converged
 !
          call output%printf('n', 'Frequency      Residual norm', fs='(/t3,a)')
          call output%print_separator('n', 30, '-')
@@ -311,9 +311,9 @@ contains
 !
             call solver%davidson%construct_residual(X, root)
 !
-            residual_norm = get_l2_norm(X, wf%n_gs_amplitudes)
+            residual_norm = get_l2_norm(X, wf%n_es_amplitudes)
 !
-            if (residual_norm > solver%residual_threshold) then 
+            if (residual_norm > solver%residual_threshold) then
 !
                converged_residual = .false.
                call solver%davidson%add_new_trial(X, root)
@@ -323,34 +323,34 @@ contains
             call output%printf('n', '(e9.2)     (e9.2)', &
                                reals=[frequencies(root), residual_norm])
 !
-         enddo 
+         enddo
 !
-         call mem%dealloc(X, wf%n_gs_amplitudes)
+         call mem%dealloc(X, wf%n_es_amplitudes)
 !
          call output%print_separator('n', 30, '-')
 !
-      enddo ! End of iterative loop 
+      enddo ! End of iterative loop
 !
-!     :: Summary of calculation :: 
+!     :: Summary of calculation ::
 !
       if (converged_residual) then
 !
          call output%printf('m', 'Convergence criterion met in (i0) iterations!', &
                             ints=[iteration], fs='(t3,a)')
 !
-         call mem%alloc(solution, wf%n_gs_amplitudes)
+         call mem%alloc(solution, wf%n_es_amplitudes)
 !
          do root = 1, solver%davidson%n_solutions
 !
             call solver%davidson%construct_solution(solution, root)
 !
             call solution_files(root)%open_('write', 'rewind')
-            call solution_files(root)%write_(solution, wf%n_gs_amplitudes)
+            call solution_files(root)%write_(solution, wf%n_es_amplitudes)
             call solution_files(root)%close_()
 !
          enddo
 !
-         call mem%dealloc(solution, wf%n_gs_amplitudes)
+         call mem%dealloc(solution, wf%n_es_amplitudes)
 !
       else
 !
@@ -366,7 +366,7 @@ contains
 !
    subroutine cleanup_davidson_cc_linear_equations(solver, wf)
 !!
-!!    Cleanup 
+!!    Cleanup
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -394,9 +394,9 @@ contains
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(davidson_cc_linear_equations) :: solver 
+      class(davidson_cc_linear_equations) :: solver
 !
       call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
@@ -412,7 +412,7 @@ contains
 !!    Set precondition vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
 !!
-!!    Sets precondition vector to orbital differences 
+!!    Sets precondition vector to orbital differences
 !!
       implicit none
 !
@@ -421,22 +421,22 @@ contains
 !
       real(dp), dimension(:), allocatable :: preconditioner
 !
-      call mem%alloc(preconditioner, wf%n_gs_amplitudes)
-      call wf%get_orbital_differences(preconditioner, wf%n_gs_amplitudes)
+      call mem%alloc(preconditioner, wf%n_es_amplitudes)
+      call wf%get_orbital_differences(preconditioner, wf%n_es_amplitudes)
       call solver%davidson%set_preconditioner(preconditioner)
-      call mem%dealloc(preconditioner, wf%n_gs_amplitudes)
+      call mem%dealloc(preconditioner, wf%n_es_amplitudes)
 !
    end subroutine set_precondition_vector_davidson_cc_linear_equations
 !
 !
    subroutine read_settings_davidson_cc_linear_equations(solver)
 !!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(davidson_cc_linear_equations) :: solver 
+      class(davidson_cc_linear_equations) :: solver
 !
       call input%get_keyword('threshold',                                  &
                                         'solver ' // trim(solver%section), &

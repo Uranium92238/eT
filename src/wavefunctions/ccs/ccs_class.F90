@@ -378,8 +378,8 @@ module ccs_class
       procedure :: prepare_for_multiplier_equation               => prepare_for_multiplier_equation_ccs
       procedure :: prepare_for_multiplier_equation_complex       => prepare_for_multiplier_equation_ccs_complex
 !
-      procedure :: prepare_for_density                           => prepare_for_density_ccs
-      procedure :: prepare_for_density_complex                   => prepare_for_density_ccs_complex
+      procedure :: prepare_for_properties                           => prepare_for_properties_ccs
+      procedure :: prepare_for_properties_complex                   => prepare_for_properties_ccs_complex
 !
       procedure :: approximate_double_excitation_vectors         => approximate_double_excitation_vectors_ccs
 !

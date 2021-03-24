@@ -186,7 +186,7 @@ contains
 !
 !     Compute the one-electron density
 !
-      call wf%prepare_for_density()
+      call wf%prepare_for_properties()
       call wf%initialize_gs_density()
       call wf%construct_gs_density()
 !

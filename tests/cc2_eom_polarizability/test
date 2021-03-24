@@ -9,11 +9,11 @@ sys.path.append(str(Path(__file__).parents[1]))
 # we import essential functions from the runtest library
 from runtest import version_info, cli, run
 
-# functions to get the filters
-from filters import get_gs_filter, get_polarizability_filter
-
 # this tells runtest how to run your code
 from runtest_config import configure
+
+# functions to get the filters
+from filters import get_gs_filter, get_polarizability_filter
 
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
@@ -28,11 +28,10 @@ f.extend(g)
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_eom_polarizability.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'cc2_eom_polarizability.inp'
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

@@ -40,11 +40,10 @@ for inp in ['uhf.inp']:
                 extra_args='-xyz',
                 filters={'out': f})
 
-missing_file = checkfile.exists()
-
-if missing_file > 0:
-    print("Missing files:")
-    print("\n".join(checkfile.name))
+if checkfile.exists():
+    filerror = 0
+else:
+    print(f"Missing file: {checkfile.name}")
     filerror = 1
 
 sys.exit(ierr + filerror)
