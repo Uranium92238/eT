@@ -287,6 +287,15 @@ module ccs_class
 !
       procedure :: construct_Jacobian_transform                  => construct_Jacobian_transform_ccs
 !
+      procedure :: prepare_for_Jacobians                 &
+                => prepare_for_Jacobians_ccs
+!
+      procedure :: prepare_for_approximate_Jacobians     &
+                => prepare_for_approximate_Jacobians_ccs
+!
+      procedure :: approximate_Jacobian_transform        &
+                => approximate_Jacobian_transform_ccs      
+!
       procedure :: jacobian_transformation                       => jacobian_transformation_ccs
       procedure :: jacobian_ccs_a1                               => jacobian_ccs_a1_ccs
       procedure :: jacobian_ccs_b1                               => jacobian_ccs_b1_ccs
@@ -919,6 +928,107 @@ contains
       endif
 !
    end subroutine construct_Jacobian_transform_ccs
+!
+!
+   subroutine prepare_for_Jacobians_ccs(wf, r_or_l)
+!!
+!!    Approximate Jacobian transform
+!!    Written by Eirik F. Kjønstad, Mar 2021
+!!
+!!    Wrapper for preparations to left and right Jacobian transformations.
+!!
+!!    r_or_l: 'left', 'right', or 'both'
+!!            (prepares for A^T, A, or both A^T and A)
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: r_or_l
+!
+      if (r_or_l == 'right') then 
+!
+         call wf%prepare_for_jacobian()
+!
+      else if (r_or_l == 'left') then 
+!
+         call wf%prepare_for_jacobian_transpose()
+!
+      else if (r_or_l == 'both') then 
+!
+         call wf%prepare_for_jacobian()
+         call wf%prepare_for_jacobian_transpose()
+!
+      else 
+!
+         call output%error_msg('Could not recognize "r_or_l" in prepare_for_Jacobians_ccs.')
+!
+      end if
+!
+   end subroutine prepare_for_Jacobians_ccs
+!
+!
+   subroutine approximate_Jacobian_transform_ccs(wf, r_or_l, X, R, w)
+!!
+!!    Approximate Jacobian transform
+!!    Written by Eirik F. Kjønstad, Mar 2021
+!!
+!!    Wrapper for a lower-level Jacobian transformation that is the best approximation
+!!    with a lower computational scaling.
+!!
+      use warning_suppressor
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: r_or_l
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)  :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: R
+!
+      real(dp), intent(in), optional :: w
+!
+!     Suppress unused variables
+      call do_nothing(w) 
+      call do_nothing(r_or_l)
+      call do_nothing(X)
+      call do_nothing(R)
+!
+      call output%error_msg('Approximate Jacobian transformation for this CC method &
+                           & has not yet been implemented.')
+!
+   end subroutine approximate_Jacobian_transform_ccs
+!
+!
+   subroutine prepare_for_approximate_Jacobians_ccs(wf, r_or_l)
+!!
+!!    Prepare for approximate Jacobians
+!!    Written by Eirik F. Kjønstad, Mar 2021
+!!
+!!    Wrapper for preparations to a lower-level Jacobian transformation that is 
+!!    the best approximation with a lower computational scaling.
+!!
+!!    r_or_l: 'left', 'right', or 'both'
+!!            (prepares for A^T, A, or both A^T and A)
+!!
+      use warning_suppressor
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: r_or_l
+!
+!     Suppress unused variables
+      call do_nothing(wf)
+      call do_nothing(r_or_l)
+!
+      call output%error_msg('Approximate Jacobian transformation for this CC method &
+                           & has not yet been implemented. (Error due to call to prepare &
+                           & for this transformation.)')
+!
+   end subroutine prepare_for_approximate_Jacobians_ccs
 !
 !
    subroutine get_cvs_projector_ccs(wf, projector, n_cores, core_MOs)

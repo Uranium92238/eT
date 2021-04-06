@@ -59,7 +59,7 @@ def get_mlhf_filter(tolerance, convergence=True, restart=False, idempotent=True)
     return f
 
 
-def get_gs_filter(tolerance, convergence=True, restart=False):
+def get_gs_filter(tolerance, convergence=True, restart=False, Newton=False):
     """
     Returns filters for a GS calculation.
     """
@@ -79,19 +79,31 @@ def get_gs_filter(tolerance, convergence=True, restart=False):
         ),
     ]
 
+    if Newton:
+        h = [
+            get_filter(
+                from_string="Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)",
+                num_lines=13,
+                abs_tolerance=tolerance,
+                mask=[3],
+                ignore_sign=True,
+            ),
+        ]
+        g.extend(h)
+
     f.extend(g)
 
     return f
 
 
-def get_es_filter(n_states, tolerance, convergence=True, restart=False):
+def get_es_filter(n_states, tolerance, convergence=True, restart=False, Newton=False):
     """
     Returns filters for an ES calculation.
     """
 
     from runtest import get_filter
 
-    f = get_gs_filter(tolerance, convergence, restart)
+    f = get_gs_filter(tolerance, convergence, restart, Newton)
 
     g = [
         get_filter(
@@ -107,14 +119,14 @@ def get_es_filter(n_states, tolerance, convergence=True, restart=False):
     return f
 
 
-def get_eom_filter(n_states, tolerance, convergence=True, restart=False):
+def get_eom_filter(n_states, tolerance, convergence=True, restart=False, Newton=False):
     """
     Returns filters for an EOM calculation.
     """
 
     from runtest import get_filter
 
-    f = get_es_filter(n_states, tolerance, convergence, restart)
+    f = get_es_filter(n_states, tolerance, convergence, restart, Newton)
 
     g = [
         get_filter(

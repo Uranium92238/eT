@@ -7,7 +7,7 @@ import sys
 sys.path.append(str(Path(__file__).parents[1]))
 
 # we import essential functions from the runtest library
-from runtest import version_info, cli, run
+from runtest import version_info, get_filter, cli, run
 
 # this tells runtest how to run your code
 from runtest_config import configure
@@ -19,7 +19,7 @@ assert version_info.major == 2
 from filters import get_gs_filter
 
 # construct filter(s)
-threshold = 1.0e-8
+threshold = 1.0e-10
 convergence = True
 Newton = True
 restart = False
@@ -30,7 +30,7 @@ f = get_gs_filter(threshold, convergence, restart, Newton)
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_gs_energy_nr_crop.inp']:
+for inp in ['cc2_lowmem_gs_energy_nr.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

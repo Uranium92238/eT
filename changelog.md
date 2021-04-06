@@ -1,4 +1,7 @@
 # eT v1.3
+### Features
+- Added multimodel Newton-Raphson capability to ground state Newton-Raphson solver. Can be used to converge amplitudes in CC2 and CC3. eT-program/eT!759
+
 ### Structure
 - The test scripts now uses pathlib instead of os. eT-program/eT!756
 

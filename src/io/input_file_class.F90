@@ -500,17 +500,18 @@ contains
 !
       solver_cc_gs%name_    = 'solver cc gs'
       solver_cc_gs%required = .false.
-      solver_cc_gs%keywords = [character(len=30) ::   &
-                              'algorithm',            &
-                              'energy threshold',     &
-                              'omega threshold',      &
-                              'crop',                 &
-                              'micro iteration storage', &
-                              'max micro iterations', &
-                              'rel micro threshold',  &
-                              'storage',              &
-                              'max iterations',       &
-                              'diis dimension',       &
+      solver_cc_gs%keywords = [character(len=30) ::       &
+                              'algorithm',                &
+                              'energy threshold',         &
+                              'omega threshold',          &
+                              'crop',                     &
+                              'micro iteration storage',  &
+                              'max micro iterations',     &
+                              'multimodel newton',        &
+                              'rel micro threshold',      &
+                              'storage',                  &
+                              'max iterations',           &
+                              'diis dimension',           &
                               'restart' ]
 !
 !
