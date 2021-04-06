@@ -303,6 +303,10 @@ contains
 !!
 !!    Allocates/initializes the amplitude updater algorithm used by the ground state solver.
 !!
+      use abstract_jacobian_transformer_class,     only: abstract_jacobian_transformer
+      use jacobian_transformer_class,              only: jacobian_transformer
+      use approximate_jacobian_transformer_class,  only: approximate_jacobian_transformer
+!
       use amplitude_updater_class,      only: amplitude_updater
 !
       use quasi_newton_updater_class,   only: quasi_newton_updater
@@ -317,6 +321,8 @@ contains
       character(len=*), intent(in) :: global_storage
 !
       class(amplitude_updater), allocatable :: t_updater
+!
+      class(abstract_jacobian_transformer), allocatable :: transformer
 !
       real(dp) :: relative_threshold
 !
@@ -336,6 +342,8 @@ contains
          if (trim(wf%name_) == 'cc2') &
             call output%error_msg('Newton-Raphson not implemented for CC2')
 !
+!        Set defaults for microiterations, and read if non-standard settings
+!
          relative_threshold = 1.0d-2
          max_iterations     = 100
          storage            = 'disk'
@@ -351,12 +359,26 @@ contains
 !
          call input%get_keyword('micro iteration storage', 'solver cc gs', storage)
 !
-         t_updater = newton_raphson_updater(n_amplitudes       = wf%n_gs_amplitudes,  &
-                                            scale_amplitudes   = .true.,              &
-                                            scale_residual     = .false.,             &
-                                            relative_threshold = relative_threshold,  &   
-                                            records_in_memory  = records_in_memory,   & 
-                                            max_iterations     = max_iterations)
+!        Determine which transformation to use - exact or approximate Jacobian - 
+!        and then construct the t_updater
+!
+         if (input%is_keyword_present('multimodel newton', 'solver cc gs')) then 
+!
+            transformer = approximate_jacobian_transformer('right')
+!
+         else 
+!
+            transformer = jacobian_transformer('right')
+!
+         endif
+!
+         t_updater = newton_raphson_updater(n_amplitudes       = wf%n_gs_amplitudes, &
+                                            scale_amplitudes   = .true.,             &
+                                            scale_residual     = .false.,            &
+                                            relative_threshold = relative_threshold, &   
+                                            records_in_memory  = records_in_memory,  & 
+                                            max_iterations     = max_iterations,     &
+                                            transformer        = transformer)
 !
       else 
 !

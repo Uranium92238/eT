@@ -29,11 +29,12 @@ module newton_raphson_updater_class
 !!    where A is the Jacobian matrix.
 !!
    use parameters
-   use amplitude_updater_class,    only: amplitude_updater
-   use ccs_class,                  only: ccs
-   use memory_manager_class,       only: mem
-   use global_out,                 only: output
-   use linear_davidson_tool_class, only: linear_davidson_tool
+   use amplitude_updater_class,             only: amplitude_updater
+   use ccs_class,                           only: ccs
+   use memory_manager_class,                only: mem
+   use global_out,                          only: output
+   use linear_davidson_tool_class,          only: linear_davidson_tool
+   use abstract_jacobian_transformer_class, only: abstract_jacobian_transformer
 !
    implicit none
 !
@@ -45,6 +46,8 @@ module newton_raphson_updater_class
       integer, private  :: max_iterations
 !
       type(linear_davidson_tool), allocatable :: davidson 
+!
+      class(abstract_jacobian_transformer), allocatable :: transformer 
 !
    contains
 !
@@ -63,24 +66,26 @@ module newton_raphson_updater_class
 contains 
 !
 !
-   function new_newton_raphson_updater(n_amplitudes,             &
-                                            scale_amplitudes,    &
-                                            scale_residual,      &
-                                            relative_threshold,  &
-                                            records_in_memory,   &
-                                            max_iterations) result(this)
+   function new_newton_raphson_updater(n_amplitudes,        &
+                                       scale_amplitudes,    &
+                                       scale_residual,      &
+                                       relative_threshold,  &
+                                       records_in_memory,   &
+                                       max_iterations,      &
+                                       transformer) result(this)
 !!
 !!    New Newton-Raphson updator
 !!    Written by Eirik F. Kjønstad, 2020
 !!
-
+!!
 !!    scale_amplitudes / scale_residual: if true, scales the diagonal of the double
 !!                                       amplitudes by a factor of two
-
 !!    relative_threshold:                convergence threshold relative to residual norm
 !!    records_in_memory:                 in Davidson, place trials/transforms in memory; 
 !!                                       otherwise, they are on disk
 !!    max_iterations:                    error if reached without convergence
+!!    transformer:                       jacobian transformation to use; see the class
+!!                                       abstract_jacobian_transform and descendants.
 !!
       implicit none 
 !
@@ -89,6 +94,8 @@ contains
       logical, intent(in) :: records_in_memory, scale_amplitudes, scale_residual
 !
       real(dp), intent(in) :: relative_threshold
+!
+      class(abstract_jacobian_transformer), intent(in) :: transformer 
 !
       type(newton_raphson_updater) :: this 
 !
@@ -99,6 +106,7 @@ contains
       this%records_in_memory  = records_in_memory
       this%max_dim_red        = 50
       this%max_iterations     = max_iterations
+      this%transformer        = transformer 
 !
       this%davidson = linear_davidson_tool(name_        = 'newton_raphson_amplitude_updator', &
                                       n_parameters      = this%n_amplitudes,                  &
@@ -149,6 +157,7 @@ contains
       call this%davidson%set_lindep_threshold(min(1.0d-11, rho_threshold))
 !
       call this%davidson%initialize()
+!
       call this%davidson%set_rhs(residual)
 !
       call mem%alloc(preconditioner, this%n_amplitudes)
@@ -159,7 +168,8 @@ contains
 !
       call this%davidson%set_trials_to_preconditioner_guess()
 !
-      call wf%prepare_for_jacobian() 
+      call this%transformer%prepare(wf)
+      call wf%construct_fock(task = 'es')
 !
       call output%printf('n', 'Iteration     Residual norm', fs='(/t6,a)')
       call output%print_separator('n', 29, '-', fs='(t6,a)')
@@ -193,7 +203,7 @@ contains
 !
          call this%davidson%get_trial(c, trial)
 !
-         call wf%construct_Jacobian_transform('right', c, x, w = zero)
+         call this%transformer%transform(wf, c, x, w = zero)
 !
          call this%davidson%set_transform(x, trial)
 !

@@ -396,24 +396,21 @@ contains
       class(abstract_cc_es), intent(in) :: solver 
       class(ccs), intent(inout)         :: wf
 !
-      call wf%initialize_excited_state_files
+      call wf%initialize_excited_state_files()
+      call wf%prepare_for_Jacobians(solver%transformation)
 !
       if (solver%transformation == 'right') then 
 !
-         call wf%initialize_right_excitation_energies
-         call wf%prepare_for_jacobian()
+         call wf%initialize_right_excitation_energies()
 !
       else if (solver%transformation == 'left') then 
 !
-         call wf%initialize_left_excitation_energies
-         call wf%prepare_for_jacobian_transpose()
+         call wf%initialize_left_excitation_energies()
 !
       else if (solver%transformation == 'both') then 
 !
-         call wf%initialize_right_excitation_energies
-         call wf%initialize_left_excitation_energies
-         call wf%prepare_for_jacobian()
-         call wf%prepare_for_jacobian_transpose()
+         call wf%initialize_right_excitation_energies()
+         call wf%initialize_left_excitation_energies()
 !
       end if
 !

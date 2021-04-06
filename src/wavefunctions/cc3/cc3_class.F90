@@ -88,6 +88,9 @@ module cc3_class
 !
       procedure :: construct_Jacobian_transform         => construct_Jacobian_transform_cc3
 !
+      procedure :: prepare_for_approximate_Jacobians    => prepare_for_approximate_Jacobians_cc3
+      procedure :: approximate_Jacobian_transform       => approximate_Jacobian_transform_cc3
+!
 !     Right hand side transformation
 !
       procedure :: effective_jacobian_transformation    => effective_jacobian_transformation_cc3
@@ -362,6 +365,52 @@ contains
       end if
 !
    end subroutine construct_Jacobian_transform_cc3
+!
+!
+   subroutine approximate_Jacobian_transform_cc3(wf, r_or_l, X, R, w)
+!!
+!!    Approximate Jacobian transform
+!!    Written by Eirik F. Kjønstad, Mar 2021
+!!
+!!    Wrapper for a lower-level Jacobian transformation that is the best approximation
+!!    with a lower computational scaling.
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: r_or_l
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)  :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: R
+!
+      real(dp), intent(in), optional :: w
+!
+      call wf%ccsd%construct_Jacobian_transform(r_or_l, X, R, w)
+!
+   end subroutine approximate_Jacobian_transform_cc3
+!
+!
+   subroutine prepare_for_approximate_Jacobians_cc3(wf, r_or_l)
+!!
+!!    Prepare for approximate Jacobians
+!!    Written by Eirik F. Kjønstad, Mar 2021
+!!
+!!    Wrapper for preparations to a lower-level Jacobian transformation that is 
+!!    the best approximation with a lower computational scaling.
+!!
+!!    r_or_l: 'left', 'right', or 'both'
+!!            (prepares for A^T, A, or both A^T and A)
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: r_or_l
+!
+      call wf%ccsd%prepare_for_Jacobians(r_or_l)
+!
+   end subroutine prepare_for_approximate_Jacobians_cc3
 !
 !
    subroutine save_tbar_intermediates_cc3(wf)

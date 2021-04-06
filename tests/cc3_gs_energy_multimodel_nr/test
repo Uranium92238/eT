@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
+# provides os.path.join
+import os
+
+# provides exit
 import sys
 
 # we make sure we can import runtest and runtest_config
-sys.path.append(str(Path(__file__).parents[1]))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 # we import essential functions from the runtest library
 from runtest import version_info, get_filter, cli, run
@@ -12,31 +15,25 @@ from runtest import version_info, get_filter, cli, run
 # this tells runtest how to run your code
 from runtest_config import configure
 
-# functions to get the filters
-from filters import get_gs_filter
-
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
 
+# functions to get the filters
+from filters import get_gs_filter
+
 # construct filter(s)
 threshold = 1.0e-10
+convergence = True
+Newton = True
+restart = False
 
-f = [
-    get_filter(string="Final ground state energy (a.u.):", abs_tolerance=threshold),
-    get_filter(
-        from_string="Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)",
-        num_lines=13,
-        abs_tolerance=threshold,
-        mask=[3],
-        ignore_sign=True,
-    ),
-]
+f = get_gs_filter(threshold, convergence, restart, Newton)
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_gs_energy_NR.inp']:
+for inp in ['cc3_gs_energy_multimodel_nr.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

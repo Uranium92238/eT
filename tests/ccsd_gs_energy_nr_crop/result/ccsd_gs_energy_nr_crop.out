@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco (development version)
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-03-10 18:59:19 UTC +01:00
+  Git branch:         add-gs-multimodel-newton
+  Git hash:           a33b68a1ea54c8417f096ed5dc0593b36a11e21c
+  Fortran compiler:   GNU 9.3.0
+  C compiler:         GNU 9.3.0
+  C++ compiler:       GNU 9.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
   OpenMP:             ON
-  PCM:                ON
+  PCM:                OFF
   Forced batching:    OFF
-  Runtime checks:     OFF
+  Runtime checks:     ON
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:25:37 UTC +01:00
+  Calculation started: 2021-03-10 19:00:36 UTC +01:00
 
 
   :: Input file
@@ -166,21 +166,21 @@
      5          -224.265504871498     0.2185E-02     0.4029E-03
      6          -224.265575210795     0.1077E-02     0.7034E-04
      7          -224.265591462473     0.7761E-03     0.1625E-04
-     8          -224.265595759690     0.1293E-03     0.4297E-05
+     8          -224.265595759691     0.1293E-03     0.4297E-05
      9          -224.265596134831     0.4396E-04     0.3751E-06
     10          -224.265596146299     0.2286E-04     0.1147E-07
     11          -224.265596149999     0.6961E-05     0.3700E-08
-    12          -224.265596150202     0.3440E-05     0.2037E-09
-    13          -224.265596150281     0.1956E-05     0.7864E-10
-    14          -224.265596150309     0.4363E-06     0.2831E-10
-    15          -224.265596150314     0.1784E-06     0.4746E-11
-    16          -224.265596150315     0.8538E-07     0.7390E-12
-    17          -224.265596150315     0.6247E-07     0.1137E-12
-    18          -224.265596150315     0.2744E-07     0.0000E+00
-    19          -224.265596150315     0.2922E-07     0.2274E-12
-    20          -224.265596150315     0.1496E-07     0.1421E-12
-    21          -224.265596150315     0.4764E-08     0.5684E-13
-    22          -224.265596150315     0.4073E-08     0.1421E-12
+    12          -224.265596150202     0.3440E-05     0.2036E-09
+    13          -224.265596150281     0.1956E-05     0.7887E-10
+    14          -224.265596150310     0.4363E-06     0.2848E-10
+    15          -224.265596150314     0.1784E-06     0.4434E-11
+    16          -224.265596150315     0.8538E-07     0.6821E-12
+    17          -224.265596150315     0.6247E-07     0.8527E-13
+    18          -224.265596150315     0.2744E-07     0.8527E-13
+    19          -224.265596150315     0.2922E-07     0.8527E-13
+    20          -224.265596150315     0.1496E-07     0.2842E-13
+    21          -224.265596150315     0.4764E-08     0.8527E-13
+    22          -224.265596150315     0.4073E-08     0.1705E-12
     23          -224.265596150315     0.8969E-09     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 23 iterations!
@@ -194,8 +194,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              3.00726
-     Total cpu time (sec):               5.95721
+     Total wall time (sec):              2.18020
+     Total cpu time (sec):               4.34800
 
 
   :: CCSD wavefunction
@@ -280,7 +280,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.8323E-10
-     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1440E-14
 
   - Settings for integral handling:
 
@@ -290,8 +290,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              1.10299
-     Total cpu time (sec):               2.14974
+     Total wall time (sec):              1.25707
+     Total cpu time (sec):               2.47361
 
 
   2) Preparation of MO basis and integrals
@@ -423,16 +423,16 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.26923
-     Total cpu time (sec):               2.53722
+     Total wall time (sec):              0.93218
+     Total cpu time (sec):               1.86414
 
   - Timings for the CCSD ground state calculation
 
-     Total wall time (sec):              2.37264
-     Total cpu time (sec):               4.68739
+     Total wall time (sec):              2.18956
+     Total cpu time (sec):               4.33806
 
      Peak memory usage during the execution of eT: 60.896864 MB
 
-  Calculation ended: 2021-03-09 17:25:43 UTC +01:00
+  Calculation ended: 2021-03-10 19:00:40 UTC +01:00
 
   eT terminated successfully!

@@ -85,6 +85,9 @@ set(eT_fortran_sources
    src/solver_tools/amplitude_updaters/amplitude_updater_class.F90
    src/solver_tools/amplitude_updaters/quasi_newton_updater_class.F90
    src/solver_tools/amplitude_updaters/newton_raphson_updater_class.F90
+   src/solver_tools/amplitude_updaters/abstract_jacobian_transformer_class.F90
+   src/solver_tools/amplitude_updaters/approximate_jacobian_transformer_class.F90
+   src/solver_tools/amplitude_updaters/jacobian_transformer_class.F90
 #
    src/fields/electric_field_class.F90
    src/solver_tools/precondition_tool_class.F90
