@@ -110,15 +110,12 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest)
    file(COPY ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest DESTINATION ${CMAKE_BINARY_DIR}/tests)
 endif()
 
-#Configure eT_launch, set permissions toexecutable and copy into build
-configure_file(${CMAKE_SOURCE_DIR}/eT_launch.in ${CMAKE_SOURCE_DIR}/eT_launch)
-file(COPY ${CMAKE_SOURCE_DIR}/eT_launch 
+#Configure eT_launch.in, set permissions toexecutable and copy into build
+configure_file(${CMAKE_SOURCE_DIR}/eT_launch.in ${CMAKE_SOURCE_DIR}/eT_launch.py)
+file(COPY ${CMAKE_SOURCE_DIR}/eT_launch.py
      DESTINATION ${CMAKE_BINARY_DIR} 
      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ WORLD_READ)
-file(REMOVE  ${CMAKE_SOURCE_DIR}/eT_launch)
-
-#Copy conversion script into tests directory
-file(COPY ${CMAKE_SOURCE_DIR}/convert_v1_0_restart_files.py  DESTINATION ${CMAKE_BINARY_DIR}/tests)
+file(REMOVE  ${CMAKE_SOURCE_DIR}/eT_launch.py)
 
 #Configure get_complilation_info library
 include(CompilationInfo)

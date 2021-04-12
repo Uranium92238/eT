@@ -29,7 +29,7 @@ f += get_spin_filter(spin_threshold)
 options = cli()
 
 test_dir = Path(__file__).parent
-checkfile = test_dir / "uhf_mo_information.out"
+checkfile = test_dir / "uhf.mo_information.out"
 
 ierr = 0
 for inp in ['uhf.inp']:
@@ -37,7 +37,6 @@ for inp in ['uhf.inp']:
     ierr += run(options,
                 configure,
                 input_files=inp,
-                extra_args='-xyz',
                 filters={'out': f})
 
 if checkfile.exists():

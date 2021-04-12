@@ -821,7 +821,7 @@ contains
 !
       class(uhf), intent(inout) :: wf
 !
-      wf%mo_information_file = output_file('mo_information.out')
+      wf%mo_information_file = output_file('eT.mo_information.out')
       call wf%mo_information_file%open_('rewind')
 !
       call wf%print_orbitals_and_energies(wf%orbital_energies_a,     &

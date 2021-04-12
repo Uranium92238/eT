@@ -89,7 +89,7 @@ program eT_program
    input = input_file('eT.inp')
    call input%open_()
 !
-   timing = output_file('timing.out')
+   timing = output_file('eT.timing.out')
    call timing%open_()
 !
    eT_timer = timings("Total time in eT", pl='minimal')

@@ -30,7 +30,7 @@ checkfiles = ["hf_energy.AO_density.plt",
               "hf_energy.MO_0001.plt",
               "hf_energy.MO_0002.plt",
               "hf_energy.MO_0003.plt",
-              "hf_energy_mo_information.out"]
+              "hf_energy.mo_information.out"]
 
 test_dir = Path(__file__).parent
 checkfiles = [test_dir / i for i in checkfiles]
@@ -41,7 +41,6 @@ for inp in ['hf_energy.inp']:
     ierr += run(options,
                 configure,
                 input_files=inp,
-                extra_args='-xyz',
                 filters={'out': f})
 
 missing_files = [i for i in checkfiles if not i.exists()]

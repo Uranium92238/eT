@@ -24,7 +24,7 @@
 macro(add_eT_runtest _name _labels)
     add_test(
         ${_name}
-        python3 ${PROJECT_BINARY_DIR}/tests/${_name}/test --binary-dir=${PROJECT_BINARY_DIR}  --work-dir=${PROJECT_BINARY_DIR}/tests/${_name} --verbose)
+        python3 ${PROJECT_BINARY_DIR}/tests/${_name}/test --binary-dir=${PROJECT_BINARY_DIR} --work-dir=${PROJECT_BINARY_DIR}/tests/${_name} --verbose)
     if(NOT "${_labels}" STREQUAL "")
         set_tests_properties(${_name} PROPERTIES LABELS "${_labels}")
     endif()
