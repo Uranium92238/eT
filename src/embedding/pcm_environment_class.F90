@@ -410,7 +410,7 @@ contains
          inquire(file='@pcmsolver.inp', exist=file_exists)
 !         
          if(.not.file_exists) &
-            call output%error_msg('PCM Calculation External Input: Problems with go_pcm.py')
+            call output%error_msg("PCM Calculation External Input: No @pcmsolver.inp in scratch.")
 !      
       else
 !      

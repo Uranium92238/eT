@@ -568,7 +568,7 @@ def complexify_modules(src_dir, parameter_list):
                     c_file.write(line)
 
 
-def main(root_dir):
+def autogenerate(root_dir):
 
     source_directory = Path(root_dir / "src")
 
@@ -590,4 +590,4 @@ def main(root_dir):
 
 if __name__ == "__main__":
     default_path = Path(__file__).resolve().parent
-    main(default_path)
+    autogenerate(default_path)

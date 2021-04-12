@@ -161,7 +161,7 @@ compiling, as the script generates necessary interfaces and files handling compl
 Use `make -j n`, where `n` is the number of processors, to make the compilation run in parallel.
 
 If successful, the directory now contains the executable, `eT`, as well as a Python launch script 
-[eT_launch](https://etprogram.org/eT_launch.html). 
+[eT_launch.py](https://etprogram.org/eT_launch.html). 
 If you downloaded runtest,
 you can test your installation using ctest:
 ```shell

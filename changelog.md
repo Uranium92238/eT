@@ -1,28 +1,24 @@
 # eT v1.3
 ### Features
 - Added multimodel Newton-Raphson capability to ground state Newton-Raphson solver. Can be used to converge amplitudes in CC2 and CC3. eT-program/eT!759
+- EOM polarizabilities are now available for CC2. eT-program/eT!761
+- Consistent copying of all output files. They will now be copied to the same directory as output file. eT-program/eT!763
+- Possible to specify output file, executable, savedir, loaddir, loadv1.0dir and pcm input file for each input file. eT-program/eT!763
+- `eT_launch.py` now more tolerant of number of inputs and will use defaults or give a warning if they don't match the number of input files. eT-program/eT!763
+- Changed `convert_v1_0_restart_files.py` script to not delete the old files and it can now be called from `eT_launch.py` using `--load-v1-0-restart-dir`. eT-program/eT!763
+- `-i-err` changed to  `-i`. (`-i-err` retained for backwardness). eT-program/eT!763
+- Possible to tell `eT_launch.py` to gracefully terminate eT using signals (`--signals`) or timeout (`--timeout`). eT-program/eT!763
 
 ### Structure
 - The test scripts now uses pathlib instead of os. eT-program/eT!756
-
-### Features
-- EOM polarizabilities are now available for CC2. eT-program/eT!761
+- Changed names of `setup` and `eT_launch` to `setup.py` and `eT_launch.py` so they can be imported into python. eT-program/eT!763
+- Changed output file names to all start with `eT.*` and `eT_launch.py` renames them to `output_name.*`. eT-program/eT!763
+- Removed `check_alloc.py`. eT-program/eT!763
 
 
 # eT v1.2
 ### Bugfixes
 - Added handling of zero length character prints. See merge request eT-program/eT!716
-
-### Optimization
-- Fock matrix construction at CC level, in terms of T1-transformed integrals, is now N^4 scaling. Only the necessary blocks for a given task are constructed. See merge request eT-program/eT!678
-- Removed one construction of the Coulomb fock matrix per iteration. See merge request eT-program/eT!677
-- CCS Jacobian is now N^4 scaling (Cholesky vector algorithm) See merge request eT-program/eT!592
-- CCS energy is now N^4 scaling (Cholesky vector algorithm) See merge request eT-program/eT!715
-- CC3 optimization using covariant/contravariant amplitudes and integrals are resorted on the fly. See merge request eT-program/eT!685
-- Non-linear davidson now default solver for CC3 and low-mem CC2. See merge request eT-program/eT!724
-- Only necessary (vv|vv) integrals computed in CCSD and transpose Jacobian transformation now uses the optimized v^4o^2 routine. See merge request eT-program/eT!711
-- Some cleanup in C2 and D2 terms in CCSD. See merge request eT-program/eT!727
-- ERI tools use xsyrk to compute symmetric integrals. See merge request eT-program/eT!730
 
 ### Features
 - printf accepts complex numbers and possible to repeat formats. See merge request eT-program/eT!674
@@ -38,6 +34,17 @@
 - Added keyword to control storage in micro iterations of Newton-Raphson ground state solver (`micro iterations storage`). See merge request eT-program/eT!651
 - Non-linear davidson: minimal threshold in the microiterations set to half the residual threshold. See merge request eT-program/eT!738
 - The conversion script removes `scf_restart_file` and `cc_restart_file` after it has been used. See merge request eT-program/eT!745
+
+### Optimization
+- Fock matrix construction at CC level, in terms of T1-transformed integrals, is now N^4 scaling. Only the necessary blocks for a given task are constructed. See merge request eT-program/eT!678
+- Removed one construction of the Coulomb fock matrix per iteration. See merge request eT-program/eT!677
+- CCS Jacobian is now N^4 scaling (Cholesky vector algorithm) See merge request eT-program/eT!592
+- CCS energy is now N^4 scaling (Cholesky vector algorithm) See merge request eT-program/eT!715
+- CC3 optimization using covariant/contravariant amplitudes and integrals are resorted on the fly. See merge request eT-program/eT!685
+- Non-linear davidson now default solver for CC3 and low-mem CC2. See merge request eT-program/eT!724
+- Only necessary (vv|vv) integrals computed in CCSD and transpose Jacobian transformation now uses the optimized v^4o^2 routine. See merge request eT-program/eT!711
+- Some cleanup in C2 and D2 terms in CCSD. See merge request eT-program/eT!727
+- ERI tools use xsyrk to compute symmetric integrals. See merge request eT-program/eT!730
 
 ### Structure
 - Omega and Jacobian routines have separate in and out vectors and call the corresponding parent routines. See merge request eT-program/eT!684

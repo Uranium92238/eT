@@ -26,9 +26,9 @@ f = [
                mask=[2])
 ]
 
-checkfiles = ["ccsd_es_lanczos_lanczos30_X",
-              "ccsd_es_lanczos_lanczos30_Y",
-              "ccsd_es_lanczos_lanczos30_Z"]
+checkfiles = ["ccsd_es_lanczos.lanczos30_X",
+              "ccsd_es_lanczos.lanczos30_Y",
+              "ccsd_es_lanczos.lanczos30_Z"]
 
 test_dir = Path(__file__).parent
 checkfiles = [test_dir / i for i in checkfiles]

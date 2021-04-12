@@ -30,7 +30,7 @@ build:
       if [ "$coverage" == "true" ]; then 
         extra_F_flags=' -fprofile-arcs -ftest-coverage'
       fi
-    - ./setup --int32 -FC=gfortran -CXX=g++ -F-flags="$extra_F_flags" $extra_setup_options --pcm
+    - ./setup.py --int32 -FC=gfortran -CXX=g++ -F-flags="$extra_F_flags" $extra_setup_options --pcm
     - cd build
     - cmake_command=$(cat setup_cmake_output | head -1)
     - echo ${cmake_command}

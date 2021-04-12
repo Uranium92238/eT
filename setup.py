@@ -7,13 +7,22 @@
 # licensed under the GNU Lesser General Public License
 # Converted to use pathlib.Path and f-strings by
 # Sander Roet <sander.roet at ntnu.no>, Sep 2020
+
+from pathlib import Path
+
+root_dir = Path(__file__).resolve().parent
+dev_tool_dir = root_dir / "dev_tools"
+default_path = root_dir / "build"
+
 import sys
+
+sys.path.append(str(dev_tool_dir))
+
 import subprocess
 import shutil
-import autogenerate_files
+from autogenerate_files import autogenerate
 from os import chdir
 from argparse import ArgumentParser, HelpFormatter
-from pathlib import Path
 
 
 class SmartFormatter(HelpFormatter):
@@ -27,9 +36,6 @@ class SmartFormatter(HelpFormatter):
 if sys.version < "3.6":
     print("requires python version >= 3.6")
     sys.exit(1)
-
-root_dir = Path(__file__).resolve().parent
-default_path = root_dir / "build"
 
 
 def input_parser():
@@ -260,13 +266,13 @@ def run_CMake(command, build_path):
     chdir(calldir)
 
 
-def main(argv):
+def eT_setup(argv):
     args = input_parser()
-    autogenerate_files.main(root_dir)
+    autogenerate(root_dir)
     build_path = build_maker(args)
     cmake_command = construct_command(args)
     run_CMake(cmake_command, build_path)
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    eT_setup(sys.argv)

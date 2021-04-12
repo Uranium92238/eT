@@ -3,9 +3,6 @@
 from pathlib import Path
 import sys
 
-import shutil
-from pathlib import Path
-
 # we make sure we can import runtest and runtest_config
 sys.path.append(str(Path(__file__).parents[1]))
 
@@ -18,9 +15,6 @@ from runtest_config import configure
 # functions to get the filters
 from filters import get_hf_filter, get_spin_filter
 
-# functions to convert v1.0 files
-from convert_v1_0_restart_files import convert_files_in_dir
-
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
 
@@ -28,18 +22,6 @@ assert version_info.major == 2
 options = cli()
 
 ierr = 0
-
-# Copy old_restart_files to converted_files
-test_dir = Path(__file__).parent
-src = Path(test_dir / "old_restart_files")
-dest = Path(test_dir / "converted_files")
-
-if dest.exists():
-    shutil.rmtree(dest.resolve())
-shutil.copytree(src.resolve(), dest.resolve())
-
-# Use the script on converted_files
-convert_files_in_dir(dest)
 
 # construct filter(s)
 threshold = 1.0e-10
@@ -55,9 +37,7 @@ for inp in ['restart_uhf.inp']:
     ierr += run(options,
                 configure,
                 input_files=inp,
-                extra_args='-load ./converted_files',
+                extra_args='-load-v1-0 ./old_restart_files',
                 filters={'out': f})
-
-shutil.rmtree(dest)
 
 sys.exit(ierr)

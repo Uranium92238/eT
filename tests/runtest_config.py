@@ -6,7 +6,7 @@ def configure(options, input_files, extra_args):
 
     from os import path
 
-    launcher = "eT_launch"
+    launcher = "eT_launch.py"
     launcher_full_path = path.normpath(path.join(options.binary_dir, launcher))
 
     inp = input_files
@@ -14,7 +14,7 @@ def configure(options, input_files, extra_args):
     command = []
     command.append("{0}".format(launcher_full_path))
     command.append("{0} ".format(inp))
-    command.append(" --omp 2")  # Set default number of threads, can be overwritten
+    command.append(" --omp 2")
     if extra_args is not None:
         command.append(extra_args)
 
