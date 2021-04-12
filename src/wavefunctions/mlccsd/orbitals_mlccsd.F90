@@ -368,6 +368,7 @@ contains
 !!                      construct the virtual Cholesky orbitals
 !!                      Default: .false.
 !!
+      use cholesky_orbital_tool_class, only: cholesky_orbital_tool
       implicit none
 !
       class(mlccsd), intent(inout) :: wf
@@ -376,172 +377,111 @@ contains
 !
       logical  :: occupied_only_local
 !
-      real(dp), dimension(:,:), allocatable :: D
-!
-      integer, dimension(:), allocatable :: active_aos_ccsd, active_aos_cc2
+      real(dp), dimension(:,:), allocatable :: C
 !
       integer :: first_ao_ccsd, last_ao_ccsd, n_active_aos_ccsd
       integer :: first_ao_cc2, last_ao_cc2, n_active_aos_cc2
 !
-      integer :: i, mo_offset
-!
-      real(dp), parameter :: full_cd_threshold = 1.0d-4
+      type(cholesky_orbital_tool), allocatable :: cd_tool_o, cd_tool_v
 !
       occupied_only_local = .false. 
 !
       if (present(occupied_only)) occupied_only_local = occupied_only
 !
-!     Construct active occupied orbitals     
-!
-!     Determine CCSD ao list
-!
-!     Note that active atoms are the first atoms of the array of atoms in system. 
-!     They are also ordered after the method they are treated with.
-!
       call wf%ao%get_aos_in_subset('ccsd', first_ao_ccsd, last_ao_ccsd)
 !
       n_active_aos_ccsd = last_ao_ccsd - first_ao_ccsd + 1
 !
-      call mem%alloc(active_aos_ccsd, n_active_aos_ccsd)
-!
-      do i = 1, n_active_aos_ccsd
-!
-         active_aos_ccsd(i) = first_ao_ccsd + i - 1
-!
-      enddo
-!      
-!     If we do both CC2 and CCS, then determine the CC2 ao list 
-!     (from both CCSD and CC2 active atoms)
-!
+      n_active_aos_cc2 = 0
       if (wf%do_cc2 .and. wf%do_ccs) then
 !
          call wf%ao%get_aos_in_subset('cc2', first_ao_cc2, last_ao_cc2)
 !         
          n_active_aos_cc2 = last_ao_cc2 - first_ao_cc2 + 1
-         call mem%alloc(active_aos_cc2, n_active_aos_ccsd + n_active_aos_cc2)
-!
-         do i = 1, n_active_aos_ccsd
-!
-            active_aos_cc2(i) = first_ao_ccsd + i - 1
-!
-         enddo
-!
-         do i = 1, n_active_aos_cc2 
-!
-            active_aos_cc2(i + n_active_aos_ccsd) = first_ao_cc2 + i - 1
-!
-         enddo
 !
       endif
 !
-!     Set up active occupied density 
+      call mem%alloc(C, wf%ao%n, wf%ao%n)
 !
-      call mem%alloc(D, wf%ao%n, wf%ao%n)
+!     Occupied orbitals
 !
-      call dgemm('N', 'T',                   &
-                  wf%ao%n,                   &
-                  wf%ao%n,                   &
-                  wf%n_o,                    &
-                  one,                       &
-                  wf%orbital_coefficients,   &
-                  wf%ao%n,                   &
-                  wf%orbital_coefficients,   &
-                  wf%ao%n,                   &
-                  zero,                      &
-                  D,                         &
-                  wf%ao%n)
+      cd_tool_o = cholesky_orbital_tool(wf%ao%n, wf%cholesky_orbital_threshold)
+      call cd_tool_o%initialize_density()
+      call cd_tool_o%set_density_from_orbitals(wf%orbital_coefficients(:,1:wf%n_o), wf%n_o)
 !
+!     Active
 !
-!     Construct active occupied orbitals
+      call cd_tool_o%restricted_decomposition(C, wf%n_ccsd_o, n_active_aos_ccsd, first_ao_ccsd)
+      call wf%set_orbital_coefficients(C(:,1:wf%n_ccsd_o), wf%n_ccsd_o, 1)
 !
-      mo_offset = 0
-!
-      call wf%construct_orbital_block_by_density_cd(D, wf%n_ccsd_o, &
-                                 wf%cholesky_orbital_threshold, mo_offset, active_aos_ccsd)
-!
-      mo_offset = mo_offset + wf%n_ccsd_o
+!     Inactive
 !
       if (wf%do_cc2 .and. wf%do_ccs) then
 !
-         call wf%construct_orbital_block_by_density_cd(D, wf%n_cc2_o, &
-                           wf%cholesky_orbital_threshold, mo_offset, active_aos_cc2)
-!  
-         mo_offset = mo_offset + wf%n_cc2_o
+         call cd_tool_o%restricted_decomposition(C, wf%n_cc2_o, n_active_aos_ccsd + n_active_aos_cc2, first_ao_ccsd)
+         call wf%set_orbital_coefficients(C(:,1:wf%n_cc2_o), wf%n_cc2_o, wf%n_ccsd_o + 1)
 !
-         call wf%construct_orbital_block_by_density_cd(D, wf%n_ccs_o, &
-                           full_cd_threshold, mo_offset)
+         call cd_tool_o%full_decomposition(C, wf%n_ccs_o)
+         call wf%set_orbital_coefficients(C(:,1:wf%n_ccs_o), wf%n_ccs_o, wf%n_ccsd_o + wf%n_cc2_o + 1)
 !
-      elseif (wf%do_cc2 .and. .not. wf%do_ccs) then 
+      elseif (wf%do_cc2 .and. .not. wf%do_ccs) then
 !
-         call wf%construct_orbital_block_by_density_cd(D, wf%n_cc2_o, full_cd_threshold, mo_offset)
+         call cd_tool_o%full_decomposition(C, wf%n_cc2_o)
+         call wf%set_orbital_coefficients(C(:,1:wf%n_cc2_o), wf%n_cc2_o, wf%n_ccsd_o + 1)
          wf%n_ccs_o = 0
 !
-      elseif (wf%do_ccs .and. .not. wf%do_cc2) then
+      else
 !
-         call wf%construct_orbital_block_by_density_cd(D, wf%n_ccs_o, full_cd_threshold, mo_offset)
+         call cd_tool_o%full_decomposition(C, wf%n_ccs_o)
+         call wf%set_orbital_coefficients(C(:,1:wf%n_ccs_o), wf%n_ccs_o, wf%n_ccsd_o + 1)
          wf%n_cc2_o = 0
 !
-      endif  
+      endif
 !
-!     Construct active virtual orbitals     
+      call cd_tool_o%cleanup()
+!
+!     Virtual orbitals    
 !
       if (.not. occupied_only_local) then
 !
-!        Set up virtual density     
+         cd_tool_v = cholesky_orbital_tool(wf%ao%n, wf%cholesky_orbital_threshold)
+         call cd_tool_v%initialize_density()
+         call cd_tool_v%set_density_from_orbitals(wf%orbital_coefficients(:,wf%n_o + 1 : wf%n_mo), wf%n_v)
 !
-         call dgemm('N', 'T',                                  &
-                     wf%ao%n,                                  &
-                     wf%ao%n,                                  &
-                     wf%n_v,                                   &
-                     one,                                      &
-                     wf%orbital_coefficients(1, wf%n_o + 1),   &
-                     wf%ao%n,                                  &
-                     wf%orbital_coefficients(1, wf%n_o + 1),   &
-                     wf%ao%n,                                  &
-                     zero,                                     &
-                     D,                                        &
-                     wf%ao%n)
+!        Active
 !
-         mo_offset = wf%n_o
+         call cd_tool_v%restricted_decomposition(C, wf%n_ccsd_v, n_active_aos_ccsd, first_ao_ccsd)
+         call wf%set_orbital_coefficients(C(:,1:wf%n_ccsd_v), wf%n_ccsd_v, wf%n_o + 1)
 !
-         call wf%construct_orbital_block_by_density_cd(D, wf%n_ccsd_v, &
-                              wf%cholesky_orbital_threshold, wf%n_o, active_aos_ccsd)
-!
-         mo_offset = mo_offset + wf%n_ccsd_v
+!        Inactive
 !
          if (wf%do_cc2 .and. wf%do_ccs) then
 !
-            call wf%construct_orbital_block_by_density_cd(D, wf%n_cc2_v, &
-                              wf%cholesky_orbital_threshold, mo_offset, active_aos_cc2)
+            call cd_tool_v%restricted_decomposition(C, wf%n_cc2_v, n_active_aos_ccsd + n_active_aos_cc2, first_ao_ccsd)
+            call wf%set_orbital_coefficients(C(:,1:wf%n_cc2_v), wf%n_cc2_v, wf%n_ccsd_v + 1)
 !
-            call wf%ao%get_aos_in_subset('cc2', first_ao_cc2, last_ao_cc2)
-!         
-            n_active_aos_cc2 = last_ao_cc2 - first_ao_cc2 + 1
-            call mem%dealloc(active_aos_cc2, n_active_aos_ccsd + n_active_aos_cc2)
+            call cd_tool_v%full_decomposition(C, wf%n_ccs_v)
+            call wf%set_orbital_coefficients(C(:,1:wf%n_ccs_v), wf%n_ccs_v, wf%n_o + wf%n_ccsd_v + wf%n_cc2_v + 1)
 !
-            mo_offset = mo_offset + wf%n_cc2_v
+         elseif (wf%do_cc2 .and. .not. wf%do_ccs) then
 !
-            call wf%construct_orbital_block_by_density_cd(D, wf%n_ccs_v, &
-                                                         full_cd_threshold, mo_offset)
-!
-         elseif (wf%do_cc2 .and. .not. wf%do_ccs) then 
-!
-            call wf%construct_orbital_block_by_density_cd(D, wf%n_cc2_v, &
-                                                         full_cd_threshold, mo_offset)
+            call cd_tool_v%full_decomposition(C, wf%n_cc2_v)
+            call wf%set_orbital_coefficients(C(:,1:wf%n_cc2_v), wf%n_cc2_v, wf%n_o + wf%n_ccsd_v + 1)
             wf%n_ccs_v = 0
 !
-         elseif (wf%do_ccs .and. .not. wf%do_cc2) then
+         else
 !
-            call wf%construct_orbital_block_by_density_cd(D, wf%n_ccs_v, &
-                                                         full_cd_threshold, mo_offset)
+            call cd_tool_v%full_decomposition(C, wf%n_ccs_v)
+            call wf%set_orbital_coefficients(C(:,1:wf%n_ccs_v), wf%n_ccs_v, wf%n_o + wf%n_ccsd_v + 1)
             wf%n_cc2_v = 0
 !
          endif
 !
+         call cd_tool_v%cleanup()
+!
       endif
 !
-      call mem%dealloc(active_aos_ccsd, n_active_aos_ccsd) 
-      call mem%dealloc(D, wf%ao%n, wf%ao%n)        
+      call mem%dealloc(C, wf%ao%n, wf%ao%n)  
 !
    end subroutine construct_cholesky_orbitals_mlccsd
 !

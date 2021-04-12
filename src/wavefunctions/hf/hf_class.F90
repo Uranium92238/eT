@@ -31,7 +31,7 @@ module hf_class
 !
    use timings_class,         only : timings
    use array_utilities,       only : get_abs_max, sandwich
-   use array_utilities,       only : full_cholesky_decomposition_system
+   use array_utilities,       only : full_cholesky_decomposition
    use array_utilities,       only : get_n_highest
    use array_utilities,       only : identity_array
    use output_file_class,     only : output_file
@@ -135,7 +135,6 @@ module hf_class
 !     AO Density related routines
 !
       procedure :: construct_ao_density                        => construct_ao_density_hf
-      procedure :: decompose_ao_density                        => decompose_ao_density_hf
       procedure :: get_ao_density                              => get_ao_density_hf
       procedure :: set_ao_density                              => set_ao_density_hf
       procedure :: initialize_density                          => initialize_density_hf
@@ -737,55 +736,6 @@ contains
       if (wf%embedded) hf_energy = hf_energy + wf%embedding%get_energy(wf%ao, wf%ao_density)
 !
    end function calculate_hf_energy_from_fock_hf
-!
-!
-   subroutine decompose_ao_density_hf(wf)
-!!
-!!    Decompose AO density
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Does a Cholesky decomposition of the AO density matrix,
-!!
-!!       D^AO_wx = sum_J L_w,J L_J,x^T,
-!!
-!!    and sets the MO coefficients accordingly.
-!!
-!!    Modified by Rolf H. Myhre and Alexander C. Paul, Oct 2019
-!!    included sanity check
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      integer, dimension(:), allocatable :: used_diag
-!
-      integer :: rank
-!
-      call mem%alloc(used_diag, wf%ao%n)
-!
-      call dscal(wf%ao%n**2, half, wf%ao_density, 1)
-!
-      call full_cholesky_decomposition_system(wf%ao_density,            &
-                                              wf%orbital_coefficients,  &
-                                              wf%ao%n,                  &
-                                              rank,                     &
-                                              1.0d-12,                  &
-                                              used_diag)
-!
-      call dscal(wf%ao%n**2, two, wf%ao_density, 1)
-!
-      if (any(used_diag .gt. wf%ao%n) .or. any(used_diag .le. 0)) then
-!
-         call output%printf('m', 'Something went wrong when decomposing the AO density.', &
-                            fs='(/t3,a)')
-!
-         call output%error_msg('Trying to access elements outside of an array.')
-!
-      end if
-!
-      call mem%dealloc(used_diag, wf%ao%n)
-!
-   end subroutine decompose_ao_density_hf
 !
 !
    subroutine construct_projection_matrices_hf(wf, Po, Pv, D)

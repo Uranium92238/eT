@@ -245,19 +245,19 @@ contains
 !!    - On exit wf%n_mo, wf%n_o and wf%n_v are updated not to include 
 !!      frozen hf orbitals
 !!
+      use cholesky_orbital_tool_class, only: cholesky_orbital_tool
+!
       implicit none
 !
       class(hf), intent(inout) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: D, orbitals_copy, S, PAO_coeff
-!
-      integer, dimension(:), allocatable :: active_aos
+      real(dp), dimension(:,:), allocatable :: D, orbitals_copy, S, PAO_coeff, C_o
 !
       integer :: first_ao, last_ao, i, n_active_aos, a, first_inactive_ao
 !
-      real(dp), parameter :: full_cd_threshold = 1.0d-4
+      integer :: ao, rank, n_inactive_centers, n_hf_centers 
 !
-      integer :: mo_offset, ao, rank, n_inactive_centers, n_hf_centers 
+      type(cholesky_orbital_tool), allocatable :: cd_tool_o
 !
 !     Construct active occupied orbitals
 !
@@ -313,16 +313,6 @@ contains
 !
       n_active_aos = last_ao
 !
-      call mem%alloc(active_aos, n_active_aos)
-!
-!$omp parallel do private(i)
-      do i = 1, n_active_aos
-!
-         active_aos(i) =  i
-!
-      enddo
-!$omp end parallel do
-!
 !     Occupied orbitals
 !
 !     1. Set up active occupied density
@@ -344,19 +334,21 @@ contains
 !
 !     2. Construct occupied active orbitals
 !
-      mo_offset = 0
+      call mem%alloc(C_o, wf%ao%n, wf%ao%n)
 !
-      call wf%construct_orbital_block_by_density_cd(D, wf%n_o, wf%cholesky_orbital_threshold, &
-                  mo_offset, active_aos)
+      cd_tool_o = cholesky_orbital_tool(wf%ao%n, wf%cholesky_orbital_threshold)
+      call cd_tool_o%initialize_density()
+      call cd_tool_o%set_density_from_density(D, wf%n_o)
 !
-      call mem%dealloc(active_aos, n_active_aos)
+      call cd_tool_o%restricted_decomposition(C_o, wf%n_o, n_active_aos, 1)
+      call wf%set_orbital_coefficients(C_o(:,1:wf%n_o), wf%n_o, 1)
 !
-!     3. Construct occupied orbitals to be frozen 
+      call cd_tool_o%full_decomposition(C_o, wf%n_frozen_hf_o)
+      call wf%set_orbital_coefficients(C_o(:,1:wf%n_frozen_hf_o), wf%n_frozen_hf_o, wf%n_o + 1)
 !
-      mo_offset = wf%n_o
+      call mem%dealloc(C_o, wf%ao%n, wf%ao%n)
 !
-      call wf%construct_orbital_block_by_density_cd(D, wf%n_frozen_hf_o, full_cd_threshold, &
-                  mo_offset)
+      call cd_tool_o%cleanup()
 !
 !     Virtual orbitals
 !

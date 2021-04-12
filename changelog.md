@@ -1,4 +1,5 @@
 # eT v1.3
+
 ### Features
 - Added multimodel Newton-Raphson capability to ground state Newton-Raphson solver. Can be used to converge amplitudes in CC2 and CC3. eT-program/eT!759
 - EOM polarizabilities are now available for CC2. eT-program/eT!761
@@ -14,7 +15,7 @@
 - Changed names of `setup` and `eT_launch` to `setup.py` and `eT_launch.py` so they can be imported into python. eT-program/eT!763
 - Changed output file names to all start with `eT.*` and `eT_launch.py` renames them to `output_name.*`. eT-program/eT!763
 - Removed `check_alloc.py`. eT-program/eT!763
-
+- Cholesky orbital tool now handles decomposition of densities to get orbitals. eT-program/eT!762
 
 # eT v1.2
 ### Bugfixes
