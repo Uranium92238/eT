@@ -121,9 +121,6 @@ module wavefunction_class
       procedure :: lowdin_orthonormalization &
                 => lowdin_orthonormalization_wavefunction
 !
-      procedure :: construct_orbital_block_by_density_cd &
-                => construct_orbital_block_by_density_cd_wavefunction
-!
       procedure :: initialize_mo_fock_frozen &
                 => initialize_mo_fock_frozen_wavefunction
 !
@@ -141,6 +138,9 @@ module wavefunction_class
 !
       procedure :: set_geometry &
                 => set_geometry_wavefunction
+!
+      procedure :: set_orbital_coefficients &
+                => set_orbital_coefficients_wavefunction
 !
       procedure :: prepare_embedding &
                 => prepare_embedding_wavefunction 
@@ -602,114 +602,6 @@ contains
    end subroutine lowdin_orthonormalization_wavefunction
 !
 !
-   subroutine construct_orbital_block_by_density_cd_wavefunction(wf, D, n_vectors, threshold, mo_offset, active_aos)
-!!
-!!    Construct orbital block by Cholesky decomposition for density
-!!    Written by Sarai D. Folkestad, Feb 2019
-!!
-!!    Cholesky decomposition of density D plus
-!!    update of corresponding wavefunction MOs
-!!
-!!    See A. M. J. Sánchez de Merás, H. Koch,
-!!    I. G. Cuesta, and L. Boman (J. Chem. Phys. 132, 204105 (2010))
-!!    for more information on active space generation
-!!    using Cholesky decomposition
-!!
-!!    'D' : Density to be decomposed
-!!          Given in the AO basis
-!!
-!!    'n_vectors' : The number of Cholesky
-!!                  vectors (orbitals) constructed
-!!
-!!    'threshold' : The Cholesky decomposition threshold
-!!
-!!    'mo_offset' : Offset used to set the new MOs
-!!
-!!    'active_aos' : List of AOs on active atoms (optional)
-!!                   This is used in case we want to partially
-!!                   decompose density to get active orbitals
-!!
-!!
-!
-      use array_utilities, only: cholesky_decomposition_limited_diagonal, full_cholesky_decomposition_effective
-!
-      implicit none
-!
-      class(wavefunction), intent(inout) :: wf
-!
-      real(dp), dimension(wf%ao%n,wf%ao%n), intent(inout) :: D
-!
-      integer, intent(out) :: n_vectors
-!
-      real(dp), intent(in) :: threshold
-!
-      integer, intent(in) :: mo_offset
-!
-      integer, dimension(:), optional :: active_aos
-!
-      integer :: n_active_aos, ao, mo
-!
-      real(dp), dimension(:,:), allocatable :: cholesky_vec
-      integer, dimension(:), allocatable  :: keep_vectors
-!
-      call mem%alloc(cholesky_vec, wf%ao%n, wf%ao%n)
-!
-      if (present(active_aos)) then
-!
-!        Active space generation by CD choosing pivots
-!        only on active atoms
-!
-         n_active_aos = size(active_aos)
-!
-         if (n_active_aos .gt. wf%ao%n) call output%error_msg('More active AOs than total AOs')
-!      
-         call cholesky_decomposition_limited_diagonal(D, cholesky_vec, wf%ao%n, &
-                                                      n_vectors, threshold, &
-                                                      n_active_aos, active_aos)
-!
-!        Set the  MOs to be the ones to be frozen for CC
-!
-!$omp parallel do private(ao, mo)
-         do mo = 1, n_vectors
-            do ao = 1, wf%ao%n
-!
-               wf%orbital_coefficients(ao, mo_offset + mo) = cholesky_vec(ao, mo)
-!
-            enddo
-         enddo
-!$omp end parallel do
-!
-      else
-!
-         call mem%alloc(keep_vectors, wf%ao%n)
-!
-!        Full CD of density (used for inactive densities)
-!
-         call full_cholesky_decomposition_effective(D, cholesky_vec, &
-                                             wf%ao%n, n_vectors, &
-                                             threshold, keep_vectors)
-!
-!
-         call mem%dealloc(keep_vectors, wf%ao%n)
-!
-!
-!$omp parallel do private(ao, mo)
-         do mo = 1, n_vectors
-            do ao = 1, wf%ao%n
-!
-               wf%orbital_coefficients(ao, mo_offset + mo) = cholesky_vec(ao, mo)
-!
-            enddo
-         enddo
-!$omp end parallel do
-!
-      endif
-!
-      call mem%dealloc(cholesky_vec, wf%ao%n, wf%ao%n)
-!
-   end subroutine construct_orbital_block_by_density_cd_wavefunction
-!
-!
    subroutine initialize_mo_fock_frozen_wavefunction(wf)
 !!
 !!    Initialize MO Fock frozen
@@ -1074,6 +966,35 @@ contains
       R = R * angstrom_to_bohr     
 !
    end function get_molecular_geometry_wavefunction
+!
+!
+   subroutine set_orbital_coefficients_wavefunction(wf, C, n_orbitals, mo_offset)
+!!
+!!    Set orbital coefficients
+!!    Written by Ida-Marie Høyvik and Linda Goletto, 2019
+!!
+!!    Generalized by SDF 2021, from 'set_active_mo_coefficients_mlhf'
+!!
+      implicit none
+!
+      class(wavefunction),                      intent(inout) :: wf
+      integer,                                  intent(in)    :: n_orbitals
+      real(dp), dimension(wf%ao%n, n_orbitals), intent(in)    :: C
+      integer,                                  intent(in)    :: mo_offset
+!
+      integer :: ao, mo
+!
+!$omp parallel do private(ao, mo)
+         do mo = 1, n_orbitals
+            do ao = 1, wf%ao%n
+!
+               wf%orbital_coefficients(ao, mo_offset - 1 + mo) = C(ao, mo)
+!
+            enddo
+         enddo
+!$omp end parallel do
+!
+   end subroutine set_orbital_coefficients_wavefunction
 !
 !
 end module wavefunction_class

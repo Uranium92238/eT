@@ -139,6 +139,7 @@ set(eT_fortran_sources
    src/tools/task_list_class.F90
    src/tools/electrostatics/point_charges_class.F90
    src/tools/electrostatics/point_charge_class.F90
+   src/tools/orbitals/cholesky_orbital_tool_class.F90
 #
    src/various/butcher_tables.F90
    src/various/continuous_output_coefficients.F90

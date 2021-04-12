@@ -1502,7 +1502,7 @@ contains
 !
       use array_utilities, only: zero_array,       &
                                  zero_array_int,   &
-                                 full_cholesky_decomposition_system
+                                 full_cholesky_decomposition
 !
       implicit none 
 !
@@ -1546,12 +1546,12 @@ contains
       call zero_array(L, ao%n**2)
       call zero_array_int(pivots, ao%n)
 !
-      call full_cholesky_decomposition_system(s_p,                   &
-                                              L,                     &
-                                              ao%n,                  &
-                                              ao%n_orthonormal_ao,              &
-                                              ao%lindep_threshold,   &
-                                              pivots)
+      call full_cholesky_decomposition(s_p,                   &
+                                       L,                     &
+                                       ao%n,                  &
+                                       ao%n_orthonormal_ao,   &
+                                       ao%lindep_threshold,   &
+                                       pivots)
 !
       if (    ao%n_orthonormal_ao   .gt. ao%n     &
          .or. ao%n_orthonormal_ao   .le. 0        &
