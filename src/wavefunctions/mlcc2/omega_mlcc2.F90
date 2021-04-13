@@ -62,13 +62,13 @@ contains
       call wf%construct_u_aibj()
 !
       call wf%omega_cc2_a1(omega(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
-                           wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+                           1, 1, wf%n_cc2_o, wf%n_cc2_v)
 !
       call wf%omega_cc2_b1(omega(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
-                           wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+                           1, 1, wf%n_cc2_o, wf%n_cc2_v)
 !
       call wf%omega_cc2_c1(omega(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
-                           wf%first_cc2_o, wf%first_cc2_v)
+                           1, 1)
 !
       call timer%turn_off()
 !

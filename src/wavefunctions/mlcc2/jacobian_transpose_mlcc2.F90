@@ -81,7 +81,7 @@ contains
 !     CC2 contributions to the transformed singles vector
 !
       call wf%jacobian_transpose_cc2_a1(sigma(1 : wf%n_t1), b(1 : wf%n_t1), &
-                                        wf%n_cc2_o, wf%n_cc2_v, wf%first_cc2_o, wf%first_cc2_v)
+                                        wf%n_cc2_o, wf%n_cc2_v, 1, 1)
 !
       call mem%alloc(b_aibj, (wf%n_cc2_v), (wf%n_cc2_o), (wf%n_cc2_v), (wf%n_cc2_o))
 !
@@ -89,7 +89,7 @@ contains
                     b_aibj, wf%n_cc2_v*wf%n_cc2_o)
 !
       call wf%jacobian_transpose_cc2_b1(sigma(1 : wf%n_t1), b_aibj, wf%n_cc2_o, wf%n_cc2_v, &
-                                    wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+                                    1, 1, wf%n_cc2_o, wf%n_cc2_v)
 !
 !     CC2 contributions to the transformed doubles vector
 !
@@ -99,7 +99,7 @@ contains
 !     Contributions from singles vector c
 !
       call wf%jacobian_transpose_cc2_a2(sigma_aibj, b(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
-                                 wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+                                 1, 1, wf%n_cc2_o, wf%n_cc2_v)
 
 !     Symmetrize
 !
@@ -693,10 +693,10 @@ contains
                do a = 1, wf%n_cc2_v
 !
                   sigma_aibj(a, i, b, j) = sigma_aibj(a, i, b, j) + c_aibj(a,i,b,j) &
-                                          *(wf%orbital_energies(a + wf%first_cc2_v - 1 + wf%n_o) &
-                                          + wf%orbital_energies(b + wf%first_cc2_v - 1 + wf%n_o) &
-                                          - wf%orbital_energies(i + wf%first_cc2_o - 1) &
-                                          - wf%orbital_energies(j + wf%first_cc2_o - 1))
+                                          *(wf%orbital_energies(a + wf%n_o) &
+                                          + wf%orbital_energies(b + wf%n_o) &
+                                          - wf%orbital_energies(i) &
+                                          - wf%orbital_energies(j))
 !
                enddo
             enddo
