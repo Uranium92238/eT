@@ -157,20 +157,6 @@ contains
 !
       endif
 !
-!     Set orbital partitioning specifications
-!
-      wf%first_cc2_o = 1
-      wf%first_cc2_v = 1
-!
-      wf%last_cc2_o = wf%n_cc2_o
-      wf%last_cc2_v = wf%n_cc2_v
-!
-      wf%first_ccs_o = wf%last_cc2_o + 1
-      wf%first_ccs_v = wf%last_cc2_v + 1
-!
-      wf%last_ccs_o = wf%n_o
-      wf%last_ccs_v = wf%n_v
-!
       call timer%turn_off()
 !
    end subroutine orbital_partitioning_mlcc2
