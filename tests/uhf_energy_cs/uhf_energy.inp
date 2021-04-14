@@ -18,8 +18,8 @@ end memory
 
 solver scf
   algorithm:          scf-diis
-  energy threshold:   1.0d-11
-  gradient threshold: 1.0d-11
+  energy threshold:   1.0d-10
+  gradient threshold: 1.0d-10
 end solver scf
 
 geometry

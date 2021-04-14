@@ -22,7 +22,7 @@ from filters import get_hf_filter, get_spin_filter
 assert version_info.major == 2
 
 # construct filter(s)
-threshold = 1.0e-10
+threshold = 1.0e-09
 spin_threshold = 1.0e-8
 
 f = get_hf_filter(threshold)
