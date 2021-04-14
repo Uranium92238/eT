@@ -1,7 +1,11 @@
+# eT v1.2.1
+### Bugfixes
+- Reduced threshold in `uhf_energy_cs` to 1.0d-10 due to instabilities. See merge request eT-program/eT!766
+
+
 # eT v1.2
 ### Bugfixes
 - Added handling of zero length character prints. See merge request eT-program/eT!716
-- Reduced threshold in `uhf_energy_cs` to 1.0d-10 due to instabilities. See merge request eT-program/eT!766
 
 ### Optimization
 - Fock matrix construction at CC level, in terms of T1-transformed integrals, is now N^4 scaling. Only the necessary blocks for a given task are constructed. See merge request eT-program/eT!678
