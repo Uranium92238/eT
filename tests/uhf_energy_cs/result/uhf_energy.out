@@ -16,12 +16,12 @@
 
    This is eT version 1.2.0, Cobra
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-04-14 09:51:57 UTC +02:00
+  Git branch:         cesium-test
+  Git hash:           dd155a8eca00a91584debf02e20823292dd672e5
+  Fortran compiler:   GNU 9.3.0
+  C compiler:         GNU 9.3.0
+  C++ compiler:       GNU 9.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:23:47 UTC +01:00
+  Calculation started: 2021-04-14 10:32:02 UTC +02:00
 
 
   :: Input file
@@ -59,8 +59,8 @@
 
      solver scf
        algorithm:          scf-diis
-       energy threshold:   1.0d-11
-       gradient threshold: 1.0d-11
+       energy threshold:   1.0d-10
+       gradient threshold: 1.0d-10
      end solver scf
 
 
@@ -126,19 +126,19 @@
      Maximum iterations:                   100
      Acceleration type:                   diis
 
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:             -7530.568190922064
+     Energy of initial guess:             -7530.568190922015
      Number of electrons in guess:           55.000000000000
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Integral cutoff:               0.1000E-16
+     Coulomb screening threshold:   0.1000E-15
+     Exchange screening threshold:  0.1000E-13
+     Integral cutoff:               0.1000E-15
      Cumulative Fock threshold:     0.1000E+01
 
   - DIIS tool settings:
@@ -151,26 +151,24 @@
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1         -7530.542527047887     0.1562E-02     0.7531E+04
-     2         -7530.543242039050     0.6254E-03     0.7150E-03
-     3         -7530.543345749135     0.2859E-03     0.1037E-03
-     4         -7530.543363707358     0.1677E-04     0.1796E-04
-     5         -7530.543363803163     0.3497E-05     0.9580E-07
-     6         -7530.543363806696     0.1160E-05     0.3533E-08
-     7         -7530.543363807132     0.8127E-07     0.4356E-09
-     8         -7530.543363807136     0.3141E-08     0.4547E-11
-     9         -7530.543363807134     0.4896E-10     0.2728E-11
-    10         -7530.543363807136     0.1118E-10     0.2728E-11
-    11         -7530.543363807134     0.4128E-12     0.2728E-11
+     2         -7530.543242039055     0.6254E-03     0.7150E-03
+     3         -7530.543345749136     0.2859E-03     0.1037E-03
+     4         -7530.543363707360     0.1677E-04     0.1796E-04
+     5         -7530.543363803160     0.3497E-05     0.9580E-07
+     6         -7530.543363806697     0.1160E-05     0.3537E-08
+     7         -7530.543363807133     0.8127E-07     0.4356E-09
+     8         -7530.543363807134     0.3141E-08     0.1819E-11
+     9         -7530.543363807137     0.4896E-10     0.2728E-11
   ---------------------------------------------------------------
-  Convergence criterion met in 11 iterations!
+  Convergence criterion met in 9 iterations!
 
   - Summary of UHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap (alpha):          0.289543124715
-     HOMO-LUMO gap (beta):           0.696523627790
+     HOMO-LUMO gap (alpha):          0.289543125868
+     HOMO-LUMO gap (beta):           0.696523627952
      Nuclear repulsion energy:       0.000000000000
-     Electronic energy:          -7530.543363807134
-     Total energy:               -7530.543363807134
+     Electronic energy:          -7530.543363807137
+     Total energy:               -7530.543363807137
 
   - UHF wavefunction spin expectation values:
 
@@ -181,11 +179,11 @@
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):              8.25096
-     Total cpu time (sec):              16.45564
+     Total wall time (sec):              5.81162
+     Total cpu time (sec):              11.57317
 
      Peak memory usage during the execution of eT: 473.520 KB
 
-  Calculation ended: 2021-03-09 17:23:55 UTC +01:00
+  Calculation ended: 2021-04-14 10:32:08 UTC +02:00
 
   eT terminated successfully!
