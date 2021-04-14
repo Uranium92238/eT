@@ -17,6 +17,12 @@
 - Removed `check_alloc.py`. eT-program/eT!763
 - Cholesky orbital tool now handles decomposition of densities to get orbitals. eT-program/eT!762
 
+
+# eT v1.2.1
+### Bugfixes
+- Reduced threshold in `uhf_energy_cs` to 1.0d-10 due to instabilities. See merge request eT-program/eT!766
+
+
 # eT v1.2
 ### Bugfixes
 - Added handling of zero length character prints. See merge request eT-program/eT!716
