@@ -15,7 +15,7 @@
 
 #Where to look for Libint2
 set(_LIBINT_NORMAL_SEARCH
-    /usr/local/libint 
+    /usr/local/libint
     /usr/opt/local/libint)
 
 #Save location if set in environment
@@ -26,7 +26,7 @@ set(LIBINT2_GLOB_DIR)
 # Must use glob instead of find_path because path depends on version
 # First see if provided as command line argument
 if(LIBINT2_ROOT)
-   message("-- Libint2 will be searched for based on LIBINT2_ROOT=" ${LIBINT2_ROOT})
+   message(STATUS "Libint2 will be searched for based on LIBINT2_ROOT=" ${LIBINT2_ROOT})
    file(GLOB_RECURSE _GLOBFILE ${LIBINT2_ROOT}/*/libint2.h)
    if(_GLOBFILE)
       get_filename_component(_GLOBDIR ${_GLOBFILE} PATH)
@@ -35,7 +35,7 @@ if(LIBINT2_ROOT)
 
 # Else look in environment path
 elseif(LIBINT2_ENV)
-   message("-- Libint2 will be searched for based on LIBINT2_ROOT=" ${LIBINT2_ENV})
+   message(STATUS "Libint2 will be searched for based on LIBINT2_ROOT=" ${LIBINT2_ENV})
    file(GLOB_RECURSE _GLOBFILE ${LIBINT2_ENV}/*/libint2.h)
    if(_GLOBFILE)
       get_filename_component(_GLOBDIR ${_GLOBFILE} PATH)
@@ -44,7 +44,7 @@ elseif(LIBINT2_ENV)
 
 # Else look in standard paths
 else()
-   message("-- Libint2 will be searched for based on default path ${_LIBINT_NORMAL_SEARCH}")
+   message(STATUS "Libint2 will be searched for based on default path ${_LIBINT_NORMAL_SEARCH}")
    foreach(search ${_LIBINT_NORMAL_SEARCH})
       file(GLOB_RECURSE _GLOBFILE ${search}/*/libint2.h)
       if(_GLOBFILE)
@@ -74,7 +74,7 @@ if(LIBINT2_GLOB_DIR)
                 NAMES libint2.a
                 PATHS ${_BASE_PATH} NO_DEFAULT_PATH
                 PATH_SUFFIXES lib lib/.libs)
-                
+
    #Try to find the Libint data path
    file(GLOB_RECURSE _BASIS_DIR ${_BASE_PATH}/*/3-21g.g94)
    if(_BASIS_DIR)
@@ -85,7 +85,7 @@ endif()
 
 # Let the module handle the variables
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(Libint2 
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Libint2
       FOUND_VAR Libint2_FOUND
       REQUIRED_VARS Libint2_INCLUDE_DIR
                     Libint2_H_DIR
