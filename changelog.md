@@ -9,6 +9,7 @@
 - Changed `convert_v1_0_restart_files.py` script to not delete the old files and it can now be called from `eT_launch.py` using `--load-v1-0-restart-dir`. eT-program/eT!763
 - `-i-err` changed to  `-i`. (`-i-err` retained for backwardness). eT-program/eT!763
 - Possible to tell `eT_launch.py` to gracefully terminate eT using signals (`--signals`) or timeout (`--timeout`). eT-program/eT!763
+- Z-matrix tool can convert between xyz coordinates and Z-matrix
 
 ### Structure
 - The test scripts now uses pathlib instead of os. eT-program/eT!756
