@@ -179,11 +179,17 @@ module ao_tool_class
       procedure, public :: print_centers &
                         => print_centers_ao_tool
 !
+      procedure, public :: print_z_matrix &
+                        => print_z_matrix_ao_tool
+!
       procedure, public :: evaluate_aos_at_point &
                         => evaluate_aos_at_point_ao_tool
 !
       procedure, public :: get_center_coordinates &
                         => get_center_coordinates_ao_tool
+!
+      procedure, public :: get_center_symbols &
+                        => get_center_symbols_ao_tool
 !
       procedure, public :: get_point_charges &
                         => get_point_charges_ao_tool
@@ -300,10 +306,15 @@ contains
 !
       class(atomic_center), dimension(:), optional, intent(in) :: centers 
 !
+      logical :: print_z_matrix
+!
       call ao%initialize_centers(centers)
 !
       call ao%print_centers('angstrom')
       call ao%print_centers('bohr')
+!
+      print_z_matrix = input%is_keyword_present('z-matrix', 'print')
+      if (print_z_matrix) call ao%print_z_matrix()
 !  
       call ao%calculate_n_aos()
       call ao%calculate_n_shells()
@@ -2581,6 +2592,30 @@ contains
    end function get_center_coordinates_ao_tool
 !
 !
+   subroutine get_center_symbols_ao_tool(ao, symbols)
+!!
+!!    Get center symbols 
+!!    Written by Sarai D. Folkestad, 2021
+!!
+!!    Returns the center symbols 
+!!
+      implicit none 
+!
+      class(ao_tool), intent(in) :: ao 
+!
+      character(len=2), dimension(ao%n_centers), intent(out) :: symbols
+!
+      integer :: I 
+!
+      do I = 1, ao%n_centers 
+!
+         symbols(I) = ao%centers(I)%symbol
+!
+      enddo
+!
+   end subroutine get_center_symbols_ao_tool
+!
+!
    subroutine get_point_charges_ao_tool(ao, pc)
 !!
 !!    Get point charges 
@@ -2796,6 +2831,43 @@ contains
          call mem%dealloc(ao%cs_eri_max_indices, ao%n_sh*(ao%n_sh + 1)/2, 3)
 !
    end subroutine destructor
+!
+!
+   subroutine print_z_matrix_ao_tool(ao)
+!!
+!!    Print Z-matrix 
+!!    Written by Sarai D. Folkestad, 2021
+!!
+!!    Prints the Z-matrix in angstrom.
+!!
+!
+      use z_matrix_tool_class, only: z_matrix_tool
+!
+      implicit none 
+!
+      class(ao_tool), intent(in)   :: ao  
+!
+      type(z_matrix_tool), allocatable :: z_matrix
+!
+      real(dp), dimension(:,:), allocatable :: R
+      character(len=2), dimension(ao%n_centers) :: symbols
+!
+      z_matrix = z_matrix_tool(ao%n_centers)
+      call z_matrix%initialize()
+!
+      call mem%alloc(R, 3, ao%n_centers)
+!
+      R =  ao%get_center_coordinates()
+      call ao%get_center_symbols(symbols)
+!
+      call z_matrix%construct(R, symbols)
+      call z_matrix%print_(output)
+!
+      call mem%dealloc(R, 3, ao%n_centers)
+!
+      call z_matrix%cleanup_z_matrix()
+!
+   end subroutine print_z_matrix_ao_tool
 !
 !
 end module ao_tool_class

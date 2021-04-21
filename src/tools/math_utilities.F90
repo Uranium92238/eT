@@ -198,4 +198,55 @@ contains
    end function binomial
 !
 !
+   function cross_product_R3(r1, r2) result(r3)
+!!
+!!    Cross product R^3
+!!    Written by Sarai D. Folkestad Oct 2020
+!!
+      implicit none
+!
+      real(dp), dimension(3), intent(in) :: r1, r2
+      real(dp), dimension(3) :: r3
+!
+      r3(1) =   r1(2)*r2(3) - r1(3)*r2(2)   !   y1 * z2 - y2 * z1
+      r3(2) = - r1(1)*r2(3) + r1(3)*r2(1)   ! - x1 * z2 + x2 * z1
+      r3(3) =   r1(1)*r2(2) - r1(2)*r2(1)   !   y1 * z2 - y2 * z1
+!
+   end function cross_product_R3
+!
+!
+   function dot_R3(r1, r2) result(r1_dot_r2)
+!!
+!!    Dot product R^3
+!!    Written by Sarai D. Folkestad Oct 2020
+!!
+      implicit none
+!
+      real(dp), dimension(3), intent(in) :: r1, r2
+!
+      real(dp) :: r1_dot_r2
+!
+      r1_dot_r2 =  r1(1) * r2(1) &
+                 + r1(2) * r2(2) &
+                 + r1(3) * r2(3) 
+!
+   end function dot_R3
+!
+!
+   function norm_R3(r) result(r_norm)
+!!
+!!    Norm R^3
+!!    Written by Sarai D. Folkestad Oct 2020
+!!
+      implicit none
+!
+      real(dp), dimension(3), intent(in) :: r
+!
+      real(dp) :: r_norm
+!
+      r_norm =  sqrt(r(1)**2 + r(2)**2 + r(3)**2)
+!
+   end function norm_R3
+!
+!
 end module math_utilities

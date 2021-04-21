@@ -119,7 +119,7 @@ contains
       implicit none 
 !
       class(reference_engine) :: engine 
-      class(hf) :: wf 
+      class(hf)               :: wf 
 !
 !     Overwrite restart if the corresponding files don't exist
       if (engine%restart) engine%restart = wf%is_restart_possible()

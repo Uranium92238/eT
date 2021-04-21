@@ -61,7 +61,10 @@ module parameters
 !
 !  Pi
 !
-   real(dp), parameter :: pi = four*atan(one)
+!
+   real(dp), parameter :: pi = four * atan(one)
+   real(dp), parameter :: radians_to_degrees = 180.0d0/pi
+   real(dp), parameter :: degrees_to_radians = pi/180.0d0
 !
 !  Complex integers
 !

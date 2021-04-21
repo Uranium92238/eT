@@ -425,7 +425,8 @@ contains
       global_print%required = .false.
       global_print%keywords = [character(len=30) ::  &
                               'output print level ', &
-                              'timing print level ']
+                              'timing print level ', &
+                              'z-matrix']
 !
 !
       solver_cholesky%name_    = 'solver cholesky'

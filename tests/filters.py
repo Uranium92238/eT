@@ -1,4 +1,6 @@
-def get_hf_filter(tolerance, convergence=True, restart=False, idempotent=True):
+def get_hf_filter(
+    tolerance, convergence=False, restart=False, idempotent=True, z_matrix=False
+):
     """
     Returns filters for a HF calculation.
     """
@@ -32,6 +34,14 @@ def get_hf_filter(tolerance, convergence=True, restart=False, idempotent=True):
             # non-idempotent SAD
             get_filter(string="Energy of initial guess:", abs_tolerance=1.0e-6)
         )
+
+    if z_matrix:
+        g = [
+            # first line in geometries
+            get_filter(from_string="Z-matrix (", abs_tolerance=1.0e-6, num_lines=4),
+        ]
+
+        f.extend(g)
 
     return f
 

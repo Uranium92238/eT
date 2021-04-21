@@ -43,6 +43,7 @@ endmacro()
 add_eT_runtest(eri_cholesky                                 "eT;short;cholesky;eri")
 #
 add_eT_runtest(hf_energy                                    "eT;short;hf;sad")
+add_eT_runtest(hf_print_z_matrix                            "eT;short;hf;z-matrix")
 add_eT_runtest(hf_file_check                                "eT;short;hf;sad;eT_launch")
 add_eT_runtest(hf_low_memory                                "eT;short;hf;sad")
 add_eT_runtest(hf_energy_cumulative                         "eT;short;hf;cumulative-fock")
