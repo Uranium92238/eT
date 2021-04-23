@@ -678,8 +678,8 @@ def run_eT(executable, scratch, eT_env, end_second=None, signals=None):
 
 def launch_eT(
     path_dict,
+    scratch,
     eT_env=environ.copy(),
-    scratch=Path(mkdtemp(dir=getenv("eT_SCRATCH"))),
     end_second=None,
     signals=None,
     no_timing=False,
@@ -778,8 +778,8 @@ def main():
 
     launch_eT(
         path_dict,
-        eT_env,
         scratch,
+        eT_env,
         end_second,
         signals,
         args.no_timing,
