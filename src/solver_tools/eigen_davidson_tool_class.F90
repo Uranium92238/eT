@@ -346,20 +346,19 @@ contains
 !     Find lowest n_solutions eigenvalues and sort them (the corresponding indices
 !     are placed in the integer array index_list)
 !
-      call mem%alloc(index_list, davidson%n_solutions)
+      call mem%alloc(index_list, davidson%dim_red)
 !
-      call get_n_lowest(davidson%n_solutions, davidson%dim_red, &
+      call get_n_lowest(davidson%dim_red, davidson%dim_red, &
                         omega_re, davidson%omega_re, index_list)
 !
 !     Pick out solution vectors and imaginary parts of eigenvalues according to index_list
 !
       if (allocated(davidson%X_red)) &
-         call mem%dealloc(davidson%X_red, davidson%dim_red - davidson%n_new_trials, davidson%n_solutions)
+         call mem%dealloc(davidson%X_red, davidson%dim_red - davidson%n_new_trials, davidson%max_dim_red)
 !
-      call mem%alloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
+      call mem%alloc(davidson%X_red, davidson%dim_red, davidson%max_dim_red)
 !
-!$omp parallel do private(i, j) collapse(2)
-      do j = 1, davidson%n_solutions
+      do j = 1, davidson%dim_red
          do i = 1, davidson%dim_red
 !
             davidson%X_red(i, j) = X_red(i, index_list(j))
@@ -367,12 +366,11 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do
 !
       call mem%dealloc(X_red, davidson%dim_red, davidson%dim_red)
       call mem%dealloc(omega_re, davidson%dim_red)
       call mem%dealloc(omega_im, davidson%dim_red)
-      call mem%dealloc(index_list, davidson%n_solutions)
+      call mem%dealloc(index_list, davidson%dim_red)
 !
       davidson%n_new_trials = 0
 !
@@ -388,13 +386,14 @@ contains
 !!
 !!    Constructs the nth full space residual 
 !!
-!!       R = A X - omega X,
+!!       R_n = A X_n - omega_n X_n
 !!
-!!    without any preconditioning (this is applied after a call
-!!    to construct residual from the construct next trial vector
-!!    routine). Here, X is the nth eigenvector and omega is the 
-!!    eigenvalue. The residual is normalized by the norm of the 
-!!    solution X.
+!!    If n is not passed, n = 1 is assumed.
+!!
+!!    If the nth root is part of a complex pair, then we instead construct:
+!!
+!!       - The real residual vector if it is the 1st root in the pair (see construct_im_residual)
+!!       - The imaginary residual vector if it is the 2nd (see construct_re_residual)
 !!
       implicit none 
 !
@@ -405,7 +404,7 @@ contains
 !
       integer, intent(in), optional :: n
 !
-      integer :: k
+      integer :: k 
 !
       real(dp) :: norm_X 
 !
@@ -421,46 +420,39 @@ contains
 !
       norm_X = get_l2_norm(X, davidson%n_parameters)
 !
-      if (davidson%omega_im(k) == zero) then  ! standard case: the nth root is not part of a complex pair
+      if (davidson%omega_im(k) .eq. zero) then 
+!
+!        Not a complex pair. We construct the ordinary residual:
 !
          call davidson%construct_AX(R, k) ! set R = AX 
 !
-        call daxpy(davidson%n_parameters, - davidson%omega_re(k), X, 1,  R, 1)
-        call dscal(davidson%n_parameters, one/norm_X, R, 1)
+         call daxpy(davidson%n_parameters, - davidson%omega_re(k), X, 1,  R, 1)
+         call dscal(davidson%n_parameters, one/norm_X, R, 1)
 !
       else
 !
-!        If it's the first root of the complex pair, construct the real residual; 
-!        if it's the second, construct the imaginary residual
+!        First root of complex pair  => construct the real residual
+!        Second root of complex pair => construct the imaginary residual
 !
          if (k == 1) then
 !
-            if (davidson%n_solutions < 2) call output%error_msg('add one more root to treat the complex pair.')
+!           Because complex pairs come in pairs, the reduced space dimension is at least two,
+!           and so we can call construct_re_residual and construct the (k+1)-th residual vector
+!           (see dgeev LAPACK documentation)
 !
             call davidson%construct_re_residual(R, X, norm_X, k)
 !
-         elseif (n == davidson%n_solutions) then 
-!
-            if (davidson%omega_re(k-1) /= davidson%omega_re(k)) &
-                        call output%error_msg('add one more root to treat the complex pair.')
-!
-            call davidson%construct_im_residual(R, X, norm_X, k)
-!
-         else ! neither first or last, so it's safe to look at n + 1 and n - 1 
+         else ! k > 1, so it is safe to access k - 1
 !
             if (davidson%omega_re(k) == davidson%omega_re(k - 1)) then
 !
                call davidson%construct_im_residual(R, X, norm_X, k)
 !
-            elseif (davidson%omega_re(k) == davidson%omega_re(k + 1)) then 
+            else 
 !
                call davidson%construct_re_residual(R, X, norm_X, k)
 !
-            else ! should never happen, but just in case, let the user know there's a bug
-!
-               call output%error_msg('something went very wrong when trying to construct imaginary residual.')
-!
-            endif 
+            endif
 !
          endif
 !
@@ -481,16 +473,13 @@ contains
 !!
 !!    we will find the real part X_re as the first of the two roots,
 !!    and the imaginary part X_im as the second of the two roots 
-!!    (in X_red). This routine constructs the residual associated
-!!    with the real part. As such, the construct residual routine 
-!!    makes sure the n-th root is X_re and (n + 1)-th is X_im (and
-!!    exists, which might not be the case if too few roots are 
-!!    requested). On exit, the real residual is placed in R: 
-!!    
-!!       R = (A X_re - omega_re X_re) + omega_im X_im 
+!!    (in X_red). 
 !!
-!!    The residual is divided by the norm of X+ (or, 
-!!    equivalently, X-).
+!!    This routine constructs the residual associated
+!!    with the real part. It is assumed tha X_re is root n 
+!!    and X_im is root n + 1. On exit:
+!!    
+!!       R = [(A X_re - omega_re X_re) + omega_im X_im]/norm(X+)
 !!
       implicit none 
 !
@@ -505,6 +494,19 @@ contains
       real(dp), dimension(:), allocatable :: X_im 
 !
       real(dp) :: norm_X_im
+!
+      if (n .eq. davidson%n_solutions) then 
+!
+         call output%warning_msg('Root (i0) may be part of a complex pair of roots ((i0),(i0)), &
+                                 &where the second root of the pair has not been requested. &
+                                 &We will try to converge only the real part of the residual. &
+                                 &If the imaginary energy does not disappear, &
+                                 &we recommend that you request one additional root &
+                                 &to properly converge both the real and imaginary parts &
+                                 &of the two roots.', &
+                                 ints=[n, n, n+1], fs='(t3,a)')
+!
+      endif
 !
       call mem%alloc(X_im, davidson%n_parameters)  
 !
@@ -533,20 +535,14 @@ contains
 !!       X+ = X_re + i X_im 
 !!       X- = X_re - i X_im,
 !!
-!!    we will find the real part X_re as the first of the two roots,
-!!    and the imaginary part X_im as the second of the two roots 
-!!    (in X_red). This routine constructs the residual associated
-!!    with the imaginary part. As such, the construct residual 
-!!    routine makes sure the n-th root is X_im and (n - 1)-th 
-!!    is X_re. On exit, the imaginary residual is placed in R: 
+!!    This routine constructs the residual associated
+!!    with the imaginary part. It is assumed that the n-th root is X_im 
+!!    and that the (n - 1)-th is X_re. On exit:
 !!    
-!!       R = (A X_im - omega_re X_im) - omega_im X_re 
+!!       R = [(A X_im - omega_re X_im) - omega_im X_re]/norm(X+) 
 !!
-!!    The residual is divided by the norm of X+ (or, equivalently, 
-!!    X-). Note that omega_im of root n is the negative of omega_im 
-!!    of root n - 1. To avoid inconsistency, we use omega_im from 
-!!    the previous root (otherwise, we would change the sign of the
-!!    last constribution).
+!!    Note that omega_im of root n is the negative of omega_im of root n - 1.
+!!    To avoid inconsistency, we use omega_im from the previous root.
 !!
       implicit none 
 !
@@ -565,7 +561,7 @@ contains
       call mem%alloc(X_re, davidson%n_parameters)  
 !
       call davidson%construct_solution(X_re, n - 1) ! set X_re 
-      call davidson%construct_AX(R, n)       ! set R = A X_im 
+      call davidson%construct_AX(R, n)              ! set R = A X_im 
 !
       call daxpy(davidson%n_parameters, - davidson%omega_re(n), X_im, 1, R, 1) 
       call daxpy(davidson%n_parameters, - davidson%omega_im(n - 1), X_re, 1, R, 1) 
@@ -751,7 +747,7 @@ contains
          call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
 !
       if (allocated(davidson%X_red)) &
-         call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
+         call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%max_dim_red)
 !
       if (allocated(davidson%S_red)) &
          call mem%dealloc(davidson%S_red, davidson%dim_red, davidson%dim_red)
