@@ -61,7 +61,7 @@ module ccs_class
       integer :: n_bath_orbitals
 !
       integer :: n_core_MOs
-      logical :: cvs 
+      logical :: cvs
 !
       real(dp), dimension(:), allocatable :: left_excitation_energies
       real(dp), dimension(:), allocatable :: right_excitation_energies
@@ -181,7 +181,7 @@ module ccs_class
       procedure :: initialize_left_excitation_energies           => initialize_left_excitation_energies_ccs
       procedure :: destruct_left_excitation_energies             => destruct_left_excitation_energies_ccs
 !
-      procedure :: initialize_core_MOs                           => initialize_core_MOs_ccs 
+      procedure :: initialize_core_MOs                           => initialize_core_MOs_ccs
       procedure :: destruct_core_MOs                             => destruct_core_MOs_ccs
 !
 !     File handling procedures
@@ -266,7 +266,7 @@ module ccs_class
       procedure :: omega_ccs_a1                                  => omega_ccs_a1_ccs
       procedure :: omega_ccs_a1_complex                          => omega_ccs_a1_ccs_complex
 !
-!     Routines related to the F transformation 
+!     Routines related to the F transformation
 !
       procedure :: F_transformation                              => F_transformation_ccs
 !
@@ -294,7 +294,7 @@ module ccs_class
                 => prepare_for_approximate_Jacobians_ccs
 !
       procedure :: approximate_Jacobian_transform        &
-                => approximate_Jacobian_transform_ccs      
+                => approximate_Jacobian_transform_ccs
 !
       procedure :: jacobian_transformation                       => jacobian_transformation_ccs
       procedure :: jacobian_ccs_a1                               => jacobian_ccs_a1_ccs
@@ -357,7 +357,7 @@ module ccs_class
 !
       procedure :: biorthonormalize_L_and_R                      => biorthonormalize_L_and_R_ccs
       procedure :: L_R_overlap                                   => L_R_overlap_ccs
-      procedure :: get_degree_of_degeneracy                      => get_degree_of_degeneracy_ccs
+      procedure :: get_degenerate_states                         => get_degenerate_states_ccs
       procedure :: check_for_parallel_states                     => check_for_parallel_states_ccs
       procedure :: remove_parallel_states                        => remove_parallel_states_ccs
       procedure :: remove_parallel_states_from_file              => remove_parallel_states_from_file_ccs
@@ -372,9 +372,9 @@ module ccs_class
       procedure :: add_t1_terms_and_transform                    => add_t1_terms_and_transform_ccs
       procedure :: add_t1_terms_and_transform_complex            => add_t1_terms_and_transform_ccs_complex
 !
-!     One-electron integrals 
+!     One-electron integrals
 !
-      procedure :: get_t1_oei                                    => get_t1_oei_ccs 
+      procedure :: get_t1_oei                                    => get_t1_oei_ccs
       procedure :: get_t1_oei_complex                            => get_t1_oei_ccs_complex
 !
 !     Preparation procedures
@@ -401,12 +401,12 @@ module ccs_class
 !
       procedure :: mo_preparations                               => mo_preparations_ccs
       procedure :: construct_MO_screening_for_cd                 => construct_MO_screening_for_cd_ccs
-! 
+!
 !     Core-valence separation procedures
 !
       procedure :: get_cvs_projector                             => get_cvs_projector_ccs
       procedure :: set_cvs_start_indices                         => set_cvs_start_indices_ccs
-! 
+!
       procedure :: get_rm_core_projector                         => get_rm_core_projector_ccs
 !
 !     Other procedures
@@ -448,7 +448,7 @@ module ccs_class
    end type ccs
 !
 !
-   interface 
+   interface
 !
       include "file_handling_ccs_interface.F90"
       include "initialize_destruct_ccs_interface.F90"
@@ -580,7 +580,7 @@ contains
 !
 !     Print orbital space info for cc
 !
-      call output%printf('m', ' - Number of ground state amplitudes:', fs='(/t3,a)')     
+      call output%printf('m', ' - Number of ground state amplitudes:', fs='(/t3,a)')
 !
       call output%printf('m', 'Single excitation amplitudes:  (i0)', &
             ints=[wf%n_t1], fs='(/t6,a)')
@@ -594,7 +594,7 @@ contains
 !!    Set variables from template wavefunction
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Transfers the wavefunction variables needed to start a 
+!!    Transfers the wavefunction variables needed to start a
 !!    CC calculation from either an HF of a CC wavefunction
 !!
       implicit none
@@ -617,7 +617,7 @@ contains
       wf%ao%n = template_wf%ao%n
       wf%n_mo = template_wf%n_mo
 !
-#ifdef HAS_32BIT_INTEGERS  
+#ifdef HAS_32BIT_INTEGERS
       if (wf%n_mo .gt. int32_mo_limit) call output%error_msg('too many MOs for 32bit integer')
 #endif
 !
@@ -632,7 +632,7 @@ contains
 !
       call dcopy(wf%ao%n*wf%n_mo, template_wf%orbital_coefficients, 1, wf%orbital_coefficients, 1)
 !
-!     Handle changes in the number of MOs as a result of 
+!     Handle changes in the number of MOs as a result of
 !     special methods
 !
       if (wf%bath_orbital) call wf%make_bath_orbital()
@@ -694,10 +694,10 @@ contains
 !
    subroutine read_settings_ccs(wf)
 !!
-!!    Read settings 
+!!    Read settings
 !!    Written by Sarai D. Folkestad, Aug 2019
 !!
-!!    Reads the cc-section of the input file 
+!!    Reads the cc-section of the input file
 !!
       implicit none
 !
@@ -705,7 +705,7 @@ contains
 !
       if (input%is_section_present('cc')) then
 !
-         if (input%is_keyword_present('bath orbital','cc')) then 
+         if (input%is_keyword_present('bath orbital','cc')) then
 !
             wf%bath_orbital = .true.
             wf%n_bath_orbitals = 1 ! May want to expand the number of bath orbitals later on
@@ -733,11 +733,11 @@ contains
       orbital_information_file = sequential_file('orbital_information')
       call orbital_information_file%open_('read', 'rewind')
 !
-      call orbital_information_file%read_(wf%n_o)     
-      call orbital_information_file%read_(wf%n_v)         
-      call orbital_information_file%read_(wf%ao%n)     
-      call orbital_information_file%read_(wf%n_mo)     
-      call orbital_information_file%read_(wf%hf_energy)    
+      call orbital_information_file%read_(wf%n_o)
+      call orbital_information_file%read_(wf%n_v)
+      call orbital_information_file%read_(wf%ao%n)
+      call orbital_information_file%read_(wf%n_mo)
+      call orbital_information_file%read_(wf%hf_energy)
 !
       call orbital_information_file%close_()
 !
@@ -778,9 +778,9 @@ contains
 !
          call zero_array(wf%t1, wf%n_t1)
 !
-      else 
+      else
 !
-         if (wf%t_file%exists()) then 
+         if (wf%t_file%exists()) then
 !
             call output%printf('m', 'Requested restart. Reading in solution from file.', &
                                fs='(/t3,a)')
@@ -817,9 +817,9 @@ contains
 !
          call copy_and_scale(one, wf%t1, wf%t1bar, wf%n_t1)
 !
-      else 
+      else
 !
-         if (wf%tbar_file%exists()) then 
+         if (wf%tbar_file%exists()) then
 !
             call output%printf('m', 'Requested restart. Reading multipliers from file.', &
                               fs='(/t3,a)')
@@ -844,9 +844,9 @@ contains
 !!
 !!    Sets the (ground state) orbital differences vector:
 !!
-!!       epsilon_ai = epsilon_a - epsilon_i 
+!!       epsilon_ai = epsilon_a - epsilon_i
 !!
-!!    Here, the epsilon vector has dimensionality N = n_t1 
+!!    Here, the epsilon vector has dimensionality N = n_t1
 !!
       implicit none
 !
@@ -886,10 +886,10 @@ contains
 !!
 !!    Wrapper for Jacobian transformations
 !!
-!!    r_or_l: string that should be 'left' or 'right', 
+!!    r_or_l: string that should be 'left' or 'right',
 !!            determines if Jacobian or Jacobian transpose is called
 !!
-!!    X: On input contains the vector to transform, 
+!!    X: On input contains the vector to transform,
 !!
 !!    R: On output contains the transformed vector
 !!
@@ -910,7 +910,7 @@ contains
       real(dp), intent(in), optional :: w
 !
 !     Suppress unused variable compiler warning for 'w'
-      call do_nothing(w) 
+      call do_nothing(w)
 !
 !     Compute the transformed matrix
       if (r_or_l .eq. "right") then
@@ -946,20 +946,20 @@ contains
 !
       character(len=*), intent(in) :: r_or_l
 !
-      if (r_or_l == 'right') then 
+      if (r_or_l == 'right') then
 !
          call wf%prepare_for_jacobian()
 !
-      else if (r_or_l == 'left') then 
+      else if (r_or_l == 'left') then
 !
          call wf%prepare_for_jacobian_transpose()
 !
-      else if (r_or_l == 'both') then 
+      else if (r_or_l == 'both') then
 !
          call wf%prepare_for_jacobian()
          call wf%prepare_for_jacobian_transpose()
 !
-      else 
+      else
 !
          call output%error_msg('Could not recognize "r_or_l" in prepare_for_Jacobians_ccs.')
 !
@@ -990,7 +990,7 @@ contains
       real(dp), intent(in), optional :: w
 !
 !     Suppress unused variables
-      call do_nothing(w) 
+      call do_nothing(w)
       call do_nothing(r_or_l)
       call do_nothing(X)
       call do_nothing(R)
@@ -1006,7 +1006,7 @@ contains
 !!    Prepare for approximate Jacobians
 !!    Written by Eirik F. Kjønstad, Mar 2021
 !!
-!!    Wrapper for preparations to a lower-level Jacobian transformation that is 
+!!    Wrapper for preparations to a lower-level Jacobian transformation that is
 !!    the best approximation with a lower computational scaling.
 !!
 !!    r_or_l: 'left', 'right', or 'both'
@@ -1125,8 +1125,8 @@ contains
 !!
 !!    Prints the dominant amplitudes in the amplitude vector x.
 !!
-!!    tag specified the printed label for the vector, e.g. tag = "t" for 
-!!    the cluster amplitudes. 
+!!    tag specified the printed label for the vector, e.g. tag = "t" for
+!!    the cluster amplitudes.
 !!
       implicit none
 !
@@ -1149,8 +1149,8 @@ contains
 !!    Prints the 10 most dominant single amplitudes,
 !!    or sorts them if there are fewer than twenty of them.
 !!
-!!    tag specified the printed label for the vector, e.g. tag = "t" for 
-!!    the cluster amplitudes. 
+!!    tag specified the printed label for the vector, e.g. tag = "t" for
+!!    the cluster amplitudes.
 !!
       implicit none
 !
@@ -1283,22 +1283,22 @@ contains
 !
    subroutine scale_amplitudes_ccs(wf, t)
 !!
-!!    Scale amplitudes 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!    Scale amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
 !!    Scales t to conform with the convention used in the wavefunction:
 !!
-!!       t1 <- t1 
+!!       t1 <- t1
 !!       t2_aiai <- two * t2_aiai
 !!       ...
 !!
       use warning_suppressor
 !
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t
 !
       call do_nothing(t)
 !
@@ -1310,7 +1310,7 @@ contains
 !!    Make bath orbital
 !!    Written by Sarai D. Folkestad
 !!
-!!    Makes bath orbital with all corresponding integrals 
+!!    Makes bath orbital with all corresponding integrals
 !!    zero
 !!
       implicit none
@@ -1356,8 +1356,8 @@ contains
 !!    Set IP start indices
 !!    Written by Sarai D. Folkestad, Aug 2019
 !!
-!!    Sets IP start indices for trial vectors 
-!!    from the orbital energies of the 
+!!    Sets IP start indices for trial vectors
+!!    from the orbital energies of the
 !!    occupied. (Koopmans)
 !!
       implicit none
@@ -1379,7 +1379,7 @@ contains
 !
    subroutine get_ip_projector_ccs(wf, projector)
 !!
-!!    Get IP projector 
+!!    Get IP projector
 !!    Written by Sarai D. Folkestad, Aug 2019
 !!
 !!    Constructs and returns the projector
@@ -1417,11 +1417,11 @@ contains
 !!
 !!    Approximate double excitation vectors:
 !!
-!!       R_aibj = 1/(1 + delta_aibj) * (P_ai,bj(sum_c R_ci g_bjac 
-!!                                              - sum_k R_bk g_kjai))/(-eps_aibj + omega^CCS) 
+!!       R_aibj = 1/(1 + delta_aibj) * (P_ai,bj(sum_c R_ci g_bjac
+!!                                              - sum_k R_bk g_kjai))/(-eps_aibj + omega^CCS)
 !!              = 1/(1 + delta_aibj) * X_aibj/(-eps_aibj + omega^CCS)
 !!
-!!    Used for CNTOs from CCS. 
+!!    Used for CNTOs from CCS.
 !!
 !!    For further information see Baudin, P. and Kristensen, K., J. Chem. Phys. 2017, 146, 214114
 !!
@@ -1436,16 +1436,16 @@ contains
 !!
 !!    2. Add (term 2)
 !!
-!!       P_ai,bj(sum_c R_ci g_bjac)/(-eps_aibj + omega^CCS)/(1+delta_ai,bj) 
+!!       P_ai,bj(sum_c R_ci g_bjac)/(-eps_aibj + omega^CCS)/(1+delta_ai,bj)
 !!
 !!       and calculate norm of doubles part
-!!       
+!!
 !!    3. Normalize full excitation vector (R_ai, R_aibj)
 !!
 !!    Steps 1-3 are done in batching loops over a and b,
 !!    but note that the same batching structure (sizes and numbers of batches)
 !!    are used for all three loops using the maximal memory requirement.
-!! 
+!!
 !
       use reordering, only : add_to_packed, sort_12_to_21
       use direct_stream_file_class, only: direct_stream_file
@@ -1524,20 +1524,20 @@ contains
 !
          call mem%alloc(X_aiJ, batch_a%length, wf%n_o, wf%eri%n_J)
 !
-         call dgemm('N', 'N',                   &
-                     batch_a%length,            &
-                     wf%n_o*wf%eri%n_J,   &
-                     wf%n_o,                    &
-                     one,                       &
-                     R_ai(batch_a%first,1),     &
-                     wf%n_v,                    &
-                     L_kjJ,                     &
-                     wf%n_o,                    &
-                     zero,                      &
-                     X_aiJ,                     &
+         call dgemm('N', 'N',               &
+                     batch_a%length,        &
+                     wf%n_o*wf%eri%n_J,     &
+                     wf%n_o,                &
+                     one,                   &
+                     R_ai(batch_a%first,1), &
+                     wf%n_v,                &
+                     L_kjJ,                 &
+                     wf%n_o,                &
+                     zero,                  &
+                     X_aiJ,                 &
                      batch_a%length)
 !
-         do current_b_batch = 1, batch_b%num_batches 
+         do current_b_batch = 1, batch_b%num_batches
 !
             if (current_b_batch == current_a_batch) cycle
 !
@@ -1545,32 +1545,32 @@ contains
 !
             call mem%alloc(X_bjJ, batch_b%length, wf%n_o, wf%eri%n_J)
 !
-            call dgemm('N', 'N',                   &
-                        batch_b%length,            &
-                        wf%n_o*wf%eri%n_J,   &
-                        wf%n_o,                    &
-                        one,                       &
-                        R_ai(batch_b%first,1),     &
-                        wf%n_v,                    &
-                        L_kjJ,                     &
-                        wf%n_o,                    &
-                        zero,                      &
-                        X_bjJ,                     &
+            call dgemm('N', 'N',               &
+                        batch_b%length,        &
+                        wf%n_o*wf%eri%n_J,     &
+                        wf%n_o,                &
+                        one,                   &
+                        R_ai(batch_b%first,1), &
+                        wf%n_v,                &
+                        L_kjJ,                 &
+                        wf%n_o,                &
+                        zero,                  &
+                        X_bjJ,                 &
                         batch_b%length)
 !
             call mem%alloc(R_bjai, batch_b%length, wf%n_o, batch_a%length, wf%n_o)
 !
             call dgemm('N', 'N', &
-                        batch_b%length*wf%n_o,  &
-                        batch_a%length*wf%n_o,  &
-                        wf%eri%n_J,       &
-                        -one,                   &
-                        X_bjJ,                  &
-                        batch_b%length*wf%n_o,  &
-                        L_Jai,                  &
-                        wf%eri%n_J,       &
-                        zero,                   &
-                        R_bjai,                 &
+                        batch_b%length*wf%n_o, &
+                        batch_a%length*wf%n_o, &
+                        wf%eri%n_J,            &
+                        -one,                  &
+                        X_bjJ,                 &
+                        batch_b%length*wf%n_o, &
+                        L_Jai,                 &
+                        wf%eri%n_J,            &
+                        zero,                  &
+                        R_bjai,                &
                         batch_b%length*wf%n_o)
 !
             call mem%dealloc(X_bjJ, batch_b%length, wf%n_o, wf%eri%n_J)
@@ -1579,7 +1579,7 @@ contains
 !
             call sort_1234_to_3412(R_bjai, R_aibj, batch_b%length, wf%n_o, batch_a%length, wf%n_o)
 !
-            call mem%dealloc(R_bjai, batch_b%length, wf%n_o, batch_a%length, wf%n_o) 
+            call mem%dealloc(R_bjai, batch_b%length, wf%n_o, batch_a%length, wf%n_o)
 !
             call mem%alloc(L_Jbj, wf%eri%n_J, batch_b%length, wf%n_o)
             call wf%eri%get_cholesky_mo(L_Jbj, wf%n_o + batch_b%first, &
@@ -1589,17 +1589,17 @@ contains
             call dgemm('N', 'N', &
                         batch_a%length*wf%n_o,  &
                         batch_b%length*wf%n_o,  &
-                        wf%eri%n_J,       &
+                        wf%eri%n_J,             &
                         -one,                   &
                         X_aiJ,                  &
                         batch_a%length*wf%n_o,  &
                         L_Jbj,                  &
-                        wf%eri%n_J,       &
+                        wf%eri%n_J,             &
                         one,                    &
                         R_aibj,                 &
                         batch_a%length*wf%n_o)
 !
-            call mem%dealloc(L_Jbj, wf%eri%n_J, batch_b%length, wf%n_o)      
+            call mem%dealloc(L_Jbj, wf%eri%n_J, batch_b%length, wf%n_o)
 !
 !           Divide by orbital differences and CCS excitation energy
 !
@@ -1635,12 +1635,12 @@ contains
          call dgemm('N', 'N', &
                      batch_a%length*wf%n_o,  &
                      batch_a%length*wf%n_o,  &
-                     wf%eri%n_J,       &
+                     wf%eri%n_J,             &
                      -one,                   &
                      X_aiJ,                  &
                      batch_a%length*wf%n_o,  &
                      L_Jai,                  &
-                     wf%eri%n_J,       &
+                     wf%eri%n_J,             &
                      zero,                   &
                      R_aibj,                 &
                      batch_a%length*wf%n_o)
@@ -1692,7 +1692,7 @@ contains
 !
 !     ::  Add term 2, store R_aibj in file_temp_2, and calculate norm of doubles part
 !
-!        += P_ai,bj(sum_c R_ci g_bjac)/(-eps_aibj + omega^CCS)/(1+delta_ai,bj) 
+!        += P_ai,bj(sum_c R_ci g_bjac)/(-eps_aibj + omega^CCS)/(1+delta_ai,bj)
 !
 !     Accumulate dot product of double vectors for subsequent normalization
 !
@@ -1707,21 +1707,21 @@ contains
                                           batch_a%first + wf%n_o, batch_a%last + wf%n_o,  &
                                           1 + wf%n_o, wf%n_mo)
 !
-         call mem%alloc(X_Jai, wf%eri%n_J, batch_a%length, wf%n_o) 
+         call mem%alloc(X_Jai, wf%eri%n_J, batch_a%length, wf%n_o)
 !
 !        X_ai_J = sum_c R_ci L_ac_J
 !
-         call dgemm('N', 'N',                            &
+         call dgemm('N', 'N',                      &
                      batch_a%length*(wf%eri%n_J),  &
-                     wf%n_o,                             &
-                     wf%n_v,                             &
-                     one,                                &
-                     L_Jac,                              & ! L_Ja_c
+                     wf%n_o,                       &
+                     wf%n_v,                       &
+                     one,                          &
+                     L_Jac,                        & ! L_Ja_c
                      batch_a%length*(wf%eri%n_J),  &
-                     R_ai,                               & ! R_c_i
-                     wf%n_v,                             &
-                     zero,                               &
-                     X_Jai,                              &
+                     R_ai,                         & ! R_c_i
+                     wf%n_v,                       &
+                     zero,                         &
+                     X_Jai,                        &
                      batch_a%length*(wf%eri%n_J))
 !
          call mem%dealloc(L_Jac, wf%eri%n_J, batch_a%length, wf%n_v)
@@ -1743,14 +1743,14 @@ contains
                                                 batch_b%last + wf%n_o, 1, wf%n_o)
 !
             call dgemm('T', 'N',                &
-                        batch_a%length*wf%n_o,  &       
-                        batch_b%length*wf%n_o,  &  
-                        wf%eri%n_J,       &
+                        batch_a%length*wf%n_o,  &
+                        batch_b%length*wf%n_o,  &
+                        wf%eri%n_J,             &
                         one,                    &
-                        X_Jai,                  & ! X_J_ai  
-                        wf%eri%n_J,       &
-                        L_Jbj,                  & 
-                        wf%eri%n_J,       &
+                        X_Jai,                  & ! X_J_ai
+                        wf%eri%n_J,             &
+                        L_Jbj,                  &
+                        wf%eri%n_J,             &
                         zero,                   &
                         R_aibj,                 &
                         batch_a%length*wf%n_o)
@@ -1759,43 +1759,43 @@ contains
 !
             call mem%alloc(L_Jbc, wf%eri%n_J, batch_b%length, wf%n_v)
             call wf%eri%get_cholesky_mo(L_Jbc,                                         &
-                                             batch_b%first + wf%n_o, batch_b%last + wf%n_o,  &
-                                             1 + wf%n_o, wf%n_mo)
+                                        batch_b%first + wf%n_o, batch_b%last + wf%n_o, &
+                                        1 + wf%n_o, wf%n_mo)
 !
-            call mem%alloc(X_Jbj, wf%eri%n_J, batch_b%length, wf%n_o) 
+            call mem%alloc(X_Jbj, wf%eri%n_J, batch_b%length, wf%n_o)
 !
 !           X_bj_J = sum_c R_cj L_bc_J
 !
-            call dgemm('N', 'N',                            &
+            call dgemm('N', 'N',                      &
                         batch_b%length*(wf%eri%n_J),  &
-                        wf%n_o,                             &
-                        wf%n_v,                             &
-                        one,                                &
-                        L_Jbc,                              & ! L_Jb_c
+                        wf%n_o,                       &
+                        wf%n_v,                       &
+                        one,                          &
+                        L_Jbc,                        & ! L_Jb_c
                         batch_b%length*(wf%eri%n_J),  &
-                        R_ai,                               & ! R_c_j
-                        wf%n_v,                             &
-                        zero,                               &
-                        X_Jbj,                              &
+                        R_ai,                         & ! R_c_j
+                        wf%n_v,                       &
+                        zero,                         &
+                        X_Jbj,                        &
                         batch_b%length*(wf%eri%n_J))
 !
-            call mem%dealloc(L_Jbc, wf%eri%n_J, batch_b%length, wf%n_v) 
+            call mem%dealloc(L_Jbc, wf%eri%n_J, batch_b%length, wf%n_v)
 !
             call dgemm('T', 'N',                &
-                        batch_a%length*wf%n_o,  &       
-                        batch_b%length*wf%n_o,  &  
-                        wf%eri%n_J,       &
+                        batch_a%length*wf%n_o,  &
+                        batch_b%length*wf%n_o,  &
+                        wf%eri%n_J,             &
                         one,                    &
                         L_Jai,                  & ! L_J_ai
-                        wf%eri%n_J,       &
+                        wf%eri%n_J,             &
                         X_Jbj,                  & ! X_J_bj
-                        wf%eri%n_J,       &
+                        wf%eri%n_J,             &
                         one,                    &
                         R_aibj,                 &
                         batch_a%length*wf%n_o)
 !
 !
-            call mem%dealloc(X_Jbj, wf%eri%n_J, batch_b%length, wf%n_o)                      
+            call mem%dealloc(X_Jbj, wf%eri%n_J, batch_b%length, wf%n_o)
 !
 !           Divide by orbital differences and CCS excitation energy
 !
@@ -1840,18 +1840,18 @@ contains
          call mem%alloc(R_aibj, batch_a%length, wf%n_o, batch_a%length, wf%n_o)
 !
          call dgemm('T', 'N',                &
-                     batch_a%length*wf%n_o,  &       
-                     batch_a%length*wf%n_o,  &  
-                     wf%eri%n_J,       &
+                     batch_a%length*wf%n_o,  &
+                     batch_a%length*wf%n_o,  &
+                     wf%eri%n_J,             &
                      one,                    &
-                     L_Jai,                  & 
-                     wf%eri%n_J,       &
+                     L_Jai,                  &
+                     wf%eri%n_J,             &
                      X_Jai,                  & ! X_J_bj
-                     wf%eri%n_J,       &
+                     wf%eri%n_J,             &
                      zero,                   &
                      R_aibj,                 &
                      batch_a%length*wf%n_o)
-!    
+!
          call mem%dealloc(X_Jai, wf%eri%n_J, batch_a%length, wf%n_o)
          call mem%dealloc(L_Jai, wf%eri%n_J, batch_a%length, wf%n_o)
 !
@@ -1888,7 +1888,7 @@ contains
          call daxpy((batch_a%length**2)*(wf%n_o**2), one, R_aibj_old, 1, R_aibj, 1)
          call mem%dealloc(R_aibj_old, batch_a%length, wf%n_o, batch_a%length, wf%n_o)
 !
-!        Pack in 
+!        Pack in
 !
          call mem%alloc(R_aibj_packed, batch_a%length*wf%n_o*(batch_a%length*wf%n_o + 1)/2)
 !
@@ -1930,7 +1930,7 @@ contains
 !
          call batch_a%determine_limits(current_a_batch)
 !
-         do current_b_batch = 1, batch_b%num_batches 
+         do current_b_batch = 1, batch_b%num_batches
 !
             if (current_b_batch == current_a_batch) cycle
 !
@@ -1980,7 +1980,7 @@ contains
 !$omp end parallel do
 !
          call mem%dealloc(R_aibj_batch, batch_a%length, wf%n_o, batch_a%length, wf%n_o)
-!  
+!
          call file_%write_(R_ibj_a, batch_a%first, batch_a%last)
 !
       enddo
@@ -1995,16 +1995,16 @@ contains
 !
    subroutine read_cvs_settings_ccs(wf)
 !!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
-      if (input%is_keyword_present('core excitation', 'solver cc es')) then 
-!  
-!        Determine the number of core MOs 
+      if (input%is_keyword_present('core excitation', 'solver cc es')) then
+!
+!        Determine the number of core MOs
 !
          wf%n_core_MOs = input%get_n_elements_for_keyword('core excitation', 'solver cc es')
 !
@@ -2018,14 +2018,14 @@ contains
 !
          call output%error_msg('found no specified core MOs in input for CVS calculation')
 !
-      endif 
+      endif
 !
       wf%cvs = .true.
 !
 !     Consistency check (given currently implemented CVS capabilities)
 !
       if (input%is_keyword_present('core excitation', 'solver cc es') .and. &
-          input%is_keyword_present('core', 'frozen orbitals')) then 
+          input%is_keyword_present('core', 'frozen orbitals')) then
 !
          call output%error_msg('No support for CVS with frozen core yet. Turn off frozen core.')
 !
@@ -2036,16 +2036,16 @@ contains
 !
    subroutine read_rm_core_settings_ccs(wf)
 !!
-!!    Read remove core settings 
+!!    Read remove core settings
 !!    Written by Sarai D. Folkestad, 2021
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
-      if (input%is_keyword_present('remove core', 'solver cc es')) then 
-!  
-!        Determine the number of core MOs 
+      if (input%is_keyword_present('remove core', 'solver cc es')) then
+!
+!        Determine the number of core MOs
 !
          wf%n_core_MOs = input%get_n_elements_for_keyword('remove core', 'solver cc es')
 !
@@ -2059,12 +2059,12 @@ contains
 !
          call output%error_msg('found no specified core MOs to remove!')
 !
-      endif 
+      endif
 !
 !     Consistency check
 !
       if (input%is_keyword_present('remove core', 'solver cc es') .and. &
-          input%is_keyword_present('core', 'frozen orbitals')) then 
+          input%is_keyword_present('core', 'frozen orbitals')) then
 !
          call output%error_msg('No support for removal of core with frozen core yet. Turn off frozen core.')
 !
@@ -2084,7 +2084,7 @@ contains
 !!    such as frozen core, change of basis from canonical
 !!    orbitals and shifting of bath orbitals (not implemented).
 !!
-!!    This routine is not overwritten for 
+!!    This routine is not overwritten for
 !!    descendants of standard CC-type (e.g., CCSD, CC2, CC3)
 !!    but will be so for MLCC methods.
 !!
@@ -2097,10 +2097,10 @@ contains
    end subroutine mo_preparations_ccs
 !
 !
-   subroutine get_degree_of_degeneracy_ccs(wf, state, transformation, threshold, &
-                                           n_degeneracy, degenerate)
+   subroutine get_degenerate_states_ccs(wf, state, transformation, threshold, &
+                                        n_degeneracy, degenerate)
 !!
-!!    Get Degree of Degeneracy
+!!    Get degenerate states
 !!    Written by Alexander C. Paul, Oct 2019
 !!
 !!    Checks if there are degeneracies between the given excited "state"
@@ -2110,7 +2110,7 @@ contains
 !!    transformation: left, right or both
 !!    threshold:      threshold to compare the energies to
 !!    n_degeneracy:   number of states with the same energy as "state" (at least 1)
-!!    degenerate:     optional array of logicals 
+!!    degenerate:     optional array of logicals
 !!                    specifying which state is degenerate to "state"
 !!
       implicit none
@@ -2125,69 +2125,73 @@ contains
 !
       integer, intent(out) :: n_degeneracy
 !
-      logical, dimension(wf%n_singlet_states), intent(out), optional :: degenerate
+      logical, dimension(wf%n_singlet_states), intent(out) :: degenerate
 !
-      integer :: p
+      real(dp) :: delta_l, delta_r
+      integer  :: p, q
+      logical  :: state_found
 !
       n_degeneracy = 1
+      state_found = .true.
+      degenerate = .false.
+      degenerate(state) = .true.
 !
-!     Check for degeneracies in the excitation energies
+      do while (state_found)
 !
-      do p = 1, wf%n_singlet_states
+         state_found = .false.
 !
-         if(present(degenerate)) degenerate(p) = .false.
+!        Loop over degenerate states
+         do p = 1, wf%n_singlet_states
+            if (.not. degenerate(p)) cycle
 !
-         if(p .eq. state) then
+!           Loop over all non-degenerate states
+            do q = 1, wf%n_singlet_states
+               if (degenerate(q)) cycle
 !
-            if(present(degenerate)) degenerate(p) = .true.
-            cycle
+               if (trim(transformation) .eq. 'right') then
 !
-         end if
+                  delta_r = wf%right_excitation_energies(p) - wf%right_excitation_energies(q)
 !
-         if (trim(transformation) .eq. 'right') then
+                  if (abs(delta_r) .gt. threshold) cycle
 !
-            if (abs(wf%right_excitation_energies(p) - &
-                    wf%right_excitation_energies(state)) .gt. threshold) cycle
+               else if (trim(transformation) .eq. 'left') then
 !
-         else if (trim(transformation) .eq. 'left') then
+                  delta_l = wf%left_excitation_energies(p) - wf%left_excitation_energies(q)
 !
-            if (abs(wf%left_excitation_energies(p) - &
-                    wf%left_excitation_energies(state)) .gt. threshold) cycle
+                  if (abs(delta_l) .gt. threshold) cycle
 !
-         else if (trim(transformation) .eq. 'both') then
+               else if (trim(transformation) .eq. 'both') then
 !
-            if ((abs(wf%left_excitation_energies(p) - wf%left_excitation_energies(state)) &
-                .gt. threshold) .and. &
-                (abs(wf%right_excitation_energies(p) - wf%right_excitation_energies(state)) &
-                .gt. threshold)) then
+                  delta_l = wf%left_excitation_energies(p) - wf%left_excitation_energies(q)
+                  delta_r = wf%right_excitation_energies(p) - wf%right_excitation_energies(q)
 !
-               cycle
+                  if (abs(delta_l) .gt. threshold .and. abs(delta_r) .gt. threshold) then
 !
-            else if  ((abs(wf%left_excitation_energies(p)       &
-                        - wf%left_excitation_energies(state))   &
-                        .gt. threshold) .neqv.                  &
-                      (abs(wf%right_excitation_energies(p)      &
-                         - wf%right_excitation_energies(state)) &
-                         .gt. threshold)) then
+                     cycle
 !
-               call output%error_msg('Different degree of degeneracy in the &
-                  &left excited states compared to the right excited states')
+                  else if  (abs(delta_l) .gt. threshold .neqv. abs(delta_r) .gt. threshold) then
 !
-            end if
+                     call output%error_msg('Different degree of degeneracy in the &
+                        &left excited states compared to the right excited states')
 !
-         else
+                  end if
 !
-            call output%error_msg('Tried to check for degenerate states but argument &
-                                 &(a0) not recognized.', chars=[trim(transformation)])
+               else
 !
-         end if
+                  call output%error_msg('Tried to check for degenerate states but argument &
+                                       &(a0) not recognized.', chars=[trim(transformation)])
 !
-         n_degeneracy = n_degeneracy + 1
-         if(present(degenerate)) degenerate(p) = .true.
+               end if
 !
+               n_degeneracy = n_degeneracy + 1
+               degenerate(q) = .true.
+               state_found = .true.
+!
+            end do
+         end do
       end do
 !
-   end subroutine get_degree_of_degeneracy_ccs
+   end subroutine get_degenerate_states_ccs
 !
 !
    subroutine check_for_parallel_states_ccs(wf, side, threshold, parallel_states)
@@ -2229,7 +2233,7 @@ contains
 !
       do current_state = 1, wf%n_singlet_states
 !
-!        keep track of which states have been checked, 
+!        keep track of which states have been checked,
 !        cycle if they were checked already
 !
          if (checked(current_state)) cycle
@@ -2239,13 +2243,13 @@ contains
 !
 !        Get the number of states degenerate with current_state (at least 1)
 !
-         call wf%get_degree_of_degeneracy(current_state, side,threshold, &
+         call wf%get_degenerate_states(current_state, side,threshold, &
                                           n_degeneracy, degenerate)
 !
 !        If degeneracies are found:
 !           - read all degenerate states
-!           - loop through all state pairs (p != q): 
-!                 -If 2 states are parallel print warning 
+!           - loop through all state pairs (p != q):
+!                 -If 2 states are parallel print warning
 !                  and reduce the degree of degeneracy
 !
          if (n_degeneracy .gt. 1) then
@@ -2258,7 +2262,7 @@ contains
 !
             do p = current_state, wf%n_singlet_states
 !
-!              Only degenerate states have to be checked 
+!              Only degenerate states have to be checked
                if (.not. degenerate(p)) cycle
 !
                counter = counter + 1
@@ -2331,7 +2335,7 @@ contains
 !!    Biorthonormalize the left and right eigenvectors
 !!    Written by Alexander C. Paul, Sep 2019
 !!
-!!    For that: 
+!!    For that:
 !!       - check if left and right excitation energies are consistent
 !!       - check for degenerate states
 !!       - check for and discard parallel states
@@ -2367,7 +2371,7 @@ contains
       call output%printf('v', 'Biorthonormalization of left and right excited &
                          &state vectors', fs='(/t3,a)')
 !
-!     Prepare logicals to keep track of which states have already been 
+!     Prepare logicals to keep track of which states have already been
 !     biorthonormalized and which states are degenerate to the current_state
 !
       call mem%alloc(biorthonormalized, wf%n_singlet_states)
@@ -2389,7 +2393,7 @@ contains
          if (abs(wf%left_excitation_energies(current_state) &
                - wf%right_excitation_energies(current_state)) .gt. 2*energy_threshold) then
 !
-!           roots might be ordered incorrectly 
+!           roots might be ordered incorrectly
 !           if so biorthonormalization will give an error
 !
             call output%warning_msg('Eigenvector (i0) is not left-right consistent &
@@ -2407,10 +2411,10 @@ contains
 !
 !        :: Check for degeneracies in both left and right excitation energies ::
 !
-         call wf%get_degree_of_degeneracy(current_state, 'both', 2*energy_threshold, &
-                                          n_degeneracy, degenerate)
+         call wf%get_degenerate_states(current_state, 'both', 2*energy_threshold, &
+                                       n_degeneracy, degenerate)
 !
-         call output%printf('debug', 'Degree of degeneracy: (i0)', &
+         call output%printf('v', 'Degree of degeneracy: (i0)', &
                             ints=[n_degeneracy], fs='(/t6,a)')
 !
 !        Read in degenerate states L/R
@@ -2423,7 +2427,7 @@ contains
 !
          counter = 0
 !
-         do state = current_state, wf%n_singlet_states
+         do state = 1, wf%n_singlet_states
 !
             if (.not. degenerate(state)) cycle
 !
@@ -2440,8 +2444,6 @@ contains
 !
          end do
 !
-         call mem%dealloc(degenerate_states, n_degeneracy)
-!
          if (n_degeneracy .gt. 1) then
 !
             call output%printf('n', 'Found states that are close in energy:', fs='(/t6,a)')
@@ -2451,7 +2453,7 @@ contains
             do state = 1, n_degeneracy
 !
                call output%printf('n', ' (i2)     (f19.12)', &
-                                  ints=[current_state + state - 1], &
+                                  ints=[degenerate_states(state)], &
                                   reals=[wf%right_excitation_energies(current_state+state-1)], &
                                   fs='(t6,a)')
 !
@@ -2470,10 +2472,10 @@ contains
 !
          do state = 1, n_degeneracy
 !
-            LT_R = wf%L_R_overlap(L(:,state),                &
-                                  current_state + state - 1, &
-                                  R(:,state),                &
-                                  current_state + state - 1)
+            LT_R = wf%L_R_overlap(L(:,state),               &
+                                  degenerate_states(state), &
+                                  R(:,state),               &
+                                  degenerate_states(state))
 !
             call dscal(wf%n_es_amplitudes, one/LT_R, L(:, state), 1)
 !
@@ -2481,7 +2483,7 @@ contains
 !
          counter = 0
 !
-         do state = current_state, wf%n_singlet_states
+         do state = 1, wf%n_singlet_states
 !
 !           Only save the states that we currently consider
             if (.not. degenerate(state)) cycle
@@ -2495,6 +2497,7 @@ contains
 !
          end do
 !
+         call mem%dealloc(degenerate_states, n_degeneracy)
          call mem%dealloc(R, wf%n_es_amplitudes, n_degeneracy)
          call mem%dealloc(L, wf%n_es_amplitudes, n_degeneracy)
 !
@@ -2502,7 +2505,7 @@ contains
 !
       call mem%dealloc(biorthonormalized, wf%n_singlet_states)
 !
-      call mem%dealloc(degenerate, wf%n_singlet_states)    
+      call mem%dealloc(degenerate, wf%n_singlet_states)
 !
       call timer%turn_off()
 !
@@ -2511,12 +2514,12 @@ contains
 !
    subroutine print_gs_summary_ccs(wf)
 !!
-!!    Print ground state summary 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!    Print ground state summary
+!!    Written by Eirik F. Kjønstad, Dec 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
       call output%printf('m', '- Ground state summary:', fs='(/t3,a)')
 !
@@ -2534,14 +2537,14 @@ contains
    subroutine print_X1_diagnostics_ccs(wf, X, label)
 !!
 !!    Get X1 diagnostics
-!!    Written by Eirik F. Kjønstad, Dec 2018   
+!!    Written by Eirik F. Kjønstad, Dec 2018
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf     
+      class(ccs), intent(in) :: wf
 !
       character(len=1), intent(in) :: label
-!     
+!
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X
 !
       real(dp) :: get_X1_diagnostics
@@ -2564,13 +2567,13 @@ contains
 !!
 !!       v_x = max_p(C_xp^2)
 !!
-!!       screening_vector(x,y) = v_x * v_y 
+!!       screening_vector(x,y) = v_x * v_y
 !!
 !!    which is used to target accuracy in MO integrals
 !!    rather than the AO integrals in the decomposition
 !!    of the ERIs
 !!
-!!    See J. Chem. Phys. 150, 194112 (2019) for further 
+!!    See J. Chem. Phys. 150, 194112 (2019) for further
 !!    details
 !!
       implicit none
