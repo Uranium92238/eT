@@ -107,8 +107,7 @@ module davidson_tool_class
       procedure :: cleanup                                     &
                 => cleanup_davidson_tool
 !
-      procedure :: destruct_reduced_space_quantities           &
-                => destruct_reduced_space_quantities_davidson_tool
+      procedure(destruct_reduced_space_quantities), deferred :: destruct_reduced_space_quantities 
 !
       procedure :: set_lindep_threshold                        &
                 => set_lindep_threshold_davidson_tool
@@ -117,6 +116,21 @@ module davidson_tool_class
                 => reset_reduced_space_davidson_tool
 !
    end type davidson_tool
+!
+!
+   abstract interface
+!
+      subroutine destruct_reduced_space_quantities(davidson)
+!
+         import :: davidson_tool
+!
+         implicit none 
+!
+         class(davidson_tool) :: davidson 
+!
+      end subroutine destruct_reduced_space_quantities
+!
+   end interface
 !
 !
 contains
@@ -144,11 +158,11 @@ contains
       call davidson%trials%initialize_storer()
       call davidson%transforms%initialize_storer()
 !
-      call mem%alloc(davidson%omega_re, davidson%n_solutions)
-      call mem%alloc(davidson%omega_im, davidson%n_solutions)
+      call mem%alloc(davidson%omega_re, davidson%max_dim_red)
+      call mem%alloc(davidson%omega_im, davidson%max_dim_red)
 !
-      call zero_array(davidson%omega_re, davidson%n_solutions)
-      call zero_array(davidson%omega_im, davidson%n_solutions)
+      call zero_array(davidson%omega_re, davidson%max_dim_red)
+      call zero_array(davidson%omega_im, davidson%max_dim_red)
 !
    end subroutine initialize_davidson_tool
 !
@@ -168,8 +182,8 @@ contains
       call davidson%trials%finalize_storer()
       call davidson%transforms%finalize_storer()
 !
-      call mem%dealloc(davidson%omega_re, davidson%n_solutions)
-      call mem%dealloc(davidson%omega_im, davidson%n_solutions)
+      call mem%dealloc(davidson%omega_re, davidson%max_dim_red)
+      call mem%dealloc(davidson%omega_im, davidson%max_dim_red)
 !
       call davidson%destruct_reduced_space_quantities()
       if (davidson%do_precondition) call davidson%preconditioner%destruct_precondition_vector()
@@ -783,6 +797,14 @@ contains
 !
       type(batching_index), allocatable :: batch_i 
 !
+      if (n .gt. davidson%dim_red) then 
+!
+        call output%error_msg('Tried to construct a full space vector (n = (i0)) that does not &
+                              &correspond to a reduced space solution (dim_red = (i0)).', &
+                              ints=[n, davidson%dim_red])
+!
+      endif
+!
       req_0 = 0
       req_1 = y_vectors%required_to_load_record()
 !
@@ -907,27 +929,6 @@ contains
       davidson%n_new_trials = davidson%n_solutions
 !
    end subroutine set_trials_to_solutions_davidson_tool
-!
-!
-   subroutine destruct_reduced_space_quantities_davidson_tool(davidson)
-!!
-!!    Destruct reduced space quantities 
-!!    Written by Eirik F. Kjønstad, Jan 2020
-!!
-!!    Deallocates reduced space quantities, e.g. when re-setting the reduced space,
-!!    or upon destruction of the Davidson tool.
-!!
-      implicit none 
-!
-      class(davidson_tool) :: davidson
-!
-      if (allocated(davidson%A_red)) &
-         call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
-!
-      if (allocated(davidson%X_red)) &
-         call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
-!
-   end subroutine destruct_reduced_space_quantities_davidson_tool
 !
 !
    subroutine update_reduced_dim_davidson_tool(davidson)
