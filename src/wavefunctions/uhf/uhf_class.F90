@@ -210,7 +210,7 @@ contains
    end function new_uhf_from_parameters
 !
 !
-   subroutine prepare_uhf(wf, centers, embedding)
+   subroutine prepare_uhf(wf, centers, embedding, charge)
 !!
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -225,12 +225,13 @@ contains
       class(uhf) :: wf
 !
       class(atomic_center), dimension(:), optional, intent(in) :: centers 
+      integer, intent(in), optional :: charge 
 !
       logical, intent(in), optional :: embedding
 !
       wf%orbital_file = stream_file('orbital_coefficients')
 !
-      call wf%prepare_ao_tool(centers)
+      call wf%prepare_ao_tool(centers=centers, charge=charge)
       call wf%prepare_embedding(embedding)
       if (wf%embedded) call wf%embedding%print_description
 !
