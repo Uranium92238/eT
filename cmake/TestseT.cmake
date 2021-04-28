@@ -61,6 +61,8 @@ add_eT_runtest(hf_scf_energy_qmmmnopol                      "eT;short;hf;sad;qmm
 add_eT_runtest(hf_scf_energy_qmfq                           "eT;short;hf;sad;qmmm;fq")
 add_eT_runtest(hf_dipole                                    "eT;short;hf;sad;dipole")
 add_eT_runtest(hf_quadrupole                                "eT;short;hf;sad;quadrupole")
+add_eT_runtest(hf_anion                                     "eT;short;hf;sad;charged")
+add_eT_runtest(hf_hydroxyl                                  "eT;short;hf;sad;charged")
 add_eT_runtest(restart_hf                                   "eT;short;hf;restart")
 add_eT_runtest(visualization_cube                           "eT;short;hf;visualization")
 #
