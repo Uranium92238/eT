@@ -169,7 +169,7 @@ module wavefunction_class
 contains
 !
 !
-   subroutine prepare_ao_tool_wavefunction(wf, centers, template)
+   subroutine prepare_ao_tool_wavefunction(wf, centers, template, charge)
 !!
 !!    Prepare AO tool
 !!    Written by Eirik F. Kjønstad, 2020 
@@ -191,6 +191,7 @@ contains
       class(atomic_center), dimension(:), optional, intent(in) :: centers
 !
       type(ao_tool), optional, intent(in) :: template
+      integer, intent(in), optional :: charge
 !
       wf%ao = ao_tool()
 !
@@ -200,7 +201,7 @@ contains
 !
       else 
 !
-         call wf%ao%initialize(centers)
+         call wf%ao%initialize(centers, charge)
 !
       end if
 !

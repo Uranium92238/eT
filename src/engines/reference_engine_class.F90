@@ -368,7 +368,7 @@ contains
          sad_wf = uhf(fractional_uniform_valence=.true., &
                       multiplicity=multiplicity)
 !
-         call sad_wf%prepare([center],  embedding=.false.)
+         call sad_wf%prepare([center],  embedding=.false., charge=0)
 !
 !        Prepare and run solver
 !
