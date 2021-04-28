@@ -230,6 +230,13 @@ contains
       real(dp), dimension(:,:), allocatable     :: e
       real(dp), dimension(:,:,:), allocatable   :: C
 !
+      type(timings) :: timer, iteration_timer
+!
+      timer = timings('SCF solver', pl='normal')
+      call timer%turn_on()
+!
+      iteration_timer = timings('SCF iteration', pl='normal')
+!
 !     Wave function must initialize 
 !     necessary arrays, set start guesses, 
 !     and inform solver about the dimensions of the problem
@@ -249,6 +256,7 @@ contains
       if (solver%skip) then
 !
          call solver%skip_scf(wf)
+         call timer%turn_off()
          return
 !
       endif
@@ -269,6 +277,8 @@ contains
       call solver%print_iteration_banner()
 !
       do while ((.not. converged) .and. (iteration .lt. solver%max_iterations))
+!
+         call iteration_timer%turn_on()
 !
          iteration = iteration + 1
 !
@@ -293,6 +303,8 @@ contains
 !
          endif
 !
+         call iteration_timer%turn_off()
+!
       enddo
 !
       call solver%print_summary(iteration, converged)
@@ -303,6 +315,8 @@ contains
       call mem%dealloc(e, solver%dim_, solver%n_equations)
 !
       call solver%accelerator%finalize()
+!
+      call timer%turn_off()
 !
    end subroutine run_scf_solver
 !
@@ -370,6 +384,11 @@ contains
 !
       integer                             :: i, offset
 !
+      type(timings) :: timer
+!
+      timer = timings('SCF diagonalization', pl='normal')
+      call timer%turn_on()
+!
       do i = 1, solver%n_equations
 !
           offset = ((solver%dim_)*(solver%dim_ + 1)/2)*(i-1)
@@ -378,6 +397,8 @@ contains
           call diagonalize_symmetric(C(:,:,i), solver%dim_, e(:,i))
 !
       enddo
+!
+      call timer%turn_off()
 !
    end subroutine do_scf_step_scf_solver
 !
