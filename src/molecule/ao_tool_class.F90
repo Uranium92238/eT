@@ -93,6 +93,8 @@ module ao_tool_class
 !
       character(len=200) :: basis_type_ ! standard, spherical, or Gaussian
 !
+      integer :: charge
+!
    contains 
 !
       procedure, public :: initialize &
@@ -211,6 +213,8 @@ module ao_tool_class
       procedure, private :: initialize_centers_from_ao_tool
       procedure, private :: set_atomic_center_positions
 !
+      procedure, private :: initialize_total_charge
+!
       procedure, private :: calculate_n_shells
       procedure, private :: calculate_n_aos 
       procedure, private :: calculate_max_shell_size 
@@ -286,7 +290,7 @@ contains
    end function new_ao_tool
 !
 !
-   subroutine initialize_ao_tool(ao, centers)
+   subroutine initialize_ao_tool(ao, centers, charge)
 !!
 !!    Initialize 
 !!    Written by Eirik F. Kjønstad, 2020
@@ -299,8 +303,10 @@ contains
       class(ao_tool), intent(inout) :: ao
 !
       class(atomic_center), dimension(:), optional, intent(in) :: centers 
+      integer, intent(in), optional :: charge 
 !
       call ao%initialize_centers(centers)
+      call ao%initialize_total_charge(charge)
 !
       call ao%print_centers('angstrom')
       call ao%print_centers('bohr')
@@ -350,8 +356,9 @@ contains
 
       call ao%initialize_centers(ao_template=template)
 !  
-      ao%n = template%n
-      ao%n_sh = template%n_sh
+      ao%n      = template%n
+      ao%n_sh   = template%n_sh
+      ao%charge = template%charge
 !
       allocate(ao%shells(ao%n_sh))
       ao%shells = template%shells
@@ -434,6 +441,29 @@ contains
       enddo      
 !
    end subroutine initialize_centers
+!
+!
+   subroutine initialize_total_charge(ao, charge)
+!!
+!!    Initialize total_charge 
+!!    Written by Sarai D. Folkestad, 2021
+!
+      implicit none 
+!
+      class(ao_tool), intent(inout) :: ao
+      integer, optional, intent(in) :: charge  
+!
+      if (present(charge)) then
+!
+         ao%charge = charge
+         return
+!
+      endif
+!
+      ao%charge = 0
+      call input%get_keyword('charge', 'system', ao%charge)
+!
+   end subroutine initialize_total_charge
 !
 !
    subroutine calculate_n_shells(ao)
@@ -2705,7 +2735,7 @@ contains
 !
       integer :: n 
 !
-      integer :: I, Q
+      integer :: I
 !
       n = 0
 !
@@ -2715,10 +2745,7 @@ contains
 !
       enddo
 !
-      Q = 0
-      call input%get_keyword('charge', 'system', Q)
-!
-      n = n - Q
+      n = n - ao%charge
 !
    end function get_n_electrons_ao_tool
 !

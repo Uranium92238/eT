@@ -188,7 +188,7 @@ contains
    end function new_mlhf
 !
 !
-   subroutine prepare_mlhf(wf, centers, embedding)
+   subroutine prepare_mlhf(wf, centers, embedding, charge)
 !!
 !!    Prepare
 !!    Written by Linda Goletto, Sarai D. Folkestad
@@ -203,13 +203,14 @@ contains
 !
       class(mlhf) :: wf
 !
-      class(atomic_center), dimension(:), optional, intent(in) :: centers 
+      class(atomic_center), dimension(:), optional, intent(in) :: centers       
+      integer, intent(in), optional :: charge 
 !
       logical, intent(in), optional :: embedding 
 !
       wf%orbital_file = stream_file('hf_orbitals')
 !
-      call wf%prepare_ao_tool(centers)
+      call wf%prepare_ao_tool(centers=centers, charge=charge)
       call wf%prepare_embedding(embedding)
       if (wf%embedded) call wf%embedding%print_description
 !

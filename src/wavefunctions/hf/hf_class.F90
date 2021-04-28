@@ -514,9 +514,18 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: h_wx
 !
+      real(dp) :: n_electrons
+!
       if (trim(guess) == 'sad' .or. trim(guess) == 'SAD') then
 !
          call wf%ao%get_sad_guess(wf%ao_density)
+!
+!        Check that the density has the correct number of electrons
+!
+         n_electrons = wf%get_n_electrons_in_density()
+!
+         if (nint(n_electrons) - wf%ao%charge .ne. wf%ao%get_n_electrons()) &
+            call output%error_msg('mismatch in number of electrons from initial guess')
 !
       elseif (trim(guess) == 'core' .or. trim(guess) == 'CORE') then
 !
@@ -1022,6 +1031,16 @@ contains
 !
       wf%n_mo = wf%ao%get_n_orthonormal_ao()
 !
+
+      if (mod(wf%ao%get_n_electrons(),2) .ne. 0) then
+!
+         call output%printf('m', 'Number of electrons:     (i0)', &
+                         ints=[wf%ao%get_n_electrons()], fs='(/t3, a)')
+
+         call output%error_msg('restricted closed-shell approaches only &
+                                &possible for even number of electrons.')
+      endif
+!
       wf%n_o = (wf%ao%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
@@ -1238,13 +1257,16 @@ contains
                          reals=[wf%energy], fs='(/t6, a)')
       call output%printf('m', 'Number of electrons in guess: (f25.12)', &
                          reals=[n_electrons], fs='(t6, a)')
+      if (wf%ao%charge .ne. 0) &
+         call output%printf('m', 'Overall charge:               (i25)', &
+                            ints=[wf%ao%charge], fs='(t6, a)')
 !
       call wf%construct_initial_idempotent_density()
 !
    end subroutine prepare_for_roothan_hall_hf
 !
 !
-   subroutine prepare_hf(wf, centers, embedding)
+   subroutine prepare_hf(wf, centers, embedding, charge)
 !!
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1259,12 +1281,13 @@ contains
       class(hf) :: wf
 !
       class(atomic_center), dimension(:), optional, intent(in) :: centers 
+      integer, intent(in), optional :: charge 
 !
       logical, intent(in), optional :: embedding 
 !
       wf%orbital_file = stream_file('orbital_coefficients')
 !
-      call wf%prepare_ao_tool(centers)
+      call wf%prepare_ao_tool(centers=centers, charge=charge)
       call wf%prepare_embedding(embedding)
       if (wf%embedded) call wf%embedding%print_description
 !
