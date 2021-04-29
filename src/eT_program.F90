@@ -170,12 +170,19 @@ program eT_program
 !
    call timing%printf('m', ":: Total time", fs='(//t3,a)')
    call timing%print_separator('m', 16, '=')
-   call eT_timer%turn_off()
+!
+   call output%print_separator('m', 60, '-', fs='(/t3,a)')
 !
    call mem%check_for_leak()
    call mem%print_max_used()
 !
    call output%check_for_warnings()
+!
+   call eT_timer%turn_off()
+   call output%printf('m', 'Total wall time in eT (sec): (f20.5)', &
+                      reals=[eT_timer%get_elapsed_time('wall')], fs='(/t3,a)')
+   call output%printf('m', 'Total cpu time in eT (sec):  (f20.5)', &
+                      reals=[eT_timer%get_elapsed_time('cpu')], fs='(t3,a)')
 !
    call get_date_and_time(timestamp)
    call output%printf('m', "Calculation ended: (a0)", chars=[timestamp], fs='(/t3,a)')

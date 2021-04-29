@@ -407,7 +407,7 @@ contains
 !
 
       call output%printf('n', 'Peak memory usage during the execution of eT: (a0)', &
-                         chars=[mem%get_memory_as_character(mem%max_used)], fs='(/t6,a)')
+                         chars=[mem%get_memory_as_character(mem%max_used)], fs='(/t3,a)')
 !
    end subroutine print_max_used_memory_manager
 !
