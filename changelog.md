@@ -21,6 +21,10 @@
 - Cholesky orbital tool now handles decomposition of densities to get orbitals. eT-program/eT!762
 
 
+# eT v1.2.3
+### Bugfixes
+- Reduced threshold in `xenon` test to 1.0d-9 due to instabilities. See merge request eT-program/eT!782
+
 # eT v1.2.2
 ### Bugfixes
 - Testing that the number of electrons is even for restricted closed calculations. See merge request eT-program/eT!777
