@@ -34,13 +34,13 @@ solver cholesky
 end solver cholesky
 
 solver cc gs
-   energy threshold: 1.0d-11
-   omega threshold:  1.0d-11
+   energy threshold: 1.0d-10
+   omega threshold:  1.0d-10
 end solver cc gs
 
 solver cc es
    singlet states: 3
-   residual threshold: 1.0d-11
+   residual threshold: 1.0d-9
    right eigenvectors
 end solver cc es
 
