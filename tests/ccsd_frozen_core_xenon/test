@@ -22,8 +22,8 @@ from filters import get_hf_filter
 assert version_info.major == 2
 
 # construct filter(s)
-n_states = 8
-tolerance = 1.0e-10
+n_states = 3
+tolerance = 1.0e-8
 f = get_hf_filter(tolerance)
 
 # Don't test largest amplitudes as the order of the states can change due to degeneracies
