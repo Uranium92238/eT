@@ -28,7 +28,8 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
     set(CMAKE_Fortran_FLAGS "-fpp -O3 -warn all -xHost -no-wrap-margin -stand f08")
 #
 #   Turn off xHost spammelam by disabling remark #10382
-    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -diag-disable=10382")
+#   and truncated source warning (#5194)
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -diag-disable=10382,5194")
 #
 #   Enable 64 bit flag if requested (default)
 # 
