@@ -106,27 +106,29 @@ module ccsd_class
 !
 !     Procedures related to Jacobian transformation
 !
-      procedure :: jacobian_transformation                    => jacobian_transformation_ccsd
+      procedure, public :: jacobian_transformation &
+                        => jacobian_transformation_ccsd
 !
-      procedure :: jacobian_ccsd_b2                           => jacobian_ccsd_b2_ccsd
-      procedure :: jacobian_ccsd_c2                           => jacobian_ccsd_c2_ccsd
-      procedure :: jacobian_ccsd_d2                           => jacobian_ccsd_d2_ccsd
-      procedure :: jacobian_ccsd_e2                           => jacobian_ccsd_e2_ccsd
-      procedure :: jacobian_ccsd_f2                           => jacobian_ccsd_f2_ccsd
-      procedure :: jacobian_ccsd_g2                           => jacobian_ccsd_g2_ccsd
-      procedure :: jacobian_ccsd_h2                           => jacobian_ccsd_h2_ccsd
-      procedure :: jacobian_ccsd_i2                           => jacobian_ccsd_i2_ccsd
-      procedure :: jacobian_ccsd_j2                           => jacobian_ccsd_j2_ccsd
-      procedure :: jacobian_ccsd_k2                           => jacobian_ccsd_k2_ccsd
+      procedure, private :: jacobian_ccsd_b2
+      procedure, private :: jacobian_ccsd_c2
+      procedure, private :: jacobian_ccsd_d2
+      procedure, private :: jacobian_ccsd_e2
+      procedure, private :: jacobian_ccsd_f2
+      procedure, private :: jacobian_ccsd_g2
+      procedure, private :: jacobian_ccsd_h2
+      procedure, private :: jacobian_ccsd_i2
+      procedure, private :: jacobian_ccsd_j2
+      procedure, private :: jacobian_ccsd_k2
 !
-      procedure :: prepare_for_jacobian                       => prepare_for_jacobian_ccsd
+      procedure, public :: prepare_for_jacobian &
+                        => prepare_for_jacobian_ccsd
 !
-      procedure :: save_jacobian_c2_intermediates             => save_jacobian_c2_intermediates_ccsd
-      procedure :: save_jacobian_d2_intermediate              => save_jacobian_d2_intermediate_ccsd
-      procedure :: save_jacobian_e2_intermediate              => save_jacobian_e2_intermediate_ccsd
-      procedure :: save_jacobian_g2_intermediates             => save_jacobian_g2_intermediates_ccsd
-      procedure :: save_jacobian_h2_intermediates             => save_jacobian_h2_intermediates_ccsd
-      procedure :: save_jacobian_j2_intermediate              => save_jacobian_j2_intermediate_ccsd
+      procedure, private :: save_jacobian_c2_intermediates
+      procedure, private :: save_jacobian_d2_intermediate 
+      procedure, private :: save_jacobian_e2_intermediate 
+      procedure, private :: save_jacobian_g2_intermediates
+      procedure, private :: save_jacobian_h2_intermediates
+      procedure, private :: save_jacobian_j2_intermediate 
 !
 !     Procedures related to Jacobian transpose transformation
 !
