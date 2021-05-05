@@ -12,6 +12,7 @@
 - Z-matrix tool can convert between xyz coordinates and Z-matrix. eT-program/eT!619
 - Davidson excited state solver can now handle cases where a requested root forms a complex pair with a higher root before convergence is reached (i.e., a false-positive complex pair); we thus avoid the commonly encountered "add one more root" error. eT-program/eT!772
 - Biorthonormalization works for a set of close states as well. eT-program/eT!775
+- Added printing of implementation references, and the associated keyword `full references` in the `print` section. eT-program/eT!773
 
 ### Structure
 - The test scripts now uses pathlib instead of os. eT-program/eT!756
