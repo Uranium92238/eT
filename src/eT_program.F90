@@ -27,13 +27,14 @@ program eT_program
    use parameters
    use global_in
    use global_out
-   use timings_class, only : timings, timing
-   use memory_manager_class, only : mem, memory_manager
-   use libint_initialization, only : initialize_libint_c, finalize_libint_c
+   use timings_class,            only: timings, timing
+   use memory_manager_class,     only: mem, memory_manager
+   use citation_printer_class,   only: eT_citations, citation_printer
+   use libint_initialization,    only: initialize_libint_c, finalize_libint_c
 !
-   use hf_class, only: hf
-   use uhf_class, only: uhf
-   use mlhf_class, only: mlhf
+   use hf_class,     only: hf
+   use uhf_class,    only: uhf
+   use mlhf_class,   only: mlhf
 !
    use omp_lib
 !
@@ -108,6 +109,8 @@ program eT_program
 !
    call input%read_keywords_and_geometry()
    call input%close_()
+!
+   eT_citations = citation_printer()
 !
    n_threads = 1
 !
@@ -186,6 +189,8 @@ program eT_program
 !
    call get_date_and_time(timestamp)
    call output%printf('m', "Calculation ended: (a0)", chars=[timestamp], fs='(/t3,a)')
+!
+   call eT_citations%print_(output)
 !
    call output%printf('m', 'eT terminated successfully!', fs='(/t3,a)')
 !

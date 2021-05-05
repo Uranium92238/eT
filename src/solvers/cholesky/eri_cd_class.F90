@@ -189,10 +189,15 @@ contains
 !!    New ERI CD
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use citation_class,         only: citation
+      use citation_printer_class, only: eT_citations
+!
       implicit none
 !
       type(eri_cd)  :: solver
       type(ao_tool) :: ao
+!
+      type(citation), allocatable :: reference
 !
       solver%timer = timings('Cholesky decomposition of ERIs')
       call solver%timer%turn_on()
@@ -215,7 +220,24 @@ contains
       solver%n_aop   = ao%n*(ao%n+1)/2 ! Number of ao pairs packed
       solver%n_ao    = ao%n
       solver%n_s     = ao%n_sh
-      solver%n_shp   = solver%n_s*(solver%n_s + 1)/2              ! Number of shell pairs packed
+      solver%n_shp   = solver%n_s*(solver%n_s + 1)/2 ! Number of shell pairs packed
+!
+!     Add citation for this implementation
+!
+      reference = citation(implementation = 'Cholesky decomposition of ERIs',            &
+                           journal        = 'J. Chem. Phys.',                            &
+                           title_         = 'An efficient algorithm for Cholesky &
+                                 &decomposition of electron repulsion integrals',        &
+                           volume         = '150',                                       &
+                           issue          = '19',                                        &
+                           pages          = '194112',                                    &
+                           year           = '2019',                                      &
+                           doi            = '10.1063/1.5083802',                         &
+                           authors        = [character(len=25) :: 'Sarai D. Folkestad',  &
+                                                                  'Eirik F. Kjønstad',   &
+                                                                  'Henrik Koch'])
+!
+      call eT_citations%add(reference)
 !
 !     Initialize files
 !

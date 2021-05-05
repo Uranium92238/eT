@@ -426,6 +426,7 @@ contains
       global_print%keywords = [character(len=30) ::  &
                               'output print level ', &
                               'timing print level ', &
+                              'full references',     &
                               'z-matrix']
 !
 !
