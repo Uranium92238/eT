@@ -90,6 +90,7 @@ module ao_tool_class
       real(dp), private :: libint_epsilon ! Default Libint ERI precision
 !
       real(dp), private :: eri_cutoff
+      real(dp), private :: oei_cutoff
 !
       character(len=200) :: basis_type_ ! standard, spherical, or Gaussian
 !
@@ -157,8 +158,20 @@ module ao_tool_class
       procedure, public :: set_libint_epsilon &       ! epsilon = precision of electron repulsion 
                         => set_libint_epsilon_ao_tool !           integrals 
 !
+      procedure, public :: set_eri_cutoff &       
+                        => set_eri_cutoff_ao_tool 
+!
+      procedure, public :: set_oei_cutoff &       
+                        => set_oei_cutoff_ao_tool 
+!
       procedure, public :: get_libint_epsilon &
                         => get_libint_epsilon_ao_tool
+!
+      procedure, public :: get_eri_cutoff &       
+                        => get_eri_cutoff_ao_tool 
+!
+      procedure, public :: get_oei_cutoff &       
+                        => get_oei_cutoff_ao_tool 
 !
       procedure, public :: get_reduced_ao_metric &
                         => get_reduced_ao_metric_ao_tool
@@ -212,6 +225,7 @@ module ao_tool_class
                         => get_subset_point_charges_ao_tool
 !         
       procedure, private :: construct_oei 
+      procedure, private :: construct_oei_screened 
       procedure, private :: construct_oei_1der
 !
       procedure, private :: determine_linearly_independent_aos
@@ -236,6 +250,7 @@ module ao_tool_class
       procedure, private :: initialize_centers 
 !
       procedure, private :: get_subset_index
+      procedure, private :: shp_on_same_atom
 !
       final :: destructor 
 !
@@ -269,6 +284,7 @@ contains
 !
       ao%lindep_threshold = 1.0d-6
       ao%eri_cutoff       = 1.0d-12
+      ao%oei_cutoff       = 1.0d-17
 !
       ao%libint_epsilon = ao%eri_cutoff**2
 !
@@ -370,6 +386,9 @@ contains
       ao%n      = template%n
       ao%n_sh   = template%n_sh
       ao%charge = template%charge
+!
+      ao%eri_cutoff = template%eri_cutoff
+      ao%oei_cutoff = template%oei_cutoff
 !
       allocate(ao%shells(ao%n_sh))
       ao%shells = template%shells
@@ -814,7 +833,7 @@ contains
    end function get_n_oei_components_ao_tool
 !
 !
-   subroutine get_oei_ao_tool(ao, oei_type, oei)
+   subroutine get_oei_ao_tool(ao, oei_type, oei, screening)
 !!
 !!    Get OEI (one-electron integral)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020 
@@ -839,18 +858,33 @@ contains
 !
       character(len=*), intent(in) :: oei_type 
 !
-      real(dp), dimension(*), intent(out) :: oei     
+      real(dp), dimension(*), intent(out) :: oei   
+!
+      logical, intent(in), optional :: screening  
 !
       integer :: n_components 
 !
       type(timings), allocatable :: timer 
 !
-      timer = timings('One-electron integrals (' // trim(oei_type) // ')', 'v')
+      logical :: screening_local
+!
+      timer = timings('One-electron integrals (' // trim(oei_type) // ')', 'm')
       call timer%turn_on()
+!
+      screening_local = .false.
+      if (present(screening)) screening_local = screening
 !
       n_components = ao%get_n_oei_components(oei_type)
 !
-      call ao%construct_oei(trim(oei_type), oei, n_components)
+      if (screening_local) then
+!
+         call ao%construct_oei_screened(trim(oei_type), oei, n_components)
+!
+      else
+!
+         call ao%construct_oei(trim(oei_type), oei, n_components)
+!
+      endif
 !
       call timer%turn_off()
 !
@@ -1317,7 +1351,7 @@ contains
    end subroutine initialize_oei_ao_tool
 !
 !
-   subroutine construct_stored_oei_ao_tool(ao, oei_type)
+   subroutine construct_stored_oei_ao_tool(ao, oei_type, screening)
 !!
 !!    Construct stored OEI 
 !!    Written by Eirik F. Kjønstad, 2020
@@ -1338,9 +1372,11 @@ contains
 !
       character(len=*), intent(in) :: oei_type 
 !
+      logical, intent(in), optional :: screening
+!
       if (trim(oei_type) == 'hamiltonian') then 
 !
-         call ao%get_oei('hamiltonian', ao%h)
+         call ao%get_oei('hamiltonian', ao%h, screening)
 !
       elseif (trim(oei_type) == 'overlap') then 
 !
@@ -1348,7 +1384,7 @@ contains
 !
       elseif (trim(oei_type) == 'electrostatic potential') then 
 !
-         call ao%get_oei('electrostatic potential', ao%v)
+         call ao%get_oei('electrostatic potential', ao%v, screening)
 !
       else 
 !
@@ -1484,13 +1520,13 @@ contains
 !
       class(ao_tool), intent(inout) :: ao 
 !
-      call ao%construct_stored_oei('hamiltonian')
       call ao%construct_stored_oei('overlap')
+      call ao%construct_stored_oei('hamiltonian', screening = .true.)
 !
       call ao%determine_linearly_independent_aos()
 !
       call ao%construct_cs_eri_max_screenings()      
-!  
+!
    end subroutine calculate_geometry_dependent_variables
 !
 !
@@ -1877,6 +1913,38 @@ contains
    end subroutine set_libint_epsilon_ao_tool
 !
 !
+   subroutine set_eri_cutoff_ao_tool(ao, eri_cutoff)
+!!
+!!    Set ERI cutoff
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none 
+!
+      class(ao_tool), intent(inout) :: ao
+!
+      real(dp), intent(in) :: eri_cutoff
+!
+      ao%eri_cutoff = eri_cutoff
+!
+   end subroutine set_eri_cutoff_ao_tool
+!
+!
+   subroutine set_oei_cutoff_ao_tool(ao, oei_cutoff)
+!!
+!!    Set one-electron integral (oei) cutoff
+!!    Written by Sarai D. Folkestad, 2021
+!! 
+      implicit none 
+!
+      class(ao_tool), intent(inout) :: ao
+!
+      real(dp), intent(in) :: oei_cutoff
+!
+      ao%oei_cutoff = oei_cutoff
+!
+   end subroutine set_oei_cutoff_ao_tool
+!
+!
    pure function get_libint_epsilon_ao_tool(ao) result(epsilon_)
 !!
 !!    Get Libint epsilon 
@@ -1891,6 +1959,38 @@ contains
       epsilon_ = ao%libint_epsilon 
 !
    end function get_libint_epsilon_ao_tool
+!
+!
+   pure function get_eri_cutoff_ao_tool(ao) result(eri_cutoff)
+!!
+!!    Get ERI cutoff
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none 
+!
+      class(ao_tool), intent(in) :: ao
+!
+      real(dp) :: eri_cutoff
+!
+      eri_cutoff = ao%eri_cutoff 
+!
+   end function get_eri_cutoff_ao_tool
+!
+!
+   pure function get_oei_cutoff_ao_tool(ao) result(oei_cutoff)
+!!
+!!    Get one-electron integral (oei) cutoff
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none 
+!
+      class(ao_tool), intent(in) :: ao
+!
+      real(dp) :: oei_cutoff
+!
+      oei_cutoff = ao%oei_cutoff 
+!
+   end function get_oei_cutoff_ao_tool
 !
 !  
    subroutine get_center_ao_tool(ao, I, center)
@@ -2858,6 +2958,132 @@ contains
          call mem%dealloc(ao%cs_eri_max_indices, ao%n_sh*(ao%n_sh + 1)/2, 3)
 !
    end subroutine destructor
+!
+!
+   subroutine construct_oei_screened(ao, oei_type, x, n_components)
+!!
+!!    Construct OEI screened (one-electron integral) 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2021 
+!
+      use iso_c_binding  
+      use array_utilities, only: zero_array  
+!
+      implicit none 
+!
+      class(ao_tool), intent(in) :: ao 
+!
+      integer, intent(in) :: n_components
+!
+      real(dp), dimension(ao%n, ao%n, n_components), intent(out) :: x 
+!
+      character(len=*) :: oei_type
+!
+      integer :: w, y, k, w_f, y_f
+!
+      integer :: A, B, n_shp, AB
+      integer(c_int) :: A_c, B_c
+!
+      real(dp) :: max_s 
+!
+      real(dp), dimension(:,:,:), pointer                           :: x_ABk_p 
+      real(dp), dimension((ao%max_sh_size)**2*n_components), target :: x_ABk
+!
+      character(len=100, kind=c_char) :: oei_type_c
+!
+      integer, dimension(:,:), allocatable :: shp_list
+!
+      if (trim(oei_type) == 'overlap') &
+         call output%error_msg('cannot use overlap screening on overlap')
+!
+      call zero_array(x, ao%n**2*n_components)
+!
+!     Count the number of significant shell pairs
+!
+      call mem%alloc(shp_list, ao%n_sh**2, 2)
+!
+      n_shp = 0
+!
+      do A = 1, ao%n_sh
+         do B = 1, A
+!
+            if (ao%shp_on_same_atom(A,B)) then
+!
+               n_shp = n_shp + 1   
+               shp_list(n_shp, 1) = A 
+               shp_list(n_shp, 2) = B       
+!
+            else  
+!
+               max_s = maxval(abs(ao%s(ao%shells(A)%first:ao%shells(A)%last,&
+                                       ao%shells(B)%first:ao%shells(B)%last)))
+!
+               if (max_s .gt. ao%oei_cutoff) then
+!
+                  n_shp = n_shp + 1   
+                  shp_list(n_shp, 1) = A 
+                  shp_list(n_shp, 2) = B  
+!
+               endif  
+!
+            endif
+!
+         enddo
+      enddo
+!
+      oei_type_c = trim(oei_type) // c_null_char
+!
+!$omp parallel do private(AB, A_c, B_c, x_ABk, x_ABk_p, w, y, w_f, y_f, k) schedule(dynamic)
+      do AB = 1, n_shp
+!
+            A_c = int(shp_list(AB, 1), kind=c_int)
+            B_c = int(shp_list(AB, 2), kind=c_int)
+!
+           call get_oei_c(oei_type_c, x_ABk, A_c, B_c)
+!
+           x_ABk_p(1 : ao%shells(A_c)%length, &
+                   1 : ao%shells(B_c)%length, &
+                   1 : n_components)          &
+           => x_ABk(1 : ao%shells(A_c)%length*&
+                        ao%shells(B_c)%length*&
+                        n_components)
+!          
+           do k = 1, n_components
+              do w = 1, ao%shells(A_c)%length
+                 do y = 1, ao%shells(B_c)%length
+!
+                    w_f = ao%shells(A_c)%first - 1 + w
+                    y_f = ao%shells(B_c)%first - 1 + y
+!
+                    x(w_f, y_f, k) = x_ABk_p(w, y, k)
+                    x(y_f, w_f, k) = x_ABk_p(w, y, k)
+!
+                 enddo
+              enddo
+           enddo
+         enddo
+!$omp end parallel do
+!
+      call mem%dealloc(shp_list, ao%n_sh**2, 2)
+!
+   end subroutine construct_oei_screened
+!
+!
+   function shp_on_same_atom(ao, A, B) result(on_same_atom)
+!!
+!!    Shell pair on same atom
+!!    Written by Sarai D. Folkestad, 2021
+!!
+!!    Checks if shells A and B are on the same atom
+!!
+      implicit none
+
+      class(ao_tool), intent(in) :: ao 
+      integer, intent(in) :: A, B
+      logical :: on_same_atom
+!
+      on_same_atom = (ao%shell_to_center(A) == ao%shell_to_center(B))
+!
+   end function shp_on_same_atom
 !
 !
    subroutine print_z_matrix_ao_tool(ao)

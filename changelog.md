@@ -14,6 +14,9 @@
 - Biorthonormalization works for a set of close states as well. eT-program/eT!775
 - Added printing of implementation references, and the associated keyword `full references` in the `print` section. eT-program/eT!773
 
+### Optimization
+- One-electron integrals with screening based on the overlap matrix. eT-program/eT!770
+
 ### Structure
 - The test scripts now uses pathlib instead of os. eT-program/eT!756
 - Changed names of `setup` and `eT_launch` to `setup.py` and `eT_launch.py` so they can be imported into python. eT-program/eT!763

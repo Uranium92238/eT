@@ -1175,7 +1175,9 @@ contains
 !
       real(dp), intent(in) :: gradient_threshold
 !
-      real(dp) :: epsilon ! Libint ERI precision 
+      real(dp) :: epsilon_ ! Libint ERI precision 
+!
+      real(dp) :: integral_cutoff
 !
 !     If not specified by user, set Coulomb and exchange thresholds 
 !     (For ref., this will give 10-12 and 10-10 for gradient threshold: 10-6)
@@ -1194,14 +1196,13 @@ contains
 !
 !     If not requested by user, set Libint integral accuracy according to thresholds 
 !
-      if (.not. input%is_keyword_present('integral precision', 'solver scf')) then 
+      if (input%is_keyword_present('integral precision', 'solver scf')) then 
 !
-!        Tighten the default threshold if it is larger than 
-!        the lowest screening threshold squared
-!
-         epsilon = min(wf%coulomb_threshold, wf%exchange_threshold)**2
-!
-      else
+         call input%get_keyword('integral cutoff',          &
+                                          'solver scf',     &
+                                          integral_cutoff) 
+         call wf%ao%set_eri_cutoff(integral_cutoff)
+         epsilon_ = integral_cutoff**2
 !
 !        Warn user about tampering with integral precision (Libint epsilon)
 !
@@ -1209,13 +1210,26 @@ contains
                                  & Be aware that the 'precision' given to Libint is not exact&
                                  & but approximate. Don't use unless you know what you are doing.")
 !
+      else
+!
+!        Tighten the default threshold if it is larger than 
+!        the lowest screening threshold squared
+!
+         epsilon_ = min(wf%coulomb_threshold, wf%exchange_threshold)**2
+         call wf%ao%set_eri_cutoff(sqrt(epsilon_))
+!
       endif 
+!  
+      if (input%is_keyword_present('one-electron integral cutoff', 'solver scf')) then
 !
-!     If not requested by user, set integral cutoff
+         call input%get_keyword('one-electron integral cutoff',   &
+                                           'solver scf',          &
+                                           integral_cutoff)    
+         call wf%ao%set_oei_cutoff(integral_cutoff)
 !
-      if (.not. input%is_keyword_present('integral cutoff', 'solver scf')) then
+      else 
 !
-         wf%integral_cutoff = sqrt(epsilon)
+         call wf%ao%set_oei_cutoff(wf%coulomb_threshold*1.0d-5)
 !
       endif
 !
@@ -1231,7 +1245,7 @@ contains
 !
       endif
 !
-      call wf%ao%set_libint_epsilon(epsilon)
+      call wf%ao%set_libint_epsilon(epsilon_)
 !
    end subroutine set_screening_and_precision_thresholds_hf
 !
