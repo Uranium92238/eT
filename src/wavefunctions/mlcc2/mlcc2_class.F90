@@ -548,6 +548,8 @@ contains
 !!
 !!       s_aibj = - g_aibj/ε_aibj, {a,i,b,j} are CC2 orbitals
 !! 
+      implicit none 
+!
       class(mlcc2), intent(inout) :: wf 
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb 

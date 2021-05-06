@@ -40,6 +40,8 @@ contains
 !!
 !!    Initializes the wavefunction files for wavefunction parameters.
 !!
+      implicit none 
+!
       class(ccs) :: wf 
 !
       call wf%initialize_ground_state_files()
@@ -52,6 +54,8 @@ contains
 !!    Initialize singles files 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
+      implicit none 
+!
       class(ccs) :: wf 
 !
       wf%t_file = stream_file('t')
@@ -67,6 +71,8 @@ contains
 !!
 !!    Modified by Alexander C. Paul, May 2020: array of stream files
 !!
+      implicit none 
+!
       class(ccs), intent(inout) :: wf
 !
       character(len=5) :: file_name

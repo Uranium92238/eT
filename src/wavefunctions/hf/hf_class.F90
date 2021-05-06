@@ -1612,6 +1612,8 @@ contains
 !!    If the gradient norm is sufficiently small, 
 !!    'cumulative_fock' is enabled
 !!
+      implicit none 
+!
       class(hf) :: wf
 !
       real(dp), dimension(wf%gradient_dimension), intent(out) :: G

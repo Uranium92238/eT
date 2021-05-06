@@ -179,6 +179,8 @@ contains
 !!                 Coulomb and exchange screening will target the MO basis G(D). Used in 
 !!                 MLHF when constructing G(Da). Default: false.
 !!
+      implicit none 
+!
       class(hf), intent(inout):: wf
 !
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)    :: D

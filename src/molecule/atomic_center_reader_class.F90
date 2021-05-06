@@ -403,6 +403,8 @@ contains
 !!    the full list of subsets - in case there are sets that contain zero
 !!    atoms.
 !!
+      implicit none 
+!
       class(atomic_center_reader), intent(inout) :: this
 !
       integer :: set, I 
@@ -445,6 +447,8 @@ contains
 !!    Based on routines with contributions from Sarai D. Folkestad, Eirik F. Kjønstad,
 !!    Rolf H. Myhre, and Åsmund H. Tveten.
 !!
+      implicit none 
+!
       class(atomic_center_reader), intent(inout) :: this 
 !
       integer :: k
