@@ -442,22 +442,23 @@ contains
 !
       solver_scf%name_    = 'solver scf'
       solver_scf%required = .false.
-      solver_scf%keywords = [character(len=30) ::        &
-                            'algorithm',                 &
-                            'energy threshold',          &
-                            'gradient threshold',        &
-                            'storage',                   &
-                            'crop',                      &
-                            'cumulative fock threshold', &
-                            'max iterations',            &
-                            'coulomb threshold',         &
-                            'exchange threshold',        &
-                            'integral precision',        &
-                            'integral cutoff',           &
-                            'diis dimension',            &
-                            'restart',                   &
-                            'ao density guess',          &
-                            'print orbitals',            &
+      solver_scf%keywords = [character(len=30) ::           &
+                            'algorithm',                    &
+                            'energy threshold',             &
+                            'gradient threshold',           &
+                            'storage',                      &
+                            'crop',                         &
+                            'cumulative fock threshold',    &
+                            'max iterations',               &
+                            'coulomb threshold',            &
+                            'exchange threshold',           &
+                            'integral precision',           &
+                            'integral cutoff',              &
+                            'one-electron integral cutoff', &
+                            'diis dimension',               &
+                            'restart',                      &
+                            'ao density guess',             &
+                            'print orbitals',               &
                             'skip']
 !
 !

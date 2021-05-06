@@ -272,7 +272,7 @@ contains
       call wf%construct_ao_G(wf%ao_density, wf%ao_fock)
 !
 !     Add the one-electron part
-!
+! 
       call daxpy(wf%ao%n**2, one, wf%ao%h, 1, wf%ao_fock, 1)
 !
       call timer%turn_off()

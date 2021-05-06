@@ -13,6 +13,9 @@
 - Davidson excited state solver can now handle cases where a requested root forms a complex pair with a higher root before convergence is reached (i.e., a false-positive complex pair); we thus avoid the commonly encountered "add one more root" error. eT-program/eT!772
 - Biorthonormalization works for a set of close states as well. eT-program/eT!775
 
+### Optimization
+- One-electron integrals with screening based on the overlap matrix. eT-program/eT!770
+
 ### Structure
 - The test scripts now uses pathlib instead of os. eT-program/eT!756
 - Changed names of `setup` and `eT_launch` to `setup.py` and `eT_launch.py` so they can be imported into python. eT-program/eT!763

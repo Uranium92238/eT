@@ -56,7 +56,6 @@ module hf_class
 !
       real(dp) :: coulomb_threshold  = 1.0D-12   ! Screening threshold (Fock, Coulomb)
       real(dp) :: exchange_threshold = 1.0D-10   ! Screening threshold (Fock, exchange)
-      real(dp) :: integral_cutoff    = 1.0D-12   ! Default: sqrt(epsilon) 
 !
       real(dp) :: cumulative_fock_threshold = 1.0d0
 !
@@ -357,7 +356,7 @@ contains
       implicit none
 !
       class(hf) :: wf
-!
+!  
       call input%get_keyword('coulomb threshold',              &
                                         'solver scf',          &
                                         wf%coulomb_threshold)
@@ -365,10 +364,6 @@ contains
       call input%get_keyword('exchange threshold',             &
                                         'solver scf',          &
                                         wf%exchange_threshold)
-!
-      call input%get_keyword('integral cutoff',                &
-                                        'solver scf',          &
-                                        wf%integral_cutoff)      
 !
       call input%get_keyword('cumulative fock threshold',      &
                                         'solver scf',          &
@@ -955,14 +950,17 @@ contains
       call output%printf('n', '- Screening and integral thresholds:', &
                         fs='(/t3,a)')
 !
-      call output%printf('n', 'Coulomb screening threshold:  (e11.4)', &
+      call output%printf('n', 'Coulomb screening threshold:   (e11.4)', &
                          reals=[wf%coulomb_threshold], fs='(/t6,a)')
 !
-      call output%printf('n', 'Exchange screening threshold: (e11.4)', &
+      call output%printf('n', 'Exchange screening threshold:  (e11.4)', &
                          reals=[wf%exchange_threshold], fs='(t6,a)')
 !
-      call output%printf('n', 'Integral cutoff:              (e11.4)', &
-                         reals=[wf%integral_cutoff], fs='(t6,a)')
+      call output%printf('n', 'ERI cutoff:                    (e11.4)', &
+                         reals=[wf%ao%get_eri_cutoff()], fs='(t6,a)')
+!
+      call output%printf('n', 'One-electron integral  cutoff: (e11.4)', &
+                         reals=[wf%ao%get_oei_cutoff()], fs='(t6,a)')
 !
       call output%printf('n', 'Cumulative Fock threshold:    (e11.4)', &
                          reals=[wf%cumulative_fock_threshold], fs='(t6,a)')
