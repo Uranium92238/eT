@@ -547,6 +547,8 @@ contains
 !!   Modified to fit with the default indentation of eT messages.
 !!
 !
+     implicit none 
+!
      character(kind=c_char), intent(in) :: message(*)
      integer(c_int) :: length, length_2, i, n_messages
      character(len=1000), allocatable :: message_eT(:)

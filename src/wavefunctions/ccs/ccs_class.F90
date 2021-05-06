@@ -1261,6 +1261,8 @@ contains
 !!
 !!    Modified by Alexander C. Paul to be overwritable for CC3 and low-mem CC2
 !!
+      implicit none
+!
       class(ccs), intent(in) :: wf
 !
       real(dp) :: overlap

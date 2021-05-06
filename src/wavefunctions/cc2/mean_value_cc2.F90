@@ -58,6 +58,8 @@ contains
 !!
 !!    E = E_HF + sum_aibj (t_i^a*t_j^b + t_ij^ab) L_iajb
 !!
+      implicit none 
+!
       class(cc2), intent(inout) :: wf 
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb 

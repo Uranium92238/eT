@@ -61,6 +61,8 @@ contains
 !!    Isolated the intermediates from the
 !!    jacobian_transpose_doubles_a1_doubles and wrote them to file. 
 !!
+      implicit none
+!
       class(doubles), intent(inout) :: wf
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_bjck
 !

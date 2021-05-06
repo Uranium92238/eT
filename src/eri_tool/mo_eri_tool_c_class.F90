@@ -920,6 +920,8 @@ contains
 !!    we have to construct all the intermediate vectors in batches and write them to temp_file
 !!    before reading them in and constructing the final vectors.
 !!
+      implicit none 
+!
       class(mo_eri_tool_c), intent(inout) :: eri
 !
       complex(dp), dimension(eri%n_mo, eri%n_mo), intent(in) :: T

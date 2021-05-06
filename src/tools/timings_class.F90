@@ -137,6 +137,8 @@ contains
 !!    as shown in the timing output file when turn_off()
 !!    is called.
 !!
+      implicit none 
+!
       type(timings) :: timer 
 !
       character(len=*), intent(in) :: name_ 

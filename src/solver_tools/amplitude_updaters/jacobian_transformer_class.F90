@@ -57,6 +57,8 @@ contains
 !!
 !!    side: 'left' or 'right' (call A^T or A transformation, respectively)
 !!
+      implicit none 
+!
       character(len=*), intent(in) :: side
 !
       type(jacobian_transformer) :: this 
