@@ -13,6 +13,7 @@
 - Davidson excited state solver can now handle cases where a requested root forms a complex pair with a higher root before convergence is reached (i.e., a false-positive complex pair); we thus avoid the commonly encountered "add one more root" error. eT-program/eT!772
 - Biorthonormalization works for a set of close states as well. eT-program/eT!775
 - Added printing of implementation references, and the associated keyword `full references` in the `print` section. eT-program/eT!773
+- Made autogenerate script compatible with Python 3.6 (UTF-8 encoding error). eT-program/eT!794
 
 ### Optimization
 - One-electron integrals with screening based on the overlap matrix. eT-program/eT!770

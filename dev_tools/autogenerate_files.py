@@ -41,7 +41,7 @@ complexifiable_modules = {"packed_array_utilities_r"}
 def is_submodule(file_path):
     # Checks if first non comment line in file starts with "submodule"
 
-    with file_path.open("r") as f:
+    with file_path.open("r", encoding="utf-8") as f:
         lines = f.readlines()
 
     for line in lines:
@@ -186,14 +186,14 @@ def autogenerate_interfaces(src_dir):
     for submodule_path in all_submodules:
 
         # Make a generator
-        with submodule_path.open("r") as f:
+        with submodule_path.open("r", encoding="utf-8") as f:
             lines = (i for i in f.readlines())
 
         lines, code_lines = create_code_to_line_map(lines)
         iterator = zip(lines, code_lines)
 
         interface_path = Path(f"{submodule_path.with_suffix('')}_interface.F90")
-        with interface_path.open("w") as interface_file:
+        with interface_path.open("w", encoding="utf-8") as interface_file:
 
             write_license(interface_file)
 
@@ -259,7 +259,7 @@ def get_complex_mod_variables(file_path):
     # Loop over lines in class_file until "contains"
     # If line starts with "complex(dp) and contains "_complex"
     # add the word preceding "complex" to variable list.
-    mod_file = file_path.open("r")
+    mod_file = file_path.open("r", encoding="utf-8")
     with mod_file as lines:
         while True:
             try:
@@ -290,7 +290,7 @@ def get_complex_class_procedures(file_path):
     # Loop over lines in class_file until "end type"
     # If the first string in line is "procedure" and the third ends with "_complex",
     # add pointer and procedure to the list
-    class_file = file_path.open("r")
+    class_file = file_path.open("r", encoding="utf-8")
     with class_file as lines:
         while True:
             try:
@@ -476,13 +476,17 @@ def autogenerate_complex_files(source_directory, parameter_list):
 
         for submodule_name in complex_submodules[wf]:
 
-            with (wf_dir / f"{submodule_name}.F90").open("r") as r_file:
+            with (wf_dir / f"{submodule_name}.F90").open(
+                "r", encoding="utf-8"
+            ) as r_file:
                 line_list = r_file.readlines()
 
             # Make an iterator
             lines = (i for i in line_list)
 
-            with (auto_dir / f"{submodule_name}_complex.F90").open("w") as c_file:
+            with (auto_dir / f"{submodule_name}_complex.F90").open(
+                "w", encoding="utf-8"
+            ) as c_file:
                 while True:
 
                     try:
@@ -556,11 +560,11 @@ def complexify_modules(src_dir, parameter_list):
             split_name = str(f_path.name).rpartition("_r")
             c_path = auto_dir / (split_name[0] + "_c" + split_name[2])
 
-            with f_path.open("r") as r_file:
+            with f_path.open("r", encoding="utf-8") as r_file:
                 lines = r_file.readlines()
 
             # Loop over lines, complexify if longer than 1 and write
-            with c_path.open("w") as c_file:
+            with c_path.open("w", encoding="utf-8") as c_file:
                 for line in lines:
 
                     if len(line.strip()) > 1:
