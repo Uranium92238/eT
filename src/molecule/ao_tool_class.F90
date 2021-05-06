@@ -1492,6 +1492,8 @@ contains
 !!       R:     New position for the centers (3 x n_atoms)
 !!       units: 'angstrom' or 'bohr', unit of R
 !!
+      implicit none 
+!
       class(ao_tool), intent(inout) :: ao 
 !
       real(dp), dimension(3, ao%n_centers), intent(in) :: R 
@@ -2891,6 +2893,8 @@ contains
 !!    Written by Alexander C. Paul, Feb 2021
 !!
       use array_utilities, only: copy_integer
+!
+      implicit none 
 !
       class(ao_tool), intent(inout) :: ao
       type(ao_tool),  intent(in)    :: template

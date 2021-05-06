@@ -730,6 +730,8 @@ contains
 !!    g_vvvo: Integral array in vvvo order
 !!    length: length of the batch
 !!
+      implicit none 
+!
       class(triples), intent(in) :: wf
 !
       integer, intent(in) :: length
@@ -756,6 +758,8 @@ contains
 !!    length1: length of the batch for the second to last index
 !!    length2: length of the batch for the last index
 !!
+      implicit none 
+!
       class(triples), intent(in) :: wf
 !
       integer, intent(in) :: length1, length2
@@ -782,6 +786,8 @@ contains
 !!    length1: length of the batch for the second to last index
 !!    length2: length of the batch for the last index
 !!
+      implicit none 
+!
       class(triples), intent(in) :: wf
 !
       integer, intent(in) :: length1, length2

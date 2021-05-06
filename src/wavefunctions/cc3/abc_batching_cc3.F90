@@ -100,6 +100,8 @@ contains
 !!    length1: length of the batch for the second to last index
 !!    length2: length of the batch for the last index
 !!
+      implicit none
+!
       class(cc3), intent(in) :: wf
 !
       integer, intent(in) :: length1, length2
@@ -167,6 +169,8 @@ contains
 !!    length1: length of the batch for the second to last index
 !!    length2: length of the batch for the last index
 !!
+      implicit none
+!
       class(cc3), intent(in) :: wf
 !
       integer, intent(in) :: length1, length2
@@ -234,6 +238,8 @@ contains
 !!    length1: length of the batch for the second to last index
 !!    length2: length of the batch for the last index
 !!
+      implicit none
+!
       class(cc3), intent(in) :: wf
 !
       integer, intent(in) :: length1, length2
@@ -310,6 +316,8 @@ contains
 !!    g_oovo: Integral array in ooov order
 !!    length: length of the batch
 !!
+      implicit none
+!
       class(cc3), intent(in) :: wf
 !
       integer, intent(in) :: length
@@ -375,6 +383,8 @@ contains
 !!    g_ooov: Integral array in ooov order
 !!    length: length of the batch
 !!
+      implicit none
+!
       class(cc3), intent(in) :: wf
 !
       integer, intent(in) :: length
