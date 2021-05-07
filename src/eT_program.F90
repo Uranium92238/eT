@@ -427,6 +427,8 @@ subroutine set_global_print_levels()
    use global_in, only: input
    use timings_class, only : timing
 !
+   implicit none 
+!
    character(len=200) :: print_level
 !
 !  Set default

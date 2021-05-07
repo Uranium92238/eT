@@ -87,6 +87,8 @@ contains
 !!    New BFGS tool
 !!    Written by Eirik F. Kjønstad, 2019
 !!
+      implicit none 
+!
       type(bfgs_tool) :: bfgs
 !
       integer, intent(in)  :: n_parameters

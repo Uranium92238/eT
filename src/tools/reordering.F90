@@ -5781,6 +5781,8 @@ contains
 !!    Pack in unpacked array X_prqs to packed array Y_pqrs
 !!    where dim_p = dim_r and dim_q = dim_s
 !!
+      implicit none 
+!
       integer, intent(in) :: dim_p
       integer, intent(in) :: dim_q
 !
@@ -5828,6 +5830,8 @@ contains
 !!    Pack in unpacked array X_prqs to packed array Y_pqrs
 !!    where dim_p = dim_r and dim_q = dim_s
 !!
+      implicit none 
+!
       integer, intent(in) :: dim_p
       integer, intent(in) :: dim_q
 !

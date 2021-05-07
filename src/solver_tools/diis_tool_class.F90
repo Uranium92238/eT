@@ -206,6 +206,8 @@ contains
 !!                         (see J. Chem. Theory Comput. 2015, 11, 4, 1518-1524). Optional.
 !!                         Default is false. 
 !!
+      implicit none 
+!
       type(diis_tool) :: diis
 !
       character(len=*), intent(in) :: name_
