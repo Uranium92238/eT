@@ -214,19 +214,11 @@ contains
 !
       end if
 !
-      call engine%tasks%print_('cholesky')
+!     Determine ground state | CC >
 !
-      call engine%do_cholesky(wf)
+      call engine%gs_engine%run(wf)
 !
-      call engine%tasks%print_('mo preparations')
-!
-      call wf%mo_preparations()
-!
-!     Ground state solution
-!
-      call engine%do_ground_state(wf)
-!
-!     Determine multipliers
+!     Determine multipliers < Λ |
 !
       call engine%do_multipliers(wf)
 !

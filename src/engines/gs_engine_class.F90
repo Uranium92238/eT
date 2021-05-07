@@ -156,8 +156,6 @@ contains
 !
       call wf%mo_preparations() 
 !
-!     Determine ground state
-!
       call engine%do_ground_state(wf)
 !
    end subroutine run_gs_engine
