@@ -1745,7 +1745,8 @@ contains
       do record = 1, this%n_qm_atom_lines
 !
          if (this%geometry(record)(1:6) .ne. 'basis:' &
-            .and. (this%geometry(record)(1:6) .ne. 'units:')) &
+            .and. (this%geometry(record)(1:6) .ne. 'units:') &
+            .and. (this%geometry(record)(1:5) .ne. 'ghost')) &
             n_atoms = n_atoms + 1
 !
       enddo
@@ -1833,11 +1834,12 @@ contains
 !
 !
    subroutine get_geometry_input_file(this, n_atoms, symbols, &
-                                       positions, basis_sets, units_angstrom)
+                                       positions, basis_sets, units_angstrom, is_ghost)
 !!
 !!    Get geometry
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!    Modified by Åsmund H. Tveten, Oct 2019. Generalized to Bohr units.
+!!    Modified by Tor S. Haugland, May 2021. Added ghost atoms.
 !!
 !!    Reads the geometry from the output file and sets it in the
 !!    list of atoms.
@@ -1854,6 +1856,7 @@ contains
 !
       character(len=2), dimension(n_atoms), intent(out)   :: symbols
       character(len=100), dimension(n_atoms), intent(out) :: basis_sets
+      logical, dimension(n_atoms), intent(out) :: is_ghost
 !
       real(dp), dimension(3, n_atoms), intent(out) :: positions ! x, y, z
 !
@@ -1867,6 +1870,7 @@ contains
 !
       character(len=200) :: string
       character(len=100) :: current_basis
+      logical :: is_ghost_atom = .false.
 !
       start_ = 1 ! Specifies the line of the first and required basis
 !
@@ -1907,11 +1911,16 @@ contains
          string = trim(adjustl(this%geometry(i)))
 !
          if (string(1:6) == 'units:') &
-         call output%error_msg('Units must be specified as the first line in the geometry section.')
+            call output%error_msg('Units must be specified as the first line in the geometry section.')
 !
          if(string(1:6) == 'basis:') then
 !
             current_basis = trim(adjustl(string(7:200)))
+!
+         elseif (string(1:5) == 'ghost') then
+!
+!           Every atom after 'ghost' keyword are ghosts
+            is_ghost_atom = .true.
 !
          else
 !
@@ -1919,6 +1928,7 @@ contains
 !
             basis_sets(current_atom) = current_basis
             symbols(current_atom)    = string(1:2)
+            is_ghost(current_atom)   = is_ghost_atom
 !
             string = adjustl(string(3:200))
             read(string(1:), *) positions(:, current_atom)           

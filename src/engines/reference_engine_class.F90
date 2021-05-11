@@ -346,11 +346,10 @@ contains
 !
       do I = 1, wf%n_atomic_centers
 !
-!        Check unique
-!
-         if ( all(unique_atom_index /= I)) cycle
-!
          call wf%ao%get_center(I, center)
+!
+!        Check for unique atoms and ghosts
+         if (all(unique_atom_index /= I) .or. center%is_ghost()) cycle
 !
          name_ = "sad_" // trim(center%basis) // "_" // trim(center%symbol)
 !

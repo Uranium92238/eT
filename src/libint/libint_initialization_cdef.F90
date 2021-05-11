@@ -22,6 +22,7 @@ interface
 !
    subroutine export_geometry_and_basis_to_libint_c(nAtoms, &
                                                     atomicNumbers, &
+                                                    atomicCharges, &
                                                     atomicCoordinates, &
                                                     basisSets, &
                                                     maxLen, &
@@ -33,6 +34,7 @@ interface
 !
       integer(c_int), value                        :: nAtoms
       integer(c_int), dimension(*), intent(in)     :: atomicNumbers
+      integer(c_int), dimension(*), intent(in)     :: atomicCharges
       real(c_double), dimension(*), intent(in)     :: atomicCoordinates
       character(c_char), dimension(*), intent(in)  :: basisSets
       integer(c_int), value                        :: maxLen

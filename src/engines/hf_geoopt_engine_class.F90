@@ -92,6 +92,9 @@ contains
 !
       type(bfgs_geoopt_hf) :: bfgs_geoopt
 !
+      if (wf%ao%has_ghost_atoms()) &
+         call output%warning_msg("Ghosts are experimental in geometry optimization.")
+!
       if (wf%embedded) &
          call output%error_msg('geometry optimization with embedding is not supported')
 !

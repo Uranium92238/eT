@@ -221,6 +221,7 @@ contains
       character(len=100), dimension(:), allocatable :: center_bases     
       real(dp), dimension(:,:), allocatable         :: center_positions 
       integer, dimension(:), allocatable            :: center_indices  
+      logical, dimension(:), allocatable            :: center_is_ghosts
 !
       logical :: units_angstrom
 !
@@ -232,12 +233,14 @@ contains
 !
       allocate(center_symbols(this%n_centers))
       allocate(center_bases(this%n_centers))
+      allocate(center_is_ghosts(this%n_centers))
 !
       call input%get_geometry(this%n_centers,   &
                               center_symbols,   &
                               center_positions, & 
                               center_bases,     &
-                              units_angstrom)
+                              units_angstrom,   &
+                              center_is_ghosts)
 !
       if (.not. units_angstrom) then 
 !
@@ -267,7 +270,8 @@ contains
       allocate(this%centers(this%n_centers))
 !
       call this%create_centers(center_indices, center_bases, &
-                               center_symbols, center_positions)
+                               center_symbols, center_positions, &
+                               center_is_ghosts)
 !
       call mem%dealloc(center_indices, this%n_centers)
       call mem%dealloc(center_positions, 3, this%n_centers)
@@ -283,7 +287,7 @@ contains
 !
 !
    subroutine create_centers(this, center_indices, center_bases, &
-                                   center_symbols, center_positions)
+                                   center_symbols, center_positions, center_is_ghosts)
 !!
 !!    Create centers
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020-2021
@@ -301,6 +305,7 @@ contains
       character(len=100), dimension(this%n_centers), intent(in) :: center_bases     
       character(len=2), dimension(this%n_centers), intent(in)   :: center_symbols   
       real(dp), dimension(3, this%n_centers), intent(in)        :: center_positions 
+      logical, dimension(this%n_centers), intent(in)            :: center_is_ghosts
 !
       integer :: J, J_c
 !
@@ -323,7 +328,8 @@ contains
                                          center_symbols(J_c),       &
                                          center_positions(:, J_c),  &
                                          center_bases(J_c),         &
-                                         this%basis_type_)              
+                                         this%basis_type_,          &
+                                         center_is_ghosts(J_c))
 !
       enddo
 !
