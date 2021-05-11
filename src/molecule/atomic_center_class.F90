@@ -61,6 +61,7 @@ module atomic_center_class
       real(dp), dimension(3) :: coordinates ! x, y, z
 !
       integer :: number_       ! Atomic number Z
+      integer :: charge        ! = number_ (if (ghost) then = 0)
 !
       integer :: input_number  ! Atom # in the input file 
       integer :: libint_number ! Center # in Libint 
@@ -93,6 +94,9 @@ module atomic_center_class
       procedure :: get_ao_interval &
                 => get_ao_interval_atomic_center
 !
+      procedure :: is_ghost &
+                => is_ghost_atomic_center
+!
       procedure :: cleanup &
                 => cleanup_atomic_center
 !
@@ -121,7 +125,8 @@ contains
                               symbol,           &
                               coordinates,         &
                               basis,            &
-                              basis_type_) result(center)
+                              basis_type_,      &
+                              is_ghost) result(center)
 !!
 !!    New atomic center
 !!    Written by Eirik F. Kjønstad, 2020 
@@ -140,6 +145,8 @@ contains
 !
       character(len=*), intent(in) :: basis_type_
 !
+      logical, intent(in) :: is_ghost
+!
       center%libint_number = libint_number 
       center%symbol        = symbol 
       center%basis         = basis 
@@ -147,6 +154,9 @@ contains
       center%input_number  = input_number
 !
       call center%symbol_to_number()
+!
+      center%charge = center%number_
+      if (is_ghost) center%charge = 0
 !
       if (center%number_ .eq. -1) &
          call output%error_msg('illegal atomic symbol, check the eT.inp file ')
@@ -747,6 +757,24 @@ contains
       aos%length = aos%last - aos%first + 1
 !
    end function get_ao_interval_atomic_center
+!
+!
+   pure function is_ghost_atomic_center(center) result(is_ghost)
+!!
+!!    Is ghost?
+!!    Written by Tor S. Hauglan, May 2021
+!!
+!!    Ghosts are atoms with zero charge. Their only function is
+!!    enlargening the basis.
+!!
+      implicit none 
+!
+      class(atomic_center), intent(in) :: center 
+      logical :: is_ghost
+!
+      is_ghost = (center%charge == 0)
+!
+   end function is_ghost_atomic_center
 !
 !
    subroutine cleanup_atomic_center(center)

@@ -324,6 +324,9 @@ contains
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
+      if (wf%ao%has_ghost_atoms()) &
+         call output%warning_msg("Ghosts are experimental in multilevel.")
+!
       if (wf%bath_orbital) call output%error_msg('Bath orbitals not yet implemented for MLCCSD')
 !      
       call wf%read_mlcc_settings()

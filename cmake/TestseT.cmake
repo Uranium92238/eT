@@ -53,6 +53,7 @@ add_eT_runtest(hf_energy_6-31g                              "eT;short;hf;sad;pop
 add_eT_runtest(hf_energy_6-31g_pol                          "eT;short;hf;sad;pople;cartesian")
 add_eT_runtest(hf_energy_cartesian_basis_set                "eT;short;hf;sad;cartesian")
 add_eT_runtest(hf_energy_external_basis                     "eT;short;hf;sad;cartesian;externalbasis")
+add_eT_runtest(hf_energy_ghost                              "eT;short;hf;sad")
 add_eT_runtest(hf_geoopt                                    "eT;short;hf;bfgs;gradient")
 add_eT_runtest(hf_scf_energy                                "eT;short;hf;sad")
 add_eT_runtest(hf_energy_qmmmnopol                          "eT;short;hf;sad;qmmm;mmnopol")

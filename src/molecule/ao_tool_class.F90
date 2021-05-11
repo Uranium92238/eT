@@ -223,6 +223,9 @@ module ao_tool_class
 !
       procedure, public :: get_subset_point_charges &
                         => get_subset_point_charges_ao_tool
+!
+      procedure, public :: has_ghost_atoms &
+                        => has_ghost_atoms_ao_tool
 !         
       procedure, private :: construct_oei 
       procedure, private :: construct_oei_screened 
@@ -251,6 +254,7 @@ module ao_tool_class
 !
       procedure, private :: get_subset_index
       procedure, private :: shp_on_same_atom
+!
 !
       final :: destructor 
 !
@@ -564,7 +568,8 @@ contains
                                        centers(I)%symbol,         &
                                        centers(I)%coordinates,    &
                                        centers(I)%basis,          &
-                                       ao%basis_type_)              
+                                       ao%basis_type_,            &
+                                       centers(I)%is_ghost())
 !
       enddo
 !
@@ -601,7 +606,8 @@ contains
                                        ao_template%centers(i)%symbol,        &
                                        ao_template%centers(i)%coordinates,   &
                                        ao_template%centers(i)%basis,         &
-                                       ao_template%basis_type_)
+                                       ao_template%basis_type_,              &
+                                       ao_template%centers(i)%is_ghost())
 !
       enddo
 !
@@ -1413,6 +1419,9 @@ contains
 !!    Modified by Eirik F. Kjønstad, Sep 2020
 !!    Renamed some variables, moved and adapted routine to AO tool  
 !!
+!!    Modified by Tor S. Haugland, May 2021
+!!    Print ghost atoms
+!!
       implicit none 
 !
       class(ao_tool), intent(in)   :: ao  
@@ -1422,7 +1431,7 @@ contains
 !
       integer :: I, line_length
 !
-      logical :: print_basis
+      logical :: print_basis, print_ghost, print_separator
 !
       real(dp), dimension(3) :: position_
 !
@@ -1447,27 +1456,33 @@ contains
 !
       do I = 1, ao%n_centers
 !
-         print_basis = .false. 
-!
-         if (I == 1) then ! always print basis if it is the first center
-!
+         if (I == 1) then
             print_basis = .true.  
+            print_ghost = ao%centers(I)%is_ghost()
+            print_separator = .false.
+         else
+            print_basis = ao%centers(I-1)%basis .ne. ao%centers(I)%basis
+            print_ghost = (.not. ao%centers(I-1)%is_ghost()) .and. ao%centers(I)%is_ghost()
+            print_separator = ao%centers(I-1)%is_ghost() .and. (.not. ao%centers(I)%is_ghost())
+         endif
 !
-         elseif (ao%centers(I-1)%basis .ne. ao%centers(I)%basis) then 
+         if (print_ghost) then
+            call output%printf('m', &
+               '=============================== Ghost atoms ==================================',&
+               fs='(t6,a)')
+         endif
 !
-            print_basis = .true.
-!
+         if (print_separator) then
+            call output%print_separator(pl='m', symbol='=', n=line_length, fs='(t6,a)')
          endif
 !
          if (print_basis) then
-!
             call output%printf('m', &
                                'Basis: ' // trim(ao%centers(I)%get_basis_set_name()), &
                                fs='(t9,a)')
-!
          end if
 !
-         position_ = (ao%centers(I)%coordinates)*(conversion_factor)
+         position_ = ao%centers(I)%coordinates * conversion_factor
 !
          call output%printf('m', '(i4) (a2) (f18.12) (f18.12) (f18.12)  (i7)',   &
                             chars=[ao%centers(I)%symbol],                        &
@@ -1733,6 +1748,9 @@ contains
       call mem%alloc(D_I, ao%n**2)
 !
       do I = 1, ao%n_centers
+!
+!        Skip ghost atoms
+         if (ao%centers(I)%charge == 0) cycle
 !
 !        Read the atomic density at the Ith center and set pointer 
 !        to the relevant portion of the array 
@@ -2768,7 +2786,7 @@ contains
 !
       do I = 1, ao%n_centers 
 !
-         pc%q(I) = real(ao%centers(I)%number_,kind=dp)
+         pc%q(I) = real(ao%centers(I)%charge,kind=dp)
 !
       enddo
 !
@@ -2824,7 +2842,7 @@ contains
       do I = first, last
 !
          pc%r(:,I) = ao%centers(I)%coordinates(:)
-         pc%q(I)   = real(ao%centers(I)%number_, kind = dp)
+         pc%q(I)   = real(ao%centers(I)%charge, kind = dp)
 !
       enddo
 !
@@ -2878,7 +2896,7 @@ contains
 !
       do I = 1, ao%n_centers
 !
-         n = n + ao%centers(I)%number_
+         n = n + ao%centers(I)%charge
 !
       enddo
 !
@@ -3125,6 +3143,27 @@ contains
       call z_matrix%cleanup_z_matrix()
 !
    end subroutine print_z_matrix_ao_tool
+!
+!
+   pure function has_ghost_atoms_ao_tool(ao) result(has_ghosts)
+!!
+!!    Has ghost atoms?
+!!    Written by Tor S. Haugland, May 2021
+!!
+!!    Are ghost atoms present in system?
+!!
+      implicit none
+!
+      class(ao_tool), intent(in) :: ao
+      logical :: has_ghosts
+      integer :: I
+!
+      has_ghosts = .false.
+      do I = 1, ao%get_n_centers()
+         has_ghosts = has_ghosts .or. ao%centers(I)%is_ghost()
+      enddo
+!
+   end function has_ghost_atoms_ao_tool
 !
 !
 end module ao_tool_class

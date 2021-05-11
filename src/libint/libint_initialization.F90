@@ -52,6 +52,7 @@ contains
       type(atomic_center), dimension(:), intent(in) :: atoms
 !
       integer(c_int), dimension(:), allocatable :: atomic_numbers_c
+      integer(c_int), dimension(:), allocatable :: atomic_charges_c
       real(c_double), dimension(:,:), allocatable :: atomic_coordinates_c
 !
       integer :: i
@@ -67,6 +68,7 @@ contains
       n_atoms_c = int(n_atoms, c_int)
 !
       allocate(atomic_numbers_c(n_atoms))
+      allocate(atomic_charges_c(n_atoms))
       allocate(atomic_coordinates_c(3, n_atoms))
       allocate(basis_sets_c(n_atoms))
       allocate(cartesians_c(n_atoms))
@@ -76,6 +78,7 @@ contains
       do i =1,n_atoms
 !
          atomic_numbers_c(i) = int(atoms(i)%number_, c_int)
+         atomic_charges_c(i) = int(atoms(i)%charge, c_int)
 !
          atomic_coordinates_c(1,i) = real(atoms(i)%coordinates(1)*angstrom_to_bohr, c_double)
          atomic_coordinates_c(2,i) = real(atoms(i)%coordinates(2)*angstrom_to_bohr, c_double)
@@ -95,6 +98,7 @@ contains
 !     We only pass on the pointers to basis_sets_c because chars are difficult in C
       call export_geometry_and_basis_to_libint_c(n_atoms_c, &
                                                  atomic_numbers_c, &
+                                                 atomic_charges_c, &
                                                  atomic_coordinates_c, &
                                                  basis_sets_c, &
                                                  max_length, &

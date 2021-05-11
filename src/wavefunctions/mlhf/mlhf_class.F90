@@ -213,6 +213,9 @@ contains
       call wf%prepare_embedding(embedding)
       if (wf%embedded) call wf%embedding%print_description
 !
+      if (wf%ao%has_ghost_atoms()) &
+         call output%warning_msg("Ghosts are experimental in multilevel.")
+!
       wf%n_densities = 1
 !
       call wf%set_n_mo()

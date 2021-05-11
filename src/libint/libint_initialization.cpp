@@ -56,6 +56,7 @@ vector<Engine> coulomb_external_unit_charges(omp_get_max_threads());
 
 void export_geometry_and_basis_to_libint(const int nAtoms,
                                          const int *atomicNumbers,
+                                         const int *atomicCharges,
                                          const double *atomicCoordinates,
                                          const char *basisSets,
                                          const int maxLength,
@@ -64,14 +65,18 @@ void export_geometry_and_basis_to_libint(const int nAtoms,
     /*
     Export geometry and basis set
     Written by Rolf H. Myhre, Mar. 2020
+    Modified by Tor S. Haugland, May 2021. Add atomic charges.
 
     Exports the geometry and basis sets used from the Fortran side to Libint
 
-    n_atoms is an int with number of atoms
+    nAtoms is an int with number of atoms
 
-    atomic_numbers is an int array of dimension n_atoms passed by reference
+    atomicNumbers is an int array of dimension n_atoms passed by reference
 
-    atomic_cordinates is a double array with dimension 3*n_atoms with atomic coordinates
+    atomicCharges is an int array of dimension n_atoms passed by reference. Usually
+    equal to atomicNumbers, but zero for ghost atoms.
+
+    atomicCordinates is a double array with dimension 3*n_atoms with atomic coordinates
     passed by reference
 
     basisSets is an array of c strings passed by reference
@@ -176,6 +181,12 @@ void export_geometry_and_basis_to_libint(const int nAtoms,
 
         //Add temporary to Libint basis
         basis.add(temporary);
+    }
+
+    //Loop over the atoms
+    for (int i = 0; i < nAtoms; i++)
+    {
+        atoms[i].atomic_number = atomicCharges[i];
     }
 }
 

@@ -38,6 +38,7 @@ void finalize_libint();
 void initialize_eri(const double eri_precision);
 void export_geometry_and_basis_to_libint(const int nAtoms,
                                          const int *atomicNumbers,
+                                         const int *atomicCharges,
                                          const double *atomicCoordinates,
                                          const char *basisSets,
                                          const int maxLength,
