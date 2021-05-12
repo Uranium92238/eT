@@ -308,7 +308,7 @@ contains
 !
       do state = 1, solver%n_singlet_states
 !
-         call solver%diis(state)%initialize_storers()
+         call solver%diis(state)%initialize()
 !
       enddo  
 ! 
@@ -498,7 +498,7 @@ contains
 !
       do state = 1, solver%n_singlet_states
 !
-         call solver%diis(state)%finalize_storers()
+         call solver%diis(state)%finalize()
 !
       enddo 
 !

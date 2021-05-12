@@ -23,50 +23,43 @@ module diis_tool_class
 !!    DIIS tool class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
 !!
-!!    Objects of this class can be instantiated in order to solve a non-linear set of equations,
-!!    e(x) = 0, where e and x are vectors of length n_equations and n_parameters.
-!!
-!!    The squared norm of the averaged error vector
-!!
-!!       < e(x) > = sum_k w_k e(x)_k
-!!
-!!    is minimized with respect to the condition sum_k w_k = 1. The k index
-!!    runs over previous iterations, by default limited to the last 8 iterations
-!!    (determined by dimension_).
-!!
-!!    The standard update of the parameters is
-!!
-!!       x = sum_k=1^n w_k x_k     (*)
-!!
-!!    Note that the "x_k" sent to the routine may be quasi-Newton update estimates,
-!!    so that the DIIS-extrapolated x in (*) is the optimal combination of previous 
-!!    quasi-Newton estimates (this is, e.g., the case for CC ground and 
-!!    excited states).
-!!
-!!    See Pulay, P. Convergence acceleration of iterative sequences. 
-!!    The case of SCF iteration. Chem. Phys. Lett. 1980, 73, 393−398.
+!!    Objects of this class can be used to solve a non-linear set of equations e(x) = 0, 
+!!    where e and x are vectors of length n_equations and n_parameters.
 !!
 !!    Typical usage: 
 !!
-!!    do while (.not. converged) 
+!!       diis = diis_tool(...)
 !!
-!!       -> Calculate error vector e given the current parameters x
+!!       call diis%initialize()
 !!
-!!       -> Overwrite x with the x_n you want to use in the extrapolation 
-!!          step (*). This can, e.g., be a quasi-Newton update estimate based  
-!!          on the current e and x. 
+!!       do while (.not. converged) 
 !!
-!!       call diis%update(e, x)
+!!          -> Calculate error vector e given the current parameters x
 !!
-!!       -> now, x contains the extrapolated guess (*)
+!!          -> Set x to some estimated next value (x = x + dx), e.g. using Quasi-Newton
 !!
-!!    enddo 
+!!          call diis%update(e, x)
 !!
-!!    In the tool, the DIIS matrix is denoted as G:
+!!          -> Now, x contains the extrapolated DIIS guess (*)
 !!
-!!       G_ij = e_i^T e_j,     
+!!       enddo 
 !!
-!!    where i and j denote the record numbers.
+!!       call diis%finalize()
+!!
+!!
+!!    In DIIS, the squared norm of the averaged error vector
+!!
+!!       < e(x) > = sum_k w_k e(x)_k
+!!
+!!    is minimized with respect to the condition sum_k w_k = 1. The parameters
+!!    are updated as
+!!
+!!       x = sum_k=1^n w_k x_k     (*)
+!!
+!!    where "x_k" is the current previous estimates for x (e.g., using quasi-Newton).
+!!
+!!    See Pulay, P. Convergence acceleration of iterative sequences. 
+!!    The case of SCF iteration. Chem. Phys. Lett. 1980, 73, 393−398.
 !!
 !
    use global_out, only : output
@@ -84,81 +77,57 @@ module diis_tool_class
 !
    type :: diis_tool
 !
-      character(len=40) :: name_          ! determines the prefix of all DIIS files
+      character(len=40), private :: name_ ! determines the prefix of all DIIS files
 !
-      class(record_storer), allocatable :: e_vectors, x_vectors 
+!     Storers for error and parameter vectors 
+      class(record_storer), allocatable, private :: e_vectors, x_vectors 
 !
       integer, private :: iteration       ! Variable keeping track of the current DIIS iteration
-                                          ! Note: defined to increment by +1 each time 'update' 
-                                          ! is called.
+                                          ! Increments by +1 when 'update' is called
 !
-      integer, private :: dimension_      ! Standard is 8, though it might be useful to 
-                                          ! change this value
+      integer, private :: dimension_      ! Standard is 8, i.e. to keep at most 8 vectors
 !
-      integer, private :: n_parameters    ! The length of the x vectors
-      integer, private :: n_equations     ! The length of the e vectors
+      integer, private :: n_parameters    ! The length of the parameter (x) vectors
+      integer, private :: n_equations     ! The length of the error (e) vectors
 !
-      logical :: accumulate               ! Variable keeping track of wether we are  
-!                                         ! cumulatively building the DIIS matrix or not
-!                                         ! Note: default is to accumulate
-!
-      logical :: erase_history            ! (DIIS space) 1,2,3,4,...,8,1,2,3,... if true 
-                                          ! (DIIS space) 1,2,3,4,...,8,8,8,8,... if false 
-!
-      logical :: crop                     ! Conjugate residual with optimal trial vectors 
+      logical, private :: crop            ! Conjugate residual with optimal trial vectors 
                                           ! J. Chem. Theory Comput. 2015, 11, 4, 1518-1524
 !
-      real(dp), dimension(:,:), allocatable :: G ! DIIS matrix 
+      real(dp), dimension(:,:), allocatable, private :: G ! DIIS matrix, G_ij = e_i^T e_j
 !
 !     Index arrays 
 !
 !        - index:    index in the DIIS matrix according to DIIS tool 
 !        - record:   index in record storer, i.e. storage position 
 !
-!        These begin to differ when old records are discarded from DIIS space. 
-!        See cycle_left routine.
+!        These begin to differ when old records are discarded from DIIS space. See cycle_left.
 !
-      integer, dimension(:), allocatable :: index_to_record
-      integer, dimension(:), allocatable :: record_to_index 
+      integer, dimension(:), allocatable, private :: index_to_record
+      integer, dimension(:), allocatable, private :: record_to_index 
 !
    contains
 !
-      procedure :: update                          => update_diis_tool   
+      procedure, public :: update &
+                        => update_diis_tool   
 !
-      procedure :: read_x                          => read_x_diis_tool
-      procedure :: read_e                          => read_e_diis_tool
+      procedure, public :: initialize &
+                        => initialize_diis_tool
 !
-      procedure :: write_x                         => write_x_diis_tool
-      procedure :: write_e                         => write_e_diis_tool
+      procedure, public :: finalize &
+                        => finalize_diis_tool
 !
-      procedure :: initialize_storers              => initialize_storers_diis_tool
-      procedure :: finalize_storers                => finalize_storers_diis_tool
+      procedure, private :: print_settings 
 !
-      procedure :: get_dim_G                       => get_dim_G_diis_tool
-      procedure :: get_dimension                   => get_dimension_diis_tool
+      procedure, private :: get_dim_G
+      procedure, private :: construct_padded_G
+      procedure, private :: construct_new_G_elements
 !
-      procedure :: print_settings                  => print_settings_diis_tool
+      procedure, private :: construct_extrapolated_vector
 !
-      procedure, private :: construct_padded_G              &
-                         => construct_padded_G_diis_tool
+      procedure, private :: write_e_and_x
+      procedure, private :: update_crop_e_and_x
 !
-      procedure, private :: construct_new_G_elements        &
-                         => construct_new_G_elements_diis_tool
-!
-      procedure, private :: construct_full_G                &
-                         => construct_full_G_diis_tool
-!
-      procedure, private :: write_e_and_x                   &
-                         => write_e_and_x_diis_tool
-!
-      procedure, private :: update_crop_e_and_x             &
-                         => update_crop_e_and_x_diis_tool 
-!
-      procedure, private :: cycle_left                      &
-                         => cycle_left_diis_tool
-!
-      procedure, private :: construct_extrapolated_vector   &
-                         => construct_extrapolated_vector_diis_tool
+      procedure, private :: cycle_left
 !
    end type diis_tool
 !
@@ -174,8 +143,7 @@ contains
 !
 !
    function new_diis_tool(name_, n_parameters, n_equations, &
-                  dimension_, accumulate, erase_history, crop, &
-                  records_in_memory) result(diis)
+                          dimension_, crop, records_in_memory) result(diis)
 !!
 !!    New DIIS tool
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
@@ -188,19 +156,6 @@ contains
 !!
 !!    dimension_:          Number of records to use in the DIIS extrapolation. 
 !!                         Default is to use the previous 8 records. 
-!!
-!!    accumulate:          If true, the parts of the DIIS matrix constructed 
-!!                         on "update" is the parts that have not been calculated
-!!                         previously. If false, the entire DIIS matrix is re-
-!!                         constructed when "update" is called. This is sometimes
-!!                         neccessary because the previous records have to be 
-!!                         updated to a new basis. Default is true.
-!!
-!!    erase_history:       Instead of keeping the previous 8 records 
-!!                         (if DIIS dimension = 8), the history is erased 
-!!                         every 8th call to "update". This usually leads to 
-!!                         slower convergene (or oscillating behavior in the 
-!!                         residuals). Default is false.
 !!
 !!    crop:                Use conjugate residual with optimal trial vectors 
 !!                         (see J. Chem. Theory Comput. 2015, 11, 4, 1518-1524). Optional.
@@ -216,8 +171,6 @@ contains
       integer, intent(in) :: n_equations
 !
       integer, intent(in), optional :: dimension_
-      logical, intent(in), optional :: accumulate
-      logical, intent(in), optional :: erase_history
       logical, intent(in), optional :: crop
       logical, intent(in), optional :: records_in_memory
 !
@@ -228,21 +181,7 @@ contains
       diis%iteration       = 1 
       diis%dimension_      = 8
 !
-      diis%accumulate      = .true. 
-      diis%erase_history   = .false. 
       diis%crop            = .false. 
-!
-      if (present(accumulate)) then 
-!
-         diis%accumulate = accumulate
-!
-      endif
-!
-      if (present(erase_history)) then
-!
-         diis%erase_history = erase_history
-!
-      endif
 !
       if (present(dimension_)) then
 !
@@ -255,13 +194,6 @@ contains
          diis%crop = crop
 !
       endif 
-!
-      if (diis%crop .and. diis%erase_history) then 
-!
-         call output%warning_msg("Asked for both 'crop' and 'erase history' in DIIS tool. " // &
-                                 "Convergence will not improve by using CROP in this case.")
-!
-      endif
 !
       call diis%print_settings()
 !
@@ -280,19 +212,16 @@ contains
    end function new_diis_tool
 !
 !
-   subroutine initialize_storers_diis_tool(diis)
+   subroutine initialize_diis_tool(diis)
 !!
-!!    Prepare storers 
+!!    Initialize 
 !!    Written by Eirik F. Kjønstad, Nov 2019 
 !!
-!!    Prepares the storer objects for e and x vectors.
-!!
-!!    records_in_memory:   If true, keep DIIS records (previous x and e vectors) 
-!!                         in memory. Otherwise, they are stored on disk.
+!!    Initializes storers and allocates member variables.
 !!
       implicit none 
 !
-      class(diis_tool) :: diis
+      class(diis_tool), intent(inout) :: diis
 !
       integer :: I
 !
@@ -311,20 +240,19 @@ contains
 !
       enddo
 !
-   end subroutine initialize_storers_diis_tool
+   end subroutine initialize_diis_tool
 !
 !
-   subroutine finalize_storers_diis_tool(diis)
+   subroutine finalize_diis_tool(diis)
 !!
-!!    Cleanup storers 
+!!    Finalize
 !!    Written by Eirik F. Kjønstad, Nov 2019 
 !!
-!!    Performs cleanup for the different storers. 
-!!    Cannot be done in the constructor. 
+!!    Finalizes storers and deallocates member variables.
 !!
       implicit none 
 !
-      class(diis_tool) :: diis
+      class(diis_tool), intent(inout) :: diis
 !
       call diis%e_vectors%finalize_storer()
       call diis%x_vectors%finalize_storer()
@@ -334,7 +262,7 @@ contains
       call mem%dealloc(diis%index_to_record, diis%dimension_)
       call mem%dealloc(diis%record_to_index, diis%dimension_)
 !
-   end subroutine finalize_storers_diis_tool
+   end subroutine finalize_diis_tool
 !
 !
     subroutine update_diis_tool(diis, e, x)
@@ -362,10 +290,10 @@ contains
 !!
       implicit none
 !
-      class(diis_tool) :: diis
+      class(diis_tool), intent(inout) :: diis
 !
-      real(dp), dimension(diis%n_equations)  :: e
-      real(dp), dimension(diis%n_parameters) :: x
+      real(dp), dimension(diis%n_equations), intent(in)     :: e
+      real(dp), dimension(diis%n_parameters), intent(inout) :: x
 !
       integer :: info
       integer :: dim_G
@@ -436,14 +364,12 @@ contains
 !
 !     Construct the extrapolated x vector, i.e. the DIIS guess for the parameters 
 !
-      call diis%construct_extrapolated_vector(diis%x_vectors, x, padded_H, dim_G)
+      call diis%construct_extrapolated_vector(diis%x_vectors, x, diis%n_parameters, padded_H, dim_G)
 !
 !     If CROP is enabled, we replace the current e and x vectors 
 !     with the extrapolated e and x 
 !
-      if (diis%crop) call diis%update_crop_e_and_x(x,             &
-                                                   padded_H,      &
-                                                   dim_G)
+      if (diis%crop) call diis%update_crop_e_and_x(x, padded_H, dim_G)
 !
       call mem%dealloc(padded_H, dim_G + 1)
 !
@@ -454,7 +380,7 @@ contains
    end subroutine update_diis_tool
 !
 !
-   subroutine update_crop_e_and_x_diis_tool(diis, x, H, dim_G)
+   subroutine update_crop_e_and_x(diis, x, H, dim_G)
 !!
 !!    Update CROP e and x 
 !!    Written by Eirik F. Kjønstad, Nov-Des 2019 
@@ -467,7 +393,7 @@ contains
 !!
       implicit none 
 !
-      class(diis_tool) :: diis 
+      class(diis_tool), intent(inout) :: diis 
 !
       real(dp), dimension(diis%n_parameters), intent(in) :: x 
 !
@@ -485,27 +411,22 @@ contains
 !
       call mem%alloc(e, diis%n_equations)
 !
-      call diis%construct_extrapolated_vector(diis%e_vectors, e, H, dim_G)
+      call diis%construct_extrapolated_vector(diis%e_vectors, e, diis%n_equations, H, dim_G)
       call diis%e_vectors%copy_record_in(e, diis%index_to_record(dim_G)) 
 !
-      if (diis%accumulate) then 
+!     Compute the new elements of the DIIS matrix with the new extrapolated e vector
 !
-!        Recompute the new elements of the DIIS matrix (given the new e vector)
-!        If not accumulate, these will be computed in the next iteration anyway.
-!
-         call diis%construct_new_G_elements(diis%G,         &
-                                            e,              &
-                                            dim_G,          &
-                                            diis%dimension_)
-!
-      endif
+      call diis%construct_new_G_elements(diis%G,         &
+                                         e,              &
+                                         dim_G,          &
+                                         diis%dimension_)
 !
       call mem%dealloc(e, diis%n_equations)
 !
-   end subroutine update_crop_e_and_x_diis_tool
+   end subroutine update_crop_e_and_x
 !
 !
-   subroutine construct_extrapolated_vector_diis_tool(diis, y_vectors, y, w, dim_w)
+   subroutine construct_extrapolated_vector(diis, y_vectors, y, dim_y, w, dim_w)
 !!
 !!    Construct extrapolated vector 
 !!    Written by Eirik F. Kjønstad, Mar 2020 
@@ -522,11 +443,13 @@ contains
 !!
       implicit none 
 !
-      class(diis_tool) :: diis 
+      class(diis_tool), intent(in) :: diis 
 !
-      class(record_storer) :: y_vectors
+      class(record_storer), intent(inout) :: y_vectors
 !
-      real(dp), dimension(y_vectors%record_dim), intent(out) :: y 
+      integer, intent(in) :: dim_y
+!
+      real(dp), dimension(dim_y), intent(out) :: y 
 !
       integer, intent(in) :: dim_w 
 !
@@ -538,7 +461,7 @@ contains
 !
       type(batching_index), allocatable :: batch_i 
 !
-      call zero_array(y, y_vectors%record_dim)
+      call zero_array(y, dim_y)
 !
 !     Prepare to batch over records i 
 !
@@ -563,7 +486,7 @@ contains
 !
 !           Add w_i y_i to y 
 !
-            call daxpy(y_vectors%record_dim,          &
+            call daxpy(dim_y,                         &
                        w(diis%record_to_index(i)),    &
                        y_i(:, i - batch_i%first + 1), &
                        1,                             &
@@ -576,60 +499,41 @@ contains
 !
       call y_vectors%free_records()      
 !
-   end subroutine construct_extrapolated_vector_diis_tool
+   end subroutine construct_extrapolated_vector
 !
 !
-   function get_dim_G_diis_tool(diis)
+   pure function get_dim_G(diis) result(dim_G)
 !!
 !!    Get current dimension 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
       implicit none
 !
-      class(diis_tool) :: diis
+      class(diis_tool), intent(in) :: diis
 !
-      integer :: get_dim_G_diis_tool
+      integer :: dim_G 
 !
-      if (diis%iteration .gt. diis%dimension_ .and. &
-            .not. diis%erase_history) then 
+      if (diis%iteration .gt. diis%dimension_) then 
 !
-         get_dim_G_diis_tool = diis%dimension_
+         dim_G = diis%dimension_
 !
       else
 !
-         get_dim_G_diis_tool = diis%iteration - &
-                           diis%dimension_*((diis%iteration-1)/diis%dimension_) 
+         dim_G = diis%iteration - &
+                 diis%dimension_*((diis%iteration-1)/diis%dimension_) 
 !
       endif
 !
-   end function get_dim_G_diis_tool
+   end function get_dim_G
 !
 !
-   function get_dimension_diis_tool(diis)
-!!
-!!    Get dimension 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
-!!
-      implicit none
-!
-      class(diis_tool) :: diis
-!
-      integer :: get_dimension_diis_tool
-!
-      get_dimension_diis_tool = diis%dimension_
-!
-   end function get_dimension_diis_tool
-!
-!
-   subroutine write_e_and_x_diis_tool(diis, e, x, dim_G)
+   subroutine write_e_and_x(diis, e, x, dim_G)
 !!
 !!    Write current e and x 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
 !!    Stores the current e and x vectors. Each index 1, 2, ..., diis_dim
-!!    has its own record. If more iterations have passed than we keep on file
-!!    (i.e., diis%iteration > diis%dimension_), then we do a first-in/
-!!    last-out replacement unless erase_history is true. 
+!!    has its own record. 
 !!
       implicit none 
 !
@@ -640,21 +544,19 @@ contains
 !
       integer, intent(in) :: dim_G
 !
-      logical :: cycle_left   
+      if (diis%iteration .gt. diis%dimension_) then
 !
-      cycle_left = (.not. diis%erase_history) .and. &
-                  (dim_G .eq. diis%dimension_) .and. &
-                 (dim_G .ne. diis%iteration)
+         call diis%cycle_left() ! removes oldest record to make room for new record
 !
-      if (cycle_left) call diis%cycle_left()
+      endif
 !
       call diis%e_vectors%copy_record_in(e, diis%index_to_record(dim_G))
       call diis%x_vectors%copy_record_in(x, diis%index_to_record(dim_G))
 !
-   end subroutine write_e_and_x_diis_tool
+   end subroutine write_e_and_x
 !
 !
-   subroutine construct_padded_G_diis_tool(diis, dim_G, padded_G, e)
+   subroutine construct_padded_G(diis, dim_G, padded_G, e)
 !!
 !!    Construct padded G 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -672,7 +574,7 @@ contains
 !!
       implicit none
 !
-      class(diis_tool) :: diis
+      class(diis_tool), intent(inout) :: diis
 !
       integer, intent(in) :: dim_G
 !
@@ -684,47 +586,37 @@ contains
 !
       padded_G = zero
 !
-      if (.not. diis%accumulate) then 
+!     Transfer the parts of the DIIS matrix already calculated 
 !
-!        - Construct the entire DIIS matrix G_ij = e_i^T e_j 
+      if (diis%iteration .gt. diis%dimension_) then 
 !
-         call diis%construct_full_G(padded_G, dim_G)
+!        Old matrix is full size; cut out the parts to keep 
 !
-      else ! accumulate 
-!
-!        - Transfer the parts of the DIIS matrix already calculated 
-!
-         if (diis%iteration .gt. diis%dimension_ .and. .not. diis%erase_history) then 
-!
-!           Old matrix is full size; cut out the parts to keep 
-!
-            padded_G(1 : dim_G - 1, &
-                     1 : dim_G - 1) = diis%G(2 : dim_G, &
-                                             2 : dim_G)   
+         padded_G(1 : dim_G - 1, &
+                  1 : dim_G - 1) = diis%G(2 : dim_G, &
+                                          2 : dim_G)   
 
 !
-         elseif (dim_G .gt. 1) then 
+      elseif (dim_G .gt. 1) then 
 !
-!           Just copy the old matrix to the new 
+!        Just copy the old matrix to the new 
 !
-            padded_G(1 : dim_G - 1, &
-                     1 : dim_G - 1) = diis%G(1 : dim_G - 1, &
-                                             1 : dim_G - 1)   
+         padded_G(1 : dim_G - 1, &
+                  1 : dim_G - 1) = diis%G(1 : dim_G - 1, &
+                                          1 : dim_G - 1)   
 !
-         endif 
+      endif 
 !
-!        - Compute the new elements of the DIIS matrix 
+!     Compute the new elements of the DIIS matrix 
 !
-         call diis%construct_new_G_elements(padded_G,   &
-                                            e,          &
-                                            dim_G,      &
-                                            dim_G + 1)
+      call diis%construct_new_G_elements(padded_G,   &
+                                         e,          &
+                                         dim_G,      &
+                                         dim_G + 1)
 !
-!        Keep a copy of the DIIS matrix for the next iteration 
+!     Keep a copy of the DIIS matrix for the next iteration 
 !
-         diis%G(1 : dim_G, 1 : dim_G) = padded_G(1 : dim_G, 1 : dim_G)
-!
-      endif
+      diis%G(1 : dim_G, 1 : dim_G) = padded_G(1 : dim_G, 1 : dim_G)
 !
 !     Add the (-1)-padding in the last row and column  
 !
@@ -735,109 +627,10 @@ contains
 !
       enddo
 !
-   end subroutine construct_padded_G_diis_tool
+   end subroutine construct_padded_G
 !
 !
-   subroutine construct_full_G_diis_tool(diis, G, dim_G)
-!!
-!!    Construct full G  
-!!    Written by Eirik F. Kjønstad, Mar 2020 
-!! 
-!!    Computes the DIIS matrix
-!!
-!!       G(i,j) = e_i^T e_j = G(j,i)          i,j = 1,2, ..., dim_G
-!!
-!!    G:     G matrix 
-!!    dim_G: dimensionality of G matrix 
-!!
-      implicit none 
-!
-      class(diis_tool) :: diis 
-!
-      integer, intent(in) :: dim_G 
-!
-      real(dp), dimension(dim_G + 1, dim_G + 1), intent(inout) :: G 
-!
-      real(dp), dimension(:,:), pointer, contiguous :: prev_e_i, prev_e_j  
-!
-      integer :: i, j, current_i_batch, current_j_batch, req_0, req_1_i, req_1_j, req_2
-!
-      integer :: i_index, j_index 
-!
-      type(batching_index), allocatable :: batch_i, batch_j 
-!
-      real(dp) :: ddot
-!
-!     Prepare for batching over i and j 
-!
-      req_0 = 0
-!
-      req_1_i = diis%e_vectors%required_to_load_record()
-      req_1_j = diis%e_vectors%required_to_load_record()
-!
-      req_2 = 0
-!
-      batch_i = batching_index(dim_G)
-      batch_j = batching_index(dim_G)
-!
-      call mem%batch_setup(batch_i, batch_j, req_0, req_1_i, req_1_j, req_2)
-!
-!     Allocate arrays to store e_i and e_j
-!
-      call diis%e_vectors%prepare_records([batch_i, batch_j])
-!
-      do current_i_batch = 1, batch_i%num_batches
-!
-         call batch_i%determine_limits(current_i_batch)
-!
-         call diis%e_vectors%load(prev_e_i, batch_i, 1)
-!
-         do current_j_batch = 1, current_i_batch
-!
-            call batch_j%determine_limits(current_j_batch)
-!
-            call diis%e_vectors%load(prev_e_j, batch_j, 2)
-!
-!           Compute lower triangle contributions to the DIIS matrix 
-!
-            do i = batch_i%first, batch_i%last 
-               do j = batch_j%first, min(batch_j%last, i) 
-!
-                  i_index = diis%record_to_index(i)
-                  j_index = diis%record_to_index(j)
-!
-                  G(i_index, j_index) = ddot(diis%n_equations,                        &
-                                             prev_e_i(:, i - batch_i%first + 1),      &
-                                             1,                                       &
-                                             prev_e_j(:, j - batch_j%first + 1),      &
-                                             1)
-!
-               enddo
-            enddo 
-!
-         enddo ! end of j batches 
-      enddo ! end of i batches 
-!
-!     Set upper triangle of DIIS matrix 
-!
-      do i = 1, dim_G
-         do j = 1, i
-!
-            G(j, i) = G(i, j)
-!
-         enddo
-      enddo 
-!
-      call diis%e_vectors%free_records()
-!
-   end subroutine construct_full_G_diis_tool
-!
-!
-   subroutine construct_new_G_elements_diis_tool(diis,      &
-                                                 G,         &
-                                                 e,         &
-                                                 element,   &
-                                                 dim_G)
+   subroutine construct_new_G_elements(diis, G, e, element, dim_G)
 !!
 !!    Construct new G elements 
 !!    Written by Eirik F. Kjønstad, Mar 2020 
@@ -851,7 +644,7 @@ contains
 !!
       implicit none 
 !
-      class(diis_tool) :: diis 
+      class(diis_tool), intent(inout) :: diis 
 !
       real(dp), dimension(diis%n_equations), intent(in) :: e 
 !
@@ -904,108 +697,10 @@ contains
 !
       call diis%e_vectors%free_records()
 !
-   end subroutine construct_new_G_elements_diis_tool
+   end subroutine construct_new_G_elements
 !
 !
-   subroutine read_x_diis_tool(diis, x_i, i)
-!!
-!!    Read x_i 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
-!!
-      implicit none
-!
-      class(diis_tool) :: diis
-!
-      real(dp), dimension(diis%n_parameters), intent(out) :: x_i
-!
-      integer, intent(in) :: i
-!
-      integer :: dim_G
-!
-      dim_G = diis%get_dim_G()
-!
-      if (i .gt. dim_G) call output%error_msg('Asked for an x not in use.')
-!
-      call diis%x_vectors%copy_record_out(x_i, diis%index_to_record(i))
-!
-   end subroutine read_x_diis_tool
-!
-!
-   subroutine read_e_diis_tool(diis, e_i, i)
-!!
-!!    Read e_i
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
-!!
-      implicit none
-!
-      class(diis_tool) :: diis
-!
-      real(dp), dimension(diis%n_equations), intent(out) :: e_i
-!
-      integer, intent(in) :: i
-!
-      integer :: dim_G
-!
-      dim_G = diis%get_dim_G()
-!
-      if (i .gt. dim_G) call output%error_msg('Asked for an e not in use.')
-!
-      call diis%e_vectors%copy_record_out(e_i, diis%index_to_record(i))
-!
-   end subroutine read_e_diis_tool
-!
-!
-   subroutine write_x_diis_tool(diis, x_i, i)
-!!
-!!    Write x_i 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
-!!
-      implicit none
-!
-      class(diis_tool) :: diis
-!
-      real(dp), dimension(diis%n_parameters), intent(in) :: x_i
-!
-      integer, intent(in) :: i
-!
-      integer :: dim_G
-!
-      dim_G = diis%get_dim_G()
-!
-      if (diis%accumulate) call output%error_msg('Can not set x for cumulative diis.')
-      if (i .gt. dim_G) call output%error_msg('Asked for an x not in use.')
-!
-      call diis%x_vectors%copy_record_in(x_i, diis%index_to_record(i))
-!
-   end subroutine write_x_diis_tool
-!
-!
-   subroutine write_e_diis_tool(diis, e_i, i)
-!!
-!!    Write e_i 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
-!!
-      implicit none
-!
-      class(diis_tool) :: diis
-!
-      real(dp), dimension(diis%n_equations), intent(in) :: e_i
-!
-      integer, intent(in) :: i
-!
-      integer :: dim_G
-!
-      dim_G = diis%get_dim_G()
-!
-      if (diis%accumulate) call output%error_msg('Can not set e for cumulative diis.')
-      if (i .gt. dim_G) call output%error_msg('Asked for an e not in use.')
-!
-      call diis%e_vectors%copy_record_in(e_i, diis%index_to_record(i))
-!
-   end subroutine write_e_diis_tool
-!
-!
-   subroutine cycle_left_diis_tool(diis)
+   subroutine cycle_left(diis)
 !!
 !!    Cycle left 
 !!    Written by Eirik F. Kjønstad, 2019 
@@ -1017,7 +712,7 @@ contains
 !!
       implicit none
 !
-      class(diis_tool) :: diis
+      class(diis_tool), intent(inout) :: diis
 !
       integer :: I, first_record 
 !
@@ -1041,17 +736,17 @@ contains
 !
       enddo 
 !
-   end subroutine cycle_left_diis_tool
+   end subroutine cycle_left
 !
 !
-   subroutine print_settings_diis_tool(diis)
+   subroutine print_settings(diis)
 !!
 !!    Print settings
 !!    Written by Sarai D. Folkestad, 2020
 !!
       implicit none
 !
-      class(diis_tool), intent(inout)  :: diis
+      class(diis_tool), intent(in)  :: diis
 !
       call output%printf('n', '- DIIS tool settings:', fs='(/t3,a)')
 !
@@ -1064,16 +759,9 @@ contains
 !
       endif
 !
-      if (diis%erase_history) then 
-!
-        call output%printf('v', 'DIIS history deleted when &
-              &full DIIS dimension is reached.', fs='(/t6,a)')
-!
-      endif
-!
       call output%newline('n')
 !
-   end subroutine print_settings_diis_tool
+   end subroutine print_settings
 !
 !
 end module diis_tool_class

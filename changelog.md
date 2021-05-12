@@ -1,4 +1,6 @@
 # eT v1.3.0
+### Bugfixes
+- Removed option to accumulate and erase history in DIIS. These features were not working properly. eT-program/eT!800
 
 ### Features
 - Added multimodel Newton-Raphson capability to ground state Newton-Raphson solver. Can be used to converge amplitudes in CC2 and CC3. eT-program/eT!759
