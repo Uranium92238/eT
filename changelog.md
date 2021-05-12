@@ -1,4 +1,4 @@
-# eT v1.3
+# eT v1.3.0
 
 ### Features
 - Added multimodel Newton-Raphson capability to ground state Newton-Raphson solver. Can be used to converge amplitudes in CC2 and CC3. eT-program/eT!759
@@ -40,7 +40,7 @@
 ### Bugfixes
 - Reduced threshold in `uhf_energy_cs` to 1.0d-10 due to instabilities. See merge request eT-program/eT!766
 
-# eT v1.2
+# eT v1.2.0
 ### Bugfixes
 - Added handling of zero length character prints. See merge request eT-program/eT!716
 
@@ -102,7 +102,7 @@
 - `mo_information_file` now part of `hf_class` as workaround for ifort segfault. See merge request eT-program/eT!681
 
 
-# eT v1.1
+# eT v1.1.0
 ### Bugfixes
 - Fixed bug in EOM when $`n_o > n_v`$
 - Fixed wrong allocation in expectation value engine
