@@ -4,6 +4,8 @@ stages:
   - pystyle
   - build
   - run
+  - prepare-release
+  - create-release
 
 pystyle:
   stage: pystyle
@@ -78,4 +80,38 @@ run:
     - merge_requests
     - /^release\/\d+\.\d+$/
 
+prepare-release:
+  stage: prepare-release
+  image: python:latest
+  script:
+    - python3 dev_tools/export_release_info.py 
+  artifacts:
+    paths:
+      - major.txt
+      - minor.txt
+      - patch.txt   
+      - description.txt
+  rules:
+    - if: '$CI_PROJECT_NAMESPACE == "eT-program" && $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "push"'
+      when: on_success
+    - when: never # Default: never run if the above conditions are false
 
+create-release:
+  stage: create-release
+  image: registry.gitlab.com/gitlab-org/release-cli
+  needs: ["prepare-release"]
+  script: 
+    - major=$(cat major.txt)
+    - minor=$(cat minor.txt)
+    - patch=$(cat patch.txt)
+    - description=$(cat description.txt)
+    - >
+      release-cli create 
+      --name "v${major}.${minor}.${patch}" 
+      --description "${description}"
+      --tag-name "v${major}.${minor}.${patch}" 
+      --ref $CI_COMMIT_SHA
+  rules:
+    - if: '$CI_PROJECT_NAMESPACE == "eT-program" && $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "push"'
+      when: on_success
+    - when: never # Default: never run if the above conditions are false
