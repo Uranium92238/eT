@@ -358,15 +358,13 @@ contains
 !
       call ao%calculate_max_shell_size()
 !
-!     Allocation and calculation of variables that depend on the position of the centers
-!
-      call ao%initialize_oei('hamiltonian') 
-      call ao%initialize_oei('overlap')
-!
       call mem%alloc(ao%cs_eri_max,         ao%n_sh*(ao%n_sh + 1)/2, 2)
       call mem%alloc(ao%cs_eri_max_indices, ao%n_sh*(ao%n_sh + 1)/2, 3)  
 !
-      call ao%calculate_geometry_dependent_variables()
+      call ao%construct_stored_oei('overlap')
+!
+      call ao%determine_linearly_independent_aos()
+      call ao%construct_cs_eri_max_screenings()  
 !
    end subroutine initialize_ao_tool
 !
@@ -1336,15 +1334,15 @@ contains
 !
       if (trim(oei_type) == 'hamiltonian') then 
 !
-         call mem%alloc(ao%h, ao%n, ao%n)
+         if (.not. allocated(ao%h)) call mem%alloc(ao%h, ao%n, ao%n)
 !
       elseif (trim(oei_type) == 'overlap') then 
 !
-         call mem%alloc(ao%s, ao%n, ao%n)
+         if (.not. allocated(ao%s)) call mem%alloc(ao%s, ao%n, ao%n)
 !
       elseif (trim(oei_type) == 'electrostatic potential') then 
 !
-         call mem%alloc(ao%v, ao%n, ao%n)
+         if (.not. allocated(ao%v)) call mem%alloc(ao%v, ao%n, ao%n)
 !
       else 
 !
@@ -1382,14 +1380,17 @@ contains
 !
       if (trim(oei_type) == 'hamiltonian') then 
 !
+         call ao%initialize_oei('hamiltonian')
          call ao%get_oei('hamiltonian', ao%h, screening)
 !
       elseif (trim(oei_type) == 'overlap') then 
 !
+         call ao%initialize_oei('overlap')
          call ao%get_oei('overlap', ao%s)
 !
       elseif (trim(oei_type) == 'electrostatic potential') then 
 !
+         call ao%initialize_oei('electrostatic potential')
          call ao%get_oei('electrostatic potential', ao%v, screening)
 !
       else 

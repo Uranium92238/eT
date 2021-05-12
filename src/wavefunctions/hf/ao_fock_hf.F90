@@ -1184,27 +1184,53 @@ contains
 !     If not specified by user, set Coulomb and exchange thresholds 
 !     (For ref., this will give 10-12 and 10-10 for gradient threshold: 10-6)
 !
-      if (.not. input%is_keyword_present('coulomb threshold', 'solver scf')) then 
+      if (input%is_keyword_present('coulomb threshold', 'solver scf')) then 
+!  
+         call input%get_keyword('coulomb threshold',  &
+                                        'solver scf', &
+                                        wf%coulomb_threshold)
+!
+      else
 !
          wf%coulomb_threshold  = gradient_threshold*1.0d-6
 !
       endif 
 !
-      if (.not. input%is_keyword_present('exchange threshold', 'solver scf')) then 
+      if (input%is_keyword_present('exchange threshold', 'solver scf')) then 
+!
+         call input%get_keyword('exchange threshold', &
+                                        'solver scf', &
+                                        wf%exchange_threshold)
+!
+      else
 !
          wf%exchange_threshold = gradient_threshold*1.0d-4
 !
       endif
 !
-!     If not requested by user, set Libint integral accuracy according to thresholds 
+!     Electron repulsion integrals
 !
-      if (input%is_keyword_present('integral precision', 'solver scf')) then 
+      if (input%is_keyword_present('integral cutoff', 'solver scf')) then 
 !
          call input%get_keyword('integral cutoff',          &
                                           'solver scf',     &
                                           integral_cutoff) 
-         call wf%ao%set_eri_cutoff(integral_cutoff)
-         epsilon_ = integral_cutoff**2
+!
+      else
+!
+         integral_cutoff = wf%coulomb_threshold
+!
+      endif
+!
+      call wf%ao%set_eri_cutoff(integral_cutoff)
+!
+!     If not requested by user, set Libint integral accuracy according to thresholds 
+!
+      if (input%is_keyword_present('integral precision', 'solver scf')) then 
+!
+         call input%get_keyword('integral precision',       &
+                                          'solver scf',     &
+                                          epsilon_) 
 !
 !        Warn user about tampering with integral precision (Libint epsilon)
 !
@@ -1212,21 +1238,23 @@ contains
                                  & Be aware that the 'precision' given to Libint is not exact&
                                  & but approximate. Don't use unless you know what you are doing.")
 !
+!
       else
 !
-!        Tighten the default threshold if it is larger than 
-!        the lowest screening threshold squared
+         epsilon_ = integral_cutoff**2
 !
-         epsilon_ = min(wf%coulomb_threshold, wf%exchange_threshold)**2
-         call wf%ao%set_eri_cutoff(sqrt(epsilon_))
+      endif
 !
-      endif 
-!  
+      call wf%ao%set_libint_epsilon(epsilon_)
+!
+!     One electron integrals
+!
       if (input%is_keyword_present('one-electron integral cutoff', 'solver scf')) then
 !
          call input%get_keyword('one-electron integral cutoff',   &
                                            'solver scf',          &
-                                           integral_cutoff)    
+                                           integral_cutoff)  
+!  
          call wf%ao%set_oei_cutoff(integral_cutoff)
 !
       else 
@@ -1246,8 +1274,6 @@ contains
          wf%exchange_threshold = wf%coulomb_threshold
 !
       endif
-!
-      call wf%ao%set_libint_epsilon(epsilon_)
 !
    end subroutine set_screening_and_precision_thresholds_hf
 !

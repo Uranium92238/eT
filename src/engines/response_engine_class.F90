@@ -279,6 +279,7 @@ contains
 !
       endif
 !
+!
 !     Calculate polarizabilities
 !
       if (engine%polarizabilities) then

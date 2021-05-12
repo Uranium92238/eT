@@ -356,14 +356,7 @@ contains
       implicit none
 !
       class(hf) :: wf
-!  
-      call input%get_keyword('coulomb threshold',              &
-                                        'solver scf',          &
-                                        wf%coulomb_threshold)
-!
-      call input%get_keyword('exchange threshold',             &
-                                        'solver scf',          &
-                                        wf%exchange_threshold)
+
 !
       call input%get_keyword('cumulative fock threshold',      &
                                         'solver scf',          &
@@ -979,7 +972,6 @@ contains
 !
       wf%n_mo = wf%ao%get_n_orthonormal_ao()
 !
-
       if (mod(wf%ao%get_n_electrons(),2) .ne. 0) then
 !
          call output%printf('m', 'Number of electrons:     (i0)', &
@@ -1487,6 +1479,8 @@ contains
       wf%cumulative_fock = .false. 
 !
       call wf%set_screening_and_precision_thresholds(gradient_threshold)
+!
+      call wf%ao%construct_stored_oei('hamiltonian')
 !
       call wf%initialize_orbitals()
       call wf%initialize_density()
