@@ -235,7 +235,7 @@ contains
 !
       type(timings), allocatable :: iteration_timer 
 !
-      call solver%diis%initialize_storers()
+      call solver%diis%initialize()
 !
       call mem%alloc(omega, wf%n_gs_amplitudes)
       call mem%alloc(amplitudes, wf%n_gs_amplitudes)
@@ -321,7 +321,7 @@ contains
 !
       call wf%print_gs_summary()
 !
-      call solver%diis%finalize_storers()
+      call solver%diis%finalize()
 !
    end subroutine run_diis_cc_gs
 !

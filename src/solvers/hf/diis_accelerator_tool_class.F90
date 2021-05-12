@@ -107,7 +107,7 @@ contains
 !
       class(diis_accelerator_tool), intent(inout) :: this
 !
-      call this%diis%initialize_storers()
+      call this%diis%initialize()
 !
    end subroutine initialize_diis_accelerator_tool
 !
@@ -121,7 +121,7 @@ contains
 !
       class(diis_accelerator_tool), intent(inout) :: this
 !
-      call this%diis%finalize_storers()
+      call this%diis%finalize()
 !
    end subroutine finalize_diis_accelerator_tool
 !
