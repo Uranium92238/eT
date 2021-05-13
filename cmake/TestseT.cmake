@@ -103,6 +103,7 @@ add_eT_runtest(ccs_eom_diis_parallel_states                 "eT;short;ccs;es;eom
 add_eT_runtest(ccs_td_rk4                                   "eT;short;ccs;complex;td")
 add_eT_runtest(ccs_right_lt_lindep                          "eT;short;ccs;es")
 add_eT_runtest(restart_ccs_es                               "eT;short;ccs;es;restart")
+add_eT_runtest(restart_ccs_gs_dipole                        "eT;short;ccs;gs;dipole;restart")
 add_eT_runtest(restart_ccs_eom                              "eT;short;ccs;eom;restart")
 add_eT_runtest(restart_ccs_from_ccsd                        "eT;short;ccs;eom;es;restart")
 add_eT_runtest(restart_ccs_v1.0                             "eT;short;ccs;eom;restart;v1.0")

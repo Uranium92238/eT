@@ -1,0 +1,449 @@
+
+
+
+                     eT 1.3 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.3.0 Disco (development version)
+  ------------------------------------------------------------
+  Configuration date: 2021-05-13 18:22:34 UTC +02:00
+  Git branch:         ccs-read-multipliers
+  Git hash:           df27f0a9c9eeb27071361bf39163f1c2fdeb0925
+  Fortran compiler:   GNU 10.2.0
+  C compiler:         GNU 10.2.0
+  C++ compiler:       GNU 10.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-05-13 18:26:19 UTC +02:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: H2O He
+        charge: 0
+     end system
+
+     do
+       mean value
+     end do
+
+     memory
+        available: 8
+     end memory
+
+     solver cholesky
+        threshold: 1.0d-11
+     end solver cholesky
+
+     solver scf
+        energy threshold:   1.0d-11
+        gradient threshold: 1.0d-11
+     end solver scf
+
+     method
+        hf
+        ccs
+     end method
+
+     solver cc gs
+        restart
+        omega threshold:  1.0d-11
+     end solver cc gs
+
+     solver cc multipliers
+        restart
+        threshold: 1.0d-11
+     end solver cc multipliers
+
+     cc mean value
+        dipole
+     end cc mean value
+
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: RHF wavefunction
+  ======================
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: sto-3g
+        1  H     0.866810000000     0.601440000000     0.000000000000        1
+        2  H    -0.866810000000     0.601440000000     0.000000000000        2
+        3  O     0.000000000000    -0.075790000000     0.000000000000        3
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: sto-3g
+        1  H     1.638033502034     1.136556880358     0.000000000000        1
+        2  H    -1.638033502034     1.136556880358     0.000000000000        2
+        3  O     0.000000000000    -0.143222342981     0.000000000000        3
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               7
+     Number of orthonormal atomic orbitals:   7
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:         5
+     Number of virtual orbitals:          2
+     Number of molecular orbitals:        7
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:               -74.363236511985
+     Number of electrons in guess:           10.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:     0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -74.889701962820     0.8468E-01     0.7489E+02
+     2           -74.940474931397     0.1479E-01     0.5077E-01
+     3           -74.942053887929     0.1666E-02     0.1579E-02
+     4           -74.942080036155     0.4571E-04     0.2615E-04
+     5           -74.942080053391     0.1184E-04     0.1724E-07
+     6           -74.942080057695     0.1579E-06     0.4304E-08
+     7           -74.942080057696     0.4561E-09     0.5969E-12
+     8           -74.942080057696     0.1575E-12     0.4263E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 8 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.865206190621
+     Nuclear repulsion energy:       8.002366974166
+     Electronic energy:            -82.944447031862
+     Total energy:                 -74.942080057696
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              0.02600
+     Total cpu time (sec):               0.02869
+
+
+  :: CCS wavefunction
+  ======================
+
+     Bath orbital(s):         False
+     Core-valence separation: False
+
+   - Number of orbitals:
+
+     Occupied orbitals:    5
+     Virtual orbitals:     2
+     Molecular orbitals:   7
+     Atomic orbitals:      7
+
+   - Number of ground state amplitudes:
+
+     Single excitation amplitudes:  10
+
+
+  :: Mean value coupled cluster engine
+  =======================================
+
+  Calculates the time-independent expectation value of one-electron operators 
+
+  A, < A > = < Λ | A | CC >.
+
+  This is a CCS mean value calculation.
+  The following tasks will be performed:
+
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
+     4) Calculation of the multipliers (diis algorithm)
+     5) Calculation of ground state properties
+
+
+  1) Cholesky decomposition of the electron repulsion integrals
+
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-10
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition ao details:
+
+     Total number of AOs:                     7
+     Total number of shell pairs:            15
+     Total number of AO pairs:               28
+
+     Significant shell pairs:                15
+     Significant AO pairs:                   28
+
+     Construct shell pairs:                  15
+     Construct AO pairs:                     28
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1                22 /      11       0.47851E+01          17              9               198
+     2                 6 /       6       0.47444E-01          16             22               132
+     3                 2 /       2       0.40655E-03           4             26                52
+     4                 0 /       0       0.80613E-06           2             28                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 28
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.2986E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.3632E-16
+
+  - Settings for integral handling:
+
+     Cholesky vectors in memory: True
+     ERI matrix in memory:       False
+     T1 ERI matrix in memory:    False
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.00900
+     Total cpu time (sec):               0.01196
+
+
+  2) Preparation of MO basis and integrals
+
+
+  3) Calculation of the ground state (diis algorithm)
+
+   - DIIS coupled cluster ground state solver
+  ----------------------------------------------
+
+  A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
+  of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
+  13.
+
+  - CC ground state solver settings:
+
+     Residual threshold:            0.1000E-10
+     Max number of iterations:      100
+
+  Requested restart. Reading in solution from file.
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (cc_gs_diis_e): file
+     Storage (cc_gs_diis_x): file
+
+  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ---------------------------------------------------------------
+    1           -74.942080057696     0.3544E-12     0.7494E+02
+  ---------------------------------------------------------------
+  Convergence criterion met in 1 iterations!
+
+  - Ground state summary:
+
+     Final ground state energy (a.u.):   -74.942080057696
+
+     Correlation energy (a.u.):            0.000000000000
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         t(a,i)
+     -----------------------------------
+        1      1        0.000000000000
+        2      1        0.000000000000
+        1      2        0.000000000000
+        2      2        0.000000000000
+        1      3        0.000000000000
+        2      3        0.000000000000
+        1      4        0.000000000000
+        2      4        0.000000000000
+        1      5        0.000000000000
+        2      5        0.000000000000
+     ------------------------------------
+
+  - Finished solving the CCS ground state equations
+
+     Total wall time (sec):              0.00100
+     Total cpu time (sec):               0.00172
+
+
+  4) Calculation of the multipliers (diis algorithm)
+
+   - DIIS coupled cluster multipliers solver
+  ---------------------------------------------
+
+  A DIIS CC multiplier equations solver. It combines a quasi-Newton perturbation 
+  theory estimate of the next multipliers, using least square fitting 
+  to find an an optimal combination of previous estimates such that the 
+  update is minimized.
+
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
+  13, for the more details on this algorithm.
+
+  - DIIS CC multipliers solver settings:
+
+     Residual threshold:        0.10E-10
+     Max number of iterations:       100
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (cc_multipliers_diis_e): file
+     Storage (cc_multipliers_diis_x): file
+
+  Requested restart. Reading multipliers from file.
+
+  Iteration    Norm residual
+  ----------------------------
+    1          0.7077E-12
+  ----------------------------
+  Convergence criterion met in 1 iterations!
+
+  - DIIS CC multipliers solver summary:
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         tbar(a,i)
+     -----------------------------------
+        1      1        0.000000000000
+        2      1        0.000000000000
+        1      2        0.000000000000
+        2      2        0.000000000000
+        1      3        0.000000000000
+        2      3        0.000000000000
+        1      4        0.000000000000
+        2      4        0.000000000000
+        1      5        0.000000000000
+        2      5        0.000000000000
+     ------------------------------------
+
+  - Finished solving the ccs multipliers equations
+
+     Total wall time (sec):              0.00100
+     Total cpu time (sec):               0.00095
+
+
+  5) Calculation of ground state properties
+
+  - Operator: dipole moment [a.u.]
+
+     x:          0.0000000
+     y:          0.6035218
+     z:          0.0000000
+
+     |mu|:       0.6035218
+
+  - Operator: dipole moment [Debye]
+
+     x:          0.0000000
+     y:          1.5339994
+     z:          0.0000000
+
+     |mu|:       1.5339994
+
+  - Timings for the CCS mean value calculation
+
+     Total wall time (sec):              0.01500
+     Total cpu time (sec):               0.01712
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 59.476 KB
+
+  Total wall time in eT (sec):              0.05400
+  Total cpu time in eT (sec):               0.05980
+
+  Calculation ended: 2021-05-13 18:26:19 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
+
+  eT terminated successfully!
