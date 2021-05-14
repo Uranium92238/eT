@@ -494,39 +494,6 @@ contains
    end function convert_to_uppercase
 !
 !
-   subroutine remove_spaces_etc(string)
-!!
-!!    Remove spaces etc.
-!!    written by Rolf H. Myhre, Mar. 2020
-!!
-!!    Replaces characters that are not suitable for file names from string
-!!    Trailing blanks are not touched
-!!
-!!    ' ' -> '_'
-!!    '*' -> 's'
-!!    '+' -> 'p'
-!!
-      implicit none
-!
-      character(len=*), intent(inout) :: string
-!
-      integer :: i
-!
-      do i = 1, len_trim(string)
-!
-         if (string(i:i) .eq. ' ') then 
-            string(i:i) = '_'
-         else if (string(i:i) .eq. '*') then
-            string(i:i) = 's'
-         else if (string(i:i) .eq. '+') then
-            string(i:i) = 'p'
-         endif
-!
-      enddo
-!
-   end subroutine remove_spaces_etc
-!
-!
    subroutine index_of_unique_strings(indices, n_strings, strings)
 !!
 !!    Index of unique strings

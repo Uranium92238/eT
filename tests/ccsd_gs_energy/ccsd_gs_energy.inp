@@ -12,6 +12,10 @@ memory
    available: 8
 end memory
 
+print
+   full references
+end print
+
 solver cholesky
    threshold: 1.0d-12
 end solver cholesky
