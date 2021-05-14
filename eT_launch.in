@@ -575,6 +575,7 @@ def list_out_files(scratch, no_timing):
         "*.cube",
         "*lanczos*[0-9]*",
         "*.mo_information.out",
+        "*.molden",
     ]
 
     if not no_timing:

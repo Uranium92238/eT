@@ -25,7 +25,7 @@ module output_file_class
 !!
 !!
 !
-   use kinds    
+   use kinds
    use abstract_out_file_class
 !
    type, extends(abstract_out_file) :: output_file
@@ -39,23 +39,23 @@ module output_file_class
 !
    contains
 !
-      procedure :: open_                     => open_output_file
+      procedure, public :: open_                   => open_output_file
 !
-      procedure :: error_msg                 => error_msg_output_file
-      procedure :: warning_msg               => warning_msg_output_file
-      procedure :: check_for_warnings        => check_for_warnings_output_file
+      procedure, public :: error_msg               => error_msg_output_file
+      procedure, public :: warning_msg             => warning_msg_output_file
+      procedure, public :: check_for_warnings      => check_for_warnings_output_file
 !
-      procedure, public :: printf            => printf_output_file
-      procedure, public :: print_matrix      => print_matrix_output_file
-      procedure, public :: print_separator   => print_separator_output_file
-      procedure, public :: print_vector      => print_vector_output_file
+      procedure, public :: printf                  => printf_output_file
+      procedure, public :: print_matrix            => print_matrix_output_file
+      procedure, public :: print_separator         => print_separator_output_file
+      procedure, public :: print_vector            => print_vector_output_file
 !
-      procedure, public :: newline           => newline_output_file
+      procedure, public :: newline                 => newline_output_file
 !
-      procedure, public :: set_global_print_level  => set_global_print_level_output_file 
-      procedure, public :: set_local_print_level   => set_local_print_level_output_file  
-      procedure, public :: reset_local_print_level => reset_local_print_level_output_file  
-      procedure, public :: check_print_level       => check_print_level_output_file  
+      procedure, public :: set_global_print_level  => set_global_print_level_output_file
+      procedure, public :: set_local_print_level   => set_local_print_level_output_file
+      procedure, public :: reset_local_print_level => reset_local_print_level_output_file
+      procedure, public :: check_print_level       => check_print_level_output_file
 !
       procedure, public :: mute   => mute_output_file
       procedure, public :: unmute => unmute_output_file
@@ -79,7 +79,7 @@ contains
 !!    Writen by Rolf H. Myhre May 2019
 !!
 !!    Output file is a formatted and sequantial file.
-!!    Routine sets these, and sets the file name    
+!!    Routine sets these, and sets the file name
 !!
       implicit none
 !
@@ -250,12 +250,12 @@ contains
          pos = trim(position_)
       else
          pos = 'rewind'
-      endif 
+      endif
 !
       if (the_file%is_open) then
 !
          print *, trim(the_file%name_)//' is already open'
-         stop 
+         stop
 !
       endif
 !
@@ -267,9 +267,9 @@ contains
 !
          print *, 'Error: could not open eT output file '//trim(the_file%name_)//&
                              &'. Error message: '//trim(io_msg)
-         stop 
+         stop
 !
-      endif 
+      endif
 !
       the_file%is_open = .true.
 !
@@ -288,32 +288,32 @@ contains
 !!    Modified by Rolf H. Myhre, Nov 2019
 !!    Updated to reflect changes in format_print, plus update of documentation
 !!
-!!    error_specs: String of character that should be printed as error message, 
+!!    error_specs: String of character that should be printed as error message,
 !!                 including formatting of reals and integers
 !!
-!!    reals:   Optional array of reals to print - in the order specified by string 
+!!    reals:   Optional array of reals to print - in the order specified by string
 !!             Default: None
-!!    ints:    Optional array of integers to print - in the order specified by string 
+!!    ints:    Optional array of integers to print - in the order specified by string
 !!             Default: None
-!!    chars:   Optional array of character strings to print - in the order specified 
+!!    chars:   Optional array of character strings to print - in the order specified
 !!             by string. Note that all the strings must be of same length in Fortran
 !!             Default: None
-!!    logs:    Optional array of logicals to print - in the order specified by string 
+!!    logs:    Optional array of logicals to print - in the order specified by string
 !!             Default: None
 !!
-!!    fs:      Optional character string specifies the format of the entire string,  
-!!             e.g. fs='(/t6,a)' gives a new line, then indentation 5, then the value 
+!!    fs:      Optional character string specifies the format of the entire string,
+!!             e.g. fs='(/t6,a)' gives a new line, then indentation 5, then the value
 !!             of 'string' with reals and integers as specified. Default: '(t3,a)'
-!!    ffs:     Optional character string specifies the format of the first printed line if 
+!!    ffs:     Optional character string specifies the format of the first printed line if
 !!             different from fs. Default: same as fs
 !!
-!!    ll:      Optional integer specifying number of characters to print per line before 
+!!    ll:      Optional integer specifying number of characters to print per line before
 !!             looking for a white space to add a line break after. Default: 70
-!!    padd:    Optional integer specifies how many characters beyond ll to search for 
+!!    padd:    Optional integer specifies how many characters beyond ll to search for
 !!             a white space. Default: 18
 !!
-!!    Note: The number of characters to print per line will typically be between ll and 
-!!    ll + padd minus the number of blank spaces specified by the t specifier in the format 
+!!    Note: The number of characters to print per line will typically be between ll and
+!!    ll + padd minus the number of blank spaces specified by the t specifier in the format
 !!    string, assuming there are enough characters to print.
 !!
       implicit none
@@ -322,7 +322,7 @@ contains
 !
       character(len=*) :: error_specs
 !
-      real(dp)        , dimension(:), intent(in), optional  :: reals 
+      real(dp)        , dimension(:), intent(in), optional  :: reals
       complex(dp)     , dimension(:), intent(in), optional  :: complexs
       integer         , dimension(:), intent(in), optional  :: ints
       character(len=*), dimension(:), intent(in), optional  :: chars
@@ -380,32 +380,32 @@ contains
 !!    Modified by Rolf H. Myhre, Nov 2019
 !!    Updated to reflect changes in format_print, plus update of documentation
 !!
-!!    error_specs: String of character that should be printed as error message, 
+!!    error_specs: String of character that should be printed as error message,
 !!                 including formatting of reals and integers
 !!
-!!    reals:   Optional array of reals to print - in the order specified by string 
+!!    reals:   Optional array of reals to print - in the order specified by string
 !!             Default: None
-!!    ints:    Optional array of integers to print - in the order specified by string 
+!!    ints:    Optional array of integers to print - in the order specified by string
 !!             Default: None
-!!    chars:   Optional array of character strings to print - in the order specified 
+!!    chars:   Optional array of character strings to print - in the order specified
 !!             by string. Note that all the strings must be of same length in Fortran
 !!             Default: None
-!!    logs:    Optional array of logicals to print - in the order specified by string 
+!!    logs:    Optional array of logicals to print - in the order specified by string
 !!             Default: None
 !!
-!!    fs:      Optional character string specifies the format of the entire string,  
-!!             e.g. fs='(/t6,a)' gives a new line, then indentation 5, then the value 
+!!    fs:      Optional character string specifies the format of the entire string,
+!!             e.g. fs='(/t6,a)' gives a new line, then indentation 5, then the value
 !!             of 'string' with reals and integers as specified. Default: '(t3,a)'
-!!    ffs:     Optional character string specifies the format of the first printed line if 
+!!    ffs:     Optional character string specifies the format of the first printed line if
 !!             different from fs. Default: same as fs
 !!
-!!    ll:      Optional integer specifying number of characters to print per line before 
+!!    ll:      Optional integer specifying number of characters to print per line before
 !!             looking for a white space to add a line break after. Default: 70
-!!    padd:    Optional integer specifies how many characters beyond ll to search for 
+!!    padd:    Optional integer specifies how many characters beyond ll to search for
 !!             a white space. Default: 18
 !!
-!!    Note: The number of characters to print per line will typically be between ll and 
-!!    ll + padd minus the number of blank spaces specified by the t specifier in the format 
+!!    Note: The number of characters to print per line will typically be between ll and
+!!    ll + padd minus the number of blank spaces specified by the t specifier in the format
 !!    string, assuming there are enough characters to print.
 !!
       implicit none
@@ -414,7 +414,7 @@ contains
 !
       character(len=*) :: warning_specs
 !
-      real(dp)        , dimension(:), intent(in), optional  :: reals 
+      real(dp)        , dimension(:), intent(in), optional  :: reals
       complex(dp)     , dimension(:), intent(in), optional  :: complexs
       integer         , dimension(:), intent(in), optional  :: ints
       character(len=*), dimension(:), intent(in), optional  :: chars
@@ -488,7 +488,7 @@ contains
 !
    end subroutine check_for_warnings_output_file
 !
-!  
+!
    subroutine printf_output_file(the_file, pl, string, &
                                  reals, complexs, ints, chars, logs, &
                                  fs, ffs, ll, padd, adv)
@@ -496,55 +496,55 @@ contains
 !!    printf
 !!    Written by Rolf H. Myhre, May 2019
 !!
-!!    Printf output_file wrapper that checks for print level and silence before calling 
-!!    format_print which prints any number of reals, integers, characters and logicals 
+!!    Printf output_file wrapper that checks for print level and silence before calling
+!!    format_print which prints any number of reals, integers, characters and logicals
 !!    formatted Python style.
 !!
 !!    pl:      print level
-!!             character string that is compared to the print level of the file with four 
+!!             character string that is compared to the print level of the file with four
 !!             allowed levels:
-!!             'minimal' or 'm' : Will always be printed. Only banners, final results 
-!!                                like total energies or excitation energies, and solver 
-!!                                settings or other essential information 
+!!             'minimal' or 'm' : Will always be printed. Only banners, final results
+!!                                like total energies or excitation energies, and solver
+!!                                settings or other essential information
 !!             'normal' or 'n'  : Will normally be printed, for example convergence iterations
 !!             'verbose' or 'v' : Will only be printed if verbose output is specified in input,
-!!                                for example extra norms and MO coefficients 
-!!             'debug'          : Print information only useful for developers such as extra tests 
+!!                                for example extra norms and MO coefficients
+!!             'debug'          : Print information only useful for developers such as extra tests
 !!                                and index dimensions
 !!
 !!
-!!    string:  String of characters that should be printed, 
+!!    string:  String of characters that should be printed,
 !!             including formatting of reals, integers, characters and logicals
 !!
-!!    reals:   Optional array of reals to print - in the order specified by string 
+!!    reals:   Optional array of reals to print - in the order specified by string
 !!             Default: None
-!!    ints:    Optional array of integers to print - in the order specified by string 
+!!    ints:    Optional array of integers to print - in the order specified by string
 !!             Default: None
-!!    chars:   Optional array of character strings to print - in the order specified 
+!!    chars:   Optional array of character strings to print - in the order specified
 !!             by string. Note that all the strings must be of same length in Fortran
 !!             Default: None
-!!    logs:    Optional array of logicals to print - in the order specified by string 
+!!    logs:    Optional array of logicals to print - in the order specified by string
 !!             Default: None
 !!
-!!    fs:      Optional character string specifies the format of the entire string,  
-!!             e.g. fs='(/t6,a)' gives a new line, then indentation 5, then the value 
+!!    fs:      Optional character string specifies the format of the entire string,
+!!             e.g. fs='(/t6,a)' gives a new line, then indentation 5, then the value
 !!             of 'string' with reals and integers as specified. Default: '(t3,a)'
-!!    ffs:     Optional character string specifies the format of the first printed line if 
+!!    ffs:     Optional character string specifies the format of the first printed line if
 !!             different from fs. Default: same as fs
 !!
-!!    ll:      Optional integer specifying number of characters to print per line before 
+!!    ll:      Optional integer specifying number of characters to print per line before
 !!             looking for a white space to add a line break after. Default: 70
-!!    padd:    Optional integer specifies how many characters beyond ll to search for 
+!!    padd:    Optional integer specifies how many characters beyond ll to search for
 !!             a white space. Default: 18
 !!
-!!    adv:     Optional logical specifies whether advance is 'yes' or 'no' for the last line. 
+!!    adv:     Optional logical specifies whether advance is 'yes' or 'no' for the last line.
 !!             Default: .true.
 !!
-!!    Note: The number of characters to print per line will typically be between ll and 
-!!    ll + padd minus the number of blank spaces specified by the t specifier in the format 
+!!    Note: The number of characters to print per line will typically be between ll and
+!!    ll + padd minus the number of blank spaces specified by the t specifier in the format
 !!    string, assuming there are enough characters to print.
 !!
-!!    Example: 
+!!    Example:
 !!    call output%printf('(a0) ground state energy (a.u): (f19.12)', &
 !!                       pl='minimal', reals=[wf%energy], chars=[wf%name_], fs='(/t6,a)')
 !!
@@ -553,10 +553,10 @@ contains
       class(output_file), intent(in) :: the_file
 !
 !     Data to print
-      character(len=*), intent(in)                          :: string 
+      character(len=*), intent(in)                          :: string
       character(len=*), intent(in)                          :: pl
-      real(dp), dimension(:), intent(in), optional          :: reals 
-      complex(dp), dimension(:), intent(in), optional       :: complexs 
+      real(dp), dimension(:), intent(in), optional          :: reals
+      complex(dp), dimension(:), intent(in), optional       :: complexs
       integer, dimension(:), intent(in), optional           :: ints
       character(len=*), dimension(:), intent(in), optional  :: chars
       logical, dimension(:), intent(in), optional           :: logs
@@ -571,7 +571,7 @@ contains
 !
       if (the_file%is_mute) then !File is muted, make a quiet return
 !
-         return 
+         return
 !
       endif
 !
@@ -583,7 +583,7 @@ contains
          call the_file%flush_()
 !
       endif
-      
+
 !
    end subroutine printf_output_file
 !
@@ -623,7 +623,7 @@ contains
 !
 !     Print if print_level is verbose and local print level is verbose or debug
       elseif ((trim(print_level) .eq. 'verbose') .or. (trim(print_level) .eq. 'v' )) then
-!        
+!
          if ((the_file%local_print_level .eq. 'verbose') .or. &
              (the_file%local_print_level .eq. 'debug')) then
             should_print = .true.
@@ -641,7 +641,7 @@ contains
       else
 !
          print *, 'Error: '//trim(print_level)// 'is not an acceptable print level'
-         error stop 
+         error stop
 !
       endif
 !
@@ -650,9 +650,9 @@ contains
 !
 !
    subroutine print_matrix_output_file(the_file, pl, name_, matrix, dim_1, dim_2, fs, columns)
-!!    
-!!    Print matrix 
-!!    
+!!
+!!    Print matrix
+!!
 !!    Written by Rolf H. Myhre, Oct. 2019
 !!
 !!    Calls format_print_matrix if appropriate print level
@@ -671,7 +671,7 @@ contains
       character(len=*), intent(in)                    :: pl
 !
       character(len=*), intent(in)                    :: name_
-!      
+!
       integer, intent(in)                             :: dim_1
       integer, intent(in)                             :: dim_2
 !
@@ -683,7 +683,7 @@ contains
 !
       if (the_file%is_mute) then !File is muted, make a quiet return
 !
-         return 
+         return
 !
       endif
 !
@@ -695,15 +695,15 @@ contains
          call the_file%flush_()
 !
       endif
-      
+
 !
    end subroutine print_matrix_output_file
 !
 !
    subroutine print_separator_output_file(the_file, pl, n, symbol, fs)
-!!    
+!!
 !!    Print separator
-!!    
+!!
 !!    Written by Rolf H. Myhre, Oct. 2019
 !!
 !!    Calls format_print_separator if appropriate print level
@@ -726,7 +726,7 @@ contains
 !
       if (the_file%is_mute) then !File is muted, make a quiet return
 !
-         return 
+         return
 !
       endif
 !
@@ -738,14 +738,14 @@ contains
          call the_file%flush_()
 !
       endif
-      
+
 !
    end subroutine print_separator_output_file
 !
 !
    subroutine print_vector_output_file(the_file, pl, name_, dim_, vector, fs, columns, transpose_)
-!!    
-!!    Print vector 
+!!
+!!    Print vector
 !!    Written by Tor S. Haugland, Oct 2019
 !!
 !!    Calls format_print_vector if appropriate print level
@@ -775,7 +775,7 @@ contains
 !
       if (the_file%is_mute) then !File is muted, make a quiet return
 !
-         return 
+         return
 !
       endif
 !
@@ -787,7 +787,7 @@ contains
          call the_file%flush_()
 !
       endif
-      
+
 !
    end subroutine print_vector_output_file
 !

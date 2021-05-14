@@ -94,6 +94,8 @@ module hf_class
       procedure :: read_orbitals                               => read_orbitals_hf
       procedure :: save_orbitals                               => save_orbitals_hf
 !
+      procedure :: write_molden_file                           => write_molden_file_hf
+!
 !     Read, write restart information, and check for safe restart 
 !
       procedure :: read_for_scf_restart                        => read_for_scf_restart_hf
@@ -365,7 +367,7 @@ contains
    end subroutine read_hf_settings_hf
 !
 !
-   subroutine print_summary_hf(wf, print_mo_info)
+   subroutine print_summary_hf(wf, write_mo_info)
 !!
 !!    Print Summary
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -376,7 +378,7 @@ contains
 !
       class(hf), intent(inout) :: wf
 !
-      logical, intent(in) :: print_mo_info
+      logical, intent(in) :: write_mo_info
 !
       call output%printf('m', '- Summary of '// &
                          &trim(convert_to_uppercase(wf%name_))// ' wavefunction &
@@ -384,7 +386,7 @@ contains
 !
       call wf%print_energy()
 !
-      if (print_mo_info) call wf%save_orbital_info()
+      if (write_mo_info) call wf%save_orbital_info()
 !
    end subroutine print_summary_hf
 !
@@ -432,7 +434,7 @@ contains
       write(header, '(a,a)') trim(prefix), ' energies'
 !
       call wf%mo_information_file%print_vector('m', header, wf%n_mo, mo_energies, &
-                                               fs='(f16.12)', columns=4)
+                                               fs='(f20.12)', columns=3)
 !
       write(header, '(a,a)') trim(prefix), ' coefficients'
       call wf%mo_information_file%printf('m', header, fs='(//t3,a)')

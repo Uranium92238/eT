@@ -1045,7 +1045,7 @@ contains
    end function get_exact_s2_uhf
 !
 !
-   subroutine print_summary_uhf(wf, print_mo_info)
+   subroutine print_summary_uhf(wf, write_mo_info)
 !!
 !!    Print Summary
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1056,14 +1056,14 @@ contains
 !
       class(uhf), intent(inout) :: wf
 !
-      logical, intent(in) :: print_mo_info
+      logical, intent(in) :: write_mo_info
 !
       call output%printf('m', '- Summary of '// &
                          &trim(convert_to_uppercase(wf%name_))// ' wavefunction &
                          &energetics (a.u.):', fs='(/t3,a)')
       call wf%print_energy()
 !
-      if (print_mo_info) call wf%save_orbital_info()
+      if (write_mo_info) call wf%save_orbital_info()
 !
       call output%printf('m', '- '// &
                          &trim(convert_to_uppercase(wf%name_))// ' wavefunction spin expectation values:', fs='(/t3,a)')     
