@@ -27,7 +27,7 @@ submodule (cc3_class) multiplier_equation_cc3
 !!       t-bar^T A + eta = 0,
 !!
 !!    where t-bar is the multiplier vector, and
-!! 
+!!
 !!       A_mu,nu = < mu | exp(-T) [H, τ_nu] exp(T) | R >
 !!       eta_mu  = < R | exp(-T) [H, τ_mu] exp(T) | R >.
 !!
@@ -90,8 +90,9 @@ contains
 !
 !     Transform the multipliers by A^T, eq. = t-bar^T A
 !
-!     Same as A^T transformation but with zero frequency and cvs is switched off
-      call wf%effective_jacobian_transpose_transformation(zero, eta, equation, .false.)
+!     Same as A^T transformation but with zero frequency and without cvs and "remove core"
+      call wf%effective_jacobian_transpose_transformation(zero, eta, equation, &
+                                                          cvs=.false., rm_core=.false.)
 !
 !     No triples contributions to η
 !     Construct eta(CCSD) and add, eq. = t-bar^T A + eta

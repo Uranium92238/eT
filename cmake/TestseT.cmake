@@ -164,7 +164,7 @@ add_eT_runtest(ccsd_right_cvs_es_energies_diis              "eT;short;ccsd;es;ri
 add_eT_runtest(ccsd_right_ip_energies                       "eT;short;ccsd;ip;right")
 add_eT_runtest(ccsd_right_ip_diis                           "eT;short;ccsd;ip;right;diis")
 add_eT_runtest(ccsd_right_es_energies_cartgauss             "eT;short;ccsd;es;right;cartesian gaussians")
-add_eT_runtest(ccsd_es_remove_core                          "eT;short;ccsd;es")
+add_eT_runtest(ccsd_es_remove_core                          "eT;short;ccsd;es;remove-core")
 add_eT_runtest(ccsd_left_ip_energies                        "eT;short;ccsd;ip;left")
 add_eT_runtest(ccsd_left_ip_diis                            "eT;short;ccsd;ip;left;diis")
 add_eT_runtest(ccsd_left_es_energies                        "eT;short;ccsd;es;left")
@@ -213,6 +213,7 @@ add_eT_runtest(cc3_left_es_energies                         "eT;short;cc3;es;lef
 add_eT_runtest(cc3_left_cvs_es_energies                     "eT;short;cc3;es;left;cvs;diis")
 add_eT_runtest(cc3_oscillator_strength_eom                  "eT;short;cc3;es;eom")
 add_eT_runtest(cc3_oscillator_strength_eom_cvs              "eT;short;cc3;es;eom;cvs")
+add_eT_runtest(cc3_remove_core                              "eT;short;cc3;remove-core;eom")
 add_eT_runtest(restart_cc3_from_ccsd                        "eT;short;cc3;es;eom;restart")
 #
 add_eT_runtest(mlcc2_cnto_full_right_es                     "eT;short;mlcc2;es;cnto")

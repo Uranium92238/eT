@@ -24,7 +24,7 @@ module lowmem_cc2_class
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto and Alexander C. Paul, 2018
 !!
-!!    Version of CC2 that has an O(M^2) memory requirement - making it suitable 
+!!    Version of CC2 that has an O(M^2) memory requirement - making it suitable
 !!    to treat larger systems than the standard CC2 wavefunction.
 !!
 !
@@ -146,10 +146,10 @@ contains
 !!
 !!    Wrapper for Jacobian transformations
 !!
-!!    r_or_l: string that should be 'left' or 'right', 
+!!    r_or_l: string that should be 'left' or 'right',
 !!            determines if Jacobian or Jacobian transpose is called
 !!
-!!    X: On input contains the vector to transform, 
+!!    X: On input contains the vector to transform,
 !!       on output contains the transformed vector
 !!
 !!    w: Excitation energy. Only used for debug prints for CCS, CCSD etc.
@@ -179,11 +179,11 @@ contains
 !
       if (r_or_l .eq. "right") then
 !
-         call wf%effective_jacobian_transformation(w, X, R) ! X <- AX
+         call wf%effective_jacobian_transformation(w, X, R)
 !
       else if (r_or_l .eq. "left") then
 !
-         call wf%effective_jacobian_transpose_transformation(w, X, R, wf%cvs) ! X <- A^TX
+         call wf%effective_jacobian_transpose_transformation(w, X, R, wf%cvs, wf%rm_core)
 !
       else
 !
@@ -223,7 +223,7 @@ contains
 !!    Prepare for approximate Jacobians
 !!    Written by Eirik F. Kjønstad, Mar 2021
 !!
-!!    Wrapper for preparations to a lower-level Jacobian transformation that is 
+!!    Wrapper for preparations to a lower-level Jacobian transformation that is
 !!    the best approximation with a lower computational scaling.
 !!
 !!    r_or_l: 'left', 'right', or 'both'

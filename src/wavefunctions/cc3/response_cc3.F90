@@ -32,15 +32,15 @@ submodule (cc3_class) response_cc3
 !!
 !!          D_pq = < X| e^(-T) E_pq e^T |Y >
 !!
-!!    where X and Y are left and right state vectors with contributions 
+!!    where X and Y are left and right state vectors with contributions
 !!    from a reference determinant and excited determinants (< mu|, |nu >):
 !!
-!!          D_pq =             X_ref < HF| e^(-T) E_pq e^T |HF >  Y_ref
-!!                 + sum_mu    X_mu  < mu| e^(-T) E_pq e^T |HF >  Y_ref
-!!                 + sum_mu    X_ref < HF| e^(-T) E_pq e^T |mu >  Y_mu
-!!                 + sum_mu,nu X_mu  < mu| e^(-T) E_pq e^T |nu >  Y_nu
+!!          D_pq =           X_ref < HF| e^(-T) E_pq e^T |HF >  Y_ref
+!!               + sum_mu    X_mu  < mu| e^(-T) E_pq e^T |HF >  Y_ref
+!!               + sum_mu    X_ref < HF| e^(-T) E_pq e^T |mu >  Y_mu
+!!               + sum_mu,nu X_mu  < mu| e^(-T) E_pq e^T |nu >  Y_nu
 !!
-!!    Depending on the type of density matrix (Ground state, transition , 
+!!    Depending on the type of density matrix (Ground state, transition ,
 !!    excited state, interstate transition) different states and thus different
 !!    amplitudes X_ref, X_mu, Y_ref and Y_mu will contribute.
 !!
@@ -55,10 +55,10 @@ submodule (cc3_class) response_cc3
 !!
 !!       ref_ref: first component of the vector for the left and right state
 !!
-!!       mu_ref:  second component of the vector for the left and 
+!!       mu_ref:  second component of the vector for the left and
 !!                first component of the vector for the right state
 !!
-!!       ref_mu:  first component of the vector for the left and 
+!!       ref_mu:  first component of the vector for the left and
 !!                second component of the vector for the right state
 !!
 !!       mu_nu:   second component of the vector for the left and right state
@@ -69,13 +69,13 @@ submodule (cc3_class) response_cc3
 !!          D^L_pq = < k| E_pq |CC >
 !!          D^R_pq = < Lambda| E_pq |k >
 !!
-!!    where |k > and < k| are the eigenvectors of the Jacobian 
+!!    where |k > and < k| are the eigenvectors of the Jacobian
 !!    with the amplitudes R_mu, L_mu
 !!
 !!          |k > = - tbar R_k |CC > + sum_mu (tau_mu |CC > R_{k,mu})
 !!          < k| = sum_mu L_{k,mu} < mu| e^-T
 !!
-!!    For the left transition density all the ground state terms can be reused, 
+!!    For the left transition density all the ground state terms can be reused,
 !!    if tbar is replaced by L_k and the ref_ref term is neglected.
 !!
 !
@@ -177,7 +177,7 @@ contains
       call add_2314_to_1234(third, L_aibj, L_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     :: CC3 contribution to ov- and vv-part ::   
+!     :: CC3 contribution to ov- and vv-part ::
 !     ::         in batches of i,j,k         ::
 !
       call mem%alloc(density_ov, wf%n_o, wf%n_v)
@@ -188,8 +188,8 @@ contains
       call cc3_ijk_timer%turn_on()
       call wf%density_cc3_mu_ref_ijk(density_ov, density_vv,             &
                                      wf%left_excitation_energies(state), &
-                                     L_ai, L_abij, t_abij,               &
-                                     cvs=wf%cvs, keep_Y=.false.)
+                                     L_ai, L_abij, t_abij, cvs=wf%cvs,   &
+                                     rm_core=wf%rm_core, keep_Y=.false.)
       call cc3_ijk_timer%turn_off()
 !
 !     Add CC3 ov and vv contributions to the density matrix
@@ -198,7 +198,7 @@ contains
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
-            wf%left_transition_density(i, wf%n_o+a) = density_ov(i, a)  & 
+            wf%left_transition_density(i, wf%n_o+a) = density_ov(i, a)  &
                               + wf%left_transition_density(i, wf%n_o+a)
 !
          enddo
@@ -242,7 +242,8 @@ contains
       call cc3_abc_timer%turn_on()
       call wf%density_cc3_mu_ref_abc(density_oo,                         &
                                      wf%left_excitation_energies(state), &
-                                     L_ia, L_ijab, t_ijab, cvs=wf%cvs)
+                                     L_ia, L_ijab, t_ijab, cvs=wf%cvs,   &
+                                     rm_core=wf%rm_core)
       call cc3_abc_timer%turn_off()
 !
       call mem%dealloc(L_ia, wf%n_o, wf%n_v)
@@ -255,7 +256,7 @@ contains
 !
             wf%left_transition_density(i, j) = density_oo(i, j)   &
                               + wf%left_transition_density(i, j)
-                                                
+
 !
          enddo
       enddo
@@ -279,7 +280,7 @@ contains
 !!    where |k > is the right eigenvector of the Jacobian
 !!    with amplitudes R_mu
 !!
-!!          |k > = sum_mu (tau_mu |CC > R_{k,mu} - tbar_mu |CC > R_{k,mu}) 
+!!          |k > = sum_mu (tau_mu |CC > R_{k,mu} - tbar_mu |CC > R_{k,mu})
 !!
       use array_utilities, only: scale_diagonal
 !
@@ -298,7 +299,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: tbar_abij, R_abij
       real(dp), dimension(:,:,:,:), allocatable :: tbar_ijab, R_ijab
 !
-      real(dp), dimension(:,:), allocatable :: density_oo, density_ov 
+      real(dp), dimension(:,:), allocatable :: density_oo, density_ov
       real(dp), dimension(:,:), allocatable :: density_vo, density_vv
 !
       real(dp) :: tbar_R_overlap, ddot
@@ -426,7 +427,7 @@ contains
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
-            wf%right_transition_density(wf%n_o+a, i) = density_vo(a, i)  & 
+            wf%right_transition_density(wf%n_o+a, i) = density_vo(a, i)  &
                                        + wf%right_transition_density(wf%n_o+a, i)
 !
          enddo
@@ -453,7 +454,7 @@ contains
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
-            wf%right_transition_density(i, wf%n_o+a) = density_ov(i, a)  & 
+            wf%right_transition_density(i, wf%n_o+a) = density_ov(i, a)  &
                                        + wf%right_transition_density(i, wf%n_o+a)
 !
          enddo
@@ -481,7 +482,7 @@ contains
                                     tbar_ia, tbar_ijab, R_ai, R_ijab)
       call cc3_abc_timer%turn_off
 !
-      call mem%dealloc(R_ai, wf%n_v, wf%n_o) 
+      call mem%dealloc(R_ai, wf%n_v, wf%n_o)
       call mem%dealloc(tbar_ia, wf%n_o, wf%n_v)
       call mem%dealloc(tbar_ijab, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
       call mem%dealloc(R_ijab, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
@@ -503,7 +504,7 @@ contains
 !
       call cc3_timer%turn_off()
 !
-!     Contribution of the ground state density scaled by 
+!     Contribution of the ground state density scaled by
 !     the right-hand side reference term (- sum_mu tbar_mu*R_mu)
 !
       call wf%density_mu_mu_oo(wf%right_transition_density, tbar_R_overlap)
@@ -519,7 +520,7 @@ contains
 !
    module subroutine density_cc3_mu_nu_ov_cc3(wf, density_ov, R_ai)
 !!
-!!    One electron density (EOM) excited-determinant/excited-determinant ov-term 
+!!    One electron density (EOM) excited-determinant/excited-determinant ov-term
 !!    Written by Alexander C. Paul, August 2019
 !!
 !!    Computes terms of the form:
@@ -529,7 +530,7 @@ contains
 !!    explicit term in this routine:
 !!
 !!       D^R_ld = -1/2 sum_{abcijk} tbar^abc_ijk(R^c_l t^abd_ijk + R^d_k t^abc_ijl)
-!!              = sum_{abcijk}( -1/2 tbar^abc_ijk t^abc_ijl R^d_k 
+!!              = sum_{abcijk}( -1/2 tbar^abc_ijk t^abc_ijl R^d_k
 !!                              -1/2 tbar^abc_ijk t^abd_ijk R^c_l)
 !!              = sum_k D_lk R^d_k - sum_c D_cd R^c_l
 !!
@@ -580,8 +581,8 @@ contains
    module subroutine density_cc3_mu_nu_oo_ov_vv_cc3(wf, density_oo, density_ov, &
                                                     density_vv, R_ai, R_aibj)
 !!
-!!    One electron density (EOM) excited-determinant/excited-determinant 
-!!    oo-, ov- and vv-term 
+!!    One electron density (EOM) excited-determinant/excited-determinant
+!!    oo-, ov- and vv-term
 !!    Written by Alexander C. Paul, August 2019
 !!
 !!    Computes terms of the form:
@@ -713,7 +714,7 @@ contains
       call sort_1234_to_2314(Y_alki, Y_lkai, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       call mem%dealloc(Y_alki, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-!     rho^R_kl -= sum{ai} Y_alki R^a_i     
+!     rho^R_kl -= sum{ai} Y_alki R^a_i
 !
       call dgemv('N',            &
                   wf%n_o**2,     &
@@ -752,7 +753,7 @@ contains
                                                tbar_ai, tbar_abij,         &
                                                R_ai, R_abij, tbar_R_overlap)
 !!
-!!    One electron density excited-determinant/excited-determinant term 
+!!    One electron density excited-determinant/excited-determinant term
 !!    in batches of the occupied orbitals i,j,k
 !!    Written by Alexander C. Paul, July 2019
 !!
@@ -768,9 +769,9 @@ contains
 !!
 !!    explicit terms in this routine
 !!
-!!    R_mu3 = (omega - eps_mu3)^-1 (< mu3| [H,R_2] |HF > 
+!!    R_mu3 = (omega - eps_mu3)^-1 (< mu3| [H,R_2] |HF >
 !!                                + < mu3| [[H,R_1],T_2] |HF >)
-!!    tbar_mu3 = (- eps_mu3)^-1 (tbar_mu1 < mu1| [H,tau_nu3] |R > 
+!!    tbar_mu3 = (- eps_mu3)^-1 (tbar_mu1 < mu1| [H,tau_nu3] |R >
 !!                             + tbar_mu2 < mu2| [H,tau_nu3] |R >
 !!
 !!    vo-part:
@@ -889,11 +890,14 @@ contains
       real(dp), dimension(:,:), allocatable     :: density_ai
 !
       type(batching_index) :: batch_i, batch_j, batch_k
-      integer :: i_batch, j_batch, k_batch
-      integer :: i, j, k, i_rel, j_rel, k_rel
-      integer :: req_0, req_1, req_2, req_3, req_i, req_1_eri
-      integer :: req_single_batch
+      integer  :: i_batch, j_batch, k_batch
+      integer  :: i, j, k, i_rel, j_rel, k_rel
+      integer  :: req_0, req_1, req_2, req_3, req_i, req_1_eri
+      integer  :: req_single_batch
       real(dp) :: ddot
+      logical  :: skip
+!
+      skip = .false.
 !
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -907,7 +911,7 @@ contains
       req_0 = req_0 + 3*wf%n_v**3 + wf%n_v*wf%n_o + (wf%n_v*wf%n_o)**2
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
-!     Need less memory if we don't need to batch, so we overwrite the maximum 
+!     Need less memory if we don't need to batch, so we overwrite the maximum
 !     required memory in batch_setup
 !
       req_single_batch = req_0 + req_1_eri*wf%n_o + 3*wf%n_v**3*wf%n_o &
@@ -1147,16 +1151,25 @@ contains
 !
                         k_rel = k - batch_k%first + 1
 !
-!                       Check if at least one index i,j,k is a core orbital
-                        if(wf%cvs) then
+!                       Check for core orbitals:
+!                       cvs: i,j,k cannot all correspond to valence orbitals
 !
-                           if(.not. (any(wf%core_MOs .eq. i) &
-                              .or.   any(wf%core_MOs .eq. j) &
-                              .or.   any(wf%core_MOs .eq. k))) cycle
+!                       rm_core: The contraction Z_bcjk = tbar^abc_ijk R^a_i
+!                                can only be cycled if i,j and k are core orbitals.
+!
+                        if(wf%ijk_amplitudes_are_zero(i, j, k, wf%cvs, .false.)) cycle
+!
+                        if (wf%rm_core) then
+!
+!                          The construction of R3 can be skipped if there is one
+!                          or more core orbitals
+                           skip = wf%one_core_index(i, j, k, wf%rm_core)
+!
+                           if (wf%three_core_indices(i,j,k, wf%rm_core)) cycle
 !
                         end if
 !
-!                       Also terms that only include the triples multipliers 
+!                       Also terms that only include the triples multipliers
 !                       can be cycled if we use CVS
 !                       Because they are contracted with R^a_i or R^ab_ij
 !                       which have to contain at least one core orbital.
@@ -1188,8 +1201,8 @@ contains
 !
                         call wf%divide_by_orbital_differences(i, j, k, tbar_abc, zero)
 !
-                        call wf%density_cc3_mu_nu_vo(i, j, k, tbar_abc, u_abc,   &
-                                                               density_vo, R_abij)
+                        call wf%density_cc3_mu_nu_vo(i, j, k, tbar_abc, u_abc, &
+                                                     density_vo, R_abij)
 !
 !                       Construct intermediate used for the ov-block:
 !                          Z_bcjk = sum_ai tbar^abc_ijk R^a_i
@@ -1197,58 +1210,62 @@ contains
                         call wf%construct_Z_intermediate(i, j, k, tbar_abc, u_abc,  &
                                                          Z_bcjk, R_ai)
 !
-!                       Construct R^{abc}_{ijk} for given i, j, k
-!                       Using c1-transformed integrals the terms have the same form 
-!                       as the omega terms (where t_abc = R_abc)
+                        if (.not. skip) then
 !
-                        call wf%construct_V(i, j, k, u_abc, R_abc,        &
-                                            t_abij, R_abij,               &
-                                            g_bdci_p(:,:,:,i_rel),        &
-                                            g_bdcj_p(:,:,:,j_rel),        &
-                                            g_bdck_p(:,:,:,k_rel),        &
-                                            g_bdci_c1_p(:,:,:,i_rel),     &
-                                            g_bdcj_c1_p(:,:,:,j_rel),     &
-                                            g_bdck_c1_p(:,:,:,k_rel),     &
-                                            g_ljci_p(:,:,j_rel,i_rel),    &
-                                            g_lkci_p(:,:,k_rel,i_rel),    &
-                                            g_lkcj_p(:,:,k_rel,j_rel),    &
-                                            g_licj_p(:,:,i_rel,j_rel),    &
-                                            g_lick_p(:,:,i_rel,k_rel),    &
-                                            g_ljck_p(:,:,j_rel,k_rel),    &
-                                            g_ljci_c1_p(:,:,j_rel,i_rel), &
-                                            g_lkci_c1_p(:,:,k_rel,i_rel), &
-                                            g_lkcj_c1_p(:,:,k_rel,j_rel), &
-                                            g_licj_c1_p(:,:,i_rel,j_rel), &
-                                            g_lick_c1_p(:,:,i_rel,k_rel), &
-                                            g_ljck_c1_p(:,:,j_rel,k_rel))
+!                          Construct R^{abc}_{ijk} for given i, j, k
+!                          Using c1-transformed integrals the terms have the same form
+!                          as the omega terms (where t_abc = R_abc)
 !
-                        call wf%divide_by_orbital_differences(i, j, k, R_abc, omega)
+                           call wf%construct_V(i, j, k, u_abc, R_abc,        &
+                                               t_abij, R_abij,               &
+                                               g_bdci_p(:,:,:,i_rel),        &
+                                               g_bdcj_p(:,:,:,j_rel),        &
+                                               g_bdck_p(:,:,:,k_rel),        &
+                                               g_bdci_c1_p(:,:,:,i_rel),     &
+                                               g_bdcj_c1_p(:,:,:,j_rel),     &
+                                               g_bdck_c1_p(:,:,:,k_rel),     &
+                                               g_ljci_p(:,:,j_rel,i_rel),    &
+                                               g_lkci_p(:,:,k_rel,i_rel),    &
+                                               g_lkcj_p(:,:,k_rel,j_rel),    &
+                                               g_licj_p(:,:,i_rel,j_rel),    &
+                                               g_lick_p(:,:,i_rel,k_rel),    &
+                                               g_ljck_p(:,:,j_rel,k_rel),    &
+                                               g_ljci_c1_p(:,:,j_rel,i_rel), &
+                                               g_lkci_c1_p(:,:,k_rel,i_rel), &
+                                               g_lkcj_c1_p(:,:,k_rel,j_rel), &
+                                               g_licj_c1_p(:,:,i_rel,j_rel), &
+                                               g_lick_c1_p(:,:,i_rel,k_rel), &
+                                               g_ljck_c1_p(:,:,j_rel,k_rel))
 !
-                        call wf%density_cc3_mu_ref_vv(i, j, k, density_vv, R_abc, &
-                                                      u_abc, tbar_abc, sorting)
+                           call wf%divide_by_orbital_differences(i, j, k, R_abc, omega)
 !
-!                       Overlap:
-!                          tbar_R_overlap = sum_{ai >= bj >= ck} L^abc_ijk R^abc_ijk
-!                                         = 1/6 sum_abcijk L^abc_ijk R^abc_ijk
+                           call wf%density_cc3_mu_ref_vv(i, j, k, density_vv, R_abc, &
+                                                         u_abc, tbar_abc, sorting)
 !
-!                       Due to the restrictions on the loops the factor of 1/6 
-!                       vanishes, but we need to account for double counting 
-!                       if 2 indices are the same e.g.:
-!                             tbar^abc_ijk*R^abc_ijk = tbar^abc_jik*R^abc_jik
+!                          Overlap:
+!                             tbar_R_overlap = sum_{ai >= bj >= ck} L^abc_ijk R^abc_ijk
+!                                            = 1/6 sum_abcijk L^abc_ijk R^abc_ijk
 !
-                        if (i .ne. j .and. j .ne. k) then
-                           tbar_R_overlap = tbar_R_overlap &
-                                          + ddot(wf%n_v**3, tbar_abc, 1 , R_abc, 1)
-                        else
-                           tbar_R_overlap = tbar_R_overlap &
-                                          + half*ddot(wf%n_v**3, tbar_abc, 1 , R_abc, 1)
+!                          Due to the restrictions on the loops the factor of 1/6
+!                          vanishes, but we need to account for double counting
+!                          if 2 indices are the same e.g.:
+!                                tbar^abc_ijk*R^abc_ijk = tbar^abc_jik*R^abc_jik
+!
+                           if (i .ne. j .and. j .ne. k) then
+                              tbar_R_overlap = tbar_R_overlap &
+                                             + ddot(wf%n_v**3, tbar_abc, 1 , R_abc, 1)
+                           else
+                              tbar_R_overlap = tbar_R_overlap &
+                                             + half*ddot(wf%n_v**3, tbar_abc, 1 , R_abc, 1)
+                           end if
+!
+!                          Need the contravariant R to use construct_x_ai
+                           call construct_contravariant_t3(R_abc, u_abc, wf%n_v)
+!
+                           call wf%construct_x_ai_intermediate(i, j, k, R_abc, u_abc, &
+                                                               tbar_abij, density_ai)
+!
                         end if
-!
-!                       Need the contravariant R to use construct_x_ai
-                        call construct_contravariant_t3(R_abc, u_abc, wf%n_v)
-!
-                        call wf%construct_x_ai_intermediate(i, j, k, R_abc, u_abc, &
-                                                            tbar_abij, density_ai)
 !
                      enddo ! loop over k
                   enddo ! loop over j
@@ -1352,7 +1369,7 @@ contains
    module subroutine density_cc3_mu_nu_vo_cc3(wf, i, j, k, tbar_abc,   &
                                               v_abc, density_vo, R_abij)
 !!
-!!    One electron density (EOM) excited-determinant/excited-determinant vo-term 
+!!    One electron density (EOM) excited-determinant/excited-determinant vo-term
 !!    Written by Alexander C. Paul, August 2019
 !!
 !!    Computes terms of the form:
@@ -1363,7 +1380,7 @@ contains
 !!
 !!          D^R_ck += sum_{abij} tbar^abc_ijk R^ab_ij
 !!
-!!    All permutations for i,j,k have to be considered 
+!!    All permutations for i,j,k have to be considered
 !!    due to the restrictions in the i,j,k loops
 !!
 !!    based on construct_x_ai_intermediate_cc3
@@ -1423,7 +1440,7 @@ contains
    module subroutine construct_Z_intermediate_cc3(wf, i, j, k, tbar_abc, &
                                                   v_abc, Z_bcjk, R_ai)
 !!
-!!    Constructs Z-intermediate 
+!!    Constructs Z-intermediate
 !!    Written by Alexander C. Paul, August 2019
 !!
 !!    based on jacobian_cc3_b2_fock_cc3
@@ -1433,9 +1450,9 @@ contains
 !!
 !!       Z_bcjk += sum_{ai} tbar^abc_ijk R^a_i
 !!
-!!    All permutations for i,j,k have to be considered 
+!!    All permutations for i,j,k have to be considered
 !!    due to the restrictions in the i,j,k loops
-!!      
+!!
       implicit none
 !
       class(cc3) :: wf
@@ -1486,7 +1503,7 @@ contains
 !
    module subroutine density_cc3_mu3_nu2_ov_cc3(wf, density_ov, density_vo)
 !!
-!!    One electron density (EOM) triples-determinant/doubles-determinant ov-term 
+!!    One electron density (EOM) triples-determinant/doubles-determinant ov-term
 !!    Written by Alexander C. Paul, August 2019
 !!
 !!    Computes terms of the form:
@@ -1542,7 +1559,7 @@ contains
    module subroutine density_cc3_mu_nu_abc_cc3(wf, density_oo, omega, &
                                                tbar_ia, tbar_ijab, R_ai, R_ijab)
 !!
-!!    One electron density excited-determinant/excited-determinant term 
+!!    One electron density excited-determinant/excited-determinant term
 !!    in batches of the virtual orbitals a,b,c
 !!    Written by Alexander C. Paul, August 2019
 !!
@@ -1557,17 +1574,17 @@ contains
 !!
 !!    explicit terms in this routine
 !!
-!!    R_mu3 = (omega - eps_mu3)^-1 (< mu3| [H,R_2] |HF > 
+!!    R_mu3 = (omega - eps_mu3)^-1 (< mu3| [H,R_2] |HF >
 !!                                + < mu3| [[H,R_1],T_2] |HF >)
 !!
-!!    tbar_mu3 = (- eps_mu3)^-1 (tbar_mu1 < mu1| [H,tau_nu3] |R > 
+!!    tbar_mu3 = (- eps_mu3)^-1 (tbar_mu1 < mu1| [H,tau_nu3] |R >
 !!                             + tbar_mu2 < mu2| [H,tau_nu3] |R >
 !!
 !!    oo-part:
 !!          D^R_kl -= 1/2 sum_{abcij} tbar^abc_ijl R^abc_ijk
 !!
       use omp_lib
-! 
+!
       implicit none
 !
       class(cc3) :: wf
@@ -1613,7 +1630,7 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, pointer :: g_adck_p => null()
       real(dp), dimension(:,:,:,:), contiguous, pointer :: g_bdck_p => null()
 !
-!     c1-transformed integrals 
+!     c1-transformed integrals
       real(dp), dimension(:,:,:,:), allocatable, target :: g_ljak_c1
       real(dp), dimension(:,:,:,:), allocatable, target :: g_ljbk_c1
       real(dp), dimension(:,:,:,:), allocatable, target :: g_ljck_c1
@@ -1692,7 +1709,7 @@ contains
       req_1_eri = req_1_eri + max(wf%n_v**2*wf%n_o, wf%n_o**2*wf%n_v)
       req_0 = req_0 + 4*wf%n_o**3*n_threads
 !
-!     Need less memory if we don't need to batch, so we overwrite the maximum 
+!     Need less memory if we don't need to batch, so we overwrite the maximum
 !     required memory in batch_setup
 !
       req_single_batch = req_0 + req_1_eri*wf%n_v + 3*wf%n_v**3*wf%n_o &
@@ -1902,7 +1919,7 @@ contains
 !
                endif
 !
-!$omp parallel do private(a, a_rel, b, b_rel, c, c_rel, thread_n) & 
+!$omp parallel do private(a, a_rel, b, b_rel, c, c_rel, thread_n) &
 !$omp schedule(guided, 1)
                do a = batch_a%first, batch_a%last
 !
@@ -1923,11 +1940,11 @@ contains
                         c_rel = c - batch_c%first + 1
 !
 !                       Construct R^abc_ijk for given a,b,c
-!                       Using c1-transformed integrals the terms have the same form 
+!                       Using c1-transformed integrals the terms have the same form
 !                       as the omega terms (where t_ijk = R_ijk)
 !
-!                       Therefore the contributions to the c3-amplitudes can be computed 
-!                       using the same routine once for t1-transformed and once for 
+!                       Therefore the contributions to the c3-amplitudes can be computed
+!                       using the same routine once for t1-transformed and once for
 !                       c1-transformed integrals
 !
                         call wf%construct_W_abc(a, b, c,                   &
@@ -1961,7 +1978,7 @@ contains
 !
                         call wf%divide_by_orbital_differences_abc(a, b, c, &
                                                                   R_ijk(:,:,:,thread_n), &
-                                                                  omega, wf%cvs)
+                                                                  omega, wf%cvs, wf%rm_core)
 !
                         call wf%construct_W_abc(a, b, c,                   &
                                                 tbar_ijk(:,:,:,thread_n),  &
@@ -1979,7 +1996,7 @@ contains
 !
                         call wf%outer_product_terms_l3_abc(a, b, c, tbar_ia,          &
                                                            tbar_ijab,                 &
-                                                           tbar_ijk(:,:,:,thread_n),  & 
+                                                           tbar_ijk(:,:,:,thread_n),  &
                                                            wf%fock_ia,                &
                                                            g_jakb_p(:,:,a_rel,b_rel), &
                                                            g_jakc_p(:,:,a_rel,c_rel), &
@@ -2035,7 +2052,7 @@ contains
             call mem%dealloc(sorting, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
          else
             call mem%dealloc(sorting, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-         end if      
+         end if
 !
       else ! batching
 !
@@ -2089,7 +2106,7 @@ contains
 !
    module subroutine density_cc3_mu_nu_ov_Z_term_cc3(wf, density_ov, Z_bcjk, t_abij)
 !!
-!!    One electron density (EOM) excited-determinant/excited-determinant 
+!!    One electron density (EOM) excited-determinant/excited-determinant
 !!    ov-term from Z_intermediate
 !!    Written by Alexander C. Paul, August 2019
 !!
@@ -2166,7 +2183,7 @@ contains
       req_0 = req_0 + wf%n_v**3
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
-!     Need less memory if we don't need to batch, so we overwrite the maximum 
+!     Need less memory if we don't need to batch, so we overwrite the maximum
 !     required memory in batch_setup
 !
       req_single_batch = req_0 + req_1_eri*wf%n_o + wf%n_v**3*wf%n_o &

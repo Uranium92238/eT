@@ -61,7 +61,7 @@ module ccs_class
       integer :: n_bath_orbitals
 !
       integer :: n_core_MOs
-      logical :: cvs
+      logical :: cvs, rm_core
 !
       real(dp), dimension(:), allocatable :: left_excitation_energies
       real(dp), dimension(:), allocatable :: right_excitation_energies
@@ -521,8 +521,9 @@ contains
       call wf%initialize_files()
 !
       wf%bath_orbital = .false.
-      wf%cvs = .false.
-      wf%need_g_abcd = .false.
+      wf%need_g_abcd  = .false.
+      wf%cvs          = .false.
+      wf%rm_core      = .false.
 !
       call wf%read_settings()
 !
@@ -2056,6 +2057,8 @@ contains
          call wf%initialize_core_MOs()
 !
          call input%get_array_for_keyword('remove core', 'solver cc es', wf%n_core_MOs, wf%core_MOs)
+!
+         wf%rm_core = .true.
 !
       else
 !

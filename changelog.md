@@ -16,7 +16,8 @@
 - Biorthonormalization works for a set of close states as well. eT-program/eT!775
 - Added printing of implementation references, and the associated keyword `full references` in the `print` section. eT-program/eT!773
 - Made autogenerate script compatible with Python 3.6 (UTF-8 encoding error). eT-program/eT!794
-- Added `ghost` atoms. eT-prgram/eT!795
+- Added `ghost` atoms. eT-program/eT!795
+- Added `remove core` projection to CC3. eT-program/eT!804
 
 ### Optimization
 - One-electron integrals with screening based on the overlap matrix. eT-program/eT!770

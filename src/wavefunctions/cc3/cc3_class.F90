@@ -64,6 +64,11 @@ module cc3_class
       procedure :: cleanup                              => cleanup_cc3
       procedure :: delete_intermediate_files            => delete_intermediate_files_cc3
 !
+      procedure :: one_core_index                       => one_core_index_cc3
+      procedure :: two_core_indices                     => two_core_indices_cc3
+      procedure :: three_core_indices                   => three_core_indices_cc3
+      procedure :: ijk_amplitudes_are_zero              => ijk_amplitudes_are_zero_cc3
+!
 !     Routines related to omega
 !
       procedure :: construct_omega                      => construct_omega_cc3
@@ -224,7 +229,7 @@ contains
 !
       class(wavefunction), intent(in) :: template_wf
 !
-      type(citation), allocatable :: reference 
+      type(citation), allocatable :: reference
 !
       wf%name_ = 'cc3'
 !
@@ -338,10 +343,10 @@ contains
 !!
 !!    Wrapper for Jacobian transformations
 !!
-!!    r_or_l: string that should be 'left' or 'right', 
+!!    r_or_l: string that should be 'left' or 'right',
 !!            determines if Jacobian or Jacobian transpose is called
 !!
-!!    X: On input contains the vector to transform. 
+!!    X: On input contains the vector to transform.
 !!    R: On output contains the transformed vector
 !!
 !!    w: Excitation energy. Only used for debug prints for CCS, CCSD etc.
@@ -370,11 +375,11 @@ contains
 !     Compute the transformed matrix
       if (r_or_l .eq. "right") then
 !
-         call wf%effective_jacobian_transformation(w, X, R) ! R <- AX
+         call wf%effective_jacobian_transformation(w, X, R)
 !
       else if (r_or_l .eq. "left") then
 !
-         call wf%effective_jacobian_transpose_transformation(w, X, R, wf%cvs) ! X <- A^TX
+         call wf%effective_jacobian_transpose_transformation(w, X, R, wf%cvs, wf%rm_core)
 !
       else
 !
@@ -414,7 +419,7 @@ contains
 !!    Prepare for approximate Jacobians
 !!    Written by Eirik F. Kjønstad, Mar 2021
 !!
-!!    Wrapper for preparations to a lower-level Jacobian transformation that is 
+!!    Wrapper for preparations to a lower-level Jacobian transformation that is
 !!    the best approximation with a lower computational scaling.
 !!
 !!    r_or_l: 'left', 'right', or 'both'
@@ -439,11 +444,9 @@ contains
 !!    Modified by Rolf H. Myhre Feb. 2020
 !!    copy() should not be used
 !!
-!!    jacobian_transpose_transformation is used 
-!!    for multipliers and left excited states
-!!    Copy the intermediate Y_ebck after solving
-!!    for the multipliers to reuse it 
-!!    in the right transition densities
+!!    Copy the intermediate Y_ebck constructed as follows:
+!!    Y_ebck = sum_aij tbar^abc_ijk * t^ae_ij
+!!    Later used in the right transition density matrix
 !!
       implicit none
 !
@@ -463,7 +466,7 @@ contains
 !
       Y_ebck_tbar = direct_stream_file('Y_ebck_tbar', wf%n_v**3)
 !
-!     Delete if the file already exists 
+!     Delete if the file already exists
 !     e.g. when restarting a crashed CC3 calculation
 !
       if(Y_ebck_tbar%exists()) then
@@ -499,7 +502,7 @@ contains
    end subroutine save_tbar_intermediates_cc3
 !
 !
-   real(dp) function L_R_overlap_cc3(wf, L, left_state, R, right_state)
+   function L_R_overlap_cc3(wf, L, left_state, R, right_state) result(L_R_overlap)
 !!
 !!    Left right overlap
 !!    Written by Alexander C. Paul, Aug 2019
@@ -521,11 +524,11 @@ contains
       real(dp), dimension(:,:), allocatable :: L1, R1
       real(dp), dimension(:,:,:,:), allocatable :: L2, R2
 !
-      real(dp) :: ddot
+      real(dp) :: ddot, L_R_overlap
 !
       integer :: a, i
 !
-      L_R_overlap_cc3 = ddot(wf%n_es_amplitudes, L, 1, R, 1)
+      L_R_overlap = ddot(wf%n_es_amplitudes, L, 1, R, 1)
 !
 !     :: Triples contribution to the overlap ::
 !
@@ -563,7 +566,7 @@ contains
 !
       call wf%L_R_overlap_triples(wf%left_excitation_energies(left_state),  &
                                   wf%right_excitation_energies(right_state),&
-                                  L1, L2, R1, R2, L_R_overlap_cc3)
+                                  L1, L2, R1, R2, L_R_overlap, wf%cvs, wf%rm_core)
 !
       call mem%dealloc(L1, wf%n_v, wf%n_o)
       call mem%dealloc(L2, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -572,33 +575,35 @@ contains
 !
       call output%printf('debug', 'Overlap of (i0). left and (i0). right state: (f15.10)', &
                          ints=[left_state, right_state], &
-                         reals=[L_R_overlap_cc3], fs='(/t6,a)')
+                         reals=[L_R_overlap], fs='(/t6,a)')
 !
    end function L_R_overlap_cc3
 !
 !
-   subroutine L_R_overlap_triples_cc3(wf, omega_L, omega_R, L1, L2, R1, R2, LT_R)
+   subroutine L_R_overlap_triples_cc3(wf, omega_L, omega_R, L1, L2, R1, R2, &
+                                      LT_R, cvs, rm_core)
 !!
 !!    Left right overlap triples
 !!    Written by Alexander C. Paul, August 2019
 !!
-!!    Calculates the overlap of the triples part 
+!!    Calculates the overlap of the triples part
 !!    of the left and right excitation vectors
-!!    
+!!
 !!    Right excitation vector:
-!!       R_mu3 = (omega - eps_mu3)^-1 (< mu3| [H,R_2] |HF > 
+!!       R_mu3 = (omega - eps_mu3)^-1 (< mu3| [H,R_2] |HF >
 !!                                   + < mu3| [[H,R_1],T_2] |HF >)
 !!
 !!    Left excitation vector:
-!!       L_mu3 = (omega - eps^abc_ijk)^-1 (L_mu1 < mu1| [H,tau_nu3] |R > 
+!!       L_mu3 = (omega - eps^abc_ijk)^-1 (L_mu1 < mu1| [H,tau_nu3] |R >
 !!                                       + L_mu2 < mu2| [H,tau_nu3] |R >)
 !!
       implicit none
 !
       class(cc3) :: wf
 !
-      real(dp), intent(in) :: omega_L
-      real(dp), intent(in) :: omega_R
+      logical, intent(in) :: cvs, rm_core
+!
+      real(dp), intent(in) :: omega_L, omega_R
 !
       real(dp), intent(inout) :: LT_R
 !
@@ -701,7 +706,7 @@ contains
       req_0 = req_0 + 2*wf%n_v**3
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
-!     Need less memory if we don't need to batch, so we overwrite the maximum 
+!     Need less memory if we don't need to batch, so we overwrite the maximum
 !     required memory in batch_setup
 !
       req_single_batch = req_0 + req_1_eri*wf%n_o + 3*wf%n_v**3*wf%n_o &
@@ -933,17 +938,13 @@ contains
 !
                         k_rel = k - batch_k%first + 1
 !
-!                       Check if at least one index i,j,k is a core orbital
-                        if(wf%cvs) then
-!
-                           if(.not. (any(wf%core_MOs .eq. i) &
-                              .or.   any(wf%core_MOs .eq. j) &
-                              .or.   any(wf%core_MOs .eq. k))) cycle
-!
-                        end if
+!                       Check for core orbitals (used for excited states):
+!                       cvs: i,j,k cannot all correspond to valence orbitals
+!                       rm_core: i,j,k may not contain any core orbital
+                        if (wf%ijk_amplitudes_are_zero(i, j, k, cvs, rm_core)) cycle
 !
 !                       Construct R^{abc}_{ijk} for given i, j, k
-!                       Using c1-transformed integrals the terms have the same form 
+!                       Using c1-transformed integrals the terms have the same form
 !                       as the omega terms (where t_abc = R_abc)
 !
                         call wf%construct_V(i, j, k, sorting,              &
@@ -999,8 +1000,8 @@ contains
 !                          LT_R = sum_{ai >= bj >= ck} L^abc_ijk R^abc_ijk
 !                               = 1/6 sum_abcijk L^abc_ijk R^abc_ijk
 !
-!                       We don't have the factor of 1/6 due to the restrictions 
-!                       on the loops. Need to account for doubles counting 
+!                       We don't have the factor of 1/6 due to the restrictions
+!                       on the loops. Need to account for doubles counting
 !                       if 2 indices are the same e.g.:
 !                             L^abc_ijk*R^abc_ijk = L^abc_jik*R^abc_jik
 !
@@ -1097,10 +1098,10 @@ contains
 !!    Estimate maximum memory needed for cc3 integral setup
 !!
 !!    get_eri_t1_mem returns the memory needed to construct the requested integral
-!!    The dimensions sent in specify if an index is batched (1) or of 
+!!    The dimensions sent in specify if an index is batched (1) or of
 !!    full dimension (n_o/n_v)
 !!    The memory estimate for the first and second pair of indices
-!!    is added to the integers req*. 
+!!    is added to the integers req*.
 !!
 !!    The memory needed to get vvov and vvvo is identical
 !!    The memory needed to get oovo and ooov is identical
@@ -1135,9 +1136,9 @@ contains
 !!    Estimate maximum memory needed for cc3 integral setup
 !!    for the C1-transformed integrals
 !!
-!!    get_eri_c1_mem returns the memory needed to construct the requested 
+!!    get_eri_c1_mem returns the memory needed to construct the requested
 !!    c1-transformed integral
-!!    The dimensions sent in specify if an index is batched (1) or of 
+!!    The dimensions sent in specify if an index is batched (1) or of
 !!    full dimension (n_o/n_v)
 !!
 !!    6 memory estimates are returned:
@@ -1169,6 +1170,149 @@ contains
       req1 = max(req1_vvvo, req1_oovo)
 !
    end subroutine estimate_mem_c1_integral_setup_cc3
+!
+!
+   pure function one_core_index_cc3(wf, i, j, k, check) result(found)
+!!
+!!    One core index
+!!    Written by Alexander C. Paul, Apr 2021
+!!
+!!    Checks if at least one of i,j,k is a core index.
+!!    The logical check is used to skip the check completely.
+!!
+!!    This is used to determine if a triple loop over i,j,k
+!!    can be cycled, eg. due to cvs or removing core orbitals
+!!
+      implicit none
+!
+      class(cc3), intent(in) :: wf
+!
+      integer, intent(in) :: i, j, k
+      logical, intent(in) :: check
+      logical :: found
+!
+      found = .false.
+!
+      if (check) then
+         found =    any(wf%core_MOs .eq. i) &
+               .or. any(wf%core_MOs .eq. j) &
+               .or. any(wf%core_MOs .eq. k)
+      end if
+!
+   end function one_core_index_cc3
+!
+!
+   pure function two_core_indices_cc3(wf, i, j, k, check) result(found)
+!!
+!!    Two core indices
+!!    Written by Alexander C. Paul, Apr 2021
+!!
+!!    Checks if at least two of i,j,k are core indices.
+!!    The logical check is used to skip the check completely.
+!!
+!!    This is used to determine if a triple loop over i,j,k
+!!    can be cycled, eg. to remove core orbitals
+!!
+      implicit none
+!
+      class(cc3), intent(in) :: wf
+!
+      integer, intent(in) :: i, j, k
+      logical, intent(in) :: check
+      logical :: found
+!
+      logical :: i_core, j_core, k_core
+!
+      found = .false.
+!
+      if (check) then
+!
+         i_core = any(wf%core_MOs .eq. i)
+         j_core = any(wf%core_MOs .eq. j)
+         k_core = any(wf%core_MOs .eq. k)
+!
+         if (i_core .and. j_core) then
+            found = .true.
+         else if (j_core .and. k_core) then
+            found = .true.
+         else if (i_core .and. k_core) then
+            found = .true.
+         end if
+!
+      end if
+!
+   end function two_core_indices_cc3
+!
+!
+   pure function three_core_indices_cc3(wf, i, j, k, check) result(found)
+!!
+!!    Three core indices
+!!    Written by Alexander C. Paul, Apr 2021
+!!
+!!    Checks if i,j and k are core indices.
+!!    The logical check is used to skip the check completely.
+!!
+!!    This is used to determine if a triple loop over i,j,k
+!!    can be cycled, eg. to remove core orbitals
+!!
+      implicit none
+!
+      class(cc3), intent(in) :: wf
+!
+      integer, intent(in) :: i, j, k
+      logical, intent(in) :: check
+      logical :: found
+!
+      found = .false.
+!
+      if (check) then
+!
+         found =     any(wf%core_MOs .eq. i) &
+               .and. any(wf%core_MOs .eq. j) &
+               .and. any(wf%core_MOs .eq. k)
+!
+      end if
+!
+   end function three_core_indices_cc3
+!
+!
+   pure function ijk_amplitudes_are_zero_cc3(wf, i, j, k, cvs, rm_core) result(skip)
+!!
+!!    ijk amplitudes are zero
+!!    Written by Alexander C. Paul, Apr 2021
+!!
+!!    cvs:     returns true if none of i,j,k is a core orbital
+!!    rm_core: returns true if at least one of i,j,k is a core orbital
+!!
+!!    Used to determine if a triple loop over i,j,k shall be cycled in CC3
+!!    if core states or states with removed core contribution shall be calculated.
+!!    In most of the i,j,k loops all contributions can be skipped
+!!    if the conditions below are true.
+!!
+!!
+      implicit none
+!
+      class(cc3), intent(in) :: wf
+!
+      integer, intent(in) :: i, j, k
+      logical, intent(in) :: cvs, rm_core
+      logical :: skip
+!
+      skip = .false.
+!
+      if (cvs) then
+         skip  = .not. (any(wf%core_MOs .eq. i) &
+                 .or.   any(wf%core_MOs .eq. j) &
+                 .or.   any(wf%core_MOs .eq. k))
+      end if
+!
+      if (rm_core) then
+         skip  =   (any(wf%core_MOs .eq. i) &
+               .or. any(wf%core_MOs .eq. j) &
+               .or. any(wf%core_MOs .eq. k))
+      end if
+!
+   end function ijk_amplitudes_are_zero_cc3
 !
 !
 end module cc3_class
