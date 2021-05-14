@@ -45,6 +45,7 @@ add_eT_runtest(eri_cholesky                                 "eT;short;cholesky;e
 add_eT_runtest(hf_energy                                    "eT;short;hf;sad")
 add_eT_runtest(hf_print_z_matrix                            "eT;short;hf;z-matrix")
 add_eT_runtest(hf_file_check                                "eT;short;hf;sad;eT_launch")
+add_eT_runtest(hf_orbital_files                             "eT;short;hf;sad;eT_launch;molden")
 add_eT_runtest(hf_low_memory                                "eT;short;hf;sad")
 add_eT_runtest(hf_energy_cumulative                         "eT;short;hf;cumulative-fock")
 add_eT_runtest(hf_energy_sto3g                              "eT;short;hf;sad;sto3g")

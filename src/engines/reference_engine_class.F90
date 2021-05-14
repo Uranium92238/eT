@@ -19,8 +19,8 @@
 !
 module reference_engine_class
 !!
-!!    Hartree-Fock engine class module 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    Hartree-Fock engine class module
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
    use kinds
 !
@@ -39,17 +39,17 @@ module reference_engine_class
    type, extends(abstract_engine) :: reference_engine
 !
       character(len=200) :: ao_density_guess
-      character(len=200) :: algorithm 
+      character(len=200) :: algorithm
 !
       logical :: restart
       logical :: requested_mean_value
 !
       logical :: plot_orbitals
-      logical :: print_mo_info
+      logical :: write_mo_info, molden_file
 !
       logical :: skip_scf
 !
-   contains 
+   contains
 !
       procedure :: ignite                              => ignite_reference_engine
 !
@@ -73,12 +73,12 @@ module reference_engine_class
 !
       procedure, private :: check_algorithm            => check_algorithm_reference_engine
 !
-   end type reference_engine 
+   end type reference_engine
 !
 !
    interface reference_engine
 !
-      procedure :: new_reference_engine 
+      procedure :: new_reference_engine
 !
    end interface reference_engine
 !
@@ -88,10 +88,10 @@ contains
 !
    function new_reference_engine() result(engine)
 !!
-!!    New reference engine 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    New reference engine
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      implicit none 
+      implicit none
 !
       type(reference_engine) :: engine
 !
@@ -102,9 +102,10 @@ contains
       engine%quadrupole       = .false.
       engine%plot_orbitals    = .false.
       engine%plot_density     = .false.
-      engine%print_mo_info    = .false.
+      engine%write_mo_info    = .false.
+      engine%molden_file      = .false.
       engine%skip_scf         = .false.
-!  
+!
       call engine%read_settings()
       call engine%check_algorithm()
 !
@@ -116,10 +117,10 @@ contains
 !!    Ignite
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(reference_engine) :: engine 
-      class(hf)               :: wf 
+      class(reference_engine) :: engine
+      class(hf)               :: wf
 !
 !     Overwrite restart if the corresponding files don't exist
       if (engine%restart) engine%restart = wf%is_restart_possible()
@@ -137,12 +138,12 @@ contains
 !
    subroutine run_reference_engine(engine, wf)
 !!
-!!    Run 
+!!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(reference_engine)    :: engine 
+      class(reference_engine)    :: engine
       class(hf)                  :: wf
 !
       if ((.not. engine%restart) .and.  &
@@ -160,7 +161,8 @@ contains
       call engine%do_ground_state(wf)
 !
       if (.not. engine%skip_scf) call wf%flip_final_orbitals()
-      call wf%print_summary(engine%print_mo_info)
+      call wf%print_summary(engine%write_mo_info)
+      if (engine%molden_file) call wf%write_molden_file()
 !
 !     Plot orbitals and/or density
 !
@@ -175,12 +177,12 @@ contains
 !
    subroutine read_settings_reference_engine(engine)
 !!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(reference_engine) :: engine 
+      class(reference_engine) :: engine
 !
       call input%get_keyword('algorithm', 'solver scf', engine%algorithm)
 !
@@ -189,20 +191,16 @@ contains
 !
       call input%get_keyword('ao density guess', 'solver scf', engine%ao_density_guess)
 !
-      if (input%is_keyword_present('print orbitals', 'solver scf')) then
-         engine%print_mo_info = .true.
-      end if
+      engine%write_mo_info = input%is_keyword_present('print orbitals', 'solver scf')
 !
-      if (input%is_keyword_present('plot hf orbitals', 'visualization')) then
-         engine%plot_orbitals = .true.
-      end if
+      engine%molden_file = input%is_keyword_present('write molden', 'solver scf')
 !
-      if (input%is_keyword_present('plot hf density', 'visualization')) then 
-         engine%plot_density = .true.
-      end if
+      engine%plot_orbitals = input%is_keyword_present('plot hf orbitals', 'visualization')
+!
+      engine%plot_density = input%is_keyword_present('plot hf density', 'visualization')
 !
 !     Global restart
-      if (input%is_keyword_present('restart', 'do')) then 
+      if (input%is_keyword_present('restart', 'do')) then
          engine%restart = .true.
       end if
 !
@@ -235,24 +233,24 @@ contains
       engine%tasks = task_list()
 !
       if (trim(engine%ao_density_guess) == 'sad' .and. .not. engine%restart) &
-         call engine%tasks%add(label='sad', description='Generate initial SAD density') 
+         call engine%tasks%add(label='sad', description='Generate initial SAD density')
 !
       call engine%tasks%add(label='gs solver',                                &
                             description='Calculation of reference state (' // &
                                  trim(convert_to_uppercase(engine%algorithm)) // ' algorithm)')
 !
       if (engine%plot_orbitals .or. engine%plot_density) &
-         call engine%tasks%add(label='plotting', description='Plot orbitals and/or density') 
+         call engine%tasks%add(label='plotting', description='Plot orbitals and/or density')
 !
       if (engine%dipole .or. engine%quadrupole) &
          call engine%tasks%add(label='expectation value', &
-            description='Calculate dipole and/or quadrupole moments') 
+            description='Calculate dipole and/or quadrupole moments')
 !
    end subroutine set_printables_reference_engine
 !
 !
    subroutine generate_sad_density_reference_engine(engine, wf)
-!!    
+!!
 !!    Generate SAD density
 !!    Written by Tor S. Haugland, Sep 2019
 !!
@@ -306,7 +304,7 @@ contains
 !
       type(timings), allocatable :: sad_generation_timer
 !
-      type(atomic_center), allocatable :: center 
+      type(atomic_center), allocatable :: center
 !
       call engine%tasks%print_('sad')
 !
@@ -382,7 +380,7 @@ contains
 !
 !        Cleanup and generate ao_density_a and ao_density_b
 !
-         call sad_wf%orbital_file%delete_() 
+         call sad_wf%orbital_file%delete_()
          call sad_wf%cleanup()
 !
          deallocate(sad_wf)
@@ -431,7 +429,7 @@ contains
 !!
 !!    Writes orbitals and/or density to .plt files
 !!    which may be opened in Chimera, if requested
-!!    on input. 
+!!    on input.
 !!
 !
       use visualization_class, only : visualization
@@ -439,7 +437,7 @@ contains
       implicit none
 !
       class(reference_engine) :: engine
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       type(visualization), allocatable :: plotter
 !
@@ -484,10 +482,10 @@ contains
 !!    Do orbital plotting
 !!    Written by Sarai D. Folkestad, Oct 2019
 !!
-!!    Reads orbitals to plot, and extracts the 
-!!    corresponding MO coefficients. Prepares 
+!!    Reads orbitals to plot, and extracts the
+!!    corresponding MO coefficients. Prepares
 !!    file tags for the .plt files and writes
-!!    orbital plot files using the visualization 
+!!    orbital plot files using the visualization
 !!    tool.
 !!
       use visualization_class, only : visualization
@@ -495,7 +493,7 @@ contains
 !
       implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       type(visualization) :: plotter
 !
@@ -507,15 +505,14 @@ contains
 !
       character(len=200), dimension(:), allocatable :: orbital_file_tags
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Orbital plotting time', pl='normal')
       call timer%turn_on()
 !
 !     Read orbital plotting settings
 !
-      n_orbitals_to_plot = input%get_n_elements_for_keyword('plot hf orbitals', &
-                                                                        'visualization')
+      n_orbitals_to_plot = input%get_n_elements_for_keyword('plot hf orbitals', 'visualization')
 !
       call mem%alloc(orbitals_to_plot, n_orbitals_to_plot)
       call input%get_array_for_keyword('plot hf orbitals', 'visualization', &
@@ -570,7 +567,7 @@ contains
 !
       engine%requested_mean_value = input%is_section_present('hf mean value')
 !
-      if (engine%requested_mean_value) then 
+      if (engine%requested_mean_value) then
 !
          if (input%is_keyword_present('dipole','hf mean value')) &
              engine%dipole = .true.
@@ -601,17 +598,17 @@ contains
       real(dp), dimension(6) :: q_electronic
       real(dp), dimension(6) :: q_nuclear
       real(dp), dimension(6) :: q_total
-!      
+!
       character(len=4), dimension(:), allocatable :: components
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Time to calculte dipole and/or quadrupole', pl='normal')
       call timer%turn_on()
 !
       call engine%tasks%print_('expectation value')
 !
-      if(engine%dipole) then 
+      if(engine%dipole) then
 !
          call engine%calculate_dipole_moment(wf, mu_electronic, mu_nuclear, mu_total)
 !
@@ -670,7 +667,7 @@ contains
 !!    Calculate dipole moment
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
-!!    Modified by Linda Goletto, Anders Hutcheson 
+!!    Modified by Linda Goletto, Anders Hutcheson
 !!    and Tommaso Giovannini, Oct 2019
 !!
 !!    Calculates tr(D mu) in the AO basis; if the wf is mlhf,
@@ -721,7 +718,7 @@ contains
 !!    Calculate quadrupole moment
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
-!!    Modified by Linda Goletto, Anders Hutcheson 
+!!    Modified by Linda Goletto, Anders Hutcheson
 !!    and Tommaso Giovannini, Oct 2019
 !!
 !!    Calculates tr(D Q) in the AO basis; if the wf is mlhf,
@@ -770,16 +767,16 @@ contains
 !
    subroutine do_ground_state_reference_engine(engine, wf)
 !!
-!!    Do ground state 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    Do ground state
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Constructs the solver specified on input. 
+!!    Constructs the solver specified on input.
 !!    Solves the ground state.
 !!
       implicit none
 !
-      class(reference_engine), intent(in)       :: engine 
-      class(hf), intent(inout)                  :: wf 
+      class(reference_engine), intent(in)       :: engine
+      class(hf), intent(inout)                  :: wf
 !
       class(scf_solver),  allocatable           :: scf
       character(len=200)                        :: acceleration_type
@@ -791,7 +788,7 @@ contains
       if (trim(engine%algorithm) == 'scf-diis' .or. &
           trim(engine%algorithm) == 'mo-scf-diis') acceleration_type = 'diis'
 !
-      scf = scf_solver(engine%restart, acceleration_type, engine%skip_scf)     
+      scf = scf_solver(engine%restart, acceleration_type, engine%skip_scf)
       call scf%run(wf)
 !
    end subroutine do_ground_state_reference_engine
@@ -799,7 +796,7 @@ contains
 !
    subroutine check_algorithm_reference_engine(engine)
 !!
-!!    Check algorithm 
+!!    Check algorithm
 !!    Written by Sarai D. Folkestad, 2020
 !!
       implicit none
