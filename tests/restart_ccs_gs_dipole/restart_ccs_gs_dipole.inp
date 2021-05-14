@@ -1,0 +1,47 @@
+system
+   name: H2O He
+   charge: 0
+end system
+
+do
+  mean value
+end do
+
+memory
+   available: 8
+end memory
+
+solver cholesky
+   threshold: 1.0d-11
+end solver cholesky
+
+solver scf
+   energy threshold:   1.0d-11
+   gradient threshold: 1.0d-11
+end solver scf
+
+method
+   hf
+   ccs
+end method
+
+solver cc gs
+   restart
+   omega threshold:  1.0d-11
+end solver cc gs
+
+solver cc multipliers
+   restart
+   threshold: 1.0d-11
+end solver cc multipliers
+
+cc mean value
+   dipole
+end cc mean value
+
+geometry
+basis: sto-3g
+ H          0.86681        0.60144        0.00000
+ H         -0.86681        0.60144        0.00000
+ O          0.00000       -0.07579        0.00000
+end geometry
