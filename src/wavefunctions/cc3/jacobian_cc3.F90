@@ -53,7 +53,7 @@ contains
 !!    where the basis employed for the brackets is biorthonormal.
 !!    The transformation is rho = A c, i.e.,
 !!
-!!       rho_mu = (A c)_mu 
+!!       rho_mu = (A c)_mu
 !!       = sum_ck A_mu,ck c_ck + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl)
 !!
 !!    On exit, c is overwritten by rho. That is, c(ai) = rho_a_i,
@@ -81,7 +81,7 @@ contains
 !     Zero the transformed vector
 !
       call zero_array(rho, wf%n_t1 + wf%n_t2)
-! 
+!
 !     :: CCSD contributions to the rho vector ::
 !
       call wf%ccsd%jacobian_transformation(c, rho)
@@ -101,10 +101,11 @@ contains
 !
 !     CC3-Contributions from the T3-amplitudes
       call wf%jacobian_cc3_t3_a2(c(1:wf%n_t1), rho_abij)
-      call wf%jacobian_cc3_t3_b2(c(1:wf%n_t1), rho_abij)
+      call wf%jacobian_cc3_t3_b2(c(1:wf%n_t1), rho_abij, wf%cvs, wf%rm_core)
 !
 !     CC3-Contributions from the C3-amplitudes
-      call wf%jacobian_cc3_c3_a(omega, c(1:wf%n_t1), c_abij, rho, rho_abij)
+      call wf%jacobian_cc3_c3_a(omega, c(1:wf%n_t1), c_abij, rho, rho_abij, &
+                                wf%cvs, wf%rm_core)
 !
       call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -123,11 +124,11 @@ contains
 !!
 !!    Jacobian CC3 T3 A2
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
-!!    Adapted to give a contravariant representation of rho2 due to the 
-!!    way the X-intermediates are constructed 
+!!    Adapted to give a contravariant representation of rho2 due to the
+!!    way the X-intermediates are constructed
 !!    by Rolf H. Myhre and Alexander C. Paul, Okt 2020
 !!
-!!    Reads in the intermediates X_abid and X_ajil prepared in 
+!!    Reads in the intermediates X_abid and X_ajil prepared in
 !!    prepare_jacobian_transform contracts with c_ai and adds to rho_abij
 !!
 !!    ~rho_abil += sum_abi X_abid * C_dl
@@ -136,7 +137,7 @@ contains
 !!    where: ~rho^ab_ij = 2 rho^ab_ij - rho^ba_ij
 !!           X_abid = - sum_jck u_abc * g_kcjd
 !!           X_ajil = - sum_bck u_abc * g_lbkc
-!!           u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk 
+!!           u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk
 !!                     - 2t^acb_ijk - 2t_cba_ijk - 2t_bac_ijk
 !!
       implicit none
@@ -156,7 +157,7 @@ contains
 !
       type(timings), allocatable :: cc3_timer_t3_a2
 !
-      cc3_timer_t3_a2 = timings('Time in CC3 T3 a2', pl='verbose') 
+      cc3_timer_t3_a2 = timings('Time in CC3 T3 a2', pl='verbose')
       call cc3_timer_t3_a2%turn_on()
 !
 !     :: X_abid term ::
@@ -229,11 +230,11 @@ contains
    end subroutine jacobian_cc3_t3_a2_cc3
 !
 !
-   module subroutine jacobian_cc3_t3_b2_cc3(wf, c_ai, rho_abij)
+   module subroutine jacobian_cc3_t3_b2_cc3(wf, c_ai, rho_abij, cvs, rm_core)
 !!
 !!    Jacobian CC3 T3 B2
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
-!!    Adapted to give a contravariant representation of rho2 due to the 
+!!    Adapted to give a contravariant representation of rho2 due to the
 !!    use of a contravariant representation of t3
 !!    by Rolf H. Myhre and Alexander C. Paul, Okt 2020
 !!
@@ -245,6 +246,8 @@ contains
       implicit none
 !
       class(cc3) :: wf
+!
+      logical, intent(in) :: cvs, rm_core
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
 !
@@ -307,7 +310,7 @@ contains
       req_0 = req_0 + wf%n_v**3
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
-!     Need less memory if we don't need to batch, so we overwrite the maximum 
+!     Need less memory if we don't need to batch, so we overwrite the maximum
 !     required memory in batch_setup
 !
       req_single_batch = req_0 + req_1_eri*wf%n_o + wf%n_v**3*wf%n_o &
@@ -436,16 +439,12 @@ contains
                            cycle
                         end if
 !
-!                       Check if at least one index i,j,k is a core orbital
+!                       Check for core orbitals:
+!                       cvs: i,j,k cannot all correspond to valence orbitals
+!                       rm_core: i,j,k may not contain any core orbital
+!
 !                       Here t3 contributes to rho2 and can, thus, be restricted as well
-!
-                        if(wf%cvs) then
-!
-                           if(.not. (any(wf%core_MOs .eq. i) &
-                              .or.   any(wf%core_MOs .eq. j) &
-                              .or.   any(wf%core_MOs .eq. k))) cycle
-!
-                        end if
+                        if (wf%ijk_amplitudes_are_zero(i, j, k, cvs, rm_core)) cycle
 !
                         k_rel = k - batch_k%first + 1
 !
@@ -518,11 +517,12 @@ contains
    end subroutine jacobian_cc3_t3_b2_cc3
 !
 !
-   module subroutine jacobian_cc3_c3_a_cc3(wf, omega, c_ai, c_abij, rho_ai, rho_abij)
+   module subroutine jacobian_cc3_c3_a_cc3(wf, omega, c_ai, c_abij, rho_ai, rho_abij, &
+                                           cvs, rm_core)
 !!
 !!    Jacobian CC3 C3 A
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Feb 2019
-!!    Adapted to give a contravariant representation of rho2 due to the 
+!!    Adapted to give a contravariant representation of rho2 due to the
 !!    use of a contravariant representation of R3
 !!    by Rolf H. Myhre and Alexander C. Paul, Okt 2020
 !!
@@ -530,10 +530,10 @@ contains
 !!    to the singles and doubles part of the outgoing vector
 !!
 !!    The triples amplitudes are expressed in terms of doubles amplitudes:
-!!    C_3 = (omega - epsilon_mu3)^-1 (< mu3| [H,C_2] | HF > 
+!!    C_3 = (omega - epsilon_mu3)^-1 (< mu3| [H,C_2] | HF >
 !!                                  + < mu3| [[H,C_1],T_2] |HF >)
 !!
-!!    c^abc = (omega - epsilon^abc_ijk)^-1 * P^abc_ijk 
+!!    c^abc = (omega - epsilon^abc_ijk)^-1 * P^abc_ijk
 !!             (sum_d c^ad_ij g_ckbd - sum_l c^ab_il g_cklj
 !!            + sum_d t^ad_ij g'_bdck - sum_l t^ab_il g'_cklj
 !!
@@ -549,6 +549,8 @@ contains
       class(cc3) :: wf
 !
       real(dp), intent(in) :: omega
+!
+      logical, intent(in) :: cvs, rm_core
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
@@ -660,7 +662,7 @@ contains
       req_0 = req_0 + wf%n_v**3
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
-!     Need less memory if we don't need to batch, so we overwrite the maximum 
+!     Need less memory if we don't need to batch, so we overwrite the maximum
 !     required memory in batch_setup
 !
       req_single_batch = req_0 + req_1_eri*wf%n_o + 3*wf%n_v**3*wf%n_o &
@@ -889,20 +891,16 @@ contains
                            cycle
                         end if
 !
-!                       Check if at least one index i,j,k is a core orbital
-                        if(wf%cvs) then
-!
-                           if(.not. (any(wf%core_MOs .eq. i) &
-                              .or.   any(wf%core_MOs .eq. j) &
-                              .or.   any(wf%core_MOs .eq. k))) cycle
-!
-                        end if
+!                       Check for core orbitals:
+!                       cvs: i,j,k cannot all correspond to valence orbitals
+!                       rm_core: i,j,k may not contain any core orbital
+                        if (wf%ijk_amplitudes_are_zero(i, j, k, cvs, rm_core)) cycle
 !
                         k_rel = k - batch_k%first + 1
 !
 !                       Construct C^{abc}_{ijk} for given i, j, k
 !                       and calculate contributions to rho1 and rho2
-!                       Using c1-transformed integrals the terms have the same form 
+!                       Using c1-transformed integrals the terms have the same form
 !                       as the omega terms (where t_abc = c_abc)
 !
                         call wf%construct_V(i, j, k, sorting, c_abc,       &
