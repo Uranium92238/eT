@@ -186,7 +186,6 @@ module ccs_class
 !
 !     File handling procedures
 !
-      procedure :: read_hf                                       => read_hf_ccs
       procedure :: initialize_files                              => initialize_files_ccs
       procedure :: initialize_ground_state_files                 => initialize_ground_state_files_ccs
       procedure :: initialize_excited_state_files                => initialize_excited_state_files_ccs
@@ -716,52 +715,6 @@ contains
       endif
 !
    end subroutine read_settings_ccs
-!
-!
-   subroutine read_hf_ccs(wf)
-!!
-!!    Read HF file
-!!    Written by Rolf H. Myhre, May 2019
-!!    Short routine to read the HF information from disk
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      type(sequential_file) :: orbital_information_file
-      type(sequential_file) :: CC_orbitals_file, CC_orbital_energies_file
-!
-      orbital_information_file = sequential_file('orbital_information')
-      call orbital_information_file%open_('read', 'rewind')
-!
-      call orbital_information_file%read_(wf%n_o)
-      call orbital_information_file%read_(wf%n_v)
-      call orbital_information_file%read_(wf%ao%n)
-      call orbital_information_file%read_(wf%n_mo)
-      call orbital_information_file%read_(wf%hf_energy)
-!
-      call orbital_information_file%close_()
-!
-!     Set orbital coefficients and energies
-!
-      call wf%initialize_orbital_coefficients()
-      call wf%initialize_orbital_energies()
-!
-      CC_orbitals_file = sequential_file('cc_orbital_coefficients')
-      call CC_orbitals_file%open_('read', 'rewind')
-!
-      call CC_orbitals_file%read_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
-!
-      call CC_orbitals_file%close_('keep')
-!
-      CC_orbital_energies_file = sequential_file('cc_orbital_energies')
-      call CC_orbital_energies_file%open_('read', 'rewind')
-!
-      call CC_orbital_energies_file%read_(wf%orbital_energies, wf%n_mo)
-!
-      call CC_orbital_energies_file%close_('keep')
-!
-   end subroutine read_hf_ccs
 !
 !
    subroutine set_initial_amplitudes_guess_ccs(wf, restart)
