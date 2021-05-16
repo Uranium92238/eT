@@ -243,8 +243,15 @@ module ao_tool_class
       procedure, private :: construct_oei_1der
 !
       procedure, private :: determine_linearly_independent_aos
+!
+      procedure, private :: set_up_centers
+!
+      procedure, private :: initialize_centers 
       procedure, private :: initialize_centers_from_template
       procedure, private :: initialize_centers_from_ao_tool
+      procedure, private :: initialize_centers_from_input_file
+      procedure, private :: initialize_center_shells
+!
       procedure, private :: set_atomic_center_positions
 !
       procedure, private :: initialize_total_charge
@@ -260,8 +267,6 @@ module ao_tool_class
 !
       procedure, private :: calculate_geometry_dependent_variables ! h, s, ERI screening lists, ...
       procedure, private :: copy_geometry_dependent_variables
-!
-      procedure, private :: initialize_centers
 !
       procedure, private :: get_subset_index
       procedure, private :: shp_on_same_atom
@@ -343,7 +348,7 @@ contains
 !
       logical :: print_z_matrix
 !
-      call ao%initialize_centers(centers)
+      call ao%set_up_centers(centers)
       call ao%initialize_total_charge(charge)
 !
       call ao%print_centers('angstrom')
@@ -393,8 +398,8 @@ contains
       class(ao_tool), intent(inout) :: ao
       class(ao_tool), intent(in)    :: template
 
-      call ao%initialize_centers(ao_template=template)
-!
+      call ao%set_up_centers(ao_template=template)
+!  
       ao%n      = template%n
       ao%n_sh   = template%n_sh
       ao%charge = template%charge
@@ -427,14 +432,19 @@ contains
    end subroutine initialize_ao_tool_from_template
 !
 !
-   subroutine initialize_centers(ao, centers, ao_template)
+   subroutine set_up_centers(ao, centers, ao_template)
 !!
-!!    Initialize centers
-!!    Written by Eirik F. Kjønstad, 2020
+!!    Set up centers 
+!!    Written by Eirik F. Kjønstad, 2020 
 !!
-      use atomic_center_reader_class, only: atomic_center_reader
-!
-      implicit none
+!!    Makes the centers fully ready for use.
+!!
+!!    Reads centers from input, unless optional arguments are passed:
+!!
+!!       - centers:     copy from an existing set of centers
+!!       - ao_template: copy from centers in another ao_tool
+!!
+      implicit none 
 !
       class(ao_tool), intent(inout) :: ao
 !
@@ -442,11 +452,29 @@ contains
 !
       type(ao_tool), optional, intent(in) :: ao_template
 !
-      integer :: I
+      call ao%initialize_centers(centers, ao_template)
+      call ao%export_centers_to_libint()
+      call ao%initialize_center_shells()   
 !
-      class(atomic_center_reader), allocatable :: center_reader
+   end subroutine set_up_centers
 !
-      if (present(centers)) then
+!
+   subroutine initialize_centers(ao, centers, ao_template)
+!!
+!!    Initialize centers 
+!!    Written by Eirik F. Kjønstad, 2020 
+!!
+!!    Allocates and sets the centers as well as the center subsets.
+!!
+      implicit none 
+!
+      class(ao_tool), intent(inout) :: ao
+!
+      class(atomic_center), dimension(:), optional, intent(in) :: centers 
+!
+      type(ao_tool), optional, intent(in) :: ao_template 
+!
+      if (present(centers)) then 
 !
          call ao%initialize_centers_from_template(centers)
 !
@@ -454,102 +482,44 @@ contains
 !
          call ao%initialize_centers_from_ao_tool(ao_template)
 !
-      else
+      else 
 !
-         center_reader = atomic_center_reader(ao%basis_type_)
-!
-         call center_reader%read_centers()
-!
-         ao%n_centers = center_reader%get_n_centers()
-         allocate(ao%centers(ao%n_centers))
-!
-         call center_reader%get_centers(ao%centers)
-!
-         ao%n_center_subsets = center_reader%get_n_center_subsets()
-         allocate(ao%center_subsets(ao%n_center_subsets))
-!
-         call center_reader%get_center_subsets(ao%center_subsets)
-!
-         deallocate(center_reader)
+         call ao%initialize_centers_from_input_file()
 !
       endif
-!
-      call ao%export_centers_to_libint()
-!
-      do I = 1, ao%n_centers
-!
-         call ao%centers(I)%initialize_shells()
-!
-      enddo
 !
    end subroutine initialize_centers
 !
 !
-   subroutine initialize_total_charge(ao, charge)
+   subroutine initialize_centers_from_input_file(ao)
 !!
-!!    Initialize total_charge
-!!    Written by Sarai D. Folkestad, 2021
-!
-      implicit none
-!
-      class(ao_tool), intent(inout) :: ao
-      integer, optional, intent(in) :: charge
-!
-      if (present(charge)) then
-!
-         ao%charge = charge
-         return
-!
-      endif
-!
-      ao%charge = 0
-      call input%get_keyword('charge', 'system', ao%charge)
-!
-   end subroutine initialize_total_charge
-!
-!
-   subroutine calculate_n_shells(ao)
+!!    Initialize centers from input file
+!!    Written by Eirik F. Kjønstad, 2021
 !!
-!!    Calculate number of shells
-!!    Written by Eirik F. Kjønstad, 2020
-!!
-      implicit none
+      use atomic_center_reader_class, only: atomic_center_reader
+!
+      implicit none 
 !
       class(ao_tool), intent(inout) :: ao
 !
-      integer :: I
+      class(atomic_center_reader), allocatable :: center_reader
 !
-      ao%n_sh = 0
+      center_reader = atomic_center_reader(ao%basis_type_)
 !
-      do I = 1, ao%n_centers
+      call center_reader%read_centers()
 !
-         ao%n_sh = ao%n_sh + ao%centers(I)%n_shells
+      ao%n_centers = center_reader%get_n_centers()
+      ao%n_center_subsets = center_reader%get_n_center_subsets()
 !
-      enddo
+      allocate(ao%centers(ao%n_centers))
+      allocate(ao%center_subsets(ao%n_center_subsets))
 !
-   end subroutine calculate_n_shells
+      call center_reader%get_centers(ao%centers)
+      call center_reader%get_center_subsets(ao%center_subsets)
 !
+      deallocate(center_reader)
 !
-   subroutine calculate_n_aos(ao)
-!!
-!!    Caculate number of AOs
-!!    Written by Eirik F. Kjønstad, 2020
-!!
-      implicit none
-!
-      class(ao_tool), intent(inout) :: ao
-!
-      integer :: I
-!
-      ao%n = 0
-!
-      do I = 1, ao%n_centers
-!
-         ao%n = ao%n + ao%centers(I)%n_ao
-!
-      enddo
-!
-   end subroutine calculate_n_aos
+   end subroutine initialize_centers_from_input_file
 !
 !
    subroutine initialize_centers_from_template(ao, centers)
@@ -643,6 +613,93 @@ contains
       call ao%initialize_libint_integral_engines()
 !
    end subroutine export_centers_to_libint_ao_tool
+!
+!
+   subroutine initialize_center_shells(ao)
+!!
+!!    Initialize shells
+!!    Written by Eirik F. Kjønstad, 2021
+!!
+      implicit none 
+!
+      class(ao_tool), intent(inout) :: ao 
+!
+      integer :: I 
+!
+      do I = 1, ao%n_centers
+!
+         call ao%centers(I)%initialize_shells()
+!
+      enddo
+!
+   end subroutine initialize_center_shells
+!
+!
+   subroutine initialize_total_charge(ao, charge)
+!!
+!!    Initialize total_charge 
+!!    Written by Sarai D. Folkestad, 2021
+!
+      implicit none 
+!
+      class(ao_tool), intent(inout) :: ao
+      integer, optional, intent(in) :: charge  
+!
+      if (present(charge)) then
+!
+         ao%charge = charge
+         return
+!
+      endif
+!
+      ao%charge = 0
+      call input%get_keyword('charge', 'system', ao%charge)
+!
+   end subroutine initialize_total_charge
+!
+!
+   subroutine calculate_n_shells(ao)
+!!
+!!    Calculate number of shells 
+!!    Written by Eirik F. Kjønstad, 2020
+!!
+      implicit none 
+!
+      class(ao_tool), intent(inout) :: ao 
+!
+      integer :: I
+!
+      ao%n_sh = 0
+!
+      do I = 1, ao%n_centers 
+!
+         ao%n_sh = ao%n_sh + ao%centers(I)%n_shells
+!
+      enddo
+!
+   end subroutine calculate_n_shells
+!
+!
+   subroutine calculate_n_aos(ao)
+!!
+!!    Caculate number of AOs 
+!!    Written by Eirik F. Kjønstad, 2020
+!!
+      implicit none 
+!
+      class(ao_tool), intent(inout) :: ao 
+!
+      integer :: I
+!
+      ao%n = 0
+!
+      do I = 1, ao%n_centers 
+!
+         ao%n = ao%n + ao%centers(I)%n_ao
+!
+      enddo
+!
+   end subroutine calculate_n_aos
 !
 !
    subroutine initialize_libint_integral_engines_ao_tool(ao)
