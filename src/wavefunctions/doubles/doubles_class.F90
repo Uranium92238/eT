@@ -35,7 +35,7 @@ module doubles_class
 !
    implicit none
 !
-   type, abstract, extends(ccs) :: doubles
+   type, extends(ccs) :: doubles
 !
       real(dp),    dimension(:), allocatable :: t2
       complex(dp), dimension(:), allocatable :: t2_complex
@@ -71,13 +71,20 @@ module doubles_class
 !
       procedure :: get_orbital_differences               => get_orbital_differences_doubles
 !
-      procedure :: jacobian_doubles_a1                   => jacobian_doubles_a1_doubles
-      procedure :: jacobian_doubles_b1                   => jacobian_doubles_b1_doubles
-      procedure :: jacobian_doubles_c1                   => jacobian_doubles_c1_doubles
-      procedure :: jacobian_doubles_d1                   => jacobian_doubles_d1_doubles
-      procedure :: jacobian_doubles_a2                   => jacobian_doubles_a2_doubles
+      procedure, public :: jacobian_transformation &
+                        => jacobian_transformation_doubles
 !
-      procedure :: save_jacobian_a1_intermediates        => save_jacobian_a1_intermediates_doubles
+      procedure :: prepare_for_jacobian &
+                => prepare_for_jacobian_doubles
+
+!
+      procedure, private :: jacobian_doubles_a1
+      procedure, private :: jacobian_doubles_b1
+      procedure, private :: jacobian_doubles_c1
+      procedure, private :: jacobian_doubles_d1
+      procedure, private :: jacobian_doubles_a2
+!
+      procedure, private :: save_jacobian_a1_intermediates
 !
 !     Jacobian transpose transformation procedures in common for CC2 and CCSD
 !
