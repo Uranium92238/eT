@@ -1,0 +1,32 @@
+system
+   name: HOF
+   charge: 0
+   pure gaussians
+end system
+
+do
+   ground state
+end do
+
+memory
+   available: 8
+end memory
+
+solver scf
+   algorithm:          scf-diis
+   energy threshold:   1.0d-10
+   gradient threshold: 1.0d-10
+   write molden
+   print orbitals
+end solver scf
+
+method
+   hf
+end method
+
+geometry
+basis: 3-21g
+ H          0.86681        0.60144        5.00000
+ F         -0.86681        0.60144        5.00000
+ O          0.00000       -0.07579        5.00000
+end geometry
