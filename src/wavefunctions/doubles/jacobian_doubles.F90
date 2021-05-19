@@ -38,7 +38,90 @@ submodule (doubles_class) jacobian_doubles
 contains
 !
 !
-   module subroutine save_jacobian_a1_intermediates_doubles(wf)
+   module subroutine prepare_for_jacobian_doubles(wf)
+!!
+!!    Prepare for jacobian
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!
+      implicit none
+!
+      class(doubles), intent(inout) :: wf
+!
+      call wf%save_jacobian_a1_intermediates()
+!
+   end subroutine prepare_for_jacobian_doubles
+!
+!
+   module subroutine jacobian_transformation_doubles(wf, c, rho)
+!!
+!!    Jacobian transformation 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+!!    Directs the transformation by the doubles Jacobi matrix,
+!!
+!!       A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >,
+!!
+!!    where the basis employed for the brackets is biorthonormal.
+!!    The transformation is rho = A c, i.e.,
+!!
+!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck
+!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
+!!
+!!    On exit, c is overwritten by rho. That is, c_ai = rho_ai,
+!!    and c_aibj = rho_aibj.
+!!
+      implicit none
+!
+      class(doubles), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(in)  :: c
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: rho
+!
+      real(dp), dimension(:,:,:,:), allocatable :: c_aibj
+      real(dp), dimension(:,:,:,:), allocatable :: rho_aibj
+!
+      call zero_array(rho, wf%n_t1 + wf%n_t2)
+!
+!     CCS contributions
+!
+      call wf%ccs%jacobian_transformation(c(1 : wf%n_t1), rho(1 : wf%n_t1))
+!
+!     Contributions to transformed singles
+!
+      call wf%jacobian_doubles_a1(rho(1 : wf%n_t1), c(1 : wf%n_t1))
+!
+      call mem%alloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call squareup(c(wf%n_t1+1:), c_aibj, wf%n_t1)
+!
+!     Scale the doubles vector by 1 + delta_ai,bj, i.e.
+!     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
+!
+      call scale_diagonal(two, c_aibj, wf%n_t1)
+!
+      call wf%jacobian_doubles_b1(rho(1 : wf%n_t1), c_aibj)
+      call wf%jacobian_doubles_c1(rho(1 : wf%n_t1), c_aibj)
+      call wf%jacobian_doubles_d1(rho(1 : wf%n_t1), c_aibj)
+!
+      call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Contributions to transformed doubles
+!
+      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call zero_array(rho_aibj, wf%n_t1**2)
+!
+      call wf%jacobian_doubles_a2(rho_aibj, c(1 : wf%n_t1))
+!
+      call scale_diagonal(half, rho_aibj, wf%n_t1)
+!
+      call symmetrize_and_add_to_packed(rho(wf%n_t1+1:), rho_aibj, wf%n_t1)
+!
+      call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+   end subroutine jacobian_transformation_doubles
+!
+!
+   module subroutine save_jacobian_a1_intermediates(wf)
 !!
 !!    Save jacobian a1 intermediates
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2019
@@ -148,10 +231,10 @@ contains
 !
       call jacobian_a1_intermediate_timer%turn_off()
 !
-   end subroutine save_jacobian_a1_intermediates_doubles
+   end subroutine save_jacobian_a1_intermediates
 !
 !
-   module subroutine jacobian_doubles_a1_doubles(wf, rho_ai, c_ai)
+   module subroutine jacobian_doubles_a1(wf, rho_ai, c_ai)
 !!
 !!    Jacobian doubles A1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -340,10 +423,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_doubles_a1_doubles
+   end subroutine jacobian_doubles_a1
 !
 !
- module subroutine jacobian_doubles_b1_doubles(wf, rho_ai, c_aibj)
+ module subroutine jacobian_doubles_b1(wf, rho_ai, c_aibj)
 !!
 !!    Jacobian doubles B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
@@ -393,10 +476,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_doubles_b1_doubles
+   end subroutine jacobian_doubles_b1
 !
 !
-   module subroutine jacobian_doubles_c1_doubles(wf, rho_ai, c_aibj)
+   module subroutine jacobian_doubles_c1(wf, rho_ai, c_aibj)
 !!
 !!    Jacobian doubles C1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -453,10 +536,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_doubles_c1_doubles
+   end subroutine jacobian_doubles_c1
 !
 !
-   module subroutine jacobian_doubles_d1_doubles(wf, rho_ai, c_bicj)
+   module subroutine jacobian_doubles_d1(wf, rho_ai, c_bicj)
 !!
 !!    Jacobian doubles D1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -540,10 +623,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_doubles_d1_doubles
+   end subroutine jacobian_doubles_d1
 !
 !
-   module subroutine jacobian_doubles_a2_doubles(wf, rho_aibj, c_ai)
+   module subroutine jacobian_doubles_a2(wf, rho_aibj, c_ai)
 !!
 !!    Jacobian doubles A2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -635,7 +718,7 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_doubles_a2_doubles
+   end subroutine jacobian_doubles_a2
 !
 !
 end submodule jacobian_doubles

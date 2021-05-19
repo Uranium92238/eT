@@ -54,7 +54,8 @@ contains
 !
       call wf%initialize_t2()
       call wf%construct_t2()
-      call wf%save_jacobian_a1_intermediates()
+!
+      call wf%doubles%prepare_for_jacobian()
 !
       call timer%turn_off()
 !
@@ -87,7 +88,6 @@ contains
       real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: rho
 !
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj
-!
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj
 !
       type(timings) :: timer
@@ -95,55 +95,27 @@ contains
       timer = timings('Jacobian transformation CC2', pl='normal')
       call timer%turn_on()
 !
-!     Zero the transformed vector
-!
       call zero_array(rho, wf%n_t1 + wf%n_t2)
 !
-!     :: CCS contributions to the singles c vector ::
+!     Doubles contributions
 !
-      call wf%ccs%jacobian_transformation(c(1 : wf%n_t1), rho(1 : wf%n_t1))
+      call wf%doubles%jacobian_transformation(c, rho)
 !
-!     :: CC2 contributions to the transformed singles vector ::
+!     CC2 contributions
 !
-      call wf%jacobian_doubles_a1(rho(1 : wf%n_t1), c(1 : wf%n_t1))
+      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%alloc(c_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
-!
+      call zero_array(rho_aibj, wf%n_t1**2)
       call squareup(c(wf%n_t1+1:), c_aibj, wf%n_t1)
-!
-!     Scale the doubles vector by 1 + delta_ai,bj, i.e.
-!     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
 !
       call scale_diagonal(two, c_aibj, wf%n_t1)
 !
-      call wf%jacobian_doubles_b1(rho(1 : wf%n_t1), c_aibj)
-      call wf%jacobian_doubles_c1(rho(1 : wf%n_t1), c_aibj)
-      call wf%jacobian_doubles_d1(rho(1 : wf%n_t1), c_aibj)
-!
-!     :: CC2 contributions to the transformed doubles vector ::
-!
-!     Allocate unpacked transformed vector
-!
-      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(rho_aibj, wf%n_t1**2)
-!
-!     Contributions from singles vector c
-!
-      call wf%jacobian_doubles_a2(rho_aibj, c(1 : wf%n_t1))
-!
-      call scale_diagonal(half, rho_aibj, wf%n_t1)
-!
-      call symmetric_sum(rho_aibj, wf%n_t1)
-!
-!     Contributions from doubles vector c      
-!
       call wf%jacobian_cc2_b2(rho_aibj, c_aibj)
 !
-      call mem%dealloc(c_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
+      call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Overwrite the incoming doubles c vector & pack in
-!
-      call packin(rho(wf%n_t1+1:), rho_aibj, wf%n_t1)
+      call add_to_packed_real(rho(wf%n_t1+1:), rho_aibj, wf%n_t1)
 !
       call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !

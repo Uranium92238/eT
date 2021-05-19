@@ -54,10 +54,11 @@ contains
 !
       type(timings), allocatable :: prep_timer
 !
-      prep_timer = timings("Time preparing for CCSD Jacobian", pl='normal')
+      prep_timer = timings("Prepare for Jacobian CCSD", pl='normal')
       call prep_timer%turn_on()
 !
-      call wf%save_jacobian_a1_intermediates()
+      call wf%doubles%prepare_for_jacobian()
+!
       call wf%save_jacobian_c2_intermediates()
       call wf%save_jacobian_d2_intermediate()
       call wf%save_jacobian_e2_intermediate()
@@ -104,40 +105,24 @@ contains
       timer = timings('Jacobian CCSD transformation', pl='normal')
       call timer%turn_on()
 !
-!     Allocate and zero the transformed vector
-!
       call zero_array(rho, wf%n_t1 + wf%n_t2)
 !
-!     :: CCS contributions to the singles c vector ::
+!     Doubles contributions
 !
-      call wf%ccs%jacobian_transformation(c(1 : wf%n_t1), rho(1 : wf%n_t1))
+      call wf%doubles%jacobian_transformation(c, rho)
 !
-!     :: CCSD contributions to the transformed singles vector ::
-!
-      call wf%jacobian_doubles_a1(rho(1 : wf%n_t1), c(1 : wf%n_t1))
+!     CCSD contributions
 !
       call mem%alloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+      call zero_array(rho_aibj, wf%n_t1**2)
       call squareup(c(wf%n_t1+1:), c_aibj, wf%n_t1)
 !
-!     Scale the doubles vector by 1 + delta_ai,bj, i.e.
-!     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
-!
       call scale_diagonal(two, c_aibj, wf%n_t1)
-      call wf%jacobian_doubles_b1(rho(1 : wf%n_t1), c_aibj)
-      call wf%jacobian_doubles_c1(rho(1 : wf%n_t1), c_aibj)
-      call wf%jacobian_doubles_d1(rho(1 : wf%n_t1), c_aibj)
-!
-!     :: CCSD contributions to the transformed doubles vector ::
-!
-!     Allocate unpacked transformed vector
-!
-      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(rho_aibj, wf%n_t1**2)
 !
 !     Contributions from singles vector c
 !
-      call wf%jacobian_doubles_a2(rho_aibj, c(1 : wf%n_t1))
       call wf%jacobian_ccsd_b2(rho_aibj, c(1 : wf%n_t1))
       call wf%jacobian_ccsd_c2(rho_aibj, c(1 : wf%n_t1))
       call wf%jacobian_ccsd_d2(rho_aibj, c(1 : wf%n_t1))
@@ -153,7 +138,7 @@ contains
 !     Last three terms are already symmetric (J2, K2, and L2). Perform the symmetrization
 !     rho_aibj = P_ij^ab rho_aibj now, for convenience
 !
-      call symmetric_sum(rho_aibj, (wf%n_v)*(wf%n_o))
+      call symmetric_sum(rho_aibj, wf%n_t1)
 !
 !     In preparation for last two terms, reorder
 !     rho_aibj to rho_abij, and c_aibj to c_abij
@@ -172,15 +157,16 @@ contains
 !
       call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-!     Scale diagonal by 1/(1 + delta_ai,bj) and packin
+!     Scale diagonal by 1/(1 + delta_ai,bj), packin, and add non-A2
+!     CCSD doubles contributions
 !
       call scale_diagonal(half, rho_abij, wf%n_v, wf%n_o)
 !
-!     Pack in the rho vector
-!
-      call packin(rho(wf%n_t1+1:), rho_abij, wf%n_v, wf%n_o)
+      call packin_and_add_from_1324_order_real(rho(wf%n_t1+1:), rho_abij, wf%n_v, wf%n_o)
 !
       call mem%dealloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+!     Add CCSD-Omega-A2 contribution
 !
       call wf%omega_ccsd_a2(rho(wf%n_t1+1:), c(wf%n_t1+1:), right=.true., diagonal_factor=two)
 !
