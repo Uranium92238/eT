@@ -89,17 +89,17 @@ module ccsd_class
       procedure :: construct_omega                            => construct_omega_ccsd
       procedure :: construct_omega_complex                    => construct_omega_ccsd_complex
 !
-      procedure :: omega_ccsd_a2                              => omega_ccsd_a2_ccsd
-      procedure :: omega_ccsd_a2_complex                      => omega_ccsd_a2_ccsd_complex
+      procedure, private :: omega_ccsd_a2
+      procedure, private :: omega_ccsd_a2_complex
 !
-      procedure :: omega_ccsd_b2                              => omega_ccsd_b2_ccsd
-      procedure :: omega_ccsd_b2_complex                      => omega_ccsd_b2_ccsd_complex
+      procedure, private :: omega_ccsd_b2
+      procedure, private :: omega_ccsd_b2_complex
 !
-      procedure :: omega_ccsd_c2_d2                           => omega_ccsd_c2_d2_ccsd
-      procedure :: omega_ccsd_c2_d2_complex                   => omega_ccsd_c2_d2_ccsd_complex
+      procedure, private :: omega_ccsd_c2_d2
+      procedure, private :: omega_ccsd_c2_d2_complex
 !
-      procedure :: omega_ccsd_e2                              => omega_ccsd_e2_ccsd
-      procedure :: omega_ccsd_e2_complex                      => omega_ccsd_e2_ccsd_complex
+      procedure, private :: omega_ccsd_e2        
+      procedure, private :: omega_ccsd_e2_complex
 !
       procedure :: construct_u_aibj                           => construct_u_aibj_ccsd
       procedure :: construct_u_aibj_complex                   => construct_u_aibj_ccsd_complex
