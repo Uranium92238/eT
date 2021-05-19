@@ -322,7 +322,7 @@ contains
 !
          ao%basis_type_ = 'cartesian'
 !
-      elseif (input%is_keyword_present('spherical gaussians', 'system')) then
+      elseif (input%is_keyword_present('pure gaussians', 'system')) then
 !
          ao%basis_type_ = 'spherical'
 !
