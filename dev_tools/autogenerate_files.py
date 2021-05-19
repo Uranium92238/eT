@@ -279,6 +279,7 @@ def get_complex_mod_variables(file_path):
 
 
 def get_complex_class_procedures(file_path):
+
     """
     Find all procedures ending in "_complex" in a module before "end type"
     and return a list of the procedures and the corresponding procedure pointers
@@ -300,12 +301,25 @@ def get_complex_class_procedures(file_path):
 
             if line.startswith("end type"):
                 break
-            elif len(line) > 0:
-                split_line = line.split()
-                if split_line[0] == "procedure" and split_line[2].endswith("_complex"):
 
-                    pointer_list.append(split_line[2].split("_complex")[0])
-                    procedure_list.append(split_line[4].split("_complex")[0])
+            elif len(line) > 0:
+
+                # Check whether line is procedure with a name that ends with "_complex"
+                if line.lstrip().startswith("procedure") and line.endswith("_complex"):
+
+                    split_match = line.split("::")
+                    after_colon = split_match[1]
+
+                    if "=>" in after_colon:
+                        names = after_colon.split("=>")
+                        pointer = names[0].strip().split("_complex")[0]
+                        routine = names[1].strip().split("_complex")[0]
+                    else:
+                        pointer = after_colon.strip().split("_complex")[0]
+                        routine = pointer
+
+                    procedure_list.append(routine)
+                    pointer_list.append(pointer)
 
     class_file.close()
 

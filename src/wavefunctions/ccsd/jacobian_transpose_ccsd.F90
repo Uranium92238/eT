@@ -228,7 +228,7 @@ contains
    end subroutine jacobian_transpose_transformation_ccsd
 !
 !
-   module subroutine save_jacobian_transpose_d1_intermediates_ccsd(wf, t_aibj)
+   module subroutine save_jacobian_transpose_d1_intermediates(wf, t_aibj)
 !!
 !!    Save Jacobian transpose D1 intermediates
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, and 
@@ -286,10 +286,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_transpose_d1_intermediates_ccsd
+   end subroutine save_jacobian_transpose_d1_intermediates
 !
 !
-   module subroutine jacobian_transpose_ccsd_d1_ccsd(wf, sigma_ai, b_aibj)
+   module subroutine jacobian_transpose_ccsd_d1(wf, sigma_ai, b_aibj)
 !!
 !!    Jacobian transpose CCSD D1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -392,10 +392,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_transpose_ccsd_d1_ccsd
+   end subroutine jacobian_transpose_ccsd_d1
 !
 !
-   module subroutine save_jacobian_transpose_e1_intermediates_ccsd(wf, t_aibj, L_ilmd)
+   module subroutine save_jacobian_transpose_e1_intermediates(wf, t_aibj, L_ilmd)
 !!
 !!    Save Jacobian transpose E1 intermediates
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, and 
@@ -463,10 +463,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_transpose_e1_intermediates_ccsd
+   end subroutine save_jacobian_transpose_e1_intermediates
 !
 !
-   module subroutine jacobian_transpose_ccsd_e1_ccsd(wf, sigma_ai, b_aibj)
+   module subroutine jacobian_transpose_ccsd_e1(wf, sigma_ai, b_aibj)
 !!
 !!    Jacobian transpose CCSD E1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -772,10 +772,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_transpose_ccsd_e1_ccsd
+   end subroutine jacobian_transpose_ccsd_e1
 !
 !
-   module subroutine save_jacobian_transpose_f1_intermediates_ccsd(wf, t_aibj, g_ikmc)
+   module subroutine save_jacobian_transpose_f1_intermediates(wf, t_aibj, g_ikmc)
 !!
 !!    Save Jacobian transpose F1 intermediates
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, and
@@ -889,10 +889,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_transpose_f1_intermediates_ccsd
+   end subroutine save_jacobian_transpose_f1_intermediates
 !
 !
-   module subroutine jacobian_transpose_ccsd_f1_ccsd(wf, sigma_ai, b_aibj)
+   module subroutine jacobian_transpose_ccsd_f1(wf, sigma_ai, b_aibj)
 !!
 !!    Jacobian transpose CCSD F1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -1033,10 +1033,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_transpose_ccsd_f1_ccsd
+   end subroutine jacobian_transpose_ccsd_f1
 !
 !
-   module subroutine save_jacobian_transpose_g1_intermediates_ccsd(wf, t_aibj)
+   module subroutine save_jacobian_transpose_g1_intermediates(wf, t_aibj)
 !!
 !!    Save jacobian transpose g1 intermediates
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad and
@@ -1151,10 +1151,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_transpose_g1_intermediates_ccsd
+   end subroutine save_jacobian_transpose_g1_intermediates
 !
 !
-   module subroutine jacobian_transpose_ccsd_g1_ccsd(wf, sigma_ai, b_aibj)
+   module subroutine jacobian_transpose_ccsd_g1(wf, sigma_ai, b_aibj)
 !!
 !!    Jacobian transpose CCSD G1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -1401,10 +1401,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_transpose_ccsd_g1_ccsd
+   end subroutine jacobian_transpose_ccsd_g1
 !
 !
-   module subroutine jacobian_transpose_ccsd_b2_ccsd(wf, sigma_aibj, b_aibj)
+   module subroutine jacobian_transpose_ccsd_b2(wf, sigma_aibj, b_aibj)
 !!
 !!    Jacobian transpose CCSD B2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -1593,11 +1593,11 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_transpose_ccsd_b2_ccsd
+   end subroutine jacobian_transpose_ccsd_b2
 !
 
 !
-   module subroutine jacobian_transpose_ccsd_c2_ccsd(wf, sigma_aibj, b_aibj)
+   module subroutine jacobian_transpose_ccsd_c2(wf, sigma_aibj, b_aibj)
 !!
 !!    Jacobian transpose CCSD C2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -1750,10 +1750,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_transpose_ccsd_c2_ccsd
+   end subroutine jacobian_transpose_ccsd_c2
 !
 !
-   module subroutine save_jacobian_transpose_d2_intermediates_ccsd(wf, u_ckdl, L_dlbj)
+   module subroutine save_jacobian_transpose_d2_intermediates(wf, u_ckdl, L_dlbj)
 !!
 !!    Save Jacobian transpose D2 intermediates
 !!    Written by Andreas Skeidsvoll, Tor S. Haugland,
@@ -1810,10 +1810,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_transpose_d2_intermediates_ccsd
+   end subroutine save_jacobian_transpose_d2_intermediates
 !
 !
-   module subroutine jacobian_transpose_ccsd_d2_ccsd(wf, sigma_aibj, b_aibj)
+   module subroutine jacobian_transpose_ccsd_d2(wf, sigma_aibj, b_aibj)
 !!
 !!    Jacobian transpose CCSD D2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -1873,10 +1873,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_transpose_ccsd_d2_ccsd
+   end subroutine jacobian_transpose_ccsd_d2
 !
 !
-   module subroutine jacobian_transpose_ccsd_e2_ccsd(wf, sigma_aibj, b_aibj)
+   module subroutine jacobian_transpose_ccsd_e2(wf, sigma_aibj, b_aibj)
 !!
 !!    Jacobian transpose CCSD E2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -1972,10 +1972,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_transpose_ccsd_e2_ccsd
+   end subroutine jacobian_transpose_ccsd_e2
 !
 !
-   module subroutine save_jacobian_transpose_f2_intermediates_ccsd(wf, t_ckdl, L_dlbi)
+   module subroutine save_jacobian_transpose_f2_intermediates(wf, t_ckdl, L_dlbi)
 !!
 !!    Save Jacobian transpose f2 intermediates
 !!    Written by Eirik F. Kjønstad, Tor S. Haugland and 
@@ -2034,10 +2034,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_transpose_f2_intermediates_ccsd
+   end subroutine save_jacobian_transpose_f2_intermediates
 !
 !
-   module subroutine jacobian_transpose_ccsd_f2_ccsd(wf, sigma_aibj, b_aibj)
+   module subroutine jacobian_transpose_ccsd_f2(wf, sigma_aibj, b_aibj)
 !!
 !!    Jacobian transpose CCSD F2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -2229,10 +2229,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_transpose_ccsd_f2_ccsd
+   end subroutine jacobian_transpose_ccsd_f2
 !
 !
-   module subroutine save_jacobian_transpose_g2_intermediates_ccsd(wf, t_aibj, g_kdib)
+   module subroutine save_jacobian_transpose_g2_intermediates(wf, t_aibj, g_kdib)
 !!
 !!    Save Jacobian transpose g2 intermediates
 !!    Written by Tor S. Haugland, Eirik F. Kjønstad and 
@@ -2353,10 +2353,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_transpose_g2_intermediates_ccsd
+   end subroutine save_jacobian_transpose_g2_intermediates
 !
 !
-   module subroutine jacobian_transpose_ccsd_g2_ccsd(wf, sigma_aibj, b_aibj)
+   module subroutine jacobian_transpose_ccsd_g2(wf, sigma_aibj, b_aibj)
 !!
 !!    Jacobian transpose CCSD G2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -2467,10 +2467,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_transpose_ccsd_g2_ccsd
+   end subroutine jacobian_transpose_ccsd_g2
 !
 !
-   module subroutine save_jacobian_transpose_i2_intermediates_ccsd(wf, t_aibj, g_ovov)
+   module subroutine save_jacobian_transpose_i2_intermediates(wf, t_aibj, g_ovov)
 !!
 !!    Save Jacobian transpose i2 intermediates
 !!    Written by Tor S. Haugland, Eirik F. Kjønstad and 
@@ -2559,10 +2559,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_transpose_i2_intermediates_ccsd
+   end subroutine save_jacobian_transpose_i2_intermediates
 !
 !
-   module subroutine jacobian_transpose_ccsd_i2_ccsd(wf, sigma_abij, b_abij)
+   module subroutine jacobian_transpose_ccsd_i2(wf, sigma_abij, b_abij)
 !!
 !!    Jacobian transpose CCSD I2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -2693,10 +2693,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_transpose_ccsd_i2_ccsd
+   end subroutine jacobian_transpose_ccsd_i2
 !
 !
-   module subroutine save_jacobian_transpose_e2_oo_intermediate_ccsd(wf, t_ckdl, L_ckdj)
+   module subroutine save_jacobian_transpose_e2_oo_intermediate(wf, t_ckdl, L_ckdj)
 !!
 !!    Save Jacobian transpose e2 oo intermediate
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -2755,10 +2755,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_transpose_e2_oo_intermediate_ccsd
+   end subroutine save_jacobian_transpose_e2_oo_intermediate
 !
 !
-   module subroutine save_jacobian_transpose_e2_vv_intermediate_ccsd(wf, t_ckdl, L_bkdl)
+   module subroutine save_jacobian_transpose_e2_vv_intermediate(wf, t_ckdl, L_bkdl)
 !!
 !!    Save Jacobian transpose e2 vv intermediate
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -2817,7 +2817,7 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_transpose_e2_vv_intermediate_ccsd
+   end subroutine save_jacobian_transpose_e2_vv_intermediate
 !
 !
 end submodule jacobian_transpose_ccsd
