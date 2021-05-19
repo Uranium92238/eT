@@ -200,14 +200,12 @@ contains
       davidson%trials = record_storer(trim(davidson%name_) // '_trials',            &
                                       davidson%n_parameters,                        &
                                       davidson%max_dim_red + davidson%n_solutions,  &
-                                      records_in_memory,                            &
-                                      delete=.true.)
+                                      records_in_memory)
 !
       davidson%transforms = record_storer(trim(davidson%name_) // '_transforms',       &
                                           davidson%n_parameters,                       &
                                           davidson%max_dim_red + davidson%n_solutions, &
-                                          records_in_memory,                           &
-                                          delete=.true.)
+                                          records_in_memory)
 !
    end function new_eigen_davidson_tool
 !  

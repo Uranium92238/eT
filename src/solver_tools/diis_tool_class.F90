@@ -200,14 +200,12 @@ contains
       diis%e_vectors = record_storer(trim(diis%name_) // '_e',    &
                                      diis%n_equations,            &
                                      diis%dimension_,             &
-                                     records_in_memory,           &
-                                     delete=.true.)
+                                     records_in_memory)
 !
       diis%x_vectors = record_storer(trim(diis%name_) // '_x',    &
                                      diis%n_parameters,           &
                                      diis%dimension_,             &
-                                     records_in_memory,           &
-                                     delete=.true.)
+                                     records_in_memory)
 !
    end function new_diis_tool
 !
@@ -225,8 +223,8 @@ contains
 !
       integer :: I
 !
-      call diis%e_vectors%initialize_storer()
-      call diis%x_vectors%initialize_storer()
+      call diis%e_vectors%initialize()
+      call diis%x_vectors%initialize()
 !
       call mem%alloc(diis%G, diis%dimension_, diis%dimension_)
 !
@@ -254,8 +252,8 @@ contains
 !
       class(diis_tool), intent(inout) :: diis
 !
-      call diis%e_vectors%finalize_storer()
-      call diis%x_vectors%finalize_storer()
+      call diis%e_vectors%finalize()
+      call diis%x_vectors%finalize()
 !
       call mem%dealloc(diis%G, diis%dimension_, diis%dimension_)
 !

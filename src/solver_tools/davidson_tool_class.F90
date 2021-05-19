@@ -155,8 +155,8 @@ contains
 !
       call davidson%reset_reduced_space()
 !
-      call davidson%trials%initialize_storer()
-      call davidson%transforms%initialize_storer()
+      call davidson%trials%initialize()
+      call davidson%transforms%initialize()
 !
       call mem%alloc(davidson%omega_re, davidson%max_dim_red)
       call mem%alloc(davidson%omega_im, davidson%max_dim_red)
@@ -179,8 +179,8 @@ contains
 !
       class(davidson_tool) :: davidson 
 !
-      call davidson%trials%finalize_storer()
-      call davidson%transforms%finalize_storer()
+      call davidson%trials%finalize()
+      call davidson%transforms%finalize()
 !
       call mem%dealloc(davidson%omega_re, davidson%max_dim_red)
       call mem%dealloc(davidson%omega_im, davidson%max_dim_red)

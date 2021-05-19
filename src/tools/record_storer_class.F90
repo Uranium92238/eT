@@ -42,96 +42,92 @@ module record_storer_class
 !
 !     Name of storer - determines file name for stored records
 !
-      character(len=255) :: name_ = 'no_name'
+      character(len=255), private :: name_ = 'no_name'
 !
 !     Maximum number of records & dimensionality of each record
 !
-      integer :: n_records 
-      integer :: record_dim
+      integer, private :: n_records 
+      integer, private :: record_dim
 !
 !     Linked list of arrays for storing records in memory 
 !
-      type(array_list), allocatable :: linked_arrays
+      type(array_list), allocatable, private :: linked_arrays
 !
 !     Pointer for array (if in_memory = true)
 !
-      real(dp), dimension(:,:), pointer, contiguous :: array_p
+      real(dp), dimension(:,:), pointer, contiguous, private :: array_p
 !
 !     Are the records stored in memory?
 !
-      logical :: in_memory 
-!
-!     Delete records on finalization?
-!     Records are dumped to file if records are stored in memory and delete is false
-!
-      logical :: delete 
+      logical, private :: in_memory 
 !
 !     File for storing records
 !
-      type(direct_stream_file), allocatable :: file_
+      type(direct_stream_file), allocatable, private :: file_
 !
 !     Storing intervals for each of the blocks loaded into memory 
 !
-      integer :: n_blocks 
-      type(interval), dimension(:), allocatable :: blocks
+      integer, private :: n_blocks 
+      type(interval), dimension(:), allocatable, private :: blocks
 !
    contains
 !
-!     Prepare to hold a set of records in memory
+!     Three main routines to access records in storer
 !
-      procedure :: prepare_records           => prepare_records_record_storer
+!     - Prepare to hold a set of records in memory
+!     - Load sets a pointer to array where the records are stored 
+!     - Free up space allocated with prepare
 !
-!     Sets pointer to array where the records are stored 
+      procedure, public :: prepare_records &
+                        => prepare_records_record_storer
 !
-      procedure :: load_records_record_storer
-      procedure :: load_interval_record_storer
+      generic, public   :: load &
+                        => load_records, &
+                           load_interval
 !
-      generic :: load                        => load_records_record_storer, &
-                                                load_interval_record_storer
-!
-!     Free up space allocated to temporarily keep records in memory 
-!
-      procedure :: free_records              => free_records_record_storer
-!
-!     Store changes made to records temporarily held in memory 
-!
-      procedure :: store                     => store_record_storer 
-!
-!     Set copy: set record(s) by copying into storer 
-!
-      procedure :: copy_record_in_single_record_record_storer
-      procedure :: copy_record_in_interval_record_storer
-!
-      generic   :: copy_record_in            => copy_record_in_single_record_record_storer, &
-                                                copy_record_in_interval_record_storer
-!
-!     Get copy: get record(s) by copying out of storer  
-!
-      procedure :: copy_record_out_single_record_record_storer
-      procedure :: copy_record_out_interval_record_storer
-!
-      generic   :: copy_record_out           => copy_record_out_single_record_record_storer, &
-                                                copy_record_out_interval_record_storer
-!
-!     # elements that will be allocated on load of one record 
-!
-      procedure :: required_to_load_record   => required_to_load_record_record_storer
-!
-!     Dumps all records on file if they are kept in memory 
-!
-      procedure :: write_all                 => write_all_record_storer
-!
-!     When storing/setting, make sure blocks loaded into memory are updated 
-!
-      procedure :: update_block              => update_block_record_storer
+      procedure, public :: free_records &
+                        => free_records_record_storer
 !
 !     Initializations and finalizations
 !
-!     For memory storer, allocates/deallocates full array. 
-!     Opens/closes file for file storer.
+      procedure, public :: initialize &
+                        => initialize_record_storer 
 !
-      procedure :: initialize_storer         => initialize_storer_record_storer 
-      procedure :: finalize_storer           => finalize_storer_record_storer 
+      procedure, public :: finalize &
+                        => finalize_record_storer 
+!
+!     # elements that will be allocated on load of one record 
+!
+      procedure, public :: required_to_load_record &
+                        => required_to_load_record_record_storer
+!
+!     Set/get records by copying out/into storer 
+!
+      generic, public :: copy_record_in &
+                      => copy_record_in_single_record, &
+                         copy_record_in_interval
+!
+      generic, public :: copy_record_out &
+                      => copy_record_out_single_record, &
+                         copy_record_out_interval
+!
+!     Store changes made to records temporarily held in memory 
+!
+      procedure, public :: store &
+                        => store_record_storer 
+!
+      procedure, private :: update_loaded_blocks ! If file storage, some records may be loaded into memory
+                                                 ! If so, this routine updates these loaded blocks when the 
+                                                 ! records are changed
+!
+      procedure, private :: load_records
+      procedure, private :: load_interval
+!
+      procedure, private :: copy_record_out_single_record
+      procedure, private :: copy_record_out_interval
+!
+      procedure, private :: copy_record_in_single_record
+      procedure, private :: copy_record_in_interval
 !
    end type record_storer
 !
@@ -149,8 +145,7 @@ contains
    function new_record_storer(name_,            &
                               record_dim,       &
                               n_records,        &
-                              records_in_mem,   &
-                              delete) result(storer)
+                              records_in_mem) result(storer)
 !!
 !!    Record storer constructor
 !!    Writen by Eirik F. Kjønstad, 2019
@@ -166,10 +161,6 @@ contains
 !!    records_in_mem:   Store records in memory if true. 
 !!                      Stores records on direct stream file if false.
 !!
-!!    delete:           Delete file if records are stored on file.
-!!                      If records are stored in memory, the records are dumped 
-!!                      on file when the storer is finalized.
-!!
       implicit none
 !
       type(record_storer) :: storer
@@ -179,14 +170,12 @@ contains
       integer, intent(in) :: record_dim
       integer, intent(in) :: n_records 
       logical, intent(in) :: records_in_mem
-      logical, intent(in) :: delete
 !
       storer%name_       = trim(name_)
       storer%record_dim  = record_dim 
       storer%n_records   = n_records 
 !
       storer%in_memory = records_in_mem
-      storer%delete    = delete 
       storer%n_blocks = 0
 !
       if (storer%in_memory) then 
@@ -329,9 +318,9 @@ contains
    end subroutine free_records_record_storer
 ! 
 !
-   subroutine copy_record_out_single_record_record_storer(storer, x, n)
+   subroutine copy_record_out_single_record(storer, x, n)
 !!
-!!    Get copy 
+!!    Copy record out 
 !!    Written by Eirik F. Kjønstad, 2020 
 !!
 !!    Copies the nth record into x.
@@ -366,12 +355,12 @@ contains
 !
       endif       
 !
-   end subroutine copy_record_out_single_record_record_storer
+   end subroutine copy_record_out_single_record
 !
 !
-   subroutine copy_record_out_interval_record_storer(storer, x, interval_)
+   subroutine copy_record_out_interval(storer, x, interval_)
 !!
-!!    Get copy 
+!!    Copy record out
 !!    Written by Eirik F. Kjønstad, 2020 
 !!
 !!    Copies an interval of records into x.
@@ -406,10 +395,10 @@ contains
 !
       endif       
 !
-   end subroutine copy_record_out_interval_record_storer
+   end subroutine copy_record_out_interval
 !  
 !
-   subroutine load_records_record_storer(storer, x, first, last, block_)
+   subroutine load_records(storer, x, first, last, block_)
 !!
 !!    Load records 
 !!    Written by Eirik F. Kjønstad, 2020
@@ -525,10 +514,10 @@ contains
 !
       endif 
 !
-   end subroutine load_records_record_storer
+   end subroutine load_records
 !
 !
-   subroutine load_interval_record_storer(storer, x, interval_, block_)
+   subroutine load_interval(storer, x, interval_, block_)
 !!
 !!    Load interval 
 !!    Written by Eirik F. Kjønstad, 2020
@@ -562,7 +551,7 @@ contains
 !
       call storer%load(x, interval_%first, interval_%last, block_)
 !
-   end subroutine load_interval_record_storer
+   end subroutine load_interval
 !
 !
    subroutine store_record_storer(storer, x, interval_)
@@ -603,7 +592,7 @@ contains
 !
 !        Make sure blocks in memory are updated 
 !
-         call storer%update_block(x, interval_%first, interval_%last)
+         call storer%update_loaded_blocks(x, interval_%first, interval_%last)
 !
 !
       endif
@@ -611,7 +600,7 @@ contains
    end subroutine store_record_storer
 !
 !
-   subroutine store_single_record_record_storer(storer, x, n)
+   subroutine store_single_record(storer, x, n)
 !!
 !!    Store single record 
 !!    Written by Eirik F. Kjønstad, 2020 
@@ -644,14 +633,14 @@ contains
 !
 !        Make sure blocks in memory are updated 
 !
-         call storer%update_block(x, n, n)
+         call storer%update_loaded_blocks(x, n, n)
 !
       endif
 !
-   end subroutine store_single_record_record_storer
+   end subroutine store_single_record
 !
 !
-   subroutine copy_record_in_interval_record_storer(storer, x, interval_)
+   subroutine copy_record_in_interval(storer, x, interval_)
 !!
 !!    Set interval 
 !!    Written by Eirik F. Kjønstad, 2020
@@ -678,7 +667,7 @@ contains
 !
 !        If interval is already loaded into memory, overwrite block as well
 !
-         call storer%update_block(x, interval_%first, interval_%last)
+         call storer%update_loaded_blocks(x, interval_%first, interval_%last)
 !
       else 
 !
@@ -692,10 +681,10 @@ contains
 !
       endif 
 !
-   end subroutine copy_record_in_interval_record_storer
+   end subroutine copy_record_in_interval
 !
 !
-   subroutine copy_record_in_single_record_record_storer(storer, x, n)
+   subroutine copy_record_in_single_record(storer, x, n)
 !!
 !!    Set copy single record 
 !!    Written by Eirik F. Kjønstad, 2020
@@ -722,7 +711,7 @@ contains
 !
 !        If record is loaded in memory, overwrite record 
 !
-         call storer%update_block(x, n, n)
+         call storer%update_loaded_blocks(x, n, n)
 !
       else 
 !
@@ -736,12 +725,12 @@ contains
 !
       endif 
 !
-   end subroutine copy_record_in_single_record_record_storer
+   end subroutine copy_record_in_single_record
 !
 !
-   subroutine update_block_record_storer(storer, x, first, last)
+   subroutine update_loaded_blocks(storer, x, first, last)
 !!
-!!    Update block  
+!!    Update loaded blocks  
 !!    Written by Eirik F. Kjønstad, Apr 2020
 !!
 !!    Copies x into loaded blocks corresponding to the interval given by first and last.
@@ -807,33 +796,12 @@ contains
 !
       enddo
 !
-   end subroutine update_block_record_storer
+   end subroutine update_loaded_blocks
 !
 !
-   subroutine write_all_record_storer(storer)
+   subroutine initialize_record_storer(storer)
 !!
-!!    Write all
-!!    Written by Eirik F. Kjønstad, Mar 2020 
-!!
-!!    Dumps records stored in memory to file. 
-!!    Assumes that records are in memory and file is closed.
-!!
-      implicit none 
-!
-      class(record_storer) :: storer 
-!
-      call storer%file_%open_('write')
-!
-      call storer%file_%write_(storer%array_p, 1, storer%n_records)
-!
-      call storer%file_%close_()
-!
-   end subroutine write_all_record_storer
-!
-!
-   subroutine initialize_storer_record_storer(storer)
-!!
-!!    Initialize storer  
+!!    Initialize  
 !!    Written by Eirik F. Kjønstad, Nov 2019 
 !!
       implicit none 
@@ -860,12 +828,12 @@ contains
 !
       endif
 !
-   end subroutine initialize_storer_record_storer
+   end subroutine initialize_record_storer
 !
 !
-   subroutine finalize_storer_record_storer(storer)
+   subroutine finalize_record_storer(storer)
 !!
-!!    Finalize storer  
+!!    Finalize  
 !!    Written by Eirik F. Kjønstad, Nov 2019 
 !!
       implicit none 
@@ -877,24 +845,11 @@ contains
 !
       if (storer%in_memory) then 
 !
-!        Dump records on file if requested 
-!
-         if (.not. storer%delete) &
-            call storer%write_all()
-!
-!        Deallocate array to keep records 
-!
-         call storer%linked_arrays%finalize()
-!
-      else
-!
-!        Delete file if requested 
-!
-         if (storer%delete .and. storer%file_%exists()) call storer%file_%delete_()
+            call storer%linked_arrays%finalize()
 !
       endif 
 !
-   end subroutine finalize_storer_record_storer
+   end subroutine finalize_record_storer
 !
 !
 end module record_storer_class
