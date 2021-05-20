@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco (development version)
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2021-05-20 11:26:13 UTC +02:00
+  Git branch:         reduce-test-times-1
+  Git hash:           8c3c9f899c6543e3ce70447d2f5c508edabfd560
+  Fortran compiler:   GNU 10.2.0
+  C compiler:         GNU 10.2.0
+  C++ compiler:       GNU 10.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
-  PCM:                ON
+  PCM:                OFF
   Forced batching:    OFF
-  Runtime checks:     OFF
+  Runtime checks:     ON
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:25:49 UTC +01:00
+  Calculation started: 2021-05-20 11:32:36 UTC +02:00
 
 
   :: Input file
@@ -85,7 +85,7 @@
      ! Geometry:
 
 
-  Running on 2 OMP threads
+  Running on 4 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -97,10 +97,10 @@
      ==============================================================================
         Atom           X                  Y                  Z         # in input
      ==============================================================================
-        Basis: cc-pvdz
-        1  O     0.000000000000     0.000000000000     0.000000000000        1
-        2  H     1.080500000000     0.000000000000     0.000000000000        2
-        3  F    -0.032983409676     0.000000000000     1.349597011958        3
+        Basis: sto-3g
+        1  O    -1.777465459200     0.078482329600     0.005660594600        1
+        2  H    -0.788139097200     0.036727062100    -0.003996456100        2
+        3  H    -2.066830875400    -0.844195220100    -0.207733891500        3
         4 He     5.000000000000     0.000000000000     0.000000000000        4
      ==============================================================================
 
@@ -109,24 +109,24 @@
      ==============================================================================
         Atom           X                  Y                  Z         # in input
      ==============================================================================
-        Basis: cc-pvdz
-        1  O     0.000000000000     0.000000000000     0.000000000000        1
-        2  H     2.041849077593     0.000000000000     0.000000000000        2
-        3  F    -0.062329610941     0.000000000000     2.550368731132        3
+        Basis: sto-3g
+        1  O    -3.358922913762     0.148310108562     0.010696973496        1
+        2  H    -1.489367041770     0.069404088729    -0.007552207498        2
+        3  H    -3.905744300301    -1.595297761656    -0.392560161725        3
         4 He     9.448630622825     0.000000000000     0.000000000000        4
      ==============================================================================
 
   - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
      Linear dependence threshold:             0.10E-05
-     Number of atomic orbitals:               38
-     Number of orthonormal atomic orbitals:   38
+     Number of atomic orbitals:               8
+     Number of orthonormal atomic orbitals:   8
 
   - Molecular orbital details:
 
-     Number of occupied orbitals:        10
-     Number of virtual orbitals:         28
-     Number of molecular orbitals:       38
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:          2
+     Number of molecular orbitals:        8
 
 
   :: Hartree-Fock engine
@@ -156,14 +156,15 @@
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:              -177.493812450417
-     Number of electrons in guess:           20.000000000000
+     Energy of initial guess:               -77.408466724637
+     Number of electrons in guess:           12.000000000000
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Integral cutoff:               0.1000E-16
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
      Cumulative Fock threshold:     0.1000E+01
 
   - DIIS tool settings:
@@ -175,39 +176,28 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -177.560921212609     0.6258E-01     0.1776E+03
-     2          -177.582522954993     0.1868E-01     0.2160E-01
-     3          -177.584057069750     0.1171E-01     0.1534E-02
-     4          -177.584421928583     0.3222E-02     0.3649E-03
-     5          -177.584486677069     0.5674E-03     0.6475E-04
-     6          -177.584491979257     0.1498E-03     0.5302E-05
-     7          -177.584492508079     0.6243E-04     0.5288E-06
-     8          -177.584492626216     0.2640E-04     0.1181E-06
-     9          -177.584492638214     0.9649E-05     0.1200E-07
-    10          -177.584492639693     0.1461E-05     0.1480E-08
-    11          -177.584492639729     0.1736E-06     0.3593E-10
-    12          -177.584492639730     0.4392E-07     0.9095E-12
-    13          -177.584492639730     0.2464E-07     0.0000E+00
-    14          -177.584492639730     0.7359E-08     0.0000E+00
-    15          -177.584492639730     0.1324E-08     0.0000E+00
-    16          -177.584492639730     0.1871E-09     0.1137E-12
-    17          -177.584492639730     0.8492E-10     0.2842E-12
-    18          -177.584492639730     0.1988E-10     0.8527E-13
-    19          -177.584492639730     0.6528E-11     0.1137E-12
+     1           -77.731249073363     0.8904E-01     0.7773E+02
+     2           -77.772230302371     0.8078E-02     0.4098E-01
+     3           -77.772761381111     0.1603E-02     0.5311E-03
+     4           -77.772786825258     0.1427E-04     0.2544E-04
+     5           -77.772786829161     0.5831E-05     0.3904E-08
+     6           -77.772786829752     0.2029E-06     0.5911E-09
+     7           -77.772786829753     0.2304E-09     0.6537E-12
+     8           -77.772786829753     0.8625E-14     0.2842E-13
   ---------------------------------------------------------------
-  Convergence criterion met in 19 iterations!
+  Convergence criterion met in 8 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.666700793912
-     Nuclear repulsion energy:      38.654201017304
-     Electronic energy:           -216.238693657034
-     Total energy:                -177.584492639730
+     HOMO-LUMO gap:                  0.962760443475
+     Nuclear repulsion energy:      10.468730839836
+     Electronic energy:            -88.241517669589
+     Total energy:                 -77.772786829753
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.49653
-     Total cpu time (sec):               2.93933
+     Total wall time (sec):              0.03000
+     Total cpu time (sec):               0.04001
 
 
   :: CCSD wavefunction
@@ -218,15 +208,15 @@
 
    - Number of orbitals:
 
-     Occupied orbitals:    10
-     Virtual orbitals:     28
-     Molecular orbitals:   38
-     Atomic orbitals:      38
+     Occupied orbitals:    6
+     Virtual orbitals:     2
+     Molecular orbitals:   8
+     Atomic orbitals:      8
 
    - Number of ground state amplitudes:
 
-     Single excitation amplitudes:  280
-     Double excitation amplitudes:  39340
+     Single excitation amplitudes:  12
+     Double excitation amplitudes:  78
 
 
   :: Mean value coupled cluster engine
@@ -269,34 +259,31 @@
 
   - Cholesky decomposition ao details:
 
-     Total number of AOs:                    38
-     Total number of shell pairs:           171
-     Total number of AO pairs:              741
+     Total number of AOs:                     8
+     Total number of shell pairs:            21
+     Total number of AO pairs:               36
 
-     Significant shell pairs:               132
-     Significant AO pairs:                  588
+     Significant shell pairs:                16
+     Significant AO pairs:                   29
 
-     Construct shell pairs:                 151
-     Construct AO pairs:                    653
+     Construct shell pairs:                  18
+     Construct AO pairs:                     31
 
   Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
   -------------------------------------------------------------------------------------------------------
-     1               562 /     121       0.53537E+01         184             51             28662
-     2               416 /     100       0.50631E-01         337            159             66144
-     3               364 /      86       0.43268E-03         282            239             86996
-     4               262 /      68       0.37560E-05         253            346             90652
-     5               158 /      40       0.36505E-07         170            436             68888
-     6                 0 /       0       0.36501E-09          79            485                 0
+     1                22 /      11       0.47851E+01          16             10               220
+     2                 5 /       5       0.47403E-01          16             24               120
+     3                 0 /       0       0.10744E-03           5             29                 0
   -------------------------------------------------------------------------------------------------------
 
   - Summary of Cholesky decomposition of electronic repulsion integrals:
 
-     Final number of Cholesky vectors: 485
+     Final number of Cholesky vectors: 29
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.9635E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.1574E-14
+     Maximal difference between approximate and actual diagonal:              0.6185E-13
+     Minimal element of difference between approximate and actual diagonal:  -0.2250E-15
 
   - Settings for integral handling:
 
@@ -306,8 +293,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.56069
-     Total cpu time (sec):               1.10111
+     Total wall time (sec):              0.00900
+     Total cpu time (sec):               0.01665
 
 
   2) Preparation of MO basis and integrals
@@ -338,76 +325,66 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -177.999882776772     0.1268E+00     0.1780E+03
-    2          -178.004484624805     0.3684E-01     0.4602E-02
-    3          -178.015143737434     0.1271E-01     0.1066E-01
-    4          -178.017548199525     0.3310E-02     0.2404E-02
-    5          -178.017423910931     0.1045E-02     0.1243E-03
-    6          -178.017474506043     0.3780E-03     0.5060E-04
-    7          -178.017465120939     0.1177E-03     0.9385E-05
-    8          -178.017457241374     0.4582E-04     0.7880E-05
-    9          -178.017457896120     0.1763E-04     0.6547E-06
-   10          -178.017458001013     0.7877E-05     0.1049E-06
-   11          -178.017458162541     0.3251E-05     0.1615E-06
-   12          -178.017458245120     0.1441E-05     0.8258E-07
-   13          -178.017458276670     0.4068E-06     0.3155E-07
-   14          -178.017458296195     0.1354E-06     0.1952E-07
-   15          -178.017458301047     0.5443E-07     0.4852E-08
-   16          -178.017458302366     0.1824E-07     0.1319E-08
-   17          -178.017458302433     0.8287E-08     0.6719E-10
-   18          -178.017458302322     0.3767E-08     0.1109E-09
-   19          -178.017458302187     0.1440E-08     0.1355E-09
-   20          -178.017458302159     0.4540E-09     0.2791E-10
-   21          -178.017458302156     0.1851E-09     0.2814E-11
-   22          -178.017458302154     0.8136E-10     0.2046E-11
-   23          -178.017458302155     0.3889E-10     0.5684E-12
-   24          -178.017458302155     0.1822E-10     0.8811E-12
-   25          -178.017458302156     0.6221E-11     0.1421E-12
+    1           -77.811082905332     0.5809E-01     0.7781E+02
+    2           -77.821312411457     0.2140E-01     0.1023E-01
+    3           -77.826294068160     0.2885E-02     0.4982E-02
+    4           -77.826488240846     0.6015E-03     0.1942E-03
+    5           -77.826499546254     0.7938E-04     0.1131E-04
+    6           -77.826493023103     0.1279E-04     0.6523E-05
+    7           -77.826493725131     0.3150E-05     0.7020E-06
+    8           -77.826493488194     0.7383E-06     0.2369E-06
+    9           -77.826493538448     0.1611E-06     0.5025E-07
+   10           -77.826493531261     0.3566E-07     0.7187E-08
+   11           -77.826493530182     0.5779E-08     0.1079E-08
+   12           -77.826493530149     0.9949E-09     0.3317E-10
+   13           -77.826493530180     0.1730E-09     0.3136E-10
+   14           -77.826493530171     0.3832E-10     0.9578E-11
+   15           -77.826493530172     0.3842E-11     0.1648E-11
   ---------------------------------------------------------------
-  Convergence criterion met in 25 iterations!
+  Convergence criterion met in 15 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):  -178.017458302156
+     Final ground state energy (a.u.):   -77.826493530172
 
-     Correlation energy (a.u.):           -0.432965662425
+     Correlation energy (a.u.):           -0.053706700419
 
      Largest single amplitudes:
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        2      8       -0.017461523108
-        1      9       -0.013016742630
-        1      6       -0.010911876623
-       11      8        0.010442812963
-        5      8        0.008714941075
-        4      7       -0.008028846993
-        2      4        0.007926758009
-        3      9        0.007744451532
-       15      8        0.007133085826
-       13      8       -0.007064364052
+        1      5        0.015123888413
+        2      4       -0.003188035297
+        1      2        0.000434037902
+        1      1        0.000035476642
+        1      3        0.000000001768
+        2      3       -0.000000000816
+        2      5        0.000000000001
+        1      4        0.000000000000
+        2      2       -0.000000000000
+        2      1        0.000000000000
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         t(ai,bj)
      --------------------------------------------------
-        2      8       2      8       -0.105697648080
-        8      5       8      5       -0.064551442101
-        4     10       4     10       -0.037045706068
-       17      5      17      5       -0.032218930918
-       18      5      18      5       -0.032218816653
-       16      5      16      5       -0.032216399832
-        2     10       2     10       -0.030526264138
-        3      9       3      9       -0.028929561908
-        2      9       2      9       -0.027146297727
-        2      8       5      8        0.026934325745
+        2      4       2      4       -0.082575072171
+        1      5       1      5       -0.053106195485
+        2      4       1      5        0.052536714392
+        1      4       1      4       -0.046797848986
+        2      5       2      5       -0.044701446608
+        1      4       2      5        0.038890675196
+        1      2       1      5        0.034766229552
+        1      2       1      2       -0.032406870418
+        1      2       2      4       -0.031693451888
+        1      6       1      6       -0.026317094441
      --------------------------------------------------
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.95003
-     Total cpu time (sec):               1.89652
+     Total wall time (sec):              0.08600
+     Total cpu time (sec):               0.13089
 
 
   4) Calculation of the multipliers (davidson algorithm)
@@ -427,7 +404,7 @@
 
    - Davidson tool settings:
 
-     Number of parameters:                39620
+     Number of parameters:                   90
      Number of requested solutions:           1
      Max reduced space dimension:            50
 
@@ -436,31 +413,23 @@
 
   Iteration     Residual norm
   ---------------------------
-    1             0.6384E-01
-    2             0.1792E-01
-    3             0.3474E-02
-    4             0.1273E-02
-    5             0.3389E-03
-    6             0.9102E-04
-    7             0.3595E-04
-    8             0.1648E-04
-    9             0.6506E-05
-   10             0.2470E-05
-   11             0.9586E-06
-   12             0.3512E-06
-   13             0.1214E-06
-   14             0.3460E-07
-   15             0.1230E-07
-   16             0.4276E-08
-   17             0.1569E-08
-   18             0.5287E-09
-   19             0.2237E-09
-   20             0.7344E-10
-   21             0.2161E-10
-   22             0.5835E-11
+    1             0.6577E-02
+    2             0.9595E-03
+    3             0.2464E-03
+    4             0.6467E-04
+    5             0.1496E-04
+    6             0.3763E-05
+    7             0.6410E-06
+    8             0.9052E-07
+    9             0.1973E-07
+   10             0.2893E-08
+   11             0.7835E-09
+   12             0.1544E-09
+   13             0.2087E-10
+   14             0.4982E-11
   ---------------------------
 
-  Convergence criterion met in 22 iterations!
+  Convergence criterion met in 14 iterations!
 
   - Davidson CC multipliers solver summary:
 
@@ -468,65 +437,75 @@
      -----------------------------------
         a       i         tbar(a,i)
      -----------------------------------
-        1      9       -0.025074256048
-        2      8       -0.021096058166
-       11      8        0.019288949830
-        1      6       -0.019110865311
-        3      9        0.014584142920
-        5      8        0.013738899129
-        2      4        0.013212070461
-        4      7       -0.012938533847
-        4     10       -0.012699710352
-       13      8       -0.012577033597
+        1      5        0.026451012889
+        2      4       -0.002758977832
+        1      2        0.002736033980
+        1      1        0.000067913549
+        1      3        0.000000003408
+        2      3        0.000000001020
+        2      5        0.000000000001
+        2      2        0.000000000000
+        1      4       -0.000000000000
+        1      6        0.000000000000
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         tbar(ai,bj)
      --------------------------------------------------
-        2      8       2      8       -0.200870129977
-        8      5       8      5       -0.128164777335
-        2      8       4     10        0.077486199703
-        4     10       4     10       -0.074205212415
-        2      8       7      9        0.071243162620
-        5      8       4     10       -0.064937253734
-       17      5      17      5       -0.063970245561
-       18      5      18      5       -0.063970035399
-       16      5      16      5       -0.063965300681
-        2     10       2     10       -0.057868399020
+        2      4       2      4       -0.162514163267
+        2      4       1      5        0.129601162067
+        1      5       1      5       -0.104555298181
+        1      4       1      4       -0.091833087105
+        2      5       2      5       -0.087798960440
+        1      2       2      4       -0.082626260679
+        1      2       1      5        0.068416305895
+        1      2       1      2       -0.063925094235
+        1      6       1      6       -0.051540514998
+        1      4       2      5        0.050505832812
      --------------------------------------------------
 
   - Finished solving the CCSD multipliers equations
 
-     Total wall time (sec):               0.57993
-     Total cpu time (sec):                1.15825
+     Total wall time (sec):               0.09500
+     Total cpu time (sec):                0.11341
 
 
   5) Calculation of ground state properties
 
   - Operator: dipole moment [a.u.]
 
-     x:          0.7240958
-     y:         -0.0000000
-     z:         -0.2285337
+     x:          0.3534968
+     y:         -0.4870614
+     z:         -0.1126463
 
-     |mu|:       0.7593039
+     |mu|:       0.6122728
 
   - Operator: dipole moment [Debye]
 
-     x:          1.8404680
-     y:         -0.0000000
-     z:         -0.5808747
+     x:          0.8984993
+     y:         -1.2379865
+     z:         -0.2863183
 
-     |mu|:       1.9299580
+     |mu|:       1.5562422
 
   - Timings for the CCSD mean value calculation
 
-     Total wall time (sec):              2.09921
-     Total cpu time (sec):               4.17689
+     Total wall time (sec):              0.19400
+     Total cpu time (sec):               0.26742
 
-     Peak memory usage during the execution of eT: 41.245400 MB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:25:53 UTC +01:00
+  Peak memory usage during the execution of eT: 110.608 KB
+
+  Total wall time in eT (sec):              0.23900
+  Total cpu time in eT (sec):               0.32251
+
+  Calculation ended: 2021-05-20 11:32:36 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!
