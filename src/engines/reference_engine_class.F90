@@ -95,6 +95,11 @@ contains
 !
       type(reference_engine) :: engine
 !
+      engine%name_            = 'Hartree-Fock engine'
+!
+      engine%description      = 'Drives the calculation of the Hartree-Fock state. '
+      engine%tag              = 'ground state'
+!
       engine%ao_density_guess = 'sad'
       engine%algorithm        = 'scf-diis'
       engine%restart          = .false.
@@ -119,10 +124,11 @@ contains
 !!
       implicit none
 !
-      class(reference_engine) :: engine
-      class(hf)               :: wf
+      class(reference_engine), intent(inout) :: engine
+      class(hf),               intent(inout) :: wf
 !
 !     Overwrite restart if the corresponding files don't exist
+!
       if (engine%restart) engine%restart = wf%is_restart_possible()
       call engine%set_printables()
 !
@@ -143,8 +149,8 @@ contains
 !!
       implicit none
 !
-      class(reference_engine)    :: engine
-      class(hf)                  :: wf
+      class(reference_engine), intent(in)    :: engine
+      class(hf),               intent(inout) :: wf
 !
       if ((.not. engine%restart) .and.  &
           (.not. engine%skip_scf) .and. &
@@ -182,7 +188,7 @@ contains
 !!
       implicit none
 !
-      class(reference_engine) :: engine
+      class(reference_engine), intent(inout) :: engine
 !
       call input%get_keyword('algorithm', 'solver scf', engine%algorithm)
 !
@@ -221,12 +227,7 @@ contains
 !
       implicit none
 !
-      class(reference_engine) :: engine
-!
-      engine%name_       = 'Hartree-Fock engine'
-!
-      engine%description = 'Drives the calculation of the Hartree-Fock state. '
-      engine%tag         = 'ground state'
+      class(reference_engine), intent(inout) :: engine
 !
 !     Prepare the list of tasks
 !

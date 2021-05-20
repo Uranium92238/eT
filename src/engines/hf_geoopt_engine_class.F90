@@ -63,6 +63,11 @@ contains
 !
       type(hf_geoopt_engine) :: engine
 !
+      engine%name_       = 'Hartree-Fock geometry optimization engine'
+!
+      engine%description = 'Calculates the optimized geometry for the Hartree-Fock wavefunction.'
+      engine%tag         = 'geometry optimization'
+!
       engine%algorithm        = 'bfgs'
       engine%ao_density_guess = 'sad'
       engine%restart          = .false.
@@ -87,8 +92,8 @@ contains
 !!
       implicit none
 !
-      class(hf_geoopt_engine) :: engine
-      class(hf)               :: wf
+      class(hf_geoopt_engine), intent(in)    :: engine
+      class(hf),               intent(inout) :: wf
 !
       type(bfgs_geoopt_hf) :: bfgs_geoopt
 !
@@ -130,7 +135,7 @@ contains
 !!
       implicit none
 !
-      class(hf_geoopt_engine) :: engine
+      class(hf_geoopt_engine), intent(inout) :: engine
 !
       call input%get_keyword('algorithm', 'solver scf geoopt', engine%algorithm)
 !
@@ -154,12 +159,7 @@ contains
 !
       implicit none
 !
-      class(hf_geoopt_engine) :: engine
-!
-      engine%name_       = 'Hartree-Fock geometry optimization engine'
-!
-      engine%description = 'Calculates the optimized geometry for the Hartree-Fock wavefunction.'
-      engine%tag         = 'geometry optimization'
+      class(hf_geoopt_engine), intent(inout) :: engine
 !
       engine%tasks = task_list()
 !
