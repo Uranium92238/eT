@@ -246,7 +246,7 @@ module ao_tool_class
 !
       procedure, private :: set_up_centers
 !
-      procedure, private :: initialize_centers 
+      procedure, private :: initialize_centers
       procedure, private :: initialize_centers_from_template
       procedure, private :: initialize_centers_from_ao_tool
       procedure, private :: initialize_centers_from_input_file
@@ -379,7 +379,7 @@ contains
       call ao%construct_stored_oei('overlap')
 !
       call ao%determine_linearly_independent_aos()
-      call ao%construct_cs_eri_max_screenings()  
+      call ao%construct_cs_eri_max_screenings()
 !
    end subroutine initialize_ao_tool
 !
@@ -399,7 +399,7 @@ contains
       class(ao_tool), intent(in)    :: template
 
       call ao%set_up_centers(ao_template=template)
-!  
+!
       ao%n      = template%n
       ao%n_sh   = template%n_sh
       ao%charge = template%charge
@@ -434,8 +434,8 @@ contains
 !
    subroutine set_up_centers(ao, centers, ao_template)
 !!
-!!    Set up centers 
-!!    Written by Eirik F. Kjønstad, 2020 
+!!    Set up centers
+!!    Written by Eirik F. Kjønstad, 2020
 !!
 !!    Makes the centers fully ready for use.
 !!
@@ -444,7 +444,7 @@ contains
 !!       - centers:     copy from an existing set of centers
 !!       - ao_template: copy from centers in another ao_tool
 !!
-      implicit none 
+      implicit none
 !
       class(ao_tool), intent(inout) :: ao
 !
@@ -454,27 +454,27 @@ contains
 !
       call ao%initialize_centers(centers, ao_template)
       call ao%export_centers_to_libint()
-      call ao%initialize_center_shells()   
+      call ao%initialize_center_shells()
 !
    end subroutine set_up_centers
 !
 !
    subroutine initialize_centers(ao, centers, ao_template)
 !!
-!!    Initialize centers 
-!!    Written by Eirik F. Kjønstad, 2020 
+!!    Initialize centers
+!!    Written by Eirik F. Kjønstad, 2020
 !!
 !!    Allocates and sets the centers as well as the center subsets.
 !!
-      implicit none 
+      implicit none
 !
       class(ao_tool), intent(inout) :: ao
 !
-      class(atomic_center), dimension(:), optional, intent(in) :: centers 
+      class(atomic_center), dimension(:), optional, intent(in) :: centers
 !
-      type(ao_tool), optional, intent(in) :: ao_template 
+      type(ao_tool), optional, intent(in) :: ao_template
 !
-      if (present(centers)) then 
+      if (present(centers)) then
 !
          call ao%initialize_centers_from_template(centers)
 !
@@ -482,7 +482,7 @@ contains
 !
          call ao%initialize_centers_from_ao_tool(ao_template)
 !
-      else 
+      else
 !
          call ao%initialize_centers_from_input_file()
 !
@@ -498,7 +498,7 @@ contains
 !!
       use atomic_center_reader_class, only: atomic_center_reader
 !
-      implicit none 
+      implicit none
 !
       class(ao_tool), intent(inout) :: ao
 !
@@ -620,11 +620,11 @@ contains
 !!    Initialize shells
 !!    Written by Eirik F. Kjønstad, 2021
 !!
-      implicit none 
+      implicit none
 !
-      class(ao_tool), intent(inout) :: ao 
+      class(ao_tool), intent(inout) :: ao
 !
-      integer :: I 
+      integer :: I
 !
       do I = 1, ao%n_centers
 !
@@ -637,13 +637,13 @@ contains
 !
    subroutine initialize_total_charge(ao, charge)
 !!
-!!    Initialize total_charge 
+!!    Initialize total_charge
 !!    Written by Sarai D. Folkestad, 2021
 !
-      implicit none 
+      implicit none
 !
       class(ao_tool), intent(inout) :: ao
-      integer, optional, intent(in) :: charge  
+      integer, optional, intent(in) :: charge
 !
       if (present(charge)) then
 !
@@ -660,18 +660,18 @@ contains
 !
    subroutine calculate_n_shells(ao)
 !!
-!!    Calculate number of shells 
+!!    Calculate number of shells
 !!    Written by Eirik F. Kjønstad, 2020
 !!
-      implicit none 
+      implicit none
 !
-      class(ao_tool), intent(inout) :: ao 
+      class(ao_tool), intent(inout) :: ao
 !
       integer :: I
 !
       ao%n_sh = 0
 !
-      do I = 1, ao%n_centers 
+      do I = 1, ao%n_centers
 !
          ao%n_sh = ao%n_sh + ao%centers(I)%n_shells
 !
@@ -682,18 +682,18 @@ contains
 !
    subroutine calculate_n_aos(ao)
 !!
-!!    Caculate number of AOs 
+!!    Caculate number of AOs
 !!    Written by Eirik F. Kjønstad, 2020
 !!
-      implicit none 
+      implicit none
 !
-      class(ao_tool), intent(inout) :: ao 
+      class(ao_tool), intent(inout) :: ao
 !
       integer :: I
 !
       ao%n = 0
 !
-      do I = 1, ao%n_centers 
+      do I = 1, ao%n_centers
 !
          ao%n = ao%n + ao%centers(I)%n_ao
 !
@@ -3231,7 +3231,7 @@ contains
    end function has_ghost_atoms_ao_tool
 !
 !
-   module function get_molden_ao_indices_ao_tool(ao) result(map)
+   function get_molden_ao_indices_ao_tool(ao) result(map)
 !!
 !!    Get Molden AO indices
 !!    Written by Alexander C. Paul, May 2021
@@ -3261,7 +3261,7 @@ contains
    end function get_molden_ao_indices_ao_tool
 !
 !
-   module subroutine print_molden_geometry_ao_tool(ao, file_)
+   subroutine print_molden_geometry_ao_tool(ao, file_)
 !!
 !!    Print molden geometry
 !!    Written by Alexander C. Paul, May 2021
@@ -3290,7 +3290,7 @@ contains
    end subroutine print_molden_geometry_ao_tool
 !
 !
-   module subroutine print_basis_set_molden_ao_tool(ao, file_)
+   subroutine print_basis_set_molden_ao_tool(ao, file_)
 !!
 !!    Print basis set molden
 !!    Written by Alexander C. Paul, May 2021
