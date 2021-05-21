@@ -106,7 +106,7 @@ contains
    end subroutine construct_omega_ccsd
 !
 !
-   module subroutine omega_ccsd_a2_ccsd(wf, omega2, t2, right, diagonal_factor)
+   module subroutine omega_ccsd_a2(wf, omega2, t2, right, diagonal_factor)
 !!
 !!    Omega A2 term
 !!    Written by Rolf H. Myhre, Eirik F. Kjønstad, and Sarai D. Folkestad, Jan 2020
@@ -416,10 +416,10 @@ contains
       call ccsd_a2_timer%turn_off()
       call ccsd_a2_integral_timer%turn_off()
 !
-   end subroutine omega_ccsd_a2_ccsd
+   end subroutine omega_ccsd_a2
 !
 !
-   module subroutine omega_ccsd_b2_ccsd(wf, omega_abij, t_abij)
+   module subroutine omega_ccsd_b2(wf, omega_abij, t_abij)
 !!
 !!    Omega B2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -517,10 +517,10 @@ contains
 !
       call ccsd_b2_timer%turn_off()
 !
-   end subroutine omega_ccsd_b2_ccsd
+   end subroutine omega_ccsd_b2
 !
 !
-   module subroutine omega_ccsd_c2_d2_ccsd(wf, omega2, t2)
+   module subroutine omega_ccsd_c2_d2(wf, omega2, t2)
 !!
 !!    Omega C2 and D2
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad and Rolf H. Myhre, Feb. 2021
@@ -633,10 +633,10 @@ contains
 !
       call ccsd_c2_d2_timer%turn_off()
 !
-   end subroutine omega_ccsd_c2_d2_ccsd
+   end subroutine omega_ccsd_c2_d2
 !
 !
-   module subroutine omega_ccsd_e2_ccsd(wf, omega_aibj, t_aibj)
+   module subroutine omega_ccsd_e2(wf, omega_aibj, t_aibj)
 !!
 !!    Omega E2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -799,7 +799,7 @@ contains
 !
       call ccsd_e2_timer%turn_off()
 !
-   end subroutine omega_ccsd_e2_ccsd
+   end subroutine omega_ccsd_e2
 !
 !
    module subroutine construct_u_aibj_ccsd(wf)
