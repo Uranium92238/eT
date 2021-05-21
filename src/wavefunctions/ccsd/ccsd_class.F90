@@ -32,27 +32,27 @@ module ccsd_class
 !
 !     Intermediate files
 !
-      type(sequential_file) :: jacobian_c2_intermediate_oovo_1
-      type(sequential_file) :: jacobian_c2_intermediate_oovo_2
-      type(sequential_file) :: jacobian_c2_intermediate_oovo_3
-      type(sequential_file) :: jacobian_d2_intermediate
-      type(sequential_file) :: jacobian_e2_intermediate
-      type(sequential_file) :: jacobian_g2_intermediate_vovo
-      type(sequential_file) :: jacobian_h2_intermediate_voov_1
-      type(sequential_file) :: jacobian_h2_intermediate_voov_2
-      type(sequential_file) :: jacobian_j2_intermediate_oooo
+      type(sequential_file), private :: jacobian_c2_intermediate_oovo_1
+      type(sequential_file), private :: jacobian_c2_intermediate_oovo_2
+      type(sequential_file), private :: jacobian_c2_intermediate_oovo_3
+      type(sequential_file), private :: jacobian_d2_intermediate
+      type(sequential_file), private :: jacobian_e2_intermediate
+      type(sequential_file), private :: jacobian_g2_intermediate_vovo
+      type(sequential_file), private :: jacobian_h2_intermediate_voov_1
+      type(sequential_file), private :: jacobian_h2_intermediate_voov_2
+      type(sequential_file), private :: jacobian_j2_intermediate_oooo
 !
-      type(sequential_file) :: jacobian_transpose_d1_intermediate
-      type(sequential_file) :: jacobian_transpose_e1_intermediate
-      type(sequential_file) :: jacobian_transpose_f1_intermediate
-      type(sequential_file) :: jacobian_transpose_g1_intermediate
-      type(sequential_file) :: jacobian_transpose_d2_intermediate
-      type(sequential_file) :: jacobian_transpose_e2_oo_intermediate
-      type(sequential_file) :: jacobian_transpose_e2_vv_intermediate
-      type(sequential_file) :: jacobian_transpose_f2_intermediate
-      type(sequential_file) :: jacobian_transpose_g2_intermediate
-      type(sequential_file) :: jacobian_transpose_g2_intermediate_2
-      type(sequential_file) :: jacobian_transpose_i2_intermediate
+      type(sequential_file), private :: jacobian_transpose_d1_intermediate
+      type(sequential_file), private :: jacobian_transpose_e1_intermediate
+      type(sequential_file), private :: jacobian_transpose_f1_intermediate
+      type(sequential_file), private :: jacobian_transpose_g1_intermediate
+      type(sequential_file), private :: jacobian_transpose_d2_intermediate
+      type(sequential_file), private :: jacobian_transpose_e2_oo_intermediate
+      type(sequential_file), private :: jacobian_transpose_e2_vv_intermediate
+      type(sequential_file), private :: jacobian_transpose_f2_intermediate
+      type(sequential_file), private :: jacobian_transpose_g2_intermediate
+      type(sequential_file), private :: jacobian_transpose_g2_intermediate_2
+      type(sequential_file), private :: jacobian_transpose_i2_intermediate
 !
    contains
 !
