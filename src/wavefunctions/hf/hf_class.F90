@@ -22,7 +22,7 @@ module hf_class
 !!    Hartree-Fock (HF) class module
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
-!!    Wavefunction class for restricted (closed-shell) Hartree-Fock theory. 
+!!    Wavefunction class for restricted (closed-shell) Hartree-Fock theory.
 !!
 !
    use wavefunction_class
@@ -51,7 +51,7 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: ao_density
       real(dp), dimension(:,:,:), allocatable :: previous_ao_density
 !
-      integer :: n_densities ! For RHF, there is one AO density. 
+      integer :: n_densities ! For RHF, there is one AO density.
                              ! For UHF, there are two AO densities (alpha, beta).
 !
       real(dp) :: coulomb_threshold  = 1.0D-12   ! Screening threshold (Fock, Coulomb)
@@ -59,7 +59,7 @@ module hf_class
 !
       real(dp) :: cumulative_fock_threshold = 1.0d0
 !
-      real(dp), dimension(:,:), allocatable :: W_mo_update ! Eigenvectors for 
+      real(dp), dimension(:,:), allocatable :: W_mo_update ! Eigenvectors for
                                                            ! Roothan-Hall in MO basis
 !
 !     Frozen orbital variables. Frozen orbitals are typically frozen core or frozen HF orbitals.
@@ -89,14 +89,14 @@ module hf_class
       procedure :: print_summary                               => print_summary_hf
       procedure :: print_energy                                => print_energy_hf
 !
-!     Read, save of orbital energies and coefficients 
+!     Read, save of orbital energies and coefficients
 !
       procedure :: read_orbitals                               => read_orbitals_hf
       procedure :: save_orbitals                               => save_orbitals_hf
 !
       procedure :: write_molden_file                           => write_molden_file_hf
 !
-!     Read, write restart information, and check for safe restart 
+!     Read, write restart information, and check for safe restart
 !
       procedure :: read_for_scf_restart                        => read_for_scf_restart_hf
 !
@@ -316,7 +316,7 @@ contains
 !
       endif
 !
-      nuclear_repulsion = wf%get_nuclear_repulsion()    
+      nuclear_repulsion = wf%get_nuclear_repulsion()
 !
       call output%printf('m', 'Nuclear repulsion energy:  (f19.12)', &
                          reals=[nuclear_repulsion], fs='(t6,a)')
@@ -362,7 +362,7 @@ contains
 !
       call input%get_keyword('cumulative fock threshold',      &
                                         'solver scf',          &
-                                        wf%cumulative_fock_threshold)  
+                                        wf%cumulative_fock_threshold)
 !
    end subroutine read_hf_settings_hf
 !
@@ -374,7 +374,7 @@ contains
 !!
       use string_utilities, only: convert_to_uppercase
 !
-      implicit none 
+      implicit none
 !
       class(hf), intent(inout) :: wf
 !
@@ -462,20 +462,20 @@ contains
       implicit none
 !
       class(hf),                             intent(in) :: wf
-      real(dp), dimension(wf%ao%n, wf%n_mo), intent(in) :: orbital_coefficients 
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(in) :: orbital_coefficients
 !
       integer, parameter :: n_entries = 5
 !
       integer :: mo_offset, first_mo, last_mo
 !
-!     Print at most n_entries (5) MOs at a time 
+!     Print at most n_entries (5) MOs at a time
 !
       do mo_offset = 1, wf%n_mo, n_entries
 !
          first_mo = mo_offset
          last_mo  = min(mo_offset + n_entries - 1, wf%n_mo)
 !
-!        Print the current set of MO vectors 
+!        Print the current set of MO vectors
 !
          call wf%ao%print_ao_vectors(C        = orbital_coefficients(:, first_mo : last_mo),&
                                      out_file = wf%mo_information_file,                     &
@@ -757,7 +757,7 @@ contains
 !
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Construction of projection matrices (Po, Pv)', 'verbose')
       call timer%turn_on()
@@ -844,9 +844,9 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo) :: G
 !
-      real(dp), dimension(:, :), allocatable :: tmp, G_ao 
+      real(dp), dimension(:, :), allocatable :: tmp, G_ao
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Construct RH gradient', 'verbose')
       call timer%turn_on()
@@ -873,7 +873,7 @@ contains
 !
       call mem%dealloc(tmp, wf%ao%n, wf%ao%n)
 !
-!     Transform G_ao to OAO pivot basis: G = P^T G_ao P 
+!     Transform G_ao to OAO pivot basis: G = P^T G_ao P
 !
       call wf%ao%orthonormal_ao_pivot_basis_transformation(G_ao, G)
 !
@@ -890,12 +890,12 @@ contains
 !!    Get number of electrons in density
 !!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Calculates the number of electrons in the current AO density, a useful check on 
+!!    Calculates the number of electrons in the current AO density, a useful check on
 !!    the sensibility of the AO density. It is by default printed by some solvers.
 !!
-!!    Calculated as 
+!!    Calculated as
 !!
-!!       n = Tr(D S) =  sum_wx D_wx S_xw = sum_wx D_wx S_wx 
+!!       n = Tr(D S) =  sum_wx D_wx S_xw = sum_wx D_wx S_wx
 !!
       implicit none
 !
@@ -942,8 +942,7 @@ contains
 !
       class(hf) :: wf
 !
-      call output%printf('n', '- Screening and integral thresholds:', &
-                        fs='(/t3,a)')
+      call output%printf('n', '- Screening and integral thresholds:', fs='(/t3,a)')
 !
       call output%printf('n', 'Coulomb screening threshold:   (e11.4)', &
                          reals=[wf%coulomb_threshold], fs='(/t6,a)')
@@ -957,7 +956,7 @@ contains
       call output%printf('n', 'One-electron integral  cutoff: (e11.4)', &
                          reals=[wf%ao%get_oei_cutoff()], fs='(t6,a)')
 !
-      call output%printf('n', 'Cumulative Fock threshold:    (e11.4)', &
+      call output%printf('n', 'Cumulative Fock threshold:     (e11.4)', &
                          reals=[wf%cumulative_fock_threshold], fs='(t6,a)')
 !
    end subroutine print_screening_settings_hf
@@ -1027,7 +1026,7 @@ contains
 !
       integer :: k, q
 !
-      type(timings) :: s_timer, h_timer, G_timer, G_timer_sym, non_integral_timer, timer 
+      type(timings) :: s_timer, h_timer, G_timer, G_timer_sym, non_integral_timer, timer
 !
 !     Initialize timers
 !
@@ -1222,10 +1221,10 @@ contains
 !
       class(hf) :: wf
 !
-      class(atomic_center), dimension(:), optional, intent(in) :: centers 
-      integer, intent(in), optional :: charge 
+      class(atomic_center), dimension(:), optional, intent(in) :: centers
+      integer, intent(in), optional :: charge
 !
-      logical, intent(in), optional :: embedding 
+      logical, intent(in), optional :: embedding
 !
       wf%orbital_file = stream_file('orbital_coefficients')
 !
@@ -1260,7 +1259,7 @@ contains
 !!    and D_pq is the a one-electron density matrix in the AO basis
 !!
       implicit none
-!  
+!
       class(hf), intent(in) :: wf
 !
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: A
@@ -1369,18 +1368,18 @@ contains
 !
    subroutine read_frozen_orbitals_settings_hf(wf)
 !!
-!!    Read frozen orbitals 
+!!    Read frozen orbitals
 !!    Written by Sarai D. Folkestad, Oct 2019
 !!
 !!    Reads the frozen orbitals section of the input
 !!
-!!     - Frozen core 
+!!     - Frozen core
 !!
 !!    - Frozen hf orbitals
 !!
 !!    - plot active density
 !!
-!!    This routine is used at HF level to prepare mos and 
+!!    This routine is used at HF level to prepare mos and
 !!    frozen fock contributions.
 !!
 !!    This routine is read at cc level to figure out if there
@@ -1430,7 +1429,7 @@ contains
          do w = 1, wf%ao%n
 !
             if (abs(wf%orbital_coefficients(w,p)) .gt. 1.0d-2) then
-!  
+!
 !              Found the first significant contribution to MO p
 !
                if (wf%orbital_coefficients(w,p) .lt. 0.0d0) then
@@ -1470,15 +1469,15 @@ contains
 !
       class(hf)                     :: wf
 !
-      logical, intent(in)           :: restart   
-      logical, intent(in)           :: skip   
-      character(len=*), intent(in)  :: ao_density_guess 
+      logical, intent(in)           :: restart
+      logical, intent(in)           :: skip
+      character(len=*), intent(in)  :: ao_density_guess
       real(dp)                      :: gradient_threshold
       integer, intent(out)          :: dim_
       integer, intent(out)          :: n_densities
       integer, intent(out)          :: gradient_dimension
 !
-      wf%cumulative_fock = .false. 
+      wf%cumulative_fock = .false.
 !
       call wf%set_screening_and_precision_thresholds(gradient_threshold)
 !
@@ -1503,7 +1502,7 @@ contains
                call output%error_msg('cannot skip scf when gradient has not converged.')
          endif
 !
-      else 
+      else
 !
          call output%printf('m', '- Setting initial AO density to &
                             &'//trim(ao_density_guess), fs='(/t3,a)')
@@ -1511,7 +1510,7 @@ contains
          call wf%set_initial_ao_density_guess(ao_density_guess)
          call wf%prepare_for_roothan_hall()
 !
-      endif 
+      endif
 !
       dim_ = wf%n_mo
       n_densities = wf%n_densities
@@ -1541,8 +1540,8 @@ contains
 !!
 !!    Set C and e
 !!    Written by Sarai D. Folkestad, 2020
-!! 
-!!    Sets the orbital coefficients from the orbital 
+!!
+!!    Sets the orbital coefficients from the orbital
 !!    coefficients in the orthonormal AO basis (C)
 !!
 !!    Sets the orbital energies (e)
@@ -1575,7 +1574,7 @@ contains
 !!    Constructs the Fock matrix in the orthonormal AO basis
 !!    and returns it packed
 !!
-      use reordering, only: packin 
+      use reordering, only: packin
       implicit none
 !
       class(hf) :: wf
@@ -1603,10 +1602,10 @@ contains
 !!
 !!    Returns the packed gradient
 !!
-!!    If the gradient norm is sufficiently small, 
+!!    If the gradient norm is sufficiently small,
 !!    'cumulative_fock' is enabled
 !!
-      implicit none 
+      implicit none
 !
       class(hf) :: wf
 !
@@ -1655,10 +1654,10 @@ contains
    subroutine set_orbital_coefficients_from_reduced_ao_C_hf(wf, C, orbital_coefficients)
 !!
 !!    Set orbital coefficients from reduced AO C
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2020 
-!! 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2020
+!!
 !!    Sets the orbital coefficients from the orbital coefficients
-!!    in the reduced ao basis 
+!!    in the reduced ao basis
 !!
 !!       orbital_coefficients = P C
 !!
@@ -1666,7 +1665,7 @@ contains
 !!
 !!       P^T S P = L L^T
 !!
-!!    defines the Cholesky decomposition of the 
+!!    defines the Cholesky decomposition of the
 !!    atomic orbital overlap matrix S.
 !!
       implicit none
@@ -1683,7 +1682,7 @@ contains
                   one,                    &
                   wf%ao%P,                &
                   wf%ao%n,                &
-                  C,                      & 
+                  C,                      &
                   wf%n_mo,                &
                   zero,                   &
                   orbital_coefficients,   &
@@ -1695,10 +1694,10 @@ contains
    subroutine set_orbital_coefficients_from_orthonormal_ao_C_hf(wf, C, orbital_coefficients)
 !!
 !!    Set orbital coefficients from orthonormal AO C
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2020 
-!! 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2020
+!!
 !!    Sets the orbital coefficients from the orbital coefficients
-!!    in the reduced ao basis 
+!!    in the reduced ao basis
 !!
 !!       orbital_coefficients = P L^-T C
 !!
@@ -1706,7 +1705,7 @@ contains
 !!
 !!       P^T S P = L L^T
 !!
-!!    defines the Cholesky decomposition of the 
+!!    defines the Cholesky decomposition of the
 !!    atomic orbital overlap matrix S.
 !!
       implicit none
@@ -1769,10 +1768,10 @@ contains
 !!    Transforms a matrix from the AO basis to the
 !!    reduced AO (RAO) basis
 !!
-!!       X_reduced_ao = P^T X_ao P, 
+!!       X_reduced_ao = P^T X_ao P,
 !!
 !!    where P is a projection onto the linearly idependent AO basis
-!!    and is obtained from the Cholesky decomposition  of 
+!!    and is obtained from the Cholesky decomposition  of
 !!    the atomic orbital overlap matrix S:
 !!
 !!       P^T S P = L L^T
@@ -1810,10 +1809,10 @@ contains
                   XP,        &
                   wf%ao%n,   &
                   zero,      &
-                  X_reduced_ao,     & 
+                  X_reduced_ao,     &
                   wf%n_mo)
 !
-      call mem%dealloc(XP, wf%ao%n, wf%n_mo)      
+      call mem%dealloc(XP, wf%ao%n, wf%n_mo)
 !
    end subroutine ao_to_reduced_ao_transformation_hf
 !
@@ -1824,15 +1823,15 @@ contains
 !!    Written by Sarai D. Folkestad, 2020
 !!
 !!    Transforms a matrix from the AO basis to the
-!!    orthonormal AO (OAO) basis 
+!!    orthonormal AO (OAO) basis
 !!
-!!       X_orthonormal_ao = L^-1 P^T X_ao P L^-T, 
+!!       X_orthonormal_ao = L^-1 P^T X_ao P L^-T,
 !!
 !!    where
 !!
 !!       P^T S P = L L^T
 !!
-!!    defines the Cholesky decomposition of the 
+!!    defines the Cholesky decomposition of the
 !!    atomic orbital overlap matrix S.
 !!
       implicit none

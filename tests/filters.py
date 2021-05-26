@@ -1,3 +1,16 @@
+def get_general_filter():
+    """
+    Returns filter for general settings
+    """
+    from runtest import get_filter
+
+    f = [
+        get_filter(string="Memory available for calculation:", abs_tolerance=1.0e-6),
+    ]
+
+    return f
+
+
 def get_hf_filter(
     tolerance, convergence=False, restart=False, idempotent=True, z_matrix=False
 ):
@@ -7,7 +20,9 @@ def get_hf_filter(
 
     from runtest import get_filter
 
-    f = [
+    f = get_general_filter()
+
+    g = [
         # Energy quantities
         get_filter(string="Nuclear repulsion energy:", abs_tolerance=tolerance),
         get_filter(string="HOMO-LUMO gap", abs_tolerance=tolerance),
@@ -15,7 +30,7 @@ def get_hf_filter(
     ]
 
     if idempotent:
-        f.append(
+        g.append(
             get_filter(
                 from_string="Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)",
                 num_lines=3,
@@ -25,23 +40,23 @@ def get_hf_filter(
         )
 
     if convergence:
-        f.append(
+        g.append(
             get_filter(string="Convergence criterion met in", abs_tolerance=1.0e-10)
         )
 
     if not restart:
-        f.append(
+        g.append(
             # non-idempotent SAD
             get_filter(string="Energy of initial guess:", abs_tolerance=1.0e-6)
         )
 
     if z_matrix:
-        g = [
+        g.append(
             # first line in geometries
-            get_filter(from_string="Z-matrix (", abs_tolerance=1.0e-6, num_lines=4),
-        ]
+            get_filter(from_string="Z-matrix (", abs_tolerance=1.0e-6, num_lines=4)
+        )
 
-        f.extend(g)
+    f.extend(g)
 
     return f
 

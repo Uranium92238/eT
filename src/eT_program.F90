@@ -49,7 +49,7 @@ program eT_program
 !  Memory manager information
 !
    character(len=200) :: mem_unit
-   integer :: mem_total
+   integer(i64) :: mem_total
 !
 !  Interface reference and CC wavefunction calculation,
 !  as well as for starting and stopping Libint 
