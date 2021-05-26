@@ -226,7 +226,7 @@ contains
 !
       type(memory_manager) :: mem
 !
-      integer, intent(in) :: total 
+      integer(i64), intent(in) :: total 
 !
       character(len=*), intent(in) :: units 
 !
