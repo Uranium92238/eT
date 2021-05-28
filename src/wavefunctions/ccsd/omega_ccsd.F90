@@ -22,11 +22,11 @@ submodule (ccsd_class) omega_ccsd
 !!
 !!    Omega submodule
 !!
-!!    Routines to construct 
+!!    Routines to construct
 !!
 !!    Omega_mu =  < mu | exp(-T) H exp(T) | R >
 !!
-!!    Transfered to the current eT program from the first version 
+!!    Transfered to the current eT program from the first version
 !!    of eT by Andreas Skeidsvoll and Sarai D. Folkestad, 2018.
 !!
 !
@@ -53,7 +53,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij
       real(dp), dimension(:,:,:,:), allocatable :: omega_aibj, omega_abij
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Construct CCSD Omega', pl='normal')
       call timer%turn_on()
@@ -110,11 +110,11 @@ contains
 !!
 !!    Omega A2 term
 !!    Written by Rolf H. Myhre, Eirik F. Kjønstad, and Sarai D. Folkestad, Jan 2020
-!!      
+!!
 !!    Computes the most expensive CCSD terms omega^ab_ij = sum_cd g_acbd t^cd_ij
 !!
-!!    The algorithm exploits the symmetry of T2, Omega and g by computing the 
-!!    symmetric (+) and antisymmtric (-) combinations of all three entities, 
+!!    The algorithm exploits the symmetry of T2, Omega and g by computing the
+!!    symmetric (+) and antisymmtric (-) combinations of all three entities,
 !!    resulting in an asymptotic scaling of 1/4 * n_v^4 * n_o^2
 !!    In addition, the vvvv integrals must typically be computed from the Cholesky vector,
 !!    scaling as 1/2 * n_v^4 * n_J
@@ -137,11 +137,11 @@ contains
 !!
 !!    diagonal_factor: real, optional, biorthonormal factor for excited state calculations
 !!                                     if present and right is true:
-!!                                        diagonal elements of t+ will be scaled, 
+!!                                        diagonal elements of t+ will be scaled,
 !!                                     elsif present and right is false:
 !!                                        diagonal elements of omega+ will be scaled
 !!
-!!    In general, _p dimensions are given by dim*(dim+1)/2, 
+!!    In general, _p dimensions are given by dim*(dim+1)/2,
 !!          while _m dimensions are given by dim*(dim-1)/2
 !!
       use packed_array_utilities_r
@@ -174,10 +174,10 @@ contains
 !
 !     Batching and memory handling variables
 !
-      integer :: req0, req_a, req_b, req_ab, max_req
+      integer :: req_0, req_a, req_b, req_ab, max_req
 !
       integer :: current_a_batch
-      integer :: current_b_batch    
+      integer :: current_b_batch
       integer :: first_p, last_p, first_q, last_q
       integer :: first_r, last_r, first_s, last_s
 !
@@ -222,33 +222,39 @@ contains
       batch_a = batching_index(wf%n_v)
       batch_b = batching_index(wf%n_v)
 !
-      max_req = n_v_p*wf%n_v + wf%n_v**2*(wf%n_v**2+1)/2 + wf%n_v*wf%n_o*(wf%n_v*wf%n_o+1)/2
-      call wf%eri%get_eri_t1_packed_mem('vv', max_req, 1, wf%n_v, qp=right)
+      max_req = n_v_p**2 + n_v_m**2 &
+              + max(wf%n_v**2*(wf%n_v**2+1)/2, n_o_p*n_v_p + n_o_m*n_v_m)
+      call wf%eri%get_eri_t1_packed_mem('vv', max_req, wf%n_v, wf%n_v, qp=right)
 !
-      req0 = 0
+      req_0 = 0
       req_a = 0
       req_b = 0
       call wf%eri%get_eri_t1_mem('vvvv', req_a, req_b, 1, wf%n_v, 1, wf%n_v, qp=right, sr=right)
       req_ab = wf%n_v**2 + (max(wf%n_v, wf%n_o))**2
 !
-      call mem%batch_setup(batch_a, batch_b, req0, req_a, req_b, req_ab, req_single_batch=max_req)
+      call mem%batch_setup(batch_a, batch_b, req_0, req_a, req_b, req_ab, &
+                           req_single_batch=max_req)
 !
 !     Figure out the batch dependent dimensions and allocate g+- and work
+!     Work is used for omega+- and the packed vvvv eri integrals. 
+!     Must take the edge case where n_o is greater than n_v into account.
+!     the subblocks of g_vvvv won't be symmetric when batch_a .ne. batch_b and can't be packed
 !
       if (batch_a%num_batches .eq. 1) then
-         ab_p_dim   = wf%n_v*(wf%n_v+1)/2
-         ab_m_dim   = wf%n_v*(wf%n_v-1)/2
+         ab_p_dim = n_v_p
+         ab_m_dim = n_v_m
+         work_dim = max(wf%n_v**2*(wf%n_v**2+1)/2, n_o_p*n_v_p + n_o_m*n_v_m)
       else
-         ab_p_dim   = batch_a%max_length**2
-         ab_m_dim   = batch_a%max_length**2
+         ab_p_dim = batch_a%max_length**2
+         ab_m_dim = batch_a%max_length**2
+         work_dim = max(ab_p_dim*wf%n_v**2, ab_p_dim*n_o_p + ab_m_dim*n_o_m)
       endif
-      work_dim = max(ab_p_dim*wf%n_v**2, ab_p_dim*n_o_p + ab_m_dim*n_o_m)
 !
       call mem%alloc(g_p_cdab, n_v_p, ab_p_dim)
       call mem%alloc(g_m_cdab, n_v_m, ab_m_dim)
-      call mem%alloc(work,work_dim)
+      call mem%alloc(work, work_dim)
 !
-      g_vvvv(1:wf%n_v**2*ab_p_dim)    => work
+      g_vvvv => work
       omega2_p_ijab(1:n_o_p*ab_p_dim) => work
       omega2_m_ijab(1:n_o_m*ab_m_dim) => work(n_o_p*ab_p_dim+1:)
 !
@@ -288,7 +294,7 @@ contains
                last_s  = batch_b%last
             endif
 !
-!           If batches are the same, we can compute the packed integral 
+!           If batches are the same, we can compute the packed integral
 !           and double packed g and omega, else we need the full integral block
 !
             if (current_b_batch .eq. current_a_batch) then
@@ -305,7 +311,7 @@ contains
 !
                call ccsd_a2_integral_timer%freeze()
 !
-               call construct_plus_minus_1324_from_RFP(work, g_p_cdab, g_m_cdab, &
+               call construct_plus_minus_1324_from_RFP(g_vvvv, g_p_cdab, g_m_cdab, &
                                                        wf%n_v, batch_a%length)
 !
                call dgemm('N','N',       &
@@ -450,7 +456,7 @@ contains
       ccsd_b2_timer = timings('omega ccsd b2', pl='verbose')
       call ccsd_b2_timer%turn_on()
 !
-!     Construct g_aibj and add to omega2 
+!     Construct g_aibj and add to omega2
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call wf%eri%get_eri_t1('vovo', g_aibj)
@@ -558,15 +564,15 @@ contains
       call mem%alloc(D_term, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Add (+/-) g_vvoo in 2314 ordering to both intermediates
-      call wf%eri%get_eri_t1('vvoo', g, qp=.true.) 
+      call wf%eri%get_eri_t1('vvoo', g, qp=.true.)
       call sort_1234_to_1324(g, C_term, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call copy_and_scale(-one, C_term, D_term, (wf%n_o*wf%n_v)**2)
 !
 !     Add 2*g_voov ordered as 4312 to D
-      call wf%eri%get_eri_t1('voov', D_term, alpha=two, beta=one, sr=.true., rspq=.true.) 
+      call wf%eri%get_eri_t1('voov', D_term, alpha=two, beta=one, sr=.true., rspq=.true.)
 !
 !     Use t2_u2 as temporary storage of g_ovov ordered as 2143 and sort to 2314
-      call wf%eri%get_eri_t1('ovov', t2_u2, qp=.true., sr=.true.) 
+      call wf%eri%get_eri_t1('ovov', t2_u2, qp=.true., sr=.true.)
       call sort_1234_to_1432(t2_u2, g, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call construct_1432_and_contra(t2, t2_u2, wf%n_v, wf%n_o)
@@ -673,7 +679,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: Y_k_j        ! An intermediate, see below for definition
 !
-      type(timings) :: ccsd_e2_timer 
+      type(timings) :: ccsd_e2_timer
 !
       ccsd_e2_timer = timings('omega ccsd e2', pl='verbose')
       call ccsd_e2_timer%turn_on()
@@ -684,7 +690,7 @@ contains
 !                  = 2 * t_kl^bd - t_lk^bd = 2 * t_bkdl(bk,dl) - t_bkdl(bl, dk)
 !
       call mem%alloc(u_bldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      
+
       call copy_and_scale(-one, t_aibj, u_bldk, (wf%n_v)**2*(wf%n_o)**2)
       call add_1432_to_1234(two, t_aibj, u_bldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -807,7 +813,7 @@ contains
 !!    Construct u_aibj
 !!    Written by Tor S. Haugland, Nov 2019
 !!
-!!    Constructs 
+!!    Constructs
 !!
 !!       u_aibj = 2t_aibj - t_ajbi
 !!
@@ -835,4 +841,4 @@ contains
    end subroutine construct_u_aibj_ccsd
 !
 !
-end submodule omega_ccsd 
+end submodule omega_ccsd
