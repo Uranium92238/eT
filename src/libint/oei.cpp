@@ -18,10 +18,10 @@
 //
 // -----------------------------------------------------------------------
 /*
- 
-   One-electron integral (oei) routines 
+
+   One-electron integral (oei) routines
    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2020
- 
+
 */
 
 using namespace std;
@@ -37,7 +37,7 @@ void get_oei(char *type_, double *x, int *s1, int *s2){
    Get one-electron integrals (oei)
    Written by Sarai D. Folkestad, Sep 2020
 
-   Wrapper for the construction of oeis 
+   Wrapper for the construction of oeis
    The string 'type_' is used to determine the libint engine
    passed to the 'construct_oei' routine.
 
@@ -46,7 +46,7 @@ void get_oei(char *type_, double *x, int *s1, int *s2){
    bool add_            = false;         // Adding to x or copying into x
    double prefactor     = 1.0e0;         // Prefactor for integrals
    int offset           = 0;             // Offset to get the right operator from the engine
-   int n_components     = 1;             // Total number of components from the engine: 
+   int n_components     = 1;             // Total number of components from the engine:
                                          //  components operator 1 + components operator 2 + ...
 
    if (engine_type == "overlap") {
@@ -143,10 +143,10 @@ void get_oei(char *type_, double *x, int *s1, int *s2){
 void get_oei_1der(char *type_, double *x, int *s1, int *s2){
 
 /*
-   Get one-electron integrals (oei) 1 der 
+   Get one-electron integrals (oei) 1 der
    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2020
 
-   Wrapper for the construction of oeis 
+   Wrapper for the construction of oeis
    The string 'type_' is used to determine the libint engine
    passed to the 'construct_oei' routine.
 
@@ -155,7 +155,7 @@ void get_oei_1der(char *type_, double *x, int *s1, int *s2){
    bool add_            = false;         // Adding to x or copying into x
    double prefactor     = 1.0e0;         // Prefactor for integrals
    int offset           = 0;             // Offset to get the right operator from the engine
-   int n_components     = 6;             // Total number of components from the engine: 
+   int n_components     = 6;             // Total number of components from the engine:
                                          //  components operator 1 + components operator 2 + ...
 
    if (engine_type == "overlap") {
@@ -185,7 +185,7 @@ void get_oei_1der(char *type_, double *x, int *s1, int *s2){
    return;
 }
 
-void construct_oei(vector<libint2::Engine> engine, \
+void construct_oei(vector<libint2::Engine> &engine, \
                   double *x,                       \
                   int *s1,                         \
                   int *s2,                         \
@@ -245,13 +245,13 @@ void add_nuclear_h_1der(double *h_wxqk, int *s1, int *s2, int *n_ao){
     Add nuclear h 1der
     Written by Eirik F. Kjønstad, 2019-2020
 
-    Adds the contributions to the nuclear first derivative of h to 
+    Adds the contributions to the nuclear first derivative of h to
     the array h_wxqk (indices: ao, ao, xyz, atom) associated with the shells
-    s1 and s2. 
+    s1 and s2.
 
-    Note that since the operator depends on the atomic centers, there are 
-    contributions to all atoms (i.e. k = 1,2,3,...,n_atoms) stemming from 
-    s1 and s2. This is unlike for center-independent operators, see the 
+    Note that since the operator depends on the atomic centers, there are
+    contributions to all atoms (i.e. k = 1,2,3,...,n_atoms) stemming from
+    s1 and s2. This is unlike for center-independent operators, see the
     get_oei_1der routine.
 
 */
@@ -282,8 +282,8 @@ void add_nuclear_h_1der(double *h_wxqk, int *s1, int *s2, int *n_ao){
 
     Libint order 'integrals' shellsets:
 
-    Shellset 1-3: xyz (orbital) derivative contributions with respect to center given by s1 
-    Shellset 4-6: xyz (orbital) derivative contributions with respect to center given by s2 
+    Shellset 1-3: xyz (orbital) derivative contributions with respect to center given by s1
+    Shellset 4-6: xyz (orbital) derivative contributions with respect to center given by s2
     Shellset 7-:  xyz (operator) derivative contributions due to atoms 1, 2, 3, ..., n_atoms
 
 
@@ -317,7 +317,7 @@ void add_nuclear_h_1der(double *h_wxqk, int *s1, int *s2, int *n_ao){
                h_wxqk[offset] = h_wxqk[offset] + current_integrals[f12];
 
             }
-          }          
+          }
         }
       }
     }
