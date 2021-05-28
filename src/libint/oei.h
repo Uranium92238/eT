@@ -26,7 +26,7 @@ extern "C" {
 #else
 #endif
 
-void construct_oei(vector<libint2::Engine> engine, \
+void construct_oei(vector<libint2::Engine> &engine, \
                   double *x,                       \
                   int *s1,                         \
                   int *s2,                         \

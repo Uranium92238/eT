@@ -1,3 +1,6 @@
+# eT v1.2.4
+### Bugfixes
+- Engines are passed by reference in oei.cpp to avoid copy of engine for each call to the `construct_oei` routine (done for each shell pair).eT-program/eT!821
 # eT v1.2.3
 ### Bugfixes
 - Reduced threshold in `xenon` test to 1.0d-9 due to instabilities. See merge request eT-program/eT!782
