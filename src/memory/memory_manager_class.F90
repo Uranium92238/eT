@@ -40,7 +40,7 @@ module memory_manager_class
 !!    e.g. call mem%alloc(X, M, N, K) for an M x N x K tensor.
 !!
 !!    Note: Large arrays MUST always be allocated using the memory manager object. Small arrays,
-!!    integers, strings, etc., which use a negligible amount of memory, do not have to pass 
+!!    integers, strings, etc., which use a negligible amount of memory, do not have to pass
 !!    through the memory manager.
 !!
 !!    The 'alloc' and 'dealloc' routines allow the memory manager keep track of the
@@ -54,15 +54,15 @@ module memory_manager_class
    use batching_index_class, only : batching_index
 !
 !     Debug option:
-!     Require that batch setup always gives batching 
+!     Require that batch setup always gives batching
 !
 #ifdef _FORCED_BATCHING
       logical, parameter, private :: force_batch = .true.
 #else
-      logical, parameter, private :: force_batch = .false.    
-#endif 
+      logical, parameter, private :: force_batch = .false.
+#endif
 !
-!  Class definition 
+!  Class definition
 !
    type :: memory_manager
 !
@@ -187,11 +187,11 @@ module memory_manager_class
       procedure, nopass :: print_allocation_error   => print_allocation_error_memory_manager
       procedure, nopass :: print_deallocation_error => print_deallocation_error_memory_manager
 !
-!     Print of settings 
+!     Print of settings
 !
       procedure :: print_settings    => print_settings_memory_manager
 !
-!     Get and print of memory 
+!     Get and print of memory
 !
       procedure :: print_max_used                  => print_max_used_memory_manager
       procedure :: print_available                 => print_available_memory_manager
@@ -216,7 +216,7 @@ contains
 !
    function new_memory_manager(total, units) result(mem)
 !!
-!!    New memory manager 
+!!    New memory manager
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
 !!    Creates the memory manager object and sets the
@@ -226,15 +226,15 @@ contains
 !
       type(memory_manager) :: mem
 !
-      integer, intent(in) :: total 
+      integer, intent(in) :: total
 !
-      character(len=*), intent(in) :: units 
+      character(len=*), intent(in) :: units
 !
-!     Set standard and read settings 
+!     Set standard and read settings
 !
 !     Default is 8 GB
 !
-      mem%total = total 
+      mem%total = total
       mem%units = trim(units)
 !
 !     Convert from current unit to B
@@ -271,21 +271,21 @@ contains
 !
    subroutine check_for_leak_memory_manager(mem)
 !!
-!!    Check for leak 
-!!    Written by Eirik F. Kjønstad, Apr 2019 
+!!    Check for leak
+!!    Written by Eirik F. Kjønstad, Apr 2019
 !!
-!!    Issues a warning if there has been a leak since the 
-!!    the memory manager was prepared. Should only be called 
+!!    Issues a warning if there has been a leak since the
+!!    the memory manager was prepared. Should only be called
 !!    at the end of the program, when all arrays that were
 !!    allocated since mem%prepare() should have been deallocated.
 !!
-      implicit none 
+      implicit none
 !
       class(memory_manager), intent(in) :: mem
 !
       character(len=200) :: difference_string
 !
-      if (mem%available .ne. mem%total) then 
+      if (mem%available .ne. mem%total) then
 !
          call output%printf('m', 'Mismatch in memory according to eT and &
                             &specified on input:', fs='(/t3,a)')
@@ -304,17 +304,17 @@ contains
          call output%error_msg('Deallocations are missing or specified with &
                                  &incorrect dimensionalities.')
 !
-      endif 
+      endif
 !
    end subroutine check_for_leak_memory_manager
 !
 !
    pure function get_available_memory_manager(mem) result(memory)
 !!
-!!    Get available  
-!!    Written by Eirik F. Kjønstad, Jan 2019 
+!!    Get available
+!!    Written by Eirik F. Kjønstad, Jan 2019
 !!
-      implicit none 
+      implicit none
 !
       class(memory_manager), intent(in) :: mem
 !
@@ -359,7 +359,7 @@ contains
 !
          write(memory,'(f10.3, a)') dble(input_mem)/1.0d3, ' KB'
          memory = trim(adjustl(memory))
-!         
+!
       else if (abs(input_mem) .lt. 1d9) then
 !
          write(memory,'(f10.6, a)') dble(input_mem)/1.0d6, ' MB'
@@ -382,12 +382,12 @@ contains
 !
    subroutine print_available_memory_manager(mem)
 !!
-!!    Print available  
-!!    Written by Eirik F. Kjønstad, Jan 2019 
+!!    Print available
+!!    Written by Eirik F. Kjønstad, Jan 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(memory_manager), intent(in) :: mem 
+      class(memory_manager), intent(in) :: mem
 !
 
       call output%printf('m', 'Currently available memory: (a0)', &
@@ -398,12 +398,12 @@ contains
 !
    subroutine print_max_used_memory_manager(mem)
 !!
-!!    Print maximum used memory 
+!!    Print maximum used memory
 !!    Written by Alexander C. Paul, May 2020
 !!
-      implicit none 
+      implicit none
 !
-      class(memory_manager), intent(in) :: mem 
+      class(memory_manager), intent(in) :: mem
 !
 
       call output%printf('n', 'Peak memory usage during the execution of eT: (a0)', &
@@ -508,7 +508,7 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable :: array
 !
-      integer, intent(in) :: M, N, O ! First, second and third dimension of array 
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
@@ -549,7 +549,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: array
 !
-      integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array 
+      integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
@@ -590,7 +590,7 @@ contains
 !
       real(dp), dimension(:,:,:,:,:), allocatable :: array
 !
-      integer, intent(in) :: M, N, O, P, Q ! First, second, third, fourth, fifth dimension of array 
+      integer, intent(in) :: M, N, O, P, Q ! First, second, third, fourth, fifth dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O*P*Q)
       integer :: error = 0
@@ -631,7 +631,7 @@ contains
 !
       real(dp), dimension(:,:,:,:,:,:), allocatable :: array
 !
-      integer, intent(in) :: M, N, O, P, Q, R ! First, second, third, fourth, fifth, sixth dimension of array 
+      integer, intent(in) :: M, N, O, P, Q, R ! First, second, third, fourth, fifth, sixth dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O*P*Q*R)
       integer :: error = 0
@@ -717,7 +717,7 @@ contains
 !
       real(dp), dimension(:,:,:), pointer :: point
 !
-      integer, intent(in) :: M, N, O ! First, second and third dimension of array 
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
@@ -844,7 +844,7 @@ contains
 !
       complex(dp), dimension(:,:,:), allocatable :: array
 !
-      integer, intent(in) :: M, N, O ! First, second and third dimension of array 
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
@@ -885,7 +885,7 @@ contains
 !
       complex(dp), dimension(:,:,:,:), allocatable :: array
 !
-      integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array 
+      integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
@@ -926,7 +926,7 @@ contains
 !
       complex(dp), dimension(:,:,:,:,:), allocatable :: array
 !
-      integer, intent(in) :: M, N, O, P, Q ! First, second, third, fourth, fifth dimension of array 
+      integer, intent(in) :: M, N, O, P, Q ! First, second, third, fourth, fifth dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O*P*Q)
       integer :: error = 0
@@ -967,7 +967,7 @@ contains
 !
       complex(dp), dimension(:,:,:,:,:,:), allocatable :: array
 !
-      integer, intent(in) :: M, N, O, P, Q, R ! First, second, third, fourth, fifth, sixth dimension of array 
+      integer, intent(in) :: M, N, O, P, Q, R ! First, second, third, fourth, fifth, sixth dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O*P*Q*R)
       integer :: error = 0
@@ -1008,7 +1008,7 @@ contains
 !
       complex(dp), dimension(:,:,:), pointer :: point
 !
-      integer, intent(in) :: M, N, O ! First, second and third dimension of array 
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
@@ -1053,7 +1053,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: array
 !
-      integer, intent(in) :: M ! Dimension of array 
+      integer, intent(in) :: M ! Dimension of array
 !
       integer :: size_array ! Total size of array (M)
       integer :: error = 0
@@ -1094,7 +1094,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: array
 !
-      integer, intent(in) :: M, N ! First and second dimension of array 
+      integer, intent(in) :: M, N ! First and second dimension of array
 !
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
@@ -1290,7 +1290,7 @@ contains
 !!    Dealloc r 2 pointer
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
-!!    Deallocates a two dimensional double precision array pointer 
+!!    Deallocates a two dimensional double precision array pointer
 !!    and updates the available memory accordingly.
 !!
       implicit none
@@ -1299,7 +1299,7 @@ contains
 !
       real(dp), dimension(:,:), pointer :: point
 !
-      integer, intent(in) :: M, N ! First and second dimension of array 
+      integer, intent(in) :: M, N ! First and second dimension of array
 !
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
@@ -1331,7 +1331,7 @@ contains
 !!    Dealloc r 3 pointer
 !!    Written by Rolf H. Myhre, January 2019
 !!
-!!    Deallocates a three dimensional double precision array pointer 
+!!    Deallocates a three dimensional double precision array pointer
 !!    and updates the available memory accordingly.
 !!
       implicit none
@@ -1381,7 +1381,7 @@ contains
 !
       complex(dp), dimension(:), allocatable :: array
 !
-      integer, intent(in) :: M ! Dimension of array 
+      integer, intent(in) :: M ! Dimension of array
 !
       integer :: size_array ! Total size of array (M)
       integer :: error = 0
@@ -1422,7 +1422,7 @@ contains
 !
       complex(dp), dimension(:,:), allocatable :: array
 !
-      integer, intent(in) :: M, N ! First and second dimension of array 
+      integer, intent(in) :: M, N ! First and second dimension of array
 !
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
@@ -1618,7 +1618,7 @@ contains
 !!    Dealloc c 3 pointer
 !!    Written by Rolf H. Myhre, January 2019
 !!
-!!    Deallocates a three dimensional double precision pointer 
+!!    Deallocates a three dimensional double precision pointer
 !!    and updates the available memory accordingly.
 !!
       implicit none
@@ -1668,7 +1668,7 @@ contains
 !
       integer, dimension(:), allocatable :: array
 !
-      integer, intent(in) :: M ! Dimension of array 
+      integer, intent(in) :: M ! Dimension of array
 !
       integer :: size_array ! Total size of array (M)
       integer :: error = 0
@@ -1709,7 +1709,7 @@ contains
 !
       integer, dimension(:,:), allocatable :: array
 !
-      integer, intent(in) :: M, N ! First and second dimension of array 
+      integer, intent(in) :: M, N ! First and second dimension of array
 !
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
@@ -1750,7 +1750,7 @@ contains
 !
       integer, dimension(:,:,:), allocatable :: array
 !
-      integer, intent(in) :: M, N, O ! First, second and third dimension of array 
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
@@ -1791,7 +1791,7 @@ contains
 !
       integer, dimension(:,:,:,:), allocatable :: array
 !
-      integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array 
+      integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
@@ -1832,7 +1832,7 @@ contains
 !
       integer, dimension(:), allocatable :: array
 !
-      integer, intent(in) :: M ! Dimension of array 
+      integer, intent(in) :: M ! Dimension of array
 !
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
@@ -1873,7 +1873,7 @@ contains
 !
       integer, dimension(:,:), allocatable :: array
 !
-      integer, intent(in) :: M, N ! First and second dimension of array 
+      integer, intent(in) :: M, N ! First and second dimension of array
 !
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
@@ -1996,7 +1996,7 @@ contains
 !
       logical, dimension(:), allocatable :: array
 !
-      integer, intent(in) :: M ! Dimension of array 
+      integer, intent(in) :: M ! Dimension of array
 !
       integer :: size_array ! Total size of array (M)
       integer :: error = 0
@@ -2037,7 +2037,7 @@ contains
 !
       logical, dimension(:), allocatable :: array
 !
-      integer, intent(in) :: M ! Dimension of array 
+      integer, intent(in) :: M ! Dimension of array
 !
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
@@ -2123,7 +2123,9 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         call output%error_msg('User-specified memory insufficient in mem%alloc.')
+         call output%error_msg('User-specified memory insufficient in mem%alloc. &
+                               &Tried to allocate array with (i0) elements.', &
+                                ints=[size_array], ll=50)
 !
       endif
 !
@@ -2214,7 +2216,7 @@ contains
 !
 !        Hack because intel flips out if we put two functions in chars=[]
 !
-         reqChar = mem%get_memory_as_character(req_min, .true.) 
+         reqChar = mem%get_memory_as_character(req_min, .true.)
          call output%printf('m', 'Need at least (a0) but only have (a0)', &
                             chars=[reqChar, mem%get_memory_as_character(mem%available, .true.)])
          call output%error_msg('Not enough memory for a batch.')
@@ -2289,10 +2291,10 @@ contains
 !
       integer(i64):: req0_tot
       integer(i64):: req1_p_min
-      integer(i64):: req1_q_min 
+      integer(i64):: req1_q_min
       integer(i64):: req2_min
       integer(i64):: req_min
-      integer(i64):: req_tot 
+      integer(i64):: req_tot
 !
       integer(i64):: p_elements, q_elements
 !
@@ -2435,25 +2437,25 @@ contains
 !
       endif
 !
-!     Debug feature: enforced random batching 
+!     Debug feature: enforced random batching
 !
-      if (force_batch) then 
+      if (force_batch) then
 !
-         if (batch_p%index_dimension == batch_q%index_dimension) then 
+         if (batch_p%index_dimension == batch_q%index_dimension) then
 !
             call batch_p%force_batch()
 !
             batch_q%max_length  = batch_p%max_length
             batch_q%num_batches = batch_p%num_batches
 !
-         else 
+         else
 !
             call batch_p%force_batch()
             call batch_q%force_batch()
 !
-         endif 
+         endif
 !
-      endif 
+      endif
 !
    end subroutine batch_setup_2_memory_manager
 !
@@ -2500,14 +2502,14 @@ contains
       class(batching_index) :: batch_r ! An index being batched over
 !
       integer, intent(in) :: req0
-! 
-      integer, intent(in) :: req1_p 
-      integer, intent(in) :: req1_q 
-      integer, intent(in) :: req1_r 
+!
+      integer, intent(in) :: req1_p
+      integer, intent(in) :: req1_q
+      integer, intent(in) :: req1_r
 !
       integer, intent(in) :: req2_pq
       integer, intent(in) :: req2_pr
-      integer, intent(in) :: req2_qr 
+      integer, intent(in) :: req2_qr
 !
       integer, intent(in) :: req3
 !
@@ -2517,9 +2519,9 @@ contains
       integer(i64):: req0_tot
 !
       integer(i64):: req1_p_min
-      integer(i64):: req1_q_min 
+      integer(i64):: req1_q_min
       integer(i64):: req1_r_min
-! 
+!
       integer(i64):: req2_pq_min
       integer(i64):: req2_pr_min
       integer(i64):: req2_qr_min
@@ -2527,7 +2529,7 @@ contains
       integer(i64):: req3_min
 !
       integer(i64):: req_min
-      integer(i64):: req_tot 
+      integer(i64):: req_tot
 !
       integer(i64):: p_elements, q_elements, r_elements
 !
@@ -2608,7 +2610,7 @@ contains
       else if (req_min .gt. mem%available) then
 !
 !        Hack because intel flips out if we put two functions in chars=[]
-         reqChar = mem%get_memory_as_character(req_min, .true.) 
+         reqChar = mem%get_memory_as_character(req_min, .true.)
          call output%printf('m', 'Need at least (a0) but only have (a0)', &
                             chars=[reqChar, mem%get_memory_as_character(mem%available, .true.)])
          call output%error_msg('Not enough memory for a batch.')
@@ -2680,7 +2682,7 @@ contains
 !
       endif
 !
-      if (force_batch) then 
+      if (force_batch) then
 !
          call batch_p%force_batch()
 !
@@ -2700,7 +2702,7 @@ contains
 !
          end if
 !
-      endif 
+      endif
 !
    end subroutine batch_setup_3_memory_manager
 !
