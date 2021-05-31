@@ -193,15 +193,15 @@ def input_parser():
     parser.add_argument(
         "-end-t",
         "--end-time",
-        help=("Time for copying after timeout."),
+        help=("Time for copying before timeout. Default: 5 min"),
         type=str,
-        default="00:05:00",
+        default=None,
     )
 
     parser.add_argument(
         "-tf",
         "--time-format",
-        help=("Format for timeout arguments."),
+        help=("Format for timeout arguments. Default: '%%H:%%M:%%S'"),
         type=str,
         default="%H:%M:%S",
     )
@@ -311,7 +311,11 @@ def get_abort_args(args):
         now_second = int(time())
 
         duration = get_seconds(args.timeout, args.time_format)
-        end_time = get_seconds(args.end_time, args.time_format)
+
+        if args.end_time:
+            end_time = get_seconds(args.end_time, args.time_format)
+        else:
+            end_time = 300
 
         end_second = now_second + duration - end_time
 

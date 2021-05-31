@@ -11,7 +11,7 @@
 - `eT_launch.py` now more tolerant of number of inputs and will use defaults or give a warning if they don't match the number of input files. eT-program/eT!763
 - Changed `convert_v1_0_restart_files.py` script to not delete the old files and it can now be called from `eT_launch.py` using `--load-v1-0-restart-dir`. eT-program/eT!763
 - `-i-err` changed to  `-i`. (`-i-err` retained for backwardness). eT-program/eT!763
-- Possible to tell `eT_launch.py` to gracefully terminate eT using signals (`--signals`) or timeout (`--timeout`). eT-program/eT!763
+- Possible to tell `eT_launch.py` to gracefully terminate eT using signals (`--signals`) or timeout (`--timeout`). eT-program/eT!763, eT-program/eT!820
 - Z-matrix tool can convert between xyz coordinates and Z-matrix. eT-program/eT!619
 - Davidson excited state solver can now handle cases where a requested root forms a complex pair with a higher root before convergence is reached (i.e., a false-positive complex pair); we thus avoid the commonly encountered "add one more root" error. eT-program/eT!772
 - Biorthonormalization works for a set of close states as well. eT-program/eT!775
