@@ -2,6 +2,7 @@
 ### Bugfixes
 - Removed option to accumulate and erase history in DIIS. These features were not working properly. eT-program/eT!800
 - Keyword `pure gaussians` is now correctly read and enabled. eT-program/eT!810
+- Added check for 'end geometry' in input file. eT-program/eT!825
 
 ### Features
 - Added multimodel Newton-Raphson capability to ground state Newton-Raphson solver. Can be used to converge amplitudes in CC2 and CC3. eT-program/eT!759

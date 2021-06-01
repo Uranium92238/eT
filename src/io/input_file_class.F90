@@ -2311,6 +2311,10 @@ contains
 !
             exit
 !
+         elseif (io_error .ne. 0) then
+!
+            call output%error_msg("The 'geometry' section appears to have no end in the input file.")
+!
          endif
 !
          if (trim(adjustl(line)) == '--') then ! QM and MM atoms separator
