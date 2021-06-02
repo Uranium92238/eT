@@ -55,7 +55,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: omega_abij
       real(dp), dimension(:,:,:,:), allocatable :: t_abij
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Construct CC3 Omega', pl='normal')
 !
@@ -90,7 +90,7 @@ contains
 !!
 !!    CC3 Omega A
 !!    Written by Rolf H. Myhre, January 2019
-!!    Adapted to give a contravariant representation of omega2 due to the 
+!!    Adapted to give a contravariant representation of omega2 due to the
 !!    use of a contravariant representation of t3
 !!    by Rolf H. Myhre and Alexander C. Paul, Sep 2020
 !!
@@ -184,7 +184,7 @@ contains
       req_0 = req_0 + wf%n_v**3
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
-!     Need less memory if we don't need to batch, so we overwrite the maximum 
+!     Need less memory if we don't need to batch, so we overwrite the maximum
 !     required memory in batch_setup
 !
       req_single_batch = req_0 + req_1_eri*wf%n_o + 2*wf%n_v**3*wf%n_o &
@@ -483,7 +483,7 @@ contains
 !!    Calculate the triples contribution to omega1 and omega2
 !!
 !!    Written by Rolf H. Myhre and Alexander C. Paul, August 2020
-!!    Adapted to give a contravariant representation of rho2 due to the 
+!!    Adapted to give a contravariant representation of rho2 due to the
 !!    use of a contravariant representation of t3
 !!    by Rolf H. Myhre and Alexander C. Paul, Okt 2020
 !!
@@ -491,7 +491,7 @@ contains
 !             (4t_abc - 2t_bac - 2t_cba - 2t_acb + t_bca + t_cab)
 !!
 !!    omega^a_i += sum_bcjk u^abc_ijk g_jbkc
-!!    
+!!
 !!    ~omega^ab_ij += sum_ck  u^abc_ijk F_kc
 !!    ~omega^ab_lj += sum_cik u^abc_ijk g_ilkc
 !!    ~omega^ad_ij += sum_bck u^abc_ijk g_dbkc
@@ -553,7 +553,7 @@ contains
       call wf%omega1_cc3_permutation(k, u_abc, g_ibjc, omega1, factor_ij)
 !
 !     ~omega_abjk += sum_c u_abc F_ic
-      call wf%omega2_fock_cc3_permutation(j, k, u_abc, F_ov_ck(:,i), omega2, factor_jk)
+      call wf%omega2_fock_cc3_permutation(u_abc, F_ov_ck(:,i), omega2(:,:,j,k), factor_jk)
 !
 !     abc -> cab
 !     cab -> bca
@@ -565,7 +565,7 @@ contains
       call wf%omega2_cc3_permutation(j, k, v_abc, g_dbic, g_ilkc, omega2)
 !
 !     ~omega_abij += sum_c u_abc F_kc
-      call wf%omega2_fock_cc3_permutation(i, j, v_abc, F_ov_ck(:,k), omega2, factor_ij)
+      call wf%omega2_fock_cc3_permutation(v_abc, F_ov_ck(:,k), omega2(:,:,i,j), factor_ij)
 !
 !     bca -> cab
 !     abc -> bca
@@ -574,7 +574,7 @@ contains
 !     ~omega_adij += sum_bc u_abc g_dbkc
 !     ~omega_abli -= sum_c u_abc g_kljc
 !
-      call wf%omega2_cc3_permutation(i, j, u_abc, g_dbkc, g_kljc, omega2)  
+      call wf%omega2_cc3_permutation(i, j, u_abc, g_dbkc, g_kljc, omega2)
 !
 !     omega_ai += sum_bc u_abc g_jbkc
       call wf%omega1_cc3_permutation(i, u_abc, g_jbkc, omega1, factor_jk)
@@ -610,7 +610,7 @@ contains
          call wf%omega2_cc3_permutation(k, j, v_abc, g_dbic, g_iljc, omega2)
 !
 !        ~omega_abik += sum_c v_abc F_jc
-         call wf%omega2_fock_cc3_permutation(i, k, v_abc, F_ov_ck(:,j), omega2, one)
+         call wf%omega2_fock_cc3_permutation(v_abc, F_ov_ck(:,j), omega2(:,:,i,k), one)
 !
       end if
 !
@@ -623,7 +623,7 @@ contains
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Jan 2021
 !!
 !!    Constructs one permutation to CC3 omega2 vector:
-!!    These contributions are: 
+!!    These contributions are:
 !!    ~omega^ab_lj += sum_cik u^abc_ijk g_ilkc
 !!    ~omega^ad_ij += sum_bck u^abc_ijk g_dbkc
 !!
@@ -669,7 +669,7 @@ contains
    end subroutine omega2_cc3_permutation_cc3
 !
 !
-   module subroutine omega2_fock_cc3_permutation_cc3(wf, o1, o2, t3, F_ov, omega2, factor)
+   module subroutine omega2_fock_cc3_permutation_cc3(wf, t3, F_ov, omega2, factor)
 !!
 !!    Omega doubles Fock CC3 permutation
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Jan 2021
@@ -681,25 +681,23 @@ contains
 !
       class(cc3) :: wf
 !
-      integer, intent(in) :: o1, o2
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: t3
 !
       real(dp), dimension(wf%n_v), intent(in) :: F_ov
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: omega2
+      real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: omega2
 !
       real(dp), intent(in) :: factor
 !
-      call dgemv('T',              &
-                 wf%n_v,           &
-                 wf%n_v**2,        &
-                 factor,           &
-                 t3,               & ! u_c_ab
-                 wf%n_v,           &
-                 F_ov, 1,          & ! F_c_i
-                 one,              &
-                 omega2(:,:,o1,o2), 1) ! omega_ab,jk
+      call dgemv('T',       &
+                 wf%n_v,    &
+                 wf%n_v**2, &
+                 factor,    &
+                 t3,        & ! u_c_ab
+                 wf%n_v,    &
+                 F_ov, 1,   & ! F_c_i
+                 one,       &
+                 omega2, 1) ! omega_ab,jk
 !
    end subroutine omega2_fock_cc3_permutation_cc3
 !

@@ -16,6 +16,8 @@ cc response
    eom
    dipole length
    transition moments
+   permanent moments
+   initial states: {0,1,2}
 end cc response
 
 solver scf

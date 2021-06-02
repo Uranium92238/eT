@@ -66,28 +66,33 @@ module array_utilities
                    entrywise_product_
    end interface entrywise_product
 !
+   interface get_trace
+      procedure :: get_trace_r, &
+                   get_trace_c
+   end interface get_trace
+!
 contains
 !
 !
    subroutine zero_array(x, n)
 !!
-!!    Zero array 
-!!    Written by Eirik F. Kjønstad, 2018 
+!!    Zero array
+!!    Written by Eirik F. Kjønstad, 2018
 !!
 !!    Sets the array x of length n to zero.
 !!
-      implicit none 
+      implicit none
 !
-      integer, intent(in) :: n 
+      integer, intent(in) :: n
 !
-      real(dp), dimension(n), intent(out) :: x 
+      real(dp), dimension(n), intent(out) :: x
 !
-      integer :: I 
+      integer :: I
 !
 !$omp parallel do private(I) schedule(static)
-      do I = 1, n 
+      do I = 1, n
 !
-         x(I) = zero 
+         x(I) = zero
 !
       enddo
 !$omp end parallel do
@@ -97,20 +102,20 @@ contains
 !
    subroutine zero_array_complex(X, n)
 !!
-!!    Zero array 
+!!    Zero array
 !!    Written by Eirik F. Kjønstad, 2018
 !!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
 !!
-      implicit none 
+      implicit none
 !
-      integer, intent(in) :: n 
+      integer, intent(in) :: n
 !
-      complex(dp), dimension(n), intent(out) :: X 
+      complex(dp), dimension(n), intent(out) :: X
 !
-      integer :: I 
+      integer :: I
 !
 !$omp parallel do private(I) schedule(static)
-      do I = 1, n 
+      do I = 1, n
 !
          X(I) = zero_complex
 !
@@ -123,22 +128,22 @@ contains
    subroutine zero_array_int(x, n)
 !!
 !!    Zero array int
-!!    Written by Eirik F. Kjønstad, 2020 
+!!    Written by Eirik F. Kjønstad, 2020
 !!
 !!    Sets the integer array x of length n to zero.
 !!
-      implicit none 
+      implicit none
 !
-      integer, intent(in) :: n 
+      integer, intent(in) :: n
 !
-      integer, dimension(n), intent(out) :: x 
+      integer, dimension(n), intent(out) :: x
 !
-      integer :: I 
+      integer :: I
 !
 !$omp parallel do private(I) schedule(static)
-      do I = 1, n 
+      do I = 1, n
 !
-         x(I) = 0 
+         x(I) = 0
 !
       enddo
 !$omp end parallel do
@@ -148,25 +153,25 @@ contains
 !
    subroutine identity_array(x, n)
 !!
-!!    Identity array 
-!!    Written by Ida-Marie Hoyvik, Oct 2019 
+!!    Identity array
+!!    Written by Ida-Marie Hoyvik, Oct 2019
 !!
 !!    Sets the array x of dimension nxn to be the identity matrix.
 !!
-      implicit none 
+      implicit none
 !
-      integer, intent(in) :: n 
+      integer, intent(in) :: n
 !
-      real(dp), dimension(n,n), intent(out) :: x 
+      real(dp), dimension(n,n), intent(out) :: x
 !
-      integer :: i 
+      integer :: i
 !
       call zero_array(x,n*n)
 !
 !$omp parallel do private(i) schedule(static)
-      do i = 1, n 
+      do i = 1, n
 !
-         x(i,i) = one 
+         x(i,i) = one
 !
       enddo
 !$omp end parallel do
@@ -235,7 +240,7 @@ contains
 !!    Number of significant
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
 !!
-!!    Returns the number of elements in a vector x (of dimension n) larger, 
+!!    Returns the number of elements in a vector x (of dimension n) larger,
 !!    in absolute value, than "threshold": #i such that abs(x(i)) > threshold.
 !!
       implicit none
@@ -271,13 +276,13 @@ contains
 !!    Cuts the significant blocks out of a vector and places them in a reduced size vector
 !!
 !!    vec:  vector to cut out blocks from
-!!    dim_: dimension of vec 
+!!    dim_: dimension of vec
 !!
 !!    vec_reduced: vector to place the cut-out blocks into (intent: out)
-!!    dim_reduced: dimension of vec_reduced 
+!!    dim_reduced: dimension of vec_reduced
 !!
-!!    n_blocks:          total number of blocks 
-!!    block_significant: a logical array, block_significant(i) == .true. means that i is a significant block 
+!!    n_blocks:          total number of blocks
+!!    block_significant: a logical array, block_significant(i) == .true. means that i is a significant block
 !!    block_firsts:      an integer array, of dimension n_blocks + 1, containing the first index of each significant block;
 !!                       the (n_blocks)+1-th element equals (last element of the final block) + 1.
 !!
@@ -321,13 +326,13 @@ contains
 !!    Cuts the significant blocks out of a vector and places them in a reduced size vector
 !!
 !!    vec:  vector to cut out blocks from
-!!    dim_: dimension of vec 
+!!    dim_: dimension of vec
 !!
 !!    vec_reduced: vector to place the cut-out blocks into (intent: out)
-!!    dim_reduced: dimension of vec_reduced 
+!!    dim_reduced: dimension of vec_reduced
 !!
-!!    n_blocks:          total number of blocks 
-!!    block_significant: a logical array, block_significant(i) == .true. means that i is a significant block 
+!!    n_blocks:          total number of blocks
+!!    block_significant: a logical array, block_significant(i) == .true. means that i is a significant block
 !!    block_firsts:      an integer array, of dimension n_blocks + 1, containing the first index of each significant block;
 !!                       the (n_blocks)+1-th element equals (last element of the final block) + 1.
 !!
@@ -368,18 +373,18 @@ contains
 !!    Reduce array
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Cuts the significant row blocks out of a array and places them in a reduced size array 
+!!    Cuts the significant row blocks out of a array and places them in a reduced size array
 !!
 !!    array:   array to cut out blocks from
-!!    dim_:    number of rows in array 
+!!    dim_:    number of rows in array
 !!
 !!    array_reduced: array to place the cut-out blocks into (intent: out)
 !!    dim_reduced:   number of rows in array_reduced
 !!
-!!    columns: number of columns in array and array_reduced 
+!!    columns: number of columns in array and array_reduced
 !!
-!!    n_blocks:          total number of blocks 
-!!    block_significant: a logical array, block_significant(i) == .true. means that i is a significant block 
+!!    n_blocks:          total number of blocks
+!!    block_significant: a logical array, block_significant(i) == .true. means that i is a significant block
 !!    block_firsts:      an integer array, of dimension n_blocks + 1, containing the first index of each significant block;
 !!                       the (n_blocks)+1-th element equals (last element of the final block) + 1.
 !!
@@ -429,15 +434,15 @@ contains
 !!    Cuts the significant row blocks out of a array and places them in a reduced size array
 !!
 !!    array:   array to cut out blocks from
-!!    dim_:    number of rows in array 
+!!    dim_:    number of rows in array
 !!
 !!    array_reduced: array to place the cut-out blocks into (intent: out)
 !!    dim_reduced:   number of rows in array_reduced
 !!
-!!    columns: number of columns in array and array_reduced 
+!!    columns: number of columns in array and array_reduced
 !!
-!!    n_blocks:          total number of blocks 
-!!    block_significant: a logical array, block_significant(i) == .true. means that i is a significant block 
+!!    n_blocks:          total number of blocks
+!!    block_significant: a logical array, block_significant(i) == .true. means that i is a significant block
 !!    block_firsts:      an integer array, of dimension n_blocks + 1, containing the first index of each significant block;
 !!                       the (n_blocks)+1-th element equals (last element of the final block) + 1.
 !!
@@ -487,17 +492,17 @@ contains
 !!
 !!    Wrapper for Lapack decomposition routine dpstrf.
 !!
-!!    matrix:                          matrix M we want to decompose, P^T M P = L L^T 
-!!    cholesky_vectors (intent: out):  L 
+!!    matrix:                          matrix M we want to decompose, P^T M P = L L^T
+!!    cholesky_vectors (intent: out):  L
 !!    dim_:                            M and L are (dim) x (dim) arrays
 !!
 !!    used_diag (intent: out):         Vector (of dimension dim) containing the information in P:
 !!                                     P(used_diag(j), j) = one. Other elements of P are zero.
-!!                      
+!!
 !!    threshold:                       Threshold to use in the Cholesky decomposition.
-!!    
+!!
 !!    n_vectors:                       Number of Cholesky vectors
-!! 
+!!
       implicit none
 !
       integer, intent(in) :: dim_
@@ -632,7 +637,7 @@ contains
 !
       call dtrtri('l','n', n, Ainv, n, info)
 !
-      if (info /= 0) then 
+      if (info /= 0) then
          call output%error_msg('Matrix inversion failed.' // &
                                ' "Dtrtri" finished with info: (i0)', ints=[info])
       end if
@@ -647,7 +652,7 @@ contains
 !!
 !!    Returns the largest element, in absolute valute value, of X (length: n)
 !!
-      implicit none 
+      implicit none
 !
       integer, intent(in) :: n
 !
@@ -672,13 +677,13 @@ contains
 !!    Written by Sarai D. Folkestad, Sep 2019
 !!
 !!    Computes the largest element, in absolute valute value, of X (length: n),
-!!    and the index of X associated with that value. 
+!!    and the index of X associated with that value.
 !!
-!!    The routine is a copy of the function get_abs_max 
+!!    The routine is a copy of the function get_abs_max
 !!    written by Eirik F. Kjønstad. S.D.F added the
 !!    index_ stuff.
 !!
-      implicit none 
+      implicit none
 !
       integer, intent(in) :: n
 !
@@ -716,8 +721,8 @@ contains
 !!
 !!    All matrices are n x n.
 !!
-!!    left (optional): if true, transpose the left factor, A (standard); 
-!!    if false, tranpose the right factor, B. 
+!!    left (optional): if true, transpose the left factor, A (standard);
+!!    if false, tranpose the right factor, B.
 !!
       implicit none
 !
@@ -728,13 +733,13 @@ contains
 !
       real(dp), dimension(n, n) :: X
 !
-      logical, optional, intent(in) :: left 
+      logical, optional, intent(in) :: left
 !
       real(dp), dimension(:, :), allocatable :: tmp
 !
       call mem%alloc(tmp, n, n)
 !
-      if (present(left)) then 
+      if (present(left)) then
 !
          if (left) then ! Transpose the left factor, X <- A^T X B
 !
@@ -795,7 +800,7 @@ contains
          endif
 !
       else ! Transpose left factor (standard)
-!  
+!
             call dgemm('N', 'N', &
                         n,       &
                         n,       &
@@ -840,8 +845,8 @@ contains
 !!
 !!    All matrices are n x n.
 !!
-!!    left (optional): if true, transpose the left factor, A (standard); 
-!!    if false, tranpose the right factor, B. 
+!!    left (optional): if true, transpose the left factor, A (standard);
+!!    if false, tranpose the right factor, B.
 !!
 !!    Based on sandwich_real by Eirik F. Kjønstad, 2018
 !!
@@ -854,13 +859,13 @@ contains
 !
       complex(dp), dimension(n, n) :: X
 !
-      logical, optional, intent(in) :: left 
+      logical, optional, intent(in) :: left
 !
       complex(dp), dimension(:, :), allocatable :: tmp
 !
       call mem%alloc(tmp, n, n)
 !
-      if (present(left)) then 
+      if (present(left)) then
 !
          if (left) then ! Transpose the left factor, X <- A^T X B
 !
@@ -921,7 +926,7 @@ contains
             endif
 !
          else ! Transpose left factor (standard)
-!  
+!
             call zgemm('N', 'N',      &
                         n,            &
                         n,            &
@@ -1053,7 +1058,7 @@ contains
                   tmp,     &
                   n,       &
                   zero,    &
-                  Xr,      & ! X = A tmp = A X A^T 
+                  Xr,      & ! X = A tmp = A X A^T
                   m)
 !
       call mem%dealloc(tmp, n, m)
@@ -1109,7 +1114,7 @@ contains
                   tmp,                &
                   n,                  &
                   zero_complex,       &
-                  Xr,                 & ! X = A tmp = A X A^T 
+                  Xr,                 & ! X = A tmp = A X A^T
                   m)
 !
       call mem%dealloc(tmp, n, m)
@@ -1162,7 +1167,7 @@ contains
                   tmp,          &
                   n,            &
                   zero_complex, &
-                  Xr,           & ! X = A tmp = A X A^T 
+                  Xr,           & ! X = A tmp = A X A^T
                   m)
 !
       call mem%dealloc(tmp, n, m)
@@ -1214,7 +1219,7 @@ contains
                   tmp,     &
                   m,       &
                   zero,    &
-                  X,       & ! X = A tmp = A X A^T 
+                  X,       & ! X = A tmp = A X A^T
                   m)
 !
       call mem%dealloc(tmp, m, m)
@@ -1224,20 +1229,20 @@ contains
 !
    real(dp) function get_l2_norm(X, n)
 !!
-!!    Get L^2 norm 
-!!    Written by Eirik F. Kjønstad, Aug 2018 
+!!    Get L^2 norm
+!!    Written by Eirik F. Kjønstad, Aug 2018
 !!
-!!    Returns the L^2 norm of the n-dimensional vector X: 
+!!    Returns the L^2 norm of the n-dimensional vector X:
 !!
 !!       sqrt( sum_i=1^n X_i^2 )
 !!
-      implicit none 
+      implicit none
 !
       integer, intent(in) :: n
 !
-      real(dp), dimension(n), intent(in) :: X 
+      real(dp), dimension(n), intent(in) :: X
 !
-      real(dp) :: ddot 
+      real(dp) :: ddot
 !
       get_l2_norm = sqrt(ddot(n, X, 1, X, 1))
 !
@@ -1246,10 +1251,10 @@ contains
 !
    subroutine transpose_(A, A_trans, dim_)
 !!
-!!    Transpose 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Transpose
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    Saves the transpose of A in A_trans. The matrices are assumed to 
+!!    Saves the transpose of A in A_trans. The matrices are assumed to
 !!    be dim_ x dim_.
 !!
       implicit none
@@ -1260,8 +1265,8 @@ contains
       real(dp), dimension(dim_, dim_), intent(out) :: A_trans
 !
 !$omp parallel do private(m, n) shared(A, A_trans)
-      do m = 1, dim_ 
-         do n = 1, dim_ 
+      do m = 1, dim_
+         do n = 1, dim_
 !
             A_trans(n, m) = A(m, n)
 !
@@ -1300,7 +1305,7 @@ contains
          Y(i) = alpha*X(i)
 !
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
    end subroutine copy_and_scale
 !
@@ -1330,7 +1335,7 @@ contains
          Y(i) = alpha*X(i)
 !
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
    end subroutine copy_and_scale_complex
 !
@@ -1341,7 +1346,7 @@ contains
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!    Finds the n lowest values of "vec" (of length "size"), sorts them, and returns them
-!!    in "sorted_short_vec", together with an index list (of length "n") refering to the 
+!!    in "sorted_short_vec", together with an index list (of length "n") refering to the
 !!    indices of the lowest elements in the original vector "vec".
 !!
       implicit none
@@ -1432,7 +1437,7 @@ contains
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!    Finds the n highest values of "vec" (of length "size"), sorts them, and returns them
-!!    in "sorted_short_vec", together with an index list (of length "n") refering to the 
+!!    in "sorted_short_vec", together with an index list (of length "n") refering to the
 !!    indices of the lowest elements in the original vector "vec".
 !!
       implicit none
@@ -1527,7 +1532,7 @@ contains
 !!
 !!    Modified by Sarai D. Folkestad, 6. Aug. 2018
 !!
-!!    - Type real*8 changed to real(dp)       
+!!    - Type real*8 changed to real(dp)
 !!    - Variable x renamed to pivot
 !!    - Variable t renamed to temp
 !!
@@ -1593,7 +1598,7 @@ contains
 !!
 !!    Modified by Sarai D. Folkestad, 11. Nov. 2018
 !!
-!!    - Type real*8 changed to real(dp)       
+!!    - Type real*8 changed to real(dp)
 !!    - Variable x renamed to pivot
 !!    - Variable t renamed to temp
 !!    - Added index_list
@@ -1716,14 +1721,14 @@ contains
 !!    licensed under GPLv3.
 !!
 !!    Modified by Sarai D. Folkestad, 6. Aug. 2018
-!!   
+!!
 !!    - Variable x renamed to pivot
 !!    - Variable t renamed to temp
 !!    - Added index_list
 !!
 !!    Modified by Andreas Skeidsvoll, 26. Feb. 2019
 !!
-!!    - Type real*8 changed to integer    
+!!    - Type real*8 changed to integer
 !!
 !     quicksort.f -*-f90-*-
 !     Author: t-nissie
@@ -1786,14 +1791,14 @@ contains
 !!
 !!
 !!    Modified by Sarai D. Folkestad, 11. Nov. 2018
-!!   
+!!
 !!    - Variable x renamed to pivot
 !!    - Variable t renamed to temp
 !!    - Added index_list
 !!
 !!    Modified by Andreas Skeidsvoll, 26. Feb. 2019
 !!
-!!    - Type real*8 changed to integer    
+!!    - Type real*8 changed to integer
 !!
 !     quicksort.f -*-f90-*-
 !     Author: t-nissie
@@ -2030,7 +2035,7 @@ contains
 !!    Written by Ida-Marie Høyvik and Sarai D. Folkestad, Oct 2019
 !!
 !!    Extracts columns of a matrix, based on the logical list
-!!    'extract' where extract(I)=.true. defines the instruction 
+!!    'extract' where extract(I)=.true. defines the instruction
 !!    to extract. The number of elements to extract
 !!    'n_extract' must already be determined and passed to the routine.
 !!
@@ -2052,7 +2057,7 @@ contains
       counter = 0
 !
       do I = 1, n_columns
-!  
+!
          if (extract(I)) then
 !
             counter = counter + 1
@@ -2060,7 +2065,7 @@ contains
             if (counter .gt. n_extract) call output%error_msg('Tried to extract non-existent column from matrix')
 !
             call dcopy(n_rows, M(1,I), 1, M_extracted(1,counter), 1)
-!     
+!
          endif
 !
       enddo
@@ -2177,7 +2182,7 @@ contains
 !!
 !!    Also called Hadamard or Schur product
 !!
-!!    Scales each element of a vector 
+!!    Scales each element of a vector
 !!    by the corresponding element of another vector
 !!             X(p) = X(p) * Y(p)
 !!
@@ -2199,7 +2204,7 @@ contains
 !
          X(p) = X(p)*Y(p)
 !
-      enddo  
+      enddo
 !$omp end parallel do
 !
    end subroutine entrywise_product_in_place
@@ -2212,7 +2217,7 @@ contains
 !!
 !!    Also called Hadamard or Schur product
 !!
-!!    Scales each element of a 2 dimensional vector 
+!!    Scales each element of a 2 dimensional vector
 !!    by the corresponding element of another vector
 !!             X(p) = X(p) * Y(p)
 !!
@@ -2241,7 +2246,7 @@ contains
 !!
 !!    Also called Hadamard or Schur product
 !!
-!!    Scales each element of a 3 dimensional vector 
+!!    Scales each element of a 3 dimensional vector
 !!    by the corresponding element of another vector
 !!             X(p) = X(p) * Y(p)
 !!
@@ -2270,7 +2275,7 @@ contains
 !!
 !!    Also called Hadamard or Schur product
 !!
-!!    Scales each element of a 4 dimensional vector 
+!!    Scales each element of a 4 dimensional vector
 !!    by the corresponding element of another vector
 !!             X(p) = X(p) * Y(p)
 !!
@@ -2299,7 +2304,7 @@ contains
 !!
 !!    Also called Hadamard or Schur product
 !!
-!!    Scales each element of a vector 
+!!    Scales each element of a vector
 !!    by the corresponding element of another vector
 !!             Z(p) = X(p) * Y(p)
 !!
@@ -2320,7 +2325,7 @@ contains
 !
          Z(p) = X(p)*Y(p)
 !
-      enddo  
+      enddo
 !$omp end parallel do
 !
    end subroutine entrywise_product_
@@ -2328,13 +2333,13 @@ contains
 !
    subroutine scale_real_diagonal_by_real(alpha, X, dim_)
 !!
-!!    Scale diagonal of real array by real  
-!!    Written by Anders Hutcheson, Oct 2019 
+!!    Scale diagonal of real array by real
+!!    Written by Anders Hutcheson, Oct 2019
 !!
-!!    X is of dimension dim_^2 and we scale every 
+!!    X is of dimension dim_^2 and we scale every
 !!    dim_+1 element(diagonal) by alpha,
-!!    because we only scale the diagonal elements 
-!!    the first argument is dim_    
+!!    because we only scale the diagonal elements
+!!    the first argument is dim_
 !!
 
       implicit none
@@ -2343,7 +2348,7 @@ contains
 !
       integer, intent(in) :: dim_
 !
-      real(dp), dimension(dim_, dim_), intent(inout) :: X 
+      real(dp), dimension(dim_, dim_), intent(inout) :: X
 !
       call dscal(dim_, alpha, X, dim_+1)
 !
@@ -2353,12 +2358,12 @@ contains
    subroutine scale_complex_diagonal_by_real(alpha, X, dim_)
 !!
 !!    Scale diagonal of complex array by real
-!!    Written by Anders Hutcheson, Oct 2019 
+!!    Written by Anders Hutcheson, Oct 2019
 !!
-!!    X is of dimension dim_^2 and we scale every 
+!!    X is of dimension dim_^2 and we scale every
 !!    dim_+1 element(diagonal) by alpha,
-!!    because we only scale the diagonal elements 
-!!    the first argument is dim_ 
+!!    because we only scale the diagonal elements
+!!    the first argument is dim_
 !!
       implicit none
 !
@@ -2366,7 +2371,7 @@ contains
 !
       integer, intent(in) :: dim_
 !
-      complex(dp), dimension(dim_, dim_), intent(inout) :: X    
+      complex(dp), dimension(dim_, dim_), intent(inout) :: X
 !
       call zdscal(dim_, alpha, X, dim_+1)
 !
@@ -2378,18 +2383,18 @@ contains
 !!    Scale diagonal of complex array by complex
 !!    Written by Anders Hutcheson, Oct 2019
 !!
-!!    X is of dimension dim_^2 and we scale every 
+!!    X is of dimension dim_^2 and we scale every
 !!    dim_+1 element(diagonal) by alpha,
-!!    because we only scale the diagonal elements 
-!!    the first argument is dim_  
-!! 
+!!    because we only scale the diagonal elements
+!!    the first argument is dim_
+!!
       implicit none
 !
       complex(dp), intent(in) :: alpha
 !
       integer, intent(in) :: dim_
 !
-      complex(dp), dimension(dim_, dim_), intent(inout) :: X    
+      complex(dp), dimension(dim_, dim_), intent(inout) :: X
 !
       call zscal(dim_, alpha, X, dim_+1)
 !
@@ -2398,12 +2403,12 @@ contains
 !
    subroutine scale_real_4_diagonal_by_real(alpha, X, dim_)
 !!
-!!    Scale diagonal of 4 dimensional real array by real 
-!!    Written by Anders Hutcheson, Oct 2019 
+!!    Scale diagonal of 4 dimensional real array by real
+!!    Written by Anders Hutcheson, Oct 2019
 !!
 !!    The matrix has to have the following dimensions,
-!!    X(dim_1,dim_2,dim_1,dim_2) and 
-!!    dim_ is then given by dim_1*dim_2  
+!!    X(dim_1,dim_2,dim_1,dim_2) and
+!!    dim_ is then given by dim_1*dim_2
 !!
       implicit none
 !
@@ -2420,12 +2425,12 @@ contains
 !
    subroutine scale_complex_4_diagonal_by_real(alpha, X, dim_)
 !!
-!!    Scale diagonal of 4 dimensional complex array by real  
-!!    Written by Anders Hutcheson, Oct 2019 
-!! 
+!!    Scale diagonal of 4 dimensional complex array by real
+!!    Written by Anders Hutcheson, Oct 2019
+!!
 !!    The matrix has to have the following dimensions,
-!!    X(dim_1,dim_2,dim_1,dim_2) and 
-!!    dim_ is then given by dim_1*dim_2  
+!!    X(dim_1,dim_2,dim_1,dim_2) and
+!!    dim_ is then given by dim_1*dim_2
 !!
       implicit none
 !
@@ -2442,12 +2447,12 @@ contains
 !
    subroutine scale_complex_4_diagonal_by_complex(alpha, X, dim_)
 !!
-!!    Scale diagonal of 4 dimensional complex array by complex  
-!!    Written by Anders Hutcheson, Oct 2019 
-!! 
+!!    Scale diagonal of 4 dimensional complex array by complex
+!!    Written by Anders Hutcheson, Oct 2019
+!!
 !!    The matrix has to have the following dimensions,
-!!    X(dim_1,dim_2,dim_1,dim_2) and 
-!!    dim_ is then given by dim_1*dim_2   
+!!    X(dim_1,dim_2,dim_1,dim_2) and
+!!    dim_ is then given by dim_1*dim_2
 !!
       implicit none
 !
@@ -2464,11 +2469,11 @@ contains
 !
    subroutine scale_real_4_diagonal_by_real_1324(alpha, X, dim_p, dim_q)
 !!
-!!    Scale diagonal of 4 dimensional real array sorted 1324 by real 
-!!    Written by Anders Hutcheson, Oct 2019 
+!!    Scale diagonal of 4 dimensional real array sorted 1324 by real
+!!    Written by Anders Hutcheson, Oct 2019
 !!
 !!    The matrix has to have the following dimensions,
-!!    X(dim_p, dim_p, dim_q, dim_q) 
+!!    X(dim_p, dim_p, dim_q, dim_q)
 !!
       implicit none
 !
@@ -2477,7 +2482,7 @@ contains
       integer, intent(in) :: dim_p, dim_q
 !
       real(dp), dimension(dim_p,dim_p,dim_q,dim_q), intent(inout) :: X
-!      
+!
       integer :: p, q
 !
 !$omp parallel do schedule(static) private(p, q)
@@ -2495,12 +2500,12 @@ contains
 !
    subroutine scale_complex_4_diagonal_by_real_1324(alpha, X, dim_p, dim_q)
 !!
-!!    Scale diagonal of 4 dimensional complex array sorted 1324 by real 
-!!    Written by Anders Hutcheson, Oct 2019 
+!!    Scale diagonal of 4 dimensional complex array sorted 1324 by real
+!!    Written by Anders Hutcheson, Oct 2019
 !!
 !!    The matrix has to have the following dimensions,
-!!    X(dim_p, dim_p, dim_q, dim_q) 
-!! 
+!!    X(dim_p, dim_p, dim_q, dim_q)
+!!
       implicit none
 !
       real(dp), intent(in) :: alpha
@@ -2508,7 +2513,7 @@ contains
       integer, intent(in) :: dim_p, dim_q
 !
       complex(dp), dimension(dim_p,dim_p,dim_q,dim_q), intent(inout) :: X
-!      
+!
       integer :: p, q
 !
 !$omp parallel do schedule(static) private(p, q)
@@ -2526,12 +2531,12 @@ contains
 !
    subroutine scale_complex_4_diagonal_by_complex_1324(alpha, X, dim_p, dim_q)
 !!
-!!    Scale diagonal of 4 dimensional complex array sorted 1324 by complex 
-!!    Written by Anders Hutcheson, Oct 2019 
+!!    Scale diagonal of 4 dimensional complex array sorted 1324 by complex
+!!    Written by Anders Hutcheson, Oct 2019
 !!
 !!    The matrix has to have the following dimensions,
-!!    X(dim_p, dim_p, dim_q, dim_q) 
-!! 
+!!    X(dim_p, dim_p, dim_q, dim_q)
+!!
       implicit none
 !
       complex(dp), intent(in) :: alpha
@@ -2539,7 +2544,7 @@ contains
       integer, intent(in) :: dim_p, dim_q
 !
       complex(dp), dimension(dim_p,dim_p,dim_q,dim_q), intent(inout) :: X
-!      
+!
       integer :: p, q
 !
 !$omp parallel do schedule(static) private(p, q)
@@ -2568,13 +2573,13 @@ contains
 !!
 !!    where dim_pq = dim_p*dim_q
 !!
-      implicit none 
+      implicit none
 !
       real(dp), intent(in) :: alpha
 !
       integer :: dim_pq
 !
-      real(dp), dimension(dim_pq*(dim_pq+1)/2), intent(inout) :: X 
+      real(dp), dimension(dim_pq*(dim_pq+1)/2), intent(inout) :: X
 !
       integer :: pq, pqpq
 !
@@ -2604,13 +2609,13 @@ contains
 !!
 !!    where dim_pq = dim_p*dim_q
 !!
-      implicit none 
+      implicit none
 !
       real(dp), intent(in) :: alpha
 !
       integer :: dim_pq
 !
-      complex(dp), dimension(dim_pq*(dim_pq+1)/2), intent(inout) :: X 
+      complex(dp), dimension(dim_pq*(dim_pq+1)/2), intent(inout) :: X
 !
       integer :: pq, pqpq
 !
@@ -2644,13 +2649,13 @@ contains
 !!
 !!    where dim_pq = dim_p*dim_q
 !!
-      implicit none 
+      implicit none
 !
       complex(dp), intent(in) :: alpha
 !
       integer :: dim_pq
 !
-      complex(dp), dimension(dim_pq*(dim_pq+1)/2), intent(inout) :: X 
+      complex(dp), dimension(dim_pq*(dim_pq+1)/2), intent(inout) :: X
 !
       integer :: pq, pqpq
 !
@@ -2710,7 +2715,7 @@ contains
 !!    block_dim : array of dimensions for the blocks
 !!                Elements sum up to n_total
 !!
-!!    doagonal : Contains the diagonal elements of the 
+!!    doagonal : Contains the diagonal elements of the
 !!               matrix A after block diagonalization
 !!
 !!    This routine uses the convention that eigenvectors are flipped
@@ -2745,9 +2750,9 @@ contains
          if (block_dim(block_) .gt. 0) then
 !
             call mem%alloc(eigenvalues, block_dim(block_))
-!  
+!
 !           Work size query
-!  
+!
             call dsyev('V','U',              &
                         block_dim(block_),   &
                         A(offset, offset),   &
@@ -2756,7 +2761,7 @@ contains
                         worksize,            &
                         -1,                  &
                         info)
-!  
+!
             if (info .ne. 0) call output%error_msg('could not perform DSYEV worksize query')
 !
 !           Diagonalize block
@@ -2832,7 +2837,7 @@ contains
 !!    R following Kohaupt, L., Rocky Mountain J. Math., 44, 1265, (2014)
 !!
 !!    NB: Order of the R vectors can change from input to output
-!!        The R vectors are ordered such that the corresponding L vector 
+!!        The R vectors are ordered such that the corresponding L vector
 !!        with non-zero overlap are at the same position
 !!
 !!    The p-th vector is determined in terms of the previously biorthogonalized
@@ -2957,6 +2962,64 @@ contains
    end subroutine gram_schmidt_biorthonormalization
 !
 !
+   function get_trace_r(x, n) result(trace)
+!!
+!!    Compute trace real
+!!    Written by Alexander C. Paul, Apr 2020
+!!
+!!    Computes trace of a quadratic (n x n) array x.
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+!
+      real(dp), dimension(n,n), intent(in) :: x
+!
+      real(dp) :: trace
+      integer  :: p
+!
+      trace = zero
+!
+!$omp parallel do private(p) schedule(static) reduction(+:trace)
+      do p = 1, n
+!
+         trace = trace + x(p,p)
+!
+      enddo
+!$omp end parallel do
+!
+   end function get_trace_r
+!
+!
+   function get_trace_c(x, n) result(trace)
+!!
+!!    Compute trace complex
+!!    Written by Alexander C. Paul, Apr 2020
+!!
+!!    Computes trace of a quadratic (n x n) array x.
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+!
+      complex(dp), dimension(n,n), intent(in) :: x
+!
+      complex(dp) :: trace
+      integer :: p
+!
+      trace = zero
+!
+!$omp parallel do private(p) schedule(static) reduction(+:trace)
+      do p = 1, n
+!
+         trace = trace + x(p,p)
+!
+      enddo
+!$omp end parallel do
+!
+   end function get_trace_c
+!
+!
    subroutine diagonalize_symmetric(A, dim_, diagonal)
 !!
 !!    Diagonalize symmetric
@@ -2964,7 +3027,7 @@ contains
 !!
 !!    Diagonalizes the symmetric matrix A (an dim_ x dim_ matrix)
 !!
-!!    diagonal : Contains the diagonal elements of the 
+!!    diagonal : Contains the diagonal elements of the
 !!               matrix A after block diagonalization
 !!
 !!    This routine uses the convention that eigenvectors are flipped
@@ -2999,23 +3062,23 @@ contains
 !
    subroutine constant_array(x, n, const)
 !!
-!!    Constant array 
+!!    Constant array
 !!    Written by Sarai D. Folkestad, 2021
 !!
 !!    Sets the array x of length n to const.
 !!
-      implicit none 
+      implicit none
 !
-      integer, intent(in) :: n 
+      integer, intent(in) :: n
 !
-      real(dp), dimension(n), intent(out) :: x 
+      real(dp), dimension(n), intent(out) :: x
 !
       real(dp), intent(in) :: const
 !
-      integer :: I 
+      integer :: I
 !
 !$omp parallel do private(I) schedule(static)
-      do I = 1, n 
+      do I = 1, n
 !
          x(I) = const
 !
@@ -3033,10 +3096,10 @@ contains
 !!    Solves the linear equation
 !!
 !!       A X = S X e.
-!!    
+!!
 !!    On exit the vectors (X) are stored in A
 !!    On exit S is overwritten
-!! 
+!!
       implicit none
 !
       integer, intent(in) :: dim_
@@ -3055,7 +3118,7 @@ contains
 !
       call dsygv(1, 'V', 'L', &
                   dim_,       &
-                  A,          & 
+                  A,          &
                   dim_,       &
                   S,          &
                   dim_,       &
@@ -3064,9 +3127,9 @@ contains
                   4*(dim_),   &
                   info)
 !
-      call mem%dealloc(work, 4*dim_)   
+      call mem%dealloc(work, 4*dim_)
 !
-      if (info .ne. 0) call output%error_msg('in generalized diagonalization (array_utilities.F90)')   
+      if (info .ne. 0) call output%error_msg('in generalized diagonalization (array_utilities.F90)')
 !
    end subroutine generalized_diagonalization_symmetric
 !
@@ -3107,7 +3170,7 @@ contains
             Y(i) = alpha_*X(i)
 !
          enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       else
 !
@@ -3117,10 +3180,45 @@ contains
             Y(i) = beta_*Y(i) + alpha_*X(i)
 !
          enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       end if
 !
    end subroutine copy_integer
+!
+!
+   subroutine add_to_subblock(scalar, x, y, p_range, q_range)
+!!
+!!    Add block
+!!    Written by Alexander C. Paul, Apr 2021
+!!
+!!    Add elements of x to the block of y defined by first/last p and q.
+!!    y is assumed to
+!!
+      use interval_class, only: interval
+!
+      implicit none
+!
+      real(dp), intent(in) :: scalar
+      type(interval), intent(in) :: p_range, q_range
+!
+      real(dp), dimension(:,:), intent(inout) :: y
+      real(dp), dimension(p_range%first:p_range%last, q_range%first:q_range%last), &
+                                                                        intent(in) :: x
+!
+      integer :: p, q
+!
+!$omp parallel do schedule(static) private(p,q)
+      do q = q_range%first, q_range%last
+         do p = p_range%first, p_range%last
+!
+               y(p,q) = y(p,q) + scalar*x(p,q)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_to_subblock
+!
 !
 end module array_utilities

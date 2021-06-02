@@ -197,7 +197,6 @@
   ======================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -226,7 +225,7 @@
      3) Calculation of the ground state (diis algorithm)
      4) Calculation of the multipliers (davidson algorithm)
      5) Calculation of the excited state (davidson algorithm)
-     6) Calculation of the transition moments (EOM)
+     6) Calculation of excited state properties (EOM)
 
 
   1) Cholesky decomposition of the electron repulsion integrals
@@ -667,14 +666,14 @@
      Total cpu time (sec):               0.01427
 
 
-  6) Calculation of the transition moments (EOM)
+  6) Calculation of excited state properties (EOM)
 
   :: EOM properties calculation
 
-  - Summary of EOM properties calculation:
+  - Summary of EOM transition properties calculation:
 
-     State 1:
-     ----------
+     States m = 0 and n = 1:
+     -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.283140803896
      Excitation energy [eV]:            7.704653712837
@@ -682,7 +681,7 @@
 
                    Transition moments [a.u.]         Transition strength [a.u.]
      --------------------------------------------------------------------------
-     Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
+     Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
      --------------------------------------------------------------------------
      X          -0.0003805212     -0.0007610423            0.0000002896
      Y          -0.0011321897     -0.0022643795            0.0000025637
@@ -690,8 +689,8 @@
      --------------------------------------------------------------------------
      Oscillator strength:      0.013110083300
 
-     State 2:
-     ----------
+     States m = 0 and n = 2:
+     -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.336575862688
      Excitation energy [eV]:            9.158695724626
@@ -699,7 +698,7 @@
 
                    Transition moments [a.u.]         Transition strength [a.u.]
      --------------------------------------------------------------------------
-     Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
+     Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
      --------------------------------------------------------------------------
      X          -0.0058211760     -0.0116423519            0.0000677722
      Y           0.0002191045      0.0004382090            0.0000000960
@@ -707,8 +706,8 @@
      --------------------------------------------------------------------------
      Oscillator strength:      0.000015234303
 
-     State 3:
-     ----------
+     States m = 0 and n = 3:
+     -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.381521396005
      Excitation energy [eV]:           10.381725981581
@@ -716,11 +715,11 @@
 
                    Transition moments [a.u.]         Transition strength [a.u.]
      --------------------------------------------------------------------------
-     Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
+     Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
      --------------------------------------------------------------------------
-     X           0.0009718226      0.0019436453            0.0000018889
-     Y          -0.4533812396     -0.9067624791            0.4111090968
-     Z           0.0039450131      0.0078900262            0.0000311263
+     X          -0.0009718226     -0.0019436453            0.0000018889
+     Y           0.4533812396      0.9067624791            0.4111090968
+     Z          -0.0039450131     -0.0078900262            0.0000311263
      --------------------------------------------------------------------------
      Oscillator strength:      0.104573008326
 

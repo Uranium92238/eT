@@ -52,10 +52,13 @@ module cc3_class
 !
 !     Density intermediates files
 !     Y_cmjk = sum_aij tbar^abc_ijk t^ab_im
-      type(direct_stream_file) :: Y_cmjk_tbar
+      type(direct_stream_file) :: Y_cmjk_tbar, Y_ebck_tbar
 !
       real(dp), dimension(:,:), allocatable :: GS_cc3_density_oo
       real(dp), dimension(:,:), allocatable :: GS_cc3_density_vv
+!
+      real(dp), dimension(:,:), allocatable :: L_cc3_density_oo
+      real(dp), dimension(:,:), allocatable :: L_cc3_density_vv
 !
    contains
 !
@@ -159,9 +162,20 @@ module cc3_class
       procedure :: initialize_gs_density                => initialize_gs_density_cc3
       procedure :: destruct_gs_density                  => destruct_gs_density_cc3
 !
-      procedure :: construct_gs_density                 => construct_gs_density_cc3
-      procedure :: construct_left_transition_density    => construct_left_transition_density_cc3
-      procedure :: construct_right_transition_density   => construct_right_transition_density_cc3
+      procedure :: initialize_density_intermediates &
+                => initialize_density_intermediates_cc3
+      procedure :: destruct_density_intermediates &
+                => destruct_density_intermediates_cc3
+!
+      procedure :: mu_ref_density_terms &
+                => mu_ref_density_terms_cc3
+      procedure :: density_cc3_mu_ref_blocks &
+                => density_cc3_mu_ref_blocks_cc3
+!
+      procedure :: mu_nu_density_terms   &
+                => mu_nu_density_terms_cc3
+      procedure :: density_cc3_mu_nu_blocks &
+                => density_cc3_mu_nu_blocks_cc3
 !
       procedure :: density_cc3_mu_ref_abc               => density_cc3_mu_ref_abc_cc3
       procedure :: density_cc3_mu_ref_oo                => density_cc3_mu_ref_oo_cc3
@@ -171,13 +185,13 @@ module cc3_class
                 => construct_y_vooo_intermediate_cc3
 !
       procedure :: density_cc3_mu_nu_ov                 => density_cc3_mu_nu_ov_cc3
-      procedure :: density_cc3_mu_nu_oo_ov_vv           => density_cc3_mu_nu_oo_ov_vv_cc3
-      procedure :: density_cc3_mu3_nu2_ov               => density_cc3_mu3_nu2_ov_cc3
       procedure :: density_cc3_mu_nu_ijk                => density_cc3_mu_nu_ijk_cc3
       procedure :: density_cc3_mu_nu_abc                => density_cc3_mu_nu_abc_cc3
       procedure :: density_cc3_mu_nu_ov_Z_term          => density_cc3_mu_nu_ov_Z_term_cc3
-      procedure :: density_cc3_mu_nu_vo                 => density_cc3_mu_nu_vo_cc3
-      procedure :: construct_Z_intermediate             => construct_Z_intermediate_cc3
+      procedure :: density_cc3_Z1_ov                    => density_cc3_Z1_ov_cc3
+      procedure :: density_cc3_Z2_oo_vv                 => density_cc3_Z2_oo_vv_cc3
+      procedure :: density_cc3_Y_vooo_ov                => density_cc3_Y_vooo_ov_cc3
+      procedure :: density_cc3_Y_vvvo_ov                => density_cc3_Y_vvvo_ov_cc3
 !
       procedure, nopass :: density_cc3_oo_vv_N7_TN_permutation &
                         => density_cc3_oo_vv_N7_TN_permutation_cc3
@@ -217,11 +231,11 @@ contains
    subroutine initialize_cc3(wf, template_wf)
 !!
 !!    Initialize
-!!    Written by Rolf H. Myhre, 2018
+!!    Written by Rolf H. Myhre and Alexander C. Paul, 2018
 !!
-      use wavefunction_class,       only : wavefunction
-      use citation_class,           only : citation
-      use citation_printer_class,   only : eT_citations
+      use wavefunction_class,       only: wavefunction
+      use citation_class,           only: citation
+      use citation_printer_class,   only: eT_citations
 !
       implicit none
 !
@@ -293,8 +307,6 @@ contains
 !
       class(cc3) :: wf
 !
-      type(direct_stream_file) :: Y_ebck_tbar
-!
 !     Delete Intermediate files for the jacobian transformations
       if (wf%X_abid%exists()) then
 !
@@ -317,13 +329,10 @@ contains
 !
       end if
 !
-!     Intermediates created for/in response
-      Y_ebck_tbar = direct_stream_file('Y_ebck_tbar', wf%n_v**3)
+!     Intermediates created for response
+      if (wf%Y_ebck_tbar%exists()) then
 !
-      if (Y_ebck_tbar%exists()) then
-!
-         call Y_ebck_tbar%open_('write')
-         call Y_ebck_tbar%delete_
+         call wf%Y_ebck_tbar%delete_
 !
       end if
 !
@@ -452,29 +461,21 @@ contains
 !
       class(cc3) :: wf
 !
-      type(direct_stream_file) :: Y_ebck_tbar
-!
       type(batching_index) :: batch_k
       integer :: k_batch, req_0, req_1
 !
       real(dp), dimension(:,:), allocatable :: Y_ebck
 !
-!     Copy the intermediate Y_ebck constructed as follows:
-!     Y_ebck = sum_aij tbar^abc_ijk * t^ae_ij
-!
-!     Later used in the right transition density matrix
-!
-      Y_ebck_tbar = direct_stream_file('Y_ebck_tbar', wf%n_v**3)
+      wf%Y_ebck_tbar = direct_stream_file('Y_ebck_tbar', wf%n_v**3)
 !
 !     Delete if the file already exists
 !     e.g. when restarting a crashed CC3 calculation
 !
-      if(Y_ebck_tbar%exists()) then
-         call Y_ebck_tbar%delete_
+      if(wf%Y_ebck_tbar%exists()) then
+         call wf%Y_ebck_tbar%delete_
       end if
 !
-!     We want to read and write as much as possible at once,
-!     so we'll set up a batch
+!     Want to read and write as much as possible at once:
 !
       req_0 = 0
       req_1 = wf%n_v**3
@@ -483,19 +484,19 @@ contains
       call mem%batch_setup(batch_k, req_0, req_1)
       call mem%alloc(Y_ebck, wf%n_v**3, batch_k%max_length)
 !
-      call Y_ebck_tbar%open_('write')
+      call wf%Y_ebck_tbar%open_('write')
       call wf%Y_ebck%open_('read')
 !
       do k_batch = 1, batch_k%num_batches
          call batch_k%determine_limits(k_batch)
 !
          call wf%Y_ebck%read_interval(Y_ebck, batch_k)
-         call Y_ebck_tbar%write_interval(Y_ebck, batch_k)
+         call wf%Y_ebck_tbar%write_interval(Y_ebck, batch_k)
 !
       enddo
 !
       call wf%Y_ebck%close_()
-      call Y_ebck_tbar%close_()
+      call wf%Y_ebck_tbar%close_()
 !
       call mem%dealloc(Y_ebck, wf%n_v**3, batch_k%max_length)
 !
@@ -932,10 +933,6 @@ contains
 !
                      do k = batch_k%first, min(batch_k%last, j)
 !
-                        if (k .eq. i) then ! k == j == i
-                           cycle
-                        end if
-!
                         k_rel = k - batch_k%first + 1
 !
 !                       Check for core orbitals (used for excited states):
@@ -947,7 +944,7 @@ contains
 !                       Using c1-transformed integrals the terms have the same form
 !                       as the omega terms (where t_abc = R_abc)
 !
-                        call wf%construct_V(i, j, k, sorting,              &
+                        call wf%construct_V(i, j, k, sorting,             &
                                             R_abc, t2, R2,                &
                                             g_bdci_p(:,:,:,i_rel),        &
                                             g_bdcj_p(:,:,:,j_rel),        &
@@ -1276,7 +1273,7 @@ contains
    end function three_core_indices_cc3
 !
 !
-   pure function ijk_amplitudes_are_zero_cc3(wf, i, j, k, cvs, rm_core) result(skip)
+   pure function ijk_amplitudes_are_zero_cc3(wf, i, j, k, cvs, rm_core) result(are_zero)
 !!
 !!    ijk amplitudes are zero
 !!    Written by Alexander C. Paul, Apr 2021
@@ -1296,20 +1293,26 @@ contains
 !
       integer, intent(in) :: i, j, k
       logical, intent(in) :: cvs, rm_core
-      logical :: skip
+      logical :: are_zero
 !
-      skip = .false.
+      are_zero = .false.
 !
-      if (cvs) then
-         skip  = .not. (any(wf%core_MOs .eq. i) &
-                 .or.   any(wf%core_MOs .eq. j) &
-                 .or.   any(wf%core_MOs .eq. k))
-      end if
+      if (i .eq. j .and. j .eq. k) then ! k == j == i
 !
-      if (rm_core) then
-         skip  =   (any(wf%core_MOs .eq. i) &
-               .or. any(wf%core_MOs .eq. j) &
-               .or. any(wf%core_MOs .eq. k))
+         are_zero = .true.
+!
+      else if (cvs) then
+!
+         are_zero = .not. (any(wf%core_MOs .eq. i) &
+                    .or.   any(wf%core_MOs .eq. j) &
+                    .or.   any(wf%core_MOs .eq. k))
+!
+      else if (rm_core) then
+!
+         are_zero =   (any(wf%core_MOs .eq. i) &
+                  .or. any(wf%core_MOs .eq. j) &
+                  .or. any(wf%core_MOs .eq. k))
+!
       end if
 !
    end function ijk_amplitudes_are_zero_cc3

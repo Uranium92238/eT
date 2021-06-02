@@ -23,10 +23,10 @@ module doubles_class
 !!    Abstract doubles class module
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019
 !!
-!!    Doubles class which contains routines that are in common 
+!!    Doubles class which contains routines that are in common
 !!    for both CCSD and CC2.
 !!
-!!    Both CCSD and CC2 inherit from this doubles class 
+!!    Both CCSD and CC2 inherit from this doubles class
 !!    but need specialized routines.
 !!
 !
@@ -136,11 +136,21 @@ module doubles_class
 !
 !     Properties and densities
 !
-      procedure :: construct_gs_density                  => construct_gs_density_doubles
-      procedure :: construct_gs_density_complex          => construct_gs_density_doubles_complex
+      procedure :: construct_gs_density &
+                => construct_gs_density_doubles
+      procedure :: construct_gs_density_complex &
+                => construct_gs_density_doubles_complex
 !
-      procedure :: construct_left_transition_density     => construct_left_transition_density_doubles
-      procedure :: construct_right_transition_density    => construct_right_transition_density_doubles
+      procedure :: mu_ref_density_terms &
+                => mu_ref_density_terms_doubles
+      procedure :: mu_ref_density_terms_complex &
+                => mu_ref_density_terms_doubles_complex
+!
+      procedure :: construct_right_transition_density &
+                => construct_right_transition_density_doubles
+!
+      procedure :: mu_nu_density_terms &
+                => mu_nu_density_terms_doubles
 !
       procedure :: density_doubles_mu_ref_oo             => density_doubles_mu_ref_oo_doubles
       procedure :: density_doubles_mu_ref_oo_complex     => density_doubles_mu_ref_oo_doubles_complex
@@ -319,7 +329,7 @@ contains
 !
    subroutine get_ip_projector_doubles(wf, projector)
 !!
-!!    Get IP projector 
+!!    Get IP projector
 !!    Written by Sarai D. Folkestad, Aug 2019
 !!
 !!    Constructs and returns the projector
@@ -351,7 +361,7 @@ contains
                   projector(wf%n_t1 + AIBJ) = one
 !
                enddo
-            enddo 
+            enddo
 !
          enddo
       enddo
@@ -361,7 +371,7 @@ contains
 !
    subroutine get_orbital_differences_doubles(wf, orbital_differences, N)
 !!
-!!    Get orbital differences 
+!!    Get orbital differences
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    and Andreas Skeidsvoll, 2018
 !!
@@ -369,7 +379,7 @@ contains
 !
       class(doubles), intent(in) :: wf
 !
-      integer, intent(in) :: N 
+      integer, intent(in) :: N
 !
       real(dp), dimension(N), intent(out) :: orbital_differences
 !
@@ -379,16 +389,16 @@ contains
 !
       if (N .eq. wf%n_t1) return ! Requested only singles orbital differences
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
             ai = wf%n_v*(i - 1) + a
 !
-            do j = 1, wf%n_o 
+            do j = 1, wf%n_o
                do b = 1, wf%n_v
 !
-                  bj = wf%n_v*(j-1) + b 
+                  bj = wf%n_v*(j-1) + b
 !
                   if (ai .ge. bj) then
 !
@@ -402,7 +412,7 @@ contains
                   endif
 !
                enddo
-            enddo  
+            enddo
 !
          enddo
       enddo

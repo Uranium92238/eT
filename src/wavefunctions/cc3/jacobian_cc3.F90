@@ -435,10 +435,6 @@ contains
 !
                      do k = batch_k%first, min(batch_k%last, j)
 !
-                        if (k .eq. i) then ! k == j == i
-                           cycle
-                        end if
-!
 !                       Check for core orbitals:
 !                       cvs: i,j,k cannot all correspond to valence orbitals
 !                       rm_core: i,j,k may not contain any core orbital
@@ -887,10 +883,6 @@ contains
 !
                      do k = batch_k%first, min(batch_k%last, j)
 !
-                        if (i .eq. j .and. i .eq. k) then
-                           cycle
-                        end if
-!
 !                       Check for core orbitals:
 !                       cvs: i,j,k cannot all correspond to valence orbitals
 !                       rm_core: i,j,k may not contain any core orbital
@@ -1072,11 +1064,11 @@ contains
    end subroutine construct_c1_fock_cc3
 !
 !
-   module subroutine jacobian_cc3_b2_fock_cc3(wf, i, j, k, u_abc, v_abc, rho_abij, F_ov_ck)
+   module subroutine jacobian_cc3_b2_fock_cc3(wf, i, j, k, u_abc, v_abc, rho_ablj, F_ov_ck)
 !!
 !!    Jacobian CC3 B2 fock
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Feb 2019
-!!    Adapted to give a contravariant representation of rho2 due to the 
+!!    Adapted to give a contravariant representation of rho2 due to the
 !!    use of a contravariant representation of t3
 !!    by Rolf H. Myhre and Alexander C. Paul, Okt 2020
 !!
@@ -1089,53 +1081,51 @@ contains
 !!    where:
 !!    u_abc = (4t_abc - 2t_acb - 2t_cba - 2t_bac + t_bca + t_cab)
 !!
+!!    Note that rho_abij has to be symmetrized outside of this routine
+!!    This routine is also used for Z_bcjk = tbar^abc_ijk R^a_i
+!!
       implicit none
 !
       class(cc3) :: wf
 !
       integer, intent(in) :: i, j, k
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)            :: u_abc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)           :: v_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)  :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: v_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_abij
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_ablj
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                    :: F_ov_ck
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: F_ov_ck
 !
       real(dp) :: factor_ij, factor_jk
-      logical  :: skip
 !
       if (i .ne. j .and. j .ne. k) then
          factor_ij = one
          factor_jk = one
-         skip = .false.
       else if (j .eq. k )  then
          factor_ij = one
          factor_jk = half
-         skip = .true.
       else ! i == j
          factor_ij = half
          factor_jk = one
-         skip = .true.
       end if
 !
-!     u_abc = 4t_abc - 2t_acb - 2t_cba - 2t_bac + t_bca + t_cab
-!     rho^ab_ij += sum_c u_abc F^C1_kc
-      call wf%rho2_fock_cc3_permutation(i, j, u_abc, F_ov_ck(:,k), rho_abij, factor_ij)
+!     rho_abjk += sum_c u_abc*F_ic
+      call wf%omega2_fock_cc3_permutation(u_abc, F_ov_ck(:,i), rho_ablj(:,:,j,k), factor_jk)
 !
-!     v_abc = 4t_cab - 2t_bac - 2t_acba - 2t_cba + t_abc + t_bca
-      call sort_123_to_231(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
+!     abc -> cab
+      call sort_123_to_312(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-!     rho_abjk += sum_c v_abc*F_ic
-      call wf%rho2_fock_cc3_permutation(j, k, v_abc, F_ov_ck(:,i), rho_abij, factor_jk)
+!     rho^ab_ij += sum_c v_abc F^C1_kc
+      call wf%omega2_fock_cc3_permutation(v_abc, F_ov_ck(:,k), rho_ablj(:,:,i,j), factor_ij)
 !
-      if (.not. skip) then
+      if (k .ne. j .and. j .ne. i) then
 !
-!        v_abc = 4t_acb - 2t_cab - 2t_abc - 2t_bca + t_cba + t_bac
-         call sort_123_to_132(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
+!        acb -> cab
+         call sort_123_to_213(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
 !        rho^ab_ik += sum_c v_abc*F_jc
-         call wf%rho2_fock_cc3_permutation(i, k, v_abc, F_ov_ck(:,j), rho_abij, one)
+         call wf%omega2_fock_cc3_permutation(v_abc, F_ov_ck(:,j), rho_ablj(:,:,i,k), one)
 !
       end if
 !

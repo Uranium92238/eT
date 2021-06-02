@@ -93,27 +93,70 @@ contains
 !
    module subroutine construct_gs_density_ccs(wf)
 !!
-!!    Construct one-electron density
+!!    Construct GS density
 !!    Written by Sarai Dery Folkestad, 2019
 !!
-!!    Constructs the one-electron density
-!!    matrix in the T1 basis
+!!    Constructs the one-electron density matrix in the T1 basis
 !!
 !!    D_pq = < Lambda| E_pq |CC >
 !!
 !!    Contributions to the density are split up as follows:
 !!    D_pq = D_pq(ref-ref) + sum_mu tbar_mu D_pq(mu-ref)
 !!
+!!    The second term is separated in "mu_ref_density_terms",
+!!    as it is used for the left transition density as well.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+      type(timings) :: timer
+!
+      timer = timings('Ground state density', pl='m')
+      call timer%turn_on
+!
+      call wf%mu_ref_density_terms(wf%density, 0, wf%t1bar)
+      call wf%density_ccs_ref_ref_oo(wf%density)
+!
+      call timer%turn_off
+!
+   end subroutine construct_gs_density_ccs
+!
+!
+   module subroutine mu_ref_density_terms_ccs(wf, density, state, L)
+!!
+!!    Density mu ref terms
+!!    Written by Alexander C. Paul, May 2021
+!!
+!!    Constructs terms of the form:
+!!       sum_mu L_mu < mu| E_pq |HF >
+!!
+!!    corresponding to terms of the ground state density
+!!    and the left transition density.
+!!
       implicit none
 !
       class(ccs) :: wf
 !
-      call zero_array(wf%density, (wf%n_mo)**2)
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: density
 !
-      call wf%density_ccs_ref_ref_oo(wf%density)
-      call wf%density_ccs_mu_ref_vo(wf%density, wf%t1bar)
+      integer, intent(in) :: state
 !
-   end subroutine construct_gs_density_ccs
+      real(dp), dimension(wf%n_t1), intent(in) :: L
+!
+      type(timings)     :: timer
+      character(len=40) :: timer_name
+!
+      write(timer_name, '(a,i0,a)') 'CCS contribution to <', state,'|E_pq|0>'
+      timer = timings(trim(timer_name), pl='v')
+      call timer%turn_on()
+!
+      call zero_array(density, wf%n_mo**2)
+!
+      call wf%density_ccs_mu_ref_vo(density, L)
+!
+      call timer%turn_off()
+!
+   end subroutine mu_ref_density_terms_ccs
 !
 !
    module subroutine density_ccs_ref_ref_oo_ccs(wf, density)
