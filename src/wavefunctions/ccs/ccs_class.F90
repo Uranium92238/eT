@@ -70,7 +70,7 @@ module ccs_class
 !
       logical :: need_g_abcd
 !
-      type(stream_file)     :: t_file, tbar_file
+      type(stream_file) :: t_file, tbar_file
 !
       type(stream_file), dimension(:), allocatable :: l_files, r_files
 !
@@ -100,8 +100,8 @@ module ccs_class
       real(dp),    dimension(:,:), allocatable :: density
       complex(dp), dimension(:,:), allocatable :: density_complex
 
-      real(dp),    dimension(:,:), allocatable :: left_transition_density
-      real(dp),    dimension(:,:), allocatable :: right_transition_density
+      real(dp),    dimension(:),   allocatable :: r0
+      complex(dp), dimension(:),   allocatable :: r0_complex
 !
       integer, dimension(:), allocatable :: core_MOs
 !
@@ -172,8 +172,10 @@ module ccs_class
       procedure :: destruct_gs_density                           => destruct_gs_density_ccs
       procedure :: destruct_gs_density_complex                   => destruct_gs_density_ccs_complex
 !
-      procedure :: initialize_transition_densities               => initialize_transition_densities_ccs
-      procedure :: destruct_transition_densities                 => destruct_transition_densities_ccs
+      procedure :: initialize_density_intermediates &
+                => initialize_density_intermediates_ccs
+      procedure :: destruct_density_intermediates   &
+                => destruct_density_intermediates_ccs
 !
       procedure :: initialize_right_excitation_energies          => initialize_right_excitation_energies_ccs
       procedure :: destruct_right_excitation_energies            => destruct_right_excitation_energies_ccs
@@ -209,6 +211,9 @@ module ccs_class
       procedure :: get_restart_vector                            => get_restart_vector_ccs
 !
       procedure :: save_tbar_intermediates                       => save_tbar_intermediates_ccs
+!
+      procedure :: get_density_for_plotting &
+                => get_density_for_plotting_ccs
 !
 !     Print summaries
 !
@@ -324,11 +329,18 @@ module ccs_class
       procedure :: calculate_energy_length_dipole_term           => calculate_energy_length_dipole_term_ccs
       procedure :: calculate_energy_length_dipole_term_complex   => calculate_energy_length_dipole_term_ccs_complex
 !
+      procedure :: compute_eom_transition_moments                => compute_eom_transition_moments_ccs
+!
       procedure :: construct_gs_density                          => construct_gs_density_ccs
       procedure :: construct_gs_density_complex                  => construct_gs_density_ccs_complex
+      procedure :: mu_ref_density_terms                          => mu_ref_density_terms_ccs
+      procedure :: mu_ref_density_terms_complex                  => mu_ref_density_terms_ccs_complex
+!
+      procedure :: construct_left_transition_density             => construct_left_transition_density_ccs
 !
       procedure :: construct_right_transition_density            => construct_right_transition_density_ccs
-      procedure :: construct_left_transition_density             => construct_left_transition_density_ccs
+      procedure :: construct_es_density                          => construct_es_density_ccs
+      procedure :: mu_nu_density_terms                           => mu_nu_density_terms_ccs
 !
       procedure :: density_ccs_ref_ref_oo                        => density_ccs_ref_ref_oo_ccs
       procedure :: density_ccs_ref_ref_oo_complex                => density_ccs_ref_ref_oo_ccs_complex
@@ -361,7 +373,7 @@ module ccs_class
       procedure :: remove_parallel_states                        => remove_parallel_states_ccs
       procedure :: remove_parallel_states_from_file              => remove_parallel_states_from_file_ccs
 !
-!     One-electron interals
+!     One-electron integrals
 !
       procedure :: t1_transform                                  => t1_transform_ccs
       procedure :: t1_transform_complex                          => t1_transform_ccs_complex
@@ -550,9 +562,6 @@ contains
       call output%printf('m', 'Bath orbital(s):         (l0)', &
             logs=[wf%bath_orbital], fs='(/t6, a)')
 !
-      call output%printf('m', 'Core-valence separation: (l0)', &
-            logs=[wf%cvs], fs='(t6, a)')
-!
 !     Print orbital space info for cc
 !
       call output%printf('m', ' - Number of orbitals:', &
@@ -676,7 +685,6 @@ contains
       call wf%destruct_orbital_coefficients()
       call wf%destruct_orbital_energies()
       call wf%destruct_gs_density()
-      call wf%destruct_transition_densities()
       call wf%destruct_frozen_CCT()
 !
       call wf%eri%cleanup()
@@ -1232,7 +1240,7 @@ contains
       overlap = ddot(wf%n_es_amplitudes, L, 1, R, 1)
 !
       call output%printf('debug', 'Overlap of (i0). left and (i0). right state: (f15.10)', &
-                         ints=[left_state, right_state], reals=[overlap], fs='(/t6,a)')
+                         ints=[left_state, right_state], reals=[overlap], fs='(t6,a)')
 !
    end function L_R_overlap_ccs
 !

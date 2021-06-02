@@ -80,21 +80,21 @@ module visualization_class
 !
    contains 
 !
-      procedure, public :: initialize                            => initialize_visualization
-      procedure, public :: cleanup                               => cleanup_visualization
+      procedure, public :: initialize                 => initialize_visualization
+      procedure, public :: cleanup                    => cleanup_visualization
 !
-      procedure, public :: plot_orbitals => plot_orbitals_visualization
-      procedure, public :: plot_density  => plot_density_visualization
+      procedure, public :: plot_orbitals              => plot_orbitals_visualization
+      procedure, public :: plot_density               => plot_density_visualization
 !
-      procedure, private :: set_up_grid                  => set_up_grid_visualization
-      procedure, private :: print_grid_info              => print_grid_info_visualization
-      procedure, private :: read_settings                => read_settings_visualization
-      procedure, private :: write_vector                 => write_vector_visualization
-      procedure, private :: write_vector_to_plt          => write_vector_to_plt_visualization
-      procedure, private :: write_vector_to_cube         => write_vector_to_cube_visualization
-      procedure, private :: evaluate_mos_on_grid         => evaluate_mos_on_grid_visualization
-      procedure, private :: evaluate_density_on_grid     => evaluate_density_on_grid_visualization
-      procedure, private :: place_grid_in_memory         => place_grid_in_memory_visualization
+      procedure, private :: set_up_grid               => set_up_grid_visualization
+      procedure, private :: print_grid_info           => print_grid_info_visualization
+      procedure, private :: read_settings             => read_settings_visualization
+      procedure, private :: write_vector              => write_vector_visualization
+      procedure, private :: write_vector_to_plt       => write_vector_to_plt_visualization
+      procedure, private :: write_vector_to_cube      => write_vector_to_cube_visualization
+      procedure, private :: evaluate_mos_on_grid      => evaluate_mos_on_grid_visualization
+      procedure, private :: evaluate_density_on_grid  => evaluate_density_on_grid_visualization
+      procedure, private :: place_grid_in_memory      => place_grid_in_memory_visualization
 !
    end type visualization
 !

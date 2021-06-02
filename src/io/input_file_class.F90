@@ -296,13 +296,14 @@ contains
       cc_response%name_    = 'cc response'
       cc_response%required = .false.
       cc_response%keywords = [character(len=30) :: &
-                             'transition moments', &
-                             'frequencies',        &
-                             'polarizabilities',   &
                              'dipole length',      &
+                             'eom',                &
+                             'frequencies',        &
+                             'initial states',     &
                              'lr',                 &
-                             'eom']
-!
+                             'polarizabilities',   &
+                             'permanent moments',  &
+                             'transition moments']
 !
       cc_td%name_    = 'cc td'
       cc_td%required = .false.
@@ -584,16 +585,17 @@ contains
       visualization%name_    = 'visualization'
       visualization%required = .false.
       visualization%keywords = [character(len=30) ::        &
+                               'file format',               &
                                'grid spacing',              &
                                'grid buffer',               &
                                'grid min',                  &
                                'grid max',                  &
                                'plot cc density',           &
+                               'plot es densities',         &
                                'plot hf orbitals',          &
                                'plot hf density',           &
                                'plot hf active density',    &
                                'plot transition densities', &
-                               'file format',               &
                                'states to plot']
 !
 !     Gather all sections into the file's section array

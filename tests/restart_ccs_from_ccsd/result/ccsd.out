@@ -183,7 +183,7 @@
      2           -78.828675852655     0.7128E-01     0.3207E-01
      3           -78.843428154462     0.8290E-02     0.1475E-01
      4           -78.843809541675     0.2414E-02     0.3814E-03
-     5           -78.843850846799     0.3301E-03     0.4131E-04
+     5           -78.843850846800     0.3301E-03     0.4131E-04
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
      8           -78.843851693557     0.2356E-05     0.7054E-09
@@ -216,7 +216,6 @@
   =======================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -246,7 +245,7 @@
      3) Calculation of the ground state (diis algorithm)
      4) Calculation of the multipliers (davidson algorithm)
      5) Calculation of the excited state (davidson algorithm)
-     6) Calculation of the transition moments (EOM)
+     6) Calculation of excited state properties (EOM)
 
 
   1) Cholesky decomposition of the electron repulsion integrals
@@ -535,6 +534,7 @@
 
      Storage (cc_es_davidson_trials): file
      Storage (cc_es_davidson_transforms): file
+
 
   Iteration:                  1
   Reduced space dimension:    1
@@ -843,6 +843,7 @@
      Storage (cc_es_davidson_transforms): file
      Restarting left vector 1 from file r_001.
 
+
   Iteration:                  1
   Reduced space dimension:    1
 
@@ -1107,14 +1108,14 @@
      Total cpu time (sec):               0.33587
 
 
-  6) Calculation of the transition moments (EOM)
+  6) Calculation of excited state properties (EOM)
 
   :: EOM properties calculation
 
-  - Summary of EOM properties calculation:
+  - Summary of EOM transition properties calculation:
 
-     State 1:
-     ----------
+     States m = 0 and n = 1:
+     -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.247194255572
      Excitation energy [eV]:            6.726498310305
@@ -1122,7 +1123,7 @@
 
                    Transition moments [a.u.]         Transition strength [a.u.]
      --------------------------------------------------------------------------
-     Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
+     Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
      --------------------------------------------------------------------------
      X           0.0004665158      0.0008903044            0.0000004153
      Y           0.0027022345      0.0052703759            0.0000142418

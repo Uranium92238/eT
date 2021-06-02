@@ -23,7 +23,7 @@ submodule (ccs_class) file_handling_ccs
 !!    File handling submodule
 !!
 !!    Gathers routines that save wavefunction parameters to file,
-!!    and reads them from file, plus other routines related to the 
+!!    and reads them from file, plus other routines related to the
 !!    handling of the files that belong to the wavefunction.
 !!
 !
@@ -35,14 +35,14 @@ contains
 !
    module subroutine initialize_files_ccs(wf)
 !!
-!!    Initialize files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!    Initialize files
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    Initializes the wavefunction files for wavefunction parameters.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       call wf%initialize_ground_state_files()
 !
@@ -51,12 +51,12 @@ contains
 !
    module subroutine initialize_ground_state_files_ccs(wf)
 !!
-!!    Initialize singles files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!    Initialize singles files
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       wf%t_file = stream_file('t')
       wf%tbar_file = stream_file('tbar')
@@ -71,7 +71,7 @@ contains
 !!
 !!    Modified by Alexander C. Paul, May 2020: array of stream files
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(inout) :: wf
 !
@@ -110,11 +110,11 @@ contains
    module subroutine read_singles_vector_ccs(wf, file_, vector, read_n)
 !!
 !!    Read singles vector
-!!    Written by Alexander C. Paul, Oct 2019 
+!!    Written by Alexander C. Paul, Oct 2019
 !!
 !!    read_n: adds the number of amplitudes read to read_n
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(inout) :: wf
 !
@@ -145,15 +145,15 @@ contains
    module subroutine save_singles_vector_ccs(wf, file_, vector)
 !!
 !!    Save singles vector
-!!    Written by Alexander C. Paul, Oct 2019 
+!!    Written by Alexander C. Paul, Oct 2019
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
-      real(dp), dimension(wf%n_t1), intent(in) :: vector 
+      real(dp), dimension(wf%n_t1), intent(in) :: vector
 !
       integer(i64) :: n
 !
@@ -174,7 +174,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
       call wf%t_file%open_('write','rewind')
       call wf%t_file%write_(wf%energy)
@@ -188,11 +188,11 @@ contains
 !!
 !!    Read amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!    Adapted to return the number of read amplitdues if requested 
+!!    Adapted to return the number of read amplitdues if requested
 !!    by Alexander C. Paul, Oct 2020
 !!
-!!    read_n: optionally returns the number of amplitudes read. 
-!!            This is especially useful e.g. in CCSD to provide a start guess 
+!!    read_n: optionally returns the number of amplitudes read.
+!!            This is especially useful e.g. in CCSD to provide a start guess
 !!            for the doubles if only singles were found on file.
 !!
       implicit none
@@ -216,14 +216,14 @@ contains
 !
    module subroutine save_multipliers_ccs(wf)
 !!
-!!    Save multipliers 
+!!    Save multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    File format: energy n_t1, t1bar
 !!
       implicit none
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
       call wf%tbar_file%open_('write','rewind')
       call wf%tbar_file%write_(wf%energy)
@@ -235,18 +235,18 @@ contains
 !
    module subroutine read_multipliers_ccs(wf, read_n)
 !!
-!!    Read multipliers 
+!!    Read multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!    Adapted to return the number of read multipliers if requested 
+!!    Adapted to return the number of read multipliers if requested
 !!    by Alexander C. Paul, Oct 2020
 !!
-!!    read_n: optionally returns the number of multipliers read. 
-!!            This is especially useful e.g. in CCSD to provide a start guess 
+!!    read_n: optionally returns the number of multipliers read.
+!!            This is especially useful e.g. in CCSD to provide a start guess
 !!            for the doubles if only singles were found on file.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
       integer, intent(out), optional :: read_n
 !
@@ -265,7 +265,7 @@ contains
 !
    module subroutine save_excited_state_ccs(wf, X, first, last, side, energies)
 !!
-!!    Save excited state 
+!!    Save excited state
 !!    Written by Eirik F. Kjønstad, Mar 2019
 !!    Modified by Alexander C. Paul, Oct 2019
 !!    Modified by Eirik F. Kjønstad, Mar 2020
@@ -274,20 +274,20 @@ contains
 !!
 !!    first: first state to write
 !!    last:  last state to write
-!!    side:  'right' or 'left' depending on right or left excited states 
+!!    side:  'right' or 'left' depending on right or left excited states
 !!
 !!    Modified by Eirik F. Kjønstad, Mar 2020: made changes for direct stream,
-!!                                             and added [first, last] range 
+!!                                             and added [first, last] range
 !!    Modified by Alexander C. Paul, May 2020: introduced array of stream files
 !!    for the excited states
 !!
       implicit none
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
-      integer, intent(in) :: first, last ! first, last state number 
+      integer, intent(in) :: first, last ! first, last state number
 !
-      real(dp), dimension(wf%n_es_amplitudes, first:last), intent(in) :: X 
+      real(dp), dimension(wf%n_es_amplitudes, first:last), intent(in) :: X
 !
       character(len=*), intent(in) :: side ! 'left' or 'right'
 !
@@ -295,7 +295,7 @@ contains
 !
       integer :: state
 !
-      if (trim(side) .eq. 'right') then 
+      if (trim(side) .eq. 'right') then
 !
          do state = first, last
 !
@@ -304,7 +304,7 @@ contains
 !
          end do
 !
-      else if (trim(side) .eq. 'left') then 
+      else if (trim(side) .eq. 'left') then
 !
          do state = first, last
 !
@@ -320,7 +320,7 @@ contains
 !
    module subroutine save_excitation_vector_on_file_ccs(wf, file_, vector, energy)
 !!
-!!    Save excitation vector on file 
+!!    Save excitation vector on file
 !!    Written by Alexander C. Paul, Sep 2020
 !!
 !!    Writes excitation vector o file structured as follows:
@@ -328,7 +328,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
@@ -348,7 +348,7 @@ contains
 !
    module subroutine read_excited_state_ccs(wf, X, first, last, side, energies)
 !!
-!!    Read excited state 
+!!    Read excited state
 !!    Written by Eirik F. Kjønstad, Mar 2019
 !!    modified by Alexander C. Paul, Oct 2019
 !!    modified by Eirik F. Kjønstad, Mar 2020
@@ -357,19 +357,19 @@ contains
 !!
 !!    first: first state to read
 !!    last:  last state to read
-!!    side:  'right' or 'left' depending on right or left excited states 
+!!    side:  'right' or 'left' depending on right or left excited states
 !!
 !!    Modified by Eirik F. Kjønstad, Mar 2020: made changes for direct stream,
-!!                                             and added [first, last] range 
+!!                                             and added [first, last] range
 !!    Modified by Alexander C. Paul, May 2020: introduced array of stream files
 !!    for the excited states.
 !!    Modified by Alexander C. Paul, Sep 2020: Files now contain energy and n_es
 !!
       implicit none
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
-      integer, intent(in) :: first, last ! first, last state number 
+      integer, intent(in) :: first, last ! first, last state number
 !
       real(dp), dimension(wf%n_es_amplitudes, first:last), intent(out) :: X
       real(dp), dimension(first:last), optional,           intent(out) :: energies
@@ -380,7 +380,7 @@ contains
 !
       integer :: state
 !
-      if (trim(side) .eq. 'right') then 
+      if (trim(side) .eq. 'right') then
 !
          do state = first, last
 !
@@ -389,7 +389,7 @@ contains
 !
          end do
 !
-      elseif (trim(side) .eq. 'left') then 
+      elseif (trim(side) .eq. 'left') then
 !
          do state = first, last
 !
@@ -414,7 +414,7 @@ contains
 !
    module subroutine read_excitation_vector_file_ccs(wf, file_, vector, energy, read_n)
 !!
-!!    Read excitation vector file 
+!!    Read excitation vector file
 !!    Written by Alexander C. Paul, Sep 2020
 !!
 !!    Reads excitation vector from file structured as follows:
@@ -424,7 +424,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
@@ -458,7 +458,7 @@ contains
 !!    returns the corresponding vector if the file exists.
 !!    Otherwise checks the "other side" and tries to read it.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(inout) :: wf
 !
@@ -483,7 +483,7 @@ contains
             found = .true.
 !
          else
-!           
+!
             if (wf%l_files(n)%exists()) then
 !
                call wf%get_restart_vector(wf%l_files(n), vector, energy, &
@@ -512,7 +512,7 @@ contains
 !
             end if
 !
-         end if      
+         end if
 !
       else
 !
@@ -547,7 +547,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
@@ -588,7 +588,7 @@ contains
       class(ccs) :: wf
 !
 !     Suppress unused variable compiler warning for wf
-      call do_nothing(wf) 
+      call do_nothing(wf)
 !
    end subroutine save_tbar_intermediates_ccs
 !
@@ -621,7 +621,6 @@ contains
       character(len=20) :: warning_print
 !
       n_parallel = 0
-!
       call mem%alloc(parallel, wf%n_singlet_states)
 !
       if (trim(transformation) == 'left' .or. trim(transformation) == 'both') then
@@ -632,7 +631,8 @@ contains
          call wf%check_for_parallel_states('left', threshold, parallel)
 !
          call wf%remove_parallel_states_from_file(parallel, n_parallel_left, &
-                                                  left_energies, wf%l_files, 'left')
+                                                  left_energies, wf%l_files, &
+                                                  'left')
 !
          deallocate(wf%l_files)
          call wf%destruct_left_excitation_energies
@@ -647,7 +647,8 @@ contains
          call wf%check_for_parallel_states('right', threshold, parallel)
 !
          call wf%remove_parallel_states_from_file(parallel, n_parallel_right, &
-                                                  right_energies, wf%r_files, 'right')
+                                                  right_energies, wf%r_files, &
+                                                  'right')
 !
          deallocate(wf%r_files)
          call wf%destruct_right_excitation_energies
@@ -703,9 +704,9 @@ contains
       if (n_parallel > 0) then
 !
          if (n_parallel == 1) then
-            write(warning_print,'(i0,a)') n_parallel, ' parallel state' 
-         else 
-            write(warning_print,'(i0,a)') n_parallel, ' parallel states' 
+            write(warning_print,'(i0,a)') n_parallel, ' parallel state'
+         else
+            write(warning_print,'(i0,a)') n_parallel, ' parallel states'
          end if
 !
          call output%warning_msg('(a0) removed. Number of states reduced to: (i0)', &
@@ -780,6 +781,37 @@ contains
       end do
 !
    end subroutine remove_parallel_states_from_file_ccs
+!
+!
+   module function get_density_for_plotting_ccs(wf, density, state_p, state_q) result(c_D_ct)
+!!
+!!    Get density for plotting
+!!    Written by Alexander C. Paul, May 2021
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: density
+      integer, intent(in) :: state_p, state_q
+!
+      real(dp), dimension(wf%ao%n, wf%ao%n) :: c_D_ct
+!
+      character(len=10) :: file_name
+      type(stream_file) :: density_file
+!
+      write(file_name, '(a, i3.3, a, i3.3)') 'dm_', state_p, '_', state_q
+!
+      density_file = stream_file(file_name)
+!
+      call density_file%open_('read')
+      call density_file%read_(density, wf%n_mo**2)
+!
+      call wf%add_t1_terms_and_transform(density, c_D_ct)
+!
+      call density_file%close_('keep')
+!
+   end function get_density_for_plotting_ccs
 !
 !
 end submodule file_handling_ccs

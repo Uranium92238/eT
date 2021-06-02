@@ -22,7 +22,7 @@ submodule (doubles_class) response_doubles
 !!
 !!    Response properties submodule
 !!
-!!    Routines for construction of the right-hand-side, eta^X, 
+!!    Routines for construction of the right-hand-side, eta^X,
 !!    and left-hand-side, xi^X vectors and the left-hand-side (D^L)
 !!    and right-hand-side (D^R) transition densities for transition moments.
 !!
@@ -31,14 +31,14 @@ submodule (doubles_class) response_doubles
 !!    (Following Koch, H., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
 !!    J. Chem. Phys. 100, 4393 (1994))
 !!
-!!          eta_mu^X,EOM = < Lambda| [X, tau_mu] |CC > 
+!!          eta_mu^X,EOM = < Lambda| [X, tau_mu] |CC >
 !!                         + (< Lambda| tau_mu X |CC > - tbar_mu < Lambda| X |CC >)
 !!                       = eta^{X,0} + eta^{X,corr}
 !!
-!!    Where the last two terms are called the EOM-corrections and the first term also 
+!!    Where the last two terms are called the EOM-corrections and the first term also
 !!    appears in LR-CC.
 !!
-!!    The left-hand-side vector is the same in EOM-CC and LR-CC:   
+!!    The left-hand-side vector is the same in EOM-CC and LR-CC:
 !!
 !!          xi^X_mu = < mu| exp(-T) X exp(T)|R >
 !!
@@ -48,7 +48,7 @@ submodule (doubles_class) response_doubles
 !!
 !!          D_pq = < X| e^(-T) E_pq e^T |Y >
 !!
-!!    where X and Y are left and right state vectors with contributions 
+!!    where X and Y are left and right state vectors with contributions
 !!    from a reference determinant and excited determinants (< mu|, |nu >):
 !!
 !!          D_pq =             X_ref < HF| e^(-T) E_pq e^T |HF >  Y_ref
@@ -56,7 +56,7 @@ submodule (doubles_class) response_doubles
 !!                 + sum_mu    X_ref < HF| e^(-T) E_pq e^T |mu >  Y_mu
 !!                 + sum_mu,nu X_mu  < mu| e^(-T) E_pq e^T |nu >  Y_nu
 !!
-!!    Depending on the type of density matrix (Ground state, transition , 
+!!    Depending on the type of density matrix (Ground state, transition ,
 !!    excited state, interstate transition) different states and thus different
 !!    amplitudes X_ref, X_mu, Y_ref and Y_mu will contribute.
 !!
@@ -71,10 +71,10 @@ submodule (doubles_class) response_doubles
 !!
 !!       ref_ref: first component of the vector for the left and right state
 !!
-!!       mu_ref:  second component of the vector for the left and 
+!!       mu_ref:  second component of the vector for the left and
 !!                first component of the vector for the right state
 !!
-!!       ref_mu:  first component of the vector for the left and 
+!!       ref_mu:  first component of the vector for the left and
 !!                second component of the vector for the right state
 !!
 !!       mu_nu:   second component of the vector for the left and right state
@@ -85,13 +85,13 @@ submodule (doubles_class) response_doubles
 !!          D^L_pq = < k| E_pq |CC >
 !!          D^R_pq = < Lambda| E_pq |k >
 !!
-!!    where |k > and < k| are the eigenvectors of the Jacobian 
+!!    where |k > and < k| are the eigenvectors of the Jacobian
 !!    with the amplitudes R_mu, L_mu
 !!
 !!          |k > = - tbar R_k |CC > + sum_mu (tau_mu |CC > R_{k,mu})
 !!          < k| = sum_mu L_{k,mu} < mu| e^-T
 !!
-!!    For the left transition density all the ground state terms can be reused, 
+!!    For the left transition density all the ground state terms can be reused,
 !!    if tbar is replaced by L_k and the ref_ref term is neglected.
 !!
 !
@@ -101,173 +101,138 @@ submodule (doubles_class) response_doubles
 contains
 !
 !
-   module subroutine construct_left_transition_density_doubles(wf, state)
+   module subroutine construct_right_transition_density_doubles(wf, density, state, R)
 !!
-!!    Construct left one-electron EOM transition density
+!!    Construct right transition density (EOM)
 !!    Written by Alexander C. Paul, June 2019
 !!
-!!          D^L_pq = < k| E_pq |CC >
+!!          D^R_pq = < Lambda| E_pq |R_n >
 !!
-!!    where < k| is the left eigenvector of the Jacobian
-!!    with amplitudes L_mu
-!!
-!!          < k| = sum_mu L_{k,mu} < mu| e^-T
-!!
-      implicit none
-!
-      class(doubles) :: wf
-!
-      integer, intent(in) :: state
-!
-      real(dp), dimension(:), allocatable :: L_k
-!
-      real(dp), dimension(:,:), allocatable :: L_ai
-      real(dp), dimension(:,:,:,:), allocatable :: L_aibj
-!
-      real(dp), dimension(:,:,:,:), allocatable :: t_aibj
-!
-      type(timings) :: L_TDM_timer
-!
-      L_TDM_timer = timings('Left transition density')
-!
-      call L_TDM_timer%turn_on()
-!
-      call mem%alloc(L_k, wf%n_es_amplitudes)
-      call wf%read_excited_state(L_k, state, state, 'left')
-!
-      call zero_array(wf%left_transition_density, wf%n_mo**2)
-!
-!     Allocate the singles part of the excitation vector
-!
-      call mem%alloc(L_ai, wf%n_v, wf%n_o)
-!
-      call dcopy(wf%n_t1, L_k, 1, L_ai, 1)
-!
-      call wf%density_ccs_mu_ref_vo(wf%left_transition_density, L_ai)
-!
-      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
-!
-      call wf%density_doubles_mu_ref_ov(wf%left_transition_density, L_ai, t_aibj)
-!
-      call mem%dealloc(L_ai, wf%n_v, wf%n_o)
-!
-!     Allocate and unpack doubles part of the excitation vector
-!
-      call mem%alloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call squareup(L_k(wf%n_t1 + 1 : wf%n_es_amplitudes), L_aibj, wf%n_t1)
-!
-      call mem%dealloc(L_k, wf%n_es_amplitudes)
-!
-      call wf%density_doubles_mu_ref_oo(wf%left_transition_density, L_aibj, t_aibj)
-      call wf%density_doubles_mu_ref_vv(wf%left_transition_density, L_aibj, t_aibj)
-!
-      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call L_TDM_timer%turn_off()
-!      
-   end subroutine construct_left_transition_density_doubles
-!
-!
-   module subroutine construct_right_transition_density_doubles(wf, state)
-!!
-!!    Construct right one-electron EOM transition density
-!!    Written by Alexander C. Paul, June 2019
-!!
-!!          D^R_pq = < Lambda| E_pq |k >
-!!
-!!    where |k > is the right eigenvector of the Jacobian
+!!    where |R_n > is the right eigenvector of the Jacobian
 !!    with amplitudes R_mu
 !!
-!!          |k > = sum_mu (tau_mu |CC > R_{k,mu} - tbar_mu |CC > R_{k,mu}) 
+!!          |R_n > = sum_mu (tau_mu R_{n,mu} - tbar_mu R_{n,mu}) |CC >
+!!                 = (r0 + sum_mu tau_mu R_{n,mu}) |CC >
 !!
+!!    Contributions to the right transition density are split as follows:
+!!
+!!    D^R_pq = sum_mu < HF| E_pq |mu > R_mu + sum_mu tbar_mu < mu| E_pq |HF >
+!!           + sum_mu,nu tbar_mu < mu| E_pq |nu > R_nu
+!!
+!!    The last term is separated in "mu_nu_density_terms" as it is identical
+!!    for the right transition density and excited state densities
+!!
+      use array_utilities, only: get_trace
+!
       implicit none
 !
       class(doubles) :: wf
 !
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: density
+!
       integer, intent(in) :: state
 !
-      real(dp), dimension(:), allocatable :: R_k
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: R
 !
-      real(dp), dimension(:,:), allocatable :: R_ai
-      real(dp), dimension(:,:,:,:), allocatable :: R_aibj
+      type(timings)     :: timer
+      character(len=25) :: timer_name
 !
-      real(dp), dimension(:,:,:,:), allocatable :: tbar_aibj
+      write(timer_name, '(a,i0,a)') 'Density <0|E_pq|',state,'>'
+      timer = timings(trim(timer_name), pl='m')
+      call timer%turn_on()
 !
-      real(dp) :: tbar_R_overlap, ddot
+      call wf%mu_nu_density_terms(density, 0, [wf%t1bar, wf%t2bar], &
+                               state, wf%r0(state), R)
 !
-      type(timings) :: R_TDM_timer
+      call wf%density_ccs_ref_mu_ov(density, R)
+      call wf%density_mu_mu_oo(density, -wf%r0(state))
+      call wf%density_mu_ref(density, wf%density, wf%r0(state))
 !
-      R_TDM_timer = timings('Right transition density')
+      call timer%turn_off()
 !
-      call R_TDM_timer%turn_on()
-!
-      call zero_array(wf%right_transition_density, (wf%n_mo)**2)
-!
-      call mem%alloc(R_k, wf%n_es_amplitudes)
-      call wf%read_excited_state(R_k, state, state, 'right')
-!
-      call mem%alloc(R_ai, wf%n_v, wf%n_o)
-!
-      call dcopy(wf%n_t1, R_k, 1, R_ai, 1)
-!
-      call wf%density_ccs_mu_nu_oo(wf%right_transition_density, wf%t1bar, R_ai)
-      call wf%density_ccs_ref_mu_ov(wf%right_transition_density, R_ai)
-      call wf%density_ccs_mu_nu_vv(wf%right_transition_density, wf%t1bar, R_ai)
-!
-      tbar_R_overlap = ddot(wf%n_t1, wf%t1bar, 1, R_ai, 1)
-!
-      call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2bar, tbar_aibj, (wf%n_v)*(wf%n_o))
-!
-      call wf%density_doubles_mu_nu_ov(wf%right_transition_density, tbar_aibj, R_ai)
-      call wf%density_doubles_mu_nu_vo(wf%right_transition_density, tbar_aibj, R_ai)
-!
-      call mem%dealloc(R_ai, wf%n_v, wf%n_o)
-!
-!     Allocate and unpack doubles part of the excitation vector
-!
-      call mem%alloc(R_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call squareup(R_k(wf%n_t1 + 1 : wf%n_es_amplitudes), R_aibj, wf%n_t1)
-!
-      call mem%dealloc(R_k, wf%n_es_amplitudes)
-!
-!     Scale the doubles vector by biorthonormal factor (1 + delta_ai,bj)
-!
-      call scale_diagonal(two, R_aibj, wf%n_t1)
-!
-      tbar_R_overlap = tbar_R_overlap &
-                       + half * ddot((wf%n_v)**2*(wf%n_o)**2, R_aibj, 1, tbar_aibj, 1)
-!
-      call wf%density_doubles_mu_ref_oo(wf%right_transition_density, tbar_aibj, R_aibj)
-      call wf%density_doubles_mu_ref_vv(wf%right_transition_density, tbar_aibj, R_aibj)
-!
-      call mem%dealloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call wf%density_doubles_mu_ref_ov(wf%right_transition_density, wf%t1bar, R_aibj)
-!
-      call mem%dealloc(R_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Contribution of the ground state density scaled by 
-!     the right-hand side reference term (- sum_mu tbar_mu*R_mu)
-!
-      call wf%density_mu_mu_oo(wf%right_transition_density, tbar_R_overlap)
-!
-      call wf%density_mu_ref(wf%right_transition_density, &
-                             wf%density,                  &
-                             tbar_R_overlap)
-!
-      call R_TDM_timer%turn_off()
+      call output%printf('debug', 'Trace (a0): (f15.12)', chars=[trim(timer_name)], &
+                          reals=[get_trace(density, wf%n_mo)], fs='(/t6,a)')
 !
    end subroutine construct_right_transition_density_doubles
 !
 !
+   module subroutine mu_nu_density_terms_doubles(wf, density, m, L, n, r0, R)
+!!
+!!    density mu nu terms
+!!    Written by Alexander C. Paul, May 2021
+!!
+!!    Constructs terms of the form:
+!!       sum_mu,nu L_mu < mu| E_pq |nu > R_nu
+!!
+!!    corresponding to terms of the right transition density
+!!    and excited state densities.
+!!
+!!    NB: Terms where mu == nu are separated out in construct_es_density
+!!        and construct_right_transition_density
+!!
+      use array_utilities, only: scale_diagonal
+!
+      implicit none
+!
+      class(doubles) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: density
+!
+      integer, intent(in) :: m, n
+!
+!     L might only be contiguous in the ranges (1:n_t1) and (1+t1: n_t1+n_t2)
+!     as L can also be a combined array of t1bar + t2bar
+      real(dp), dimension(wf%n_t1+wf%n_t2), intent(in) :: L
+!
+      real(dp), intent(out) :: r0
+      real(dp), dimension(wf%n_t1+wf%n_t2), intent(in) :: R
+!
+      real(dp), dimension(:,:,:,:), allocatable :: L2, R2
+!
+      real(dp) :: ddot
+!
+      type(timings)     :: timer
+      character(len=40) :: timer_name
+!
+      write(timer_name, '(a,i0,a,i0,a)') 'Doubles contribution to <', m, '|E_pq|',n,'>'
+      timer = timings(trim(timer_name), pl='v')
+!
+      call zero_array(density, wf%n_mo**2)
+      r0 = zero
+!
+      call wf%ccs%mu_nu_density_terms(density, m, L, n, r0, R)
+!
+      call timer%turn_on() ! Only doubles contribution
+!
+      call mem%alloc(L2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(L(wf%n_t1+1:), L2, wf%n_v*wf%n_o)
+!
+      call wf%density_doubles_mu_nu_ov(density, L2, R(1:wf%n_t1))
+      call wf%density_doubles_mu_nu_vo(density, L2, R(1:wf%n_t1))
+!
+      call mem%alloc(R2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(R(wf%n_t1 + 1 : wf%n_es_amplitudes), R2, wf%n_t1)
+      call scale_diagonal(two, R2, wf%n_t1)
+!
+      r0 = r0 - half*ddot(wf%n_t1**2, R2, 1, L2, 1)
+!
+      call wf%density_doubles_mu_ref_oo(density, L2, R2)
+      call wf%density_doubles_mu_ref_vv(density, L2, R2)
+!
+      call mem%dealloc(L2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call wf%density_doubles_mu_ref_ov(density, L(1:wf%n_t1), R2)
+!
+      call mem%dealloc(R2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
+!
+   end subroutine mu_nu_density_terms_doubles
+!
+!
    module subroutine density_doubles_mu_nu_ov_doubles(wf, density, tbar_aibj, R_ai)
 !!
-!!    One electron density (EOM) excited-determinant/excited-determinant ov-term 
+!!    One electron density (EOM) excited-determinant/excited-determinant ov-term
 !!    Written by Alexander C. Paul, June 2019
 !!
 !!    Computes terms of the form:
@@ -277,7 +242,7 @@ contains
 !!    explicit term in this routine:
 !!          D^R_kc += sum_abij R^a_i tbar^ab_ij (2t^bc_jk - t^bc_kj)
 !!                   -sum_abij tbar^ab_ij (R^b_k t^ac_ij + R^c_j t^ab_ik)
-!!      
+!!
       implicit none
 !
       class(doubles) :: wf
@@ -313,8 +278,8 @@ contains
 !
       call mem%alloc(u_bjck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call dcopy((wf%n_v)**2*(wf%n_o)**2, t_aick, 1, u_bjck, 1)
-      call dscal((wf%n_v)**2*(wf%n_o)**2, two, u_bjck, 1)
+      call dcopy((wf%n_v*wf%n_o)**2, t_aick, 1, u_bjck, 1)
+      call dscal((wf%n_v*wf%n_o)**2, two, u_bjck, 1)
       call add_1432_to_1234(-one, t_aick, u_bjck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(t_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -424,7 +389,7 @@ contains
 !
    module subroutine density_doubles_mu_nu_vo_doubles(wf, density, tbar_aibj, R_ai)
 !!
-!!    One electron density (EOM) excited-determinant/excited-determinant vo-term 
+!!    One electron density (EOM) excited-determinant/excited-determinant vo-term
 !!    Written by Alexander C. Paul, June 2019
 !!
 !!    Computes terms of the form:
@@ -433,7 +398,7 @@ contains
 !!
 !!    explicit term in this routine:
 !!          D^R_bj += sum_ai R^a_i tbar^ab_ij
-!!      
+!!
       implicit none
 !
       class(doubles) :: wf
@@ -481,7 +446,7 @@ contains
 !!    Written by Sarai D. Folkestad, May 2019
 !!
 !!    Constructs the EOM effective etaX vector, adding the EOM
-!!    correction to etaX. 
+!!    correction to etaX.
 !!
       implicit none
 !
@@ -517,7 +482,7 @@ contains
       class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!      
+!
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
       real(dp), dimension(:,:), allocatable :: etaX_ai
@@ -543,7 +508,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            etaX(ai) = etaX_ai(a,i) 
+            etaX(ai) = etaX_ai(a,i)
 !
          enddo
       enddo
@@ -559,7 +524,8 @@ contains
       call wf%etaX_doubles_a2(X, etaX_aibj)
       call wf%etaX_doubles_b2(X, etaX_aibj)
 !
-      call symmetrize_and_add_to_packed(etaX(wf%n_t1 + 1 : wf%n_es_amplitudes), etaX_aibj, (wf%n_v)*(wf%n_o))
+      call symmetrize_and_add_to_packed(etaX(wf%n_t1 + 1 : wf%n_es_amplitudes), &
+                                        etaX_aibj, wf%n_v*wf%n_o)
 !
       call mem%dealloc(etaX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -580,9 +546,9 @@ contains
       class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!      
+!
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX_ai
-!        
+!
       real(dp), dimension(:,:), allocatable :: X_id ! X_la
 !
       real(dp), dimension(:,:,:,:), allocatable :: tb_ckal ! tb_ckdi
@@ -603,22 +569,22 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
 !     Squareup multipliers
 !
       call mem%alloc(tb_ckal, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2bar, tb_ckal, wf%n_t1)
-!      
+!
 !     Read amplitudes and order as t_lck_d = t_kl^cd
 !
       call mem%alloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_ckdl, wf%n_t1)
-!      
+!
 !     :: First term: - sum_ckdl tb_ckal X_id t_ckdl
 !
 !     I_a_d = sum_ckl tb_a_lck t_lck_d = sum_ckl tb_ckal t_kl^cd
-!  
+!
       call mem%alloc(I_ad, wf%n_v, wf%n_v)
 !
       call dgemm('N','T',           &
@@ -635,7 +601,7 @@ contains
                   wf%n_v)
 !
 !     Add   - sum_ckdl tb_ckal X_id t_kl^cd
-!         = - sum_d I_a_d X_id 
+!         = - sum_d I_a_d X_id
 !         = - sum_d I_a_d X_i_a^T(d,i)
 !
       call dgemm('N','T',     &
@@ -649,7 +615,7 @@ contains
                   wf%n_o,     &
                   one,        &
                   etaX_ai,    &
-                  wf%n_v)          
+                  wf%n_v)
 !
       call mem%dealloc(I_ad, wf%n_v, wf%n_v)
 !
@@ -677,17 +643,17 @@ contains
 !
 !     Add - sum_ckdl b_ckdi X_la t_kl^cd = - sum_l X_la I_l_i = - sum_l X_i_a^T(a,l) I_l_i(l,i)
 !
-      call dgemm('T','N',     &
-                  wf%n_v,     &
-                  wf%n_o,     &
-                  wf%n_o,     &
-                  -one,       &
-                  X_id,       &
-                  wf%n_o,     &
-                  I_li,       &
-                  wf%n_o,     &
-                  one,        &
-                  etaX_ai,    &
+      call dgemm('T','N',  &
+                  wf%n_v,  &
+                  wf%n_o,  &
+                  wf%n_o,  &
+                  -one,    &
+                  X_id,    &
+                  wf%n_o,  &
+                  I_li,    &
+                  wf%n_o,  &
+                  one,     &
+                  etaX_ai, &
                   wf%n_v)
 !
       call mem%dealloc(I_li, wf%n_o, wf%n_o)
@@ -701,9 +667,9 @@ contains
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2019
-!!   
+!!
 !!    Constructs the A2 term of the etaX vector
-!! 
+!!
 !!       A2 = 2 X_jb tb_ai - X_ib tb_aj
 !!
       implicit none
@@ -715,16 +681,17 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: etaX_aibj
 !
       integer :: i, a, j, b
-!  
+!
 !$omp parallel do private(a, i, b, j)
        do j = 1, wf%n_o
          do b = 1, wf%n_v
-!  
+!
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
-                  etaX_aibj(a, i, b, j) = etaX_aibj(a, i, b, j) - (X(i, b + wf%n_o))*(wf%t1bar(a, j)) &
-                                       + two*(X(j, b + wf%n_o))*(wf%t1bar(a, i))
+                  etaX_aibj(a, i, b, j) = etaX_aibj(a, i, b, j) &
+                                        + two*X(j, b + wf%n_o)*wf%t1bar(a, i) &
+                                        - X(i, b + wf%n_o)*wf%t1bar(a, j)
 !
                enddo
             enddo
@@ -742,9 +709,9 @@ contains
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2019
-!!   
+!!
 !!    Constructs the B2 term of the etaX vector
-!! 
+!!
 !!       B2 = sum_c tb_aicj X_cb - sum_k tb_aibk X_jk
 !!
       implicit none
@@ -768,16 +735,16 @@ contains
 !     Get and squareup multipliers
 !
       call mem%alloc(tb_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2bar, tb_aibj, (wf%n_v)*(wf%n_o))
+      call squareup(wf%t2bar, tb_aibj, wf%n_v*wf%n_o)
 !
 !     Reorder multipiers to tb_aijc
 !
-      call mem%alloc(tb_aijc, (wf%n_v), (wf%n_o), (wf%n_o), (wf%n_v))
+      call mem%alloc(tb_aijc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call sort_1234_to_1243(tb_aibj, tb_aijc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     :: First term: sum_c tb_aicj X_cb 
+!     :: First term: sum_c tb_aicj X_cb
 !
-      call mem%alloc(X_cb, wf%n_v, wf%n_v) 
+      call mem%alloc(X_cb, wf%n_v, wf%n_v)
 !
 !$omp parallel do private(b, c)
       do b = 1, wf%n_v
@@ -789,27 +756,27 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%alloc(etaX_aijb, (wf%n_v), (wf%n_o), (wf%n_o), (wf%n_v))
+      call mem%alloc(etaX_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call dgemm('N','N',               &
-                  (wf%n_v)*(wf%n_o)**2, &
-                  wf%n_v,               &
-                  wf%n_v,               &
-                  one,                  &
-                  tb_aijc,              &
-                  (wf%n_v)*(wf%n_o)**2, &
-                  X_cb,                 &
-                  wf%n_v,               &
-                  zero,                 &
-                  etaX_aijb,            &
-                  (wf%n_v)*(wf%n_o)**2)
+      call dgemm('N','N',           &
+                  wf%n_v*wf%n_o**2, &
+                  wf%n_v,           &
+                  wf%n_v,           &
+                  one,              &
+                  tb_aijc,          &
+                  wf%n_v*wf%n_o**2, &
+                  X_cb,             &
+                  wf%n_v,           &
+                  zero,             &
+                  etaX_aijb,        &
+                  wf%n_v*wf%n_o**2)
 !
-      call mem%dealloc(tb_aijc, (wf%n_v), (wf%n_o), (wf%n_o), (wf%n_v))      
+      call mem%dealloc(tb_aijc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call mem%dealloc(X_cb, wf%n_v, wf%n_v)
 !
       call add_1243_to_1234(one, etaX_aijb, etaX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(etaX_aijb, (wf%n_v), (wf%n_o), (wf%n_o), (wf%n_v))
+      call mem%dealloc(etaX_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
 !     :: Second term: -sum_k tb_aick X_jk
 !
@@ -825,19 +792,19 @@ contains
       enddo
 !$omp end parallel do
 !
-      call dgemm('N','T',                 &
-                  (wf%n_o)*(wf%n_v)**2,   &
-                  wf%n_o,                 &
-                  wf%n_o,                 &
-                  -one,                   &
-                  tb_aibj,                &
-                  (wf%n_o)*(wf%n_v)**2,   &
-                  X_jk,                   &
-                  wf%n_o,                 &
-                  one,                    &
-                  etaX_aibj,              &
-                  (wf%n_o)*(wf%n_v)**2)
-!          
+      call dgemm('N','T',           &
+                  wf%n_o*wf%n_v**2, &
+                  wf%n_o,           &
+                  wf%n_o,           &
+                  -one,             &
+                  tb_aibj,          &
+                  wf%n_o*wf%n_v**2, &
+                  X_jk,             &
+                  wf%n_o,           &
+                  one,              &
+                  etaX_aibj,        &
+                  wf%n_o*wf%n_v**2)
+!
       call mem%dealloc(tb_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(X_jk, wf%n_o, wf%n_o)
 !
@@ -860,7 +827,7 @@ contains
       class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!      
+!
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: xiX
 !
       real(dp), dimension(:,:), allocatable :: xiX_ai
@@ -883,8 +850,8 @@ contains
          do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
-!        
-            xiX(ai) = xiX_ai(a,i) 
+!
+            xiX(ai) = xiX_ai(a,i)
 !
          enddo
       enddo
@@ -893,7 +860,7 @@ contains
       call mem%dealloc(xiX_ai, wf%n_v, wf%n_o)
 !
 !     xiX_aibj
-!      
+!
       call mem%alloc(xiX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(xiX_aibj, (wf%n_o*wf%n_v)**2)
 !
@@ -907,7 +874,8 @@ contains
          enddo
       enddo
 !
-      call symmetrize_and_add_to_packed(xiX(wf%n_t1 + 1 : wf%n_es_amplitudes), xiX_aibj, (wf%n_v)*(wf%n_o))
+      call symmetrize_and_add_to_packed(xiX(wf%n_t1 + 1 : wf%n_es_amplitudes), &
+                                        xiX_aibj, wf%n_v*wf%n_o)
 !
       call mem%dealloc(xiX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -924,7 +892,7 @@ contains
 !!    Constructs the A1 term of xiX
 !!
 !!       A1 = sum_ck u_aick X_kc,
-!!    
+!!
 !!    where u_aick = 2t_ckai - t_ciak
 !!
       implicit none
@@ -932,9 +900,9 @@ contains
       class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!      
+!
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: xiX_ai
-!      
+!
       real(dp), dimension(:,:,:,:), allocatable   :: u_aick
       real(dp), dimension(:,:,:,:), allocatable   :: t_aick
 !
@@ -964,25 +932,25 @@ contains
       call mem%alloc(u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(u_aick, (wf%n_o*wf%n_v)**2)
 !
-      call add_1432_to_1234(-one, t_aick, u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o) 
-      call daxpy((wf%n_o)**2 * (wf%n_v)**2, two, t_aick, 1, u_aick, 1)
+      call add_1432_to_1234(-one, t_aick, u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call daxpy(wf%n_o**2 * wf%n_v**2, two, t_aick, 1, u_aick, 1)
 !
       call mem%dealloc(t_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     sum_ck u_ai_ck X_kc
 !
-      call dgemm('N','N',            &
-                  (wf%n_o)*(wf%n_v), &
-                  1,                 &
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  u_aick,            &
-                  (wf%n_o)*(wf%n_v), &
-                  X_ck,              &
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  xiX_ai,           &
-                  (wf%n_o)*(wf%n_v))
+      call dgemm('N','N',        &
+                  wf%n_o*wf%n_v, &
+                  1,             &
+                  wf%n_o*wf%n_v, &
+                  one,           &
+                  u_aick,        &
+                  wf%n_o*wf%n_v, &
+                  X_ck,          &
+                  wf%n_o*wf%n_v, &
+                  one,           &
+                  xiX_ai,        &
+                  wf%n_o*wf%n_v)
 !
       call mem%dealloc(u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(X_ck, wf%n_v, wf%n_o)
@@ -1006,7 +974,7 @@ contains
       class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!      
+!
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: xiX_aibj
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_cjai
@@ -1033,21 +1001,21 @@ contains
       enddo
 !$omp end parallel do
 !
-      call dgemm('N','N',            &
-                 wf%n_v,             &
-                 wf%n_v*(wf%n_o)**2, &
-                 wf%n_v,             &
-                 one,                &
-                 X_bc,               &
-                 wf%n_v,             &
-                 t_cjai,             &
-                 wf%n_v,             &
-                 one,                &
-                 xiX_aibj,           & ! xiX_bjai but it does not matter since we will symmetrize anyhow
+      call dgemm('N','N',          &
+                 wf%n_v,           &
+                 wf%n_v*wf%n_o**2, &
+                 wf%n_v,           &
+                 one,              &
+                 X_bc,             &
+                 wf%n_v,           &
+                 t_cjai,           &
+                 wf%n_v,           &
+                 one,              &
+                 xiX_aibj,         & ! xiX_bjai, will symmetrize anyhow
                  wf%n_v)
-!         
+!
       call mem%dealloc(X_bc, wf%n_v, wf%n_v)
-!      
+!
 !     :: Second term: -sum_k t_ai_bk X_kj
 !
       call mem%alloc(X_kj, wf%n_o, wf%n_o)
@@ -1061,19 +1029,19 @@ contains
          enddo
       enddo
 !$omp end parallel do
-!      
-      call dgemm('N','N',              &
-                 (wf%n_o)*(wf%n_v)**2, &
-                 wf%n_o,               &
-                 wf%n_o,               &
-                 -one,                 &
-                 t_cjai,               &
-                 wf%n_o*(wf%n_v)**2,   &
-                 X_kj,                 &
-                 wf%n_o,               &
-                 one,                  &
-                 xiX_aibj,            &
-                 wf%n_o*(wf%n_v)**2)
+!
+      call dgemm('N','N',          &
+                 wf%n_o*wf%n_v**2, &
+                 wf%n_o,           &
+                 wf%n_o,           &
+                 -one,             &
+                 t_cjai,           &
+                 wf%n_o*wf%n_v**2, &
+                 X_kj,             &
+                 wf%n_o,           &
+                 one,              &
+                 xiX_aibj,         &
+                 wf%n_o*wf%n_v**2)
 !
       call mem%dealloc(X_kj, wf%n_o, wf%n_o)
       call mem%dealloc(t_cjai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -1129,26 +1097,26 @@ contains
          enddo
       enddo
 !$omp end parallel do
-!      
-      call dgemm('N','N',           &
-                 (wf%n_v)*(wf%n_o), &
-                 1,                 &
-                 (wf%n_v)*(wf%n_o), &
-                 one,               &
-                 tb_aibj,           &
-                 (wf%n_v)*(wf%n_o), &
-                 X_ck,              &
-                 (wf%n_v)*(wf%n_o), &
-                 one,               &
-                 etaX_ai,           &
-                 (wf%n_v)*(wf%n_o))
+!
+      call dgemm('N','N',       &
+                 wf%n_v*wf%n_o, &
+                 1,             &
+                 wf%n_v*wf%n_o, &
+                 one,           &
+                 tb_aibj,       &
+                 wf%n_v*wf%n_o, &
+                 X_ck,          &
+                 wf%n_v*wf%n_o, &
+                 one,           &
+                 etaX_ai,       &
+                 wf%n_v*wf%n_o)
 !
       call mem%dealloc(X_ck, wf%n_v, wf%n_o)
 !
 !     :: Second term: sum_ckdl tb_aick u_ckdl X_ld
 !
 !     X_ld ordered as X_dl
-! 
+!
       call mem%alloc(X_dl, wf%n_v, wf%n_o)
 !
 !$omp parallel do private(l, d)
@@ -1170,44 +1138,44 @@ contains
       call zero_array(u_ckdl, (wf%n_o*wf%n_v)**2)
 !
       call add_1432_to_1234(-one, t_ckdl, u_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ckdl, 1, u_ckdl, 1)
+      call daxpy((wf%n_o*wf%n_v)**2, two, t_ckdl, 1, u_ckdl, 1)
 !
       call mem%dealloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Form the intermediate I_ai_dl = sum_ck tb_ai_ck u_ck_dl
 !
       call mem%alloc(I_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!      
-      call dgemm('N','N',           &
-                 (wf%n_v)*(wf%n_o), &
-                 (wf%n_v)*(wf%n_o), &
-                 (wf%n_v)*(wf%n_o), &
-                 one,               &
-                 tb_aibj,           &
-                 (wf%n_v)*(wf%n_o), &
-                 u_ckdl,            &
-                 (wf%n_v)*(wf%n_o), &
-                 zero,              &
-                 I_aidl,            &
-                 (wf%n_v)*(wf%n_o))
+!
+      call dgemm('N','N',       &
+                 wf%n_v*wf%n_o, &
+                 wf%n_v*wf%n_o, &
+                 wf%n_v*wf%n_o, &
+                 one,           &
+                 tb_aibj,       &
+                 wf%n_v*wf%n_o, &
+                 u_ckdl,        &
+                 wf%n_v*wf%n_o, &
+                 zero,          &
+                 I_aidl,        &
+                 wf%n_v*wf%n_o)
 !
       call mem%dealloc(tb_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(u_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Form sum_dl I_ai_dl X_ld^T
 !
-      call dgemm('N','N',           &
-                 (wf%n_v)*(wf%n_o), &
-                 1,                 &
-                 (wf%n_v)*(wf%n_o), &
-                 one,               &
-                 I_aidl,            &
-                 (wf%n_v)*(wf%n_o), &
-                 X_dl,              &
-                 (wf%n_v)*(wf%n_o), &
-                 one,               &
-                 etaX_ai,           &
-                 (wf%n_v)*(wf%n_o))
+      call dgemm('N','N',       &
+                 wf%n_v*wf%n_o, &
+                 1,             &
+                 wf%n_v*wf%n_o, &
+                 one,           &
+                 I_aidl,        &
+                 wf%n_v*wf%n_o, &
+                 X_dl,          &
+                 wf%n_v*wf%n_o, &
+                 one,           &
+                 etaX_ai,       &
+                 wf%n_v*wf%n_o)
 !
             call mem%dealloc(I_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
             call mem%dealloc(X_dl, wf%n_v, wf%n_o)
@@ -1222,7 +1190,7 @@ contains
 !!
 !!    Add EOM contribution to etaX vector
 !!
-!!       EOM correction:  eta^X,corr_mu += tbar_mu (xi * tbar) 
+!!    EOM correction:  eta^X,corr_mu += tbar_mu (xi * tbar)
 !!
       implicit none
 !

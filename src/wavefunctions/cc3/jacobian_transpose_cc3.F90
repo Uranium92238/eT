@@ -437,10 +437,6 @@ contains
 !
                      do k = batch_k%first, min(batch_k%last, j)
 !
-                        if (k .eq. i) then ! k == j == i
-                           cycle
-                        end if
-!
 !                       Check for core orbitals:
 !                       cvs: i,j,k cannot all correspond to valence orbitals
 !                       rm_core: i,j,k may not contain any core orbital
@@ -1028,10 +1024,6 @@ contains
                      j_rel = j - batch_j%first + 1
 !
                      do k = batch_k%first, min(batch_k%last, j)
-!
-                        if (i .eq. j .and. i .eq. k) then
-                           cycle
-                        end if
 !
 !                       Check for core orbitals
                         if (wf%ijk_amplitudes_are_zero(i, j, k, cvs, rm_core)) cycle

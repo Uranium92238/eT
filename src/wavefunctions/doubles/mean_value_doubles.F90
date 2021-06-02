@@ -20,16 +20,16 @@
 submodule (doubles_class) mean_value_doubles
 !
 !!
-!!    Mean-value submodule 
+!!    Mean-value submodule
 !!
-!!    Contains routines related to the mean values, i.e. 
-!!    the construction of density matrices as well as expectation 
+!!    Contains routines related to the mean values, i.e.
+!!    the construction of density matrices as well as expectation
 !!    value calculation.
 !!
 !!    The ground state density is constructed as follows:
 !!
 !!          D_pq = < Lambda| E_pq |CC >
-!!    where: 
+!!    where:
 !!          < Lambda| = < HF| + sum_mu tbar_mu < mu| exp(-T)
 !!
 !!
@@ -45,7 +45,7 @@ submodule (doubles_class) mean_value_doubles
 !!                 + sum_mu    X_ref < HF| e^(-T) E_pq e^T |mu >  Y_mu
 !!                 + sum_mu,nu X_mu  < mu| e^(-T) E_pq e^T |nu >  Y_nu
 !!
-!!    Depending on the type of density matrix (Ground state, transition , 
+!!    Depending on the type of density matrix (Ground state, transition ,
 !!    excited state, interstate transition) different states and thus different
 !!    amplitudes X_ref, X_mu, Y_ref and Y_mu will contribute.
 !!
@@ -60,16 +60,16 @@ submodule (doubles_class) mean_value_doubles
 !!
 !!       ref_ref: first component of the vector for the left and right state
 !!
-!!       mu_ref:  second component of the vector for the left and 
+!!       mu_ref:  second component of the vector for the left and
 !!                first component of the vector for the right state
 !!
-!!       ref_mu:  first component of the vector for the left and 
+!!       ref_mu:  first component of the vector for the left and
 !!                second component of the vector for the right state
 !!
 !!       mu_nu:   second component of the vector for the left and right state
 !!
 !
-   implicit none 
+   implicit none
 !
 !
 contains
@@ -77,44 +77,88 @@ contains
 !
    module subroutine construct_gs_density_doubles(wf)
 !!
-!!    Construct one-electron density
+!!    Construct GS density
 !!    Written by Sarai Dery Folkestad, 2019
 !!
-!!    Constructs the one-electron density 
-!!    matrix in the T1 basis
+!!    Constructs the one-electron density matrix in the T1 basis
 !!
 !!    D_pq = < Lambda| E_pq |CC >
 !!
 !!    Contributions to the density are split up as follows:
-!!       D_pq = D_pq(ref-ref) + sum_mu tbar_mu D_pq(mu-ref)
+!!    D_pq = D_pq(ref-ref) + sum_mu tbar_mu D_pq(mu-ref)
+!!
+!!    The second term is separated in "mu_ref_density_terms",
+!!    as it is used for the left transition density as well.
+!!
+      implicit none
+!
+      class(doubles) :: wf
+      type(timings)  :: timer
+!
+      timer = timings('Ground state density', pl='m')
+      call timer%turn_on
+!
+      call wf%mu_ref_density_terms(wf%density, 0, [wf%t1bar, wf%t2bar])
+      call wf%density_ccs_ref_ref_oo(wf%density)
+!
+      call timer%turn_off
+!
+   end subroutine construct_gs_density_doubles
+!
+!
+   module subroutine mu_ref_density_terms_doubles(wf, density, state, L)
+!!
+!!    Density mu ref terms
+!!    Written by Alexander C. Paul, May 2021
+!!
+!!    Constructs terms of the form:
+!!       sum_mu L_mu < mu| E_pq |HF >
+!!
+!!    corresponding to terms of the ground state density
+!!    and the left transition density.
 !!
       implicit none
 !
       class(doubles) :: wf
 !
-      real(dp), dimension(:,:,:,:), allocatable :: tbar_aibj
-      real(dp), dimension(:,:,:,:), allocatable :: t_aibj
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: density
 !
-      call zero_array(wf%density, (wf%n_mo)**2)
+      integer, intent(in) :: state
 !
-      call wf%density_ccs_ref_ref_oo(wf%density)
-      call wf%density_ccs_mu_ref_vo(wf%density, wf%t1bar)
+!     L might only be contiguous in the ranges (1:n_t1) and (1+t1: n_t1+n_t2)
+!     as L can also be a combined array of t1bar + t2bar
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(in) :: L
 !
-      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
+      real(dp), dimension(:,:,:,:), allocatable :: L2, t2
 !
-      call wf%density_doubles_mu_ref_ov(wf%density, wf%t1bar, t_aibj)
+      type(timings)     :: timer
+      character(len=40) :: timer_name
 !
-      call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2bar, tbar_aibj, (wf%n_v)*(wf%n_o))
+      write(timer_name, '(a,i0,a)') 'Doubles contribution to <', state,'|E_pq|0>'
+      timer = timings(trim(timer_name), pl='v')
 !
-      call wf%density_doubles_mu_ref_oo(wf%density, tbar_aibj, t_aibj)
-      call wf%density_doubles_mu_ref_vv(wf%density, tbar_aibj, t_aibj)
+      call zero_array(density, wf%n_mo**2)
+      call wf%ccs%mu_ref_density_terms(density, state, L(1:wf%n_t1))
 !
-      call mem%dealloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call timer%turn_on() ! Doubles contribution
 !
-   end subroutine construct_gs_density_doubles
+      call mem%alloc(t2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t2, wf%n_v*wf%n_o)
+!
+      call wf%density_doubles_mu_ref_ov(density, L(1:wf%n_t1), t2)
+!
+      call mem%alloc(L2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(L(wf%n_t1+1 : wf%n_t1+wf%n_t2), L2, wf%n_t1)
+!
+      call wf%density_doubles_mu_ref_oo(density, L2, t2)
+      call wf%density_doubles_mu_ref_vv(density, L2, t2)
+!
+      call mem%dealloc(t2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(L2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
+!
+   end subroutine mu_ref_density_terms_doubles
 !
 !
    module subroutine density_doubles_mu_ref_oo_doubles(wf, density, tbar_akbj, t_akbi)
@@ -129,7 +173,7 @@ contains
 !!    where X_mu is a general amplitude (tbar or L)
 !!
 !!    explicit term in this routine:
-!!          D_ij -= sum_abk t_akb,i tbar_akb,j 
+!!          D_ij -= sum_abk t_akb,i tbar_akb,j
 !!
       implicit none
 !
@@ -140,17 +184,17 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_akbj
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_akbi
 !
-      call dgemm('T', 'N',                &
-                  wf%n_o,                 &
-                  wf%n_o,                 &
-                  (wf%n_v**2)*(wf%n_o),   &
-                  -one,                   &
-                  t_akbi,                 & ! t_akb_i
-                  (wf%n_v**2)*(wf%n_o),   &
-                  tbar_akbj,              & ! tbar_akb_j
-                  (wf%n_v**2)*(wf%n_o),   &
-                  one,                    &
-                  density,                &
+      call dgemm('T', 'N',          &
+                  wf%n_o,           &
+                  wf%n_o,           &
+                  wf%n_v**2*wf%n_o, &
+                  -one,             &
+                  t_akbi,           & ! t_akb_i
+                  wf%n_v**2*wf%n_o, &
+                  tbar_akbj,        & ! tbar_akb_j
+                  wf%n_v**2*wf%n_o, &
+                  one,              &
+                  density,          &
                   wf%n_mo)
 !
    end subroutine density_doubles_mu_ref_oo_doubles
@@ -178,16 +222,16 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_ajci
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_bjci
 !
-      call dgemm('N', 'T',                         &
-                  wf%n_v,                          &
-                  wf%n_v,                          &
-                  (wf%n_o**2)*(wf%n_v),            &
-                  one,                             &
-                  tbar_ajci,                       & ! tbar_a_jci
-                  wf%n_v,                          &
-                  t_bjci,                          & ! t_b_jci
-                  wf%n_v,                          &
-                  one,                             &
+      call dgemm('N', 'T',          &
+                  wf%n_v,           &
+                  wf%n_v,           &
+                  wf%n_o**2*wf%n_v, &
+                  one,              &
+                  tbar_ajci,        & ! tbar_a_jci
+                  wf%n_v,           &
+                  t_bjci,           & ! t_b_jci
+                  wf%n_v,           &
+                  one,              &
                   density(wf%n_o + 1, wf%n_o + 1), &
                   wf%n_mo)
 !
@@ -205,7 +249,7 @@ contains
 !!
 !!    where X_mu is a general amplitude (tbar or L)
 !!
-!!          D_ia += sum_bj u^ab_ij tbar_bj = sum_bj u_ia,bj tbar_bj 
+!!          D_ia += sum_bj u^ab_ij tbar_bj = sum_bj u_ia,bj tbar_bj
 !!
 !!          u^{ab}_ij = 2t_aibj - t_ajbi
 !!
@@ -226,8 +270,8 @@ contains
 !
       call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call dcopy((wf%n_v)**2*(wf%n_o)**2, t_aibj, 1, u_aibj, 1)
-      call dscal((wf%n_v)**2*(wf%n_o)**2, two, u_aibj, 1)
+      call dcopy(wf%n_v**2*wf%n_o**2, t_aibj, 1, u_aibj, 1)
+      call dscal(wf%n_v**2*wf%n_o**2, two, u_aibj, 1)
 !
       call add_1432_to_1234(-one, t_aibj, u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !

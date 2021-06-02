@@ -194,7 +194,6 @@
   =======================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -224,7 +223,7 @@
      3) Calculation of the ground state (diis algorithm)
      4) Calculation of the multipliers (davidson algorithm)
      5) Calculation of the excited state (davidson algorithm)
-     6) Calculation of the transition moments (EOM)
+     6) Calculation of excited state properties (EOM)
 
 
   1) Cholesky decomposition of the electron repulsion integrals
@@ -417,7 +416,7 @@
    19             0.1167E-10
    20             0.4058E-11
    21             0.1156E-11
-   22             0.2911E-12
+   22             0.2910E-12
   ---------------------------
 
   Convergence criterion met in 22 iterations!
@@ -860,14 +859,14 @@
      Total cpu time (sec):               0.02365
 
 
-  6) Calculation of the transition moments (EOM)
+  6) Calculation of excited state properties (EOM)
 
   :: EOM properties calculation
 
-  - Summary of EOM properties calculation:
+  - Summary of EOM transition properties calculation:
 
-     State 1:
-     ----------
+     States m = 0 and n = 1:
+     -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.247194255572
      Excitation energy [eV]:            6.726498310302
@@ -875,7 +874,7 @@
 
                    Transition moments [a.u.]         Transition strength [a.u.]
      --------------------------------------------------------------------------
-     Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
+     Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
      --------------------------------------------------------------------------
      X          -0.0004665158     -0.0008903044            0.0000004153
      Y          -0.0027022345     -0.0052703759            0.0000142418

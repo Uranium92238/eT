@@ -35,8 +35,9 @@ module reordering
    implicit none
 !
    interface sort_12_to_21
-      procedure :: sort_12_to_21, &
-                   sort_12_to_21_complex
+      procedure :: sort_12_to_21_r, &
+                   sort_12_to_21_c, &
+                   sort_12_compound_to_21
    end interface sort_12_to_21
 !
    interface add_21_to_12
@@ -412,9 +413,9 @@ contains
 !     -::- Two-index re-sort and re-sort-add routines -::-
 !     ----------------------------------------------------
 !
-   subroutine sort_12_to_21(x_p_q, x_q_p, dim_p, dim_q)
+   subroutine sort_12_to_21_r(x_pq, x_qp, dim_p, dim_q)
 !!
-!!    Sort 12 to 21
+!!    Sort 12 to 21 real
 !!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
 !!
 !!    Reorders the array x_p_q to x_q_p (i.e., 12 to 21).
@@ -426,8 +427,8 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q
 !
-      real(dp), dimension(dim_p, dim_q), intent(in) :: x_p_q
-      real(dp), dimension(dim_q, dim_p) :: x_q_p
+      real(dp), dimension(dim_p, dim_q), intent(in)  :: x_pq
+      real(dp), dimension(dim_q, dim_p), intent(out) :: x_qp
 !
       integer :: p, q
 !
@@ -435,18 +436,34 @@ contains
       do p = 1, dim_p
          do q = 1, dim_q
 !
-            x_q_p(q, p) = x_p_q(p, q)
+            x_qp(q, p) = x_pq(p, q)
 !
          enddo
       enddo
 !$omp end parallel do
 !
-   end subroutine sort_12_to_21
+   end subroutine sort_12_to_21_r
 !
-!
-   subroutine sort_12_to_21_complex(x_p_q, x_q_p, dim_p, dim_q)
+   subroutine sort_12_compound_to_21(x_pq, x_qp, dim_p, dim_q)
 !!
-!!    Sort 12 to 21
+!!    Sort 12 compound to 21
+!!    Written by Alexander C. Paul, May 2021
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      real(dp), dimension(dim_p*dim_q), intent(in)  :: x_pq
+      real(dp), dimension(dim_q, dim_p), intent(out) :: x_qp
+!
+      call sort_12_to_21_r(x_pq, x_qp, dim_p, dim_q)
+!
+   end subroutine sort_12_compound_to_21
+!
+!
+   subroutine sort_12_to_21_c(x_p_q, x_q_p, dim_p, dim_q)
+!!
+!!    Sort 12 to 21 complex
 !!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
 !!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
 !!
@@ -474,7 +491,7 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine sort_12_to_21_complex
+   end subroutine sort_12_to_21_c
 !
 !
    subroutine add_21_to_12(scalar, x, y_p_q, dim_p, dim_q)
@@ -2456,7 +2473,7 @@ contains
    subroutine sort_1234_to_2431(x_pqrs, x_qsrp, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 2431
-!!    Written by Sarai D. Folkestad, 
+!!    Written by Sarai D. Folkestad,
 !!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
 !!
 !!    Reorders the array x_pqrs to x_qsrp (i.e., 1234 to 2431).
@@ -2490,7 +2507,7 @@ contains
    subroutine sort_1234_to_2431_complex(x_pqrs, x_qsrp, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 2431
-!!    Written by Sarai D. Folkestad, 
+!!    Written by Sarai D. Folkestad,
 !!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
 !!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
 !!
@@ -2525,7 +2542,7 @@ contains
    subroutine sort_1234_to_3421(x_pqrs, x_rsqp, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 3421
-!!    Written by Sarai D. Folkestad, 
+!!    Written by Sarai D. Folkestad,
 !!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
 !!
 !!    Reorders the array x_pqrs to x_rsqp (i.e., 1234 to 3421).
@@ -2559,7 +2576,7 @@ contains
    subroutine sort_1234_to_3421_complex(x_pqrs, x_rsqp, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 3421
-!!    Written by Sarai D. Folkestad, 
+!!    Written by Sarai D. Folkestad,
 !!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
 !!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
 !!
@@ -5443,7 +5460,7 @@ contains
                   pqrs = max(pq,rs)*(max(pq,rs)-3)/2 + pq + rs
 !
                   y(pqrs) = y(pqrs) &
-                          + third*(two*x(p,r,q,s) + x(r,p,q,s) & 
+                          + third*(two*x(p,r,q,s) + x(r,p,q,s) &
                           +        two*x(r,p,s,q) + x(p,r,s,q))
 !
                enddo
@@ -5781,7 +5798,7 @@ contains
 !!    Pack in unpacked array X_prqs to packed array Y_pqrs
 !!    where dim_p = dim_r and dim_q = dim_s
 !!
-      implicit none 
+      implicit none
 !
       integer, intent(in) :: dim_p
       integer, intent(in) :: dim_q
@@ -5830,7 +5847,7 @@ contains
 !!    Pack in unpacked array X_prqs to packed array Y_pqrs
 !!    where dim_p = dim_r and dim_q = dim_s
 !!
-      implicit none 
+      implicit none
 !
       integer, intent(in) :: dim_p
       integer, intent(in) :: dim_q
@@ -5881,7 +5898,7 @@ contains
 !!    Pack in unpacked array X_prqs to packed array Y_pqrs
 !!    where dim_p = dim_r and dim_q = dim_s
 !!
-      implicit none 
+      implicit none
 !
       integer, intent(in) :: dim_p
       integer, intent(in) :: dim_q
@@ -5932,7 +5949,7 @@ contains
 !!    Pack in unpacked array X_prqs to packed array Y_pqrs
 !!    where dim_p = dim_r and dim_q = dim_s
 !!
-      implicit none 
+      implicit none
 !
       integer, intent(in) :: dim_p
       integer, intent(in) :: dim_q

@@ -155,14 +155,14 @@ def get_eom_filter(n_states, tolerance, convergence=True, restart=False, Newton=
 
     g = [
         get_filter(
-            from_string="Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >",
+            from_string="Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >",
             num_lines=5,
             abs_tolerance=tolerance,
             mask=[1, 2],
             ignore_sign=True,
         ),
         get_filter(
-            from_string="Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >",
+            from_string="Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >",
             num_lines=5,
             abs_tolerance=tolerance,
             mask=[3],
@@ -233,7 +233,7 @@ def get_quadrupole_filter(tolerance):
     return f
 
 
-def get_cube_filter(tolerance):
+def get_cube_filter(tolerance, n_lines):
     """
     Returns filters for a calculation of .cube
     """
@@ -242,7 +242,7 @@ def get_cube_filter(tolerance):
 
     f = [
         get_filter(
-            from_string="Integrated density", num_lines=25, abs_tolerance=tolerance
+            from_string="Integrated density", num_lines=n_lines, abs_tolerance=tolerance
         )
     ]
 

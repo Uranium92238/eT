@@ -16,7 +16,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
-# 	Based on the cmake/DaltonTests.cmake file of the public 
+# 	Based on the cmake/DaltonTests.cmake file of the public
 #   Dalton program (LGPL v2.1)
 #
 # 	Copied and modified for eT by Rolf H. Myhre, Feb 2019
@@ -32,13 +32,13 @@ endmacro()
 
 # All tests here should contain the label "eT"
 
-# Add a keyword for the length of the test: 
-# 
+# Add a keyword for the length of the test:
+#
 # 	short < 30 seconds
 # 	medium > 30 seconds < 120 seconds
 # 	long > 120 seconds < 200 seconds
 # 	verylong > 200 seconds
-# 
+#
 # NEVER comment out tests
 add_eT_runtest(eri_cholesky                                 "eT;short;cholesky;eri")
 #
@@ -180,6 +180,9 @@ add_eT_runtest(ccsd_eom_polarizability                      "eT;short;ccsd;es;eo
 add_eT_runtest(ccsd_oscillator_strength_eom                 "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom_crop            "eT;short;ccsd;es;eom;crop")
 add_eT_runtest(ccsd_oscillator_strength_eom_records_in_mem  "eT;short;ccsd;es;eom")
+add_eT_runtest(ccsd_es_transition_strengths                 "eT;short;ccsd;es;eom")
+add_eT_runtest(ccsd_es_dipole_moments                       "eT;short;ccsd;es;eom;dipole")
+add_eT_runtest(ccsd_es_cvs_properties                       "eT;short;ccsd;es;eom;cvs;dipole")
 add_eT_runtest(ccsd_cvs_eom_degeneracy                      "eT;short;ccsd;es;eom;diis;degeneracy")
 add_eT_runtest(ccsd_td_rk4                                  "eT;short;ccsd;complex;td")
 add_eT_runtest(ccsd_td_rk4_train                            "eT;short;ccsd;complex;td")
@@ -219,8 +222,11 @@ add_eT_runtest(cc3_left_es_energies                         "eT;short;cc3;es;lef
 add_eT_runtest(cc3_left_cvs_es_energies                     "eT;short;cc3;es;left;cvs;diis")
 add_eT_runtest(cc3_oscillator_strength_eom                  "eT;short;cc3;es;eom")
 add_eT_runtest(cc3_oscillator_strength_eom_cvs              "eT;short;cc3;es;eom;cvs")
-add_eT_runtest(cc3_remove_core                              "eT;short;cc3;remove-core;eom")
+add_eT_runtest(cc3_es_properties                            "eT;short;cc3;es;eom")
+add_eT_runtest(cc3_es_cvs_properties                        "eT;short;cc3;es;eom;cvs")
+add_eT_runtest(cc3_es_remove-core_properties                "eT;short;cc3;es;eom;remove-core")
 add_eT_runtest(restart_cc3_from_ccsd                        "eT;short;cc3;es;eom;restart")
+add_eT_runtest(cc3_visualization                            "eT;short;cc3;visualization;es;eom")
 #
 add_eT_runtest(mlcc2_cnto_full_right_es                     "eT;short;mlcc2;es;cnto")
 add_eT_runtest(mlcc2_pao_full_right_es                      "eT;short;mlcc2;es;pao")

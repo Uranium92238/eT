@@ -67,4 +67,42 @@ contains
    end subroutine destruct_gs_density_cc3
 !
 !
+   module subroutine initialize_density_intermediates_cc3(wf)
+!!
+!!    Initialize density intermediates
+!!    Written by Alexander C. Paul and Sarai D. Folkestad, Apr 2020
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      call mem%alloc(wf%r0, wf%n_singlet_states)
+!
+!     CC3 corrections to the left transition density are needed
+!     for the excited state transition densities
+      call mem%alloc(wf%L_cc3_density_oo, wf%n_o, wf%n_o)
+      call mem%alloc(wf%L_cc3_density_vv, wf%n_v, wf%n_v)
+!
+   end subroutine initialize_density_intermediates_cc3
+!
+!
+   module subroutine destruct_density_intermediates_cc3(wf)
+!!
+!!    Destruct density intermediates
+!!    Written by Alexander C. Paul and Sarai D. Folkestad, Apr 2020
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      call mem%dealloc(wf%r0, wf%n_singlet_states)
+!
+!     CC3 corrections to the left transition density are needed
+!     for the excited state transition densities
+      call mem%dealloc(wf%L_cc3_density_oo, wf%n_o, wf%n_o)
+      call mem%dealloc(wf%L_cc3_density_vv, wf%n_v, wf%n_v)
+!
+   end subroutine destruct_density_intermediates_cc3
+!
+!
 end submodule initialize_destruct_cc3
