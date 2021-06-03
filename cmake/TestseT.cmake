@@ -67,7 +67,7 @@ add_eT_runtest(hf_quadrupole                                "eT;short;hf;sad;qua
 add_eT_runtest(hf_anion                                     "eT;short;hf;sad;charged")
 add_eT_runtest(hf_hydroxyl                                  "eT;short;hf;sad;charged")
 add_eT_runtest(restart_hf                                   "eT;short;hf;restart")
-add_eT_runtest(visualization_cube                           "eT;short;hf;visualization")
+add_eT_runtest(hf_visualization                             "eT;short;hf;visualization")
 #
 add_eT_runtest(restart_geoopt                               "eT;short;hf;bfgs;gradient,restart")
 add_eT_runtest(hf_bohr_units                                "eT;short;hf;sad")
