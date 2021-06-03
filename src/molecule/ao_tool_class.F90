@@ -235,6 +235,9 @@ module ao_tool_class
       procedure, public :: print_basis_set_molden &
                         => print_basis_set_molden_ao_tool
 !
+      procedure, public :: get_SAD_center_indices &
+                        => get_SAD_center_indices_ao_tool
+!
       procedure, private :: construct_cs_eri_max_screenings ! Cauchy-Schwarz (CS),
                                                             ! electron repulsion integrals (ERIs)
 !
@@ -3358,6 +3361,50 @@ contains
       end if
 !
    end subroutine print_basis_set_molden_ao_tool
+!
+!
+   subroutine get_SAD_center_indices_ao_tool(ao, center_indices)
+!!
+!!    Get SAD center indices
+!!    Written by Tor S. Haugland and Sarai D. Folkestad, Jun 2021
+!!
+!!    Collects the indices of unique atoms, excluding ghost atoms.
+!!
+!
+      use string_utilities, only: index_of_unique_strings
+!
+      implicit none
+!
+      class(ao_tool),                           intent(in) :: ao
+      integer, dimension(ao%n_centers),         intent(out) :: center_indices
+!
+      integer :: n_centers, I
+!
+      character(len=50), dimension(ao%n_centers) :: atom_and_basis
+      integer, dimension(ao%n_centers) :: unique_center_indices
+!
+      do I = 1, ao%n_centers
+!
+         atom_and_basis(I) = ao%centers(I)%get_identifier_string()
+!
+      enddo
+!
+      call index_of_unique_strings(unique_center_indices, ao%n_centers, atom_and_basis)
+!
+      center_indices = 0
+      n_centers = 0
+!
+      do I = 1, ao%n_centers
+!
+         if (unique_center_indices(I) == 0) cycle
+         if (ao%centers(I)%is_ghost()) cycle ! No density to generate for ghost atom
+
+         n_centers = n_centers + 1
+         center_indices(n_centers) = unique_center_indices(I)
+!
+      enddo
+!
+   end subroutine get_SAD_center_indices_ao_tool
 !
 !
 end module ao_tool_class
