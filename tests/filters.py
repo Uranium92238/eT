@@ -233,18 +233,14 @@ def get_quadrupole_filter(tolerance):
     return f
 
 
-def get_cube_filter(tolerance, n_lines):
+def get_file_filter(tolerance):
     """
-    Returns filters for a calculation of .cube
+    Returns filters to check an entire file.
     """
 
     from runtest import get_filter
 
-    f = [
-        get_filter(
-            from_string="Integrated density", num_lines=n_lines, abs_tolerance=tolerance
-        )
-    ]
+    f = [get_filter(abs_tolerance=tolerance, ignore_sign=True)]
 
     return f
 
