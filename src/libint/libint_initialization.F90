@@ -78,7 +78,7 @@ contains
       do i =1,n_atoms
 !
          atomic_numbers_c(i) = int(atoms(i)%number_, c_int)
-         atomic_charges_c(i) = int(atoms(i)%charge, c_int)
+         atomic_charges_c(i) = int(atoms(i)%nuclear_charge, c_int)
 !
          atomic_coordinates_c(1,i) = real(atoms(i)%coordinates(1)*angstrom_to_bohr, c_double)
          atomic_coordinates_c(2,i) = real(atoms(i)%coordinates(2)*angstrom_to_bohr, c_double)

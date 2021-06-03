@@ -60,8 +60,9 @@ module atomic_center_class
 !
       real(dp), dimension(3) :: coordinates ! x, y, z
 !
-      integer :: number_       ! Atomic number Z
-      integer :: charge        ! = number_ (if (ghost) then = 0)
+      integer :: number_        ! Atomic number Z
+      integer :: charge
+      integer :: nuclear_charge ! = number_ (if (ghost) then = 0)
 !
       integer :: input_number  ! Atom # in the input file
       integer :: libint_number ! Center # in Libint
@@ -161,8 +162,10 @@ contains
 !
       call center%symbol_to_number()
 !
-      center%charge = center%number_
-      if (is_ghost) center%charge = 0
+      center%charge = 0
+      center%nuclear_charge = center%number_
+!
+      if (is_ghost) center%nuclear_charge = 0
 !
       if (center%number_ .eq. -1) &
          call output%error_msg('illegal atomic symbol, check the eT.inp file ')
@@ -778,7 +781,7 @@ contains
       class(atomic_center), intent(in) :: center
       logical :: is_ghost
 !
-      is_ghost = (center%charge == 0)
+      is_ghost = (center%nuclear_charge == 0)
 !
    end function is_ghost_atomic_center
 !
