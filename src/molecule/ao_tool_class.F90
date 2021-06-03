@@ -1820,8 +1820,7 @@ contains
 !
       do I = 1, ao%n_centers
 !
-!        Skip ghost atoms
-         if (ao%centers(I)%charge == 0) cycle
+         if (ao%centers(I)%is_ghost()) cycle
 !
 !        Read the atomic density at the Ith center and set pointer
 !        to the relevant portion of the array
@@ -2853,7 +2852,7 @@ contains
 !
       do I = 1, ao%n_centers
 !
-         pc%q(I) = real(ao%centers(I)%charge,kind=dp)
+         pc%q(I) = real(ao%centers(I)%nuclear_charge,kind=dp)
 !
       enddo
 !
@@ -2909,7 +2908,7 @@ contains
       do I = first, last
 !
          pc%r(:,I) = ao%centers(I)%coordinates(:)
-         pc%q(I)   = real(ao%centers(I)%charge, kind = dp)
+         pc%q(I)   = real(ao%centers(I)%nuclear_charge, kind = dp)
 !
       enddo
 !
@@ -2963,7 +2962,7 @@ contains
 !
       do I = 1, ao%n_centers
 !
-         n = n + ao%centers(I)%charge
+         n = n + ao%centers(I)%nuclear_charge
 !
       enddo
 !
