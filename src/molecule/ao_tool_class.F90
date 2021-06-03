@@ -3395,11 +3395,11 @@ contains
 !
       do I = 1, ao%n_centers
 !
-         if (unique_center_indices(I) == 0) cycle
+         if (all(unique_center_indices /= I)) cycle
          if (ao%centers(I)%is_ghost()) cycle ! No density to generate for ghost atom
-
+!
          n_centers = n_centers + 1
-         center_indices(n_centers) = unique_center_indices(I)
+         center_indices(n_centers) = I
 !
       enddo
 !
