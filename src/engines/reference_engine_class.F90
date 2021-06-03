@@ -268,28 +268,22 @@ contains
 !!    Added "Found SAD". Only loop over unique atoms.
 !!
       use sequential_file_class,  only: sequential_file
-!
       use atomic_center_class,    only: atomic_center
-!
       use uhf_class,              only: uhf
-!
-      use string_utilities,       only: index_of_unique_strings
-!
       use timings_class,          only: timing
 !
       implicit none
 !
       class(reference_engine)          :: engine
-!
       class(hf)                        :: wf
 !
-      type(uhf),         allocatable         :: sad_wf
-      type(scf_solver), allocatable          :: sad_solver
+      type(uhf),        allocatable :: sad_wf
+      type(scf_solver), allocatable :: sad_solver
 !
       character(len=200)    :: ao_density_guess
-      real(dp)              :: energy_threshold
       real(dp)              :: gradient_threshold
       integer               :: max_iterations
+      integer               :: I
 !
       character(len=200)    :: name_
       integer               :: multiplicity
@@ -299,45 +293,25 @@ contains
       type(sequential_file) :: alpha_density_file
       type(sequential_file) :: beta_density_file
 !
-      integer :: I
-      character(len=50), dimension(wf%n_atomic_centers) :: atom_and_basis
-      integer,           dimension(wf%n_atomic_centers) :: unique_atom_index
+      integer, dimension(wf%n_atomic_centers) :: unique_atom_index
 !
       type(timings), allocatable :: sad_generation_timer
 !
-      type(atomic_center), allocatable :: center
+      type(atomic_center) :: center
 !
       call engine%tasks%print_('sad')
 !
       sad_generation_timer = timings('SAD generation time', pl='normal')
       call sad_generation_timer%turn_on()
 !
-!     SAD solver settings
-!
       ao_density_guess   = 'core'
       max_iterations     = 100
-!
-      energy_threshold   = 1.0D-6
-      call input%get_keyword('energy threshold', 'solver scf', energy_threshold)
-      energy_threshold   = min(1.0D-6, energy_threshold)
 !
       gradient_threshold = 1.0D-6
       call input%get_keyword('gradient threshold', 'solver scf', gradient_threshold)
       gradient_threshold = min(1.0D-6, gradient_threshold)
 !
-!     Find atomic index of unique atom/basis combinations
-!
-      allocate(center)
-!
-      do I = 1, wf%n_atomic_centers
-!
-         call wf%ao%get_center(I, center)
-!
-         atom_and_basis(I) = trim(center%symbol) // trim(center%basis)
-!
-      enddo
-!
-      call index_of_unique_strings(unique_atom_index, wf%n_atomic_centers, atom_and_basis)
+      call wf%ao%get_SAD_center_indices(unique_atom_index)
 !
 !     For every unique atom, generate SAD density to file
 !
@@ -345,12 +319,11 @@ contains
 !
       do I = 1, wf%n_atomic_centers
 !
+         if (all(unique_atom_index /= I)) cycle
+!
          call wf%ao%get_center(I, center)
 !
-!        Check for unique atoms and ghosts
-         if (all(unique_atom_index /= I) .or. center%is_ghost()) cycle
-!
-         name_ = "sad_" // trim(center%basis) // "_" // trim(center%symbol)
+         name_ = "sad_" // trim(center%get_identifier_string())
 !
          alpha_fname = trim(name_) // '_alpha'
          beta_fname  = trim(name_) // '_beta'
@@ -361,25 +334,19 @@ contains
 !
          multiplicity = center%get_ground_state_multiplicity()
 !
-!        Prepare SAD wavefunction
-!
          sad_wf = uhf(fractional_uniform_valence=.true., &
                       multiplicity=multiplicity)
 !
          call sad_wf%prepare([center],  embedding=.false., charge=0)
 !
-!        Prepare and run solver
-!
-         sad_solver = scf_solver(restart=.false.,                 &
-                           ao_density_guess=ao_density_guess,     &
-                           max_iterations=max_iterations,         &
-                           gradient_threshold=gradient_threshold, &
-                           acceleration_type='none',              &
-                           skip = .false.)
+         sad_solver = scf_solver(restart=.false.,                       &
+                                 ao_density_guess=ao_density_guess,     &
+                                 max_iterations=max_iterations,         &
+                                 gradient_threshold=gradient_threshold, &
+                                 acceleration_type='none',              &
+                                 skip = .false.)
 !
          call sad_solver%run(sad_wf)
-!
-!        Cleanup and generate ao_density_a and ao_density_b
 !
          call sad_wf%orbital_file%delete_()
          call sad_wf%cleanup()
@@ -392,7 +359,7 @@ contains
                             adjustl(center%symbol) // ' using UHF/(a0)', &
                             chars=[center%basis], fs='(t6,a)')
 !
-!        Move densities to where "set_ao_density_sad" can use them,
+!        Move density files to where ao_tool can use them,
 !        but first delete SAD if it already exists.
 !
          alpha_density_file = sequential_file(alpha_fname)
@@ -410,8 +377,6 @@ contains
          call beta_density_file%delete_()
 !
       enddo
-!
-      deallocate(center)
 !
 !     Libint is overwritten by SAD. Re-initialize.
 !

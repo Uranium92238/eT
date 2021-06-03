@@ -100,6 +100,9 @@ module atomic_center_class
       procedure :: get_ao_molden_order &
                 => get_ao_molden_order_atomic_center
 !
+      procedure :: get_identifier_string &
+                => get_identifier_string_atomic_center
+!
       procedure :: cleanup &
                 => cleanup_atomic_center
 !
@@ -126,7 +129,7 @@ contains
    function new_atomic_center(libint_number,    &
                               input_number,     &
                               symbol,           &
-                              coordinates,         &
+                              coordinates,      &
                               basis,            &
                               basis_type_,      &
                               is_ghost) result(center)
@@ -350,17 +353,17 @@ contains
       real(dp), dimension(center%n_ao, center%n_ao), intent(out) :: atomic_D
 !
       real(dp), dimension(:,:), allocatable :: temporary
-      character(len=100)                    :: alpha_fname, beta_fname
+      character(len=100)                    :: alpha_fname, beta_fname, name_
 !
       type(sequential_file), allocatable :: alpha_D_file
       type(sequential_file), allocatable :: beta_D_file
 !
       atomic_D = zero
 !
-      alpha_fname = 'sad_' // trim(center%basis) // '_' // &
-                  & trim(center%symbol) // '_' // 'alpha'
-      beta_fname  = 'sad_' // trim(center%basis) // '_' // &
-                  & trim(center%symbol) // '_' // 'beta'
+      name_ = "sad_" // trim(center%get_identifier_string())
+!
+      alpha_fname = trim(name_) // '_alpha'
+      beta_fname  = trim(name_) // '_beta'
 !
       alpha_D_file = sequential_file(trim(alpha_fname))
       beta_D_file  = sequential_file(trim(beta_fname))
@@ -813,6 +816,23 @@ contains
       end do
 !
    end function get_ao_molden_order_atomic_center
+!
+!
+   pure function get_identifier_string_atomic_center(center) result(identifier)
+!!
+!!    Get identifier string
+!!    Written by Sarai D. Folkestad, Jun 2021
+!!
+!!    Returns a string with symbol and basis set
+!!
+      implicit none
+!
+      class(atomic_center), intent(in) :: center
+      character(len=50) :: identifier
+!
+      identifier = trim(center%symbol) // "_" // trim(center%basis)
+!
+   end function get_identifier_string_atomic_center
 !
 !
    subroutine cleanup_atomic_center(center)
