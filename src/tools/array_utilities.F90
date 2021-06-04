@@ -3195,24 +3195,26 @@ contains
 !!    Add elements of x to the block of y defined by first/last p and q.
 !!    y is assumed to
 !!
-      use interval_class, only: interval
+      use range_class
 !
       implicit none
 !
       real(dp), intent(in) :: scalar
-      type(interval), intent(in) :: p_range, q_range
+      class(range_), intent(in) :: p_range, q_range
 !
       real(dp), dimension(:,:), intent(inout) :: y
-      real(dp), dimension(p_range%first:p_range%last, q_range%first:q_range%last), &
-                                                                        intent(in) :: x
+      real(dp), intent(in), dimension(p_range%length, q_range%length) :: x
 !
-      integer :: p, q
+      integer :: p, q, pp, qq
 !
-!$omp parallel do schedule(static) private(p,q)
-      do q = q_range%first, q_range%last
-         do p = p_range%first, p_range%last
+!$omp parallel do schedule(static) private(p,q, pp, qq)
+      do q = 1, q_range%length
+         qq = q_range%first + (q-1)*q_range%step
 !
-               y(p,q) = y(p,q) + scalar*x(p,q)
+         do p = 1, p_range%length
+            pp = p_range%first + (p-1)*p_range%step
+!
+            y(pp,qq) = y(pp,qq) + scalar*x(p,q)
 !
          enddo
       enddo

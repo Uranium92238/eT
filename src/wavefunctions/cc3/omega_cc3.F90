@@ -361,15 +361,15 @@ contains
 !
                endif
 !
-               do i = batch_i%first, batch_i%last
+               do i = batch_i%first, batch_i%get_last()
 !
                   i_rel = i - batch_i%first + 1
 !
-                  do j = batch_j%first, min(batch_j%last, i)
+                  do j = batch_j%first, min(batch_j%get_last(), i)
 !
                      j_rel = j - batch_j%first + 1
 !
-                     do k = batch_k%first, min(batch_k%last, j)
+                     do k = batch_k%first, min(batch_k%get_last(), j)
 !
                         if (i .eq. j .and. i .eq. k) then
                            cycle

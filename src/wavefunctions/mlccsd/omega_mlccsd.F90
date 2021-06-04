@@ -275,10 +275,10 @@ contains
 !
             call integral_timer%turn_on()
 !
-            call wf%eri%get_eri_t1('vvvv', g_acbd,              &
-                                   batch_a%first, batch_a%last, &
-                                   1, n_a_v,                    &
-                                   batch_b%first, batch_b%last, &
+            call wf%eri%get_eri_t1('vvvv', g_acbd,                      &
+                                   batch_a%first, batch_a%get_last(),   &
+                                   1, n_a_v,                            &
+                                   batch_b%first, batch_b%get_last(),   &
                                    1, n_a_v)
 !
             call integral_timer%freeze()
@@ -914,7 +914,7 @@ contains
          call mem%alloc(g_kiac, n_a_o, wf%n_ccsd_o, batch_a%length, n_a_v)
 !
          call wf%eri%get_eri_t1('oovv', g_kiac, 1, n_a_o, 1, wf%n_ccsd_o, &
-                                                batch_a%first, batch_a%last, 1, n_a_v)
+                                                batch_a%first, batch_a%get_last(), 1, n_a_v)
 !
 !        X_aick = X_aick + g_kiac
 !

@@ -1535,7 +1535,7 @@ contains
 !!    shall be printed in the routine calling this routine.
 !!
       use array_utilities, only: get_l2_norm
-      use interval_class, only: interval
+      use range_class
 !
       implicit none
 !
@@ -1557,7 +1557,7 @@ contains
       character(len=15), dimension(:), allocatable :: labels
       character(len=100) :: line
 !
-      type(interval), allocatable :: subset
+      type(range_), allocatable :: subset
 !
       n_columns = engine%n_initial_states + 1
 !
@@ -1599,13 +1599,13 @@ contains
          n_to_print = min(n_columns-n_printed, 4)
          ll = 7 + 15*n_to_print
 !
-         subset = interval(n_printed + 1, n_printed + n_to_print)
+         subset = range_(n_printed + 1, n_printed + n_to_print)
 !
 !        Print header of the table (Comp.  Label1  Label2 ...)
 !
          write(line,'(a,i0,a)') ' Comp.', subset%length, '(a15)'
          call output%printf('m', trim(line), fs='(//t6,a)', ll=80, &
-                            chars=[labels(subset%first:subset%last)])
+                            chars=[labels(subset%first:subset%get_last())])
 !
          call output%print_separator('m', ll,'-', fs='(t6,a)')
 !
@@ -1615,7 +1615,7 @@ contains
 !
             write(line,'(a5,1x,i0,a)') components(c), subset%length, '(f15.6)'
             call output%printf('m', trim(line), fs='(t6,a)', &
-                               reals=[operator_(c, subset%first:subset%last)])
+                               reals=[operator_(c, subset%first:subset%get_last())])
 !
          end do
 !
@@ -1624,7 +1624,7 @@ contains
 !        Print Norm of the operator for every state in the subset
          write(line,'(a,i0,a)') 'Norm  ', subset%length, '(f15.6)'
          call output%printf('m', trim(line), fs='(t6,a)', &
-                           reals=[norms(subset%first:subset%last)])
+                           reals=[norms(subset%first:subset%get_last())])
 !
          call output%print_separator('m', ll,'-', fs='(t6,a)')
 !

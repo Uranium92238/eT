@@ -1392,7 +1392,8 @@ contains
 !
          call batch_a%determine_limits(current_a_batch)
 !
-         call doubles_file%read_(R_ibja(:,:,:,1:batch_a%length), batch_a%first, batch_a%last)
+         call doubles_file%read_(R_ibja(:,:,:,1:batch_a%length), &
+                                 batch_a%first, batch_a%get_last())
 !
 !        M_ij = 1/2 (1 + delta_ai,bk delta_i,j) R_jbka R_ibka
 !
@@ -1423,7 +1424,8 @@ contains
 !
             call batch_c%determine_limits(current_c_batch)
 !
-            call doubles_file%read_(R_kdlc(:,:,:,1:batch_c%length), batch_c%first, batch_c%last)
+            call doubles_file%read_(R_kdlc(:,:,:,1:batch_c%length), &
+                                    batch_c%first, batch_c%get_last())
 !
 !           N_ac += 1/2 sum_dkl(1 + delta_ak,dl delta_a,c) R_akdl R_ckdl
 !

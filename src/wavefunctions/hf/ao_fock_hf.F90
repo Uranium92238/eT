@@ -17,10 +17,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (hf_class) ao_fock 
+submodule (hf_class) ao_fock
 !
 !!
-!!    AO Fock submodule 
+!!    AO Fock submodule
 !!
 !!    Collects the routines used in the construction of the AO Fock matrix.
 !!
@@ -93,7 +93,7 @@ contains
 !!    in the iterative loop.
 !!
 !!    Modified by SDF, Sep 2020:
-!!    
+!!
 !!    Cumulative construction of two-electron part and not
 !!    full Fock matrix
 !!
@@ -175,11 +175,11 @@ contains
 !!
 !!    Modified by Eirik F. Kjønstad, Jan 2020. Added C_screening optional.
 !!
-!!    C_screening: If true, G(D) will be constructed in the AO basis, as usual, but the 
-!!                 Coulomb and exchange screening will target the MO basis G(D). Used in 
+!!    C_screening: If true, G(D) will be constructed in the AO basis, as usual, but the
+!!                 Coulomb and exchange screening will target the MO basis G(D). Used in
 !!                 MLHF when constructing G(Da). Default: false.
 !!
-      implicit none 
+      implicit none
 !
       class(hf), intent(inout):: wf
 !
@@ -196,7 +196,7 @@ contains
       real(dp) :: eri_precision
 !
       logical, optional, intent(in) :: C_screening
-      logical :: C_screening_local 
+      logical :: C_screening_local
 !
       C_screening_local = .false.
       if (present(C_screening)) C_screening_local = C_screening
@@ -226,20 +226,20 @@ contains
 !
       eri_precision = wf%ao%get_libint_epsilon()
 !
-      if (.not. C_screening_local) then 
+      if (.not. C_screening_local) then
 !
          call wf%construct_ao_G_thread_terms(G_thread, D, n_threads, max_D_schwarz,           &
                                              max_eri_schwarz, shp_density_schwarz, wf%ao%n_sig_eri_shp, &
                                              wf%coulomb_threshold, wf%exchange_threshold,     &
                                              eri_precision, wf%ao%shells)
 !
-      else 
+      else
 !
          call wf%construct_ao_G_thread_terms_mo_screened(G_thread, D, n_threads, max_D_schwarz,   &
                                                          max_eri_schwarz, shp_density_schwarz,    &
                                                          wf%ao%n_sig_eri_shp, wf%coulomb_threshold,         &
                                                          wf%exchange_threshold, eri_precision,    &
-                                                         wf%ao%shells)         
+                                                         wf%ao%shells)
 !
       endif
 !
@@ -281,8 +281,8 @@ contains
 !!    Note: the contributions from each thread need to be added to a single
 !!    n_ao x n_ao matrix & symmetrized to get G(D)_αβ.
 !!
-!!    Routine partly based on Hartree-Fock implementation shipped with 
-!!    the Libint 2 integral package by E. Valeev. 
+!!    Routine partly based on Hartree-Fock implementation shipped with
+!!    the Libint 2 integral package by E. Valeev.
 !!
       implicit none
 !
@@ -290,12 +290,12 @@ contains
 !
       integer, intent(in) :: n_threads, n_sig_shp
 !
-      type(interval), dimension(wf%ao%n_sh), intent(in) :: shells
+      type(range_), dimension(wf%ao%n_sh), intent(in) :: shells
 !
       real(dp), dimension(wf%ao%n, wf%ao%n*n_threads)   :: F
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
 !
-      real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz 
+      real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz
       real(dp), intent(in) :: coulomb_thr, exchange_thr, precision_thr
 !
       real(dp), dimension(wf%ao%n_sh, wf%ao%n_sh), intent(in) :: shp_density_schwarz
@@ -370,28 +370,31 @@ contains
 !
                if (skip == 1) cycle
 !
-               tot_dim = (shells(s1)%length)*(shells(s2)%length)*(shells(s3)%length)*(shells(s4)%length)
+               tot_dim = shells(s1)%length * &
+                         shells(s2)%length * &
+                         shells(s3)%length * &
+                         shells(s4)%length
 !
                g(1:tot_dim) = deg*g(1:tot_dim)
 !
-               do z = shells(s4)%first, shells(s4)%last
+               do z = shells(s4)%first, shells(s4)%get_last()
 !
                   z_red = z - shells(s4)%first + 1
 !
-                  do y = shells(s3)%first, shells(s3)%last
+                  do y = shells(s3)%first, shells(s3)%get_last()
 !
                      y_red = y - shells(s3)%first + 1
 !
                      d1 = D(y, z)
 !
-                     do x = shells(s2)%first, shells(s2)%last
+                     do x = shells(s2)%first, shells(s2)%get_last()
 !
                         x_red = x - shells(s2)%first + 1
 !
                         d3 = D(x, y)
                         d5 = D(x, z)
 !
-                        do w = shells(s1)%first, shells(s1)%last
+                        do w = shells(s1)%first, shells(s1)%get_last()
 !
                            d2 = D(w, x)
                            d4 = D(w, y)
@@ -399,7 +402,10 @@ contains
 !
                            w_red = w - shells(s1)%first + 1
 !
-                           wxyz = shells(s1)%length*(shells(s2)%length*(shells(s3)%length*(z_red-1)+y_red-1)+x_red-1)+w_red
+                           wxyz = shells(s1)%length * &
+                                 (shells(s2)%length * &
+                                 (shells(s3)%length * &
+                                 (z_red-1)+y_red-1)+x_red-1)+w_red
 !
                            temp = g(wxyz)
 !
@@ -450,8 +456,8 @@ contains
 !!    Note: the contributions from each thread need to be added to a single
 !!    n_ao x n_ao matrix & symmetrized to get G(D)_αβ.
 !!
-!!    Routine partly based on Hartree-Fock implementation shipped with 
-!!    the Libint 2 integral package by E. Valeev. 
+!!    Routine partly based on Hartree-Fock implementation shipped with
+!!    the Libint 2 integral package by E. Valeev.
 !!
 !!    This routine modifies the existing construct AO G routine by:
 !!
@@ -459,12 +465,12 @@ contains
 !!
 !!          C_max(s) = max_p | C_wp | for AOs w in the shell s
 !!
-!!       - Use this MO coefficients list to screen (Coulomb, exchange) for the precision of 
+!!       - Use this MO coefficients list to screen (Coulomb, exchange) for the precision of
 !!
 !!          G_pq = G_alpha,beta C_alpha,p C_beta,q        (not G_alpha,beta)
 !!
-!!    Used to construct G(Da), where Da is the active density, in MLHF. In that case 
-!!    the MOs are local, which means that screening for G(Da) in the MO basis is more efficient  
+!!    Used to construct G(Da), where Da is the active density, in MLHF. In that case
+!!    the MOs are local, which means that screening for G(Da) in the MO basis is more efficient
 !!    than screening for G(Da) in the AO basis.
 !!
       implicit none
@@ -473,12 +479,12 @@ contains
 !
       integer, intent(in) :: n_threads, n_sig_shp
 !
-      type(interval), dimension(wf%ao%n_sh), intent(in) :: shells
+      type(range_), dimension(wf%ao%n_sh), intent(in) :: shells
 !
       real(dp), dimension(wf%ao%n, wf%ao%n*n_threads)   :: F
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
 !
-      real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz 
+      real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz
       real(dp), intent(in) :: coulomb_thr, exchange_thr, precision_thr
 !
       real(dp), dimension(wf%ao%n_sh, wf%ao%n_sh), intent(in) :: shp_density_schwarz
@@ -500,19 +506,19 @@ contains
 !
       real(dp), dimension(:), allocatable :: C_max
 !
-      call mem%alloc(C_max, wf%ao%n_sh) 
+      call mem%alloc(C_max, wf%ao%n_sh)
 !
       C_max_timer = timings('MO coefficients maximums screening vector', 'n')
       call C_max_timer%turn_on()
 !
-      do s1 = 1, wf%ao%n_sh 
+      do s1 = 1, wf%ao%n_sh
 !
-         C_max(s1) = zero 
+         C_max(s1) = zero
 !
-         do q = 1, wf%n_mo 
-            do w = shells(s1)%first, shells(s1)%last
+         do q = 1, wf%n_mo
+            do w = shells(s1)%first, shells(s1)%get_last()
 !
-               if (abs(wf%orbital_coefficients(w, q)) .gt. C_max(s1)) then 
+               if (abs(wf%orbital_coefficients(w, q)) .gt. C_max(s1)) then
 !
                   C_max(s1) = abs(wf%orbital_coefficients(w, q))
 !
@@ -581,29 +587,31 @@ contains
 !
                if (skip == 1) cycle
 !
-               tot_dim = (shells(s1)%length)*(shells(s2)%length)*&
-                         (shells(s3)%length)*(shells(s4)%length)
+               tot_dim = shells(s1)%length * &
+                         shells(s2)%length * &
+                         shells(s3)%length * &
+                         shells(s4)%length
 !
                g(1:tot_dim) = deg*g(1:tot_dim)
 !
-               do z = shells(s4)%first, shells(s4)%last
+               do z = shells(s4)%first, shells(s4)%get_last()
 !
                   z_red = z - shells(s4)%first + 1
 !
-                  do y = shells(s3)%first, shells(s3)%last
+                  do y = shells(s3)%first, shells(s3)%get_last()
 !
                      y_red = y - shells(s3)%first + 1
 !
                      d1 = D(y, z)
 !
-                     do x = shells(s2)%first, shells(s2)%last
+                     do x = shells(s2)%first, shells(s2)%get_last()
 !
                         x_red = x - shells(s2)%first + 1
 !
                         d3 = D(x, y)
                         d5 = D(x, z)
 !
-                        do w = shells(s1)%first, shells(s1)%last
+                        do w = shells(s1)%first, shells(s1)%get_last()
 !
                            d2 = D(w, x)
                            d4 = D(w, y)
@@ -611,8 +619,10 @@ contains
 !
                            w_red = w - shells(s1)%first + 1
 !
-                           wxyz = shells(s1)%length*(shells(s2)%length*&
-                                    (shells(s3)%length*(z_red-1)+y_red-1)+x_red-1)+w_red
+                           wxyz = shells(s1)%length * &
+                                 (shells(s2)%length * &
+                                 (shells(s3)%length * &
+                                 (z_red-1)+y_red-1)+x_red-1)+w_red
 !
                            temp = g(wxyz)
 !
@@ -643,7 +653,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(C_max, wf%ao%n_sh) 
+      call mem%dealloc(C_max, wf%ao%n_sh)
 !
    end subroutine construct_ao_G_thread_terms_mo_screened_hf
 !
@@ -671,7 +681,7 @@ contains
 !
       integer, intent(in) :: n_threads,  n_sig_shp
 !
-      type(interval), dimension(wf%ao%n_sh), intent(in) :: shells
+      type(range_), dimension(wf%ao%n_sh), intent(in) :: shells
 !
       real(dp), dimension(wf%ao%n, wf%ao%n*n_threads)   :: F
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
@@ -743,31 +753,37 @@ contains
 !
                if (skip == 1) cycle
 !
-               tot_dim = (shells(s1)%length)*(shells(s2)%length)*(shells(s3)%length)*(shells(s4)%length)
+               tot_dim = shells(s1)%length * &
+                         shells(s2)%length * &
+                         shells(s3)%length * &
+                         shells(s4)%length
 !
                g(1:tot_dim) = deg*g(1:tot_dim)
 !
-               do z = shells(s4)%first, shells(s4)%last
+               do z = shells(s4)%first, shells(s4)%get_last()
 !
                   z_red = z - shells(s4)%first + 1
 !
-                  do y = shells(s3)%first, shells(s3)%last
+                  do y = shells(s3)%first, shells(s3)%get_last()
 !
                      y_red = y - shells(s3)%first + 1
 !
                      d1 = D(y, z)
 !
-                     do x = shells(s2)%first, shells(s2)%last
+                     do x = shells(s2)%first, shells(s2)%get_last()
 !
                         x_red = x - shells(s2)%first + 1
 !
-                        do w = shells(s1)%first, shells(s1)%last
+                        do w = shells(s1)%first, shells(s1)%get_last()
 !
                            d2 = D(w, x)
 !
                            w_red = w - shells(s1)%first + 1
 !
-                           wxyz = shells(s1)%length*(shells(s2)%length*(shells(s3)%length*(z_red-1)+y_red-1)+x_red-1)+w_red
+                           wxyz = shells(s1)%length * &
+                                 (shells(s2)%length * &
+                                 (shells(s3)%length * &
+                                 (z_red-1)+y_red-1)+x_red-1)+w_red
 !
                            temp = g(wxyz)
 !
@@ -813,7 +829,7 @@ contains
 !
       integer, intent(in) :: n_threads,  n_sig_shp
 !
-      type(interval), dimension(wf%ao%n_sh), intent(in) :: shells
+      type(range_), dimension(wf%ao%n_sh), intent(in) :: shells
 !
       real(dp), dimension(wf%ao%n, wf%ao%n*n_threads)   :: F
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
@@ -888,34 +904,39 @@ contains
 !
                if (skip == 1) cycle
 !
-               tot_dim = (shells(s1)%length)*(shells(s2)%length)*(shells(s3)%length)*(shells(s4)%length)
+               tot_dim = shells(s1)%length * &
+                         shells(s2)%length * &
+                         shells(s3)%length * &
+                         shells(s4)%length
 !
                g(1:tot_dim) = deg*g(1:tot_dim)
 !
-               do z = shells(s4)%first, shells(s4)%last
+               do z = shells(s4)%first, shells(s4)%get_last()
 !
                   z_red = z - shells(s4)%first + 1
 !
-                  do y = shells(s3)%first, shells(s3)%last
+                  do y = shells(s3)%first, shells(s3)%get_last()
 !
                      y_red = y - shells(s3)%first + 1
 !
-                     do x = shells(s2)%first, shells(s2)%last
+                     do x = shells(s2)%first, shells(s2)%get_last()
 !
                         x_red = x - shells(s2)%first + 1
 !
                         d3 = D(x, y)
                         d5 = D(x, z)
 !
-                        do w = shells(s1)%first, shells(s1)%last
+                        do w = shells(s1)%first, shells(s1)%get_last()
 !
                            d4 = D(w, y)
                            d6 = D(w, z)
 !
                            w_red = w - shells(s1)%first + 1
 !
-                           wxyz = shells(s1)%length*(shells(s2)%length*&
-                                  (shells(s3)%length*(z_red-1)+y_red-1)+x_red-1)+w_red
+                           wxyz = shells(s1)%length * &
+                                 (shells(s2)%length * &
+                                 (shells(s3)%length * &
+                                 (z_red-1)+y_red-1)+x_red-1)+w_red
 !
                            temp = g(wxyz)
 !
@@ -962,7 +983,7 @@ contains
       real(dp), dimension(:,:), allocatable, target :: D_red
       real(dp), dimension(:,:), contiguous, pointer :: D_red_p => null()
 !
-      type(interval) :: A_interval, B_interval
+      type(range_) :: A_range, B_range
 !
       integer :: s1, s2
       integer :: n_threads = 1, thread = 0
@@ -973,20 +994,22 @@ contains
 !
       call mem%alloc(D_red,wf%ao%max_sh_size**2,n_threads)
 !
-!$omp parallel do private(s1, s2, A_interval, B_interval, D_red_p, maximum, thread) schedule(dynamic)
+!$omp parallel do private(s1, s2, A_range, B_range, D_red_p, maximum, thread) schedule(dynamic)
       do s1 = 1, wf%ao%n_sh
          do s2 = 1, s1
 !
 !$          thread = omp_get_thread_num()
 !
-            A_interval = wf%ao%shells(s1)
-            B_interval = wf%ao%shells(s2)
+            A_range = wf%ao%shells(s1)
+            B_range = wf%ao%shells(s2)
 !
-            D_red_p(1:A_interval%length,1:B_interval%length) => D_red(1:A_interval%length*B_interval%length,thread+1)
+            D_red_p(1:A_range%length,1:B_range%length) &
+                  => D_red(1:A_range%length*B_range%length,thread+1)
 !
-            D_red_p = D(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
+            D_red_p = D(A_range%first : A_range%get_last(), &
+                        B_range%first : B_range%get_last())
 !
-            maximum = get_abs_max(D_red_p, (A_interval%length)*(B_interval%length))
+            maximum = get_abs_max(D_red_p, (A_range%length)*(B_range%length))
 !
             nullify(D_red_p)
 !
@@ -1077,34 +1100,37 @@ contains
 !
                   call wf%ao%get_eri_1der(g_ABCDqk, A, B, C, D)
 !
-                  tot_dim = (wf%ao%shells(A)%length)*(wf%ao%shells(B)%length)&
-                              *(wf%ao%shells(C)%length)*(wf%ao%shells(D)%length)&
-                              *3*4
+                  tot_dim = wf%ao%shells(A)%length * &
+                            wf%ao%shells(B)%length * &
+                            wf%ao%shells(C)%length * &
+                            wf%ao%shells(D)%length * 3 * 4
 !
                   g_ABCDqk(1:tot_dim) = deg*g_ABCDqk(1:tot_dim)
 !
-                  g_ABCDqk_p(1 : wf%ao%shells(A)%length, 1 : wf%ao%shells(B)%length, &
-                             1 : wf%ao%shells(C)%length, 1 : wf%ao%shells(D)%length, &
+                  g_ABCDqk_p(1 : wf%ao%shells(A)%length, &
+                             1 : wf%ao%shells(B)%length, &
+                             1 : wf%ao%shells(C)%length, &
+                             1 : wf%ao%shells(D)%length, &
                              1 : 3, 1 : 4) => g_ABCDqk(1 : tot_dim)
 !
-                  do z = wf%ao%shells(D)%first, wf%ao%shells(D)%last
+                  do z = wf%ao%shells(D)%first, wf%ao%shells(D)%get_last()
 !
                      z_red = z - wf%ao%shells(D)%first + 1
 !
-                     do y = wf%ao%shells(C)%first, wf%ao%shells(C)%last
+                     do y = wf%ao%shells(C)%first, wf%ao%shells(C)%get_last()
 !
                         y_red = y - wf%ao%shells(C)%first + 1
 !
                         d1 = D_ao(y, z)
 !
-                        do x = wf%ao%shells(B)%first, wf%ao%shells(B)%last
+                        do x = wf%ao%shells(B)%first, wf%ao%shells(B)%get_last()
 !
                            x_red = x - wf%ao%shells(B)%first + 1
 !
                            d3 = D_ao(x, y)
                            d5 = D_ao(x, z)
 !
-                           do w = wf%ao%shells(A)%first, wf%ao%shells(A)%last
+                           do w = wf%ao%shells(A)%first, wf%ao%shells(A)%get_last()
 !
                               d2 = D_ao(w, x)
                               d4 = D_ao(w, y)
@@ -1129,12 +1155,18 @@ contains
                               do k = 1, 4
                                  do q = 1, 3
 !
-                                    G_ao_t(w, x, q, atoms(k), thread+1) = G_ao_t(w, x, q, atoms(k), thread+1) + temp1(q, k)
-                                    G_ao_t(y, x, q, atoms(k), thread+1) = G_ao_t(y, x, q, atoms(k), thread+1) - temp6(q, k)
-                                    G_ao_t(y, z, q, atoms(k), thread+1) = G_ao_t(y, z, q, atoms(k), thread+1) + temp2(q, k)
-                                    G_ao_t(w, z, q, atoms(k), thread+1) = G_ao_t(w, z, q, atoms(k), thread+1) - temp3(q, k)
-                                    G_ao_t(x, z, q, atoms(k), thread+1) = G_ao_t(x, z, q, atoms(k), thread+1) - temp4(q, k)
-                                    G_ao_t(w, y, q, atoms(k), thread+1) = G_ao_t(w, y, q, atoms(k), thread+1) - temp5(q, k)
+                                    G_ao_t(w, x, q, atoms(k), thread+1) = &
+                                          G_ao_t(w, x, q, atoms(k), thread+1) + temp1(q, k)
+                                    G_ao_t(y, x, q, atoms(k), thread+1) = &
+                                          G_ao_t(y, x, q, atoms(k), thread+1) - temp6(q, k)
+                                    G_ao_t(y, z, q, atoms(k), thread+1) = &
+                                          G_ao_t(y, z, q, atoms(k), thread+1) + temp2(q, k)
+                                    G_ao_t(w, z, q, atoms(k), thread+1) = &
+                                          G_ao_t(w, z, q, atoms(k), thread+1) - temp3(q, k)
+                                    G_ao_t(x, z, q, atoms(k), thread+1) = &
+                                          G_ao_t(x, z, q, atoms(k), thread+1) - temp4(q, k)
+                                    G_ao_t(w, y, q, atoms(k), thread+1) = &
+                                          G_ao_t(w, y, q, atoms(k), thread+1) - temp5(q, k)
 !
                                  enddo
                               enddo
@@ -1177,15 +1209,15 @@ contains
 !
       real(dp), intent(in) :: gradient_threshold
 !
-      real(dp) :: epsilon_ ! Libint ERI precision 
+      real(dp) :: epsilon_ ! Libint ERI precision
 !
       real(dp) :: integral_cutoff
 !
-!     If not specified by user, set Coulomb and exchange thresholds 
+!     If not specified by user, set Coulomb and exchange thresholds
 !     (For ref., this will give 10-12 and 10-10 for gradient threshold: 10-6)
 !
-      if (input%is_keyword_present('coulomb threshold', 'solver scf')) then 
-!  
+      if (input%is_keyword_present('coulomb threshold', 'solver scf')) then
+!
          call input%get_keyword('coulomb threshold',  &
                                         'solver scf', &
                                         wf%coulomb_threshold)
@@ -1194,9 +1226,9 @@ contains
 !
          wf%coulomb_threshold  = gradient_threshold*1.0d-6
 !
-      endif 
+      endif
 !
-      if (input%is_keyword_present('exchange threshold', 'solver scf')) then 
+      if (input%is_keyword_present('exchange threshold', 'solver scf')) then
 !
          call input%get_keyword('exchange threshold', &
                                         'solver scf', &
@@ -1210,11 +1242,11 @@ contains
 !
 !     Electron repulsion integrals
 !
-      if (input%is_keyword_present('integral cutoff', 'solver scf')) then 
+      if (input%is_keyword_present('integral cutoff', 'solver scf')) then
 !
          call input%get_keyword('integral cutoff',          &
                                           'solver scf',     &
-                                          integral_cutoff) 
+                                          integral_cutoff)
 !
       else
 !
@@ -1224,13 +1256,13 @@ contains
 !
       call wf%ao%set_eri_cutoff(integral_cutoff)
 !
-!     If not requested by user, set Libint integral accuracy according to thresholds 
+!     If not requested by user, set Libint integral accuracy according to thresholds
 !
-      if (input%is_keyword_present('integral precision', 'solver scf')) then 
+      if (input%is_keyword_present('integral precision', 'solver scf')) then
 !
          call input%get_keyword('integral precision',       &
                                           'solver scf',     &
-                                          epsilon_) 
+                                          epsilon_)
 !
 !        Warn user about tampering with integral precision (Libint epsilon)
 !
@@ -1253,19 +1285,19 @@ contains
 !
          call input%get_keyword('one-electron integral cutoff',   &
                                            'solver scf',          &
-                                           integral_cutoff)  
-!  
+                                           integral_cutoff)
+!
          call wf%ao%set_oei_cutoff(integral_cutoff)
 !
-      else 
+      else
 !
          call wf%ao%set_oei_cutoff(wf%coulomb_threshold*1.0d-5)
 !
       endif
 !
-!     Currently, exchange threshold must be >= coulomb threshold in the Fock construction 
+!     Currently, exchange threshold must be >= coulomb threshold in the Fock construction
 !
-      if (wf%exchange_threshold .lt. wf%coulomb_threshold) then 
+      if (wf%exchange_threshold .lt. wf%coulomb_threshold) then
 !
          call output%printf('m', 'Exchange threshold is restricted to being higher than, or&
                                  & equal, to the Coulomb threshold. Setting them equal to&

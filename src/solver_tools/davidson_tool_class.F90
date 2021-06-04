@@ -26,6 +26,7 @@ module davidson_tool_class
 !
    use parameters
 !
+   use range_class
    use record_storer_class, only: record_storer
    use memory_manager_class, only: mem 
    use global_out, only: output
@@ -33,7 +34,6 @@ module davidson_tool_class
    use precondition_tool_class, only: precondition_tool
    use batching_index_class, only: batching_index
    use timings_class, only: timings 
-   use interval_class, only: interval
 !
    type, abstract :: davidson_tool
 !
@@ -417,7 +417,7 @@ contains
 !
       type(batching_index), allocatable :: batch_i, batch_j
 !
-      type(interval), allocatable :: i_interval 
+      type(range_), allocatable :: i_interval 
 !
       integer, parameter :: n_orthonormalizations = 2
 !
@@ -507,18 +507,19 @@ contains
 !
 !              Load only i vectors that are needed for the j batch 
 !
-               i_interval = interval(first=batch_i%first, &
-                                     last=min(batch_i%last, batch_j%first - 1))
+               i_interval = range_(batch_i%first,                                &
+                                   min(batch_i%get_last(), batch_j%first - 1) -  &
+                                   batch_i%first + 1)
 !
                if (i_interval%length .lt. 1) cycle ! No i vectors to load; 
-                                                   ! go to next i batch 
+                                                         ! go to next i batch 
 !
                call davidson%trials%load(c_i, i_interval, 2)
 !
 !              Remove i components along j vectors 
 !
-               do j = batch_j%first, batch_j%last
-                  do i = i_interval%first, i_interval%last
+               do j = batch_j%first, batch_j%get_last()
+                  do i = i_interval%first, i_interval%get_last()
 !
                      r_ji = ddot(davidson%n_parameters,              &
                                  c_j(:, j - batch_j%first + 1),      &
@@ -526,11 +527,11 @@ contains
                                  c_i(:, i - i_interval%first + 1),   &
                                  1)                  
 !
-                     call daxpy(davidson%n_parameters,               &
-                                -r_ji,                               &
-                                c_i(:, i - i_interval%first + 1),    &
-                                1,                                   &
-                                c_j(:, j - batch_j%first + 1),       &
+                     call daxpy(davidson%n_parameters,            &
+                                -r_ji,                            &
+                                c_i(:, i - i_interval%first + 1), &
+                                1,                                &
+                                c_j(:, j - batch_j%first + 1),    &
                                 1)
 !
                   enddo
@@ -543,17 +544,17 @@ contains
 !
                do i = 1, j - 1
 !
-                  r_ji = ddot(davidson%n_parameters,              &
-                              c_j(:, j),                          &
-                              1,                                  &
-                              c_j(:, i),                          &
+                  r_ji = ddot(davidson%n_parameters,  &
+                              c_j(:, j),              &
+                              1,                      &
+                              c_j(:, i),              &
                               1)                  
 !
-                  call daxpy(davidson%n_parameters,               &
-                             -r_ji,                               &
-                             c_j(:, i),                           &
-                             1,                                   &
-                             c_j(:, j),                           &
+                  call daxpy(davidson%n_parameters,   &
+                             -r_ji,                   &
+                             c_j(:, i),               &
+                             1,                       &
+                             c_j(:, j),               &
                              1)
 !
                enddo 
@@ -822,17 +823,17 @@ contains
 !
          call y_vectors%load(y_i, batch_i)
 !
-         call dgemm('N', 'N',                            &
-                     davidson%n_parameters,              &
-                     1,                                  &
-                     batch_i%length,                     &
-                     one,                                &
-                     y_i,                                & ! y_alpha,i
-                     davidson%n_parameters,              &
-                     davidson%X_red(batch_i%first,n),    & ! Xred_i,n 
-                     davidson%dim_red,                   &
-                     one,                                &
-                     y,                                  & ! y_alpha,n
+         call dgemm('N', 'N',                         &
+                     davidson%n_parameters,           &
+                     1,                               &
+                     batch_i%length,                  &
+                     one,                             &
+                     y_i,                             & ! y_alpha,i
+                     davidson%n_parameters,           &
+                     davidson%X_red(batch_i%first,n), & ! Xred_i,n 
+                     davidson%dim_red,                &
+                     one,                             &
+                     y,                               & ! y_alpha,n
                      davidson%n_parameters)
 !
       enddo
@@ -917,7 +918,7 @@ contains
 !
       enddo
 !
-      call davidson%trials%copy_record_in(X, interval(1, davidson%n_solutions))
+      call davidson%trials%copy_record_in(X, range_(1, davidson%n_solutions))
 !
       call mem%dealloc(X, davidson%n_parameters, davidson%n_solutions)
 !

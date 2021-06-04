@@ -140,25 +140,25 @@ contains
 !
     function delta(i,j) result(delta_ij)
 !!
-!!    Delta    
-!!    Written by Eirik F. Kjønstad, 2019 
+!!    Delta
+!!    Written by Eirik F. Kjønstad, 2019
 !!
 !!    Returns the Kronecker delta as a real number:
 !!
 !!      delta_ij = 1 if i .eq. j
 !!      delta_ij = 0 if i .ne. j
 !!
-      implicit none 
+      implicit none
 !
-      real(dp) :: delta_ij 
+      real(dp) :: delta_ij
 !
       integer, intent(in) :: i, j
 !
-      if (i == j) then 
+      if (i == j) then
 !
         delta_ij = one
 !
-      else 
+      else
 !
         delta_ij = zero
 !
@@ -174,9 +174,9 @@ contains
 !!    Written by Sarai D. Folkestad, Dec 2018
 !!
 !
-      implicit none 
+      implicit none
 !
-      integer, intent(in) :: n, k 
+      integer, intent(in) :: n, k
       integer :: b
 !
       if (k .gt. n) then
@@ -228,7 +228,7 @@ contains
 !
       r1_dot_r2 =  r1(1) * r2(1) &
                  + r1(2) * r2(2) &
-                 + r1(3) * r2(3) 
+                 + r1(3) * r2(3)
 !
    end function dot_R3
 !
@@ -247,6 +247,123 @@ contains
       r_norm =  sqrt(r(1)**2 + r(2)**2 + r(3)**2)
 !
    end function norm_R3
+!
+!
+   elemental function gcd(a,b) result(d)
+!!
+!!    Greatest common divisor
+!!
+!!    Written by Rolf H. Myhre, April 2021
+!!
+!!    Uses the Eucledean Algorithm
+!!    to compute the greatest common divisor of a and b
+!!    See https://en.wikipedia.org/wiki/Euclidean_algorithm for details
+!!
+      implicit none
+!
+      integer, intent(in) :: a,b
+!
+      integer :: tmp1, tmp2
+      integer :: d
+!
+      d    = max(abs(a),abs(b))
+      tmp1 = min(abs(a),abs(b))
+!
+      do while (tmp1 .ne. 0)
+         tmp2 = tmp1
+         tmp1 = mod(d, tmp2)
+         d    = tmp2
+      enddo
+!
+   end function gcd
+!
+!
+   elemental function lcm(a,b) result(m)
+!!
+!!    Least common multiple
+!!
+!!    Written by Rolf H. Myhre, April 2021
+!!
+!!    Computes the least common multiple of a and b
+!!    See https://en.wikipedia.org/wiki/Least_common_multiple for details
+!!
+      implicit none
+!
+      integer, intent(in) :: a,b
+!
+      integer :: m
+!
+      m = (abs(a)/gcd(a,b))*abs(b)
+!
+   end function lcm
+!
+!
+   pure recursive function solve_n1s1_n2s2(s1, s2, x) result(n1)
+!!
+!!    Solve n1*s1 - n2*s2
+!!
+!!    Written by Rolf H. Myhre, May 2021
+!!
+!!    Returns an n1 solving the equation
+!!    n1*s1 - n2*s2 = x
+!!    if they exists.
+!!    If they do not exist, the function returns garbage.
+!!    Solutions exist iff x/gcd(s1,s2) is an integer.
+!!
+!!    The algorithm works by by exploiting that s1 = q*s2 + r
+!!    Inserting this in the original expression, we get
+!!    n1'*s2 - n2'*r = x
+!!    with n1' = (n1*q - n2) and n2' = -n1
+!!    This is repeated until x is dividable by r and n1 is 0.
+!!
+      implicit none
+!
+      integer, intent(in) :: s1, s2, x
+      integer :: n1, n1p
+!
+      if (mod(x,s2) .eq. 0) then
+         n1 = 0
+      else
+         n1p = solve_n1s1_n2s2(s2, mod(s1,s2), x)
+         n1 = -(n1p*s2 - x)/mod(s1,s2)
+      end if
+!
+   end function solve_n1s1_n2s2
+!
+!
+   pure recursive function least_positive_n1s1_n2s2(s1, s2, x) result(n1)
+!!
+!!    Least positive n1*s1 - n2*s2
+!!
+!!    Written by Rolf H. Myhre, May 2021
+!!
+!!    Solve n1*s1 - n2*s2 = x
+!!
+!!    and return the least positive n1 corresponding to a positive n2
+!!
+      implicit none
+!
+      integer, intent(in) :: s1, s2, x
+      integer :: n1, n2, l, c1, c2
+!
+      l = lcm(s1,s2)
+      c1 = l/s1
+      c2 = l/s2
+!
+      n1 = solve_n1s1_n2s2(s1, s2, x)
+!
+      n1 = n1 - (n1/c1)*c1
+      if (n1 .lt. 0) n1 = n1 + c1
+!
+      n2 = (n1*s1 - x)/s2
+!
+      if (n2 .lt. 0) then
+         c2 = l/s2
+         n1 = n1 - (n2/c2)*c1
+         if (mod(n2,c2) .ne. 0) n1 = n1 + c1
+      endif
+!
+   end function least_positive_n1s1_n2s2
 !
 !
 end module math_utilities

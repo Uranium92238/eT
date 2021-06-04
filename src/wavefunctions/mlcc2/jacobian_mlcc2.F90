@@ -507,7 +507,7 @@ contains
          call wf%eri%get_eri_t1('vovv', g_aibc, first_cc2_v, last_cc2_v, &
                                                 first_cc2_o, last_cc2_o, &
                                                 first_cc2_v, last_cc2_v, &
-                                                batch_c%first, batch_c%last)
+                                                batch_c%first, batch_c%get_last())
 !
          call dgemm('N','N',                             &
                      (n_cc2_o)*(n_cc2_v)**2,             &
@@ -707,9 +707,9 @@ contains
 !
          call mem%alloc(g_abkc, batch_a%length, n_cc2_v, n_cc2_o, n_cc2_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_abkc, batch_a%first, batch_a%last, &
-                                                first_cc2_v, last_cc2_v,     &   
-                                                first_cc2_o, last_cc2_o,     &
+         call wf%eri%get_eri_t1('vvov', g_abkc, batch_a%first, batch_a%get_last(),  &
+                                                first_cc2_v, last_cc2_v,            &
+                                                first_cc2_o, last_cc2_o,            &
                                                 first_cc2_v, last_cc2_v)
 !
          call mem%alloc(L_abkc, batch_a%length, n_cc2_v, n_cc2_o, n_cc2_v)

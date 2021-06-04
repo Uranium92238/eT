@@ -73,7 +73,7 @@ module direct_stream_file_class
 !
 !     Specialized read routines
 !
-      procedure :: read_interval            => read_interval_direct_stream_file
+      procedure :: read_range               => read_range_direct_stream_file
       procedure :: read_compound_full_batch => read_compound_full_batch_direct_stream_file
 !
 !     Write routines
@@ -105,7 +105,7 @@ module direct_stream_file_class
 !
 !     Specialized write routines
 !
-      procedure :: write_interval            => write_interval_direct_stream_file
+      procedure :: write_range               => write_range_direct_stream_file
       procedure :: write_compound_batch_full => write_compound_batch_full_direct_stream_file
 !
       procedure :: get_n_records             => get_n_records_direct_stream_file
@@ -370,7 +370,7 @@ contains
    end subroutine read_4_complex_dp_direct_stream_file
 !
 !
-   subroutine read_interval_direct_stream_file(the_file, array, batch_z)
+   subroutine read_range_direct_stream_file(the_file, array, z_range)
 !!
 !!    read interval direct stream
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
@@ -378,27 +378,27 @@ contains
 !!    array :: real(dp) to dump file contents in.
 !!             Only real(dp) allowed until GFortran figures out explicit shape
 !!
-!!    batch_z :: batching index
+!!    z_range :: batching index
 !!
 !!    Wrapper for read_1 that calculates first and last record from
 !!    a batching index
 !!
-      use interval_class, only : interval
+      use range_class
 !
       implicit none
 !
       class(direct_stream_file), intent(in) :: the_file
 !
-      class(interval), intent(in) :: batch_z
+      class(range_), intent(in) :: z_range
 !
-      real(dp), dimension(the_file%record_dim*batch_z%length) :: array
+      real(dp), dimension(z_range%length) :: array
 !
-      call the_file%read_1_real_dp_direct_stream_file(array, batch_z%first, batch_z%last)
+      call the_file%read_1_real_dp_direct_stream_file(array, z_range%first, z_range%get_last())
 !
-   end subroutine read_interval_direct_stream_file
+   end subroutine read_range_direct_stream_file
 !
 !
-   subroutine read_compound_full_batch_direct_stream_file(the_file, array, dim_y, batch_z)
+   subroutine read_compound_full_batch_direct_stream_file(the_file, array, dim_y, z_range)
 !!
 !!    read compound full batch direct stream
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
@@ -407,25 +407,25 @@ contains
 !!             Only real(dp) allowed until GFortran figures out explicit shape
 !!
 !!    dim_y   :: integer, full dimension of first component of batching index
-!!    batch_z :: batching index
+!!    z_range :: batching index
 !!
 !!    Reads a file whose records are represented by a compound index yz.
 !!    Reads full y dimension and batches of z.
 !!
-      use interval_class, only : interval
+      use range_class
 !
       implicit none
 !
       class(direct_stream_file), intent(in) :: the_file
 !
-      class(interval), intent(in) :: batch_z
+      class(range_), intent(in) :: z_range
       integer, intent(in) :: dim_y
 !
-      real(dp), dimension(the_file%record_dim*dim_y*batch_z%length) :: array
+      real(dp), dimension(1) :: array
 !
       call the_file%read_1_real_dp_direct_stream_file(array, &
-                           (batch_z%first-1)*dim_y + 1, &
-                            batch_z%last*dim_y)
+                           (z_range%first-1)*dim_y + 1, &
+                            z_range%get_last()*dim_y)
 !
    end subroutine read_compound_full_batch_direct_stream_file
 !
@@ -600,7 +600,7 @@ contains
    end subroutine write_4_complex_dp_direct_stream_file
 !
 !
-   subroutine write_interval_direct_stream_file(the_file, array, batch_z)
+   subroutine write_range_direct_stream_file(the_file, array, z_range)
 !!
 !!    write interval direct stream
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
@@ -608,24 +608,25 @@ contains
 !!    array :: real(dp) to dump to file
 !!             Only real(dp) allowed until GFortran figures out explicit shape
 !!
-!!    batch_z :: batching index
+!!    z_range :: batching index
 !!
 !!    Wrapper for write_1_real_dp that calculates first and last record from
 !!    a batching index
 !!
-      use interval_class, only : interval
+      use range_class
 !
       implicit none
 !
       class(direct_stream_file), intent(in) :: the_file
 !
-      class(interval), intent(in) :: batch_z
+      class(range_), intent(in) :: z_range
 !
-      real(dp), dimension(the_file%record_dim*batch_z%length) :: array
+      real(dp), dimension(1) :: array
 !
-      call the_file%write_1_real_dp_direct_stream_file(array, batch_z%first, batch_z%last)
+      call the_file%write_1_real_dp_direct_stream_file(array, z_range%first, &
+                                                              z_range%get_last())
 !
-   end subroutine write_interval_direct_stream_file
+   end subroutine write_range_direct_stream_file
 !
 !
    subroutine write_compound_batch_full_direct_stream_file(the_file, array, batch_y, dim_z)
@@ -665,7 +666,7 @@ contains
 !
             call the_file%write_1_real_dp_direct_stream_file(array(:, z), &
                                   batch_y%index_dimension*(z-1) + batch_y%first, &
-                                  batch_y%index_dimension*(z-1) + batch_y%last)
+                                  batch_y%index_dimension*(z-1) + batch_y%get_last())
          enddo
       endif
 !

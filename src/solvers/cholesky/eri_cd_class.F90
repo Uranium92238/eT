@@ -67,7 +67,7 @@ module eri_cd_class
    use memory_manager_class, only : mem
 !
    use reordering
-   use interval_class
+   use range_class
    use array_utilities, only : quicksort_with_index_ascending_int
    use array_utilities, only : quicksort_with_index_descending_int
    use array_utilities, only : quicksort_with_index_descending
@@ -409,7 +409,7 @@ contains
 !
       integer :: x, y, xy, xy_packed, A, B, I, K
 !
-      type(interval) :: A_interval, B_interval
+      type(range_) :: A_range, B_range
 !
       logical, dimension(:), allocatable :: sig_shp, construct_shp
 !
@@ -466,7 +466,7 @@ contains
       call mem%alloc(max_in_shp_diagonal, solver%n_shp)
 !
 !$omp parallel do &
-!$omp private(I, K, A, B, A_interval, B_interval, x, y, xy, g_ABAB, g_ABAB_p, D_AB, D_AB_screen) &
+!$omp private(I, K, A, B, A_range, B_range, x, y, xy, g_ABAB, g_ABAB_p, D_AB, D_AB_screen) &
 !$omp shared(sig_shp,  max_in_shp_diagonal) &
 !$omp schedule(guided)
       do I = 1, solver%n_shp
@@ -474,25 +474,25 @@ contains
          A = shp_index(I, 1)
          B = shp_index(I, 2)
 !
-         A_interval = ao%shells(A)
-         B_interval = ao%shells(B)
+         A_range = ao%shells(A)
+         B_range = ao%shells(B)
 !
 !        Construct diagonal D_AB for the given shell pair
 !
          call ao%get_eri(g_ABAB, A, B, A, B)
 !
-         g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
-                  1 : A_interval%length, 1 : B_interval%length) &
-                  => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
+         g_ABAB_p(1 : A_range%length, 1 : B_range%length, &
+                  1 : A_range%length, 1 : B_range%length) &
+                  => g_ABAB(1 : (A_range%length)**2*(B_range%length)**2)
 !
          K = 0
-         do x = 1, (A_interval%length)
-            do y = 1, (B_interval%length)
+         do x = 1, (A_range%length)
+            do y = 1, (B_range%length)
 !
                K = K + 1
                D_AB_screen(K) = g_ABAB_p(x, y, x, y)&
-                           *screening_vector_local_pt(x + A_interval%first - 1, &
-                                                   y + B_interval%first - 1)
+                           *screening_vector_local_pt(x + A_range%first - 1, &
+                                                   y + B_range%first - 1)
 !
                D_AB(K) = g_ABAB_p(x, y, x, y)
 !
@@ -501,7 +501,7 @@ contains
 !
 !        Determine whether shell pair is significant
 !
-         sig_shp(I) = (is_significant(D_AB_screen, (A_interval%length)*(B_interval%length), solver%threshold))
+         sig_shp(I) = (is_significant(D_AB_screen, (A_range%length)*(B_range%length), solver%threshold))
 !
          max_in_shp_diagonal(I) = maxval(D_AB)
 !
@@ -519,7 +519,7 @@ contains
       construct_shp = .false.
 !
 !$omp parallel do &
-!$omp private(I, K, A, B, A_interval, B_interval, x, y, xy, g_ABAB, g_ABAB_p, construct_test) &
+!$omp private(I, K, A, B, A_range, B_range, x, y, xy, g_ABAB, g_ABAB_p, construct_test) &
 !$omp shared(construct_shp) &
 !$omp schedule(guided)
       do I = 1, solver%n_shp
@@ -527,20 +527,20 @@ contains
          A = shp_index(I, 1)
          B = shp_index(I, 2)
 !
-         A_interval = ao%shells(A)
-         B_interval = ao%shells(B)
+         A_range = ao%shells(A)
+         B_range = ao%shells(B)
 !
 !        Construct diagonal construct_test for the given shell pair
 !
          call ao%get_eri(g_ABAB, A, B, A, B)
 !
-         g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
-                  1 : A_interval%length, 1 : B_interval%length) &
-                  => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
+         g_ABAB_p(1 : A_range%length, 1 : B_range%length, &
+                  1 : A_range%length, 1 : B_range%length) &
+                  => g_ABAB(1 : (A_range%length)**2*(B_range%length)**2)
 !
          K = 0
-         do x = 1, (A_interval%length)
-            do y = 1, (B_interval%length)
+         do x = 1, (A_range%length)
+            do y = 1, (B_range%length)
 !
                K = K + 1
                construct_test(K) = sqrt(g_ABAB_p(x, y, x, y)*max_diagonal)
@@ -551,7 +551,7 @@ contains
 !        Determine whether shell pair should be constructed
 !
          construct_shp(I) = is_significant(construct_test, &
-                           (A_interval%length)*(B_interval%length), min(solver%threshold,1.0d-8))
+                           (A_range%length)*(B_range%length), min(solver%threshold,1.0d-8))
 !
       enddo
 !$omp end parallel do
@@ -568,11 +568,11 @@ contains
             A = shp_index(I, 1)
             B = shp_index(I, 2)
 !
-            A_interval = ao%shells(A)
-            B_interval = ao%shells(B)
+            A_range = ao%shells(A)
+            B_range = ao%shells(B)
 !
             n_sig_aop = n_sig_aop + &
-                           get_size_shp(A_interval, B_interval)
+                           get_size_shp(A_range, B_range)
 !
             n_sig_shp = n_sig_shp + 1
 !
@@ -590,11 +590,11 @@ contains
             A = shp_index(I, 1)
             B = shp_index(I, 2)
 !
-            A_interval = ao%shells(A)
-            B_interval = ao%shells(B)
+            A_range = ao%shells(A)
+            B_range = ao%shells(B)
 !
             n_construct_aop = n_construct_aop + &
-                           get_size_shp(A_interval, B_interval)
+                           get_size_shp(A_range, B_range)
 !
             n_construct_shp = n_construct_shp + 1
 !
@@ -630,8 +630,8 @@ contains
             A = shp_index(I, 1)
             B = shp_index(I, 2)
 !
-            A_interval = ao%shells(A)
-            B_interval = ao%shells(B)
+            A_range = ao%shells(A)
+            B_range = ao%shells(B)
 !
             sig_shp_index(current_sig_shp, 1) = A
             sig_shp_index(current_sig_shp, 2) = B
@@ -639,7 +639,7 @@ contains
             if (current_sig_shp .lt. n_sig_shp) then
 !
                ao_offsets(current_sig_shp + 1) = ao_offsets(current_sig_shp) + &
-                           get_size_shp(A_interval, B_interval)
+                           get_size_shp(A_range, B_range)
 !
             endif
 !
@@ -659,7 +659,7 @@ contains
 !     This is convenient because significant_shp_to_first_significant_aop will be used to calculate lengths.
 !
 !$omp parallel do &
-!$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_ABAB, g_ABAB_p) &
+!$omp private(I, A, B, A_range, B_range, x, y, xy, xy_packed, g_ABAB, g_ABAB_p) &
 !$omp shared(D_xy, screening_vector_reduced, ao_offsets) &
 !$omp schedule(guided)
       do I = 1, n_sig_shp
@@ -667,39 +667,39 @@ contains
          A = sig_shp_index(I, 1)
          B = sig_shp_index(I, 2)
 !
-         A_interval = ao%shells(A)
-         B_interval = ao%shells(B)
+         A_range = ao%shells(A)
+         B_range = ao%shells(B)
 !
          call ao%get_eri(g_ABAB, A, B, A, B)
 !
-         g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
-                  1 : A_interval%length, 1 : B_interval%length) &
-                  => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
+         g_ABAB_p(1 : A_range%length, 1 : B_range%length, &
+                  1 : A_range%length, 1 : B_range%length) &
+                  => g_ABAB(1 : (A_range%length)**2*(B_range%length)**2)
 !
          if (A .eq. B) then
 !
-            do x = 1, A_interval%length
-               do y = x, B_interval%length
+            do x = 1, A_range%length
+               do y = x, B_range%length
 !
                   xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
                   D_xy(xy_packed + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
                   screening_vector_reduced(xy_packed + ao_offsets(I)) = &
-                                          screening_vector_local_pt(x + A_interval%first - 1, &
-                                                                 y + B_interval%first - 1)
+                                          screening_vector_local_pt(x + A_range%first - 1, &
+                                                                 y + B_range%first - 1)
                enddo
             enddo
 !
          else ! A ≠ B
 !
-            do x = 1, (A_interval%length)
-               do y = 1, (B_interval%length)
+            do x = 1, (A_range%length)
+               do y = 1, (B_range%length)
 !
-                  xy = A_interval%length*(y - 1) + x
+                  xy = A_range%length*(y - 1) + x
                   D_xy(xy + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
                   screening_vector_reduced(xy + ao_offsets(I)) = &
-                                      screening_vector_local_pt(x + A_interval%first - 1, &
-                                                             y + B_interval%first - 1)
+                                      screening_vector_local_pt(x + A_range%first - 1, &
+                                                             y + B_range%first - 1)
 !
                enddo
             enddo
@@ -794,7 +794,7 @@ contains
 !
       integer :: x, y, xy, xy_packed, A, B, I, K
 !
-      type(interval) :: A_interval, B_interval
+      type(range_) :: A_range, B_range
 !
       logical, dimension(:), allocatable :: sig_shp, construct_shp
 !
@@ -851,7 +851,7 @@ contains
       sig_shp = .false.
 !
 !$omp parallel do &
-!$omp private(I, K, A, B, A_interval, B_interval, x, y, xy, g_ABAB, g_ABAB_p, D_AB, D_AB_screen) &
+!$omp private(I, K, A, B, A_range, B_range, x, y, xy, g_ABAB, g_ABAB_p, D_AB, D_AB_screen) &
 !$omp shared(sig_shp) &
 !$omp schedule(guided)
       do I = 1, solver%n_shp
@@ -861,25 +861,25 @@ contains
 !
          if (ao%shell_to_center(B) == ao%shell_to_center(A)) then
 !
-            A_interval = ao%shells(A)
-            B_interval = ao%shells(B)
+            A_range = ao%shells(A)
+            B_range = ao%shells(B)
 !
 !           Construct diagonal D_AB for the given shell pair
 !
             call ao%get_eri(g_ABAB, A, B, A, B)
 !
-            g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
-                     1 : A_interval%length, 1 : B_interval%length) &
-                     => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
+            g_ABAB_p(1 : A_range%length, 1 : B_range%length, &
+                     1 : A_range%length, 1 : B_range%length) &
+                     => g_ABAB(1 : (A_range%length)**2*(B_range%length)**2)
 !
             K = 0
-            do x = 1, (A_interval%length)
-               do y = 1, (B_interval%length)
+            do x = 1, (A_range%length)
+               do y = 1, (B_range%length)
 !
                   K = K + 1
                   D_AB_screen(K) = g_ABAB_p(x, y, x, y)&
-                              *screening_vector_local_pt(x + A_interval%first - 1, &
-                                                      y + B_interval%first - 1)
+                              *screening_vector_local_pt(x + A_range%first - 1, &
+                                                      y + B_range%first - 1)
 !
                   D_AB(K) = g_ABAB_p(x, y, x, y)
 !
@@ -889,7 +889,7 @@ contains
 !           Determine whether shell pair is significant
 !
             sig_shp(I) = (is_significant(D_AB_screen, &
-                           (A_interval%length)*(B_interval%length), &
+                           (A_range%length)*(B_range%length), &
                            solver%threshold))
 !
             max_in_shp_diagonal(I) = maxval(D_AB)
@@ -910,7 +910,7 @@ contains
       construct_shp = .false.
 !
 !$omp parallel do &
-!$omp private(I, K, A, B, A_interval, B_interval, x, y, xy, g_ABAB, g_ABAB_p, construct_test) &
+!$omp private(I, K, A, B, A_range, B_range, x, y, xy, g_ABAB, g_ABAB_p, construct_test) &
 !$omp shared(construct_shp) &
 !$omp schedule(guided)
       do I = 1, solver%n_shp
@@ -918,20 +918,20 @@ contains
          A = shp_index(I, 1)
          B = shp_index(I, 2)
 !
-         A_interval = ao%shells(A)
-         B_interval = ao%shells(B)
+         A_range = ao%shells(A)
+         B_range = ao%shells(B)
 !
 !        Construct diagonal D_AB for the given shell pair
 !
          call ao%get_eri(g_ABAB, A, B, A, B)
 !
-         g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
-                  1 : A_interval%length, 1 : B_interval%length) &
-                  => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
+         g_ABAB_p(1 : A_range%length, 1 : B_range%length, &
+                  1 : A_range%length, 1 : B_range%length) &
+                  => g_ABAB(1 : (A_range%length)**2*(B_range%length)**2)
 !
          K = 0
-         do x = 1, (A_interval%length)
-            do y = 1, (B_interval%length)
+         do x = 1, (A_range%length)
+            do y = 1, (B_range%length)
 !
                K = K + 1
                construct_test(K) = sqrt(g_ABAB_p(x, y, x, y)*max_diagonal)
@@ -942,7 +942,7 @@ contains
 !        Determine whether shell pair should be constructed
 !
          construct_shp(I) = is_significant(construct_test, &
-                           (A_interval%length)*(B_interval%length), min(solver%threshold,1.0d-8))
+                           (A_range%length)*(B_range%length), min(solver%threshold,1.0d-8))
 !
       enddo
 !$omp end parallel do
@@ -957,11 +957,11 @@ contains
             A = shp_index(I, 1)
             B = shp_index(I, 2)
 !
-            A_interval = ao%shells(A)
-            B_interval = ao%shells(B)
+            A_range = ao%shells(A)
+            B_range = ao%shells(B)
 !
             n_sig_aop = n_sig_aop + &
-                           get_size_shp(A_interval, B_interval)
+                           get_size_shp(A_range, B_range)
 !
             n_sig_shp = n_sig_shp + 1
 !
@@ -979,11 +979,11 @@ contains
             A = shp_index(I, 1)
             B = shp_index(I, 2)
 !
-            A_interval = ao%shells(A)
-            B_interval = ao%shells(B)
+            A_range = ao%shells(A)
+            B_range = ao%shells(B)
 !
             n_construct_aop = n_construct_aop + &
-                           get_size_shp(A_interval, B_interval)
+                           get_size_shp(A_range, B_range)
 !
             n_construct_shp = n_construct_shp + 1
 !
@@ -1019,8 +1019,8 @@ contains
             A = shp_index(I, 1)
             B = shp_index(I, 2)
 !
-            A_interval = ao%shells(A)
-            B_interval = ao%shells(B)
+            A_range = ao%shells(A)
+            B_range = ao%shells(B)
 !
             sig_shp_index(current_sig_shp, 1) = A
             sig_shp_index(current_sig_shp, 2) = B
@@ -1028,7 +1028,7 @@ contains
             if (current_sig_shp .lt. n_sig_shp) then
 !
                ao_offsets(current_sig_shp + 1) = ao_offsets(current_sig_shp) + &
-                           get_size_shp(A_interval, B_interval)
+                           get_size_shp(A_range, B_range)
 !
             endif
 !
@@ -1048,7 +1048,7 @@ contains
 !     This is convenient because significant_shp_to_first_significant_aop will be used to calculate lengths.
 !
 !$omp parallel do &
-!$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_ABAB, g_ABAB_p) &
+!$omp private(I, A, B, A_range, B_range, x, y, xy, xy_packed, g_ABAB, g_ABAB_p) &
 !$omp shared(D_xy, screening_vector_reduced, ao_offsets) &
 !$omp schedule(guided)
       do I = 1, n_sig_shp
@@ -1056,41 +1056,41 @@ contains
          A = sig_shp_index(I, 1)
          B = sig_shp_index(I, 2)
 !
-         A_interval = ao%shells(A)
-         B_interval = ao%shells(B)
+         A_range = ao%shells(A)
+         B_range = ao%shells(B)
 !
          call ao%get_eri(g_ABAB, A, B, A, B)
 !
-         g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
-                  1 : A_interval%length, 1 : B_interval%length) &
-                  => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
+         g_ABAB_p(1 : A_range%length, 1 : B_range%length, &
+                  1 : A_range%length, 1 : B_range%length) &
+                  => g_ABAB(1 : (A_range%length)**2*(B_range%length)**2)
 !
          if (A .eq. B) then
 !
-            do x = 1, A_interval%length
-               do y = x, B_interval%length
+            do x = 1, A_range%length
+               do y = x, B_range%length
 !
-                  xy = A_interval%length*(y - 1) + x
+                  xy = A_range%length*(y - 1) + x
                   xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
                   D_xy(xy_packed + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
                   screening_vector_reduced(xy_packed + ao_offsets(I)) = &
-                                          screening_vector_local_pt(x + A_interval%first - 1, &
-                                                                 y + B_interval%first - 1)
+                                          screening_vector_local_pt(x + A_range%first - 1, &
+                                                                 y + B_range%first - 1)
 !
                enddo
             enddo
 !
          else ! A ≠ B
 !
-            do x = 1, (A_interval%length)
-               do y = 1, (B_interval%length)
+            do x = 1, (A_range%length)
+               do y = 1, (B_range%length)
 !
-                  xy = A_interval%length*(y - 1) + x
+                  xy = A_range%length*(y - 1) + x
                   D_xy(xy + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
                   screening_vector_reduced(xy + ao_offsets(I)) = &
-                                      screening_vector_local_pt(x + A_interval%first - 1, &
-                                                             y + B_interval%first - 1)
+                                      screening_vector_local_pt(x + A_range%first - 1, &
+                                                             y + B_range%first - 1)
 !
                enddo
             enddo
@@ -1165,7 +1165,7 @@ contains
 !
       logical, dimension(:), allocatable :: sig_shp, sig_shp_batch
 !
-      type(interval) :: A_interval, B_interval
+      type(range_) :: A_range, B_range
 !
       type(sequential_file) :: batch_file
 !
@@ -1222,10 +1222,10 @@ contains
 !
                if (sig_shp(shp)) then
 !
-                  A_interval = ao%shells(A)
-                  B_interval = ao%shells(B)
+                  A_range = ao%shells(A)
+                  B_range = ao%shells(B)
 !
-                  xy_last = xy_last + get_size_shp(A_interval, B_interval)
+                  xy_last = xy_last + get_size_shp(A_range, B_range)
 !
                   if ((xy_last .ge. batch_first) .and. (xy_first .le. batch_last)) then
 !
@@ -1240,7 +1240,7 @@ contains
 !
                   endif
 !
-                  xy_first = xy_first + get_size_shp(A_interval, B_interval)
+                  xy_first = xy_first + get_size_shp(A_range, B_range)
 !
                endif
 !
@@ -1337,7 +1337,7 @@ contains
 !
       logical, dimension(:), allocatable :: sig_shp, sig_shp_old
 !
-      type(interval) :: A_interval, B_interval
+      type(range_) :: A_range, B_range
 !
       real(dp), dimension(:), allocatable :: D, D_old, screening_vector, screening_vector_old
 !
@@ -1485,12 +1485,12 @@ contains
 !
             if (shp == sorted_AB(I)) then
 !
-               A_interval = ao%shells(A_shell)
-               B_interval = ao%shells(B_shell)
+               A_range = ao%shells(A_shell)
+               B_range = ao%shells(B_shell)
 !
                sig_shp(shp) = .true.
                n_sig_shp = n_sig_shp + 1
-               n_sig_aop = n_sig_aop + get_size_shp(A_interval, B_interval)
+               n_sig_aop = n_sig_aop + get_size_shp(A_range, B_range)
 !
                I = I + 1
 !
@@ -1540,8 +1540,8 @@ contains
 !
             if (sig_shp_old(shp)) then
 !
-               A_interval = ao%shells(A_shell)
-               B_interval = ao%shells(B_shell)
+               A_range = ao%shells(A_shell)
+               B_range = ao%shells(B_shell)
 !
                if (sig_shp(shp)) then
 !
@@ -1550,11 +1550,11 @@ contains
                   alpha_beta_offset_old(count_sig) = current_offset_old
                   alpha_beta_offset(count_sig)     = current_offset
 !
-                  current_offset = current_offset + get_size_shp(A_interval, B_interval)
+                  current_offset = current_offset + get_size_shp(A_range, B_range)
 !
                endif
 !
-               current_offset_old = current_offset_old + get_size_shp(A_interval, B_interval)
+               current_offset_old = current_offset_old + get_size_shp(A_range, B_range)
 !
             endif
 !
@@ -1573,13 +1573,13 @@ contains
 !
          n_basis_aop_in_AB_total = sorted_n_basis_aop_in_AB(I)
 !
-         A_interval = ao%shells(sorted_A(I))
-         B_interval = ao%shells(sorted_B(I))
+         A_range = ao%shells(sorted_A(I))
+         B_range = ao%shells(sorted_B(I))
 !
          do aop = 1, n_basis_aop_in_AB_total
 !
-            alpha_in_A = sorted_alpha(aop + n_basis_aop_in_AB_offset) - A_interval%first + 1
-            beta_in_B  = sorted_beta(aop + n_basis_aop_in_AB_offset) - B_interval%first + 1
+            alpha_in_A = sorted_alpha(aop + n_basis_aop_in_AB_offset) - A_range%first + 1
+            beta_in_B  = sorted_beta(aop + n_basis_aop_in_AB_offset) - B_range%first + 1
 !
             if (sorted_A(I) == sorted_B(I)) then
 !
@@ -1587,7 +1587,7 @@ contains
 !
             else
 !
-               alpha_beta_in_AB = A_interval%length*(beta_in_B - 1) + alpha_in_A
+               alpha_beta_in_AB = A_range%length*(beta_in_B - 1) + alpha_in_A
 !
             endif
 !
@@ -1846,7 +1846,7 @@ contains
 !
 !     Intervals
 !
-      type(interval) :: A_interval, B_interval, C_interval, D_interval
+      type(range_) :: A_range, B_range, C_range, D_range
 !
 !     Cholesky linked list
 !
@@ -1903,45 +1903,45 @@ contains
 !
                sig_shp_to_first_sig_aop(current_sig_shp) = first_sig_aop
 !
-               A_interval = ao%shells(A)
-               B_interval = ao%shells(B)
+               A_range = ao%shells(A)
+               B_range = ao%shells(B)
 !
                sig_shp_to_shells(current_sig_shp, 1) = A
                sig_shp_to_shells(current_sig_shp, 2) = B
 !
                if (A .eq. B) then
 !
-                  do x = 1, A_interval%length
-                     do y = 1, B_interval%length
+                  do x = 1, A_range%length
+                     do y = 1, B_range%length
 !
-                        xy = A_interval%length*(y - 1) + x
+                        xy = A_range%length*(y - 1) + x
                         xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
                         sig_aop_to_aos(xy_packed + first_sig_aop - 1, 1) = &
-                                                      A_interval%first + x - 1
+                                                      A_range%first + x - 1
 !
                         sig_aop_to_aos(xy_packed + first_sig_aop - 1, 2) = &
-                                                      B_interval%first + y - 1
+                                                      B_range%first + y - 1
 !
                      enddo
                   enddo
 !
                else ! A ≠ B
 !
-                  do x = 1, (A_interval%length)
-                     do y = 1, (B_interval%length)
+                  do x = 1, (A_range%length)
+                     do y = 1, (B_range%length)
 !
-                        xy = A_interval%length*(y - 1) + x
+                        xy = A_range%length*(y - 1) + x
 !
-                        sig_aop_to_aos(xy + first_sig_aop - 1, 1) = A_interval%first + x - 1
-                        sig_aop_to_aos(xy + first_sig_aop - 1, 2) = B_interval%first + y - 1
+                        sig_aop_to_aos(xy + first_sig_aop - 1, 1) = A_range%first + x - 1
+                        sig_aop_to_aos(xy + first_sig_aop - 1, 2) = B_range%first + y - 1
 !
                      enddo
                   enddo
 !
                endif
 !
-               first_sig_aop = first_sig_aop + get_size_shp(A_interval, B_interval)
+               first_sig_aop = first_sig_aop + get_size_shp(A_range, B_range)
 !
                current_sig_shp = current_sig_shp + 1
 !
@@ -2129,7 +2129,7 @@ contains
          call mem%alloc(g_wxyz, n_sig_aop, n_qual_aop)
 !
 !$omp parallel do &
-!$omp private(AB_shp, CD_shp, A, B, A_interval, B_interval, C, D, C_interval, D_interval, &
+!$omp private(AB_shp, CD_shp, A, B, A_range, B_range, C, D, C_range, D_range, &
 !$omp  aop, w, x, y, z, wx, wx_packed, g_ABCD, g_ABCD_p, n_qual_aop_in_shp) &
 !$omp shared(g_wxyz, n_qual_aop_in_prev_shps, qual_aop) &
 !$omp schedule(guided)
@@ -2139,8 +2139,8 @@ contains
             D                = qual_shp(CD_shp, 2)
             n_qual_aop_in_shp = qual_shp(CD_shp, 3)
 !
-            C_interval = ao%shells(C)
-            D_interval = ao%shells(D)
+            C_range = ao%shells(C)
+            D_range = ao%shells(D)
 !
 !           Calculate the ({wx} | J) integrals,
 !           where {wx} is the screened list of integrals
@@ -2150,14 +2150,14 @@ contains
                A = sig_shp_to_shells(AB_shp, 1)
                B = sig_shp_to_shells(AB_shp, 2)
 !
-               A_interval = ao%shells(A)
-               B_interval = ao%shells(B)
+               A_range = ao%shells(A)
+               B_range = ao%shells(B)
 !
                call ao%get_eri(g_ABCD, A, B, C, D)
 !
-               g_ABCD_p(1 : A_interval%length, 1 : B_interval%length, &
-                        1 : C_interval%length, 1 : D_interval%length) &
-                        => g_ABCD(1 : (A_interval%length)*(B_interval%length)*(C_interval%length)*(D_interval%length))
+               g_ABCD_p(1 : A_range%length, 1 : B_range%length, &
+                        1 : C_range%length, 1 : D_range%length) &
+                        => g_ABCD(1 : (A_range%length)*(B_range%length)*(C_range%length)*(D_range%length))
 !
                do aop = 1, n_qual_aop_in_shp
 !
@@ -2166,26 +2166,26 @@ contains
 !
                   if (A == B) then
 !
-                     do w = 1, A_interval%length
-                        do x = w, B_interval%length
+                     do w = 1, A_range%length
+                        do x = w, B_range%length
 !
                            wx_packed = (max(w,x)*(max(w,x)-3)/2) + w + x
 !
                            g_wxyz(sig_shp_to_first_sig_aop(AB_shp) + wx_packed - 1, aop + n_qual_aop_in_prev_shps(CD_shp)) &
-                                   = g_ABCD_p(w, x, y - C_interval%first + 1, z - D_interval%first + 1)
+                                   = g_ABCD_p(w, x, y - C_range%first + 1, z - D_range%first + 1)
 !
                         enddo
                      enddo
 !
                   else
 !
-                     do w = 1, A_interval%length
-                        do x = 1, B_interval%length
+                     do w = 1, A_range%length
+                        do x = 1, B_range%length
 !
-                           wx = A_interval%length*(x-1) + w
+                           wx = A_range%length*(x-1) + w
 !
                            g_wxyz(sig_shp_to_first_sig_aop(AB_shp) + wx - 1, aop + n_qual_aop_in_prev_shps(CD_shp)) &
-                                   = g_ABCD_p(w, x, y - C_interval%first + 1, z - D_interval%first + 1)
+                                   = g_ABCD_p(w, x, y - C_range%first + 1, z - D_range%first + 1)
 !
                         enddo
                      enddo
@@ -2462,12 +2462,12 @@ contains
                   A = sig_shp_to_shells(shp, 1)
                   B = sig_shp_to_shells(shp, 2)
 !
-                  A_interval = ao%shells(A)
-                  B_interval = ao%shells(B)
+                  A_range = ao%shells(A)
+                  B_range = ao%shells(B)
 !
                   new_sig_shp_to_first_sig_aop(current_new_sig_shp) = first_sig_aop
 !
-                  first_sig_aop = first_sig_aop + get_size_shp(A_interval, B_interval)
+                  first_sig_aop = first_sig_aop + get_size_shp(A_range, B_range)
                   n_new_sig_aop = first_sig_aop - 1
 !
                   current_new_sig_shp    = current_new_sig_shp + 1
@@ -2480,25 +2480,25 @@ contains
 !
             call mem%alloc(new_sig_aop_to_aos, n_new_sig_aop, 2)
 !
-            call reduce_array_int(sig_aop_to_aos,       &
-                               new_sig_aop_to_aos,      &
+            call reduce_array_int(sig_aop_to_aos,        &
+                               new_sig_aop_to_aos,       &
                                sig_shp_to_first_sig_aop, &
                                new_sig_shp,              &
                                n_sig_shp,                &
-                               n_sig_aop,               &
-                               n_new_sig_aop,           &
+                               n_sig_aop,                &
+                               n_new_sig_aop,            &
                                2)
 !
             call mem%alloc(new_sig_shp_to_shells, n_new_sig_shp, 2)
             new_sig_shp_to_shells = 0
 !
-            call reduce_array_int(sig_shp_to_shells,        &
-                                  new_sig_shp_to_shells,    &
-                                  sig_shp_to_previous_sig_shp,  &
-                                  new_sig_shp,              &
-                                  n_sig_shp,                &
-                                  n_sig_shp,                &
-                                  n_new_sig_shp,            &
+            call reduce_array_int(sig_shp_to_shells,           &
+                                  new_sig_shp_to_shells,       &
+                                  sig_shp_to_previous_sig_shp, &
+                                  new_sig_shp,                 &
+                                  n_sig_shp,                   &
+                                  n_sig_shp,                   &
+                                  n_new_sig_shp,               &
                                   2)
 !
             call mem%dealloc(sig_shp_to_previous_sig_shp, n_sig_shp + 1)
@@ -2510,12 +2510,12 @@ contains
 !
             call mem%alloc(D_xy_new, n_new_sig_aop)
 !
-           call reduce_vector(D_xy,                     &
-                             D_xy_new,                  &
+           call reduce_vector(D_xy,                      &
+                             D_xy_new,                   &
                              sig_shp_to_first_sig_aop,   &
                              new_sig_shp,                &
                              n_sig_shp,                  &
-                             n_sig_aop,                 &
+                             n_sig_aop,                  &
                              n_new_sig_aop)
 !
             call mem%dealloc(D_xy, n_sig_aop)
@@ -2527,12 +2527,12 @@ contains
 !
             call mem%alloc(screening_vector_new, n_new_sig_aop)
 !
-           call reduce_vector(screening_vector,         &
-                             screening_vector_new,      &
+           call reduce_vector(screening_vector,          &
+                             screening_vector_new,       &
                              sig_shp_to_first_sig_aop,   &
                              new_sig_shp,                &
                              n_sig_shp,                  &
-                             n_sig_aop,                 &
+                             n_sig_aop,                  &
                              n_new_sig_aop)
 !
             call mem%dealloc(screening_vector, n_sig_aop)
@@ -2760,7 +2760,7 @@ contains
 !
 !     Intervals
 !
-      type(interval) :: A_interval, B_interval, C_interval, D_interval
+      type(range_) :: A_range, B_range, C_range, D_range
 !
 !     Reals
 !
@@ -2802,7 +2802,7 @@ contains
       call mem%alloc(integrals_auxiliary, solver%n_cholesky, solver%n_cholesky)
 !
 !$omp parallel do &
-!$omp private(AB_shp, CD_shp, A, B, A_interval, B_interval, C, D, C_interval, D_interval, &
+!$omp private(AB_shp, CD_shp, A, B, A_range, B_range, C, D, C_range, D_range, &
 !$omp w, x, y, z, wx, yz, g_AB_CD, g_AB_CD_p, I, J, K, L, &
 !$omp current_aop_in_shp, basis_aops_in_CD_shp, basis_aops_in_AB_shp, basis_aops_in_CD_shp_p, basis_aops_in_AB_shp_p) &
 !$omp shared(integrals_auxiliary, cholesky_basis, basis_shell_info) &
@@ -2812,8 +2812,8 @@ contains
          C = basis_shell_info(CD_shp, 1)
          D = basis_shell_info(CD_shp, 2)
 !
-         C_interval = ao%shells(C)
-         D_interval = ao%shells(D)
+         C_range = ao%shells(C)
+         D_range = ao%shells(D)
 !
          basis_aops_in_CD_shp_p(1 : basis_shell_info(CD_shp, 4), 1 : 3) => &
                basis_aops_in_CD_shp(1 : basis_shell_info(CD_shp, 4)*3)
@@ -2827,8 +2827,8 @@ contains
 !
                current_aop_in_shp = current_aop_in_shp + 1
 !
-               basis_aops_in_CD_shp_p(current_aop_in_shp, 1) = cholesky_basis(I,1) - C_interval%first + 1
-               basis_aops_in_CD_shp_p(current_aop_in_shp, 2) = cholesky_basis(I,2) - D_interval%first + 1
+               basis_aops_in_CD_shp_p(current_aop_in_shp, 1) = cholesky_basis(I,1) - C_range%first + 1
+               basis_aops_in_CD_shp_p(current_aop_in_shp, 2) = cholesky_basis(I,2) - D_range%first + 1
                basis_aops_in_CD_shp_p(current_aop_in_shp, 3) = I
 !
             endif
@@ -2839,8 +2839,8 @@ contains
             A = basis_shell_info(AB_shp, 1)
             B = basis_shell_info(AB_shp, 2)
 !
-            A_interval = ao%shells(A)
-            B_interval = ao%shells(B)
+            A_range = ao%shells(A)
+            B_range = ao%shells(B)
 !
             basis_aops_in_AB_shp_p(1 : basis_shell_info(AB_shp, 4), 1 : 3) => &
                   basis_aops_in_AB_shp(1 : basis_shell_info(AB_shp, 4)*3)
@@ -2854,8 +2854,8 @@ contains
 !
                   current_aop_in_shp = current_aop_in_shp + 1
 !
-                  basis_aops_in_AB_shp_p(current_aop_in_shp, 1) = cholesky_basis(I,1) - A_interval%first + 1
-                  basis_aops_in_AB_shp_p(current_aop_in_shp, 2) = cholesky_basis(I,2) - B_interval%first + 1
+                  basis_aops_in_AB_shp_p(current_aop_in_shp, 1) = cholesky_basis(I,1) - A_range%first + 1
+                  basis_aops_in_AB_shp_p(current_aop_in_shp, 2) = cholesky_basis(I,2) - B_range%first + 1
                   basis_aops_in_AB_shp_p(current_aop_in_shp, 3) = I
 !
                endif
@@ -2865,9 +2865,9 @@ contains
 !
             call ao%get_eri(g_AB_CD, A, B, C, D)
 !
-            g_AB_CD_p(1 : A_interval%length*B_interval%length, &
-                        1 : C_interval%length*D_interval%length) &
-                        => g_AB_CD(1 : A_interval%length*B_interval%length*C_interval%length*D_interval%length)
+            g_AB_CD_p(1 : A_range%length*B_range%length, &
+                        1 : C_range%length*D_range%length) &
+                        => g_AB_CD(1 : A_range%length*B_range%length*C_range%length*D_range%length)
 !
 !           Only keep those that correspond to elements of the basis
 !
@@ -2876,11 +2876,11 @@ contains
 !
                   y = basis_aops_in_CD_shp_p(J, 1)
                   z = basis_aops_in_CD_shp_p(J, 2)
-                  yz = C_interval%length*(z-1)+y
+                  yz = C_range%length*(z-1)+y
 !
                   w = basis_aops_in_AB_shp_p(I, 1)
                   x = basis_aops_in_AB_shp_p(I, 2)
-                  wx = A_interval%length*(x-1)+w
+                  wx = A_range%length*(x-1)+w
 !
                   K = basis_aops_in_AB_shp_p(I, 3)
                   L = basis_aops_in_CD_shp_p(J, 3)
@@ -3037,8 +3037,8 @@ contains
       B  = basis_shell_info(AB_shp, 2)
       AB = basis_shell_info(AB_shp, 3)
 !
-      A_interval = ao%shells(A)
-      B_interval = ao%shells(B)
+      A_range = ao%shells(A)
+      B_range = ao%shells(B)
 !
 !     Determine which elements in the shell pair AB are elements of the basis
 !
@@ -3050,10 +3050,10 @@ contains
             current_aop_in_shp = current_aop_in_shp + 1
 !
             aops_in_basis(AB_shp, current_aop_in_shp) &
-               = cholesky_basis_updated(I,1) - A_interval%first + 1
+               = cholesky_basis_updated(I,1) - A_range%first + 1
 !
             aops_in_basis(AB_shp, max_n_basis_aops_in_shp + current_aop_in_shp) &
-               = cholesky_basis_updated(I,2) - B_interval%first + 1
+               = cholesky_basis_updated(I,2) - B_range%first + 1
 !
             aops_in_basis(AB_shp, 2*max_n_basis_aops_in_shp + current_aop_in_shp) &
                = I
@@ -3159,7 +3159,7 @@ contains
    end subroutine invert_Q_eri_cd
 !
 !
-   pure function get_size_shp(A_interval, B_interval) result(size_shp)
+   pure function get_size_shp(A_range, B_range) result(size_shp)
 !!
 !!    Get size shell pair
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -3168,18 +3168,18 @@ contains
 !!
       implicit none
 !
-      type(interval), intent(in) :: A_interval
-      type(interval), intent(in) :: B_interval
+      type(range_), intent(in) :: A_range
+      type(range_), intent(in) :: B_range
 !
       integer :: size_shp
 !
-      if (A_interval%first == B_interval%first) then
+      if (A_range%first == B_range%first) then
 !
-         size_shp = A_interval%length*(A_interval%length + 1)/2
+         size_shp = A_range%length*(A_range%length + 1)/2
 !
       else
 !
-         size_shp = (A_interval%length)*(B_interval%length)
+         size_shp = (A_range%length)*(B_range%length)
 !
       endif
 !
@@ -3360,7 +3360,7 @@ contains
 !
 !     Intervals
 !
-      type(interval) :: A_interval, B_interval, C_interval, D_interval
+      type(range_) :: A_range, B_range, C_range, D_range
 !
       integer :: max_n_basis_aops_in_shp
 !
@@ -3480,38 +3480,38 @@ contains
             C = basis_shell_info(K_shp, 1)
             D = basis_shell_info(K_shp, 2)
 !
-            C_interval = ao%shells(C)
-            D_interval = ao%shells(D)            
+            C_range = ao%shells(C)
+            D_range = ao%shells(D)            
 !
-!$omp parallel do private(AB_shp, A, B, A_interval, B_interval, g_ABCD, g_ABCD_p, w, x, J, y, z)
+!$omp parallel do private(AB_shp, A, B, A_range, B_range, g_ABCD, g_ABCD_p, w, x, J, y, z)
             do AB_shp = 1, n_construct_shp
 !
                A = AB_info(AB_shp, 1)
                B = AB_info(AB_shp, 2)
 !
-               B_interval = ao%shells(B)
-               A_interval = ao%shells(A)
+               B_range = ao%shells(B)
+               A_range = ao%shells(A)
 !
                call ao%get_eri(g_ABCD, A, B, C, D)
 !
-               g_ABCD_p(1 : A_interval%length, 1 : B_interval%length, &
-                        1 : C_interval%length, 1 : D_interval%length) &
-                        => g_ABCD(1 : A_interval%length &
-                                     *B_interval%length &
-                                     *C_interval%length &
-                                     *D_interval%length)
+               g_ABCD_p(1 : A_range%length, 1 : B_range%length, &
+                        1 : C_range%length, 1 : D_range%length) &
+                        => g_ABCD(1 : A_range%length &
+                                     *B_range%length &
+                                     *C_range%length &
+                                     *D_range%length)
 !
                if (A == B) then
 !
-                  do w = A_interval%first, A_interval%last
-                     do x = B_interval%first, B_interval%last
+                  do w = A_range%first, A_range%get_last()
+                     do x = B_range%first, B_range%get_last()
                         do J = 1, basis_shell_info(K_shp, 4)
 !
                            y = aops_in_basis(K_shp, J)
                            z = aops_in_basis(K_shp, J + max_n_basis_aops_in_shp)
 
-                           g_wxK(w, x, J) = g_ABCD_p(w - A_interval%first + 1, &
-                                                     x - B_interval%first + 1, y, z)
+                           g_wxK(w, x, J) = g_ABCD_p(w - A_range%first + 1, &
+                                                     x - B_range%first + 1, y, z)
 !
                         enddo
                      enddo
@@ -3519,17 +3519,17 @@ contains
 !
                else
 !
-                  do w = A_interval%first, A_interval%last
-                     do x = B_interval%first, B_interval%last
+                  do w = A_range%first, A_range%get_last()
+                     do x = B_range%first, B_range%get_last()
                         do J = 1, basis_shell_info(K_shp, 4)
 !
                            y = aops_in_basis(K_shp, J)
                            z = aops_in_basis(K_shp, J + max_n_basis_aops_in_shp)
 
-                           g_wxK(w, x, J) = g_ABCD_p(w - A_interval%first + 1, &
-                                                     x - B_interval%first + 1, y, z)
-                           g_wxK(x, w, J) = g_ABCD_p(w - A_interval%first + 1, &
-                                                     x - B_interval%first + 1, y, z)
+                           g_wxK(w, x, J) = g_ABCD_p(w - A_range%first + 1, &
+                                                     x - B_range%first + 1, y, z)
+                           g_wxK(x, w, J) = g_ABCD_p(w - A_range%first + 1, &
+                                                     x - B_range%first + 1, y, z)
 !
                         enddo
                      enddo
@@ -3546,7 +3546,7 @@ contains
 !
             call dgemm('T', 'N',                               &
                         batch_p%length,                        &
-                        n_ao*basis_shell_info(K_shp,4),         &
+                        n_ao*basis_shell_info(K_shp,4),        &
                         n_ao,                                  &
                         one,                                   &
                         orbital_coefficients(1,batch_p%first), & ! C_w_p
@@ -3569,7 +3569,7 @@ contains
 !
             call dgemm('T', 'N',                                  &
                         n_mo,                                     &
-                        batch_p%length*basis_shell_info(K_shp,4),  &
+                        batch_p%length*basis_shell_info(K_shp,4), &
                         n_ao,                                     &
                         one,                                      &
                         orbital_coefficients,                     & ! C_x_q
@@ -3624,7 +3624,7 @@ contains
                                           1,               &
                                           n_mo,            &
                                           batch_p%first,   &
-                                          batch_p%last)
+                                          batch_p%get_last())
 !
          call mem%dealloc(L_Jqp, solver%n_cholesky, n_mo, batch_p%length)
 !
@@ -3689,7 +3689,7 @@ contains
       integer, dimension(:,:), allocatable :: cholesky_basis   ! Info on cholesky basis
       integer, dimension(:,:), allocatable :: aops_in_basis
 !
-      type(interval) :: A_interval, B_interval, C_interval, D_interval
+      type(range_) :: A_range, B_range, C_range, D_range
 !
       integer :: max_n_basis_aops_in_shp
 !
@@ -3777,8 +3777,8 @@ contains
 !
                current_construct_shp = current_construct_shp + 1
 !
-               A_interval = ao%shells(A)
-               B_interval = ao%shells(B)
+               A_range = ao%shells(A)
+               B_range = ao%shells(B)
 !     
                construct_shp_index(current_construct_shp, 1) = A
                construct_shp_index(current_construct_shp, 2) = B
@@ -3786,7 +3786,7 @@ contains
                if (current_construct_shp .lt. n_construct_shp) then
 !
                   ao_offsets(current_construct_shp + 1) = ao_offsets(current_construct_shp) + &
-                           get_size_shp(A_interval, B_interval)
+                           get_size_shp(A_range, B_range)
 !
                endif
 !
@@ -3802,7 +3802,7 @@ contains
       call mem%alloc(D_xy, n_construct_aop)
 !
 !$omp parallel do &
-!$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_ABAB, g_ABAB_p) &
+!$omp private(I, A, B, A_range, B_range, x, y, xy, xy_packed, g_ABAB, g_ABAB_p) &
 !$omp shared(D_xy, ao_offsets) &
 !$omp schedule(guided)
       do AB_shp = 1, n_construct_shp
@@ -3810,21 +3810,21 @@ contains
          A = construct_shp_index(AB_shp, 1)
          B = construct_shp_index(AB_shp, 2)
 !
-         A_interval = ao%shells(A)
-         B_interval = ao%shells(B)
+         A_range = ao%shells(A)
+         B_range = ao%shells(B)
 !
          call ao%get_eri(g_ABAB, A, B, A, B)
 !
-         g_ABAB_p(1 : A_interval%length, &
-                  1 : B_interval%length, &
-                  1 : A_interval%length, &
-                  1 : B_interval%length) &
-                        => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
+         g_ABAB_p(1 : A_range%length, &
+                  1 : B_range%length, &
+                  1 : A_range%length, &
+                  1 : B_range%length) &
+                        => g_ABAB(1 : (A_range%length)**2*(B_range%length)**2)
 !
          if (A .eq. B) then
 !
-            do x = 1, A_interval%length
-               do y = x, B_interval%length
+            do x = 1, A_range%length
+               do y = x, B_range%length
 !
                   xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
@@ -3835,10 +3835,10 @@ contains
 !
          else ! A ≠ B
 !
-            do x = 1, (A_interval%length)
-               do y = 1, (B_interval%length)
+            do x = 1, (A_range%length)
+               do y = 1, (B_range%length)
 !
-                  xy = A_interval%length*(y - 1) + x
+                  xy = A_range%length*(y - 1) + x
                   D_xy(xy + ao_offsets(AB_shp)) = g_ABAB_p(x, y, x, y)
 !
                enddo
@@ -3872,45 +3872,45 @@ contains
             C = basis_shell_info(K_shp, 1)
             D = basis_shell_info(K_shp, 2)
 !
-            C_interval = ao%shells(C)
-            D_interval = ao%shells(D)            
+            C_range = ao%shells(C)
+            D_range = ao%shells(D)            
 !
             call mem%alloc(g_wxK, n_construct_aop, basis_shell_info(K_shp,4))
 !
-!$omp parallel do private(AB_shp, A, B, A_interval, B_interval, g_ABCD, g_ABCD_p, w, x, J, y, z)
+!$omp parallel do private(AB_shp, A, B, A_range, B_range, g_ABCD, g_ABCD_p, w, x, J, y, z)
             do AB_shp = 1, n_construct_shp
 !
                A = construct_shp_index(AB_shp, 1)
                B = construct_shp_index(AB_shp, 2)
 !  
-               A_interval = ao%shells(A)
-               B_interval = ao%shells(B)
+               A_range = ao%shells(A)
+               B_range = ao%shells(B)
 !
                call ao%get_eri(g_ABCD, A, B, C, D)
 !
-               g_ABCD_p(1 : A_interval%length, 1 : B_interval%length, &
-                        1 : C_interval%length, 1 : D_interval%length) &
-                        => g_ABCD(1 : A_interval%length &
-                                     *B_interval%length &
-                                     *C_interval%length &
-                                     *D_interval%length)
+               g_ABCD_p(1 : A_range%length, 1 : B_range%length, &
+                        1 : C_range%length, 1 : D_range%length) &
+                        => g_ABCD(1 : A_range%length &
+                                     *B_range%length &
+                                     *C_range%length &
+                                     *D_range%length)
 !
                if (A == B) then
 !
-                  do w = A_interval%first, A_interval%last
-                     do x = B_interval%first, B_interval%last
+                  do w = A_range%first, A_range%get_last()
+                     do x = B_range%first, B_range%get_last()
                         do K = 1, basis_shell_info(K_shp, 4)
 !
                            y = aops_in_basis(K_shp, K)
                            z = aops_in_basis(K_shp, K + max_n_basis_aops_in_shp)
 !
-                           wx = (max(x - B_interval%first + 1, w - A_interval%first + 1)*&
-                                (max(x - B_interval%first + 1,w - A_interval%first + 1)-3)/2) &
-                              + x - B_interval%first + 1 + w - A_interval%first + 1
+                           wx = (max(x - B_range%first + 1, w - A_range%first + 1)*&
+                                (max(x - B_range%first + 1, w - A_range%first + 1)-3)/2) &
+                              + x - B_range%first + 1 + w - A_range%first + 1
 !
                            g_wxK(wx + ao_offsets(AB_shp), K) = &
-                                          g_ABCD_p(w - A_interval%first + 1, &
-                                                   x - B_interval%first + 1, y, z)
+                                          g_ABCD_p(w - A_range%first + 1, &
+                                                   x - B_range%first + 1, y, z)
 
 !
                         enddo
@@ -3919,18 +3919,18 @@ contains
 !
                else
 !
-                  do w = A_interval%first, A_interval%last
-                     do x = B_interval%first, B_interval%last
+                  do w = A_range%first, A_range%get_last()
+                     do x = B_range%first, B_range%get_last()
                         do K = 1, basis_shell_info(K_shp, 4)
 !
                            y = aops_in_basis(K_shp, K)
                            z = aops_in_basis(K_shp, K + max_n_basis_aops_in_shp)
 !
-                           wx = A_interval%length*(x - B_interval%first) + w - A_interval%first + 1
+                           wx = A_range%length*(x - B_range%first) + w - A_range%first + 1
 !
                            g_wxK(wx + ao_offsets(AB_shp), K) = &
-                                          g_ABCD_p(w - A_interval%first + 1, &
-                                                   x - B_interval%first + 1, y, z)
+                                          g_ABCD_p(w - A_range%first + 1, &
+                                                   x - B_range%first + 1, y, z)
 !
                         enddo
                      enddo

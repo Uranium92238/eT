@@ -683,7 +683,7 @@ contains
 !
       real(dp), dimension(:,:), pointer, contiguous :: c_i, c_j 
 !
-      type(interval), allocatable :: j_interval
+      type(range_), allocatable :: j_interval
 !
       real(dp) :: ddot
 !
@@ -699,16 +699,17 @@ contains
 !
             call batch_j%determine_limits(current_j_batch)
 !
-            if (batch_j%first .gt. batch_i%last) cycle ! Nothing to calculate; 
+            if (batch_j%first .gt. batch_i%get_last()) cycle ! Nothing to calculate; 
                                                        ! go to next batch of j 
 !
-            j_interval = interval(first=batch_j%first, &
-                                  last=min(batch_i%last, batch_j%last))
+            j_interval = range_(batch_j%first, &
+                                min(batch_i%get_last(), batch_j%get_last()) - &
+                                batch_j%first + 1)
 !
             call davidson%trials%load(c_j, j_interval, 2)
 !
-            do i = batch_i%first, batch_i%last
-               do j = j_interval%first, min(batch_j%last, i) 
+            do i = batch_i%first, batch_i%get_last()
+               do j = j_interval%first, min(batch_j%get_last(), i) 
 !
                   davidson%S_red(i, j) = ddot(davidson%n_parameters,             &
                                               c_i(:, i - batch_i%first + 1),     &

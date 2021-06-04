@@ -91,8 +91,8 @@ module atomic_center_class
       procedure :: get_ground_state_multiplicity &
                 => get_ground_state_multiplicity_atomic_center
 !
-      procedure :: get_ao_interval &
-                => get_ao_interval_atomic_center
+      procedure :: get_ao_range &
+                => get_ao_range_atomic_center
 !
       procedure :: is_ghost &
                 => is_ghost_atomic_center
@@ -274,8 +274,8 @@ contains
 !!    Initialize shells
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
-!!    Allocates the shell array, determines the interval information of each shell
-!!    (first, last, and length), as well as basis information for each shell (primitives,
+!!    Allocates the shell array, determines the range information of each shell 
+!!    (first, length), as well as basis information for each shell (primitives, 
 !!    exponents, and coefficients).
 !!
       use iso_c_binding, only: c_int
@@ -302,7 +302,7 @@ contains
 !
       allocate(center%shells(center%n_shells))
 !
-!     Get shell intervals and determine the total number of AOs on the center
+!     Get shell ranges and determine the total number of AOs on the center
 !
       allocate(n_aos_in_shell(center%n_shells))
       allocate(shell_numbers(center%n_shells))
@@ -742,27 +742,30 @@ contains
    end subroutine set_cartesian_atomic_center
 !
 !
-   function get_ao_interval_atomic_center(center) result(aos)
+   function get_ao_range_atomic_center(center) result(aos)
 !!
-!!    Get AO interval
+!!    Get AO range 
 !!    Written by Eirik F. Kjønstad, 2020
 !!
-!!    Returns an interval containing the first and last AOs on the center,
-!!    as well as the length (in an interval object 'aos')
+!!    Returns an range containing the first and last AOs on the center,
+!!    as well as the length (in an range object 'aos')
 !!
-      use interval_class, only: interval
+      use range_class
 !
       implicit none
 !
       class(atomic_center), intent(in) :: center
 !
-      type(interval) :: aos
+      type(range_) :: aos
 !
-      aos%first  = center%shells(1)%first
-      aos%last   = center%shells(center%n_shells)%last
-      aos%length = aos%last - aos%first + 1
+      integer :: first, length
 !
-   end function get_ao_interval_atomic_center
+      first  = center%shells(1)%first
+      length = center%shells(center%n_shells)%get_last() - first + 1
+!
+      aos = range_(first, length)
+!
+   end function get_ao_range_atomic_center
 !
 !
    pure function is_ghost_atomic_center(center) result(is_ghost)
@@ -805,7 +808,7 @@ contains
 !
          l = center%shells(s)%l
 !
-         do i = center%shells(s)%first, center%shells(s)%last
+         do i = center%shells(s)%first, center%shells(s)%get_last()
 !
             i_rel = i - center%shells(s)%first + 1
 !

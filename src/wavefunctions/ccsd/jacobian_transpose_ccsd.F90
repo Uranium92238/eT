@@ -655,7 +655,7 @@ contains
 !
          call mem%alloc(g_dale, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_dale, first_p=batch_d%first, last_p=batch_d%last)
+         call wf%eri%get_eri_t1('vvov', g_dale, first_p=batch_d%first, last_p=batch_d%get_last())
 !
 !        Form  L_aeld = L_dale = 2 * g_dale - g_dela
 !                              = 2 * g_dale(d,a,l,e) - g_dale(d,e,l,a)
@@ -738,7 +738,7 @@ contains
 !
          call mem%alloc(g_deia, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_deia, first_p=batch_d%first, last_p=batch_d%last)
+         call wf%eri%get_eri_t1('vvov', g_deia, first_p=batch_d%first, last_p=batch_d%get_last())
 !
 !        Form L_aied = L_deia = 2 * g_deia - g_daie
 !                             = 2 * g_deia(d,e,i,a) - g_deia(d,a,i,e)
@@ -1102,7 +1102,7 @@ contains
 !
          call mem%alloc(g_icde, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
 !
-         call wf%eri%get_eri_t1('ovvv', g_icde, first_r=batch_d%first, last_r=batch_d%last)
+         call wf%eri%get_eri_t1('ovvv', g_icde, first_r=batch_d%first, last_r=batch_d%get_last())
 !
 !        Reorder to g_id_ce = g_ic_de
 !
@@ -1270,7 +1270,7 @@ contains
 !
          call mem%alloc(g_kade, wf%n_o, wf%n_v, wf%n_v, batch_e%length)
 !
-         call wf%eri%get_eri_t1('ovvv', g_kade, first_s=batch_e%first, last_s=batch_e%last)
+         call wf%eri%get_eri_t1('ovvv', g_kade, first_s=batch_e%first, last_s=batch_e%get_last())
 !
 !        Reorder to g_akde = g_kade
 !
@@ -1351,7 +1351,7 @@ contains
 !
          call mem%alloc(g_keda, wf%n_o, wf%n_v, wf%n_v, batch_a%length)
 !
-         call wf%eri%get_eri_t1('ovvv', g_keda, first_s=batch_a%first, last_s=batch_a%last)
+         call wf%eri%get_eri_t1('ovvv', g_keda, first_s=batch_a%first, last_s=batch_a%get_last())
 !
          call dgemm('T','N',                    &
                      batch_a%length,            &
@@ -1552,14 +1552,14 @@ contains
          call mem%alloc(g_cbjk_restricted, wf%n_v, batch_b%length, wf%n_o, wf%n_o)
 !
          call wf%eri%get_eri_t1('vvoo', g_cbjk_restricted, &
-                                first_q=batch_b%first, last_q=batch_b%last)
+                                first_q=batch_b%first, last_q=batch_b%get_last())
 !
 !        Place in reordered full space vector and deallocate restricted vector
 !
 !$omp parallel do schedule(static) private(k,j,b,c)
          do k = 1, wf%n_o
             do j = 1, wf%n_o
-               do b = batch_b%first, batch_b%last
+               do b = batch_b%first, batch_b%get_last()
                   do c = 1, wf%n_v
 !
                      g_ckbj(c,k,b,j) = g_cbjk_restricted(c,b-batch_b%first+1,j,k)
@@ -1696,14 +1696,14 @@ contains
 !
          call mem%alloc(g_cbik, wf%n_v, batch_b%length, wf%n_o, wf%n_o)
 !
-         call wf%eri%get_eri_t1('vvoo', g_cbik, first_q=batch_b%first, last_q=batch_b%last)
+         call wf%eri%get_eri_t1('vvoo', g_cbik, first_q=batch_b%first, last_q=batch_b%get_last())
 !
 !        Place in reordered integral g_ckbi = g_cbik
 !
 !$omp parallel do schedule(static) private(k,i,b,c)
          do k = 1, wf%n_o
             do i = 1, wf%n_o
-               do b = batch_b%first, batch_b%last
+               do b = batch_b%first, batch_b%get_last()
                   do c = 1, wf%n_v
 !
                      g_ckbi(c,k,b,i) = g_cbik(c,b-batch_b%first+1,i,k)
