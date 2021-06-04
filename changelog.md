@@ -1,3 +1,7 @@
+# eT v1.2.5
+### Bugfixes
+- The `req_single_batch` in `calculate_energy_ccs` is now passed as `req_single_batch` instead of `element_size`. eT-program/eT!835
+
 # eT v1.2.4
 ### Bugfixes
 - Engines are passed by reference in oei.cpp to avoid copy of engine for each call to the `construct_oei` routine (done for each shell pair).eT-program/eT!821
