@@ -35,7 +35,7 @@ module parameters
 !
    integer, parameter :: major_version = 1
    integer, parameter :: minor_version = 2
-   integer, parameter :: patch_version = 4
+   integer, parameter :: patch_version = 5
    character(len=7), parameter :: version_name = "Cobra"
 !
 !  Integers
