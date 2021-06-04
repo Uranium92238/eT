@@ -56,6 +56,8 @@ program eT_program
 !
    character(len=50) :: timestamp
 !
+   logical :: requested_cholesky
+!
 !  Interface reference and CC wavefunction calculation
 !
    interface
@@ -141,7 +143,8 @@ program eT_program
 !
 !  Cholesky decomposition of electron repulsion integrals (ERIs)
 !
-   if (input%is_keyword_present('cholesky eri', 'do')) call do_eri_cholesky() 
+   requested_cholesky = input%is_keyword_present('cholesky eri', 'do')
+   if (requested_cholesky) call do_eri_cholesky() 
 !
 !  Hartree-Fock calculation
 !
@@ -166,6 +169,9 @@ program eT_program
 !
       if (input%requested_cc_calculation()) &
          call output%error_msg('to run CC calculation reference wavefunction must be specified.')
+!
+      if (.not. requested_cholesky) & 
+         call output%error_msg('no method nor ERI Cholesky decomposition selected in input.')
 !
    endif
 !
