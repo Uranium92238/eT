@@ -67,14 +67,14 @@ contains
       if (.not. present(c_ai)) then
 !
          call wf%eri%get_eri_t1('vvvo', unordered_g_vvvo, &
-                                 first_p=batch_p%first, last_p=batch_p%last, &
-                                 first_r=batch_r%first, last_r=batch_r%last)
+                                 first_p=batch_p%first, last_p=batch_p%get_last(), &
+                                 first_r=batch_r%first, last_r=batch_r%get_last())
 !
       else
 !
          call wf%eri%get_eri_c1('vvvo', unordered_g_vvvo, c_ai, &
-                                 first_p=batch_p%first, last_p=batch_p%last, &
-                                 first_r=batch_r%first, last_r=batch_r%last)
+                                 first_p=batch_p%first, last_p=batch_p%get_last(), &
+                                 first_r=batch_r%first, last_r=batch_r%get_last())
 !
       end if
 !
@@ -144,8 +144,8 @@ contains
       real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_vvov
 !
       call wf%eri%get_eri_t1('vvov', unordered_g_vvov, &
-                              first_q=batch_q%first, last_q=batch_q%last, &
-                              first_s=batch_s%first, last_s=batch_s%last)
+                              first_q=batch_q%first, last_q=batch_q%get_last(), &
+                              first_s=batch_s%first, last_s=batch_s%get_last())
 !
       call sort_1234_to_1324(unordered_g_vvov, g_vvov, wf%n_v, batch_q%length, &
                                                        wf%n_o, batch_s%length)
@@ -213,8 +213,8 @@ contains
       real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_ovov
 !
       call wf%eri%get_eri_t1('ovov', unordered_g_ovov, &
-                              first_q=batch_q%first, last_q=batch_q%last, &
-                              first_s=batch_s%first, last_s=batch_s%last)
+                              first_q=batch_q%first, last_q=batch_q%get_last(), &
+                              first_s=batch_s%first, last_s=batch_s%get_last())
 !
        call sort_1234_to_1324(unordered_g_ovov, g_ovov, wf%n_o, batch_q%length, &
                                                         wf%n_o, batch_s%length)
@@ -286,12 +286,12 @@ contains
       if (.not. present(c_ai)) then
 !
          call wf%eri%get_eri_t1('oovo', unordered_g_oovo, &
-                                 first_r=batch_r%first, last_r=batch_r%last)
+                                 first_r=batch_r%first, last_r=batch_r%get_last())
 !
       else
 !
          call wf%eri%get_eri_c1('oovo', unordered_g_oovo, c_ai, &
-                                 first_r=batch_r%first, last_r=batch_r%last)
+                                 first_r=batch_r%first, last_r=batch_r%get_last())
 !
       end if
 !
@@ -360,7 +360,7 @@ contains
       real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_ooov
 !
       call wf%eri%get_eri_t1('ooov', unordered_g_ooov, &
-                              first_s=batch_s%first, last_s=batch_s%last)
+                              first_s=batch_s%first, last_s=batch_s%get_last())
 !
       call sort_1234_to_2134(unordered_g_ooov, g_ooov, wf%n_o, wf%n_o, &
                                                        wf%n_o, batch_s%length)

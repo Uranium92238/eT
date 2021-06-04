@@ -29,9 +29,9 @@ module record_storer_class
 !!
 !
    use kinds 
+   use range_class
    use memory_manager_class, only: mem   
    use global_out, only: output  
-   use interval_class, only: interval
    use batching_index_class, only: batching_index
    use array_list_class, only: array_list
    use direct_stream_file_class, only: direct_stream_file
@@ -65,10 +65,10 @@ module record_storer_class
 !
       type(direct_stream_file), allocatable, private :: file_
 !
-!     Storing intervals for each of the blocks loaded into memory 
+!     Storing ranges for each of the blocks loaded into memory 
 !
       integer, private :: n_blocks 
-      type(interval), dimension(:), allocatable, private :: blocks
+      type(range_), dimension(:), allocatable, private :: blocks
 !
    contains
 !
@@ -83,7 +83,7 @@ module record_storer_class
 !
       generic, public   :: load &
                         => load_records, &
-                           load_interval
+                           load_range
 !
       procedure, public :: free_records &
                         => free_records_record_storer
@@ -105,11 +105,11 @@ module record_storer_class
 !
       generic, public :: copy_record_in &
                       => copy_record_in_single_record, &
-                         copy_record_in_interval
+                         copy_record_in_range
 !
       generic, public :: copy_record_out &
                       => copy_record_out_single_record, &
-                         copy_record_out_interval
+                         copy_record_out_range
 !
 !     Store changes made to records temporarily held in memory 
 !
@@ -121,13 +121,13 @@ module record_storer_class
                                                  ! records are changed
 !
       procedure, private :: load_records
-      procedure, private :: load_interval
+      procedure, private :: load_range
 !
       procedure, private :: copy_record_out_single_record
-      procedure, private :: copy_record_out_interval
+      procedure, private :: copy_record_out_range
 !
       procedure, private :: copy_record_in_single_record
-      procedure, private :: copy_record_in_interval
+      procedure, private :: copy_record_in_range
 !
    end type record_storer
 !
@@ -274,7 +274,7 @@ contains
 !
          enddo 
 !
-!        Allocate blocks for holding interval information
+!        Allocate blocks for holding range information
 !
          allocate(storer%blocks(storer%n_blocks))
 !
@@ -303,7 +303,7 @@ contains
 !
          call storer%linked_arrays%finalize()
 !
-!        Deallocate blocks for holding interval information
+!        Deallocate blocks for holding range information
 !
          deallocate(storer%blocks)
 !
@@ -358,20 +358,20 @@ contains
    end subroutine copy_record_out_single_record
 !
 !
-   subroutine copy_record_out_interval(storer, x, interval_)
+   subroutine copy_record_out_range(storer, x, a_range)
 !!
 !!    Copy record out
 !!    Written by Eirik F. Kjønstad, 2020 
 !!
-!!    Copies an interval of records into x.
+!!    Copies an range of records into x.
 !!
       implicit none 
 !
       class(record_storer) :: storer 
 !
-      class(interval), intent(in) :: interval_ 
+      class(range_), intent(in) :: a_range
 !
-      real(dp), dimension(storer%record_dim, interval_%length), intent(out) :: x 
+      real(dp), dimension(1), intent(out) :: x 
 !
       if (.not. storer%in_memory) then 
 !
@@ -379,7 +379,7 @@ contains
 !
          call storer%file_%open_('read')
 !
-         call storer%file_%read_(x, interval_%first, interval_%last)
+         call storer%file_%read_(x, a_range%first, a_range%get_last())
 !
          call storer%file_%close_()
 !
@@ -387,15 +387,13 @@ contains
 !
 !        If records are in memory, copy the record 
 !
-         call dcopy(storer%record_dim*interval_%length,     &
-                    storer%array_p(:, interval_%first),     &
-                    1,                                      &
-                    x,                                      &
-                    1)
+         call dcopy(storer%record_dim*a_range%length, &
+                    storer%array_p(:, a_range%first), &
+                    1, x, 1)
 !
       endif       
 !
-   end subroutine copy_record_out_interval
+   end subroutine copy_record_out_range
 !  
 !
    subroutine load_records(storer, x, first, last, block_)
@@ -428,7 +426,7 @@ contains
 !!               loaded pointers.
 !!
 !!               If the records are in memory, the value of "block" will not 
-!!               be used. In this case x is just set to the specified interval.
+!!               be used. In this case x is just set to the specified range.
 !!
       implicit none 
 !
@@ -447,13 +445,13 @@ contains
       block_local = 1
       if (present(block_)) block_local = block_
 !
-!     Sanity check: is interval valid?
+!     Sanity check: is range valid?
 !
       length = last - first + 1
 !
       if (length .lt. 0) then 
 !
-         call output%error_msg('Tried to load invalid interval [(i0),(i0)]', ints=[first, last])
+         call output%error_msg('Tried to load invalid range [(i0),(i0)]', ints=[first, last])
 !
       endif
 !
@@ -465,7 +463,7 @@ contains
 ! 
          do k = 1, storer%n_blocks 
 ! 
-            if (storer%blocks(k)%is_subset(first, last)) stored_in_block = k
+            if (storer%blocks(k)%contains_(range_(first, last))) stored_in_block = k
 !
          enddo
 !
@@ -500,9 +498,9 @@ contains
 !
             call storer%file_%read_(x, first, last)
 !
-!           Store the block interval information in the storer 
+!           Store the block range information in the storer 
 !
-            storer%blocks(block_local) = interval(first, last)
+            storer%blocks(block_local) = range_(first, last)
 !
          endif
 !
@@ -517,52 +515,52 @@ contains
    end subroutine load_records
 !
 !
-   subroutine load_interval(storer, x, interval_, block_)
+   subroutine load_range(storer, x, a_range, block_)
 !!
-!!    Load interval 
+!!    Load range 
 !!    Written by Eirik F. Kjønstad, 2020
 !!
 !!    Specific procedure for the generic "load".
 !!
-!!    x:         pointer to load records into  
+!!    x:       pointer to load records into  
 !!
-!!    interval_: interval of records to load into x
+!!    a_range: range of records to load into x
 !!
-!!    block_:    (optional, integer) x is pointed to this 
-!!               block in memory. Default is 1. 
+!!    block_:  (optional, integer) x is pointed to this 
+!!             block in memory. Default is 1. 
 !!
-!!               The blocks are ordered in the same order as "batches" in the 
-!!               prepare_records routine. E.g., if [batch_i, batch_j] was sent to 
-!!               prepare_records, then the i records should be loaded with block=1  
-!!               and the j records with block=2.
+!!             The blocks are ordered in the same order as "batches" in the 
+!!             prepare_records routine. E.g., if [batch_i, batch_j] was sent to 
+!!             prepare_records, then the i records should be loaded with block=1  
+!!             and the j records with block=2.
 !!
-!!               If the records are in memory, the value of "block" will not 
-!!               be used. In this case x is just set to the specified interval.
+!!             If the records are in memory, the value of "block" will not 
+!!             be used. In this case x is just set to the specified range.
 !!
       implicit none 
 !
       class(record_storer) :: storer
 !
-      class(interval), intent(in) :: interval_
+      class(range_), intent(in) :: a_range
 !
       real(dp), dimension(:,:), pointer, contiguous :: x 
 !
       integer, intent(in), optional :: block_
 !
-      call storer%load(x, interval_%first, interval_%last, block_)
+      call storer%load_records(x, a_range%first, a_range%get_last(), block_)
 !
-   end subroutine load_interval
+   end subroutine load_range
 !
 !
-   subroutine store_record_storer(storer, x, interval_)
+   subroutine store_record_storer(storer, x, a_range)
 !!
 !!    Store
 !!    Written by Eirik F. Kjønstad, 2020 
 !!
 !!    Stores changes made to records temporarily held in memory. 
 !!
-!!    x:         pointer to records 
-!!    interval_: interval of records associated with x 
+!!    x:       pointer to records 
+!!    a_range: range of records associated with x 
 !!
 !!    If records are kept in memory, the changes made to  
 !!    the loaded pointer is permanent and this routine does not 
@@ -578,7 +576,7 @@ contains
 !
       class(record_storer) :: storer 
 !
-      class(interval), intent(in) :: interval_
+      class(range_), intent(in) :: a_range
 !
       real(dp), dimension(:,:), pointer, contiguous :: x 
 !
@@ -587,12 +585,12 @@ contains
 !        Write to file 
 !
          call storer%file_%write_(x,                  &
-                                  interval_%first,    &
-                                  interval_%last)
+                                  a_range%first,      &
+                                  a_range%get_last())
 !
 !        Make sure blocks in memory are updated 
 !
-         call storer%update_loaded_blocks(x, interval_%first, interval_%last)
+         call storer%update_loaded_blocks(x, a_range%first, a_range%get_last())
 !
 !
       endif
@@ -640,9 +638,9 @@ contains
    end subroutine store_single_record
 !
 !
-   subroutine copy_record_in_interval(storer, x, interval_)
+   subroutine copy_record_in_range(storer, x, a_range)
 !!
-!!    Set interval 
+!!    Set range 
 !!    Written by Eirik F. Kjønstad, 2020
 !!
 !!    Saves array x in the storer by writing to file or copying the array.
@@ -651,9 +649,9 @@ contains
 !
       class(record_storer) :: storer
 !
-      class(interval), intent(in) :: interval_
+      class(range_), intent(in) :: a_range
 !
-      real(dp), dimension(storer%record_dim, interval_%length), intent(in) :: x 
+      real(dp), dimension(1,1), intent(in) :: x 
 !
       if (.not. storer%in_memory) then 
 !
@@ -661,27 +659,27 @@ contains
 !
          call storer%file_%open_('write')
 !
-         call storer%file_%write_(x, interval_%first, interval_%last)
+         call storer%file_%write_(x, a_range%first, a_range%get_last())
 !
          call storer%file_%close_()
 !
-!        If interval is already loaded into memory, overwrite block as well
+!        If range is already loaded into memory, overwrite block as well
 !
-         call storer%update_loaded_blocks(x, interval_%first, interval_%last)
+         call storer%update_loaded_blocks(x, a_range%first, a_range%get_last())
 !
       else 
 !
 !        If records are in memory, copy into memory 
 !
-         call dcopy(storer%record_dim*interval_%length,                    &
+         call dcopy(storer%record_dim*a_range%length,                      &
                     x,                                                     &
                     1,                                                     &
-                    storer%array_p(:, interval_%first : interval_%last),   &
+                    storer%array_p(:, a_range%first : a_range%get_last()), &
                     1)
 !
       endif 
 !
-   end subroutine copy_record_in_interval
+   end subroutine copy_record_in_range
 !
 !
    subroutine copy_record_in_single_record(storer, x, n)
@@ -733,7 +731,7 @@ contains
 !!    Update loaded blocks  
 !!    Written by Eirik F. Kjønstad, Apr 2020
 !!
-!!    Copies x into loaded blocks corresponding to the interval given by first and last.
+!!    Copies x into loaded blocks corresponding to the range given by first and last.
 !!
 !!    Assumes that storer%in_memory is false and should only be called in this case.
 !!
@@ -753,11 +751,11 @@ contains
 !
 !        Skip to next block if [first, last] has no elements in common with the block 
 !
-         if (storer%blocks(k)%empty_intersection(first, last)) cycle
+         if (.not. storer%blocks(k)%contains_(range_(first, last))) cycle
 !
-         if (storer%blocks(k)%is_subset(first, last)) then 
+         if (storer%blocks(k)%contains_(range_(first, last))) then 
 !
-!           Interval is subset of the kth block: copy entire block 
+!           range is subset of the kth block: copy entire block 
 !
             length = last - first + 1
 !
@@ -774,13 +772,13 @@ contains
 !
          else 
 !
-!           Interval is not subset: copy elements one-by-one
+!           range is not subset: copy elements one-by-one
 !
             call storer%linked_arrays%get_array(array_p, k)
 !
             do n = first, last 
 !
-               if (storer%blocks(k)%element_is_member(n)) then 
+               if (storer%blocks(k)%contains_(n)) then 
 !
                   call dcopy(storer%record_dim,                            &
                              x(:, n - first + 1),                          &

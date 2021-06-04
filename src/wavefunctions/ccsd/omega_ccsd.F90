@@ -284,14 +284,14 @@ contains
 !
             if(right) then
                first_p = batch_a%first
-               last_p  = batch_a%last
+               last_p  = batch_a%get_last()
                first_r = batch_b%first
-               last_r  = batch_b%last
+               last_r  = batch_b%get_last()
             else
                first_q = batch_a%first
-               last_q  = batch_a%last
+               last_q  = batch_a%get_last()
                first_s = batch_b%first
-               last_s  = batch_b%last
+               last_s  = batch_b%get_last()
             endif
 !
 !           If batches are the same, we can compute the packed integral

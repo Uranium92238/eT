@@ -438,7 +438,7 @@ contains
                      davidson%n_rhs,                     &
                      davidson%n_parameters,              &
                      one,                                &
-                     c,                                  & ! c_alpha,i 
+                     c,                                  & ! c_alpha,i
                      davidson%n_parameters,              &
                      davidson%F,                         & ! F_alpha,k
                      davidson%n_parameters,              &

@@ -1508,7 +1508,7 @@ contains
          call mem%alloc(g_kcbd, wf%n_o, wf%n_v, batch_b%length, wf%n_v)
 !
          call wf%eri%get_eri_t1('ovvv', g_kcbd, 1, wf%n_o, 1, wf%n_v, &
-                                                batch_b%first, batch_b%last, 1, wf%n_v)
+                                                batch_b%first, batch_b%get_last(), 1, wf%n_v)
 !
          call mem%alloc(g_dkbc, n_a_v, n_a_o, batch_b%length, wf%n_v)
 !
@@ -3116,7 +3116,7 @@ contains
 !
          call mem%alloc(g_bdkc, batch_b%length, n_a_v, wf%n_o, n_a_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_bdkc, batch_b%first, batch_b%last, 1, n_a_v, &
+         call wf%eri%get_eri_t1('vvov', g_bdkc, batch_b%first, batch_b%get_last(), 1, n_a_v, &
                                                 1, wf%n_o, 1, n_a_v)
 !
 !        Reorder g_bd_kc to g_cd_kb (= g_kcbd), i.e. 1234 to 4231

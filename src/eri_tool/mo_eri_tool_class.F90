@@ -889,14 +889,14 @@ contains
          L_J_1_p(1:eri%n_J, 1:batcher%length, 1:eri%n_mo) => L_J_1
          L_J_2_p(1:eri%n_J, 1:batcher%length, 1:eri%n_mo) => L_J_2
 !
-         call eri%get_cholesky_mo(L_J_1, batcher%first, batcher%last, 1, eri%n_mo)
+         call eri%get_cholesky_mo(L_J_1, batcher%first, batcher%get_last(), 1, eri%n_mo)
 !
-         call dgemm('N', 'T',                                   &
-                    eri%n_J*batcher%length, eri%n_mo, eri%n_mo, &
-                    one,                                        &
-                    L_J_1_p, eri%n_J*batcher%length,            &
-                    T, eri%n_mo,                                &
-                    zero,                                       &
+         call dgemm('N', 'T',                                     &
+                    eri%n_J*batcher%length, eri%n_mo, eri%n_mo,   &
+                    one,                                          &
+                    L_J_1_p, eri%n_J*batcher%length,              &
+                    T, eri%n_mo,                                  &
+                    zero,                                         &
                     L_J_2_p, eri%n_J*batcher%length)
 !
          L_J_1_p(1:eri%n_J, 1:eri%n_mo, 1:batcher%length) => L_J_1
@@ -904,7 +904,8 @@ contains
          call sort_123_to_132(L_J_2_p, L_J_1_p, eri%n_J, batcher%length, eri%n_mo)
 !
          if (.not. all_in_mem) then
-            call temp_file%write_(L_J_1, (batcher%first-1)*eri%n_mo+1, batcher%last*eri%n_mo)
+            call temp_file%write_(L_J_1, (batcher%first-1)*eri%n_mo+1, &
+                                  batcher%get_last()*eri%n_mo)
          endif
 !
       enddo
@@ -921,23 +922,24 @@ contains
          if (.not. all_in_mem) then
             do r = 1, eri%n_mo
                call temp_file%read_(L_J_1_p(:, :, r), &
-                                    (r-1)*eri%n_mo + batcher%first, (r-1)*eri%n_mo + batcher%last)
+                                    (r-1)*eri%n_mo + batcher%first, &
+                                    (r-1)*eri%n_mo + batcher%get_last())
             enddo
          endif
 !
-         call dgemm('N', 'T',                                   &
-                    eri%n_J*batcher%length, eri%n_mo, eri%n_mo, &
-                    one,                                        &
-                    L_J_1_p, eri%n_J*batcher%length,            &
-                    T, eri%n_mo,                                &
-                    zero,                                       &
+         call dgemm('N', 'T',                                     &
+                    eri%n_J*batcher%length, eri%n_mo, eri%n_mo,   &
+                    one,                                          &
+                    L_J_1_p, eri%n_J*batcher%length,              &
+                    T, eri%n_mo,                                  &
+                    zero,                                         &
                     L_J_2_p, eri%n_J*batcher%length)
 
          L_J_1_p(1:eri%n_J, 1:eri%n_mo, 1:batcher%length) => L_J_1
 !
          call sort_123_to_132(L_J_2_p, L_J_1_p, eri%n_J, batcher%length, eri%n_mo)
 !
-         call eri%set_cholesky_mo(L_J_1_p, 1, eri%n_mo, batcher%first, batcher%last)
+         call eri%set_cholesky_mo(L_J_1_p, 1, eri%n_mo, batcher%first, batcher%get_last())
 !
       enddo
 

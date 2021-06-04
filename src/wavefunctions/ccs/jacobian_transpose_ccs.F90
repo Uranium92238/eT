@@ -207,15 +207,15 @@ contains
 !
             call mem%alloc(L_bjia, wf%n_v, batch_j%length, wf%n_o, batch_a%length)
 !
-            call wf%eri%get_eri_t1('voov', L_bjia, 1, wf%n_v, batch_j%first, batch_j%last, &
-                                                   1, wf%n_o, batch_a%first, batch_a%last)
+            call wf%eri%get_eri_t1('voov', L_bjia, 1, wf%n_v, batch_j%first, batch_j%get_last(), &
+                                                   1, wf%n_o, batch_a%first, batch_a%get_last())
 !
             call dscal((wf%n_v)*(wf%n_o)*(batch_a%length)*(batch_j%length), two, L_bjia, 1)
 !
             call mem%alloc(g_baij, wf%n_v, batch_a%length, wf%n_o, batch_j%length)
 !
-            call wf%eri%get_eri_t1('vvoo', g_baij, 1, wf%n_v, batch_a%first, batch_a%last, &
-                                                   1, wf%n_o, batch_j%first, batch_j%last)
+            call wf%eri%get_eri_t1('vvoo', g_baij, 1, wf%n_v, batch_a%first, batch_a%get_last(), &
+                                                   1, wf%n_o, batch_j%first, batch_j%get_last())
 !
             call add_1432_to_1234(-one, g_baij, L_bjia, wf%n_v, batch_j%length, wf%n_o, batch_a%length)
 !

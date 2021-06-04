@@ -593,7 +593,7 @@ contains
 !
          call mem%alloc(g_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_abjc, first_p=batch_a%first, last_p=batch_a%last)
+         call wf%eri%get_eri_t1('vvov', g_abjc, first_p=batch_a%first, last_p=batch_a%get_last())
 !
          call mem%alloc(L_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
 !
@@ -697,7 +697,7 @@ contains
 !
          call mem%alloc(g_aibc, wf%n_v, wf%n_o, wf%n_v, batch_b%length)
 !
-         call wf%eri%get_eri_t1('vovv', g_aibc, first_r=batch_b%first, last_r=batch_b%last)
+         call wf%eri%get_eri_t1('vovv', g_aibc, first_r=batch_b%first, last_r=batch_b%get_last())
 !
          call dgemm('N', 'N',                            &
                      (wf%n_v)*(wf%n_o)*(batch_b%length), &

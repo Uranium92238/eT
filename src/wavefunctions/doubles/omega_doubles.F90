@@ -102,7 +102,7 @@ contains
          call mem%alloc(L_Jab, wf%eri%n_J, batch_a%length, wf%n_v)
          call wf%eri%get_cholesky_t1(L_Jab,                  &
                                      wf%n_o + batch_a%first, &
-                                     wf%n_o + batch_a%last,  &
+                                     wf%n_o + batch_a%get_last(),  &
                                      wf%n_o + 1, wf%n_mo)
 !
          call mem%alloc(L_aJb, batch_a%length, wf%eri%n_J, wf%n_v)

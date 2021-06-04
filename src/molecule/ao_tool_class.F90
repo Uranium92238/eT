@@ -31,6 +31,7 @@ module ao_tool_class
 !
    use kinds
    use parameters
+   use named_range_class
    use iso_c_binding,         only: c_int
 !
    use global_in,             only: input
@@ -38,8 +39,6 @@ module ao_tool_class
    use memory_manager_class,  only: mem
 !
    use atomic_center_class,   only: atomic_center
-   use interval_class,        only: interval
-   use named_interval_class,  only: named_interval
    use point_charges_class,   only: point_charges
 !
    implicit none
@@ -54,7 +53,7 @@ module ao_tool_class
 !
 !     Vector of shell intervals (first, last, length)
 !
-      type(interval), dimension(:), allocatable, public :: shells
+      type(range_), dimension(:), allocatable, public :: shells
 !
 !     Various useful index mappings
 !
@@ -85,7 +84,7 @@ module ao_tool_class
       real(dp), dimension(:,:), allocatable, public :: P, L ! AO-to-OAO transformation matrices
 !
       integer, private :: n_center_subsets
-      type(named_interval), dimension(:), allocatable, private :: center_subsets
+      type(named_range), dimension(:), allocatable, private :: center_subsets
 !
       real(dp), private :: libint_epsilon ! Default Libint ERI precision
 !
@@ -557,9 +556,9 @@ contains
       ao%n_center_subsets = 1
       allocate(ao%center_subsets(ao%n_center_subsets))
 !
-      ao%center_subsets(1) = named_interval(name_ = 'unclassified',  &
-                                            first = 1,               &
-                                            last  = ao%n_centers)
+      ao%center_subsets(1) = named_range('unclassified',  &
+                                         1,               &
+                                         ao%n_centers)
 !
    end subroutine initialize_centers_from_template
 !
@@ -742,7 +741,7 @@ contains
 !
             A = A + 1
 !
-            do w = ao%shells(A)%first, ao%shells(A)%last
+            do w = ao%shells(A)%first, ao%shells(A)%get_last()
 !
                ao%ao_to_center(w) = I
 !
@@ -767,7 +766,7 @@ contains
       A = 0
 !
       do A = 1, ao%n_sh
-         do w = ao%shells(A)%first, ao%shells(A)%last
+         do w = ao%shells(A)%first, ao%shells(A)%get_last()
 !
             ao%ao_to_shell(w) = A
 !
@@ -823,7 +822,7 @@ contains
 !
             A = A + 1
 !
-            ao%shells(A) = interval(ao%centers(I)%shells(B))
+            ao%shells(A) = range_(ao%centers(I)%shells(B))
 !
          enddo
       enddo
@@ -1796,7 +1795,6 @@ contains
 !!
 !!    Moved and adapted to AO tool, removed loop allocations, Eirik F. Kjønstad, 2020
 !!
-      use interval_class, only: interval
       use array_utilities, only: zero_array
 !
       implicit none
@@ -1810,7 +1808,7 @@ contains
 !
       integer :: I, w, x, w_full, x_full
 !
-      type(interval), allocatable :: aos_I
+      type(range_), allocatable :: aos_I
 !
       call zero_array(D, ao%n**2)
 !
@@ -1827,7 +1825,7 @@ contains
 !
          call ao%centers(I)%read_atomic_uhf_density(D_I)
 !
-         aos_I = ao%centers(I)%get_ao_interval()
+         aos_I = ao%centers(I)%get_ao_range()
 !
          D_I_p(1 : aos_I%length, 1 : aos_I%length) => D_I(1 : aos_I%length**2)
 !
@@ -1872,7 +1870,7 @@ contains
 !
       integer :: set, I
 !
-      class(interval), allocatable :: aos
+      class(range_), allocatable :: aos
 !
 !     Test if there's nothing to do; if so, tell the developer not to be silly
 !
@@ -1883,14 +1881,14 @@ contains
 !
       do set = 1, ao%n_center_subsets
 !
-         if (trim(subset) .eq. trim(ao%center_subsets(set)%name_)) then
+         if (trim(subset) .eq. trim(ao%center_subsets(set)%get_name())) then
 !
 !           Return the requested AO indices
 !
             if (present(first)) then
 !
                I   = ao%center_subsets(set)%first
-               aos = ao%centers(I)%get_ao_interval()
+               aos = ao%centers(I)%get_ao_range()
 !
                first = aos%first
 !
@@ -1898,10 +1896,10 @@ contains
 !
             if (present(last)) then
 !
-               I   = ao%center_subsets(set)%last
-               aos = ao%centers(I)%get_ao_interval()
+               I   = ao%center_subsets(set)%get_last()
+               aos = ao%centers(I)%get_ao_range()
 !
-               last = aos%last
+               last = aos%get_last()
 !
             endif
 !
@@ -1939,7 +1937,7 @@ contains
 !
       do set = 1, ao%n_center_subsets
 !
-         if (trim(subset) .eq. trim(ao%center_subsets(set)%name_)) then
+         if (trim(subset) .eq. trim(ao%center_subsets(set)%get_name())) then
 !
             is_center_subset = .true.
             return
@@ -1971,7 +1969,7 @@ contains
 !
       do I = 1, ao%n_center_subsets
 !
-         if (trim(ao%center_subsets(I)%name_) == trim(subset)) then
+         if (trim(ao%center_subsets(I)%get_name()) == trim(subset)) then
 !
             n_centers = ao%center_subsets(I)%length
             return
@@ -2328,7 +2326,7 @@ contains
 !
          do A = 1, ao%centers(I)%n_shells
 !
-            do w = ao%centers(I)%shells(A)%first, ao%centers(I)%shells(A)%last
+            do w = ao%centers(I)%shells(A)%first, ao%centers(I)%shells(A)%get_last()
 !
                w_red = w - ao%centers(I)%shells(A)%first + 1
 !
@@ -2900,7 +2898,7 @@ contains
          first = ao%center_subsets(subset_index)%first
       endif
 !
-      last = ao%center_subsets(subset_index)%last
+      last = ao%center_subsets(subset_index)%get_last()
 !
       pc = point_charges(last - first + 1)
       call pc%initialize()
@@ -2935,7 +2933,7 @@ contains
 !
       do I = 1, ao%n_center_subsets
 !
-         if (ao%center_subsets(I)%name_ == trim(name_)) subset_index = I
+         if (ao%center_subsets(I)%get_name() == trim(name_)) subset_index = I
 !
       enddo
 !
@@ -3102,8 +3100,8 @@ contains
 !
             else
 !
-               max_s = maxval(abs(ao%s(ao%shells(A)%first:ao%shells(A)%last,&
-                                       ao%shells(B)%first:ao%shells(B)%last)))
+               max_s = maxval(abs(ao%s(ao%shells(A)%first:ao%shells(A)%get_last(),&
+                                       ao%shells(B)%first:ao%shells(B)%get_last())))
 !
                if (max_s .gt. ao%oei_cutoff) then
 !
@@ -3131,8 +3129,8 @@ contains
            x_ABk_p(1 : ao%shells(A_c)%length, &
                    1 : ao%shells(B_c)%length, &
                    1 : n_components)          &
-           => x_ABk(1 : ao%shells(A_c)%length*&
-                        ao%shells(B_c)%length*&
+           => x_ABk(1 : ao%shells(A_c)%length * &
+                        ao%shells(B_c)%length * &
                         n_components)
 !
            do k = 1, n_components
@@ -3250,13 +3248,14 @@ contains
 !
       integer, dimension(ao%n) :: map
 !
-      type(interval), allocatable :: aos
+      type(range_), allocatable :: aos
       integer :: c
 !
       do c = 1, ao%n_centers
 !
-         aos = ao%centers(c)%get_ao_interval()
-         map(aos%first:aos%last) = ao%centers(c)%get_ao_molden_order(aos%first, aos%last)
+         aos = ao%centers(c)%get_ao_range()
+         map(aos%first:aos%get_last()) = &
+            ao%centers(c)%get_ao_molden_order(aos%first, aos%get_last())
 !
       end do
 !

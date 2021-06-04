@@ -37,7 +37,7 @@ module hf_class
    use output_file_class,     only : output_file
    use sequential_file_class, only : sequential_file
    use array_utilities,       only : zero_array
-   use interval_class,        only : interval
+   use range_class
    use omp_lib
 !
    use stream_file_class, only: stream_file

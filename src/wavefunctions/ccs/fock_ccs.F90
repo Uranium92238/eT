@@ -309,20 +309,23 @@ contains
 !
 !           F_ai = F_ai + sum_j (2*g_aijj - g_ajji)
 !
-            call mem%alloc(g_aijj, wf%n_v, batch_i%length, batch_j%length, batch_j%length)
-            call mem%alloc(g_ajji, wf%n_v, batch_j%length, batch_j%length, batch_i%length)
+            call mem%alloc(g_aijj, wf%n_v, batch_i%length, &
+                                   batch_j%length, batch_j%length)
+            call mem%alloc(g_ajji, wf%n_v, batch_j%length, &
+                                   batch_j%length, batch_i%length)
 !
-            call wf%eri%get_eri_t1('vooo', g_aijj,                        &
-                              1, wf%n_v,                    &
-                              batch_i%first, batch_i%last,  &
-                              batch_j%first, batch_j%last,  &
-                              batch_j%first, batch_j%last)
+            call wf%eri%get_eri_t1('vooo', g_aijj,                &
+                              1, wf%n_v,                          &
+                              batch_i%first, batch_i%get_last(),  &
+                              batch_j%first, batch_j%get_last(),  &
+                              batch_j%first, batch_j%get_last())
 !
-            call wf%eri%get_eri_t1('vooo', g_ajji,                        &
-                              1, wf%n_v,                    &
-                              batch_j%first, batch_j%last,  &
-                              batch_j%first, batch_j%last,  &
-                              batch_i%first, batch_i%last)
+            call wf%eri%get_eri_t1('vooo', g_ajji,                &
+                              1, wf%n_v,                          &
+                              batch_j%first, batch_j%get_last(),  &
+                              batch_j%first, batch_j%get_last(),  &
+                              batch_i%first, batch_i%get_last())
+!
 !
 !$omp parallel do private(i, a, j)
             do i = 1, batch_i%length
@@ -330,7 +333,7 @@ contains
                   do j = 1, batch_j%length
 !
                      wf%fock_ai(a, i + batch_i%first - 1)   &
-                     = wf%fock_ai(a, i + batch_i%first - 1)   &
+                     = wf%fock_ai(a, i + batch_i%first - 1) &
                      + two*g_aijj(a, i, j, j) - g_ajji(a, j, j, i)
 !
                   enddo
@@ -338,8 +341,10 @@ contains
             enddo
 !$omp end parallel do
 !
-            call mem%dealloc(g_aijj, wf%n_v, batch_i%length, batch_j%length, batch_j%length)
-            call mem%dealloc(g_ajji, wf%n_v, batch_j%length, batch_j%length, batch_i%length)
+            call mem%dealloc(g_aijj, wf%n_v, batch_i%length, &
+                                     batch_j%length, batch_j%length)
+            call mem%dealloc(g_ajji, wf%n_v, batch_j%length, &
+                                     batch_j%length, batch_i%length)
 !
          enddo
       enddo
@@ -374,8 +379,8 @@ contains
 !!       subblock calculation
 !!
 !
+      use range_class
       use batching_index_class, only : batching_index
-      use interval_class, only : interval
 !
       implicit none
 !
@@ -383,7 +388,7 @@ contains
 !
       integer, intent(in), optional :: first_i, last_i, first_a, last_a
 !
-      type(interval) :: interval_i, interval_a
+      type(range_) :: i_range, interval_a
 !
       real(dp), dimension(:,:), allocatable :: F_pq
 !
@@ -400,13 +405,13 @@ contains
       if (present(first_i) .and. present(last_i) .and. &
           present(first_a) .and. present(last_a)) then
 !
-         interval_i = interval(first_i, last_i)
-         interval_a = interval(first_a, last_a)
+         i_range = range_(first_i, last_i)
+         interval_a = range_(first_a, last_a)
 !
       else
 !
-         interval_i = interval(1, wf%n_o)
-         interval_a = interval(1, wf%n_v)
+         i_range = range_(1, wf%n_o)
+         interval_a = range_(1, wf%n_v)
 !
       endif
 !
@@ -421,8 +426,8 @@ contains
       if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_pq)
 !
 !$omp parallel do
-      do a = interval_a%first, interval_a%last
-         do i = interval_i%first, interval_i%last
+      do a = interval_a%first, interval_a%get_last()
+         do i = i_range%first, i_range%get_last()
 !
             wf%fock_ia(i, a) = F_pq(i, a + wf%n_o)
 !
@@ -443,7 +448,7 @@ contains
 !
       req2 =  2*wf%n_v
 !
-      batch_i = batching_index(interval_i%length)
+      batch_i = batching_index(i_range%length)
       batch_j = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
@@ -464,29 +469,29 @@ contains
             call mem%alloc(g_ijja, batch_i%length, batch_j%length, &
                                    batch_j%length, interval_a%length)
 !
-            call wf%eri%get_eri_t1('ovoo', g_iajj,                   &
-                              batch_i%first + interval_i%first - 1,  &
-                              batch_i%last + interval_i%first - 1,   &
-                              interval_a%first, interval_a%last,     &
-                              batch_j%first, batch_j%last,           &
-                              batch_j%first, batch_j%last)
+            call wf%eri%get_eri_t1('ovoo', g_iajj,                      &
+                              batch_i%first + i_range%first - 1,        &
+                              batch_i%get_last() + i_range%first - 1,   &
+                              interval_a%first, interval_a%get_last(),  &
+                              batch_j%first, batch_j%get_last(),        &
+                              batch_j%first, batch_j%get_last())
 !
-            call wf%eri%get_eri_t1('ooov', g_ijja,                   &
-                              batch_i%first + interval_i%first - 1,  &
-                              batch_i%last + interval_i%first - 1,   &
-                              batch_j%first, batch_j%last,           &
-                              batch_j%first, batch_j%last,           &
-                              interval_a%first, interval_a%last)
+            call wf%eri%get_eri_t1('ooov', g_ijja,                      &
+                              batch_i%first + i_range%first - 1,        &
+                              batch_i%get_last() + i_range%first - 1,   &
+                              batch_j%first, batch_j%get_last(),        &
+                              batch_j%first, batch_j%get_last(),        &
+                              interval_a%first, interval_a%get_last())
 !
 !$omp parallel do private (a, i, j)
             do a = 1, interval_a%length
                do i = 1, batch_i%length
                   do j = 1, batch_j%length
 !
-                     wf%fock_ia(i + batch_i%first - 1 + interval_i%first - 1, &
-                                a + interval_a%first - 1) & 
-                        = wf%fock_ia(i + batch_i%first - 1 + interval_i%first - 1, &
-                                a + interval_a%first - 1) &
+                     wf%fock_ia(i + batch_i%first - 1 + i_range%first - 1,       &
+                                a + interval_a%first - 1)                        &
+                        = wf%fock_ia(i + batch_i%first - 1 + i_range%first - 1,  &
+                                a + interval_a%first - 1)                        &
                         + two*g_iajj(i, a, j, j) - g_ijja(i, j, j, a)
 !
                   enddo
@@ -533,8 +538,8 @@ contains
 !!       subblock calculation
 !!
 !
+      use range_class
       use batching_index_class, only : batching_index
-      use interval_class, only : interval
 !
       implicit none
 !
@@ -542,7 +547,7 @@ contains
 !
       integer, intent(in), optional :: first_a, last_a, first_b, last_b
 !
-      type(interval) :: interval_a, interval_b
+      type(range_) :: interval_a, interval_b
 !
       real(dp), dimension(:,:), allocatable :: F_pq
 !
@@ -559,13 +564,13 @@ contains
       if (present(first_a) .and. present(last_a) .and. &
           present(first_b) .and. present(last_b)) then
 !
-         interval_a = interval(first_a, last_a)
-         interval_b = interval(first_b, last_b)
+         interval_a = range_(first_a, last_a)
+         interval_b = range_(first_b, last_b)
 !
       else
 !
-         interval_a = interval(1, wf%n_v)
-         interval_b = interval(1, wf%n_v)
+         interval_a = range_(1, wf%n_v)
+         interval_b = range_(1, wf%n_v)
 !
       endif
 !
@@ -580,8 +585,8 @@ contains
       if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_pq)
 !
 !$omp parallel do
-      do b = interval_b%first, interval_b%last
-         do a = interval_a%first, interval_a%last
+      do b = interval_b%first, interval_b%get_last()
+         do a = interval_a%first, interval_a%get_last()
 !
             wf%fock_ab(a, b) = F_pq(a + wf%n_o, b + wf%n_o)
 !
@@ -597,8 +602,8 @@ contains
 !
       req0 = 0
 !
-      req1_i = (wf%eri%n_J)*(max(interval_a%length, interval_b%length))
-      req1_a = (wf%eri%n_J)*(max(interval_a%length, interval_b%length))
+      req1_i = wf%eri%n_J*max(interval_a%length, interval_b%length)
+      req1_a = wf%eri%n_J*max(interval_a%length, interval_b%length)
 !
       req2 =  2*wf%n_o*(interval_b%length)
 !
@@ -618,31 +623,32 @@ contains
             call mem%alloc(g_abii, batch_a%length, interval_b%length, &
                                    batch_i%length, batch_i%length)
 !
-            call wf%eri%get_eri_t1('vvoo', g_abii,                                 &
-                              batch_a%first + interval_a%first - 1,  &
-                              batch_a%last + interval_a%first - 1,   &
-                              interval_b%first, interval_b%last,     &
-                              batch_i%first, batch_i%last,           &
-                              batch_i%first, batch_i%last)
+            call wf%eri%get_eri_t1('vvoo', g_abii,                         &
+                              batch_a%first + interval_a%first - 1,        &
+                              batch_a%get_last() + interval_a%first - 1,   &
+                              interval_b%first, interval_b%get_last(),     &
+                              batch_i%first, batch_i%get_last(),           &
+                              batch_i%first, batch_i%get_last())
 !
-            call mem%alloc(g_aiib, batch_a%length, batch_i%length, batch_i%length, interval_b%length)
+            call mem%alloc(g_aiib, batch_a%length, batch_i%length, &
+                                   batch_i%length, interval_b%length)
 !
-            call wf%eri%get_eri_t1('voov', g_aiib,                                 &
-                              batch_a%first + interval_a%first - 1,  &
-                              batch_a%last + interval_a%first - 1,   &
-                              batch_i%first, batch_i%last,           &
-                              batch_i%first, batch_i%last,           &
-                              interval_b%first, interval_b%last)
+            call wf%eri%get_eri_t1('voov', g_aiib,                         &
+                              batch_a%first + interval_a%first - 1,        &
+                              batch_a%get_last() + interval_a%first - 1,   &
+                              batch_i%first, batch_i%get_last(),           &
+                              batch_i%first, batch_i%get_last(),           &
+                              interval_b%first, interval_b%get_last())
 !
 !$omp parallel do private (a, b, i)
             do a = 1, batch_a%length
                do b = 1, interval_b%length
                   do i = 1, batch_i%length
 !
-                     wf%fock_ab(a + batch_a%first - 1 + interval_a%first - 1, &
-                                b + interval_b%first - 1) &
-                     = wf%fock_ab(a + batch_a%first - 1 + interval_a%first - 1, &
-                                b + interval_b%first - 1) &
+                     wf%fock_ab(a + batch_a%first - 1 + interval_a%first - 1,    &
+                                b + interval_b%first - 1)                        &
+                     = wf%fock_ab(a + batch_a%first - 1 + interval_a%first - 1,  &
+                                b + interval_b%first - 1)                        &
                      + two*g_abii(a, b, i, i) - g_aiib(a, i, i, b)
 !
                   enddo
@@ -650,8 +656,10 @@ contains
             enddo
 !$omp end parallel do
 !
-            call mem%dealloc(g_aiib, batch_a%length, batch_i%length, batch_i%length, interval_b%length)
-            call mem%dealloc(g_abii, batch_a%length, interval_b%length, batch_i%length, batch_i%length)
+            call mem%dealloc(g_aiib, batch_a%length, batch_i%length, &
+                                     batch_i%length, interval_b%length)
+            call mem%dealloc(g_abii, batch_a%length, interval_b%length, &
+                                     batch_i%length, batch_i%length)
 !
          enddo
       enddo
@@ -686,8 +694,8 @@ contains
 !!       subblock calculation
 !!
 !
+      use range_class
       use batching_index_class, only : batching_index
-      use interval_class, only : interval
 !
       implicit none
 !
@@ -695,7 +703,7 @@ contains
 !
       integer, intent(in), optional :: first_i, last_i, first_j, last_j
 !
-      type(interval) :: interval_i, interval_j
+      type(range_) :: i_range, j_range
 !
       real(dp), dimension(:,:), allocatable :: F_pq
 !
@@ -710,13 +718,13 @@ contains
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j)) then
 !
-         interval_i = interval(first_i, last_i)
-         interval_j = interval(first_j, last_j)
+         i_range = range_(first_i, last_i)
+         j_range = range_(first_j, last_j)
 !
       else
 !
-         interval_i = interval(1, wf%n_o)
-         interval_j = interval(1, wf%n_o)
+         i_range = range_(1, wf%n_o)
+         j_range = range_(1, wf%n_o)
 !
       endif
 !
@@ -731,8 +739,8 @@ contains
       if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_pq)
 !
 !$omp parallel do
-      do j = interval_j%first, interval_j%last
-         do i = interval_i%first, interval_i%last
+      do j = j_range%first, j_range%get_last()
+         do i = i_range%first, i_range%get_last()
 !
             wf%fock_ij(i,j) = F_pq(i, j)
 !
@@ -753,7 +761,7 @@ contains
 !
       req2 =  (wf%n_o**2)
 !
-      batch_i = batching_index(interval_i%length)
+      batch_i = batching_index(i_range%length)
       batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2)
@@ -766,32 +774,34 @@ contains
 !
             call batch_k%determine_limits(current_k_batch)
 !
-            call mem%alloc(g_ijkk, batch_i%length, interval_j%length, batch_k%length, batch_k%length)
-            call mem%alloc(g_ikkj, batch_i%length, batch_k%length, batch_k%length, interval_j%length)
+            call mem%alloc(g_ijkk, batch_i%length, j_range%length, &
+                                   batch_k%length, batch_k%length)
+            call mem%alloc(g_ikkj, batch_i%length, batch_k%length, &
+                                   batch_k%length, j_range%length)
 !
-            call wf%eri%get_eri_t1('oooo', g_ijkk,                                 &
-                              batch_i%first + interval_i%first - 1,  &
-                              batch_i%last + interval_i%first - 1,   &
-                              interval_j%first, interval_j%last,     &
-                              batch_k%first, batch_k%last,           &
-                              batch_k%first, batch_k%last)
+            call wf%eri%get_eri_t1('oooo', g_ijkk,                      &
+                              batch_i%first + i_range%first - 1,        &
+                              batch_i%get_last() + i_range%first - 1,   &
+                              j_range%first, j_range%get_last(),        &
+                              batch_k%first, batch_k%get_last(),        &
+                              batch_k%first, batch_k%get_last())
 !
-            call wf%eri%get_eri_t1('oooo', g_ikkj,                                 &
-                              batch_i%first + interval_i%first - 1,  &
-                              batch_i%last + interval_i%first - 1,   &
-                              batch_k%first, batch_k%last,           &
-                              batch_k%first, batch_k%last,           &
-                              interval_j%first, interval_j%last)
+            call wf%eri%get_eri_t1('oooo', g_ikkj,                      &
+                              batch_i%first + i_range%first - 1,        &
+                              batch_i%get_last() + i_range%first - 1,   &
+                              batch_k%first, batch_k%get_last(),        &
+                              batch_k%first, batch_k%get_last(),        &
+                              j_range%first, j_range%get_last())
 !
 !$omp parallel do private(i,j,k)
-            do j = 1, interval_j%length
+            do j = 1, j_range%length
                do i = 1, batch_i%length
                   do k = 1, batch_k%length
 !
-                     wf%fock_ij(i + batch_i%first - 1 + interval_i%first - 1, &
-                                j + interval_j%first - 1) &
-                        = wf%fock_ij(i + batch_i%first - 1 + interval_i%first - 1, &
-                                j + interval_j%first - 1) &
+                     wf%fock_ij(i + batch_i%first - 1 + i_range%first - 1,       &
+                                j + j_range%first - 1)                                 &
+                        = wf%fock_ij(i + batch_i%first - 1 + i_range%first - 1,  &
+                                j + j_range%first - 1)                                 &
                         + two*g_ijkk(i, j, k, k) - g_ikkj(i, k, k, j)
 !
                   enddo
@@ -799,8 +809,10 @@ contains
             enddo
 !$omp end parallel do
 !
-            call mem%dealloc(g_ijkk, batch_i%length, interval_j%length, batch_k%length, batch_k%length)
-            call mem%dealloc(g_ikkj, batch_i%length, batch_k%length, batch_k%length, interval_j%length)
+            call mem%dealloc(g_ijkk, batch_i%length, j_range%length, &
+                                     batch_k%length, batch_k%length)
+            call mem%dealloc(g_ikkj, batch_i%length, batch_k%length, &
+                                     batch_k%length, j_range%length)
 !
          enddo
 !

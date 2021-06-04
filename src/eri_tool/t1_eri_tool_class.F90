@@ -608,8 +608,8 @@ contains
          do batch = 1, batcher%num_batches
 !
             call batcher%determine_limits(batch)
-            call eri%cholesky_mo%read_(array, batcher%first, batcher%last)
-            call eri%cholesky_t1%write_(array, batcher%first, batcher%last)
+            call eri%cholesky_mo%read_(array, batcher%first, batcher%get_last())
+            call eri%cholesky_t1%write_(array, batcher%first, batcher%get_last())
 !
          enddo
 !
@@ -772,20 +772,23 @@ contains
             call batch_o%determine_limits(o_batch)
 !
 !           L_J_ij_t1 = L_J_ij_mo
-            call eri%get_cholesky_mo(L_J_oo, batch_o%first, batch_o%last, 1, eri%n_o)
+            call eri%get_cholesky_mo(L_J_oo, &
+                                     batch_o%first, batch_o%get_last(), 1, eri%n_o)
 !
 !           L_J_ij_t1 += sum_b L_J_ib_mo t_bj
-            call eri%get_cholesky_mo(L_J_ox, batch_o%first, batch_o%last, eri%n_o+1, eri%n_mo)
+            call eri%get_cholesky_mo(L_J_ox, &
+                                     batch_o%first, batch_o%get_last(), eri%n_o+1, eri%n_mo)
 !
-            call dgemm('N', 'N',                                 &
-                       eri%n_J*batch_o%length, eri%n_o, eri%n_v, &
-                       one,                                      &
-                       L_J_ox, eri%n_J*batch_o%length,           &
-                       t1, eri%n_v,                              &
-                       one,                                      &
+            call dgemm('N', 'N',                                  &
+                       eri%n_J*batch_o%length, eri%n_o, eri%n_v,  &
+                       one,                                       &
+                       L_J_ox, eri%n_J*batch_o%length,            &
+                       t1, eri%n_v,                               &
+                       one,                                       &
                        L_J_oo, eri%n_J*batch_o%length)
 !
-            call eri%set_cholesky_t1(L_J_oo, batch_o%first, batch_o%last, 1, eri%n_o)
+            call eri%set_cholesky_t1(L_J_oo, &
+                                     batch_o%first, batch_o%get_last(), 1, eri%n_o)
 !
          enddo
 !
@@ -866,11 +869,11 @@ contains
 !
 !           L'_J_ji = sum_b L_J_jb_mo t_bi
             call dgemm('N', 'N', &
-                       eri%n_J*batch_o%length, eri%n_o, eri%n_v,          &
-                       one,                                               &
-                       eri%L_J_ov_mo(:,batch_o%first,1), eri%n_J*eri%n_o, &
-                       t1, eri%n_v,                                       &
-                       zero,                                              &
+                       eri%n_J*batch_o%length, eri%n_o, eri%n_v,           &
+                       one,                                                &
+                       eri%L_J_ov_mo(:,batch_o%first,1), eri%n_J*eri%n_o,  &
+                       t1, eri%n_v,                                        &
+                       zero,                                               &
                        L_J_ji, eri%n_J*batch_o%length)
 !
             call sort_123_to_132(L_J_ji_p, L_J_ij_p, eri%n_J, batch_o%length, eri%n_o)
@@ -884,13 +887,18 @@ contains
                call batch_v%determine_limits(v_batch)
 !
 !              L_J_ai_t1 -= sum_j t_aj L'_J_ji_mo
-               call dgemm('N', 'T',                                        &
-                          eri%n_J*eri%n_o, batch_v%length, batch_o%length, &
-                          one,                                             &
-                          L_J_ij, eri%n_J*eri%n_o,                         &
-                          t1(batch_v%first:, batch_o%first), eri%n_v,      &
-                          zero,                                            &
-                          L_J_ia, eri%n_J*eri%n_o)
+               call dgemm('N', 'T',                         &
+                          eri%n_J*eri%n_o,                  &
+                          batch_v%length,                   &
+                          batch_o%length,                   &
+                          one,                              &
+                          L_J_ij,                           &
+                          eri%n_J*eri%n_o,                  &
+                          t1(batch_v%first, batch_o%first), &
+                          eri%n_v,                          &
+                          zero,                             &
+                          L_J_ia,                           &
+                          eri%n_J*eri%n_o)
 !
 !$omp parallel do private(i, a, J)
                do i = 1, eri%n_o
@@ -932,20 +940,20 @@ contains
 !
 !           L_J_ai_t1 = L_J_ai_mo
             call eri%get_cholesky_mo(L_J_ai_p, &
-                                     eri%n_o+batch_v%first, eri%n_o+batch_v%last, &
+                                     eri%n_o+batch_v%first, eri%n_o+batch_v%get_last(), &
                                      1, eri%n_o)
 !
 !           L_J_ai_t1 += sum_b L_J_ab_mo t_bi
             call eri%get_cholesky_mo(L_J_ab_p, &
-                                     eri%n_o+batch_v%first, eri%n_o+batch_v%last, &
+                                     eri%n_o+batch_v%first, eri%n_o+batch_v%get_last(), &
                                      eri%n_o+1, eri%n_mo)
 !
-            call dgemm('N', 'N',                                 &
-                       eri%n_J*batch_v%length, eri%n_o, eri%n_v, &
-                       one,                                      &
-                       L_J_ab_p, eri%n_J*batch_v%length,         &
-                       t1, eri%n_v,                              &
-                       one,                                      &
+            call dgemm('N', 'N',                                  &
+                       eri%n_J*batch_v%length, eri%n_o, eri%n_v,  &
+                       one,                                       &
+                       L_J_ab_p, eri%n_J*batch_v%length,          &
+                       t1, eri%n_v,                               &
+                       one,                                       &
                        L_J_ai_p, eri%n_J*batch_v%length)
 !
             do o_batch = 1, batch_o%num_batches
@@ -956,19 +964,22 @@ contains
                L_J_ia_p(1:eri%n_J, 1:batch_o%length, 1:eri%n_v) => L_J_ij
 !
 !              L'_J_ji = sum_b L_J_jb_mo t_bi
-               call eri%get_cholesky_mo(L_J_ia_p, batch_o%first, batch_o%last, eri%n_o+1, eri%n_mo)
+               call eri%get_cholesky_mo(L_J_ia_p, &
+                                        batch_o%first, batch_o%get_last(), &
+                                        eri%n_o+1, eri%n_mo)
 !
-               call dgemm('N', 'N',                                 &
-                          eri%n_J*batch_o%length, eri%n_o, eri%n_v, &
-                          one,                                      &
-                          L_J_ia_p, eri%n_J*batch_o%length,         &
-                          t1, eri%n_v,                              &
-                          zero,                                     &
+               call dgemm('N', 'N',                                  &
+                          eri%n_J*batch_o%length, eri%n_o, eri%n_v,  &
+                          one,                                       &
+                          L_J_ia_p, eri%n_J*batch_o%length,          &
+                          t1, eri%n_v,                               &
+                          zero,                                      &
                           L_J_ji_p, eri%n_J*batch_o%length)
 !
 !              L'_J_ji += L_J_ji_mo
                L_J_ij_p(1:eri%n_J, 1:eri%n_o, 1:batch_o%length) => L_J_ij
-               call eri%get_cholesky_mo(L_J_ij_p, 1, eri%n_o, batch_o%first, batch_o%last)
+               call eri%get_cholesky_mo(L_J_ij_p, &
+                                        1, eri%n_o, batch_o%first, batch_o%get_last())
 !
                call add_132_to_123(one, L_J_ji_p, L_J_ij_p, eri%n_J, eri%n_o, batch_o%length)
 !
@@ -979,7 +990,7 @@ contains
                           eri%n_J*eri%n_o, batch_v%length, batch_o%length, &
                           -one,                                            &
                           L_J_ij_p, eri%n_J*eri%n_o,                       &
-                          t1(batch_v%first:, batch_o%first), eri%n_v,      &
+                          t1(batch_v%first, batch_o%first), eri%n_v,       &
                           zero,                                            &
                           L_J_ia_p, eri%n_J*eri%n_o)
 !
@@ -988,7 +999,8 @@ contains
             enddo
 !
             call eri%set_cholesky_t1(L_J_ai_p, &
-                                     eri%n_o+batch_v%first, eri%n_o+batch_v%last, 1, eri%n_o)
+                                     eri%n_o+batch_v%first, eri%n_o+batch_v%get_last(), &
+                                     1, eri%n_o)
 !
          enddo
 !
@@ -1051,7 +1063,7 @@ contains
                        L_J_vv, eri%n_J*batch_v%length)
 !
             call add_132_to_123(one, L_J_vv, &
-                                eri%L_J_vv_t1(:,:,batch_v%first:batch_v%last), &
+                                eri%L_J_vv_t1(:,:,batch_v%first:batch_v%get_last()), &
                                 eri%n_J, eri%n_v, batch_v%length)
 !
          enddo
@@ -1072,24 +1084,26 @@ contains
 !
 !           L_J_ab_t1 -= sum_j t_aj L_J_jb_mo
             call eri%get_cholesky_mo(L_J_xv, &
-                                     eri%n_o + batch_v%first, eri%n_o + batch_v%last, 1, eri%n_o)
+                                     eri%n_o + batch_v%first,        &
+                                     eri%n_o + batch_v%get_last(),   &
+                                     1, eri%n_o)
 !
-            call dgemm('N', 'T',                                 &
-                       eri%n_J*batch_v%length, eri%n_v, eri%n_o, &
-                       -one,                                     &
-                       L_J_xv, eri%n_J*batch_v%length,           &
-                       t1, eri%n_v,                              &
-                       zero,                                     &
+            call dgemm('N', 'T',                                  &
+                       eri%n_J*batch_v%length, eri%n_v, eri%n_o,  &
+                       -one,                                      &
+                       L_J_xv, eri%n_J*batch_v%length,            &
+                       t1, eri%n_v,                               &
+                       zero,                                      &
                        L_J_vv, eri%n_J*batch_v%length)
 !
 !           L_J_ab_t1 = L_J_ab_mo
             call eri%get_cholesky_mo(L_J_xv, eri%n_o + 1, eri%n_mo, &
-                                     eri%n_o + batch_v%first, eri%n_o + batch_v%last)
+                                     eri%n_o + batch_v%first, eri%n_o + batch_v%get_last())
 !
             call add_132_to_123(one, L_J_vv, L_J_xv, eri%n_J, eri%n_v, batch_v%length)
 !
             call eri%set_cholesky_t1(L_J_xv, eri%n_o+1, eri%n_mo, &
-                                     eri%n_o + batch_v%first, eri%n_o + batch_v%last)
+                                     eri%n_o + batch_v%first, eri%n_o + batch_v%get_last())
 !
          enddo
 !

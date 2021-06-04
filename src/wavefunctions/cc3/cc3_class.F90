@@ -490,8 +490,8 @@ contains
       do k_batch = 1, batch_k%num_batches
          call batch_k%determine_limits(k_batch)
 !
-         call wf%Y_ebck%read_interval(Y_ebck, batch_k)
-         call wf%Y_ebck_tbar%write_interval(Y_ebck, batch_k)
+         call wf%Y_ebck%read_range(Y_ebck, batch_k)
+         call wf%Y_ebck_tbar%write_range(Y_ebck, batch_k)
 !
       enddo
 !
@@ -923,15 +923,15 @@ contains
 !
                endif
 !
-               do i = batch_i%first, batch_i%last
+               do i = batch_i%first, batch_i%get_last()
 !
                   i_rel = i - batch_i%first + 1
 !
-                  do j = batch_j%first, min(batch_j%last, i)
+                  do j = batch_j%first, min(batch_j%get_last(), i)
 !
                      j_rel = j - batch_j%first + 1
 !
-                     do k = batch_k%first, min(batch_k%last, j)
+                     do k = batch_k%first, min(batch_k%get_last(), j)
 !
                         k_rel = k - batch_k%first + 1
 !

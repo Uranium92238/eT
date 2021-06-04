@@ -652,7 +652,7 @@ contains
 !
          call mem%alloc(g_bdkc, batch_b%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_bdkc, first_p=batch_b%first, last_p=batch_b%last)
+         call wf%eri%get_eri_t1('vvov', g_bdkc, first_p=batch_b%first, last_p=batch_b%get_last())
 !
 !        :: Term 2. - sum_kcd g_kcbd t_kj^ad c_ci ::
 !
@@ -1893,7 +1893,7 @@ contains
 !
          call mem%alloc(g_bdkc, batch_b%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_bdkc, first_p=batch_b%first, last_p=batch_b%last)
+         call wf%eri%get_eri_t1('vvov', g_bdkc, first_p=batch_b%first, last_p=batch_b%get_last())
 !
 !        Reorder g_bd_kc to g_cd_kb (= g_kcbd), i.e. 1234 to 4231
 !

@@ -137,8 +137,8 @@ contains
             call mem%alloc(g_bicj, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
             call mem%alloc(u_bjci, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
 !
-            call wf%eri%get_eri_t1('vovo', g_bicj, batch_b%first, batch_b%last, 1, wf%n_o, &
-                                                   batch_c%first, batch_c%last, 1, wf%n_o)
+            call wf%eri%get_eri_t1('vovo', g_bicj, batch_b%first, batch_b%get_last(), 1, wf%n_o, &
+                                                   batch_c%first, batch_c%get_last(), 1, wf%n_o)
 !
 !$omp parallel do schedule(static) private(i, j, c, b, eps_ci) collapse(2)
             do i = 1, wf%n_o
@@ -165,8 +165,8 @@ contains
 !
             call mem%alloc(g_abjc, batch_b%length,wf%n_v, batch_c%length,wf%n_o)
 !
-            call wf%eri%get_eri_t1('vvov', g_abjc, 1, wf%n_v, batch_b%first, batch_b%last, &
-                                                   1, wf%n_o, batch_c%first, batch_c%last)
+            call wf%eri%get_eri_t1('vvov', g_abjc, 1, wf%n_v, batch_b%first, batch_b%get_last(), &
+                                                   1, wf%n_o, batch_c%first, batch_c%get_last())
 !
             call dgemm('N','N',                                   &
                         wf%n_v,                                   &
@@ -272,9 +272,9 @@ contains
                               batch_b%length, batch_k%length)
 !
                call wf%eri%get_eri_t1('vovo', g_ajbk, 1, wf%n_v, &
-                                                      batch_j%first, batch_j%last, &
-                                                      batch_b%first, batch_b%last, &
-                                                      batch_k%first, batch_k%last)
+                                                      batch_j%first, batch_j%get_last(), &
+                                                      batch_b%first, batch_b%get_last(), &
+                                                      batch_k%first, batch_k%get_last())
 !
 !$omp parallel do schedule(static) private(k, j, a, b)
                do a = 1, wf%n_v
@@ -297,9 +297,9 @@ contains
                               batch_k%length, wf%n_o)
 !
                call wf%eri%get_eri_t1('ovoo', g_jbki,              &
-                                      batch_j%first, batch_j%last, &
-                                      batch_b%first, batch_b%last, &
-                                      batch_k%first, batch_k%last, & 
+                                      batch_j%first, batch_j%get_last(), &
+                                      batch_b%first, batch_b%get_last(), &
+                                      batch_k%first, batch_k%get_last(), & 
                                       1, wf%n_o)
 !
 !              Omega_ai += sum_jbk t_ajbk g_jbki       
@@ -326,9 +326,9 @@ contains
                                       batch_j%length, wf%n_o)
 !
                call wf%eri%get_eri_t1('ovoo', g_kbji,              &
-                                      batch_k%first, batch_k%last, &
-                                      batch_b%first, batch_b%last, &
-                                      batch_j%first, batch_j%last, & 
+                                      batch_k%first, batch_k%get_last(), &
+                                      batch_b%first, batch_b%get_last(), &
+                                      batch_j%first, batch_j%get_last(), & 
                                       1, wf%n_o)
 !
                call mem%alloc(g_jbki, batch_j%length, batch_b%length, &
@@ -439,8 +439,8 @@ contains
 !
             call mem%alloc(g_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
 !
-            call wf%eri%get_eri_t1('vovo', g_aibj, 1, wf%n_v, batch_i%first, batch_i%last,  &
-                                                   1, wf%n_v, batch_j%first, batch_j%last)
+            call wf%eri%get_eri_t1('vovo', g_aibj, 1, wf%n_v, batch_i%first, batch_i%get_last(),  &
+                                                   1, wf%n_v, batch_j%first, batch_j%get_last())
 !
             call mem%alloc(u_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
 !

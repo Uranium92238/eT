@@ -119,8 +119,6 @@ set(eT_fortran_sources
    src/solvers/tdcc/complex_fft_class.F90
    src/solvers/cc/asymmetric_lanczos_cc_es_class.F90
 #
-   src/tools/interval_class.F90
-   src/tools/named_interval_class.F90
    src/tools/index_invert.F90
    src/tools/reordering.F90
    src/tools/timings_class.F90
@@ -141,6 +139,8 @@ set(eT_fortran_sources
    src/tools/electrostatics/point_charges_class.F90
    src/tools/electrostatics/point_charge_class.F90
    src/tools/orbitals/cholesky_orbital_tool_class.F90
+   src/tools/maps/range_class.F90
+   src/tools/maps/named_range_class.F90
 #
    src/tools/citation_printer_class.F90
    src/tools/citation_class.F90

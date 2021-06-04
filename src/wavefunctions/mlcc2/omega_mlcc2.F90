@@ -158,10 +158,10 @@ contains
          call batch_a%determine_limits(current_a_batch)
 !
          call mem%alloc(L_Jab, wf%eri%n_J, batch_a%length, n_cc2_v)
-         call wf%eri%get_cholesky_t1(L_Jab,                       &
-                                          wf%n_o + batch_a%first, &
-                                          wf%n_o + batch_a%last,  & 
-                                          wf%n_o + first_cc2_v,   &
+         call wf%eri%get_cholesky_t1(L_Jab,                             &
+                                          wf%n_o + batch_a%first,       &
+                                          wf%n_o + batch_a%get_last(),  & 
+                                          wf%n_o + first_cc2_v,         &
                                           wf%n_o + last_cc2_v)
 !
          call mem%alloc(L_aJb, batch_a%length, wf%eri%n_J, n_cc2_v)

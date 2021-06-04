@@ -356,7 +356,7 @@ contains
 !
          call mem%alloc(g_bjca, wf%n_v, wf%n_o, wf%n_v, batch_a%length)
 !
-         call wf%eri%get_eri_t1('vovv', g_bjca, first_s=batch_a%first, last_s=batch_a%last)
+         call wf%eri%get_eri_t1('vovv', g_bjca, first_s=batch_a%first, last_s=batch_a%get_last())
 !
 !        sigma_ai =+ sum_bjc g_abjc * c_bjci
 !
@@ -518,7 +518,7 @@ contains
 !
          call mem%alloc(g_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_cajb, first_p=batch_c%first, last_p=batch_c%last)
+         call wf%eri%get_eri_t1('vvov', g_cajb, first_p=batch_c%first, last_p=batch_c%get_last())
 !
          call mem%alloc(L_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !

@@ -104,7 +104,7 @@ contains
 !!        and construct_right_transition_density
 !!
       use array_utilities, only: add_to_subblock
-      use interval_class, only: interval
+      use range_class
 !
       implicit none
 !
@@ -126,7 +126,7 @@ contains
       logical  :: cvs_l, rm_core_l, es_to_es
       real(dp) :: omega_l, omega_r
 !
-      type(interval) :: o_range, v_range
+      type(range_) :: o_range, v_range
 !
       type(timings)     :: timer
       character(len=40) :: timer_name
@@ -137,8 +137,8 @@ contains
       call zero_array(density, wf%n_mo**2)
       r0 = zero
 !
-      o_range = interval(1, wf%n_o)
-      v_range = interval(wf%n_o+1, wf%n_mo)
+      o_range = range_(1, wf%n_o)
+      v_range = range_(wf%n_o+1, wf%n_v)
 !
       call wf%ccsd%mu_nu_density_terms(density, m, L, n, r0, R)
 !
@@ -744,15 +744,15 @@ contains
 !
                endif
 !
-               do i = batch_i%first, batch_i%last
+               do i = batch_i%first, batch_i%get_last()
 !
                   i_rel = i - batch_i%first + 1
 !
-                  do j = batch_j%first, min(batch_j%last, i)
+                  do j = batch_j%first, min(batch_j%get_last(), i)
 !
                      j_rel = j - batch_j%first + 1
 !
-                     do k = batch_k%first, min(batch_k%last, j)
+                     do k = batch_k%first, min(batch_k%get_last(), j)
 !
 !                       Check for core orbitals:
 !                       cvs: i,j,k cannot all correspond to valence orbitals
@@ -1415,17 +1415,17 @@ contains
 !
 !$omp parallel do private(a, a_rel, b, b_rel, c, c_rel, thread_n) &
 !$omp schedule(guided, 1)
-               do a = batch_a%first, batch_a%last
+               do a = batch_a%first, batch_a%get_last()
 !
                   a_rel = a - batch_a%first + 1
 !
 !$                thread_n = omp_get_thread_num() + 1
 !
-                  do b = batch_b%first, min(batch_b%last, a)
+                  do b = batch_b%first, min(batch_b%get_last(), a)
 !
                      b_rel = b - batch_b%first + 1
 !
-                     do c = batch_c%first, min(batch_c%last, b)
+                     do c = batch_c%first, min(batch_c%get_last(), b)
 !
                         if (a .eq. b .and. a .eq. c) then
                            cycle
@@ -1799,15 +1799,15 @@ contains
 !
                endif
 !
-               do i = batch_i%first, batch_i%last
+               do i = batch_i%first, batch_i%get_last()
 !
                   i_rel = i - batch_i%first + 1
 !
-                  do j = batch_j%first, min(batch_j%last, i)
+                  do j = batch_j%first, min(batch_j%get_last(), i)
 !
                      j_rel = j - batch_j%first + 1
 !
-                     do k = batch_k%first, min(batch_k%last, j)
+                     do k = batch_k%first, min(batch_k%get_last(), j)
 !
                         if (i .eq. j .and. i .eq. k) then
                            cycle
@@ -2054,7 +2054,7 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call wf%Y_ebck_tbar%read_interval(Y_vvvo, batch_i)
+         call wf%Y_ebck_tbar%read_range(Y_vvvo, batch_i)
 !
          do i = 1, batch_i%length
 !

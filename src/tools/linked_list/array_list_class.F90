@@ -369,8 +369,6 @@ contains
 !!
 !!    n_columns: returns the number of columns in the nth array. Optional.
 !!
-      use interval_class, only: interval
-!
       implicit none
 !
       class(array_list), intent(inout) :: list

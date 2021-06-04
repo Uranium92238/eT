@@ -427,15 +427,15 @@ contains
 !              CVS: in principle check j,k and l but due to the symmetry in L_iald
 !                   we can also check i,j,k
 !
-               do i = batch_i%first, batch_i%last
+               do i = batch_i%first, batch_i%get_last()
 !
                   i_rel = i - batch_i%first + 1
 !
-                  do j = batch_j%first, min(batch_j%last, i)
+                  do j = batch_j%first, min(batch_j%get_last(), i)
 !
                      j_rel = j - batch_j%first + 1
 !
-                     do k = batch_k%first, min(batch_k%last, j)
+                     do k = batch_k%first, min(batch_k%get_last(), j)
 !
 !                       Check for core orbitals:
 !                       cvs: i,j,k cannot all correspond to valence orbitals
@@ -924,7 +924,7 @@ contains
 !
                call wf%setup_vvov(g_dbjc, g_dbjc_p, sorting, batch_j, left=.true.)
 !
-               call wf%Y_ebck%read_interval(Y_ebcj, batch_j)
+               call wf%Y_ebck%read_range(Y_ebcj, batch_j)
                Y_ebcj_p => Y_ebcj
 !
                call wf%setup_oovo(g_licj, g_licj_p, sorting, batch_i, batch_j)
@@ -955,7 +955,7 @@ contains
 !
                   call wf%setup_vvov(g_dbkc, g_dbkc_p, sorting, batch_k, left=.true.)
 !
-                  call wf%Y_ebck%read_interval(Y_ebck, batch_k)
+                  call wf%Y_ebck%read_range(Y_ebck, batch_k)
                   Y_ebck_p => Y_ebck
 !
                   call wf%setup_oovo(g_lick, g_lick_p, sorting, batch_i, batch_k)
@@ -1015,15 +1015,15 @@ contains
 !
                endif
 !
-               do i = batch_i%first, batch_i%last
+               do i = batch_i%first, batch_i%get_last()
 !
                   i_rel = i - batch_i%first + 1
 !
-                  do j = batch_j%first, min(batch_j%last, i)
+                  do j = batch_j%first, min(batch_j%get_last(), i)
 !
                      j_rel = j - batch_j%first + 1
 !
-                     do k = batch_k%first, min(batch_k%last, j)
+                     do k = batch_k%first, min(batch_k%get_last(), j)
 !
 !                       Check for core orbitals
                         if (wf%ijk_amplitudes_are_zero(i, j, k, cvs, rm_core)) cycle
@@ -1080,18 +1080,18 @@ contains
 !              Will be read in after the loops for the contractions to sigma_ai
 !
                if (k_batch .ne. j_batch) then !k_batch != j_batch, k_batch != i_batch
-                  call wf%Y_ebck%write_interval(Y_ebck, batch_k)
+                  call wf%Y_ebck%write_range(Y_ebck, batch_k)
                endif
 !
             enddo ! batch_k
 !
             if (j_batch .ne. i_batch) then
-               call wf%Y_ebck%write_interval(Y_ebcj, batch_j)
+               call wf%Y_ebck%write_range(Y_ebcj, batch_j)
             endif
 !
          enddo ! batch_j
 !
-         call wf%Y_ebck%write_interval(Y_ebci, batch_i)
+         call wf%Y_ebck%write_range(Y_ebci, batch_i)
 !
       enddo ! batch_i
 !
@@ -1456,7 +1456,7 @@ contains
             call batch_v%determine_limits(v_batch)
 !
             call wf%eri%get_cholesky_t1(L_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
-                                        wf%n_o+batch_v%first, wf%n_o+batch_v%last)
+                                        wf%n_o+batch_v%first, wf%n_o+batch_v%get_last())
 !
             call dgemm('T','N',                                 &
                         batch_v%length,                         &
@@ -1475,7 +1475,7 @@ contains
 !
 !        :: Term 2: sigma_cl += sum_mjk Y_cmjk * g_mjlk ::
 !
-         call wf%eri%get_cholesky_t1(X_J_lk, 1, wf%n_o, batch_k%first, batch_k%last)
+         call wf%eri%get_cholesky_t1(X_J_lk, 1, wf%n_o, batch_k%first, batch_k%get_last())
 !
          call sort_123_to_132(X_J_lk, X_J_kl, wf%eri%n_J, wf%n_o, batch_k%length)
          call sort_123_to_132(X_J_ck, X_Jk_c, wf%eri%n_J, wf%n_v, batch_k%length)
@@ -1496,7 +1496,7 @@ contains
 !        :: Term 3: sigma_dj -= sum_cmj Y_cmjk * g_ckmd ::
 !
          call wf%eri%get_cholesky_t1(X_J_ck, wf%n_o+1, wf%n_o+wf%n_v, &
-                                     batch_k%first, batch_k%last)
+                                     batch_k%first, batch_k%get_last())
 !
          call dgemm('N', 'T',              &
                     wf%eri%n_J,            &
@@ -1516,7 +1516,7 @@ contains
             call batch_v%determine_limits(v_batch)
 !
             call wf%eri%get_cholesky_t1(L_J_vv, 1, wf%n_o, &
-                                        wf%n_o+batch_v%first, wf%n_o+batch_v%last)
+                                        wf%n_o+batch_v%first, wf%n_o+batch_v%get_last())
 !
             call dgemm('T','N',                     &
                         batch_v%length,             &
@@ -1608,7 +1608,7 @@ contains
 !
          call batch_k%determine_limits(k_batch)
 !
-         call wf%Y_ebck%read_interval(Y_ebck, batch_k)
+         call wf%Y_ebck%read_range(Y_ebck, batch_k)
          call sort_1234_to_2134(Y_ebck, Y_beck, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
          call zero_array(X_J_ck, wf%eri%n_J*wf%n_v*batch_k%length)
@@ -1618,7 +1618,7 @@ contains
             call batch_v%determine_limits(v_batch)
 !
             call wf%eri%get_cholesky_t1(X_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
-                                        wf%n_o+batch_v%first, wf%n_o+batch_v%last)
+                                        wf%n_o+batch_v%first, wf%n_o+batch_v%get_last())
 !
             call dgemm('N','N',                      &
                         wf%eri%n_J,                  &
@@ -1642,7 +1642,7 @@ contains
             call batch_v%determine_limits(v_batch)
 !
             call wf%eri%get_cholesky_t1(X_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
-                                        wf%n_o+batch_v%first, wf%n_o+batch_v%last)
+                                        wf%n_o+batch_v%first, wf%n_o+batch_v%get_last())
 !
             call dgemm('T','N',                                 &
                         batch_v%length,                         &
@@ -1663,7 +1663,7 @@ contains
 !
          call sort_123_to_132(X_J_ck, X_J_kc, wf%eri%n_J, wf%n_v, batch_k%length)
 !
-         call wf%eri%get_cholesky_t1(L_J_lk, 1, wf%n_o, batch_k%first, batch_k%last)
+         call wf%eri%get_cholesky_t1(L_J_lk, 1, wf%n_o, batch_k%first, batch_k%get_last())
          call sort_123_to_132(L_J_lk, L_Jk_l, wf%eri%n_J, wf%n_o, batch_k%length)
 !
          call dgemm('T', 'N',                  &
@@ -1682,7 +1682,7 @@ contains
 !        :: Term 3: sigma_bl += - sum_cek Y_ebck * g_ckle ::
 !
          call wf%eri%get_cholesky_t1(X_J_ck, 1+wf%n_o, wf%n_v+wf%n_o, &
-                                     batch_k%first, batch_k%last)
+                                     batch_k%first, batch_k%get_last())
 !
          do v_batch = 1, batch_v%num_batches
 !
@@ -1702,7 +1702,7 @@ contains
                         wf%n_v*batch_v%length)
 !
             call wf%eri%get_cholesky_t1(L_J_le, 1, wf%n_o, &
-                                        batch_v%first+wf%n_o, batch_v%last+wf%n_o)
+                                        batch_v%first+wf%n_o, batch_v%get_last()+wf%n_o)
 !
             call sort_123_to_312(L_J_le, L_eJ_l, wf%eri%n_J, wf%n_o, batch_v%length)
 !
