@@ -227,7 +227,6 @@ add_eT_runtest(cc3_es_cvs_properties                        "eT;short;cc3;es;eom
 add_eT_runtest(cc3_es_remove-core_properties                "eT;short;cc3;es;eom;remove-core")
 add_eT_runtest(cc3_visualization                            "eT;short;cc3;visualization;es;eom")
 add_eT_runtest(restart_cc3_from_ccsd                        "eT;short;cc3;es;eom;restart")
-add_eT_runtest(restart_cc3_nonlin_davidson                  "eT;short;cc3;es;non-linear davidson;restart")
 #
 add_eT_runtest(mlcc2_cnto_full_right_es                     "eT;short;mlcc2;es;cnto")
 add_eT_runtest(mlcc2_pao_full_right_es                      "eT;short;mlcc2;es;pao")

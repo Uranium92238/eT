@@ -594,8 +594,6 @@ contains
 !
       real(dp), parameter :: default_lindep_threshold = 1.0d-11
 !
-      logical :: save_states
-!
       type(timings) :: micro_iteration_time
       character(len=40) :: timer_name
 !
@@ -692,17 +690,10 @@ contains
          call output%print_separator('v', 68,'-', fs='(t6,a)')
 !
          trial = 0
-         save_states = mod(iteration, 2) == 0
 !
          do state = 1, solver%n_singlet_states
 !
             call solver%davidson%construct_solution(X(:,state), state)
-!
-            if (save_states) then
-               call wf%save_excited_state(X(:, state), state, state, &
-                                          solver%transformation,     &
-                                          solver%energies(state))
-            end if
 !
             call solver%davidson%construct_residual(residual, X(:,state), state)
 !
@@ -717,8 +708,8 @@ contains
                if (micro_residual_norms(state) .le. lindep_threshold) then
 !
                   call output%warning_msg('Residual norm for root (i0) smaller than linear ' // &
-                                          'dependence threshold, but energy and residual  '  // &
-                                          'thresholds have not yet been met. No new trial ' // &
+                                          'dependence threshold, but energy and residual '   // &
+                                          'thresholds have not yet been met. No new trial '  // &
                                           'added for this root.', ints=[state], fs='(/t6,a)')
 !
                else
