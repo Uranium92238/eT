@@ -304,6 +304,7 @@ contains
          endif
 !
          call iteration_timer%turn_off()
+         call iteration_timer%reset()
 !
       enddo
 !
