@@ -27,7 +27,7 @@ f = get_es_filter(n_states, threshold)
 options = cli()
 
 ierr = 0
-for inp in ['mlcc2_pao_full_right_es_energies.inp']:
+for inp in ['mlcc2_pao_full_right_es.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

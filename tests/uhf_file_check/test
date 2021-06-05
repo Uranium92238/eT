@@ -13,7 +13,7 @@ from runtest import version_info, cli, run
 from runtest_config import configure
 
 # functions to get the filters
-from filters import get_hf_filter, get_spin_filter
+from filters import get_hf_filter, get_spin_filter, get_file_filter
 
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
@@ -24,20 +24,22 @@ spin_threshold = 1.0e-8
 
 f = get_hf_filter(threshold)
 f += get_spin_filter(spin_threshold)
+g = get_file_filter(threshold)
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 test_dir = Path(__file__).parent
-checkfile = test_dir / "uhf.mo_information.out"
+checkfile = test_dir / "uhf_file_check.mo_information.out"
 
 ierr = 0
-for inp in ['uhf.inp']:
+for inp in ['uhf_file_check.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,
                 input_files=inp,
-                filters={'out': f})
+                filters={'out': f,
+                         'mo_information.out': g})
 
 if checkfile.exists():
     filerror = 0

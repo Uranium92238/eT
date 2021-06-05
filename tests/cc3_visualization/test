@@ -29,7 +29,7 @@ f = get_eom_filter(n_states, threshold)
 options = cli()
 
 ierr = 0
-for inp in ["cube.inp"]:
+for inp in ["cc3_visualization.inp"]:
     # the run function runs the code and filters the outputs
     ierr += run(options, configure,
                 input_files=inp,

@@ -29,7 +29,7 @@ f += get_spin_filter(spin_threshold)
 options = cli()
 
 ierr = 0
-for inp in ['uhf_energy.inp']:
+for inp in ['uhf_energy_cs.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,
