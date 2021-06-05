@@ -27,7 +27,7 @@ f = get_gs_filter(threshold)
 options = cli()
 
 ierr = 0
-for inp in ['cc2_gs_energy.inp']:
+for inp in ['cc2_gs_energy_cholesky_on_file.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

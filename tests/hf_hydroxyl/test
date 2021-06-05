@@ -27,7 +27,7 @@ f = get_hf_filter(threshold)
 options = cli()
 
 ierr = 0
-for inp in ['hf_energy.inp']:
+for inp in ['hf_hydroxyl.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

@@ -31,7 +31,7 @@ options = cli()
 
 ierr = 0
 
-for inp in ['restart_cc2.inp']:
+for inp in ['restart_cc2_v1.0.inp']:
     ierr += run(options,
                 configure,
                 input_files=inp,

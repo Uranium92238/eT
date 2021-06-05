@@ -25,6 +25,7 @@
 - Excited state properties and oscillator strengths between excited states can be calculated. eT-program/eT!785
 - Non-linear davidson now saves the excited states every second micro iteration. eT-program/eT!834
 - Added timings for each iteration in the excited state solvers. eT-program/eT!834
+- Renamed input files in tests the directories to agree with the name of the directory. eT-program/eT!833
 
 ### Optimization
 - One-electron integrals with screening based on the overlap matrix. eT-program/eT!770

@@ -26,7 +26,7 @@ f = get_hf_filter(threshold, z_matrix=True)
 options = cli()
 
 ierr = 0
-for inp in ['hf_energy.inp']:
+for inp in ['hf_print_z_matrix.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

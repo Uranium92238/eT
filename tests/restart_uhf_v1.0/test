@@ -30,7 +30,7 @@ f = get_hf_filter(threshold, convergence=True, restart=True)
 g = get_spin_filter(threshold)
 f.extend(g)
 
-for inp in ['restart_uhf.inp']:
+for inp in ['restart_uhf_v1.0.inp']:
     #
     # the run function runs the code and filters the outputs
     #

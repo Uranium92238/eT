@@ -27,7 +27,7 @@ f = get_eom_filter(n_states, threshold)
 options = cli()
 
 ierr = 0
-for inp in ['ccsd.inp']:
+for inp in ['ccsd_es_transition_strengths.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

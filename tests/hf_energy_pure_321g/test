@@ -28,7 +28,7 @@ g = [get_filter(abs_tolerance=threshold, ignore_sign=True)]
 options = cli()
 
 ierr = 0
-for inp in ['hf_energy.inp']:
+for inp in ['hf_energy_pure_321g.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

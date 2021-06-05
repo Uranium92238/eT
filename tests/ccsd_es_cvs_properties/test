@@ -35,7 +35,7 @@ f.extend(g)
 options = cli()
 
 ierr = 0
-for inp in ['ccsd.inp']:
+for inp in ['ccsd_es_cvs_properties.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,
