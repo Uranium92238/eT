@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco (development version)
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-05-13 01:15:18 UTC +02:00
-  Git branch:         remove-unused-routines
-  Git hash:           7263774d0fb306912334ebd8c5db30dc46e54a8e
-  Fortran compiler:   GNU 10.2.0
-  C compiler:         GNU 10.2.0
-  C++ compiler:       GNU 10.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-05-13 01:18:20 UTC +02:00
+  Calculation started: 2021-06-07 12:49:51 UTC +02:00
 
 
   :: Input file
@@ -81,7 +81,7 @@
      end solver cc es
 
 
-  Running on 4 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -161,7 +161,7 @@
      Exchange screening threshold:   0.1000E-14
      ERI cutoff:                     0.1000E-16
      One-electron integral  cutoff:  0.1000E-21
-     Cumulative Fock threshold:     0.1000E+01
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -180,14 +180,14 @@
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
      8           -78.843851693557     0.2356E-05     0.7055E-09
-     9           -78.843851693630     0.2071E-06     0.7373E-10
-    10           -78.843851693631     0.1594E-07     0.4121E-12
-    11           -78.843851693631     0.3322E-08     0.4263E-13
-    12           -78.843851693631     0.1197E-08     0.2842E-13
-    13           -78.843851693631     0.4264E-09     0.5684E-13
+     9           -78.843851693630     0.2071E-06     0.7371E-10
+    10           -78.843851693631     0.1594E-07     0.4405E-12
+    11           -78.843851693631     0.3322E-08     0.0000E+00
+    12           -78.843851693631     0.1197E-08     0.1421E-13
+    13           -78.843851693631     0.4264E-09     0.1421E-13
     14           -78.843851693631     0.1280E-09     0.4263E-13
-    15           -78.843851693631     0.1479E-10     0.1421E-13
-    16           -78.843851693631     0.2906E-11     0.1421E-13
+    15           -78.843851693631     0.1479E-10     0.2842E-13
+    16           -78.843851693631     0.2907E-11     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -200,15 +200,14 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.30400
-     Total cpu time (sec):               0.79600
+     Total wall time (sec):              0.29691
+     Total cpu time (sec):               0.54766
 
 
   :: CCS wavefunction
   ======================
 
      Bath orbital(s):         True
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -296,8 +295,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.16200
-     Total cpu time (sec):               0.37822
+     Total wall time (sec):              0.11077
+     Total cpu time (sec):               0.22029
 
 
   2) Preparation of MO basis and integrals
@@ -327,7 +326,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -78.843851693631     0.7366E-11     0.7884E+02
+    1           -78.843851693631     0.7363E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -355,8 +354,8 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.00800
-     Total cpu time (sec):               0.01700
+     Total wall time (sec):              0.00143
+     Total cpu time (sec):               0.00426
 
 
   4) Calculation of the excited state (davidson algorithm)
@@ -397,7 +396,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.485872762832    0.000000000000     0.6276E-12   0.4859E+00
+     1   0.485872762832    0.000000000000     0.6285E-12   0.4859E+00
      2   0.541641772850    0.000000000000     0.1103E-11   0.5416E+00
   ------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
@@ -453,28 +452,28 @@
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
         1                  0.485872762832       13.221271306028
-        2                  0.541641772850       14.738823365589
+        2                  0.541641772850       14.738823365588
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CCS excited state equations (right)
 
-     Total wall time (sec):              0.01100
-     Total cpu time (sec):               0.02766
+     Total wall time (sec):              0.00241
+     Total cpu time (sec):               0.00357
 
   - Timings for the CCS excited state calculation
 
-     Total wall time (sec):              0.18200
-     Total cpu time (sec):               0.42366
+     Total wall time (sec):              0.11505
+     Total cpu time (sec):               0.22857
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 11.024552 MB
+  Peak memory usage during the execution of eT: 11.053784 MB
 
-  Total wall time in eT (sec):              0.53000
-  Total cpu time in eT (sec):               1.26737
+  Total wall time in eT (sec):              0.43167
+  Total cpu time in eT (sec):               0.80396
 
-  Calculation ended: 2021-05-13 01:18:21 UTC +02:00
+  Calculation ended: 2021-06-07 12:49:51 UTC +02:00
 
   - Implementation references:
 

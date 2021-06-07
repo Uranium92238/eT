@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:25:32 UTC +01:00
+  Calculation started: 2021-06-07 12:50:08 UTC +02:00
 
 
   :: Input file
@@ -155,10 +155,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Integral cutoff:               0.1000E-16
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -177,14 +178,14 @@
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
      8           -78.843851693557     0.2356E-05     0.7054E-09
-     9           -78.843851693630     0.2071E-06     0.7380E-10
-    10           -78.843851693631     0.1594E-07     0.3695E-12
-    11           -78.843851693631     0.3322E-08     0.2842E-13
+     9           -78.843851693630     0.2071E-06     0.7371E-10
+    10           -78.843851693631     0.1594E-07     0.3979E-12
+    11           -78.843851693631     0.3322E-08     0.1421E-13
     12           -78.843851693631     0.1197E-08     0.1421E-13
-    13           -78.843851693631     0.4264E-09     0.2842E-13
+    13           -78.843851693631     0.4264E-09     0.1421E-13
     14           -78.843851693631     0.1280E-09     0.1421E-13
     15           -78.843851693631     0.1479E-10     0.1421E-13
-    16           -78.843851693631     0.2907E-11     0.2842E-13
+    16           -78.843851693631     0.2908E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -197,15 +198,14 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.55358
-     Total cpu time (sec):               1.06016
+     Total wall time (sec):              0.32036
+     Total cpu time (sec):               0.56946
 
 
   :: LOW MEMORY CC2 wavefunction
   =================================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -294,8 +294,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.21021
-     Total cpu time (sec):               0.42221
+     Total wall time (sec):              0.11367
+     Total cpu time (sec):               0.22565
 
 
   2) Preparation of MO basis and integrals
@@ -367,8 +367,8 @@
 
   - Finished solving the LOW MEMORY CC2 ground state equations
 
-     Total wall time (sec):              0.06627
-     Total cpu time (sec):               0.13411
+     Total wall time (sec):              0.04121
+     Total cpu time (sec):               0.08510
 
 
   4) Calculation of the excited state (diis algorithm)
@@ -476,7 +476,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.245983318085       0.3089E-04
-     2      0.354258090426       0.5440E-03
+     2      0.354258090425       0.5440E-03
      3      0.312494628547       0.2477E-03
   -----------------------------------------------
 
@@ -504,7 +504,7 @@
   -----------------------------------------------
      1      0.245983430456       0.2852E-05
      2      0.354257109589       0.5197E-04
-     3      0.312493293690       0.2127E-04
+     3      0.312493293691       0.2127E-04
   -----------------------------------------------
 
   Iteration:                 11
@@ -583,7 +583,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.245983441338       0.1813E-11
+     1      0.245983441338       0.1814E-11
      2      0.354257072913       0.9035E-09
      3      0.312493140828       0.4576E-09
   -----------------------------------------------
@@ -592,27 +592,27 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.245983441338       0.1813E-11
+     1      0.245983441338       0.1814E-11
      2      0.354257072917       0.1016E-09
-     3      0.312493140823       0.7921E-10
+     3      0.312493140823       0.7886E-10
   -----------------------------------------------
 
   Iteration:                 21
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.245983441338       0.1813E-11
+     1      0.245983441338       0.1814E-11
      2      0.354257072916       0.1861E-10
-     3      0.312493140824       0.2632E-11
+     3      0.312493140824       0.2861E-11
   -----------------------------------------------
 
   Iteration:                 22
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.245983441338       0.1813E-11
-     2      0.354257072916       0.4676E-11
-     3      0.312493140824       0.2632E-11
+     1      0.245983441338       0.1814E-11
+     2      0.354257072916       0.4675E-11
+     3      0.312493140824       0.2861E-11
   -----------------------------------------------
   Convergence criterion met in 22 iterations!
 
@@ -654,7 +654,7 @@
      -----------------------------------
         2      6        0.983888959785
         3      6        0.161510332238
-        7      6       -0.071460933883
+        7      6       -0.071460933884
        14      6        0.021752345804
         2      3       -0.011826768100
        12      6       -0.006327958190
@@ -682,7 +682,7 @@
        13      5       -0.029288514830
         7      4        0.026531873269
         4      2       -0.018792517154
-       10      5        0.013280743593
+       10      5        0.013280743592
      ------------------------------------
 
      - Electronic excitation energies:
@@ -699,16 +699,26 @@
 
   - Finished solving the LOW MEMORY CC2 excited state equations (right)
 
-     Total wall time (sec):              0.45158
-     Total cpu time (sec):               0.90359
+     Total wall time (sec):              0.35144
+     Total cpu time (sec):               0.70165
 
   - Timings for the LOW MEMORY CC2 excited state calculation
 
-     Total wall time (sec):              0.72855
-     Total cpu time (sec):               1.46042
+     Total wall time (sec):              0.50692
+     Total cpu time (sec):               1.01301
 
-     Peak memory usage during the execution of eT: 10.695640 MB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:25:34 UTC +01:00
+  Peak memory usage during the execution of eT: 10.695640 MB
+
+  Total wall time in eT (sec):              0.84707
+  Total cpu time in eT (sec):               1.61016
+
+  Calculation ended: 2021-06-07 12:50:09 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!

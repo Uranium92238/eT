@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:24:43 UTC +01:00
+  Calculation started: 2021-06-07 12:49:52 UTC +02:00
 
 
   :: Input file
@@ -162,10 +162,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-17
-     Exchange screening threshold:  0.1000E-15
-     Integral cutoff:               0.1000E-17
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-17
+     Exchange screening threshold:   0.1000E-15
+     ERI cutoff:                     0.1000E-17
+     One-electron integral  cutoff:  0.1000E-22
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -176,7 +177,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.6421E-12     0.7884E+02
+     1           -78.843851693631     0.6423E-12     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -189,8 +190,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.02868
-     Total cpu time (sec):               0.04728
+     Total wall time (sec):              0.04037
+     Total cpu time (sec):               0.03291
 
 
   :: CCS wavefunction
@@ -224,7 +225,7 @@
      2) Preparation of MO basis and integrals
      3) Calculation of the ground state (diis algorithm)
      4) Calculation of the multipliers (davidson algorithm)
-     5) Calculation of the excited state (davidson algorithm)
+     5) Calculation of the excited states (davidson algorithm)
      6) Calculation of excited state properties (EOM)
 
 
@@ -289,8 +290,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.20955
-     Total cpu time (sec):               0.41752
+     Total wall time (sec):              0.12021
+     Total cpu time (sec):               0.23786
 
 
   2) Preparation of MO basis and integrals
@@ -323,7 +324,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -78.843851693631     0.1550E-11     0.7884E+02
+    1           -78.843851693631     0.1544E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -351,8 +352,8 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.00338
-     Total cpu time (sec):               0.00808
+     Total wall time (sec):              0.00175
+     Total cpu time (sec):               0.00575
 
 
   4) Calculation of the multipliers (davidson algorithm)
@@ -400,11 +401,11 @@
 
   - Finished solving the CCS multipliers equations
 
-     Total wall time (sec):               0.00035
-     Total cpu time (sec):                0.00035
+     Total wall time (sec):               0.00028
+     Total cpu time (sec):                0.00028
 
 
-  5) Calculation of the excited state (davidson algorithm)
+  5) Calculation of the excited states (davidson algorithm)
      Calculating right vectors
 
    - Davidson coupled cluster excited state solver
@@ -446,9 +447,9 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803896    0.000000000000     0.6996E-12   0.8327E-15
-     2   0.336575862688    0.000000000000     0.3865E-11   0.2776E-15
-     3   0.381521396005    0.000000000000     0.2564E-11   0.4441E-15
+     1   0.283140803896    0.000000000000     0.7002E-12   0.3053E-14
+     2   0.336575862688    0.000000000000     0.3866E-11   0.1443E-14
+     3   0.381521396005    0.000000000000     0.2564E-11   0.9437E-15
   ------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -463,16 +464,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      6       -0.983643739610
-        4      6       -0.157041269778
-        6      6        0.065052447146
-       13      6        0.047162913486
-       15      6       -0.020463284034
-        1      3        0.011446417248
-        9      6        0.011160558004
-       10      6       -0.009804553971
-       22      6       -0.009439702303
-       19      5        0.009153283040
+        1      6        0.983643739610
+        4      6        0.157041269778
+        6      6       -0.065052447146
+       13      6       -0.047162913486
+       15      6        0.020463284034
+        1      3       -0.011446417248
+        9      6       -0.011160558004
+       10      6        0.009804553971
+       22      6        0.009439702303
+       19      5       -0.009153283040
      ------------------------------------
 
      Electronic state nr. 2
@@ -505,16 +506,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      5        0.968067241494
-        2      4       -0.195174921973
-        4      5        0.107739719930
-        3      4       -0.071197371545
-        5      6       -0.052457958139
-       13      5       -0.040201847070
-        7      4        0.033643496372
-        1      2       -0.024847732516
-       15      5        0.018989031645
-       10      5        0.017857942703
+        1      5       -0.968067241495
+        2      4        0.195174921973
+        4      5       -0.107739719930
+        3      4        0.071197371545
+        5      6        0.052457958139
+       13      5        0.040201847070
+        7      4       -0.033643496372
+        1      2        0.024847732516
+       15      5       -0.018989031645
+       10      5       -0.017857942703
      ------------------------------------
 
      - Electronic excitation energies:
@@ -523,7 +524,7 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.283140803896        7.704653712837
+        1                  0.283140803896        7.704653712836
         2                  0.336575862688        9.158695724626
         3                  0.381521396005       10.381725981581
      ---------------------------------------------------------------
@@ -531,11 +532,11 @@
 
   - Finished solving the CCS excited state equations (right)
 
-     Total wall time (sec):              0.00489
-     Total cpu time (sec):               0.00888
+     Total wall time (sec):              0.00331
+     Total cpu time (sec):               0.00731
 
 
-  5) Calculation of the excited state (davidson algorithm)
+  5) Calculation of the excited states (davidson algorithm)
      Calculating left vectors
 
    - Davidson coupled cluster excited state solver
@@ -577,9 +578,9 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803896    0.000000000000     0.6998E-12   0.1665E-15
-     2   0.336575862688    0.000000000000     0.3866E-11   0.1110E-14
-     3   0.381521396005    0.000000000000     0.2563E-11   0.2220E-15
+     1   0.283140803896    0.000000000000     0.7004E-12   0.1665E-15
+     2   0.336575862688    0.000000000000     0.3867E-11   0.5551E-16
+     3   0.381521396005    0.000000000000     0.2564E-11   0.5551E-16
   ------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -636,7 +637,7 @@
      -----------------------------------
         a       i         L(a,i)
      -----------------------------------
-        1      5       -0.968067241494
+        1      5       -0.968067241495
         2      4        0.195174921973
         4      5       -0.107739719930
         3      4        0.071197371545
@@ -654,7 +655,7 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.283140803896        7.704653712837
+        1                  0.283140803896        7.704653712836
         2                  0.336575862688        9.158695724626
         3                  0.381521396005       10.381725981581
      ---------------------------------------------------------------
@@ -662,8 +663,8 @@
 
   - Finished solving the CCS excited state equations (left)
 
-     Total wall time (sec):              0.00627
-     Total cpu time (sec):               0.01427
+     Total wall time (sec):              0.00413
+     Total cpu time (sec):               0.00813
 
 
   6) Calculation of excited state properties (EOM)
@@ -676,16 +677,16 @@
      -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.283140803896
-     Excitation energy [eV]:            7.704653712837
+     Excitation energy [eV]:            7.704653712836
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
      --------------------------------------------------------------------------
      Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
      --------------------------------------------------------------------------
-     X          -0.0003805212     -0.0007610423            0.0000002896
-     Y          -0.0011321897     -0.0022643795            0.0000025637
-     Z           0.1863473434      0.3726946869            0.0694506648
+     X           0.0003805212      0.0007610423            0.0000002896
+     Y           0.0011321897      0.0022643795            0.0000025637
+     Z          -0.1863473434     -0.3726946869            0.0694506648
      --------------------------------------------------------------------------
      Oscillator strength:      0.013110083300
 
@@ -725,11 +726,21 @@
 
   - Timings for the CCS response calculation
 
-     Total wall time (sec):              0.22985
-     Total cpu time (sec):               0.45769
+     Total wall time (sec):              0.13336
+     Total cpu time (sec):               0.26699
 
-     Peak memory usage during the execution of eT: 10.695640 MB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:24:44 UTC +01:00
+  Peak memory usage during the execution of eT: 10.695648 MB
+
+  Total wall time in eT (sec):              0.19790
+  Total cpu time in eT (sec):               0.33801
+
+  Calculation ended: 2021-06-07 12:49:52 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!

@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.1 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,26 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.1.0, Bastion
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Compiled by:        sarai
-  Compiled on:        dhcp-10-24-4-67.wlan.ntnu.no
-  Configuration date: 2021-03-25 11:04:11 UTC +01:00
-  Git branch:         Z-matrix
-  Git hash:           a5265c5d086a9e0ea3ba168da056f450e83132b6
-  Fortran compiler:   GNU 10.2.0
-  C compiler:         GNU 10.2.0
-  C++ compiler:       GNU 10.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-25 11:22:30 UTC +01:00
+  Calculation started: 2021-06-07 12:49:26 UTC +02:00
 
 
   :: Input file
@@ -143,11 +141,8 @@
 
   - SCF solver settings:
 
-     Maximum iterations:                    100
-
-     Residual threshold:            0.1000E-09
-     Energy threshold:              0.1000E-09
-     Acceleration type:                    diis
+     Maximum iterations:                   100
+     Acceleration type:                   diis
 
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
@@ -159,34 +154,38 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-15
-     Exchange screening threshold:  0.1000E-13
-     Integral cutoff:               0.1000E-15
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-15
+     Exchange screening threshold:   0.1000E-13
+     ERI cutoff:                     0.1000E-15
+     One-electron integral  cutoff:  0.1000E-20
+     Cumulative Fock threshold:      0.1000E+01
 
-  - DIIS convergence acceleration:
+  - DIIS tool settings:
 
      DIIS dimension:   8
 
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
+
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -177.452442672055     0.7565E-01     0.1775E+03
+     1          -177.452442672056     0.7565E-01     0.1775E+03
      2          -177.479038695766     0.1346E-01     0.2660E-01
      3          -177.480034970237     0.4311E-02     0.9963E-03
      4          -177.480161392961     0.1845E-02     0.1264E-03
      5          -177.480175069916     0.3629E-03     0.1368E-04
-     6          -177.480176290419     0.7402E-04     0.1221E-05
+     6          -177.480176290418     0.7402E-04     0.1221E-05
      7          -177.480176366127     0.2207E-04     0.7571E-07
      8          -177.480176376357     0.5096E-05     0.1023E-07
-     9          -177.480176377183     0.1218E-05     0.8254E-09
-    10          -177.480176377209     0.2536E-06     0.2666E-10
-    11          -177.480176377210     0.4399E-07     0.9379E-12
-    12          -177.480176377210     0.8545E-08     0.5684E-13
-    13          -177.480176377210     0.2855E-08     0.1990E-12
-    14          -177.480176377210     0.1321E-08     0.1421E-12
-    15          -177.480176377210     0.3976E-09     0.1137E-12
-    16          -177.480176377210     0.1465E-09     0.2842E-13
-    17          -177.480176377210     0.5394E-10     0.8527E-13
+     9          -177.480176377183     0.1218E-05     0.8253E-09
+    10          -177.480176377209     0.2536E-06     0.2669E-10
+    11          -177.480176377210     0.4399E-07     0.8811E-12
+    12          -177.480176377210     0.8545E-08     0.1421E-12
+    13          -177.480176377210     0.2855E-08     0.2274E-12
+    14          -177.480176377210     0.1321E-08     0.3411E-12
+    15          -177.480176377210     0.3976E-09     0.3126E-12
+    16          -177.480176377210     0.1465E-09     0.2558E-12
+    17          -177.480176377210     0.5394E-10     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -199,11 +198,20 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.94700
-     Total cpu time (sec):               3.59390
+     Total wall time (sec):              0.79458
+     Total cpu time (sec):               1.52719
 
-     Peak memory usage during the execution of eT: 296.012 KB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-25 11:22:32 UTC +01:00
+  Peak memory usage during the execution of eT: 298.504 KB
+
+  Total wall time in eT (sec):              0.80822
+  Total cpu time in eT (sec):               1.54302
+
+  Calculation ended: 2021-06-07 12:49:27 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
 
   eT terminated successfully!

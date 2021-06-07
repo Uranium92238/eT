@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:24:20 UTC +01:00
+  Calculation started: 2021-06-07 12:49:45 UTC +02:00
 
 
   :: Input file
@@ -167,10 +167,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Integral cutoff:               0.1000E-16
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -183,20 +184,20 @@
   ---------------------------------------------------------------
      1          -151.986254697214     0.3356E+00     0.1520E+03
      2          -152.011877032065     0.1366E+00     0.2562E-01
-     3          -152.018448490310     0.2167E-01     0.6571E-02
+     3          -152.018448490309     0.2167E-01     0.6571E-02
      4          -152.018690017983     0.5645E-02     0.2415E-03
      5          -152.018703912219     0.1006E-02     0.1389E-04
      6          -152.018704702597     0.1890E-03     0.7904E-06
      7          -152.018704720008     0.2445E-04     0.1741E-07
-     8          -152.018704720379     0.5552E-05     0.3710E-09
+     8          -152.018704720379     0.5552E-05     0.3712E-09
      9          -152.018704720403     0.1150E-05     0.2413E-10
-    10          -152.018704720404     0.2301E-06     0.6821E-12
-    11          -152.018704720404     0.7198E-07     0.8527E-13
-    12          -152.018704720404     0.1570E-07     0.1421E-12
-    13          -152.018704720404     0.2151E-08     0.2842E-13
+    10          -152.018704720404     0.2301E-06     0.8811E-12
+    11          -152.018704720404     0.7198E-07     0.2842E-13
+    12          -152.018704720404     0.1570E-07     0.8527E-13
+    13          -152.018704720404     0.2151E-08     0.5684E-13
     14          -152.018704720404     0.5725E-09     0.2842E-13
-    15          -152.018704720404     0.4648E-10     0.2842E-13
-    16          -152.018704720404     0.8075E-11     0.8527E-13
+    15          -152.018704720404     0.4649E-10     0.8527E-13
+    16          -152.018704720404     0.8077E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -209,7 +210,7 @@
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
-     Active energy:               -104.805789875470
+     Active energy:               -104.805789875469
      Active-inactive energy:        19.262564524020
      Inactive energy:             -103.861874602348
 
@@ -237,13 +238,22 @@
 
   - Timings for the MLHF ground state calculation
 
-     Total wall time (sec):              2.00842
-     Total cpu time (sec):               3.96787
+     Total wall time (sec):              1.02231
+     Total cpu time (sec):               1.97574
 
-     Peak memory usage during the execution of eT: 393.552 KB
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 393.552 KB
 
   :: There was 1 warning during the execution of eT. ::
 
-  Calculation ended: 2021-03-09 17:24:22 UTC +01:00
+  Total wall time in eT (sec):              1.03621
+  Total cpu time in eT (sec):               1.99182
+
+  Calculation ended: 2021-06-07 12:49:46 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
 
   eT terminated successfully!

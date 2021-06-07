@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:24:45 UTC +01:00
+  Calculation started: 2021-06-07 12:49:53 UTC +02:00
 
 
   :: Input file
@@ -163,10 +163,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-17
-     Exchange screening threshold:  0.1000E-15
-     Integral cutoff:               0.1000E-17
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-17
+     Exchange screening threshold:   0.1000E-15
+     ERI cutoff:                     0.1000E-17
+     One-electron integral  cutoff:  0.1000E-22
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -177,7 +178,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.6423E-12     0.7884E+02
+     1           -78.843851693631     0.6421E-12     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -190,8 +191,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.06843
-     Total cpu time (sec):               0.09189
+     Total wall time (sec):              0.05742
+     Total cpu time (sec):               0.02915
 
 
   :: CCS wavefunction
@@ -225,7 +226,7 @@
      2) Preparation of MO basis and integrals
      3) Calculation of the ground state (diis algorithm)
      4) Calculation of the multipliers (davidson algorithm)
-     5) Calculation of the excited state (davidson algorithm)
+     5) Calculation of the excited states (davidson algorithm)
      6) Calculation of excited state properties (EOM)
 
 
@@ -290,8 +291,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.21002
-     Total cpu time (sec):               0.41801
+     Total wall time (sec):              0.12030
+     Total cpu time (sec):               0.23888
 
 
   2) Preparation of MO basis and integrals
@@ -365,8 +366,8 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.03078
-     Total cpu time (sec):               0.06264
+     Total wall time (sec):              0.01389
+     Total cpu time (sec):               0.02582
 
 
   4) Calculation of the multipliers (davidson algorithm)
@@ -414,11 +415,11 @@
 
   - Finished solving the CCS multipliers equations
 
-     Total wall time (sec):               0.00033
-     Total cpu time (sec):                0.00033
+     Total wall time (sec):               0.00030
+     Total cpu time (sec):                0.00030
 
 
-  5) Calculation of the excited state (davidson algorithm)
+  5) Calculation of the excited states (davidson algorithm)
      Calculating right vectors
 
    - Davidson coupled cluster excited state solver
@@ -538,7 +539,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.4184E-06   0.6673E-12
+     1   0.283140803897    0.000000000000     0.4184E-06   0.6685E-12
   ------------------------------------------------------------------------
 
   Iteration:                 12
@@ -546,7 +547,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.8322E-07   0.5607E-13
+     1   0.283140803897    0.000000000000     0.8322E-07   0.5401E-13
   ------------------------------------------------------------------------
 
   Iteration:                 13
@@ -554,7 +555,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.3428E-07   0.8771E-14
+     1   0.283140803897    0.000000000000     0.3428E-07   0.8715E-14
   ------------------------------------------------------------------------
 
   Iteration:                 14
@@ -562,7 +563,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.4563E-08   0.1388E-14
+     1   0.283140803897    0.000000000000     0.4563E-08   0.1110E-15
   ------------------------------------------------------------------------
 
   Iteration:                 15
@@ -570,7 +571,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.3333E-08   0.2776E-15
+     1   0.283140803897    0.000000000000     0.3333E-08   0.8327E-15
   ------------------------------------------------------------------------
 
   Iteration:                 16
@@ -578,7 +579,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.6513E-09   0.3331E-15
+     1   0.283140803897    0.000000000000     0.6513E-09   0.7772E-15
   ------------------------------------------------------------------------
 
   Iteration:                 17
@@ -586,7 +587,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.5854E-10   0.1665E-15
+     1   0.283140803897    0.000000000000     0.5854E-10   0.7216E-15
   ------------------------------------------------------------------------
 
   Iteration:                 18
@@ -594,7 +595,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.6365E-11   0.1166E-14
+     1   0.283140803897    0.000000000000     0.6364E-11   0.1443E-14
   ------------------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -633,11 +634,11 @@
 
   - Finished solving the CCS excited state equations (right)
 
-     Total wall time (sec):              0.01300
-     Total cpu time (sec):               0.02500
+     Total wall time (sec):              0.01077
+     Total cpu time (sec):               0.01873
 
 
-  5) Calculation of the excited state (davidson algorithm)
+  5) Calculation of the excited states (davidson algorithm)
      Calculating left vectors
 
    - Davidson coupled cluster excited state solver
@@ -749,7 +750,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.4255E-06   0.3362E-11
+     1   0.283140803898    0.000000000000     0.4255E-06   0.3363E-11
   ------------------------------------------------------------------------
 
   Iteration:                 11
@@ -757,7 +758,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.1899E-06   0.1948E-12
+     1   0.283140803897    0.000000000000     0.1899E-06   0.1936E-12
   ------------------------------------------------------------------------
 
   Iteration:                 12
@@ -765,7 +766,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.7594E-07   0.2576E-13
+     1   0.283140803897    0.000000000000     0.7594E-07   0.2670E-13
   ------------------------------------------------------------------------
 
   Iteration:                 13
@@ -773,7 +774,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.4130E-07   0.3941E-14
+     1   0.283140803897    0.000000000000     0.4130E-07   0.4108E-14
   ------------------------------------------------------------------------
 
   Iteration:                 14
@@ -781,7 +782,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.5054E-08   0.8327E-15
+     1   0.283140803897    0.000000000000     0.5054E-08   0.1110E-15
   ------------------------------------------------------------------------
 
   Iteration:                 15
@@ -789,7 +790,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.2814E-08   0.4996E-15
+     1   0.283140803897    0.000000000000     0.2814E-08   0.5551E-16
   ------------------------------------------------------------------------
 
   Iteration:                 16
@@ -797,7 +798,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.3808E-09   0.1665E-15
+     1   0.283140803897    0.000000000000     0.3808E-09   0.5551E-15
   ------------------------------------------------------------------------
 
   Iteration:                 17
@@ -805,7 +806,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.6709E-10   0.9992E-15
+     1   0.283140803897    0.000000000000     0.6709E-10   0.1110E-15
   ------------------------------------------------------------------------
 
   Iteration:                 18
@@ -813,7 +814,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803897    0.000000000000     0.5872E-11   0.9992E-15
+     1   0.283140803897    0.000000000000     0.5872E-11   0.9437E-15
   ------------------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -852,8 +853,8 @@
 
   - Finished solving the CCS excited state equations (left)
 
-     Total wall time (sec):              0.01625
-     Total cpu time (sec):               0.03225
+     Total wall time (sec):              0.01235
+     Total cpu time (sec):               0.02829
 
 
   6) Calculation of excited state properties (EOM)
@@ -881,11 +882,21 @@
 
   - Timings for the CCS response calculation
 
-     Total wall time (sec):              0.27525
-     Total cpu time (sec):               0.55108
+     Total wall time (sec):              0.16025
+     Total cpu time (sec):               0.31864
 
-     Peak memory usage during the execution of eT: 10.695640 MB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:24:46 UTC +01:00
+  Peak memory usage during the execution of eT: 10.695648 MB
+
+  Total wall time in eT (sec):              0.23794
+  Total cpu time in eT (sec):               0.37783
+
+  Calculation ended: 2021-06-07 12:49:53 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!
