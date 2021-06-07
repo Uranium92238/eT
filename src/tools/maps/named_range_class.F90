@@ -42,6 +42,7 @@ module named_range_class
    interface named_range
 !
       procedure :: new_named_range
+      procedure :: new_uninitialized_named_range
       procedure :: copy_named_range
 !
    end interface named_range
@@ -49,7 +50,7 @@ module named_range_class
 contains
 !
 !
-   function new_named_range(name_, first, length, step) result(this)
+   pure function new_named_range(name_, first, length, step) result(this)
 !!
 !!    New named range
 !!    Written by Eirik F. Kjønstad, 2020
@@ -68,6 +69,22 @@ contains
       this%name_ = trim(name_)
 !
    end function new_named_range
+!
+!
+   pure function new_uninitialized_named_range(name_) result(this)
+!!
+!!    New uninitialized range
+!!    Written by Rolf H. Myhre, Jun 2021
+!!
+      implicit none
+!
+      character(len=*), intent(in) :: name_
+!
+      type(named_range) :: this
+!
+      this%name_ = trim(name_)
+!
+   end function new_uninitialized_named_range
 !
 !
    pure function copy_named_range(that) result(this)
