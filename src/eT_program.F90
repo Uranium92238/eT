@@ -27,13 +27,14 @@ program eT_program
    use parameters
    use global_in
    use global_out
-   use timings_class, only : timings, timing
-   use memory_manager_class, only : mem, memory_manager
-   use libint_initialization, only : initialize_libint_c, finalize_libint_c
+   use timings_class,            only: timings, timing
+   use memory_manager_class,     only: mem, memory_manager
+   use citation_printer_class,   only: eT_citations, citation_printer
+   use libint_initialization,    only: initialize_libint_c, finalize_libint_c
 !
-   use hf_class, only: hf
-   use uhf_class, only: uhf
-   use mlhf_class, only: mlhf
+   use hf_class,     only: hf
+   use uhf_class,    only: uhf
+   use mlhf_class,   only: mlhf
 !
    use omp_lib
 !
@@ -48,12 +49,14 @@ program eT_program
 !  Memory manager information
 !
    character(len=200) :: mem_unit
-   integer :: mem_total
+   integer(i64) :: mem_total
 !
 !  Interface reference and CC wavefunction calculation,
 !  as well as for starting and stopping Libint 
 !
    character(len=50) :: timestamp
+!
+   logical :: requested_cholesky
 !
 !  Interface reference and CC wavefunction calculation
 !
@@ -89,7 +92,7 @@ program eT_program
    input = input_file('eT.inp')
    call input%open_()
 !
-   timing = output_file('timing.out')
+   timing = output_file('eT.timing.out')
    call timing%open_()
 !
    eT_timer = timings("Total time in eT", pl='minimal')
@@ -97,7 +100,7 @@ program eT_program
 !
    call print_program_banner()
 !
-   call output%printf('m', "This is eT version (i0).(i0).(i0), (a0)", &
+   call output%printf('m', "This is eT (i0).(i0).(i0) (a0)", &
                       ints=[major_version, minor_version, patch_version], &
                       chars = [version_name], fs='(//t4,a)')
 !
@@ -108,6 +111,8 @@ program eT_program
 !
    call input%read_keywords_and_geometry()
    call input%close_()
+!
+   eT_citations = citation_printer()
 !
    n_threads = 1
 !
@@ -138,7 +143,8 @@ program eT_program
 !
 !  Cholesky decomposition of electron repulsion integrals (ERIs)
 !
-   if (input%is_keyword_present('cholesky eri', 'do')) call do_eri_cholesky() 
+   requested_cholesky = input%is_keyword_present('cholesky eri', 'do')
+   if (requested_cholesky) call do_eri_cholesky() 
 !
 !  Hartree-Fock calculation
 !
@@ -164,21 +170,33 @@ program eT_program
       if (input%requested_cc_calculation()) &
          call output%error_msg('to run CC calculation reference wavefunction must be specified.')
 !
+      if (.not. requested_cholesky) & 
+         call output%error_msg('no method nor ERI Cholesky decomposition selected in input.')
+!
    endif
 !
    call finalize_libint_c() ! No longer safe to use Libint
 !
    call timing%printf('m', ":: Total time", fs='(//t3,a)')
    call timing%print_separator('m', 16, '=')
-   call eT_timer%turn_off()
+!
+   call output%print_separator('m', 60, '-', fs='(/t3,a)')
 !
    call mem%check_for_leak()
    call mem%print_max_used()
 !
    call output%check_for_warnings()
 !
+   call eT_timer%turn_off()
+   call output%printf('m', 'Total wall time in eT (sec): (f20.5)', &
+                      reals=[eT_timer%get_elapsed_time('wall')], fs='(/t3,a)')
+   call output%printf('m', 'Total cpu time in eT (sec):  (f20.5)', &
+                      reals=[eT_timer%get_elapsed_time('cpu')], fs='(t3,a)')
+!
    call get_date_and_time(timestamp)
    call output%printf('m', "Calculation ended: (a0)", chars=[timestamp], fs='(/t3,a)')
+!
+   call eT_citations%print_(output)
 !
    call output%printf('m', 'eT terminated successfully!', fs='(/t3,a)')
 !
@@ -414,6 +432,8 @@ subroutine set_global_print_levels()
    use global_out, only: output
    use global_in, only: input
    use timings_class, only : timing
+!
+   implicit none 
 !
    character(len=200) :: print_level
 !

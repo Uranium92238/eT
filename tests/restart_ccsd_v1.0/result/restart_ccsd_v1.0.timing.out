@@ -1,0 +1,383 @@
+
+  One-electron integrals (overlap)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.29
+
+  Cholesky decomposition of AO overlap
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+
+  :: Hartree-Fock engine
+  =========================
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                 13.52
+
+  AO G construction
+  wall time (sec):                 0.01
+  cpu time (sec):                  0.02
+  cpu/wall ratio:                  1.69
+
+  SCF solver
+  wall time (sec):                 0.06
+  cpu time (sec):                  0.03
+  cpu/wall ratio:                  0.53
+
+  Hartree-Fock engine
+  wall time (sec):                 0.06
+  cpu time (sec):                  0.03
+  cpu/wall ratio:                  0.53
+
+
+  :: Coupled cluster response engine
+  =====================================
+
+
+  1) Cholesky decomposition of the electron repulsion integrals
+
+  Cholesky; time to determine auxiliary basis
+  wall time (sec):                 0.03
+  cpu time (sec):                  0.07
+  cpu/wall ratio:                  1.96
+
+  Cholesky; time to construct (J|K), decompose, and invert
+  wall time (sec):                 0.02
+  cpu time (sec):                  0.04
+  cpu/wall ratio:                  2.16
+
+  Diagonal test
+  wall time (sec):                 0.05
+  cpu time (sec):                  0.09
+  cpu/wall ratio:                  1.96
+
+  Construct and write Cholesky vectors
+  wall time (sec):                 0.02
+  cpu time (sec):                  0.05
+  cpu/wall ratio:                  2.06
+
+  Cholesky decomposition of ERIs
+  wall time (sec):                 0.12
+  cpu time (sec):                  0.24
+  cpu/wall ratio:                  2.00
+
+
+  2) Preparation of MO basis and integrals
+
+
+  3) Calculation of the ground state (diis algorithm)
+
+  Copy Cholesky MO to T1
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Construct eri integrals
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.01
+  cpu/wall ratio:                  2.09
+
+  Update t1 cholesky
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  4.58
+
+  Construct eri integrals
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.14
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                 24.88
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.01
+
+  Construct CCS Omega
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  0.77
+
+  Construct CCSD Omega
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  DIIS CC GS iteration time
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.01
+  cpu/wall ratio:                  1.94
+
+  CC GS solver time
+  wall time (sec):                 0.01
+  cpu time (sec):                  0.03
+  cpu/wall ratio:                  2.11
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.01
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+
+  4) Calculation of the multipliers (davidson algorithm)
+
+  Time preparing for CCSD Jacobian transpose
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Jacobian transpose CCS
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Jacobian transpose CCSD
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.01
+  cpu/wall ratio:                  2.20
+
+  CCSD multipliers
+  wall time (sec):                 0.01
+  cpu time (sec):                  0.01
+  cpu/wall ratio:                  1.76
+
+
+  5) Calculation of the excited states (davidson algorithm)
+     Calculating right vectors
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Prepare for Jacobian CCSD
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Jacobian CCS transformation
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Jacobian CCSD transformation
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.01
+  cpu/wall ratio:                  2.07
+
+  Jacobian CCS transformation
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Jacobian CCSD transformation
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.01
+  cpu/wall ratio:                  2.10
+
+  Jacobian CCS transformation
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Jacobian CCSD transformation
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.01
+  cpu/wall ratio:                  2.01
+
+  Davidson: CC ES iteration 1
+  wall time (sec):                 0.01
+  cpu time (sec):                  0.02
+  cpu/wall ratio:                  1.96
+
+  CCSD excited state (right)
+  wall time (sec):                 0.02
+  cpu time (sec):                  0.04
+  cpu/wall ratio:                  2.11
+
+
+  5) Calculation of the excited states (davidson algorithm)
+     Calculating left vectors
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Time preparing for CCSD Jacobian transpose
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.01
+  cpu/wall ratio:                  3.70
+
+  Jacobian transpose CCS
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  0.99
+
+  Jacobian transpose CCSD
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Jacobian transpose CCS
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.01
+
+  Jacobian transpose CCSD
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.01
+  cpu/wall ratio:                  2.21
+
+  Jacobian transpose CCS
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  0.99
+
+  Jacobian transpose CCSD
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.01
+  cpu/wall ratio:                  1.95
+
+  Davidson: CC ES iteration 1
+  wall time (sec):                 0.01
+  cpu time (sec):                  0.02
+  cpu/wall ratio:                  2.02
+
+  CCSD excited state (left)
+  wall time (sec):                 0.02
+  cpu time (sec):                  0.03
+  cpu/wall ratio:                  1.98
+
+  Biorthonormalization of left and right states
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+
+  6) Calculation of excited state properties (EOM)
+
+  Ground state density
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  One-electron integrals (dipole)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  0.99
+
+  Density <0|E_pq|1>
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Density <0|E_pq|2>
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Density <0|E_pq|3>
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Density <1|E_pq|0>
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Density <2|E_pq|0>
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Density <3|E_pq|0>
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Time to calculate EOM properties
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  Coupled cluster response engine
+  wall time (sec):                 0.18
+  cpu time (sec):                  0.36
+  cpu/wall ratio:                  2.01
+
+
+  :: Total time
+  ================
+
+  Total time in eT
+  wall time (sec):                 0.26
+  cpu time (sec):                  0.42
+  cpu/wall ratio:                  1.62

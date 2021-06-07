@@ -52,30 +52,7 @@ module point_charge_class
    end type point_charge
 !
 !
-   interface point_charge
-!
-      procedure :: new_point_charge 
-!
-   end interface point_charge
-!
 contains  
-!
-!
-   pure function new_point_charge(r, q) result(this)
-!!
-!!    New point charge
-!!    Written by Sarai D. Folkestad, 2020
-!!
-      implicit none
-!
-      real(dp), dimension(3), intent(in)  :: r
-      real(dp),               intent(in)  :: q
-      type(point_charge)                  :: this
-!
-      this%r = r
-      this%q = q
-!
-   end function new_point_charge
 !
 !
    pure subroutine set_r_point_charge(this, r)

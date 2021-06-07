@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:24:01 UTC +01:00
+  Calculation started: 2021-06-07 12:49:39 UTC +02:00
 
 
   :: Input file
@@ -138,10 +138,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-17
-     Exchange screening threshold:  0.1000E-15
-     Integral cutoff:               0.1000E-17
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-17
+     Exchange screening threshold:   0.1000E-15
+     ERI cutoff:                     0.1000E-17
+     One-electron integral  cutoff:  0.1000E-22
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -152,7 +153,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -149.596896918359     0.3402E-01     0.1496E+03
+     1          -149.596896918358     0.3402E-01     0.1496E+03
      2          -149.624445236441     0.8970E-02     0.2755E-01
      3          -149.627146245003     0.3779E-02     0.2701E-02
      4          -149.627626142103     0.7885E-03     0.4799E-03
@@ -161,12 +162,12 @@
      7          -149.627668990353     0.2116E-05     0.7214E-08
      8          -149.627668990686     0.1000E-06     0.3333E-09
      9          -149.627668990687     0.1929E-07     0.6537E-12
-    10          -149.627668990687     0.4758E-08     0.5684E-13
+    10          -149.627668990687     0.4758E-08     0.2842E-13
     11          -149.627668990687     0.9281E-09     0.2842E-13
-    12          -149.627668990687     0.9798E-10     0.8527E-13
-    13          -149.627668990687     0.1444E-10     0.1421E-12
-    14          -149.627668990687     0.2479E-11     0.2842E-13
-    15          -149.627668990687     0.6161E-12     0.8527E-13
+    12          -149.627668990687     0.9798E-10     0.5684E-13
+    13          -149.627668990687     0.1444E-10     0.0000E+00
+    14          -149.627668990687     0.2477E-11     0.0000E+00
+    15          -149.627668990687     0.6128E-12     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -175,7 +176,7 @@
      HOMO-LUMO gap (alpha):          0.976726296346
      HOMO-LUMO gap (beta):           0.687048046170
      Nuclear repulsion energy:      28.035878724238
-     Electronic energy:           -177.663547714926
+     Electronic energy:           -177.663547714925
      Total energy:                -149.627668990687
 
   - UHF wavefunction spin expectation values:
@@ -187,11 +188,20 @@
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):              1.71155
-     Total cpu time (sec):               3.40335
+     Total wall time (sec):              0.86239
+     Total cpu time (sec):               1.68074
 
-     Peak memory usage during the execution of eT: 272.576 KB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:24:03 UTC +01:00
+  Peak memory usage during the execution of eT: 272.576 KB
+
+  Total wall time in eT (sec):              0.87572
+  Total cpu time in eT (sec):               1.69459
+
+  Calculation ended: 2021-06-07 12:49:40 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
 
   eT terminated successfully!

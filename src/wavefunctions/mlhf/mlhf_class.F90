@@ -96,7 +96,6 @@ module mlhf_class
       procedure :: read_for_scf_restart                     => read_for_scf_restart_mlhf
 !
       procedure :: construct_active_mos                     => construct_active_mos_mlhf
-      procedure :: set_active_mo_coefficients               => set_active_mo_coefficients_mlhf
       procedure :: construct_virtual_density_from_mo        => construct_virtual_density_from_mo_mlhf
       procedure :: construct_active_paos                    => construct_active_paos_mlhf
       procedure :: print_orbital_space_info                 => print_orbital_space_info_mlhf
@@ -214,6 +213,9 @@ contains
       call wf%prepare_embedding(embedding)
       if (wf%embedded) call wf%embedding%print_description
 !
+      if (wf%ao%has_ghost_atoms()) &
+         call output%warning_msg("Ghosts are experimental in multilevel.")
+!
       wf%n_densities = 1
 !
       call wf%set_n_mo()
@@ -273,7 +275,7 @@ contains
       call wf%construct_ao_G(wf%ao_density, wf%ao_fock)
 !
 !     Add the one-electron part
-!
+! 
       call daxpy(wf%ao%n**2, one, wf%ao%h, 1, wf%ao_fock, 1)
 !
       call timer%turn_off()
@@ -433,42 +435,6 @@ contains
       wf%energy = wf%energy + wf%inactive_energy + wf%get_active_energy_G_De_term()
 !
    end subroutine update_fock_and_energy_mlhf
-!
-!
-   subroutine set_active_mo_coefficients_mlhf(wf, C_o, C_v)
-!!
-!!    Set active MO coefficients
-!!    Written by Ida-Marie Høyvik and Linda Goletto, 2019
-!!
-!!    Places the coefficients in the input
-!!    into the coefficient matrix:
-!!
-!!    - takes the first n_o vectors from C_o (occupied coefficients)
-!!      and places into coefficient matrix;
-!!    - takes the first n_v vectors from C_v (virtual coefficients)
-!!      and places into coefficient matrix.
-!!
-      implicit none
-!
-      class(mlhf) :: wf
-!
-      real(dp), dimension(wf%ao%n,wf%n_o), intent(in) :: C_o
-      real(dp), dimension(wf%ao%n,wf%n_v), intent(in) :: C_v
-!
-      call wf%destruct_orbital_coefficients()
-      call wf%destruct_orbital_energies()
-!
-!     new dimension of mo space
-      wf%n_mo = wf%n_o + wf%n_v
-!
-      call wf%initialize_orbital_coefficients()
-      call wf%initialize_orbital_energies()
-!
-      call dcopy(wf%ao%n*wf%n_o, C_o, 1, wf%orbital_coefficients, 1)
-!
-      call dcopy(wf%ao%n*wf%n_v, C_v, 1, wf%orbital_coefficients(1,wf%n_o+1), 1)
-!
-   end subroutine set_active_mo_coefficients_mlhf
 !
 !
    subroutine construct_virtual_density_from_mo_mlhf(wf, D_v)
@@ -868,7 +834,7 @@ contains
    end subroutine read_mlhf_settings_mlhf
 !
 !
-   subroutine construct_active_paos_mlhf(wf, C_pao)
+   subroutine construct_active_paos_mlhf(wf, C_pao, n_active_aos)
 !!
 !!    Construct active PAOs
 !!    Written by Ida-Marie Hoyvik and Sarai D. Folkestad 2019
@@ -884,34 +850,27 @@ contains
 !
       class(mlhf)   :: wf
 !
-      real(dp), dimension(wf%ao%n, wf%ao%n), intent(out)  :: C_pao
+
+      integer, intent(in)   :: n_active_aos
+      real(dp), dimension(wf%ao%n, n_active_aos), intent(out)  :: C_pao
 !
       real(dp), dimension(:,:), allocatable :: C_pao_copy
       real(dp), dimension(:,:), allocatable :: S_pao
       real(dp), dimension(:,:), allocatable :: D
 !
-      integer   :: n_active_aos
-      integer   :: last_hf_ao
       integer   :: rank
 !
-      call wf%ao%get_aos_in_subset('hf', last=last_hf_ao)
+      call dscal(wf%ao%n**2, half, wf%ao_density, 1)
 !
-      n_active_aos = last_hf_ao ! Because if there are CC active atoms, these are also HF active
-!
-      call mem%alloc(C_pao_copy, wf%ao%n, n_active_aos)
-      call wf%project_atomic_orbitals(wf%ao_density, C_pao_copy, n_active_aos)
+      call wf%project_atomic_orbitals(wf%ao_density, C_pao, n_active_aos)
 !
       call mem%alloc(S_pao, n_active_aos, n_active_aos)
 !
-      call wf%get_orbital_overlap(C_pao_copy, n_active_aos, S_pao)
+      call wf%get_orbital_overlap(C_pao, n_active_aos, S_pao)
 !
-      call wf%lowdin_orthonormalization(C_pao_copy, S_pao, n_active_aos, wf%n_v)
+      call wf%lowdin_orthonormalization(C_pao, S_pao, n_active_aos, wf%n_v)
 !
       call mem%dealloc(S_pao, n_active_aos, n_active_aos)
-!
-      call dcopy(wf%ao%n*wf%n_v, C_pao_copy, 1, C_pao, 1)
-!
-      call mem%dealloc(C_pao_copy, wf%ao%n, n_active_aos)
 !
 !     Construct inactive virtuals and add to frozen CC^T. Needed for later PAO construction
 !     e.g. to perform CC in reduced space or MLCC with PAOs
@@ -970,6 +929,8 @@ contains
                   wf%ao%n)
 !
       call mem%dealloc(C_pao_copy, wf%ao%n, wf%ao%n)      
+!
+      call dscal(wf%ao%n**2, two, wf%ao_density, 1)
 !
    end subroutine construct_active_paos_mlhf
 !
@@ -1243,23 +1204,23 @@ contains
 !!    orbital coefficients
 !!
 !
-      use array_utilities, only : cholesky_decomposition_limited_diagonal
+      use array_utilities, only : copy_and_scale
+      use cholesky_orbital_tool_class, only: cholesky_orbital_tool
 !
       implicit none
 !
       class(mlhf) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: D_v, C_v, C_o
+      real(dp), dimension(:,:), allocatable :: C_v, C_o
 !
       integer     :: n_vectors
 !
       integer     :: n_active_aos
-      integer     :: i
       integer     :: last_hf_ao
 !
-      integer,  dimension(:),   allocatable :: active_aos
-!
       type(timings) :: active_mos_construction_timer
+!
+      type(cholesky_orbital_tool), allocatable :: cd_tool_o, cd_tool_v
 !
       active_mos_construction_timer = timings('Active MOs construction', pl='normal')
       call active_mos_construction_timer%turn_on()
@@ -1271,68 +1232,64 @@ contains
 !
       n_active_aos =  last_hf_ao ! Because if there are CC active atoms, these are also HF active
 !
-      call mem%alloc(active_aos, n_active_aos)
-!
-      do i = 1, n_active_aos
-!
-         active_aos(i) = i
-!
-      enddo
-!
 !     Partition virtual space
 !
-      call mem%alloc(C_v, wf%ao%n, wf%ao%n)
-!
-      call dscal(wf%ao%n**2, half, wf%ao_density, 1) ! Idempotent ao density
+      call mem%alloc(C_v, wf%ao%n, n_active_aos)
 !
       if (wf%cholesky_virtuals) then
 !
 !        Cholesky orbitals
 !
-         call mem%alloc(D_v, wf%ao%n, wf%ao%n)
-!
-!        Make virtual density before occupied density is changed
-!
-         call wf%construct_virtual_density_from_mo(D_v)
-
-         call cholesky_decomposition_limited_diagonal(D_v, C_v, wf%ao%n, wf%n_v, &
-                                       wf%cholesky_threshold, n_active_aos, active_aos)
+         cd_tool_v = cholesky_orbital_tool(wf%ao%n, wf%cholesky_threshold)
+         call cd_tool_v%initialize_density()
+         call cd_tool_v%set_density_from_orbitals(wf%orbital_coefficients(:,wf%n_o + 1:wf%n_mo), wf%n_v)
+         call cd_tool_v%restricted_decomposition(C_v, wf%n_v, n_active_aos, 1)
 !
 !        Add inactive virtual density to frozen_CCT to be used if new PAOs are constructed later
 !
-         call daxpy(wf%ao%n**2, one, D_v, 1, wf%frozen_CCT, 1)
-!
-         call mem%dealloc(D_v, wf%ao%n, wf%ao%n)
+         call daxpy(wf%ao%n**2, one, cd_tool_v%D, 1, wf%frozen_CCT, 1)
+         call cd_tool_v%cleanup()
 !
       else
 !
 !        PAOs
 !
-         call wf%construct_active_paos(C_v)
+         call wf%construct_active_paos(C_v, n_active_aos)
 !
       endif
 !
 !     Partition occupied space (Cholesky orbitals)
 !
-      call mem%alloc(C_o, wf%ao%n, wf%ao%n)
+      call mem%alloc(C_o, wf%ao%n, n_active_aos)
 !
-      call cholesky_decomposition_limited_diagonal(wf%ao_density, C_o, wf%ao%n, wf%n_o, &
-                                  wf%cholesky_threshold, n_active_aos, active_aos)
+      cd_tool_o = cholesky_orbital_tool(wf%ao%n, wf%cholesky_threshold)
+      call cd_tool_o%initialize_density()
+      call cd_tool_o%set_density_from_density(wf%ao_density, wf%n_o, factor=half)
+      call cd_tool_o%restricted_decomposition(C_o, wf%n_o, n_active_aos, 1)
 !
 !     Add inactive density to frozen_CCT to be used if new PAOs are constructed later
 !
-      call daxpy(wf%ao%n**2, one, wf%ao_density, 1, wf%frozen_CCT, 1)
+      call daxpy(wf%ao%n**2, one, cd_tool_o%D, 1, wf%frozen_CCT, 1)
 !
-      call dscal(wf%ao%n**2, two, wf%ao_density, 1) ! Rescale ao density 
+      call copy_and_scale(two, cd_tool_o%D, wf%ao_density, wf%ao%n**2)
+      call cd_tool_o%cleanup()
 !
 !     Set molecular orbitals coefficients
 !
-      call wf%set_active_mo_coefficients(C_o(:,1:wf%n_o), C_v(:,1:wf%n_v))
+      call wf%destruct_orbital_coefficients()
+      call wf%destruct_orbital_energies()
 !
-      call mem%dealloc(C_v, wf%ao%n, wf%ao%n)
-      call mem%dealloc(C_o, wf%ao%n, wf%ao%n)
+!     new dimension of mo space
+      wf%n_mo = wf%n_o + wf%n_v
 !
-      call mem%dealloc(active_aos, n_active_aos)
+      call wf%initialize_orbital_coefficients()
+      call wf%initialize_orbital_energies()
+!
+      call wf%set_orbital_coefficients(C_o(:,1:wf%n_o), wf%n_o, 1)
+      call wf%set_orbital_coefficients(C_v(:,1:wf%n_v), wf%n_v, wf%n_o + 1)
+!
+      call mem%dealloc(C_v, wf%ao%n, n_active_aos)
+      call mem%dealloc(C_o, wf%ao%n, n_active_aos)
 !
       call active_mos_construction_timer%turn_off()
 !

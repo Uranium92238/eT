@@ -54,10 +54,11 @@ contains
 !
       type(timings), allocatable :: prep_timer
 !
-      prep_timer = timings("Time preparing for CCSD Jacobian", pl='normal')
+      prep_timer = timings("Prepare for Jacobian CCSD", pl='normal')
       call prep_timer%turn_on()
 !
-      call wf%save_jacobian_a1_intermediates()
+      call wf%doubles%prepare_for_jacobian()
+!
       call wf%save_jacobian_c2_intermediates()
       call wf%save_jacobian_d2_intermediate()
       call wf%save_jacobian_e2_intermediate()
@@ -104,40 +105,24 @@ contains
       timer = timings('Jacobian CCSD transformation', pl='normal')
       call timer%turn_on()
 !
-!     Allocate and zero the transformed vector
-!
       call zero_array(rho, wf%n_t1 + wf%n_t2)
 !
-!     :: CCS contributions to the singles c vector ::
+!     Doubles contributions
 !
-      call wf%ccs%jacobian_transformation(c(1 : wf%n_t1), rho(1 : wf%n_t1))
+      call wf%doubles%jacobian_transformation(c, rho)
 !
-!     :: CCSD contributions to the transformed singles vector ::
-!
-      call wf%jacobian_doubles_a1(rho(1 : wf%n_t1), c(1 : wf%n_t1))
+!     CCSD contributions
 !
       call mem%alloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+      call zero_array(rho_aibj, wf%n_t1**2)
       call squareup(c(wf%n_t1+1:), c_aibj, wf%n_t1)
 !
-!     Scale the doubles vector by 1 + delta_ai,bj, i.e.
-!     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
-!
       call scale_diagonal(two, c_aibj, wf%n_t1)
-      call wf%jacobian_doubles_b1(rho(1 : wf%n_t1), c_aibj)
-      call wf%jacobian_doubles_c1(rho(1 : wf%n_t1), c_aibj)
-      call wf%jacobian_doubles_d1(rho(1 : wf%n_t1), c_aibj)
-!
-!     :: CCSD contributions to the transformed doubles vector ::
-!
-!     Allocate unpacked transformed vector
-!
-      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(rho_aibj, wf%n_t1**2)
 !
 !     Contributions from singles vector c
 !
-      call wf%jacobian_doubles_a2(rho_aibj, c(1 : wf%n_t1))
       call wf%jacobian_ccsd_b2(rho_aibj, c(1 : wf%n_t1))
       call wf%jacobian_ccsd_c2(rho_aibj, c(1 : wf%n_t1))
       call wf%jacobian_ccsd_d2(rho_aibj, c(1 : wf%n_t1))
@@ -153,7 +138,7 @@ contains
 !     Last three terms are already symmetric (J2, K2, and L2). Perform the symmetrization
 !     rho_aibj = P_ij^ab rho_aibj now, for convenience
 !
-      call symmetric_sum(rho_aibj, (wf%n_v)*(wf%n_o))
+      call symmetric_sum(rho_aibj, wf%n_t1)
 !
 !     In preparation for last two terms, reorder
 !     rho_aibj to rho_abij, and c_aibj to c_abij
@@ -172,15 +157,16 @@ contains
 !
       call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-!     Scale diagonal by 1/(1 + delta_ai,bj) and packin
+!     Scale diagonal by 1/(1 + delta_ai,bj), packin, and add non-A2
+!     CCSD doubles contributions
 !
       call scale_diagonal(half, rho_abij, wf%n_v, wf%n_o)
 !
-!     Pack in the rho vector
-!
-      call packin(rho(wf%n_t1+1:), rho_abij, wf%n_v, wf%n_o)
+      call packin_and_add_from_1324_order_real(rho(wf%n_t1+1:), rho_abij, wf%n_v, wf%n_o)
 !
       call mem%dealloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+!     Add CCSD-Omega-A2 contribution
 !
       call wf%omega_ccsd_a2(rho(wf%n_t1+1:), c(wf%n_t1+1:), right=.true., diagonal_factor=two)
 !
@@ -189,7 +175,7 @@ contains
    end subroutine jacobian_transformation_ccsd
 !
 !
-   module subroutine jacobian_ccsd_b2_ccsd(wf, rho_aibj, c_ai)
+   module subroutine jacobian_ccsd_b2(wf, rho_aibj, c_ai)
 !!
 !!    Jacobian CCSD B2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -295,10 +281,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_ccsd_b2_ccsd
+   end subroutine jacobian_ccsd_b2
 !
 !
-   module subroutine jacobian_ccsd_c2_ccsd(wf, rho_aibj, c_ai)
+   module subroutine jacobian_ccsd_c2(wf, rho_aibj, c_ai)
 !!
 !!    Jacobian CCSD C2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -553,10 +539,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_ccsd_c2_ccsd
+   end subroutine jacobian_ccsd_c2
 !
 !
-  module subroutine jacobian_ccsd_d2_ccsd(wf, rho_aibj, c_ai)
+  module subroutine jacobian_ccsd_d2(wf, rho_aibj, c_ai)
 !!
 !!    Jacobian CCSD D2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -666,7 +652,7 @@ contains
 !
          call mem%alloc(g_bdkc, batch_b%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_bdkc, first_p=batch_b%first, last_p=batch_b%last)
+         call wf%eri%get_eri_t1('vvov', g_bdkc, first_p=batch_b%first, last_p=batch_b%get_last())
 !
 !        :: Term 2. - sum_kcd g_kcbd t_kj^ad c_ci ::
 !
@@ -974,10 +960,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_ccsd_d2_ccsd
+   end subroutine jacobian_ccsd_d2
 !
 !
-    module subroutine jacobian_ccsd_e2_ccsd(wf, rho_aibj, c_aick)
+    module subroutine jacobian_ccsd_e2(wf, rho_aibj, c_aick)
 !!
 !!    Jacobian CCSD E2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -1038,10 +1024,10 @@ contains
 !      
       call timer%turn_off()
 !
-   end subroutine jacobian_ccsd_e2_ccsd
+   end subroutine jacobian_ccsd_e2
 !
 !
-   module subroutine jacobian_ccsd_f2_ccsd(wf, rho_aibj, c_aibj)
+   module subroutine jacobian_ccsd_f2(wf, rho_aibj, c_aibj)
 !!
 !!    Jacobian CCSD F2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -1173,10 +1159,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_ccsd_f2_ccsd
+   end subroutine jacobian_ccsd_f2
 !
 !
-   module subroutine jacobian_ccsd_g2_ccsd(wf, rho_aibj, c_aibj)
+   module subroutine jacobian_ccsd_g2(wf, rho_aibj, c_aibj)
 !!
 !!    Jacobian CCSD G2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -1189,7 +1175,7 @@ contains
 !!                  - sum_l Y_jl c_aibl
 !!
 !!    The intermediates are constructed once in prepare_for_jacobian
-!!    in the routine save_jacobian_g2_intermediates_ccsd
+!!    in the routine save_jacobian_g2_intermediates
 !!
 !!    L_kc,ld = 2*g_kc,ld - g_kd,lc = 2*g_kcld(kc,ld) - 2*g_kcld(kd,lc)
 !!
@@ -1280,10 +1266,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_ccsd_g2_ccsd
+   end subroutine jacobian_ccsd_g2
 !
 !
-   module subroutine jacobian_ccsd_h2_ccsd(wf, rho_aibj, c_aibj)
+   module subroutine jacobian_ccsd_h2(wf, rho_aibj, c_aibj)
 !!
 !!    Jacobian CCSD H2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -1372,10 +1358,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_ccsd_h2_ccsd
+   end subroutine jacobian_ccsd_h2
 !
 !
-   module subroutine jacobian_ccsd_i2_ccsd(wf, rho_aibj, c_aibj)
+   module subroutine jacobian_ccsd_i2(wf, rho_aibj, c_aibj)
 !!
 !!    Jacobian CCSD I2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -1527,10 +1513,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_ccsd_i2_ccsd
+   end subroutine jacobian_ccsd_i2
 !
 !
-   module subroutine jacobian_ccsd_j2_ccsd(wf, rho_abij, c_abij)
+   module subroutine jacobian_ccsd_j2(wf, rho_abij, c_abij)
 !!
 !!    Jacobian CCSD J2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -1635,10 +1621,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_ccsd_j2_ccsd
+   end subroutine jacobian_ccsd_j2
 !
 !
-   module subroutine jacobian_ccsd_k2_ccsd(wf, rho_abij, c_abij)
+   module subroutine jacobian_ccsd_k2(wf, rho_abij, c_abij)
 !!
 !!    Jacobian CCSD K2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -1691,10 +1677,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_ccsd_k2_ccsd
+   end subroutine jacobian_ccsd_k2
 !
 !
-   module subroutine save_jacobian_c2_intermediates_ccsd(wf)
+   module subroutine save_jacobian_c2_intermediates(wf)
 !!
 !!    Save jacobian c2 intermediates
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2019
@@ -1847,10 +1833,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_c2_intermediates_ccsd
+   end subroutine save_jacobian_c2_intermediates
 !
 !
-   module subroutine save_jacobian_d2_intermediate_ccsd(wf)
+   module subroutine save_jacobian_d2_intermediate(wf)
 !!
 !!    Save jacobian d2 intermediate
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2019
@@ -1907,7 +1893,7 @@ contains
 !
          call mem%alloc(g_bdkc, batch_b%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_bdkc, first_p=batch_b%first, last_p=batch_b%last)
+         call wf%eri%get_eri_t1('vvov', g_bdkc, first_p=batch_b%first, last_p=batch_b%get_last())
 !
 !        Reorder g_bd_kc to g_cd_kb (= g_kcbd), i.e. 1234 to 4231
 !
@@ -1963,10 +1949,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_d2_intermediate_ccsd
+   end subroutine save_jacobian_d2_intermediate
 !
 !
-   module subroutine save_jacobian_e2_intermediate_ccsd(wf)
+   module subroutine save_jacobian_e2_intermediate(wf)
 !!
 !!    Save jacobian e2 intermediate
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2019
@@ -2037,10 +2023,10 @@ contains
 !
       call timer%turn_off()      
 !
-   end subroutine save_jacobian_e2_intermediate_ccsd
+   end subroutine save_jacobian_e2_intermediate
 !
 !
-   module subroutine save_jacobian_g2_intermediates_ccsd(wf)
+   module subroutine save_jacobian_g2_intermediates(wf)
 !!
 !!    Save jacobian g2 intermediates
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2019
@@ -2132,10 +2118,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_g2_intermediates_ccsd
+   end subroutine save_jacobian_g2_intermediates
 !
 !
-   module subroutine save_jacobian_h2_intermediates_ccsd(wf)
+   module subroutine save_jacobian_h2_intermediates(wf)
 !!
 !!    Save jacobian h2 intermediates
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2019
@@ -2237,10 +2223,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_h2_intermediates_ccsd
+   end subroutine save_jacobian_h2_intermediates
 !
 !
-   module subroutine save_jacobian_j2_intermediate_ccsd(wf)
+   module subroutine save_jacobian_j2_intermediate(wf)
 !!
 !!    Save jacobian j2 intermediate
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2019
@@ -2311,7 +2297,7 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_j2_intermediate_ccsd
+   end subroutine save_jacobian_j2_intermediate
 !
 !
 end submodule jacobian_ccsd

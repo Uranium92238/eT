@@ -197,19 +197,11 @@ contains
 !
       real(dp) :: energy_threshold, residual_threshold
 !
-      call engine%tasks%print_('cholesky')
+!     Determine ground state
 !
-      call engine%do_cholesky(wf)
+      call engine%gs_engine%run(wf)
 !
-      call engine%tasks%print_('mo preparations')
-!
-      call wf%mo_preparations()
-!
-!     Ground state solution
-!
-      call engine%do_ground_state(wf)
-!
-!     Excited state solutions
+!     Determine excited states
 !
       if (engine%es_transformation .eq. 'both') then
 !

@@ -33,7 +33,7 @@ set(CMAKE_MODULE_PATH
     /usr/local/share/cmake/Modules
     )
 
-# Set options with standard values 
+# Set options with standard values
 
 option(ENABLE_64BIT_INTEGERS  "Enable 64-bit integers"                                   ON)
 option(ENABLE_AUTO_BLAS       "Enable CMake to autodetect BLAS"                          ON)
@@ -49,17 +49,12 @@ find_package(Libint2 REQUIRED)
 find_package(Eigen3)
 find_package(Boost REQUIRED)
 
-if(NOT ENABLE_64BIT_INTEGERS)
-   add_definitions(-DHAS_32BIT_INTEGERS)
-   message(STATUS "32bit integers ENABLED")
-endif()
-
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Libint2_H_DIR})
 include_directories(${Libint2_INCLUDE_DIR})
 
-message("-- Boost location: ${Boost_INCLUDE_DIRS}")
+message(STATUS "Boost location: ${Boost_INCLUDE_DIRS}")
 
 # Including the source files
 include(eT_sources)
@@ -68,16 +63,9 @@ include(eT_CXX_sources)
 include(CXX_flags)
 include(ConfigTesting)
 
-#Handle PCMSolver
-if(ENABLE_PCMSOLVER)
-   add_definitions(-DHAS_PCMSOLVER)
-   message(STATUS "Polarizable Continuum Model via PCMSolver ENABLED")
-   find_package(PCMSolver REQUIRED)
-   include_directories(${PCMSolver_INCLUDE_DIR})
-   set(eT_fortran_sources 
-   ${PCMSolver_INCLUDE_DIR}/PCMSolver/pcmsolver.f90
-   ${eT_fortran_sources}
-   )
+if(NOT ENABLE_64BIT_INTEGERS)
+   add_definitions(-DHAS_32BIT_INTEGERS)
+   message(STATUS "32bit integers enabled")
 endif()
 
 # Math detection
@@ -86,9 +74,21 @@ set(LAPACK_LANG "Fortran")
 set(MKL_COMPILER_BINDINGS ${CMAKE_Fortran_COMPILER_ID})
 include(ConfigMath)
 
-# Set lapack and blas libraries 
+# Set lapack and blas libraries
 if(LAPACK_FOUND AND BLAS_FOUND)
     set(lapackblas_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+endif()
+
+#Handle PCMSolver
+if(ENABLE_PCMSOLVER)
+   add_definitions(-DHAS_PCMSOLVER)
+   message(STATUS "Polarizable Continuum Model enabled")
+   find_package(PCMSolver REQUIRED)
+   include_directories(${PCMSolver_INCLUDE_DIR})
+   set(eT_fortran_sources
+   ${PCMSolver_INCLUDE_DIR}/PCMSolver/pcmsolver.f90
+   ${eT_fortran_sources}
+   )
 endif()
 
 add_executable(eT ${eT_fortran_sources} ${eT_CXX_sources})
@@ -98,10 +98,14 @@ target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} ${PCMSolver_
 
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
 
-# Set compiler definition if forced batching is enabled 
+# Set compiler definition if forced batching is enabled
 if(ENABLE_FORCED_BATCHING)
-    message("-- Forced batching enabled (expert option)")
+    message(STATUS "Forced batching enabled")
     target_compile_definitions(eT PUBLIC _FORCED_BATCHING)
+endif()
+
+if(ENABLE_RUNTIME_CHECKS)
+    message(STATUS "Runtime checks enabled")
 endif()
 
 file(COPY ${CMAKE_SOURCE_DIR}/tests DESTINATION ${CMAKE_BINARY_DIR})
@@ -110,15 +114,12 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest)
    file(COPY ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest DESTINATION ${CMAKE_BINARY_DIR}/tests)
 endif()
 
-#Configure eT_launch, set permissions toexecutable and copy into build
-configure_file(${CMAKE_SOURCE_DIR}/eT_launch.in ${CMAKE_SOURCE_DIR}/eT_launch)
-file(COPY ${CMAKE_SOURCE_DIR}/eT_launch 
-     DESTINATION ${CMAKE_BINARY_DIR} 
+#Configure eT_launch.in, set permissions toexecutable and copy into build
+configure_file(${CMAKE_SOURCE_DIR}/eT_launch.in ${CMAKE_SOURCE_DIR}/eT_launch.py)
+file(COPY ${CMAKE_SOURCE_DIR}/eT_launch.py
+     DESTINATION ${CMAKE_BINARY_DIR}
      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ WORLD_READ)
-file(REMOVE  ${CMAKE_SOURCE_DIR}/eT_launch)
-
-#Copy conversion script into tests directory
-file(COPY ${CMAKE_SOURCE_DIR}/convert_v1_0_restart_files.py  DESTINATION ${CMAKE_BINARY_DIR}/tests)
+file(REMOVE  ${CMAKE_SOURCE_DIR}/eT_launch.py)
 
 #Configure get_complilation_info library
 include(CompilationInfo)

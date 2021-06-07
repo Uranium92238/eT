@@ -55,7 +55,7 @@ contains
       timer = timings('Prepare for Jacobian transformation MLCC2', pl='normal')
       call timer%turn_on()
 !
-      call wf%save_jacobian_a1_intermediates(wf%n_cc2_o, wf%n_cc2_v, wf%first_cc2_o, wf%first_cc2_v)
+      call wf%save_jacobian_a1_intermediates(wf%n_cc2_o, wf%n_cc2_v, 1, 1)
 !
       call timer%turn_off()
 !
@@ -108,7 +108,7 @@ contains
 !     CC2 contributions to the transformed singles vector  
 !
       call wf%jacobian_cc2_a1(rho(1 : wf%n_t1), c(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
-                              wf%first_cc2_o, wf%first_cc2_v)
+                              1, 1)
 !
 !     Allocate the incoming unpacked doubles vector
 !
@@ -122,7 +122,7 @@ contains
       call scale_diagonal(two, c_aibj, wf%n_cc2_o*wf%n_cc2_v)
 !     
       call wf%jacobian_cc2_b1(rho(1 : wf%n_t1), c_aibj, wf%n_cc2_o, wf%n_cc2_v, &
-                              wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+                              1, 1, wf%n_cc2_o, wf%n_cc2_v)
 !
 !     CC2 contributions to the transformed doubles vector
 !
@@ -132,7 +132,7 @@ contains
 !     Contributions from singles vector c
 !
       call wf%jacobian_cc2_a2(rho_aibj, c(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
-                              wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+                              1, 1, wf%n_cc2_o, wf%n_cc2_v)
 ! 
 !     Biorthonormalize
 !
@@ -507,7 +507,7 @@ contains
          call wf%eri%get_eri_t1('vovv', g_aibc, first_cc2_v, last_cc2_v, &
                                                 first_cc2_o, last_cc2_o, &
                                                 first_cc2_v, last_cc2_v, &
-                                                batch_c%first, batch_c%last)
+                                                batch_c%first, batch_c%get_last())
 !
          call dgemm('N','N',                             &
                      (n_cc2_o)*(n_cc2_v)**2,             &
@@ -707,9 +707,9 @@ contains
 !
          call mem%alloc(g_abkc, batch_a%length, n_cc2_v, n_cc2_o, n_cc2_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_abkc, batch_a%first, batch_a%last, &
-                                                first_cc2_v, last_cc2_v,     &   
-                                                first_cc2_o, last_cc2_o,     &
+         call wf%eri%get_eri_t1('vvov', g_abkc, batch_a%first, batch_a%get_last(),  &
+                                                first_cc2_v, last_cc2_v,            &
+                                                first_cc2_o, last_cc2_o,            &
                                                 first_cc2_v, last_cc2_v)
 !
          call mem%alloc(L_abkc, batch_a%length, n_cc2_v, n_cc2_o, n_cc2_v)
@@ -794,10 +794,10 @@ contains
                do a = 1, wf%n_cc2_v
 !
                   rho_aibj(a,i,b,j) = rho_aibj(a,i,b,j) + c_aibj(a,i,b,j)*&
-                                          (- wf%orbital_energies(i + wf%first_cc2_o - 1) &
-                                           - wf%orbital_energies(j + wf%first_cc2_o - 1) &
-                                           + wf%orbital_energies(wf%n_o + a + wf%first_cc2_v - 1) &
-                                           + wf%orbital_energies(wf%n_o + b + wf%first_cc2_v - 1) )
+                                          (- wf%orbital_energies(i) &
+                                           - wf%orbital_energies(j) &
+                                           + wf%orbital_energies(wf%n_o + a) &
+                                           + wf%orbital_energies(wf%n_o + b) )
 !
                enddo
             enddo

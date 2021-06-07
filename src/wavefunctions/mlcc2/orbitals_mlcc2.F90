@@ -157,20 +157,6 @@ contains
 !
       endif
 !
-!     Set orbital partitioning specifications
-!
-      wf%first_cc2_o = 1
-      wf%first_cc2_v = 1
-!
-      wf%last_cc2_o = wf%n_cc2_o
-      wf%last_cc2_v = wf%n_cc2_v
-!
-      wf%first_ccs_o = wf%last_cc2_o + 1
-      wf%first_ccs_v = wf%last_cc2_v + 1
-!
-      wf%last_ccs_o = wf%n_o
-      wf%last_ccs_v = wf%n_v
-!
       call timer%turn_off()
 !
    end subroutine orbital_partitioning_mlcc2
@@ -196,6 +182,8 @@ contains
 !!                      construct the virtual Cholesky orbitals
 !!                      default: .false.
 !!
+      use cholesky_orbital_tool_class, only: cholesky_orbital_tool
+!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
@@ -204,101 +192,65 @@ contains
 !
       logical  :: occupied_only_local
 !
-      real(dp), dimension(:,:), allocatable :: D
+      real(dp), dimension(:,:), allocatable :: C
 !
-      integer, dimension(:), allocatable :: active_aos
+      integer :: first_ao, last_ao, n_active_aos
 !
-      integer :: first_ao, last_ao, i, n_active_aos
-!
-      real(dp), parameter :: full_cd_threshold = 1.0d-4
-!
-      integer :: mo_offset
+      type(cholesky_orbital_tool), allocatable :: cd_tool_o, cd_tool_v
 !
       occupied_only_local = .false. 
 !
       if (present(occupied_only)) occupied_only_local = occupied_only
 !
-!     Construct active occupied orbitals     
-!
-!     0. Determine active ao list
+!     Construct occupied orbitals     
 !
       call wf%ao%get_aos_in_subset('cc2', first_ao, last_ao)
 !
       n_active_aos = last_ao - first_ao + 1
 !
-      call mem%alloc(active_aos, n_active_aos)
+      call mem%alloc(C, wf%ao%n, wf%ao%n)
 !
-      do i = 1, n_active_aos
+      cd_tool_o = cholesky_orbital_tool(wf%ao%n, wf%cholesky_orbital_threshold)
+      call cd_tool_o%initialize_density()
+      call cd_tool_o%set_density_from_orbitals(wf%orbital_coefficients(:,1:wf%n_o), wf%n_o)
 !
-         active_aos(i) = first_ao + i - 1
+!     Active
 !
-      enddo
 !
-!     1. Set up active occupied density 
+      call cd_tool_o%restricted_decomposition(C, wf%n_cc2_o, n_active_aos, first_ao)
+      call wf%set_orbital_coefficients(C(:,1:wf%n_cc2_o), wf%n_cc2_o, 1)
 !
-      call mem%alloc(D, wf%ao%n, wf%ao%n)
+!     Inactive
 !
-      call dgemm('N', 'T',                   &
-                  wf%ao%n,                   &
-                  wf%ao%n,                   &
-                  wf%n_o,                    &
-                  one,                       &
-                  wf%orbital_coefficients,   &
-                  wf%ao%n,                   &
-                  wf%orbital_coefficients,   &
-                  wf%ao%n,                   &
-                  zero,                      &
-                  D,                         &
-                  wf%ao%n)
+      call cd_tool_o%full_decomposition(C, wf%n_ccs_o)
+      call wf%set_orbital_coefficients(C(:,1:wf%n_ccs_o), wf%n_ccs_o, wf%n_cc2_o + 1)
 !
-!     Construct active occupied orbitals
+      call cd_tool_o%cleanup()
 !
-      mo_offset = 0
-!
-      call wf%construct_orbital_block_by_density_cd(D, wf%n_cc2_o, wf%cholesky_orbital_threshold, &
-                                                      mo_offset, active_aos)
-!
-!     Construct inactive occupied orbitals
-!
-      mo_offset = wf%n_cc2_o
-!
-      call wf%construct_orbital_block_by_density_cd(D, wf%n_ccs_o, full_cd_threshold, mo_offset)
-!
-!     Construct active virtual orbitals     
+!     Construct virtual orbitals     
 !
       if (.not. occupied_only_local) then
 !
-!        1. Set up virtual density     
+         cd_tool_v = cholesky_orbital_tool(wf%ao%n, wf%cholesky_orbital_threshold)
+         call cd_tool_v%initialize_density()
 !
-         call dgemm('N', 'T',                                  &
-                     wf%ao%n,                                  &
-                     wf%ao%n,                                  &
-                     wf%n_v,                                   &
-                     one,                                      &
-                     wf%orbital_coefficients(1, wf%n_o + 1),   &
-                     wf%ao%n,                                  &
-                     wf%orbital_coefficients(1, wf%n_o + 1),   &
-                     wf%ao%n,                                  &
-                     zero,                                     &
-                     D,                                        &
-                     wf%ao%n)
+         call cd_tool_v%set_density_from_orbitals(wf%orbital_coefficients(:,wf%n_o + 1 : wf%n_mo), wf%n_v)
 !
-!        Construct active virtual orbitals
+!        Active
 !
-         mo_offset = wf%n_o
+         call cd_tool_v%restricted_decomposition(C, wf%n_cc2_v, n_active_aos, first_ao)
+         call wf%set_orbital_coefficients(C(:,1:wf%n_cc2_v), wf%n_cc2_v, wf%n_o + 1)
 !
-         call wf%construct_orbital_block_by_density_cd(D, wf%n_cc2_v, wf%cholesky_orbital_threshold, mo_offset, active_aos)
+!        Inactive
 !
-!        Construct inactive virtual orbitals
+         call cd_tool_v%full_decomposition(C, wf%n_ccs_v)
+         call wf%set_orbital_coefficients(C(:,1:wf%n_ccs_v), wf%n_ccs_v, wf%n_o + wf%n_cc2_v + 1)
 !
-         mo_offset = wf%n_o + wf%n_cc2_v
-!
-         call wf%construct_orbital_block_by_density_cd(D, wf%n_ccs_v, full_cd_threshold, mo_offset)
+         call cd_tool_v%cleanup()
 !
       endif
 !
-      call mem%dealloc(active_aos, n_active_aos)
-      call mem%dealloc(D, wf%ao%n, wf%ao%n)
+      call mem%dealloc(C, wf%ao%n, wf%ao%n)
 !
    end subroutine construct_cholesky_orbitals_mlcc2
 !
@@ -1440,7 +1392,8 @@ contains
 !
          call batch_a%determine_limits(current_a_batch)
 !
-         call doubles_file%read_(R_ibja(:,:,:,1:batch_a%length), batch_a%first, batch_a%last)
+         call doubles_file%read_(R_ibja(:,:,:,1:batch_a%length), &
+                                 batch_a%first, batch_a%get_last())
 !
 !        M_ij = 1/2 (1 + delta_ai,bk delta_i,j) R_jbka R_ibka
 !
@@ -1471,7 +1424,8 @@ contains
 !
             call batch_c%determine_limits(current_c_batch)
 !
-            call doubles_file%read_(R_kdlc(:,:,:,1:batch_c%length), batch_c%first, batch_c%last)
+            call doubles_file%read_(R_kdlc(:,:,:,1:batch_c%length), &
+                                    batch_c%first, batch_c%get_last())
 !
 !           N_ac += 1/2 sum_dkl(1 + delta_ak,dl delta_a,c) R_akdl R_ckdl
 !

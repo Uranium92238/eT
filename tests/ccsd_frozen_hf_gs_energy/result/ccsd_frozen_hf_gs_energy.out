@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:25:43 UTC +01:00
+  Calculation started: 2021-06-07 12:50:10 UTC +02:00
 
 
   :: Input file
@@ -163,10 +163,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Integral cutoff:               0.1000E-16
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -174,10 +175,10 @@
      2          -166.615837132106     0.1011E+00     0.8981E-01
      3          -166.653902505872     0.6370E-01     0.3807E-01
      4          -166.666439535201     0.3849E-01     0.1254E-01
-     5          -166.671637703802     0.2505E-01     0.5198E-02
+     5          -166.671637703803     0.2505E-01     0.5198E-02
      6          -166.673477847057     0.1442E-01     0.1840E-02
      7          -166.674186528525     0.9471E-02     0.7087E-03
-     8          -166.674444686187     0.5389E-02     0.2582E-03
+     8          -166.674444686188     0.5389E-02     0.2582E-03
      9          -166.674541899503     0.3536E-02     0.9721E-04
     10          -166.674577779784     0.2015E-02     0.3588E-04
     11          -166.674591192949     0.1315E-02     0.1341E-04
@@ -190,35 +191,35 @@
     18          -166.674599119340     0.3942E-04     0.1329E-07
     19          -166.674599124291     0.2503E-04     0.4951E-08
     20          -166.674599126136     0.1473E-04     0.1844E-08
-    21          -166.674599126823     0.9303E-05     0.6871E-09
-    22          -166.674599127079     0.5504E-05     0.2560E-09
-    23          -166.674599127174     0.3459E-05     0.9553E-10
+    21          -166.674599126823     0.9303E-05     0.6872E-09
+    22          -166.674599127079     0.5504E-05     0.2561E-09
+    23          -166.674599127174     0.3459E-05     0.9541E-10
     24          -166.674599127210     0.2056E-05     0.3550E-10
-    25          -166.674599127223     0.1286E-05     0.1310E-10
-    26          -166.674599127228     0.7676E-06     0.4889E-11
-    27          -166.674599127230     0.4785E-06     0.1876E-11
-    28          -166.674599127230     0.2865E-06     0.6253E-12
-    29          -166.674599127231     0.1781E-06     0.3979E-12
+    25          -166.674599127223     0.1286E-05     0.1322E-10
+    26          -166.674599127228     0.7676E-06     0.4974E-11
+    27          -166.674599127230     0.4785E-06     0.1705E-11
+    28          -166.674599127230     0.2865E-06     0.7958E-12
+    29          -166.674599127231     0.1781E-06     0.1990E-12
     30          -166.674599127231     0.1069E-06     0.0000E+00
-    31          -166.674599127231     0.6627E-07     0.1137E-12
-    32          -166.674599127231     0.3989E-07     0.5684E-13
-    33          -166.674599127231     0.2467E-07     0.1421E-12
+    31          -166.674599127231     0.6627E-07     0.8527E-13
+    32          -166.674599127231     0.3989E-07     0.1705E-12
+    33          -166.674599127231     0.2467E-07     0.5684E-13
     34          -166.674599127231     0.1488E-07     0.2842E-13
-    35          -166.674599127231     0.9185E-08     0.0000E+00
-    36          -166.674599127231     0.5550E-08     0.0000E+00
+    35          -166.674599127231     0.9185E-08     0.2842E-13
+    36          -166.674599127231     0.5550E-08     0.1137E-12
     37          -166.674599127231     0.3420E-08     0.0000E+00
-    38          -166.674599127231     0.2070E-08     0.5684E-13
-    39          -166.674599127231     0.1274E-08     0.1421E-12
-    40          -166.674599127231     0.7718E-09     0.8527E-13
-    41          -166.674599127231     0.4744E-09     0.1137E-12
-    42          -166.674599127231     0.2878E-09     0.1137E-12
-    43          -166.674599127231     0.1767E-09     0.2842E-13
-    44          -166.674599127231     0.1073E-09     0.1137E-12
-    45          -166.674599127231     0.6582E-10     0.0000E+00
-    46          -166.674599127231     0.4000E-10     0.2842E-13
-    47          -166.674599127231     0.2452E-10     0.5684E-13
-    48          -166.674599127231     0.1491E-10     0.2842E-13
-    49          -166.674599127231     0.9136E-11     0.5684E-13
+    38          -166.674599127231     0.2070E-08     0.1421E-12
+    39          -166.674599127231     0.1274E-08     0.2842E-13
+    40          -166.674599127231     0.7718E-09     0.0000E+00
+    41          -166.674599127231     0.4744E-09     0.1705E-12
+    42          -166.674599127231     0.2878E-09     0.5684E-13
+    43          -166.674599127231     0.1767E-09     0.0000E+00
+    44          -166.674599127231     0.1073E-09     0.2842E-13
+    45          -166.674599127231     0.6582E-10     0.1137E-12
+    46          -166.674599127231     0.4000E-10     0.5684E-13
+    47          -166.674599127231     0.2452E-10     0.8527E-13
+    48          -166.674599127231     0.1491E-10     0.1137E-12
+    49          -166.674599127231     0.9139E-11     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 49 iterations!
 
@@ -231,10 +232,10 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.69367
-     Total cpu time (sec):               1.34093
+     Total wall time (sec):              0.35013
+     Total cpu time (sec):               0.67486
 
-     The smallest diagonal after decomposition is:  -0.1110E-15
+     The smallest diagonal after decomposition is:  -0.2296E-15
 
   - Preparation for frozen Hartree-Fock orbitals
 
@@ -246,7 +247,6 @@
   =======================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -324,7 +324,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.4557E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1392E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.1508E-15
 
   - Settings for integral handling:
 
@@ -334,8 +334,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.12460
-     Total cpu time (sec):               0.25218
+     Total wall time (sec):              0.05925
+     Total cpu time (sec):               0.11509
 
 
   2) Preparation of MO basis and integrals
@@ -426,16 +426,26 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.04379
-     Total cpu time (sec):               0.08774
+     Total wall time (sec):              0.02637
+     Total cpu time (sec):               0.05433
 
   - Timings for the CCSD ground state calculation
 
-     Total wall time (sec):              0.16872
-     Total cpu time (sec):               0.34024
+     Total wall time (sec):              0.08591
+     Total cpu time (sec):               0.16972
 
-     Peak memory usage during the execution of eT: 1.026912 MB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:25:44 UTC +01:00
+  Peak memory usage during the execution of eT: 1.026912 MB
+
+  Total wall time in eT (sec):              0.44961
+  Total cpu time in eT (sec):               0.86609
+
+  Calculation ended: 2021-06-07 12:50:10 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!

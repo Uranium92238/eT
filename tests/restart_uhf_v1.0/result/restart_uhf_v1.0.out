@@ -1,0 +1,189 @@
+
+
+
+                     eT 1.3 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.3.0 Disco
+  ------------------------------------------------------------
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-06-07 12:49:40 UTC +02:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: H2O He
+        charge: 0
+        multiplicity: 3
+     end system
+
+     method
+        uhf
+     end method
+
+     memory
+        available: 8
+     end memory
+
+     solver scf
+        skip
+        algorithm:          scf-diis
+        energy threshold:   1.0d-11
+        gradient threshold: 1.0d-11
+     end solver scf
+
+     do
+        ground state
+     end do
+
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: UHF wavefunction
+  ======================
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  H    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
+        4 He     0.100000000000    -0.020000000000     7.530000000000        4
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  H    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
+        4 He     0.188972612457    -0.037794522491    14.229637717975        4
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               29
+     Number of orthonormal atomic orbitals:   29
+
+  - Molecular orbital details:
+
+     Number of alpha electrons:               7
+     Number of beta electrons:                5
+     Number of virtual alpha orbitals:       22
+     Number of virtual beta orbitals:        24
+     Number of molecular orbitals:           29
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a UHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
+  - Requested restart. Reading orbitals from file
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
+
+  Warning: skipping SCF solver!
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -78.656324404025     0.6543E-11     0.7866E+02
+  ---------------------------------------------------------------
+  Convergence criterion met in 1 iterations!
+
+  - Summary of UHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap (alpha):          0.329592118308
+     HOMO-LUMO gap (beta):           0.699081248374
+     Nuclear repulsion energy:      12.116100574587
+     Electronic energy:            -90.772424978612
+     Total energy:                 -78.656324404025
+
+  - UHF wavefunction spin expectation values:
+
+     Sz:                   1.00000000
+     Sz(Sz + 1):           2.00000000
+     S^2:                  2.00764752
+     Spin contamination:   0.00764752
+
+  - Timings for the UHF ground state calculation
+
+     Total wall time (sec):              0.07053
+     Total cpu time (sec):               0.06959
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 164.432 KB
+
+  :: There was 1 warning during the execution of eT. ::
+
+  Total wall time in eT (sec):              0.08342
+  Total cpu time in eT (sec):               0.08253
+
+  Calculation ended: 2021-06-07 12:49:40 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+
+  eT terminated successfully!

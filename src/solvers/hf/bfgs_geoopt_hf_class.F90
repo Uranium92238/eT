@@ -228,7 +228,7 @@ contains
 !
       hf_gs_solver = scf_solver(restart = restart, acceleration_type = 'diis', skip = .false.)
       call hf_gs_solver%run(wf)
-      call wf%print_summary(print_mo_info=.false.)
+      call wf%print_summary(write_mo_info=.false.)
 !
 !     Compute gradient 
 !

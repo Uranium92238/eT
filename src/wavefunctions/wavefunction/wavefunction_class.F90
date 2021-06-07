@@ -43,11 +43,11 @@ module wavefunction_class
 !
       complex(dp), dimension(3) :: dipole_moment_complex
 !
-      integer :: n_atomic_centers 
+      integer :: n_atomic_centers
 !
-      integer :: n_mo ! Number of molecular orbitals 
-      integer :: n_o  ! Number of occupied orbitals 
-      integer :: n_v  ! Number of virtual orbbitals 
+      integer :: n_mo ! Number of molecular orbitals
+      integer :: n_o  ! Number of occupied orbitals
+      integer :: n_v  ! Number of virtual orbbitals
 !
       logical :: embedded
 !
@@ -82,7 +82,7 @@ module wavefunction_class
       procedure :: initialize_orbital_coefficients &
                 => initialize_orbital_coefficients_wavefunction
 !
-      procedure :: initialize_orbital_energies &    
+      procedure :: initialize_orbital_energies &
                 => initialize_orbital_energies_wavefunction
 !
       procedure :: destruct_orbital_coefficients &
@@ -121,9 +121,6 @@ module wavefunction_class
       procedure :: lowdin_orthonormalization &
                 => lowdin_orthonormalization_wavefunction
 !
-      procedure :: construct_orbital_block_by_density_cd &
-                => construct_orbital_block_by_density_cd_wavefunction
-!
       procedure :: initialize_mo_fock_frozen &
                 => initialize_mo_fock_frozen_wavefunction
 !
@@ -142,28 +139,31 @@ module wavefunction_class
       procedure :: set_geometry &
                 => set_geometry_wavefunction
 !
+      procedure :: set_orbital_coefficients &
+                => set_orbital_coefficients_wavefunction
+!
       procedure :: prepare_embedding &
-                => prepare_embedding_wavefunction 
+                => prepare_embedding_wavefunction
 !
       procedure :: contruct_mo_basis_transformation &
                 => contruct_mo_basis_transformation_wavefunction
 !
       procedure :: get_nuclear_dipole &
                 => get_nuclear_dipole_wavefunction
-!  
+!
       procedure :: get_nuclear_quadrupole &
                 => get_nuclear_quadrupole_wavefunction
-!  
+!
       procedure :: get_nuclear_repulsion &
                 => get_nuclear_repulsion_wavefunction
-!  
+!
       procedure :: get_nuclear_repulsion_1der &
                 => get_nuclear_repulsion_1der_wavefunction
 !
       procedure :: get_molecular_geometry &
                 => get_molecular_geometry_wavefunction
 !
-   end type wavefunction 
+   end type wavefunction
 !
 !
 contains
@@ -172,21 +172,21 @@ contains
    subroutine prepare_ao_tool_wavefunction(wf, centers, template, charge)
 !!
 !!    Prepare AO tool
-!!    Written by Eirik F. Kjønstad, 2020 
+!!    Written by Eirik F. Kjønstad, 2020
 !!
 !!    Initializes the AO tool, which handles the atomic orbital integrals in eT.
 !!
-!!    centers:   Optional set of 'atomic_center' objects that represents the atomic orbital 
-!!               basis used by the AO tool and the integral program (Libint). The default 
+!!    centers:   Optional set of 'atomic_center' objects that represents the atomic orbital
+!!               basis used by the AO tool and the integral program (Libint). The default
 !!               centers are those specified by the QM geometry in the eT input file.
 !!
 !!    template: Optional template_ao_tool from which the ao_tool is initialized.
-!!               
+!!
       use atomic_center_class, only: atomic_center
 !
-      implicit none 
+      implicit none
 !
-      class(wavefunction) :: wf 
+      class(wavefunction) :: wf
 !
       class(atomic_center), dimension(:), optional, intent(in) :: centers
 !
@@ -199,7 +199,7 @@ contains
 !
          call wf%ao%initialize_ao_tool_from_template(template)
 !
-      else 
+      else
 !
          call wf%ao%initialize(centers, charge)
 !
@@ -212,24 +212,24 @@ contains
 !
    subroutine set_geometry_wavefunction(wf, R, units)
 !!
-!!    Set geometry 
-!!    Written by Eirik F. Kjønstad, 2020 
+!!    Set geometry
+!!    Written by Eirik F. Kjønstad, 2020
 !!
-!!    Sets the position of the atomic nuclei. 
+!!    Sets the position of the atomic nuclei.
 !!
-!!       R:     (3 x n_atoms) array containing the Cartesian coordinates of the atoms 
+!!       R:     (3 x n_atoms) array containing the Cartesian coordinates of the atoms
 !!       units: specifies units of R ('angstrom' or 'bohr')
 !!
-!!    This includes updating the atomic centers of the AO tool 
+!!    This includes updating the atomic centers of the AO tool
 !!    and the atomic positions of the molecule.
 !!
       implicit none
 !
-      class(wavefunction), intent(inout) :: wf 
+      class(wavefunction), intent(inout) :: wf
 !
       character(len=*), intent(in) :: units
 !
-      real(dp), dimension(3, wf%n_atomic_centers) :: R 
+      real(dp), dimension(3, wf%n_atomic_centers) :: R
 !
       call wf%ao%set_atomic_centers(R, units)
 !
@@ -305,8 +305,8 @@ contains
 !
       class(wavefunction), intent(in) :: wf
 !
-      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)    :: X_wx 
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Y_pq  
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)    :: X_wx
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Y_pq
 !
       real(dp), dimension(:,:), allocatable :: Z_wq ! = sum_x X_wx C_xq
 !
@@ -330,7 +330,7 @@ contains
                   wf%n_mo,                 &
                   wf%ao%n,                 &
                   one,                     &
-                  wf%orbital_coefficients, & ! C_wp 
+                  wf%orbital_coefficients, & ! C_wp
                   wf%ao%n,                 &
                   Z_wq,                    &
                   wf%ao%n,                 &
@@ -365,7 +365,7 @@ contains
       class(wavefunction), intent(in) :: wf
 !
       integer, intent(in) :: n_orbitals
-!  
+!
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)      :: D
       real(dp), dimension(wf%ao%n, n_orbitals), intent(out)  :: PAO_coeff
 !
@@ -401,7 +401,7 @@ contains
 !
       enddo
 !$omp end parallel do
-!  
+!
       call mem%alloc(S, wf%ao%n, wf%ao%n)
 !
       call wf%ao%get_oei('overlap', S)
@@ -603,114 +603,6 @@ contains
    end subroutine lowdin_orthonormalization_wavefunction
 !
 !
-   subroutine construct_orbital_block_by_density_cd_wavefunction(wf, D, n_vectors, threshold, mo_offset, active_aos)
-!!
-!!    Construct orbital block by Cholesky decomposition for density
-!!    Written by Sarai D. Folkestad, Feb 2019
-!!
-!!    Cholesky decomposition of density D plus
-!!    update of corresponding wavefunction MOs
-!!
-!!    See A. M. J. Sánchez de Merás, H. Koch,
-!!    I. G. Cuesta, and L. Boman (J. Chem. Phys. 132, 204105 (2010))
-!!    for more information on active space generation
-!!    using Cholesky decomposition
-!!
-!!    'D' : Density to be decomposed
-!!          Given in the AO basis
-!!
-!!    'n_vectors' : The number of Cholesky
-!!                  vectors (orbitals) constructed
-!!
-!!    'threshold' : The Cholesky decomposition threshold
-!!
-!!    'mo_offset' : Offset used to set the new MOs
-!!
-!!    'active_aos' : List of AOs on active atoms (optional)
-!!                   This is used in case we want to partially
-!!                   decompose density to get active orbitals
-!!
-!!
-!
-      use array_utilities, only: cholesky_decomposition_limited_diagonal, full_cholesky_decomposition_effective
-!
-      implicit none
-!
-      class(wavefunction), intent(inout) :: wf
-!
-      real(dp), dimension(wf%ao%n,wf%ao%n), intent(inout) :: D
-!
-      integer, intent(out) :: n_vectors
-!
-      real(dp), intent(in) :: threshold
-!
-      integer, intent(in) :: mo_offset
-!
-      integer, dimension(:), optional :: active_aos
-!
-      integer :: n_active_aos, ao, mo
-!
-      real(dp), dimension(:,:), allocatable :: cholesky_vec
-      integer, dimension(:), allocatable  :: keep_vectors
-!
-      call mem%alloc(cholesky_vec, wf%ao%n, wf%ao%n)
-!
-      if (present(active_aos)) then
-!
-!        Active space generation by CD choosing pivots
-!        only on active atoms
-!
-         n_active_aos = size(active_aos)
-!
-         if (n_active_aos .gt. wf%ao%n) call output%error_msg('More active AOs than total AOs')
-!      
-         call cholesky_decomposition_limited_diagonal(D, cholesky_vec, wf%ao%n, &
-                                                      n_vectors, threshold, &
-                                                      n_active_aos, active_aos)
-!
-!        Set the  MOs to be the ones to be frozen for CC
-!
-!$omp parallel do private(ao, mo)
-         do mo = 1, n_vectors
-            do ao = 1, wf%ao%n
-!
-               wf%orbital_coefficients(ao, mo_offset + mo) = cholesky_vec(ao, mo)
-!
-            enddo
-         enddo
-!$omp end parallel do
-!
-      else
-!
-         call mem%alloc(keep_vectors, wf%ao%n)
-!
-!        Full CD of density (used for inactive densities)
-!
-         call full_cholesky_decomposition_effective(D, cholesky_vec, &
-                                             wf%ao%n, n_vectors, &
-                                             threshold, keep_vectors)
-!
-!
-         call mem%dealloc(keep_vectors, wf%ao%n)
-!
-!
-!$omp parallel do private(ao, mo)
-         do mo = 1, n_vectors
-            do ao = 1, wf%ao%n
-!
-               wf%orbital_coefficients(ao, mo_offset + mo) = cholesky_vec(ao, mo)
-!
-            enddo
-         enddo
-!$omp end parallel do
-!
-      endif
-!
-      call mem%dealloc(cholesky_vec, wf%ao%n, wf%ao%n)
-!
-   end subroutine construct_orbital_block_by_density_cd_wavefunction
-!
-!
    subroutine initialize_mo_fock_frozen_wavefunction(wf)
 !!
 !!    Initialize MO Fock frozen
@@ -871,7 +763,7 @@ contains
 !!    or polarizable (QM/FQ or PCM)
 !!
       use environment_factory_class, only: environment_factory
-!      
+!
       implicit none
 !
       class(wavefunction), intent(inout)        :: wf
@@ -974,16 +866,16 @@ contains
 !
    function get_nuclear_dipole_wavefunction(wf) result(d)
 !!
-!!    Get nuclear dipole 
+!!    Get nuclear dipole
 !!    Written by Eirik F. Kjønstad, Oct 2020
 !!
       use point_charges_class,         only: point_charges
 !
-      implicit none 
+      implicit none
 !
-      class(wavefunction), intent(in) :: wf 
+      class(wavefunction), intent(in) :: wf
 !
-      real(dp), dimension(3) :: d 
+      real(dp), dimension(3) :: d
 !
       type(point_charges) :: pc
 !
@@ -995,16 +887,16 @@ contains
 !
    function get_nuclear_quadrupole_wavefunction(wf) result(q)
 !!
-!!    Get nuclear quadrupole 
+!!    Get nuclear quadrupole
 !!    Written by Eirik F. Kjønstad, Oct 2020
 !!
       use point_charges_class,         only: point_charges
 !
-      implicit none 
+      implicit none
 !
-      class(wavefunction), intent(in) :: wf 
+      class(wavefunction), intent(in) :: wf
 !
-      real(dp), dimension(6) :: q 
+      real(dp), dimension(6) :: q
 !
       type(point_charges) :: pc
 !
@@ -1016,16 +908,16 @@ contains
 !
    function get_nuclear_repulsion_wavefunction(wf) result(E)
 !!
-!!    Get nuclear repulsion 
+!!    Get nuclear repulsion
 !!    Written by Eirik F. Kjønstad, Oct 2020
 !!
       use point_charges_class, only: point_charges
 !
-      implicit none 
+      implicit none
 !
-      class(wavefunction), intent(in) :: wf 
+      class(wavefunction), intent(in) :: wf
 !
-      real(dp) :: E 
+      real(dp) :: E
 !
       type(point_charges) :: pc
 !
@@ -1044,11 +936,11 @@ contains
 !!
       use point_charges_class,         only: point_charges
 !
-      implicit none 
+      implicit none
 !
-      class(wavefunction), intent(in) :: wf 
+      class(wavefunction), intent(in) :: wf
 !
-      real(dp), dimension(3, wf%ao%get_n_centers()) :: E 
+      real(dp), dimension(3, wf%ao%get_n_centers()) :: E
 !
       type(point_charges) :: pc
 !
@@ -1060,21 +952,50 @@ contains
 !
    function get_molecular_geometry_wavefunction(wf) result(R)
 !!
-!!    Get molecular geometry 
-!!    Written by Eirik F. Kjønstad, June 2019 
+!!    Get molecular geometry
+!!    Written by Eirik F. Kjønstad, June 2019
 !!
       use parameters, only: angstrom_to_bohr
 !
-      implicit none 
+      implicit none
 !
-      class(wavefunction), intent(in) :: wf 
+      class(wavefunction), intent(in) :: wf
 !
       real(dp), dimension(3, wf%n_atomic_centers) :: R
 !
-      R = wf%ao%get_center_coordinates() 
-      R = R * angstrom_to_bohr     
+      R = wf%ao%get_center_coordinates()
+      R = R * angstrom_to_bohr
 !
    end function get_molecular_geometry_wavefunction
+!
+!
+   subroutine set_orbital_coefficients_wavefunction(wf, C, n_orbitals, mo_offset)
+!!
+!!    Set orbital coefficients
+!!    Written by Ida-Marie Høyvik and Linda Goletto, 2019
+!!
+!!    Generalized by SDF 2021, from 'set_active_mo_coefficients_mlhf'
+!!
+      implicit none
+!
+      class(wavefunction),                      intent(inout) :: wf
+      integer,                                  intent(in)    :: n_orbitals
+      real(dp), dimension(wf%ao%n, n_orbitals), intent(in)    :: C
+      integer,                                  intent(in)    :: mo_offset
+!
+      integer :: ao, mo
+!
+!$omp parallel do private(ao, mo)
+         do mo = 1, n_orbitals
+            do ao = 1, wf%ao%n
+!
+               wf%orbital_coefficients(ao, mo_offset - 1 + mo) = C(ao, mo)
+!
+            enddo
+         enddo
+!$omp end parallel do
+!
+   end subroutine set_orbital_coefficients_wavefunction
 !
 !
 end module wavefunction_class

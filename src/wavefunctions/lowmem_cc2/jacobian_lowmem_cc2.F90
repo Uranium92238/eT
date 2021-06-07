@@ -179,9 +179,9 @@ contains
             call mem%alloc(g_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
 !
             call wf%eri%get_eri_t1('ovov', g_jckb,              &
-                                   batch_j%first, batch_j%last, &
+                                   batch_j%first, batch_j%get_last(), &
                                    1, wf%n_v,                   &
-                                   batch_k%first, batch_k%last, &
+                                   batch_k%first, batch_k%get_last(), &
                                    1, wf%n_v)
 !
             call mem%alloc(L_kcjb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
@@ -200,8 +200,8 @@ contains
 !
                call mem%alloc(g_ckbi, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
 !
-               call wf%eri%get_eri_t1('vovo', g_ckbi, 1, wf%n_v, batch_k%first, batch_k%last, &
-                                                      1, wf%n_v, batch_i%first, batch_i%last)
+               call wf%eri%get_eri_t1('vovo', g_ckbi, 1, wf%n_v, batch_k%first, batch_k%get_last(), &
+                                                      1, wf%n_v, batch_i%first, batch_i%get_last())
 !
 !$omp parallel do private(i,b,k,c,eps_ik)
                do i = 1, batch_i%length 
@@ -338,9 +338,9 @@ contains
             call mem%alloc(g_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
             call wf%eri%get_eri_t1('ovov', g_kcjb,              &
-                                   batch_k%first, batch_k%last, &
+                                   batch_k%first, batch_k%get_last(), &
                                    1, wf%n_v,                   &
-                                   batch_j%first, batch_j%last, &
+                                   batch_j%first, batch_j%get_last(), &
                                    1, wf%n_v)
 !
             call mem%alloc(L_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
@@ -357,8 +357,8 @@ contains
 !
             call mem%alloc(g_ckaj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
 !
-            call wf%eri%get_eri_t1('vovo', g_ckaj, 1, wf%n_v, batch_k%first, batch_k%last, &
-                                                   1, wf%n_v, batch_j%first, batch_j%last)
+            call wf%eri%get_eri_t1('vovo', g_ckaj, 1, wf%n_v, batch_k%first, batch_k%get_last(), &
+                                                   1, wf%n_v, batch_j%first, batch_j%get_last())
 !
             call mem%alloc(t_akcj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
 !
@@ -559,9 +559,9 @@ contains
             call mem%alloc(g_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
             call wf%eri%get_eri_t1('ovov', g_kcjb,               &
-                                   batch_k%first, batch_k%last,  &
+                                   batch_k%first, batch_k%get_last(),  &
                                    1, wf%n_v,                    &
-                                   batch_j%first, batch_j%last,  &
+                                   batch_j%first, batch_j%get_last(),  &
                                    1, wf%n_v)
 !
             call mem%alloc(L_kcbj, batch_k%length, wf%n_v, wf%n_v, batch_j%length)
@@ -634,8 +634,8 @@ contains
 !
             call mem%alloc(g_aick, batch_a%length, wf%n_o, batch_c%length, wf%n_o)
 !
-            call wf%eri%get_eri_t1('vovo', g_aick, batch_a%first, batch_a%last, 1, wf%n_o, &
-                                                   batch_c%first, batch_c%last, 1, wf%n_o)
+            call wf%eri%get_eri_t1('vovo', g_aick, batch_a%first, batch_a%get_last(), 1, wf%n_o, &
+                                                   batch_c%first, batch_c%get_last(), 1, wf%n_o)
 !
             call mem%alloc(u_aikc, batch_a%length, wf%n_o, wf%n_o, batch_c%length)
 !
@@ -825,8 +825,8 @@ contains
 !
             call mem%alloc(g_aicd, batch_a%length, wf%n_o, batch_c%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vovv', g_aicd, batch_a%first, batch_a%last, 1, wf%n_o, &
-                                                   batch_c%first, batch_c%last, 1, wf%n_v)
+            call wf%eri%get_eri_t1('vovv', g_aicd, batch_a%first, batch_a%get_last(), 1, wf%n_o, &
+                                                   batch_c%first, batch_c%get_last(), 1, wf%n_v)
 !
             call mem%alloc(X_aick, batch_a%length, wf%n_o, batch_c%length, wf%n_o)
 !
@@ -1033,8 +1033,8 @@ contains
 !
             call mem%alloc(g_lkai, wf%n_o, batch_k%length, wf%n_v, batch_i%length)
 !
-            call wf%eri%get_eri_t1('oovo', g_lkai, 1, wf%n_o, batch_k%first, batch_k%last, &
-                                                   1, wf%n_v, batch_i%first, batch_i%last)
+            call wf%eri%get_eri_t1('oovo', g_lkai, 1, wf%n_o, batch_k%first, batch_k%get_last(), &
+                                                   1, wf%n_v, batch_i%first, batch_i%get_last())
 !
             call mem%alloc(X_ckai, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
 !
@@ -1191,13 +1191,13 @@ contains
 !
             call mem%alloc(g_akbc, batch_a%length, wf%n_o, batch_b%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vovv', g_akbc, batch_a%first, batch_a%last, 1, wf%n_o, &
-                                                   batch_b%first, batch_b%last, 1, wf%n_v)
+            call wf%eri%get_eri_t1('vovv', g_akbc, batch_a%first, batch_a%get_last(), 1, wf%n_o, &
+                                                   batch_b%first, batch_b%get_last(), 1, wf%n_v)
 !
             call mem%alloc(g_bjac, batch_b%length, wf%n_o, batch_a%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vovv', g_bjac, batch_b%first, batch_b%last, 1, wf%n_o, &
-                                                   batch_a%first, batch_a%last, 1, wf%n_v)
+            call wf%eri%get_eri_t1('vovv', g_bjac, batch_b%first, batch_b%get_last(), 1, wf%n_o, &
+                                                   batch_a%first, batch_a%get_last(), 1, wf%n_v)
 !
             do current_i_batch = 1, batch_i%num_batches
 !
@@ -1265,8 +1265,8 @@ contains
 !
                call mem%alloc(g_kijb, wf%n_o, batch_i%length, wf%n_o, batch_b%length)
 !
-               call wf%eri%get_eri_t1('ooov', g_kijb, 1, wf%n_o, batch_i%first, batch_i%last, &
-                                                      1, wf%n_o, batch_b%first, batch_b%last)
+               call wf%eri%get_eri_t1('ooov', g_kijb, 1, wf%n_o, batch_i%first, batch_i%get_last(), &
+                                                      1, wf%n_o, batch_b%first, batch_b%get_last())
 !
                call mem%alloc(L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length)
 !
@@ -1376,8 +1376,8 @@ contains
 !
             call mem%alloc(g_ljak, wf%n_o, (batch_j%length), wf%n_v, (batch_k%length))
 !
-            call wf%eri%get_eri_t1('oovo', g_ljak, 1, wf%n_o, batch_j%first, batch_j%last, &
-                                                   1, wf%n_v, batch_k%first, batch_k%last)
+            call wf%eri%get_eri_t1('oovo', g_ljak, 1, wf%n_o, batch_j%first, batch_j%get_last(), &
+                                                   1, wf%n_v, batch_k%first, batch_k%get_last())
 !
             call mem%alloc(X_bjak, wf%n_v, batch_j%length, wf%n_v, batch_k%length)
 !
@@ -1400,8 +1400,8 @@ contains
 !
             call mem%alloc(g_lkbj, wf%n_o, batch_k%length, wf%n_v, batch_j%length)
 !
-            call wf%eri%get_eri_t1('oovo', g_lkbj, 1, wf%n_o, batch_k%first, batch_k%last, &
-                                                   1, wf%n_v, batch_j%first, batch_j%last)
+            call wf%eri%get_eri_t1('oovo', g_lkbj, 1, wf%n_o, batch_k%first, batch_k%get_last(), &
+                                                   1, wf%n_v, batch_j%first, batch_j%get_last())
 !
             call mem%alloc(X_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
 !
@@ -1448,8 +1448,8 @@ contains
 !
             call mem%alloc(g_jbki,batch_j%length, wf%n_v, batch_k%length, wf%n_o)
 !
-            call wf%eri%get_eri_t1('ovoo', g_jbki, batch_j%first, batch_j%last, 1, wf%n_v, &
-                                                   batch_k%first, batch_k%last, 1, wf%n_o)
+            call wf%eri%get_eri_t1('ovoo', g_jbki, batch_j%first, batch_j%get_last(), 1, wf%n_v, &
+                                                   batch_k%first, batch_k%get_last(), 1, wf%n_o)
 !
             call mem%alloc(L_jbki, batch_j%length, wf%n_v, batch_k%length, wf%n_o)
 !
@@ -1460,8 +1460,8 @@ contains
 !
             call mem%alloc(g_jikb, batch_j%length, wf%n_o, batch_k%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('ooov', g_jikb, batch_j%first, batch_j%last, 1, wf%n_o, &
-                                                   batch_k%first, batch_k%last, 1, wf%n_v)
+            call wf%eri%get_eri_t1('ooov', g_jikb, batch_j%first, batch_j%get_last(), 1, wf%n_o, &
+                                                   batch_k%first, batch_k%get_last(), 1, wf%n_v)
 !
             call add_1432_to_1234(-one, g_jikb, L_jbki, batch_j%length, wf%n_v, batch_k%length, wf%n_o)
 !
@@ -1559,8 +1559,8 @@ contains
 !
             call mem%alloc(g_bicd, batch_b%length, wf%n_o, batch_c%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vovv', g_bicd, batch_b%first, batch_b%last, 1, wf%n_o, &
-                                                   batch_c%first, batch_c%last, 1, wf%n_v)
+            call wf%eri%get_eri_t1('vovv', g_bicd, batch_b%first, batch_b%get_last(), 1, wf%n_o, &
+                                                   batch_c%first, batch_c%get_last(), 1, wf%n_v)
 !
             call mem%alloc(X_bick, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
@@ -1583,8 +1583,8 @@ contains
 !
             call mem%alloc(g_ckbd, batch_c%length, wf%n_o, batch_b%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vovv', g_ckbd, batch_c%first, batch_c%last, 1, wf%n_o, &
-                                                   batch_b%first, batch_b%last, 1, wf%n_v)
+            call wf%eri%get_eri_t1('vovv', g_ckbd, batch_c%first, batch_c%get_last(), 1, wf%n_o, &
+                                                   batch_b%first, batch_b%get_last(), 1, wf%n_v)
 !
             call mem%alloc(X_ckbi, batch_c%length, wf%n_o, batch_b%length, wf%n_o)
 !
@@ -1631,8 +1631,8 @@ contains
 !
             call mem%alloc(g_abkc, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
 !
-            call wf%eri%get_eri_t1('vvov', g_abkc, 1, wf%n_v, batch_b%first, batch_b%last, &
-                                                   1, wf%n_o, batch_c%first, batch_c%last)
+            call wf%eri%get_eri_t1('vvov', g_abkc, 1, wf%n_v, batch_b%first, batch_b%get_last(), &
+                                                   1, wf%n_o, batch_c%first, batch_c%get_last())
 !
             call mem%alloc(L_abkc, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
 !
@@ -1644,8 +1644,8 @@ contains
 !
             call mem%alloc(g_kbac, wf%n_o, batch_b%length, wf%n_v, batch_c%length)
 !
-            call wf%eri%get_eri_t1('ovvv', g_kbac, 1, wf%n_o, batch_b%first, batch_b%last, &
-                                                   1, wf%n_v, batch_c%first, batch_c%last)
+            call wf%eri%get_eri_t1('ovvv', g_kbac, 1, wf%n_o, batch_b%first, batch_b%get_last(), &
+                                                   1, wf%n_v, batch_c%first, batch_c%get_last())
 !
             call add_3214_to_1234(-one, g_kbac, L_abkc, &
                                  wf%n_v, batch_b%length, wf%n_o, batch_c%length)
@@ -1751,8 +1751,8 @@ contains
 !
             call mem%alloc(g_abkc, batch_a%length, wf%n_v, batch_k%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vvov', g_abkc, batch_a%first, batch_a%last, 1, wf%n_v, &
-                                                   batch_k%first, batch_k%last, 1, wf%n_v)
+            call wf%eri%get_eri_t1('vvov', g_abkc, batch_a%first, batch_a%get_last(), 1, wf%n_v, &
+                                                   batch_k%first, batch_k%get_last(), 1, wf%n_v)
 !
             do current_i_batch = 1, batch_i%num_batches
 !
@@ -1762,8 +1762,8 @@ contains
 !
                call mem%alloc(g_lkbi, wf%n_o, batch_k%length, wf%n_v, batch_i%length)
 !
-               call wf%eri%get_eri_t1('oovo', g_lkbi, 1, wf%n_o, batch_k%first, batch_k%last, &
-                                                      1, wf%n_v, batch_i%first, batch_i%last)
+               call wf%eri%get_eri_t1('oovo', g_lkbi, 1, wf%n_o, batch_k%first, batch_k%get_last(), &
+                                                      1, wf%n_v, batch_i%first, batch_i%get_last())
 !
                call mem%alloc(X_ckbi, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
 !
@@ -1786,8 +1786,9 @@ contains
 !
                call mem%alloc(g_lick, wf%n_o, batch_i%length, wf%n_v, batch_k%length)
 !
-               call wf%eri%get_eri_t1('oovo', g_lick, 1, wf%n_o, batch_i%first, batch_i%last, &
-                                                      1, wf%n_v, batch_k%first, batch_k%last)
+               call wf%eri%get_eri_t1('oovo', g_lick,                               &
+                                      1, wf%n_o, batch_i%first, batch_i%get_last(), &
+                                      1, wf%n_v, batch_k%first, batch_k%get_last())
 !
                call mem%alloc(X_bick, wf%n_v, batch_i%length, wf%n_v, batch_k%length)
 !

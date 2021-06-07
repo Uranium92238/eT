@@ -34,9 +34,9 @@ module parameters
 !  Version
 !
    integer, parameter :: major_version = 1
-   integer, parameter :: minor_version = 2
-   integer, parameter :: patch_version = 5
-   character(len=7), parameter :: version_name = "Cobra"
+   integer, parameter :: minor_version = 3
+   integer, parameter :: patch_version = 0
+   character(len=27), parameter :: version_name = "Disco"
 !
 !  Integers
 !
@@ -61,7 +61,10 @@ module parameters
 !
 !  Pi
 !
-   real(dp), parameter :: pi = four*atan(one)
+!
+   real(dp), parameter :: pi = four * atan(one)
+   real(dp), parameter :: radians_to_degrees = 180.0d0/pi
+   real(dp), parameter :: degrees_to_radians = pi/180.0d0
 !
 !  Complex integers
 !

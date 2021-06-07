@@ -9,7 +9,8 @@ method
 end method
 
 memory
-   available: 8
+   available: 8000000
+   unit: KB
 end memory
 
 solver cholesky

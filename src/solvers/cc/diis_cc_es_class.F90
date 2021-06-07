@@ -28,38 +28,38 @@ module diis_cc_es_class
 !!    A R = omega R   or  L^T A = omega L^T
 !!
 !! for a set of right or left states (R, L) and the associated
-!! excitation energies omega. Here, A is the coupled cluster 
+!! excitation energies omega. Here, A is the coupled cluster
 !! Jacobian matrix:
 !!
-!!       A_mu,nu = < mu | [H-bar, tau_nu] | HF >,    H-bar = e-T H eT. 
+!!       A_mu,nu = < mu | [H-bar, tau_nu] | HF >,    H-bar = e-T H eT.
 !!
-!! The equation is solved using the direct inversion of the iterative 
-!! subspace (DIIS) algorithm. See Pulay, P. Convergence acceleration 
-!! of iterative sequences. The case of SCF iteration. Chem. Phys. Lett. 
-!! 1980, 73, 393−398. This algorithm combines estimates for the parameters 
-!! and the errors and finds a least-squares solution to the error being 
-!! zero (see diis_tool solver tool for more details). 
+!! The equation is solved using the direct inversion of the iterative
+!! subspace (DIIS) algorithm. See Pulay, P. Convergence acceleration
+!! of iterative sequences. The case of SCF iteration. Chem. Phys. Lett.
+!! 1980, 73, 393−398. This algorithm combines estimates for the parameters
+!! and the errors and finds a least-squares solution to the error being
+!! zero (see diis_tool solver tool for more details).
 !!
-!! The update estimates used in DIIS are the following. Assuming we 
+!! The update estimates used in DIIS are the following. Assuming we
 !! are solving for a right excited state R, the update estimate is
 !!
 !!    R_mu <- R_mu - Residual_mu/(epsilon_mu - omega),
 !!
 !! where Residual = A R - omega R and omega = R^T A R.
-!! (R is normalized.) 
+!! (R is normalized.)
 !!
-!! This solver can handle the folded CC2 and CC3 equations, where 
-!! the Jacobian transformation becomes non-linear 
+!! This solver can handle the folded CC2 and CC3 equations, where
+!! the Jacobian transformation becomes non-linear
 !!
 !!    A(omega) R = omega R   or    L^T A(omega) = omega L^T.
 !!
-!! In this case, Davidson's algorithm is not as well-suited. 
-!! Literature for DIIS/CC2: C. Hättig and F. Weigend, 
+!! In this case, Davidson's algorithm is not as well-suited.
+!! Literature for DIIS/CC2: C. Hättig and F. Weigend,
 !! J. Chem. Phys. 113, 5154 (2000).
 !!
-!! Note/warning for usage: if poor starting guesses for L and R,  
+!! Note/warning for usage: if poor starting guesses for L and R,
 !! are used this solver often finds duplicate roots and may in some
-!! cases not converge. 
+!! cases not converge.
 !!
 !
    use parameters
@@ -75,21 +75,21 @@ module diis_cc_es_class
    use array_utilities, only: quicksort_with_index_ascending, get_l2_norm
    use string_utilities, only: convert_to_uppercase
    use precondition_tool_class, only: precondition_tool
-   use convergence_tool_class, only: convergence_tool 
+   use convergence_tool_class, only: convergence_tool
 !
    implicit none
 !
    type, extends(abstract_cc_es) :: diis_cc_es
 !
-      logical :: davidson_preconvergence     ! Perform non-linear Davidson first, then go over 
-                                             ! to DIIS to converge below the residual threshold 
+      logical :: davidson_preconvergence     ! Perform non-linear Davidson first, then go over
+                                             ! to DIIS to converge below the residual threshold
 !
       real(dp) :: preconvergence_threshold   ! Non-linear Davidson threshold
 !
       type(diis_tool), dimension(:), allocatable :: diis
 !
    contains
-!     
+!
       procedure, non_overridable :: run            => run_diis_cc_es
 !
       procedure :: read_settings                   => read_settings_diis_cc_es
@@ -102,7 +102,7 @@ module diis_cc_es_class
    end type diis_cc_es
 !
 !
-   interface diis_cc_es 
+   interface diis_cc_es
 !
       procedure :: new_diis_cc_es
 !
@@ -114,7 +114,7 @@ contains
 !
    function new_diis_cc_es(transformation, wf, restart) result(solver)
 !!
-!!    New DIIS CC ES 
+!!    New DIIS CC ES
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -132,7 +132,8 @@ contains
       logical :: records_in_memory, crop
       integer :: diis_dimension
 !
-      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
+      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // &
+                     ' excited state (' // trim(transformation) //')')
       call solver%timer%turn_on()
 !
 !     Set printables
@@ -174,11 +175,13 @@ contains
 !
       call solver%print_settings()
 !
-      if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
+      if (solver%n_singlet_states == 0) then
+         call output%error_msg('number of excitations must be specified.')
+      end if
 !
       wf%n_singlet_states = solver%n_singlet_states
 !
-!     Make DIIS tools array & initialize the individual DIIS tools 
+!     Make DIIS tools array & initialize the individual DIIS tools
 !
       allocate(solver%diis(solver%n_singlet_states))
 !
@@ -192,7 +195,7 @@ contains
                                         crop=crop,                          &
                                         records_in_memory=records_in_memory)
 !
-      enddo  
+      enddo
 !
 !
    end function new_diis_cc_es
@@ -200,16 +203,16 @@ contains
 !
    subroutine print_settings_diis_cc_es(solver)
 !!
-!!    Print settings    
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Print settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(diis_cc_es) :: solver 
+      class(diis_cc_es) :: solver
 !
       call solver%print_es_settings()
 !
-      if (solver%davidson_preconvergence) then 
+      if (solver%davidson_preconvergence) then
 !
          call output%printf('m', 'Enabled preconvergence using&
                                  & the non-linear Davidson solver.', fs='(t6,a)')
@@ -224,14 +227,14 @@ contains
 !
    subroutine read_settings_diis_cc_es(solver, records_in_memory, crop, diis_dimension)
 !!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(diis_cc_es)          :: solver 
+      class(diis_cc_es)          :: solver
       logical, intent(inout)     :: records_in_memory, crop
-      integer, intent(inout)     :: diis_dimension 
+      integer, intent(inout)     :: diis_dimension
 !
       call solver%read_es_settings(records_in_memory)
       call solver%read_diis_settings(crop, diis_dimension)
@@ -241,19 +244,19 @@ contains
 !
    subroutine read_diis_settings_diis_cc_es(solver, crop, diis_dimension)
 !!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
       class(diis_cc_es)           :: solver
       logical, intent(inout)      :: crop
-      integer, intent(inout)      :: diis_dimension 
+      integer, intent(inout)      :: diis_dimension
 !
       call input%get_keyword('diis dimension', 'solver cc es', diis_dimension)
       crop = input%is_keyword_present('crop', 'solver cc es')
 !
-      if (input%is_keyword_present('davidson preconvergence', 'solver cc es')) then 
+      if (input%is_keyword_present('davidson preconvergence', 'solver cc es')) then
 !
          solver%davidson_preconvergence = .true.
 !
@@ -268,7 +271,7 @@ contains
 !
    subroutine run_diis_cc_es(solver, wf)
 !!
-!!    Run 
+!!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -280,7 +283,7 @@ contains
       logical, dimension(:), allocatable :: converged
 !
       real(dp), dimension(:), allocatable :: prev_energies
-      real(dp), dimension(:), allocatable :: residual_norms 
+      real(dp), dimension(:), allocatable :: residual_norms
 !
       integer, dimension(:), allocatable :: X_order
 !
@@ -293,13 +296,16 @@ contains
 !
       real(dp) :: ddot
 !
-!     Prepare wavefunction for excited state, and possibly do Davidson preconvergence 
+      type(timings) :: iteration_time
+      character(len=30) :: timer_name
+!
+!     Prepare wavefunction for excited state, and possibly do Davidson preconvergence
 !
       call solver%prepare_wf_for_excited_state(wf)
 !
-      if (solver%davidson_preconvergence) then 
+      if (solver%davidson_preconvergence) then
 !
-         call solver%do_davidson_preconvergence(wf)   ! Use Davidson to get first guesses 
+         call solver%do_davidson_preconvergence(wf)   ! Use Davidson to get first guesses
          solver%restart = .true.                      ! Restart from these guesses
 !
       endif
@@ -308,10 +314,10 @@ contains
 !
       do state = 1, solver%n_singlet_states
 !
-         call solver%diis(state)%initialize_storers()
+         call solver%diis(state)%initialize()
 !
-      enddo  
-! 
+      enddo
+!
       call mem%alloc(eps, wf%n_es_amplitudes)
       call wf%get_orbital_differences(eps, wf%n_es_amplitudes)
 !
@@ -323,13 +329,13 @@ contains
       call solver%initialize_start_vector_tool(wf)
       call solver%initialize_projection_tool(wf)
 !
-!     Initialize energies, residual norms, and convergence arrays 
+!     Initialize energies, residual norms, and convergence arrays
 !
       call mem%alloc(prev_energies, solver%n_singlet_states)
       call mem%alloc(residual_norms, solver%n_singlet_states)
 !
-      prev_energies     = zero 
-      residual_norms    = zero 
+      prev_energies     = zero
+      residual_norms    = zero
 !
       call mem%alloc(converged, (solver%n_singlet_states))
 !
@@ -351,7 +357,11 @@ contains
 !
       do while (.not. all(converged) .and. (iteration .le. solver%max_iterations))
 !
-         iteration = iteration + 1   
+         iteration = iteration + 1
+!
+         write(timer_name, '(a,i0)') 'DIIS: CC ES iteration ', iteration
+         iteration_time = timings(trim(timer_name), pl="n")
+         call iteration_time%turn_on()
 !
          call output%printf('n', 'Iteration: (i18)', ints=[iteration], fs='(/t3,a)')
 !
@@ -360,9 +370,9 @@ contains
 !
          do state = 1, solver%n_singlet_states
 !
-            if (.not. converged(state)) then 
+            if (.not. converged(state)) then
 !
-!              Construct R = AX 
+!              Construct R = AX
 !
                call wf%construct_Jacobian_transform(solver%transformation, &
                                                       X(:,state),          &
@@ -377,13 +387,14 @@ contains
 !
                solver%energies(state) = ddot(wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
 !
-!              Construct residual, R = A X - energy X, and calculate its norm           
+!              Construct residual, R = A X - energy X, and calculate its norm
 !
-               call daxpy(wf%n_es_amplitudes, -solver%energies(state), X(:,state), 1, R(:,state), 1)
+               call daxpy(wf%n_es_amplitudes, -solver%energies(state), &
+                          X(:,state), 1, R(:,state), 1)
 !
                residual_norms(state) = get_l2_norm(R(:, state), wf%n_es_amplitudes)
 !
-!              Update convergence logicals 
+!              Update convergence logicals
 !
                converged(state) = solver%convergence_checker%has_converged(residual_norms(state), &
                                           solver%energies(state)-prev_energies(state), iteration)
@@ -393,7 +404,7 @@ contains
 !
                if (.not. converged(state)) then
 !
-!                 Form quasi-Newton estimate for X 
+!                 Form quasi-Newton estimate for X
 !
                   call solver%preconditioner%do_(R(:,state),                     &
                                                  shift=solver%energies(state),   &
@@ -405,14 +416,14 @@ contains
 !
                   call solver%diis(state)%update(R(:,state), X(:,state))
 !
-!                 Renormalize X 
+!                 Renormalize X
 !
                   norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
                   call dscal(wf%n_es_amplitudes, one/norm_X, X(:, state), 1)
 !
-               endif 
+               endif
 !
-            endif 
+            endif
 !
             call output%printf('n', '(i4)  (f18.12)      (e11.4)', &
                                ints=[state], reals=[solver%energies(state), &
@@ -428,15 +439,18 @@ contains
                                     solver%transformation,   &
                                     solver%energies)
 !
-         prev_energies = solver%energies 
+         prev_energies = solver%energies
 !
          call output%print_separator('n', 47, '-')
 !
-      enddo 
+         call iteration_time%turn_off()
+         call iteration_time%reset()
 !
-      if (all(converged)) then 
+      enddo
 !
-         if (iteration .eq. 1) then 
+      if (all(converged)) then
+!
+         if (iteration .eq. 1) then
 !
             call output%printf('n', 'Note: residual of all states converged  in &
                                &first iteration.', fs='(/t3,a)')
@@ -482,7 +496,7 @@ contains
 !
          call wf%set_excitation_energies(solver%energies, solver%transformation)
 !
-      else 
+      else
 !
          call output%error_msg("Did not converge in the max number of iterations.")
 !
@@ -498,9 +512,9 @@ contains
 !
       do state = 1, solver%n_singlet_states
 !
-         call solver%diis(state)%finalize_storers()
+         call solver%diis(state)%finalize()
 !
-      enddo 
+      enddo
 !
       call solver%preconditioner%destruct_precondition_vector()
 !
@@ -509,21 +523,21 @@ contains
 !
    subroutine do_davidson_preconvergence_diis_cc_es(solver, wf)
 !!
-!!    Do Davidson preconvergence 
+!!    Do Davidson preconvergence
 !!    Written by Eirik F. Kjønstad, Jan 2020
 !!
 !!    Sets up non-linear Davidson solver and runs it to get first guesses
-!!    for the eigenstates. 
+!!    for the eigenstates.
 !!
       use nonlinear_davidson_cc_es_class, only: nonlinear_davidson_cc_es
 !
-      implicit none 
+      implicit none
 !
-      class(diis_cc_es), intent(in) :: solver 
+      class(diis_cc_es), intent(in) :: solver
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
-      class(nonlinear_davidson_cc_es), allocatable :: davidson_solver 
+      class(nonlinear_davidson_cc_es), allocatable :: davidson_solver
 !
       real(dp) :: relative_micro_residual_threshold
       integer  :: max_dim_red, max_micro_iterations
@@ -535,13 +549,13 @@ contains
                               & the DIIS solver will restart from the preconverged&
                               & solutions.', ffs='(/t3,a)')
 !
-!     Set some defaults 
+!     Set some defaults
 !
       max_micro_iterations              = 100
       max_dim_red                       = 100
       relative_micro_residual_threshold = 1.0d-1
 !
-!     Read non-default values, if provided by user 
+!     Read non-default values, if provided by user
 !
       call input%get_keyword('max reduced dimension',  &
                                         'solver cc es',&
@@ -562,13 +576,13 @@ contains
 !
       davidson_solver = nonlinear_davidson_cc_es(solver%transformation,             &
                                                  wf,                                &
-                                                 solver%restart,                    &  
+                                                 solver%restart,                    &
                                                  solver%preconvergence_threshold,   &
                                                  solver%preconvergence_threshold,   &
                                                  solver%max_iterations,             &
-                                                 relative_micro_residual_threshold, & 
-                                                 max_micro_iterations,              & 
-                                                 max_dim_red,                       & 
+                                                 relative_micro_residual_threshold, &
+                                                 max_micro_iterations,              &
+                                                 max_dim_red,                       &
                                                  solver%es_type,                    &
                                                  records_in_memory,                 &
                                                  solver%n_singlet_states,           &

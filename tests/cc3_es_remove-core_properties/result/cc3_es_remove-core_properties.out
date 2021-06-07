@@ -1,0 +1,1368 @@
+
+
+
+                     eT 1.3 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.3.0 Disco
+  ------------------------------------------------------------
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-06-07 12:51:19 UTC +02:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: H2O He
+        charge: 0
+     end system
+
+     do
+        response
+     end do
+
+     method
+        hf
+        cc3
+     end method
+
+     cc response
+        eom
+        dipole length
+        transition moments
+        permanent moments
+        initial states: {0,1,2}
+     end cc response
+
+     solver scf
+        gradient threshold: 1.0d-11
+     end solver scf
+
+     solver cholesky
+        threshold: 1.0d-11
+     end solver cholesky
+
+     solver cc gs
+        omega threshold: 1.0d-11
+     end solver cc gs
+
+     solver cc multipliers
+        threshold: 1.0d-11
+        algorithm: diis
+     end solver cc multipliers
+
+     solver cc es
+        residual threshold: 1.0d-11
+        singlet states: 2
+        algorithm: diis
+        remove core: {1}
+     end solver cc es
+
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: RHF wavefunction
+  ======================
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: 6-31g
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  H    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
+        4 He     0.100000000000    -0.020000000000     7.530000000000        4
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: 6-31g
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  H    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
+        4 He     0.188972612457    -0.037794522491    14.229637717975        4
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               15
+     Number of orthonormal atomic orbitals:   15
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:          9
+     Number of molecular orbitals:       15
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+     Residual threshold:            0.1000E-10
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:               -78.485136072337
+     Number of electrons in guess:           12.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -78.759259688337     0.9315E-01     0.7876E+02
+     2           -78.790545677504     0.7454E-01     0.3129E-01
+     3           -78.805987538171     0.7727E-02     0.1544E-01
+     4           -78.806355852929     0.1505E-02     0.3683E-03
+     5           -78.806369558065     0.1296E-03     0.1371E-04
+     6           -78.806369659066     0.1050E-04     0.1010E-06
+     7           -78.806369660755     0.2711E-05     0.1688E-08
+     8           -78.806369660952     0.8248E-06     0.1975E-09
+     9           -78.806369660959     0.1312E-06     0.6608E-11
+    10           -78.806369660959     0.4228E-08     0.1563E-12
+    11           -78.806369660959     0.2450E-08     0.0000E+00
+    12           -78.806369660959     0.7088E-09     0.0000E+00
+    13           -78.806369660959     0.2080E-09     0.2842E-13
+    14           -78.806369660959     0.2204E-10     0.0000E+00
+    15           -78.806369660959     0.2200E-11     0.1421E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 15 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.663332329042
+     Nuclear repulsion energy:      12.116100574587
+     Electronic energy:            -90.922470235546
+     Total energy:                 -78.806369660959
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              0.09072
+     Total cpu time (sec):               0.12339
+
+
+  :: CC3 wavefunction
+  ======================
+
+     Bath orbital(s):         False
+
+   - Number of orbitals:
+
+     Occupied orbitals:    6
+     Virtual orbitals:     9
+     Molecular orbitals:   15
+     Atomic orbitals:      15
+
+   - Number of ground state amplitudes:
+
+     Single excitation amplitudes:  54
+     Double excitation amplitudes:  1485
+
+
+  :: Coupled cluster response engine
+  =====================================
+
+  Calculates dipole transition moments and oscillator strengths between 
+
+  the ground state and the excited states.
+
+  This is a CC3 response calculation.
+  The following tasks will be performed:
+
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
+     4) Calculation of the multipliers (diis algorithm)
+     5) Calculation of the excited states (diis algorithm)
+     6) Calculation of excited state properties (EOM)
+
+
+  1) Cholesky decomposition of the electron repulsion integrals
+
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-10
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition ao details:
+
+     Total number of AOs:                    15
+     Total number of shell pairs:            66
+     Total number of AO pairs:              120
+
+     Significant shell pairs:                64
+     Significant AO pairs:                  118
+
+     Construct shell pairs:                  66
+     Construct AO pairs:                    120
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               102 /      55       0.47804E+01          54             20              2040
+     2                66 /      42       0.36454E-01          67             51              3366
+     3                34 /      24       0.27633E-03          46             79              2686
+     4                 7 /       7       0.25199E-05          27            103               721
+     5                 1 /       1       0.93553E-08           6            109               109
+     6                 0 /       0       0.14355E-10           1            110                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 110
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.4523E-11
+     Minimal element of difference between approximate and actual diagonal:  -0.3503E-15
+
+  - Settings for integral handling:
+
+     Cholesky vectors in memory: True
+     ERI matrix in memory:       False
+     T1 ERI matrix in memory:    True
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.01734
+     Total cpu time (sec):               0.03333
+
+
+  2) Preparation of MO basis and integrals
+
+
+  3) Calculation of the ground state (diis algorithm)
+
+   - DIIS coupled cluster ground state solver
+  ----------------------------------------------
+
+  A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
+  of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
+  13.
+
+  - CC ground state solver settings:
+
+     Residual threshold:            0.1000E-10
+     Max number of iterations:      100
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (cc_gs_diis_e): file
+     Storage (cc_gs_diis_x): file
+
+  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ---------------------------------------------------------------
+    1           -78.959620318959     0.7544E-01     0.7896E+02
+    2           -78.964852948126     0.2756E-01     0.5233E-02
+    3           -78.971694451425     0.5725E-02     0.6842E-02
+    4           -78.972290669555     0.1757E-02     0.5962E-03
+    5           -78.972382584411     0.4110E-03     0.9191E-04
+    6           -78.972382916650     0.1415E-03     0.3322E-06
+    7           -78.972372129518     0.2827E-04     0.1079E-04
+    8           -78.972372735238     0.8062E-05     0.6057E-06
+    9           -78.972372438188     0.3127E-05     0.2971E-06
+   10           -78.972372162544     0.1097E-05     0.2756E-06
+   11           -78.972372211304     0.3525E-06     0.4876E-07
+   12           -78.972372207804     0.1445E-06     0.3499E-08
+   13           -78.972372209819     0.5932E-07     0.2015E-08
+   14           -78.972372205381     0.1738E-07     0.4438E-08
+   15           -78.972372205376     0.3867E-08     0.5002E-11
+   16           -78.972372205593     0.9068E-09     0.2174E-09
+   17           -78.972372205608     0.2441E-09     0.1440E-10
+   18           -78.972372205604     0.7476E-10     0.3297E-11
+   19           -78.972372205603     0.1954E-10     0.1620E-11
+   20           -78.972372205602     0.7672E-11     0.7958E-12
+  ---------------------------------------------------------------
+  Convergence criterion met in 20 iterations!
+
+  - Ground state summary:
+
+     Final ground state energy (a.u.):   -78.972372205602
+
+     Correlation energy (a.u.):           -0.166002544643
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         t(a,i)
+     -----------------------------------
+        1      5        0.017936463507
+        7      4        0.012496816920
+        9      5        0.008025182459
+        2      4        0.007532730788
+        5      6        0.006287658986
+        6      2        0.005573845852
+        6      5        0.003376320152
+        8      5        0.003331452952
+        3      4        0.003298499231
+        4      5        0.002503722828
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         t(ai,bj)
+     --------------------------------------------------
+        2      4       2      4       -0.065385713004
+        5      6       5      6       -0.048064920822
+        8      3       8      3       -0.047785603479
+        1      5       1      5       -0.045748441499
+        2      4       1      5       -0.042104763426
+        6      5       6      5       -0.039111805978
+        1      4       1      4       -0.034183628625
+        1      4       2      5       -0.029865841231
+        2      5       2      5       -0.029556890554
+        6      5       5      6        0.029129551961
+     --------------------------------------------------
+
+  - Finished solving the CC3 ground state equations
+
+     Total wall time (sec):              0.05935
+     Total cpu time (sec):               0.11921
+
+
+  4) Calculation of the multipliers (diis algorithm)
+
+   - DIIS coupled cluster multipliers solver
+  ---------------------------------------------
+
+  A DIIS CC multiplier equations solver. It combines a quasi-Newton perturbation 
+  theory estimate of the next multipliers, using least square fitting 
+  to find an an optimal combination of previous estimates such that the 
+  update is minimized.
+
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
+  13, for the more details on this algorithm.
+
+  - DIIS CC multipliers solver settings:
+
+     Residual threshold:        0.10E-10
+     Max number of iterations:       100
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (cc_multipliers_diis_e): file
+     Storage (cc_multipliers_diis_x): file
+
+  Iteration    Norm residual
+  ----------------------------
+    1          0.7114E+00
+    2          0.1117E+00
+    3          0.3810E-01
+    4          0.7512E-02
+    5          0.2111E-02
+    6          0.5276E-03
+    7          0.1471E-03
+    8          0.3299E-04
+    9          0.1110E-04
+   10          0.4330E-05
+   11          0.1124E-05
+   12          0.3420E-06
+   13          0.1622E-06
+   14          0.6981E-07
+   15          0.2159E-07
+   16          0.6088E-08
+   17          0.1876E-08
+   18          0.6316E-09
+   19          0.1786E-09
+   20          0.5786E-10
+   21          0.1585E-10
+   22          0.4507E-11
+  ----------------------------
+  Convergence criterion met in 22 iterations!
+
+  - DIIS CC multipliers solver summary:
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         tbar(a,i)
+     -----------------------------------
+        1      5        0.031076307902
+        7      4        0.023913495018
+        9      5        0.015172891039
+        2      4        0.011247921367
+        5      6        0.009917674111
+        6      2        0.009776450016
+        6      5        0.007647846404
+        8      5        0.006287675627
+        3      4        0.006063615865
+        4      5        0.004768660921
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         tbar(ai,bj)
+     --------------------------------------------------
+        2      4       2      4       -0.127996025934
+        2      4       1      5       -0.104716434270
+        6      5       5      6        0.098408237939
+        5      6       5      6       -0.096940288953
+        8      3       8      3       -0.095189964867
+        2      4       5      6       -0.091555166665
+        1      5       1      5       -0.088657477209
+        7      4       5      6        0.080962886192
+        6      5       6      5       -0.077446179669
+        2      4       6      5        0.077222511765
+     --------------------------------------------------
+
+  - Finished solving the cc3 multipliers equations
+
+     Total wall time (sec):              0.09481
+     Total cpu time (sec):               0.19054
+
+
+  5) Calculation of the excited states (diis algorithm)
+     Calculating right vectors
+
+   - DIIS coupled cluster excited state solver
+  -----------------------------------------------
+
+  A DIIS solver that solves for the lowest eigenvalues and  the right 
+  eigenvectors of the Jacobian matrix, A. The eigenvalue  problem is solved 
+  by DIIS extrapolation of residuals for each  eigenvector until the convergence 
+  criteria are met.
+
+  More on the DIIS algorithm can be found in P. Pulay, Chemical Physics 
+  Letters, 73(2), 393-398 (1980).
+
+  - Settings for coupled cluster excited state solver (DIIS):
+
+     Calculation type:    remove core
+     Excitation vectors:  right
+
+     Residual threshold:            0.1000E-10
+
+     Number of singlet states:               2
+     Max number of iterations:             100
+
+  - DIIS tool settings:
+
+     DIIS dimension:  20
+
+     Storage (diis_cc_es_001_e): file
+     Storage (diis_cc_es_001_x): file
+
+  - DIIS tool settings:
+
+     DIIS dimension:  20
+
+     Storage (diis_cc_es_002_e): file
+     Storage (diis_cc_es_002_x): file
+
+  Iteration:                  1
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.351211409953       0.3399E+00
+     2      0.462829296782       0.3287E+00
+  -----------------------------------------------
+
+  Iteration:                  2
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.257920308532       0.8072E-01
+     2      0.368360978544       0.8693E-01
+  -----------------------------------------------
+
+  Iteration:                  3
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.250897574260       0.2910E-01
+     2      0.358920357977       0.3297E-01
+  -----------------------------------------------
+
+  Iteration:                  4
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251046252446       0.9327E-02
+     2      0.357261660128       0.1112E-01
+  -----------------------------------------------
+
+  Iteration:                  5
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251189441115       0.2417E-02
+     2      0.357194810958       0.4715E-02
+  -----------------------------------------------
+
+  Iteration:                  6
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251243308154       0.8916E-03
+     2      0.357186392541       0.4689E-02
+  -----------------------------------------------
+
+  Iteration:                  7
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251257810545       0.3173E-03
+     2      0.357225610666       0.3439E-02
+  -----------------------------------------------
+
+  Iteration:                  8
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258873119       0.1158E-03
+     2      0.357256933063       0.1420E-02
+  -----------------------------------------------
+
+  Iteration:                  9
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251259043481       0.6467E-04
+     2      0.357222741815       0.4775E-03
+  -----------------------------------------------
+
+  Iteration:                 10
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251259056627       0.3940E-04
+     2      0.357219963116       0.1290E-03
+  -----------------------------------------------
+
+  Iteration:                 11
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258521271       0.1591E-04
+     2      0.357220067570       0.5696E-04
+  -----------------------------------------------
+
+  Iteration:                 12
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258482738       0.6170E-05
+     2      0.357220069272       0.4271E-04
+  -----------------------------------------------
+
+  Iteration:                 13
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258547277       0.1509E-05
+     2      0.357220107035       0.4397E-04
+  -----------------------------------------------
+
+  Iteration:                 14
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258586715       0.3697E-06
+     2      0.357220044283       0.3937E-04
+  -----------------------------------------------
+
+  Iteration:                 15
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258593512       0.1264E-06
+     2      0.357219882033       0.1880E-04
+  -----------------------------------------------
+
+  Iteration:                 16
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594700       0.8198E-07
+     2      0.357220013102       0.6002E-05
+  -----------------------------------------------
+
+  Iteration:                 17
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258595076       0.6064E-07
+     2      0.357220067351       0.2167E-05
+  -----------------------------------------------
+
+  Iteration:                 18
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594574       0.2846E-07
+     2      0.357220074170       0.1016E-05
+  -----------------------------------------------
+
+  Iteration:                 19
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594402       0.8345E-08
+     2      0.357220070763       0.5055E-06
+  -----------------------------------------------
+
+  Iteration:                 20
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594429       0.2110E-08
+     2      0.357220065492       0.2824E-06
+  -----------------------------------------------
+
+  Iteration:                 21
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594444       0.9749E-09
+     2      0.357220064709       0.1990E-06
+  -----------------------------------------------
+
+  Iteration:                 22
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594450       0.4708E-09
+     2      0.357220066710       0.1279E-06
+  -----------------------------------------------
+
+  Iteration:                 23
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594447       0.1789E-09
+     2      0.357220066657       0.5321E-07
+  -----------------------------------------------
+
+  Iteration:                 24
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.7665E-10
+     2      0.357220066426       0.2008E-07
+  -----------------------------------------------
+
+  Iteration:                 25
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.3019E-10
+     2      0.357220066400       0.1019E-07
+  -----------------------------------------------
+
+  Iteration:                 26
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.9824E-11
+     2      0.357220066429       0.5359E-08
+  -----------------------------------------------
+
+  Iteration:                 27
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.9824E-11
+     2      0.357220066457       0.2019E-08
+  -----------------------------------------------
+
+  Iteration:                 28
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.9824E-11
+     2      0.357220066448       0.6710E-09
+  -----------------------------------------------
+
+  Iteration:                 29
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.9824E-11
+     2      0.357220066442       0.2073E-09
+  -----------------------------------------------
+
+  Iteration:                 30
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.9824E-11
+     2      0.357220066441       0.5538E-10
+  -----------------------------------------------
+
+  Iteration:                 31
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.9824E-11
+     2      0.357220066442       0.1483E-10
+  -----------------------------------------------
+
+  Iteration:                 32
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.9824E-11
+     2      0.357220066442       0.4627E-11
+  -----------------------------------------------
+  Convergence criterion met in 32 iterations!
+
+  - Resorting roots according to excitation energy.
+
+  - Stored converged states to file.
+
+  - Excitation vector amplitudes:
+
+     Electronic state nr. 1
+
+     Energy (Hartree):                  0.251258594445
+     Fraction singles (|R1|/|R|):       0.965959237113
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         R(a,i)
+     -----------------------------------
+        1      6        0.961303632266
+        4      6        0.084452398951
+        6      6       -0.025397553425
+        9      6       -0.025209501607
+        8      6       -0.017215585202
+        1      3       -0.011109040708
+        5      6        0.008615535835
+        1      5        0.006514341525
+        5      5       -0.003627591102
+        4      3       -0.001934159710
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         R(ai,bj)
+     --------------------------------------------------
+        2      4       1      6       -0.133300378512
+        1      5       1      6       -0.125372274096
+        1      4       2      6       -0.090655036082
+        1      2       1      6       -0.072740096659
+        1      6       5      6       -0.061491154249
+        2      5       2      6       -0.048358088490
+        3      4       1      6       -0.044773041494
+        6      5       1      6        0.040311881006
+        4      5       1      6       -0.036895507362
+        7      4       1      6        0.032792380710
+     --------------------------------------------------
+
+     Electronic state nr. 2
+
+     Energy (Hartree):                  0.357220066442
+     Fraction singles (|R1|/|R|):       0.973766812387
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         R(a,i)
+     -----------------------------------
+        1      5        0.952921991197
+        2      4       -0.165338531092
+        1      2       -0.060306695447
+        4      5        0.055868132098
+        5      6       -0.043483990330
+        3      4       -0.040350422730
+        7      4        0.028474295029
+        9      5       -0.024893586388
+        4      2       -0.015698621015
+        6      5        0.013811495684
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         R(ai,bj)
+     --------------------------------------------------
+        1      5       1      5       -0.117068180528
+        2      4       1      5       -0.106359898660
+        1      4       2      5       -0.067797833472
+        1      5       6      5        0.049159512494
+        2      5       2      5       -0.047714734656
+        1      2       2      4        0.037527274226
+        1      5       4      5       -0.035884543772
+        1      4       1      4        0.034527219527
+        2      5       3      5       -0.034310702603
+        1      5       5      6       -0.034243406428
+     --------------------------------------------------
+
+     - Electronic excitation energies:
+
+                                      Excitation energy
+                          ------------------------------------------
+      State                (Hartree)             (eV)
+     ---------------------------------------------------------------
+        1                  0.251258594445        6.837094604298
+        2                  0.357220066442        9.720453122034
+     ---------------------------------------------------------------
+     eV/Hartree (CODATA 2014): 27.21138602
+
+  - Finished solving the CC3 excited state equations (right)
+
+     Total wall time (sec):              0.17349
+     Total cpu time (sec):               0.34507
+
+
+  5) Calculation of the excited states (diis algorithm)
+     Calculating left vectors
+
+   - DIIS coupled cluster excited state solver
+  -----------------------------------------------
+
+  A DIIS solver that solves for the lowest eigenvalues and  the right 
+  eigenvectors of the Jacobian matrix, A. The eigenvalue  problem is solved 
+  by DIIS extrapolation of residuals for each  eigenvector until the convergence 
+  criteria are met.
+
+  More on the DIIS algorithm can be found in P. Pulay, Chemical Physics 
+  Letters, 73(2), 393-398 (1980).
+
+  - Settings for coupled cluster excited state solver (DIIS):
+
+     Calculation type:    remove core
+     Excitation vectors:  left
+
+     Residual threshold:            0.1000E-10
+
+     Number of singlet states:               2
+     Max number of iterations:             100
+
+  - DIIS tool settings:
+
+     DIIS dimension:  20
+
+     Storage (diis_cc_es_001_e): file
+     Storage (diis_cc_es_001_x): file
+
+  - DIIS tool settings:
+
+     DIIS dimension:  20
+
+     Storage (diis_cc_es_002_e): file
+     Storage (diis_cc_es_002_x): file
+     Restarting left vector 1 from file r_001.
+     Restarting left vector 2 from file r_002.
+
+  Iteration:                  1
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.247994214920       0.6893E-01
+     2      0.354148229275       0.1138E+00
+  -----------------------------------------------
+
+  Iteration:                  2
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.250312408180       0.1798E-01
+     2      0.357392307513       0.3172E-01
+  -----------------------------------------------
+
+  Iteration:                  3
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.250793682721       0.4765E-02
+     2      0.356515966740       0.1136E-01
+  -----------------------------------------------
+
+  Iteration:                  4
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251159444332       0.1565E-02
+     2      0.357294866129       0.3924E-02
+  -----------------------------------------------
+
+  Iteration:                  5
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251233460478       0.5326E-03
+     2      0.357248808725       0.1484E-02
+  -----------------------------------------------
+
+  Iteration:                  6
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258576347       0.1826E-03
+     2      0.357228711637       0.6854E-03
+  -----------------------------------------------
+
+  Iteration:                  7
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251260255889       0.5844E-04
+     2      0.357224117962       0.4756E-03
+  -----------------------------------------------
+
+  Iteration:                  8
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258587814       0.1643E-04
+     2      0.357226471783       0.4428E-03
+  -----------------------------------------------
+
+  Iteration:                  9
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258647640       0.7007E-05
+     2      0.357217949735       0.1405E-03
+  -----------------------------------------------
+
+  Iteration:                 10
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258618328       0.4267E-05
+     2      0.357219687460       0.3974E-04
+  -----------------------------------------------
+
+  Iteration:                 11
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258562493       0.2519E-05
+     2      0.357220373258       0.1667E-04
+  -----------------------------------------------
+
+  Iteration:                 12
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258579498       0.8452E-06
+     2      0.357220214783       0.7570E-05
+  -----------------------------------------------
+
+  Iteration:                 13
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258588704       0.2604E-06
+     2      0.357220080928       0.4109E-05
+  -----------------------------------------------
+
+  Iteration:                 14
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258593210       0.6571E-07
+     2      0.357220076124       0.3253E-05
+  -----------------------------------------------
+
+  Iteration:                 15
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594333       0.2580E-07
+     2      0.357220079955       0.3261E-05
+  -----------------------------------------------
+
+  Iteration:                 16
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594473       0.1744E-07
+     2      0.357220078546       0.2396E-05
+  -----------------------------------------------
+
+  Iteration:                 17
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594481       0.1193E-07
+     2      0.357220047663       0.1076E-05
+  -----------------------------------------------
+
+  Iteration:                 18
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594499       0.5796E-08
+     2      0.357220054073       0.4302E-06
+  -----------------------------------------------
+
+  Iteration:                 19
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594472       0.1686E-08
+     2      0.357220063455       0.2209E-06
+  -----------------------------------------------
+
+  Iteration:                 20
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594452       0.4940E-09
+     2      0.357220066586       0.1277E-06
+  -----------------------------------------------
+
+  Iteration:                 21
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.1674E-09
+     2      0.357220067527       0.8672E-07
+  -----------------------------------------------
+
+  Iteration:                 22
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594444       0.6721E-10
+     2      0.357220067478       0.5123E-07
+  -----------------------------------------------
+
+  Iteration:                 23
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.2262E-10
+     2      0.357220066424       0.2196E-07
+  -----------------------------------------------
+
+  Iteration:                 24
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.8100E-11
+     2      0.357220066358       0.5823E-08
+  -----------------------------------------------
+
+  Iteration:                 25
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.8100E-11
+     2      0.357220066409       0.1692E-08
+  -----------------------------------------------
+
+  Iteration:                 26
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.8100E-11
+     2      0.357220066429       0.5180E-09
+  -----------------------------------------------
+
+  Iteration:                 27
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.8100E-11
+     2      0.357220066439       0.1879E-09
+  -----------------------------------------------
+
+  Iteration:                 28
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.8100E-11
+     2      0.357220066443       0.9283E-10
+  -----------------------------------------------
+
+  Iteration:                 29
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.8100E-11
+     2      0.357220066443       0.4422E-10
+  -----------------------------------------------
+
+  Iteration:                 30
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.8100E-11
+     2      0.357220066442       0.1584E-10
+  -----------------------------------------------
+
+  Iteration:                 31
+
+   Root     Eigenvalue (Re)     Residual norm
+  -----------------------------------------------
+     1      0.251258594445       0.8100E-11
+     2      0.357220066442       0.6737E-11
+  -----------------------------------------------
+  Convergence criterion met in 31 iterations!
+
+  - Resorting roots according to excitation energy.
+
+  - Stored converged states to file.
+
+  - Excitation vector amplitudes:
+
+     Electronic state nr. 1
+
+     Energy (Hartree):                  0.251258594445
+     Fraction singles (|L1|/|L|):       0.952884177388
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         L(a,i)
+     -----------------------------------
+        1      6        0.948670637875
+        4      6        0.079731292632
+        9      6       -0.024835544006
+        6      6       -0.022684634783
+        8      6       -0.016324989731
+        1      3       -0.011090878290
+        5      6        0.008133478793
+        1      5        0.006505049772
+        5      5       -0.003923811330
+        4      3       -0.001932247059
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         L(ai,bj)
+     --------------------------------------------------
+        2      4       1      6       -0.172893872409
+        1      5       1      6       -0.109291971156
+        6      5       1      6        0.075635244095
+        7      4       1      6        0.073634546859
+        1      2       1      6       -0.071574819694
+        4      5       1      6       -0.067993444628
+        3      4       1      6       -0.065380123540
+        4      4       2      6       -0.057307736051
+        1      6       5      6       -0.055725655918
+        2      5       2      6       -0.046205174492
+     --------------------------------------------------
+
+     Electronic state nr. 2
+
+     Energy (Hartree):                  0.357220066442
+     Fraction singles (|L1|/|L|):       0.942979867471
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         L(a,i)
+     -----------------------------------
+        1      5        0.923935735074
+        2      4       -0.156978597227
+        1      2       -0.057737687559
+        4      5        0.051646383698
+        5      6       -0.038119177564
+        3      4       -0.037569985288
+        9      5       -0.023814616331
+        7      4        0.023761449428
+        4      2       -0.014283414396
+        6      5        0.013030474732
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         L(ai,bj)
+     --------------------------------------------------
+        1      5       1      5       -0.195047145424
+        2      4       1      5       -0.139383840866
+        2      5       2      5       -0.091261660917
+        1      4       1      4        0.068254298636
+        7      4       1      5        0.059419135778
+        1      2       2      4        0.059365712116
+        3      4       1      5       -0.058002000748
+        4      4       2      5       -0.056852413265
+        1      5       5      6       -0.051869634112
+        1      5       6      5        0.050838394141
+     --------------------------------------------------
+
+     - Electronic excitation energies:
+
+                                      Excitation energy
+                          ------------------------------------------
+      State                (Hartree)             (eV)
+     ---------------------------------------------------------------
+        1                  0.251258594445        6.837094604297
+        2                  0.357220066442        9.720453122036
+     ---------------------------------------------------------------
+     eV/Hartree (CODATA 2014): 27.21138602
+
+  - Finished solving the CC3 excited state equations (left)
+
+     Total wall time (sec):              0.16479
+     Total cpu time (sec):               0.32828
+
+
+  6) Calculation of excited state properties (EOM)
+
+  :: EOM properties calculation
+
+  - Summary of EOM transition properties calculation:
+
+     States m = 0 and n = 1:
+     -------------------------
+     Calculation type:                             EOM
+     Excitation energy [E_h]:           0.251258594445
+     Excitation energy [eV]:            6.837094604298
+     Hartree-to-eV (CODATA 2014):          27.21138602
+
+                   Transition moments [a.u.]         Transition strength [a.u.]
+     --------------------------------------------------------------------------
+     Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
+     --------------------------------------------------------------------------
+     X           0.0002025174      0.0003965876            0.0000000803
+     Y           0.0019598003      0.0037964436            0.0000074403
+     Z          -0.1219147765     -0.2368137891            0.0288711002
+     --------------------------------------------------------------------------
+     Oscillator strength:      0.004837334439
+
+     States m = 0 and n = 2:
+     -------------------------
+     Calculation type:                             EOM
+     Excitation energy [E_h]:           0.357220066442
+     Excitation energy [eV]:            9.720453122034
+     Hartree-to-eV (CODATA 2014):          27.21138602
+
+                   Transition moments [a.u.]         Transition strength [a.u.]
+     --------------------------------------------------------------------------
+     Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
+     --------------------------------------------------------------------------
+     X           0.0004025138      0.0007916717            0.0000003187
+     Y          -0.4965402796     -0.9759767507            0.4846117687
+     Z           0.0025134086      0.0049391999            0.0000124142
+     --------------------------------------------------------------------------
+     Oscillator strength:      0.115411731096
+
+     States m = 1 and n = 2:
+     -------------------------
+     Calculation type:                             EOM
+     Excitation energy [E_h]:           0.105961471996
+     Excitation energy [eV]:            2.883358517737
+     Hartree-to-eV (CODATA 2014):          27.21138602
+
+                   Transition moments [a.u.]         Transition strength [a.u.]
+     --------------------------------------------------------------------------
+     Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
+     --------------------------------------------------------------------------
+     X           0.0002958726      0.0002963137            0.0000000877
+     Y          -0.0026303927     -0.0026574222            0.0000069901
+     Z          -0.1512924857     -0.1501183548            0.0227117790
+     --------------------------------------------------------------------------
+     Oscillator strength:      0.001604882338
+
+  - Summary of EOM permanent moments calculation:
+
+     Total permanent dipole moments in [a.u.]:
+     =========================================
+
+     Conversion factor from au to Debye: 2.541746473
+
+
+      Comp.        Nuclear              0              1              2
+     -------------------------------------------------------------------
+      X           0.377945       0.000008       0.002561       0.002655
+      Y           1.051746       0.956296       0.039354       0.055732
+      Z         122.945582       0.003989       0.010086       0.007425
+     -------------------------------------------------------------------
+     Norm       122.950661       0.956304       0.040707       0.056287
+     -------------------------------------------------------------------
+
+  - Timings for the CC3 response calculation
+
+     Total wall time (sec):              0.57531
+     Total cpu time (sec):               1.14980
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 1.441400 MB
+
+  Total wall time in eT (sec):              0.67425
+  Total cpu time in eT (sec):               1.28374
+
+  Calculation ended: 2021-06-07 12:51:20 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     CC3: https://doi.org/10.1021/acs.jctc.0c00686
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
+
+  eT terminated successfully!

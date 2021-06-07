@@ -24,7 +24,7 @@ module lowmem_cc2_class
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto and Alexander C. Paul, 2018
 !!
-!!    Version of CC2 that has an O(M^2) memory requirement - making it suitable 
+!!    Version of CC2 that has an O(M^2) memory requirement - making it suitable
 !!    to treat larger systems than the standard CC2 wavefunction.
 !!
 !
@@ -50,6 +50,12 @@ module lowmem_cc2_class
       procedure :: calculate_energy => calculate_energy_lowmem_cc2
 !
       procedure :: construct_Jacobian_transform       => construct_Jacobian_transform_lowmem_cc2
+!
+      procedure :: prepare_for_approximate_Jacobians  &
+                => prepare_for_approximate_Jacobians_lowmem_cc2
+!
+      procedure :: approximate_Jacobian_transform     &
+                => approximate_Jacobian_transform_lowmem_cc2
 !
       procedure :: effective_jacobian_transformation  => effective_jacobian_transformation_lowmem_cc2
 !
@@ -140,10 +146,10 @@ contains
 !!
 !!    Wrapper for Jacobian transformations
 !!
-!!    r_or_l: string that should be 'left' or 'right', 
+!!    r_or_l: string that should be 'left' or 'right',
 !!            determines if Jacobian or Jacobian transpose is called
 !!
-!!    X: On input contains the vector to transform, 
+!!    X: On input contains the vector to transform,
 !!       on output contains the transformed vector
 !!
 !!    w: Excitation energy. Only used for debug prints for CCS, CCSD etc.
@@ -173,11 +179,11 @@ contains
 !
       if (r_or_l .eq. "right") then
 !
-         call wf%effective_jacobian_transformation(w, X, R) ! X <- AX
+         call wf%effective_jacobian_transformation(w, X, R)
 !
       else if (r_or_l .eq. "left") then
 !
-         call wf%effective_jacobian_transpose_transformation(w, X, R, wf%cvs) ! X <- A^TX
+         call wf%effective_jacobian_transpose_transformation(w, X, R, wf%cvs, wf%rm_core)
 !
       else
 !
@@ -186,6 +192,52 @@ contains
       end if
 !
    end subroutine construct_Jacobian_transform_lowmem_cc2
+!
+!
+   subroutine approximate_Jacobian_transform_lowmem_cc2(wf, r_or_l, X, R, w)
+!!
+!!    Approximate Jacobian transform
+!!    Written by Eirik F. Kjønstad, Mar 2021
+!!
+!!    Wrapper for a lower-level Jacobian transformation that is the best approximation
+!!    with a lower computational scaling.
+!!
+      implicit none
+!
+      class(lowmem_cc2), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: r_or_l
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)  :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: R
+!
+      real(dp), intent(in), optional :: w
+!
+      call wf%ccs%construct_Jacobian_transform(r_or_l, X, R, w)
+!
+   end subroutine approximate_Jacobian_transform_lowmem_cc2
+!
+!
+   subroutine prepare_for_approximate_Jacobians_lowmem_cc2(wf, r_or_l)
+!!
+!!    Prepare for approximate Jacobians
+!!    Written by Eirik F. Kjønstad, Mar 2021
+!!
+!!    Wrapper for preparations to a lower-level Jacobian transformation that is
+!!    the best approximation with a lower computational scaling.
+!!
+!!    r_or_l: 'left', 'right', or 'both'
+!!            (prepares for A^T, A, or both A^T and A)
+!!
+      implicit none
+!
+      class(lowmem_cc2), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: r_or_l
+!
+      call wf%ccs%prepare_for_Jacobians(r_or_l)
+!
+   end subroutine prepare_for_approximate_Jacobians_lowmem_cc2
 !
 !
 end module lowmem_cc2_class

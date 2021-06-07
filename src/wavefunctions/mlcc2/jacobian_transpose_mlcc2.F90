@@ -81,7 +81,7 @@ contains
 !     CC2 contributions to the transformed singles vector
 !
       call wf%jacobian_transpose_cc2_a1(sigma(1 : wf%n_t1), b(1 : wf%n_t1), &
-                                        wf%n_cc2_o, wf%n_cc2_v, wf%first_cc2_o, wf%first_cc2_v)
+                                        wf%n_cc2_o, wf%n_cc2_v, 1, 1)
 !
       call mem%alloc(b_aibj, (wf%n_cc2_v), (wf%n_cc2_o), (wf%n_cc2_v), (wf%n_cc2_o))
 !
@@ -89,7 +89,7 @@ contains
                     b_aibj, wf%n_cc2_v*wf%n_cc2_o)
 !
       call wf%jacobian_transpose_cc2_b1(sigma(1 : wf%n_t1), b_aibj, wf%n_cc2_o, wf%n_cc2_v, &
-                                    wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+                                    1, 1, wf%n_cc2_o, wf%n_cc2_v)
 !
 !     CC2 contributions to the transformed doubles vector
 !
@@ -99,7 +99,7 @@ contains
 !     Contributions from singles vector c
 !
       call wf%jacobian_transpose_cc2_a2(sigma_aibj, b(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
-                                 wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+                                 1, 1, wf%n_cc2_o, wf%n_cc2_v)
 
 !     Symmetrize
 !
@@ -425,7 +425,7 @@ contains
          call mem%alloc(g_bjca, n_cc2_v, n_cc2_o, n_cc2_v, batch_a%length)
 !
          call wf%eri%get_eri_t1('vovv', g_bjca, first_v, last_v, first_o, last_o, &
-                                                first_v, last_v, batch_a%first, batch_a%last)
+                                                first_v, last_v, batch_a%first, batch_a%get_last())
 !
 !        sigma_ai =+ sum_bjc g_abjc c_bjci
 !
@@ -616,9 +616,9 @@ contains
 !
          call mem%alloc(g_cajb, batch_c%length, n_cc2_v, n_cc2_o, n_cc2_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_cajb, batch_c%first, batch_c%last, &
-                                                first_v, last_v,             &
-                                                first_o, last_o,             &
+         call wf%eri%get_eri_t1('vvov', g_cajb, batch_c%first, batch_c%get_last(),  &
+                                                first_v, last_v,                    &
+                                                first_o, last_o,                    &
                                                 first_v, last_v)
 !
          call mem%alloc(L_cajb, batch_c%length, n_cc2_v, n_cc2_o, n_cc2_v)
@@ -693,10 +693,10 @@ contains
                do a = 1, wf%n_cc2_v
 !
                   sigma_aibj(a, i, b, j) = sigma_aibj(a, i, b, j) + c_aibj(a,i,b,j) &
-                                          *(wf%orbital_energies(a + wf%first_cc2_v - 1 + wf%n_o) &
-                                          + wf%orbital_energies(b + wf%first_cc2_v - 1 + wf%n_o) &
-                                          - wf%orbital_energies(i + wf%first_cc2_o - 1) &
-                                          - wf%orbital_energies(j + wf%first_cc2_o - 1))
+                                          *(wf%orbital_energies(a + wf%n_o) &
+                                          + wf%orbital_energies(b + wf%n_o) &
+                                          - wf%orbital_energies(i) &
+                                          - wf%orbital_energies(j))
 !
                enddo
             enddo

@@ -26,6 +26,7 @@ module davidson_tool_class
 !
    use parameters
 !
+   use range_class
    use record_storer_class, only: record_storer
    use memory_manager_class, only: mem 
    use global_out, only: output
@@ -33,7 +34,6 @@ module davidson_tool_class
    use precondition_tool_class, only: precondition_tool
    use batching_index_class, only: batching_index
    use timings_class, only: timings 
-   use interval_class, only: interval
 !
    type, abstract :: davidson_tool
 !
@@ -107,8 +107,7 @@ module davidson_tool_class
       procedure :: cleanup                                     &
                 => cleanup_davidson_tool
 !
-      procedure :: destruct_reduced_space_quantities           &
-                => destruct_reduced_space_quantities_davidson_tool
+      procedure(destruct_reduced_space_quantities), deferred :: destruct_reduced_space_quantities 
 !
       procedure :: set_lindep_threshold                        &
                 => set_lindep_threshold_davidson_tool
@@ -117,6 +116,21 @@ module davidson_tool_class
                 => reset_reduced_space_davidson_tool
 !
    end type davidson_tool
+!
+!
+   abstract interface
+!
+      subroutine destruct_reduced_space_quantities(davidson)
+!
+         import :: davidson_tool
+!
+         implicit none 
+!
+         class(davidson_tool) :: davidson 
+!
+      end subroutine destruct_reduced_space_quantities
+!
+   end interface
 !
 !
 contains
@@ -141,14 +155,14 @@ contains
 !
       call davidson%reset_reduced_space()
 !
-      call davidson%trials%initialize_storer()
-      call davidson%transforms%initialize_storer()
+      call davidson%trials%initialize()
+      call davidson%transforms%initialize()
 !
-      call mem%alloc(davidson%omega_re, davidson%n_solutions)
-      call mem%alloc(davidson%omega_im, davidson%n_solutions)
+      call mem%alloc(davidson%omega_re, davidson%max_dim_red)
+      call mem%alloc(davidson%omega_im, davidson%max_dim_red)
 !
-      call zero_array(davidson%omega_re, davidson%n_solutions)
-      call zero_array(davidson%omega_im, davidson%n_solutions)
+      call zero_array(davidson%omega_re, davidson%max_dim_red)
+      call zero_array(davidson%omega_im, davidson%max_dim_red)
 !
    end subroutine initialize_davidson_tool
 !
@@ -165,11 +179,11 @@ contains
 !
       class(davidson_tool) :: davidson 
 !
-      call davidson%trials%finalize_storer()
-      call davidson%transforms%finalize_storer()
+      call davidson%trials%finalize()
+      call davidson%transforms%finalize()
 !
-      call mem%dealloc(davidson%omega_re, davidson%n_solutions)
-      call mem%dealloc(davidson%omega_im, davidson%n_solutions)
+      call mem%dealloc(davidson%omega_re, davidson%max_dim_red)
+      call mem%dealloc(davidson%omega_im, davidson%max_dim_red)
 !
       call davidson%destruct_reduced_space_quantities()
       if (davidson%do_precondition) call davidson%preconditioner%destruct_precondition_vector()
@@ -403,7 +417,7 @@ contains
 !
       type(batching_index), allocatable :: batch_i, batch_j
 !
-      type(interval), allocatable :: i_interval 
+      type(range_), allocatable :: i_interval 
 !
       integer, parameter :: n_orthonormalizations = 2
 !
@@ -493,18 +507,19 @@ contains
 !
 !              Load only i vectors that are needed for the j batch 
 !
-               i_interval = interval(first=batch_i%first, &
-                                     last=min(batch_i%last, batch_j%first - 1))
+               i_interval = range_(batch_i%first,                                &
+                                   min(batch_i%get_last(), batch_j%first - 1) -  &
+                                   batch_i%first + 1)
 !
                if (i_interval%length .lt. 1) cycle ! No i vectors to load; 
-                                                   ! go to next i batch 
+                                                         ! go to next i batch 
 !
                call davidson%trials%load(c_i, i_interval, 2)
 !
 !              Remove i components along j vectors 
 !
-               do j = batch_j%first, batch_j%last
-                  do i = i_interval%first, i_interval%last
+               do j = batch_j%first, batch_j%get_last()
+                  do i = i_interval%first, i_interval%get_last()
 !
                      r_ji = ddot(davidson%n_parameters,              &
                                  c_j(:, j - batch_j%first + 1),      &
@@ -512,11 +527,11 @@ contains
                                  c_i(:, i - i_interval%first + 1),   &
                                  1)                  
 !
-                     call daxpy(davidson%n_parameters,               &
-                                -r_ji,                               &
-                                c_i(:, i - i_interval%first + 1),    &
-                                1,                                   &
-                                c_j(:, j - batch_j%first + 1),       &
+                     call daxpy(davidson%n_parameters,            &
+                                -r_ji,                            &
+                                c_i(:, i - i_interval%first + 1), &
+                                1,                                &
+                                c_j(:, j - batch_j%first + 1),    &
                                 1)
 !
                   enddo
@@ -529,17 +544,17 @@ contains
 !
                do i = 1, j - 1
 !
-                  r_ji = ddot(davidson%n_parameters,              &
-                              c_j(:, j),                          &
-                              1,                                  &
-                              c_j(:, i),                          &
+                  r_ji = ddot(davidson%n_parameters,  &
+                              c_j(:, j),              &
+                              1,                      &
+                              c_j(:, i),              &
                               1)                  
 !
-                  call daxpy(davidson%n_parameters,               &
-                             -r_ji,                               &
-                             c_j(:, i),                           &
-                             1,                                   &
-                             c_j(:, j),                           &
+                  call daxpy(davidson%n_parameters,   &
+                             -r_ji,                   &
+                             c_j(:, i),               &
+                             1,                       &
+                             c_j(:, j),               &
                              1)
 !
                enddo 
@@ -783,6 +798,14 @@ contains
 !
       type(batching_index), allocatable :: batch_i 
 !
+      if (n .gt. davidson%dim_red) then 
+!
+        call output%error_msg('Tried to construct a full space vector (n = (i0)) that does not &
+                              &correspond to a reduced space solution (dim_red = (i0)).', &
+                              ints=[n, davidson%dim_red])
+!
+      endif
+!
       req_0 = 0
       req_1 = y_vectors%required_to_load_record()
 !
@@ -800,17 +823,17 @@ contains
 !
          call y_vectors%load(y_i, batch_i)
 !
-         call dgemm('N', 'N',                            &
-                     davidson%n_parameters,              &
-                     1,                                  &
-                     batch_i%length,                     &
-                     one,                                &
-                     y_i,                                & ! y_alpha,i
-                     davidson%n_parameters,              &
-                     davidson%X_red(batch_i%first,n),    & ! Xred_i,n 
-                     davidson%dim_red,                   &
-                     one,                                &
-                     y,                                  & ! y_alpha,n
+         call dgemm('N', 'N',                         &
+                     davidson%n_parameters,           &
+                     1,                               &
+                     batch_i%length,                  &
+                     one,                             &
+                     y_i,                             & ! y_alpha,i
+                     davidson%n_parameters,           &
+                     davidson%X_red(batch_i%first,n), & ! Xred_i,n 
+                     davidson%dim_red,                &
+                     one,                             &
+                     y,                               & ! y_alpha,n
                      davidson%n_parameters)
 !
       enddo
@@ -895,7 +918,7 @@ contains
 !
       enddo
 !
-      call davidson%trials%copy_record_in(X, interval(1, davidson%n_solutions))
+      call davidson%trials%copy_record_in(X, range_(1, davidson%n_solutions))
 !
       call mem%dealloc(X, davidson%n_parameters, davidson%n_solutions)
 !
@@ -907,27 +930,6 @@ contains
       davidson%n_new_trials = davidson%n_solutions
 !
    end subroutine set_trials_to_solutions_davidson_tool
-!
-!
-   subroutine destruct_reduced_space_quantities_davidson_tool(davidson)
-!!
-!!    Destruct reduced space quantities 
-!!    Written by Eirik F. Kjønstad, Jan 2020
-!!
-!!    Deallocates reduced space quantities, e.g. when re-setting the reduced space,
-!!    or upon destruction of the Davidson tool.
-!!
-      implicit none 
-!
-      class(davidson_tool) :: davidson
-!
-      if (allocated(davidson%A_red)) &
-         call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
-!
-      if (allocated(davidson%X_red)) &
-         call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
-!
-   end subroutine destruct_reduced_space_quantities_davidson_tool
 !
 !
    subroutine update_reduced_dim_davidson_tool(davidson)

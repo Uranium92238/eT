@@ -263,14 +263,12 @@ contains
       davidson%trials = record_storer(trim(davidson%name_) // '_trials',            &
                                       davidson%n_parameters,                        &
                                       davidson%max_dim_red + davidson%n_solutions,  &
-                                      records_in_memory,                            &
-                                      delete=.true.)
+                                      records_in_memory)
 !
       davidson%transforms = record_storer(trim(davidson%name_) // '_transforms',       &
                                           davidson%n_parameters,                       &
                                           davidson%max_dim_red + davidson%n_solutions, &
-                                          records_in_memory,                           &
-                                          delete=.true.)
+                                          records_in_memory)
 !
 !
    end subroutine general_preparations_linear_davidson_tool
@@ -440,7 +438,7 @@ contains
                      davidson%n_rhs,                     &
                      davidson%n_parameters,              &
                      one,                                &
-                     c,                                  & ! c_alpha,i 
+                     c,                                  & ! c_alpha,i
                      davidson%n_parameters,              &
                      davidson%F,                         & ! F_alpha,k
                      davidson%n_parameters,              &

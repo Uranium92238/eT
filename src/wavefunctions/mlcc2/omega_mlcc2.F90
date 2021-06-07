@@ -62,13 +62,13 @@ contains
       call wf%construct_u_aibj()
 !
       call wf%omega_cc2_a1(omega(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
-                           wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+                           1, 1, wf%n_cc2_o, wf%n_cc2_v)
 !
       call wf%omega_cc2_b1(omega(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
-                           wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+                           1, 1, wf%n_cc2_o, wf%n_cc2_v)
 !
       call wf%omega_cc2_c1(omega(1 : wf%n_t1), wf%n_cc2_o, wf%n_cc2_v, &
-                           wf%first_cc2_o, wf%first_cc2_v)
+                           1, 1)
 !
       call timer%turn_off()
 !
@@ -158,10 +158,10 @@ contains
          call batch_a%determine_limits(current_a_batch)
 !
          call mem%alloc(L_Jab, wf%eri%n_J, batch_a%length, n_cc2_v)
-         call wf%eri%get_cholesky_t1(L_Jab,                       &
-                                          wf%n_o + batch_a%first, &
-                                          wf%n_o + batch_a%last,  & 
-                                          wf%n_o + first_cc2_v,   &
+         call wf%eri%get_cholesky_t1(L_Jab,                             &
+                                          wf%n_o + batch_a%first,       &
+                                          wf%n_o + batch_a%get_last(),  & 
+                                          wf%n_o + first_cc2_v,         &
                                           wf%n_o + last_cc2_v)
 !
          call mem%alloc(L_aJb, batch_a%length, wf%eri%n_J, n_cc2_v)

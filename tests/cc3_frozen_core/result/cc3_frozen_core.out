@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:28:15 UTC +01:00
+  Calculation started: 2021-06-07 12:51:08 UTC +02:00
 
 
   :: Input file
@@ -159,10 +159,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Integral cutoff:               0.1000E-16
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -180,14 +181,14 @@
      5           -78.843645357974     0.3300E-03     0.4132E-04
      6           -78.843646180978     0.5523E-04     0.8230E-06
      7           -78.843646204481     0.5847E-05     0.2350E-07
-     8           -78.843646205182     0.2352E-05     0.7013E-09
-     9           -78.843646205256     0.2067E-06     0.7368E-10
-    10           -78.843646205256     0.1571E-07     0.3837E-12
-    11           -78.843646205256     0.4353E-08     0.0000E+00
-    12           -78.843646205256     0.1445E-08     0.4263E-13
+     8           -78.843646205182     0.2352E-05     0.7014E-09
+     9           -78.843646205256     0.2067E-06     0.7365E-10
+    10           -78.843646205256     0.1571E-07     0.4547E-12
+    11           -78.843646205256     0.4353E-08     0.7105E-13
+    12           -78.843646205256     0.1445E-08     0.5684E-13
     13           -78.843646205256     0.5059E-09     0.4263E-13
-    14           -78.843646205256     0.1398E-09     0.1137E-12
-    15           -78.843646205256     0.1657E-10     0.5684E-13
+    14           -78.843646205256     0.1398E-09     0.7105E-13
+    15           -78.843646205256     0.1657E-10     0.7105E-13
     16           -78.843646205256     0.3178E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
@@ -201,8 +202,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.55182
-     Total cpu time (sec):               1.06767
+     Total wall time (sec):              0.30662
+     Total cpu time (sec):               0.56541
 
   - Preparation for frozen core approximation
 
@@ -213,7 +214,6 @@
   ======================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -302,8 +302,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.20094
-     Total cpu time (sec):               0.40094
+     Total wall time (sec):              0.11359
+     Total cpu time (sec):               0.22841
 
 
   2) Preparation of MO basis and integrals
@@ -354,7 +354,7 @@
    18           -79.102288108708     0.1236E-09     0.4168E-10
    19           -79.102288108713     0.3736E-10     0.4846E-11
    20           -79.102288108715     0.1263E-10     0.1847E-11
-   21           -79.102288108716     0.3579E-11     0.7105E-12
+   21           -79.102288108716     0.3578E-11     0.7105E-12
   ---------------------------------------------------------------
   Convergence criterion met in 21 iterations!
 
@@ -398,8 +398,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              0.40772
-     Total cpu time (sec):               0.81568
+     Total wall time (sec):              0.28575
+     Total cpu time (sec):               0.56997
 
 
   4) Calculation of the excited state (diis algorithm)
@@ -651,22 +651,33 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.247301791911        6.729424523128
+        1                  0.247301791911        6.729424523129
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              0.57131
-     Total cpu time (sec):               1.14332
+     Total wall time (sec):              0.46144
+     Total cpu time (sec):               0.92137
 
   - Timings for the CC3 excited state calculation
 
-     Total wall time (sec):              1.18050
-     Total cpu time (sec):               2.36047
+     Total wall time (sec):              0.86134
+     Total cpu time (sec):               1.72031
 
-     Peak memory usage during the execution of eT: 15.484464 MB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:28:17 UTC +01:00
+  Peak memory usage during the execution of eT: 15.484464 MB
+
+  Total wall time in eT (sec):              1.19610
+  Total cpu time in eT (sec):               2.33090
+
+  Calculation ended: 2021-06-07 12:51:09 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     CC3: https://doi.org/10.1021/acs.jctc.0c00686
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!

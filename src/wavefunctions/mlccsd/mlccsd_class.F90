@@ -274,16 +274,21 @@ contains
 !
    subroutine initialize_mlccsd(wf, template_wf)
 !!
-!!    New mlccsd
+!!    Initialize mlccsd
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Adapted by Sarai D. Folkestad from CCS constructer, 2020
 !!
+      use citation_class,           only : citation
+      use citation_printer_class,   only : eT_citations
+!
       implicit none
 !
       class(mlccsd), intent(inout) :: wf 
 !
       class(wavefunction), intent(in) :: template_wf
+!
+      type(citation), allocatable :: reference 
 !
 !     If we have a CC2 level, we will set the AO fock matrix from the template wavefunction.
 !     The AO fock is currently only constructed for the reference wavefunctions.
@@ -319,6 +324,9 @@ contains
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
 !
+      if (wf%ao%has_ghost_atoms()) &
+         call output%warning_msg("Ghosts are experimental in multilevel.")
+!
       if (wf%bath_orbital) call output%error_msg('Bath orbitals not yet implemented for MLCCSD')
 !      
       call wf%read_mlcc_settings()
@@ -349,6 +357,20 @@ contains
          wf%T_cnto_v_file = stream_file('cnto_N_transformation')
 !
       endif
+!
+      reference = citation(implementation = 'MLCC2 and MLCCSD',                             &
+                           journal        = 'J. Chem. Theory Comput.',                      &
+                           title_         = 'Multilevel CC2 and CCSD Methods with &
+                                             &Correlated Natural Transition Orbitals',      &
+                           volume         = '16',                                           &
+                           issue          = '1',                                            &
+                           pages          = '179–189',                                      &
+                           year           = '2019',                                         &
+                           doi            = '10.1021/acs.jctc.9b00701',                     &
+                           authors        = [character(len=25) :: 'Sarai Dery Folkestad',   &
+                                                                  'Henrik Koch'])
+!
+      call eT_citations%add(reference)
 !
    end subroutine initialize_mlccsd
 !

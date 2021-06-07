@@ -8,7 +8,8 @@ do
 end do
 
 memory
-   available: 8
+   available: 8000000000
+   unit: B
 end memory
 
 solver scf

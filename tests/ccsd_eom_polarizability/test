@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 
-# provides os.path.join
-import os
-
-# provides exit
+from pathlib import Path
 import sys
 
 # we make sure we can import runtest and runtest_config
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(str(Path(__file__).parents[1]))
 
 # we import essential functions from the runtest library
-from runtest import version_info, get_filter, cli, run
+from runtest import version_info, cli, run
+
+# functions to get the filters
+from filters import get_gs_filter, get_polarizability_filter
 
 # this tells runtest how to run your code
 from runtest_config import configure
@@ -19,22 +19,10 @@ from runtest_config import configure
 assert version_info.major == 2
 
 # construct filter(s)
-f = [
-    get_filter(string='<< mu_x, mu_x >>(0.20E-01):',
-               abs_tolerance=1.0e-10),
-    get_filter(string='<< mu_z, mu_x >>(0.20E-01):',
-               abs_tolerance=1.0e-10),
-    get_filter(string='<< mu_x, mu_x >>(0.40E-01):',
-               abs_tolerance=1.0e-10),
-    get_filter(string='<< mu_z, mu_x >>(0.40E-01):',
-               abs_tolerance=1.0e-10),
-    get_filter(string='<< mu_x, mu_x >>(0.60E-01):',
-               abs_tolerance=1.0e-10),
-    get_filter(string='<< mu_z, mu_x >>(0.60E-01):',
-               abs_tolerance=1.0e-10),
-    get_filter(string='Final ground state energy (a.u.):',
-               abs_tolerance=1.0e-10)
-]
+tolerance = 1.0e-10
+f = get_gs_filter(tolerance)
+g = get_polarizability_filter(tolerance)
+f.extend(g)
 
 # invoke the command line interface parser which returns options
 options = cli()

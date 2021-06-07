@@ -1,0 +1,45 @@
+system
+   name:  HOF
+   charge: 0
+end system
+
+do
+   excited state
+end do
+
+memory
+   available: 8
+end memory
+
+method
+   hf
+   ccsd
+end method
+
+solver scf
+   energy threshold:   1.0d-6
+   gradient threshold: 1.0d-6
+end solver scf
+
+solver cholesky
+   threshold: 1.0d-6
+end solver cholesky
+
+solver cc gs
+   storage: memory
+   energy threshold: 1.0d-4
+   omega threshold:  1.0d-4
+end solver cc gs
+
+solver cc es
+   storage: memory
+   singlet states: 3
+   residual threshold: 1.0d-4
+end solver cc es
+
+geometry
+basis: aug-cc-pVDZ
+O 0.000001366400 0.000000000000 -0.000039640155
+H 1.089989888926 0.000000000000 -0.000001945621
+F -0.030596536778 0.000000000000 1.306169602322
+end geometry

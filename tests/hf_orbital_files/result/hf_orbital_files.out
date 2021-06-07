@@ -1,0 +1,202 @@
+
+
+
+                     eT 1.3 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.3.0 Disco
+  ------------------------------------------------------------
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-06-07 12:49:27 UTC +02:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: H2O He
+        charge: 0
+     end system
+
+     do
+        ground state
+     end do
+
+     memory
+        available: 8
+     end memory
+
+     solver scf
+        algorithm:          scf-diis
+        energy threshold:   1.0d-11
+        gradient threshold: 1.0d-11
+        write molden
+        print orbitals
+     end solver scf
+
+     method
+        hf
+     end method
+
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: RHF wavefunction
+  ======================
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: 6-31g(2df,p)
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  H    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
+        4 He     0.000000000000     0.000000000000     7.500000000000        4
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: 6-31g(2df,p)
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  H    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
+        4 He     0.000000000000     0.000000000000    14.172945934238        4
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               55
+     Number of orthonormal atomic orbitals:   55
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:         49
+     Number of molecular orbitals:       55
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:               -78.484417586942
+     Number of electrons in guess:           12.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -78.797967663339     0.8878E-01     0.7880E+02
+     2           -78.828051235097     0.7207E-01     0.3008E-01
+     3           -78.844373860361     0.6304E-02     0.1632E-01
+     4           -78.844670616794     0.2583E-02     0.2968E-03
+     5           -78.844712924276     0.5434E-03     0.4231E-04
+     6           -78.844714487781     0.5177E-04     0.1564E-05
+     7           -78.844714511580     0.3869E-05     0.2380E-07
+     8           -78.844714511778     0.9754E-06     0.1980E-09
+     9           -78.844714511794     0.2316E-06     0.1626E-10
+    10           -78.844714511796     0.5755E-07     0.1336E-11
+    11           -78.844714511796     0.8195E-08     0.1421E-13
+    12           -78.844714511796     0.2796E-08     0.4263E-13
+    13           -78.844714511796     0.9666E-09     0.4263E-13
+    14           -78.844714511796     0.1904E-09     0.5684E-13
+    15           -78.844714511796     0.9392E-11     0.4263E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 15 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.666604330139
+     Nuclear repulsion energy:      12.167611407170
+     Electronic energy:            -91.012325918966
+     Total energy:                 -78.844714511796
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              0.51293
+     Total cpu time (sec):               0.95592
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 616.520 KB
+
+  Total wall time in eT (sec):              0.52152
+  Total cpu time in eT (sec):               0.96577
+
+  Calculation ended: 2021-06-07 12:49:27 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+
+  eT terminated successfully!

@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 
-# provides os.path.join
-import os
-
-# provides exit
+from pathlib import Path
 import sys
 
 # we make sure we can import runtest and runtest_config
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(str(Path(__file__).parents[1]))
 
 # we import essential functions from the runtest library
 from runtest import version_info, get_filter, cli, run
@@ -44,7 +41,7 @@ f.extend(g)
 options = cli()
 
 ierr = 0
-for inp in ['ccsd.inp']:
+for inp in ['ccsd_frozen_core_xenon.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:28:32 UTC +01:00
+  Calculation started: 2021-06-07 12:51:15 UTC +02:00
 
 
   :: Input file
@@ -159,10 +159,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Integral cutoff:               0.1000E-16
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -181,14 +182,14 @@
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
      8           -78.843851693557     0.2356E-05     0.7054E-09
-     9           -78.843851693630     0.2071E-06     0.7375E-10
-    10           -78.843851693631     0.1594E-07     0.4121E-12
-    11           -78.843851693631     0.3322E-08     0.7105E-13
-    12           -78.843851693631     0.1197E-08     0.7105E-13
-    13           -78.843851693631     0.4264E-09     0.7105E-13
-    14           -78.843851693631     0.1280E-09     0.4263E-13
-    15           -78.843851693631     0.1479E-10     0.0000E+00
-    16           -78.843851693631     0.2907E-11     0.0000E+00
+     9           -78.843851693630     0.2071E-06     0.7378E-10
+    10           -78.843851693631     0.1594E-07     0.3837E-12
+    11           -78.843851693631     0.3322E-08     0.0000E+00
+    12           -78.843851693631     0.1197E-08     0.0000E+00
+    13           -78.843851693631     0.4264E-09     0.0000E+00
+    14           -78.843851693631     0.1280E-09     0.1421E-13
+    15           -78.843851693631     0.1479E-10     0.7105E-13
+    16           -78.843851693631     0.2911E-11     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -201,15 +202,14 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.53728
-     Total cpu time (sec):               1.02965
+     Total wall time (sec):              0.32408
+     Total cpu time (sec):               0.56015
 
 
   :: CC3 wavefunction
   ======================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -238,8 +238,8 @@
      2) Preparation of MO basis and integrals
      3) Calculation of the ground state (diis algorithm)
      4) Calculation of the multipliers (diis algorithm)
-     5) Calculation of the excited state (diis algorithm)
-     6) Calculation of the transition moments (EOM)
+     5) Calculation of the excited states (diis algorithm)
+     6) Calculation of excited state properties (EOM)
 
 
   1) Cholesky decomposition of the electron repulsion integrals
@@ -302,8 +302,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.19993
-     Total cpu time (sec):               0.39993
+     Total wall time (sec):              0.11208
+     Total cpu time (sec):               0.22361
 
 
   2) Preparation of MO basis and integrals
@@ -397,8 +397,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              0.54478
-     Total cpu time (sec):               1.08868
+     Total wall time (sec):              0.39965
+     Total cpu time (sec):               0.79854
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -489,11 +489,11 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              0.82109
-     Total cpu time (sec):               1.64107
+     Total wall time (sec):              0.66128
+     Total cpu time (sec):               1.32125
 
 
-  5) Calculation of the excited state (diis algorithm)
+  5) Calculation of the excited states (diis algorithm)
      Calculating right vectors
 
    - DIIS coupled cluster excited state solver
@@ -776,11 +776,11 @@
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              1.04431
-     Total cpu time (sec):               2.08833
+     Total wall time (sec):              0.82402
+     Total cpu time (sec):               1.64781
 
 
-  5) Calculation of the excited state (diis algorithm)
+  5) Calculation of the excited states (diis algorithm)
      Calculating left vectors
 
    - DIIS coupled cluster excited state solver
@@ -1050,18 +1050,18 @@
 
   - Finished solving the CC3 excited state equations (left)
 
-     Total wall time (sec):              0.97455
-     Total cpu time (sec):               1.95055
+     Total wall time (sec):              0.78275
+     Total cpu time (sec):               1.56667
 
 
-  6) Calculation of the transition moments (EOM)
+  6) Calculation of excited state properties (EOM)
 
   :: EOM properties calculation
 
-  - Summary of EOM properties calculation:
+  - Summary of EOM transition properties calculation:
 
-     State 1:
-     ----------
+     States m = 0 and n = 1:
+     -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.247341124690
      Excitation energy [eV]:            6.730494822563
@@ -1069,7 +1069,7 @@
 
                    Transition moments [a.u.]         Transition strength [a.u.]
      --------------------------------------------------------------------------
-     Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >
+     Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
      --------------------------------------------------------------------------
      X           0.0004557875      0.0008884628            0.0000004050
      Y           0.0026773303      0.0051509350            0.0000137908
@@ -1079,11 +1079,22 @@
 
   - Timings for the CC3 response calculation
 
-     Total wall time (sec):              3.86589
-     Total cpu time (sec):               7.72978
+     Total wall time (sec):              2.99733
+     Total cpu time (sec):               5.99129
 
-     Peak memory usage during the execution of eT: 17.585784 MB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:28:36 UTC +01:00
+  Peak memory usage during the execution of eT: 17.744976 MB
+
+  Total wall time in eT (sec):              3.34098
+  Total cpu time in eT (sec):               6.57788
+
+  Calculation ended: 2021-06-07 12:51:18 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     CC3: https://doi.org/10.1021/acs.jctc.0c00686
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!

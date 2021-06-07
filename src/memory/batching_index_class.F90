@@ -62,9 +62,9 @@ module batching_index_class
    use kinds
    use parameters
    use global_out, only : output
-   use interval_class
+   use range_class
 !
-   type, extends(interval) :: batching_index
+   type, extends(range_) :: batching_index
 !
 !     Values determined by the memory manager 
 !
@@ -156,7 +156,7 @@ contains
    end function new_batching_index
 !
 !
-   subroutine determine_limits_batching_index(batch_p, batch_number)
+   subroutine determine_limits_batching_index(this, batch_number)
 !!
 !!    Determine limits
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
@@ -170,13 +170,13 @@ contains
 !!
       implicit none
 !
-      class(batching_index) :: batch_p ! p is general index (can be virtual or occupied or other)
+      class(batching_index) :: this
 !
       integer, intent(in) :: batch_number ! The current batch
 !
 !     Sanity check
 !
-      if (.not. batch_p%initialized) then
+      if (.not. this%initialized) then
 !
          call output%error_msg('a non-initialized batching variable was used.')
 !
@@ -184,45 +184,44 @@ contains
 !
 !     Determine limits of batch, q = first, first + 1, ..., last
 !
-      batch_p%first = batch_p%offset + 1 + (batch_number-1)*(batch_p%max_length)
-      batch_p%last  = batch_p%offset + &
-                        min((batch_p%max_length)+(batch_number-1)*(batch_p%max_length), &
-                            batch_p%index_dimension)
-!
-!     Calculate the length of the batch
-!
-      batch_p%length = batch_p%last - batch_p%first + 1
+      if (batch_number .lt. this%num_batches) then
+         this%range_ = range_(this%offset + 1 + (batch_number-1)*this%max_length, &
+                              this%max_length)
+      else
+         this%range_ = range_(this%offset + 1 + (batch_number-1)*this%max_length, &
+                              this%index_dimension - (batch_number-1)*this%max_length)
+      endif
 !
    end subroutine determine_limits_batching_index
 !
 !
-   subroutine force_batch_batching_index(batch_p)
+   subroutine force_batch_batching_index(this)
 !!
 !!    Force batch
 !!    Written by Eirik F. Kjønstad, Sep 2019
 !!
       implicit none
 !
-      class(batching_index) :: batch_p
+      class(batching_index) :: this
 !
       real(dp) :: some_number_between_0_and_1 ! [0, 1)
 !
       call random_number(some_number_between_0_and_1)
 ! 
 !     1, 2, 3, ..., index_dimension - 1
-      batch_p%max_length = 1 + floor((batch_p%index_dimension - 1)*some_number_between_0_and_1) 
+      this%max_length = 1 + floor((this%index_dimension - 1)*some_number_between_0_and_1) 
 !
-      batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
+      this%num_batches = (this%index_dimension-1)/(this%max_length)+1
 !
       call output%printf('debug', 'Forced batch of index with dimension: (i0). &
                          &Number of batches: (i0), Max length of batch: (i0)', &
-                         ints=[batch_p%index_dimension, batch_p%num_batches,   &
-                         batch_p%max_length], ll=90)
+                         ints=[this%index_dimension, this%num_batches,   &
+                         this%max_length], ll=90)
 !
    end subroutine force_batch_batching_index
 !
 !
-   subroutine do_not_batch_batching_index(batch_p)
+   subroutine do_not_batch_batching_index(this)
 !!
 !!    Do not batch 
 !!    Written by Eirik F. Kjønstad, Apr 2020
@@ -232,15 +231,15 @@ contains
 !!
       implicit none 
 !
-      class(batching_index), intent(inout) :: batch_p
+      class(batching_index), intent(inout) :: this
 !
-      batch_p%max_length  = 0
-      batch_p%num_batches = 0
+      this%max_length  = 0
+      this%num_batches = 0
 !
    end subroutine do_not_batch_batching_index
 !
 !
-   subroutine do_single_batch_batching_index(batch_p)
+   subroutine do_single_batch_batching_index(this)
 !!
 !!    Do single batch 
 !!    Written by Eirik F. Kjønstad, Apr 2020 
@@ -250,14 +249,12 @@ contains
 !!
       implicit none 
 !
-      class(batching_index), intent(inout) :: batch_p 
+      class(batching_index), intent(inout) :: this 
 !
-      batch_p%max_length  = batch_p%index_dimension
-      batch_p%num_batches = 1
+      this%max_length  = this%index_dimension
+      this%num_batches = 1
 !
-      batch_p%first  = 1      
-      batch_p%last   = batch_p%index_dimension
-      batch_p%length = batch_p%index_dimension
+      this%range_ = range_(1, this%index_dimension)
 !
    end subroutine do_single_batch_batching_index
 !

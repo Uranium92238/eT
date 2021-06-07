@@ -86,14 +86,14 @@ contains
 !
             call wf%eri%get_eri_t1('vovo', g_aibj, &
                                    1, wf%n_v, &
-                                   batch_i%first, batch_i%last, &
+                                   batch_i%first, batch_i%get_last(), &
                                    1, wf%n_v, &
-                                   batch_j%first, batch_j%last)
+                                   batch_j%first, batch_j%get_last())
 !
             call wf%eri%get_eri_t1('ovov', g_iajb, &
-                                   batch_i%first, batch_i%last, &
+                                   batch_i%first, batch_i%get_last(), &
                                    1, wf%n_v, &
-                                   batch_j%first, batch_j%last, &
+                                   batch_j%first, batch_j%get_last(), &
                                    1, wf%n_v)
 !
 !$omp parallel do private(b,i,j,a) reduction(+:correlation_energy)

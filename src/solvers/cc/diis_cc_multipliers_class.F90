@@ -208,7 +208,7 @@ contains
       call wf%initialize_multipliers()
       call wf%prepare_for_multiplier_equation()
 !
-      call solver%diis%initialize_storers()
+      call solver%diis%initialize()
 !
       call mem%alloc(residual, wf%n_gs_amplitudes)
       call mem%alloc(multipliers, wf%n_gs_amplitudes)
@@ -287,7 +287,7 @@ contains
       call mem%dealloc(multipliers, wf%n_gs_amplitudes)
       call mem%dealloc(epsilon, wf%n_gs_amplitudes)
 !
-      call solver%diis%finalize_storers()
+      call solver%diis%finalize()
 !
    end subroutine run_diis_cc_multipliers
 !

@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 
-# provides os.path.join
-import os
-
-# provides exit
+from pathlib import Path
 import sys
 
 # we make sure we can import runtest and runtest_config
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(str(Path(__file__).parents[1]))
 
 # we import essential functions from the runtest library
 from runtest import version_info, get_filter, cli, run
@@ -29,11 +26,12 @@ f = [
                mask=[2])
 ]
 
-checkfiles = ["ccsd_cvs_lanczos_lanczos30_X", 
-              "ccsd_cvs_lanczos_lanczos30_Y", 
-              "ccsd_cvs_lanczos_lanczos30_Z"]
+checkfiles = ["ccsd_cvs_lanczos.lanczos30_X",
+              "ccsd_cvs_lanczos.lanczos30_Y",
+              "ccsd_cvs_lanczos.lanczos30_Z"]
 
-checkfiles = [os.path.join(os.path.dirname(__file__), i) for i in checkfiles]
+test_dir = Path(__file__).parent
+checkfiles = [test_dir / i for i in checkfiles]
 
 # invoke the command line interface parser which returns options
 options = cli()
@@ -46,11 +44,11 @@ for inp in ['ccsd_cvs_lanczos.inp']:
                 input_files=inp,
                 filters={'out': f})
 
-missing_files = [i for i in checkfiles if not os.path.exists(i)]
+missing_files = [i for i in checkfiles if not i.exists()]
 filerror = len(missing_files)
 
 if filerror > 0:
     print("Missing files:")
-    print("\n".join(missing_files))
+    print("\n".join([i.name for i in missing_files]))
 
-sys.exit(ierr)
+sys.exit(ierr + filerror)

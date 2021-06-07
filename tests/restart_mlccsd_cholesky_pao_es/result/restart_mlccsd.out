@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:29:38 UTC +01:00
+  Calculation started: 2021-06-07 12:51:38 UTC +02:00
 
 
   :: Input file
@@ -163,10 +163,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-17
-     Exchange screening threshold:  0.1000E-15
-     Integral cutoff:               0.1000E-17
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-17
+     Exchange screening threshold:   0.1000E-15
+     ERI cutoff:                     0.1000E-17
+     One-electron integral  cutoff:  0.1000E-22
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -177,7 +178,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.6424E-12     0.7884E+02
+     1           -78.843851693631     0.6423E-12     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -190,15 +191,14 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.04978
-     Total cpu time (sec):               0.05197
+     Total wall time (sec):              0.01727
+     Total cpu time (sec):               0.02830
 
 
   :: MLCCSD wavefunction
   =========================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -283,8 +283,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.21943
-     Total cpu time (sec):               0.43943
+     Total wall time (sec):              0.12415
+     Total cpu time (sec):               0.24814
 
 
   2) Preparation of MO basis and integrals
@@ -332,7 +332,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -79.054599132611     0.5371E-11     0.7905E+02
+    1           -79.054599132611     0.5372E-11     0.7905E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -360,8 +360,8 @@
 
   - Finished solving the MLCCSD ground state equations
 
-     Total wall time (sec):              0.00706
-     Total cpu time (sec):               0.01506
+     Total wall time (sec):              0.00419
+     Total cpu time (sec):               0.00819
 
 
   4) Calculation of the excited state (davidson algorithm)
@@ -407,10 +407,10 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.263246328314    0.000000000000     0.7734E-11   0.2776E-15
-     2   0.356241306558    0.000000000000     0.6089E-12   0.1055E-14
-     3   0.371227026639    0.000000000000     0.3432E-11   0.6661E-14
-     4   0.454501009362    0.000000000000     0.3520E-11   0.1577E-13
+     1   0.263246328315    0.000000000000     0.7733E-11   0.1221E-14
+     2   0.356241306558    0.000000000000     0.6112E-12   0.4885E-14
+     3   0.371227026640    0.000000000000     0.3432E-11   0.2498E-14
+     4   0.454501009362    0.000000000000     0.3518E-11   0.1621E-13
   ------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -418,7 +418,7 @@
 
      Electronic state nr. 1
 
-     Energy (Hartree):                  0.263246328314
+     Energy (Hartree):                  0.263246328315
      Fraction singles (|R1|/|R|):       0.978828499645
 
      MLCC diagnostics:
@@ -430,16 +430,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      5        0.946089983451
-       16      5       -0.214767827314
-       15      5       -0.105647869411
-       10      5       -0.049206120040
-        3      5       -0.029102030032
-        6      5       -0.028354755157
-       13      5        0.023302452209
-        8      5       -0.019610562029
-       19      5        0.011375603491
-        1      6       -0.011166609338
+        1      5       -0.946089983451
+       16      5        0.214767827313
+       15      5        0.105647869411
+       10      5        0.049206120040
+        3      5        0.029102030031
+        6      5        0.028354755157
+       13      5       -0.023302452209
+        8      5        0.019610562029
+       19      5       -0.011375603491
+        1      6        0.011166609338
      ------------------------------------
 
      Electronic state nr. 2
@@ -470,7 +470,7 @@
 
      Electronic state nr. 3
 
-     Energy (Hartree):                  0.371227026639
+     Energy (Hartree):                  0.371227026640
      Fraction singles (|R1|/|R|):       0.984354373891
 
      MLCC diagnostics:
@@ -502,22 +502,22 @@
      MLCC diagnostics:
 
      |R1^internal|/|R| =       0.881342393071
-     |R1^internal|/|R1| =      0.896671291584
+     |R1^internal|/|R1| =      0.896671291583
 
      Largest single amplitudes:
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        2      4        0.722142582254
-        1      3       -0.473304971490
-       14      4        0.394906800870
-        5      4        0.147874125686
-       23      4        0.129048540912
-       16      3        0.110840479851
-       12      4        0.083638224317
-       15      3        0.052486163934
-       18      4       -0.037998865971
-       10      3        0.034348823792
+        2      4       -0.722142582255
+        1      3        0.473304971487
+       14      4       -0.394906800870
+        5      4       -0.147874125686
+       23      4       -0.129048540912
+       16      3       -0.110840479850
+       12      4       -0.083638224318
+       15      3       -0.052486163934
+       18      4        0.037998865971
+       10      3       -0.034348823792
      ------------------------------------
 
      - Electronic excitation energies:
@@ -526,25 +526,36 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.263246328314        7.163297458113
-        2                  0.356241306558        9.693819709021
-        3                  0.371227026639       10.101601922943
+        1                  0.263246328315        7.163297458117
+        2                  0.356241306558        9.693819709019
+        3                  0.371227026640       10.101601922948
         4                  0.454501009362       12.367602412241
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the MLCCSD excited state equations (right)
 
-     Total wall time (sec):              0.01843
-     Total cpu time (sec):               0.03843
+     Total wall time (sec):              0.01319
+     Total cpu time (sec):               0.02519
 
   - Timings for the MLCCSD excited state calculation
 
-     Total wall time (sec):              0.25535
-     Total cpu time (sec):               0.51134
+     Total wall time (sec):              0.14608
+     Total cpu time (sec):               0.29007
 
-     Peak memory usage during the execution of eT: 10.695640 MB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:29:38 UTC +01:00
+  Peak memory usage during the execution of eT: 10.695640 MB
+
+  Total wall time in eT (sec):              0.18476
+  Total cpu time in eT (sec):               0.34777
+
+  Calculation ended: 2021-06-07 12:51:38 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     MLCC2 and MLCCSD: https://doi.org/10.1021/acs.jctc.9b00701
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!

@@ -168,17 +168,9 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: c_D_ct
 !
-      call engine%tasks%print_('cholesky')
-!
-      call engine%do_cholesky(wf)
-!
-      call engine%tasks%print_('mo preparations')
-!
-      call wf%mo_preparations()
-!
 !     Determine ground state | CC >
 !
-      call engine%do_ground_state(wf)
+      call engine%gs_engine%run(wf)
 !
 !     Determine multipliers < Λ |
 !
@@ -186,7 +178,7 @@ contains
 !
 !     Compute the one-electron density
 !
-      call wf%prepare_for_density()
+      call wf%prepare_for_properties()
       call wf%initialize_gs_density()
       call wf%construct_gs_density()
 !

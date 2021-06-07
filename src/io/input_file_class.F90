@@ -43,12 +43,12 @@ module input_file_class
 !
 !     Array of the input lines excluding geometry
 !
-      character(len=200), dimension(:), allocatable, private :: input_  
+      character(len=200), dimension(:), allocatable, private :: input_
 !
 !     Array of the QM and MM input geometries
 !
-      character(len=200), dimension(:), allocatable, private :: geometry    
-      character(len=200), dimension(:), allocatable, private :: mm_geometry 
+      character(len=200), dimension(:), allocatable, private :: geometry
+      character(len=200), dimension(:), allocatable, private :: mm_geometry
 !
    contains
 !
@@ -135,17 +135,17 @@ module input_file_class
                 => place_records_in_memory_input_file
 !
       procedure, private :: get_wf
-      procedure, private :: requested_calculation 
+      procedure, private :: requested_calculation
 !
-      procedure, private :: get_string_keyword_wo_safety     
-      procedure, private :: get_section_limits         
+      procedure, private :: get_string_keyword_wo_safety
+      procedure, private :: get_section_limits
       procedure, private :: check_section_for_illegal_keywords
-      procedure, private :: check_for_illegal_sections        
-      procedure, private :: print_sections                    
+      procedure, private :: check_for_illegal_sections
+      procedure, private :: print_sections
 !
-      procedure, nopass, private :: string_is_comment               
-      procedure, nopass, private :: extract_keyword_from_string      
-      procedure, nopass, private :: extract_keyword_value_from_string 
+      procedure, nopass, private :: string_is_comment
+      procedure, nopass, private :: extract_keyword_from_string
+      procedure, nopass, private :: extract_keyword_value_from_string
 !
       procedure, private :: get_integer4_keyword
       procedure, private :: get_integer8_keyword
@@ -296,13 +296,14 @@ contains
       cc_response%name_    = 'cc response'
       cc_response%required = .false.
       cc_response%keywords = [character(len=30) :: &
-                             'transition moments', &
-                             'frequencies',        &
-                             'polarizabilities',   &
                              'dipole length',      &
+                             'eom',                &
+                             'frequencies',        &
+                             'initial states',     &
                              'lr',                 &
-                             'eom']
-!
+                             'polarizabilities',   &
+                             'permanent moments',  &
+                             'transition moments']
 !
       cc_td%name_    = 'cc td'
       cc_td%required = .false.
@@ -425,7 +426,9 @@ contains
       global_print%required = .false.
       global_print%keywords = [character(len=30) ::  &
                               'output print level ', &
-                              'timing print level ']
+                              'timing print level ', &
+                              'full references',     &
+                              'z-matrix']
 !
 !
       solver_cholesky%name_    = 'solver cholesky'
@@ -443,21 +446,22 @@ contains
       solver_scf%required = .false.
       solver_scf%keywords = [character(len=30) ::        &
                             'algorithm',                 &
-                            'energy threshold',          &
-                            'gradient threshold',        &
-                            'storage',                   &
+                            'ao density guess',          &
+                            'coulomb threshold',         &
                             'crop',                      &
                             'cumulative fock threshold', &
-                            'max iterations',            &
-                            'coulomb threshold',         &
-                            'exchange threshold',        &
-                            'integral precision',        &
-                            'integral cutoff',           &
                             'diis dimension',            &
-                            'restart',                   &
-                            'ao density guess',          &
+                            'energy threshold',          &
+                            'exchange threshold',        &
+                            'gradient threshold',        &
+                            'integral cutoff',           &
+                            'integral precision',        &
+                            'max iterations',            &
                             'print orbitals',            &
-                            'skip']
+                            'restart',                   &
+                            'skip',                      &
+                            'storage',                   &
+                            'write molden']
 !
 !
       solver_scf_geoopt%name_    = 'solver scf geoopt'
@@ -500,17 +504,18 @@ contains
 !
       solver_cc_gs%name_    = 'solver cc gs'
       solver_cc_gs%required = .false.
-      solver_cc_gs%keywords = [character(len=30) ::   &
-                              'algorithm',            &
-                              'energy threshold',     &
-                              'omega threshold',      &
-                              'crop',                 &
-                              'micro iteration storage', &
-                              'max micro iterations', &
-                              'rel micro threshold',  &
-                              'storage',              &
-                              'max iterations',       &
-                              'diis dimension',       &
+      solver_cc_gs%keywords = [character(len=30) ::       &
+                              'algorithm',                &
+                              'energy threshold',         &
+                              'omega threshold',          &
+                              'crop',                     &
+                              'micro iteration storage',  &
+                              'max micro iterations',     &
+                              'multimodel newton',        &
+                              'rel micro threshold',      &
+                              'storage',                  &
+                              'max iterations',           &
+                              'diis dimension',           &
                               'restart' ]
 !
 !
@@ -554,7 +559,7 @@ contains
 !
       solver_fft_dipole_moment%name_    = 'solver fft dipole moment'
       solver_fft_dipole_moment%required = .false.
-      solver_fft_dipole_moment%keywords = [character(len=30) :: & 
+      solver_fft_dipole_moment%keywords = [character(len=30) :: &
                                           'initial time',       &
                                           'final time',         &
                                           'time step']
@@ -580,16 +585,17 @@ contains
       visualization%name_    = 'visualization'
       visualization%required = .false.
       visualization%keywords = [character(len=30) ::        &
+                               'file format',               &
                                'grid spacing',              &
                                'grid buffer',               &
                                'grid min',                  &
                                'grid max',                  &
                                'plot cc density',           &
+                               'plot es densities',         &
                                'plot hf orbitals',          &
                                'plot hf density',           &
                                'plot hf active density',    &
                                'plot transition densities', &
-                               'file format',               &
                                'states to plot']
 !
 !     Gather all sections into the file's section array
@@ -755,7 +761,7 @@ contains
 !
       logical :: recognized
 !
-      character(len=200) :: section 
+      character(len=200) :: section
 !
       do i = 1, this%n_keyword_lines
 !
@@ -910,7 +916,7 @@ contains
 !
       class(input_file), intent(in) :: this
 !
-      logical :: requested 
+      logical :: requested
 !
       requested = this%requested_calculation(this%rf_wfs)
 !
@@ -926,9 +932,9 @@ contains
 !
       class(input_file), intent(in) :: this
 !
-      character(len=30) :: ref_wf 
+      character(len=30) :: ref_wf
 !
-      ref_wf = this%get_wf(this%rf_wfs)     
+      ref_wf = this%get_wf(this%rf_wfs)
 !
    end function get_reference_wf_input_file
 !
@@ -941,13 +947,13 @@ contains
 !!    Looks for wfs(k) in method and returns true if it finds one such wf
 !!    in the input file. Gives an error if it finds more than one of wfs(k).
 !!
-      implicit none 
+      implicit none
 !
       class(input_file), intent(in) :: this
 !
       character(len=30), dimension(:), intent(in) :: wfs
 !
-      logical :: requested 
+      logical :: requested
 !
       integer :: n_wfs, k
 !
@@ -976,9 +982,9 @@ contains
 !
          requested = .false.
 !
-      endif      
+      endif
 !
-   end function requested_calculation 
+   end function requested_calculation
 !
 !
    function requested_cc_calculation_input_file(this) result(requested)
@@ -1006,7 +1012,7 @@ contains
 !
       class(input_file), intent(in) :: this
 !
-      character(len=30) :: cc_wf 
+      character(len=30) :: cc_wf
 !
       cc_wf = this%get_wf(this%cc_wfs)
 !
@@ -1017,16 +1023,16 @@ contains
 !!
 !!    Get wavefunction
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
-!!    
+!!
 !!    Looks for wfs(k) in the 'method' section of the input.
 !!
-      implicit none 
+      implicit none
 !
       class(input_file), intent(in) :: this
 !
       character(len=30), dimension(:), intent(in) :: wfs
 !
-      character(len=30) :: wf 
+      character(len=30) :: wf
 !
       integer :: k
 !
@@ -1037,7 +1043,7 @@ contains
             wf = wfs(k)
             return
 !
-         endif         
+         endif
 !
       enddo
 !
@@ -1506,7 +1512,7 @@ contains
       character(len=*), intent(in) :: keyword
       character(len=*), intent(in) :: section
 !
-      logical :: is_present 
+      logical :: is_present
 !
       integer :: record, start_, end_
 !
@@ -1741,7 +1747,8 @@ contains
       do record = 1, this%n_qm_atom_lines
 !
          if (this%geometry(record)(1:6) .ne. 'basis:' &
-            .and. (this%geometry(record)(1:6) .ne. 'units:')) &
+            .and. (this%geometry(record)(1:6) .ne. 'units:') &
+            .and. (this%geometry(record)(1:5) .ne. 'ghost')) &
             n_atoms = n_atoms + 1
 !
       enddo
@@ -1788,7 +1795,7 @@ contains
 !
       character(len=200) :: string, imolecule
 !
-!     Loop through the MM geometry section 
+!     Loop through the MM geometry section
 !
       previous_molecule = 1
       n_molecules       = 1
@@ -1829,11 +1836,12 @@ contains
 !
 !
    subroutine get_geometry_input_file(this, n_atoms, symbols, &
-                                       positions, basis_sets, units_angstrom)
+                                       positions, basis_sets, units_angstrom, is_ghost)
 !!
 !!    Get geometry
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!    Modified by Åsmund H. Tveten, Oct 2019. Generalized to Bohr units.
+!!    Modified by Tor S. Haugland, May 2021. Added ghost atoms.
 !!
 !!    Reads the geometry from the output file and sets it in the
 !!    list of atoms.
@@ -1850,6 +1858,7 @@ contains
 !
       character(len=2), dimension(n_atoms), intent(out)   :: symbols
       character(len=100), dimension(n_atoms), intent(out) :: basis_sets
+      logical, dimension(n_atoms), intent(out) :: is_ghost
 !
       real(dp), dimension(3, n_atoms), intent(out) :: positions ! x, y, z
 !
@@ -1863,6 +1872,7 @@ contains
 !
       character(len=200) :: string
       character(len=100) :: current_basis
+      logical :: is_ghost_atom = .false.
 !
       start_ = 1 ! Specifies the line of the first and required basis
 !
@@ -1903,11 +1913,16 @@ contains
          string = trim(adjustl(this%geometry(i)))
 !
          if (string(1:6) == 'units:') &
-         call output%error_msg('Units must be specified as the first line in the geometry section.')
+            call output%error_msg('Units must be specified as the first line in the geometry section.')
 !
          if(string(1:6) == 'basis:') then
 !
             current_basis = trim(adjustl(string(7:200)))
+!
+         elseif (string(1:5) == 'ghost') then
+!
+!           Every atom after 'ghost' keyword are ghosts
+            is_ghost_atom = .true.
 !
          else
 !
@@ -1915,9 +1930,10 @@ contains
 !
             basis_sets(current_atom) = current_basis
             symbols(current_atom)    = string(1:2)
+            is_ghost(current_atom)   = is_ghost_atom
 !
             string = adjustl(string(3:200))
-            read(string(1:), *) positions(:, current_atom)           
+            read(string(1:), *) positions(:, current_atom)
 !
          endif
 !
@@ -1942,7 +1958,7 @@ contains
 !!    Written by Tommaso Giovanini, May 2019
 !!    Modified for robustness by Sarai D. Folkestad 2020
 !!
-!!    Reads the geometry of the MM portion from the input file in the case 
+!!    Reads the geometry of the MM portion from the input file in the case
 !!    of an fq calculation and sets it in the list of atoms.
 !!
 !!    Note: In order to be run, you need to know the number of MM atoms and molecules
@@ -1955,9 +1971,9 @@ contains
       integer,             intent(in) :: n_molecules
 !
       character(len=2), dimension(n_atoms),     intent(out) :: symbols
-      real(dp),         dimension(3, n_atoms),  intent(out) :: positions 
-      real(dp),         dimension(n_atoms),     intent(out) :: chi       
-      real(dp),         dimension(n_atoms),     intent(out) :: eta       
+      real(dp),         dimension(3, n_atoms),  intent(out) :: positions
+      real(dp),         dimension(n_atoms),     intent(out) :: chi
+      real(dp),         dimension(n_atoms),     intent(out) :: eta
       integer,          dimension(n_molecules), intent(out) :: n_atoms_per_molecule
 !
 !     Local variables
@@ -2069,8 +2085,8 @@ contains
       integer, intent(in) :: n_atoms
 !
       character(len=2), dimension(n_atoms),     intent(out) :: symbols
-      real(dp),         dimension(3, n_atoms),  intent(out) :: positions    
-      real(dp),         dimension(n_atoms),     intent(out) :: charge  
+      real(dp),         dimension(3, n_atoms),  intent(out) :: positions
+      real(dp),         dimension(n_atoms),     intent(out) :: charge
 !
 !     Local variables
 !
@@ -2297,6 +2313,10 @@ contains
 !
             exit
 !
+         elseif (io_error .ne. 0) then
+!
+            call output%error_msg("The 'geometry' section appears to have no end in the input file.")
+!
          endif
 !
          if (trim(adjustl(line)) == '--') then ! QM and MM atoms separator
@@ -2392,7 +2412,7 @@ contains
 !
       class(input_file), intent(in) :: this
 !
-      character(len=*), intent(in) :: section 
+      character(len=*), intent(in) :: section
 !
       integer, intent(out) :: start_, end_
 !
@@ -2404,7 +2424,7 @@ contains
       n_ends = 0
       n_beginnings = 0
 !
-      do i = 1, this%n_keyword_lines 
+      do i = 1, this%n_keyword_lines
 !
          if (trim(this%input_(i)) == 'end ' // section) then
 !
@@ -2503,7 +2523,7 @@ contains
 !!
 !!    Checks if storage for 'section' is in memory or on disk
 !!
-!!    records_in_mem is intent(inout) because it should be set 
+!!    records_in_mem is intent(inout) because it should be set
 !!    to a default value before a call to this routine
 !!
       implicit none
@@ -2518,23 +2538,23 @@ contains
       if (this%is_keyword_present('storage', trim(section))) then
 !
          call this%get_keyword('storage', trim(section), storage)
-!  
+!
 !        Determine whether to store records in memory or on file
-!  
-         if (trim(storage) == 'memory') then 
-!  
+!
+         if (trim(storage) == 'memory') then
+!
             records_in_memory = .true.
-!  
-         elseif (trim(storage) == 'disk') then 
-!  
+!
+         elseif (trim(storage) == 'disk') then
+!
             records_in_memory = .false.
-!  
-         else 
-!  
+!
+         else
+!
             call output%error_msg('Could not recognize keyword storage in solver: ' // &
                                     trim(storage))
-!  
-         endif 
+!
+         endif
 !
       endif
 !

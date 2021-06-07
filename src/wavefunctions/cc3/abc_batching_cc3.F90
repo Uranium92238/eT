@@ -23,7 +23,7 @@ submodule (cc3_class) batching_abc
 !!    Batching abc submodule
 !!
 !!    Routines that construct the triples T-amplitudes and
-!!    components of the excitation vectors in batches 
+!!    components of the excitation vectors in batches
 !!    of the virtual indices a,b,c
 !!
 !
@@ -67,14 +67,14 @@ contains
       if (.not. present(c_ai)) then
 !
          call wf%eri%get_eri_t1('vvvo', unordered_g_vvvo, &
-                                 first_p=batch_p%first, last_p=batch_p%last, &
-                                 first_r=batch_r%first, last_r=batch_r%last)
+                                 first_p=batch_p%first, last_p=batch_p%get_last(), &
+                                 first_r=batch_r%first, last_r=batch_r%get_last())
 !
-      else 
+      else
 !
          call wf%eri%get_eri_c1('vvvo', unordered_g_vvvo, c_ai, &
-                                 first_p=batch_p%first, last_p=batch_p%last, &
-                                 first_r=batch_r%first, last_r=batch_r%last)
+                                 first_p=batch_p%first, last_p=batch_p%get_last(), &
+                                 first_r=batch_r%first, last_r=batch_r%get_last())
 !
       end if
 !
@@ -91,7 +91,7 @@ contains
 !!    Point vvvo abc
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Jan 2021
 !!
-!!    Sets a pointer to a vvvo integral 
+!!    Sets a pointer to a vvvo integral
 !!    where the two virtual indices can be batched over
 !!    NB: The batching indices need to be the last index
 !!
@@ -100,6 +100,8 @@ contains
 !!    length1: length of the batch for the second to last index
 !!    length2: length of the batch for the last index
 !!
+      implicit none
+!
       class(cc3), intent(in) :: wf
 !
       integer, intent(in) :: length1, length2
@@ -142,8 +144,8 @@ contains
       real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_vvov
 !
       call wf%eri%get_eri_t1('vvov', unordered_g_vvov, &
-                              first_q=batch_q%first, last_q=batch_q%last, &
-                              first_s=batch_s%first, last_s=batch_s%last)
+                              first_q=batch_q%first, last_q=batch_q%get_last(), &
+                              first_s=batch_s%first, last_s=batch_s%get_last())
 !
       call sort_1234_to_1324(unordered_g_vvov, g_vvov, wf%n_v, batch_q%length, &
                                                        wf%n_o, batch_s%length)
@@ -158,7 +160,7 @@ contains
 !!    Point vvov abc
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Jan 2021
 !!
-!!    Sets a pointer to a vvov integral 
+!!    Sets a pointer to a vvov integral
 !!    where the two virtual indices can be batched over
 !!    NB: The batching indices need to be the last index
 !!
@@ -167,6 +169,8 @@ contains
 !!    length1: length of the batch for the second to last index
 !!    length2: length of the batch for the last index
 !!
+      implicit none
+!
       class(cc3), intent(in) :: wf
 !
       integer, intent(in) :: length1, length2
@@ -209,8 +213,8 @@ contains
       real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_ovov
 !
       call wf%eri%get_eri_t1('ovov', unordered_g_ovov, &
-                              first_q=batch_q%first, last_q=batch_q%last, &
-                              first_s=batch_s%first, last_s=batch_s%last)
+                              first_q=batch_q%first, last_q=batch_q%get_last(), &
+                              first_s=batch_s%first, last_s=batch_s%get_last())
 !
        call sort_1234_to_1324(unordered_g_ovov, g_ovov, wf%n_o, batch_q%length, &
                                                         wf%n_o, batch_s%length)
@@ -225,7 +229,7 @@ contains
 !!    Point ovov abc
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Jan 2021
 !!
-!!    Sets a pointer to a ovov integral 
+!!    Sets a pointer to a ovov integral
 !!    where the two virtual indices can be batched over
 !!    NB: The batching indices need to be the last index
 !!
@@ -234,6 +238,8 @@ contains
 !!    length1: length of the batch for the second to last index
 !!    length2: length of the batch for the last index
 !!
+      implicit none
+!
       class(cc3), intent(in) :: wf
 !
       integer, intent(in) :: length1, length2
@@ -280,12 +286,12 @@ contains
       if (.not. present(c_ai)) then
 !
          call wf%eri%get_eri_t1('oovo', unordered_g_oovo, &
-                                 first_r=batch_r%first, last_r=batch_r%last)
+                                 first_r=batch_r%first, last_r=batch_r%get_last())
 !
       else
 !
          call wf%eri%get_eri_c1('oovo', unordered_g_oovo, c_ai, &
-                                 first_r=batch_r%first, last_r=batch_r%last)
+                                 first_r=batch_r%first, last_r=batch_r%get_last())
 !
       end if
 !
@@ -302,7 +308,7 @@ contains
 !!    Point oovo abc
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Jan 2021
 !!
-!!    Sets a pointer to a oovo integral 
+!!    Sets a pointer to a oovo integral
 !!    where the virtual index can be batched over
 !!    NB: The virtual index needs to be the last index
 !!
@@ -310,6 +316,8 @@ contains
 !!    g_oovo: Integral array in ooov order
 !!    length: length of the batch
 !!
+      implicit none
+!
       class(cc3), intent(in) :: wf
 !
       integer, intent(in) :: length
@@ -352,7 +360,7 @@ contains
       real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_ooov
 !
       call wf%eri%get_eri_t1('ooov', unordered_g_ooov, &
-                              first_s=batch_s%first, last_s=batch_s%last)
+                              first_s=batch_s%first, last_s=batch_s%get_last())
 !
       call sort_1234_to_2134(unordered_g_ooov, g_ooov, wf%n_o, wf%n_o, &
                                                        wf%n_o, batch_s%length)
@@ -367,7 +375,7 @@ contains
 !!    Point ooov abc
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Jan 2021
 !!
-!!    Sets a pointer to a ooov integral 
+!!    Sets a pointer to a ooov integral
 !!    where the virtual index can be batched over
 !!    NB: The virtual index needs to be the last index
 !!
@@ -375,6 +383,8 @@ contains
 !!    g_ooov: Integral array in ooov order
 !!    length: length of the batch
 !!
+      implicit none
+!
       class(cc3), intent(in) :: wf
 !
       integer, intent(in) :: length
@@ -395,10 +405,10 @@ contains
 !!    Estimate maximum memory needed for cc3 integral setup for abc batching
 !!
 !!    get_eri_t1_mem returns the memory needed to construct the requested integral
-!!    The dimensions sent in specify if an index is batched (1) or of 
+!!    The dimensions sent in specify if an index is batched (1) or of
 !!    full dimension (n_o/n_v)
 !!    The memory estimate for the first and second pair of indices
-!!    is added to the integers req*. 
+!!    is added to the integers req*.
 !!
 !!    NB: The memory needed to get vvov and vvvo is identical
 !!        The memory needed to get oovo and ooov is identical
@@ -433,9 +443,9 @@ contains
 !!    Estimate maximum memory needed for cc3 integral setup
 !!    for the C1-transformed integrals with abc batching
 !!
-!!    get_eri_c1_mem returns the memory needed to construct the requested 
+!!    get_eri_c1_mem returns the memory needed to construct the requested
 !!    c1-transformed integral
-!!    The dimensions sent in specify if an index is batched (1) or of 
+!!    The dimensions sent in specify if an index is batched (1) or of
 !!    full dimension (n_o/n_v)
 !!
 !!    6 memory estimates are returned:
@@ -703,7 +713,7 @@ contains
 !
 !     t^da_ki*(cd|bj)
 !     ---------------
-!      
+!
       call dgemm('N', 'N',          &
                   wf%n_o**2,        &
                   wf%n_o,           &
@@ -739,12 +749,12 @@ contains
 !
 !
    module subroutine divide_by_orbital_differences_abc_cc3(wf, a, b, c, t_ijk, &
-                                                           omega, cvs)
+                                                           omega, cvs, rm_core)
 !!
 !!    Divide by orbital energy differences (abc batching)
-!!    Written by Alexander C. Paul, July 2019    
+!!    Written by Alexander C. Paul, July 2019
 !!
-!!    Divide an array of triples amplitudes (single a,b,c) 
+!!    Divide an array of triples amplitudes (single a,b,c)
 !!    by the respective orbital energy differences eps^abc_ijk
 !!
 !!    omega: If present divide by eps^abc_ijk - omega instead of eps^abc_ijk
@@ -758,14 +768,16 @@ contains
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(inout) :: t_ijk
 !
       real(dp), optional, intent(in) :: omega
-      logical, optional, intent(in)  :: cvs
+      logical, optional, intent(in)  :: cvs, rm_core
 !
       integer  :: i, j, k
-      logical  :: cvs_
+      logical  :: cvs_, rm_core_
       real(dp) :: epsilon_abc, epsilon_k, epsilon_kj
 !
       cvs_ = .false.
+      rm_core_ = .false.
       if (present(cvs)) cvs_ = cvs
+      if (present(rm_core)) rm_core_ = rm_core
 !
       epsilon_abc =  - wf%orbital_energies(wf%n_o + a) &
                      - wf%orbital_energies(wf%n_o + b) &
@@ -792,15 +804,13 @@ contains
 !
             do i = 1, wf%n_o
 !
-               if (cvs_) then
-                  if(.not. (any(wf%core_MOs .eq. i) &
-                     .or.   any(wf%core_MOs .eq. j) &
-                     .or.   any(wf%core_MOs .eq. k))) then
+!              Check for core orbitals (used for excited states):
+!              cvs: i,j,k cannot all correspond to valence orbitals
+!              rm_core: i,j,k may not contain any core orbital
 !
-                     t_ijk(i,j,k) = zero
-                     cycle
-!
-                  end if
+               if (wf%ijk_amplitudes_are_zero(i, j, k, cvs_, rm_core_)) then
+                  t_ijk(i,j,k) = zero
+                  cycle
                end if
 !
                t_ijk(i,j,k) = t_ijk(i,j,k)*one/(epsilon_kj + wf%orbital_energies(i))

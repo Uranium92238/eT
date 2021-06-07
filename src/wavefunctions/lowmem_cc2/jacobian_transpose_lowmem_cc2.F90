@@ -38,7 +38,8 @@ submodule (lowmem_cc2_class) jacobian_transpose
 contains
 !
 !
-   module subroutine effective_jacobian_transpose_transformation_lowmem_cc2(wf,omega,b,sigma,cvs)
+   module subroutine effective_jacobian_transpose_transformation_lowmem_cc2(wf, omega, b, sigma, &
+                                                                            cvs, rm_core)
 !!
 !!    Effective Jacobian transpose transformation
 !!    Written by Sarai Dery Folkestad, Jun 2019
@@ -51,17 +52,18 @@ contains
       real(dp), dimension(wf%n_t1), intent(in)  :: b
       real(dp), dimension(wf%n_t1), intent(out) :: sigma
 !
-      logical, intent(in) :: cvs
+      logical, intent(in) :: cvs, rm_core
 !
       real(dp), dimension(:), allocatable :: eps_o
       real(dp), dimension(:), allocatable :: eps_v
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Effective Jacobian transpose lowmem CC2', pl='normal')
       call timer%turn_on()
 !
       if (cvs) call output%error_msg('CVS not yet implemented for lowmem CC2.')
+      if (rm_core) call output%error_msg('"Remove core" not yet implemented for lowmem CC2.')
 !
 !     Zero the transformed vector
 !
@@ -110,7 +112,7 @@ contains
 !!
 !!       u_bjck = 2t_bjck - t_bkcj
 !!
-!!    and 
+!!    and
 !!
 !!       t_bjck = - g_bjck/ε_bjck
 !!
@@ -143,7 +145,7 @@ contains
 !
       type(batching_index) :: batch_i, batch_j, batch_k
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CC2 A1', pl='verbose')
       call timer%turn_on()
@@ -151,17 +153,17 @@ contains
       req0 = 0
 !
       req1_j = 0
-      req1_k = 0 
+      req1_k = 0
       call wf%eri%get_eri_t1_mem('ovov', req1_j, req1_k, 1, wf%n_v, 1, wf%n_v)
 !
       req2 = 2*wf%n_v**2
 !
       batch_j = batching_index(wf%n_o)
       batch_k = batching_index(wf%n_o)
-!  
+!
       call mem%alloc(X_ck, wf%n_v, wf%n_o)
       call zero_array(X_ck, wf%n_v*wf%n_o)
-!  
+!
       call mem%alloc(Y_ba, wf%n_v, wf%n_v)
       call zero_array(Y_ba, wf%n_v**2)
 !
@@ -174,15 +176,15 @@ contains
          do current_k_batch = 1, batch_k%num_batches
 !
             call batch_k%determine_limits(current_k_batch)
-! 
+!
 !           L_kcja ordered as L_jcka
 !
-            call mem%alloc(g_kcja, batch_k%length, wf%n_v, batch_j%length, wf%n_v) 
-            call wf%eri%get_eri_t1('ovov', g_kcja,               &    
-                                   batch_k%first, batch_k%last,  &
+            call mem%alloc(g_kcja, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
+            call wf%eri%get_eri_t1('ovov', g_kcja,               &
+                                   batch_k%first, batch_k%get_last(),  &
                                    1, wf%n_v,                    &
-                                   batch_j%first, batch_j%last,  &    
-                                   1, wf%n_v)    
+                                   batch_j%first, batch_j%get_last(),  &
+                                   1, wf%n_v)
 !
             call mem%alloc(L_jcka, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
 !
@@ -191,12 +193,12 @@ contains
             call add_3214_to_1234(two, g_kcja, L_jcka, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
             call add_3412_to_1234(-one, g_kcja, L_jcka, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
 !
-            call mem%dealloc(g_kcja, batch_k%length, wf%n_v, batch_j%length, wf%n_v) 
+            call mem%dealloc(g_kcja, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
             call mem%alloc(g_bjck, wf%n_v, batch_j%length, wf%n_v, batch_k%length)
 !
-            call wf%eri%get_eri_t1('vovo', g_bjck, 1, wf%n_v, batch_j%first, batch_j%last,  &    
-                                                   1, wf%n_v, batch_k%first, batch_k%last)
+            call wf%eri%get_eri_t1('vovo', g_bjck, 1, wf%n_v, batch_j%first, batch_j%get_last(),  &
+                                                   1, wf%n_v, batch_k%first, batch_k%get_last())
 !
 !           t_bjck = - g_bjck/ε_bjck
 !
@@ -221,9 +223,9 @@ contains
                         wf%n_v,  &
                         (batch_k%length)*(batch_j%length)*(wf%n_v), &
                         -one,    &
-                        g_bjck,  & 
+                        g_bjck,  &
                         wf%n_v,  &
-                        L_jcka,  &   
+                        L_jcka,  &
                         (batch_k%length)*(batch_j%length)*(wf%n_v), &
                         one,     &
                         Y_ba,    &
@@ -231,7 +233,7 @@ contains
 !
             call mem%dealloc(L_jcka, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
 !
-!           X_ck = sum_bj u_ckbj b_bj             
+!           X_ck = sum_bj u_ckbj b_bj
 !
             call mem%alloc(u_ckbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
 !
@@ -249,7 +251,7 @@ contains
                         one,                       &
                         u_ckbj,                    &
                         (batch_k%length)*(wf%n_v), &
-                        b_ai(1, batch_j%first),    & ! b_bj 
+                        b_ai(1, batch_j%first),    & ! b_bj
                         (batch_j%length)*(wf%n_v), &
                         one,                       &
                         X_ck(1, batch_k%first),    &
@@ -281,7 +283,7 @@ contains
 !
       req0 = 0
 !
-      req1_i = wf%eri%n_J*wf%n_v   
+      req1_i = wf%eri%n_J*wf%n_v
       req1_k = wf%eri%n_J*wf%n_v
 !
       req2 =  2*wf%n_v**2
@@ -303,11 +305,11 @@ contains
 !
             call mem%alloc(g_iakc, batch_i%length, wf%n_v, batch_k%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('ovov', g_iakc,               &    
-                                   batch_i%first, batch_i%last,  &
+            call wf%eri%get_eri_t1('ovov', g_iakc,               &
+                                   batch_i%first, batch_i%get_last(),  &
                                    1, wf%n_v,                    &
-                                   batch_k%first, batch_k%last,  &    
-                                   1, wf%n_v)    
+                                   batch_k%first, batch_k%get_last(),  &
+                                   1, wf%n_v)
 !
             call mem%alloc(L_aick, wf%n_v, batch_i%length, wf%n_v, batch_k%length)
 !
@@ -381,7 +383,7 @@ contains
 !
       type(batching_index) :: batch_b, batch_c
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CC2 B1', pl='verbose')
       call timer%turn_on()
@@ -411,27 +413,27 @@ contains
 !
 !           L_ibkc ordered as L_ickb
 !
-            call mem%alloc(g_ibkc, wf%n_o, batch_b%length, wf%n_o, batch_c%length) 
+            call mem%alloc(g_ibkc, wf%n_o, batch_b%length, wf%n_o, batch_c%length)
 !
-            call wf%eri%get_eri_t1('ovov', g_ibkc,               &    
+            call wf%eri%get_eri_t1('ovov', g_ibkc,               &
                                    1, wf%n_o,                    &
-                                   batch_b%first, batch_b%last,  &
+                                   batch_b%first, batch_b%get_last(),  &
                                    1, wf%n_o,                    &
-                                   batch_c%first, batch_c%last)    
+                                   batch_c%first, batch_c%get_last())
 !
-            call mem%alloc(L_ickb, wf%n_o, batch_c%length, wf%n_o, batch_b%length)    
+            call mem%alloc(L_ickb, wf%n_o, batch_c%length, wf%n_o, batch_b%length)
             call zero_array(L_ickb, (wf%n_o**2)*(batch_c%length)*(batch_b%length))
 !
             call add_3412_to_1234(-one, g_ibkc, L_ickb, wf%n_o, batch_c%length, wf%n_o, batch_b%length)
 !
             call add_1432_to_1234(two, g_ibkc, L_ickb, wf%n_o, batch_c%length, wf%n_o, batch_b%length)
 !
-            call mem%dealloc(g_ibkc, wf%n_o, batch_b%length, wf%n_o, batch_c%length)  
+            call mem%dealloc(g_ibkc, wf%n_o, batch_b%length, wf%n_o, batch_c%length)
 !
             call mem%alloc(g_ckbj, batch_c%length, wf%n_o, batch_b%length, wf%n_o)
 !
-            call wf%eri%get_eri_t1('vovo', g_ckbj, batch_c%first, batch_c%last, 1, wf%n_o, &
-                                                   batch_b%first, batch_b%last, 1, wf%n_o)
+            call wf%eri%get_eri_t1('vovo', g_ckbj, batch_c%first, batch_c%get_last(), 1, wf%n_o, &
+                                                   batch_b%first, batch_b%get_last(), 1, wf%n_o)
 !
 !           t_ckbj = - g_ckbj/ε_ckbj
 !
@@ -449,7 +451,7 @@ contains
                enddo
             enddo
 !
-            call dgemm('N', 'N', &  
+            call dgemm('N', 'N', &
                         wf%n_o,  &
                         wf%n_o,  &
                         wf%n_o*(batch_b%length)*(batch_c%length), &
@@ -461,9 +463,9 @@ contains
                         one,     &
                         X_ij,    &
                         wf%n_o)
-!  
-            call mem%dealloc(L_ickb, wf%n_o, batch_c%length, wf%n_o, batch_b%length) 
-            call mem%dealloc(g_ckbj, batch_c%length, wf%n_o, batch_b%length, wf%n_o)     
+!
+            call mem%dealloc(L_ickb, wf%n_o, batch_c%length, wf%n_o, batch_b%length)
+            call mem%dealloc(g_ckbj, batch_c%length, wf%n_o, batch_b%length, wf%n_o)
 !
          enddo
       enddo
@@ -519,11 +521,11 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_bjci, g_bjca
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Effective jacobian transpose CC2 A1', pl='verbose')
       call timer%turn_on()
-!     
+!
       req0 = 0
 !
       req1_b = (wf%eri%n_J)*wf%n_o
@@ -546,8 +548,8 @@ contains
 !
             call mem%alloc(g_bjca, batch_b%length, wf%n_o, batch_c%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vovv', g_bjca, batch_b%first, batch_b%last, 1, wf%n_o, &
-                                                   batch_c%first, batch_c%last, 1, wf%n_v)
+            call wf%eri%get_eri_t1('vovv', g_bjca, batch_b%first, batch_b%get_last(), 1, wf%n_o, &
+                                                   batch_c%first, batch_c%get_last(), 1, wf%n_v)
 !
             call mem%alloc(X_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
@@ -625,11 +627,11 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_bjca, Y_bjci, X_icjb, X_jbic, g_dcjb, g_dbic
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Effective jacobian transpose CC2 B1', pl='verbose')
       call timer%turn_on()
-!     
+!
       req0 = 0
 !
       req1_b = max((wf%eri%n_J)*wf%n_v, (wf%eri%n_J)*wf%n_o)
@@ -651,10 +653,10 @@ contains
             call batch_c%determine_limits(current_c_batch)
 !
             call mem%alloc(g_dcjb, wf%n_v, batch_c%length, wf%n_o, batch_b%length)
-            call wf%eri%get_eri_t1('vvov', g_dcjb, 1, wf%n_v, batch_c%first, batch_c%last, &
-                                                   1, wf%n_o, batch_b%first, batch_b%last)
+            call wf%eri%get_eri_t1('vvov', g_dcjb, 1, wf%n_v, batch_c%first, batch_c%get_last(), &
+                                                   1, wf%n_o, batch_b%first, batch_b%get_last())
 !
-            call mem%alloc(X_icjb, wf%n_o, batch_c%length, wf%n_o, batch_b%length)   
+            call mem%alloc(X_icjb, wf%n_o, batch_c%length, wf%n_o, batch_b%length)
 !
             call dgemm('T', 'N',                                     &
                         wf%n_o,                                      &
@@ -670,22 +672,22 @@ contains
                         wf%n_o)
 !
             call mem%dealloc(g_dcjb, wf%n_v, batch_c%length, wf%n_o, batch_b%length)
-!  
+!
             call mem%alloc(Y_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
-            call sort_1234_to_4321(X_icjb, Y_bjci, wf%n_o, batch_c%length, wf%n_o, batch_b%length)    
+            call sort_1234_to_4321(X_icjb, Y_bjci, wf%n_o, batch_c%length, wf%n_o, batch_b%length)
 !
             call dscal((batch_c%length)*(wf%n_o**2)*(batch_b%length), two, Y_bjci, 1)
 !
             call add_2341_to_1234(-one, X_icjb, Y_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
-            call mem%dealloc(X_icjb, wf%n_o, batch_c%length, wf%n_o, batch_b%length)        
+            call mem%dealloc(X_icjb, wf%n_o, batch_c%length, wf%n_o, batch_b%length)
 !
             call mem%alloc(g_dbic, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
-            call wf%eri%get_eri_t1('vvov', g_dbic, 1, wf%n_v, batch_b%first, batch_b%last, &
-                                                   1, wf%n_o, batch_c%first, batch_c%last)
+            call wf%eri%get_eri_t1('vvov', g_dbic, 1, wf%n_v, batch_b%first, batch_b%get_last(), &
+                                                   1, wf%n_o, batch_c%first, batch_c%get_last())
 !
-            call mem%alloc(X_jbic, wf%n_o, batch_b%length, wf%n_o, batch_c%length)   
+            call mem%alloc(X_jbic, wf%n_o, batch_b%length, wf%n_o, batch_c%length)
 !
             call dgemm('T', 'N',                                     &
                         wf%n_o,                                      &
@@ -705,7 +707,7 @@ contains
             call add_2143_to_1234(two, X_jbic, Y_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
             call add_4123_to_1234(-one, X_jbic, Y_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
-            call mem%dealloc(X_jbic, wf%n_o, batch_b%length, wf%n_o, batch_c%length) 
+            call mem%dealloc(X_jbic, wf%n_o, batch_b%length, wf%n_o, batch_c%length)
 !
 !
 !$omp parallel do private(i, c, j, b)
@@ -726,8 +728,8 @@ contains
 !
              call mem%alloc(g_bjca, batch_b%length, wf%n_o, batch_c%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vovv', g_bjca, batch_b%first, batch_b%last, 1, wf%n_o, &
-                                                   batch_c%first, batch_c%last, 1, wf%n_v)
+            call wf%eri%get_eri_t1('vovv', g_bjca, batch_b%first, batch_b%get_last(), 1, wf%n_o, &
+                                                   batch_c%first, batch_c%get_last(), 1, wf%n_v)
 !
            call dgemm('T', 'N',                                     &
                        wf%n_v,                                      &
@@ -742,8 +744,8 @@ contains
                        sigma_ai,                                    &
                        wf%n_v)
 !
-            call mem%dealloc(g_bjca, batch_b%length, wf%n_o, batch_c%length, wf%n_v)           
-            call mem%dealloc(Y_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)   
+            call mem%dealloc(g_bjca, batch_b%length, wf%n_o, batch_c%length, wf%n_v)
+            call mem%dealloc(Y_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
          enddo
       enddo
@@ -784,7 +786,7 @@ contains
 !
       integer :: i, j, c, b
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Effective jacobian transpose CC2 C1', pl='verbose')
       call timer%turn_on()
@@ -796,7 +798,7 @@ contains
       req1_b = max((wf%eri%n_J)*(wf%n_v),(wf%eri%n_J)*(wf%n_o))
 !
       req2_kc = 2*(wf%n_o)*(wf%n_v)
-      req2_kb = 2*(wf%n_o)*(wf%n_v) 
+      req2_kb = 2*(wf%n_o)*(wf%n_v)
       req2_bc = max(2*(wf%n_o**2),(wf%n_o**2) + (wf%n_o)*(wf%n_v))
 !
       req3 = 0
@@ -828,8 +830,8 @@ contains
                call mem%alloc(g_jbik, wf%n_o, batch_b%length, wf%n_o, batch_k%length)
 !
                call wf%eri%get_eri_t1('ovoo', g_jbik,                         &
-                                      1, wf%n_o, batch_b%first, batch_b%last, & 
-                                      1, wf%n_o, batch_k%first, batch_k%last)
+                                      1, wf%n_o, batch_b%first, batch_b%get_last(), &
+                                      1, wf%n_o, batch_k%first, batch_k%get_last())
 !
                call mem%alloc(L_jbik, wf%n_o, batch_b%length, wf%n_o, batch_k%length)
 !
@@ -864,8 +866,8 @@ contains
                call mem%alloc(g_icjk, wf%n_o, batch_c%length, wf%n_o, batch_k%length)
 !
                call wf%eri%get_eri_t1('ovoo', g_icjk,                         &
-                                      1, wf%n_o, batch_c%first, batch_c%last, &
-                                      1, wf%n_o, batch_k%first, batch_k%last)
+                                      1, wf%n_o, batch_c%first, batch_c%get_last(), &
+                                      1, wf%n_o, batch_k%first, batch_k%get_last())
 !
                call mem%alloc(L_icjk, wf%n_o, batch_c%length, wf%n_o, batch_k%length)
 !
@@ -917,8 +919,8 @@ contains
 !
             call mem%alloc(g_bjca, batch_b%length, wf%n_o, batch_c%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vovv', g_bjca, batch_b%first, batch_b%last, 1, wf%n_o, &
-                                                   batch_c%first, batch_c%last, 1, wf%n_v)
+            call wf%eri%get_eri_t1('vovv', g_bjca, batch_b%first, batch_b%get_last(), 1, wf%n_o, &
+                                                   batch_c%first, batch_c%get_last(), 1, wf%n_v)
 !
             call dgemm('T', 'N',                                     &
                         wf%n_v,                                      &
@@ -975,11 +977,11 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_akbj, g_ikbj
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Effective jacobian transpose CC2 D1', pl='verbose')
       call timer%turn_on()
-!     
+!
       req0 = 0
 !
       req1_j = wf%eri%n_J*wf%n_v
@@ -1002,8 +1004,8 @@ contains
 !
             call mem%alloc(g_ikbj, wf%n_o, batch_k%length, wf%n_v, batch_j%length)
 !
-            call wf%eri%get_eri_t1('oovo', g_ikbj, 1, wf%n_o, batch_k%first, batch_k%last, & 
-                                                   1, wf%n_v, batch_j%first, batch_j%last)
+            call wf%eri%get_eri_t1('oovo', g_ikbj, 1, wf%n_o, batch_k%first, batch_k%get_last(), &
+                                                   1, wf%n_v, batch_j%first, batch_j%get_last())
 !
             call mem%alloc(X_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
 !
@@ -1080,8 +1082,8 @@ contains
       integer :: k, j, b, a
 !
       real(dp), dimension(:,:,:,:), allocatable :: Y_akbj, X_jbka, X_kajb, g_jbkl, g_kajl, g_ikbj
-!     
-      type(timings), allocatable :: timer 
+!
+      type(timings), allocatable :: timer
 !
       timer = timings('Effective jacobian transpose CC2 E1', pl='verbose')
       call timer%turn_on()
@@ -1108,8 +1110,8 @@ contains
 !
             call mem%alloc(g_jbkl, batch_j%length, wf%n_v, batch_k%length, wf%n_o)
 !
-            call wf%eri%get_eri_t1('ovoo', g_jbkl, batch_j%first, batch_j%last, 1, wf%n_v, &
-                                                   batch_k%first, batch_k%last, 1, wf%n_o)
+            call wf%eri%get_eri_t1('ovoo', g_jbkl, batch_j%first, batch_j%get_last(), 1, wf%n_v, &
+                                                   batch_k%first, batch_k%get_last(), 1, wf%n_o)
 !
             call mem%alloc(X_jbka, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
 !
@@ -1138,8 +1140,8 @@ contains
 !
             call mem%alloc(g_kajl, batch_k%length, wf%n_v, batch_j%length, wf%n_o)
 !
-            call wf%eri%get_eri_t1('ovoo', g_kajl, batch_k%first, batch_k%last, 1, wf%n_v, &
-                                                   batch_j%first, batch_j%last, 1, wf%n_o)
+            call wf%eri%get_eri_t1('ovoo', g_kajl, batch_k%first, batch_k%get_last(), 1, wf%n_v, &
+                                                   batch_j%first, batch_j%get_last(), 1, wf%n_o)
 !
             call mem%alloc(X_kajb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
@@ -1180,8 +1182,8 @@ contains
 !
             call mem%alloc(g_ikbj, wf%n_o, batch_k%length, wf%n_v, batch_j%length)
 !
-            call wf%eri%get_eri_t1('oovo', g_ikbj, 1, wf%n_o, batch_k%first, batch_k%last,  &
-                                                   1, wf%n_v, batch_j%first, batch_j%last)
+            call wf%eri%get_eri_t1('oovo', g_ikbj, 1, wf%n_o, batch_k%first, batch_k%get_last(),  &
+                                                   1, wf%n_v, batch_j%first, batch_j%get_last())
 !
             call dgemm('N', 'T',                                     &
                         wf%n_v,                                      &
@@ -1238,7 +1240,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: X_akbj, Y_kajb, Y_jbka
       real(dp), dimension(:,:,:,:), allocatable :: L_cajb, L_cbka, g_cajb, g_cbka, g_ikbj
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Effective jacobian transpose CC2 F1', pl='verbose')
       call timer%turn_on()
@@ -1280,8 +1282,8 @@ contains
 !              Construct L_cajb and contract with b_ck
 !
                call mem%alloc(g_cajb, batch_c%length, wf%n_v, batch_j%length, wf%n_v)
-               call wf%eri%get_eri_t1('vvov', g_cajb, batch_c%first, batch_c%last, 1, wf%n_v, &
-                                                      batch_j%first, batch_j%last, 1, wf%n_v)
+               call wf%eri%get_eri_t1('vvov', g_cajb, batch_c%first, batch_c%get_last(), 1, wf%n_v, &
+                                                      batch_j%first, batch_j%get_last(), 1, wf%n_v)
 !
                call mem%alloc(L_cajb, batch_c%length, wf%n_v, batch_j%length, wf%n_v)
 !
@@ -1315,8 +1317,8 @@ contains
 !
                call mem%alloc(g_cbka, batch_c%length, wf%n_v, batch_k%length, wf%n_v)
 !
-               call wf%eri%get_eri_t1('vvov', g_cbka, batch_c%first, batch_c%last, 1, wf%n_v, &
-                                                      batch_k%first, batch_k%last, 1, wf%n_v)
+               call wf%eri%get_eri_t1('vvov', g_cbka, batch_c%first, batch_c%get_last(), 1, wf%n_v, &
+                                                      batch_k%first, batch_k%get_last(), 1, wf%n_v)
 !
                call mem%alloc(L_cbka, batch_c%length, wf%n_v, batch_k%length, wf%n_v)
 !
@@ -1365,8 +1367,8 @@ contains
 !
             call mem%alloc(g_ikbj, wf%n_o, batch_k%length, wf%n_v, batch_j%length)
 !
-            call wf%eri%get_eri_t1('oovo', g_ikbj, 1, wf%n_o, batch_k%first, batch_k%last, &
-                                                   1, wf%n_v, batch_j%first, batch_j%last)
+            call wf%eri%get_eri_t1('oovo', g_ikbj, 1, wf%n_o, batch_k%first, batch_k%get_last(), &
+                                                   1, wf%n_v, batch_j%first, batch_j%get_last())
 !
             call dgemm('N', 'T',                                     &
                         wf%n_v,                                      &
@@ -1385,9 +1387,9 @@ contains
             call mem%dealloc(X_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
 !
          enddo
-      enddo 
+      enddo
 !
-      call timer%turn_off()  
+      call timer%turn_off()
 !
    end subroutine effective_jacobian_transpose_cc2_f1_lowmem_cc2
 !

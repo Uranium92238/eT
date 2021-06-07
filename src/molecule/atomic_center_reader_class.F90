@@ -26,39 +26,39 @@ module atomic_center_reader_class
 !!    Class responsible for reading the atomic centers from the input file.
 !!
 !!    The atomic center reader processes the information in the input file and initializes
-!!    a set of atomic center objects ('centers') and an array of center subsets that specifies the 
-!!    active atom spaces ('nonempty sets').  
+!!    a set of atomic center objects ('centers') and an array of center subsets that specifies the
+!!    active atom spaces ('nonempty sets').
 !!
 !!    The object processes information via the 'read_centers' subroutine.
 !!
 !!    The user can then get the centers and sets via get-routines.
 !!
 !
+   use named_range_class
    use global_in,             only: input
    use global_out,            only: output
-   use named_interval_class,  only: named_interval
    use kinds,                 only: dp
    use memory_manager_class,  only: mem
    use atomic_center_class,   only: atomic_center
 !
-   implicit none 
+   implicit none
 !
    type :: atomic_center_reader
 !
 !     Atomic center objects and center subsets
       integer, private :: n_centers
-      type(atomic_center), dimension(:), allocatable, private :: centers 
+      type(atomic_center), dimension(:), allocatable, private :: centers
 !
-      integer, private :: n_sets, n_nonempty_sets 
-      type(named_interval), dimension(:), allocatable, private :: sets, nonempty_sets 
+      integer, private :: n_sets, n_nonempty_sets
+      type(named_range), dimension(:), allocatable, private :: sets, nonempty_sets
 !
 !     ordered_wfs = wf-order used to order the center subsets
       character(len=200), dimension(6), private :: ordered_wfs
 !
 !     type = standard, spherical, or Gaussian
-      character(len=200), private :: basis_type_ 
+      character(len=200), private :: basis_type_
 !
-   contains 
+   contains
 !
       procedure, public :: get_centers &
                         => get_centers_atomic_center_reader
@@ -76,29 +76,29 @@ module atomic_center_reader_class
                         => read_centers_atomic_center_reader
 !
       procedure, private :: create_centers                ! Sets up the array of atomic centers
-      procedure, private :: order_center_indices_by_basis 
+      procedure, private :: order_center_indices_by_basis
       procedure, private :: create_nonempty_subsets       ! Removes empty atomic subsets
 !
-!     The routines below are used to set up atomic center subsets. The information extracted is the 
-!     name of each set ('unclassified', 'hf', ...) and the interval information (first, last, length)
+!     The routines below are used to set up atomic center subsets. The information extracted is the
+!     name of each set ('unclassified', 'hf', ...) and the range information (first, last, length)
 !
-      procedure, private :: determine_n_subsets       
-      procedure, private :: determine_subset_names    
+      procedure, private :: determine_n_subsets
+      procedure, private :: determine_subset_names
 !
-!     determine_subset_indices_and_intervals determines the atomic center indices
-!     for each of the sets (subset-indices) and stores how many centers there 
+!     determine_subset_indices_and_ranges determines the atomic center indices
+!     for each of the sets (subset-indices) and stores how many centers there
 !     are in each set (subset-length). The indices are needed to reorder the centers
 !     so that each set is contiguous (see create_centers).
 !
-!     How this is done depends on how the active spaces are specified: no active space 
-!     (unclassified), specified as {1,3,5,...} or [1-4, 6-8] (list/range), or as a central atom 
+!     How this is done depends on how the active spaces are specified: no active space
+!     (unclassified), specified as {1,3,5,...} or [1-4, 6-8] (list/range), or as a central atom
 !     with a surrounding radius (central_atom)
-! 
-      procedure, private :: determine_subset_indices_and_intervals
 !
-      procedure, private :: determine_subset_indices_and_intervals_list_range   
-      procedure, private :: determine_subset_indices_and_intervals_central_atom
-      procedure, private :: determine_subset_indices_and_intervals_unclassified 
+      procedure, private :: determine_subset_indices_and_ranges
+!
+      procedure, private :: determine_subset_indices_and_ranges_list_range
+      procedure, private :: determine_subset_indices_and_ranges_central_atom
+      procedure, private :: determine_subset_indices_and_ranges_unclassified
 !
    end type atomic_center_reader
 !
@@ -115,10 +115,10 @@ contains
 !
    function new_atomic_center_reader(basis_type_) result(this)
 !!
-!!    New atomic center reader 
+!!    New atomic center reader
 !!    Written by Eirik F. Kjønstad, 2021
-!! 
-      implicit none 
+!!
+      implicit none
 !
       type(atomic_center_reader) :: this
 !
@@ -141,13 +141,13 @@ contains
 !!    Get centers
 !!    Written by Eirik F. Kjønstad, 2021
 !!
-      implicit none 
+      implicit none
 !
-      class(atomic_center_reader), intent(in) :: this 
+      class(atomic_center_reader), intent(in) :: this
 !
-      type(atomic_center), dimension(this%n_centers), intent(out) :: centers 
+      type(atomic_center), dimension(this%n_centers), intent(out) :: centers
 !
-      centers = this%centers 
+      centers = this%centers
 !
    end subroutine get_centers_atomic_center_reader
 !
@@ -157,9 +157,9 @@ contains
 !!    Get number of centers
 !!    Written by Eirik F. Kjønstad, 2021
 !!
-      implicit none 
+      implicit none
 !
-      class(atomic_center_reader), intent(in) :: this 
+      class(atomic_center_reader), intent(in) :: this
 !
       integer :: n_centers
 !
@@ -173,13 +173,13 @@ contains
 !!    Get center subsets
 !!    Written by Eirik F. Kjønstad, 2021
 !!
-      implicit none 
+      implicit none
 !
-      class(atomic_center_reader), intent(in) :: this 
+      class(atomic_center_reader), intent(in) :: this
 !
-      type(named_interval), dimension(this%n_nonempty_sets), intent(out) :: center_subsets 
+      type(named_range), dimension(this%n_nonempty_sets), intent(out) :: center_subsets
 !
-      center_subsets = this%nonempty_sets 
+      center_subsets = this%nonempty_sets
 !
    end subroutine get_center_subsets_atomic_center_reader
 !
@@ -189,9 +189,9 @@ contains
 !!    Get number of center subsets
 !!    Written by Eirik F. Kjønstad, 2021
 !!
-      implicit none 
+      implicit none
 !
-      class(atomic_center_reader), intent(in) :: this 
+      class(atomic_center_reader), intent(in) :: this
 !
       integer :: n_center_subsets
 !
@@ -202,29 +202,30 @@ contains
 !
    subroutine read_centers_atomic_center_reader(this)
 !!
-!!    Read centers 
+!!    Read centers
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020
 !!
-!!    Reads the basis centers from input and initializes 'centers' objects as well as 
-!!    'center subsets' (which specifies the active atomic-center subspaces). 
+!!    Reads the basis centers from input and initializes 'centers' objects as well as
+!!    'center subsets' (which specifies the active atomic-center subspaces).
 !!
 !!    Based on routines with contributions from Sarai D. Folkestad, Eirik F. Kjønstad,
 !!    Rolf H. Myhre, and Åsmund H. Tveten.
 !!
       use parameters, only: bohr_to_angstrom
-!  
-      implicit none 
+!
+      implicit none
 !
       class(atomic_center_reader), intent(inout) :: this
 !
-      character(len=2), dimension(:), allocatable   :: center_symbols   
-      character(len=100), dimension(:), allocatable :: center_bases     
-      real(dp), dimension(:,:), allocatable         :: center_positions 
-      integer, dimension(:), allocatable            :: center_indices  
+      character(len=2), dimension(:), allocatable   :: center_symbols
+      character(len=100), dimension(:), allocatable :: center_bases
+      real(dp), dimension(:,:), allocatable         :: center_positions
+      integer, dimension(:), allocatable            :: center_indices
+      logical, dimension(:), allocatable            :: center_is_ghosts
 !
       logical :: units_angstrom
 !
-!     Read the number of centers, as well as associated symbols, positions and bases 
+!     Read the number of centers, as well as associated symbols, positions and bases
 !
       this%n_centers = input%get_n_atoms()
 !
@@ -232,14 +233,16 @@ contains
 !
       allocate(center_symbols(this%n_centers))
       allocate(center_bases(this%n_centers))
+      allocate(center_is_ghosts(this%n_centers))
 !
       call input%get_geometry(this%n_centers,   &
                               center_symbols,   &
-                              center_positions, & 
+                              center_positions, &
                               center_bases,     &
-                              units_angstrom)
+                              units_angstrom,   &
+                              center_is_ghosts)
 !
-      if (.not. units_angstrom) then 
+      if (.not. units_angstrom) then
 !
          call dscal(3*this%n_centers,  &
                     bohr_to_angstrom,  &
@@ -256,18 +259,19 @@ contains
 !
       call this%determine_subset_names()
 !
-!     Store center-indices and interval (first, last, length) for each subset
+!     Store center-indices and range (first, last, length) for each subset
 !
       call mem%alloc(center_indices, this%n_centers)
 !
-      call this%determine_subset_indices_and_intervals(center_indices, center_positions)
+      call this%determine_subset_indices_and_ranges(center_indices, center_positions)
 !
 !     Create the centers in the correct order and store offsets for the subsets
 !
       allocate(this%centers(this%n_centers))
 !
       call this%create_centers(center_indices, center_bases, &
-                               center_symbols, center_positions)
+                               center_symbols, center_positions, &
+                               center_is_ghosts)
 !
       call mem%dealloc(center_indices, this%n_centers)
       call mem%dealloc(center_positions, 3, this%n_centers)
@@ -283,7 +287,7 @@ contains
 !
 !
    subroutine create_centers(this, center_indices, center_bases, &
-                                   center_symbols, center_positions)
+                                   center_symbols, center_positions, center_is_ghosts)
 !!
 !!    Create centers
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020-2021
@@ -293,14 +297,15 @@ contains
 !!    Based on routines with contributions from Sarai D. Folkestad, Eirik F. Kjønstad,
 !!    Rolf H. Myhre, and Åsmund H. Tveten.
 !!
-      implicit none 
+      implicit none
 !
       class(atomic_center_reader), intent(inout) :: this
 !
       integer, dimension(this%n_centers), intent(in)            :: center_indices
-      character(len=100), dimension(this%n_centers), intent(in) :: center_bases     
-      character(len=2), dimension(this%n_centers), intent(in)   :: center_symbols   
-      real(dp), dimension(3, this%n_centers), intent(in)        :: center_positions 
+      character(len=100), dimension(this%n_centers), intent(in) :: center_bases
+      character(len=2), dimension(this%n_centers), intent(in)   :: center_symbols
+      real(dp), dimension(3, this%n_centers), intent(in)        :: center_positions
+      logical, dimension(this%n_centers), intent(in)            :: center_is_ghosts
 !
       integer :: J, J_c
 !
@@ -314,7 +319,7 @@ contains
 !
 !     Initialize centers according to this reordering
 !
-      do J = 1, this%n_centers 
+      do J = 1, this%n_centers
 !
          J_c = ordered_center_indices(J)
 !
@@ -323,7 +328,8 @@ contains
                                          center_symbols(J_c),       &
                                          center_positions(:, J_c),  &
                                          center_bases(J_c),         &
-                                         this%basis_type_)              
+                                         this%basis_type_,          &
+                                         center_is_ghosts(J_c))
 !
       enddo
 !
@@ -338,20 +344,20 @@ contains
 !!    Order center indices by basis
 !!    Written by Eirik F. Kjønstad, Jan 2021
 !!
-!!    Order the center indices by basis set within each subset. 
+!!    Order the center indices by basis set within each subset.
 !!
-!!    On entry, center_indices are ordered according to subset but not according to 
+!!    On entry, center_indices are ordered according to subset but not according to
 !!    basis within each subset.
 !!
-      implicit none 
+      implicit none
 !
-      class(atomic_center_reader), intent(in) :: this 
+      class(atomic_center_reader), intent(in) :: this
 !
       integer, dimension(this%n_centers), intent(out)           :: ordered_center_indices
       integer, dimension(this%n_centers), intent(in)            :: center_indices
-      character(len=100), dimension(this%n_centers), intent(in) :: center_bases          
+      character(len=100), dimension(this%n_centers), intent(in) :: center_bases
 !
-      logical, dimension(:), allocatable :: center_reordered ! true for atomic centers that 
+      logical, dimension(:), allocatable :: center_reordered ! true for atomic centers that
                                                              ! have been placed in the ordered
                                                              ! center indices array
 !
@@ -362,30 +368,34 @@ contains
 !
       center = 0
 !
-      do set = 1, this%n_sets 
+      do set = 1, this%n_sets
 !
-         do J = this%sets(set)%first, this%sets(set)%last 
+         if (this%sets(set)%length .gt. 0) then
 !
-            J_c = center_indices(J)
+            do J = this%sets(set)%first, this%sets(set)%get_last()
 !
-!           For each J, we find the K within the set that has the same basis set
-!           and has not already been found and added to ordered_center_indices
+               J_c = center_indices(J)
 !
-            do K = J, this%sets(set)%last
+!              For each J, we find the K within the set that has the same basis set
+!              and has not already been found and added to ordered_center_indices
 !
-               K_c = center_indices(K)
+               do K = J, this%sets(set)%get_last()
 !
-               if (center_reordered(K_c)) cycle                    ! Already reordered? cycle
-               if (center_bases(K_c) .ne. center_bases(J_c)) cycle ! Not the current basis? cycle
+                  K_c = center_indices(K)
 !
-               center = center + 1
-               ordered_center_indices(center) = K_c 
+                  if (center_reordered(K_c)) cycle                    ! Already reordered? cycle
+                  if (center_bases(K_c) .ne. center_bases(J_c)) cycle ! Not the current basis? cycle
 !
-               center_reordered(K_c) = .true.
+                  center = center + 1
+                  ordered_center_indices(center) = K_c
+!
+                  center_reordered(K_c) = .true.
+!
+               enddo
 !
             enddo
 !
-         enddo
+         endif
 !
       enddo
 !
@@ -399,19 +409,21 @@ contains
 !!    Create nonempty subsets
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020-2021
 !!
-!!    Allocates and sets an array where empty sets have been removed from 
+!!    Allocates and sets an array where empty sets have been removed from
 !!    the full list of subsets - in case there are sets that contain zero
 !!    atoms.
 !!
+      implicit none
+!
       class(atomic_center_reader), intent(inout) :: this
 !
-      integer :: set, I 
+      integer :: set, I
 !
       this%n_nonempty_sets = 0
 !
-      do set = 1, this%n_sets 
+      do set = 1, this%n_sets
 !
-         if (this%sets(set)%length .gt. 0) then 
+         if (this%sets(set)%length .gt. 0) then
 !
             this%n_nonempty_sets = this%n_nonempty_sets + 1
 !
@@ -425,14 +437,14 @@ contains
 !
       do set = 1, this%n_sets
 !
-         if (this%sets(set)%length .gt. 0) then 
+         if (this%sets(set)%length .gt. 0) then
 !
             I = I + 1
             this%nonempty_sets(I) = this%sets(set)
 !
          endif
 !
-      enddo      
+      enddo
 !
    end subroutine create_nonempty_subsets
 !
@@ -445,7 +457,9 @@ contains
 !!    Based on routines with contributions from Sarai D. Folkestad, Eirik F. Kjønstad,
 !!    Rolf H. Myhre, and Åsmund H. Tveten.
 !!
-      class(atomic_center_reader), intent(inout) :: this 
+      implicit none
+!
+      class(atomic_center_reader), intent(inout) :: this
 !
       integer :: k
 !
@@ -466,20 +480,22 @@ contains
 !
    subroutine determine_subset_names(this)
 !!
-!!    Determine subset names 
+!!    Determine subset names
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020-2021
-!! 
-!!    Center-set names are set to the method of the active space ('ccsd', 'hf', etc.) or 
+!!
+!!    Center-set names are set to the method of the active space ('ccsd', 'hf', etc.) or
 !!    to 'unclassified' if no active spaces are specified in input.
+!!
+!!    First and length is set to zero here and determined later.
 !!
 !!    Based on routines with contributions from Sarai D. Folkestad, Eirik F. Kjønstad,
 !!    Rolf H. Myhre, and Åsmund H. Tveten.
 !!
-      implicit none 
+      implicit none
 !
       class(atomic_center_reader), intent(inout) :: this
 !
-      integer :: set, k 
+      integer :: set, k
 !
       set = 0
 !
@@ -488,35 +504,35 @@ contains
          if (input%is_keyword_present(trim(this%ordered_wfs(k)), 'active atoms')) then
 !
             set = set + 1
-            this%sets(set)%name_ = trim(this%ordered_wfs(k))
+            this%sets(set) = named_range(trim(this%ordered_wfs(k)))
 !
          endif
 !
-      enddo 
+      enddo
 !
-      this%sets(this%n_sets)%name_ = 'unclassified'      
+      this%sets(this%n_sets) = named_range('unclassified')
 !
    end subroutine determine_subset_names
 !
 !
-   subroutine determine_subset_indices_and_intervals(this, center_indices, center_positions)
+   subroutine determine_subset_indices_and_ranges(this, center_indices, center_positions)
 !!
-!!    Determine subset indices and intervals
+!!    Determine subset indices and ranges
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020
-!!    
-!!    Stores the atomic center indices, for each of the sets in the 
-!!    center indices arrays, as well as the number of atoms in each 
+!!
+!!    Stores the atomic center indices, for each of the sets in the
+!!    center indices arrays, as well as the number of atoms in each
 !!    set (i.e., the subset-lengths).
 !!
 !!    Based on routines with contributions from Sarai D. Folkestad, Eirik F. Kjønstad,
 !!    Rolf H. Myhre, and Åsmund H. Tveten.
 !!
-      implicit none 
+      implicit none
 !
       class(atomic_center_reader), intent(inout) :: this
 !
       integer, dimension(this%n_centers), intent(out)    :: center_indices
-      real(dp), dimension(3, this%n_centers), intent(in) :: center_positions 
+      real(dp), dimension(3, this%n_centers), intent(in) :: center_positions
 !
       character(len=200) :: selection_type
 !
@@ -526,85 +542,84 @@ contains
                                         'active atoms',     &
                                         selection_type)
 !
-      if (trim(selection_type) == 'none') then 
+      if (trim(selection_type) == 'none') then
 !
-!        Only unclassified centers; one subset with all atoms 
+!        Only unclassified centers; one subset with all atoms
 !
          if (this%n_sets .ne. 1) &
                call output%error_msg("You need to specify selection type for active atoms.")
 !
-         call this%determine_subset_indices_and_intervals_unclassified(center_indices)
+         call this%determine_subset_indices_and_ranges_unclassified(center_indices)
 !
-      elseif (trim(selection_type) == 'list' .or. trim(selection_type) == 'range') then 
+      elseif (trim(selection_type) == 'list' .or. trim(selection_type) == 'range') then
 !
 !        Active atoms given by list {1,4,5} or range [1-4, 6-10]
 !
-         call this%determine_subset_indices_and_intervals_list_range(center_indices)
+         call this%determine_subset_indices_and_ranges_list_range(center_indices)
 !
       elseif (trim(selection_type) == 'central atom') then
 !
 !        Central atoms with radii defining the different methods
 !
-         call this%determine_subset_indices_and_intervals_central_atom(center_indices, center_positions)
+         call this%determine_subset_indices_and_ranges_central_atom(center_indices, center_positions)
 !
-      endif 
+      endif
 !
-   end subroutine determine_subset_indices_and_intervals
+   end subroutine determine_subset_indices_and_ranges
 !
 !
-   subroutine determine_subset_indices_and_intervals_list_range(this, center_indices)
+   subroutine determine_subset_indices_and_ranges_list_range(this, center_indices)
 !!
-!!    Determine subset indices and intervals (list or range)
+!!    Determine subset indices and ranges (list or range)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020-2021
 !!
-!!    Determines the subset-indices and intervals when active atoms
+!!    Determines the subset-indices and ranges when active atoms
 !!    are given by a list {1,4,5} or a range [1-4, 6-10].
 !!
 !!    Based on routines with contributions from Sarai D. Folkestad, Eirik F. Kjønstad,
 !!    Rolf H. Myhre, and Åsmund H. Tveten.
 !!
-      implicit none 
+      implicit none
 !
-      class(atomic_center_reader), intent(inout) :: this 
+      class(atomic_center_reader), intent(inout) :: this
 !
       integer, dimension(this%n_centers), intent(out) :: center_indices
 !
-      integer :: i, first, last, length   
+      integer :: i, first, length
 !
-!     Get center indices for atoms associated with methods 
+!     Get center indices for atoms associated with methods
 !
       first = 1
 !
       do i = 1, this%n_sets - 1
 !
-         length = input%get_n_elements_for_keyword(trim(this%sets(i)%name_), &
-                                                              'active atoms')         
+         length = input%get_n_elements_for_keyword(this%sets(i)%get_name(), &
+                                                   'active atoms')
 !
-         last = first + length - 1
-         call this%sets(i)%set_interval(first, last)
+         call this%sets(i)%set_range(first, length)
 !
-         call input%get_array_for_keyword(trim(this%sets(i)%name_),     &
-                                                     'active atoms',               &
-                                                     length,                       &
-                                                     center_indices(first : last))
+         call input%get_array_for_keyword(this%sets(i)%get_name(), &
+                                          'active atoms',          &
+                                          length,                  &
+                                          center_indices(first:))
 !
          first = first + length
 !
       enddo
 !
-!     Store the inactive center indices & associated interval
+!     Store the inactive center indices & associated range
 !
-      call this%determine_subset_indices_and_intervals_unclassified(center_indices)
+      call this%determine_subset_indices_and_ranges_unclassified(center_indices)
 !
-   end subroutine determine_subset_indices_and_intervals_list_range
+   end subroutine determine_subset_indices_and_ranges_list_range
 !
 !
-   subroutine determine_subset_indices_and_intervals_central_atom(this, center_indices, center_positions)
+   subroutine determine_subset_indices_and_ranges_central_atom(this, center_indices, center_positions)
 !!
-!!    Determine subset indices and intervals (central atom)
+!!    Determine subset indices and ranges (central atom)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020-2021
 !!
-!!    Determines the set-center-indices and interval when active atoms
+!!    Determines the set-center-indices and range when active atoms
 !!    are specified by a central atom with a radius.
 !!
 !!    Based on routines with contributions from Sarai D. Folkestad, Eirik F. Kjønstad,
@@ -613,21 +628,21 @@ contains
       use array_utilities, only: get_l2_norm
       use parameters, only: zero
 !
-      implicit none 
+      implicit none
 !
-      class(atomic_center_reader), intent(inout) :: this 
+      class(atomic_center_reader), intent(inout) :: this
 !
       integer, dimension(this%n_centers), intent(out) :: center_indices
 !
-      real(dp), dimension(3, this%n_centers), intent(in) :: center_positions 
+      real(dp), dimension(3, this%n_centers), intent(in) :: center_positions
 !
       logical, dimension(:), allocatable :: unclassified
 !
-      integer :: central_atom, center, i, k, first, last 
+      integer :: central_atom, center, i, k, first, length
 !
       real(dp), dimension(:), allocatable :: radii
 !
-      real(dp), dimension(3) :: r_vec 
+      real(dp), dimension(3) :: r_vec
 !
       real(dp) :: r
 !
@@ -639,17 +654,17 @@ contains
 !
       call mem%alloc(radii, this%n_sets)
 !
-      radii = zero 
+      radii = zero
 !
       do i = 1, this%n_sets - 1
 !
-         call input%get_keyword(trim(this%sets(i)%name_),  &
-                                           'active atoms',            &
-                                           radii(i))         
+         call input%get_keyword(this%sets(i)%get_name(), &
+                                'active atoms',          &
+                                radii(i))
 !
       enddo
 !
-!     Set the center indices for the different methods & the number of indices 
+!     Set the center indices for the different methods & the number of indices
 !
       call mem%alloc(unclassified, this%n_centers)
       unclassified = .true.
@@ -657,7 +672,7 @@ contains
       first = 1
       center = 0
 !
-      do i = 1, this%n_sets - 1 
+      do i = 1, this%n_sets - 1
 !
          do k = 1, this%n_centers
 !
@@ -665,23 +680,23 @@ contains
 !
             r = get_l2_norm(r_vec, 3)
 !
-!           Is center (k) within radii(i) of central atom 
+!           Is center (k) within radii(i) of central atom
 !           & has the center not been designated to a previous method?
 !
-            if (r .lt. radii(i) .and. unclassified(k)) then 
+            if (r .lt. radii(i) .and. unclassified(k)) then
 !
                center = center + 1
-               center_indices(center) = k 
+               center_indices(center) = k
 !
                unclassified(k) = .false.
 !
-            endif 
+            endif
 !
          enddo
 !
-         last = center
-         call this%sets(i)%set_interval(first, last)
-!     
+         length = center - first + 1
+         call this%sets(i)%set_range(first, length)
+!
          first = first + center
 !
       enddo
@@ -689,34 +704,34 @@ contains
       call mem%dealloc(radii, this%n_sets)
       call mem%dealloc(unclassified, this%n_centers)
 !
-!     Store the inactive center indices & associated interval
+!     Store the inactive center indices & associated range
 !
-      call this%determine_subset_indices_and_intervals_unclassified(center_indices)
+      call this%determine_subset_indices_and_ranges_unclassified(center_indices)
 !
-   end subroutine determine_subset_indices_and_intervals_central_atom
+   end subroutine determine_subset_indices_and_ranges_central_atom
 !
 !
-   subroutine determine_subset_indices_and_intervals_unclassified(this, center_indices)
+   subroutine determine_subset_indices_and_ranges_unclassified(this, center_indices)
 !!
-!!    Determine subset indices and intervals (unclassified)
+!!    Determine subset indices and ranges (unclassified)
 !!    Written by Eirik F. Kjønstad, 2021
 !!
-!!    Sets the subset indices and interval for unclassified centers
+!!    Sets the subset indices and range for unclassified centers
 !!
-      implicit none 
+      implicit none
 !
-      class(atomic_center_reader), intent(inout) :: this 
+      class(atomic_center_reader), intent(inout) :: this
 !
       integer, dimension(this%n_centers), intent(inout) :: center_indices
 !
-      integer :: center, k, j, set, first, last 
+      integer :: center, k, j, set, first
 !
       logical :: k_is_unclassified
 !
-      set = this%n_sets ! by assumption, 'unclassified' is the last subset 
+      set = this%n_sets ! by assumption, 'unclassified' is the last subset
 !
       first = 1
-      if (set .gt. 1) first = this%sets(set-1)%last + 1
+      if (set .gt. 1) first = this%sets(set-1)%get_last() + 1
 !
       center = 0
 !
@@ -728,29 +743,27 @@ contains
 !
          do j = 1, first - 1
 !
-            if (k .eq. center_indices(j)) then 
+            if (k .eq. center_indices(j)) then
 !
-               k_is_unclassified = .false.    
-               exit 
+               k_is_unclassified = .false.
+               exit
 !
             endif
 !
          enddo
 !
-         if (k_is_unclassified) then 
+         if (k_is_unclassified) then
 !
             center = center + 1
             center_indices(first + center - 1) = k
 !
          endif
 !
-      enddo 
+      enddo
 !
-      last = first + center - 1
+      if (center .gt. 0) call this%sets(set)%set_range(first, center)
 !
-      call this%sets(set)%set_interval(first, last)    
-!
-   end subroutine determine_subset_indices_and_intervals_unclassified
+   end subroutine determine_subset_indices_and_ranges_unclassified
 !
 !
 end module atomic_center_reader_class

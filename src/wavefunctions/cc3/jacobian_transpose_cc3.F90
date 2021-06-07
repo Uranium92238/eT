@@ -38,11 +38,12 @@ submodule (cc3_class) jacobian_transpose
 contains
 !
 !
-   module subroutine effective_jacobian_transpose_transformation_cc3(wf, omega, b, sigma, cvs)
+   module subroutine effective_jacobian_transpose_transformation_cc3(wf, omega, b, sigma, &
+                                                                     cvs, rm_core)
 !!
 !!    Effective Jacobian transpose transformation (CC3)
 !!    Alexander C. Paul and Rolf H. Myhre, March 2019
-!!    Adapted to use a covariant representation of L2 
+!!    Adapted to use a covariant representation of L2
 !!    by Rolf H. Myhre and Alexander C. Paul, Okt 2020
 !!
 !!    Directs the transformation by the transpose of the  CC3 Jacobi matrix,
@@ -50,7 +51,7 @@ contains
 !!       A_mu,nu = < mu| exp(-T) [H, tau_nu] exp(T)|R >,
 !!
 !!    The transformation is performed as sigma^T = b^T A, where b is the vector
-!!    sent to the routine. 
+!!    sent to the routine.
 !!
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
@@ -66,7 +67,7 @@ contains
       real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: sigma
 !
 !     Same routines used for tbar3 and L3
-      logical, intent(in) :: cvs
+      logical, intent(in) :: cvs, rm_core
 !
       real(dp), dimension(:,:,:,:), allocatable :: b_abij
       real(dp), dimension(:,:,:,:), allocatable :: sigma_abij
@@ -94,7 +95,7 @@ contains
 !
 !     CC3-Contributions from the C3-amplitudes
       call wf%jacobian_transpose_cc3_c3_a(omega, b(1:wf%n_t1), b_abij, &
-                                          sigma(1:wf%n_t1), sigma_abij, cvs)
+                                          sigma(1:wf%n_t1), sigma_abij, cvs, rm_core)
 !
 !     Done with the doubles part pack sigma_abij into sigma
 !
@@ -106,7 +107,7 @@ contains
 !
 !     CC3-Contributions from the T3-amplitudes
       call wf%jacobian_transpose_cc3_t3_a1(b_abij, sigma(1:wf%n_t1))
-      call wf%jacobian_transpose_cc3_t3_b1(b_abij, sigma(1:wf%n_t1), cvs)
+      call wf%jacobian_transpose_cc3_t3_b1(b_abij, sigma(1:wf%n_t1), cvs, rm_core)
 !
       call mem%dealloc(b_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -119,7 +120,7 @@ contains
 !!
 !!    Jacobian transpose T3 A1 term
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
-!!    Adapted to use a covariant representation of L2 
+!!    Adapted to use a covariant representation of L2
 !!    by Rolf H. Myhre and Alexander C. Paul, Okt 2020
 !!
 !!    Computes the first contribution of the T3 amplitudes to sigma_1
@@ -130,7 +131,7 @@ contains
 !!    sigma_dl +=  sum_abi X_abid * _C_abil + sum_aik _C_daji * X_ajil
 !!
 !!    where:  _c^ab_ij = 1/3 (2c^ab_ij + c^ba_ij)
-!!    
+!!
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
@@ -223,11 +224,11 @@ contains
    end subroutine jacobian_transpose_cc3_t3_a1_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_t3_b1_cc3(wf, c_abij, sigma_ai, cvs)
+   module subroutine jacobian_transpose_cc3_t3_b1_cc3(wf, c_abij, sigma_ai, cvs, rm_core)
 !!
 !!    Jacobian transpose T3 B1 term
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
-!!    Adapted to use a covariant representation of L2 and a contravariant t3 
+!!    Adapted to use a covariant representation of L2 and a contravariant t3
 !!    by Rolf H. Myhre and Alexander C. Paul, Okt 2020
 !!
 !!    Constructs t^abc_ijk for fixed ijk and contracts with c_abij
@@ -238,7 +239,7 @@ contains
 !!             +=  sum_ai X_ai * L_iald
 !!
 !!    where: _c^ab_ij  = 1/3 (2 c^ab_ij + c^ba_ij)
-!!           u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk 
+!!           u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk
 !!                     - 2t^acb_ijk - 2t_cba_ijk - 2t_bac_ijk
 !!
       use array_utilities
@@ -251,7 +252,7 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
 !
-      logical, intent(in) :: cvs
+      logical, intent(in) :: cvs, rm_core
 !
       real(dp), dimension(:,:,:), allocatable :: t_abc
 !
@@ -312,7 +313,7 @@ contains
       req_0 = req_0 + wf%n_v**3
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
-!     Need less memory if we don't need to batch, so we overwrite the maximum 
+!     Need less memory if we don't need to batch, so we overwrite the maximum
 !     required memory in batch_setup
 !
       req_single_batch = req_0 + req_1_eri*wf%n_o + wf%n_v**3*wf%n_o &
@@ -426,30 +427,22 @@ contains
 !              CVS: in principle check j,k and l but due to the symmetry in L_iald
 !                   we can also check i,j,k
 !
-               do i = batch_i%first, batch_i%last
+               do i = batch_i%first, batch_i%get_last()
 !
                   i_rel = i - batch_i%first + 1
 !
-                  do j = batch_j%first, min(batch_j%last, i)
+                  do j = batch_j%first, min(batch_j%get_last(), i)
 !
                      j_rel = j - batch_j%first + 1
 !
-                     do k = batch_k%first, min(batch_k%last, j)
+                     do k = batch_k%first, min(batch_k%get_last(), j)
 !
-                        if (k .eq. i) then ! k == j == i
-                           cycle
-                        end if
+!                       Check for core orbitals:
+!                       cvs: i,j,k cannot all correspond to valence orbitals
+!                       rm_core: i,j,k may not contain any core orbital
 !
-!                       Check if at least one index i,j,k is a core orbital
 !                       Here t3 is contracted with L2 and can, thus, be restricted as well
-!
-                        if(cvs) then
-!
-                           if(.not. (any(wf%core_MOs .eq. i) &
-                              .or.   any(wf%core_MOs .eq. j) &
-                              .or.   any(wf%core_MOs .eq. k))) cycle
-!
-                        end if
+                        if (wf%ijk_amplitudes_are_zero(i, j, k, cvs, rm_core)) cycle
 !
                         k_rel = k - batch_k%first + 1
 !
@@ -602,7 +595,7 @@ contains
 !!    sigma_dl +=  sum_ai X_ai * L_iald
 !!
 !!    where: _c^ab_ij  = 1/3 (2 c^ab_ij + c^ba_ij)
-!!           u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk 
+!!           u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk
 !!                     - 2t^acb_ijk - 2t_cba_ijk - 2t_bac_ijk
 !!
       implicit none
@@ -695,7 +688,7 @@ contains
    module subroutine jacobian_transpose_cc3_c3_a_cc3(wf, omega,            &
                                                      c_ai, c_abij,         &
                                                      sigma_ai, sigma_abij, &
-                                                     cvs)
+                                                     cvs, rm_core)
 !!
 !!    Jacobian transpose CC3 c3 A
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
@@ -708,13 +701,13 @@ contains
 !!    Construct C^abc_ijk in single batches of ijk and compute the contributions
 !!    to the singles and doubles part of the outgoing vector
 !!
-!!    The construction of C3 is split into contributions 
+!!    The construction of C3 is split into contributions
 !!    from outer products and matrix multiplications
 !!
-!!    1 array for each Permutation of C_abc will be used 
+!!    1 array for each Permutation of C_abc will be used
 !!    to reduce the amount of N^7-contractions and sorting
 !!
-!!    c_mu3 = (omega - epsilon^abc_ijk)^-1 (c_mu1 < mu1| [H,tau_nu3] |R > 
+!!    c_mu3 = (omega - epsilon^abc_ijk)^-1 (c_mu1 < mu1| [H,tau_nu3] |R >
 !!                                        + c_mu2 < mu2| [H,tau_nu3] |R >)
 !!
 !!    sigma_1 += c_mu3 < mu3| [[H,T_2],tau_nu1] |R >
@@ -725,15 +718,13 @@ contains
       class(cc3) :: wf
 !
       real(dp), intent(in) :: omega
+      logical, intent(in)  :: cvs, rm_core
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: sigma_abij
-!
-!     Same routines used for tbar3 and L3
-      logical, intent(in) :: cvs
 !
       real(dp), dimension(:,:,:), allocatable :: u_abc
 !
@@ -824,7 +815,7 @@ contains
       req_0 = req_0 + wf%n_v**3 + wf%n_v*wf%n_o**3
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
-!     Need less memory if we don't need to batch, so we overwrite the maximum 
+!     Need less memory if we don't need to batch, so we overwrite the maximum
 !     required memory in batch_setup
 !
       req_single_batch = req_0 + req_1_eri*wf%n_o + 3*wf%n_v**3*wf%n_o &
@@ -844,7 +835,7 @@ contains
 !
       call mem%alloc(Y_cmjk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       call zero_array(Y_cmjk, wf%n_v*wf%n_o**3)
-! 
+!
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%alloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
@@ -933,7 +924,7 @@ contains
 !
                call wf%setup_vvov(g_dbjc, g_dbjc_p, sorting, batch_j, left=.true.)
 !
-               call wf%Y_ebck%read_interval(Y_ebcj, batch_j)
+               call wf%Y_ebck%read_range(Y_ebcj, batch_j)
                Y_ebcj_p => Y_ebcj
 !
                call wf%setup_oovo(g_licj, g_licj_p, sorting, batch_i, batch_j)
@@ -964,7 +955,7 @@ contains
 !
                   call wf%setup_vvov(g_dbkc, g_dbkc_p, sorting, batch_k, left=.true.)
 !
-                  call wf%Y_ebck%read_interval(Y_ebck, batch_k)
+                  call wf%Y_ebck%read_range(Y_ebck, batch_k)
                   Y_ebck_p => Y_ebck
 !
                   call wf%setup_oovo(g_lick, g_lick_p, sorting, batch_i, batch_k)
@@ -1024,28 +1015,18 @@ contains
 !
                endif
 !
-               do i = batch_i%first, batch_i%last
+               do i = batch_i%first, batch_i%get_last()
 !
                   i_rel = i - batch_i%first + 1
 !
-                  do j = batch_j%first, min(batch_j%last, i)
+                  do j = batch_j%first, min(batch_j%get_last(), i)
 !
                      j_rel = j - batch_j%first + 1
 !
-                     do k = batch_k%first, min(batch_k%last, j)
+                     do k = batch_k%first, min(batch_k%get_last(), j)
 !
-                        if (i .eq. j .and. i .eq. k) then
-                           cycle
-                        end if
-!
-!                       Check if at least one index i,j,k is a core orbital
-                        if(cvs) then
-!
-                           if(.not. (any(wf%core_MOs .eq. i) &
-                              .or.   any(wf%core_MOs .eq. j) &
-                              .or.   any(wf%core_MOs .eq. k))) cycle
-!
-                        end if
+!                       Check for core orbitals
+                        if (wf%ijk_amplitudes_are_zero(i, j, k, cvs, rm_core)) cycle
 !
                         k_rel = k - batch_k%first + 1
 !
@@ -1095,22 +1076,22 @@ contains
                   enddo ! loop over j
                enddo ! loop over i
 !
-!              write the intermediate Y_ebck to file. 
+!              write the intermediate Y_ebck to file.
 !              Will be read in after the loops for the contractions to sigma_ai
 !
                if (k_batch .ne. j_batch) then !k_batch != j_batch, k_batch != i_batch
-                  call wf%Y_ebck%write_interval(Y_ebck, batch_k)
+                  call wf%Y_ebck%write_range(Y_ebck, batch_k)
                endif
 !
             enddo ! batch_k
 !
             if (j_batch .ne. i_batch) then
-               call wf%Y_ebck%write_interval(Y_ebcj, batch_j)
+               call wf%Y_ebck%write_range(Y_ebcj, batch_j)
             endif
 !
          enddo ! batch_j
 !
-         call wf%Y_ebck%write_interval(Y_ebci, batch_i)
+         call wf%Y_ebck%write_range(Y_ebci, batch_i)
 !
       enddo ! batch_i
 !
@@ -1262,7 +1243,7 @@ contains
 !!    Y_ebck = sum_aij c^abc_ijk * t^ae_ij
 !!    Y_cmjk = sum_abj c^abc_ijk * t^ab_mj
 !!
-!!    All permutations for i,j,k have to be considered 
+!!    All permutations for i,j,k have to be considered
 !!    due to the restrictions in the i,j,k loops
 !!
       implicit none
@@ -1403,7 +1384,7 @@ contains
 !!    sigma_1 += sum_mjk Y_cmjk * g_mjlk
 !!    sigma_1 += sum_cmj Y_cmjk * g_mjcd
 !!    sigma_1 += sum_cmk Y_cmjk * g_mdck
-!!   
+!!
       implicit none
 !
       class(cc3) :: wf
@@ -1475,7 +1456,7 @@ contains
             call batch_v%determine_limits(v_batch)
 !
             call wf%eri%get_cholesky_t1(L_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
-                                        wf%n_o+batch_v%first, wf%n_o+batch_v%last)
+                                        wf%n_o+batch_v%first, wf%n_o+batch_v%get_last())
 !
             call dgemm('T','N',                                 &
                         batch_v%length,                         &
@@ -1494,7 +1475,7 @@ contains
 !
 !        :: Term 2: sigma_cl += sum_mjk Y_cmjk * g_mjlk ::
 !
-         call wf%eri%get_cholesky_t1(X_J_lk, 1, wf%n_o, batch_k%first, batch_k%last)
+         call wf%eri%get_cholesky_t1(X_J_lk, 1, wf%n_o, batch_k%first, batch_k%get_last())
 !
          call sort_123_to_132(X_J_lk, X_J_kl, wf%eri%n_J, wf%n_o, batch_k%length)
          call sort_123_to_132(X_J_ck, X_Jk_c, wf%eri%n_J, wf%n_v, batch_k%length)
@@ -1515,7 +1496,7 @@ contains
 !        :: Term 3: sigma_dj -= sum_cmj Y_cmjk * g_ckmd ::
 !
          call wf%eri%get_cholesky_t1(X_J_ck, wf%n_o+1, wf%n_o+wf%n_v, &
-                                     batch_k%first, batch_k%last)
+                                     batch_k%first, batch_k%get_last())
 !
          call dgemm('N', 'T',              &
                     wf%eri%n_J,            &
@@ -1535,7 +1516,7 @@ contains
             call batch_v%determine_limits(v_batch)
 !
             call wf%eri%get_cholesky_t1(L_J_vv, 1, wf%n_o, &
-                                        wf%n_o+batch_v%first, wf%n_o+batch_v%last)
+                                        wf%n_o+batch_v%first, wf%n_o+batch_v%get_last())
 !
             call dgemm('T','N',                     &
                         batch_v%length,             &
@@ -1627,7 +1608,7 @@ contains
 !
          call batch_k%determine_limits(k_batch)
 !
-         call wf%Y_ebck%read_interval(Y_ebck, batch_k)
+         call wf%Y_ebck%read_range(Y_ebck, batch_k)
          call sort_1234_to_2134(Y_ebck, Y_beck, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
          call zero_array(X_J_ck, wf%eri%n_J*wf%n_v*batch_k%length)
@@ -1637,7 +1618,7 @@ contains
             call batch_v%determine_limits(v_batch)
 !
             call wf%eri%get_cholesky_t1(X_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
-                                        wf%n_o+batch_v%first, wf%n_o+batch_v%last)
+                                        wf%n_o+batch_v%first, wf%n_o+batch_v%get_last())
 !
             call dgemm('N','N',                      &
                         wf%eri%n_J,                  &
@@ -1661,7 +1642,7 @@ contains
             call batch_v%determine_limits(v_batch)
 !
             call wf%eri%get_cholesky_t1(X_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
-                                        wf%n_o+batch_v%first, wf%n_o+batch_v%last)
+                                        wf%n_o+batch_v%first, wf%n_o+batch_v%get_last())
 !
             call dgemm('T','N',                                 &
                         batch_v%length,                         &
@@ -1682,7 +1663,7 @@ contains
 !
          call sort_123_to_132(X_J_ck, X_J_kc, wf%eri%n_J, wf%n_v, batch_k%length)
 !
-         call wf%eri%get_cholesky_t1(L_J_lk, 1, wf%n_o, batch_k%first, batch_k%last)
+         call wf%eri%get_cholesky_t1(L_J_lk, 1, wf%n_o, batch_k%first, batch_k%get_last())
          call sort_123_to_132(L_J_lk, L_Jk_l, wf%eri%n_J, wf%n_o, batch_k%length)
 !
          call dgemm('T', 'N',                  &
@@ -1701,7 +1682,7 @@ contains
 !        :: Term 3: sigma_bl += - sum_cek Y_ebck * g_ckle ::
 !
          call wf%eri%get_cholesky_t1(X_J_ck, 1+wf%n_o, wf%n_v+wf%n_o, &
-                                     batch_k%first, batch_k%last)
+                                     batch_k%first, batch_k%get_last())
 !
          do v_batch = 1, batch_v%num_batches
 !
@@ -1721,7 +1702,7 @@ contains
                         wf%n_v*batch_v%length)
 !
             call wf%eri%get_cholesky_t1(L_J_le, 1, wf%n_o, &
-                                        batch_v%first+wf%n_o, batch_v%last+wf%n_o)
+                                        batch_v%first+wf%n_o, batch_v%get_last()+wf%n_o)
 !
             call sort_123_to_312(L_J_le, L_eJ_l, wf%eri%n_J, wf%n_o, batch_v%length)
 !

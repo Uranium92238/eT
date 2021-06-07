@@ -295,40 +295,6 @@ contains
    end subroutine destruct_gs_density_ccs
 !
 !
-   module subroutine initialize_transition_densities_ccs(wf)
-!!
-!!    Initialize left and right transition densities
-!!    Written by Alexander C. Paul, June 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      call mem%alloc(wf%left_transition_density, wf%n_mo, wf%n_mo)
-!
-      call mem%alloc(wf%right_transition_density, wf%n_mo, wf%n_mo)
-!
-   end subroutine initialize_transition_densities_ccs
-!
-!
-   module subroutine destruct_transition_densities_ccs(wf)
-!!
-!!    Destruct left and right transition densities
-!!    Written by Alexander C. Paul, June 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (allocated(wf%left_transition_density)) &
-         call mem%dealloc(wf%left_transition_density, wf%n_mo, wf%n_mo)
-!
-      if (allocated(wf%right_transition_density)) &
-         call mem%dealloc(wf%right_transition_density, wf%n_mo, wf%n_mo)
-!
-   end subroutine destruct_transition_densities_ccs
-!
-!
    module subroutine initialize_right_excitation_energies_ccs(wf)
 !!
 !!    Initialize right excitation energies 
@@ -453,5 +419,33 @@ contains
       call wf%destruct_fock_ab()
 !
    end subroutine destruct_fock_ccs
+!
+!
+   module subroutine initialize_density_intermediates_ccs(wf)
+!!
+!!    Initialize help arrays for the transition densities
+!!    Written by Alexander C. Paul and Sarai D. Folkestad, Apr 2020
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      call mem%alloc(wf%r0, wf%n_singlet_states)
+!
+   end subroutine initialize_density_intermediates_ccs
+!
+!
+   module subroutine destruct_density_intermediates_ccs(wf)
+!!
+!!    Destruct help arrays for the transition densities
+!!    Written by Alexander C. Paul and Sarai D. Folkestad, Apr 2020
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      call mem%dealloc(wf%r0, wf%n_singlet_states)
+!
+   end subroutine destruct_density_intermediates_ccs
 !
 end submodule initialize_destruct_ccs

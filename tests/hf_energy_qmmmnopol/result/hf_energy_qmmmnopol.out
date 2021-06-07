@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:23:31 UTC +01:00
+  Calculation started: 2021-06-07 12:49:32 UTC +02:00
 
 
   :: Input file
@@ -180,10 +180,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-15
-     Exchange screening threshold:  0.1000E-13
-     Integral cutoff:               0.1000E-15
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-15
+     Exchange screening threshold:   0.1000E-13
+     ERI cutoff:                     0.1000E-15
+     One-electron integral  cutoff:  0.1000E-20
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -201,12 +202,12 @@
      5           -76.390968941723     0.1389E-03     0.1291E-04
      6           -76.390969292992     0.3025E-04     0.3513E-06
      7           -76.390969304853     0.4093E-05     0.1186E-07
-     8           -76.390969305100     0.2872E-06     0.2470E-09
-     9           -76.390969305103     0.6221E-07     0.2984E-11
-    10           -76.390969305103     0.5084E-08     0.7105E-13
-    11           -76.390969305103     0.8413E-09     0.7105E-13
-    12           -76.390969305103     0.2940E-09     0.4263E-13
-    13           -76.390969305103     0.1134E-09     0.1137E-12
+     8           -76.390969305100     0.2872E-06     0.2471E-09
+     9           -76.390969305103     0.6221E-07     0.2970E-11
+    10           -76.390969305103     0.5084E-08     0.4263E-13
+    11           -76.390969305103     0.8413E-09     0.2842E-13
+    12           -76.390969305103     0.2940E-09     0.1421E-13
+    13           -76.390969305103     0.1134E-09     0.2842E-13
     14           -76.390969305103     0.1554E-10     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
@@ -225,11 +226,20 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.01363
-     Total cpu time (sec):               1.98123
+     Total wall time (sec):              0.50781
+     Total cpu time (sec):               0.95769
 
-     Peak memory usage during the execution of eT: 360.072 KB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:23:32 UTC +01:00
+  Peak memory usage during the execution of eT: 360.072 KB
+
+  Total wall time in eT (sec):              0.52283
+  Total cpu time in eT (sec):               0.97355
+
+  Calculation ended: 2021-06-07 12:49:33 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
 
   eT terminated successfully!

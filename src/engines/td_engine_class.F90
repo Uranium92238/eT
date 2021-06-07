@@ -83,12 +83,17 @@ contains
 !!    Generates a new time dependent engine object. Sets the default settings for the engine, and
 !!    replaces these with user defined settings if specified in the input file.
 !!
+      use citation_class,           only : citation
+      use citation_printer_class,   only : eT_citations
+!
       implicit none
 !
 !     Needed for defaults and sanity checks
       class(ccs), intent(in)       :: wf
 !
       type(td_engine) :: engine
+!
+      type(citation), allocatable :: reference 
 !
 !     Set defaults
 !
@@ -126,6 +131,21 @@ contains
 !
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
+!
+      reference = citation(implementation = 'Time-dependent CC',                            &
+                           journal        = 'Phys. Rev. A',                                 &
+                           title_         = 'Time-dependent coupled-cluster theory for &
+                                             &ultrafast transient-absorption spectroscopy', &
+                           volume         = '102',                                          &
+                           issue          = '2',                                            &
+                           pages          = '023115',                                       &
+                           year           = '2020',                                         &
+                           doi            = '10.1103/PhysRevA.102.023115',                  &
+                           authors        = [character(len=25) :: 'Andreas S. Skeidsvoll',  &
+                                                                  'Alice Balbi',            &
+                                                                  'Henrik Koch'])
+!
+      call eT_citations%add(reference)
 !
    end function new_td_engine
 !

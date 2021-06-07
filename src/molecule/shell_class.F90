@@ -26,13 +26,13 @@ module shell_class
 !
    use kinds
 !
-   use interval_class, only: interval
+   use range_class
    use global_out, only : output
    use memory_manager_class, only : mem
 !
    implicit none
 !
-   type, extends(interval) :: shell ! interval: AO index range of the shell 
+   type, extends(range_) :: shell ! AO index range of the shell 
 !
       integer    :: size_cart = -1 ! The number of basis functions in cartesian
       integer    :: l         = -1 ! The angular momentum
@@ -46,7 +46,6 @@ module shell_class
    contains
 !
       procedure :: determine_angular_momentum         => determine_angular_momentum_shell
-      procedure :: determine_last_ao_index            => determine_last_ao_index_shell
 !
       procedure :: initialize_exponents               => initialize_exponents_shell
       procedure :: initialize_coefficients            => initialize_coefficients_shell
@@ -63,52 +62,52 @@ module shell_class
       procedure :: set_n_primitives                   => set_n_primitives_shell
       procedure :: get_n_primitives                   => get_n_primitives_shell
 !
-      procedure, nopass :: get_angular_momentum_label => get_angular_momentum_label_shell
+      procedure :: get_angular_momentum               => get_angular_momentum_shell
+      procedure :: get_angular_momentum_label         => get_angular_momentum_label_shell
+      procedure, nopass :: get_molden_offset          => get_molden_offset_shell
 !
-      procedure :: cleanup                            => cleanup_shell 
+      procedure :: cleanup                            => cleanup_shell
 !
    end type shell
 !
 !
-   interface shell 
+   interface shell
 !
-      procedure :: new_shell 
+      procedure :: new_shell
 !
-   end interface shell 
+   end interface shell
 !
 !
 contains
 !
 !
-   function new_shell(first, length, number_) result(sh)
+   function new_shell(first, length, number_) result(this)
 !!
-!!    New shell 
-!!    Written by Eirik F. Kjønstad, 2019 
+!!    New shell
+!!    Written by Eirik F. Kjønstad, 2019
 !!
-!!    first:   the first AO index of the shell 
-!!    length:  the number of AOs in the shell 
+!!    first:   the first AO index of the shell
+!!    length:  the number of AOs in the shell
 !!    number_: the shell number in the full list of shells (according to Libint)
 !!
-      implicit none 
+      implicit none
 !
-      integer, intent(in) :: first, length 
+      integer, intent(in) :: first, length
 !
-      integer, intent(in) :: number_ 
+      integer, intent(in) :: number_
 !
-      type(shell) :: sh 
+      type(shell) :: this
 !
-      sh%first = first 
-      sh%length = length 
+      this%range_ = range_(first, length)
 !
-      call sh%determine_last_ao_index()
-      call sh%determine_angular_momentum()
+      call this%determine_angular_momentum()
 !
-      sh%number_ = number_
+      this%number_ = number_
 !
    end function new_shell
 !
 !
-   subroutine determine_angular_momentum_shell(sh)
+   subroutine determine_angular_momentum_shell(this)
 !!
 !!    Determine angular momentum
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -118,18 +117,19 @@ contains
 !!
       implicit none
 !
-      class(shell) :: sh
+      class(shell) :: this
 !
       integer :: i
 !
       i = 0
-      sh%l = -1
+      this%l = -1
 !
       do while (i .lt. 10)
 !
-         if ((2*i + 1) .eq. sh%length .or. (((i+1)*(i+2))/2) .eq. sh%length) then
+         if ((2*i + 1) .eq. this%length .or. &
+            (((i+1)*(i+2))/2) .eq. this%length) then
 !
-            sh%l = i
+            this%l = i
 !
          endif
 !
@@ -137,7 +137,7 @@ contains
 !
       enddo
 !
-      if (sh%l .eq. -1) then
+      if (this%l .eq. -1) then
 !
          call output%error_msg('could not determine angular momentum of shell.')
 !
@@ -146,240 +146,297 @@ contains
    end subroutine determine_angular_momentum_shell
 !
 !
-   subroutine determine_last_ao_index_shell(sh)
-!!
-!!    Determine last AO index
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(shell) :: sh
-!
-      sh%last = sh%first + sh%length - 1
-!
-   end subroutine determine_last_ao_index_shell
-!
-!
-   subroutine initialize_exponents_shell(sh)
+   subroutine initialize_exponents_shell(this)
 !!
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: sh
+      class(shell), intent(inout) :: this
 !
-      if (sh%n_primitives == 0) &
+      if (this%n_primitives == 0) &
       call output%error_msg('Number of primitive Gaussians not set before alloc of exponents')
 !
-      if (.not. allocated(sh%exponents)) &
-         call mem%alloc(sh%exponents, sh%n_primitives)
+      if (.not. allocated(this%exponents)) &
+         call mem%alloc(this%exponents, this%n_primitives)
 !
    end subroutine initialize_exponents_shell
 !
 !
-   subroutine initialize_coefficients_shell(sh)
+   subroutine initialize_coefficients_shell(this)
 !!
 !!    Initialize coefficients
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: sh
+      class(shell), intent(inout) :: this
 !
-      if (sh%n_primitives == 0) &
+      if (this%n_primitives == 0) &
       call output%error_msg('Number of primitive Gaussians not set before alloc of coefficients')
 !
-      if (.not. allocated(sh%coefficients)) &
-            call mem%alloc(sh%coefficients, sh%n_primitives)
+      if (.not. allocated(this%coefficients)) &
+            call mem%alloc(this%coefficients, this%n_primitives)
 !
    end subroutine initialize_coefficients_shell
 !
 !
-   subroutine destruct_exponents_shell(sh)
+   subroutine destruct_exponents_shell(this)
 !!
 !!    Destruct primitive exponents
 !!    Written by Andreas Skeidsvoll, Aug 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: sh
+      class(shell), intent(inout) :: this
 !
-      if (sh%n_primitives == 0) &
+      if (this%n_primitives == 0) &
       call output%error_msg('Number of primitive Gaussians not set before dealloc of exponents')
 !
-      if (allocated(sh%exponents)) &
-         call mem%dealloc(sh%exponents, sh%n_primitives)
+      if (allocated(this%exponents)) &
+         call mem%dealloc(this%exponents, this%n_primitives)
 !
    end subroutine destruct_exponents_shell
 !
 !
-   subroutine destruct_coefficients_shell(sh)
+   subroutine destruct_coefficients_shell(this)
 !!
 !!    Destruct coefficients
 !!    Written by Andreas Skeidsvoll, Aug 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: sh
+      class(shell), intent(inout) :: this
 !
-      if (sh%n_primitives == 0) &
+      if (this%n_primitives == 0) &
       call output%error_msg('Number of primitive Gaussians not set before dealloc of coefficients')
 !
-      if (allocated(sh%coefficients)) &
-         call mem%dealloc(sh%coefficients, sh%n_primitives)
+      if (allocated(this%coefficients)) &
+         call mem%dealloc(this%coefficients, this%n_primitives)
 !
    end subroutine destruct_coefficients_shell
 !
 !
-   subroutine set_exponent_i_shell(sh, i, exponent)
+   subroutine set_exponent_i_shell(this, i, exponent)
 !!
 !!    Set exponent i
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: sh
+      class(shell), intent(inout) :: this
 !
       integer, intent(in)   :: i
       real(dp), intent(in)       :: exponent
 !
-      if (i .gt. sh%n_primitives) &
+      if (i .gt. this%n_primitives) &
          call output%error_msg('Tried to set exponent for non-exisiting primitive Gaussian')
 !
-      sh%exponents(i) = exponent
+      this%exponents(i) = exponent
 !
    end subroutine set_exponent_i_shell
 !
 !
-   real(dp) function get_exponent_i_shell(sh, i)
+   function get_exponent_i_shell(this, i) result(exponent_)
 !!
 !!    Get exponent i
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
-!  
-      class(shell), intent(in) :: sh
+!
+      class(shell), intent(in) :: this
 !
       integer, intent(in)   :: i
 !
-      if (i .gt. sh%n_primitives) &
+      real(dp) :: exponent_
+!
+      if (i .gt. this%n_primitives) &
          call output%error_msg('Tried to get exponent for non-exisiting primitive Gaussian')
 !
-      get_exponent_i_shell = sh%exponents(i)
+      exponent_ = this%exponents(i)
 !
    end function get_exponent_i_shell
 !
 !
-   subroutine set_coefficient_i_shell(sh, i, coefficient)
+   subroutine set_coefficient_i_shell(this, i, coefficient)
 !!
 !!    Set coefficient i
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: sh
+      class(shell), intent(inout) :: this
 !
       integer, intent(in)   :: i
       real(dp), intent(in)  :: coefficient
 !
-      if (i .gt. sh%n_primitives) &
+      if (i .gt. this%n_primitives) &
          call output%error_msg('Tried to set coefficient for non-exisiting primitive Gaussian')
 !
-      sh%coefficients(i) = coefficient
+      this%coefficients(i) = coefficient
 !
    end subroutine set_coefficient_i_shell
 !
 !
-   real(dp) function get_coefficient_i_shell(sh, i)
+   real(dp) function get_coefficient_i_shell(this, i)
 !!
 !!    Get coefficient i
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(in) :: sh
+      class(shell), intent(in) :: this
 !
-      integer, intent(in)   :: i
+      integer, intent(in) :: i
 !
-      if (i .gt. sh%n_primitives) &
+      if (i .gt. this%n_primitives) &
          call output%error_msg('Tried to get coefficient for non-exisiting primitive Gaussian')
 !
-      get_coefficient_i_shell = sh%coefficients(i)
+      get_coefficient_i_shell = this%coefficients(i)
 !
    end function get_coefficient_i_shell
 !
 !
-   subroutine set_n_primitives_shell(sh, n)
+   subroutine set_n_primitives_shell(this, n)
 !!
 !!    Set number of primitives
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: sh
+      class(shell), intent(inout) :: this
 !
       integer, intent(in) :: n
 !
-      sh%n_primitives = n
+      this%n_primitives = n
 !
    end subroutine set_n_primitives_shell
 !
 !
-   integer function get_n_primitives_shell(sh)
+   pure function get_n_primitives_shell(this) result(n)
 !!
 !!    Get number of primitives
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(in) :: sh
+      class(shell), intent(in) :: this
 !
-      get_n_primitives_shell = sh%n_primitives
+      integer :: n
+!
+      n = this%n_primitives
 !
    end function get_n_primitives_shell
 !
 !
-   subroutine get_angular_momentum_label_shell(l, ao, label, cartesian)
+   function get_angular_momentum_label_shell(this, n, cartesian) result(label)
 !!
 !!    Get angular momentum label
 !!    written by Alexander C. Paul, Dec 2019
 !!
 !!    Returns string containing the angular momentum and it's spatial component
 !!
-!!    l:          angular momentum quantum number
-!!    ao:         atomic orbital of the shell
+!!    n:          number of the orbital of the shell
 !!                NB: assuming default ordering of libint.
 !!                cartesian basis functions: {xx, xy, xz, yy, yz, zz}
 !!                spherical/pure functions:  m_l: {2, 1, 0, -1, -2}
-!!    label:      string that is returned e.g. d_xx
 !!    cartesian:  logical determining if a cartesian or "pure" basis set is used
+!!    label:      string that is returned e.g. d_xx
 !!
       use angular_momentum
 !
       implicit none
 !
-      integer, intent(in) :: l
-      integer, intent(in) :: ao
+      class(shell), intent(in) :: this
 !
-      character(len=*), intent(inout) :: label
+      integer, intent(in) :: n
+!
+      character(len=8) :: label
 !
       logical, intent(in) :: cartesian
 !
       if (cartesian) then
 !
+         select case (this%l)
+            case(0)
+               label = this%get_angular_momentum()
+            case(1)
+               label = this%get_angular_momentum() // ' '  // p_cart(n)
+            case(2)
+               label = this%get_angular_momentum() // ' '  // d_cart(n)
+            case(3)
+               label = this%get_angular_momentum() // ' '  // f_cart(n)
+            case(4)
+               label = this%get_angular_momentum() // ' '  // g_cart(n)
+            case(5)
+               label = this%get_angular_momentum()
+            case default
+               call output%error_msg('Angular momentum of atomic orbital not recognized.')
+         end select
+!
+      else
+!
+         select case (this%l)
+            case(0)
+               label = this%get_angular_momentum()
+            case(1)
+               label = this%get_angular_momentum() // ' ' // p(n)
+            case(2)
+               label = this%get_angular_momentum() // ' '  // d(n)
+            case(3)
+               label = this%get_angular_momentum() // ' '  // f(n)
+            case(4)
+               label = this%get_angular_momentum() // ' '  // g(n)
+            case(5)
+               label = this%get_angular_momentum()
+            case default
+               call output%error_msg('Angular momentum of atomic orbital not recognized.')
+         end select
+!
+      end if
+!
+   end function get_angular_momentum_label_shell
+!
+!
+   function get_molden_offset_shell(l, i, cartesian) result(offset)
+!!
+!!    Get molden offset
+!!    Written by Alexander C. Paul, May 2021
+!!
+!!    To write molden files the AOs have to be reordered
+!!    within a shell the n-th ao has to have the number (first + offset(n) - 1)
+!!
+      use angular_momentum
+!
+      implicit none
+!
+      integer, intent(in) :: l, i
+      logical, intent(in) :: cartesian
+      integer :: offset
+!
+      offset = 0
+!
+      if (cartesian) then
+!
          select case (l)
             case(0)
-               label = s
+               offset = i
             case(1)
-               label = p_cart(ao)
+               offset = i
             case(2)
-               label = d_cart(ao)
+!              instead of   xx, xy, xz, yy, yz, zz
+!              Molden wants xx, yy, zz, xy, xz, yz
+               offset = d_offsets_cart(i)
             case(3)
-               label = f_cart(ao)
+!              instead of   xxx, xxy, xxz, xyy, xyz, xzz, yyy, yyz, yzz, zzz
+!              Molden wants xxx, yyy, zzz, xyy, xxy, xxz, xzz, yzz, yyz, xyz
+               offset = f_offsets_cart(i)
             case(4)
-               label = g
-            case(5)
-               label = h
+!              instead of   xxxx, xxxy, xxxz, xxyy, xxyz, xxzz, xyyy, xyyz, xyzz, xzzz,
+!                           yyyy, yyyz, yyzz, yzzz, zzzz
+!              Molden wants xxxx, yyyy, zzzz, xxxy, xxxz, yyyx, yyyz, zzzx, zzzy, xxyy,
+!                           xxzz, yyzz, xxyz, yyxz, zzxy
+               offset = g_offsets_cart(i)
             case default
                call output%error_msg('Angular momentum of atomic orbital not recognized.')
          end select
@@ -388,37 +445,74 @@ contains
 !
          select case (l)
             case(0)
-               label = s
+               offset = i
             case(1)
-               label = p(ao)
+               offset = i
             case(2)
-               label = d(ao)
+!              instead of   2, 1, 0,-1,-2
+!              Molden wants 0, 1,-1, 2,-2
+               offset = d_offsets(i)
             case(3)
-               label = f(ao)
+!              instead of   3, 2, 1, 0,-1,-2,-3
+!              Molden wants 0, 1,-1, 2,-2, 3,-3
+               offset = f_offsets(i)
             case(4)
-               label = g
-            case(5)
-               label = h
+!              instead of   4, 3, 2, 1, 0,-1,-2,-3,-4
+!              Molden wants 0, 1,-1, 2,-2, 3,-3, 4,-4
+               offset = g_offsets(i)
             case default
                call output%error_msg('Angular momentum of atomic orbital not recognized.')
          end select
 !
       end if
 !
-   end subroutine get_angular_momentum_label_shell
+   end function get_molden_offset_shell
 !
 !
-   subroutine cleanup_shell(sh)
+   pure function get_angular_momentum_shell(this) result(l_letter)
+!!
+!!    Get angular momentum
+!!    written by Alexander C. Paul, Dec 2019
+!!
+!!    Convert angular momentum quantum number into the letter s,p,d,f,g,h
+!!
+      use angular_momentum
+!
+      implicit none
+!
+      class(shell), intent(in) :: this
+!
+      character(len=:), allocatable :: l_letter
+!
+      select case (this%l)
+         case(0)
+            l_letter = 's'
+         case(1)
+            l_letter = 'p'
+         case(2)
+            l_letter = 'd'
+         case(3)
+            l_letter = 'f'
+         case(4)
+            l_letter = 'g'
+         case(5)
+            l_letter = 'h'
+      end select
+!
+   end function get_angular_momentum_shell
+!
+!
+   subroutine cleanup_shell(this)
 !!
 !!    Cleanup
 !!    Written by Sarai D. Folkestad, Dec 2019
 !!
       implicit none
 !
-      class(shell) :: sh
+      class(shell) :: this
 !
-      call sh%destruct_exponents()   
-      call sh%destruct_coefficients()
+      call this%destruct_exponents()   
+      call this%destruct_coefficients()
 !
    end subroutine cleanup_shell
 !

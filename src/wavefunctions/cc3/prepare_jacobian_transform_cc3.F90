@@ -274,7 +274,7 @@ contains
 !
                call wf%setup_ovov(g_lbjc, g_lbjc_p, sorting, batch_full, batch_j)
 !
-               call wf%X_dbai%read_interval(X_dbaj, batch_j)
+               call wf%X_dbai%read_range(X_dbaj, batch_j)
                X_dbaj_p => X_dbaj
 !
                call wf%setup_oovo(g_licj, g_licj_p, sorting, batch_i, batch_j)
@@ -306,7 +306,7 @@ contains
 !
                   call wf%setup_ovov(g_lbkc, g_lbkc_p, sorting, batch_full, batch_k)
 !
-                  call wf%X_dbai%read_interval(X_dbak, batch_k)
+                  call wf%X_dbai%read_range(X_dbak, batch_k)
                   X_dbak_p => X_dbak
 !
                else if (k_batch .eq. i_batch) then ! k_batch == j_batch == i_batch
@@ -337,15 +337,15 @@ contains
 !
                endif
 !
-               do i = batch_i%first, batch_i%last
+               do i = batch_i%first, batch_i%get_last()
 !
                   i_rel = i - batch_i%first + 1
 !
-                  do j = batch_j%first, min(batch_j%last, i)
+                  do j = batch_j%first, min(batch_j%get_last(), i)
 !
                      j_rel = j - batch_j%first + 1
 !
-                     do k = batch_k%first, min(batch_k%last, j)
+                     do k = batch_k%first, min(batch_k%get_last(), j)
 !
                         if (k .eq. i) then ! k == j == i
                            cycle
@@ -383,18 +383,18 @@ contains
                enddo ! loop over i
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
-                  call wf%X_dbai%write_interval(X_dbak, batch_k)
+                  call wf%X_dbai%write_range(X_dbak, batch_k)
                endif
 !
             enddo ! batch_k
 !
             if (j_batch .ne. i_batch) then
-               call wf%X_dbai%write_interval(X_dbaj, batch_j)
+               call wf%X_dbai%write_range(X_dbaj, batch_j)
             endif
 !
          enddo ! batch_j
 !
-         call wf%X_dbai%write_interval(X_dbai, batch_i)
+         call wf%X_dbai%write_range(X_dbai, batch_i)
 !
       enddo ! batch_i
 !
@@ -608,7 +608,7 @@ contains
 !
 !        Read from file
 !
-         call wf%X_dbai%read_interval(X_dbai, batch_i)
+         call wf%X_dbai%read_range(X_dbai, batch_i)
 !
 !        Sort X_dbai to X_abid
 !

@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:26:35 UTC +01:00
+  Calculation started: 2021-06-07 12:50:29 UTC +02:00
 
 
   :: Input file
@@ -159,10 +159,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Integral cutoff:               0.1000E-16
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -182,15 +183,15 @@
      7          -177.480195516818     0.2206E-04     0.7560E-07
      8          -177.480195527024     0.5084E-05     0.1021E-07
      9          -177.480195527847     0.1218E-05     0.8232E-09
-    10          -177.480195527874     0.2531E-06     0.2666E-10
-    11          -177.480195527875     0.4375E-07     0.9379E-12
-    12          -177.480195527875     0.9241E-08     0.2842E-12
-    13          -177.480195527875     0.4370E-08     0.0000E+00
-    14          -177.480195527875     0.1744E-08     0.0000E+00
-    15          -177.480195527875     0.3643E-09     0.2842E-13
-    16          -177.480195527875     0.1712E-09     0.2842E-13
+    10          -177.480195527874     0.2531E-06     0.2663E-10
+    11          -177.480195527875     0.4375E-07     0.1108E-11
+    12          -177.480195527875     0.9241E-08     0.2842E-13
+    13          -177.480195527875     0.4370E-08     0.5684E-13
+    14          -177.480195527875     0.1744E-08     0.1137E-12
+    15          -177.480195527875     0.3643E-09     0.1137E-12
+    16          -177.480195527875     0.1712E-09     0.5684E-13
     17          -177.480195527875     0.5855E-10     0.0000E+00
-    18          -177.480195527875     0.5043E-11     0.5684E-13
+    18          -177.480195527875     0.5043E-11     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -198,20 +199,19 @@
 
      HOMO-LUMO gap:                  0.600390987886
      Nuclear repulsion energy:      48.499011140898
-     Electronic energy:           -225.979206668772
+     Electronic energy:           -225.979206668773
      Total energy:                -177.480195527875
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.65049
-     Total cpu time (sec):               3.25273
+     Total wall time (sec):              0.90474
+     Total cpu time (sec):               1.73760
 
 
   :: CCSD wavefunction
   =======================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -292,7 +292,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9504E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1283E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1084E-14
 
   - Settings for integral handling:
 
@@ -302,8 +302,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.75048
-     Total cpu time (sec):               1.46741
+     Total wall time (sec):              0.40829
+     Total cpu time (sec):               0.80337
 
 
   2) Preparation of MO basis and integrals
@@ -335,20 +335,20 @@
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
     1          -177.877001409678     0.1168E+00     0.1779E+03
-    2          -177.886677470623     0.3120E-01     0.9676E-02
+    2          -177.886677470624     0.3120E-01     0.9676E-02
     3          -177.894835530805     0.8696E-02     0.8158E-02
     4          -177.896138458913     0.2772E-02     0.1303E-02
     5          -177.895996892341     0.9633E-03     0.1416E-03
-    6          -177.895989294978     0.4209E-03     0.7597E-05
+    6          -177.895989294979     0.4209E-03     0.7597E-05
     7          -177.895986725658     0.1136E-03     0.2569E-05
     8          -177.895979732814     0.3176E-04     0.6993E-05
     9          -177.895980089064     0.8612E-05     0.3562E-06
-   10          -177.895980244988     0.3383E-05     0.1559E-06
+   10          -177.895980244989     0.3383E-05     0.1559E-06
    11          -177.895980204537     0.1671E-05     0.4045E-07
    12          -177.895980277253     0.8445E-06     0.7272E-07
    13          -177.895980290898     0.2798E-06     0.1364E-07
    14          -177.895980297511     0.1025E-06     0.6614E-08
-   15          -177.895980299219     0.2911E-07     0.1708E-08
+   15          -177.895980299220     0.2911E-07     0.1708E-08
    16          -177.895980298868     0.8897E-08     0.3515E-09
    17          -177.895980298712     0.2774E-08     0.1558E-09
    18          -177.895980298611     0.8305E-09     0.1012E-09
@@ -370,7 +370,7 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        1      9        0.020651636313
+        1      9        0.020651636312
         3      9        0.009706732910
         4      7        0.006068718374
        14      9       -0.005941010434
@@ -400,8 +400,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.00593
-     Total cpu time (sec):               2.00879
+     Total wall time (sec):              0.72932
+     Total cpu time (sec):               1.46081
 
 
   5) Calculation of the excited state (asymmetric lanczos algorithm)
@@ -495,8 +495,8 @@
 
   - Finished solving the CCSD multipliers equations
 
-     Total wall time (sec):               0.55641
-     Total cpu time (sec):                1.11237
+     Total wall time (sec):               0.39155
+     Total cpu time (sec):                0.78347
 
    - Asymmetric Lanczos excited state solver
   ---------------------------------------------
@@ -523,17 +523,17 @@
      State.      energy [a.u]         energy [eV]         Osc. strength
      ----------------------------------------------------------------------
         1        0.323026578130       8.790000912207      0.129660258375
-        2        0.741730214899      20.183507200318      0.494370099346
+        2        0.741730214899      20.183507200319      0.494370099346
         3        1.095042753973      29.797631086773      0.684669350204
         4        1.778069782448      48.383743220699      0.906066335709
         5        2.779591277199      75.636531221691      2.090166478101
-        6        3.897202616779     106.048284803324      0.836725814923
+        6        3.897202616779     106.048284803323      0.836725814923
         7        4.867850582987     132.460961301353      0.674570794611
         8        5.972451632724     162.518686863827      0.066466358758
         9        8.476343993485     230.653068445041      0.003349650071
        10       11.126136672930     302.757599918387      0.000429003547
      ----------------------------------------------------------------------
-     For full spectrum see file: lanczos30_X
+     For full spectrum see file: eT.lanczos30_X
 
      Component: Y
 
@@ -543,14 +543,14 @@
         2        0.745568514935      20.287952664253      0.279616059485
         3        1.155985150435      31.455958161875      0.587968136743
         4        1.800964905888      49.006751262600      1.007951268293
-        5        2.816321075513      76.635999942033      2.175177458492
-        6        3.895770801107     106.009323114372      1.102131782270
-        7        4.754369609346     129.372986721673      0.755644790005
+        5        2.816321075513      76.635999942033      2.175177458491
+        6        3.895770801107     106.009323114371      1.102131782270
+        7        4.754369609346     129.372986721674      0.755644790005
         8        5.870147170437     159.734840648974      0.071646362859
         9        8.344030477758     227.052634292930      0.002846083420
-       10       11.025971612237     300.031969786131      0.000302338119
+       10       11.025971612237     300.031969786130      0.000302338119
      ----------------------------------------------------------------------
-     For full spectrum see file: lanczos30_Y
+     For full spectrum see file: eT.lanczos30_Y
 
      Component: Z
 
@@ -559,28 +559,38 @@
         1        0.210623285365       5.731351522874      0.002975382185
         2        0.693846567771      18.880526794270      0.054888513995
         3        1.350578218072      36.751105242160      0.408194061851
-        4        1.911257577789      52.007967732856      1.318872036610
+        4        1.911257577789      52.007967732857      1.318872036610
         5        2.736789492170      74.471835326922      1.739315865757
-        6        3.757434054386     102.244988498585      1.432601606432
+        6        3.757434054386     102.244988498584      1.432601606432
         7        4.501069337452     122.480335244197      1.260219139340
         8        5.537145317298     150.673398677819      0.126092042817
-        9        7.731061855512     210.372908494822      0.002420590445
-       10       10.352259733327     281.699335782867      0.000154623040
+        9        7.731061855511     210.372908494820      0.002420590445
+       10       10.352259733327     281.699335782866      0.000154623040
      ----------------------------------------------------------------------
-     For full spectrum see file: lanczos30_Z
+     For full spectrum see file: eT.lanczos30_Z
 
   - Finished solving the CCSD excited state equations.
 
-     Total wall time (sec):              4.11258
-     Total cpu time (sec):               8.22372
+     Total wall time (sec):              3.78902
+     Total cpu time (sec):               7.57666
 
   - Timings for the CCSD excited state calculation
 
-     Total wall time (sec):              6.43247
-     Total cpu time (sec):              12.82735
+     Total wall time (sec):              5.32045
+     Total cpu time (sec):              10.62658
 
-     Peak memory usage during the execution of eT: 46.352520 MB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:26:43 UTC +01:00
+  Peak memory usage during the execution of eT: 46.352520 MB
+
+  Total wall time in eT (sec):              6.24672
+  Total cpu time in eT (sec):              12.39372
+
+  Calculation ended: 2021-06-07 12:50:35 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!

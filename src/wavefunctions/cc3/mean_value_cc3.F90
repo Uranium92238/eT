@@ -20,16 +20,16 @@
 submodule (cc3_class) mean_value_cc3
 !
 !!
-!!    Mean-value submodule 
+!!    Mean-value submodule
 !!
-!!    Contains routines related to the mean values, i.e. 
-!!    the construction of density matrices as well as expectation 
+!!    Contains routines related to the mean values, i.e.
+!!    the construction of density matrices as well as expectation
 !!    value calculation.
 !!
 !!    The ground state density is constructed as follows:
 !!
 !!          D_pq = < Lambda| E_pq |CC >
-!!    where: 
+!!    where:
 !!          < Lambda| = < HF| + sum_mu tbar_mu < mu| exp(-T)
 !!
 !!
@@ -45,7 +45,7 @@ submodule (cc3_class) mean_value_cc3
 !!                 + sum_mu    X_ref < HF| e^(-T) E_pq e^T |mu >  Y_mu
 !!                 + sum_mu,nu X_mu  < mu| e^(-T) E_pq e^T |nu >  Y_nu
 !!
-!!    Depending on the type of density matrix (Ground state, transition , 
+!!    Depending on the type of density matrix (Ground state, transition ,
 !!    excited state, interstate transition) different states and thus different
 !!    amplitudes X_ref, X_mu, Y_ref and Y_mu will contribute.
 !!
@@ -60,10 +60,10 @@ submodule (cc3_class) mean_value_cc3
 !!
 !!       ref_ref: first component of the vector for the left and right state
 !!
-!!       mu_ref:  second component of the vector for the left and 
+!!       mu_ref:  second component of the vector for the left and
 !!                first component of the vector for the right state
 !!
-!!       ref_mu:  first component of the vector for the left and 
+!!       ref_mu:  first component of the vector for the left and
 !!                second component of the vector for the right state
 !!
 !!       mu_nu:   second component of the vector for the left and right state
@@ -75,170 +75,172 @@ submodule (cc3_class) mean_value_cc3
 contains
 !
 !
-   module subroutine construct_gs_density_cc3(wf)
+   module subroutine mu_ref_density_terms_cc3(wf, density, state, L)
 !!
-!!    Construct one-electron density
-!!    Written by Alexander C. Paul
-!!    based on construct_gs_density_ccsd by Sarai D. Folkestad
+!!    Density mu ref terms
+!!    Written by Alexander C. Paul, May 2021
 !!
-!!    Constructs the one-electron density matrix in the T1 basis
+!!    Constructs terms of the form:
+!!       sum_mu L_mu < mu| E_pq |HF >
 !!
-!!    D_pq = < Lambda| E_pq |CC >
+!!    corresponding to terms of the ground state density
+!!    and the left transition density.
 !!
-!!    Contributions to the density are split up as follows:
-!!    D_pq = D_pq(ref-ref) + sum_mu tbar_mu D_pq(mu-ref)
+!!    Directs the construction of the CC3 part of the GS and
+!!    left transition density, as the equations are the same, but the
+!!    required information is different for the left GS and the left ES.
 !!
+      use array_utilities, only: add_to_subblock
+      use range_class
+!
       implicit none
 !
       class(cc3) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: tbar_ia
-      real(dp), dimension(:,:,:,:), allocatable :: t_aibj, tbar_aibj
-      real(dp), dimension(:,:,:,:), allocatable :: t_abij, tbar_abij
-      real(dp), dimension(:,:,:,:), allocatable :: t_ijab, tbar_ijab
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: density
 !
-      real(dp), dimension(:,:), allocatable :: density_ov
+      integer, intent(in) :: state
 !
-      integer :: i, j, a, b
+!     L might only be contiguous in the ranges (1:n_t1) and (1+t1: n_t1+n_t2)
+!     as L can also be a combined array of t1bar + t2bar
+      real(dp), dimension(wf%n_t1+wf%n_t2), intent(in) :: L
 !
-      type(timings) :: cc3_timer, ccsd_timer
-      type(timings) :: cc3_ijk_timer, cc3_abc_timer
+      real(dp), dimension(:,:), allocatable :: d_ov, d_vo
 !
-      cc3_ijk_timer = timings('Time in CC3 GS density ijk batching')
-      cc3_abc_timer = timings('Time in CC3 GS density abc batching')
-      cc3_timer     = timings('Total CC3 contribution GS density')
-      ccsd_timer    = timings('Total CCSD contribution GS density')
+      logical  :: cvs, rm_core, ground_state
+      real(dp) :: omega
 !
-      call ccsd_timer%turn_on()
+      type(range_) :: o_range, v_range
 !
-      call zero_array(wf%density, wf%n_mo**2)
+      type(timings)     :: timer
+      character(len=40) :: timer_name
 !
-!     CCS contrubtions
-      call wf%density_ccs_ref_ref_oo(wf%density)
-      call wf%density_ccs_mu_ref_vo(wf%density, wf%t1bar)
+      write(timer_name, '(a,i0,a)') 'CC3 contribution to <', state, '|E_pq|0>'
+      timer = timings(trim(timer_name), pl='v')
 !
-!     CCSD contriubutions
-      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
+      call zero_array(density, wf%n_mo**2)
+      call wf%ccsd%mu_ref_density_terms(density, state, L)
 !
-      call wf%density_doubles_mu_ref_ov(wf%density, wf%t1bar, t_aibj)
+      call timer%turn_on() ! CC3 contribution
 !
-      call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2bar, tbar_aibj, (wf%n_v)*(wf%n_o))
+      call mem%alloc(d_ov, wf%n_o, wf%n_v)
+      call mem%alloc(d_vo, wf%n_v, wf%n_o)
 !
-      call wf%density_doubles_mu_ref_oo(wf%density, tbar_aibj, t_aibj)
-      call wf%density_doubles_mu_ref_vv(wf%density, tbar_aibj, t_aibj)
+      o_range = range_(1, wf%n_o)
+      v_range = range_(wf%n_o+1, wf%n_v)
 !
-      call ccsd_timer%turn_off()
+      if (state == 0) then
 !
-!     :: CC3 contributions ::
-!     -----------------------
+         omega = zero
+         cvs = .false.
+         rm_core = .false.
+         ground_state = .true.
 !
-      call cc3_timer%turn_on()
+         call wf%density_cc3_mu_ref_blocks(wf%GS_cc3_density_oo, d_ov, d_vo, &
+                                           wf%GS_cc3_density_vv, L, omega,   &
+                                           cvs, rm_core, ground_state)
+!
+         call add_to_subblock(one, wf%GS_cc3_density_oo, density, o_range, o_range)
+         call add_to_subblock(one, wf%GS_cc3_density_vv, density, v_range, v_range)
+!
+      else
+!
+         omega = wf%left_excitation_energies(state)
+         ground_state = .false.
+!
+         call wf%density_cc3_mu_ref_blocks(wf%L_cc3_density_oo, d_ov, d_vo, &
+                                           wf%L_cc3_density_vv, L, omega,   &
+                                           wf%cvs, wf%rm_core, ground_state)
+!
+         call add_to_subblock(one, wf%L_cc3_density_oo, density, o_range, o_range)
+         call add_to_subblock(one, wf%L_cc3_density_vv, density, v_range, v_range)
+!
+      end if
+!
+      call add_to_subblock(one, d_ov, density, o_range, v_range)
+      call add_to_subblock(one, d_vo, density, v_range, o_range)
+!
+      call mem%dealloc(d_ov, wf%n_o, wf%n_v)
+      call mem%dealloc(d_vo, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
+!
+   end subroutine mu_ref_density_terms_cc3
+!
+!
+   module subroutine density_cc3_mu_ref_blocks_cc3(wf, d_oo, d_ov, d_vo, d_vv, &
+                                                   L, omega, cvs, rm_core, gs)
+!!
+!!    Density CC3 mu ref blocks
+!!    Written by Alexander C. Paul, May 2021
+!!
+!!    Constructs terms of the ground state density
+!!    and the left transition density in blocks.
+!!
+!!       sum_mu L_mu < mu| E_pq |HF >
+!!
+      implicit none
+!
+      class(cc3), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: d_oo
+      real(dp), dimension(wf%n_o, wf%n_v), intent(out) :: d_ov
+      real(dp), dimension(wf%n_v, wf%n_o), intent(out) :: d_vo
+      real(dp), dimension(wf%n_v, wf%n_v), intent(out) :: d_vv
+!
+      real(dp), intent(in) :: omega
+      logical, intent(in)  :: cvs, rm_core, gs
+!
+      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(in) :: L
+!
+      real(dp), dimension(:,:), allocatable :: L_ia
+      real(dp), dimension(:,:,:,:), allocatable :: L_abij, t_abij
+      real(dp), dimension(:,:,:,:), allocatable :: L_ijab, t_ijab
+!
+      call zero_array(d_oo, wf%n_o**2)
+      call zero_array(d_ov, wf%n_o*wf%n_v)
+      call zero_array(d_vo, wf%n_v*wf%n_o)
+      call zero_array(d_vv, wf%n_v**2)
 !
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call sort_1234_to_1324(t_aibj, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Construct covariant tbar2 = 1/3 (2tbar^ab_ij + tbar^ba_ij)
-      call mem%alloc(tbar_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!     Construct covariant L2 = 1/3 (2L^ab_ij + L^ba_ij)
+      call mem%alloc(L_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call construct_covariant_1324(L(wf%n_t1+1:), L_abij, wf%n_v, wf%n_o)
 !
-      call sort_1234_to_1324(tbar_aibj, tbar_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call dscal(wf%n_t1**2, two*third, tbar_abij, 1)
-      call add_2314_to_1234(third, tbar_aibj, tbar_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%dealloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     CC3 contribution in batches of i,j,k
 !
-!     :: CC3 contribution to ov- and vv-part ::   
-!     ::         in batches of i,j,k         
+      call wf%density_cc3_mu_ref_ijk(d_ov, d_vv, omega, L(1:wf%n_t1), L_abij, t_abij, &
+                                     cvs, rm_core, keep_Y=gs)
 !
-      call mem%alloc(density_ov, wf%n_o, wf%n_v)
-      call zero_array(density_ov, wf%n_o*wf%n_v)
-!
-      call zero_array(wf%GS_cc3_density_vv, wf%n_v**2)
-!
-!     Call with omega = zero and cvs=.false. for GS density
-!     Save the Y_vooo intermediate for response properties
-!
-      call cc3_ijk_timer%turn_on()
-      call wf%density_cc3_mu_ref_ijk(density_ov, wf%GS_cc3_density_vv,  &
-                                     zero, wf%t1bar, tbar_abij, t_abij, &
-                                     cvs=.false., keep_Y=.true.)
-      call cc3_ijk_timer%turn_off()
-!
-!     Copy CC3 ov and vv contributions to the density matrix
-!
-!$omp parallel do private(a, i)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            wf%density(i, wf%n_o+a) = wf%density(i, wf%n_o+a) + density_ov(i, a)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call mem%dealloc(density_ov, wf%n_o, wf%n_v)
-!
-!$omp parallel do private(a, b)
-      do b = 1, wf%n_v
-         do a = 1, wf%n_v
-!
-            wf%density(wf%n_o+a, wf%n_o+b) = wf%density(wf%n_o+a, wf%n_o+b) &
-                                             + wf%GS_cc3_density_vv(a, b)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-!     :: CC3 contribution to oo-part ::
-!     ::     in batches of a,b,c     ::
-!
-!     Need t2, tbar2 in ijab ordering for the oo term
+!     Need t2, L2 in ijab ordering for the d_oo term
       call mem%alloc(t_ijab, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
       call sort_1234_to_3412(t_abij, t_ijab, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call mem%alloc(tbar_ijab, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
-      call sort_1234_to_3412(tbar_abij, tbar_ijab, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%dealloc(tbar_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%alloc(L_ijab, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+      call sort_1234_to_3412(L_abij, L_ijab, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(L_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call mem%alloc(tbar_ia, wf%n_o, wf%n_v)
-      call sort_12_to_21(wf%t1bar, tbar_ia, wf%n_v, wf%n_o)
+      call mem%alloc(L_ia, wf%n_o, wf%n_v)
+      call sort_12_to_21(L(1:wf%n_t1), L_ia, wf%n_v, wf%n_o)
 !
-      call zero_array(wf%GS_cc3_density_oo, wf%n_o**2)
+!     CC3 contribution in batches of a,b,c
 !
-      call cc3_abc_timer%turn_on()
+      call wf%density_cc3_mu_ref_abc(d_oo, omega, L_ia, L_ijab, t_ijab, cvs, rm_core)
 !
-!     Call with omega = zero and cvs=.false. for GS density
-!
-      call wf%density_cc3_mu_ref_abc(wf%GS_cc3_density_oo,     &
-                                     zero, tbar_ia, tbar_ijab, &
-                                     t_ijab, cvs=.false.)
-      call cc3_abc_timer%turn_off()
-!
-      call mem%dealloc(tbar_ia, wf%n_o, wf%n_v)
+      call mem%dealloc(L_ia, wf%n_o, wf%n_v)
       call mem%dealloc(t_ijab, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
-      call mem%dealloc(tbar_ijab, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+      call mem%dealloc(L_ijab, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
 !
-!$omp parallel do private(i, j)
-      do j = 1, wf%n_o
-         do i = 1, wf%n_o
-!
-            wf%density(i, j) = wf%density(i, j) + wf%GS_cc3_density_oo(i, j)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call cc3_timer%turn_off()
-!
-   end subroutine construct_gs_density_cc3
+   end subroutine density_cc3_mu_ref_blocks_cc3
 !
 !
    module subroutine density_cc3_mu_ref_abc_cc3(wf, density_oo, omega, tbar_ia, &
-                                                tbar_ijab, t_ijab, cvs)
+                                                tbar_ijab, t_ijab, cvs, rm_core)
 !!
-!!    One electron density excited-determinant/reference term 
+!!    One electron density excited-determinant/reference term
 !!    in batches of the virtual orbitals a,b,c
 !!    Written by Alexander C. Paul, July 2019
 !!
@@ -253,11 +255,11 @@ contains
 !!    to the oo-block
 !!
 !!    t_mu3 = -< mu3|{U,T2}|HF > (eps_mu3)^-1
-!!    tbar_mu3 = (- eps_mu3)^-1 (tbar_mu1 < mu1| [H,tau_nu3] |R > 
+!!    tbar_mu3 = (- eps_mu3)^-1 (tbar_mu1 < mu1| [H,tau_nu3] |R >
 !!                             + tbar_mu2 < mu2| [H,tau_nu3] |R >
 !!
 !!    oo-block:
-!!          D_kl += -1/2 sum_ij,abc t^abc_ijk tbar^abc_ijl    
+!!          D_kl += -1/2 sum_ij,abc t^abc_ijk tbar^abc_ijl
 !!
       use omp_lib
       use array_utilities, only: copy_and_scale
@@ -270,7 +272,7 @@ contains
 !
       real(dp), intent(in) :: omega
 !
-      logical, intent(in)  :: cvs
+      logical, intent(in)  :: cvs, rm_core
 !
       real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: tbar_ia
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_v, wf%n_v), intent(in) :: tbar_ijab
@@ -344,6 +346,11 @@ contains
       integer              :: n_threads, thread_n, i
       integer              :: req_single_batch
 !
+      type(timings) :: abc_timer
+!
+      abc_timer = timings('CC3 density mu ref abc', pl='v')
+      call abc_timer%turn_on
+!
       thread_n  = 1
       n_threads = 1
 !
@@ -360,7 +367,7 @@ contains
       req_1_eri = req_1_eri + max(wf%n_v**2*wf%n_o, wf%n_o**3)
       req_0 = req_0 + 4*wf%n_o**3*n_threads
 !
-!     Need less memory if we don't need to batch, so we overwrite the maximum 
+!     Need less memory if we don't need to batch, so we overwrite the maximum
 !     required memory in batch_setup
 !
       req_single_batch = req_0 + req_1_eri*wf%n_v + 2*wf%n_v**3*wf%n_o &
@@ -532,17 +539,17 @@ contains
 !
 !$omp parallel do private(a, a_rel, b, b_rel, c, c_rel, thread_n) &
 !$omp schedule(guided, 1)
-               do a = batch_a%first, batch_a%last
+               do a = batch_a%first, batch_a%get_last()
 !
                   a_rel = a - batch_a%first + 1
 !
 !$                thread_n = omp_get_thread_num() + 1
 !
-                  do b = batch_b%first, min(batch_b%last, a)
+                  do b = batch_b%first, min(batch_b%get_last(), a)
 !
                      b_rel = b - batch_b%first + 1
 !
-                     do c = batch_c%first, min(batch_c%last, b)
+                     do c = batch_c%first, min(batch_c%get_last(), b)
 !
                         if (a .eq. b .and. a .eq. c) then
                            cycle
@@ -584,7 +591,7 @@ contains
 !
                         call wf%outer_product_terms_l3_abc(a, b, c, tbar_ia,          &
                                                            tbar_ijab,                 &
-                                                           tbar_ijk(:,:,:,thread_n),  & 
+                                                           tbar_ijk(:,:,:,thread_n),  &
                                                            wf%fock_ia,                &
                                                            g_jakb_p(:,:,a_rel,b_rel), &
                                                            g_jakc_p(:,:,a_rel,c_rel), &
@@ -595,7 +602,7 @@ contains
 !
                         call wf%divide_by_orbital_differences_abc(a, b, c, &
                                                                   tbar_ijk(:,:,:,thread_n), &
-                                                                  omega, cvs)
+                                                                  omega, cvs, rm_core)
 !
                         call wf%density_cc3_mu_ref_oo(a, b, c, density_oo_thread(:,:,thread_n), &
                                                       t_ijk(:,:,:,thread_n),                    &
@@ -674,13 +681,15 @@ contains
 !
       endif
 !
+      call abc_timer%turn_off
+!
    end subroutine density_cc3_mu_ref_abc_cc3
 !
 !
    module subroutine density_cc3_mu_ref_oo_cc3(wf, a, b, c, density_oo, t_ijk, &
                                                    u_ijk, tbar_ijk, v_ijk)
 !!
-!!    One electron density excited-determinant/reference oo-term 
+!!    One electron density excited-determinant/reference oo-term
 !!    Written by Alexander C. Paul, August 2019
 !!
 !!    Calculates CC3 terms of the form:
@@ -692,8 +701,8 @@ contains
 !!    explicit Term:
 !!          D_kl += -1/2 sum_ij,abc t^abc_ijk tbar^abc_ijl
 !!
-!!    All permutations for a,b,c have to be considered 
-!!    due to the restrictions in the a,b,c loops   
+!!    All permutations for a,b,c have to be considered
+!!    due to the restrictions in the a,b,c loops
 !!
       implicit none
 !
@@ -716,7 +725,7 @@ contains
       else if (b .eq. c) then
          factor_ab = -one
          factor_bc = -half
-      else 
+      else
          factor_ab = -half
          factor_bc = -one
       end if
@@ -747,9 +756,9 @@ contains
 !
    module subroutine density_cc3_mu_ref_ijk_cc3(wf, density_ov, density_vv, omega, &
                                                 tbar_ai, tbar_abij, t_abij,        &
-                                                cvs, keep_Y)
+                                                cvs, rm_core, keep_Y)
 !!
-!!    One electron density excited-determinant/reference term 
+!!    One electron density excited-determinant/reference term
 !!    in batches of the occupied orbitals i,j,k
 !!    Written by Alexander C. Paul, July 2019
 !!    Adapted to first construct a covariant intermediate for L3 from
@@ -768,7 +777,7 @@ contains
 !!    to the ov- and vv-blocks.
 !!
 !!    t_mu3 = -< mu3| [U,T2] |HF > (eps_mu3)^-1
-!!    tbar_mu3 = (- eps_mu3)^-1 (tbar_mu1 < mu1 | [H,tau_nu3] |R > 
+!!    tbar_mu3 = (- eps_mu3)^-1 (tbar_mu1 < mu1 | [H,tau_nu3] |R >
 !!                             + tbar_mu2 < mu2 | [H,tau_nu3] |R >
 !!
 !!    ov-block:
@@ -784,7 +793,7 @@ contains
 !
       real(dp), intent(in) :: omega
 !
-      logical, intent(in)  :: cvs
+      logical, intent(in)  :: cvs, rm_core
 !
 !     If present and true the intermediate Y_clik will be stored on file
       logical, intent(in), optional :: keep_Y
@@ -857,13 +866,21 @@ contains
       real(dp), dimension(:,:), allocatable :: density_ai
 !
 !     Intermediate Y_clik
-      real(dp), dimension(:,:,:,:), allocatable :: Y_clik, Y_lcik
+      real(dp), dimension(:,:,:,:), allocatable :: Y_clik
+!
+      type(timings) :: ijk_timer
 !
       type(batching_index) :: batch_i, batch_j, batch_k
       integer :: i_batch, j_batch, k_batch
       integer :: req_0, req_1, req_2, req_3, req_i, req_1_eri
       integer :: i, j, k, i_rel, j_rel, k_rel
       integer :: req_single_batch
+      logical :: skip
+!
+      ijk_timer = timings('CC3 density mu ref ijk', pl='v')
+      call ijk_timer%turn_on
+!
+      skip = .false.
 !
       batch_i = batching_index(wf%n_o)
       batch_j = batching_index(wf%n_o)
@@ -874,7 +891,7 @@ contains
       req_0 = req_0 + 3*wf%n_v**3 + wf%n_v*wf%n_o + wf%n_v*wf%n_o**3
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
-!     Need less memory if we don't need to batch, so we overwrite the maximum 
+!     Need less memory if we don't need to batch, so we overwrite the maximum
 !     required memory in batch_setup
 !
       req_single_batch = req_0 + req_1_eri*wf%n_o + 2*wf%n_v**3*wf%n_o &
@@ -1059,27 +1076,34 @@ contains
 !
                endif
 !
-               do i = batch_i%first, batch_i%last
+               do i = batch_i%first, batch_i%get_last()
 !
                   i_rel = i - batch_i%first + 1
 !
-                  do j = batch_j%first, min(batch_j%last, i)
+                  do j = batch_j%first, min(batch_j%get_last(), i)
 !
                      j_rel = j - batch_j%first + 1
 !
-                     do k = batch_k%first, min(batch_k%last, j)
+                     do k = batch_k%first, min(batch_k%get_last(), j)
 !
                         if (i .eq. j .and. i .eq. k) cycle
 !
-!                       Check if at least one index i,j,k is a core orbital
-!                       cvs == .true. if we construct the left transition density
+!                       Check for core orbitals:
+!                       cvs: i,j,k cannot all correspond to valence orbitals
 !
-                        if(cvs) then
+!                       rm_core: in the contraction X_ck = L^ab_ij t^abc_ijk
+!                                one index (k) can correspond to a general orbital
+!                                and we can only cycle if 2 or more indices
+!                                are core orbitals
 !
-                           if(.not. (any(wf%core_MOs .eq. i) &
-                              .or.   any(wf%core_MOs .eq. j) &
-                              .or.   any(wf%core_MOs .eq. k))) cycle
+                        if(cvs .and. .not. wf%one_core_index(i, j, k, cvs)) cycle
 !
+                        if (rm_core) then
+                           if(wf%two_core_indices(i, j, k, rm_core)) then
+                              cycle
+                           else
+                              skip = wf%one_core_index(i, j, k, rm_core)
+                           end if
                         end if
 !
                         k_rel = k - batch_k%first + 1
@@ -1089,27 +1113,31 @@ contains
 !                       4V_abc - 2W_bac - 2W_cba - 2W_acb + W_bca + W_cab
 !                       by omega - eps^abc_ijk
 !
-                        call wf%construct_W(i, j, k, sorting,           &
-                                            tbar_abc, tbar_abij,       &
-                                            g_dbic_p(:,:,:,i_rel),     &
-                                            g_dbjc_p(:,:,:,j_rel),     &
-                                            g_dbkc_p(:,:,:,k_rel),     &
-                                            g_jlic_p(:,:,j_rel,i_rel), &
-                                            g_klic_p(:,:,k_rel,i_rel), &
-                                            g_kljc_p(:,:,k_rel,j_rel), &
-                                            g_iljc_p(:,:,i_rel,j_rel), &
-                                            g_ilkc_p(:,:,i_rel,k_rel), &
-                                            g_jlkc_p(:,:,j_rel,k_rel))
+                        if (.not. skip) then
 !
-                        call wf%outer_product_terms_l3(i, j, k, tbar_ai, tbar_abij, &
-                                                       tbar_abc, wf%fock_ia,        &
-                                                       g_ibjc_p(:,:,i_rel,j_rel),   &
-                                                       g_ibkc_p(:,:,i_rel,k_rel),   &
-                                                       g_jbkc_p(:,:,j_rel,k_rel))
+                           call wf%construct_W(i, j, k, sorting,          &
+                                               tbar_abc, tbar_abij,       &
+                                               g_dbic_p(:,:,:,i_rel),     &
+                                               g_dbjc_p(:,:,:,j_rel),     &
+                                               g_dbkc_p(:,:,:,k_rel),     &
+                                               g_jlic_p(:,:,j_rel,i_rel), &
+                                               g_klic_p(:,:,k_rel,i_rel), &
+                                               g_kljc_p(:,:,k_rel,j_rel), &
+                                               g_iljc_p(:,:,i_rel,j_rel), &
+                                               g_ilkc_p(:,:,i_rel,k_rel), &
+                                               g_jlkc_p(:,:,j_rel,k_rel))
 !
-                        call construct_contravariant_t3(tbar_abc, sorting, wf%n_v)
+                           call wf%outer_product_terms_l3(i, j, k, tbar_ai, tbar_abij, &
+                                                          tbar_abc, wf%fock_ia,        &
+                                                          g_ibjc_p(:,:,i_rel,j_rel),   &
+                                                          g_ibkc_p(:,:,i_rel,k_rel),   &
+                                                          g_jbkc_p(:,:,j_rel,k_rel))
 !
-                        call wf%divide_by_orbital_differences(i, j, k, tbar_abc, omega)
+                           call construct_contravariant_t3(tbar_abc, sorting, wf%n_v)
+!
+                           call wf%divide_by_orbital_differences(i, j, k, tbar_abc, omega)
+!
+                        end if
 !
 !                       construct t3 for fixed i,j,k
                         call wf%construct_W(i, j, k, u_abc, t_abc, t_abij, &
@@ -1125,7 +1153,8 @@ contains
 !
                         call wf%divide_by_orbital_differences(i, j, k, t_abc)
 !
-                        call wf%density_cc3_mu_ref_vv(i, j, k, density_vv, t_abc,   &
+                        if (.not. skip) &
+                           call wf%density_cc3_mu_ref_vv(i, j, k, density_vv, t_abc, &
                                                          u_abc, tbar_abc, sorting)
 !
 !                       Need contravariant t3 for X_ai intermediate
@@ -1134,8 +1163,9 @@ contains
                         call wf%construct_x_ai_intermediate(i, j, k, t_abc, sorting,  &
                                                             tbar_abij, density_ai)
 !
-                        call wf%construct_y_vooo_intermediate(i, j, k, tbar_abc, sorting, &
-                                                              t_abij, Y_clik)
+                        if (.not. skip) &
+                           call wf%construct_y_vooo_intermediate(i, j, k, tbar_abc, sorting, &
+                                                                 t_abij, Y_clik)
 !
                      enddo ! loop over k
                   enddo ! loop over j
@@ -1203,8 +1233,6 @@ contains
 !
       call mem%dealloc(density_ai, wf%n_v, wf%n_o)
 !
-!     :: D_ld -= sum_cik Y_clik t^dc_ik ::
-!
 !     Write Y_clik to file if keep_Y present and true
 !     Reused for the right transition density matrices
 !
@@ -1221,24 +1249,11 @@ contains
          end if
       end if
 !
-      call mem%alloc(Y_lcik, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call sort_1234_to_2134(Y_clik, Y_lcik, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!     D_ld -= sum_cik Y_clik t^dc_ik
+      call wf%density_cc3_Y_vooo_ov(density_ov, t_abij, Y_clik)
       call mem%dealloc(Y_clik, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call dgemm('N','T',                 &
-                  wf%n_o,                 &
-                  wf%n_v,                 &
-                  (wf%n_v)*(wf%n_o)**2,   &
-                  -one,                   &
-                  Y_lcik,                 & ! Y_l_cik
-                  wf%n_o,                 & 
-                  t_abij,                 & ! t_d_cik
-                  wf%n_v,                 &
-                  one,                    &
-                  density_ov,             &
-                  wf%n_o)
-!
-      call mem%dealloc(Y_lcik, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call ijk_timer%turn_off
 !
    end subroutine density_cc3_mu_ref_ijk_cc3
 !
@@ -1246,7 +1261,7 @@ contains
    module subroutine density_cc3_mu_ref_vv_cc3(wf, i, j, k, density_vv, t_abc, &
                                                u_abc, tbar_abc, v_abc)
 !!
-!!    One electron density excited-determinant/reference vv-term 
+!!    One electron density excited-determinant/reference vv-term
 !!    Written by Alexander C. Paul, August 2019
 !!
 !!    Calculates CC3 terms of the form:
@@ -1258,8 +1273,8 @@ contains
 !!    explicit Term:
 !!          D_cd += 1/2 sum_ab,ijk tbar^abc_ijk t^abd_ijk
 !!
-!!    All permutations for i,j,k have to be considered 
-!!    due to the restrictions in the i,j,k loops   
+!!    All permutations for i,j,k have to be considered
+!!    due to the restrictions in the i,j,k loops
 !!
       implicit none
 !
@@ -1282,7 +1297,7 @@ contains
       else if (j .eq. k) then
          factor_ij = one
          factor_jk = half
-      else 
+      else
          factor_ij = half
          factor_jk = one
       end if
@@ -1316,16 +1331,16 @@ contains
    module subroutine construct_y_vooo_intermediate_cc3(wf, i, j, k, u_abc, &
                                                       v_abc, t2, Y_clik)
 !!
-!!    Construct Y_vooo intermediate  
+!!    Construct Y_vooo intermediate
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
 !!    Y_clik = sum_abj tbar^abc_ijk * t^ab_lj
 !!    used to compute the tbar3 contributions to the ov part of the GS density
 !!
-!!    All permutations for i,j,k have to be considered 
+!!    All permutations for i,j,k have to be considered
 !!    due to the restrictions in the i,j,k loops
 !!
-!!    NB: u_abc changes from in to out, 
+!!    NB: u_abc changes from in to out,
 !!        so this should be the last routine called in a i,j,k loop
 !!
       implicit none
@@ -1409,7 +1424,7 @@ contains
                   dim_**2,       &
                   v3,            & ! v_rs_q
                   dim_**2,       &
-                  one,           & 
+                  one,           &
                   density_block, &
                   dim_)
 !
@@ -1434,7 +1449,7 @@ contains
       real(dp), dimension(dim_, dim_), intent(inout) :: density_block
 !
       real(dp), intent(in) :: factor
-!      
+!
       call dgemm('N','T',        &
                   dim_,          &
                   dim_,          &
@@ -1444,7 +1459,7 @@ contains
                   dim_,          &
                   v3,            & ! v_q_rs
                   dim_,          &
-                  one,           & 
+                  one,           &
                   density_block, &
                   dim_)
 !

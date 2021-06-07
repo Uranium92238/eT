@@ -389,12 +389,13 @@ contains
 !
          call mem%alloc(g_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_cajb, first_p = batch_c%first, last_p = batch_c%last)
+         call wf%eri%get_eri_t1('vvov', g_cajb, first_p = batch_c%first, &
+                                                last_p = batch_c%get_last())
 !
          call mem%alloc(L_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call dcopy((batch_c%length)*(wf%n_v**2)*(wf%n_o), g_cajb, 1, L_cajb, 1)
-         call dscal((batch_c%length)*(wf%n_v**2)*(wf%n_o), two, L_cajb, 1)
+         call dcopy(batch_c%length*wf%n_v**2*(wf%n_o), g_cajb, 1, L_cajb, 1)
+         call dscal(batch_c%length*wf%n_v**2*(wf%n_o), two, L_cajb, 1)
 !
          call add_1432_to_1234(-one, g_cajb, L_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !

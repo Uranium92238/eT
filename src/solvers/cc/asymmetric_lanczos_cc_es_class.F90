@@ -582,7 +582,7 @@ contains
 !
       write(chain_length_string, '(i6)') solver%chain_length
 !
-      spectrum_file = output_file('lanczos' // trim(adjustl(chain_length_string)) // '_' &
+      spectrum_file = output_file('eT.lanczos' // trim(adjustl(chain_length_string)) // '_' &
                                    //component_string(component))
 !
       call spectrum_file%open_()

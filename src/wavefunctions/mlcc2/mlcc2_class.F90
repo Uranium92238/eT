@@ -57,16 +57,6 @@ module mlcc2_class
       integer :: n_cc2_o
       integer :: n_cc2_v
 !
-      integer :: first_ccs_o
-      integer :: first_ccs_v
-      integer :: last_ccs_o
-      integer :: last_ccs_v
-!
-      integer :: first_cc2_o
-      integer :: first_cc2_v
-      integer :: last_cc2_o
-      integer :: last_cc2_v
-!
 !     Orbital type string
 !
       character(len=200) :: cc2_orbital_type
@@ -279,11 +269,16 @@ contains
 !!
 !!    Adapted by Sarai D. Folkestad from CCS constructer, 2019
 !!
+      use citation_class,           only : citation
+      use citation_printer_class,   only : eT_citations
+!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
 !
       class(wavefunction), intent(in) :: template_wf
+!
+      type(citation), allocatable :: reference 
 !
       wf%name_ = 'mlcc2'
 !
@@ -305,6 +300,9 @@ contains
       call wf%general_cc_preparations()
       call wf%set_variables_from_template_wf(template_wf)
       call wf%print_banner()
+!
+      if (wf%ao%has_ghost_atoms()) &
+         call output%warning_msg("Ghosts are experimental in multilevel.")
 !
       if (wf%bath_orbital) call output%error_msg('Bath orbitals not yet implemented for MLCC2')
 !
@@ -328,6 +326,20 @@ contains
          wf%T_nto_o_file = stream_file('nto_M_transformation')
 !
       endif
+!
+      reference = citation(implementation = 'MLCC2 and MLCCSD',                             &
+                           journal        = 'J. Chem. Theory Comput.',                      &
+                           title_         = 'Multilevel CC2 and CCSD Methods with &
+                                             &Correlated Natural Transition Orbitals',      &
+                           volume         = '16',                                           &
+                           issue          = '1',                                            &
+                           pages          = '179–189',                                      &
+                           year           = '2019',                                         &
+                           doi            = '10.1021/acs.jctc.9b00701',                     &
+                           authors        = [character(len=25) :: 'Sarai Dery Folkestad',   &
+                                                                  'Henrik Koch'])
+!
+      call eT_citations%add(reference)
 !
    end subroutine initialize_mlcc2
 !
@@ -539,6 +551,8 @@ contains
 !!
 !!       s_aibj = - g_aibj/ε_aibj, {a,i,b,j} are CC2 orbitals
 !! 
+      implicit none 
+!
       class(mlcc2), intent(inout) :: wf 
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb 
@@ -576,16 +590,16 @@ contains
       call mem%alloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
       call wf%eri%get_eri_t1('ovov', g_iajb,                &
-                             wf%first_cc2_o, wf%last_cc2_o, &
-                             wf%first_cc2_v, wf%last_cc2_v, &
-                             wf%first_cc2_o, wf%last_cc2_o, &
-                             wf%first_cc2_v, wf%last_cc2_v)
+                             1, wf%n_cc2_o, &
+                             1, wf%n_cc2_v, &
+                             1, wf%n_cc2_o, &
+                             1, wf%n_cc2_v)
 !
       call wf%eri%get_eri_t1('vovo', g_aibj,                &
-                             wf%first_cc2_v, wf%last_cc2_v, &
-                             wf%first_cc2_o, wf%last_cc2_o, &
-                             wf%first_cc2_v, wf%last_cc2_v, &
-                             wf%first_cc2_o, wf%last_cc2_o)
+                             1, wf%n_cc2_v, &
+                             1, wf%n_cc2_o, &
+                             1, wf%n_cc2_v, &
+                             1, wf%n_cc2_o)
 !
 !$omp parallel do private(a,i,b,j) reduction(+:correlation_energy)
       do b = 1, wf%n_cc2_v
@@ -593,11 +607,11 @@ contains
             do j = 1, wf%n_cc2_o 
                do a = 1, wf%n_cc2_v
 !
-                  correlation_energy = correlation_energy - (g_aibj(a,i,b,j)/              &
-                                    (wf%orbital_energies(wf%n_o + a + wf%first_cc2_v - 1)  &
-                                   + wf%orbital_energies(wf%n_o + b + wf%first_cc2_v - 1)  &
-                                   - wf%orbital_energies(i + wf%first_cc2_o - 1)           &
-                                   - wf%orbital_energies(j + wf%first_cc2_o - 1)))         &
+                  correlation_energy = correlation_energy - (g_aibj(a,i,b,j)/&
+                                    (wf%orbital_energies(wf%n_o + a)  &
+                                   + wf%orbital_energies(wf%n_o + b)  &
+                                   - wf%orbital_energies(i)           &
+                                   - wf%orbital_energies(j)))         &
                                        *(two*g_iajb(i,a,j,b)-g_iajb(i,b,j,a))
 !
                enddo
@@ -687,10 +701,10 @@ contains
                      aibj = (ai*(ai-3)/2) + ai + bj
 !
                      orbital_differences(aibj + (wf%n_o)*(wf%n_v)) =  &
-                                 wf%orbital_energies(a + wf%n_o + wf%first_cc2_v - 1) &
-                                 - wf%orbital_energies(i + wf%first_cc2_o - 1) &
-                                 + wf%orbital_energies(b + wf%n_o + wf%first_cc2_v - 1) &
-                                 - wf%orbital_energies(j + wf%first_cc2_o - 1)
+                                 wf%orbital_energies(a + wf%n_o) &
+                                 - wf%orbital_energies(i) &
+                                 + wf%orbital_energies(b + wf%n_o) &
+                                 - wf%orbital_energies(j)
 !
                   endif
 !
@@ -747,17 +761,17 @@ contains
 !     t2bar = sum_ai tbar_ai A_ai,aibj
 !
       call wf%jacobian_transpose_cc2_a2(t2bar, wf%t1bar, wf%n_cc2_o, wf%n_cc2_v, &
-                                       wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+                                       1, 1, wf%n_cc2_o, wf%n_cc2_v)
 !
       call symmetric_sum(t2bar, wf%n_cc2_o*wf%n_cc2_v)
 !
       call mem%alloc(g_iajb, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v)
 !      
       call wf%eri%get_eri_t1('ovov', g_iajb,                &
-                             wf%first_cc2_o, wf%last_cc2_o, &
-                             wf%first_cc2_v, wf%last_cc2_v, &
-                             wf%first_cc2_o, wf%last_cc2_o, &
-                             wf%first_cc2_v, wf%last_cc2_v)
+                             1, wf%n_cc2_o, &
+                             1, wf%n_cc2_v, &
+                             1, wf%n_cc2_o, &
+                             1, wf%n_cc2_v)
 !
 !     t2bar += η_aibj
 !
@@ -775,10 +789,10 @@ contains
                do a = 1, wf%n_cc2_v
 !
                   t2bar(a, i, b, j) = t2bar(a, i, b, j)/&
-                     (-  wf%orbital_energies(a + wf%n_o + wf%first_cc2_v - 1) &
-                      -  wf%orbital_energies(b + wf%n_o + wf%first_cc2_v - 1) &
-                      +  wf%orbital_energies(i + wf%first_cc2_o - 1) &
-                      +  wf%orbital_energies(j + wf%first_cc2_o - 1))
+                     (-  wf%orbital_energies(a + wf%n_o) &
+                      -  wf%orbital_energies(b + wf%n_o) &
+                      +  wf%orbital_energies(i) &
+                      +  wf%orbital_energies(j))
 !
                enddo
             enddo
@@ -795,13 +809,13 @@ contains
       call wf%jacobian_transpose_ccs_a1(equation, wf%t1bar)
       call wf%jacobian_transpose_ccs_b1(equation, wf%t1bar)
       call wf%jacobian_transpose_cc2_a1(equation, wf%t1bar, wf%n_cc2_o, wf%n_cc2_v, &
-                                 wf%first_cc2_o, wf%first_cc2_v)
+                                 1, 1)
 !
 !
 !     equation += sum_bjck tbar_bjck A_{bjck,ai}
 !
       call wf%jacobian_transpose_cc2_b1(equation, t2bar, wf%n_cc2_o, wf%n_cc2_v, &
-                           wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+                           1, 1, wf%n_cc2_o, wf%n_cc2_v)
 !
       call mem%dealloc(t2bar, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
@@ -843,10 +857,10 @@ contains
       call mem%alloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)  
       call mem%alloc(s_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)  
 !
-      call wf%eri%get_eri_t1('vovo', g_aibj, wf%first_cc2_v, wf%last_cc2_v, &
-                                             wf%first_cc2_o, wf%last_cc2_o, &
-                                             wf%first_cc2_v, wf%last_cc2_v, &
-                                             wf%first_cc2_o, wf%last_cc2_o)
+      call wf%eri%get_eri_t1('vovo', g_aibj,1, wf%n_cc2_v, &
+                                            1, wf%n_cc2_o, &
+                                            1, wf%n_cc2_v, &
+                                            1, wf%n_cc2_o)
 !
 !$omp parallel do private(a, i, b, j)
       do b = 1, wf%n_cc2_v 
@@ -855,10 +869,10 @@ contains
                do a = 1, wf%n_cc2_v
 !
                   s_aibj(a, i, b, j) = (g_aibj(a, i, b, j))/ &
-                           (-  wf%orbital_energies(a + wf%n_o + wf%first_cc2_v - 1) &
-                            -  wf%orbital_energies(b + wf%n_o + wf%first_cc2_v - 1) &
-                            +  wf%orbital_energies(i + wf%first_cc2_o - 1) &
-                            +  wf%orbital_energies(j + wf%first_cc2_o - 1))
+                           (-  wf%orbital_energies(a + wf%n_o) &
+                            -  wf%orbital_energies(b + wf%n_o) &
+                            +  wf%orbital_energies(i) &
+                            +  wf%orbital_energies(j))
 
 !
                enddo
@@ -894,17 +908,17 @@ contains
 !     t2bar = sum_ai tbar_ai A_ai,aibj
 !
       call wf%jacobian_transpose_cc2_a2(t2bar, wf%t1bar, wf%n_cc2_o, wf%n_cc2_v, &
-                                       wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
+                                       1, 1, wf%n_cc2_o, wf%n_cc2_v)
 !
       call symmetric_sum(t2bar, wf%n_cc2_o*wf%n_cc2_v)
 !
       call mem%alloc(g_iajb, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v)
 !
       call wf%eri%get_eri_t1('ovov', g_iajb,                &
-                             wf%first_cc2_o, wf%last_cc2_o, &
-                             wf%first_cc2_v, wf%last_cc2_v, &
-                             wf%first_cc2_o, wf%last_cc2_o, &
-                             wf%first_cc2_v, wf%last_cc2_v)
+                             1, wf%n_cc2_o, &
+                             1, wf%n_cc2_v, &
+                             1, wf%n_cc2_o, &
+                             1, wf%n_cc2_v)
 !
 !     t2bar += η_aibj
 !
@@ -922,10 +936,10 @@ contains
                do a = 1, wf%n_cc2_v
 !
                   t2bar(a, i, b, j) = t2bar(a, i, b, j)/&
-                           (-  wf%orbital_energies(a + wf%n_o + wf%first_cc2_v - 1) &
-                            -  wf%orbital_energies(b + wf%n_o + wf%first_cc2_v - 1) &
-                            +  wf%orbital_energies(i + wf%first_cc2_o - 1) &
-                            +  wf%orbital_energies(j + wf%first_cc2_o - 1))
+                           (-  wf%orbital_energies(a + wf%n_o) &
+                            -  wf%orbital_energies(b + wf%n_o) &
+                            +  wf%orbital_energies(i) &
+                            +  wf%orbital_energies(j))
 !
                enddo
             enddo
@@ -963,7 +977,7 @@ contains
 !
          i = core_MOs(core)
 !
-         if ((i .lt. wf%first_cc2_o) .or. (i  .gt. wf%last_cc2_o)) then 
+         if ((i .lt. 1) .or. (i  .gt. wf%n_cc2_o)) then 
             call output%error_msg('Core orbital (i0) is not CC2 orbital', ints=[i])
          end if
 !
@@ -1019,8 +1033,8 @@ contains
 !
       do mo = 1, wf%n_core_MOs
 !
-         if ((wf%core_MOs(mo) .lt. wf%first_cc2_o) &
-         .or. (wf%core_MOs(mo) .gt. wf%last_cc2_o)) &
+         if ((wf%core_MOs(mo) .lt. 1) &
+         .or. (wf%core_MOs(mo) .gt. wf%n_cc2_o)) &
             call output%error_msg('Active MO not in active space for MLCC2 calculation.')
 !
       enddo
@@ -1295,7 +1309,7 @@ contains
          do a = 1, wf%n_cc2_v
 !
             ai = wf%n_cc2_v*(i-1) + a 
-            ai_full = wf%n_v*(i + wf%first_cc2_o - 2) + a + wf%first_cc2_v - 1
+            ai_full = wf%n_v*(i-1) + a
 !
             X_internal(ai) = X(ai_full)
 !
@@ -1349,20 +1363,6 @@ contains
 !     Read partitionings from restart file
 !
       call wf%read_mlcc_orbitals()
-!
-!     Set orbital partitioning specifications
-!
-      wf%first_cc2_o = 1
-      wf%first_cc2_v = 1
-!
-      wf%last_cc2_o = wf%n_cc2_o
-      wf%last_cc2_v = wf%n_cc2_v
-!
-      wf%first_ccs_o = wf%last_cc2_o + 1
-      wf%first_ccs_v = wf%last_cc2_v + 1
-!
-      wf%last_ccs_o = wf%n_o
-      wf%last_ccs_v = wf%n_v
 !
       call mem%alloc(T, wf%n_mo, wf%n_mo)
       call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, canonical_orbitals, T)

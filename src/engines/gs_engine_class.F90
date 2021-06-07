@@ -156,8 +156,6 @@ contains
 !
       call wf%mo_preparations() 
 !
-!     Determine ground state
-!
       call engine%do_ground_state(wf)
 !
    end subroutine run_gs_engine
@@ -303,10 +301,17 @@ contains
 !!
 !!    Allocates/initializes the amplitude updater algorithm used by the ground state solver.
 !!
+      use abstract_jacobian_transformer_class,     only: abstract_jacobian_transformer
+      use jacobian_transformer_class,              only: jacobian_transformer
+      use approximate_jacobian_transformer_class,  only: approximate_jacobian_transformer
+!
       use amplitude_updater_class,      only: amplitude_updater
 !
       use quasi_newton_updater_class,   only: quasi_newton_updater
       use newton_raphson_updater_class, only: newton_raphson_updater
+!
+      use citation_class,           only : citation
+      use citation_printer_class,   only : eT_citations
 !
       implicit none 
 !
@@ -317,6 +322,10 @@ contains
       character(len=*), intent(in) :: global_storage
 !
       class(amplitude_updater), allocatable :: t_updater
+!
+      class(abstract_jacobian_transformer), allocatable :: transformer
+!
+      class(citation), allocatable :: reference
 !
       real(dp) :: relative_threshold
 !
@@ -336,6 +345,8 @@ contains
          if (trim(wf%name_) == 'cc2') &
             call output%error_msg('Newton-Raphson not implemented for CC2')
 !
+!        Set defaults for microiterations, and read if non-standard settings
+!
          relative_threshold = 1.0d-2
          max_iterations     = 100
          storage            = 'disk'
@@ -351,12 +362,42 @@ contains
 !
          call input%get_keyword('micro iteration storage', 'solver cc gs', storage)
 !
-         t_updater = newton_raphson_updater(n_amplitudes       = wf%n_gs_amplitudes,  &
-                                            scale_amplitudes   = .true.,              &
-                                            scale_residual     = .false.,             &
-                                            relative_threshold = relative_threshold,  &   
-                                            records_in_memory  = records_in_memory,   & 
-                                            max_iterations     = max_iterations)
+!        Determine which transformation to use - exact or approximate Jacobian - 
+!        and then construct the t_updater
+!
+         if (input%is_keyword_present('multimodel newton', 'solver cc gs')) then 
+!
+            transformer = approximate_jacobian_transformer('right')
+!
+            reference = citation(implementation = 'Multimodel Newton algorithm',                  &
+                                 journal        = 'J. Chem. Phys.',                               &
+                                 title_         = 'Accelerated multimodel Newton-type algorithms &
+                                                   &for faster convergence of ground and excited &
+                                                   &state coupled cluster equations',             &
+                                 volume         = '153',                                          &
+                                 issue          = '1',                                            &
+                                 pages          = '014104',                                       &
+                                 year           = '2020',                                         &
+                                 doi            = '10.1063/5.0010989',                            &
+                                 authors        = [character(len=25) :: 'Eirik F. Kjønstad',      &
+                                                                        'Sarai D. Folkestad',     &
+                                                                        'Henrik Koch'])
+!
+            call eT_citations%add(reference)
+!
+         else 
+!
+            transformer = jacobian_transformer('right')
+!
+         endif
+!
+         t_updater = newton_raphson_updater(n_amplitudes       = wf%n_gs_amplitudes, &
+                                            scale_amplitudes   = .true.,             &
+                                            scale_residual     = .false.,            &
+                                            relative_threshold = relative_threshold, &   
+                                            records_in_memory  = records_in_memory,  & 
+                                            max_iterations     = max_iterations,     &
+                                            transformer        = transformer)
 !
       else 
 !

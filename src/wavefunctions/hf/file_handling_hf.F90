@@ -23,7 +23,7 @@ submodule (hf_class) file_handling_hf
 !!    File handling submodule
 !!
 !!    Gathers routines that save wavefunction parameters to file,
-!!    and reads them from file, plus other routines related to the 
+!!    and reads them from file, plus other routines related to the
 !!    handling of the files that belong to the wavefunction.
 !!
 !
@@ -103,6 +103,83 @@ contains
       call ao_density_file%close_
 !
    end subroutine save_ao_density_hf
+!
+!
+   module subroutine write_molden_file_hf(wf)
+!!
+!!    Write Molden file
+!!    Written by Alexander C. Paul, May 2021
+!!
+!!    Writes file readable by "molden" (https://www3.cmbi.umcn.nl/molden/)
+!!
+      use output_file_class, only: output_file
+!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+      type(output_file), allocatable :: molden
+!
+!     Map aos from libint ordering to molden ordering
+      integer, dimension(:), allocatable :: ao_map
+      integer p, q, i
+!
+      real(dp) :: occupation
+!
+      call mem%alloc(ao_map, wf%ao%n)
+!
+      ao_map = wf%ao%get_molden_ao_indices()
+!
+      molden = output_file('eT.molden')
+      call molden%open_
+!
+!     Print header
+!
+      call molden%printf('m', '[Molden Format]', fs='(t1,a)')
+!
+!     Print Geometry
+!
+      call molden%printf('m', '[ATOMS] AU', fs='(t1,a)')
+      call wf%ao%print_molden_geometry(molden)
+!
+!     Print basis set information per atom
+!     Atom_number (as in geometry)
+!     shell_label number_of_primitives
+!     exponent coefficient
+!
+      call molden%printf('m', '[GTO]', fs='(t1,a)')
+      call wf%ao%print_basis_set_molden(molden)
+!
+!     Print MO coefficients
+!
+      call molden%printf('m', '[MO]', fs='(t1,a)')
+!
+      do p = 1, wf%n_mo
+!
+         if (p .le. wf%n_o) then
+            occupation = two
+         else
+            occupation = zero
+         end if
+!
+         call molden%printf('m', 'Sym= A1', fs='(t1,a)')
+         call molden%printf('m', 'Ene= (f17.10)', fs='(t1,a)', reals=[wf%orbital_energies(p)])
+         call molden%printf('m', 'Spin= Alpha', fs='(t1,a)')
+         call molden%printf('m', 'Occup= (f6.4)', reals=[occupation], fs='(t1,a)')
+!
+         do q = 1, wf%ao%n
+!
+            i = ao_map(q)
+!
+            call molden%printf('m', '(i6)   (f17.12)', fs='(t1,a)', ints=[q], &
+                               reals=[wf%orbital_coefficients(i,p)])
+!
+         end do
+      end do
+!
+      call mem%dealloc(ao_map, wf%ao%n)
+      call molden%close_
+!
+   end subroutine write_molden_file_hf
 !
 !
 end submodule file_handling_hf

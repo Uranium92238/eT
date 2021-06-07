@@ -20,16 +20,16 @@
 submodule (ccs_class) mean_value_ccs
 !
 !!
-!!    Mean-value submodule 
+!!    Mean-value submodule
 !!
-!!    Contains routines related to the mean values, i.e. 
-!!    the construction of density matrices as well as expectation 
+!!    Contains routines related to the mean values, i.e.
+!!    the construction of density matrices as well as expectation
 !!    value calculation.
 !!
 !!    The ground state density is constructed as follows:
 !!
 !!          D_pq = < Lambda| E_pq |CC >
-!!    where: 
+!!    where:
 !!          < Lambda| = < HF| + sum_mu tbar_mu < mu| exp(-T)
 !!
 !!
@@ -45,7 +45,7 @@ submodule (ccs_class) mean_value_ccs
 !!                 + sum_mu    X_ref < HF| e^(-T) E_pq e^T |mu >  Y_mu
 !!                 + sum_mu,nu X_mu  < mu| e^(-T) E_pq e^T |nu >  Y_nu
 !!
-!!    Depending on the type of density matrix (Ground state, transition , 
+!!    Depending on the type of density matrix (Ground state, transition ,
 !!    excited state, interstate transition) different states and thus different
 !!    amplitudes X_ref, X_mu, Y_ref and Y_mu will contribute.
 !!
@@ -60,61 +60,103 @@ submodule (ccs_class) mean_value_ccs
 !!
 !!       ref_ref: first component of the vector for the left and right state
 !!
-!!       mu_ref:  second component of the vector for the left and 
+!!       mu_ref:  second component of the vector for the left and
 !!                first component of the vector for the right state
 !!
-!!       ref_mu:  first component of the vector for the left and 
+!!       ref_mu:  first component of the vector for the left and
 !!                second component of the vector for the right state
 !!
 !!       mu_nu:   second component of the vector for the left and right state
 !!
 !
-   implicit none 
+   implicit none
 !
 !
 contains
 !
 !
-   module subroutine prepare_for_density_ccs(wf)
+   module subroutine prepare_for_properties_ccs(wf)
 !!
-!!    Prepare for the construction of density matrices
+!!    Prepare for properties
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
 !!
+      use warning_suppressor, only: do_nothing
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-!     For now, do nothing.
+      call do_nothing(wf)
 !
-      call output%printf('v', '- No preparations for the density for ' //  &
-                         trim(wf%name_) // ' wavefunction.', fs='(/t3,a)')
-!
-   end subroutine prepare_for_density_ccs
+   end subroutine prepare_for_properties_ccs
 !
 !
    module subroutine construct_gs_density_ccs(wf)
 !!
-!!    Construct one-electron density
+!!    Construct GS density
 !!    Written by Sarai Dery Folkestad, 2019
 !!
-!!    Constructs the one-electron density 
-!!    matrix in the T1 basis
+!!    Constructs the one-electron density matrix in the T1 basis
 !!
 !!    D_pq = < Lambda| E_pq |CC >
 !!
 !!    Contributions to the density are split up as follows:
 !!    D_pq = D_pq(ref-ref) + sum_mu tbar_mu D_pq(mu-ref)
 !!
+!!    The second term is separated in "mu_ref_density_terms",
+!!    as it is used for the left transition density as well.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+      type(timings) :: timer
+!
+      timer = timings('Ground state density', pl='m')
+      call timer%turn_on
+!
+      call wf%mu_ref_density_terms(wf%density, 0, wf%t1bar)
+      call wf%density_ccs_ref_ref_oo(wf%density)
+!
+      call timer%turn_off
+!
+   end subroutine construct_gs_density_ccs
+!
+!
+   module subroutine mu_ref_density_terms_ccs(wf, density, state, L)
+!!
+!!    Density mu ref terms
+!!    Written by Alexander C. Paul, May 2021
+!!
+!!    Constructs terms of the form:
+!!       sum_mu L_mu < mu| E_pq |HF >
+!!
+!!    corresponding to terms of the ground state density
+!!    and the left transition density.
+!!
       implicit none
 !
       class(ccs) :: wf
 !
-      call zero_array(wf%density, (wf%n_mo)**2)
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: density
 !
-      call wf%density_ccs_ref_ref_oo(wf%density)
-      call wf%density_ccs_mu_ref_vo(wf%density, wf%t1bar)
+      integer, intent(in) :: state
 !
-   end subroutine construct_gs_density_ccs
+      real(dp), dimension(wf%n_t1), intent(in) :: L
+!
+      type(timings)     :: timer
+      character(len=40) :: timer_name
+!
+      write(timer_name, '(a,i0,a)') 'CCS contribution to <', state,'|E_pq|0>'
+      timer = timings(trim(timer_name), pl='v')
+      call timer%turn_on()
+!
+      call zero_array(density, wf%n_mo**2)
+!
+      call wf%density_ccs_mu_ref_vo(density, L)
+!
+      call timer%turn_off()
+!
+   end subroutine mu_ref_density_terms_ccs
 !
 !
    module subroutine density_ccs_ref_ref_oo_ccs(wf, density)
@@ -125,7 +167,7 @@ contains
 !!    Hartree-Fock density contribution:
 !!    D_pq += < HF| e^(-T) E_pq e^T |HF >
 !!
-!!    D_ii = 2  
+!!    D_ii = 2
 !!
       implicit none
 !
@@ -138,7 +180,7 @@ contains
 !$omp parallel do private(i)
       do i = 1, wf%n_o
 !
-         density(i,i) = density(i,i) + two  
+         density(i,i) = density(i,i) + two
 !
       enddo
 !$omp end parallel do
@@ -158,7 +200,7 @@ contains
 !!    where X_mu is a general amplitude (tbar or L)
 !!
 !!    explicit term in this routine:
-!!          D_ai = tbar_ai 
+!!          D_ai = tbar_ai
 !!
       implicit none
 !
@@ -172,7 +214,7 @@ contains
 !$omp parallel do private(a, i)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
-!        
+!
             density(wf%n_o + a, i) = density(wf%n_o + a, i) + tbar_ai(a, i)
 !
          enddo
@@ -197,7 +239,7 @@ contains
 !!    in the T1-basis
 !!
       implicit none
-!  
+!
       class(ccs), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: A
@@ -222,7 +264,7 @@ contains
 !!    energy when the ground state equations are solved, of course.
 !!
 !!       E = E_hf + sum_aibj t_i^a t_j^b L_iajb
-!!         = E_hf + sum_aibj 2 t_i^a L^J_ia L^J_jb t_j^b 
+!!         = E_hf + sum_aibj 2 t_i^a L^J_ia L^J_jb t_j^b
 !!                - sum_aibj t_i^a L^J_ja L^J_ib t_j^b
 !!
       implicit none
@@ -264,7 +306,8 @@ contains
          call batch_i%determine_limits(current_i_batch)
 !
          call mem%alloc(L_Jai, wf%eri%n_J, wf%n_v, batch_i%length)
-         call wf%eri%get_cholesky_mo(L_Jai, wf%n_o + 1, wf%n_mo, batch_i%first, batch_i%last)
+         call wf%eri%get_cholesky_mo(L_Jai, wf%n_o + 1, wf%n_mo, &
+                                     batch_i%first, batch_i%get_last())
 !
          call dgemm('N', 'N',                &
                      wf%eri%n_J,             &
@@ -285,7 +328,7 @@ contains
 !
       correlation_energy = two*ddot(wf%eri%n_J, X_J, 1, X_J, 1)
 !
-      call mem%dealloc(X_J, wf%eri%n_J)    
+      call mem%dealloc(X_J, wf%eri%n_J)
 !
       req0 = 0
 !
@@ -307,25 +350,27 @@ contains
          call batch_i%determine_limits(current_i_batch)
 !
          call mem%alloc(L_Jia, wf%eri%n_J, batch_i%length, wf%n_v)
-         call wf%eri%get_cholesky_mo(L_Jia, batch_i%first, batch_i%last, wf%n_o + 1, wf%n_mo)
- !           
+         call wf%eri%get_cholesky_mo(L_Jia,                                   &
+                                     batch_i%first, batch_i%get_last(), &
+                                     wf%n_o + 1, wf%n_mo)
+ !
          do current_j_batch = 1, batch_j%num_batches
 !
             call batch_j%determine_limits(current_j_batch)
 !
             call mem%alloc(X_Jij, wf%eri%n_J, batch_i%length, batch_j%length)
 !
-            call dgemm('N', 'N',                         &
-                        wf%eri%n_J*batch_i%length,       &
-                        batch_j%length,                  &
-                        wf%n_v,                          &
-                        one,                             &
-                        L_Jia,                           &
-                        wf%eri%n_J*batch_i%length,       &
-                        wf%t1(1, batch_j%first),         &
-                        wf%n_v,                          & 
-                        zero,                            &
-                        X_Jij,                           &
+            call dgemm('N', 'N',                   &
+                        wf%eri%n_J*batch_i%length, &
+                        batch_j%length,            &
+                        wf%n_v,                    &
+                        one,                       &
+                        L_Jia,                     &
+                        wf%eri%n_J*batch_i%length, &
+                        wf%t1(1, batch_j%first),   &
+                        wf%n_v,                    &
+                        zero,                      &
+                        X_Jij,                     &
                         wf%eri%n_J*batch_i%length)
 !
             if (current_j_batch .ne. current_i_batch) then
@@ -334,22 +379,22 @@ contains
 !
                call wf%eri%get_cholesky_mo(L_Jjb,        &
                                           batch_j%first, &
-                                          batch_j%last,  &
+                                          batch_j%get_last(),  &
                                           wf%n_o + 1, wf%n_mo)
 !
                call mem%alloc(X_Jji, wf%eri%n_J, batch_j%length, batch_i%length)
 !
-               call dgemm('N', 'N',                         &
-                           wf%eri%n_J*batch_j%length,       &
-                           batch_i%length,                  &
-                           wf%n_v,                          &
-                           one,                             &
-                           L_Jjb,                           &
-                           wf%eri%n_J*batch_j%length,       &
-                           wf%t1(1, batch_i%first),         &
-                           wf%n_v,                          & 
-                           zero,                            &
-                           X_Jji,                           &
+               call dgemm('N', 'N',                   &
+                           wf%eri%n_J*batch_j%length, &
+                           batch_i%length,            &
+                           wf%n_v,                    &
+                           one,                       &
+                           L_Jjb,                     &
+                           wf%eri%n_J*batch_j%length, &
+                           wf%t1(1, batch_i%first),   &
+                           wf%n_v,                    &
+                           zero,                      &
+                           X_Jji,                     &
                            wf%eri%n_J*batch_j%length)
 !
                call mem%dealloc(L_Jjb, wf%eri%n_J, batch_j%length, wf%n_v)
@@ -394,7 +439,7 @@ contains
 !
       wf%correlation_energy = correlation_energy
 !
-      wf%energy = wf%hf_energy + wf%correlation_energy  
+      wf%energy = wf%hf_energy + wf%correlation_energy
 !
       call timer%turn_off()
 !
@@ -447,7 +492,7 @@ contains
 !!
 !!       energy += 2 sum_ii (-mu·E)_ii,
 !!
-!!    where mu is the vector of electric dipole integral matrices 
+!!    where mu is the vector of electric dipole integral matrices
 !!    and E is a uniform classical electric
 !!    vector field. This routine does not have to be overwritten in descendants.
 !!
@@ -466,7 +511,7 @@ contains
       call mem%alloc(mu, wf%n_mo, wf%n_mo, 3)
       call wf%get_t1_oei('dipole', mu)
 !
-!     Add one-electron electric field contribution to the diagonal 
+!     Add one-electron electric field contribution to the diagonal
 !     of Fock and one-electron integral terms
 !
       do i = 1, wf%n_o

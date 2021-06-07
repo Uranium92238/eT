@@ -208,7 +208,7 @@ contains
       do current_j_batch = 1, batch_j%num_batches
 !
          call batch_j%determine_limits(current_j_batch)
-         call wf%eri%get_cholesky_t1(L_J_jb, batch_j%first, batch_j%last,&
+         call wf%eri%get_cholesky_t1(L_J_jb, batch_j%first, batch_j%get_last(),&
                                                    wf%n_o + 1, wf%n_mo)
 !
 !$omp parallel do private (b, j)
@@ -254,7 +254,7 @@ contains
          call batch_i%determine_limits(current_i_batch)
 !
          call wf%eri%get_cholesky_t1(L_J_ai, wf%n_o + 1, wf%n_mo ,&
-                                                   batch_i%first, batch_i%last)
+                                                   batch_i%first, batch_i%get_last())
 !
          call dgemm('T', 'N',                   &
                      wf%n_v*batch_i%length,     &
@@ -299,7 +299,7 @@ contains
             call mem%alloc(L_J_ab, wf%eri%n_J, batch_a%length, wf%n_v)
 !
             call wf%eri%get_cholesky_t1(L_J_ab, wf%n_o + batch_a%first, &
-                                                      wf%n_o + batch_a%last,  &
+                                                      wf%n_o + batch_a%get_last(),  &
                                                       wf%n_o + 1, &
                                                       wf%n_mo)
 !
@@ -327,7 +327,7 @@ contains
             call mem%alloc(L_J_ji, wf%eri%n_J, wf%n_o, batch_i%length)
 !
             call wf%eri%get_cholesky_t1(L_J_ji, 1, wf%n_o, &
-                                                      batch_i%first, batch_i%last)
+                                                      batch_i%first, batch_i%get_last())
 !
             call mem%alloc(rho_ai_batch, batch_a%length, batch_i%length)
 !

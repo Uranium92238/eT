@@ -30,29 +30,29 @@ module ccsd_class
 !
    type, extends(doubles) :: ccsd
 !
-!     Intermediate files 
+!     Intermediate files
 !
-      type(sequential_file) :: jacobian_c2_intermediate_oovo_1
-      type(sequential_file) :: jacobian_c2_intermediate_oovo_2
-      type(sequential_file) :: jacobian_c2_intermediate_oovo_3
-      type(sequential_file) :: jacobian_d2_intermediate
-      type(sequential_file) :: jacobian_e2_intermediate
-      type(sequential_file) :: jacobian_g2_intermediate_vovo
-      type(sequential_file) :: jacobian_h2_intermediate_voov_1
-      type(sequential_file) :: jacobian_h2_intermediate_voov_2
-      type(sequential_file) :: jacobian_j2_intermediate_oooo
+      type(sequential_file), private :: jacobian_c2_intermediate_oovo_1
+      type(sequential_file), private :: jacobian_c2_intermediate_oovo_2
+      type(sequential_file), private :: jacobian_c2_intermediate_oovo_3
+      type(sequential_file), private :: jacobian_d2_intermediate
+      type(sequential_file), private :: jacobian_e2_intermediate
+      type(sequential_file), private :: jacobian_g2_intermediate_vovo
+      type(sequential_file), private :: jacobian_h2_intermediate_voov_1
+      type(sequential_file), private :: jacobian_h2_intermediate_voov_2
+      type(sequential_file), private :: jacobian_j2_intermediate_oooo
 !
-      type(sequential_file) :: jacobian_transpose_d1_intermediate
-      type(sequential_file) :: jacobian_transpose_e1_intermediate
-      type(sequential_file) :: jacobian_transpose_f1_intermediate
-      type(sequential_file) :: jacobian_transpose_g1_intermediate
-      type(sequential_file) :: jacobian_transpose_d2_intermediate
-      type(sequential_file) :: jacobian_transpose_e2_oo_intermediate
-      type(sequential_file) :: jacobian_transpose_e2_vv_intermediate
-      type(sequential_file) :: jacobian_transpose_f2_intermediate
-      type(sequential_file) :: jacobian_transpose_g2_intermediate
-      type(sequential_file) :: jacobian_transpose_g2_intermediate_2
-      type(sequential_file) :: jacobian_transpose_i2_intermediate
+      type(sequential_file), private :: jacobian_transpose_d1_intermediate
+      type(sequential_file), private :: jacobian_transpose_e1_intermediate
+      type(sequential_file), private :: jacobian_transpose_f1_intermediate
+      type(sequential_file), private :: jacobian_transpose_g1_intermediate
+      type(sequential_file), private :: jacobian_transpose_d2_intermediate
+      type(sequential_file), private :: jacobian_transpose_e2_oo_intermediate
+      type(sequential_file), private :: jacobian_transpose_e2_vv_intermediate
+      type(sequential_file), private :: jacobian_transpose_f2_intermediate
+      type(sequential_file), private :: jacobian_transpose_g2_intermediate
+      type(sequential_file), private :: jacobian_transpose_g2_intermediate_2
+      type(sequential_file), private :: jacobian_transpose_i2_intermediate
 !
    contains
 !
@@ -89,115 +89,123 @@ module ccsd_class
       procedure :: construct_omega                            => construct_omega_ccsd
       procedure :: construct_omega_complex                    => construct_omega_ccsd_complex
 !
-      procedure :: omega_ccsd_a2                              => omega_ccsd_a2_ccsd
-      procedure :: omega_ccsd_a2_complex                      => omega_ccsd_a2_ccsd_complex
+      procedure, private :: omega_ccsd_a2
+      procedure, private :: omega_ccsd_a2_complex
 !
-      procedure :: omega_ccsd_b2                              => omega_ccsd_b2_ccsd
-      procedure :: omega_ccsd_b2_complex                      => omega_ccsd_b2_ccsd_complex
+      procedure, private :: omega_ccsd_b2
+      procedure, private :: omega_ccsd_b2_complex
 !
-      procedure :: omega_ccsd_c2_d2                           => omega_ccsd_c2_d2_ccsd
-      procedure :: omega_ccsd_c2_d2_complex                   => omega_ccsd_c2_d2_ccsd_complex
+      procedure, private :: omega_ccsd_c2_d2
+      procedure, private :: omega_ccsd_c2_d2_complex
 !
-      procedure :: omega_ccsd_e2                              => omega_ccsd_e2_ccsd
-      procedure :: omega_ccsd_e2_complex                      => omega_ccsd_e2_ccsd_complex
+      procedure, private :: omega_ccsd_e2        
+      procedure, private :: omega_ccsd_e2_complex
 !
       procedure :: construct_u_aibj                           => construct_u_aibj_ccsd
       procedure :: construct_u_aibj_complex                   => construct_u_aibj_ccsd_complex
 !
 !     Procedures related to Jacobian transformation
 !
-      procedure :: jacobian_transformation                    => jacobian_transformation_ccsd
+      procedure, public :: jacobian_transformation &
+                        => jacobian_transformation_ccsd
 !
-      procedure :: jacobian_ccsd_b2                           => jacobian_ccsd_b2_ccsd
-      procedure :: jacobian_ccsd_c2                           => jacobian_ccsd_c2_ccsd
-      procedure :: jacobian_ccsd_d2                           => jacobian_ccsd_d2_ccsd
-      procedure :: jacobian_ccsd_e2                           => jacobian_ccsd_e2_ccsd
-      procedure :: jacobian_ccsd_f2                           => jacobian_ccsd_f2_ccsd
-      procedure :: jacobian_ccsd_g2                           => jacobian_ccsd_g2_ccsd
-      procedure :: jacobian_ccsd_h2                           => jacobian_ccsd_h2_ccsd
-      procedure :: jacobian_ccsd_i2                           => jacobian_ccsd_i2_ccsd
-      procedure :: jacobian_ccsd_j2                           => jacobian_ccsd_j2_ccsd
-      procedure :: jacobian_ccsd_k2                           => jacobian_ccsd_k2_ccsd
+      procedure, private :: jacobian_ccsd_b2
+      procedure, private :: jacobian_ccsd_c2
+      procedure, private :: jacobian_ccsd_d2
+      procedure, private :: jacobian_ccsd_e2
+      procedure, private :: jacobian_ccsd_f2
+      procedure, private :: jacobian_ccsd_g2
+      procedure, private :: jacobian_ccsd_h2
+      procedure, private :: jacobian_ccsd_i2
+      procedure, private :: jacobian_ccsd_j2
+      procedure, private :: jacobian_ccsd_k2
 !
-      procedure :: prepare_for_jacobian                       => prepare_for_jacobian_ccsd
+      procedure, public :: prepare_for_jacobian &
+                        => prepare_for_jacobian_ccsd
 !
-      procedure :: save_jacobian_c2_intermediates             => save_jacobian_c2_intermediates_ccsd
-      procedure :: save_jacobian_d2_intermediate              => save_jacobian_d2_intermediate_ccsd
-      procedure :: save_jacobian_e2_intermediate              => save_jacobian_e2_intermediate_ccsd
-      procedure :: save_jacobian_g2_intermediates             => save_jacobian_g2_intermediates_ccsd
-      procedure :: save_jacobian_h2_intermediates             => save_jacobian_h2_intermediates_ccsd
-      procedure :: save_jacobian_j2_intermediate              => save_jacobian_j2_intermediate_ccsd
+      procedure, private :: save_jacobian_c2_intermediates
+      procedure, private :: save_jacobian_d2_intermediate 
+      procedure, private :: save_jacobian_e2_intermediate 
+      procedure, private :: save_jacobian_g2_intermediates
+      procedure, private :: save_jacobian_h2_intermediates
+      procedure, private :: save_jacobian_j2_intermediate 
 !
 !     Procedures related to Jacobian transpose transformation
 !
-      procedure :: prepare_for_jacobian_transpose             => prepare_for_jacobian_transpose_ccsd
-      procedure :: prepare_for_jacobian_transpose_complex     => prepare_for_jacobian_transpose_ccsd_complex
+      procedure, public :: prepare_for_jacobian_transpose               &
+                        => prepare_for_jacobian_transpose_ccsd
 !
-      procedure :: jacobian_transpose_transformation          => jacobian_transpose_transformation_ccsd
-      procedure :: jacobian_transpose_transformation_complex  => jacobian_transpose_transformation_ccsd_complex
+      procedure, public :: prepare_for_jacobian_transpose_complex       &
+                        => prepare_for_jacobian_transpose_ccsd_complex
 !
-      procedure :: jacobian_transpose_ccsd_d1                 => jacobian_transpose_ccsd_d1_ccsd
-      procedure :: jacobian_transpose_ccsd_d1_complex         => jacobian_transpose_ccsd_d1_ccsd_complex
+      procedure, public :: jacobian_transpose_transformation            &
+                        => jacobian_transpose_transformation_ccsd
 !
-      procedure :: jacobian_transpose_ccsd_e1                 => jacobian_transpose_ccsd_e1_ccsd
-      procedure :: jacobian_transpose_ccsd_e1_complex         => jacobian_transpose_ccsd_e1_ccsd_complex
+      procedure, public :: jacobian_transpose_transformation_complex    &
+                        => jacobian_transpose_transformation_ccsd_complex
 !
-      procedure :: jacobian_transpose_ccsd_f1                 => jacobian_transpose_ccsd_f1_ccsd
-      procedure :: jacobian_transpose_ccsd_f1_complex         => jacobian_transpose_ccsd_f1_ccsd_complex
+      procedure, private :: jacobian_transpose_ccsd_d1
+      procedure, private :: jacobian_transpose_ccsd_d1_complex
 !
-      procedure :: jacobian_transpose_ccsd_g1                 => jacobian_transpose_ccsd_g1_ccsd
-      procedure :: jacobian_transpose_ccsd_g1_complex         => jacobian_transpose_ccsd_g1_ccsd_complex
+      procedure, private :: jacobian_transpose_ccsd_e1
+      procedure, private :: jacobian_transpose_ccsd_e1_complex
 !
-      procedure :: jacobian_transpose_ccsd_b2                 => jacobian_transpose_ccsd_b2_ccsd
-      procedure :: jacobian_transpose_ccsd_b2_complex         => jacobian_transpose_ccsd_b2_ccsd_complex
+      procedure, private :: jacobian_transpose_ccsd_f1
+      procedure, private :: jacobian_transpose_ccsd_f1_complex
 !
-      procedure :: jacobian_transpose_ccsd_c2                 => jacobian_transpose_ccsd_c2_ccsd
-      procedure :: jacobian_transpose_ccsd_c2_complex         => jacobian_transpose_ccsd_c2_ccsd_complex
+      procedure, private :: jacobian_transpose_ccsd_g1
+      procedure, private :: jacobian_transpose_ccsd_g1_complex
 !
-      procedure :: jacobian_transpose_ccsd_d2                 => jacobian_transpose_ccsd_d2_ccsd
-      procedure :: jacobian_transpose_ccsd_d2_complex         => jacobian_transpose_ccsd_d2_ccsd_complex
+      procedure, private :: jacobian_transpose_ccsd_b2
+      procedure, private :: jacobian_transpose_ccsd_b2_complex
 !
-      procedure :: jacobian_transpose_ccsd_e2                 => jacobian_transpose_ccsd_e2_ccsd
-      procedure :: jacobian_transpose_ccsd_e2_complex         => jacobian_transpose_ccsd_e2_ccsd_complex
+      procedure, private :: jacobian_transpose_ccsd_c2
+      procedure, private :: jacobian_transpose_ccsd_c2_complex
 !
-      procedure :: jacobian_transpose_ccsd_f2                 => jacobian_transpose_ccsd_f2_ccsd
-      procedure :: jacobian_transpose_ccsd_f2_complex         => jacobian_transpose_ccsd_f2_ccsd_complex
+      procedure, private :: jacobian_transpose_ccsd_d2
+      procedure, private :: jacobian_transpose_ccsd_d2_complex
 !
-      procedure :: jacobian_transpose_ccsd_g2                 => jacobian_transpose_ccsd_g2_ccsd
-      procedure :: jacobian_transpose_ccsd_g2_complex         => jacobian_transpose_ccsd_g2_ccsd_complex
+      procedure, private :: jacobian_transpose_ccsd_e2
+      procedure, private :: jacobian_transpose_ccsd_e2_complex
 !
-      procedure :: jacobian_transpose_ccsd_i2                 => jacobian_transpose_ccsd_i2_ccsd
-      procedure :: jacobian_transpose_ccsd_i2_complex         => jacobian_transpose_ccsd_i2_ccsd_complex
+      procedure, private :: jacobian_transpose_ccsd_f2
+      procedure, private :: jacobian_transpose_ccsd_f2_complex
 !
-      procedure :: save_jacobian_transpose_d1_intermediates           => save_jacobian_transpose_d1_intermediates_ccsd
-      procedure :: save_jacobian_transpose_d1_intermediates_complex   => save_jacobian_transpose_d1_intermediates_ccsd_complex
+      procedure, private :: jacobian_transpose_ccsd_g2
+      procedure, private :: jacobian_transpose_ccsd_g2_complex
 !
-      procedure :: save_jacobian_transpose_e1_intermediates           => save_jacobian_transpose_e1_intermediates_ccsd
-      procedure :: save_jacobian_transpose_e1_intermediates_complex   => save_jacobian_transpose_e1_intermediates_ccsd_complex
+      procedure, private :: jacobian_transpose_ccsd_i2
+      procedure, private :: jacobian_transpose_ccsd_i2_complex
 !
-      procedure :: save_jacobian_transpose_f1_intermediates           => save_jacobian_transpose_f1_intermediates_ccsd
-      procedure :: save_jacobian_transpose_f1_intermediates_complex   => save_jacobian_transpose_f1_intermediates_ccsd_complex
+      procedure, private :: save_jacobian_transpose_d1_intermediates
+      procedure, private :: save_jacobian_transpose_d1_intermediates_complex
 !
-      procedure :: save_jacobian_transpose_g1_intermediates           => save_jacobian_transpose_g1_intermediates_ccsd
-      procedure :: save_jacobian_transpose_g1_intermediates_complex   => save_jacobian_transpose_g1_intermediates_ccsd_complex
+      procedure, private :: save_jacobian_transpose_e1_intermediates
+      procedure, private :: save_jacobian_transpose_e1_intermediates_complex
 !
-      procedure :: save_jacobian_transpose_d2_intermediates           => save_jacobian_transpose_d2_intermediates_ccsd
-      procedure :: save_jacobian_transpose_d2_intermediates_complex   => save_jacobian_transpose_d2_intermediates_ccsd_complex
+      procedure, private :: save_jacobian_transpose_f1_intermediates
+      procedure, private :: save_jacobian_transpose_f1_intermediates_complex
 !
-      procedure :: save_jacobian_transpose_e2_oo_intermediate         => save_jacobian_transpose_e2_oo_intermediate_ccsd
-      procedure :: save_jacobian_transpose_e2_oo_intermediate_complex => save_jacobian_transpose_e2_oo_intermediate_ccsd_complex
+      procedure, private :: save_jacobian_transpose_g1_intermediates
+      procedure, private :: save_jacobian_transpose_g1_intermediates_complex
 !
-      procedure :: save_jacobian_transpose_e2_vv_intermediate         => save_jacobian_transpose_e2_vv_intermediate_ccsd
-      procedure :: save_jacobian_transpose_e2_vv_intermediate_complex => save_jacobian_transpose_e2_vv_intermediate_ccsd_complex
+      procedure, private :: save_jacobian_transpose_d2_intermediates
+      procedure, private :: save_jacobian_transpose_d2_intermediates_complex
 !
-      procedure :: save_jacobian_transpose_f2_intermediates           => save_jacobian_transpose_f2_intermediates_ccsd
-      procedure :: save_jacobian_transpose_f2_intermediates_complex   => save_jacobian_transpose_f2_intermediates_ccsd_complex
+      procedure, private :: save_jacobian_transpose_e2_oo_intermediate
+      procedure, private :: save_jacobian_transpose_e2_oo_intermediate_complex
 !
-      procedure :: save_jacobian_transpose_g2_intermediates           => save_jacobian_transpose_g2_intermediates_ccsd
-      procedure :: save_jacobian_transpose_g2_intermediates_complex   => save_jacobian_transpose_g2_intermediates_ccsd_complex
+      procedure, private :: save_jacobian_transpose_e2_vv_intermediate
+      procedure, private :: save_jacobian_transpose_e2_vv_intermediate_complex
 !
-      procedure :: save_jacobian_transpose_i2_intermediates           => save_jacobian_transpose_i2_intermediates_ccsd
-      procedure :: save_jacobian_transpose_i2_intermediates_complex   => save_jacobian_transpose_i2_intermediates_ccsd_complex
+      procedure, private :: save_jacobian_transpose_f2_intermediates
+      procedure, private :: save_jacobian_transpose_f2_intermediates_complex
+!
+      procedure, private :: save_jacobian_transpose_g2_intermediates
+      procedure, private :: save_jacobian_transpose_g2_intermediates_complex
+!
+      procedure, private :: save_jacobian_transpose_i2_intermediates
+      procedure, private :: save_jacobian_transpose_i2_intermediates_complex
 !
 !     Procedures related to multiplier equation
 !
@@ -261,13 +269,13 @@ module ccsd_class
       include "complex_ccsd_interface.F90"
       include "fock_ccsd_interface.F90"
 !
-      include "autogenerated_complex_files/initialize_destruct_ccsd_complex_interface.F90"
-      include "autogenerated_complex_files/jacobian_transpose_ccsd_complex_interface.F90"
-      include "autogenerated_complex_files/multiplier_equation_ccsd_complex_interface.F90"
-      include "autogenerated_complex_files/omega_ccsd_complex_interface.F90"
-      include "autogenerated_complex_files/set_get_ccsd_complex_interface.F90"
-      include "autogenerated_complex_files/mean_value_ccsd_complex_interface.F90"
-      include "autogenerated_complex_files/fock_ccsd_complex_interface.F90"
+      include "generated_complex_files/initialize_destruct_ccsd_complex_interface.F90"
+      include "generated_complex_files/jacobian_transpose_ccsd_complex_interface.F90"
+      include "generated_complex_files/multiplier_equation_ccsd_complex_interface.F90"
+      include "generated_complex_files/omega_ccsd_complex_interface.F90"
+      include "generated_complex_files/set_get_ccsd_complex_interface.F90"
+      include "generated_complex_files/mean_value_ccsd_complex_interface.F90"
+      include "generated_complex_files/fock_ccsd_complex_interface.F90"
 !
    end interface
 !
@@ -329,9 +337,9 @@ contains
 !
          call wf%set_t2_to_cc2_guess()
 !
-      else 
+      else
 !
-         if (wf%t_file%exists()) then 
+         if (wf%t_file%exists()) then
 !
             call output%printf('m', 'Requested restart. Reading in solution from file.', &
                           fs='(/t3,a)')
@@ -392,9 +400,9 @@ contains
          call copy_and_scale(one, wf%t1, wf%t1bar, wf%n_t1)
          call construct_packed_contravariant(wf%t2, wf%t2bar, wf%n_v ,wf%n_o)
 !
-      else 
+      else
 !
-         if (wf%tbar_file%exists()) then 
+         if (wf%tbar_file%exists()) then
 !
             call output%printf('m', 'Requested restart. Reading multipliers from file.', &
                               fs='(/t3,a)')
@@ -509,8 +517,8 @@ contains
 !!
 !!    Prints the dominant amplitudes in the amplitude vector x.
 !!
-!!    tag specified the printed label for the vector, e.g. tag = "t" for 
-!!    the cluster amplitudes. 
+!!    tag specified the printed label for the vector, e.g. tag = "t" for
+!!    the cluster amplitudes.
 !!
       implicit none
 !
@@ -534,8 +542,8 @@ contains
 !!    Prints the 20 most dominant double amplitudes,
 !!    or sorts them if there are fewer than twenty of them.
 !!
-!!    tag specified the printed label for the vector, e.g. tag = "t" for 
-!!    the cluster amplitudes. 
+!!    tag specified the printed label for the vector, e.g. tag = "t" for
+!!    the cluster amplitudes.
 !!
       implicit none
 !
@@ -568,7 +576,7 @@ contains
 !
 !     Print largest contributions
 !
-      call output%printf('m', 'Largest double amplitudes:', fs='(/t6,a)') 
+      call output%printf('m', 'Largest double amplitudes:', fs='(/t6,a)')
       call output%print_separator('m', 50, '-', fs='(t6,a)')
       call output%printf('m', 'a      i       b      j         (a0)(ai,bj)', &
                          fs='(t9,a)', chars=[tag])
@@ -597,20 +605,20 @@ contains
 !
    subroutine scale_amplitudes_ccsd(wf, t)
 !!
-!!    Scale amplitudes 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!    Scale amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
 !!    Scales t to conform with the convention used in the wavefunction:
 !!
-!!       t1 <- t1 
+!!       t1 <- t1
 !!       t2_aiai <- two * t2_aiai
 !!       ...
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd), intent(in) :: wf 
+      class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t
 !
       call scale_diagonal(two,                                    &
                           t(wf%n_t1 + 1 : wf%n_gs_amplitudes),    &

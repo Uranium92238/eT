@@ -19,8 +19,8 @@
 !
 module hf_geoopt_engine_class
 !!
-!!    Hartree-Fock geometry optimization engine class module 
-!!    Written by Eirik F. Kjønstad, 2019 
+!!    Hartree-Fock geometry optimization engine class module
+!!    Written by Eirik F. Kjønstad, 2019
 !!
    use reference_engine_class, only: reference_engine
 !
@@ -34,19 +34,19 @@ module hf_geoopt_engine_class
 !
    type, extends(reference_engine) :: hf_geoopt_engine
 !
-   contains 
+   contains
 !
       procedure :: run              => run_hf_geoopt_engine
 !
       procedure :: read_settings    => read_settings_hf_geoopt_engine
       procedure :: set_printables   => set_printables_hf_geoopt_engine
 !
-   end type hf_geoopt_engine 
+   end type hf_geoopt_engine
 !
 !
    interface hf_geoopt_engine
 !
-      procedure :: new_hf_geoopt_engine 
+      procedure :: new_hf_geoopt_engine
 !
    end interface hf_geoopt_engine
 !
@@ -56,19 +56,24 @@ contains
 !
    function new_hf_geoopt_engine() result(engine)
 !!
-!!    New HF engine 
-!!    Written by Eirik F. Kjønstad, 2019 
+!!    New HF engine
+!!    Written by Eirik F. Kjønstad, 2019
 !!
-      implicit none 
+      implicit none
 !
       type(hf_geoopt_engine) :: engine
+!
+      engine%name_       = 'Hartree-Fock geometry optimization engine'
+!
+      engine%description = 'Calculates the optimized geometry for the Hartree-Fock wavefunction.'
+      engine%tag         = 'geometry optimization'
 !
       engine%algorithm        = 'bfgs'
       engine%ao_density_guess = 'sad'
       engine%restart          = .false.
       engine%plot_orbitals    = .false.
       engine%plot_density     = .false.
-      engine%print_mo_info    = .false.
+      engine%write_mo_info    = .false.
 !
       call engine%read_settings()
 !
@@ -82,15 +87,18 @@ contains
 !
    subroutine run_hf_geoopt_engine(engine, wf)
 !!
-!!    Run 
-!!    Written by Eirik F. Kjønstad, 2019 
+!!    Run
+!!    Written by Eirik F. Kjønstad, 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(hf_geoopt_engine) :: engine 
-      class(hf)               :: wf 
+      class(hf_geoopt_engine), intent(in)    :: engine
+      class(hf),               intent(inout) :: wf
 !
       type(bfgs_geoopt_hf) :: bfgs_geoopt
+!
+      if (wf%ao%has_ghost_atoms()) &
+         call output%warning_msg("Ghosts are experimental in geometry optimization.")
 !
       if (wf%embedded) &
          call output%error_msg('geometry optimization with embedding is not supported')
@@ -122,21 +130,19 @@ contains
 !
    subroutine read_settings_hf_geoopt_engine(engine)
 !!
-!!    Read settings 
-!!    Written by Eirik F. Kjønstad, 2019 
+!!    Read settings
+!!    Written by Eirik F. Kjønstad, 2019
 !!
       implicit none
 !
-      class(hf_geoopt_engine) :: engine 
+      class(hf_geoopt_engine), intent(inout) :: engine
 !
       call input%get_keyword('algorithm', 'solver scf geoopt', engine%algorithm)
 !
       if (input%is_keyword_present('restart', 'solver scf geoopt')) engine%restart = .true.
       if (input%is_keyword_present('restart', 'do')) engine%restart = .true.
 !
-      if (input%is_keyword_present('print orbitals', 'solver scf')) then
-         engine%print_mo_info = .true.
-      end if
+      engine%write_mo_info = input%is_keyword_present('print orbitals', 'solver scf')
 !
    end subroutine read_settings_hf_geoopt_engine
 !
@@ -153,17 +159,12 @@ contains
 !
       implicit none
 !
-      class(hf_geoopt_engine) :: engine
-!
-      engine%name_       = 'Hartree-Fock geometry optimization engine'
-!
-      engine%description = 'Calculates the optimized geometry for the Hartree-Fock wavefunction.'
-      engine%tag         = 'geometry optimization'
+      class(hf_geoopt_engine), intent(inout) :: engine
 !
       engine%tasks = task_list()
 !
       if (trim(engine%ao_density_guess) == 'sad' .and. .not. engine%restart) &
-         call engine%tasks%add(label='sad', description='Generate initial SAD density') 
+         call engine%tasks%add(label='sad', description='Generate initial SAD density')
 !
       call engine%tasks%add(label='optimize geometry', &
                             description='Calculation of optimized geometry (' //&

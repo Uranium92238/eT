@@ -1,0 +1,51 @@
+system
+   name: H2O He
+   charge: 0
+end system
+
+do
+   response
+end do
+
+method
+   hf
+   cc3
+end method
+
+cc response
+   eom
+   dipole length
+   transition moments
+   initial states: {0,1}
+end cc response
+
+solver scf
+   gradient threshold: 1.0d-11
+end solver scf
+
+solver cholesky
+   threshold: 1.0d-11
+end solver cholesky
+
+solver cc gs
+   omega threshold: 1.0d-11
+end solver cc gs
+
+solver cc multipliers
+   threshold: 1.0d-11
+   algorithm: diis
+end solver cc multipliers
+
+solver cc es
+   residual threshold: 1.0d-11
+   singlet states: 2
+   algorithm: diis
+end solver cc es
+
+geometry
+basis: 6-31G
+ H          0.86681        0.60144        5.00000
+ H         -0.86681        0.60144        5.00000
+ O          0.00000       -0.07579        5.00000
+ He         0.10000       -0.02000        7.53000
+end geometry

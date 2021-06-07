@@ -33,9 +33,9 @@ submodule (cc2_class) mean_value_cc2
 contains
 !
 !
-   module subroutine prepare_for_density_cc2(wf)
+   module subroutine prepare_for_properties_cc2(wf)
 !!
-!!    Prepare for the construction of density matrices
+!!    Prepare for properties
 !!    Written by Sarai D. Folekstad, May 2019
 !!
       implicit none
@@ -48,7 +48,7 @@ contains
       call wf%construct_t2()
       call wf%construct_t2bar()
 !
-   end subroutine prepare_for_density_cc2
+   end subroutine prepare_for_properties_cc2
 !
 !
    module subroutine calculate_energy_cc2(wf)
@@ -58,6 +58,8 @@ contains
 !!
 !!    E = E_HF + sum_aibj (t_i^a*t_j^b + t_ij^ab) L_iajb
 !!
+      implicit none 
+!
       class(cc2), intent(inout) :: wf 
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb 
