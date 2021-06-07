@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:25:57 UTC +01:00
+  Calculation started: 2021-06-07 12:50:13 UTC +02:00
 
 
   :: Input file
@@ -163,10 +163,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Integral cutoff:               0.1000E-16
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -185,11 +186,11 @@
      6           -75.952529042757     0.1070E-04     0.1018E-06
      7           -75.952529044529     0.2782E-05     0.1772E-08
      8           -75.952529044735     0.8424E-06     0.2056E-09
-     9           -75.952529044742     0.1319E-06     0.6693E-11
-    10           -75.952529044742     0.3674E-08     0.1279E-12
-    11           -75.952529044742     0.6219E-09     0.1421E-13
-    12           -75.952529044742     0.9153E-10     0.1421E-13
-    13           -75.952529044742     0.1795E-10     0.4263E-13
+     9           -75.952529044742     0.1319E-06     0.6722E-11
+    10           -75.952529044742     0.3674E-08     0.2842E-13
+    11           -75.952529044742     0.6219E-09     0.0000E+00
+    12           -75.952529044742     0.9153E-10     0.2842E-13
+    13           -75.952529044742     0.1795E-10     0.0000E+00
     14           -75.952529044742     0.3148E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
@@ -203,8 +204,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.11833
-     Total cpu time (sec):               0.18275
+     Total wall time (sec):              0.06278
+     Total cpu time (sec):               0.10066
 
   - Preparation for frozen core approximation
 
@@ -215,7 +216,6 @@
   =======================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -296,7 +296,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.4740E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.3529E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.3074E-15
 
   - Settings for integral handling:
 
@@ -306,8 +306,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.02372
-     Total cpu time (sec):               0.04771
+     Total wall time (sec):              0.01403
+     Total cpu time (sec):               0.02763
 
 
   2) Preparation of MO basis and integrals
@@ -398,8 +398,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.02628
-     Total cpu time (sec):               0.05429
+     Total wall time (sec):              0.01470
+     Total cpu time (sec):               0.03065
 
 
   4) Calculation of the multipliers (davidson algorithm)
@@ -443,7 +443,7 @@
    13             0.7302E-09
    14             0.1496E-09
    15             0.2533E-10
-   16             0.4813E-11
+   16             0.4812E-11
   ---------------------------
 
   Convergence criterion met in 16 iterations!
@@ -484,8 +484,8 @@
 
   - Finished solving the CCSD multipliers equations
 
-     Total wall time (sec):               0.01237
-     Total cpu time (sec):                0.02437
+     Total wall time (sec):               0.00923
+     Total cpu time (sec):                0.01723
 
 
   5) Calculation of ground state properties
@@ -494,7 +494,7 @@
 
      xx:        -5.6349517
      xy:         0.0000000
-     xz:         0.0000000
+     xz:        -0.0000000
      yy:        -3.1625188
      yz:        -0.0000000
      zz:        -4.4494437
@@ -503,7 +503,7 @@
 
      xx:        -7.5792034
      xy:         0.0000000
-     xz:         0.0000000
+     xz:        -0.0000000
      yy:        -4.2536963
      yz:        -0.0000000
      zz:        -5.9846545
@@ -518,7 +518,7 @@
 
      xx:        -1.8289705
      xy:         0.0000000
-     xz:         0.0000000
+     xz:        -0.0000000
      yy:         1.8796789
      yz:        -0.0000000
      zz:        -0.0507085
@@ -527,18 +527,28 @@
 
      xx:        -2.4600280
      xy:         0.0000000
-     xz:         0.0000000
+     xz:        -0.0000000
      yy:         2.5282326
      yz:        -0.0000000
      zz:        -0.0682046
 
   - Timings for the CCSD mean value calculation
 
-     Total wall time (sec):              0.06427
-     Total cpu time (sec):               0.12826
+     Total wall time (sec):              0.03928
+     Total cpu time (sec):               0.07683
 
-     Peak memory usage during the execution of eT: 674.392 KB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:25:57 UTC +01:00
+  Peak memory usage during the execution of eT: 674.392 KB
+
+  Total wall time in eT (sec):              0.11081
+  Total cpu time in eT (sec):               0.18860
+
+  Calculation ended: 2021-06-07 12:50:13 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!

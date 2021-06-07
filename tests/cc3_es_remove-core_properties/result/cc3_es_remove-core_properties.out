@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco (development version)
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-05-14 20:10:12 UTC +02:00
-  Git branch:         es-densities
-  Git hash:           2caf498dc2bf011248feaeef537157280a4809ac
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-05-14 20:12:06 UTC +02:00
+  Calculation started: 2021-06-07 12:51:19 UTC +02:00
 
 
   :: Input file
@@ -165,7 +165,7 @@
      Exchange screening threshold:   0.1000E-14
      ERI cutoff:                     0.1000E-16
      One-electron integral  cutoff:  0.1000E-21
-     Cumulative Fock threshold:     0.1000E+01
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -184,12 +184,12 @@
      6           -78.806369659066     0.1050E-04     0.1010E-06
      7           -78.806369660755     0.2711E-05     0.1688E-08
      8           -78.806369660952     0.8248E-06     0.1975E-09
-     9           -78.806369660959     0.1312E-06     0.6722E-11
-    10           -78.806369660959     0.4228E-08     0.8527E-13
-    11           -78.806369660959     0.2450E-08     0.4263E-13
-    12           -78.806369660959     0.7088E-09     0.1421E-13
-    13           -78.806369660959     0.2080E-09     0.1421E-13
-    14           -78.806369660959     0.2204E-10     0.4263E-13
+     9           -78.806369660959     0.1312E-06     0.6608E-11
+    10           -78.806369660959     0.4228E-08     0.1563E-12
+    11           -78.806369660959     0.2450E-08     0.0000E+00
+    12           -78.806369660959     0.7088E-09     0.0000E+00
+    13           -78.806369660959     0.2080E-09     0.2842E-13
+    14           -78.806369660959     0.2204E-10     0.0000E+00
     15           -78.806369660959     0.2200E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
@@ -203,8 +203,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.13647
-     Total cpu time (sec):               0.24096
+     Total wall time (sec):              0.09072
+     Total cpu time (sec):               0.12339
 
 
   :: CC3 wavefunction
@@ -303,8 +303,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.03133
-     Total cpu time (sec):               0.06333
+     Total wall time (sec):              0.01734
+     Total cpu time (sec):               0.03333
 
 
   2) Preparation of MO basis and integrals
@@ -397,8 +397,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              0.09822
-     Total cpu time (sec):               0.19822
+     Total wall time (sec):              0.05935
+     Total cpu time (sec):               0.11921
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -489,8 +489,8 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              0.13423
-     Total cpu time (sec):               0.27022
+     Total wall time (sec):              0.09481
+     Total cpu time (sec):               0.19054
 
 
   5) Calculation of the excited states (diis algorithm)
@@ -881,8 +881,8 @@
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              0.24793
-     Total cpu time (sec):               0.49589
+     Total wall time (sec):              0.17349
+     Total cpu time (sec):               0.34507
 
 
   5) Calculation of the excited states (diis algorithm)
@@ -1267,8 +1267,8 @@
 
   - Finished solving the CC3 excited state equations (left)
 
-     Total wall time (sec):              0.23619
-     Total cpu time (sec):               0.47216
+     Total wall time (sec):              0.16479
+     Total cpu time (sec):               0.32828
 
 
   6) Calculation of excited state properties (EOM)
@@ -1338,26 +1338,26 @@
 
       Comp.        Nuclear              0              1              2
      -------------------------------------------------------------------
-         X        0.377945       0.000008       0.002561       0.002655
-         Y        1.051746       0.956296       0.039354       0.055732
-         Z      122.945582       0.003989       0.010086       0.007425
+      X           0.377945       0.000008       0.002561       0.002655
+      Y           1.051746       0.956296       0.039354       0.055732
+      Z         122.945582       0.003989       0.010086       0.007425
      -------------------------------------------------------------------
-      Norm      122.950661       0.956304       0.040707       0.056287
+     Norm       122.950661       0.956304       0.040707       0.056287
      -------------------------------------------------------------------
 
   - Timings for the CC3 response calculation
 
-     Total wall time (sec):              0.84007
-     Total cpu time (sec):               1.67999
+     Total wall time (sec):              0.57531
+     Total cpu time (sec):               1.14980
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 1.441400 MB
 
-  Total wall time in eT (sec):              0.99062
-  Total cpu time in eT (sec):               1.93783
+  Total wall time in eT (sec):              0.67425
+  Total cpu time in eT (sec):               1.28374
 
-  Calculation ended: 2021-05-14 20:12:07 UTC +02:00
+  Calculation ended: 2021-06-07 12:51:20 UTC +02:00
 
   - Implementation references:
 

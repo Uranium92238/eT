@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:24:28 UTC +01:00
+  Calculation started: 2021-06-07 12:49:47 UTC +02:00
 
 
   :: Input file
@@ -195,10 +195,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-15
-     Exchange screening threshold:  0.1000E-13
-     Integral cutoff:               0.1000E-15
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-15
+     Exchange screening threshold:   0.1000E-13
+     ERI cutoff:                     0.1000E-15
+     One-electron integral  cutoff:  0.1000E-20
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -210,19 +211,19 @@
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1           -76.167279756518     0.8765E-01     0.7617E+02
-     2           -76.197738767139     0.5225E-01     0.3046E-01
+     2           -76.197738767140     0.5225E-01     0.3046E-01
      3           -76.206846897170     0.5938E-02     0.9108E-02
      4           -76.207017689704     0.1052E-02     0.1708E-03
      5           -76.207030611240     0.1541E-03     0.1292E-04
      6           -76.207030952283     0.3075E-04     0.3410E-06
      7           -76.207030963599     0.2102E-05     0.1132E-07
      8           -76.207030963669     0.6179E-06     0.7007E-10
-     9           -76.207030963674     0.1630E-06     0.4789E-11
-    10           -76.207030963674     0.3461E-07     0.4263E-12
+     9           -76.207030963674     0.1630E-06     0.4860E-11
+    10           -76.207030963674     0.3461E-07     0.3979E-12
     11           -76.207030963674     0.4998E-08     0.2842E-13
-    12           -76.207030963674     0.1125E-08     0.7105E-13
-    13           -76.207030963674     0.2482E-09     0.5684E-13
-    14           -76.207030963674     0.8066E-10     0.1421E-13
+    12           -76.207030963674     0.1125E-08     0.8527E-13
+    13           -76.207030963674     0.2482E-09     0.1421E-12
+    14           -76.207030963674     0.8066E-10     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -240,15 +241,14 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.38545
-     Total cpu time (sec):               0.75409
+     Total wall time (sec):              0.23296
+     Total cpu time (sec):               0.41112
 
 
   :: MP2 wavefunction
   ======================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -335,8 +335,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.15304
-     Total cpu time (sec):               0.30501
+     Total wall time (sec):              0.08255
+     Total cpu time (sec):               0.16653
 
 
   2) Preparation of MO basis and integrals
@@ -352,11 +352,21 @@
 
   - Timings for the MP2 ground state calculation
 
-     Total wall time (sec):              0.15362
-     Total cpu time (sec):               0.30560
+     Total wall time (sec):              0.08297
+     Total cpu time (sec):               0.16695
 
-     Peak memory usage during the execution of eT: 5.910400 MB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:24:29 UTC +01:00
+  Peak memory usage during the execution of eT: 5.910400 MB
+
+  Total wall time in eT (sec):              0.33431
+  Total cpu time in eT (sec):               0.60047
+
+  Calculation ended: 2021-06-07 12:49:47 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!

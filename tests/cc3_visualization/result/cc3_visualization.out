@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco (development version)
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-05-04 18:01:51 UTC +02:00
-  Git branch:         es-densities
-  Git hash:           4587e3b1effbe9f64be9b5c2ad0a7da4aed2e180
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-05-04 18:02:00 UTC +02:00
+  Calculation started: 2021-06-07 12:51:19 UTC +02:00
 
 
   :: Input file
@@ -57,12 +57,13 @@
         eom
         dipole length
         transition moments
-        state properties
+        permanent moments
         initial states: {1}
      end cc response
 
      visualization
-        plot cc densities
+        plot transition densities
+        plot es densities
         states to plot: {0,1}
         file format: cube
         grid spacing: 0.5
@@ -165,10 +166,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Integral cutoff:               0.1000E-16
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -187,12 +189,12 @@
      6           -75.952529015950     0.1070E-04     0.1018E-06
      7           -75.952529017723     0.2782E-05     0.1772E-08
      8           -75.952529017928     0.8425E-06     0.2056E-09
-     9           -75.952529017935     0.1319E-06     0.6708E-11
-    10           -75.952529017935     0.3674E-08     0.5684E-13
-    11           -75.952529017935     0.6219E-09     0.2842E-13
-    12           -75.952529017935     0.9153E-10     0.5684E-13
-    13           -75.952529017935     0.1795E-10     0.5684E-13
-    14           -75.952529017935     0.3147E-11     0.0000E+00
+     9           -75.952529017935     0.1319E-06     0.6722E-11
+    10           -75.952529017935     0.3674E-08     0.4263E-13
+    11           -75.952529017935     0.6219E-09     0.0000E+00
+    12           -75.952529017935     0.9153E-10     0.2842E-13
+    13           -75.952529017935     0.1795E-10     0.0000E+00
+    14           -75.952529017935     0.3147E-11     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -205,8 +207,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.09924
-     Total cpu time (sec):               0.14661
+     Total wall time (sec):              0.08287
+     Total cpu time (sec):               0.09706
 
 
   :: CC3 wavefunction
@@ -241,7 +243,7 @@
      2) Preparation of MO basis and integrals
      3) Calculation of the ground state (diis algorithm)
      4) Calculation of the multipliers (diis algorithm)
-     5) Calculation of the excited state (diis algorithm)
+     5) Calculation of the excited states (diis algorithm)
      6) Calculation of excited state properties (EOM)
      7) Visualization of CC densities
 
@@ -294,7 +296,7 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.6990E-15
+     Maximal difference between approximate and actual diagonal:              0.7025E-15
      Minimal element of difference between approximate and actual diagonal:  -0.2898E-15
 
   - Settings for integral handling:
@@ -305,8 +307,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.01729
-     Total cpu time (sec):               0.03329
+     Total wall time (sec):              0.01246
+     Total cpu time (sec):               0.02445
 
 
   2) Preparation of MO basis and integrals
@@ -348,18 +350,18 @@
    10           -76.103583855920     0.3958E-06     0.2486E-07
    11           -76.103583842772     0.7149E-07     0.1315E-07
    12           -76.103583842070     0.1552E-07     0.7013E-09
-   13           -76.103583840536     0.2841E-08     0.1535E-08
+   13           -76.103583840535     0.2841E-08     0.1535E-08
    14           -76.103583840455     0.8956E-09     0.8049E-10
    15           -76.103583840460     0.1676E-09     0.4960E-11
    16           -76.103583840459     0.6213E-10     0.1123E-11
    17           -76.103583840453     0.1485E-10     0.5812E-11
-   18           -76.103583840452     0.2408E-11     0.1506E-11
+   18           -76.103583840451     0.2408E-11     0.1506E-11
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):   -76.103583840452
+     Final ground state energy (a.u.):   -76.103583840451
 
      Correlation energy (a.u.):           -0.151054822516
 
@@ -397,8 +399,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              0.03996
-     Total cpu time (sec):               0.07996
+     Total wall time (sec):              0.03054
+     Total cpu time (sec):               0.06254
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -486,11 +488,11 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              0.04667
-     Total cpu time (sec):               0.09467
+     Total wall time (sec):              0.04396
+     Total cpu time (sec):               0.08796
 
 
-  5) Calculation of the excited state (diis algorithm)
+  5) Calculation of the excited states (diis algorithm)
      Calculating right vectors
 
    - DIIS coupled cluster excited state solver
@@ -693,7 +695,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.4154E-11
-     2      0.356222305228       0.1337E-10
+     2      0.356222305228       0.1332E-10
   -----------------------------------------------
 
   Iteration:                 22
@@ -701,7 +703,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.4154E-11
-     2      0.356222305228       0.4027E-11
+     2      0.356222305228       0.3714E-11
   -----------------------------------------------
   Convergence criterion met in 22 iterations!
 
@@ -727,9 +729,9 @@
         5      4        0.003759060613
         5      2       -0.000625000177
         5      1        0.000559985204
+        2      5        0.000000000000
         3      5       -0.000000000000
         1      4        0.000000000000
-        5      5       -0.000000000000
      ------------------------------------
 
      Largest double amplitudes:
@@ -798,11 +800,11 @@
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              0.09691
-     Total cpu time (sec):               0.19288
+     Total wall time (sec):              0.09349
+     Total cpu time (sec):               0.18540
 
 
-  5) Calculation of the excited state (diis algorithm)
+  5) Calculation of the excited states (diis algorithm)
      Calculating left vectors
 
    - DIIS coupled cluster excited state solver
@@ -967,7 +969,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.1557E-10
-     2      0.356222305136       0.5366E-08
+     2      0.356222305136       0.5353E-08
   -----------------------------------------------
 
   Iteration:                 17
@@ -975,7 +977,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.2870E-11
-     2      0.356222305227       0.1587E-08
+     2      0.356222305227       0.1501E-08
   -----------------------------------------------
 
   Iteration:                 18
@@ -983,7 +985,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.2870E-11
-     2      0.356222305231       0.1337E-08
+     2      0.356222305232       0.1166E-08
   -----------------------------------------------
 
   Iteration:                 19
@@ -991,7 +993,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.2870E-11
-     2      0.356222305247       0.8240E-09
+     2      0.356222305246       0.7979E-09
   -----------------------------------------------
 
   Iteration:                 20
@@ -999,7 +1001,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.2870E-11
-     2      0.356222305233       0.2118E-09
+     2      0.356222305233       0.2115E-09
   -----------------------------------------------
 
   Iteration:                 21
@@ -1007,7 +1009,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.2870E-11
-     2      0.356222305229       0.5340E-10
+     2      0.356222305229       0.5337E-10
   -----------------------------------------------
 
   Iteration:                 22
@@ -1023,7 +1025,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.2870E-11
-     2      0.356222305228       0.2389E-11
+     2      0.356222305228       0.2388E-11
   -----------------------------------------------
   Convergence criterion met in 23 iterations!
 
@@ -1049,8 +1051,8 @@
         5      4        0.004075653226
         5      2       -0.000696779541
         5      1        0.000502945252
-        3      5       -0.000000000000
         2      5        0.000000000000
+        3      5       -0.000000000000
         1      4        0.000000000000
      ------------------------------------
 
@@ -1120,8 +1122,8 @@
 
   - Finished solving the CC3 excited state equations (left)
 
-     Total wall time (sec):              0.09792
-     Total cpu time (sec):               0.19790
+     Total wall time (sec):              0.09175
+     Total cpu time (sec):               0.18370
 
 
   6) Calculation of excited state properties (EOM)
@@ -1158,7 +1160,7 @@
      --------------------------------------------------------------------------
      Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
      --------------------------------------------------------------------------
-     X           0.0000000000      0.0000000000            0.0000000000
+     X          -0.0000000000     -0.0000000000            0.0000000000
      Y          -0.4964044533     -0.9757760820            0.4843795925
      Z          -0.0000000000     -0.0000000000            0.0000000000
      --------------------------------------------------------------------------
@@ -1181,22 +1183,22 @@
      --------------------------------------------------------------------------
      Oscillator strength:      0.001572158897
 
-  - Summary of EOM state properties calculation:
+  - Summary of EOM permanent moments calculation:
 
-     Total state dipole moments in [a.u.]:
-     ====================================
+     Total permanent dipole moments in [a.u.]:
+     =========================================
 
      Conversion factor from au to Debye: 2.541746473
 
 
-     Comp.      Nuclear            0              1
-     -------------------------------------------------
-        X       0.000000       0.000000       0.000000
-        Y       1.127335       0.958431       0.041129
-        Z      94.486306      -0.000000       0.000000
-     -------------------------------------------------
-     Norm      94.493031       0.958431       0.041129
-     -------------------------------------------------
+      Comp.        Nuclear              0              1
+     ----------------------------------------------------
+      X           0.000000      -0.000000      -0.000000
+      Y           1.127335       0.958431       0.041129
+      Z          94.486306      -0.000000      -0.000000
+     ----------------------------------------------------
+     Norm        94.493031       0.958431       0.041129
+     ----------------------------------------------------
 
 
   7) Visualization of CC densities
@@ -1222,16 +1224,22 @@
 
   - Timings for the CC3 response calculation
 
-     Total wall time (sec):              0.36192
-     Total cpu time (sec):               0.72179
+     Total wall time (sec):              0.33137
+     Total cpu time (sec):               0.66320
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 847.296 KB
 
-  Total wall time in eT (sec):              0.46931
-  Total cpu time in eT (sec):               0.88207
+  Total wall time in eT (sec):              0.42289
+  Total cpu time in eT (sec):               0.77409
 
-  Calculation ended: 2021-05-04 18:02:01 UTC +02:00
+  Calculation ended: 2021-06-07 12:51:19 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     CC3: https://doi.org/10.1021/acs.jctc.0c00686
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!

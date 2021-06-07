@@ -1,0 +1,46 @@
+
+  One-electron integrals (overlap)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.22
+
+  Cholesky decomposition of AO overlap
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+
+  :: Hartree-Fock engine
+  =========================
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  One-electron integrals (hamiltonian)
+  wall time (sec):                 0.00
+  cpu time (sec):                  0.00
+  cpu/wall ratio:                  1.00
+
+  AO Fock construction
+  wall time (sec):                 0.03
+  cpu time (sec):                  0.06
+  cpu/wall ratio:                  1.99
+
+  SCF solver
+  wall time (sec):                 0.07
+  cpu time (sec):                  0.07
+  cpu/wall ratio:                  0.99
+
+  Hartree-Fock engine
+  wall time (sec):                 0.07
+  cpu time (sec):                  0.07
+  cpu/wall ratio:                  0.99
+
+
+  :: Total time
+  ================
+
+  Total time in eT
+  wall time (sec):                 0.08
+  cpu time (sec):                  0.08
+  cpu/wall ratio:                  0.99
