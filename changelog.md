@@ -1,3 +1,7 @@
+# eT v1.3.1
+### Bugfixes
+- Newlines added in release script for correct formatting of release notes. eT-program/eT!846
+
 # eT v1.3.0
 ### Bugfixes
 - Removed option to accumulate and erase history in DIIS. These features were not working properly. eT-program/eT!800
@@ -23,7 +27,6 @@
 - Added `ghost` atoms. eT-program/eT!795
 - Added `remove core` projection to CC3. eT-program/eT!804
 - Excited state properties and oscillator strengths between excited states can be calculated. eT-program/eT!785
-- Non-linear davidson now saves the excited states every second micro iteration. eT-program/eT!834
 - Added timings for each iteration in the excited state solvers. eT-program/eT!834
 - Renamed input files in tests the directories to agree with the name of the directory. eT-program/eT!833
 

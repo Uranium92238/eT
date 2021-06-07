@@ -165,13 +165,13 @@ def export_description(notes, major, minor, patch, name):
 
     with description_file_path.open("w") as description_file:
 
-        description_file.write(f"**eT {name}**\\")
+        description_file.write(f"**eT {name}**\\ \n")
 
-        description_file.write(f"Version {major}.{minor}.{patch}\\")
+        description_file.write(f"Version {major}.{minor}.{patch}\\ \n")
 
         textual_date = date.today().strftime("%B %d, %Y")  # e.g., "May 08, 2021"
 
-        description_file.write(f"{textual_date}")
+        description_file.write(f"{textual_date} \n\n")
 
         description_file.write(f"{notes}")
 
