@@ -25,7 +25,7 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
 # 
 #   Set standard flags 
 # 
-    set(CMAKE_Fortran_FLAGS "-fpp -O3 -warn all -xHost -no-wrap-margin -stand f08")
+    set(CMAKE_Fortran_FLAGS "-fpp -O3 -warn all -xHost -no-wrap-margin -stand f18")
 #
 #   Turn off xHost spammelam by disabling remark #10382
 #   and truncated source warning (#5194)
@@ -67,7 +67,7 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
 # 
 #   Set standard flags 
 # 
-    set(CMAKE_Fortran_FLAGS "-std=f2008 -O3 -Wall -march=native -cpp")
+    set(CMAKE_Fortran_FLAGS "-std=f2018 -O3 -Wall -march=native -cpp")
 # 
 #   Testing processor 32-bit or 64-bit
 # 
