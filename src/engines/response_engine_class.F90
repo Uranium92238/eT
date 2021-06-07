@@ -1599,7 +1599,7 @@ contains
          n_to_print = min(n_columns-n_printed, 4)
          ll = 7 + 15*n_to_print
 !
-         subset = range_(n_printed + 1, n_printed + n_to_print)
+         subset = range_(n_printed + 1, n_to_print)
 !
 !        Print header of the table (Comp.  Label1  Label2 ...)
 !
