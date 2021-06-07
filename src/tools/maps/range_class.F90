@@ -90,6 +90,8 @@ contains
          this%first  = first
          this%length = length
          this%step   = step_
+      else
+         error stop "length < 1 or step == 0 in new_range"
       endif
 !
    end function new_range
@@ -135,6 +137,8 @@ contains
          this%first  = first
          this%length = (last - first)/step_ + 1
          this%step   = step_
+      else
+         error stop "Inconsistent first, last, and step in range_from_first_last"
       endif
 !
    end function range_from_first_last

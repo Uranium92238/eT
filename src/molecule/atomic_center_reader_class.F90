@@ -504,13 +504,13 @@ contains
          if (input%is_keyword_present(trim(this%ordered_wfs(k)), 'active atoms')) then
 !
             set = set + 1
-            this%sets(set) = named_range(trim(this%ordered_wfs(k)), 0, 0)
+            this%sets(set) = named_range(trim(this%ordered_wfs(k)))
 !
          endif
 !
       enddo
 !
-      this%sets(this%n_sets) = named_range('unclassified', 0, 0)
+      this%sets(this%n_sets) = named_range('unclassified')
 !
    end subroutine determine_subset_names
 !
@@ -761,7 +761,7 @@ contains
 !
       enddo
 !
-      call this%sets(set)%set_range(first, center)
+      if (center .gt. 0) call this%sets(set)%set_range(first, center)
 !
    end subroutine determine_subset_indices_and_ranges_unclassified
 !
