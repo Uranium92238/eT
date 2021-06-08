@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco (development version)
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-17 18:10:48 UTC +01:00
-  Git branch:         cc2-polarizabilities
-  Git hash:           4f31a7d24edee4e8b76717a43c3d44b27f1ce0f6
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-17 18:19:12 UTC +01:00
+  Calculation started: 2021-06-07 12:50:02 UTC +02:00
 
 
   :: Input file
@@ -40,7 +40,7 @@
      Note: geometry section is excluded from this print
 
      system
-       name: HOF He
+       name: H2O He
        charge: 0
        multiplicity: 1
      end system
@@ -152,15 +152,16 @@
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:               -78.492416266398
+     Energy of initial guess:               -78.492416266399
      Number of electrons in guess:           12.000000000000
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Integral cutoff:               0.1000E-16
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -179,14 +180,14 @@
      6           -78.843676312828     0.5524E-04     0.8236E-06
      7           -78.843676336350     0.5855E-05     0.2352E-07
      8           -78.843676337053     0.2353E-05     0.7030E-09
-     9           -78.843676337127     0.2069E-06     0.7368E-10
-    10           -78.843676337127     0.1582E-07     0.3268E-12
+     9           -78.843676337127     0.2069E-06     0.7370E-10
+    10           -78.843676337127     0.1582E-07     0.3695E-12
     11           -78.843676337127     0.3956E-08     0.1421E-13
-    12           -78.843676337127     0.1341E-08     0.2842E-13
-    13           -78.843676337127     0.4647E-09     0.2842E-13
-    14           -78.843676337127     0.1354E-09     0.5684E-13
-    15           -78.843676337127     0.1584E-10     0.0000E+00
-    16           -78.843676337127     0.3042E-11     0.1421E-13
+    12           -78.843676337127     0.1341E-08     0.1421E-13
+    13           -78.843676337127     0.4647E-09     0.4263E-13
+    14           -78.843676337127     0.1355E-09     0.8527E-13
+    15           -78.843676337127     0.1584E-10     0.9948E-13
+    16           -78.843676337127     0.3043E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -199,15 +200,14 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.44946
-     Total cpu time (sec):               0.85915
+     Total wall time (sec):              0.28112
+     Total cpu time (sec):               0.55408
 
 
   :: CC2 wavefunction
   ======================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -236,7 +236,7 @@
      2) Preparation of MO basis and integrals
      3) Calculation of the ground state (diis algorithm)
      4) Calculation of the multipliers (diis algorithm)
-     5) Calculation of the excited state (davidson algorithm)
+     5) Calculation of the excited states (davidson algorithm)
      6) Calculation of the EOM polarizabilities
 
 
@@ -300,8 +300,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.16934
-     Total cpu time (sec):               0.33727
+     Total wall time (sec):              0.11066
+     Total cpu time (sec):               0.22230
 
 
   2) Preparation of MO basis and integrals
@@ -331,12 +331,12 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -79.084077835139     0.3735E-01     0.7908E+02
+    1           -79.084077835138     0.3735E-01     0.7908E+02
     2           -79.085268702972     0.7571E-02     0.1191E-02
     3           -79.085597209586     0.9947E-03     0.3285E-03
     4           -79.085606020110     0.1836E-03     0.8811E-05
     5           -79.085607372301     0.3655E-04     0.1352E-05
-    6           -79.085607158492     0.6560E-05     0.2138E-06
+    6           -79.085607158491     0.6560E-05     0.2138E-06
     7           -79.085607163010     0.2259E-05     0.4519E-08
     8           -79.085607163272     0.3683E-06     0.2615E-09
     9           -79.085607163288     0.3441E-07     0.1630E-10
@@ -372,8 +372,8 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.04602
-     Total cpu time (sec):               0.08997
+     Total wall time (sec):              0.03396
+     Total cpu time (sec):               0.06582
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -440,12 +440,8 @@
 
   - Finished solving the cc2 multipliers equations
 
-     Total wall time (sec):              0.02766
-     Total cpu time (sec):               0.05566
-  polarizab
-  prepare jac
-  prepare prop
-  prepare amp response
+     Total wall time (sec):              0.02604
+     Total cpu time (sec):               0.04993
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -636,8 +632,8 @@
 
   - Finished solving the CC2 linear equations
 
-     Total wall time (sec):               0.21542
-     Total cpu time (sec):                0.32278
+     Total wall time (sec):               0.13340
+     Total cpu time (sec):                0.26592
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -838,8 +834,8 @@
 
   - Finished solving the CC2 linear equations
 
-     Total wall time (sec):               0.14816
-     Total cpu time (sec):                0.29996
+     Total wall time (sec):               0.13366
+     Total cpu time (sec):                0.26409
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -1030,8 +1026,8 @@
 
   - Finished solving the CC2 linear equations
 
-     Total wall time (sec):               0.14128
-     Total cpu time (sec):                0.28131
+     Total wall time (sec):               0.14097
+     Total cpu time (sec):                0.28446
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -1232,8 +1228,8 @@
 
   - Finished solving the CC2 linear equations
 
-     Total wall time (sec):               0.15807
-     Total cpu time (sec):                0.30815
+     Total wall time (sec):               0.14505
+     Total cpu time (sec):                0.28904
 
 
   6) Calculation of the EOM polarizabilities
@@ -1248,11 +1244,21 @@
 
   - Timings for the CC2 response calculation
 
-     Total wall time (sec):              0.91340
-     Total cpu time (sec):               1.71461
+     Total wall time (sec):              0.72820
+     Total cpu time (sec):               1.45404
 
-     Peak memory usage during the execution of eT: 10.401736 MB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-17 18:19:13 UTC +01:00
+  Peak memory usage during the execution of eT: 10.401736 MB
+
+  Total wall time in eT (sec):              1.02853
+  Total cpu time in eT (sec):               2.03159
+
+  Calculation ended: 2021-06-07 12:50:03 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!

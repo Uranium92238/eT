@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco (development version)
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-05-13 18:22:34 UTC +02:00
-  Git branch:         ccs-read-multipliers
-  Git hash:           df27f0a9c9eeb27071361bf39163f1c2fdeb0925
-  Fortran compiler:   GNU 10.2.0
-  C compiler:         GNU 10.2.0
-  C++ compiler:       GNU 10.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
-  PCM:                OFF
+  PCM:                ON
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-05-13 18:26:19 UTC +02:00
+  Calculation started: 2021-06-07 12:49:51 UTC +02:00
 
 
   :: Input file
@@ -159,7 +159,7 @@
      Exchange screening threshold:   0.1000E-14
      ERI cutoff:                     0.1000E-16
      One-electron integral  cutoff:  0.1000E-21
-     Cumulative Fock threshold:     0.1000E+01
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -170,14 +170,14 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -74.889701962820     0.8468E-01     0.7489E+02
+     1           -74.889701962821     0.8468E-01     0.7489E+02
      2           -74.940474931397     0.1479E-01     0.5077E-01
-     3           -74.942053887929     0.1666E-02     0.1579E-02
+     3           -74.942053887928     0.1666E-02     0.1579E-02
      4           -74.942080036155     0.4571E-04     0.2615E-04
      5           -74.942080053391     0.1184E-04     0.1724E-07
      6           -74.942080057695     0.1579E-06     0.4304E-08
-     7           -74.942080057696     0.4561E-09     0.5969E-12
-     8           -74.942080057696     0.1575E-12     0.4263E-13
+     7           -74.942080057696     0.4561E-09     0.4974E-12
+     8           -74.942080057696     0.1555E-12     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 8 iterations!
 
@@ -190,15 +190,14 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.02600
-     Total cpu time (sec):               0.02869
+     Total wall time (sec):              0.03719
+     Total cpu time (sec):               0.03207
 
 
   :: CCS wavefunction
   ======================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -276,8 +275,8 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.2986E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.3632E-16
+     Maximal difference between approximate and actual diagonal:              0.3515E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.3515E-15
 
   - Settings for integral handling:
 
@@ -287,8 +286,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00900
-     Total cpu time (sec):               0.01196
+     Total wall time (sec):              0.00310
+     Total cpu time (sec):               0.00710
 
 
   2) Preparation of MO basis and integrals
@@ -320,7 +319,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -74.942080057696     0.3544E-12     0.7494E+02
+    1           -74.942080057696     0.3498E-12     0.7494E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -348,8 +347,8 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.00100
-     Total cpu time (sec):               0.00172
+     Total wall time (sec):              0.00061
+     Total cpu time (sec):               0.00061
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -381,7 +380,7 @@
 
   Iteration    Norm residual
   ----------------------------
-    1          0.7077E-12
+    1          0.6983E-12
   ----------------------------
   Convergence criterion met in 1 iterations!
 
@@ -405,15 +404,15 @@
 
   - Finished solving the ccs multipliers equations
 
-     Total wall time (sec):              0.00100
-     Total cpu time (sec):               0.00095
+     Total wall time (sec):              0.00039
+     Total cpu time (sec):               0.00039
 
 
   5) Calculation of ground state properties
 
   - Operator: dipole moment [a.u.]
 
-     x:          0.0000000
+     x:         -0.0000000
      y:          0.6035218
      z:          0.0000000
 
@@ -421,7 +420,7 @@
 
   - Operator: dipole moment [Debye]
 
-     x:          0.0000000
+     x:         -0.0000000
      y:          1.5339994
      z:          0.0000000
 
@@ -429,17 +428,17 @@
 
   - Timings for the CCS mean value calculation
 
-     Total wall time (sec):              0.01500
-     Total cpu time (sec):               0.01712
+     Total wall time (sec):              0.00488
+     Total cpu time (sec):               0.00888
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 59.476 KB
+  Peak memory usage during the execution of eT: 61.824 KB
 
-  Total wall time in eT (sec):              0.05400
-  Total cpu time in eT (sec):               0.05980
+  Total wall time in eT (sec):              0.04998
+  Total cpu time in eT (sec):               0.04838
 
-  Calculation ended: 2021-05-13 18:26:19 UTC +02:00
+  Calculation ended: 2021-06-07 12:49:51 UTC +02:00
 
   - Implementation references:
 

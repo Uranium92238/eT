@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:29:26 UTC +01:00
+  Calculation started: 2021-06-07 12:51:34 UTC +02:00
 
 
   :: Input file
@@ -165,10 +165,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-15
-     Exchange screening threshold:  0.1000E-13
-     Integral cutoff:               0.1000E-15
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-15
+     Exchange screening threshold:   0.1000E-13
+     ERI cutoff:                     0.1000E-15
+     One-electron integral  cutoff:  0.1000E-20
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -187,13 +188,13 @@
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
      8           -78.843851693557     0.2356E-05     0.7054E-09
-     9           -78.843851693630     0.2071E-06     0.7378E-10
+     9           -78.843851693630     0.2071E-06     0.7375E-10
     10           -78.843851693631     0.1594E-07     0.3979E-12
-    11           -78.843851693631     0.3322E-08     0.0000E+00
-    12           -78.843851693631     0.1197E-08     0.2842E-13
-    13           -78.843851693631     0.4264E-09     0.1137E-12
-    14           -78.843851693631     0.1280E-09     0.2842E-13
-    15           -78.843851693631     0.1479E-10     0.4263E-13
+    11           -78.843851693631     0.3322E-08     0.2842E-13
+    12           -78.843851693631     0.1197E-08     0.8527E-13
+    13           -78.843851693631     0.4264E-09     0.4263E-13
+    14           -78.843851693631     0.1280E-09     0.1421E-13
+    15           -78.843851693631     0.1479E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -206,15 +207,14 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.47106
-     Total cpu time (sec):               0.92831
+     Total wall time (sec):              0.27177
+     Total cpu time (sec):               0.50091
 
 
   :: MLCCSD wavefunction
   =========================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -298,8 +298,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.21010
-     Total cpu time (sec):               0.41811
+     Total wall time (sec):              0.11637
+     Total cpu time (sec):               0.23236
 
 
   2) Preparation of MO basis and integrals
@@ -308,11 +308,11 @@
 
   - Summary of CC2 calculation for CNTOs:
 
-     Wall time for CC2 ground calculation (sec):                   0.06
-     CPU time for CC2 ground calculation (sec):                    0.11
+     Wall time for CC2 ground calculation (sec):                   0.04
+     CPU time for CC2 ground calculation (sec):                    0.08
 
-     Wall time for CC2 excited calculation (sec):                  0.23
-     CPU time for CC2 excited calculation (sec):                   0.45
+     Wall time for CC2 excited calculation (sec):                  0.16
+     CPU time for CC2 excited calculation (sec):                   0.33
 
   - MLCCSD orbital partitioning:
 
@@ -366,9 +366,9 @@
    11           -79.085852451564     0.6015E-07     0.5571E-09
    12           -79.085852453238     0.1922E-07     0.1673E-08
    13           -79.085852453632     0.8494E-08     0.3938E-09
-   14           -79.085852453674     0.2038E-08     0.4235E-10
+   14           -79.085852453674     0.2038E-08     0.4233E-10
    15           -79.085852453656     0.4214E-09     0.1832E-10
-   16           -79.085852453650     0.1298E-09     0.5542E-11
+   16           -79.085852453650     0.1298E-09     0.5528E-11
    17           -79.085852453648     0.3936E-10     0.2103E-11
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
@@ -397,16 +397,27 @@
 
   - Finished solving the MLCCSD ground state equations
 
-     Total wall time (sec):              0.12499
-     Total cpu time (sec):               0.24899
+     Total wall time (sec):              0.08006
+     Total cpu time (sec):               0.16005
 
   - Timings for the MLCCSD ground state calculation
 
-     Total wall time (sec):              0.64179
-     Total cpu time (sec):               1.28167
+     Total wall time (sec):              0.41522
+     Total cpu time (sec):               0.83043
 
-     Peak memory usage during the execution of eT: 14.099744 MB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:29:28 UTC +01:00
+  Peak memory usage during the execution of eT: 14.138944 MB
+
+  Total wall time in eT (sec):              0.70563
+  Total cpu time in eT (sec):               1.35483
+
+  Calculation ended: 2021-06-07 12:51:34 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     MLCC2 and MLCCSD: https://doi.org/10.1021/acs.jctc.9b00701
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!

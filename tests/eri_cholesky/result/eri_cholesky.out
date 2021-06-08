@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:23:08 UTC +01:00
+  Calculation started: 2021-06-07 12:49:26 UTC +02:00
 
 
   :: Input file
@@ -142,11 +142,21 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.18292
-     Total cpu time (sec):               0.32050
+     Total wall time (sec):              0.09619
+     Total cpu time (sec):               0.18165
 
-     Peak memory usage during the execution of eT: 2.156992 MB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:23:08 UTC +01:00
+  Peak memory usage during the execution of eT: 2.150264 MB
+
+  Total wall time in eT (sec):              0.10930
+  Total cpu time in eT (sec):               0.19576
+
+  Calculation ended: 2021-06-07 12:49:26 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!

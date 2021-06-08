@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.2 - an electronic structure program
+                     eT 1.3 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT version 1.2.0, Cobra
+   This is eT 1.3.0 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-03-09 17:21:42 UTC +01:00
-  Git branch:         generate-cobra-tests
-  Git hash:           a115412814e137465efa1a29d7583531bd02b6a8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
+  Configuration date: 2021-06-07 12:48:33 UTC +02:00
+  Git branch:         update-test-refs-new
+  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-03-09 17:25:26 UTC +01:00
+  Calculation started: 2021-06-07 12:50:05 UTC +02:00
 
 
   :: Input file
@@ -158,10 +158,11 @@
 
   - Screening and integral thresholds:
 
-     Coulomb screening threshold:   0.1000E-16
-     Exchange screening threshold:  0.1000E-14
-     Integral cutoff:               0.1000E-16
-     Cumulative Fock threshold:     0.1000E+01
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
 
   - DIIS tool settings:
 
@@ -179,15 +180,15 @@
      5           -78.843850846799     0.3301E-03     0.4131E-04
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
-     8           -78.843851693557     0.2356E-05     0.7054E-09
-     9           -78.843851693630     0.2071E-06     0.7375E-10
+     8           -78.843851693557     0.2356E-05     0.7055E-09
+     9           -78.843851693630     0.2071E-06     0.7374E-10
     10           -78.843851693631     0.1594E-07     0.3837E-12
-    11           -78.843851693631     0.3322E-08     0.1421E-13
-    12           -78.843851693631     0.1197E-08     0.4263E-13
-    13           -78.843851693631     0.4264E-09     0.8527E-13
-    14           -78.843851693631     0.1280E-09     0.5684E-13
-    15           -78.843851693631     0.1479E-10     0.0000E+00
-    16           -78.843851693631     0.2907E-11     0.2842E-13
+    11           -78.843851693631     0.3322E-08     0.2842E-13
+    12           -78.843851693631     0.1197E-08     0.0000E+00
+    13           -78.843851693631     0.4264E-09     0.0000E+00
+    14           -78.843851693631     0.1280E-09     0.1421E-13
+    15           -78.843851693631     0.1479E-10     0.2842E-13
+    16           -78.843851693631     0.2910E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -200,15 +201,14 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.54023
-     Total cpu time (sec):               1.03208
+     Total wall time (sec):              0.29381
+     Total cpu time (sec):               0.54880
 
 
   :: LOW MEMORY CC2 wavefunction
   =================================
 
      Bath orbital(s):         False
-     Core-valence separation: False
 
    - Number of orbitals:
 
@@ -297,8 +297,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.21478
-     Total cpu time (sec):               0.43079
+     Total wall time (sec):              0.11562
+     Total cpu time (sec):               0.23141
 
 
   2) Preparation of MO basis and integrals
@@ -370,8 +370,8 @@
 
   - Finished solving the LOW MEMORY CC2 ground state equations
 
-     Total wall time (sec):              0.06434
-     Total cpu time (sec):               0.12825
+     Total wall time (sec):              0.03498
+     Total cpu time (sec):               0.06697
 
 
   4) Calculation of the excited state (diis algorithm)
@@ -452,7 +452,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.245997351305       0.5132E-02
-     2      0.354575195080       0.1336E-01
+     2      0.354575195081       0.1336E-01
      3      0.312506779505       0.7382E-02
      4      0.419488252596       0.1087E-01
   -----------------------------------------------
@@ -523,7 +523,7 @@
   -----------------------------------------------
      1      0.245983430456       0.2852E-05
      2      0.354257109589       0.5197E-04
-     3      0.312493293690       0.2127E-04
+     3      0.312493293691       0.2127E-04
      4      0.418026182158       0.3487E-03
   -----------------------------------------------
 
@@ -613,7 +613,7 @@
   -----------------------------------------------
      1      0.245983441338       0.1813E-11
      2      0.354257072913       0.9035E-09
-     3      0.312493140828       0.4574E-09
+     3      0.312493140828       0.4575E-09
      4      0.418025354381       0.1205E-07
   -----------------------------------------------
 
@@ -623,7 +623,7 @@
   -----------------------------------------------
      1      0.245983441338       0.1813E-11
      2      0.354257072917       0.1016E-09
-     3      0.312493140823       0.7821E-10
+     3      0.312493140823       0.7895E-10
      4      0.418025354510       0.1176E-08
   -----------------------------------------------
 
@@ -633,7 +633,7 @@
   -----------------------------------------------
      1      0.245983441338       0.1813E-11
      2      0.354257072916       0.1861E-10
-     3      0.312493140824       0.1978E-11
+     3      0.312493140824       0.2431E-11
      4      0.418025354497       0.1741E-09
   -----------------------------------------------
 
@@ -642,8 +642,8 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.245983441338       0.1813E-11
-     2      0.354257072916       0.4677E-11
-     3      0.312493140824       0.1978E-11
+     2      0.354257072916       0.4676E-11
+     3      0.312493140824       0.2431E-11
      4      0.418025354496       0.1551E-10
   -----------------------------------------------
 
@@ -652,9 +652,9 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.245983441338       0.1813E-11
-     2      0.354257072916       0.4677E-11
-     3      0.312493140824       0.1978E-11
-     4      0.418025354496       0.6996E-11
+     2      0.354257072916       0.4676E-11
+     3      0.312493140824       0.2431E-11
+     4      0.418025354496       0.7005E-11
   -----------------------------------------------
   Convergence criterion met in 23 iterations!
 
@@ -695,7 +695,7 @@
         a       i         R(a,i)
      -----------------------------------
         2      6        0.983888959785
-        3      6        0.161510332236
+        3      6        0.161510332237
         7      6       -0.071460933883
        14      6        0.021752345804
         2      3       -0.011826768100
@@ -755,7 +755,7 @@
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
         1                  0.245983441338        6.693550376783
-        2                  0.312493140824        8.503371483563
+        2                  0.312493140824        8.503371483564
         3                  0.354257072916        9.639825961443
         4                  0.418025354496       11.375049287347
      ---------------------------------------------------------------
@@ -763,16 +763,26 @@
 
   - Finished solving the LOW MEMORY CC2 excited state equations (right)
 
-     Total wall time (sec):              0.61877
-     Total cpu time (sec):               1.23875
+     Total wall time (sec):              0.45990
+     Total cpu time (sec):               0.91986
 
   - Timings for the LOW MEMORY CC2 excited state calculation
 
-     Total wall time (sec):              0.89849
-     Total cpu time (sec):               1.79838
+     Total wall time (sec):              0.61094
+     Total cpu time (sec):               1.21867
 
-     Peak memory usage during the execution of eT: 10.695640 MB
+  ------------------------------------------------------------
 
-  Calculation ended: 2021-03-09 17:25:28 UTC +01:00
+  Peak memory usage during the execution of eT: 10.695640 MB
+
+  Total wall time in eT (sec):              0.92397
+  Total cpu time in eT (sec):               1.79606
+
+  Calculation ended: 2021-06-07 12:50:06 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!
