@@ -1,3 +1,5 @@
+# eT v1.4.0
+
 # eT v1.3.1
 ### Bugfixes
 - Newlines added in release script for correct formatting of release notes. eT-program/eT!846

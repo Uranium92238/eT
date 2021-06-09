@@ -34,9 +34,9 @@ module parameters
 !  Version
 !
    integer, parameter :: major_version = 1
-   integer, parameter :: minor_version = 3
-   integer, parameter :: patch_version = 1
-   character(len=27), parameter :: version_name = "Disco"
+   integer, parameter :: minor_version = 4
+   integer, parameter :: patch_version = 0
+   character(len=27), parameter :: version_name = "Eos (development)"
 !
 !  Integers
 !
