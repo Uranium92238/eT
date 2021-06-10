@@ -1,0 +1,450 @@
+
+
+
+                     eT 1.4 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.4.0 Eos (development)
+  ------------------------------------------------------------
+  Configuration date: 2021-06-09 18:05:00 UTC +02:00
+  Git branch:         tests_for_mlcc_in_mlhf
+  Git hash:           f8c97e9081c1e2d95bce483ebecd339031343cca
+  Fortran compiler:   GNU 9.3.0
+  C compiler:         GNU 9.3.0
+  C++ compiler:       GNU 9.3.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     ON
+  ------------------------------------------------------------
+
+  Calculation started: 2021-06-09 18:23:33 UTC +02:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: 2 H2O
+        charge: 0
+     end system
+
+     do
+        ground state
+     end do
+
+     memory
+        available: 8
+     end memory
+
+     solver cholesky
+        threshold: 1.0d-12
+     end solver cholesky
+
+     solver scf
+        algorithm:          mo-scf-diis
+        energy threshold:   1.0d-12
+        gradient threshold: 1.0d-12
+     end solver scf
+
+     method
+        mlhf
+        mlccsd
+     end method
+
+     solver cc gs
+        omega threshold:  1.0d-10
+        energy threshold: 1.0d-10
+     end solver cc gs
+
+     solver cc es
+        algorithm:          davidson
+        singlet states:     2
+        residual threshold: 1.0d-11
+        energy threshold:   1.0d-11
+        left eigenvectors
+     end solver cc es
+
+     active atoms
+        selection type: list
+        hf: {1,2,3}
+     end active atoms
+
+     mlcc
+        levels: ccs, ccsd
+        ccsd orbitals: cnto-approx
+        cnto occupied ccsd: 2
+        cnto states: {1,2}
+     end mlcc
+
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: MLHF wavefunction
+  =======================
+
+  - MLHF settings:
+
+     Occupied orbitals:    Cholesky
+     Virtual orbitals:     PAOs
+
+     Cholesky decomposition threshold:  0.10E-01
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: 6-31g*
+        1  O    -0.443230000000     2.274540000000    -0.490590000000        1
+        2  H    -0.056240000000     3.131100000000    -0.735030000000        2
+        3  H    -0.382330000000     2.311400000000     0.494400000000        3
+        4  O    -1.534110000000    -0.146060000000     0.261680000000        4
+        5  H    -1.206790000000     0.610660000000    -0.281940000000        5
+        6  H    -1.846620000000    -0.752650000000    -0.429390000000        6
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: 6-31g*
+        1  O    -0.837583310191     4.298257659368    -0.927080739450        1
+        2  H    -0.106278197246     5.916921468626    -1.389005393339        2
+        3  H    -0.722498989205     4.367912964320     0.934280595985        3
+        4  O    -2.899047744957    -0.276013397754     0.494503532276        4
+        5  H    -2.280502589864     1.153980155227    -0.532789383560        5
+        6  H    -3.489606056144    -1.422302367654    -0.811429500627        6
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               38
+     Number of orthonormal atomic orbitals:   38
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         28
+     Number of molecular orbitals:       38
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a MLHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (MO-SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (MO-SCF-DIIS algorithm)
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+     Residual threshold:            0.1000E-11
+     Energy threshold:              0.1000E-11
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:              -151.757904128030
+     Number of electrons in guess:           20.000000000000
+
+  - Active orbital space:
+
+      Number of active occupied orbitals:        5
+      Number of active virtual orbitals:        18
+      Number of active orbitals:                23
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-17
+     Exchange screening threshold:   0.1000E-15
+     ERI cutoff:                     0.1000E-17
+     One-electron integral  cutoff:  0.1000E-22
+     Cumulative Fock threshold:      0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1          -151.947468513542     0.3742E+00     0.1519E+03
+     2          -151.974601172021     0.2066E+00     0.2713E-01
+     3          -151.982329885144     0.2854E-01     0.7729E-02
+     4          -151.982556015098     0.5571E-02     0.2261E-03
+     5          -151.982567509735     0.1186E-02     0.1149E-04
+     6          -151.982568065640     0.1713E-03     0.5559E-06
+     7          -151.982568078837     0.1854E-04     0.1320E-07
+     8          -151.982568079070     0.5108E-05     0.2337E-09
+     9          -151.982568079086     0.7388E-06     0.1620E-10
+    10          -151.982568079087     0.7490E-07     0.2274E-12
+    11          -151.982568079087     0.1483E-07     0.8527E-13
+    12          -151.982568079086     0.4122E-08     0.2842E-13
+    13          -151.982568079086     0.5962E-09     0.2842E-13
+    14          -151.982568079086     0.8899E-10     0.0000E+00
+    15          -151.982568079086     0.2016E-10     0.2842E-13
+    16          -151.982568079086     0.3174E-11     0.5684E-13
+    17          -151.982568079086     0.1060E-11     0.5684E-13
+    18          -151.982568079086     0.1236E-12     0.2842E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 18 iterations!
+
+  - Summary of MLHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.719739301321
+     Nuclear repulsion energy:      37.239924244742
+     Electronic energy:           -189.222492323828
+     Total energy:                -151.982568079086
+
+  - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
+
+     Active energy:               -104.520372954648
+     Active-inactive energy:        19.190975819373
+     Inactive energy:             -103.893095188554
+
+  - Timings for the MLHF ground state calculation
+
+     Total wall time (sec):              0.68433
+     Total cpu time (sec):               1.30537
+
+
+  :: MLCCSD wavefunction
+  =========================
+
+     Bath orbital(s):         False
+
+   - Number of orbitals:
+
+     Occupied orbitals:    5
+     Virtual orbitals:     18
+     Molecular orbitals:   23
+     Atomic orbitals:      38
+
+
+  :: Ground state coupled cluster engine
+  =========================================
+
+  Calculates the ground state CC wavefunction | CC > = exp(T) | R >
+
+  This is a MLCCSD ground state calculation.
+  The following tasks will be performed:
+
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
+
+
+  1) Cholesky decomposition of the electron repulsion integrals
+
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-11
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition ao details:
+
+     Total number of AOs:                    38
+     Total number of shell pairs:           210
+     Total number of AO pairs:              741
+
+     Significant shell pairs:               193
+     Significant AO pairs:                  701
+
+     Construct shell pairs:                 208
+     Construct AO pairs:                    739
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               673 /     179       0.47804E+01         174             38             25574
+     2               537 /     157       0.42255E-01         329            144             77328
+     3               437 /     130       0.39225E-03         198            214             93518
+     4               306 /      85       0.38100E-05         225            326             99756
+     5               217 /      47       0.38053E-07         138            401             87017
+     6                95 /      19       0.35950E-09         125            455             43225
+     7                 0 /       0       0.35892E-11          34            472                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 472
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.9457E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.1764E-14
+
+  - Settings for integral handling:
+
+     Cholesky vectors in memory: True
+     ERI matrix in memory:       False
+     T1 ERI matrix in memory:    False
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.64007
+     Total cpu time (sec):               1.27257
+
+
+  2) Preparation of MO basis and integrals
+
+  Running CCS calculation for NTOs/CNTOs.
+
+  - Summary of CCS calculation for NTOs/CNTOs:
+
+     Wall time for CCS ground calculation (sec):                   0.00
+     CPU time for CCS ground calculation (sec):                    0.00
+
+     Wall time for CCS excited calculation (sec):                  0.01
+     CPU time for CCS excited calculation (sec):                   0.03
+
+  - MLCCSD orbital partitioning:
+
+     Orbital type: cnto-approx
+
+     Number occupied ccsd orbitals:    2
+     Number virtual ccsd orbitals:     6
+
+     Number occupied cc2 orbitals:     0
+     Number virtual cc2 orbitals:      0
+
+     Number occupied ccs orbitals:     3
+     Number virtual ccs orbitals:     12
+
+
+  3) Calculation of the ground state (diis algorithm)
+
+   - DIIS coupled cluster ground state solver
+  ----------------------------------------------
+
+  A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
+  of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
+  13.
+
+  - CC ground state solver settings:
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+     Max number of iterations:      100
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (cc_gs_diis_e): file
+     Storage (cc_gs_diis_x): file
+
+  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ---------------------------------------------------------------
+    1          -152.020435372247     0.3647E-01     0.1520E+03
+    2          -152.026341790741     0.9809E-02     0.5906E-02
+    3          -152.027913848581     0.1263E-02     0.1572E-02
+    4          -152.027917768309     0.1788E-03     0.3920E-05
+    5          -152.027919094313     0.3008E-04     0.1326E-05
+    6          -152.027918957339     0.7907E-05     0.1370E-06
+    7          -152.027918946757     0.2133E-05     0.1058E-07
+    8          -152.027918960053     0.5547E-06     0.1330E-07
+    9          -152.027918958871     0.1586E-06     0.1181E-08
+   10          -152.027918958983     0.4517E-07     0.1122E-09
+   11          -152.027918958826     0.7293E-08     0.1575E-09
+   12          -152.027918958897     0.1528E-08     0.7128E-10
+   13          -152.027918958857     0.4242E-09     0.3985E-10
+   14          -152.027918958833     0.7821E-10     0.2427E-10
+  ---------------------------------------------------------------
+  Convergence criterion met in 14 iterations!
+
+  - Ground state summary:
+
+     Final ground state energy (a.u.):  -152.027918958833
+
+     Correlation energy (a.u.):           -0.045350879747
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         t(a,i)
+     -----------------------------------
+        5      1        0.005420382501
+        2      1       -0.005048708236
+        4      2       -0.002543548099
+        9      1        0.002206699722
+        6      1       -0.002203884395
+        1      1       -0.001818592511
+       17      1       -0.001668717154
+        7      1        0.001516758373
+        1      5       -0.001440301550
+       12      1        0.000817687494
+     ------------------------------------
+
+  - Finished solving the MLCCSD ground state equations
+
+     Total wall time (sec):              0.04741
+     Total cpu time (sec):               0.09456
+
+  - Timings for the MLCCSD ground state calculation
+
+     Total wall time (sec):              0.71256
+     Total cpu time (sec):               1.41540
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 10.068360 MB
+
+  Total wall time in eT (sec):              1.40950
+  Total cpu time in eT (sec):               2.73994
+
+  Calculation ended: 2021-06-09 18:23:34 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     MLCC2 and MLCCSD: https://doi.org/10.1021/acs.jctc.9b00701
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
+
+  eT terminated successfully!

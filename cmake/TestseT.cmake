@@ -233,6 +233,7 @@ add_eT_runtest(mlcc2_pao_full_right_es                      "eT;short;mlcc2;es;p
 add_eT_runtest(mlcc2_pao_right_es                           "eT;short;mlcc2;es;pao")
 add_eT_runtest(mlcc2_pao_right_es_fc                        "eT;short;mlcc2;es;pao;fc")
 add_eT_runtest(mlcc2_pao_right_es_frozen_hf                 "eT;short;mlcc2;es;pao;frozen-hf")
+add_eT_runtest(mlcc2_pao_mlhf_gs                            "eT;short;mlcc2;gs;pao;mlhf")
 add_eT_runtest(mlcc2_pao_left_es                            "eT;short;mlcc2;es;pao")
 add_eT_runtest(mlcc2_nto_full_right_es                      "eT;short;mlcc2;es;nto")
 add_eT_runtest(mlcc2_nto_right_es                           "eT;short;mlcc2;es;nto")
@@ -256,6 +257,7 @@ add_eT_runtest(restart_orbitals_mlcc2_cholesky_pao          "eT;short;mlcc2;es;c
 #
 add_eT_runtest(mlccsd_cnto_full_gs                          "eT;short;mlccsd;gs;cnto")
 add_eT_runtest(mlccsd_cnto_gs                               "eT;short;mlccsd;gs;cnto")
+add_eT_runtest(mlccsd_cnto_mlhf_gs                          "eT;short;mlccsd;mlhf;gs;cnto")
 add_eT_runtest(mlccsd_pao_gs                                "eT;short;mlccsd;gs;pao")
 add_eT_runtest(mlccsd_cc2_cnto_gs                           "eT;short;mlccsd;gs;cnto")
 add_eT_runtest(mlccsd_nto_gs                                "eT;short;mlccsd;gs;nto")
