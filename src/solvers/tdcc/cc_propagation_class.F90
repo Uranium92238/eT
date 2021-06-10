@@ -68,13 +68,9 @@ module cc_propagation_class
       logical :: energy_output, dipole_moment_output, electric_field_output, amplitudes_output, &
                  multipliers_output, density_matrix_output
 !
-      type(sequential_file) :: energy_file
-      type(sequential_file) :: dipole_moment_file
-      type(sequential_file) :: electric_field_file
-      type(sequential_file) :: amplitudes_file
-      type(sequential_file) :: multipliers_file
-      type(sequential_file) :: density_matrix_real_file
-      type(sequential_file) :: density_matrix_imaginary_file
+      type(sequential_file) :: energy_file, dipole_moment_file, electric_field_file,        &
+                               amplitudes_file, multipliers_file, density_matrix_real_file, &
+                               density_matrix_imag_file
 !
    contains
 !
@@ -647,7 +643,7 @@ contains
 !
 !     Write imaginary part of density matrix to file
 !
-      call solver%density_matrix_imaginary_file%write_(aimag(mo_density_complex), wf%n_mo*wf%n_mo)
+      call solver%density_matrix_imag_file%write_(aimag(mo_density_complex), wf%n_mo*wf%n_mo)
 !
       call mem%dealloc(mo_density_complex, wf%n_mo, wf%n_mo)
 !
@@ -803,39 +799,44 @@ contains
       class(cc_propagation) :: solver
 !
       if (solver%energy_output) then
-         solver%energy_file = sequential_file('cc_propagation_energy', 'formatted')
+         solver%energy_file &
+            = sequential_file('eT.cc_propagation_energy.out', 'formatted')
          call solver%energy_file%open_('write', 'rewind')
       endif
 !
       if (solver%dipole_moment_output) then
-         solver%dipole_moment_file = sequential_file('cc_propagation_dipole_moment', 'formatted')
+         solver%dipole_moment_file &
+            = sequential_file('eT.cc_propagation_dipole_moment.out', 'formatted')
          call solver%dipole_moment_file%open_('write', 'rewind')
       endif
 !
       if (solver%electric_field_output) then
-         solver%electric_field_file = sequential_file('cc_propagation_electric_field', 'formatted')
+         solver%electric_field_file &
+            = sequential_file('eT.cc_propagation_electric_field.out', 'formatted')
          call solver%electric_field_file%open_('write', 'rewind')
       endif
 !
       if (solver%amplitudes_output) then
-         solver%amplitudes_file = sequential_file('cc_propagation_amplitudes', 'formatted')
-         call solver%amplitudes_file%open_('write', 'rewind')                                           
+         solver%amplitudes_file &
+            = sequential_file('eT.cc_propagation_amplitudes.out', 'formatted')
+         call solver%amplitudes_file%open_('write', 'rewind')
       endif
 !
       if (solver%multipliers_output) then
-         solver%multipliers_file = sequential_file('cc_propagation_multipliers', 'formatted')
-         call solver%multipliers_file%open_('write','rewind')                                           
+         solver%multipliers_file &
+            = sequential_file('eT.cc_propagation_multipliers.out', 'formatted')
+         call solver%multipliers_file%open_('write', 'rewind')
       endif
 !
       if (solver%density_matrix_output) then
 !
-         solver%density_matrix_real_file = sequential_file('cc_propagation_density_matrix_real', &
-                                                           'formatted')
+         solver%density_matrix_real_file &
+            = sequential_file('eT.cc_propagation_density_matrix_real.out', 'formatted')
          call solver%density_matrix_real_file%open_('write','rewind')
 !
-         solver%density_matrix_imaginary_file = &
-            sequential_file('cc_propagation_density_matrix_imaginary', 'formatted')
-         call solver%density_matrix_imaginary_file%open_('write','rewind')
+         solver%density_matrix_imag_file &
+            = sequential_file('eT.cc_propagation_density_matrix_imag.out', 'formatted')
+         call solver%density_matrix_imag_file%open_('write','rewind')
 !
       endif
 !
@@ -875,7 +876,7 @@ contains
 !
       if (solver%density_matrix_output) then
          call solver%density_matrix_real_file%close_
-         call solver%density_matrix_imaginary_file%close_
+         call solver%density_matrix_imag_file%close_
       endif
 !
    end subroutine close_files_cc_propagation
