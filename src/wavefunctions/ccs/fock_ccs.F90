@@ -44,10 +44,17 @@ contains
 !!
 !!    Depending on the 'task' different blocks (ij, ai, ia, ab) will be constructed
 !!
+!
+      use timings_class, only: timings
+!
       implicit none
 !
       class(ccs), intent(inout)              :: wf
       character(len=*), intent(in), optional :: task
+      type(timings) :: timer
+!
+      timer = timings('Fock matrix construction (T1 basis)', pl='n')
+      call timer%turn_on()
 !
       if (.not. present(task)) then
 !
@@ -79,6 +86,8 @@ contains
          call output%error_msg('did not recognize task in construct_fock_ccs')
 !
       endif
+!
+      call timer%turn_off()
 !
    end subroutine construct_fock_ccs
 !

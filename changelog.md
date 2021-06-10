@@ -1,4 +1,7 @@
 # eT v1.4.0
+### Feature
+- Timers for Fock matrix construction for coupled cluster. eT-program/eT!849
+
 
 # eT v1.3.1
 ### Bugfixes
