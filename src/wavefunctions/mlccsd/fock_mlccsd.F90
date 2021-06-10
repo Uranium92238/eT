@@ -45,6 +45,7 @@ contains
 !!    Depending on the 'task' different blocks (ij, ai, ia, ab) will be constructed
 !
       use batching_index_class, only : batching_index
+      use timings_class, only: timings
 !
       implicit none
 !
@@ -52,6 +53,10 @@ contains
       character(len=*), intent(in), optional :: task
 !
       integer :: n_a_o, n_a_v
+      type(timings) :: timer
+!
+      timer = timings('Fock matrix construction (T1 basis)', pl='n')
+      call timer%turn_on()
 !
       n_a_o = wf%n_cc2_o + wf%n_ccsd_o
       n_a_v = wf%n_cc2_v + wf%n_ccsd_v
@@ -89,6 +94,8 @@ contains
          call output%error_msg('did not recognize task in construct_fock_mlccsd')
 !
       endif
+!
+      call timer%turn_off()
 !
    end subroutine construct_fock_mlccsd
 !                            

@@ -45,11 +45,16 @@ contains
 !!    Depending on the 'task' different blocks (ij, ai, ia, ab) will be constructed
 !
       use warning_suppressor, only: do_nothing
+      use timings_class, only: timings
 !
       implicit none
 !
       class(ccsd), intent(inout)              :: wf
       character(len=*), intent(in), optional :: task
+      type(timings) :: timer
+!
+      timer = timings('Fock matrix construction (T1 basis)', pl='n')
+      call timer%turn_on()
 !
       call do_nothing(task)
 !
@@ -57,6 +62,8 @@ contains
       call wf%construct_fock_ia_t1()
       call wf%construct_fock_ab_t1()
       call wf%construct_fock_ij_t1()
+!
+      call timer%turn_off()
 !
    end subroutine construct_fock_ccsd
 !                            
