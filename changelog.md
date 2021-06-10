@@ -1,7 +1,7 @@
 # eT v1.4.0
 ### Feature
 - Timers for Fock matrix construction for coupled cluster. eT-program/eT!849
-
+- `cc_propagation` and `complex_fft` file names are now starting with `output_name.*` and automatically copied to the output directory. eT-program/eT!854
 
 # eT v1.3.1
 ### Bugfixes

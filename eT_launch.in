@@ -580,6 +580,8 @@ def list_out_files(scratch, no_timing):
         "*lanczos*[0-9]*",
         "*.mo_information.out",
         "*.molden",
+        "*.cc_propagation*",
+        "*.complex_fft*",
     ]
 
     if not no_timing:
