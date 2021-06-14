@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco
+   This is eT 1.3.0 Disco (development version)
   ------------------------------------------------------------
-  Configuration date: 2021-06-07 12:48:33 UTC +02:00
-  Git branch:         update-test-refs-new
-  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2021-06-10 11:54:41 UTC +02:00
+  Git branch:         merge_to_devel
+  Git hash:           728592111db8b8c6b37c72e6f498abfbd521aa3c
+  Fortran compiler:   GNU 8.2.0
+  C compiler:         GNU 8.2.0
+  C++ compiler:       GNU 8.2.0
   LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
   OpenMP:             ON
-  PCM:                ON
+  PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-06-07 12:50:02 UTC +02:00
+  Calculation started: 2021-06-10 11:55:08 UTC +02:00
 
 
   :: Input file
@@ -152,7 +152,7 @@
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:               -78.492416266399
+     Energy of initial guess:               -78.492416266398
      Number of electrons in guess:           12.000000000000
 
   - Screening and integral thresholds:
@@ -180,14 +180,14 @@
      6           -78.843676312828     0.5524E-04     0.8236E-06
      7           -78.843676336350     0.5855E-05     0.2352E-07
      8           -78.843676337053     0.2353E-05     0.7030E-09
-     9           -78.843676337127     0.2069E-06     0.7370E-10
-    10           -78.843676337127     0.1582E-07     0.3695E-12
-    11           -78.843676337127     0.3956E-08     0.1421E-13
-    12           -78.843676337127     0.1341E-08     0.1421E-13
-    13           -78.843676337127     0.4647E-09     0.4263E-13
-    14           -78.843676337127     0.1355E-09     0.8527E-13
-    15           -78.843676337127     0.1584E-10     0.9948E-13
-    16           -78.843676337127     0.3043E-11     0.1421E-13
+     9           -78.843676337127     0.2069E-06     0.7368E-10
+    10           -78.843676337127     0.1582E-07     0.3411E-12
+    11           -78.843676337127     0.3956E-08     0.0000E+00
+    12           -78.843676337127     0.1341E-08     0.4263E-13
+    13           -78.843676337127     0.4647E-09     0.0000E+00
+    14           -78.843676337127     0.1354E-09     0.0000E+00
+    15           -78.843676337127     0.1584E-10     0.4263E-13
+    16           -78.843676337127     0.3044E-11     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -200,8 +200,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.28112
-     Total cpu time (sec):               0.55408
+     Total wall time (sec):              0.62280
+     Total cpu time (sec):               1.19240
 
 
   :: CC2 wavefunction
@@ -300,8 +300,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.11066
-     Total cpu time (sec):               0.22230
+     Total wall time (sec):              0.24519
+     Total cpu time (sec):               0.44869
 
 
   2) Preparation of MO basis and integrals
@@ -331,16 +331,16 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -79.084077835138     0.3735E-01     0.7908E+02
+    1           -79.084077835139     0.3735E-01     0.7908E+02
     2           -79.085268702972     0.7571E-02     0.1191E-02
     3           -79.085597209586     0.9947E-03     0.3285E-03
     4           -79.085606020110     0.1836E-03     0.8811E-05
     5           -79.085607372301     0.3655E-04     0.1352E-05
-    6           -79.085607158491     0.6560E-05     0.2138E-06
+    6           -79.085607158492     0.6560E-05     0.2138E-06
     7           -79.085607163010     0.2259E-05     0.4519E-08
     8           -79.085607163272     0.3683E-06     0.2615E-09
     9           -79.085607163288     0.3441E-07     0.1630E-10
-   10           -79.085607163613     0.4887E-08     0.3254E-09
+   10           -79.085607163614     0.4887E-08     0.3254E-09
    11           -79.085607163647     0.1023E-08     0.3348E-10
    12           -79.085607163635     0.2730E-09     0.1198E-10
    13           -79.085607163636     0.5165E-10     0.6111E-12
@@ -372,8 +372,8 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.03396
-     Total cpu time (sec):               0.06582
+     Total wall time (sec):              0.03940
+     Total cpu time (sec):               0.07861
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -440,8 +440,8 @@
 
   - Finished solving the cc2 multipliers equations
 
-     Total wall time (sec):              0.02604
-     Total cpu time (sec):               0.04993
+     Total wall time (sec):              0.02765
+     Total cpu time (sec):               0.05517
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -632,8 +632,8 @@
 
   - Finished solving the CC2 linear equations
 
-     Total wall time (sec):               0.13340
-     Total cpu time (sec):                0.26592
+     Total wall time (sec):               0.16727
+     Total cpu time (sec):                0.33367
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -834,8 +834,8 @@
 
   - Finished solving the CC2 linear equations
 
-     Total wall time (sec):               0.13366
-     Total cpu time (sec):                0.26409
+     Total wall time (sec):               0.25778
+     Total cpu time (sec):                0.42801
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -1026,8 +1026,8 @@
 
   - Finished solving the CC2 linear equations
 
-     Total wall time (sec):               0.14097
-     Total cpu time (sec):                0.28446
+     Total wall time (sec):               0.16412
+     Total cpu time (sec):                0.32366
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -1228,33 +1228,33 @@
 
   - Finished solving the CC2 linear equations
 
-     Total wall time (sec):               0.14505
-     Total cpu time (sec):                0.28904
+     Total wall time (sec):               0.17179
+     Total cpu time (sec):                0.34189
 
 
   6) Calculation of the EOM polarizabilities
      The convention applied here defines the polarizabilities as the response 
      functions, without negative sign.
      << mu_x, mu_x >>(0.20E-01):    -11.305289730821
-     << mu_z, mu_x >>(0.20E-01):     -5.652838332398
+     << mu_z, mu_x >>(0.20E-01):     -0.000354210511
      << mu_x, mu_x >>(0.40E-01):    -11.353824341582
-     << mu_z, mu_x >>(0.40E-01):     -5.677081403693
+     << mu_z, mu_x >>(0.40E-01):     -0.000305283523
      << mu_x, mu_x >>(0.60E-01):    -11.435928054174
-     << mu_z, mu_x >>(0.60E-01):     -5.718090815527
+     << mu_z, mu_x >>(0.60E-01):     -0.000219595012
 
   - Timings for the CC2 response calculation
 
-     Total wall time (sec):              0.72820
-     Total cpu time (sec):               1.45404
+     Total wall time (sec):              1.08052
+     Total cpu time (sec):               2.02421
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 10.401736 MB
 
-  Total wall time in eT (sec):              1.02853
-  Total cpu time in eT (sec):               2.03159
+  Total wall time in eT (sec):              1.73271
+  Total cpu time in eT (sec):               3.25075
 
-  Calculation ended: 2021-06-07 12:50:03 UTC +02:00
+  Calculation ended: 2021-06-10 11:55:10 UTC +02:00
 
   - Implementation references:
 
