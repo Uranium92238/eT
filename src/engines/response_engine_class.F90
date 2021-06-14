@@ -455,6 +455,8 @@ contains
 !!    New storage of t response and adapted to late-2019
 !!    program structure by Eirik F. Kjønstad, Nov 2019.
 !!
+!!    Revision of cross terms June 2021 by Anna Kristina Schnack-Petersen
+!!
       implicit none
 !
       class(response_engine) :: engine
@@ -495,6 +497,21 @@ contains
 !
          do k = 1, 3
 !
+!           Check if we need k
+!
+            if (any(engine%compute_polarizability(k,:))) then
+!
+               do sign_ = 1, 2 ! +, -
+!
+                  call engine%t_responses(freq, k, sign_)%open_('read', 'rewind')
+                  call engine%t_responses(freq, k, sign_)%read_(tk(:,sign_), wf%n_es_amplitudes)
+                  call engine%t_responses(freq, k, sign_)%close_()
+!
+               enddo
+!
+            endif
+!
+!
 !           Compute & print diagonal polarizabilities
 !
             if (engine%compute_polarizability(k,k)) then
@@ -503,14 +520,11 @@ contains
 !
                do sign_ = 1, 2 ! +, -
 !
-                  call engine%t_responses(freq, k, sign_)%open_('read', 'rewind')
-                  call engine%t_responses(freq, k, sign_)%read_(tk(:,sign_), wf%n_es_amplitudes)
-                  call engine%t_responses(freq, k, sign_)%close_()
-!
                   polarizability = polarizability + &
                          ddot(wf%n_es_amplitudes, engine%etaX(:,k), 1, tk(:,sign_), 1)
 !
                enddo
+!
 !
                if (engine%lr) then
 !
@@ -521,7 +535,7 @@ contains
                   call wf%F_transformation(Ftk(:,2))
 !
                   polarizability = polarizability + &
-                        ddot(wf%n_es_amplitudes, Ftk(:,2), 1, tk(:,1), 1)
+                                        ddot(wf%n_es_amplitudes, Ftk(:,2), 1, tk(:,1), 1)
 !
                endif
 !
@@ -546,15 +560,15 @@ contains
                      call engine%t_responses(freq, l, sign_)%read_(tl(:,sign_), wf%n_es_amplitudes)
                      call engine%t_responses(freq, l, sign_)%close_()
 !
-                     polarizability = polarizability +                                       &
+                     polarizability = polarizability +                            &
                          half*ddot(wf%n_es_amplitudes, engine%etaX(:,k), 1, tl(:,sign_), 1) + &
                          half*ddot(wf%n_es_amplitudes, engine%etaX(:,l), 1, tk(:,sign_), 1)
 !
                   enddo
 !
                   if (engine%lr) then
-!
-                     polarizability = polarizability +                              &
+!  
+                     polarizability = polarizability +                  &
                            half*ddot(wf%n_es_amplitudes, Ftk(:,1), 1, tl(:,2), 1) + &
                            half*ddot(wf%n_es_amplitudes, Ftk(:,2), 1, tl(:,1), 1)
 !

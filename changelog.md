@@ -1,3 +1,7 @@
+# eT v1.3.2
+### Bugfixes
+- Read response vector tk for polarizabilities when needed for either diagonal or cross terms, to avoid cross terms from uninitialized array. eT-program/eT!856
+
 # eT v1.3.1
 ### Bugfixes
 - Newlines added in release script for correct formatting of release notes. eT-program/eT!846
