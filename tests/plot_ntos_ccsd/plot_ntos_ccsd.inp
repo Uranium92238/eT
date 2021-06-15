@@ -1,0 +1,51 @@
+system
+    name: nto_cube
+    charge: 0
+end system
+
+do 
+   excited state
+end do
+
+method
+    hf
+    ccsd
+end method
+
+memory
+   available: 8
+end memory
+
+solver cholesky
+   threshold: 1.0d-12
+end solver cholesky
+
+solver scf
+   energy threshold:   1.0d-10
+   gradient threshold: 1.0d-10
+end solver scf
+
+solver cc gs
+   energy threshold: 1.0d-10
+   omega threshold:  1.0d-10
+end solver cc gs
+
+solver cc es
+   singlet states:     1
+   residual threshold: 1.0d-10
+end solver cc es
+
+visualization
+    file format: cube
+    plot ntos
+    grid spacing: 0.2
+    grid buffer: 1.0
+end visualization
+
+geometry
+basis: sto-3G
+ H          0.86681        0.60144        5.00000
+ H         -0.86681        0.60144        5.00000
+ O          0.00000       -0.07579        5.00000
+ He         0.00000        0.00000        7.50000
+end geometry

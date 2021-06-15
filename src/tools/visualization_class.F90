@@ -24,7 +24,7 @@ module visualization_class
 !!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Aug 2019
 !!
 !!    A tool to plot orbitals and densities in common file formats.
-!!    This class has two routines that may be accessed outside of this module: 
+!!    This class has two routines that may be accessed outside of this module:
 !!
 !!    Usage:
 !!
@@ -47,9 +47,9 @@ module visualization_class
 !!       call plotter%plot_density(wf%ao, density, file_tags)
 !!
 !!       plot_orbitals  -> use it to plot orbitals by passing orbital coefficients
-!!       plot_density   -> use it to plot densities (NOTE: see documentation of how 
+!!       plot_density   -> use it to plot densities (NOTE: see documentation of how
 !!                         these densities must be prepared)
-!!    
+!!
 !!    Deallocate arrays used by the plotter
 !!
 !!       call plotter%cleanup()
@@ -62,7 +62,7 @@ module visualization_class
    use memory_manager_class, only: mem
    use ao_tool_class, only: ao_tool
 !
-   type :: visualization 
+   type :: visualization
 !
       integer, private  :: n_ao
       integer, private  :: n_x, n_y, n_z, n_grid_points
@@ -78,7 +78,7 @@ module visualization_class
       logical, private :: grid_in_memory
       logical, private :: overwrite_grid
 !
-   contains 
+   contains
 !
       procedure, public :: initialize                 => initialize_visualization
       procedure, public :: cleanup                    => cleanup_visualization
@@ -103,7 +103,7 @@ module visualization_class
 !
       procedure :: new_visualization
 !
-   end interface visualization 
+   end interface visualization
 !
 !
 contains
@@ -111,10 +111,10 @@ contains
 !
    function new_visualization(ao) result(plotter)
 !!
-!!    New visualization 
+!!    New visualization
 !!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Aug 2019
 !!
-      implicit none 
+      implicit none
 !
       type(ao_tool), intent(inout) :: ao
 !
@@ -122,7 +122,7 @@ contains
 !
 !     Default settings (lengths given in Ångströms)
 !
-      plotter%dx              = 0.1d0 
+      plotter%dx              = 0.1d0
       plotter%buffer          = 2.00d0
       plotter%file_format     = 'plt'
       plotter%grid_in_memory  = .false.
@@ -147,7 +147,7 @@ contains
 !!    Allocates and fills an array with the AOs evaluated on the grid, if the
 !!    array can be held in memory.
 !!
-      implicit none 
+      implicit none
 !
       class(visualization), intent(inout) :: plotter
       type(ao_tool), intent(inout) :: ao
@@ -170,7 +170,7 @@ contains
 !!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Jul 2019
 !!
 !!    Sets up the grid, that is, given the
-!!    buffer and grid point spacing, it sets up a 
+!!    buffer and grid point spacing, it sets up a
 !!    grid around the molecule (center coordinates)
 !!
       implicit none
@@ -239,7 +239,7 @@ contains
       plotter%x_max = plotter%x_min + (plotter%n_x - 1)*plotter%dx
       plotter%y_max = plotter%y_min + (plotter%n_y - 1)*plotter%dx
       plotter%z_max = plotter%z_min + (plotter%n_z - 1)*plotter%dx
-! 
+!
       plotter%n_grid_points = (plotter%n_x)*(plotter%n_y)*(plotter%n_z)
 !
    end subroutine set_up_grid_visualization
@@ -275,7 +275,7 @@ contains
       call output%print_separator(pl='normal', fs='(t6, a)', n=66, symbol='-')
 !
    end subroutine print_grid_info_visualization
-!  
+!
 !
    subroutine write_vector_visualization(plotter, vector, file_name)
 !!
@@ -409,7 +409,7 @@ contains
 !
 !     Integrate density
       volume   = (x_max - x_min) * (y_max - y_min) * (z_max - z_min)
-      integral = volume * sum(vector) / plotter%n_grid_points 
+      integral = volume * sum(vector) / plotter%n_grid_points
 !
       cube_file = output_file(trim(file_name))
       call cube_file%open_()
@@ -448,9 +448,9 @@ contains
 !!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Aug 2019
 !!    Modified by Tor S. Haugland Feb 2021, Add overwrite_grid
 !!
-      implicit none 
+      implicit none
 !
-      class(visualization), intent(inout) :: plotter 
+      class(visualization), intent(inout) :: plotter
       real(dp), dimension(3) :: position
 !
       call input%get_keyword('grid spacing', 'visualization', plotter%dx)
@@ -462,7 +462,7 @@ contains
       plotter%overwrite_grid = input%is_keyword_present('grid min', 'visualization')
       if (plotter%overwrite_grid .neqv. input%is_keyword_present('grid max', 'visualization')) &
          call output%error_msg("'grid min' and 'grid max' must be specified together.")
-      
+
       if (plotter%overwrite_grid) then
          call input%get_array_for_keyword('grid min', 'visualization', 3, position)
          plotter%x_min = position(1)
@@ -487,9 +487,9 @@ contains
 !!    Creates the values at each grid point of the n_mo orbitals
 !!    given by orbital_coefficients.
 !!    This is done by contracting the vector of AO values on the grid
-!!    with the orbital coefficients of the MOs.   
+!!    with the orbital coefficients of the MOs.
 !!
-!!    This routine may be used for canonical orbitals 
+!!    This routine may be used for canonical orbitals
 !!    NTOs, CNTOs and so on.
 !!
 !
@@ -518,7 +518,7 @@ contains
 !
       if (plotter%grid_in_memory) then
 !
-         call dgemm('T', 'N',                & 
+         call dgemm('T', 'N',                &
                      plotter%n_grid_points,  &
                      n_mo,                   &
                      plotter%n_ao,           &
@@ -599,15 +599,15 @@ contains
 !
       real(dp), dimension(plotter%n_ao, n_mo), intent(in) :: orbital_coefficients
 !
-      character(len=200), dimension(n_mo), intent(in) :: file_tags
+      character(len=*), dimension(n_mo), intent(in) :: file_tags
 !
       real(dp), dimension(:,:,:,:), allocatable :: mos_on_grid
 !
-      character(len=200) :: file_name
+      character(len=:), allocatable :: file_name
 !
       integer :: mo
 !
-      call output%printf('m', '- Plotting orbitals', fs='(/t3,a)')      
+      call output%printf('m', '- Plotting orbitals', fs='(/t3,a)')
 !
 !     Create array of molecular orbitals at grid point
 !
@@ -620,7 +620,7 @@ contains
 !
 !        For each orbital write to file
 !
-         file_name = 'eT' // '.' // trim(file_tags(mo)) // '.' // trim(plotter%file_format)
+         file_name = 'eT.' // trim(file_tags(mo)) // '.' // trim(plotter%file_format)
 !
          call plotter%write_vector(mos_on_grid(:, :, :, mo), trim(file_name))
 !
@@ -633,7 +633,7 @@ contains
 !
    subroutine plot_density_visualization(plotter, ao, density, file_tag)
 !!
-!!    Plot density 
+!!    Plot density
 !!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Sep 2019
 !!
 !!    Plot density (e.g. AO density,  CC densities or density
@@ -648,11 +648,11 @@ contains
 !!
 !!    For coupled cluster densities we have
 !!
-!!       D_alpha,beta = (sum_pq  D_pq C_alpha,p C_beta,q) 
-!! 
+!!       D_alpha,beta = (sum_pq  D_pq C_alpha,p C_beta,q)
+!!
 !!    is passed to the routine.
 !!
-      implicit none 
+      implicit none
 !
       class(visualization), intent(in)     :: plotter
       class(ao_tool), intent(in)           :: ao
@@ -665,7 +665,7 @@ contains
 !
       character(len=200) :: file_name
 
-      call output%printf('m', '- Plotting density', fs='(/t3,a)')      
+      call output%printf('m', '- Plotting density', fs='(/t3,a)')
 !
 !     Create electron density vector
 !
@@ -691,26 +691,26 @@ contains
 !!
 !!    Calculates the expectation value of the density for each grid point:
 !!
-!!      rho(r) = sum_pq D_pq phi_p(r) phi_q(r) 
-!!           
+!!      rho(r) = sum_pq D_pq phi_p(r) phi_q(r)
+!!
 !!    See eqn. (2.7.33) in Molecular Electronic Structure Theory
 !!
-!!    For the HF density (D_pq = delta_pq nu_q), the expression reduces to 
+!!    For the HF density (D_pq = delta_pq nu_q), the expression reduces to
 !!
 !!       sum_alpha,beta xi_alpha(r) D^AO_alpha,beta xi_beta(r)
 !!
 !!    and the AO density must be passed to this routine.
 !!
 !!    For coupled cluster densities we have
-!!     
-!!       sum_pq D_pq phi_p(r) phi_q(r) 
+!!
+!!       sum_pq D_pq phi_p(r) phi_q(r)
 !!       = sum_alpha,beta (sum_pq  D_pq C_alpha,p C_beta,q) xi_beta(r) xi_alpha(r)
 !!       = sum_alpha,beta D_alpha,beta xi_beta(r) xi_alpha(r)
 !!
-!!    and 
+!!    and
 !!
-!!       D_alpha,beta = (sum_pq  D_pq C_alpha,p C_beta,q) 
-!! 
+!!       D_alpha,beta = (sum_pq  D_pq C_alpha,p C_beta,q)
+!!
 !!    is passed to the routine.
 !
       use omp_lib
@@ -732,23 +732,23 @@ contains
       real(dp), external :: ddot
 !
       if (plotter%grid_in_memory) then
-!     
+!
          call mem%alloc(I1, plotter%n_ao, plotter%n_grid_points)
 !
          call dgemm('N','N',              &
                   plotter%n_ao,           &
                   plotter%n_grid_points,  &
-                  plotter%n_ao,           & 
+                  plotter%n_ao,           &
                   one,                    &
                   density,                &
-                  plotter%n_ao,           & 
+                  plotter%n_ao,           &
                   plotter%aos_on_grid,    &
-                  plotter%n_ao,           & 
+                  plotter%n_ao,           &
                   zero,                   &
                   I1,                     &
-                  plotter%n_ao)   
+                  plotter%n_ao)
 !
-         do gp = 1, plotter%n_grid_points 
+         do gp = 1, plotter%n_grid_points
 !
             density_on_grid_vec(gp) = ddot(plotter%n_ao, &
                                            plotter%aos_on_grid(1,gp), 1, &
@@ -756,7 +756,7 @@ contains
 !
          enddo
 !
-         call mem%dealloc(I1, plotter%n_ao, plotter%n_grid_points)  
+         call mem%dealloc(I1, plotter%n_ao, plotter%n_grid_points)
 !
       else
 !
@@ -785,10 +785,10 @@ contains
 !
                   call dgemv('N',                        &
                              plotter%n_ao,               &
-                             plotter%n_ao,               & 
+                             plotter%n_ao,               &
                              one,                        &
                              density,                    &
-                             plotter%n_ao,               & 
+                             plotter%n_ao,               &
                              aos_at_point(1,thread),     &
                              1,                          &
                              zero,                       &
@@ -820,7 +820,7 @@ contains
 !!
 !!    Places the aos evaluated on the grid in memory.
 !!
-!!    The routine is only called when the array 
+!!    The routine is only called when the array
 !!    can be placed in memory with a good marigin.
 !!
       implicit none
@@ -872,14 +872,14 @@ contains
 !
    subroutine cleanup_visualization(plotter)
 !!
-!!    Cleanup  
+!!    Cleanup
 !!    Written by Sarai D. Folkestad, Nov 2019
 !!
 !!    Modified by Andreas S. Skeidsvoll, Sep 2020
 !!    Changed from destructor to cleanup routine, in order to comply with
 !!    Fortran standards.
 !!
-      implicit none 
+      implicit none
 !
       class(visualization), intent(inout) :: plotter
 !

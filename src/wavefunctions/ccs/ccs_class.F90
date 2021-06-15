@@ -456,6 +456,11 @@ module ccs_class
 !
       procedure :: initialize                                    => initialize_ccs
 !
+      procedure :: construct_ntos &
+                => construct_ntos_ccs
+      procedure :: construct_ntos_or_cntos &
+                => construct_ntos_or_cntos_ccs
+!
    end type ccs
 !
 !
@@ -2579,6 +2584,131 @@ contains
       call mem%dealloc(v, wf%ao%n)
 !
    end subroutine construct_MO_screening_for_cd_ccs
+!
+!
+   subroutine construct_ntos_ccs(wf, ntos, k, n_sig_v, n_sig_o, l_or_r,threshold)
+!!
+!!    Construct NTOs
+!!    Written by Sarai D. Folkestad, May 2020
+!!
+!!    'ntos' : array to store NTO orbital coefficients
+!!
+!!    'k' : which excited state to construct NTOs for
+!!
+!!    'n_sig_v' and 'n_sig_o' : The number of significant occupied and virtuals
+!!
+!!    'l_or_r' : excited state vector type
+!!
+!!     Constructs the M and N matrices
+!!
+!!       M_ij += sum_a R_ai R_aj
+!!       N_ab += sum_i R_ai R_bi
+!!
+!!    and diagonalizes them.
+!!    The NTOs are then constructed and stored in 'ntos'
+!!
+!!    This constitutes a singular value decomposition
+!!    of the excitation vectors.
+!!
+!!       N = RR^T = V D1 V^T
+!!       M = R^TR = U D2 U^T
+!!
+!!    If a threshold is given, the significant occupied and virtual
+!!    orbitals (n_o and n_v)
+!!    are determined by considering the
+!!    eigenvalues of M and N, using the criterion
+!!
+!!       1 - sum_i e_i < threshold,
+!!
+!!    where the eigenvalues are ordered from largest to smallest.
+!    Otherwise n_sig_o = n_sig_v = 1.
+!
+      use nto_tool_class, only: nto_tool
+!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(out) :: ntos
+!
+      real(dp), intent(in) :: threshold
+!
+      integer, intent(in) :: k
+      integer, intent(out) :: n_sig_v, n_sig_o
+!
+      character(len=*), intent(in) :: l_or_r
+!
+      type(nto_tool), allocatable :: orbital_tool
+!
+      real(dp), dimension(:), allocatable :: X
+!
+      call output%printf('n', '- Constructing NTOs for state (i0)', &
+                         ints=[k], ffs='(/t3,a)')
+!
+      call mem%alloc(X, wf%n_es_amplitudes)
+!
+      call wf%read_excited_state(X, k, k, trim(l_or_r))
+!
+      orbital_tool = nto_tool(wf%n_o, wf%n_v, wf%ao%n, wf%n_t1)
+!
+      call orbital_tool%initialize
+!
+      call orbital_tool%add_to_M_and_N(X(1:wf%n_t1))
+!
+      call orbital_tool%transform_orbitals(wf%orbital_coefficients, ntos)
+!
+      call orbital_tool%get_n_active_orbitals(n_sig_o, n_sig_v, threshold)
+!
+      call orbital_tool%cleanup
+!
+      call mem%dealloc(X, wf%n_es_amplitudes)
+!
+   end subroutine construct_ntos_ccs
+!
+!
+   subroutine construct_ntos_or_cntos_ccs(wf, orbitals, k, n_sig_v, n_sig_o, &
+                                          l_or_r, type_, threshold)
+!!
+!!    Construct NTOs or CNTOs
+!!    Written by Sarai D. Folkestad, May 2020
+!!
+!!    Wrapper to construct either NTOs or CNTOs
+!!
+!!    orbitals : NTOs/CNTOs
+!!
+!!    n_sig_o, n_sig_v : number of occupied and virtual NTOs/CNTOs
+!!
+!!    l_or_r : use left or right excitation vectors
+!!
+!!    type_ : 'ntos' or 'cntos'
+!!
+!!    threshold : threshold to determine n_sig_o and n_sig_v
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(out) :: orbitals
+!
+      real(dp), intent(in) :: threshold
+!
+      integer, intent(in) :: k
+      integer, intent(out) :: n_sig_v, n_sig_o
+!
+      character(len=*), intent(in) :: l_or_r
+      character(len=*), intent(in) :: type_
+!
+      if (trim(type_) == 'nto') then
+!
+         call wf%construct_ntos(orbitals, k, n_sig_v, n_sig_o, l_or_r,threshold)
+!
+      else if (trim(type_) == 'cnto') then
+!
+         call output%error_msg('Cannot plot CNTOs for ' // trim(wf%name_))
+!
+      endif
+!
+   end subroutine construct_ntos_or_cntos_ccs
 !
 !
 end module ccs_class

@@ -501,8 +501,7 @@ contains
 !
       do i = 1, n_orbitals_to_plot
 !
-         write(orbital_file_tags(i), '(i4.4)') orbitals_to_plot(i)
-         orbital_file_tags(i) = 'MO_' // trim(orbital_file_tags(i))
+         write(orbital_file_tags(i), '(a,i4.4)') 'MO_', orbitals_to_plot(i)
 !
       enddo
 !

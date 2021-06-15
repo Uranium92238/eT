@@ -595,6 +595,9 @@ contains
                                'plot hf orbitals',          &
                                'plot hf density',           &
                                'plot hf active density',    &
+                               'plot cntos',                &
+                               'plot ntos',                 &
+                               'nto threshold',             &
                                'plot transition densities', &
                                'states to plot']
 !

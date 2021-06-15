@@ -40,26 +40,34 @@ module es_engine_class
 !
       logical :: es_restart
 !
+       logical :: plot_ntos, plot_cntos
+!
    contains
 !
       procedure :: run                       => run_es_engine
 !
       procedure :: read_settings             => read_settings_es_engine
       procedure :: read_es_settings          => read_es_settings_es_engine
-! 
+!
       procedure :: do_excited_state          => do_excited_state_es_engine
 !
       procedure :: set_printables            => set_printables_es_engine
 !
+!
+      procedure :: do_nto_visualization      => do_nto_visualization_es_engine
+!
       procedure, nopass :: get_thresholds &
-                        => get_thresholds_response_engine
+                        => get_thresholds_es_engine
+!
+      procedure, nopass :: plot_orbitals &
+                        => plot_orbitals_es_engine
 !
    end type es_engine
 !
 !
    interface es_engine
 !
-      procedure :: new_es_engine 
+      procedure :: new_es_engine
 !
    end interface es_engine
 !
@@ -115,6 +123,8 @@ contains
       engine%gs_restart            = .false.
       engine%multipliers_restart   = .false.
       engine%es_restart            = .false.
+      engine%plot_cntos            = .false.
+      engine%plot_ntos             = .false.
 !
       call engine%read_settings()
 !
@@ -182,6 +192,9 @@ contains
 !     global restart
       if (input%is_keyword_present('restart', 'do')) engine%es_restart = .true.
 !
+      engine%plot_ntos  = input%is_keyword_present('plot ntos','visualization')
+      engine%plot_cntos = input%is_keyword_present('plot cntos','visualization')
+!
    end subroutine read_es_settings_es_engine
 !
 !
@@ -208,9 +221,13 @@ contains
          call engine%do_excited_state(wf, 'right', engine%es_restart)
          call engine%do_excited_state(wf, 'left', restart = .true.)
 !
-      else 
+      else
 !
          call engine%do_excited_state(wf, engine%es_transformation, engine%es_restart)
+!
+         if (engine%plot_ntos) call engine%do_nto_visualization(wf, 'nto')
+!
+         if (engine%plot_cntos) call engine%do_nto_visualization(wf, 'cnto')
 !
       end if
 !
@@ -232,12 +249,12 @@ contains
 !!    Solves the excited state (valence or cvs) using
 !!    either a DIIS or Davidson solver
 !!
-!!    or calculates the excitation energies and oscillator strengths 
-!!    using the asymmetric Lanczos algorithm. 
+!!    or calculates the excitation energies and oscillator strengths
+!!    using the asymmetric Lanczos algorithm.
 !!
 !!    Modified by Torsha Moitra, S. Coriani and Sarai D. Folkestad, Sep-Nov 2019
 !!
-!!       Added the asymmetric Lanczos solver 
+!!       Added the asymmetric Lanczos solver
 !!
       use abstract_cc_es_class, only: abstract_cc_es
       use davidson_cc_es_class, only: davidson_cc_es
@@ -252,7 +269,7 @@ contains
 !
       character(len=*), intent(in) :: transformation
 !
-      logical, intent(in) :: restart 
+      logical, intent(in) :: restart
 !
       class(asymmetric_lanczos_cc_es), allocatable :: cc_es_solver_asymmetric_lanczos
 
@@ -265,7 +282,7 @@ contains
 !
       if (engine%es_algorithm == 'asymmetric lanczos') then
 !
-         call engine%do_multipliers(wf)       
+         call engine%do_multipliers(wf)
          cc_es_solver_asymmetric_lanczos = asymmetric_lanczos_cc_es(wf)
          call cc_es_solver_asymmetric_lanczos%run(wf)
          call cc_es_solver_asymmetric_lanczos%cleanup(wf)
@@ -275,7 +292,7 @@ contains
          if (engine%es_algorithm == 'diis') then
 !
             cc_es_solver = diis_cc_es(transformation, wf, restart)
-! 
+!
          elseif (engine%es_algorithm == 'davidson') then
 !
             if (trim(wf%name_) == 'low memory cc2' .or. trim(wf%name_) == 'cc3') then
@@ -286,11 +303,11 @@ contains
 !
             cc_es_solver = davidson_cc_es(transformation, wf, restart)
 !
-         elseif (engine%es_algorithm == 'non-linear davidson') then 
+         elseif (engine%es_algorithm == 'non-linear davidson') then
 !
             cc_es_solver = nonlinear_davidson_cc_es(transformation, wf, engine%es_restart)
 !
-         else 
+         else
 !
             call output%error_msg('Could not start excited state solver. It may be that the &
                                     &algorithm is not implemented for the method specified.')
@@ -357,17 +374,77 @@ contains
 !
       endif
 !
-      engine%description  = 'Calculates the coupled cluster excitation vectors and excitation energies'
+!
+      if (engine%plot_ntos .or. engine%plot_cntos) &
+         call engine%tasks%add(label='plotting',   &
+                            description='Plotting NTOs/CNTOs')
+!
+      engine%description = 'Calculates the coupled cluster excitation &
+                           &vectors and excitation energies'
 !
    end subroutine set_printables_es_engine
 !
 !
-   subroutine get_thresholds_response_engine(energy_threshold, residual_threshold)
+   subroutine do_nto_visualization_es_engine(engine, wf, tag)
+!!
+!!    Do NTO visualization
+!!    Written by Sarai D. Folkestad, May 2020
+!!
+!!    Makes .plt files for NTOs and or CNTOs
+!!
+      use visualization_class, only : visualization
+      use memory_manager_class, only : mem
+      use parameters
+!
+      implicit none
+!
+      class(es_engine), intent(in) :: engine
+      class(ccs), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: tag
+!
+      type(visualization), allocatable :: plotter
+!
+      integer :: state, n_significant_v, n_significant_o
+!
+      real(dp), dimension(:,:), allocatable :: orbitals
+!
+      real(dp) :: threshold
+!
+      threshold = 0.1d0
+!
+      call input%get_keyword('nto threshold', 'visualization', threshold)
+!
+      if ((threshold .gt. 1) .or. (threshold .lt. 0)) &
+            call output%error_msg('illegal threshold given for NTO/CNTO plotting')
+!
+      call engine%tasks%print_('plotting')
+!
+      plotter = visualization(wf%ao)
+
+      call mem%alloc(orbitals, wf%ao%n, wf%n_mo)
+!
+      do state = 1, wf%n_singlet_states
+!
+         call wf%construct_ntos_or_cntos(orbitals, state, n_significant_v, n_significant_o, &
+                                         engine%es_transformation, tag, threshold)
+!
+         call engine%plot_orbitals(wf, n_significant_o, n_significant_v, &
+                                   orbitals, tag, state, plotter)
+!
+      enddo
+!
+      call mem%dealloc(orbitals, wf%ao%n, wf%n_mo)
+!
+   end subroutine do_nto_visualization_es_engine
+!
+!
+   subroutine get_thresholds_es_engine(energy_threshold, residual_threshold)
 !!
 !!    Get thresholds
 !!    Written by Alexander C. Paul, Oct 2019
 !!
-!!    Get thresholds from input to perform checks for parallel states and 
+!!    Get thresholds from input to perform checks for parallel states and
 !!    to check that the left and right states are consistent
 !!
       implicit none
@@ -378,24 +455,68 @@ contains
       residual_threshold = energy_threshold
 !
       if (input%is_keyword_present('energy threshold', 'solver cc es') .and. &
-          input%is_keyword_present('residual threshold', 'solver cc es')) then 
+          input%is_keyword_present('residual threshold', 'solver cc es')) then
 !
         call input%get_keyword('energy threshold', 'solver cc es', energy_threshold)
         call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
 !
-      else if (input%is_keyword_present('residual threshold', 'solver cc es')) then 
+      else if (input%is_keyword_present('residual threshold', 'solver cc es')) then
 !
         call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
         energy_threshold = residual_threshold
 !
-      else if (input%is_keyword_present('energy threshold', 'solver cc es')) then 
+      else if (input%is_keyword_present('energy threshold', 'solver cc es')) then
 !
          call input%get_keyword('energy threshold', 'solver cc es', energy_threshold)
          residual_threshold = energy_threshold
 !
       endif
 !
-   end subroutine get_thresholds_response_engine
+   end subroutine get_thresholds_es_engine
+!
+!
+   subroutine plot_orbitals_es_engine(wf, n_sig_o, n_sig_v, orbitals, tag, state, plotter)
+!!
+!!    Plot orbitals
+!!    Written by Sarai D. Folkestad, May 2020
+!!
+!
+      use visualization_class, only : visualization
+!
+      implicit none
+!
+      class(ccs),                            intent(in)    :: wf
+!
+      integer,                               intent(in)    :: n_sig_o, n_sig_v, state
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(in)    :: orbitals
+      character(len=*),                      intent(in)    :: tag
+      type(visualization),                   intent(inout) :: plotter
+!
+      character(len=200), dimension(:), allocatable :: file_tags
+!
+      integer :: i
+!
+      allocate(file_tags(max(n_sig_o, n_sig_v)))
+!
+      do i = 1, n_sig_o
+!
+         write(file_tags(i), '(a,i3.3,a,a,a,i3.3)') 'state_', state, '_', tag, '_o_', i
+!
+      enddo
+!
+      call plotter%plot_orbitals(wf%ao, orbitals(:, 1:n_sig_o), n_sig_o, file_tags)
+!
+      do i = 1, n_sig_v
+!
+         write(file_tags(i), '(a,i3.3,a,a,a,i3.3)') 'state_', state, '_', tag, '_v_', i
+!
+      enddo
+!
+      call plotter%plot_orbitals(wf%ao, orbitals(:, wf%n_o+1:n_sig_v), n_sig_v, file_tags)
+!
+      deallocate(file_tags)
+!
+   end subroutine plot_orbitals_es_engine
 !
 !
 end module es_engine_class

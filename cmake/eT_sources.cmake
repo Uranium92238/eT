@@ -141,6 +141,8 @@ set(eT_fortran_sources
    src/tools/orbitals/cholesky_orbital_tool_class.F90
    src/tools/maps/range_class.F90
    src/tools/maps/named_range_class.F90
+   src/tools/orbitals/nto_tool_class.F90
+   src/tools/orbitals/cnto_tool_class.F90
 #
    src/tools/citation_printer_class.F90
    src/tools/citation_class.F90
@@ -150,12 +152,12 @@ set(eT_fortran_sources
    src/various/kinds.F90
    src/various/parameters.F90
    src/various/angular_momentum.F90
-   src/various/warning_suppressor.F90 
+   src/various/warning_suppressor.F90
 #
    src/wavefunctions/wavefunction/wavefunction_class.F90
 
    src/wavefunctions/hf/frozen_orbital_hf.F90
-   src/wavefunctions/hf/hf_class.F90  
+   src/wavefunctions/hf/hf_class.F90
    src/wavefunctions/hf/set_get_hf.F90
    src/wavefunctions/hf/initialize_destruct_hf.F90
    src/wavefunctions/hf/ao_fock_hf.F90
