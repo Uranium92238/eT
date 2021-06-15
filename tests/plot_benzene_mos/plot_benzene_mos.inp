@@ -1,0 +1,45 @@
+system
+    name: visualization_cube
+    charge: 0
+end system
+
+do 
+   ground state
+end do
+
+method
+    hf
+end method
+
+memory
+   available: 8
+end memory
+
+solver scf
+   algorithm:          scf-diis
+   energy threshold:   1.0d-7
+   gradient threshold: 1.0d-7
+   diis dimension: 1
+end solver scf
+
+visualization
+   plot hf orbitals: [20,21]
+   file format: cube
+   grid spacing: 0.4
+end visualization
+
+geometry
+basis: sto-3g
+ C     0.000000     0.000000     0.000000
+ C     0.000000     0.000000     1.400000
+ C     1.212436     0.000000     2.100000
+ C     2.424871     0.000000     1.400000
+ C     2.424871     0.000000     0.000000
+ C     1.212436     0.000000    -0.700000
+ H    -0.943102     0.000000     1.944500
+ H     1.212436     0.000000     3.189000
+ H     3.367973     0.000000     1.944500
+ H     3.367973     0.000000    -0.544500
+ H     1.212436     0.000000    -1.789000
+ H    -0.943102     0.000000    -0.544500
+end geometry
