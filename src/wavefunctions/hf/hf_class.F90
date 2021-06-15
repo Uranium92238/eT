@@ -1952,6 +1952,8 @@ contains
 !
       call mem%dealloc(G, wf%n_mo*(wf%n_mo-1)/2, wf%n_densities)
 !
+      call output%printf('m', 'max gradient     (f19.12)',reals=[max_gradient] ,fs='(/t6,a)')
+!
       if (max_gradient .lt. threshold) converged = .true.
 !
    end function control_gradient_convergence_hf

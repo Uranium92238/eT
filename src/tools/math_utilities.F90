@@ -366,4 +366,34 @@ contains
    end function least_positive_n1s1_n2s2
 !
 !
+   pure function get_n_values_greater_sum(dim_, values, sum_) result(n)
+!!
+!!    Get n values greater sum
+!!    Written by Sarai D. Folkestad and Alexander C. Paul, May 2021
+!!
+!!    Get the n first values that add up to sum or more
+!!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_), intent(in) :: values
+!
+      real(dp), intent(in) :: sum_
+!
+      integer  :: n, p
+      real(dp) :: local_sum
+!
+      local_sum = zero
+!
+      do p = 1, dim_
+!
+         if (local_sum .ge. sum_) exit
+         local_sum = local_sum + values(p)
+!
+      end do
+!
+      n = p - 1
+!
+   end function get_n_values_greater_sum
+!
+!
 end module math_utilities

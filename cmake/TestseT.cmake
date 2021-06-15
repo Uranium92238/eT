@@ -69,6 +69,10 @@ add_eT_runtest(hf_hydroxyl                                  "eT;short;hf;sad;cha
 add_eT_runtest(restart_hf                                   "eT;short;hf;restart")
 add_eT_runtest(hf_visualization                             "eT;short;hf;visualization")
 #
+add_eT_runtest(plot_ntos_ccs                                "eT;short;ccs;visualization")
+add_eT_runtest(plot_ntos_ccsd                               "eT;short;ccsd;visualization")
+add_eT_runtest(plot_cntos_ccsd                              "eT;short;ccsd;visualization")
+#
 add_eT_runtest(restart_geoopt                               "eT;short;hf;bfgs;gradient,restart")
 add_eT_runtest(hf_bohr_units                                "eT;short;hf;sad")
 #
