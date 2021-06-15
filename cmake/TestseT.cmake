@@ -67,8 +67,9 @@ add_eT_runtest(hf_quadrupole                                "eT;short;hf;sad;qua
 add_eT_runtest(hf_anion                                     "eT;short;hf;sad;charged")
 add_eT_runtest(hf_hydroxyl                                  "eT;short;hf;sad;charged")
 add_eT_runtest(restart_hf                                   "eT;short;hf;restart")
-add_eT_runtest(hf_visualization                             "eT;short;hf;visualization")
 #
+add_eT_runtest(hf_visualization                             "eT;short;hf;visualization")
+add_eT_runtest(plot_benzene_mos                             "eT;short;hf;visualization")
 add_eT_runtest(plot_ntos_ccs                                "eT;short;ccs;visualization")
 add_eT_runtest(plot_ntos_ccsd                               "eT;short;ccsd;visualization")
 add_eT_runtest(plot_cntos_ccsd                              "eT;short;ccsd;visualization")
