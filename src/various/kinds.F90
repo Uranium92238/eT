@@ -41,6 +41,6 @@ module kinds
    integer, parameter :: i16 = int16
    integer, parameter :: i8  = int8
 !
-   integer, parameter :: int_size = bit_size(i64)/8
+   integer, parameter :: int_size = storage_size(i64)/8
 !
 end module kinds

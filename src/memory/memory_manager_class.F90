@@ -1672,7 +1672,6 @@ contains
 !
       integer :: size_array ! Total size of array (M)
       integer :: error = 0
-      integer :: int_size
 !
       character(len=100) :: error_msg
 !
@@ -1689,7 +1688,6 @@ contains
 !     Update the available memory
 !     Check integer size
 !
-      int_size = storage_size(array(1))/8
       call mem%update_memory_after_alloc(size_array, int_size)
 !
    end subroutine alloc_i_1_memory_manager
@@ -1713,7 +1711,6 @@ contains
 !
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
-      integer :: int_size
 !
       character(len=100) :: error_msg
 !
@@ -1730,7 +1727,6 @@ contains
 !     Update the available memory
 !     Check integer size
 !
-      int_size = storage_size(array(1,1))/8
       call mem%update_memory_after_alloc(size_array, int_size)
 !
    end subroutine alloc_i_2_memory_manager
@@ -1754,7 +1750,6 @@ contains
 !
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
-      integer :: int_size
 !
       character(len=100) :: error_msg
 !
@@ -1771,7 +1766,6 @@ contains
 !     Update the available memory
 !     Check integer size
 !
-      int_size = storage_size(array(1,1,1))/8
       call mem%update_memory_after_alloc(size_array, int_size)
 !
    end subroutine alloc_i_3_memory_manager
@@ -1795,7 +1789,6 @@ contains
 !
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
-      integer :: int_size
 !
       character(len=100) :: error_msg
 !
@@ -1812,7 +1805,6 @@ contains
 !     Update the available memory
 !     Check integer size
 !
-      int_size = storage_size(array(1,1,1,1))/8
       call mem%update_memory_after_alloc(size_array, int_size)
 !
    end subroutine alloc_i_4_memory_manager
@@ -1836,7 +1828,6 @@ contains
 !
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
-      integer :: int_size
 !
       character(len=100) :: error_msg
 !
@@ -1853,7 +1844,6 @@ contains
 !     Update the available memory
 !     Check integer size
 !
-      int_size = storage_size(array(1))/8
       mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_i_1_memory_manager
@@ -1877,7 +1867,6 @@ contains
 !
       integer :: size_array ! Total size of array (M*N)
       integer :: error = 0
-      integer :: int_size
 !
       character(len=100) :: error_msg
 !
@@ -1894,7 +1883,6 @@ contains
 !     Update the available memory
 !     Check integer size
 !
-      int_size = storage_size(array(1,1))/8
       mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_i_2_memory_manager
@@ -1918,7 +1906,6 @@ contains
 !
       integer :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
-      integer :: int_size
 !
       character(len=100) :: error_msg
 !
@@ -1935,7 +1922,6 @@ contains
 !     Update the available memory
 !     Check integer size
 !
-      int_size = storage_size(array(1,1,1))/8
       mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_i_3_memory_manager
@@ -1959,7 +1945,6 @@ contains
 !
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
-      integer :: int_size
 !
       character(len=100) :: error_msg
 !
@@ -1976,7 +1961,6 @@ contains
 !     Update the available memory
 !     Check integer size
 !
-      int_size = storage_size(array(1,1,1,1))/8
       mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_i_4_memory_manager
