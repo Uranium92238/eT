@@ -227,6 +227,9 @@ module ao_tool_class
       procedure, public :: get_molden_ao_indices &
                         => get_molden_ao_indices_ao_tool
 !
+      procedure, public :: get_ao_normalization_factors &
+                        => get_ao_normalization_factors_ao_tool
+!
       procedure, public :: print_molden_geometry &
                         => print_molden_geometry_ao_tool
 !
@@ -3235,11 +3238,7 @@ contains
 !!    Get Molden AO indices
 !!    Written by Alexander C. Paul, May 2021
 !!
-!!    Molden expects e.g. the d-orbitals to be ordered
-!!    as xx, yy, zz, xy, xz, yz, similarly for f and g orbitals
-!!    (c.f. angular_momentum.F90)
-!!    This routine creates a map so that map(10) returns the index
-!!    of the 10th AO as expected by molden
+!!    Return index list mapping AOs to the order molden expects
 !!
       implicit none
 !
@@ -3253,12 +3252,48 @@ contains
       do c = 1, ao%n_centers
 !
          aos = ao%centers(c)%get_ao_range()
-         map(aos%first:aos%get_last()) = &
-            ao%centers(c)%get_ao_molden_order(aos%first, aos%get_last())
+!
+         map(aos%first:aos%get_last()) = ao%centers(c)%get_molden_order()
 !
       end do
 !
    end function get_molden_ao_indices_ao_tool
+!
+!
+   function get_ao_normalization_factors_ao_tool(ao) result(factors)
+!!
+!!    Get ao normalization factor
+!!    Written by Alexander C. Paul, May 2021
+!!
+      use array_utilities, only: constant_array
+!
+      implicit none
+!
+      class(ao_tool), intent(in) :: ao
+!
+      real(dp), dimension(ao%n) :: factors
+!
+      type(range_), allocatable :: aos
+      integer :: c
+!
+       do c = 1, ao%n_centers
+!
+         aos = ao%centers(c)%get_ao_range()
+!
+         if (ao%centers(c)%cartesian) then
+!
+            factors(aos%first:aos%get_last()) = &
+               ao%centers(c)%get_cartesian_normalization_factors()
+!
+         else
+!
+            factors(aos%first:aos%get_last()) = one
+!
+         end if
+!
+      end do
+!
+   end function get_ao_normalization_factors_ao_tool
 !
 !
    subroutine print_molden_geometry_ao_tool(ao, file_)
