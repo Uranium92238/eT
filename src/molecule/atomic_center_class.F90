@@ -98,8 +98,11 @@ module atomic_center_class
       procedure :: is_ghost &
                 => is_ghost_atomic_center
 !
-      procedure :: get_ao_molden_order &
-                => get_ao_molden_order_atomic_center
+      procedure :: get_molden_order &
+                => get_molden_order_atomic_center
+!
+      procedure :: get_cartesian_normalization_factors &
+                => get_cartesian_normalization_factors_atomic_center
 !
       procedure :: get_identifier_string &
                 => get_identifier_string_atomic_center
@@ -277,8 +280,8 @@ contains
 !!    Initialize shells
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
-!!    Allocates the shell array, determines the range information of each shell 
-!!    (first, length), as well as basis information for each shell (primitives, 
+!!    Allocates the shell array, determines the range information of each shell
+!!    (first, length), as well as basis information for each shell (primitives,
 !!    exponents, and coefficients).
 !!
       use iso_c_binding, only: c_int
@@ -747,7 +750,7 @@ contains
 !
    function get_ao_range_atomic_center(center) result(aos)
 !!
-!!    Get AO range 
+!!    Get AO range
 !!    Written by Eirik F. Kjønstad, 2020
 !!
 !!    Returns an range containing the first and last AOs on the center,
@@ -789,39 +792,60 @@ contains
    end function is_ghost_atomic_center
 !
 !
-   function get_ao_molden_order_atomic_center(center, first, last) result(map)
+   function get_molden_order_atomic_center(center) result(map)
 !!
-!!    Get AO Molden order
+!!    Get Molden order
 !!    Written by Alexander C. Paul, May 2021
 !!
-!!    Map AOs of a given center to the order molden expects:
-!!    d-orbitals for example have to be ordered as xx, yy, zz, xy, xz, yz
+!!    Return index list mapping AOs to the order molden expects
 !!
       implicit none
 !
       class(atomic_center), intent(in) :: center
 !
-      integer, intent(in) :: first, last
+      integer, dimension(center%n_ao) :: map
 !
-      integer, dimension(first:last) :: map
+      integer :: s, offset
 !
-      integer :: s, l, i, i_rel
+      offset = 1
 !
       do s = 1, center%n_shells
 !
-         l = center%shells(s)%l
+         map(offset : offset+center%shells(s)%length-1) = &
+            center%shells(s)%get_molden_order(center%cartesian)
 !
-         do i = center%shells(s)%first, center%shells(s)%get_last()
+         offset = offset + center%shells(s)%length
 !
-            i_rel = i - center%shells(s)%first + 1
-!
-            map(i) = center%shells(s)%first - 1 &
-                   + center%shells(s)%get_molden_offset(l, i_rel, center%cartesian)
-!
-         end do
       end do
 !
-   end function get_ao_molden_order_atomic_center
+   end function get_molden_order_atomic_center
+!
+!
+   function get_cartesian_normalization_factors_atomic_center(center) result(factors)
+!!
+!!    Get cartesian normalization factors
+!!    Written by Alexander C. Paul, May 2021
+!!
+      implicit none
+!
+      class(atomic_center), intent(in) :: center
+!
+      real(dp), dimension(center%n_ao) :: factors
+!
+      integer :: s, offset
+!
+      offset = 1
+!
+      do s = 1, center%n_shells
+!
+         factors(offset : offset+center%shells(s)%length-1) = &
+            center%shells(s)%get_cartesian_normalization_factor()
+!
+         offset = offset + center%shells(s)%length
+!
+      end do
+!
+   end function get_cartesian_normalization_factors_atomic_center
 !
 !
    pure function get_identifier_string_atomic_center(center) result(identifier)

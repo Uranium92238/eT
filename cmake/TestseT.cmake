@@ -43,7 +43,7 @@ endmacro()
 add_eT_runtest(eri_cholesky                                 "eT;short;cholesky;eri")
 #
 add_eT_runtest(hf_energy                                    "eT;short;hf;sad")
-add_eT_runtest(hf_energy_pure_321g                          "eT;short;hf;sad;pople;spherical")
+add_eT_runtest(hf_energy_pure_321g                          "eT;short;hf;sad;pople;spherical;molden")
 add_eT_runtest(hf_print_z_matrix                            "eT;short;hf;z-matrix")
 add_eT_runtest(hf_file_check                                "eT;short;hf;sad;eT_launch")
 add_eT_runtest(hf_orbital_files                             "eT;short;hf;sad;eT_launch;molden")

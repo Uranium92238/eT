@@ -120,14 +120,17 @@ contains
       type(output_file), allocatable :: molden
 !
 !     Map aos from libint ordering to molden ordering
-      integer, dimension(:), allocatable :: ao_map
+      integer, dimension(:), allocatable  :: ao_map
+      real(dp), dimension(:), allocatable :: scaling_factor
       integer p, q, i
 !
       real(dp) :: occupation
 !
       call mem%alloc(ao_map, wf%ao%n)
+      call mem%alloc(scaling_factor, wf%ao%n)
 !
       ao_map = wf%ao%get_molden_ao_indices()
+      scaling_factor = wf%ao%get_ao_normalization_factors()
 !
       molden = output_file('eT.molden')
       call molden%open_
@@ -161,22 +164,23 @@ contains
             occupation = zero
          end if
 !
-         call molden%printf('m', 'Sym= A1', fs='(t1,a)')
-         call molden%printf('m', 'Ene= (f17.10)', fs='(t1,a)', reals=[wf%orbital_energies(p)])
-         call molden%printf('m', 'Spin= Alpha', fs='(t1,a)')
-         call molden%printf('m', 'Occup= (f6.4)', reals=[occupation], fs='(t1,a)')
+         call molden%printf('m', 'Sym=X', fs='(t1,a)')
+         call molden%printf('m', 'Ene=(f17.10)', fs='(t1,a)', reals=[wf%orbital_energies(p)])
+         call molden%printf('m', 'Spin=Alpha', fs='(t1,a)')
+         call molden%printf('m', 'Occup=(f6.4)', reals=[occupation], fs='(t1,a)')
 !
          do q = 1, wf%ao%n
 !
             i = ao_map(q)
 !
             call molden%printf('m', '(i6)   (f17.12)', fs='(t1,a)', ints=[q], &
-                               reals=[wf%orbital_coefficients(i,p)])
+                               reals=[scaling_factor(i)*wf%orbital_coefficients(i,p)])
 !
          end do
       end do
 !
       call mem%dealloc(ao_map, wf%ao%n)
+      call mem%dealloc(scaling_factor, wf%ao%n)
       call molden%close_
 !
    end subroutine write_molden_file_hf
