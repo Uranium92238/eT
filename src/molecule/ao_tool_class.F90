@@ -29,7 +29,6 @@ module ao_tool_class
 !!    of shells.
 !!
 !
-   use kinds
    use parameters
    use named_range_class
    use iso_c_binding,         only: c_int

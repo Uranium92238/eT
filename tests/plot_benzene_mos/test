@@ -21,7 +21,7 @@ assert version_info.major == 2
 # construct filter(s)
 threshold = 1.0e-6
 
-f = get_file_filter(threshold)
+f = get_file_filter(5*threshold)
 g = get_hf_filter(threshold)
 
 # invoke the command line interface parser which returns options
