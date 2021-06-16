@@ -141,6 +141,7 @@ set(eT_fortran_sources
    src/tools/orbitals/cholesky_orbital_tool_class.F90
    src/tools/maps/range_class.F90
    src/tools/maps/named_range_class.F90
+   src/tools/maps/block_class.F90
    src/tools/orbitals/nto_tool_class.F90
    src/tools/orbitals/cnto_tool_class.F90
 #
