@@ -32,7 +32,7 @@ module shell_class
 !
    implicit none
 !
-   type, extends(range_) :: shell ! AO index range of the shell 
+   type, extends(range_) :: shell ! AO index range of the shell
 !
       integer    :: size_cart = -1 ! The number of basis functions in cartesian
       integer    :: l         = -1 ! The angular momentum
@@ -45,26 +45,29 @@ module shell_class
 !
    contains
 !
-      procedure :: determine_angular_momentum         => determine_angular_momentum_shell
+      procedure :: determine_angular_momentum => determine_angular_momentum_shell
 !
-      procedure :: initialize_exponents               => initialize_exponents_shell
-      procedure :: initialize_coefficients            => initialize_coefficients_shell
+      procedure :: initialize_exponents       => initialize_exponents_shell
+      procedure :: initialize_coefficients    => initialize_coefficients_shell
 !
-      procedure :: destruct_exponents                 => destruct_exponents_shell
-      procedure :: destruct_coefficients              => destruct_coefficients_shell
+      procedure :: destruct_exponents         => destruct_exponents_shell
+      procedure :: destruct_coefficients      => destruct_coefficients_shell
 !
-      procedure :: set_exponent_i                     => set_exponent_i_shell
-      procedure :: get_exponent_i                     => get_exponent_i_shell
+      procedure :: set_exponent_i             => set_exponent_i_shell
+      procedure :: get_exponent_i             => get_exponent_i_shell
 !
-      procedure :: set_coefficient_i                  => set_coefficient_i_shell
-      procedure :: get_coefficient_i                  => get_coefficient_i_shell
+      procedure :: set_coefficient_i          => set_coefficient_i_shell
+      procedure :: get_coefficient_i          => get_coefficient_i_shell
 !
-      procedure :: set_n_primitives                   => set_n_primitives_shell
-      procedure :: get_n_primitives                   => get_n_primitives_shell
+      procedure :: set_n_primitives           => set_n_primitives_shell
+      procedure :: get_n_primitives           => get_n_primitives_shell
 !
-      procedure :: get_angular_momentum               => get_angular_momentum_shell
-      procedure :: get_angular_momentum_label         => get_angular_momentum_label_shell
-      procedure, nopass :: get_molden_offset          => get_molden_offset_shell
+      procedure :: get_angular_momentum       => get_angular_momentum_shell
+      procedure :: get_angular_momentum_label => get_angular_momentum_label_shell
+      procedure :: get_molden_order        => get_molden_order_shell
+!
+      procedure :: get_cartesian_normalization_factor &
+                => get_cartesian_normalization_factor_shell
 !
       procedure :: cleanup                            => cleanup_shell
 !
@@ -151,7 +154,7 @@ contains
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
-!  
+!
       class(shell), intent(inout) :: this
 !
       if (this%n_primitives == 0) &
@@ -169,7 +172,7 @@ contains
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
-!  
+!
       class(shell), intent(inout) :: this
 !
       if (this%n_primitives == 0) &
@@ -187,7 +190,7 @@ contains
 !!    Written by Andreas Skeidsvoll, Aug 2019
 !!
       implicit none
-!  
+!
       class(shell), intent(inout) :: this
 !
       if (this%n_primitives == 0) &
@@ -205,7 +208,7 @@ contains
 !!    Written by Andreas Skeidsvoll, Aug 2019
 !!
       implicit none
-!  
+!
       class(shell), intent(inout) :: this
 !
       if (this%n_primitives == 0) &
@@ -223,7 +226,7 @@ contains
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
-!  
+!
       class(shell), intent(inout) :: this
 !
       integer, intent(in)   :: i
@@ -264,7 +267,7 @@ contains
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
-!  
+!
       class(shell), intent(inout) :: this
 !
       integer, intent(in)   :: i
@@ -284,7 +287,7 @@ contains
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
-!  
+!
       class(shell), intent(in) :: this
 !
       integer, intent(in) :: i
@@ -303,7 +306,7 @@ contains
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
-!  
+!
       class(shell), intent(inout) :: this
 !
       integer, intent(in) :: n
@@ -319,7 +322,7 @@ contains
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
-!  
+!
       class(shell), intent(in) :: this
 !
       integer :: n
@@ -398,75 +401,105 @@ contains
    end function get_angular_momentum_label_shell
 !
 !
-   function get_molden_offset_shell(l, i, cartesian) result(offset)
+   function get_molden_order_shell(this, cartesian) result(map)
 !!
-!!    Get molden offset
+!!    Get Molden order
 !!    Written by Alexander C. Paul, May 2021
 !!
-!!    To write molden files the AOs have to be reordered
-!!    within a shell the n-th ao has to have the number (first + offset(n) - 1)
+!!    Return index list mapping AOs to the order molden expects
 !!
       use angular_momentum
 !
       implicit none
 !
-      integer, intent(in) :: l, i
+      class(shell), intent(in) :: this
+!
       logical, intent(in) :: cartesian
-      integer :: offset
 !
-      offset = 0
+      integer, dimension(this%length) :: map
 !
-      if (cartesian) then
+      integer :: i
 !
-         select case (l)
+      do i = 1, this%length
+!
+         if (cartesian) then
+!
+            select case (this%l)
+               case(0)
+                  map(i) = i + this%first - 1
+               case(1)
+                  map(i) = i + this%first - 1
+               case(2)
+                  map(i) = this%first - 1 + d_offsets_cart(i)
+               case(3)
+                  map(i) = this%first - 1 + f_offsets_cart(i)
+               case(4)
+                  map(i) = this%first - 1 + g_offsets_cart(i)
+               case default
+                  call output%error_msg('Molden cannot handle angular momentum beyond l=4.')
+            end select
+!
+         else
+!
+            select case (this%l)
+               case(0)
+                  map(i) = i + this%first - 1
+               case(1)
+                  map(i) = i + this%first - 1
+               case(2)
+                  map(i) = this%first - 1 + d_offsets(i)
+               case(3)
+                  map(i) = this%first - 1 + f_offsets(i)
+               case(4)
+                  map(i) = this%first - 1 + g_offsets(i)
+               case default
+                  call output%error_msg('Molden cannot handle angular momentum beyond l=4.')
+            end select
+!
+         end if
+      end do
+!
+   end function get_molden_order_shell
+!
+!
+   function get_cartesian_normalization_factor_shell(this) result(factors)
+!!
+!!    Get cartesian normalization factor
+!!    Written by Alexander C. Paul, May 2021
+!!
+!!    Return factor to normalize the cartesian function determined
+!!    by the angular momentum l and the basis function i
+!!
+      use angular_momentum
+!
+      implicit none
+!
+      class(shell), intent(in) :: this
+!
+      real(dp), dimension(this%length) :: factors
+!
+      integer:: i
+!
+      do i = 1, this%length
+!
+         select case (this%l)
             case(0)
-               offset = i
+               factors(i) = one
             case(1)
-               offset = i
+               factors(i) = one
             case(2)
-!              instead of   xx, xy, xz, yy, yz, zz
-!              Molden wants xx, yy, zz, xy, xz, yz
-               offset = d_offsets_cart(i)
+               factors(i) = d_cart_normalization(i)
             case(3)
-!              instead of   xxx, xxy, xxz, xyy, xyz, xzz, yyy, yyz, yzz, zzz
-!              Molden wants xxx, yyy, zzz, xyy, xxy, xxz, xzz, yzz, yyz, xyz
-               offset = f_offsets_cart(i)
+               factors(i) = f_cart_normalization(i)
             case(4)
-!              instead of   xxxx, xxxy, xxxz, xxyy, xxyz, xxzz, xyyy, xyyz, xyzz, xzzz,
-!                           yyyy, yyyz, yyzz, yzzz, zzzz
-!              Molden wants xxxx, yyyy, zzzz, xxxy, xxxz, yyyx, yyyz, zzzx, zzzy, xxyy,
-!                           xxzz, yyzz, xxyz, yyxz, zzxy
-               offset = g_offsets_cart(i)
+               factors(i) = g_cart_normalization(i)
             case default
                call output%error_msg('Angular momentum of atomic orbital not recognized.')
          end select
 !
-      else
+      end do
 !
-         select case (l)
-            case(0)
-               offset = i
-            case(1)
-               offset = i
-            case(2)
-!              instead of   2, 1, 0,-1,-2
-!              Molden wants 0, 1,-1, 2,-2
-               offset = d_offsets(i)
-            case(3)
-!              instead of   3, 2, 1, 0,-1,-2,-3
-!              Molden wants 0, 1,-1, 2,-2, 3,-3
-               offset = f_offsets(i)
-            case(4)
-!              instead of   4, 3, 2, 1, 0,-1,-2,-3,-4
-!              Molden wants 0, 1,-1, 2,-2, 3,-3, 4,-4
-               offset = g_offsets(i)
-            case default
-               call output%error_msg('Angular momentum of atomic orbital not recognized.')
-         end select
-!
-      end if
-!
-   end function get_molden_offset_shell
+   end function get_cartesian_normalization_factor_shell
 !
 !
    pure function get_angular_momentum_shell(this) result(l_letter)
@@ -511,7 +544,7 @@ contains
 !
       class(shell) :: this
 !
-      call this%destruct_exponents()   
+      call this%destruct_exponents()
       call this%destruct_coefficients()
 !
    end subroutine cleanup_shell

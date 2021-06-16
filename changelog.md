@@ -1,3 +1,8 @@
+# eT v1.3.3
+### Bugfixes
+- Ordering of AOs for spherical gaussians fixed in the orbital files. eT-program/eT!857
+- Molden file now contains correctly normalized orbital coefficients. eT-program/eT!857
+
 # eT v1.3.2
 ### Bugfixes
 - Read response vector tk for polarizabilities when needed for either diagonal or cross terms, to avoid cross terms from uninitialized array. eT-program/eT!856

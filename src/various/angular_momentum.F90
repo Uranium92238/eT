@@ -23,32 +23,34 @@ module angular_momentum
 !!    angular momentum module
 !!    Written by Alexander C. Paul, Dec 2019
 !!
-!!    Defines labels for angular momentum functions 
+!!    Defines labels for angular momentum functions
 !!    as defined by the default ordering in libint2
 !!
-!!    Libint ordering described in Appendix B of 
+!!    Libint ordering described in Appendix B of
 !!    https://doi.org/10.1002/jcc.20815
 !!
+!
+   use parameters
 !
    implicit none
 !
    character(len=1), parameter :: s = 's'
 !
    character(len=1), dimension(3), parameter :: p_cart = ['x', 'y', 'z']
-   character(len=2), dimension(3), parameter :: p = [' 1', ' 0', '-1']
+   character(len=2), dimension(3), parameter :: p = ['-1', ' 0', ' 1']
 !
    character(len=2), dimension(6), parameter :: d_cart = ['xx','xy','xz',&
                                                           'yy','yz','zz']
-   character(len=2), dimension(5), parameter :: d = [' 2',' 1',' 0','-1','-2']
+   character(len=2), dimension(5), parameter :: d = ['-2','-1',' 0',' 1',' 2']
 !
    character(len=3), dimension(10), parameter :: f_cart = ['xxx','xxy','xxz','xyy','xyz',&
                                                            'xzz','yyy','yyz','yzz','zzz']
-   character(len=2), dimension(7), parameter :: f = [' 3',' 2',' 1',' 0','-1','-2','-3']
+   character(len=2), dimension(7), parameter :: f = ['-3','-2','-1',' 0',' 1',' 2',' 3']
 !
    character(len=4), dimension(15), parameter :: g_cart = ['xxxx','xxxy','xxxz','xxyy','xxyz',&
                                                            'xxzz','xyyy','xyyz','xyzz','xzzz',&
                                                            'yyyy','yyyz','yyzz','yzzz','zzzz']
-   character(len=2), dimension(9), parameter  :: g = [' 4',' 3',' 2',' 1',' 0','-1','-2','-3','-4']
+   character(len=2), dimension(9), parameter  :: g = ['-4','-3','-2','-1',' 0',' 1',' 2',' 3',' 4']
 !
 !
 !  To write molden files the AOs have to be reordered
@@ -68,16 +70,36 @@ module angular_momentum
 !                                         xxzz, yyzz, xxyz, yyxz, zzxy
    integer, dimension(15) :: g_offsets_cart = [1,11,15,2,3,7,12,10,14,4,6,13,5,8,9]
 !
-!                           instead of    2, 1, 0,-1,-2
-!                           Molden wants  0, 1,-1, 2,-2
-   integer, dimension(5) :: d_offsets = [3,2,4,1,5]
+!                           instead of   2,-1, 0, 1, 2
+!                           Molden wants 0, 1,-1, 2,-2
+   integer, dimension(5) :: d_offsets = [3,4,2,5,1]
 !
-!                           instead of    3, 2, 1, 0,-1,-2,-3
-!                           Molden wants  0, 1,-1, 2,-2, 3,-3
-   integer, dimension(7) :: f_offsets = [4,3,5,2,6,1,7]
+!                           instead of  -3,-2,-1, 0, 1, 2, 3
+!                           Molden wants 0, 1,-1, 2,-2, 3,-3
+   integer, dimension(7) :: f_offsets = [4,5,3,6,2,7,1]
 !
-!                           instead of    4, 3, 2, 1, 0,-1,-2,-3,-4
-!                           Molden wants  0, 1,-1, 2,-2, 3,-3, 4,-4
-   integer, dimension(9) :: g_offsets = [5,4,6,3,7,2,8,1,9]
+!                           instead of  -4,-3,-2,-1, 0, 1, 2, 3, 4
+!                           Molden wants 0, 1,-1, 2,-2, 3,-3, 4,-4
+   integer, dimension(9) :: g_offsets = [5,6,4,7,3,8,2,9,1]
+!
+!
+!  According to https://github.com/evaleev/libint/wiki/using-modern-CPlusPlus-API
+!  only the axis-aligned components of a Cartesian shell are normalized to unity.
+!  However, xy, xz, yz for example are not normalized
+!
+   real(dp), dimension(6)  :: d_cart_normalization = [one,inv_sqrt_3,inv_sqrt_3,one,inv_sqrt_3,one]
+!
+   real(dp), dimension(10) :: f_cart_normalization = [one,inv_sqrt_5,inv_sqrt_5,inv_sqrt_5, &
+                                                      inv_sqrt_5*inv_sqrt_3, &
+                                                      inv_sqrt_5,one,inv_sqrt_5,inv_sqrt_5,one]
+!
+   real(dp), dimension(15) :: g_cart_normalization = [one,inv_sqrt_7,inv_sqrt_7, &
+                                                      inv_sqrt_7*inv_sqrt_5/inv_sqrt_3, &
+                                                      inv_sqrt_7*inv_sqrt_5, &
+                                                      inv_sqrt_7*inv_sqrt_5/inv_sqrt_3, &
+                                                      inv_sqrt_7,inv_sqrt_7*inv_sqrt_5, &
+                                                      inv_sqrt_7*inv_sqrt_5, inv_sqrt_7,one, &
+                                                      inv_sqrt_7,inv_sqrt_7*inv_sqrt_5/inv_sqrt_3, &
+                                                      inv_sqrt_7,one]
 !
 end module angular_momentum
