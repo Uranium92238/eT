@@ -38,21 +38,24 @@ module range_class
       procedure, public    :: shift_last_to  => shift_last_to_range
 !
       procedure, public    :: get_first      => get_first_range
-      procedure, public    :: get_last       => get_last_range
       procedure, public    :: get_length     => get_length_range
       procedure, public    :: get_step       => get_step_range
+      procedure, public    :: get_last       => get_last_range
+      procedure, public    :: get_extent     => get_extent_range
 !
       procedure, public    :: get_min        => get_min_range
       procedure, public    :: get_max        => get_max_range
       procedure, public    :: get_abs_step   => get_abs_step_range
+!
+      procedure, public    :: get_position   => get_position_range
 !
       procedure, public    :: overlaps       => overlaps_range
       procedure, public    :: get_overlap    => get_overlap_range
 !
       procedure, private   :: contains_range
       procedure, private   :: contains_integer
-      generic, public      :: contains_     => contains_range, &
-                                            contains_integer
+      generic, public      :: contains_      => contains_range, &
+                                                contains_integer
 !
       procedure, private   :: is_equal_range
       generic, public      :: operator(.eq.) => is_equal_range
@@ -224,6 +227,26 @@ contains
    end function get_first_range
 !
 !
+   elemental function get_position_range(this, n) result(position_)
+!!
+!!    Get position
+!!    Written by Rolf H. Myhre, Jun 2021
+!!
+!!    Return position relative to first
+!!
+      implicit none
+!
+      class(range_), intent(in) :: this
+!
+      integer, intent(in) :: n
+!
+      integer :: position_
+!
+      position_ = n - this%first + 1
+!
+   end function get_position_range
+!
+!
    elemental function get_length_range(this) result(length)
 !!
 !!    Get length
@@ -270,6 +293,22 @@ contains
       last = this%first + (this%length-1)*this%step
 !
    end function get_last_range
+!
+!
+   elemental function get_extent_range(this) result(extent)
+!!
+!!    Get extent
+!!    Written by Rolf H. Myhre, Apr 2021
+!!
+      implicit none
+!
+      class(range_), intent(in) :: this
+!
+      integer :: extent
+!
+      extent = 1 + (this%length-1)*this%step
+!
+   end function get_extent_range
 !
 !
    elemental function get_min_range(this) result(min_val)
