@@ -61,10 +61,15 @@ module parameters
 !
 !  Pi
 !
-!
    real(dp), parameter :: pi = four * atan(one)
    real(dp), parameter :: radians_to_degrees = 180.0d0/pi
    real(dp), parameter :: degrees_to_radians = pi/180.0d0
+!
+!  Square roots
+!
+   real(dp), parameter :: inv_sqrt_3 = one/sqrt(three)
+   real(dp), parameter :: inv_sqrt_5 = one/sqrt(five)
+   real(dp), parameter :: inv_sqrt_7 = one/sqrt(seven)
 !
 !  Complex integers
 !
