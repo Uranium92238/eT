@@ -39,7 +39,7 @@ module nto_tool_class
 !
    type :: nto_tool
 !
-      integer :: n_ao, n_o, n_v, n_singles, X_length, added_states
+      integer :: n_ao, n_o, n_v, n_singles, X_length, n_states
 !
       real(dp), dimension(:), allocatable :: eigenvalues_o, eigenvalues_v
       real(dp), dimension(:,:), allocatable :: M, N
@@ -124,7 +124,7 @@ contains
       character(len=*) :: tag
 !
       this%n_singles = this%n_o*this%n_v
-      this%added_states = 0
+      this%n_states = 0
 !
       this%M_file = stream_file(tag // '_M_transformation')
       this%N_file = stream_file(tag // '_N_transformation')
@@ -160,33 +160,52 @@ contains
       call zero_array(this%M, this%n_o**2)
       call zero_array(this%N, this%n_v**2)
 !
-      this%added_states = 0
+      this%n_states = 0
 !
    end subroutine initialize_nto_tool
 !
 !
-   subroutine read_M_and_N_nto_tool(this)
+   subroutine read_M_and_N_nto_tool(this, files_found)
 !!
 !!    Read M and N
 !!    Written by Sarai D. Folkestad and Alexander C. Paul, May 2021
 !!
-!!    For restart
+!!    Read the M and N matrices from file for restart
 !!
       implicit none
 !
       class(nto_tool), intent(inout) :: this
 !
-      call this%M_file%open_('read', 'rewind')
+      logical, intent(out) :: files_found
 !
-      call this%M_file%read_(this%M, this%n_o**2)
+      integer :: n_states
 !
-      call this%M_file%close_()
+      files_found = this%M_file%exists() .and. this%N_file%exists()
 !
-      call this%N_file%open_('read', 'rewind')
+      if (files_found) then
 !
-      call this%N_file%read_(this%N, this%n_v**2)
+         call this%M_file%open_('read', 'rewind')
 !
-      call this%N_file%close_()
+         call this%M_file%read_(this%n_states)
+         call this%M_file%read_(this%M, this%n_o**2)
+!
+         call this%M_file%close_()
+!
+         call this%N_file%open_('read', 'rewind')
+!
+         call this%N_file%read_(n_states)
+!
+         if (n_states .ne. this%n_states) then
+            call output%error_msg('M and N do not correspond to the same ntos. M &
+                                  &consists of (i0) while N consists of (i0) states.', &
+                                  ints=[this%n_states, n_states])
+         end if
+!
+         call this%N_file%read_(this%N, this%n_v**2)
+!
+         call this%N_file%close_()
+!
+      end if
 !
    end subroutine read_M_and_N_nto_tool
 !
@@ -204,12 +223,14 @@ contains
 !
       call this%M_file%open_('write', 'rewind')
 !
+      call this%M_file%write_(this%n_states)
       call this%M_file%write_(this%M, this%n_o**2)
 !
       call this%M_file%close_()
 !
       call this%N_file%open_('write', 'rewind')
 !
+      call this%N_file%write_(this%n_states)
       call this%N_file%write_(this%N, this%n_v**2)
 !
       call this%N_file%close_()
@@ -232,7 +253,7 @@ contains
 !
       real(dp) :: norm_, ddot
 !
-      this%added_states = this%added_states + 1
+      this%n_states = this%n_states + 1
 !
       norm_ = ddot(this%n_singles, X, 1, X, 1)
 !
@@ -297,9 +318,9 @@ contains
       real(dp) :: normalization_factor
 !
 !     Scale by -1 to get eigenvalues in the correct order.
-!     Scale by 1/added_states to get eigenvalues that add up to one.
+!     Scale by 1/n_states to get eigenvalues that add up to one.
 !
-      normalization_factor = -one/real(this%added_states, kind=dp)
+      normalization_factor = -one/real(this%n_states, kind=dp)
 !
       call dscal(this%n_o**2, normalization_factor, this%M, 1)
       call dscal(this%n_v**2, normalization_factor, this%N, 1)
@@ -432,3 +453,4 @@ contains
 !
 !
 end module nto_tool_class
+

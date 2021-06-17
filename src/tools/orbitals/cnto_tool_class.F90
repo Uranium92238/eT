@@ -100,7 +100,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: X2
 !
-      this%added_states = this%added_states + 1
+      this%n_states = this%n_states + 1
 !
       call this%add_singles_to_M_and_N(X(1:this%n_singles))
 !
