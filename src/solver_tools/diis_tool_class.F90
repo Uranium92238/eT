@@ -87,7 +87,7 @@ module diis_tool_class
       logical, private :: crop            ! Conjugate residual with optimal trial vectors
                                           ! J. Chem. Theory Comput. 2015, 11, 4, 1518-1524
 !
-      integer :: dim_G 
+      integer, private :: dim_G 
 !
       real(dp), dimension(:,:), allocatable, private :: G     ! DIIS matrix, G_ij = e_i^T e_j
 !
