@@ -1,3 +1,7 @@
+# eT v1.3.4
+### Bugfixes
+- Bug with reordering of atoms with both active spaces and several different basis sets was fixed. eT-program/eT!8
+
 # eT v1.3.3
 ### Bugfixes
 - Ordering of AOs for spherical gaussians fixed in the orbital files. eT-program/eT!857

@@ -1,0 +1,434 @@
+
+
+
+                     eT 1.3 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.3.3 Disco
+  ------------------------------------------------------------
+  Configuration date: 2021-06-18 19:51:40 UTC +02:00
+  Git branch:         hotfix-double-atom-reordering
+  Git hash:           9f31c3921490d411185e0e8d3550cafe9e741264
+  Fortran compiler:   GNU 10.2.0
+  C compiler:         GNU 10.2.0
+  C++ compiler:       GNU 10.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-06-18 19:58:41 UTC +02:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: 2 water
+        charge: 0
+     end system
+
+     do
+        ground state
+     end do
+
+     memory
+        available: 16
+     end memory
+
+     solver cholesky
+        threshold: 1.0d-12
+     end solver cholesky
+
+     solver scf
+        algorithm:          scf
+        energy threshold:   1.0d-11
+        gradient threshold: 1.0d-11
+     end solver scf
+
+     solver cc gs
+        energy threshold: 1.0d-11
+        omega threshold:  1.0d-11
+     end solver cc gs
+
+     method
+        hf
+        cc2
+     end method
+
+     frozen orbitals
+        hf
+     end frozen orbitals
+
+
+     active atoms
+        selection type: range
+        cc2: [4,6]
+        hf: [1,3]
+     end active atoms
+
+
+  Running on 4 OMP threads
+  Memory available for calculation: 16.000000 GB
+
+
+  :: RHF wavefunction
+  ======================
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  O    -3.016366529200    -0.873222302300    -0.037225661100        4
+        Basis: sto-3g
+        2  H    -2.030585691300    -0.955393218200     0.019215007600        5
+        3  H    -3.352936062000    -1.792989409800     0.101789887800        6
+        Basis: cc-pvdz
+        4  O    -6.157514528700     0.457290258900    -0.023116740700        1
+        Basis: sto-3g
+        5  H    -5.189499677700     0.639013938000     0.077251106100        2
+        6  H    -6.467182454800     1.132282401400    -0.677296090500        3
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  O    -5.700106631493    -1.650150997209    -0.070346304285        4
+        Basis: sto-3g
+        2  H    -3.837250829018    -1.805431523665     0.036311101845        5
+        3  H    -6.336130870358    -3.388258928768     0.192355010192        6
+        Basis: cc-pvdz
+        4  O   -11.636016067273     0.864153348752    -0.043684308816        1
+        Basis: sto-3g
+        5  H    -9.806733114372     1.207561332600     0.145983433349        2
+        6  H   -12.221203637164     2.139703634311    -1.279904116284        3
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               32
+     Number of orthonormal atomic orbitals:   32
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         22
+     Number of molecular orbitals:       32
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF algorithm)
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   none
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:              -151.265807465743
+     Number of electrons in guess:           20.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1          -151.921735768892     0.7983E-01     0.1519E+03
+     2          -151.973929566461     0.5208E-01     0.5219E-01
+     3          -151.984509094093     0.2673E-01     0.1058E-01
+     4          -151.988030628662     0.1714E-01     0.3522E-02
+     5          -151.989257003678     0.9253E-02     0.1226E-02
+     6          -151.989689641453     0.5858E-02     0.4326E-03
+     7          -151.989842641734     0.3320E-02     0.1530E-03
+     8          -151.989896859944     0.2044E-02     0.5422E-04
+     9          -151.989916075474     0.1193E-02     0.1922E-04
+    10          -151.989922888848     0.7205E-03     0.6813E-05
+    11          -151.989925304579     0.4255E-03     0.2416E-05
+    12          -151.989926161203     0.2550E-03     0.8566E-06
+    13          -151.989926464953     0.1514E-03     0.3038E-06
+    14          -151.989926572664     0.9043E-04     0.1077E-06
+    15          -151.989926610858     0.5380E-04     0.3819E-07
+    16          -151.989926624402     0.3209E-04     0.1354E-07
+    17          -151.989926629205     0.1911E-04     0.4803E-08
+    18          -151.989926630908     0.1139E-04     0.1703E-08
+    19          -151.989926631512     0.6787E-05     0.6040E-09
+    20          -151.989926631726     0.4045E-05     0.2140E-09
+    21          -151.989926631802     0.2410E-05     0.7606E-10
+    22          -151.989926631829     0.1436E-05     0.2692E-10
+    23          -151.989926631838     0.8558E-06     0.9521E-11
+    24          -151.989926631842     0.5100E-06     0.3411E-11
+    25          -151.989926631843     0.3039E-06     0.1052E-11
+    26          -151.989926631843     0.1811E-06     0.6537E-12
+    27          -151.989926631844     0.1079E-06     0.8527E-13
+    28          -151.989926631844     0.6431E-07     0.2842E-13
+    29          -151.989926631844     0.3833E-07     0.1705E-12
+    30          -151.989926631844     0.2284E-07     0.5684E-13
+    31          -151.989926631844     0.1361E-07     0.8527E-13
+    32          -151.989926631844     0.8111E-08     0.5684E-13
+    33          -151.989926631844     0.4834E-08     0.2842E-13
+    34          -151.989926631844     0.2881E-08     0.0000E+00
+    35          -151.989926631844     0.1717E-08     0.1137E-12
+    36          -151.989926631844     0.1023E-08     0.0000E+00
+    37          -151.989926631844     0.6097E-09     0.1705E-12
+    38          -151.989926631844     0.3634E-09     0.1705E-12
+    39          -151.989926631844     0.2166E-09     0.8527E-13
+    40          -151.989926631844     0.1291E-09     0.8527E-13
+    41          -151.989926631843     0.7691E-10     0.1705E-12
+    42          -151.989926631844     0.4584E-10     0.1137E-12
+    43          -151.989926631844     0.2732E-10     0.5684E-13
+    44          -151.989926631844     0.1628E-10     0.1421E-12
+    45          -151.989926631844     0.9699E-11     0.8527E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 45 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.988425099948
+     Nuclear repulsion energy:      33.053483663804
+     Electronic energy:           -185.043410295648
+     Total energy:                -151.989926631844
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              1.31700
+     Total cpu time (sec):               4.72502
+
+     The smallest diagonal after decomposition is:  -0.2220E-15
+
+  - Preparation for frozen Hartree-Fock orbitals
+
+     There are 5 frozen occupied orbitals.
+     There are 8 frozen virtual orbitals.
+
+
+  :: CC2 wavefunction
+  ======================
+
+     Bath orbital(s):         False
+
+   - Number of orbitals:
+
+     Occupied orbitals:    5
+     Virtual orbitals:     14
+     Molecular orbitals:   19
+     Atomic orbitals:      32
+
+   - Number of ground state amplitudes:
+
+     Single excitation amplitudes:  70
+     Double excitation amplitudes:  2485
+
+
+  :: Ground state coupled cluster engine
+  =========================================
+
+  Calculates the ground state CC wavefunction | CC > = exp(T) | R >
+
+  This is a CC2 ground state calculation.
+  The following tasks will be performed:
+
+     1) Cholesky decomposition of the electron repulsion integrals
+     2) Preparation of MO basis and integrals
+     3) Calculation of the ground state (diis algorithm)
+
+
+  1) Cholesky decomposition of the electron repulsion integrals
+
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-11
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition ao details:
+
+     Total number of AOs:                    32
+     Total number of shell pairs:           136
+     Total number of AO pairs:              528
+
+     Significant shell pairs:               120
+     Significant AO pairs:                  428
+
+     Construct shell pairs:                 135
+     Construct AO pairs:                    527
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               406 /     106       0.47383E+01         159             42             17052
+     2               266 /      86       0.45513E-01         215            142             37772
+     3               209 /      63       0.39692E-03         100            188             39292
+     4               127 /      39       0.22839E-05          95            260             33020
+     5                89 /      19       0.15283E-07          61            287             25543
+     6                 6 /       2       0.15191E-09          60            319              1914
+     7                 0 /       0       0.12563E-11           2            321                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 321
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.7525E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
+
+  - Settings for integral handling:
+
+     Cholesky vectors in memory: True
+     ERI matrix in memory:       False
+     T1 ERI matrix in memory:    False
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.30500
+     Total cpu time (sec):               0.79773
+
+
+  2) Preparation of MO basis and integrals
+
+
+  3) Calculation of the ground state (diis algorithm)
+
+   - DIIS coupled cluster ground state solver
+  ----------------------------------------------
+
+  A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
+  of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
+  13.
+
+  - CC ground state solver settings:
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+     Max number of iterations:      100
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (cc_gs_diis_e): file
+     Storage (cc_gs_diis_x): file
+
+  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ---------------------------------------------------------------
+    1          -152.180791381166     0.2646E-01     0.1522E+03
+    2          -152.181321741952     0.5063E-02     0.5304E-03
+    3          -152.181436798189     0.6338E-03     0.1151E-03
+    4          -152.181451010444     0.1035E-03     0.1421E-04
+    5          -152.181450863418     0.8354E-05     0.1470E-06
+    6          -152.181450879430     0.1269E-05     0.1601E-07
+    7          -152.181450877895     0.1877E-06     0.1535E-08
+    8          -152.181450878108     0.1090E-07     0.2123E-09
+    9          -152.181450878094     0.2179E-08     0.1324E-10
+   10          -152.181450878097     0.5842E-09     0.2814E-11
+   11          -152.181450878097     0.2867E-10     0.5684E-13
+   12          -152.181450878097     0.4692E-11     0.8527E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 12 iterations!
+
+  - Ground state summary:
+
+     Final ground state energy (a.u.):  -152.181450878097
+
+     Correlation energy (a.u.):           -0.191524246254
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         t(a,i)
+     -----------------------------------
+        7      3        0.008388942819
+        6      2        0.004602171538
+        2      3        0.004597611950
+        5      5        0.004154237971
+        9      4        0.003420124753
+       14      3       -0.003213822442
+        3      3       -0.002743927675
+        6      4       -0.002734638905
+       13      4       -0.002451416432
+        6      3       -0.002437599650
+     ------------------------------------
+
+  - Finished solving the CC2 ground state equations
+
+     Total wall time (sec):              0.06100
+     Total cpu time (sec):               0.12040
+
+  - Timings for the CC2 ground state calculation
+
+     Total wall time (sec):              0.36600
+     Total cpu time (sec):               0.91866
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 4.699656 MB
+
+  Total wall time in eT (sec):              1.79500
+  Total cpu time in eT (sec):               5.82365
+
+  Calculation ended: 2021-06-18 19:58:43 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
+
+  eT terminated successfully!

@@ -131,6 +131,7 @@ add_eT_runtest(cc2_left_ip_energies                         "eT;short;cc2;es;lef
 add_eT_runtest(cc2_left_ip_diis                             "eT;short;cc2;es;left;diis")
 add_eT_runtest(cc2_oscillator_strength_eom                  "eT;short;cc2;eom")
 add_eT_runtest(cc2_eom_polarizability                       "eT;short;cc2;es;eom")
+add_eT_runtest(cc2_frozen_hf_many_basis_sets                "eT;short;cc2;gs;frozen hf;many basis sets")
 add_eT_runtest(restart_cc2_es                               "eT;short;cc2;es;restart")
 add_eT_runtest(cc2_lowmem_gs_energy                         "eT;short;lowmem-cc2;gs")
 add_eT_runtest(cc2_lowmem_gs_energy_nr                      "eT;short;lowmem-cc2;gs;newton-raphson")
