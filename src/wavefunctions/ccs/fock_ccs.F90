@@ -274,7 +274,7 @@ contains
 !
       call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
 !
-      call wf%get_t1_oei('hamiltonian', F_pq)
+      call wf%get_t1_oei('hamiltonian', F_pq, screening=.true.)
 !
 !     Add effective contributions to Fock matrix 
 !
@@ -428,7 +428,7 @@ contains
 !
       call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
 !
-      call wf%get_t1_oei('hamiltonian', F_pq)
+      call wf%get_t1_oei('hamiltonian', F_pq, screening=.true.)
 !
 !     Add effective contributions to Fock matrix 
 !
@@ -587,7 +587,7 @@ contains
 !
       call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
 !
-      call wf%get_t1_oei('hamiltonian', F_pq)
+      call wf%get_t1_oei('hamiltonian', F_pq, screening=.true.)
 !
 !     Add effective contributions to Fock matrix 
 !
@@ -665,7 +665,7 @@ contains
             enddo
 !$omp end parallel do
 !
-            call mem%dealloc(g_aiib, batch_a%length, batch_i%length, &
+            call mem%dealloc(g_aiib, batch_a%length, batch_i%length,    &
                                      batch_i%length, interval_b%length)
             call mem%dealloc(g_abii, batch_a%length, interval_b%length, &
                                      batch_i%length, batch_i%length)
@@ -741,7 +741,7 @@ contains
 !
       call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
 !
-      call wf%get_t1_oei('hamiltonian', F_pq)
+      call wf%get_t1_oei('hamiltonian', F_pq, screening=.true.)
 !
 !     Add effective contributions to Fock matrix 
 !
@@ -808,9 +808,9 @@ contains
                   do k = 1, batch_k%length
 !
                      wf%fock_ij(i + batch_i%first - 1 + i_range%first - 1,       &
-                                j + j_range%first - 1)                                 &
+                                j + j_range%first - 1)                           &
                         = wf%fock_ij(i + batch_i%first - 1 + i_range%first - 1,  &
-                                j + j_range%first - 1)                                 &
+                                j + j_range%first - 1)                           &
                         + two*g_ijkk(i, j, k, k) - g_ikkj(i, k, k, j)
 !
                   enddo
