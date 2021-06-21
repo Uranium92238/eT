@@ -10,6 +10,11 @@
 ### Structure
 - Added block class using the range class. Facilitates the handling of multiple index ranges. eT-program/eT!823
 
+# eT v1.3.4
+### Bugfixes
+- Bug with reordering of atoms with both active spaces and several different basis sets was fixed. eT-program/eT!8
+>>>>>>> 66ca2d4f5b22f449f4b342edaa56c9326a2941ca
+
 # eT v1.3.3
 ### Bugfixes
 - Ordering of AOs for spherical gaussians fixed in the orbital files. eT-program/eT!857
