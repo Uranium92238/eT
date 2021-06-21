@@ -86,50 +86,41 @@ void export_geometry_and_basis_to_libint(const int nAtoms,
     cartesians is an array of ints passed by reference
     */
 
-    //Allocate a temporary atom object
     vector<Atom> temporaryAtoms(nAtoms, Atom{0, 0.0, 0.0, 0.0});
 
-    //Allocate vectors to keep track of atoms and basis sets
-    vector<string> uniqueBasis;
-    vector<int> uniqueCartesians;
+    vector<string> basisList;
+    vector<int> cartesiansList;
     vector<vector<int>> atomsWithBasis;
 
-    //Some extra variables
     bool newBasis;
-    int nBasis, currentBasis;
+    int nBasis;
 
-    //Construct std::string using the reference to the first basis set
-    //and add to list of unique basis sets
     string basisString = string(&basisSets[0]);
-    uniqueBasis.push_back(basisString);
+    basisList.push_back(basisString);
 
-    //Initialize vectors with cartesians and list of atom with each basis
-    uniqueCartesians.push_back(cartesians[0]);
+    cartesiansList.push_back(cartesians[0]);
     atomsWithBasis.push_back({});
-    nBasis = 1;
 
-    //Loop over the atoms
+    nBasis = 1;
+    int basisIndex = 0;
+
     for (int i = 0; i < nAtoms; i++)
     {
-        //set atomic number and coordinates in temporaryAtoms coordinates
+        basisIndex = nBasis - 1;
+
         temporaryAtoms[i].atomic_number = atomicNumbers[i];
         temporaryAtoms[i].x = atomicCoordinates[3*i];
         temporaryAtoms[i].y = atomicCoordinates[3*i+1];
         temporaryAtoms[i].z = atomicCoordinates[3*i+2];
 
-        //Construct std::string by referencing basisSets offset by maxLength*i
+        //Get current basis set
         basisString = string(&basisSets[i*maxLength]);
 
-        //Check if there's a new basis
         newBasis = true;
-        for (int j = 0; j < nBasis; j++){
-            if(uniqueBasis[j] == basisString &&
-               uniqueCartesians[j] == cartesians[i]){
+        if(basisList[basisIndex] == basisString &&
+           cartesiansList[basisIndex] == cartesians[i]){
 
-                newBasis = false;
-                currentBasis = j;
-                break;
-            }
+            newBasis = false;
         }
 
         //If we found a new basis, add it to the list,
@@ -137,53 +128,48 @@ void export_geometry_and_basis_to_libint(const int nAtoms,
         if(newBasis){
 
             nBasis++;
-            uniqueBasis.push_back(basisString);
-            uniqueCartesians.push_back(cartesians[i]);
+            basisIndex = nBasis - 1;
+            basisList.push_back(basisString);
+            cartesiansList.push_back(cartesians[i]);
             atomsWithBasis.push_back({i});
         }
         else{
-            atomsWithBasis[currentBasis].push_back(i);
+            atomsWithBasis[basisIndex].push_back(i);
         }
     }
 
-    //Set atoms in Libint
+    //Set global atoms variable
     atoms = temporaryAtoms;
 
-    //Reset basis in libint
-    eTBasis tempBasis;
-    basis = tempBasis;
+    //Reset global basis variable
+    eTBasis dummyBasis;
+    basis = dummyBasis;
 
-    //Set up the new temporary basis
-    BasisSet temporary;
+    //Temporary basis, one for each basis set in basisList
+    BasisSet temporaryBasis;
 
     for(int i = 0; i < nBasis; i++){
 
-        //clear temporary atoms
         temporaryAtoms.clear();
-
-        //Add atoms with uniqueBasis i to temporaryAtoms
         for (int const& atom: atomsWithBasis[i]){
             temporaryAtoms.push_back(atoms[atom]);
         }
 
-        //Create temporary basis set for uniqueBasis i
-        temporary = BasisSet(uniqueBasis[i], temporaryAtoms, true);
+        temporaryBasis = BasisSet(basisList[i], temporaryAtoms, true);
 
-        //Set pure or cartesian for uniqueBasis i
-        for(auto& shell: temporary) {
+        //Set pure (spherical) or cartesian
+        for(auto& shell: temporaryBasis) {
             for(auto& contraction: shell.contr) {
 
-                if (contraction.l >= 2 && uniqueCartesians[i] != 0){
+                if (contraction.l >= 2 && cartesiansList[i] != 0){
                     contraction.pure = false;
                 }
             }
         }
 
-        //Add temporary to Libint basis
-        basis.add(temporary);
+        basis.add(temporaryBasis);
     }
 
-    //Loop over the atoms
     for (int i = 0; i < nAtoms; i++)
     {
         atoms[i].atomic_number = atomicCharges[i];
