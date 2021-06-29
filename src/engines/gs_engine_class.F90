@@ -613,7 +613,7 @@ contains
       call eri_cholesky_solver%diagonal_test(wf%ao)  ! Determine the largest 
                                                          ! deviation in the ERI matrix 
 !
-      wf%eri = t1_eri_tool(wf%n_o, wf%n_v, eri_cholesky_solver%n_cholesky, wf%need_g_abcd)
+      wf%eri = t1_eri_tool(wf%n_o, wf%n_v, eri_cholesky_solver%get_n_cholesky(), wf%need_g_abcd)
 !
       call wf%eri%initialize()
 !
