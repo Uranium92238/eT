@@ -101,8 +101,8 @@ module atomic_center_class
       procedure :: get_molden_order &
                 => get_molden_order_atomic_center
 !
-      procedure :: get_cartesian_normalization_factors &
-                => get_cartesian_normalization_factors_atomic_center
+      procedure :: get_ao_normalization_factors &
+                => get_ao_normalization_factors_atomic_center
 !
       procedure :: get_identifier_string &
                 => get_identifier_string_atomic_center
@@ -322,9 +322,10 @@ contains
 !
       do j = 1, center%n_shells
 !
-         center%shells(j) = shell(first=int(first_ao_in_shell(j)),  &
-                                  length=int(n_aos_in_shell(j)),    &
-                                  number_=int(shell_numbers(j)))
+         center%shells(j) = shell(first=int(first_ao_in_shell(j)), &
+                                  length=int(n_aos_in_shell(j)),   &
+                                  number_=int(shell_numbers(j)),   &
+                                  cartesian=center%cartesian)
 !
          center%n_ao = center%n_ao + center%shells(j)%length
 !
@@ -578,7 +579,7 @@ contains
 !
 !        Sanity check -> does shell have the correct angular momentum
 !
-         if (angular_momentum_from_symbol(ang_mom) .ne. center%shells(sh)%l) &
+         if (angular_momentum_from_symbol(ang_mom) .ne. center%shells(sh)%get_angular_momentum()) &
             call output%error_msg('Mismatch in angular momentum in read_shell_basis_info')
 !
 !        Set number of primitives and initialize exponents and coefficient array
@@ -812,7 +813,7 @@ contains
       do s = 1, center%n_shells
 !
          map(offset : offset+center%shells(s)%length-1) = &
-            center%shells(s)%get_molden_order(center%cartesian)
+            center%shells(s)%get_molden_order()
 !
          offset = offset + center%shells(s)%length
 !
@@ -821,9 +822,9 @@ contains
    end function get_molden_order_atomic_center
 !
 !
-   function get_cartesian_normalization_factors_atomic_center(center) result(factors)
+   function get_ao_normalization_factors_atomic_center(center) result(factors)
 !!
-!!    Get cartesian normalization factors
+!!    Get AO normalization factors
 !!    Written by Alexander C. Paul, May 2021
 !!
       implicit none
@@ -839,13 +840,13 @@ contains
       do s = 1, center%n_shells
 !
          factors(offset : offset+center%shells(s)%length-1) = &
-            center%shells(s)%get_cartesian_normalization_factor()
+            center%shells(s)%get_normalization_factor()
 !
          offset = offset + center%shells(s)%length
 !
       end do
 !
-   end function get_cartesian_normalization_factors_atomic_center
+   end function get_ao_normalization_factors_atomic_center
 !
 !
    pure function get_identifier_string_atomic_center(center) result(identifier)

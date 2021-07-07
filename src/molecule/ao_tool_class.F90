@@ -343,6 +343,8 @@ contains
 !!    Makes the AO tool ready to use.
 !!    Centers are by default read from input. Uses the optional 'centers' instead if given.
 !!
+      use timings_class, only: timings
+!
       implicit none
 !
       class(ao_tool), intent(inout) :: ao
@@ -351,6 +353,11 @@ contains
       integer, intent(in), optional :: charge
 !
       logical :: print_z_matrix
+!
+      type(timings) :: timer
+!
+      timer = timings('Time initializing AO tool', 'n')
+      call timer%turn_on()
 !
       call ao%set_up_centers(centers)
       call ao%initialize_total_charge(charge)
@@ -385,6 +392,8 @@ contains
       call ao%determine_linearly_independent_aos()
       call ao%construct_cs_eri_max_screenings()
 !
+      call timer%turn_off()
+!
    end subroutine initialize_ao_tool
 !
 !
@@ -396,11 +405,17 @@ contains
 !!    Makes the AO tool ready to use, copying from an ao_tool template
 !!
       use array_utilities, only: copy_integer
+      use timings_class, only: timings
 !
       implicit none
 !
       class(ao_tool), intent(inout) :: ao
       class(ao_tool), intent(in)    :: template
+!
+      type(timings) :: timer
+!
+      timer = timings('Time initializing AO tool from template', 'v')
+      call timer%turn_on()
 
       call ao%set_up_centers(ao_template=template)
 !
@@ -432,6 +447,8 @@ contains
       call mem%alloc(ao%cs_eri_max_indices, ao%n_sh*(ao%n_sh + 1)/2, 3)
 !
       call ao%copy_geometry_dependent_variables(template)
+!
+      call timer%turn_off()
 !
    end subroutine initialize_ao_tool_from_template
 !
@@ -2332,8 +2349,7 @@ contains
 !
                w_red = w - ao%centers(I)%shells(A)%first + 1
 !
-               ang_mom = ao%centers(I)%shells(A)%get_angular_momentum_label(w_red, &
-                                                            ao%centers(I)%cartesian)
+               ang_mom = ao%centers(I)%shells(A)%get_angular_momentum_label(w_red)
 !
 !              Setup the string for printf to print the right number of reals
 !
@@ -2589,7 +2605,7 @@ contains
 !
 !           Determine angular momentum
 !
-            l = ao%centers(center)%shells(shell)%l
+            l = ao%centers(center)%shells(shell)%get_angular_momentum()
 !
 !           Determine radial part
 !
@@ -3283,7 +3299,7 @@ contains
          if (ao%centers(c)%cartesian) then
 !
             factors(aos%first:aos%get_last()) = &
-               ao%centers(c)%get_cartesian_normalization_factors()
+               ao%centers(c)%get_ao_normalization_factors()
 !
          else
 !
@@ -3363,7 +3379,7 @@ contains
 !
             n = ao%centers(c)%shells(s)%get_n_primitives()
             call file_%printf('m', '(a0) (i0)', ints=[n], fs='(t1,a)', &
-                 chars=[ao%centers(c)%shells(s)%get_angular_momentum()])
+                 chars=[ao%centers(c)%shells(s)%get_angular_momentum_letter()])
 !
             do i = 1, n
                call file_%printf('m', '(f16.7)   (f15.10)', fs='(t1,a)', &
