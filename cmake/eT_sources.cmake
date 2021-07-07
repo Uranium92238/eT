@@ -152,8 +152,22 @@ set(eT_fortran_sources
    src/various/continuous_output_coefficients.F90
    src/various/kinds.F90
    src/various/parameters.F90
-   src/various/angular_momentum.F90
    src/various/warning_suppressor.F90
+   src/various/angular_momentum/angular_momentum_factory.F90
+   src/various/angular_momentum/abstract_angular_momentum_class.F90
+   src/various/angular_momentum/s_angular_momentum.F90
+   src/various/angular_momentum/cartesian_p_angular_momentum.F90
+   src/various/angular_momentum/cartesian_d_angular_momentum.F90
+   src/various/angular_momentum/cartesian_f_angular_momentum.F90
+   src/various/angular_momentum/cartesian_g_angular_momentum.F90
+   src/various/angular_momentum/cartesian_h_angular_momentum.F90
+   src/various/angular_momentum/cartesian_i_angular_momentum.F90
+   src/various/angular_momentum/spherical_p_angular_momentum.F90
+   src/various/angular_momentum/spherical_d_angular_momentum.F90
+   src/various/angular_momentum/spherical_f_angular_momentum.F90
+   src/various/angular_momentum/spherical_g_angular_momentum.F90
+   src/various/angular_momentum/spherical_h_angular_momentum.F90
+   src/various/angular_momentum/spherical_i_angular_momentum.F90
 #
    src/wavefunctions/wavefunction/wavefunction_class.F90
 

@@ -9,6 +9,8 @@
 
 ### Structure
 - Added block class using the range class. Facilitates the handling of multiple index ranges. eT-program/eT!823
+- Angular momentum tools handle components of the angular momenta. eT-program/eT!864
+
 
 # eT v1.3.4
 ### Bugfixes
