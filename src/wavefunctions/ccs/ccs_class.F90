@@ -454,7 +454,7 @@ module ccs_class
 !
 !     Initialize wavefunction
 !
-      procedure :: initialize                                    => initialize_ccs
+      procedure :: initialize => initialize_ccs
 !
       procedure :: construct_ntos &
                 => construct_ntos_ccs
@@ -2651,9 +2651,9 @@ contains
 !
       orbital_tool = nto_tool(wf%n_o, wf%n_v, wf%ao%n, wf%n_t1)
 !
-      call orbital_tool%initialize
+      call orbital_tool%initialize()
 !
-      call orbital_tool%add_to_M_and_N(X(1:wf%n_t1))
+      call orbital_tool%add_excited_state(X(1:wf%n_t1))
 !
       call orbital_tool%transform_orbitals(wf%orbital_coefficients, ntos)
 !

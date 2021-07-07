@@ -39,9 +39,9 @@ module nto_tool_class
 !
    type :: nto_tool
 !
-      integer :: n_ao, n_o, n_v, n_singles, X_length, n_states
+      integer :: n_ao, n_o, n_v, X_length, n_states
 !
-      real(dp), dimension(:), allocatable :: eigenvalues_o, eigenvalues_v
+      real(dp), dimension(:),   allocatable :: eigenvalues_o, eigenvalues_v
       real(dp), dimension(:,:), allocatable :: M, N
 !
       type(stream_file), allocatable :: M_file, N_file
@@ -57,11 +57,14 @@ module nto_tool_class
          procedure, public :: write_M_and_N &
                            => write_M_and_N_nto_tool
 !
-         procedure, public :: add_to_M_and_N &
-                           => add_to_M_and_N_nto_tool
+         procedure, public :: add_excited_state &
+                           => add_excited_state_nto_tool
 !
          procedure, public :: add_singles_to_M_and_N &
                            => add_singles_to_M_and_N_nto_tool
+!
+         procedure, public :: add_contributions_to_M_and_N &
+                           => add_contributions_to_M_and_N_nto_tool
 !
          procedure, public :: diagonalize_M_and_N &
                            => diagonalize_M_and_N_nto_tool
@@ -123,7 +126,6 @@ contains
 !
       character(len=*) :: tag
 !
-      this%n_singles = this%n_o*this%n_v
       this%n_states = 0
 !
       this%M_file = stream_file(tag // '_M_transformation')
@@ -238,13 +240,16 @@ contains
    end subroutine write_M_and_N_nto_tool
 !
 !
-   subroutine add_to_M_and_N_nto_tool(this, X)
+   subroutine add_excited_state_nto_tool(this, X)
 !!
-!!    Add to M and N
+!!    Add excited state
 !!    Written by Sarai D. Folkestad and Alexander C. Paul, May 2021
 !!
 !!    Add the contribution of an excited state X to M and N
 !!
+!
+      use array_utilities, only: copy_and_scale
+!
       implicit none
 !
       class(nto_tool), intent(inout) :: this
@@ -253,15 +258,36 @@ contains
 !
       real(dp) :: norm_, ddot
 !
+      real(dp), dimension(:), allocatable :: X_copy
+!
       this%n_states = this%n_states + 1
 !
-      norm_ = ddot(this%n_singles, X, 1, X, 1)
+      call mem%alloc(X_copy, this%X_length)
 !
-      call dscal(this%n_singles, one/sqrt(norm_), X, 1)
+      norm_ = sqrt(ddot(this%X_length, X, 1, X, 1))
+      call copy_and_scale(one/norm_, X, X_copy, this%X_length)
 !
-      call this%add_singles_to_M_and_N(X(1:this%n_singles))
+      call this%add_contributions_to_M_and_N(X_copy)
 !
-   end subroutine add_to_M_and_N_nto_tool
+      call mem%dealloc(X_copy, this%X_length)
+!
+   end subroutine add_excited_state_nto_tool
+!
+!
+   subroutine add_contributions_to_M_and_N_nto_tool(this, X)
+!!
+!!    Add contributions to M and N
+!!    Written by Sarai D. Folkestad and Alexander C. Paul, May 2021
+!!
+      implicit none
+!
+      class(nto_tool), intent(inout) :: this
+!
+      real(dp), dimension(this%X_length), intent(in) :: X
+!
+      call this%add_singles_to_M_and_N(X)
+!
+   end subroutine add_contributions_to_M_and_N_nto_tool
 !
 !
    subroutine add_singles_to_M_and_N_nto_tool(this, X)
