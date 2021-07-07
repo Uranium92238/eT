@@ -3,6 +3,7 @@
 - Timers for Fock matrix construction for coupled cluster. eT-program/eT!849
 - `cc_propagation` and `complex_fft` file names are now starting with `output_name.*` and automatically copied to the output directory. eT-program/eT!854
 - Added option to plot CNTOs and NTOs. eT-program/eT!816
+- Runtime check for reading of non-existing keywords/sections. eT-program/eT!872
 
 ### Optimization
 - Adding option for overlap screening to CC calculation of one electron integral. eT-program/eT!851

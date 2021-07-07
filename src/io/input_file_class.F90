@@ -159,6 +159,10 @@ module input_file_class
       procedure, private :: get_integer_array_for_keyword
       procedure, private :: get_real_array_for_keyword
 !
+      procedure, private :: section_is_allowed
+      procedure, private :: keyword_is_allowed
+      procedure, private :: check_keyword_and_section
+!
    end type input_file
 !
    interface input_file
@@ -760,7 +764,7 @@ contains
 !
       class(input_file) :: this
 !
-      integer :: k, start_, end_, i
+      integer :: start_, end_, i
 !
       logical :: recognized
 !
@@ -779,13 +783,7 @@ contains
 !
 !           Check whether section name is valid
 !
-            recognized = .false.
-!
-            do k = 1, size(this%sections)
-!
-               if (this%sections(k)%name_ == section) recognized = .true.
-!
-            enddo
+            recognized = this%section_is_allowed(section)
 !
             if (.not. recognized) then
 !
@@ -1076,6 +1074,8 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
+      call this%check_keyword_and_section(keyword, section)
+!
       if (this%is_keyword_present(keyword, section)) then
 !
 !        Get the keyword value in string format
@@ -1108,6 +1108,8 @@ contains
       integer(i64), intent(inout) :: keyword_value
 !
       character(len=200) :: keyword_value_string
+!
+      call this%check_keyword_and_section(keyword, section)
 !
       if (this%is_keyword_present(keyword, section)) then
 !
@@ -1216,6 +1218,8 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
+      call this%check_keyword_and_section(keyword, section)
+!
       if (this%is_keyword_present(keyword, section)) then
 !
 !        Get the keyword value in string format
@@ -1283,6 +1287,8 @@ contains
       character(len=*), intent(in) :: section
 !
       character(len=200) :: keyword_value
+!
+      call this%check_keyword_and_section(keyword, section)
 !
       if (this%is_keyword_present(keyword, section)) then
 !
@@ -2561,7 +2567,91 @@ contains
 !
       endif
 !
-    end subroutine place_records_in_memory_input_file
+   end subroutine place_records_in_memory_input_file
+!
+!
+   function keyword_is_allowed(this, keyword, section) result(allowed)
+!!
+!!    Keyword is allowed
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2019-2021
+!!
+      implicit none
+
+      class(input_file), intent(in) :: this
+!
+      character(len=*), intent(in) :: keyword
+      character(len=*), intent(in) :: section
+!
+      logical :: allowed
+!
+      integer :: i, k
+!
+      allowed = .false.
+!
+      do i = 1, size(this%sections)
+!
+         if (this%sections(i)%name_ == trim(section)) then
+!
+            do k = 1, size(this%sections(i)%keywords)
+!
+               if (trim(this%sections(i)%keywords(k)) == trim(keyword)) then
+!
+                  allowed = .true.
+                  return
+!
+               endif
+            enddo
+         endif
+      enddo
+!
+   end function keyword_is_allowed
+!
+!
+   function section_is_allowed(this, section) result(allowed)
+!!
+!!    Section is allowed
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2019-2021
+!!
+      implicit none
+
+      class(input_file), intent(in) :: this
+!
+      character(len=*), intent(in) :: section
+!
+      logical :: allowed
+!
+      integer :: k
+!
+      allowed = .false.
+!
+      do k = 1, size(this%sections)
+!
+         if (this%sections(k)%name_ == trim(section)) allowed = .true.
+!
+      enddo
+!
+   end function section_is_allowed
+!
+!
+   subroutine check_keyword_and_section(this, keyword, section)
+!!
+!!    Check keyword and section
+!!    Written by Sarai D. Folkestad, Jul 2021
+!!
+      implicit none
+
+      class(input_file), intent(in) :: this
+!
+      character(len=*), intent(in) :: keyword
+      character(len=*), intent(in) :: section
+!
+      if (.not. this%section_is_allowed(section)) &
+         call output%error_msg('requested keyword from non-existing section ('//trim(section)//')')
+!
+      if (.not. this%keyword_is_allowed(keyword, section)) &
+         call output%error_msg('requested illegal keyword ('//trim(keyword)//')')
+!
+   end subroutine check_keyword_and_section
 !
 !
 end module input_file_class
