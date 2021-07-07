@@ -45,8 +45,8 @@ module cnto_tool_class
 !
    contains
 !
-      procedure, public :: add_to_M_and_N &
-                        => add_to_M_and_N_cnto_tool
+      procedure, public :: add_contributions_to_M_and_N &
+                        => add_contributions_to_M_and_N_cnto_tool
 !
       procedure, public :: add_doubles_to_M_and_N &
                         => add_doubles_to_M_and_N_cnto_tool
@@ -81,38 +81,6 @@ contains
       call this%prepare('cnto')
 !
    end function new_cnto_tool
-!
-!
-   subroutine add_to_M_and_N_cnto_tool(this, X)
-!!
-!!    Add to M and N
-!!    Written by Sarai D. Folkestad and Alexander C. Paul, May 2021
-!!
-!!    Add the contribution of an excited state X to M and N
-!!
-      use reordering, only: squareup
-!
-      implicit none
-!
-      class(cnto_tool), intent(inout) :: this
-!
-      real(dp), dimension(this%X_length), intent(in) :: X
-!
-      real(dp), dimension(:,:,:,:), allocatable :: X2
-!
-      this%n_states = this%n_states + 1
-!
-      call this%add_singles_to_M_and_N(X(1:this%n_singles))
-!
-      call mem%alloc(X2, this%n_v, this%n_o, this%n_v, this%n_o)
-!
-      call squareup(X(this%n_singles+1:), X2, this%n_singles)
-!
-      call this%add_doubles_to_M_and_N(X2)
-!
-      call mem%dealloc(X2, this%n_v, this%n_o, this%n_v, this%n_o)
-!
-   end subroutine add_to_M_and_N_cnto_tool
 !
 !
    subroutine add_doubles_to_M_and_N_cnto_tool(this, X2)
@@ -177,6 +145,34 @@ contains
 !$omp end parallel do
 !
    end subroutine add_doubles_to_M_and_N_cnto_tool
+!
+!
+   subroutine add_contributions_to_M_and_N_cnto_tool(this, X)
+!!
+!!    Add contributions to M and N
+!!    Written by Sarai D. Folkestad and Alexander C. Paul, May 2021
+!!
+!
+      use reordering, only: squareup
+!
+      implicit none
+!
+      class(cnto_tool), intent(inout) :: this
+!
+      real(dp), dimension(this%X_length), intent(in) :: X
+      real(dp), dimension(:,:,:,:), allocatable :: X2
+!
+      call this%add_singles_to_M_and_N(X(1 : this%n_o * this%n_v))
+!
+      call mem%alloc(X2, this%n_v, this%n_o, this%n_v, this%n_o)
+!
+      call squareup(X(this%n_o * this%n_v + 1 :), X2, this%n_o * this%n_v)
+!
+      call this%add_doubles_to_M_and_N(X2)
+!
+      call mem%dealloc(X2, this%n_v, this%n_o, this%n_v, this%n_o)
+!
+   end subroutine add_contributions_to_M_and_N_cnto_tool
 !
 !
 end module cnto_tool_class

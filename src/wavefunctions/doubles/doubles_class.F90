@@ -478,6 +478,8 @@ contains
 !
       type(cnto_tool), allocatable :: orbital_tool
 !
+      integer :: n_singles_and_doubles
+!
       call output%printf('n', '- Constructing CNTOs for state (i0)', &
                          ints=[k], ffs='(/t3,a)')
 !
@@ -485,11 +487,13 @@ contains
 !
       call wf%read_excited_state(X, k, k, trim(l_or_r))
 !
-      orbital_tool = cnto_tool(wf%n_o, wf%n_v, wf%ao%n, wf%n_es_amplitudes)
+      n_singles_and_doubles = wf%n_t1 + wf%n_t1*(wf%n_t1 + 1)/2
 !
-      call orbital_tool%initialize
+      orbital_tool = cnto_tool(wf%n_o, wf%n_v, wf%ao%n, n_singles_and_doubles)
 !
-      call orbital_tool%add_to_M_and_N(X)
+      call orbital_tool%initialize()
+!
+      call orbital_tool%add_excited_state(X(1:n_singles_and_doubles))
 !
       call orbital_tool%transform_orbitals(wf%orbital_coefficients, cntos)
 !
