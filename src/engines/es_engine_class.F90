@@ -305,7 +305,7 @@ contains
 !
          elseif (engine%es_algorithm == 'non-linear davidson') then
 !
-            cc_es_solver = nonlinear_davidson_cc_es(transformation, wf, engine%es_restart)
+            cc_es_solver = nonlinear_davidson_cc_es(transformation, wf, restart)
 !
          else
 !
