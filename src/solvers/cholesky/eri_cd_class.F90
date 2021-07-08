@@ -167,11 +167,11 @@ module eri_cd_class
       procedure, private :: construct_diagonal_batches
       procedure, private :: construct_diagonal_from_batch_bases
 !
-      procedure, private :: invert_Q    
-      procedure, private :: construct_S 
+      procedure, private :: invert_Q
+      procedure, private :: construct_S
 !
-      procedure, private :: read_settings 
-      procedure, private :: print_banner  
+      procedure, private :: read_settings
+      procedure, private :: print_banner
       procedure, private :: print_settings
 !
    end type eri_cd
@@ -257,7 +257,7 @@ contains
 !
 !     Additional prints
 !
-      call output%printf('m', '- Cholesky decomposition ao details:', fs='(/t3, a)')      
+      call output%printf('m', '- Cholesky decomposition ao details:', fs='(/t3, a)')
 !
       call output%printf('m', 'Total number of AOs:         (i13)', &
                          ints=[this%n_ao], fs='(/t6,a)')
@@ -308,14 +308,14 @@ contains
 !!    Determine Cholesky basis
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Determine Cholesky pivots in batches (partitioned Cholesky decomposition, PCD) or 
+!!    Determine Cholesky pivots in batches (partitioned Cholesky decomposition, PCD) or
 !!    in a single batch (standard Cholesky decomposition).
 !!
-      implicit none 
+      implicit none
 !
-      class(eri_cd), intent(inout) :: this 
+      class(eri_cd), intent(inout) :: this
 !
-      class(ao_tool), intent(in) :: ao 
+      class(ao_tool), intent(in) :: ao
 !
       if (this%n_batches == 1) then
 !
@@ -337,11 +337,11 @@ contains
 !!    Get n Cholesky
 !!    Written by Eirik F. Kjønstad, 2021
 !!
-      implicit none 
+      implicit none
 !
-      class(eri_cd), intent(in) :: this 
+      class(eri_cd), intent(in) :: this
 !
-      integer :: n_J 
+      integer :: n_J
 !
       n_J = this%n_cholesky
 !
@@ -424,7 +424,7 @@ contains
       call mem%alloc(construct_shp, this%n_shp)
 !
       call this%determine_shps_to_construct_diagonal(ao,            &
-                                                     construct_shp, & 
+                                                     construct_shp, &
                                                      shp_to_shells, &
                                                      max_diagonal)
 !
@@ -511,15 +511,15 @@ contains
 !!       3. D_xy = ( xy | xy ), the significant diagonal.
 !!       4. Screening vector
 !!
-      implicit none 
+      implicit none
 !
-      class(eri_cd), intent(inout) :: this 
+      class(eri_cd), intent(inout) :: this
 !
       integer, intent(in) :: n_sig_shp, n_sig_aop
 !
-      logical, dimension(n_sig_shp), intent(in) :: sig_shp 
+      logical, dimension(n_sig_shp), intent(in) :: sig_shp
 !
-      real(dp), dimension(n_sig_aop), intent(in) :: D_xy 
+      real(dp), dimension(n_sig_aop), intent(in) :: D_xy
 !
       real(dp), dimension(n_sig_aop), intent(in) :: screening_vector_reduced
 !
@@ -547,13 +547,13 @@ contains
 !!       1. number of shell pairs to construct, number of ao pairs to construct
 !!       2. construct_shp - vector of logicals to describe which shell pairs are to be constructed
 !!
-      implicit none 
+      implicit none
 !
-      class(eri_cd), intent(inout) :: this 
+      class(eri_cd), intent(inout) :: this
 !
       integer, intent(in) :: n_construct_shp, n_construct_aop
 !
-      logical, dimension(n_construct_shp), intent(in) :: construct_shp 
+      logical, dimension(n_construct_shp), intent(in) :: construct_shp
 !
       call this%diagonal_info_cauchy_schwarz%open_('write', 'rewind')
 !
@@ -564,7 +564,7 @@ contains
       call this%diagonal_info_cauchy_schwarz%close_()
 !
    end subroutine write_diagonal_info_cauchy_schwarz
-!  
+!
 !
    subroutine construct_sig_diagonal_and_screening_vector(this, ao, &
                                           D_xy, screening_vector_reduced, screening_vector_local, &
@@ -573,15 +573,15 @@ contains
 !!    Construct significant diagonal and screening vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(eri_cd), intent(in) :: this 
+      class(eri_cd), intent(in) :: this
 !
-      class(ao_tool), intent(in) :: ao 
+      class(ao_tool), intent(in) :: ao
 !
-      integer, intent(in) :: n_sig_shp, n_sig_aop 
+      integer, intent(in) :: n_sig_shp, n_sig_aop
 !
-      real(dp), dimension(n_sig_aop), intent(out) :: D_xy 
+      real(dp), dimension(n_sig_aop), intent(out) :: D_xy
       real(dp), dimension(n_sig_aop), intent(out) :: screening_vector_reduced
 !
       real(dp), dimension(this%n_ao, this%n_ao), intent(in) :: screening_vector_local
@@ -659,11 +659,11 @@ contains
 !!    Construct sig shp to shells and AO offsets
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(eri_cd), intent(in) :: this 
+      class(eri_cd), intent(in) :: this
 !
-      class(ao_tool), intent(in) :: ao 
+      class(ao_tool), intent(in) :: ao
 !
       integer, intent(in) :: n_sig_shp
 !
@@ -672,7 +672,7 @@ contains
       integer, dimension(n_sig_shp), intent(out) :: ao_offsets
 !
       integer, dimension(this%n_shp, 2), intent(in) :: shp_to_shells
-      logical, dimension(this%n_shp), intent(in) :: sig_shp 
+      logical, dimension(this%n_shp), intent(in) :: sig_shp
 !
       integer :: I, A, B, current_sig_shp
 !
@@ -714,19 +714,19 @@ contains
 !!
 !!    Get screening vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!    
+!!
 !!    Sets target screening vector equal to source (if 'source' is present).
 !!
 !!    Otherwise, the target screening vector is set to 1.
 !!
-      implicit none 
+      implicit none
 !
-      class(eri_cd), intent(in) :: this 
+      class(eri_cd), intent(in) :: this
 !
       real(dp), dimension(this%n_ao, this%n_ao), intent(out) :: screening_target
       real(dp), dimension(this%n_ao, this%n_ao), intent(in), optional :: screening_source
 !
-      integer :: i, j 
+      integer :: i, j
 !
       if (present(screening_source)) then
 !
@@ -736,7 +736,7 @@ contains
 !
 !$omp parallel do private (i, j)
          do i = 1, this%n_ao
-            do j = 1, this%n_ao 
+            do j = 1, this%n_ao
 !
                screening_target(i, j) = one
 !
@@ -756,19 +756,19 @@ contains
 !!
 !!    Compute number of AOPs and SHPs (I) that correspond to sig_shp(I) = .true.
 !!
-      implicit none 
+      implicit none
 !
-      class(eri_cd), intent(in) :: this 
+      class(eri_cd), intent(in) :: this
 !
-      class(ao_tool), intent(in) :: ao 
+      class(ao_tool), intent(in) :: ao
 !
       integer, intent(out) :: n_aop, n_shp
 !
-      logical, dimension(this%n_shp), intent(in) :: sig_shp 
+      logical, dimension(this%n_shp), intent(in) :: sig_shp
 !
       integer, dimension(this%n_shp, 2), intent(in) :: shp_to_shells
 !
-      integer :: I, A, B 
+      integer :: I, A, B
 !
       type(range_) :: A_range, B_range
 !
@@ -802,16 +802,16 @@ contains
 !!    Determine sig SHPs and max diagonal
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Determines the shell pairs that are significant (sig_shp) and 
+!!    Determines the shell pairs that are significant (sig_shp) and
 !!    calculates the maximum value on the entire diagonal (max_diagonal).
 !!
-      implicit none 
+      implicit none
 !
-      class(eri_cd), intent(in) :: this 
+      class(eri_cd), intent(in) :: this
 !
-      class(ao_tool), intent(in) :: ao 
+      class(ao_tool), intent(in) :: ao
 !
-      logical, dimension(this%n_shp), intent(out) :: sig_shp 
+      logical, dimension(this%n_shp), intent(out) :: sig_shp
 !
       real(dp), intent(out) :: max_diagonal
 !
@@ -824,7 +824,7 @@ contains
       real(dp), dimension(ao%max_sh_size**4), target :: g_ABAB
       real(dp), dimension(ao%max_sh_size**2) :: D_AB, D_AB_screen
 !
-      integer :: x, y, xy, A, B, I, K
+      integer :: x, y, A, B, I, K
 !
       type(range_) :: A_range, B_range
 !
@@ -835,7 +835,7 @@ contains
       call mem%alloc(max_in_shp_diagonal, this%n_shp)
 !
 !$omp parallel do &
-!$omp private(I, K, A, B, A_range, B_range, x, y, xy, g_ABAB, g_ABAB_p, D_AB, D_AB_screen) &
+!$omp private(I, K, A, B, A_range, B_range, x, y, g_ABAB, g_ABAB_p, D_AB, D_AB_screen) &
 !$omp shared(sig_shp,  max_in_shp_diagonal) &
 !$omp schedule(guided)
       do I = 1, this%n_shp
@@ -894,11 +894,11 @@ contains
 !!    Determines for which SHPs to construct the diagonal of the ERI matrix
 !!    (construct_shp).
 !!
-      implicit none 
+      implicit none
 !
-      class(eri_cd), intent(in) :: this 
+      class(eri_cd), intent(in) :: this
 !
-      class(ao_tool), intent(in) :: ao 
+      class(ao_tool), intent(in) :: ao
 !
       logical, dimension(this%n_shp), intent(out) :: construct_shp
 !
@@ -910,7 +910,7 @@ contains
 !
       real(dp), dimension(ao%max_sh_size**4), target :: g_ABAB
 !
-      integer :: I, K, A, B, x, y, xy
+      integer :: I, K, A, B, x, y
 !
       type(range_) :: A_range, B_range
 !
@@ -919,7 +919,7 @@ contains
       construct_shp = .false.
 !
 !$omp parallel do &
-!$omp private(I, K, A, B, A_range, B_range, x, y, xy, g_ABAB, g_ABAB_p, construct_test) &
+!$omp private(I, K, A, B, A_range, B_range, x, y, g_ABAB, g_ABAB_p, construct_test) &
 !$omp shared(construct_shp) &
 !$omp schedule(guided)
       do I = 1, this%n_shp
@@ -962,15 +962,15 @@ contains
 !!
 !!    Creates map from a shell-pair AB to the individual shells [A, B].
 !!
-      implicit none 
+      implicit none
 !
-      class(eri_cd), intent(in) :: this 
+      class(eri_cd), intent(in) :: this
 !
       integer, dimension(this%n_shp, 2), intent(out) :: shp_to_shells
 !
-      integer :: shp, A, B 
+      integer :: shp, A, B
 !
-      shp = 0 
+      shp = 0
 !
       do B = 1, this%n_s
          do A = B, this%n_s
@@ -3324,7 +3324,7 @@ contains
             D = basis_shell_info(K_shp, 2)
 !
             C_range = ao%shells(C)
-            D_range = ao%shells(D)            
+            D_range = ao%shells(D)
 !
 !$omp parallel do private(AB_shp, A, B, A_range, B_range, g_ABCD, g_ABCD_p, w, x, J, y, z)
             do AB_shp = 1, n_construct_shp
@@ -3622,7 +3622,7 @@ contains
 !
                A_range = ao%shells(A)
                B_range = ao%shells(B)
-!     
+!
                construct_shp_to_shells(current_construct_shp, 1) = A
                construct_shp_to_shells(current_construct_shp, 2) = B
 !
@@ -3716,7 +3716,7 @@ contains
             D = basis_shell_info(K_shp, 2)
 !
             C_range = ao%shells(C)
-            D_range = ao%shells(D)            
+            D_range = ao%shells(D)
 !
             call mem%alloc(g_wxK, n_construct_aop, basis_shell_info(K_shp,4))
 !
@@ -3725,7 +3725,7 @@ contains
 !
                A = construct_shp_to_shells(AB_shp, 1)
                B = construct_shp_to_shells(AB_shp, 2)
-!  
+!
                A_range = ao%shells(A)
                B_range = ao%shells(B)
 !
