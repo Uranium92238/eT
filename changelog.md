@@ -1,6 +1,10 @@
+# eT v1.3.5
+### Bugfixes
+- Missing keyword (one-electron integral cutoff) added to the input file class. eT-program/eT!874
+
 # eT v1.3.4
 ### Bugfixes
-- Bug with reordering of atoms with both active spaces and several different basis sets was fixed. eT-program/eT!8
+- Bug with reordering of atoms with both active spaces and several different basis sets was fixed. eT-program/eT!868
 
 # eT v1.3.3
 ### Bugfixes
