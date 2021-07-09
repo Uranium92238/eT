@@ -448,23 +448,24 @@ contains
 !
       solver_scf%name_    = 'solver scf'
       solver_scf%required = .false.
-      solver_scf%keywords = [character(len=30) ::        &
-                            'algorithm',                 &
-                            'ao density guess',          &
-                            'coulomb threshold',         &
-                            'crop',                      &
-                            'cumulative fock threshold', &
-                            'diis dimension',            &
-                            'energy threshold',          &
-                            'exchange threshold',        &
-                            'gradient threshold',        &
-                            'integral cutoff',           &
-                            'integral precision',        &
-                            'max iterations',            &
-                            'print orbitals',            &
-                            'restart',                   &
-                            'skip',                      &
-                            'storage',                   &
+      solver_scf%keywords = [character(len=30) ::           &
+                            'algorithm',                    &
+                            'ao density guess',             &
+                            'coulomb threshold',            &
+                            'crop',                         &
+                            'cumulative fock threshold',    &
+                            'diis dimension',               &
+                            'energy threshold',             &
+                            'exchange threshold',           &
+                            'gradient threshold',           &
+                            'integral cutoff',              &
+                            'integral precision',           &
+                            'max iterations',               &
+                            'one-electron integral cutoff', &
+                            'print orbitals',               &
+                            'restart',                      &
+                            'skip',                         &
+                            'storage',                      &
                             'write molden']
 !
 !
