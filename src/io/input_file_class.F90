@@ -1528,6 +1528,11 @@ contains
 !
       character(len=200) :: local_keyword
 !
+      if (.not. this%keyword_is_allowed(keyword, section)) then
+         call output%error_msg('Trying to read keyword ((a0)) that is not defined &
+                               &in section: ' // section,  chars=[keyword])
+      end if
+!
 !     Move to the requested section & get the number of records in that section
 !
       if (.not. this%is_section_present(section)) then
@@ -2585,7 +2590,7 @@ contains
 !
       logical :: allowed
 !
-      integer :: i, k
+      integer :: i
 !
       allowed = .false.
 !
@@ -2593,15 +2598,9 @@ contains
 !
          if (this%sections(i)%name_ == trim(section)) then
 !
-            do k = 1, size(this%sections(i)%keywords)
+            allowed = any(this%sections(i)%keywords == trim(keyword))
+            return
 !
-               if (trim(this%sections(i)%keywords(k)) == trim(keyword)) then
-!
-                  allowed = .true.
-                  return
-!
-               endif
-            enddo
          endif
       enddo
 !
@@ -2647,10 +2646,11 @@ contains
       character(len=*), intent(in) :: section
 !
       if (.not. this%section_is_allowed(section)) &
-         call output%error_msg('requested keyword from non-existing section ('//trim(section)//')')
+         call output%error_msg('requested keyword from non-existing section (a0)', &
+                               chars=[trim(section)])
 !
       if (.not. this%keyword_is_allowed(keyword, section)) &
-         call output%error_msg('requested illegal keyword ('//trim(keyword)//')')
+         call output%error_msg('requested illegal keyword (a0)', chars=[trim(keyword)])
 !
    end subroutine check_keyword_and_section
 !

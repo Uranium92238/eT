@@ -35,26 +35,26 @@ module uhf_class
 !
       integer :: multiplicity ! 2S + 1
 !
-      integer :: n_alpha ! Number of alpha electrons 
-      integer :: n_beta  ! Number of beta electrons 
+      integer :: n_alpha ! Number of alpha electrons
+      integer :: n_beta  ! Number of beta electrons
 !
-      real(dp), dimension(:,:), allocatable :: ao_density_a ! Alpha density 
-      real(dp), dimension(:,:), allocatable :: ao_density_b ! Beta density 
+      real(dp), dimension(:,:), allocatable :: ao_density_a ! Alpha density
+      real(dp), dimension(:,:), allocatable :: ao_density_b ! Beta density
 !
-      real(dp), dimension(:,:), allocatable :: ao_fock_a    ! Alpha Fock 
-      real(dp), dimension(:,:), allocatable :: ao_fock_b    ! Beta Fock 
+      real(dp), dimension(:,:), allocatable :: ao_fock_a    ! Alpha Fock
+      real(dp), dimension(:,:), allocatable :: ao_fock_b    ! Beta Fock
 !
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_a  ! Alpha orbital coeffs.
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_b  ! Beta orbital coeffs.
 !
-      real(dp), dimension(:), allocatable :: orbital_energies_a ! Alpha orbital energies 
+      real(dp), dimension(:), allocatable :: orbital_energies_a ! Alpha orbital energies
       real(dp), dimension(:), allocatable :: orbital_energies_b ! Beta orbital energies
 !
-      logical :: fractional_uniform_valence = .false. ! If true, smears electrons for degenerate 
-                                                      ! HOMOs. Used to generate spherically 
-                                                      ! symmetrical SAD guess. Gives non-UHF 
-                                                      ! energy and should be false if the 
-                                                      ! user wants standard UHF numbers.
+      logical :: fractional_uniform_valence  ! If true, smears electrons for degenerate
+                                             ! HOMOs. Used to generate spherically
+                                             ! symmetrical SAD guess. Gives non-UHF
+                                             ! energy and should be false if the
+                                             ! user wants standard UHF numbers.
 !
    contains
 !
@@ -97,7 +97,7 @@ module uhf_class
       procedure :: print_spin                            => print_spin_uhf
       procedure :: print_summary                         => print_summary_uhf
 !
-!     Roothan-Hall gradient 
+!     Roothan-Hall gradient
 !
       procedure :: get_packed_roothan_hall_gradient      => get_packed_roothan_hall_gradient_uhf
 !
@@ -133,7 +133,7 @@ module uhf_class
 !
       procedure :: set_n_mo                              => set_n_mo_uhf
 !
-      procedure :: cleanup                               => cleanup_uhf 
+      procedure :: cleanup                               => cleanup_uhf
 !
       procedure :: get_F                                 => get_F_uhf
       procedure :: set_C_and_e                           => set_C_and_e_uhf
@@ -155,15 +155,15 @@ module uhf_class
    end interface
 !
 !
-   interface uhf 
+   interface uhf
 !
-      procedure :: new_uhf 
+      procedure :: new_uhf
       procedure :: new_uhf_from_parameters
 !
-   end interface uhf 
+   end interface uhf
 !
 !
-contains 
+contains
 !
 !
    function new_uhf() result(wf)
@@ -177,6 +177,7 @@ contains
 !
       wf%name_ = 'uhf'
       wf%cumulative_fock = .false.
+      wf%fractional_uniform_valence = .false.
 !
       call wf%read_settings()
 !
@@ -224,8 +225,8 @@ contains
 !
       class(uhf) :: wf
 !
-      class(atomic_center), dimension(:), optional, intent(in) :: centers 
-      integer, intent(in), optional :: charge 
+      class(atomic_center), dimension(:), optional, intent(in) :: centers
+      integer, intent(in), optional :: charge
 !
       logical, intent(in), optional :: embedding
 !
@@ -269,7 +270,7 @@ contains
 !
       character(len=*) :: guess
 !
-      real(dp) :: alpha_prefactor, beta_prefactor 
+      real(dp) :: alpha_prefactor, beta_prefactor
 !
       if (trim(guess) == 'sad' .or. trim(guess) == 'SAD') then
 !
@@ -373,12 +374,7 @@ contains
 !
       class(uhf) :: wf
 !
-      call input%get_keyword('multiplicity',       &
-                                        'system',  &
-                                        wf%multiplicity)
-!
-      wf%fractional_uniform_valence = &
-            input%is_keyword_present('fractional uniform valence', 'hf')
+      call input%get_keyword('multiplicity', 'system', wf%multiplicity)
 !
    end subroutine read_uhf_settings_uhf
 !
@@ -402,15 +398,15 @@ contains
       real(dp) :: homo_lumo_gap_b
       real(dp) :: nuclear_repulsion
 !
-      if (wf%n_alpha > 0 .and. wf%n_alpha < wf%n_mo) then 
+      if (wf%n_alpha > 0 .and. wf%n_alpha < wf%n_mo) then
 !
          homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
          call output%printf('m', 'HOMO-LUMO gap (alpha):     (f19.12)', &
                             reals=[homo_lumo_gap_a], fs='(/t6,a)')
 !
-      endif 
+      endif
 !
-      if (wf%n_beta > 0 .and. wf%n_beta < wf%n_mo) then 
+      if (wf%n_beta > 0 .and. wf%n_beta < wf%n_mo) then
 !
          homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
          call output%printf('m', 'HOMO-LUMO gap (beta):      (f19.12)', &
@@ -510,7 +506,7 @@ contains
 !!    Written by Eirik F. Kjønstad, Sep 2018
 !!
 !!    Determines the number of alpha and beta elctrons
-!!    from the provided multiplicity and the number 
+!!    from the provided multiplicity and the number
 !!    electrons in the system. We assume that n_alpha
 !!    is greater than or equal to n_beta without loss
 !!    of generality.
@@ -767,7 +763,7 @@ contains
       wf%energy = wf%get_nuclear_repulsion()
 !
       if (wf%embedded) wf%energy = wf%energy + wf%embedding%get_energy(wf%ao, wf%ao_density)
-!      
+!
       wf%energy = wf%energy + (one/two)*ddot((wf%ao%n)**2, wf%ao_density_a, 1, h_wx, 1)
       wf%energy = wf%energy + (one/two)*ddot((wf%ao%n)**2, wf%ao_density_a, 1, wf%ao_fock_a, 1)
 !
@@ -873,7 +869,7 @@ contains
 !!    Constructs the Fock matrix in the orthonormal AO basis
 !!    and returns it packed
 !!
-      use reordering, only: packin 
+      use reordering, only: packin
       implicit none
 !
       class(uhf) :: wf
@@ -901,12 +897,12 @@ contains
 !!
 !!    Set C and e
 !!    Written by Sarai D. Folkestad, 2020
-!! 
-!!    Sets the orbital coefficients from the orbital 
+!!
+!!    Sets the orbital coefficients from the orbital
 !!    coefficients in the orthonormal AO basis (C)
 !!
 !!    Sets the orbital energies (e)
-!! 
+!!
       implicit none
 !
       class(uhf) :: wf
@@ -1052,7 +1048,7 @@ contains
 !!
       use string_utilities, only: convert_to_uppercase
 !
-      implicit none 
+      implicit none
 !
       class(uhf), intent(inout) :: wf
 !
@@ -1066,7 +1062,7 @@ contains
       if (write_mo_info) call wf%save_orbital_info()
 !
       call output%printf('m', '- '// &
-                         &trim(convert_to_uppercase(wf%name_))// ' wavefunction spin expectation values:', fs='(/t3,a)')     
+                         &trim(convert_to_uppercase(wf%name_))// ' wavefunction spin expectation values:', fs='(/t3,a)')
 !
       call wf%print_spin()
 !
