@@ -1,0 +1,36 @@
+system
+   name: HOF He
+   charge: 0
+end system
+
+do
+   time dependent hf
+end do
+
+memory
+   available: 8
+end memory
+
+solver scf
+   algorithm:          scf-diis
+   energy threshold:   1.0d-12
+   gradient threshold: 1.0d-12
+end solver scf
+
+method
+   hf
+end method
+
+tdhf
+  tamm-dancoff
+  states: 3
+  residual threshold: 1.0d-10
+end tdhf
+
+geometry
+basis: cc-pVDZ
+ H          0.86681        0.60144        5.00000
+ H         -0.86681        0.60144        5.00000
+ O          0.00000       -0.07579        5.00000
+ He         0.00000        0.00000        7.50000
+end geometry

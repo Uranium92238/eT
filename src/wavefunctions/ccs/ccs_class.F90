@@ -237,8 +237,6 @@ module ccs_class
       procedure :: set_fock                                      => set_fock_ccs
       procedure :: set_fock_complex                              => set_fock_ccs_complex
 !
-      procedure :: get_orbital_differences                       => get_orbital_differences_ccs
-!
       procedure :: set_excitation_energies                       => set_excitation_energies_ccs
 !
 !     Procedures related to the Fock matrix
@@ -802,42 +800,6 @@ contains
       end if
 !
    end subroutine set_initial_multipliers_guess_ccs
-!
-!
-   subroutine get_orbital_differences_ccs(wf, orbital_differences, N)
-!!
-!!    Get orbital differences
-!!    Written by Sarai D. Folkestad, Sep 2018
-!!
-!!    Sets the (ground state) orbital differences vector:
-!!
-!!       epsilon_ai = epsilon_a - epsilon_i
-!!
-!!    Here, the epsilon vector has dimensionality N = n_t1
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      integer, intent(in) :: N
-!
-      real(dp), dimension(N), intent(out) :: orbital_differences
-!
-      integer :: a, i, ai
-!
-!$omp parallel do private(i,a,ai)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            orbital_differences(ai) = wf%orbital_energies(a + wf%n_o) - wf%orbital_energies(i)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine get_orbital_differences_ccs
 !
 !
    subroutine construct_Jacobian_transform_ccs(wf, r_or_l, X, R, w)

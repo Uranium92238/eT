@@ -112,7 +112,6 @@ contains
       engine%skip_scf         = .false.
 !
       call engine%read_settings()
-      call engine%check_algorithm()
 !
    end function new_reference_engine
 !
@@ -151,6 +150,8 @@ contains
 !
       class(reference_engine), intent(in)    :: engine
       class(hf),               intent(inout) :: wf
+!
+      call engine%check_algorithm()
 !
       if ((.not. engine%restart) .and.  &
           (.not. engine%skip_scf) .and. &

@@ -1,10 +1,12 @@
 # eT v1.4.0
+
 ### Feature
 - Timers for Fock matrix construction for coupled cluster. eT-program/eT!849
 - `cc_propagation` and `complex_fft` file names are now starting with `output_name.*` and automatically copied to the output directory. eT-program/eT!854
 - Added option to plot CNTOs and NTOs. eT-program/eT!816
 - Runtime check for reading of non-existing keywords/sections. eT-program/eT!872
 - Runtime check that keywords have been defined for sections. eT-program/eT!878
+- TDHF (RPA/Tamm-Dancoff) excitation energies implemented for RHF. eT-program/eT!809
 
 ### Optimization
 - Adding option for overlap screening to CC calculation of one electron integral. eT-program/eT!851

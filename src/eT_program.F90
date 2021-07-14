@@ -220,6 +220,7 @@ subroutine reference_calculation(ref_wf)
 !
    use reference_engine_class, only: reference_engine
    use hf_geoopt_engine_class, only: hf_geoopt_engine
+   use tdhf_engine_class,     only: tdhf_engine
 !
    use hf_class, only: hf
    use uhf_class, only: uhf
@@ -259,6 +260,10 @@ subroutine reference_calculation(ref_wf)
    if (input%is_keyword_present('ground state geoopt', 'do')) then
 !
       ref_engine = hf_geoopt_engine()
+!
+   elseif (input%is_keyword_present('time dependent hf', 'do')) then
+!
+      ref_engine = tdhf_engine()
 !
    else
 !
