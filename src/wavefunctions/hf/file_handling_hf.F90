@@ -105,6 +105,101 @@ contains
    end subroutine save_ao_density_hf
 !
 !
+   module subroutine save_tdhf_vector_hf(wf, vector, energy, I)
+!!
+!!    Save TDHF vector
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_o*wf%n_v), intent(in) :: vector
+!
+      real(dp), intent(in) :: energy
+!
+      integer, intent(in) :: I
+!
+      integer(i64) :: n
+!
+      n = int(wf%n_o*wf%n_v, kind=i64)
+!
+      call wf%tdhf_files(I)%open_('write', 'rewind')
+!
+      call wf%tdhf_files(I)%write_(energy)
+      call wf%tdhf_files(I)%write_(n)
+      call wf%tdhf_files(I)%write_(vector, wf%n_o*wf%n_v)
+!
+      call wf%tdhf_files(I)%close_
+!
+   end subroutine save_tdhf_vector_hf
+!
+!
+   module subroutine read_tdhf_vector_hf(wf, vector, I)
+!!
+!!    Read TDHF vector
+!!    Written By Sarai D. Folkestad, 2021
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+      real(dp), dimension(wf%n_o*wf%n_v), intent(out) :: vector
+!
+      integer, intent(in) :: I
+!
+      call wf%tdhf_files(I)%open_('read', 'rewind')
+!
+      call wf%tdhf_files(I)%read_(vector, wf%n_o*wf%n_v, dp + i64)
+!
+      call wf%tdhf_files(I)%close_
+!
+   end subroutine read_tdhf_vector_hf
+!
+!
+   module subroutine read_tdhf_energy_hf(wf, I)
+!!
+!!    Read TDHF energy
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+      integer, intent(in) :: I
+!
+      call wf%tdhf_files(I)%open_('read', 'rewind')
+!
+      call wf%tdhf_files(I)%read_(wf%tdhf_excitation_energies(I))
+!
+      call wf%tdhf_files(I)%close_
+!
+   end subroutine read_tdhf_energy_hf
+!
+!
+   module subroutine initialize_tdhf_files_hf(wf)
+!!
+!!    Initialize TDHF files
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+      character(len=21) :: file_name
+      integer :: state
+!
+      allocate(wf%tdhf_files(wf%n_tdhf_vectors))
+!
+      do state = 1, wf%n_tdhf_vectors
+!
+         write(file_name,'(a,i3.3)') 'tdhf_eigenvectors_', state
+         wf%tdhf_files(state) = stream_file(trim(file_name))
+!
+      end do
+!
+   end subroutine initialize_tdhf_files_hf
+!
+!
    module subroutine write_molden_file_hf(wf)
 !!
 !!    Write Molden file

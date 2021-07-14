@@ -84,6 +84,35 @@ def get_mlhf_filter(tolerance, convergence=True, restart=False, idempotent=True)
     return f
 
 
+def get_tdhf_filter(
+    n_states,
+    tolerance,
+    convergence=False,
+    restart=False,
+    idempotent=True,
+    z_matrix=False,
+):
+    """
+    Returns filters for a TDHF calculation.
+    """
+
+    from runtest import get_filter
+
+    f = get_hf_filter(tolerance, convergence, restart, idempotent, z_matrix)
+    g = [
+        get_filter(
+            from_string="State                (Hartree)             (eV)",
+            num_lines=2 + n_states,
+            abs_tolerance=tolerance,
+            mask=[2],
+        )
+    ]
+
+    f.extend(g)
+
+    return f
+
+
 def get_gs_filter(tolerance, convergence=True, restart=False, Newton=False):
     """
     Returns filters for a GS calculation.

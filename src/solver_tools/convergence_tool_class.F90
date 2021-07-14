@@ -21,7 +21,7 @@ module convergence_tool_class
 !
 !!
 !!    Convergence tool class module
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
+!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
 !!    Rolf H. Myhre and Alexander C. Paul, 2020
 !
    use kinds
@@ -50,8 +50,8 @@ contains
    function new_convergence_tool(energy_threshold, residual_threshold, energy_convergence) result(this)
 !!
 !!    New convergence tool
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!    Rolf H. Myhre and Alexander C. Paul, 2020   
+!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
+!!    Rolf H. Myhre and Alexander C. Paul, 2020
 !!
       implicit none
 !
@@ -60,7 +60,7 @@ contains
       real(dp), intent(in) :: residual_threshold
       real(dp), intent(in) :: energy_threshold
       logical,  intent(in) :: energy_convergence
-!     
+!
       this%residual_threshold = residual_threshold
       this%energy_threshold   = energy_threshold
       this%energy_convergence = energy_convergence
@@ -71,7 +71,7 @@ contains
    pure function has_converged_convergence_tool(this, residual_norm, dE, iteration) result(converged)
 !!
 !!    Has converged
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
+!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
 !!    Rolf H. Myhre and Alexander C. Paul, 2020
 !!
 !!    Returns true if equations are converged according to the residual
@@ -101,7 +101,7 @@ contains
 !
          converged  = converged_energy .and. converged_residual
 !
-      else 
+      else
 !
          converged  = converged_residual
 !
@@ -116,12 +116,14 @@ contains
 !
    subroutine print_settings_convergence_tool(this)
 !!
-!!    Print    
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018-2020 
+!!    Print
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018-2020
 !!
-      implicit none 
+      implicit none
 !
-      class(convergence_tool), intent(in) :: this 
+      class(convergence_tool), intent(in) :: this
+!
+      call output%printf('m', '- Convergence thresholds', fs='(/t3,a)')
 !
       call output%printf('m', 'Residual threshold:           (e11.4)', &
                          reals=[this%residual_threshold], fs='(/t6,a)')

@@ -215,6 +215,7 @@ contains
       type(section) :: global_print
       type(section) :: frozen_orbitals
       type(section) :: integrals
+      type(section) :: tdhf
 !
 !     Set input file name, access and format
 !
@@ -327,7 +328,8 @@ contains
                               'mean value',           &
                               'time dependent state', &
                               'cholesky eri',         &
-                              'restart']
+                              'restart',              &
+                              'time dependent hf']
 !
 !
       electric_field%name_    = 'electric field'
@@ -606,6 +608,19 @@ contains
                                'plot transition densities', &
                                'states to plot']
 !
+!
+      tdhf%name_    = 'tdhf'
+      tdhf%required = .false.
+      tdhf%keywords = [character(len=30) ::                 &
+                               'tamm-dancoff',              &
+                               'residual threshold',        &
+                               'energy threshold',          &
+                               'restart',                   &
+                               'max reduced dimension',     &
+                               'max iterations',            &
+                               'storage',                   &
+                               'states']
+!
 !     Gather all sections into the file's section array
 !
       this%sections = [active_atoms,              &
@@ -636,7 +651,8 @@ contains
                        solver_scf,                &
                        solver_scf_geoopt,         &
                        system,                    &
-                       visualization]
+                       visualization,             &
+                       tdhf]
 !
       this%is_open = .false.
       this%unit_ = -1

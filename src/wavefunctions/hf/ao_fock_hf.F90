@@ -516,6 +516,7 @@ contains
          C_max(s1) = zero
 !
          do q = 1, wf%n_mo
+!
             do w = shells(s1)%first, shells(s1)%get_last()
 !
                if (abs(wf%orbital_coefficients(w, q)) .gt. C_max(s1)) then

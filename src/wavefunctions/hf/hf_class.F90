@@ -71,7 +71,12 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_frozen_hf
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_fc
 !
+      real(dp), dimension(:), allocatable :: tdhf_excitation_energies
+!
       type(stream_file)     :: orbital_file
+
+      type(stream_file), dimension(:), allocatable :: tdhf_files
+      integer :: n_tdhf_vectors
 !
       logical :: frozen_core
       logical :: frozen_hf_mos
@@ -99,6 +104,11 @@ module hf_class
 !     Read, write restart information, and check for safe restart
 !
       procedure :: read_for_scf_restart                        => read_for_scf_restart_hf
+!
+      procedure :: save_tdhf_vector                            => save_tdhf_vector_hf
+      procedure :: read_tdhf_vector                            => read_tdhf_vector_hf
+      procedure :: read_tdhf_energy                            => read_tdhf_energy_hf
+      procedure :: initialize_tdhf_files                       => initialize_tdhf_files_hf
 !
 !     Preparation and cleanup routines
 !
@@ -158,6 +168,9 @@ module hf_class
 !
       procedure :: initialize_ao_density                       => initialize_ao_density_hf
       procedure :: destruct_ao_density                         => destruct_ao_density_hf
+!
+      procedure :: initialize_tdhf_quantities                  => initialize_tdhf_quantities_hf
+      procedure :: destruct_tdhf_excitation_energies           => destruct_tdhf_excitation_energies_hf
 !
 !     Gradient and Hessian related routines
 !
@@ -234,6 +247,23 @@ module hf_class
 !
       procedure :: control_gradient_convergence                => control_gradient_convergence_hf
 !
+!     TDHF transformation
+!
+      procedure :: ao_G_with_non_symmetric_D                   => ao_G_with_non_symmetric_D_hf
+      procedure :: construct_tdhf_D                            => construct_tdhf_D_hf
+      procedure :: get_vo_block                                => get_vo_block_hf
+      procedure :: tamm_dancoff_transformation                 => tamm_dancoff_transformation_hf
+      procedure :: rpa_transformation                          => rpa_transformation_hf
+      procedure :: A_transformation                            => A_transformation_hf
+      procedure :: B_transformation                            => B_transformation_hf
+!
+!     TDHF tools
+!
+      procedure :: get_rpa_preconditioner                      => get_rpa_preconditioner_hf
+      procedure :: get_tamm_dancoff_preconditioner             => get_tamm_dancoff_preconditioner_hf
+      procedure :: get_tdhf_start_vector                       => get_tdhf_start_vector_hf
+      procedure :: tdhf_summary                                => tdhf_summary_hf
+!
    end type hf
 !
    interface
@@ -243,6 +273,7 @@ module hf_class
       include "set_get_hf_interface.F90"
       include "file_handling_hf_interface.F90"
       include "initialize_destruct_hf_interface.F90"
+      include "tdhf_transformation_hf_interface.F90"
 !
    end interface
 !
@@ -358,7 +389,6 @@ contains
       implicit none
 !
       class(hf) :: wf
-
 !
       call input%get_keyword('cumulative fock threshold',      &
                                         'solver scf',          &
@@ -579,6 +609,7 @@ contains
       call wf%destruct_orbital_coefficients_fc()
       call wf%destruct_orbital_coefficients_frozen_hf()
       call wf%destruct_frozen_CCT()
+      call wf%destruct_tdhf_excitation_energies()
 !
       deallocate(wf%ao)
       if (wf%embedded) deallocate(wf%embedding)
