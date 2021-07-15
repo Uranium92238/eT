@@ -15,6 +15,9 @@
 - Added block class using the range class. Facilitates the handling of multiple index ranges. eT-program/eT!823
 - Angular momentum tools handle components of the angular momenta. eT-program/eT!864
 
+# eT v1.3.6
+### Bugfixes
+- Basis specification for atom subsets is now possible again. eT-program/eT!880
 
 # eT v1.3.5
 ### Bugfixes

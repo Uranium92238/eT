@@ -1,0 +1,234 @@
+
+
+
+                     eT 1.3 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.3.5 Disco
+  ------------------------------------------------------------
+  Configuration date: 2021-07-15 11:50:58 UTC +02:00
+  Git branch:         hotfix-active-inactive-basis
+  Git hash:           31e40f4fda418ee67718f18c818024da79f56459
+  Fortran compiler:   GNU 10.2.0
+  C compiler:         GNU 10.2.0
+  C++ compiler:       GNU 10.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     ON
+  ------------------------------------------------------------
+
+  Calculation started: 2021-07-15 12:00:09 UTC +02:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: 2H2O
+        charge: 0
+     end system
+
+     do
+        ground state
+     end do
+
+     memory
+        available: 8
+     end memory
+
+     solver scf
+        algorithm:          scf-diis
+        energy threshold:   1.0d-10
+        gradient threshold: 1.0d-10
+     end solver scf
+
+     method
+        mlhf
+     end method
+
+     active atoms
+       selection type: range
+       hf: [4,6]
+       hf basis: aug-cc-pVDZ
+       inactive basis: sto-3g
+     end active atoms
+
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: MLHF wavefunction
+  =======================
+
+  - MLHF settings:
+
+     Occupied orbitals:    Cholesky
+     Virtual orbitals:     PAOs
+
+     Cholesky decomposition threshold:  0.10E-01
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: aug-cc-pvdz
+        1  H     0.866810000000     0.601440000000     0.000000000000        4
+        2  H    -0.866810000000     0.601440000000     0.000000000000        5
+        3  O     0.000000000000    -0.075790000000     0.000000000000        6
+        Basis: sto-3g
+        4  H     0.866810000000     0.601440000000     5.000000000000        1
+        5  H    -0.866810000000     0.601440000000     5.000000000000        2
+        6  O     0.000000000000    -0.075790000000     5.000000000000        3
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: aug-cc-pvdz
+        1  H     1.638033502034     1.136556880358     0.000000000000        4
+        2  H    -1.638033502034     1.136556880358     0.000000000000        5
+        3  O     0.000000000000    -0.143222342981     0.000000000000        6
+        Basis: sto-3g
+        4  H     1.638033502034     1.136556880358     9.448630622825        1
+        5  H    -1.638033502034     1.136556880358     9.448630622825        2
+        6  O     0.000000000000    -0.143222342981     9.448630622825        3
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               48
+     Number of orthonormal atomic orbitals:   48
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         38
+     Number of molecular orbitals:       48
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a MLHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:              -149.951085836286
+     Number of electrons in guess:           20.000000000000
+
+  - Active orbital space:
+
+      Number of active occupied orbitals:        6
+      Number of active virtual orbitals:        36
+      Number of active orbitals:                42
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-15
+     Exchange screening threshold:   0.1000E-13
+     ERI cutoff:                     0.1000E-15
+     One-electron integral  cutoff:  0.1000E-20
+     Cumulative Fock threshold:      0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_e): memory
+     Storage (solver scf_x): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1          -150.839272861139     0.3503E+00     0.1508E+03
+     2          -150.869561449895     0.2924E+00     0.3029E-01
+     3          -150.894934180868     0.2084E-01     0.2537E-01
+     4          -150.895227581045     0.8631E-02     0.2934E-03
+     5          -150.895269034632     0.2522E-02     0.4145E-04
+     6          -150.895272300420     0.3888E-03     0.3266E-05
+     7          -150.895272401736     0.3650E-04     0.1013E-06
+     8          -150.895272402930     0.7745E-05     0.1193E-08
+     9          -150.895272402960     0.9448E-06     0.3072E-10
+    10          -150.895272402962     0.3158E-06     0.1194E-11
+    11          -150.895272402962     0.6644E-07     0.0000E+00
+    12          -150.895272402962     0.1990E-07     0.1705E-12
+    13          -150.895272402962     0.3587E-08     0.5684E-13
+    14          -150.895272402962     0.1258E-08     0.2842E-13
+    15          -150.895272402962     0.4878E-09     0.2842E-13
+    16          -150.895272402962     0.1293E-09     0.5684E-13
+    17          -150.895272402962     0.2078E-10     0.5684E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 17 iterations!
+
+  - Summary of MLHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.302871161994
+     Nuclear repulsion energy:      26.497499062052
+     Electronic energy:           -177.392771465014
+     Total energy:                -150.895272402962
+
+  - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
+
+     Active energy:               -108.104436730839
+     Active-inactive energy:        20.622645069545
+     Inactive energy:              -89.910979803720
+
+  - Timings for the MLHF ground state calculation
+
+     Total wall time (sec):              1.73400
+     Total cpu time (sec):               3.31042
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 548.232 KB
+
+  Total wall time in eT (sec):              1.76800
+  Total cpu time in eT (sec):               3.34473
+
+  Calculation ended: 2021-07-15 12:00:11 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+
+  eT terminated successfully!
