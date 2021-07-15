@@ -21,8 +21,8 @@ solver scf
 end solver scf
 
 solver cc gs
-  omega threshold:  1.0d-11
-  energy threshold: 1.0d-11
+  omega threshold:  1.0d-10
+  energy threshold: 1.0d-10
 end solver cc gs
 
 solver cc es
@@ -30,8 +30,8 @@ solver cc es
   preconvergence threshold: 1.0d-4
   algorithm:                diis
   singlet states:           8
-  residual threshold:       1.0d-11
-  energy threshold:         1.0d-11
+  residual threshold:       1.0d-10
+  energy threshold:         1.0d-10
 end solver cc es
 
 geometry

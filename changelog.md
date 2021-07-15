@@ -1,3 +1,7 @@
+# eT v1.3.7
+### Bugfixes
+- Remove convergence check for cc2 test with davidson preconvergence. eT-program/eT!881
+
 # eT v1.3.6
 ### Bugfixes
 - Basis specification for atom subsets is now possible again. eT-program/eT!880
