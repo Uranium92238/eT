@@ -84,6 +84,7 @@ module atomic_center_reader_class
 !
       procedure, private :: determine_n_subsets
       procedure, private :: determine_subset_names
+      procedure, private :: determine_subset_bases
 !
 !     determine_subset_indices_and_ranges determines the atomic center indices
 !     for each of the sets (subset-indices) and stores how many centers there
@@ -264,6 +265,8 @@ contains
       call mem%alloc(center_indices, this%n_centers)
 !
       call this%determine_subset_indices_and_ranges(center_indices, center_positions)
+!
+      call this%determine_subset_bases(center_indices, center_bases)
 !
 !     Create the centers in the correct order and store offsets for the subsets
 !
@@ -764,6 +767,48 @@ contains
       if (center .gt. 0) call this%sets(set)%set_range(first, center)
 !
    end subroutine determine_subset_indices_and_ranges_unclassified
+!
+!
+   subroutine determine_subset_bases(this, center_indices, center_bases)
+!!
+!!    Determine subset bases
+!!    Written by Sarai D. Folkestad, Jul 2021
+!!
+!!    Changes the basis set of an atomic subsystem, if a different basis set
+!!    is specified for the susbet on input
+!!
+      implicit none
+!
+      class(atomic_center_reader), intent(inout) :: this
+!
+      integer, dimension(this%n_centers), intent(in) :: center_indices
+      character(len=100), dimension(this%n_centers), intent(inout) :: center_bases
+!
+      integer :: set, center
+      character(len=200) :: set_name
+      character(len=200) :: set_basis
+!
+      do set = 1, this%n_sets
+!
+         set_name = this%sets(set)%get_name()
+!
+         if (trim(set_name) == 'unclassified') set_name = 'inactive'
+!
+         if (input%is_keyword_present(trim(set_name) // ' basis', 'active atoms')) then
+!
+            call input%get_keyword(trim(set_name) // ' basis', 'active atoms', set_basis)
+!
+            do center = this%sets(set)%first, this%sets(set)%get_last()
+!
+               center_bases(center_indices(center)) = trim(set_basis)
+!
+            enddo
+!
+         endif
+!
+      enddo
+!
+   end subroutine determine_subset_bases
 !
 !
 end module atomic_center_reader_class

@@ -1,3 +1,7 @@
+# eT v1.3.6
+### Bugfixes
+- Basis specification for atom subsets is now possible again. eT-program/eT!880
+
 # eT v1.3.5
 ### Bugfixes
 - Missing keyword (one-electron integral cutoff) added to the input file class. eT-program/eT!874
