@@ -1,0 +1,247 @@
+
+
+
+                     eT 1.4 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.4.0 Eos (development)
+  ------------------------------------------------------------
+  Configuration date: 2021-07-15 21:50:36 UTC +02:00
+  Git branch:         tdhf-restart
+  Git hash:           03e4d247c1392bd4fae9dcc85e314cc6b61fdc80
+  Fortran compiler:   GNU 10.2.0
+  C compiler:         GNU 10.2.0
+  C++ compiler:       GNU 10.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-07-15 22:07:57 UTC +02:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: HOF He
+        charge: 0
+     end system
+
+     do
+        time dependent hf
+     end do
+
+     memory
+        available: 8
+     end memory
+
+     solver scf
+        algorithm:          scf-diis
+        energy threshold:   1.0d-10
+        gradient threshold: 1.0d-10
+     end solver scf
+
+     method
+        hf
+     end method
+
+     tdhf
+       restart
+       states: 2
+       residual threshold: 1.0d-10
+     end tdhf
+
+
+  Running on 4 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: RHF wavefunction
+  ======================
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  H    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
+        4 He     0.000000000000     0.000000000000     7.500000000000        4
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  H    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
+        4 He     0.000000000000     0.000000000000    14.172945934238        4
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               29
+     Number of orthonormal atomic orbitals:   29
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:         23
+     Number of molecular orbitals:       29
+
+
+  :: Time dependent Hartree-Fock engine
+  ========================================
+
+  Drives the calculation of the Hartree-Fock excitation energies and properties.
+
+  This is a RHF properties calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+     3) Calculate TDHF excitation energies
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:               -78.492359869042
+     Number of electrons in guess:           12.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-15
+     Exchange screening threshold:   0.1000E-13
+     ERI cutoff:                     0.1000E-15
+     One-electron integral  cutoff:  0.1000E-20
+     Cumulative Fock threshold:      0.1000E+01
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -78.796357979446     0.9059E-01     0.7880E+02
+     2           -78.828453237473     0.7130E-01     0.3210E-01
+     3           -78.843222387150     0.8290E-02     0.1477E-01
+     4           -78.843604035493     0.2415E-02     0.3816E-03
+     5           -78.843645357974     0.3300E-03     0.4132E-04
+     6           -78.843646180978     0.5523E-04     0.8230E-06
+     7           -78.843646204481     0.5847E-05     0.2350E-07
+     8           -78.843646205182     0.2352E-05     0.7013E-09
+     9           -78.843646205256     0.2067E-06     0.7370E-10
+    10           -78.843646205256     0.1571E-07     0.4547E-12
+    11           -78.843646205256     0.4353E-08     0.1421E-12
+    12           -78.843646205256     0.1445E-08     0.4263E-13
+    13           -78.843646205256     0.5059E-09     0.1421E-13
+    14           -78.843646205256     0.1398E-09     0.0000E+00
+    15           -78.843646205256     0.1658E-10     0.0000E+00
+  ---------------------------------------------------------------
+  Convergence criterion met in 15 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.645693538836
+     Nuclear repulsion energy:      12.167611407170
+     Electronic energy:            -91.011257612426
+     Total energy:                 -78.843646205256
+
+
+  3) Calculate TDHF excitation energies
+
+   - Davidson tool settings:
+
+     Number of parameters:                  138
+     Number of requested solutions:           2
+     Max reduced space dimension:            50
+
+     Storage (tdhf_davidson_trials): memory
+     Storage (tdhf_davidson_transforms): memory
+
+  - Davidson solver settings
+
+     Number of singlet states:               2
+     Max number of iterations:             100
+
+  Iteration:                  1
+  Reduced space dimension:    2
+
+   Root  omega (Re)        omega (Im)         |residual|   Delta omega (Re)
+  ------------------------------------------------------------------------
+     1   0.078189601099    0.000000000000     0.1396E-10   0.7819E-01
+     2   0.142327765332    0.000000000000     0.2414E-10   0.1423E+00
+  ------------------------------------------------------------------------
+  Convergence criterion met in 1 iterations!
+
+  - TDHF excitation energies:
+
+                                      Excitation energy
+                          ------------------------------------------
+      State                (Hartree)             (eV)
+     ---------------------------------------------------------------
+        1                  0.279624035267        7.608957564107
+        2                  0.377263522398       10.265863339237
+     ---------------------------------------------------------------
+     eV/Hartree (CODATA 2014): 27.21138602
+
+  - Timings for the RHF properties calculation
+
+     Total wall time (sec):              0.45300
+     Total cpu time (sec):               1.42539
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 225.492 KB
+
+  Total wall time in eT (sec):              0.49400
+  Total cpu time in eT (sec):               1.46144
+
+  Calculation ended: 2021-07-15 22:07:58 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+
+  eT terminated successfully!

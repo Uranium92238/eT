@@ -146,10 +146,16 @@ contains
       real(dp), dimension(wf%n_o*wf%n_v), intent(out) :: vector
 !
       integer, intent(in) :: I
+      integer(i64) :: n
 !
       call wf%tdhf_files(I)%open_('read', 'rewind')
+      call wf%tdhf_files(I)%read_(n, dp + 1)
 !
-      call wf%tdhf_files(I)%read_(vector, wf%n_o*wf%n_v, dp + i64)
+      if (int(n) /= wf%n_o*wf%n_v) &
+            call output%error_msg('Wrong number of parameters in (a0): (i0)', &
+                                  chars=[wf%tdhf_files(I)%get_name()], ints=[int(n)])
+!
+      call wf%tdhf_files(I)%read_(vector, wf%n_o*wf%n_v)
 !
       call wf%tdhf_files(I)%close_
 !

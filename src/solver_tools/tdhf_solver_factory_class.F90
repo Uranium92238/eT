@@ -43,7 +43,7 @@ module tdhf_solver_factory_class
 !
       integer :: n_states, max_dim_red, max_iterations
       real(dp) :: energy_threshold, residual_threshold
-      logical :: records_in_memory, energy_convergence, tamm_dancoff
+      logical :: records_in_memory, energy_convergence, tamm_dancoff, restart
 !
    contains
 !
@@ -105,7 +105,7 @@ contains
                                      max_dim_red       = this%max_dim_red,    &
                                      records_in_memory = this%records_in_memory)
 !
-      start_vector = tdhf_start_vector_tool(wf, restart = .false.) ! No support for restart yet
+      start_vector = tdhf_start_vector_tool(wf, restart=this%restart)
 !
       if (this%tamm_dancoff) then
 !
@@ -189,7 +189,7 @@ contains
 !
       implicit none
 !
-      class(tdhf_solver_factory),         intent(inout)  :: this
+      class(tdhf_solver_factory),   intent(inout)  :: this
 !
       character(len=200) :: storage
 !
@@ -203,6 +203,7 @@ contains
       this%energy_convergence   = .false.
       this%records_in_memory    = .true.
       this%tamm_dancoff         = .false.
+      this%restart              = .false.
 !
 !
       call input%get_keyword('states', 'tdhf', this%n_states)
@@ -224,6 +225,9 @@ contains
       if (trim(storage) == 'file') this%records_in_memory = .false.
 !
       this%tamm_dancoff = input%is_keyword_present('tamm-dancoff', 'tdhf')
+!
+      this%restart = input%is_keyword_present('restart', 'tdhf') &
+                    .or. input%is_keyword_present('restart', 'do')
 !
    end subroutine read_settings
 !

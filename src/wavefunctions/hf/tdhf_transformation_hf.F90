@@ -553,25 +553,36 @@ contains
 !
       if (restart) then
 !
-      else
+         if (wf%tdhf_files(trial)%exists()) then
 !
-         call mem%alloc(eps, wf%n_v*wf%n_o)
-         call wf%get_orbital_differences(eps, wf%n_v*wf%n_o)
+            call output%printf('m', 'Requested restart. Reading in solution from file.', &
+                               fs='(/t3,a)')
 !
-         call mem%alloc(start_indices, trial)
+            call wf%read_tdhf_vector(c, trial)
+            return
 !
-         call mem%alloc(lowest_eps, trial)
-         call get_n_lowest(trial, wf%n_v*wf%n_o, eps, lowest_eps, start_indices)
-         call mem%dealloc(lowest_eps, trial)
-         call mem%dealloc(eps, wf%n_v*wf%n_o)
+         endif
 !
-         call zero_array(c,  wf%n_v*wf%n_o)
-!
-         c(start_indices(trial)) = one
-!
-         call mem%dealloc(start_indices, trial)
+         call output%warning_msg('asked for restart of TDHF excitation energies, &
+                                 &but no vectors found on disk')
 !
       endif
+!
+      call mem%alloc(eps, wf%n_v*wf%n_o)
+      call wf%get_orbital_differences(eps, wf%n_v*wf%n_o)
+!
+      call mem%alloc(start_indices, trial)
+!
+      call mem%alloc(lowest_eps, trial)
+      call get_n_lowest(trial, wf%n_v*wf%n_o, eps, lowest_eps, start_indices)
+      call mem%dealloc(lowest_eps, trial)
+      call mem%dealloc(eps, wf%n_v*wf%n_o)
+!
+      call zero_array(c,  wf%n_v*wf%n_o)
+!
+      c(start_indices(trial)) = one
+!
+      call mem%dealloc(start_indices, trial)
 !
    end subroutine get_tdhf_start_vector_hf
 !
