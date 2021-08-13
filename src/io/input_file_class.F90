@@ -611,15 +611,15 @@ contains
 !
       tdhf%name_    = 'tdhf'
       tdhf%required = .false.
-      tdhf%keywords = [character(len=30) ::                 &
-                               'tamm-dancoff',              &
-                               'residual threshold',        &
-                               'energy threshold',          &
-                               'restart',                   &
-                               'max reduced dimension',     &
-                               'max iterations',            &
-                               'storage',                   &
-                               'states']
+      tdhf%keywords = [character(len=30) ::    &
+                       'energy threshold',     &
+                       'max iterations',       &
+                       'max reduced dimension',&
+                       'residual threshold',   &
+                       'restart',              &
+                       'storage',              &
+                       'states',               &
+                       'tamm-dancoff']
 !
 !     Gather all sections into the file's section array
 !

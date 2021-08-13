@@ -79,6 +79,8 @@ add_eT_runtest(hf_bohr_units                                "eT;short;hf;sad")
 #
 add_eT_runtest(tdhf_tamm_dancoff_es                         "eT;short;tdhf;tamm-dancoff")
 add_eT_runtest(tdhf_rpa_es                                  "eT;short;tdhf;rpa")
+add_eT_runtest(tdhf_restart                                 "eT;short;tdhf;rpa;restart")
+add_eT_runtest(tdhf_global_restart                          "eT;short;tdhf;rpa;restart")
 #
 add_eT_runtest(uhf_energy                                   "eT;short;uhf")
 add_eT_runtest(uhf_energy_cs                                "eT;short;uhf;atom")

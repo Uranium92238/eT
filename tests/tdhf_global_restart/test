@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+
+from pathlib import Path
+import sys
+
+# we make sure we can import runtest and runtest_config
+sys.path.append(str(Path(__file__).parents[1]))
+
+# we import essential functions from the runtest library
+from runtest import version_info, cli, run
+
+# this tells runtest how to run your code
+from runtest_config import configure
+
+# functions to get the filters
+from filters import get_tdhf_filter
+
+# we stop the script if the major version is not compatible
+assert version_info.major == 2
+
+# construct filter(s)
+threshold = 1.0e-9
+n_states = 2
+f = get_tdhf_filter(n_states, threshold, convergence=True, restart=True)
+
+# invoke the command line interface parser which returns options
+options = cli()
+
+# the run function runs the code and filters the outputs
+inp = 'tdhf.inp'
+ierr = run(options,
+           configure,
+           input_files=inp,
+           extra_args='-ks --scratch ./scratch',
+           filters={'out': f})
+
+inp = 'restart.inp'
+ierr += run(options,
+            configure,
+            input_files=inp,
+            extra_args='--scratch ./scratch',
+            filters={'out': f})
+
+sys.exit(ierr)
