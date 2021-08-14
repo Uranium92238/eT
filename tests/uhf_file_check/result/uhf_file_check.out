@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco
+   This is eT 1.3.8 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-06-07 12:48:33 UTC +02:00
-  Git branch:         update-test-refs-new
-  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2021-08-13 13:22:31 UTC +02:00
+  Git branch:         hotfix-pure-gaussians
+  Git hash:           1cbc6f763377d7ec9280ea38c11d47a0990dc42c
+  Fortran compiler:   GNU 10.2.0
+  C compiler:         GNU 10.2.0
+  C++ compiler:       GNU 10.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
-  PCM:                ON
+  PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-06-07 12:49:39 UTC +02:00
+  Calculation started: 2021-08-13 14:21:23 UTC +02:00
 
 
   :: Input file
@@ -170,21 +170,21 @@
     10           -78.656324392676     0.8298E-05     0.4698E-08
     11           -78.656324402198     0.2642E-05     0.9522E-08
     12           -78.656324403841     0.6399E-06     0.1644E-08
-    13           -78.656324403924     0.3803E-06     0.8217E-10
-    14           -78.656324403960     0.2770E-06     0.3617E-10
-    15           -78.656324403999     0.2210E-06     0.3897E-10
-    16           -78.656324404022     0.9437E-07     0.2302E-10
+    13           -78.656324403923     0.3803E-06     0.8205E-10
+    14           -78.656324403960     0.2770E-06     0.3628E-10
+    15           -78.656324403999     0.2210E-06     0.3899E-10
+    16           -78.656324404022     0.9437E-07     0.2301E-10
     17           -78.656324404025     0.5280E-07     0.2984E-11
-    18           -78.656324404025     0.3805E-07     0.4405E-12
-    19           -78.656324404025     0.1762E-07     0.5684E-13
+    18           -78.656324404025     0.3805E-07     0.4690E-12
+    19           -78.656324404025     0.1762E-07     0.4263E-13
     20           -78.656324404025     0.5746E-08     0.2842E-13
-    21           -78.656324404025     0.1892E-08     0.1421E-13
-    22           -78.656324404025     0.8109E-09     0.1421E-13
-    23           -78.656324404025     0.4098E-09     0.2842E-13
-    24           -78.656324404025     0.1701E-09     0.2842E-13
-    25           -78.656324404025     0.6925E-10     0.4263E-13
+    21           -78.656324404025     0.1892E-08     0.5684E-13
+    22           -78.656324404025     0.8109E-09     0.2842E-13
+    23           -78.656324404025     0.4098E-09     0.1421E-13
+    24           -78.656324404025     0.1701E-09     0.0000E+00
+    25           -78.656324404025     0.6925E-10     0.1421E-13
     26           -78.656324404025     0.2248E-10     0.0000E+00
-    27           -78.656324404025     0.6542E-11     0.0000E+00
+    27           -78.656324404025     0.6544E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 27 iterations!
 
@@ -205,17 +205,17 @@
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):              0.90608
-     Total cpu time (sec):               1.80006
+     Total wall time (sec):              1.65900
+     Total cpu time (sec):               3.13536
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 293.600 KB
+  Peak memory usage during the execution of eT: 291.804 KB
 
-  Total wall time in eT (sec):              0.92109
-  Total cpu time in eT (sec):               1.81514
+  Total wall time in eT (sec):              1.68600
+  Total cpu time in eT (sec):               3.16340
 
-  Calculation ended: 2021-06-07 12:49:40 UTC +02:00
+  Calculation ended: 2021-08-13 14:21:24 UTC +02:00
 
   - Implementation references:
 

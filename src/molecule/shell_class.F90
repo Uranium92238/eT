@@ -383,7 +383,7 @@ contains
             case(0)
                label = this%get_angular_momentum()
             case(1)
-               label = this%get_angular_momentum() // ' ' // p(n)
+               label = this%get_angular_momentum() // '  ' // p_cart(n)
             case(2)
                label = this%get_angular_momentum() // ' '  // d(n)
             case(3)
