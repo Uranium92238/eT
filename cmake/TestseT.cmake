@@ -71,6 +71,7 @@ add_eT_runtest(hf_visualization                             "eT;short;hf;visuali
 #
 add_eT_runtest(restart_geoopt                               "eT;short;hf;bfgs;gradient,restart")
 add_eT_runtest(hf_bohr_units                                "eT;short;hf;sad")
+add_eT_runtest(hf_pure_basis                                "eT;short;hf;spherical;pople")
 #
 add_eT_runtest(uhf_energy                                   "eT;short;uhf")
 add_eT_runtest(uhf_energy_cs                                "eT;short;uhf;atom")
