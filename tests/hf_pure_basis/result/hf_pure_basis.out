@@ -16,7 +16,7 @@
 
    This is eT 1.3.7 Disco
   ------------------------------------------------------------
-  Configuration date: 2021-08-13 13:20:35 UTC +02:00
+  Configuration date: 2021-08-13 13:15:11 UTC +02:00
   Git branch:         hotfix-pure-gaussians
   Git hash:           1cbc6f763377d7ec9280ea38c11d47a0990dc42c
   Fortran compiler:   GNU 10.2.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-08-13 13:21:06 UTC +02:00
+  Calculation started: 2021-08-13 13:19:56 UTC +02:00
 
 
   :: Input file
@@ -40,7 +40,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: HOF
+        name: HOF He
         charge: 0
         pure gaussians
      end system
@@ -57,8 +57,6 @@
         algorithm:          scf-diis
         energy threshold:   1.0d-10
         gradient threshold: 1.0d-10
-        write molden
-        print orbitals
      end solver scf
 
      method
@@ -78,10 +76,11 @@
      ==============================================================================
         Atom           X                  Y                  Z         # in input
      ==============================================================================
-        Basis: 3-21g
+        Basis: 6-31+g*
         1  H     0.866810000000     0.601440000000     5.000000000000        1
         2  F    -0.866810000000     0.601440000000     5.000000000000        2
         3  O     0.000000000000    -0.075790000000     5.000000000000        3
+        4 He     0.000000000000     0.000000000000     7.500000000000        4
      ==============================================================================
 
      ==============================================================================
@@ -89,23 +88,24 @@
      ==============================================================================
         Atom           X                  Y                  Z         # in input
      ==============================================================================
-        Basis: 3-21g
+        Basis: 6-31+g*
         1  H     1.638033502034     1.136556880358     9.448630622825        1
         2  F    -1.638033502034     1.136556880358     9.448630622825        2
         3  O     0.000000000000    -0.143222342981     9.448630622825        3
+        4 He     0.000000000000     0.000000000000    14.172945934238        4
      ==============================================================================
 
   - Cholesky decomposition of AO overlap to get linearly independent AOs:
 
      Linear dependence threshold:             0.10E-05
-     Number of atomic orbitals:               20
-     Number of orthonormal atomic orbitals:   20
+     Number of atomic orbitals:               40
+     Number of orthonormal atomic orbitals:   40
 
   - Molecular orbital details:
 
-     Number of occupied orbitals:         9
-     Number of virtual orbitals:         11
-     Number of molecular orbitals:       20
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         30
+     Number of molecular orbitals:       40
 
 
   :: Hartree-Fock engine
@@ -135,8 +135,8 @@
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:              -174.597239859460
-     Number of electrons in guess:           18.000000000000
+     Energy of initial guess:              -178.229338174548
+     Number of electrons in guess:           20.000000000000
 
   - Screening and integral thresholds:
 
@@ -155,43 +155,45 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -173.592828411933     0.4150E-01     0.1736E+03
-     2          -173.612866666874     0.1505E-01     0.2004E-01
-     3          -173.613987540751     0.5022E-02     0.1121E-02
-     4          -173.614066839142     0.1294E-02     0.7930E-04
-     5          -173.614074915534     0.1851E-03     0.8076E-05
-     6          -173.614075213268     0.7769E-04     0.2977E-06
-     7          -173.614075252594     0.7700E-05     0.3933E-07
-     8          -173.614075253298     0.1018E-05     0.7038E-09
-     9          -173.614075253330     0.1814E-06     0.3226E-10
-    10          -173.614075253331     0.5712E-07     0.7674E-12
-    11          -173.614075253331     0.5064E-08     0.1421E-12
-    12          -173.614075253331     0.8359E-09     0.8527E-13
-    13          -173.614075253331     0.1972E-09     0.8527E-13
-    14          -173.614075253331     0.7087E-10     0.8527E-13
+     1          -177.432221201272     0.7442E-01     0.1774E+03
+     2          -177.459642793888     0.1150E-01     0.2742E-01
+     3          -177.460845670494     0.5246E-02     0.1203E-02
+     4          -177.460991933023     0.2139E-02     0.1463E-03
+     5          -177.461014165045     0.3978E-03     0.2223E-04
+     6          -177.461015951252     0.9676E-04     0.1786E-05
+     7          -177.461016046874     0.3235E-04     0.9562E-07
+     8          -177.461016060279     0.5616E-05     0.1340E-07
+     9          -177.461016061375     0.1297E-05     0.1096E-08
+    10          -177.461016061420     0.2107E-06     0.4439E-10
+    11          -177.461016061422     0.1032E-06     0.2274E-11
+    12          -177.461016061422     0.4343E-07     0.8527E-13
+    13          -177.461016061422     0.9480E-08     0.1421E-12
+    14          -177.461016061422     0.1612E-08     0.1137E-12
+    15          -177.461016061422     0.2973E-09     0.1137E-12
+    16          -177.461016061422     0.9658E-10     0.2558E-12
   ---------------------------------------------------------------
-  Convergence criterion met in 14 iterations!
+  Convergence criterion met in 16 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.650110441694
-     Nuclear repulsion energy:      41.232811119190
-     Electronic energy:           -214.846886372520
-     Total energy:                -173.614075253331
+     HOMO-LUMO gap:                  0.589465702564
+     Nuclear repulsion energy:      48.518317619727
+     Electronic energy:           -225.979333681149
+     Total energy:                -177.461016061422
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.13500
-     Total cpu time (sec):               0.19512
+     Total wall time (sec):              0.99300
+     Total cpu time (sec):               1.86326
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 83.624 KB
+  Peak memory usage during the execution of eT: 328.168 KB
 
-  Total wall time in eT (sec):              0.14800
-  Total cpu time in eT (sec):               0.20678
+  Total wall time in eT (sec):              1.00700
+  Total cpu time in eT (sec):               1.87765
 
-  Calculation ended: 2021-08-13 13:21:06 UTC +02:00
+  Calculation ended: 2021-08-13 13:19:57 UTC +02:00
 
   - Implementation references:
 
