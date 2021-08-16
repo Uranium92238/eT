@@ -76,6 +76,7 @@ add_eT_runtest(plot_cntos_ccsd                              "eT;short;ccsd;visua
 #
 add_eT_runtest(restart_geoopt                               "eT;short;hf;bfgs;gradient,restart")
 add_eT_runtest(hf_bohr_units                                "eT;short;hf;sad")
+add_eT_runtest(hf_pure_basis                                "eT;short;hf;spherical;pople")
 #
 add_eT_runtest(tdhf_tamm_dancoff_es                         "eT;short;tdhf;tamm-dancoff")
 add_eT_runtest(tdhf_rpa_es                                  "eT;short;tdhf;rpa")

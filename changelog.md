@@ -16,6 +16,10 @@
 - Added block class using the range class. Facilitates the handling of multiple index ranges. eT-program/eT!823
 - Angular momentum tools handle components of the angular momenta. eT-program/eT!864
 
+# eT v1.3.8
+### Bugfixes
+- Fix bug with pure gaussians. eT-program/eT!884
+
 # eT v1.3.7
 ### Bugfixes
 - Remove convergence check for cc2 test with davidson preconvergence. eT-program/eT!881

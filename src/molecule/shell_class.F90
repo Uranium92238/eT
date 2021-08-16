@@ -329,7 +329,6 @@ contains
 !!                NB: assuming default ordering of libint.
 !!                cartesian basis functions: {xx, xy, xz, yy, yz, zz}
 !!                spherical/pure functions:  m_l: {2, 1, 0, -1, -2}
-!!    cartesian:  logical determining if a cartesian or "pure" basis set is used
 !!    label:      string that is returned e.g. d_xx
 !!
       implicit none

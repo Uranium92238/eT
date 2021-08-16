@@ -182,7 +182,6 @@ set(eT_fortran_sources
    src/various/angular_momentum/cartesian_g_angular_momentum.F90
    src/various/angular_momentum/cartesian_h_angular_momentum.F90
    src/various/angular_momentum/cartesian_i_angular_momentum.F90
-   src/various/angular_momentum/spherical_p_angular_momentum.F90
    src/various/angular_momentum/spherical_d_angular_momentum.F90
    src/various/angular_momentum/spherical_f_angular_momentum.F90
    src/various/angular_momentum/spherical_g_angular_momentum.F90

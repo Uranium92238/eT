@@ -161,8 +161,11 @@ void export_geometry_and_basis_to_libint(const int nAtoms,
         for(auto& shell: temporaryBasis) {
             for(auto& contraction: shell.contr) {
 
-                if (contraction.l >= 2 && cartesiansList[i] != 0){
-                    contraction.pure = false;
+                if (cartesiansList[i] != 0) {
+                   if (contraction.l >= 2 ) contraction.pure=false ;
+                }
+                else {
+                   if (contraction.l >= 2 ) contraction.pure=true;
                 }
             }
         }
