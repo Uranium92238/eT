@@ -7,12 +7,15 @@
 # licensed under the GNU Lesser General Public License
 # Converted to use pathlib.Path and f-strings by
 # Sander Roet <sander.roet at ntnu.no>, Sep 2020
+# Added pFUnit options and installation,
+# Eirik F. Kjønstad <eirik.kjonstad at ntnu.no>, May 2021
 
 from pathlib import Path
 
 root_dir = Path(__file__).resolve().parent
 dev_tool_dir = root_dir / "dev_tools"
 default_path = root_dir / "build"
+default_pfunit_path = root_dir / "submodules" / "pFUnit" / "build" / "installed"
 
 import sys
 
@@ -20,8 +23,8 @@ sys.path.append(str(dev_tool_dir))
 
 import subprocess
 import shutil
+
 from autogenerate_files import autogenerate
-from os import chdir
 from argparse import ArgumentParser, HelpFormatter
 
 
@@ -147,6 +150,26 @@ def input_parser():
         "with whitespace to avoid confusion with setup flags.\n"
         'Example: " -lcaf_mpi"',
     )
+    parser.add_argument(
+        "--enable-pfunit",
+        help="R|Enable unit testing (pFUnit). Assumes default\n"
+        "directory unless custom directory is specified \n"
+        "with --pfunit-dir.",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--install-pfunit",
+        help="R|Auto-install unit testing package (pFUnit).\n"
+        "This also enables pFUnit.",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--pfunit-dir",
+        help="R|Path to pFUnit installation.",
+        default=default_pfunit_path,
+    )
 
     # Link to optional libraries
     parser.add_argument(
@@ -211,6 +234,9 @@ def cmake_translator(arg):
 def construct_command(args):
     command = "cmake"
 
+    if args.install_pfunit:
+        args.enable_pfunit = True
+
     flags = (
         f" -DENABLE_64BIT_INTEGERS={cmake_translator(args.int64)}"
         f" -DENABLE_OMP={cmake_translator(args.omp)}"
@@ -218,6 +244,7 @@ def construct_command(args):
         f" -DENABLE_RUNTIME_CHECKS={cmake_translator(args.runtime_checks)}"
         f" -DENABLE_FORCED_BATCHING={cmake_translator(args.forced_batching)}"
         f" -DENABLE_PCMSOLVER={cmake_translator(args.pcm)}"
+        f" -DENABLE_PFUNIT={cmake_translator(args.enable_pfunit)}"
     )
     command += flags
 
@@ -243,35 +270,108 @@ def construct_command(args):
     if args.blas_type:
         command += f" -DBLAS_TYPE={args.blas_type}"
 
+    if args.enable_pfunit:
+
+        if args.install_pfunit:
+            auto_install_pfunit(args)
+
+        command += f" -DCMAKE_PREFIX_PATH={args.pfunit_dir}"
+
     command += f" {root_dir}"
     return command
 
 
 def run_CMake(command, build_path):
-    calldir = build_path.cwd()  # Get current directory
-    chdir(build_path)  # Switch to build dir
+
+    output = run_subprocess(command, build_path)
+    print(output)
+
+    file_path = build_path / "setup_cmake_output"
+
+    with file_path.open("w") as f:
+        f.write(command + "\n\n")
+        f.write(output)
+
+
+def eT_setup(argv):
+
+    args = input_parser()
+
+    autogenerate(root_dir)
+
+    build_path = build_maker(args)
+    cmake_command = construct_command(args)
+    run_CMake(cmake_command, build_path)
+
+    if args.enable_pfunit:
+        copy_pfunit_tests(args, build_path)
+
+
+def auto_install_pfunit(args):
+
+    pfunit_build = root_dir / "submodules" / "pFUnit" / "build"
+    pfunit_install = pfunit_build / "installed"
+
+    print("Will attempt to install pFUnit (path: " + str(pfunit_install) + ")")
+
+    cmake_command = get_pfunit_cmake_command(args, pfunit_build)
+
+    pfunit_build.mkdir(exist_ok=True)
+
+    print(f"Configuring pFUnit: {cmake_command}")
+
+    output = run_subprocess(cmake_command, pfunit_build)
+    print(output)
+
+    print("Building and installing pFUnit. This may take a few minutes...")
+
+    output = run_subprocess("make", pfunit_build)
+    print(output)
+
+    output = run_subprocess("make install", pfunit_build)
+    print(output)
+
+
+def get_pfunit_cmake_command(args, pfunit_build):
+
+    cmake_command = "cmake -DSKIP_MPI=TRUE "
+
+    skip_omp = "YES"
+    if args.omp:
+        skip_omp = "NO"
+
+    cmake_command += f"-DSKIP_OPENMP={skip_omp} "
+
+    if args.Fortran_compiler:
+        cmake_command += f"-DCMAKE_Fortran_COMPILER={args.Fortran_compiler} "
+    if args.C_compiler:
+        cmake_command += f"-DCMAKE_C_COMPILER={args.C_compiler} "
+
+    pfunit_src = pfunit_build.resolve().parent
+
+    cmake_command = cmake_command + str(pfunit_src)
+
+    return cmake_command
+
+
+def copy_pfunit_tests(args, build_path):
+
+    fromDirectory = root_dir / "unit_tests"
+    toDirectory = build_path
+
+    shutil.copytree(str(fromDirectory), str(toDirectory), dirs_exist_ok=True)
+
+
+def run_subprocess(command, path):
 
     p = subprocess.run(
-        command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=path
     )
 
     s = p.stderr.decode("utf8")
     s += p.stdout.decode("utf8")
-    print(s, end="")
 
-    with open("setup_cmake_output", "w") as f:
-        f.write(command + "\n\n")
-        f.write(s)
-
-    chdir(calldir)
-
-
-def eT_setup(argv):
-    args = input_parser()
-    autogenerate(root_dir)
-    build_path = build_maker(args)
-    cmake_command = construct_command(args)
-    run_CMake(cmake_command, build_path)
+    return s
 
 
 if __name__ == "__main__":

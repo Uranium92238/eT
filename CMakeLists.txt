@@ -43,6 +43,7 @@ option(ENABLE_THREADED_MKL    "Enable OpenMP parallelization in MKL"            
 option(ENABLE_RUNTIME_CHECKS  "Enable all runtime checks (for debug purposes)"           OFF)
 option(ENABLE_FORCED_BATCHING "Enable batching in every batch loop (for debug purposes)" OFF)
 option(ENABLE_PCMSOLVER       "Enable PCMSolver library"                                 OFF)
+option(ENABLE_PFUNIT          "Enable unit tests with pFUnit"                            OFF)
 
 # Find packages needed for libint
 find_package(Libint2 REQUIRED)
@@ -91,10 +92,19 @@ if(ENABLE_PCMSOLVER)
    )
 endif()
 
-add_executable(eT ${eT_fortran_sources} ${eT_CXX_sources})
+# Make library for compilation information
 add_library(get_compilation_info ${CMAKE_BINARY_DIR}/get_compilation_info.F90)
 
-target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} ${PCMSolver_LIBRARY} ${EXTRA_LINKER_FLAGS} get_compilation_info)
+# Make eT library 
+include(eT_library)
+
+# Make eT executable from eT_program.F90 and link the executable 
+# to eT library source as well as other libraries 
+add_executable(eT ${CMAKE_SOURCE_DIR}/src/eT_program.F90)
+
+target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} 
+                         ${PCMSolver_LIBRARY} ${EXTRA_LINKER_FLAGS} 
+                         get_compilation_info eT_library)
 
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
 
@@ -121,7 +131,27 @@ file(COPY ${CMAKE_SOURCE_DIR}/eT_launch.py
      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ WORLD_READ)
 file(REMOVE  ${CMAKE_SOURCE_DIR}/eT_launch.py)
 
-#Configure get_complilation_info library
+# Configure get_complilation_info library
 include(CompilationInfo)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/get_compilation_info.in ${CMAKE_BINARY_DIR}/get_compilation_info.F90)
+
+if(ENABLE_PFUNIT)
+
+  # pFUnit - Fortran unit testing package 
+
+  cmake_minimum_required(VERSION 3.12) # Due to GFTL (used by pFUnit), 
+                                       # which sets <prefix>_ROOT CMake variables, 
+                                       # assuming >= 3.12 policy (CMP0074)
+
+  find_package(PFUNIT)
+
+  if(PFUNIT_FOUND)
+    enable_testing()  
+    include(UnitTestseT)
+    message(STATUS "Unit testing requested, and pFUnit successfully located!")
+  else()
+    message(FATAL_ERROR "Unit testing requested, but could not find pFUnit!")
+  endif()
+
+endif()
 
