@@ -1,3 +1,7 @@
 [submodule "submodules/runtest"]
 	path = submodules/runtest
 	url = https://github.com/bast/runtest.git
+
+[submodule "submodules/pFUnit"]
+	path = submodules/pFUnit
+	url = https://github.com/Goddard-Fortran-Ecosystem/pFUnit.git
