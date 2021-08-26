@@ -8,7 +8,8 @@ with integrals for one-body operators and electron repulsion enabled.
 Libint has the dependencies [Eigen 3](http://eigen.tuxfamily.org/index.php?title=Main_Page) and [Boost](https://www.boost.org).
 To compile Libint, follow the instructions below or consult the [Libint Wiki](https://github.com/evaleev/libint/wiki).
 
-*ifort 2021.1 and 2021.2 are currenty not supported, as these compilers [behave unexpectedly](https://community.intel.com/t5/Intel-Fortran-Compiler/Finalization-of-deallocated-objects-during-allocation-by/td-p/1245875).
+*ifort 2021.1, 2021.2 and 2021.3 are currently not supported,
+as these compilers [behave unexpectedly](https://community.intel.com/t5/Intel-Fortran-Compiler/Finalization-of-deallocated-objects-during-allocation-by/td-p/1245875).
 
 ## Installing Libint
 Download the [Libint library for eT](https://www.etprogram.org/libint/libint-2.7.0-beta.1.tgz).
@@ -108,31 +109,43 @@ Go to this directory:
 ```shell
 cd eT
 ```
-Run the [setup](https://etprogram.org/setup.html) script to configure CMake:
+Run the [setup.py](https://etprogram.org/setup.html) script to configure CMake:
 ```shell
-./setup
+./setup.py
 ```
 Compilers and libraries identified by CMake will be printed to screen.
 Take a look and see if it looks reasonable and error free.
-Note that `setup` may take a long time on some clusters.
+Note that `setup.py` may take a long time on some clusters.
 
 CMake will try to identify the compilers to use (Fortran, C, C++) and the location of libraries (BLAS, LAPACK, Libint, Eigen, Boost).
 If CMake does not correctly locate and identify these,
 try setting the associated environment variables.
 In order to have these variables automatically exported when you open a new shell,
-you can place the export commands in your `home/.bashrc` file.
-Remember to update your current shell with `source .bashrc` Below are some examples:
+you can place the export commands in your `.bashrc` file.
+Remember to update your current shell with `source .bashrc`.
+Below are some examples:
 ```shell
 export LIBINT2_ROOT=/home/username/prog/libint
 export Eigen3_ROOT=/home/username/prog/eigen3/include/eigen3
 export BOOST_INCLUDEDIR=/usr/include
 export MATH_ROOT=/opt/intel/mkl
 ```
+If CMake still does not find Eigen3,
+it can help to add `EIGEN3_INCLUDE_DIR` to the `.bashrc`
+and also add it to the cmake prefix path:
+```shell
+export EIGEN3_INCLUDE_DIR=/usr/local/include/
+export CMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH:$EIGEN3_INCLUDE_DIR"
+```
+Similarly, Boost can be added to the prefix path as well, if it cannot be found
+```shell
+export CMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH:$BOOST_INCLUDEDIR"
+```
 
-For help with `setup`,
+For help with `setup.py`,
 run the script with the `--help` option.
 ```shell
-./setup --help
+./setup.py --help
 ```
 This will list the various options,
 a short description,
@@ -142,7 +155,7 @@ see the [website](https://etprogram.org/setup.html).
 
 **Optional:**
 To enable PCMSolver,
-you must run `setup` with the `--pcm` option.
+you must run `setup.py` with the `--pcm` option.
 It might be a good idea to set the location of PCMSolver as an environment variable to help CMake locate it.
 ```shell
 export PCMSolver_ROOT=/path/to/pcmsolver
@@ -156,7 +169,7 @@ Go to this directory and use the `make` command to compile.
 cd build
 make
 ```
-Note that either the `setup` or `autogenerate_files.py` script have to be run before
+Note that either the `setup.py` or `autogenerate_files.py` script have to be run before
 compiling, as the script generates necessary interfaces and files handling complex variables in eT.
 Use `make -j n`, where `n` is the number of processors, to make the compilation run in parallel.
 
@@ -170,11 +183,11 @@ ctest
 
 ## Running eT
 The launch script is the recommended way of running eT.
-Similarly to `setup`,
+Similarly to `setup.py`,
 it has a `--help` option
 and a more detailed description is available
 [here](https://etprogram.org/eT_launch.html).
-To have `eT_launch` easily available,
+To have `eT_launch.py` easily available,
 you can add `build` to your `PATH` variable in `.bashrc`;
 ```shell
 export PATH=$PATH:/path/to/eT/build
@@ -185,4 +198,3 @@ See the [website](https://etprogram.org)
 for more help or look in `eT/tests` for inspiration when making your own input file.
 For example,
 `eT/tests/hf_energy/hf_energy.inp` is an input file for a Hartree-Fock calculation.
-

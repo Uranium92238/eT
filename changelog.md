@@ -1,3 +1,7 @@
+# eT v1.3.9
+### Bugfixes
+- Updated Readme with `setup.py` and `eT_launch.py`. eT-program/eT!887
+
 # eT v1.3.8
 ### Bugfixes
 - Fix bug with pure gaussians. eT-program/eT!884
