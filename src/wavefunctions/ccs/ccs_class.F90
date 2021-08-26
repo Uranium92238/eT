@@ -433,7 +433,8 @@ module ccs_class
 !
       procedure :: print_dominant_x_amplitudes                   => print_dominant_x_amplitudes_ccs
       procedure :: print_dominant_amplitudes                     => print_dominant_amplitudes_ccs
-      procedure :: print_dominant_x1                             => print_dominant_x1_ccs
+!
+      procedure, private :: print_dominant_x1
 !
       procedure :: make_bath_orbital                             => make_bath_orbital_ccs
 !
@@ -1070,7 +1071,7 @@ contains
    end subroutine print_dominant_x_amplitudes_ccs
 !
 !
-   subroutine print_dominant_x1_ccs(wf, x1, tag)
+   subroutine print_dominant_x1(wf, x1, tag)
 !!
 !!    Print dominant x1
 !!    Written by Eirik F. Kjønstad, Dec 2018
@@ -1132,7 +1133,7 @@ contains
       call mem%dealloc(dominant_values, n_elements)
       call mem%dealloc(abs_x1, wf%n_t1)
 !
-   end subroutine print_dominant_x1_ccs
+   end subroutine print_dominant_x1
 !
 !
    subroutine set_cvs_start_indices_ccs(wf, start_indices)
