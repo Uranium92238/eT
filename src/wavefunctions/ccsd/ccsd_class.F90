@@ -219,7 +219,8 @@ module ccsd_class
 !
       procedure :: set_initial_amplitudes_guess     => set_initial_amplitudes_guess_ccsd
       procedure :: set_initial_multipliers_guess    => set_initial_multipliers_guess_ccsd
-      procedure :: set_t2_to_cc2_guess              => set_t2_to_cc2_guess_ccsd
+!
+      procedure, private :: set_t2_to_cc2_guess 
 !
       procedure :: read_amplitudes                  => read_amplitudes_ccsd
       procedure :: save_amplitudes                  => save_amplitudes_ccsd
@@ -227,11 +228,12 @@ module ccsd_class
       procedure :: save_multipliers                 => save_multipliers_ccsd
       procedure :: read_multipliers                 => read_multipliers_ccsd
 !
-      procedure :: print_dominant_x2                => print_dominant_x2_ccsd
       procedure :: print_dominant_amplitudes        => print_dominant_amplitudes_ccsd
       procedure :: print_dominant_x_amplitudes      => print_dominant_x_amplitudes_ccsd
 !
-      procedure :: scale_amplitudes                           => scale_amplitudes_ccsd
+      procedure, private :: print_dominant_x2
+!
+      procedure :: scale_amplitudes                 => scale_amplitudes_ccsd
 !
       procedure :: calculate_energy                 => calculate_energy_ccsd
       procedure :: calculate_energy_complex         => calculate_energy_ccsd_complex
@@ -433,7 +435,7 @@ contains
    end subroutine set_initial_multipliers_guess_ccsd
 !
 !
-   subroutine set_t2_to_cc2_guess_ccsd(wf)
+   subroutine set_t2_to_cc2_guess(wf)
 !!
 !!    Set t2 amplitudes guess
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
@@ -490,7 +492,7 @@ contains
 !
       call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine set_t2_to_cc2_guess_ccsd
+   end subroutine set_t2_to_cc2_guess
 !
 !
    subroutine print_dominant_amplitudes_ccsd(wf)
@@ -504,7 +506,7 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      call wf%print_dominant_x1(wf%t1,'t')
+      call wf%ccs%print_dominant_amplitudes()
       call wf%print_dominant_x2(wf%t2,'t')
 !
    end subroutine print_dominant_amplitudes_ccsd
@@ -528,13 +530,13 @@ contains
 !
       character(len=*) :: tag
 !
-      call wf%print_dominant_x1(x(1:wf%n_t1),tag)
+      call wf%ccs%print_dominant_x_amplitudes(x(1:wf%n_t1),tag)
       call wf%print_dominant_x2(x(wf%n_t1 + 1:wf%n_gs_amplitudes),tag)
 !
    end subroutine print_dominant_x_amplitudes_ccsd
 !
 !
-   subroutine print_dominant_x2_ccsd(wf, x2, tag)
+   subroutine print_dominant_x2(wf, x2, tag)
 !!
 !!    Print dominant x2
 !!    Written by Eirik F. Kjønstad, Dec 2018
@@ -600,7 +602,7 @@ contains
       call mem%dealloc(dominant_values, n_elements)
       call mem%dealloc(abs_x2, wf%n_t2)
 !
-   end subroutine print_dominant_x2_ccsd
+   end subroutine print_dominant_x2
 !
 !
    subroutine scale_amplitudes_ccsd(wf, t)
