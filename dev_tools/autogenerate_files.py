@@ -30,7 +30,7 @@ Combined in autogenerate_files.py by Alexander C. Paul, Nov 2020
 Cleaned and optimized by Rolf H. Myhre, Mar 2021
 """
 
-from re import sub, findall
+from re import sub, subn, findall
 from pathlib import Path
 
 # Set of modules that can be complexified.
@@ -349,7 +349,7 @@ def complexify_from_set(line, real_set):
     return line
 
 
-def complexify_line(line, parameter_list):
+def complexify_line(line, parameter_list, continuation_mem_batch_setup):
     """
     Check line for strings that have to be replaced for
     complexification and replace them
@@ -393,6 +393,29 @@ def complexify_line(line, parameter_list):
         line = sub(r"\b" + "zero_array" + r"\b", "zero_array_complex", line)
     if "copy_and_scale" in line:
         line = sub(r"\b" + "copy_and_scale" + r"\b", "copy_and_scale_complex", line)
+
+    # Correct element size in batch_setup
+    # in case of complex double precision
+
+    if "mem%batch_setup" in line or continuation_mem_batch_setup:
+
+        continuation_mem_batch_setup = True
+
+        (line, n_substitutions) = subn(
+            r"element_size\s*=\s*dp", ", element_size=2*dp)\n", line
+        )
+
+        if n_substitutions > 0:
+            continuation_mem_batch_setup = False
+            return line
+
+        (line, n_substitutions) = subn(r"\)\s*\n", ", element_size=2*dp)\n", line)
+
+        if n_substitutions > 0:
+            continuation_mem_batch_setup = False
+            return line
+
+        return line
 
     # Change complexifiable submodules to complex version
     for module in complexifiable_modules:
@@ -469,6 +492,9 @@ def autogenerate_complex_files(source_directory, parameter_list):
 
     pointer_set = set()
     wf_procedure_set = set()
+
+    # set to true if mem%batch_setup continues on next line
+    continuation_mem_batch_setup = False
 
     for wf in wfs:
 
@@ -548,7 +574,9 @@ def autogenerate_complex_files(source_directory, parameter_list):
                         # Complexify variables, procedures and general complexification
                         line = complexify_from_set(line, variable_set)
                         line = complexify_from_set(line, procedure_set)
-                        line = complexify_line(line, parameter_list)
+                        line = complexify_line(
+                            line, parameter_list, continuation_mem_batch_setup
+                        )
 
                     c_file.write(line)
 
@@ -560,6 +588,9 @@ def complexify_modules(src_dir, parameter_list):
 
     # Get files in src and subdirectories
     f_paths = set(src_dir.glob("**/*.F90"))
+
+    # set to true if mem%batch_setup continues on next line
+    continuation_mem_batch_setup = False
 
     # Loop over all files and check if complexifiable
     for f_path in f_paths:
@@ -582,7 +613,9 @@ def complexify_modules(src_dir, parameter_list):
                 for line in lines:
 
                     if len(line.strip()) > 1:
-                        line = complexify_line(line, parameter_list)
+                        line = complexify_line(
+                            line, parameter_list, continuation_mem_batch_setup
+                        )
                     c_file.write(line)
 
 

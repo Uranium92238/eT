@@ -3473,6 +3473,8 @@ contains
 !
       enddo
 !
+      call mem%batch_finalize()
+!
       call mem%dealloc(AB_info, n_construct_shp, 2) ! [A, B]
 !
       call mem%dealloc(cholesky_basis, this%n_cholesky, 3)
@@ -3814,8 +3816,11 @@ contains
 !
       enddo ! J batch
 !
-      call mem%dealloc(construct_shp_to_shells, n_construct_shp, 2)
+      call mem%batch_finalize()
+!
       call mem%dealloc(ao_offsets, n_construct_shp)
+!
+      call mem%dealloc(construct_shp_to_shells, n_construct_shp, 2)
 !
       call mem%dealloc(cholesky_basis, this%n_cholesky, 3)
       call mem%dealloc(basis_shell_info, n_shp_in_basis, 4)

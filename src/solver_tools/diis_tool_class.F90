@@ -565,6 +565,8 @@ contains
 !
       call this%errors%free_records()
 !
+      call mem%batch_finalize()
+!
    end subroutine construct_new_G_elements
 !
 !
@@ -753,6 +755,8 @@ contains
       enddo 
 !
       call y_vectors%free_records()
+!
+      call mem%batch_finalize()
 !
    end subroutine construct_extrapolated_vector
 !

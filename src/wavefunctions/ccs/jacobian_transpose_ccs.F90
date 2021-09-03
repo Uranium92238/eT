@@ -239,6 +239,8 @@ contains
          enddo ! batch j
       enddo ! batch a
 !
+      call mem%batch_finalize()
+!
 !$omp parallel do private(a, i)
       do a = 1, wf%n_v
          do i = 1, wf%n_o

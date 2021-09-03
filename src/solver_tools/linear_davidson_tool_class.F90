@@ -448,6 +448,8 @@ contains
 !
       enddo
 !
+      call mem%batch_finalize()
+!
       call davidson%trials%free_records()
 !
       call timer%turn_off()

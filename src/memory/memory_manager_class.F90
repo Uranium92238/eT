@@ -52,6 +52,7 @@ module memory_manager_class
    use parameters
    use global_out, only : output
    use batching_index_class, only : batching_index
+   use memory_tracker_class, only : memory_tracker
    use range_class, only: range_
    use block_class, only: block_
 !
@@ -84,6 +85,11 @@ module memory_manager_class
 !     Unit for memory, default is GB
 !
       character(len=2), private :: units
+!
+!     Batch memory tracking
+!
+      logical, private :: batching_on  
+      type(memory_tracker), allocatable :: batch_mem_tracker
 !
    contains
 !
@@ -192,7 +198,13 @@ module memory_manager_class
                                         batch_setup_2_memory_manager, &
                                         batch_setup_3_memory_manager
 !
+      procedure :: batch_finalize &
+                => batch_finalize_memory_manager
+!
+      procedure, private :: initialize_batching_tracker
+!
       procedure :: update_memory_after_alloc        => update_memory_after_alloc_memory_manager
+      procedure :: update_memory_after_dealloc      => update_memory_after_dealloc_memory_manager
 !
       procedure, nopass :: print_allocation_error   => print_allocation_error_memory_manager
       procedure, nopass :: print_deallocation_error => print_deallocation_error_memory_manager
@@ -273,6 +285,8 @@ contains
 !
       mem%available = mem%total
       mem%max_used = mem%total - mem%available
+!
+      mem%batching_on = .false. 
 !
       call mem%print_settings()
 !
@@ -1169,7 +1183,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + dp*size_array
+      call mem%update_memory_after_dealloc(size_array, dp)
 !
    end subroutine dealloc_r_1_memory_manager
 !
@@ -1251,7 +1265,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + dp*size_array
+      call mem%update_memory_after_dealloc(size_array, dp)
 !
    end subroutine dealloc_r_2_memory_manager
 !
@@ -1333,7 +1347,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + dp*size_array
+      call mem%update_memory_after_dealloc(size_array, dp)
 !
    end subroutine dealloc_r_3_memory_manager
 !
@@ -1374,7 +1388,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + dp*size_array
+      call mem%update_memory_after_dealloc(size_array, dp)
 !
    end subroutine dealloc_r_4_memory_manager
 !
@@ -1415,7 +1429,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + dp*size_array
+      call mem%update_memory_after_dealloc(size_array, dp)
 !
    end subroutine dealloc_r_5_memory_manager
 !
@@ -1456,7 +1470,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + dp*size_array
+      call mem%update_memory_after_dealloc(size_array, dp)
 !
    end subroutine dealloc_r_6_memory_manager
 !
@@ -1497,7 +1511,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + dp*size_array
+      call mem%update_memory_after_dealloc(size_array, dp)
 !
    end subroutine dealloc_r_2_p_memory_manager
 !
@@ -1538,7 +1552,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + dp*size_array
+      call mem%update_memory_after_dealloc(size_array, dp)
 !
    end subroutine dealloc_r_3_p_memory_manager
 !
@@ -1579,7 +1593,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + 2*dp*size_array
+      call mem%update_memory_after_dealloc(size_array, 2*dp)
 !
    end subroutine dealloc_c_1_memory_manager
 !
@@ -1620,7 +1634,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + 2*dp*size_array
+      call mem%update_memory_after_dealloc(size_array, 2*dp)
 !
    end subroutine dealloc_c_2_memory_manager
 !
@@ -1661,7 +1675,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + 2*dp*size_array
+      call mem%update_memory_after_dealloc(size_array, 2*dp)
 !
    end subroutine dealloc_c_3_memory_manager
 !
@@ -1702,7 +1716,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + 2*dp*size_array
+      call mem%update_memory_after_dealloc(size_array, 2*dp)
 !
    end subroutine dealloc_c_4_memory_manager
 !
@@ -1743,7 +1757,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + 2*dp*size_array
+      call mem%update_memory_after_dealloc(size_array, 2*dp)
 !
    end subroutine dealloc_c_5_memory_manager
 !
@@ -1784,7 +1798,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + 2*dp*size_array
+      call mem%update_memory_after_dealloc(size_array, 2*dp)
 !
    end subroutine dealloc_c_6_memory_manager
 !
@@ -1825,7 +1839,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + 2*dp*size_array
+      call mem%update_memory_after_dealloc(size_array, 2*dp)
 !
    end subroutine dealloc_c_3_p_memory_manager
 !
@@ -2274,12 +2288,11 @@ contains
 !
       integer, intent(in) :: size_array, size_type
 !
-!     Update available memory
+      integer(i64) :: bytes
 !
-      mem%available = mem%available - size_array*size_type
+      bytes = int(size_array*size_type, kind=i64)
 !
-!     Check if there is no more memory (defined as being no more memory
-!     left of what was specified by user as available)
+      mem%available = mem%available - bytes
 !
       if (mem%available .lt. 0) then
 !
@@ -2293,7 +2306,34 @@ contains
       if (mem%max_used < (mem%total - mem%available)) &
           mem%max_used =  mem%total - mem%available
 !
+      if (mem%batching_on) call mem%batch_mem_tracker%update(bytes)
+!
    end subroutine update_memory_after_alloc_memory_manager
+!
+!
+   subroutine update_memory_after_dealloc_memory_manager(mem, size_array, size_type)
+!!
+!!    Update memory after deallocation
+!!    Written by Alexander C. Paul, May 2020
+!!
+!!    size_array: total size of the array allocated
+!!    size_type : storage size of one element of the array in Byte
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      integer, intent(in) :: size_array, size_type
+!
+      integer(i64) :: bytes
+!
+      bytes = int(size_array*size_type, kind=i64)
+!
+      mem%available = mem%available + bytes
+!
+      if (mem%batching_on) call mem%batch_mem_tracker%update(-bytes)
+!
+   end subroutine update_memory_after_dealloc_memory_manager
 !
 !
    subroutine print_settings_memory_manager(mem)
@@ -2309,6 +2349,66 @@ contains
                          mem%get_memory_as_character(mem%total))
 !
    end subroutine print_settings_memory_manager
+!
+!
+   subroutine batch_finalize_memory_manager(mem)
+!!
+!!    Batch finalize
+!!    Written by Eirik F. Kjønstad, June 2021
+!!
+!!    Must be called after a batching loop is finished.
+!!
+!!    The routine turns of batching mode and deallocates the 
+!!    memory tracker for the batching procedure.
+!!
+      implicit none 
+!
+      class(memory_manager), intent(inout) :: mem 
+!
+      mem%batching_on = .false.
+!
+      if (allocated(mem%batch_mem_tracker)) then 
+!
+         deallocate(mem%batch_mem_tracker)
+!
+      else
+!
+         call output%error_msg('Asked to finalize batch, but batching tracker &
+                               &not allocated! Was batch_finalize already called &
+                               &for the current batching loop?')
+!
+      endif
+!
+   end subroutine batch_finalize_memory_manager
+!
+!
+   subroutine initialize_batching_tracker(mem, max_memory_usage)
+!!
+!!    Initialize batching tracker
+!!    Written by Eirik F. Kjønstad, June 2021
+!!
+!!    To be called when batching has been determined. 
+!!
+!!    Makes sure memory usage is tracked during the batching loops.
+!!
+      implicit none 
+!
+      class(memory_manager), intent(inout) :: mem 
+!
+      integer(i64), intent(in) :: max_memory_usage
+!
+      if (mem%batching_on) then 
+!
+         call output%error_msg('Tried to initialize memory tracker for batching loop, &
+                               &but the memory manager is already in batching mode! &
+                               &Have you forgotten to finalize the previous batching loop?')
+!
+      endif
+!
+      mem%batching_on = .true.
+      mem%batch_mem_tracker = memory_tracker(max_memory_usage)
+!
+   end subroutine initialize_batching_tracker
 !
 !
    subroutine batch_setup_1_memory_manager(mem, batch_p, req0, req1, element_size)
@@ -2397,6 +2497,8 @@ contains
 !
       if (force_batch) call batch_p%force_batch()
 !
+      call mem%initialize_batching_tracker(req0_tot + req1_min*int(batch_p%max_length, kind=i64))
+!
    end subroutine batch_setup_1_memory_manager
 !
 !
@@ -2423,8 +2525,8 @@ contains
 !!    req_single_batch: optional specifying the minimal memory needed to not batch
 !!
 !!    If you are batching over i and j and need to keep g_abij, g_abci and g_abcj in memory,
-!!    req1 = 2*n_v**3 (both for i and j) and req2 = n_v**2. Memory per batch is then
-!!    batch_size*req1 + batch_size**2*req2
+!!    req1_i = n_v**3, req1_j = n_v**3 and req2 = n_v**2. 
+!!    Memory per batch is then batch_size*(req1_i + req1_j) + batch_size**2*req2
 !!
 !!    If you are batching over a and j and need to keep g_abij, g_abci and g_abcj in memory,
 !!    req1_a = n_o*n_v**2, req1_j = 0, and req2 = n_o*n_v + n_v**2. Note that one integral (g_abci)
@@ -2460,6 +2562,8 @@ contains
 !
       integer :: e_size
       character(len=17), allocatable :: reqChar
+!
+      integer(i64) :: max_memory_usage 
 !
       if ((.not. batch_p%initialized) .or. (.not. batch_q%initialized)) then
 !
@@ -2617,6 +2721,25 @@ contains
 !
       endif
 !
+      max_memory_usage = req0_tot + &
+                         req1_p_min*int(batch_p%max_length, kind=i64) + &
+                         req1_q_min*int(batch_q%max_length, kind=i64) + &
+                         req2_min*int(batch_q%max_length, kind=i64)     &
+                                 *int(batch_q%max_length, kind=i64)
+!
+      if (batch_p%num_batches .eq. 1 .and. &
+          batch_q%num_batches .eq. 1) then 
+!
+         if (present(req_single_batch)) then 
+!
+            max_memory_usage = int(req_single_batch*e_size, kind=i64)
+!
+         endif
+!
+      endif
+!
+      call mem%initialize_batching_tracker(max_memory_usage)
+
    end subroutine batch_setup_2_memory_manager
 !
 !
@@ -2697,6 +2820,8 @@ contains
 !
       integer :: e_size
       character(len=17), allocatable :: reqChar
+!
+      integer(i64) :: max_memory_usage
 !
       if ((.not. batch_p%initialized)        &
             .or. (.not. batch_q%initialized) &
@@ -2863,6 +2988,34 @@ contains
          end if
 !
       endif
+!
+      max_memory_usage = req0_tot + &
+                         req1_p_min*int(batch_p%max_length, kind=i64)  +   &
+                         req1_q_min*int(batch_q%max_length, kind=i64)  +   &
+                         req1_r_min*int(batch_r%max_length, kind=i64)  +   &
+                         req2_pq_min*int(batch_p%max_length, kind=i64)     &
+                                    *int(batch_q%max_length, kind=i64) +   &
+                         req2_pr_min*int(batch_p%max_length, kind=i64)     &
+                                    *int(batch_r%max_length, kind=i64) +   &
+                         req2_qr_min*int(batch_q%max_length, kind=i64)     &
+                                    *int(batch_r%max_length, kind=i64) +   &
+                         req3_min   *int(batch_p%max_length, kind=i64)     &
+                                    *int(batch_q%max_length, kind=i64)     &
+                                    *int(batch_r%max_length, kind=i64)
+!
+      if (batch_p%num_batches .eq. 1 .and. &
+          batch_q%num_batches .eq. 1 .and. &
+          batch_r%num_batches .eq. 1) then 
+!
+         if (present(req_single_batch)) then 
+!
+            max_memory_usage = int(req_single_batch*e_size, kind=i64)
+!
+         endif
+!
+      endif
+!
+      call mem%initialize_batching_tracker(max_memory_usage)
 !
    end subroutine batch_setup_3_memory_manager
 !

@@ -402,6 +402,8 @@ contains
 !
       endif
 !
+      call mem%batch_finalize()
+!
       call ccsdpt_timer%turn_off()
 !
    end subroutine calculate_energy_correction_ccsdpt

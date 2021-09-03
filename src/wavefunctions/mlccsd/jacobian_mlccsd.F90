@@ -980,12 +980,7 @@ contains
       real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o), &
                   intent(inout) :: rho_aibj
 !
-      integer :: n_a_o, n_a_v 
-!
       real(dp), dimension(:,:,:,:), allocatable :: X_kibj
-!
-      n_a_o = wf%n_ccsd_o + wf%n_cc2_o
-      n_a_v = wf%n_ccsd_v + wf%n_cc2_v
 !
 !     :: Term 1. - sum_kcd g_kcbd x_ij^cd c_ak ::
 !
@@ -1461,6 +1456,7 @@ contains
       integer :: n_a_o, n_a_v 
 !
       integer :: rec1, rec0
+      integer :: rec1_d2_2, rec1_d2_3, rec1_d2_3to4, rec1_d2_4, rec1_d2_5
       integer :: current_b_batch
 !
       type(batching_index) :: batch_b
@@ -1479,17 +1475,29 @@ contains
 !
 !     Initialize batching variable
 !
-      rec0 = max((wf%eri%n_J)*(wf%n_o)*(wf%n_v), &
-                 (wf%n_ccsd_o**2)*(n_a_v), &
-                 (n_a_o)*(n_a_v)*(wf%n_ccsd_o)*(wf%n_ccsd_v), &
-                 (wf%n_ccsd_o**2)*(wf%n_ccsd_v)*(n_a_v))
-
-      rec1 = (wf%n_o)*(wf%n_v**2) + max((wf%n_o)*(wf%n_v**2), &
-             2*(wf%n_o)*(wf%n_ccsd_o**2) + (wf%n_ccsd_o**2)*(wf%n_ccsd_v) + (n_a_v**2)*(wf%n_o), &
-             (n_a_o)*(n_a_v)*(wf%n_v) + (wf%n_ccsd_o)*(n_a_o)*(n_a_v)&
-              + (wf%n_ccsd_o**2)*(wf%n_ccsd_v), &
-             n_a_v + (wf%n_ccsd_o**2)*(wf%n_ccsd_v))
-
+      rec0 = max(wf%eri%n_J*wf%n_o*wf%n_v, &             ! get_eri_t1
+                 wf%n_ccsd_v*wf%n_ccsd_o*n_a_v*n_a_o, &  ! from d2_2, d2_3, d2_4
+                 wf%n_ccsd_v*wf%n_ccsd_o**2*n_a_v)       ! from d2_5
+!
+!     g_kcbd, g_dkbc, L_bd^J, rho_aibj, rho_ajbi, Y_dkbi
+      rec1_d2_2 = wf%n_v*wf%eri%n_J + wf%n_o*wf%n_v**2 + n_a_v*n_a_o*wf%n_v + & 
+                  2*wf%n_ccsd_v*wf%n_ccsd_o**2 + n_a_v*n_a_o*wf%n_ccsd_o
+!
+!     g_kcbd, g_kcbd_3, rho_aibj, Y_kcbj
+      rec1_d2_3 = wf%n_o*wf%n_v**2 + n_a_v*n_a_o*wf%n_v + & 
+                  wf%n_ccsd_v*wf%n_ccsd_o**2 + n_a_v*n_a_o*wf%n_ccsd_o
+!
+!     g_kcbd, L_kcbd, rho_aibj
+      rec1_d2_3to4 = 2*wf%n_o*wf%n_v**2 + wf%n_ccsd_v*wf%n_ccsd_o**2
+!
+!     g_kcbd, L_ckbd_4, rho_aibj, Y_ckbi
+      rec1_d2_4 = wf%n_o*wf%n_v**2 + n_a_v*n_a_o*wf%n_v + &
+                  wf%n_ccsd_v*wf%n_ccsd_o**2 + n_a_v*n_a_o*wf%n_ccsd_o
+!
+!     L_ckbd_5, rho_aibj
+      rec1_d2_5 = wf%n_v*wf%n_o*n_a_v + 2*wf%n_ccsd_v*wf%n_ccsd_o**2 + n_a_v 
+!
+      rec1 = max(rec1_d2_2, rec1_d2_3, rec1_d2_3to4, rec1_d2_4, rec1_d2_5)
 !
       batch_b = batching_index(wf%n_ccsd_v)
       call mem%batch_setup(batch_b, rec0, rec1)
@@ -1620,6 +1628,8 @@ contains
          call mem%dealloc(rho_aibj_batch, wf%n_ccsd_v, wf%n_ccsd_o, batch_b%length, wf%n_ccsd_o)
 !   
       enddo
+!
+      call mem%batch_finalize()
 !
       call timer%turn_off()
 !
@@ -3166,6 +3176,8 @@ contains
          call mem%dealloc(X_ijkb, wf%n_ccsd_o, wf%n_ccsd_o, wf%n_o, batch_b%length)
 !
       enddo
+!
+      call mem%batch_finalize()
 !
 !     Store intermediate to file 
 !

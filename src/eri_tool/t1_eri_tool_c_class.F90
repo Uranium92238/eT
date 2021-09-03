@@ -743,7 +743,7 @@ contains
       else !Read and write
 !
          batcher = batching_index(eri%n_mo**2)
-         call mem%batch_setup(batcher, 0, eri%n_J)
+         call mem%batch_setup(batcher, 0, eri%n_J, 2*dp)
          call mem%alloc(array, batcher%max_length*eri%n_J)
 !
          call eri%cholesky_mo%open_('read')
@@ -758,6 +758,9 @@ contains
          enddo
 !
          call mem%dealloc(array, batcher%max_length*eri%n_J)
+!
+         call mem%batch_finalize()
+!
          call eri%cholesky_mo%close_()
          call eri%cholesky_t1%close_()
 !
@@ -908,7 +911,8 @@ contains
       else
 !
          batch_o = batching_index(eri%n_o)
-         call mem%batch_setup(batch_o, 0, eri%n_J*(eri%n_o*max(eri%n_v, eri%n_o) + eri%n_o**2))
+         call mem%batch_setup(batch_o, 0, &
+               eri%n_J*(eri%n_o*max(eri%n_v, eri%n_o) + eri%n_o**2), 2*dp)
 !
          call mem%alloc(L_J_oo, eri%n_J*batch_o%max_length*eri%n_o)
          call mem%alloc(L_J_ox, eri%n_J*batch_o%max_length*max(eri%n_v, eri%n_o))
@@ -938,6 +942,8 @@ contains
 !
          call mem%dealloc(L_J_oo, eri%n_J*batch_o%max_length*eri%n_o)
          call mem%dealloc(L_J_ox, eri%n_J*batch_o%max_length*max(eri%n_v, eri%n_o))
+!
+         call mem%batch_finalize()
 !
       end if
 !
@@ -995,7 +1001,7 @@ contains
 !
          batch_o = batching_index(eri%n_o)
          batch_v = batching_index(eri%n_v)
-         call mem%batch_setup(batch_o, batch_v, 0, 2*eri%n_J*eri%n_o, eri%n_J*eri%n_o, 0)
+         call mem%batch_setup(batch_o, batch_v, 0, 2*eri%n_J*eri%n_o, eri%n_J*eri%n_o, 0, 2*dp)
 !
          call mem%alloc(L_J_ij, eri%n_J*eri%n_o*batch_o%max_length)
          call mem%alloc(L_J_ji, eri%n_J*batch_o%max_length*eri%n_o)
@@ -1057,12 +1063,14 @@ contains
          call mem%dealloc(L_J_ji, eri%n_J*batch_o%max_length*eri%n_o)
          call mem%dealloc(L_J_ij, eri%n_J*eri%n_o*batch_o%max_length)
 !
+         call mem%batch_finalize()
+!
       else
 !
          batch_o = batching_index(eri%n_o)
          batch_v = batching_index(eri%n_v)
          req = eri%n_J*(eri%n_o + max(eri%n_v,eri%n_o))
-         call mem%batch_setup(batch_o, batch_v, 0, req, req, 0)
+         call mem%batch_setup(batch_o, batch_v, 0, req, req, 0, 2*dp)
 !
          call mem%alloc(L_J_ij, eri%n_J*batch_o%max_length*max(eri%n_v, eri%n_o))
          call mem%alloc(L_J_ji, eri%n_J*batch_o%max_length*eri%n_o)
@@ -1150,6 +1158,8 @@ contains
          call mem%dealloc(L_J_ji, eri%n_J*batch_o%max_length*eri%n_o)
          call mem%dealloc(L_J_ij, eri%n_J*batch_o%max_length*max(eri%n_v, eri%n_o))
 !
+         call mem%batch_finalize()
+!
       endif
 !
    end subroutine construct_cholesky_t1_vo_t1_eri_tool_c
@@ -1185,7 +1195,7 @@ contains
          call zcopy(eri%n_J*eri%n_v**2, eri%L_J_vv_mo, 1, eri%L_J_vv_t1, 1)
 !
          batch_v = batching_index(eri%n_v)
-         call mem%batch_setup(batch_v, 0, eri%n_J*eri%n_v)
+         call mem%batch_setup(batch_v, 0, eri%n_J*eri%n_v, 2*dp)
 !
          call mem%alloc(L_J_vv, eri%n_J, eri%n_v, batch_v%max_length)
 !
@@ -1210,10 +1220,12 @@ contains
 !
          call mem%dealloc(L_J_vv, eri%n_J, eri%n_v, batch_v%max_length)
 !
+         call mem%batch_finalize()
+!
       else
 !
          batch_v = batching_index(eri%n_v)
-         call mem%batch_setup(batch_v, 0, 2*eri%n_J*max(eri%n_v, eri%n_o))
+         call mem%batch_setup(batch_v, 0, 2*eri%n_J*max(eri%n_v, eri%n_o), 2*dp)
 !
          call mem%alloc(L_J_xv, eri%n_J, batch_v%max_length, max(eri%n_v, eri%n_o))
          call mem%alloc(L_J_vv, eri%n_J, batch_v%max_length, max(eri%n_v, eri%n_o))
@@ -1248,6 +1260,8 @@ contains
 !
          call mem%dealloc(L_J_xv, eri%n_J, batch_v%max_length, max(eri%n_v, eri%n_o))
          call mem%dealloc(L_J_vv, eri%n_J, batch_v%max_length, max(eri%n_v, eri%n_o))
+!
+         call mem%batch_finalize()
 !
       end if
 !

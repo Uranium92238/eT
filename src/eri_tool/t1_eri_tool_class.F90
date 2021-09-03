@@ -613,6 +613,8 @@ contains
 !
          enddo
 !
+         call mem%batch_finalize()
+!
          call mem%dealloc(array, batcher%max_length*eri%n_J)
          call eri%cholesky_mo%close_()
          call eri%cholesky_t1%close_()
@@ -792,6 +794,8 @@ contains
 !
          enddo
 !
+         call mem%batch_finalize()
+!
          call mem%dealloc(L_J_oo, eri%n_J*batch_o%max_length*eri%n_o)
          call mem%dealloc(L_J_ox, eri%n_J*batch_o%max_length*max(eri%n_v, eri%n_o))
 !
@@ -914,6 +918,8 @@ contains
             enddo
          enddo
 !
+         call mem%batch_finalize()
+!
          call mem%dealloc(L_J_ia, eri%n_J, eri%n_o, batch_v%max_length)
          call mem%dealloc(L_J_ji, eri%n_J*batch_o%max_length*eri%n_o)
          call mem%dealloc(L_J_ij, eri%n_J*eri%n_o*batch_o%max_length)
@@ -1004,6 +1010,8 @@ contains
 !
          enddo
 !
+         call mem%batch_finalize()
+!
          call mem%dealloc(L_J_ab, eri%n_J*batch_v%max_length*max(eri%n_v, eri%n_o))
          call mem%dealloc(L_J_ai, eri%n_J*batch_v%max_length*eri%n_o)
 !
@@ -1068,6 +1076,8 @@ contains
 !
          enddo
 !
+         call mem%batch_finalize()
+!
          call mem%dealloc(L_J_vv, eri%n_J, eri%n_v, batch_v%max_length)
 !
       else
@@ -1106,6 +1116,8 @@ contains
                                      eri%n_o + batch_v%first, eri%n_o + batch_v%get_last())
 !
          enddo
+!
+         call mem%batch_finalize()
 !
          call mem%dealloc(L_J_xv, eri%n_J, batch_v%max_length, max(eri%n_v, eri%n_o))
          call mem%dealloc(L_J_vv, eri%n_J, batch_v%max_length, max(eri%n_v, eri%n_o))

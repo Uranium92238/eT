@@ -52,6 +52,7 @@ set(eT_fortran_sources
 #
    src/memory/batching_index_class.F90
    src/memory/memory_manager_class.F90
+   src/memory/memory_tracker_class.F90
 #
    src/embedding/mm_atom_class.F90
    src/embedding/mm_molecule_class.F90

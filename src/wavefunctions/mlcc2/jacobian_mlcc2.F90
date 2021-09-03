@@ -526,6 +526,8 @@ contains
 !
       enddo  ! batch over c 
 !
+      call mem%batch_finalize()
+!
       call timer%turn_off()
 !
    end subroutine jacobian_cc2_a2_mlcc2
@@ -737,6 +739,8 @@ contains
       enddo ! batch_a
 !
       call mem%dealloc(c_bkci, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
+!
+      call mem%batch_finalize()
 !
       call timer%turn_off()
 !

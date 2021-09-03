@@ -1,4 +1,6 @@
 # eT v1.4.0
+### Bugfixes
+- Fixed some errors in memory handling that can occur for large systems and/or on machines with limited memory resources. eT-program/eT!852
 
 ### Features
 - Timers for Fock matrix construction for coupled cluster. eT-program/eT!849
@@ -9,6 +11,7 @@
 - TDHF (RPA/Tamm-Dancoff) excitation energies implemented for RHF. eT-program/eT!809
 - Restart for TDHF (RPA/Tamm-Dancoff) excitation energies. eT-program/eT!883
 - Added support for unit testing with pFUnit package. eT-program/eT!787
+- Minor changes to memory-handling to improve testability of memory-batching. eT-program/eT!852 
 
 ### Optimization
 - Adding option for overlap screening to CC calculation of one electron integral. eT-program/eT!851
@@ -45,6 +48,10 @@
 # eT v1.3.2
 ### Bugfixes
 - Read response vector tk for polarizabilities when needed for either diagonal or cross terms, to avoid cross terms from uninitialized array. eT-program/eT!856
+<<<<<<< HEAD
+>>>>>>> 11c0661353dde224f24fac0fa2633ae728e3d6ce
+=======
+>>>>>>> b7aa8fb22c5ebf601b1a4a26dcd4a700e97dbf2f
 
 # eT v1.3.1
 ### Bugfixes

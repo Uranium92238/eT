@@ -326,6 +326,8 @@ contains
 !
       enddo
 !
+      call mem%batch_finalize()
+!
       correlation_energy = two*ddot(wf%eri%n_J, X_J, 1, X_J, 1)
 !
       call mem%dealloc(X_J, wf%eri%n_J)
@@ -436,6 +438,8 @@ contains
          call mem%dealloc(L_Jia, wf%eri%n_J, batch_i%length, wf%n_v)
 !
       enddo
+!
+      call mem%batch_finalize()
 !
       wf%correlation_energy = correlation_energy
 !

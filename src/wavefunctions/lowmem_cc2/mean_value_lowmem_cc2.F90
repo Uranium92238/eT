@@ -122,6 +122,8 @@ contains
          enddo
       enddo
 !
+      call mem%batch_finalize()
+!
       wf%correlation_energy = correlation_energy
 !
       wf%energy = wf%hf_energy + correlation_energy
