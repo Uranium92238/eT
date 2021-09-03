@@ -446,6 +446,8 @@ contains
 !
       endif
 !
+      call mem%batch_finalize()
+!
 !     Resort X_dbai to X_abid for the final contraction with C^ac_il to sigma_dl
 !
       call wf%sort_x_to_abid_and_write()
@@ -622,6 +624,8 @@ contains
 !
       call mem%dealloc(X_abid, wf%n_v, wf%n_v, batch_i%max_length, wf%n_v)
       call mem%dealloc(X_dbai, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+!
+      call mem%batch_finalize()
 !
       call wf%X_abid%close_()
 !

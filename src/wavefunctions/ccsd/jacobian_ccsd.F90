@@ -958,6 +958,8 @@ contains
 !
       enddo ! End of batches over b
 !
+      call mem%batch_finalize()
+!
       call timer%turn_off()
 !
    end subroutine jacobian_ccsd_d2
@@ -1934,6 +1936,8 @@ contains
          call mem%dealloc(X_k_ijb, wf%n_o, wf%n_o, wf%n_o, batch_b%length)
 !
       enddo
+!
+      call mem%batch_finalize()
 !
 !     Store intermediate to file 
 !

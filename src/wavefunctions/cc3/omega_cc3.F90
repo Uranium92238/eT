@@ -468,6 +468,8 @@ contains
 !
       call mem%dealloc(F_ov_ck,wf%n_v,wf%n_o)
 !
+      call mem%batch_finalize()
+!
    end subroutine omega_cc3_a_cc3
 !
 !

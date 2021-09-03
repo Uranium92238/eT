@@ -296,12 +296,17 @@ contains
 !
 !     batching over i and j
 !
+!     To use batch_setup with batch_j, we assume that the integrals to compute 
+!     are g_aijk and g_ajki (with no repeating j index). This overestimates the 
+!     required memory, but avoids the incorrect memory usage that can otherwise
+!     occur.
+!
       req0 = 0
 !
-      req1_i = (wf%eri%n_J)*(wf%n_v)
-      req1_j = (wf%eri%n_J)*(wf%n_v)
-!
-      req2 =  2*wf%n_v
+      req1_i = max(wf%n_v, wf%n_o)*wf%eri%n_J 
+      req1_j = max(wf%n_v, wf%n_o)*wf%eri%n_J 
+! 
+      req2 = 2*wf%n_v*wf%n_o
 !
       batch_i = batching_index(wf%n_o)
       batch_j = batching_index(wf%n_o)
@@ -357,6 +362,8 @@ contains
 !
          enddo
       enddo
+!
+      call mem%batch_finalize()
 !
    end subroutine construct_fock_ai_t1_ccs
 !
@@ -450,12 +457,17 @@ contains
 !
 !     batching over i and j
 !
+!     To use batch_setup with batch_j, we assume that the integrals to compute 
+!     are g_iajk and g_ikja (with no repeating j index). This overestimates the 
+!     required memory, but avoids the incorrect memory usage that can otherwise
+!     occur.
+!
       req0 = 0
 !
-      req1_i = (wf%eri%n_J)*(interval_a%length)
-      req1_j = (wf%eri%n_J)*(interval_a%length)
+      req1_i = max(interval_a%length, wf%n_o)*wf%eri%n_J 
+      req1_j = max(interval_a%length, wf%n_o)*wf%eri%n_J 
 !
-      req2 =  2*wf%n_v
+      req2 = 2*interval_a%length*wf%n_o 
 !
       batch_i = batching_index(i_range%length)
       batch_j = batching_index(wf%n_o)
@@ -516,6 +528,8 @@ contains
 !
          enddo
       enddo
+!
+      call mem%batch_finalize()
 !
    end subroutine construct_fock_ia_t1_ccs
 !
@@ -609,10 +623,15 @@ contains
 !
 !     batching over a and i
 !
+!     To use batch_setup with batch_i, we assume that the integrals to compute 
+!     are g_abik and g_akbi (with no repeating i index). This overestimates the 
+!     required memory, but avoids the incorrect memory usage that can otherwise
+!     occur.
+!
       req0 = 0
 !
-      req1_i = wf%eri%n_J*max(interval_a%length, interval_b%length)
-      req1_a = wf%eri%n_J*max(interval_a%length, interval_b%length)
+      req1_i = max(interval_b%length, wf%n_o)*wf%eri%n_J 
+      req1_a = max(interval_b%length, wf%n_o)*wf%eri%n_J 
 !
       req2 =  2*wf%n_o*(interval_b%length)
 !
@@ -672,6 +691,8 @@ contains
 !
          enddo
       enddo
+!
+      call mem%batch_finalize()
 !
    end subroutine construct_fock_ab_t1_ccs
 !
@@ -763,12 +784,17 @@ contains
 !
 !     Batching over i and k
 !
+!     To use batch_setup with batch_i, we assume that the integrals to compute 
+!     are g_ijkl and g_ilkj (with no repeating i index). This overestimates the 
+!     required memory, but avoids the incorrect memory usage that can otherwise
+!     occur.
+!
       req0 = 0
 !
-      req1_i = (wf%eri%n_J)*(wf%n_o)
-      req1_k = (wf%eri%n_J)*(wf%n_o)
+      req1_i = wf%eri%n_J*wf%n_o 
+      req1_k = wf%eri%n_J*wf%n_o 
 !
-      req2 =  (wf%n_o**2)
+      req2 = 2*(wf%n_o**2)
 !
       batch_i = batching_index(i_range%length)
       batch_k = batching_index(wf%n_o)
@@ -826,6 +852,8 @@ contains
          enddo
 !
       enddo
+!
+      call mem%batch_finalize()
 !
    end subroutine construct_fock_ij_t1_ccs
 !

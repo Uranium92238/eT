@@ -942,7 +942,9 @@ contains
          call eri%set_cholesky_mo(L_J_1_p, 1, eri%n_mo, batcher%first, batcher%get_last())
 !
       enddo
-
+!
+      call mem%batch_finalize()
+!
       if (.not. all_in_mem) then
          call temp_file%close_('delete')
       endif

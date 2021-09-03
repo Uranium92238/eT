@@ -632,6 +632,8 @@ contains
 !
          call davidson%construct_reduced_submetric(batch_i, batch_j)
 !
+         call mem%batch_finalize()
+!
       else
 !
 !        Not first iteration: calculate new elements only
@@ -666,6 +668,8 @@ contains
          call mem%batch_setup(batch_i, batch_j, req_0, req_1_i, req_1_j, req_2)
 !
          call davidson%construct_reduced_submetric(batch_i, batch_j)
+!
+         call mem%batch_finalize()
 !
       endif
 !

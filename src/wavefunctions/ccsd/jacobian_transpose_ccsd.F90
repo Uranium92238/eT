@@ -689,6 +689,8 @@ contains
 !
       enddo ! End of batches over a
 !
+      call mem%batch_finalize()
+!
       call mem%dealloc(X_eldi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     :: Term 2. sum_ckdle b_ckdl L_deia t_kl^ce ::
@@ -767,6 +769,8 @@ contains
          call mem%dealloc(L_aied, wf%n_v, wf%n_o, wf%n_v, batch_d%length)
 !
       enddo ! End of batches over d
+!
+      call mem%batch_finalize()
 !
       call mem%dealloc(X_ed, wf%n_v, wf%n_v)
 !
@@ -1129,6 +1133,8 @@ contains
 !
       enddo ! End of batches over d
 !
+      call mem%batch_finalize()
+!
       call mem%dealloc(t_cekl, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
 !     - sum_ckdle b_akdl t_kl^ce g_icde = sum_kdl b_akdl X_id_kl
@@ -1297,6 +1303,8 @@ contains
 !
       enddo ! End of batches over e
 !
+      call mem%batch_finalize()
+!
       call mem%dealloc(X_kdei, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
 !     :: Term 3. - sum_ckdle b_cldi t_kl^ce g_keda ::
@@ -1369,6 +1377,8 @@ contains
          call mem%dealloc(g_keda, wf%n_o, wf%n_v, wf%n_v, batch_a%length)
 !
       enddo ! End of batches over a
+!
+      call mem%batch_finalize()
 !
       call mem%dealloc(X_kedi, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
@@ -1574,6 +1584,8 @@ contains
 !
       enddo ! End of batches over b
 !
+      call mem%batch_finalize()
+!
 !     Add  - sum_ck b_aick g_cbjk = - sum_ck b_ai_ck g_ck_bj
 !
       call dgemm('N','N',            &
@@ -1717,6 +1729,8 @@ contains
          call mem%dealloc(g_cbik, wf%n_v, batch_b%length, wf%n_o, wf%n_o)
 !
       enddo ! End of batches over b
+!
+      call mem%batch_finalize()
 !
 !     Reorder to b_ajck = b_akcj
 !

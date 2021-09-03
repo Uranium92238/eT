@@ -423,10 +423,14 @@ contains
 !
       type(timings), allocatable :: timer 
 !
+      logical :: perform_batching
+!
       timer = timings('Davidson: orthonormalization of new trial vectors', 'v')
       call timer%turn_on()
 !
 !     Batch setup over trial vectors
+!
+      perform_batching = .true. ! Set to false in special case of no batch-setup 
 !
       req_0   = 0
       req_1_i = davidson%trials%required_to_load_record()
@@ -459,6 +463,7 @@ contains
 !           No old vectors; no batches over i 
 !
             call batch_i%do_not_batch()
+            perform_batching = .false.
 !
          else
 ! 
@@ -576,6 +581,8 @@ contains
          enddo ! end of j batches 
       enddo ! end of normalization loops
 !
+      if (perform_batching) call mem%batch_finalize()
+!
       call davidson%trials%free_records()
 !
       call timer%turn_off()
@@ -633,6 +640,8 @@ contains
 !
          call davidson%construct_reduced_submatrix(batch_i, batch_j)
 !
+         call mem%batch_finalize()
+!
       else
 !
 !        Not first iteration: calculate new elements only
@@ -668,6 +677,8 @@ contains
 !
          call davidson%construct_reduced_submatrix(batch_i, batch_j)
 !
+         call mem%batch_finalize()
+!
 !        i index old, j index new 
 !
          batch_i = batching_index(dimension_=prev_dim_red, &
@@ -679,6 +690,8 @@ contains
          call mem%batch_setup(batch_i, batch_j, req_0, req_1_i, req_1_j, req_2)
 !
          call davidson%construct_reduced_submatrix(batch_i, batch_j)
+!
+         call mem%batch_finalize()
 !
       endif
 !
@@ -837,6 +850,8 @@ contains
                      davidson%n_parameters)
 !
       enddo
+!
+      call mem%batch_finalize()
 !
       call y_vectors%free_records()
 !

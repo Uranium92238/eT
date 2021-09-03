@@ -570,6 +570,8 @@ contains
          enddo ! End batching over b
       enddo ! End batching over a
 !
+      call mem%batch_finalize()
+!
       call timer%turn_off()
       call integral_timer%turn_off()
 !
@@ -981,6 +983,8 @@ contains
          call mem%dealloc(omega_a_batch, batch_a%length, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
       enddo ! End of batching
+!
+      call mem%batch_finalize()
 !
       call mem%dealloc(u_ckbj, n_a_v, n_a_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !

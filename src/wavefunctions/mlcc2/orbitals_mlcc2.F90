@@ -1462,6 +1462,8 @@ contains
       call mem%dealloc(R_kdlc, wf%n_o, wf%n_v, wf%n_o, batch_c%max_length)
       call mem%dealloc(R_ibja, wf%n_o, wf%n_v, wf%n_o, batch_a%max_length)
 !
+      call mem%batch_finalize()
+!
       call doubles_file%close_('keep')
 !
    end subroutine add_doubles_M_and_N_cnto_mlcc2

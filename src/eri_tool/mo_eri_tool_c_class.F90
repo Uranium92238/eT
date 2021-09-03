@@ -1020,6 +1020,8 @@ contains
       call mem%dealloc(L_J_1, eri%n_J * batcher%max_length * eri%n_mo)
       call mem%dealloc(L_J_2, eri%n_J * batcher%max_length * eri%n_mo)
 !
+      call mem%batch_finalize()
+!
    end subroutine update_cholesky_mo_mo_eri_tool_c
 !
 !

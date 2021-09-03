@@ -187,6 +187,8 @@ contains
          enddo
       enddo
 !
+      call mem%batch_finalize()
+!
       call timer%turn_off()
 !
    end subroutine omega_cc2_a1_lowmem_cc2
@@ -364,6 +366,8 @@ contains
          enddo
       enddo
 !
+      call mem%batch_finalize()
+!
       call timer%turn_off()
 !
    end subroutine omega_cc2_b1_lowmem_cc2
@@ -501,6 +505,8 @@ contains
 !
          enddo
       enddo
+!
+      call mem%batch_finalize()
 !
       call timer%turn_off()
 !

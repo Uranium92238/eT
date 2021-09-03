@@ -1411,6 +1411,20 @@ contains
 !
       type(sequential_file) :: file_temp_1, file_temp_2
 !
+!     Initialize temporary files
+!
+      file_temp_1 = sequential_file('approximate_doubles_temp_1')
+      file_temp_2 = sequential_file('approximate_doubles_temp_2')
+!
+      call file_temp_1%open_('readwrite', 'rewind')
+!
+      call mem%alloc(L_Jkj, wf%eri%n_J, wf%n_o, wf%n_o)
+      call wf%eri%get_cholesky_mo(L_Jkj, 1, wf%n_o, 1, wf%n_o)
+!
+      call mem%alloc(L_kjJ, wf%n_o, wf%n_o, wf%eri%n_J)
+      call sort_123_to_231(L_Jkj, L_kjJ, wf%eri%n_J, wf%n_o, wf%n_o)
+      call mem%dealloc(L_Jkj, wf%eri%n_J, wf%n_o, wf%n_o)
+!
 !     Prepare for batching
 !
       req0 = 0
@@ -1428,23 +1442,9 @@ contains
 !
       call mem%batch_setup(batch_a, batch_b, req0, req1_a, req1_b, req2)
 !
-!     Initialize temporary files
-!
-      file_temp_1 = sequential_file('approximate_doubles_temp_1')
-      file_temp_2 = sequential_file('approximate_doubles_temp_2')
-!
 !     :: Construct term 1 and store in file_temp_1
 !
 !        P_aibj (- sum_k R_bk g_kjai)/(-eps_aibj + omega^CCS)/(1 + delta_ai,bj)
-!
-      call file_temp_1%open_('readwrite', 'rewind')
-!
-      call mem%alloc(L_Jkj, wf%eri%n_J, wf%n_o, wf%n_o)
-      call wf%eri%get_cholesky_mo(L_Jkj, 1, wf%n_o, 1, wf%n_o)
-!
-      call mem%alloc(L_kjJ, wf%n_o, wf%n_o, wf%eri%n_J)
-      call sort_123_to_231(L_Jkj, L_kjJ, wf%eri%n_J, wf%n_o, wf%n_o)
-      call mem%dealloc(L_Jkj, wf%eri%n_J, wf%n_o, wf%n_o)
 !
       do current_a_batch = 1, batch_a%num_batches
 !
@@ -1614,6 +1614,8 @@ contains
          call mem%dealloc(R_aibj, batch_a%length, wf%n_o, batch_a%length, wf%n_o)
 !
       enddo
+!
+      call mem%batch_finalize()
 !
       call mem%dealloc(L_kjJ, wf%n_o, wf%n_o, wf%eri%n_J)
 !

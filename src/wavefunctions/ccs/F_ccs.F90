@@ -418,6 +418,8 @@ contains
 !
       enddo ! batches of c
 !
+      call mem%batch_finalize()
+!
       call mem%alloc(X_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call sort_1234_to_2143(X_iajb, X_aibj, wf%n_o, wf%n_v, wf%n_o, wf%n_v)

@@ -993,6 +993,8 @@ contains
 !
       endif
 !
+      call mem%batch_finalize()
+!
 !     Final contractions of the intermediates
 !
       call add_21_to_12(one, density_ai, density_ov, wf%n_o, wf%n_v)
@@ -1596,6 +1598,8 @@ contains
 !
       endif
 !
+      call mem%batch_finalize()
+!
       call abc_timer%turn_off
 !
    end subroutine density_cc3_mu_nu_abc_cc3
@@ -1878,6 +1882,8 @@ contains
 !
       endif
 !
+      call mem%batch_finalize()
+!
       call timer%turn_off
 !
    end subroutine density_cc3_mu_nu_ov_Z_term_cc3
@@ -2078,6 +2084,8 @@ contains
 !
       call wf%Y_ebck_tbar%close_
       call mem%dealloc(Y_vvvo, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+!
+      call mem%batch_finalize()
 !
    end subroutine density_cc3_Y_vvvo_ov_cc3
 !

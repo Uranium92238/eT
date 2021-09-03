@@ -419,6 +419,8 @@ contains
       call mem%dealloc(t_p_ijcd, n_o_p, n_v_p)
       call mem%dealloc(t_m_ijcd, n_o_m, n_v_m)
 !
+      call mem%batch_finalize()
+!
       call ccsd_a2_timer%turn_off()
       call ccsd_a2_integral_timer%turn_off()
 !

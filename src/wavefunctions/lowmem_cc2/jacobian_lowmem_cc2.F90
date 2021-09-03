@@ -243,6 +243,8 @@ contains
          enddo ! batch_j
       enddo ! batch_k
 !
+      call mem%batch_finalize()
+!
       wf%jacobian_a1_intermediate_oo = sequential_file('jacobian_a1_2_intermediate_oo_lowmem_cc2')
       call wf%jacobian_a1_intermediate_oo%open_('write', 'rewind')
 !
@@ -399,6 +401,8 @@ contains
 !
          enddo ! batch_k
       enddo ! batch_j
+!
+      call mem%batch_finalize()
 !
       wf%jacobian_a1_intermediate_vv = sequential_file('jacobian_a1_intermediate_vv_doubles')
       call wf%jacobian_a1_intermediate_vv%open_('write', 'rewind')
@@ -610,6 +614,8 @@ contains
          enddo ! batch_k
       enddo ! batch_j
 !
+      call mem%batch_finalize()
+!
       req0 = 0
 !
       req1_a = (wf%eri%n_J)*(wf%n_o)
@@ -695,6 +701,8 @@ contains
 !
          enddo ! batch_c
       enddo ! batch_a
+!
+      call mem%batch_finalize()
 !
       call mem%dealloc(X_kc, wf%n_o, wf%n_v)
 !
@@ -960,6 +968,8 @@ contains
          enddo ! batch_a
       enddo ! batch_c
 !
+      call mem%batch_finalize()
+!
       call timer%turn_off()
 !
    end subroutine effective_jacobian_cc2_a1_lowmem_cc2
@@ -1108,6 +1118,8 @@ contains
 !
          enddo ! batch_k
       enddo ! batch_i
+!
+      call mem%batch_finalize()
 !
       call timer%turn_off()
 !
@@ -1303,6 +1315,8 @@ contains
          enddo ! batch_b
       enddo ! batch_a
 !
+      call mem%batch_finalize()
+!
       call timer%turn_off()
 !
    end subroutine effective_jacobian_cc2_c1_lowmem_cc2
@@ -1488,6 +1502,8 @@ contains
          enddo ! batch k
       enddo ! batch j
 !
+      call mem%batch_finalize()
+!
       call timer%turn_off()
 !
    end subroutine effective_jacobian_cc2_d1_lowmem_cc2
@@ -1672,6 +1688,8 @@ contains
 !
          enddo ! batch_c
       enddo ! batch_b
+!
+      call mem%batch_finalize()
 !
       call timer%turn_off()
 !
@@ -1866,6 +1884,8 @@ contains
 !
          enddo ! batch_a
       enddo ! batch_k
+!
+      call mem%batch_finalize()
 !
       call timer%turn_off()
 !
