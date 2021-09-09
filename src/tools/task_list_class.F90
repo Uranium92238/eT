@@ -35,6 +35,7 @@ module task_list_class
 !!
 !
    use global_out, only : output
+   use timings_file_class, only: timings_file
 !
    implicit none
 !
@@ -144,7 +145,7 @@ contains
                                ints=[i], fs='(//t3,a)')
 !
             call timing%printf('m', '(i0)) ' // trim(tasks%descriptions(i)), &
-                               ints=[i], fs='(//t3,a)')
+                               ints=[i], fs='(/t3,a)')
 !
             if (present(append_string)) then
 !
@@ -162,10 +163,11 @@ contains
 !
             endif
 !
+            call timing%print_banner()
+!
             return
 !
          endif
-!
       enddo
 !
       call output%error_msg('did not recognize task label')

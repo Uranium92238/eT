@@ -26,307 +26,8 @@ module string_utilities
 !!
 !
    use kinds
-   use global_out, only: output
 !
 contains
-!
-!
-   function get_n_elements_in_string(string) result(n_elements)
-!!
-!!    Get n elements in string
-!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
-!!
-!!    Gets the number of elements in range or list,
-!!    To be used for reading of input.
-!!
-!!    Ranges should always be given as [a,b].
-!!
-!!    Lists should always be given as {a, b, c, d},
-!!    that is, in set notation.
-!!
-      implicit none
-!
-      character(len=200), intent(inout) :: string
-!
-      integer :: n_elements
-!
-!     Local variables
-!
-      integer :: first, last, n_characters
-      integer :: i
-!
-      n_elements = 0
-!
-      string = adjustl(string)
-!
-      n_characters = len_trim(string)
-!
-      if (string(1:1) == '[') then ! range given
-!
-!        Sanity check - Is set closed?
-!
-         if (string(n_characters:n_characters) /= ']') call output%error_msg('found open range in input file.')
-!
-         do i = 2, n_characters - 1
-!
-            if (string(i:i) == ',') exit
-!
-         enddo
-!
-!        Read first element
-!
-         read(string(2:i-1), *) first
-!
-!        Read last element
-!
-         read(string(i+1:n_characters - 1), *) last
-!
-!        Calculate number of elements
-!
-         n_elements = last - first + 1
-!
-      elseif (string(1:1)=='{') then ! list given
-!
-!        Sanity check - Is set closed?
-!
-         if (string(n_characters:n_characters) /= '}') call output%error_msg('found open set in input file.')
-!
-         n_elements = 1 ! Assuming that the set contains at least one element (otherwize why give list?) 
-!
-!        Loop through and count commas
-!
-         do i = 2, n_characters - 1
-!
-            if (string(i:i) == ',') n_elements = n_elements + 1
-!
-         enddo
-!
-      else ! Did not find list or 
-!
-         n_elements = 0
-!
-      endif
-!
-   end function get_n_elements_in_string
-!
-!
-   subroutine get_elements_in_string(string, n_elements, elements)
-!!
-!!    Get elements
-!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
-!!
-!!    Gets the elements from range or list.
-!!    To be used for reading of input.
-!!
-!!    Ranges should always be given as [a,b].
-!!
-!!    Lists should always be given as {a, b, c, d},
-!!    that is, in set notation.
-!!
-      implicit none
-!
-      character(len=200), intent(inout) :: string
-!
-      integer, intent(in) :: n_elements
-!
-      integer, dimension(n_elements), intent(out) :: elements
-!
-!     Local variables
-!
-      integer :: first, last, n_characters, n_elements_found
-      integer :: i, j
-!
-      string = adjustl(string)
-!
-      n_characters = len_trim(string)
-!
-      if (string(1:1) == '[') then ! range given
-!
-!        Sanity check - Is set closed?
-!
-         if (string(n_characters:n_characters) /= ']') call output%error_msg('found open range in input file.')
-!
-         do i = 2, n_characters - 1
-!
-            if (string(i:i) == ',') exit
-!
-         enddo
-!
-!        Read first element
-!
-         read(string(2:i-1), *) first
-!
-!        Read last element
-!
-         read(string(i+1:n_characters - 1), *) last
-!
-!        Sanity check - Is the number of elements found equal to n_elements
-!
-         if (n_elements .ne. last - first + 1) call output%error_msg('Mismatch in number of elements to be read.')
-!
-         do i = 1, n_elements
-!
-            elements(i) = first + i - 1
-!
-         enddo
-!
-      elseif (string(1:1)=='{') then ! list given
-!
-!        Sanity check - Is set closed?
-!
-         if (string(n_characters:n_characters) /= '}') call output%error_msg('found open set in input file.')
-!
-!        Loop through and set the elements
-!
-         first            = 2
-         n_elements_found = 0
-!
-         do j = 1, n_elements
-!
-            do i = first, n_characters - 1
-!
-               if (string(i:i) == ',') exit
-!
-            enddo
-!
-            read(string(first:i-1), *) elements(j)
-!
-            n_elements_found = n_elements_found + 1
-!
-            first = i + 1
-!
-            if (first == n_characters) exit
-!
-         enddo
-!
-         if (n_elements_found .ne. n_elements) call output%error_msg('Mismatch in number of elements to be read.')
-!
-      else ! Did not find list or 
-!
-         call output%error_msg('neither list nor range was found.')
-!
-      endif
-!
-   end subroutine get_elements_in_string
-!
-!
-   subroutine get_reals_in_string(string, n_elements, elements)
-!!
-!!    Get reals
-!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
-!!    Modified by Andreas Skeidsvoll, Sep 2019: Reads reals instead of integers
-!!
-!!    Gets the reals from list.
-!!    To be used for reading of input.
-!!
-!!    Lists should always be given as {a, b, c, d},
-!!    that is, in set notation.
-!!
-      implicit none
-!
-      character(len=200), intent(inout) :: string
-!
-      integer, intent(in) :: n_elements
-!
-      real(dp), dimension(n_elements), intent(out) :: elements
-!
-!     Local variables
-!
-      integer :: first, n_characters, n_elements_found
-      integer :: i, j
-!
-      string = adjustl(string)
-!
-      n_characters = len_trim(string)
-!
-      if (string(1:1)=='{') then ! list given
-!
-!        Sanity check - Is set closed?
-!
-         if (string(n_characters:n_characters) /= '}') call output%error_msg('found open set in input file.')
-!
-!        Loop through and set the elements
-!
-         first            = 2
-         n_elements_found = 0
-!
-         do j = 1, n_elements
-!
-            do i = first, n_characters - 1
-!
-               if (string(i:i) == ',') exit
-!
-            enddo
-!
-            read(string(first:i-1), *) elements(j)
-!
-            n_elements_found = n_elements_found + 1
-!
-            first = i + 1
-!
-            if (first == n_characters) exit
-!
-         enddo
-!
-         if (n_elements_found .ne. n_elements) call output%error_msg('Mismatch in number of elements to be read.')
-!
-      else ! Did not find list or 
-!
-         call output%error_msg('neither list nor range was found.')
-!
-      endif
-!
-   end subroutine get_reals_in_string
-!
-!
-   function set_cursor_to_character(string,final_character) result(cursor)
-!!
-!!    Set cursor to string
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
-!!    Modified by Tommaso Giovannini, May 2019
-!!
-!!    Sets the cursor to the final character in the string
-!!    More general than previous white space
-!!
-!!    final_character :: optional 
-!!    if present --> look for final_character
-!!    otherwise  --> look for whitespace
-!!
-      implicit none
-!
-      character(len=*), intent(in) :: string
-!
-      character(len=1), intent(in), optional :: final_character
-!
-      integer :: cursor
-!!
-!!    internal variables
-!!
-      character(len=1) :: look_character
-!
-      if (present(final_character)) then
-!      
-         look_character = final_character
-!         
-      else 
-!      
-         look_character = ' '
-!         
-      endif
-!
-      cursor = 1
-!
-      do while (cursor .lt. len(string))
-         if (string(cursor:cursor) .eq. look_character) then
-            return
-         else
-            cursor = cursor + 1
-         endif
-      enddo
-
-      call output%error_msg('Could not find character (a0)', chars=[trim(look_character)])
-!
-   end function set_cursor_to_character
 !
 !
    function set_cursor_to_substring(string, substring) result(cursor)
@@ -364,9 +65,100 @@ contains
          endif
       enddo
 !
-      call output%error_msg('Could not find substring (a0)', chars=[trim(substring)])
+      print *, "Error in set_cursor_to_substring"
+      error stop
 !
    end function set_cursor_to_substring
+!
+!
+   pure function n_instances_of_character(string, char) result(n)
+!!
+!!    Number of instances of character
+!!    Written by Sarai D. Folkestad, Sep 2021
+!!
+      implicit none
+!
+      character(len=*), intent(in) :: string
+!
+      character(len=1), intent(in) :: char
+!
+      integer :: n, cursor
+!
+      cursor = 1
+      n = 0
+!
+      do while (cursor .lt. len(string))
+!
+         if (string(cursor : cursor) == char) n = n + 1
+!
+         cursor = cursor + 1
+!
+      enddo
+!
+   end function n_instances_of_character
+!
+!
+   function last_instance_of_character(string, char) result(cursor)
+!!
+!!    Last instance of character
+!!    Written by Sarai D. Folkestad, Dec 2020
+!!
+!!    Sets cursor to the final character of the first occurrence
+!!    of the provided substring.
+!!
+      implicit none
+!
+      character(len=*), intent(in) :: string
+!
+      character(len=1), intent(in) :: char
+!
+      integer :: n, cursor
+!
+      cursor = len(string)
+      n = 0
+!
+      do while (cursor .gt. 0)
+!
+         if (string(cursor : cursor) == char) return
+!
+         cursor = cursor - 1
+!
+      enddo
+!
+      print *, "Error in last_instance_of_character"
+      error stop
+!
+   end function last_instance_of_character
+!
+!
+   function first_instance_of_character(string, char) result(cursor)
+!!
+!!    First instance of character
+!!    Written by Sarai D. Folkestad, Dec 2020
+!!
+      implicit none
+!
+      character(len=*), intent(in) :: string
+!
+      character(len=1), intent(in) :: char
+!
+      integer :: n, cursor
+!
+      cursor = 1
+      n = 0
+!
+      do while (cursor .gt. 0)
+!
+         if (string(cursor : cursor) == char) return
+!
+         cursor = cursor + 1
+!
+      enddo
+!
+      print *, "Error in first_instance_of_character"
+      error stop
+!
+   end function first_instance_of_character
 !
 !
    subroutine convert_to_lowercase(string)
@@ -467,7 +259,10 @@ contains
 !
       integer :: character, current_character
 !
-      if (len(string) .gt. 500) call output%error_msg('string is too long to convert.')
+      if (len(string) .gt. 500) then
+         print *, 'Error: string is too long to convert.'
+         error stop
+      endif
 !
       string_out = repeat(' ', 500)
 !
