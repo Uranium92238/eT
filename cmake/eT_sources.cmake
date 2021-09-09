@@ -45,6 +45,7 @@ set(eT_fortran_sources
    src/io/input_file_class.F90
    src/io/section_class.F90
    src/io/output_file_class.F90
+   src/io/timings_file_class.F90
    src/io/global_out.F90
    src/io/global_in.F90
 #

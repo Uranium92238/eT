@@ -1834,11 +1834,11 @@ contains
       do record = 1, this%n_mm_atom_lines
 !
          string = (trim(adjustl(this%mm_geometry(record))))
-         cursor = set_cursor_to_character(string,'=')
+         cursor = first_instance_of_character(string,'=')
 !
          string = string(cursor+1:200)
 !
-         cursor = set_cursor_to_character(string,']')
+         cursor = first_instance_of_character(string,']')
 !
          imolecule = string(1:cursor-1)
          read(imolecule,'(i4)') current_molecule
@@ -2038,7 +2038,7 @@ contains
          if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
          string = adjustl(string(2:200))
 
-         cursor = set_cursor_to_character(string, ']')
+         cursor = first_instance_of_character(string, ']')
          read(string(1:cursor-1),*) current_molecule
          string = adjustl(string(cursor+1:200))
 !
@@ -2046,7 +2046,7 @@ contains
 !
 !        Determine position
 !
-         cursor = set_cursor_to_character(string, '[')
+         cursor = first_instance_of_character(string, '[')
 !
          coordinate = string(1:cursor-1)
          read(coordinate, *) positions(:, current_atom)
@@ -2061,7 +2061,7 @@ contains
          if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
          string = adjustl(string(2:200))
 !
-         cursor = set_cursor_to_character(string,',')
+         cursor = first_instance_of_character(string,',')
          read(string(1:cursor-1), * ) chi(current_atom)
          string = adjustl(string(cursor+1:200))
 !
@@ -2073,7 +2073,7 @@ contains
          if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
          string = adjustl(string(2:200))
 !
-         cursor = set_cursor_to_character(string,']')
+         cursor = first_instance_of_character(string,']')
          read(string(1:cursor-1), * ) eta(current_atom)
 !
          if(abs(eta(current_atom)).lt.1.0d-8) then
@@ -2148,13 +2148,13 @@ contains
          if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
          string = adjustl(string(2:200))
 
-         cursor = set_cursor_to_character(string, ']')
+         cursor = first_instance_of_character(string, ']')
          read(string(1:cursor-1),*) current_molecule
          string = adjustl(string(cursor+1:200))
 !
 !        Determine position
 !
-         cursor = set_cursor_to_character(string, '[')
+         cursor = first_instance_of_character(string, '[')
 !
          coordinate = string(1:cursor-1)
          read(coordinate, *) positions(:, current_atom)
@@ -2163,13 +2163,13 @@ contains
 !
 !        Determine charge
 !
-         cursor = set_cursor_to_character(string, 'q')
+         cursor = first_instance_of_character(string, 'q')
          string = adjustl(string(cursor+1:200))
 !
          if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
          string = adjustl(string(2:200))
 !
-         cursor = set_cursor_to_character(string,']')
+         cursor = first_instance_of_character(string,']')
          read(string(1:cursor-1), * ) charge(current_atom)
 !
          if(abs(charge(current_atom)).lt.1.0d-8) then
@@ -2669,6 +2669,254 @@ contains
          call output%error_msg('requested illegal keyword (a0)', chars=[trim(keyword)])
 !
    end subroutine check_keyword_and_section
+!
+!
+   function get_n_elements_in_string(string) result(n_elements)
+!!
+!!    Get n elements in string
+!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    Gets the number of elements in range or list,
+!!    To be used for reading of input.
+!!
+!!    Ranges should always be given as [a,b].
+!!
+!!    Lists should always be given as {a, b, c, d},
+!!    that is, in set notation.
+!!
+      implicit none
+!
+      character(len=200), intent(inout) :: string
+!
+      integer :: n_elements
+!
+!     Local variables
+!
+      integer :: first, last, n_characters
+      integer :: i
+!
+      n_elements = 0
+!
+      string = adjustl(string)
+!
+      n_characters = len_trim(string)
+!
+      if (string(1:1) == '[') then ! range given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= ']') call output%error_msg('found open range in input file.')
+!
+         do i = 2, n_characters - 1
+!
+            if (string(i:i) == ',') exit
+!
+         enddo
+!
+!        Read first element
+!
+         read(string(2:i-1), *) first
+!
+!        Read last element
+!
+         read(string(i+1:n_characters - 1), *) last
+!
+!        Calculate number of elements
+!
+         n_elements = last - first + 1
+!
+      elseif (string(1:1)=='{') then ! list given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= '}') call output%error_msg('found open set in input file.')
+!
+         n_elements = 1 ! Assuming that the set contains at least one element (otherwize why give list?)
+!
+!        Loop through and count commas
+!
+         do i = 2, n_characters - 1
+!
+            if (string(i:i) == ',') n_elements = n_elements + 1
+!
+         enddo
+!
+      else ! Did not find list or
+!
+         n_elements = 0
+!
+      endif
+!
+   end function get_n_elements_in_string
+!
+!
+   subroutine get_elements_in_string(string, n_elements, elements)
+!!
+!!    Get elements
+!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    Gets the elements from range or list.
+!!    To be used for reading of input.
+!!
+!!    Ranges should always be given as [a,b].
+!!
+!!    Lists should always be given as {a, b, c, d},
+!!    that is, in set notation.
+!!
+      implicit none
+!
+      character(len=200), intent(inout) :: string
+!
+      integer, intent(in) :: n_elements
+!
+      integer, dimension(n_elements), intent(out) :: elements
+!
+!     Local variables
+!
+      integer :: first, last, n_characters, n_elements_found
+      integer :: i, j
+!
+      string = adjustl(string)
+!
+      n_characters = len_trim(string)
+!
+      if (string(1:1) == '[') then ! range given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= ']') call output%error_msg('found open range in input file.')
+!
+         do i = 2, n_characters - 1
+!
+            if (string(i:i) == ',') exit
+!
+         enddo
+!
+!        Read first element
+!
+         read(string(2:i-1), *) first
+!
+!        Read last element
+!
+         read(string(i+1:n_characters - 1), *) last
+!
+!        Sanity check - Is the number of elements found equal to n_elements
+!
+         if (n_elements .ne. last - first + 1) call output%error_msg('Mismatch in number of elements to be read.')
+!
+         do i = 1, n_elements
+!
+            elements(i) = first + i - 1
+!
+         enddo
+!
+      elseif (string(1:1)=='{') then ! list given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= '}') call output%error_msg('found open set in input file.')
+!
+!        Loop through and set the elements
+!
+         first            = 2
+         n_elements_found = 0
+!
+         do j = 1, n_elements
+!
+            do i = first, n_characters - 1
+!
+               if (string(i:i) == ',') exit
+!
+            enddo
+!
+            read(string(first:i-1), *) elements(j)
+!
+            n_elements_found = n_elements_found + 1
+!
+            first = i + 1
+!
+            if (first == n_characters) exit
+!
+         enddo
+!
+         if (n_elements_found .ne. n_elements) call output%error_msg('Mismatch in number of elements to be read.')
+!
+      else ! Did not find list or
+!
+         call output%error_msg('neither list nor range was found.')
+!
+      endif
+!
+   end subroutine get_elements_in_string
+!
+!
+   subroutine get_reals_in_string(string, n_elements, elements)
+!!
+!!    Get reals
+!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
+!!    Modified by Andreas Skeidsvoll, Sep 2019: Reads reals instead of integers
+!!
+!!    Gets the reals from list.
+!!    To be used for reading of input.
+!!
+!!    Lists should always be given as {a, b, c, d},
+!!    that is, in set notation.
+!!
+      implicit none
+!
+      character(len=200), intent(inout) :: string
+!
+      integer, intent(in) :: n_elements
+!
+      real(dp), dimension(n_elements), intent(out) :: elements
+!
+!     Local variables
+!
+      integer :: first, n_characters, n_elements_found
+      integer :: i, j
+!
+      string = adjustl(string)
+!
+      n_characters = len_trim(string)
+!
+      if (string(1:1)=='{') then ! list given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= '}') call output%error_msg('found open set in input file.')
+!
+!        Loop through and set the elements
+!
+         first            = 2
+         n_elements_found = 0
+!
+         do j = 1, n_elements
+!
+            do i = first, n_characters - 1
+!
+               if (string(i:i) == ',') exit
+!
+            enddo
+!
+            read(string(first:i-1), *) elements(j)
+!
+            n_elements_found = n_elements_found + 1
+!
+            first = i + 1
+!
+            if (first == n_characters) exit
+!
+         enddo
+!
+         if (n_elements_found .ne. n_elements) call output%error_msg('Mismatch in number of elements to be read.')
+!
+      else ! Did not find list or
+!
+         call output%error_msg('neither list nor range was found.')
+!
+      endif
+!
+   end subroutine get_reals_in_string
 !
 !
 end module input_file_class

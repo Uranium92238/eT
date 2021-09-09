@@ -79,8 +79,8 @@ module timings_class
 !!
 !
    use parameters
-   use global_out, only: output
-   use output_file_class, only : output_file
+   use global_out, only: output, timing
+   use timings_file_class, only : timings_file
 !
 !
    implicit none
@@ -121,9 +121,6 @@ module timings_class
       procedure :: new_timer
 !
    end interface timings 
-!
-!
-   type(output_file) :: timing
 !
 contains
 !
@@ -258,20 +255,7 @@ contains
 !
       class(timings), intent(in) :: timer 
 !
-      call timing%printf(timer%pl, timer%name_, fs='(/t3,a)')
-!
-      call timing%printf(timer%pl, 'wall time (sec): (f20.2)', fs='(t3,a)', &
-                         reals=[timer%elapsed_wall_time])
-!
-      call timing%printf(timer%pl, 'cpu time (sec):  (f20.2)', fs='(t3,a)', &
-                         reals=[timer%elapsed_cpu_time])     
-!
-      if (timer%elapsed_wall_time > 1.0d-8) then 
-!
-         call timing%printf(timer%pl, 'cpu/wall ratio:  (f20.2)', fs='(t3,a)', &
-                            reals=[timer%elapsed_cpu_time/timer%elapsed_wall_time])
-!
-      endif 
+      call timing%print_time(timer%elapsed_wall_time, timer%elapsed_cpu_time, timer%name_, timer%pl)
 !
    end subroutine print_times_timings
 !

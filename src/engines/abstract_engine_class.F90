@@ -98,7 +98,7 @@ contains
       call output%printf('m', ":: (a0)", fs='(//t3,a)', chars=[engine%name_])
       call output%print_separator('minimal', len(trim(engine%name_))+6, '=')
 !
-      call timing%printf('m', ":: (a0)", fs='(//t3,a)', chars=[engine%name_])
+      call timing%printf('m', ":: (a0)", fs='(/t3,a)', chars=[engine%name_])
       call timing%print_separator('minimal', len(trim(engine%name_))+6, '=')
 !
       call output%printf('m', "(a0)", fs='(/t3,a)', chars=[engine%description])
