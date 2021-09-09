@@ -11,10 +11,11 @@
 - TDHF (RPA/Tamm-Dancoff) excitation energies implemented for RHF. eT-program/eT!809
 - Restart for TDHF (RPA/Tamm-Dancoff) excitation energies. eT-program/eT!883
 - Added support for unit testing with pFUnit package. eT-program/eT!787
-- Minor changes to memory-handling to improve testability of memory-batching. eT-program/eT!852 
+- Minor changes to memory-handling to improve testability of memory-batching. eT-program/eT!852
 
 ### Optimization
 - Adding option for overlap screening to CC calculation of one electron integral. eT-program/eT!851
+- Record storers now delete their file when finalized is called. eT-program/eT!893
 
 ### Structure
 - Added block class using the range class. Facilitates the handling of multiple index ranges. eT-program/eT!823
