@@ -44,47 +44,91 @@ submodule (ccs_class) F_ccs
 contains
 !
 !
-   module subroutine F_transformation_ccs(wf, c)
+   module subroutine F_transformation_ccs(wf, c, rho)
 !!
 !!    F transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019     
 !!
 !!    Directs the transformation by the F matrix.
 !!
+!!     F(tbar)_mu,nu = < tbar | [[H-bar,tau_mu],tau_nu] | HF >
+!!
+!!    Modified for ccsd F transformation by 
+!!    (A. K. Schnack-Petersen and) Eirik F. Kjønstad Sep 2021
+!!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: c
+      real(dp), dimension(wf%n_gs_amplitudes), intent(out) :: rho
 !
-      real(dp), dimension(:,:), allocatable :: rho
+      real(dp), dimension(:), allocatable :: tbar 
 !
-      integer :: a, i, ai
+      call mem%alloc(tbar, wf%n_gs_amplitudes)
+      call wf%get_multipliers(tbar)
 !
-      call mem%alloc(rho, wf%n_v, wf%n_o)
-      rho = zero
+      call wf%F_x_transformation(c, rho, tbar)
 !
-      call wf%F_ccs_a1_0(c, rho)
-!  
-      call wf%F_ccs_a1_1(c, rho)
-      call wf%F_ccs_b1_1(c, rho)
-      call wf%F_ccs_c1_1(c, rho)
-!
-!$omp parallel do private(a, i, ai)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            c(ai) = rho(a, i)
-!
-         enddo
-      enddo
-!$omp end parallel do      
-!
-      call mem%dealloc(rho, wf%n_v, wf%n_o)
+      call mem%dealloc(tbar, wf%n_gs_amplitudes)
 !
    end subroutine F_transformation_ccs
+!
+!
+   module subroutine F_x_transformation_ccs(wf, c, rho, x)
+!!
+!!    F(x) transformation
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019     
+!!
+!!    Directs the transformation by the F matrix, defined by
+!!
+!!     F(X)_mu,nu = < X | [[H-bar,tau_mu],tau_nu] | HF >
+!!
+!!    where < X | = < HF | + < mu | X_mu
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: c
+      real(dp), dimension(wf%n_gs_amplitudes), intent(out) :: rho
+!
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: x
+!
+      call wf%F_x_mu_transformation(c, rho, x)
+!
+      call wf%F_ccs_a1_0(c, rho)
+!
+   end subroutine F_x_transformation_ccs
+!
+!
+   module subroutine F_x_mu_transformation_ccs(wf, c, rho, x)
+!!
+!!    F(x) mu transformation
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019     
+!!
+!!    Directs the transformation by the F matrix, defined by
+!!
+!!     F(X)_mu,nu = < X | [[H-bar,tau_mu],tau_nu] | HF >
+!!    
+!!    where < X | = < mu | X_mu
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_t1), intent(in) :: c
+      real(dp), dimension(wf%n_t1), intent(out) :: rho
+!
+      real(dp), dimension(wf%n_t1), intent(in) :: x
+!
+      call zero_array(rho, wf%n_t1)
+!
+      call wf%F_ccs_a1_1(c, rho, x)
+      call wf%F_ccs_b1_1(c, rho, x)
+      call wf%F_ccs_c1_1(c, rho, x)
+!
+   end subroutine F_x_mu_transformation_ccs
 !
 !
    module subroutine F_ccs_a1_0_ccs(wf, c_ai, rho_ai)
@@ -92,7 +136,7 @@ contains
 !!    F transformation A1,0 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019
 !!
-!!    rho_A1,0_ai = 2 L_iajb c_bj
+!!    rho_A1,0_ai = 2 * L_iajb * c_bj
 !!
       implicit none
 !
@@ -113,16 +157,16 @@ contains
 !
 !     L_iajb = 2 g_iajb - g_ibja (ordered as L_aibj)
 !
-      L_aibj = zero
+      call zero_array(L_aibj, (wf%n_v**2)*(wf%n_o**2))
 !
       call add_2143_to_1234(two, g_iajb, L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2341_to_1234(-one, g_iajb, L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-!     rho_ai += 2 L_iajb c_bj
+!     rho_ai += 2 * L_iajb c_bj
 !
-      call dgemm('N', 'N', &
+      call dgemm('N', 'N',             &
                   (wf%n_v)*(wf%n_o),   &
                   1,                   &
                   (wf%n_v)*(wf%n_o),   &
@@ -140,12 +184,15 @@ contains
    end subroutine F_ccs_a1_0_ccs
 !
 !
-   module subroutine F_ccs_a1_1_ccs(wf, c_ai, rho_ai)
+   module subroutine F_ccs_a1_1_ccs(wf, c_ai, rho_ai, tbar_ai)
 !!
 !!    F transformation A1,1 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019
 !!
-!!    rho_A1,1_ai = - (F_ib tbar_aj + F_ja tbar_bi) c_bj
+!!    rho_A1,1_ai = - (F_ib * tbar_aj + F_ja * tbar_bi) * c_bj
+!!
+!!    Modified for ccsd F transformation by 
+!!    (A. K. Schnack-Petersen and) Eirik F. Kjønstad Sep 2021
 !!
       implicit none
 !
@@ -153,13 +200,16 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: tbar_ai
 !
 !     Local variables
 !
       real(dp), dimension(:,:), allocatable :: X_ij
       real(dp), dimension(:,:), allocatable :: X_ji
 !
-!     Term 1 : - F_ib tbar_aj c_bj
+!     Term 1 : - F_ib * tbar_aj * c_bj
+!
+!     X_ij = F_ib * c_bj
 !
       call mem%alloc(X_ij, wf%n_o, wf%n_o)
 !
@@ -168,22 +218,24 @@ contains
                   wf%n_o,     &
                   wf%n_v,     &
                   one,        &
-                  wf%fock_ia, &
+                  wf%fock_ia, & ! F_i,b
                   wf%n_o,     &
-                  c_ai,       & ! c_bj
+                  c_ai,       & ! c_b,j
                   wf%n_v,     &
                   zero,       &
                   X_ij,       &
                   wf%n_o)
+!
+!     rho_ai -= tbar_aj * X_ij
 !
       call dgemm('N', 'T',    &
                   wf%n_v,     &
                   wf%n_o,     &
                   wf%n_o,     &
                   -one,       &
-                  wf%t1bar,   & !tbar_aj
+                  tbar_ai,    & ! tbar_a,j
                   wf%n_v,     &
-                  X_ij,       &
+                  X_ij,       & ! X_j,i
                   wf%n_o,     &
                   one,        &
                   rho_ai,     &
@@ -191,7 +243,9 @@ contains
 !
       call mem%dealloc(X_ij, wf%n_o, wf%n_o)
 !
-!     Term 2 : - F_ja tbar_bi c_bj
+!     Term 2 : - F_ja * tbar_bi * c_bj
+!
+!     X_ji = c_bj * tbar_bi
 !
       call mem%alloc(X_ji, wf%n_o, wf%n_o)
 !
@@ -202,18 +256,20 @@ contains
                   one,        &
                   c_ai,       & ! c_bj
                   wf%n_v,     &
-                  wf%t1bar,   & ! tbar_bi
+                  tbar_ai,    & ! tbar_b,i
                   wf%n_v,     &
                   zero,       &
                   X_ji,       &
                   wf%n_o)
+!
+!     rho_ai -= F_ja * X_ji
 !
       call dgemm('T', 'N',    &
                   wf%n_v,     &
                   wf%n_o,     &  
                   wf%n_o,     &
                   -one,       &
-                  wf%fock_ia, & ! F_ja
+                  wf%fock_ia, & ! F_j,a
                   wf%n_o,     &
                   X_ji,       &
                   wf%n_o,     &
@@ -226,12 +282,15 @@ contains
    end subroutine F_ccs_a1_1_ccs
 !
 !
-   module subroutine F_ccs_b1_1_ccs(wf, c_ai, rho_ai)
+   module subroutine F_ccs_b1_1_ccs(wf, c_ai, rho_ai, tbar_ai)
 !!
 !!    F transformation B1,1 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019
 !!
-!!    rho_B1,1_ai = - (L_ikjb tbar_ak + L_jkia tbar_bk) c_bj
+!!    rho_B1,1_ai = - (L_ikjb * tbar_ak + L_jkia * tbar_bk) * c_bj
+!!
+!!    Modified for ccsd F transformation by 
+!!    (A. K. Schnack-Petersen and) Eirik F. Kjønstad Sep 2021
 !!
       implicit none
 !
@@ -239,6 +298,7 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: tbar_ai
 !
 !     Local variables
 !
@@ -248,7 +308,7 @@ contains
       real(dp), dimension(:,:), allocatable :: X_ki
       real(dp), dimension(:,:), allocatable :: X_kj
 !
-!     Term 1: - L_ikjb tbar_ak c_bj
+!     Term 1: - L_ikjb * tbar_ak * c_bj
 !
 !     L_ikjb = 2 g_ikjb - g_jkib (ordered as L_kibj)
 !
@@ -257,13 +317,13 @@ contains
 !
       call mem%alloc(L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)  
 !
-      L_kibj = zero
+      call zero_array(L_kibj, (wf%n_o**3)*wf%n_v)
       call add_2143_to_1234(two, g_ikjb, L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
       call add_4123_to_1234(-one, g_ikjb, L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(g_ikjb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
-!     X_ki = L_kibj c_bj
+!     X_ki = L_kibj * c_bj
 !
       call mem%alloc(X_ki, wf%n_o, wf%n_o)
 !
@@ -280,44 +340,43 @@ contains
                   X_ki,                &
                   wf%n_o**2)
 !
-!      rho_ai += tbar_ak X_ki
+!      rho_ai += tbar_ak * X_ki
 !
-      call dgemm('N', 'N',    &  
-                  wf%n_v,     &
-                  wf%n_o,     &
-                  wf%n_o,     &
-                  -one,       &
-                  wf%t1bar,   & ! tbar_ak
-                  wf%n_v,     &
-                  X_ki,       &
-                  wf%n_o,     &
-                  one,        &
-                  rho_ai,     &
+      call dgemm('N', 'N',             &  
+                  wf%n_v,              &
+                  wf%n_o,              &
+                  wf%n_o,              &
+                  -one,                &
+                  tbar_ai,             & ! tbar_ak
+                  wf%n_v,              &
+                  X_ki,                &
+                  wf%n_o,              &
+                  one,                 &
+                  rho_ai,              &
                   wf%n_v) 
 !
       call mem%dealloc(X_ki, wf%n_o, wf%n_o)
 !
-!     Term 2: - L_jkia tbar_bk c_bj
-!
-!     NOTE: We will now pretend that L_kibj(k, i, b, j) = L_ikjb is
-!           L_kjai(k, j, a, i) = L_jkia in order to not make integrals twice
+!     Term 2: - L_jkia * tbar_bk * c_bj
 !
 !     X_kj = tbar_bk c_bj
 !
       call mem%alloc(X_kj, wf%n_o, wf%n_o)
 !
-      call dgemm('T', 'N',    &
-                  wf%n_o,     &
-                  wf%n_o,     &
-                  wf%n_v,     &
-                  one,        &
-                  wf%t1bar,   & ! tbar_bk
-                  wf%n_v,     &
-                  c_ai,       & ! c_bj
-                  wf%n_v,     &
-                  zero,       &
-                  X_kj,       &
+      call dgemm('T', 'N',             &
+                  wf%n_o,              &
+                  wf%n_o,              &
+                  wf%n_v,              &
+                  one,                 &
+                  tbar_ai,             & ! tbar_bk
+                  wf%n_v,              &
+                  c_ai,                & ! c_bj
+                  wf%n_v,              &
+                  zero,                &
+                  X_kj,                &
                   wf%n_o)
+!
+!     rho_ai -= L_kjai * X_kj
 !
       call dgemm('T', 'N',             &
                   (wf%n_v)*(wf%n_o),   &
@@ -338,15 +397,16 @@ contains
    end subroutine F_ccs_b1_1_ccs
 !
 !
-   module subroutine F_ccs_c1_1_ccs(wf, c_ai, rho_ai)
+   module subroutine F_ccs_c1_1_ccs(wf, c_ai, rho_ai, tbar_ai)
 !!
 !!    F transformation C1,1 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019
 !!
-!!    rho_C1,1_ai = (L_cajb tbar_ci + L_cbia tbar_cj) c_bj
-!!                = (X_iajb + X_jbia) c_bj
+!!    rho_C1,1_ai = (L_cajb * tbar_ci + L_cbia * tbar_cj) * c_bj
+!!                = (X_iajb + X_jbia) * c_bj
 !!
-!!    In batches of c
+!!    Modified for ccsd F transformation by 
+!!    (A. K. Schnack-Petersen and) Eirik F. Kjønstad Sep 2021
 !!
       implicit none
 !
@@ -354,6 +414,7 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
+      real(dp), dimension(wf%n_v,wf%n_o), intent(in)     :: tbar_ai
 !
 !     Local variables
 !
@@ -367,7 +428,7 @@ contains
       integer :: current_c_batch, req0, req1
 !
       call mem%alloc(X_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      X_iajb = zero
+      call zero_array(X_iajb, (wf%n_o**2)*(wf%n_v**2))
 !
 !     Prepare for batching over index c
 !
@@ -401,17 +462,19 @@ contains
 !
          call mem%dealloc(g_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call dgemm('T', 'N',                      &
-                     wf%n_o,                       &
-                     (wf%n_v**2)*wf%n_o,           &
-                     batch_c%length,               &
-                     one,                          &
-                     wf%t1bar(batch_c%first, 1),   & ! tbar_c_i
-                     wf%n_v,                       &
-                     L_cajb,                       & ! L_c_ajb
-                     batch_c%length,               &
-                     one,                          &
-                     X_iajb,                       & ! X_i_ajb
+!        X_iajb = tbar_ci * L_cajb
+!
+         call dgemm('T', 'N',                   &
+                     wf%n_o,                    &
+                     (wf%n_v**2)*wf%n_o,        &
+                     batch_c%length,            &
+                     one,                       &
+                     tbar_ai(batch_c%first, 1), & ! tbar_c_i
+                     wf%n_v,                    &
+                     L_cajb,                    & ! L_c_ajb
+                     batch_c%length,            &
+                     one,                       &
+                     X_iajb,                    & ! X_i_ajb
                      wf%n_o)
 !
          call mem%dealloc(L_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
@@ -426,34 +489,34 @@ contains
 !
       call mem%dealloc(X_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-!     rho_ai += X_aibj c_bj
+!     rho_ai += X_aibj * c_bj
 !
-      call dgemm('N', 'N',             &
-                  (wf%n_v)*(wf%n_o),   &
-                  1,                   &
-                  (wf%n_v)*(wf%n_o),   &
-                  one,                 &
-                  X_aibj,              & ! X_ai_bj
-                  (wf%n_v)*(wf%n_o),   &
-                  c_ai,                & ! c_bj
-                  (wf%n_v)*(wf%n_o),   &
-                  one,                 &
-                  rho_ai,              &
+      call dgemm('N', 'N',                      &
+                  (wf%n_v)*(wf%n_o),            &
+                  1,                            &
+                  (wf%n_v)*(wf%n_o),            &
+                  one,                          &
+                  X_aibj,                       & ! X_ai_bj
+                  (wf%n_v)*(wf%n_o),            &
+                  c_ai,                         & ! c_bj
+                  (wf%n_v)*(wf%n_o),            &
+                  one,                          &
+                  rho_ai,                       &
                   (wf%n_v)*(wf%n_o))
 !
-!     rho_ai += X_bjai c_bj (Using bj <-> ai in X_aibj)
+!     rho_ai += X_bjai * c_bj 
 !
-      call dgemm('T', 'N',             &
-                  (wf%n_v)*(wf%n_o),   &
-                  1,                   &
-                  (wf%n_v)*(wf%n_o),   &
-                  one,                 &
-                  X_aibj,              & ! X_bj_ai
-                  (wf%n_v)*(wf%n_o),   &
-                  c_ai,                & ! c_bj
-                  (wf%n_v)*(wf%n_o),   &
-                  one,                 &
-                  rho_ai,              &
+      call dgemm('T', 'N',                      &
+                  (wf%n_v)*(wf%n_o),            &
+                  1,                            &
+                  (wf%n_v)*(wf%n_o),            &
+                  one,                          &
+                  X_aibj,                       & ! X_bj_ai
+                  (wf%n_v)*(wf%n_o),            &
+                  c_ai,                         & ! c_bj
+                  (wf%n_v)*(wf%n_o),            &
+                  one,                          &
+                  rho_ai,                       &
                   (wf%n_v)*(wf%n_o))
 !
       call mem%dealloc(X_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)

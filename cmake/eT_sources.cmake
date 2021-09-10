@@ -275,6 +275,7 @@ set(eT_fortran_sources
    src/wavefunctions/ccsd/jacobian_transpose_ccsd.F90
    src/wavefunctions/ccsd/multiplier_equation_ccsd.F90
    src/wavefunctions/ccsd/fock_ccsd.F90
+   src/wavefunctions/ccsd/F_ccsd.F90
    src/wavefunctions/ccsd/complex_ccsd.F90
    src/wavefunctions/ccsd/generated_complex_files/initialize_destruct_ccsd_complex.F90
    src/wavefunctions/ccsd/generated_complex_files/jacobian_transpose_ccsd_complex.F90
