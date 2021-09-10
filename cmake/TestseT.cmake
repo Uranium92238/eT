@@ -194,6 +194,8 @@ add_eT_runtest(ccsd_left_es_diis                            "eT;short;ccsd;es;le
 add_eT_runtest(ccsd_es_lanczos                              "eT;short;ccsd;es;eom;lanczos")
 add_eT_runtest(ccsd_cvs_lanczos                             "eT;short;ccsd;es;eom;lanczos;cvs")
 add_eT_runtest(ccsd_eom_polarizability                      "eT;short;ccsd;es;eom")
+add_eT_runtest(ccsd_lr_polarizability_transition_moments_nosym "eT;short;ccsd;es;eom")
+add_eT_runtest(ccsd_lr_polarizability_transition_moments       "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom                 "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom_crop            "eT;short;ccsd;es;eom;crop")
 add_eT_runtest(ccsd_oscillator_strength_eom_records_in_mem  "eT;short;ccsd;es;eom")

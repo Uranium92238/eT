@@ -271,6 +271,8 @@ module ccs_class
 !     Routines related to the F transformation
 !
       procedure :: F_transformation                              => F_transformation_ccs
+      procedure :: F_x_transformation                            => F_x_transformation_ccs
+      procedure :: F_x_mu_transformation                         => F_x_mu_transformation_ccs
 !
       procedure :: F_ccs_a1_0                                    => F_ccs_a1_0_ccs
       procedure :: F_ccs_a1_1                                    => F_ccs_a1_1_ccs

@@ -528,11 +528,8 @@ contains
 !
                if (engine%lr) then
 !
-                  call dcopy(wf%n_es_amplitudes, tk(:,1), 1, Ftk(:,1), 1)
-                  call dcopy(wf%n_es_amplitudes, tk(:,2), 1, Ftk(:,2), 1)
-!
-                  call wf%F_transformation(Ftk(:,1))
-                  call wf%F_transformation(Ftk(:,2))
+                  call wf%F_transformation(tk(:,1), Ftk(:,1))
+                  call wf%F_transformation(tk(:,2), Ftk(:,2))
 !
                   polarizability = polarizability + &
                                         ddot(wf%n_es_amplitudes, Ftk(:,2), 1, tk(:,1), 1)
@@ -742,6 +739,7 @@ contains
 !
       integer :: k
 !
+      real(dp), dimension(:), allocatable :: R ! Stores R_k temporarily
       real(dp), dimension(:,:), allocatable :: minus_FR ! [-F R_k], k = 1, 2, ..., n_singlet_states
 !
       character(len=200) :: file_name
@@ -750,18 +748,18 @@ contains
 !
 !     Build the matrix FR of right-hand-sides, -FR = [-F R_k], k = 1, 2, ..., n_singlet_states
 !
+      call mem%alloc(R, wf%n_es_amplitudes)
       call mem%alloc(minus_FR, wf%n_es_amplitudes, wf%n_singlet_states)
-!
-      call wf%read_excited_state(minus_FR,            &
-                                 1,                   &
-                                 wf%n_singlet_states, &
-                                 'right')
 !
       do k = 1, wf%n_singlet_states
 !
-         call wf%F_transformation(minus_FR(:,k))
+         call wf%read_excited_state(R, k, k, 'right')
+!
+         call wf%F_transformation(R, minus_FR(:, k))
 !
       enddo
+!
+      call mem%dealloc(R, wf%n_es_amplitudes)
 !
       call dscal(wf%n_es_amplitudes*wf%n_singlet_states, -one, minus_FR, 1)
 !
