@@ -62,6 +62,9 @@ module es_engine_class
       procedure, nopass :: plot_orbitals &
                         => plot_orbitals_es_engine
 !
+      procedure :: set_default_es_algorithm &
+                => set_default_es_algorithm_es_engine
+!
    end type es_engine
 !
 !
@@ -89,33 +92,9 @@ contains
 !
 !     Set standards and then read if nonstandard
 !
-      engine%gs_algorithm           = 'diis'
-!
-      if (wf%name_ .eq. 'ccsd(t)' .or. &
-          wf%name_ .eq. 'mp2') then
-         call output%error_msg("Excited states not implemented for (a0)", &
-                               chars=[wf%name_])
-      end if
-!
-      if (wf%name_ .eq. 'cc3' .or. &
-          wf%name_ .eq. 'low memory cc2') then
-!
-         engine%multipliers_algorithm = 'diis'
-         engine%es_algorithm          = 'non-linear davidson'
-!
-      else if (wf%name_ .eq. 'ccs' .or. &
-               wf%name_ .eq. 'cc2' .or. &
-               wf%name_ .eq. 'mlcc2') then
-!
-         engine%multipliers_algorithm = 'diis'
-         engine%es_algorithm          = 'davidson'
-!
-      else
-!
-         engine%multipliers_algorithm = 'davidson'
-         engine%es_algorithm          = 'davidson'
-!
-      end if
+      call engine%set_default_gs_algorithm(wf)
+      call engine%set_default_multipliers_algorithm(wf)
+      call engine%set_default_es_algorithm(wf)
 !
       engine%es_type                = 'valence'
       engine%es_transformation      = 'right'
@@ -134,6 +113,37 @@ contains
       call engine%timer%turn_on()
 !
    end function new_es_engine
+!
+!
+   subroutine set_default_es_algorithm_es_engine(engine, wf)
+!!
+!!    Set default ES algorithm
+!!    Written by Eirik F. Kjønstad, 2021
+!!
+      implicit none 
+!
+      class(es_engine), intent(inout) :: engine 
+!
+      class(ccs), intent(in) :: wf 
+!
+      if (wf%name_ .eq. 'ccsd(t)' .or. &
+          wf%name_ .eq. 'mp2') then
+         call output%error_msg("Excited states not implemented for (a0)", &
+                               chars=[wf%name_])
+      end if
+!
+      if (wf%name_ .eq. 'cc3' .or. &
+          wf%name_ .eq. 'low memory cc2') then
+!
+         engine%es_algorithm = 'non-linear davidson'
+!
+      else
+!
+         engine%es_algorithm = 'davidson'
+!
+      end if
+!
+   end subroutine set_default_es_algorithm_es_engine
 !
 !
    subroutine read_settings_es_engine(engine)

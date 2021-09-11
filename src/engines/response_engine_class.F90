@@ -184,8 +184,6 @@ contains
 !
 !     Set standards and then read if nonstandard
 !
-      engine%gs_algorithm = 'diis'
-!
       if (wf%name_ .eq. 'ccsd(t)'   .or. &
           wf%name_ .eq. 'mp2'       .or. &
           wf%name_ .eq. 'mlcc2'     .or. &
@@ -197,25 +195,9 @@ contains
 !
       end if
 !
-      if (wf%name_ .eq. 'cc3' .or. &
-          wf%name_ .eq. 'low memory cc2') then
-!
-         engine%multipliers_algorithm = 'diis'
-         engine%es_algorithm          = 'non-linear davidson'
-!
-      else if (wf%name_ .eq. 'ccs' .or. &
-               wf%name_ .eq. 'cc2' .or. &
-               wf%name_ .eq. 'mlcc2') then
-!
-         engine%multipliers_algorithm = 'diis'
-         engine%es_algorithm          = 'davidson'
-!
-      else
-!
-         engine%multipliers_algorithm = 'davidson'
-         engine%es_algorithm          = 'davidson'
-!
-      end if
+      call engine%set_default_gs_algorithm(wf)
+      call engine%set_default_multipliers_algorithm(wf)
+      call engine%set_default_es_algorithm(wf)
 !
       engine%es_type                = 'valence'
       engine%lr                     = .false.

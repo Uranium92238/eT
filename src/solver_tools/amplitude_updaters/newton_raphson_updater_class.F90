@@ -45,6 +45,8 @@ module newton_raphson_updater_class
       integer, private  :: max_dim_red
       integer, private  :: max_iterations
 !
+      character(len=1), private :: print_level
+!
       type(linear_davidson_tool), allocatable :: davidson 
 !
       class(abstract_jacobian_transformer), allocatable :: transformer 
@@ -106,7 +108,8 @@ contains
       this%records_in_memory  = records_in_memory
       this%max_dim_red        = 50
       this%max_iterations     = max_iterations
-      this%transformer        = transformer 
+      this%transformer        = transformer
+      this%print_level        = 'v' 
 !
       this%davidson = linear_davidson_tool(name_        = 'newton_raphson_amplitude_updator', &
                                       n_parameters      = this%n_amplitudes,                  &
@@ -171,8 +174,8 @@ contains
       call this%transformer%prepare(wf)
       call wf%construct_fock(task = 'es')
 !
-      call output%printf('n', 'Iteration     Residual norm', fs='(/t6,a)')
-      call output%print_separator('n', 29, '-', fs='(t6,a)')
+      call output%printf(this%print_level, 'Iteration     Residual norm', fs='(/t6,a)')
+      call output%print_separator(this%print_level, 29, '-', fs='(t6,a)')
 !
       iteration = 0
       converged = .false.
@@ -224,7 +227,7 @@ contains
 !
          endif 
 !
-         call output%printf('n', '(i3)          (e11.4)', &
+         call output%printf(this%print_level, '(i3)          (e11.4)', &
                             ints=[iteration], reals=[rho_norm], fs='(t6,a)')
 !
          call iteration_timer%turn_off()
@@ -232,7 +235,7 @@ contains
 !
       enddo
 !
-      call output%print_separator('n', 29, '-', fs='(t6,a/)')
+      call output%print_separator(this%print_level, 29, '-', fs='(t6,a/)')
 !
       if (.not. converged) then
 !
