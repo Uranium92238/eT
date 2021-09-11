@@ -64,6 +64,14 @@ module gs_engine_class
 !
       procedure, nopass :: do_cholesky                   => do_cholesky_gs_engine
 !
+      procedure, nopass, private :: enable_multimodel_newton
+!
+      procedure :: set_default_gs_algorithm &
+                => set_default_gs_algorithm_gs_engine
+!
+      procedure :: set_default_multipliers_algorithm &
+                => set_default_multipliers_algorithm_gs_engine
+!
    end type gs_engine
 !
 !
@@ -89,7 +97,54 @@ contains
 !
       type(gs_engine) :: engine 
 !
-      engine%gs_algorithm = 'diis'
+      call engine%set_default_gs_algorithm(wf)
+!
+      engine%gs_restart          = .false.
+!
+      call engine%read_settings()
+!
+      call engine%set_printables()
+!
+      engine%timer = timings(trim(engine%name_))
+      call engine%timer%turn_on()
+!
+   end function new_gs_engine
+!
+!
+   subroutine set_default_gs_algorithm_gs_engine(engine, wf)
+!!
+!!    Set default GS algorithm
+!!    Written by Eirik F. Kjønstad, 2021
+!!
+      implicit none
+!
+      class(gs_engine), intent(inout) :: engine 
+!
+      class(ccs), intent(in) :: wf 
+!
+      if (wf%name_ == 'cc3') then 
+!
+         engine%gs_algorithm = 'newton-raphson'
+!
+      else
+!
+         engine%gs_algorithm = 'diis'
+!
+      endif
+!
+   end subroutine set_default_gs_algorithm_gs_engine
+!
+!
+   subroutine set_default_multipliers_algorithm_gs_engine(engine, wf)
+!!
+!!    Set default multipliers algorithm
+!!    Written by Eirik F. Kjønstad, 2021
+!!
+      implicit none
+!
+      class(gs_engine), intent(inout) :: engine 
+!
+      class(ccs), intent(in) :: wf 
 !
       if (wf%name_ .eq. 'ccs' .or. &
           wf%name_ .eq. 'cc2' .or. &
@@ -105,17 +160,7 @@ contains
 !
       end if
 !
-      engine%gs_restart          = .false.
-      engine%multipliers_restart = .false.
-!
-      call engine%read_settings()
-!
-      call engine%set_printables()
-!
-      engine%timer = timings(trim(engine%name_))
-      call engine%timer%turn_on()
-!
-   end function new_gs_engine
+   end subroutine set_default_multipliers_algorithm_gs_engine
 !
 !
    subroutine ignite_gs_engine(engine, wf)
@@ -360,12 +405,10 @@ contains
          if (trim(global_storage) == 'memory') records_in_memory = .true.
          if (trim(storage) == 'memory') records_in_memory = .true.
 !
-         call input%get_keyword('micro iteration storage', 'solver cc gs', storage)
-!
 !        Determine which transformation to use - exact or approximate Jacobian - 
 !        and then construct the t_updater
 !
-         if (input%is_keyword_present('multimodel newton', 'solver cc gs')) then 
+         if (engine%enable_multimodel_newton(wf)) then 
 !
             transformer = approximate_jacobian_transformer('right')
 !
@@ -407,6 +450,33 @@ contains
       endif       
 !
    end subroutine initialize_amplitude_updater_gs_engine
+!
+!
+   function enable_multimodel_newton(wf) result(enable)
+!!
+!!    Enable multimodel Newton?
+!!    Written by Eirik F. Kjønstad, 2021
+!!
+!!    Default is yes for CC3 and no for other CC methods
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      logical :: enable 
+!
+      character(len=200) :: multimodel_newton
+!
+      enable = .false.
+      if (wf%name_ == 'cc3') enable = .true.
+!
+      multimodel_newton = 'default'
+      call input%get_keyword('multimodel newton', 'solver cc gs', multimodel_newton)
+!
+      if (multimodel_newton == 'on') enable = .true.
+      if (multimodel_newton == 'off') enable = .false.
+!
+   end function enable_multimodel_newton
 !
 !
    subroutine do_multipliers_gs_engine(engine, wf)

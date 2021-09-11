@@ -14,6 +14,7 @@
 - Minor changes to memory-handling to improve testability of memory-batching. eT-program/eT!852 
 - New layout for timings.out file eT-program/eT!891
 - Now possible to run linear response calculations at the CCSD level. eT-program/eT!890
+- Default algorithm for ground state in CC3 changed to multimodel Newton. eT-program/eT!892
 
 ### Optimization
 - Adding option for overlap screening to CC calculation of one electron integral. eT-program/eT!851

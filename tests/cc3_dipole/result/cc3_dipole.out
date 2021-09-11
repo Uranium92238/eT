@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.3 - an electronic structure program
+                     eT 1.4 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco
+   This is eT 1.4.0 Eos (development)
   ------------------------------------------------------------
-  Configuration date: 2021-06-07 12:48:33 UTC +02:00
-  Git branch:         update-test-refs-new
-  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2021-09-07 15:03:57 UTC +02:00
+  Git branch:         make-multimodel-default-in-cc3
+  Git hash:           8e2fc68096747b1053418fc4e7e0cb0518111424
+  Fortran compiler:   GNU 11.1.0
+  C compiler:         GNU 11.1.0
+  C++ compiler:       GNU 11.1.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
-  PCM:                ON
+  PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-06-07 12:51:08 UTC +02:00
+  Calculation started: 2021-09-07 15:20:11 UTC +02:00
 
 
   :: Input file
@@ -152,6 +152,8 @@
      Maximum iterations:                   100
      Acceleration type:                   diis
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
@@ -172,8 +174,8 @@
 
      DIIS dimension:   8
 
-     Storage (solver scf_e): memory
-     Storage (solver scf_x): memory
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -185,14 +187,14 @@
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
      8           -78.843851693557     0.2356E-05     0.7054E-09
-     9           -78.843851693630     0.2071E-06     0.7374E-10
-    10           -78.843851693631     0.1594E-07     0.4121E-12
-    11           -78.843851693631     0.3322E-08     0.1421E-13
-    12           -78.843851693631     0.1197E-08     0.0000E+00
-    13           -78.843851693631     0.4264E-09     0.5684E-13
-    14           -78.843851693631     0.1280E-09     0.4263E-13
-    15           -78.843851693631     0.1479E-10     0.0000E+00
-    16           -78.843851693631     0.2904E-11     0.1421E-13
+     9           -78.843851693630     0.2071E-06     0.7373E-10
+    10           -78.843851693631     0.1594E-07     0.4547E-12
+    11           -78.843851693631     0.3322E-08     0.5684E-13
+    12           -78.843851693631     0.1197E-08     0.5684E-13
+    13           -78.843851693631     0.4264E-09     0.2842E-13
+    14           -78.843851693631     0.1280E-09     0.1421E-13
+    15           -78.843851693631     0.1479E-10     0.1421E-13
+    16           -78.843851693631     0.2905E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -205,8 +207,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.29347
-     Total cpu time (sec):               0.54873
+     Total wall time (sec):              0.41600
+     Total cpu time (sec):               0.72639
 
 
   :: CC3 wavefunction
@@ -239,7 +241,7 @@
 
      1) Cholesky decomposition of the electron repulsion integrals
      2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
+     3) Calculation of the ground state (newton-raphson algorithm)
      4) Calculation of the multipliers (diis algorithm)
      5) Calculation of ground state properties
 
@@ -304,14 +306,23 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.10896
-     Total cpu time (sec):               0.21672
+     Total wall time (sec):              0.19300
+     Total cpu time (sec):               0.30216
 
 
   2) Preparation of MO basis and integrals
 
 
-  3) Calculation of the ground state (diis algorithm)
+  3) Calculation of the ground state (newton-raphson algorithm)
+
+   - Davidson tool settings:
+
+     Number of parameters:                 9729
+     Number of requested solutions:           1
+     Max reduced space dimension:            50
+
+     Storage (newton_raphson_amplitude_updator_trials): file
+     Storage (newton_raphson_amplitude_updator_transforms): file
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -323,6 +334,8 @@
 
   - CC ground state solver settings:
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
      Max number of iterations:      100
@@ -331,34 +344,96 @@
 
      DIIS dimension:   8
 
-     Storage (cc_gs_diis_e): file
-     Storage (cc_gs_diis_x): file
+     Storage (cc_gs_diis_errors): file
+     Storage (cc_gs_diis_parameters): file
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
     1           -79.084241931608     0.9358E-01     0.7908E+02
-    2           -79.096425668901     0.2799E-01     0.1218E-01
-    3           -79.103829958623     0.6335E-02     0.7404E-02
-    4           -79.104336097469     0.1982E-02     0.5061E-03
-    5           -79.104390774595     0.5221E-03     0.5468E-04
-    6           -79.104398749304     0.1995E-03     0.7975E-05
-    7           -79.104389483792     0.4719E-04     0.9266E-05
-    8           -79.104389091837     0.1106E-04     0.3920E-06
-    9           -79.104388634766     0.4082E-05     0.4571E-06
-   10           -79.104388457645     0.1665E-05     0.1771E-06
-   11           -79.104388531273     0.6368E-06     0.7363E-07
-   12           -79.104388534799     0.2615E-06     0.3526E-08
-   13           -79.104388539782     0.9950E-07     0.4982E-08
-   14           -79.104388532667     0.3238E-07     0.7114E-08
-   15           -79.104388532455     0.8372E-08     0.2118E-09
-   16           -79.104388532882     0.2052E-08     0.4269E-09
-   17           -79.104388532982     0.6454E-09     0.9983E-10
-   18           -79.104388533024     0.1406E-09     0.4208E-10
-   19           -79.104388533030     0.4351E-10     0.5286E-11
-   20           -79.104388533031     0.1632E-10     0.1918E-11
-   21           -79.104388533032     0.5182E-11     0.8100E-12
+
+     Iteration     Residual norm
+     -----------------------------
+       1           0.2284E-01
+       2           0.5837E-02
+       3           0.1639E-02
+       4           0.5953E-03
+     -----------------------------
+
+    2           -79.103956188886     0.1780E-02     0.1971E-01
+
+     Iteration     Residual norm
+     -----------------------------
+       1           0.5257E-03
+       2           0.1805E-03
+       3           0.4898E-04
+       4           0.1928E-04
+       5           0.5749E-05
+     -----------------------------
+
+    3           -79.104372326749     0.1172E-03     0.4161E-03
+
+     Iteration     Residual norm
+     -----------------------------
+       1           0.3683E-04
+       2           0.1404E-04
+       3           0.3164E-05
+       4           0.1200E-05
+       5           0.4234E-06
+     -----------------------------
+
+    4           -79.104388195847     0.9192E-05     0.1587E-04
+
+     Iteration     Residual norm
+     -----------------------------
+       1           0.3235E-05
+       2           0.1119E-05
+       3           0.2315E-06
+       4           0.5651E-07
+     -----------------------------
+
+    5           -79.104388536632     0.8539E-06     0.3408E-06
+
+     Iteration     Residual norm
+     -----------------------------
+       1           0.2879E-06
+       2           0.8616E-07
+       3           0.1732E-07
+       4           0.4841E-08
+     -----------------------------
+
+    6           -79.104388533341     0.4169E-07     0.3292E-08
+
+     Iteration     Residual norm
+     -----------------------------
+       1           0.1104E-07
+       2           0.4435E-08
+       3           0.9915E-09
+       4           0.3044E-09
+     -----------------------------
+
+    7           -79.104388533080     0.2159E-08     0.2611E-09
+
+     Iteration     Residual norm
+     -----------------------------
+       1           0.4881E-09
+       2           0.1666E-09
+       3           0.4347E-10
+       4           0.1487E-10
+     -----------------------------
+
+    8           -79.104388533033     0.9443E-10     0.4638E-10
+
+     Iteration     Residual norm
+     -----------------------------
+       1           0.1961E-10
+       2           0.5795E-11
+       3           0.1717E-11
+       4           0.7621E-12
+     -----------------------------
+
+    9           -79.104388533032     0.3531E-11     0.9379E-12
   ---------------------------------------------------------------
-  Convergence criterion met in 21 iterations!
+  Convergence criterion met in 9 iterations!
 
   - Ground state summary:
 
@@ -373,8 +448,8 @@
         1      5        0.015274304437
        14      4       -0.008970023658
         7      4        0.007312583243
-        4      5        0.006872684670
-        2      4        0.006012921700
+        4      5        0.006872684671
+        2      4        0.006012921701
        15      5       -0.005704150040
         6      2        0.005025576014
        13      5        0.004933889030
@@ -386,9 +461,9 @@
      --------------------------------------------------
         a      i       b      j         t(ai,bj)
      --------------------------------------------------
-        2      4       2      4       -0.049931914504
+        2      4       2      4       -0.049931914505
         5      6       5      6       -0.046567925291
-        9      3       9      3       -0.041349512984
+        9      3       9      3       -0.041349512985
         3      4       3      4       -0.037778342512
         1      5       1      5       -0.037299297231
         6      5       6      5       -0.034903296771
@@ -400,8 +475,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              0.38885
-     Total cpu time (sec):               0.77932
+     Total wall time (sec):              0.85700
+     Total cpu time (sec):               1.14866
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -426,8 +501,8 @@
 
      DIIS dimension:   8
 
-     Storage (cc_multipliers_diis_e): file
-     Storage (cc_multipliers_diis_x): file
+     Storage (cc_multipliers_diis_errors): file
+     Storage (cc_multipliers_diis_parameters): file
 
   Iteration    Norm residual
   ----------------------------
@@ -492,8 +567,8 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              0.64903
-     Total cpu time (sec):               1.29534
+     Total wall time (sec):              2.10400
+     Total cpu time (sec):               2.39776
 
 
   5) Calculation of ground state properties
@@ -516,22 +591,23 @@
 
   - Timings for the CC3 mean value calculation
 
-     Total wall time (sec):              1.20273
-     Total cpu time (sec):               2.40309
+     Total wall time (sec):              3.25900
+     Total cpu time (sec):               3.99159
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 16.059960 MB
+  Peak memory usage during the execution of eT: 16.030728 MB
 
-  Total wall time in eT (sec):              1.51729
-  Total cpu time in eT (sec):               2.97676
+  Total wall time in eT (sec):              3.71400
+  Total cpu time in eT (sec):               4.75656
 
-  Calculation ended: 2021-06-07 12:51:10 UTC +02:00
+  Calculation ended: 2021-09-07 15:20:15 UTC +02:00
 
   - Implementation references:
 
      eT: https://doi.org/10.1063/5.0004713
      CC3: https://doi.org/10.1021/acs.jctc.0c00686
      Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
+     Multimodel Newton algorithm: https://doi.org/10.1063/5.0010989
 
   eT terminated successfully!

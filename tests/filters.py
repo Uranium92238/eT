@@ -137,9 +137,9 @@ def get_gs_filter(tolerance, convergence=True, restart=False, Newton=False):
         h = [
             get_filter(
                 from_string="Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)",
-                num_lines=13,
+                num_lines=15,
                 abs_tolerance=tolerance,
-                mask=[3],
+                mask=[2, 3],
                 ignore_sign=True,
             ),
         ]

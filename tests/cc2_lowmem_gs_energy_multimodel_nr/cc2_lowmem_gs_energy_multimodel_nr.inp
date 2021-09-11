@@ -8,6 +8,10 @@ method
   lowmem-cc2
 end method
 
+print
+   output print level: verbose
+end print
+
 memory
    available: 8
 end memory
@@ -23,7 +27,7 @@ solver scf
 end solver scf
 
 solver cc gs
-   multimodel newton
+   multimodel newton: on
    algorithm: newton-raphson
    energy threshold: 1.0d-11
    omega threshold:  1.0d-11
