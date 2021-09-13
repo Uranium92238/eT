@@ -98,7 +98,7 @@ module ccsd_class
       procedure, private :: omega_ccsd_c2_d2
       procedure, private :: omega_ccsd_c2_d2_complex
 !
-      procedure, private :: omega_ccsd_e2        
+      procedure, private :: omega_ccsd_e2
       procedure, private :: omega_ccsd_e2_complex
 !
       procedure :: construct_u_aibj                           => construct_u_aibj_ccsd
@@ -124,11 +124,11 @@ module ccsd_class
                         => prepare_for_jacobian_ccsd
 !
       procedure, private :: save_jacobian_c2_intermediates
-      procedure, private :: save_jacobian_d2_intermediate 
-      procedure, private :: save_jacobian_e2_intermediate 
+      procedure, private :: save_jacobian_d2_intermediate
+      procedure, private :: save_jacobian_e2_intermediate
       procedure, private :: save_jacobian_g2_intermediates
       procedure, private :: save_jacobian_h2_intermediates
-      procedure, private :: save_jacobian_j2_intermediate 
+      procedure, private :: save_jacobian_j2_intermediate
 !
 !     Procedures related to Jacobian transpose transformation
 !
@@ -147,8 +147,10 @@ module ccsd_class
       procedure, private :: jacobian_transpose_ccsd_d1
       procedure, private :: jacobian_transpose_ccsd_d1_complex
 !
-      procedure, private :: jacobian_transpose_ccsd_e1
-      procedure, private :: jacobian_transpose_ccsd_e1_complex
+      procedure, private :: jacobian_transpose_ccsd_e1_o3v
+      procedure, private :: jacobian_transpose_ccsd_e1_o3v_complex
+      procedure, private :: jacobian_transpose_ccsd_e1_v3o
+      procedure, private :: jacobian_transpose_ccsd_e1_v3o_complex
 !
       procedure, private :: jacobian_transpose_ccsd_f1
       procedure, private :: jacobian_transpose_ccsd_f1_complex
@@ -220,7 +222,7 @@ module ccsd_class
       procedure :: set_initial_amplitudes_guess     => set_initial_amplitudes_guess_ccsd
       procedure :: set_initial_multipliers_guess    => set_initial_multipliers_guess_ccsd
 !
-      procedure, private :: set_t2_to_cc2_guess 
+      procedure, private :: set_t2_to_cc2_guess
 !
       procedure :: read_amplitudes                  => read_amplitudes_ccsd
       procedure :: save_amplitudes                  => save_amplitudes_ccsd

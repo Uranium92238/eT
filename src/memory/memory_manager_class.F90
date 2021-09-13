@@ -88,7 +88,7 @@ module memory_manager_class
 !
 !     Batch memory tracking
 !
-      logical, private :: batching_on  
+      logical, private :: batching_on
       type(memory_tracker), allocatable :: batch_mem_tracker
 !
    contains
@@ -286,7 +286,7 @@ contains
       mem%available = mem%total
       mem%max_used = mem%total - mem%available
 !
-      mem%batching_on = .false. 
+      mem%batching_on = .false.
 !
       call mem%print_settings()
 !
@@ -2358,16 +2358,16 @@ contains
 !!
 !!    Must be called after a batching loop is finished.
 !!
-!!    The routine turns of batching mode and deallocates the 
+!!    The routine turns of batching mode and deallocates the
 !!    memory tracker for the batching procedure.
 !!
-      implicit none 
+      implicit none
 !
-      class(memory_manager), intent(inout) :: mem 
+      class(memory_manager), intent(inout) :: mem
 !
       mem%batching_on = .false.
 !
-      if (allocated(mem%batch_mem_tracker)) then 
+      if (allocated(mem%batch_mem_tracker)) then
 !
          deallocate(mem%batch_mem_tracker)
 !
@@ -2387,17 +2387,17 @@ contains
 !!    Initialize batching tracker
 !!    Written by Eirik F. Kjønstad, June 2021
 !!
-!!    To be called when batching has been determined. 
+!!    To be called when batching has been determined.
 !!
 !!    Makes sure memory usage is tracked during the batching loops.
 !!
-      implicit none 
+      implicit none
 !
-      class(memory_manager), intent(inout) :: mem 
+      class(memory_manager), intent(inout) :: mem
 !
       integer(i64), intent(in) :: max_memory_usage
 !
-      if (mem%batching_on) then 
+      if (mem%batching_on) then
 !
          call output%error_msg('Tried to initialize memory tracker for batching loop, &
                                &but the memory manager is already in batching mode! &
@@ -2525,7 +2525,7 @@ contains
 !!    req_single_batch: optional specifying the minimal memory needed to not batch
 !!
 !!    If you are batching over i and j and need to keep g_abij, g_abci and g_abcj in memory,
-!!    req1_i = n_v**3, req1_j = n_v**3 and req2 = n_v**2. 
+!!    req1_i = n_v**3, req1_j = n_v**3 and req2 = n_v**2.
 !!    Memory per batch is then batch_size*(req1_i + req1_j) + batch_size**2*req2
 !!
 !!    If you are batching over a and j and need to keep g_abij, g_abci and g_abcj in memory,
@@ -2563,7 +2563,7 @@ contains
       integer :: e_size
       character(len=17), allocatable :: reqChar
 !
-      integer(i64) :: max_memory_usage 
+      integer(i64) :: max_memory_usage
 !
       if ((.not. batch_p%initialized) .or. (.not. batch_q%initialized)) then
 !
@@ -2728,9 +2728,9 @@ contains
                                  *int(batch_q%max_length, kind=i64)
 !
       if (batch_p%num_batches .eq. 1 .and. &
-          batch_q%num_batches .eq. 1) then 
+          batch_q%num_batches .eq. 1) then
 !
-         if (present(req_single_batch)) then 
+         if (present(req_single_batch)) then
 !
             max_memory_usage = int(req_single_batch*e_size, kind=i64)
 !
@@ -3005,9 +3005,9 @@ contains
 !
       if (batch_p%num_batches .eq. 1 .and. &
           batch_q%num_batches .eq. 1 .and. &
-          batch_r%num_batches .eq. 1) then 
+          batch_r%num_batches .eq. 1) then
 !
-         if (present(req_single_batch)) then 
+         if (present(req_single_batch)) then
 !
             max_memory_usage = int(req_single_batch*e_size, kind=i64)
 !

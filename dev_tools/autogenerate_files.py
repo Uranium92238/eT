@@ -279,7 +279,6 @@ def get_complex_mod_variables(file_path):
 
 
 def get_complex_class_procedures(file_path):
-
     """
     Find all procedures ending in "_complex" in a module before "end type"
     and return a list of the procedures and the corresponding procedure pointers
@@ -355,8 +354,8 @@ def complexify_line(line, parameter_list, continuation_mem_batch_setup):
     complexification and replace them
     """
 
-    # BLAS translations
-    blas_translation = [
+    # Explicit translations of routine names
+    explicit_translation = [
         ("dgemm", "zgemm"),
         ("dsymm", "zsymm"),
         ("dsyrk", "zsyrk"),
@@ -366,12 +365,14 @@ def complexify_line(line, parameter_list, continuation_mem_batch_setup):
         ("dgemv", "zgemv"),
         ("dger", "zgeru"),
         ("ddot", "zdot"),
+        ("zero_array", "zero_array_complex"),
+        ("copy_and_scale", "copy_and_scale_complex"),
     ]
 
-    # Complexify BLAS routines
-    for blas in blas_translation:
-        if blas[0] in line:
-            line = sub(r"\b" + blas[0] + r"\b", blas[1], line)
+    # Complexify routines that have explcit complex versions
+    for routines in explicit_translation:
+        if routines[0] in line:
+            line = sub(r"\b" + routines[0] + r"\b", routines[1], line)
 
     # Complexify parameters
     line = complexify_from_set(line, parameter_list)
@@ -387,12 +388,6 @@ def complexify_line(line, parameter_list, continuation_mem_batch_setup):
     # Change wf%eri to wf%eri_c
     if "wf%eri" in line:
         line = sub(r"\b" + "wf%eri" + r"\b", "wf%eri_complex", line)
-
-    # Change array utilities
-    if "zero_array" in line:
-        line = sub(r"\b" + "zero_array" + r"\b", "zero_array_complex", line)
-    if "copy_and_scale" in line:
-        line = sub(r"\b" + "copy_and_scale" + r"\b", "copy_and_scale_complex", line)
 
     # Correct element size in batch_setup
     # in case of complex double precision
