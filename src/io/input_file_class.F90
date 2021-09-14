@@ -528,14 +528,18 @@ contains
 !
       solver_cc_multipliers%name_    = 'solver cc multipliers'
       solver_cc_multipliers%required = .false.
-      solver_cc_multipliers%keywords = [character(len=30) ::    &
-                                       'algorithm',             &
-                                       'threshold',             &
-                                       'storage',               &
-                                       'crop',                  &
-                                       'diis dimension',        &
-                                       'restart',               &
-                                       'max reduced dimension', &
+      solver_cc_multipliers%keywords = [character(len=30) ::       &
+                                       'algorithm',                &
+                                       'threshold',                &
+                                       'storage',                  &
+                                       'crop',                     &
+                                       'micro iteration storage',  &
+                                       'max micro iterations',     &
+                                       'multimodel newton',        &
+                                       'rel micro threshold',      &
+                                       'diis dimension',           &
+                                       'restart',                  &
+                                       'max reduced dimension',    &
                                        'max iterations']
 !
 !

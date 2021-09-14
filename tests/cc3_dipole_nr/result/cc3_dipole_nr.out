@@ -16,9 +16,9 @@
 
    This is eT 1.4.0 Eos (development)
   ------------------------------------------------------------
-  Configuration date: 2021-09-11 15:34:11 UTC +02:00
-  Git branch:         multimodel-in-multipliers
-  Git hash:           30689297503fa893d79f6ddb73fa12bdab47d3e1
+  Configuration date: 2021-09-11 14:14:46 UTC +02:00
+  Git branch:         local_dev
+  Git hash:           78cb8e73cb3e4b8b30bcc43395ace027396c8d18
   Fortran compiler:   GNU 11.1.0
   C compiler:         GNU 11.1.0
   C++ compiler:       GNU 11.1.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-09-11 15:46:14 UTC +02:00
+  Calculation started: 2021-09-11 15:33:24 UTC +02:00
 
 
   :: Input file
@@ -75,9 +75,9 @@
      end solver cc gs
 
      solver cc multipliers
-        threshold: 1.0d-11
+        multimodel newton: off
         algorithm: newton-raphson
-        multimodel newton: on
+        threshold: 1.0d-11
      end solver cc multipliers
 
      solver cholesky
@@ -87,7 +87,7 @@
      ! Geometry:
 
 
-  Running on 8 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -187,15 +187,15 @@
      5           -78.843850846799     0.3301E-03     0.4131E-04
      6           -78.843851669326     0.5527E-04     0.8225E-06
      7           -78.843851692851     0.5865E-05     0.2353E-07
-     8           -78.843851693557     0.2356E-05     0.7054E-09
-     9           -78.843851693630     0.2071E-06     0.7377E-10
-    10           -78.843851693631     0.1594E-07     0.4263E-12
-    11           -78.843851693631     0.3322E-08     0.0000E+00
-    12           -78.843851693631     0.1197E-08     0.2842E-13
-    13           -78.843851693631     0.4264E-09     0.4263E-13
+     8           -78.843851693557     0.2356E-05     0.7055E-09
+     9           -78.843851693630     0.2071E-06     0.7370E-10
+    10           -78.843851693631     0.1594E-07     0.4547E-12
+    11           -78.843851693631     0.3322E-08     0.4263E-13
+    12           -78.843851693631     0.1197E-08     0.1421E-13
+    13           -78.843851693631     0.4264E-09     0.2842E-13
     14           -78.843851693631     0.1280E-09     0.2842E-13
-    15           -78.843851693631     0.1479E-10     0.1421E-13
-    16           -78.843851693631     0.2907E-11     0.1421E-13
+    15           -78.843851693631     0.1479E-10     0.0000E+00
+    16           -78.843851693631     0.2908E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -208,8 +208,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.29500
-     Total cpu time (sec):               1.15581
+     Total wall time (sec):              0.42000
+     Total cpu time (sec):               0.73097
 
 
   :: CC3 wavefunction
@@ -307,8 +307,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.16300
-     Total cpu time (sec):               0.50430
+     Total wall time (sec):              0.18500
+     Total cpu time (sec):               0.28487
 
 
   2) Preparation of MO basis and integrals
@@ -402,8 +402,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              1.04000
-     Total cpu time (sec):               2.22738
+     Total wall time (sec):              0.88600
+     Total cpu time (sec):               1.17829
 
 
   4) Calculation of the multipliers (newton-raphson algorithm)
@@ -443,17 +443,14 @@
   Iteration    Norm residual
   ----------------------------
     1          0.1019E+01
-    2          0.2104E-01
-    3          0.1036E-02
-    4          0.5182E-04
-    5          0.4784E-05
-    6          0.3669E-06
-    7          0.1982E-07
-    8          0.7636E-09
-    9          0.3424E-10
-   10          0.1874E-11
+    2          0.7494E-02
+    3          0.6529E-04
+    4          0.6159E-06
+    5          0.3787E-08
+    6          0.2628E-10
+    7          0.1695E-12
   ----------------------------
-  Convergence criterion met in 10 iterations!
+  Convergence criterion met in 7 iterations!
 
   - DIIS CC multipliers solver summary:
 
@@ -462,7 +459,7 @@
         a       i         tbar(a,i)
      -----------------------------------
         1      5        0.026185123745
-       14      4       -0.016432585610
+       14      4       -0.016432585609
         7      4        0.014152221526
         4      5        0.012510205867
        15      5       -0.010407401354
@@ -491,8 +488,8 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              1.70900
-     Total cpu time (sec):               3.29243
+     Total wall time (sec):              3.57900
+     Total cpu time (sec):               4.07974
 
 
   5) Calculation of ground state properties
@@ -515,24 +512,23 @@
 
   - Timings for the CC3 mean value calculation
 
-     Total wall time (sec):              3.02800
-     Total cpu time (sec):               6.31724
+     Total wall time (sec):              4.75400
+     Total cpu time (sec):               5.68382
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 16.030728 MB
 
-  Total wall time in eT (sec):              3.37900
-  Total cpu time in eT (sec):               7.52969
+  Total wall time in eT (sec):              5.21200
+  Total cpu time in eT (sec):               6.45304
 
-  Calculation ended: 2021-09-11 15:46:17 UTC +02:00
+  Calculation ended: 2021-09-11 15:33:30 UTC +02:00
 
   - Implementation references:
 
      eT: https://doi.org/10.1063/5.0004713
      CC3: https://doi.org/10.1021/acs.jctc.0c00686
      Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
-     Multimodel Newton algorithm: https://doi.org/10.1063/5.0010989
      Multimodel Newton algorithm: https://doi.org/10.1063/5.0010989
 
   eT terminated successfully!

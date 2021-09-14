@@ -146,9 +146,12 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      if (wf%name_ .eq. 'ccs' .or. &
+      if (wf%name_ == 'cc3') then 
+!
+         engine%multipliers_algorithm = 'newton-raphson'
+!
+      else if (wf%name_ .eq. 'ccs' .or. &
           wf%name_ .eq. 'cc2' .or. &
-          wf%name_ .eq. 'cc3' .or. &
           wf%name_ .eq. 'low memory cc2' .or. &
           wf%name_ .eq. 'mlcc2') then
 !
@@ -328,7 +331,8 @@ contains
          storage = 'disk'
          call input%get_keyword('storage', 'solver cc gs', storage)
 !
-         call engine%initialize_amplitude_updater(wf, t_updater, storage)
+         call engine%initialize_amplitude_updater(wf, t_updater, &
+                                                storage, 'solver cc gs')
 !
          diis_solver = diis_cc_gs(wf, engine%gs_restart, t_updater, storage)
          call diis_solver%run(wf)
@@ -339,7 +343,8 @@ contains
    end subroutine do_ground_state_gs_engine
 !
 !
-   subroutine initialize_amplitude_updater_gs_engine(engine, wf, t_updater, global_storage)
+   subroutine initialize_amplitude_updater_gs_engine(engine, wf, &
+                                          t_updater, global_storage, section)
 !!
 !!    Initialize amplitude updater
 !!    Written by Eirik F. Kjønstad, 2020
@@ -365,6 +370,11 @@ contains
       class(ccs), intent(in) :: wf 
 !
       character(len=*), intent(in) :: global_storage
+      character(len=*), intent(in) :: section 
+!
+      logical :: scale_amplitudes, scale_residual
+!
+      character(len=200) :: side, algorithm
 !
       class(amplitude_updater), allocatable :: t_updater
 !
@@ -376,16 +386,40 @@ contains
 !
       integer :: max_iterations
 !
-      logical :: records_in_memory
+      logical :: records_in_memory, multipliers 
       character(len=200) :: storage
 !
-      if (trim(engine%gs_algorithm) == 'diis') then
+      if (section == 'solver cc multipliers') then 
+!
+         multipliers = .true.
+         algorithm = engine%multipliers_algorithm
+!
+      else
+!
+         multipliers = .false.
+         algorithm = engine%gs_algorithm
+!
+      end if
+!
+      if (algorithm == 'diis') then
+!
+         if (multipliers) then 
+!
+            scale_amplitudes = .false.
+            scale_residual = .false.
+!
+         else
+!
+            scale_amplitudes = .true.
+            scale_residual = .true.
+!
+         end if
 !
          t_updater = quasi_newton_updater(n_amplitudes     = wf%n_gs_amplitudes, &
-                                          scale_amplitudes = .true.,             &
-                                          scale_residual   = .true.)
+                                          scale_amplitudes = scale_amplitudes,   &
+                                          scale_residual   = scale_residual)
 !
-      elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
+      elseif (algorithm == 'newton-raphson') then 
 !
          if (trim(wf%name_) == 'cc2') &
             call output%error_msg('Newton-Raphson not implemented for CC2')
@@ -396,21 +430,35 @@ contains
          max_iterations     = 100
          storage            = 'disk'
 !
-         call input%get_keyword('rel micro threshold',     'solver cc gs', relative_threshold)
-         call input%get_keyword('max micro iterations',    'solver cc gs', max_iterations)
-         call input%get_keyword('micro iteration storage', 'solver cc gs', storage)
+         call input%get_keyword('rel micro threshold',     section, relative_threshold)
+         call input%get_keyword('max micro iterations',    section, max_iterations)
+         call input%get_keyword('micro iteration storage', section, storage)
 !
          records_in_memory = .false.
 !
          if (trim(global_storage) == 'memory') records_in_memory = .true.
          if (trim(storage) == 'memory') records_in_memory = .true.
 !
+         if (multipliers) then 
+!
+            scale_amplitudes = .false.
+            scale_residual = .false.
+            side = 'left'
+!
+         else
+!
+            scale_amplitudes = .true.
+            scale_residual = .false.
+            side = 'right'
+!
+         end if
+!
 !        Determine which transformation to use - exact or approximate Jacobian - 
 !        and then construct the t_updater
 !
-         if (engine%enable_multimodel_newton(wf)) then 
+         if (engine%enable_multimodel_newton(wf, section)) then 
 !
-            transformer = approximate_jacobian_transformer('right')
+            transformer = approximate_jacobian_transformer(side)
 !
             reference = citation(implementation = 'Multimodel Newton algorithm',                  &
                                  journal        = 'J. Chem. Phys.',                               &
@@ -430,13 +478,13 @@ contains
 !
          else 
 !
-            transformer = jacobian_transformer('right')
+            transformer = jacobian_transformer(side)
 !
          endif
 !
          t_updater = newton_raphson_updater(n_amplitudes       = wf%n_gs_amplitudes, &
-                                            scale_amplitudes   = .true.,             &
-                                            scale_residual     = .false.,            &
+                                            scale_amplitudes   = scale_amplitudes,   &
+                                            scale_residual     = scale_residual,     &
                                             relative_threshold = relative_threshold, &   
                                             records_in_memory  = records_in_memory,  & 
                                             max_iterations     = max_iterations,     &
@@ -452,7 +500,7 @@ contains
    end subroutine initialize_amplitude_updater_gs_engine
 !
 !
-   function enable_multimodel_newton(wf) result(enable)
+   function enable_multimodel_newton(wf, section) result(enable)
 !!
 !!    Enable multimodel Newton?
 !!    Written by Eirik F. Kjønstad, 2021
@@ -463,6 +511,8 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
+      character(len=*), intent(in) :: section 
+!
       logical :: enable 
 !
       character(len=200) :: multimodel_newton
@@ -471,7 +521,7 @@ contains
       if (wf%name_ == 'cc3') enable = .true.
 !
       multimodel_newton = 'default'
-      call input%get_keyword('multimodel newton', 'solver cc gs', multimodel_newton)
+      call input%get_keyword('multimodel newton', section, multimodel_newton)
 !
       if (multimodel_newton == 'on') enable = .true.
       if (multimodel_newton == 'off') enable = .false.
@@ -492,6 +542,7 @@ contains
 !!
       use diis_cc_multipliers_class,      only: diis_cc_multipliers
       use davidson_cc_multipliers_class,  only: davidson_cc_multipliers
+      use amplitude_updater_class,        only: amplitude_updater
 !
       implicit none
 !
@@ -501,6 +552,10 @@ contains
 !
       type(diis_cc_multipliers), allocatable     :: diis_solver
       type(davidson_cc_multipliers), allocatable :: davidson_solver
+!
+      class(amplitude_updater), allocatable :: tbar_updater
+!
+      character(len=200) :: storage
 !
       call wf%construct_fock(task = 'multipliers')
 !
@@ -521,9 +576,16 @@ contains
          call davidson_solver%run(wf)
          call davidson_solver%cleanup(wf)
 !
-      elseif (trim(engine%multipliers_algorithm) == 'diis') then 
+      elseif (trim(engine%multipliers_algorithm) == 'diis' .or. &
+              trim(engine%multipliers_algorithm) == 'newton-raphson') then 
 !
-         diis_solver = diis_cc_multipliers(wf, engine%multipliers_restart)
+         storage = 'disk'
+         call input%get_keyword('storage', 'solver cc multipliers', storage)
+!
+         call engine%initialize_amplitude_updater(wf, tbar_updater, &
+                                                storage, 'solver cc multipliers')
+!
+         diis_solver = diis_cc_multipliers(wf, engine%multipliers_restart, tbar_updater)
          call diis_solver%run(wf)
          call diis_solver%cleanup(wf)
 !

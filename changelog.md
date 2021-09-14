@@ -15,6 +15,7 @@
 - New layout for timings.out file eT-program/eT!891
 - Now possible to run linear response calculations at the CCSD level. eT-program/eT!890
 - Default algorithm for ground state in CC3 changed to multimodel Newton. eT-program/eT!892
+- Full and multimodel Newton-Raphson algorithm now available for ground state multipliers. The default algorithm for CC3 is changed from DIIS to multimodel Newton. eT-program/eT!895
 
 ### Optimization
 - Adding option for overlap screening to CC calculation of one electron integral. eT-program/eT!851
