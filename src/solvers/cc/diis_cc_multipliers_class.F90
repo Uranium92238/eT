@@ -66,6 +66,7 @@ module diis_cc_multipliers_class
    use diis_tool_class, only: diis_tool 
    use precondition_tool_class, only: precondition_tool 
    use memory_manager_class, only: mem
+   use amplitude_updater_class, only: amplitude_updater
 !
    implicit none
 !
@@ -88,6 +89,8 @@ module diis_cc_multipliers_class
       logical :: restart
 !
       type(timings) :: timer
+!
+      class(amplitude_updater), allocatable :: tbar_updater
 !
       class(precondition_tool), allocatable :: preconditioner 
 !
@@ -118,7 +121,7 @@ module diis_cc_multipliers_class
 contains
 !
 !
-   function new_diis_cc_multipliers(wf, restart) result(solver)
+   function new_diis_cc_multipliers(wf, restart, tbar_updater) result(solver)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -130,6 +133,8 @@ contains
       class(ccs) :: wf
 !
       logical, intent(in) :: restart
+!
+      class(amplitude_updater), intent(in) :: tbar_updater
 !
       logical :: records_in_memory, crop
       integer :: diis_dimension
@@ -153,6 +158,8 @@ contains
 !
       call solver%read_settings(records_in_memory, crop, diis_dimension)
       call solver%print_settings()
+!
+      solver%tbar_updater = tbar_updater
 !
       solver%diis = diis_tool('cc_multipliers_diis',      &
                                wf%n_gs_amplitudes,        &
@@ -252,16 +259,14 @@ contains
 !
          else
 !
-!           Precondition residual, shift multipliers by preconditioned residual, 
-!           then ask for the DIIS update of the multipliers 
-!
-            call solver%preconditioner%do_(residual, &
-                                           prefactor=-one)
+!           Get next guess for multipliers, and perform DIIS extrapolation on it 
 !
             call wf%get_multipliers(multipliers)
-            call daxpy(wf%n_gs_amplitudes, one, residual, 1, multipliers, 1)
+!
+            call solver%tbar_updater%update(wf, multipliers, residual)
 !
             call solver%diis%update(residual, multipliers)
+!
             call wf%set_multipliers(multipliers)
             call wf%save_multipliers()
 !
