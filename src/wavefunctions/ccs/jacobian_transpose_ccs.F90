@@ -29,7 +29,7 @@ submodule (ccs_class) jacobian_transpose_ccs
 !!
 !!    where
 !!
-!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
+!!    A_μ,ν = < μ |exp(-T) [H, τ_ν] exp(T) | R >.
 !!
 !
    implicit none
@@ -149,7 +149,7 @@ contains
    end subroutine jacobian_transpose_ccs_a1_ccs
 !
 !
-   module subroutine jacobian_transpose_ccs_b1_ccs(wf, sigma_ai, b_ai)
+   module subroutine jacobian_transpose_ccs_b1_ccs(wf, sigma_ai, b_bj)
 !!
 !!    Jacobian transpose B1 (CCS)
 !!    Written by Sarai D. Folkestad, Jun 2019
@@ -159,99 +159,180 @@ contains
 !!
 !!       B1 = sum_bj L_bjia b_bj
 !!          = sum_bj (2 g_bjia b_bj - g_baij b_bj)
+!!          = sum_bjJ (2 L^J_bj L^J_ia b_bj - L^J_baL^J_ij b_bj)
 !!    
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_bj
 !
-      integer :: req0, req1_j, req1_a, req2
-      integer :: current_a_batch, current_j_batch
+      integer :: req, req_i, req_a, req_ai
+      integer :: current_a_batch, current_j_batch, current_i_batch
 !
-      type(batching_index) batch_a, batch_j
+      type(batching_index) batch_a, batch_j, batch_i
 !
+      real(dp), dimension(:,:,:), allocatable :: L_Jbj, L_Jij
+      real(dp), dimension(:,:,:), allocatable :: L_Jba, Y_Jib, Y_Jbi, L_Jia
       real(dp), dimension(:,:), allocatable :: sigma_ia
-      real(dp), dimension(:,:,:,:), allocatable :: L_bjia, g_baij
-!
-      integer :: i, a
+      real(dp), dimension(:), allocatable :: X_J
 !
       type(timings), allocatable :: timer 
+!
+      integer :: i, a
 !
       timer = timings('Jacobian transpose CCS B1', pl='verbose')
       call timer%turn_on()
 !
-      call mem%alloc(sigma_ia, wf%n_o, wf%n_v)
-      call zero_array(sigma_ia, wf%n_t1)
+      call mem%alloc(X_J, wf%eri%n_J)
+      call zero_array(X_J, wf%eri%n_J)
 !
-      req0 = 0
-!
-      req1_a = max((wf%eri%n_J)*(wf%n_v),(wf%eri%n_J)*(wf%n_o))
-      req1_j = max((wf%eri%n_J)*(wf%n_v),(wf%eri%n_J)*(wf%n_o))
-!
-      req2 = (wf%n_o)*(wf%n_v)*2
-!
-      batch_a = batching_index(wf%n_v)
       batch_j = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_a, batch_j, req0, req1_a, req1_j, req2)
+      req = wf%eri%n_J*wf%n_v
+      call mem%batch_setup(batch_j, 0, req)
 !
-      do current_a_batch = 1, batch_a%num_batches
+      call mem%alloc(L_Jbj, wf%eri%n_J, wf%n_v, batch_j%max_length)
 !
-         call batch_a%determine_limits(current_a_batch)
+      do current_j_batch = 1, batch_j%num_batches
 !
-         do current_j_batch = 1, batch_j%num_batches
+         call batch_j%determine_limits(current_j_batch)
 !
-            call batch_j%determine_limits(current_j_batch)
+         call wf%eri%get_cholesky_t1(L_Jbj, wf%n_o + 1, wf%n_mo, batch_j%first, batch_j%get_last())
 !
-            call mem%alloc(L_bjia, wf%n_v, batch_j%length, wf%n_o, batch_a%length)
+         call dgemm('N', 'N',                &
+                     wf%eri%n_J,             &
+                     1,                      &
+                     batch_j%length*wf%n_v,  &
+                     one,                    &
+                     L_Jbj,                  &
+                     wf%eri%n_J,             &
+                     b_bj(1,batch_j%first),  &
+                     batch_j%length*wf%n_v,  &
+                     one,                    &
+                     X_J,                    &
+                     wf%eri%n_J)
 !
-            call wf%eri%get_eri_t1('voov', L_bjia, 1, wf%n_v, batch_j%first, batch_j%get_last(), &
-                                                   1, wf%n_o, batch_a%first, batch_a%get_last())
+      enddo
 !
-            call dscal((wf%n_v)*(wf%n_o)*(batch_a%length)*(batch_j%length), two, L_bjia, 1)
-!
-            call mem%alloc(g_baij, wf%n_v, batch_a%length, wf%n_o, batch_j%length)
-!
-            call wf%eri%get_eri_t1('vvoo', g_baij, 1, wf%n_v, batch_a%first, batch_a%get_last(), &
-                                                   1, wf%n_o, batch_j%first, batch_j%get_last())
-!
-            call add_1432_to_1234(-one, g_baij, L_bjia, wf%n_v, batch_j%length, wf%n_o, batch_a%length)
-!
-            call mem%dealloc(g_baij, wf%n_v, batch_a%length, wf%n_o, batch_j%length)
-!
-            call dgemm('N', 'N',                   &
-                        1,                         &
-                        wf%n_o*(batch_a%length),   &
-                        (batch_j%length)*(wf%n_v), &
-                        one,                       &
-                        b_ai(1, batch_j%first),    & ! b_bj
-                        1,                         &
-                        L_bjia,                    &
-                        (batch_j%length)*(wf%n_v), &
-                        one,                       &
-                        sigma_ia(1, batch_a%first),&
-                        1)
-!
-            call mem%dealloc(L_bjia, wf%n_v, batch_j%length, wf%n_o, batch_a%length)
-!
-         enddo ! batch j
-      enddo ! batch a
+      call mem%dealloc(L_Jbj, wf%eri%n_J, wf%n_v, batch_j%max_length)
 !
       call mem%batch_finalize()
 !
-!$omp parallel do private(a, i)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      batch_i = batching_index(wf%n_o)
 !
-            sigma_ai(a,i) = sigma_ai(a,i) + sigma_ia(i,a)
+      req = 2*wf%eri%n_J*wf%n_v + wf%n_v
+      call mem%batch_setup(batch_i, 0, req)
 !
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+
+         call mem%alloc(L_Jia, wf%eri%n_J, batch_i%length, wf%n_v)
+         call wf%eri%get_cholesky_t1(L_Jia, batch_i%first, batch_i%get_last(), wf%n_o + 1, wf%n_mo)
+!
+         call mem%alloc(sigma_ia, batch_i%length, wf%n_v)
+         call dgemm('T', 'N',                   &
+                     wf%n_v*batch_i%length,     &
+                     1,                         &
+                     wf%eri%n_J,                &
+                     two,                       &
+                     L_Jia,                     &
+                     wf%eri%n_J,                &
+                     X_J,                       &
+                     wf%eri%n_J,                &
+                     zero,                      &
+                     sigma_ia,                  &
+                     wf%n_v*batch_i%length)
+!
+         call mem%dealloc(L_Jia, wf%eri%n_J, batch_i%length, wf%n_v)
+!
+!$omp parallel do private (i, a)
+         do i = batch_i%first, batch_i%get_last()
+            do a = 1, wf%n_v
+               sigma_ai(a, i) = sigma_ai(a, i) + sigma_ia(i - batch_i%first + 1, a)
+            enddo
          enddo
-      enddo
 !$omp end parallel do
 !
-      call mem%dealloc(sigma_ia, wf%n_o, wf%n_v)
+         call mem%dealloc(sigma_ia, batch_i%length, wf%n_v)
+!
+      enddo
+!
+      call mem%dealloc(X_J, wf%eri%n_J)
+!
+      call mem%batch_finalize()
+!
+      batch_i = batching_index(wf%n_o)
+      batch_a = batching_index(wf%n_v)
+!
+      req = 0
+      req_a = 2*wf%eri%n_J*wf%n_v
+      req_i = 2*wf%eri%n_J*wf%n_o
+      req_ai = wf%eri%n_J
+!
+      call mem%batch_setup(batch_a, batch_i, req, req_a, req_i, req_ai)
+!
+      call mem%alloc(L_Jba, wf%eri%n_J, wf%n_v, batch_a%max_length)
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+         call mem%alloc(L_Jij, wf%eri%n_J, batch_i%length, wf%n_o)
+         call mem%alloc(Y_Jbi, wf%eri%n_J, wf%n_v, batch_i%length)
+         call mem%alloc(Y_Jib, wf%eri%n_J, batch_i%length, wf%n_v)
+!
+         call wf%eri%get_cholesky_t1(L_Jij, batch_i%first, batch_i%get_last(), 1, wf%n_o)
+!
+         call dgemm('N', 'T',                   &
+                     wf%eri%n_J*batch_i%length, &
+                     wf%n_v,                    &
+                     wf%n_o,                    &
+                     one,                       &
+                     L_Jij,                     &
+                     wf%eri%n_J*batch_i%length, &
+                     b_bj,                      &
+                     wf%n_v,                    &
+                     zero,                      &
+                     Y_Jib,                     &
+                     wf%eri%n_J*batch_i%length)
+!
+         call mem%dealloc(L_Jij, wf%eri%n_J, batch_i%length, wf%n_o)
+!
+         call sort_123_to_132(Y_Jib, Y_Jbi, wf%eri%n_J, batch_i%length, wf%n_v)
+         call mem%dealloc(Y_Jib, wf%eri%n_J, batch_i%length, wf%n_v)
+!
+         do current_a_batch = 1, batch_a%num_batches
+!
+            call batch_a%determine_limits(current_a_batch)
+!
+            call wf%eri%get_cholesky_t1(L_Jba, wf%n_o + 1, wf%n_mo, &
+                                       wf%n_o + batch_a%first, wf%n_o + batch_a%get_last())
+!
+            call dgemm('T', 'N',                              &
+                       batch_a%length,                        &
+                       batch_i%length,                        &
+                       wf%n_v*wf%eri%n_J,                     &
+                       -one,                                  &
+                       L_Jba,                                 &
+                       wf%n_v*wf%eri%n_J,                     &
+                       Y_Jbi,                                 &
+                       wf%n_v*wf%eri%n_J,                     &
+                       one,                                   &
+                       sigma_ai(batch_a%first, batch_i%first),&
+                       wf%n_v)
+!
+         enddo
+!
+         call mem%dealloc(Y_Jbi, wf%eri%n_J, wf%n_v, batch_i%length)
+!
+      enddo
+!
+      call mem%dealloc(L_Jba, wf%eri%n_J, wf%n_v, batch_a%max_length)
+
+      call mem%batch_finalize()
 !
       call timer%turn_off()
 !
