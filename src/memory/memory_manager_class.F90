@@ -59,7 +59,7 @@ module memory_manager_class
 !     Debug option:
 !     Require that batch setup always gives batching
 !
-#ifdef HAS_FORCED_BATCHING
+#ifdef _FORCED_BATCHING
       logical, parameter, private :: force_batch = .true.
 #else
       logical, parameter, private :: force_batch = .false.
