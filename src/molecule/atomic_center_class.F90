@@ -136,6 +136,7 @@ contains
                               coordinates,      &
                               basis,            &
                               basis_type_,      &
+                              charge,           &
                               is_ghost) result(center)
 !!
 !!    New atomic center
@@ -145,7 +146,7 @@ contains
 !
       type(atomic_center) :: center
 !
-      integer, intent(in) :: libint_number, input_number
+      integer, intent(in) :: libint_number, input_number, charge
 !
       character(len=2), intent(in) :: symbol
 !
@@ -162,16 +163,18 @@ contains
       center%basis         = basis
       center%coordinates   = coordinates
       center%input_number  = input_number
+      center%charge        = charge
 !
       call center%symbol_to_number()
 !
-      center%charge = 0
       center%nuclear_charge = center%number_
-!
       if (is_ghost) center%nuclear_charge = 0
 !
       if (center%number_ .eq. -1) &
          call output%error_msg('illegal atomic symbol, check the eT.inp file ')
+!
+      if (center%charge .gt. center%number_) &
+            call output%error_msg('Positive charge exceeds atomic number')
 !
       call center%rename_core_valence_dunning_sets() ! Otherwise Libint looks for 'augmentation'
                                                      ! files that don't exist for these basis sets
@@ -412,7 +415,10 @@ contains
          call output%error_msg("Atom multiplicity not supported for Z > (i0)", &
                                 ints=[size(atomic_multiplicities)])
 !
-      multiplicity = atomic_multiplicities(center%number_)
+      if (center%number_ == center%charge) &
+         call output%error_msg('Cannot assign multiplicity without electrons')
+!
+      multiplicity = atomic_multiplicities(center%number_ - center%charge)
 !
    end function get_ground_state_multiplicity_atomic_center
 !
@@ -861,7 +867,16 @@ contains
       class(atomic_center), intent(in) :: center
       character(len=50) :: identifier
 !
-      identifier = trim(center%symbol) // "_" // trim(center%basis)
+      character(len=5) :: charge_sign
+
+      if (center%charge .lt. 0) then
+         charge_sign = 'minus'
+      else
+         charge_sign = 'plus'
+      endif
+!
+      write(identifier, '(5a,i2.2)') trim(center%symbol), '_', trim(center%basis), &
+                                     '_', charge_sign, abs(center%charge)
 !
    end function get_identifier_string_atomic_center
 !

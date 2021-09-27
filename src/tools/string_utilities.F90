@@ -336,4 +336,43 @@ contains
    end subroutine index_of_unique_strings
 !
 !
+   function is_substring_in_string(string, substring) result(substring_found)
+!!
+!!    Substring in string
+!!    Written by Sarai D. Folkestad, Aug 2021
+!!
+      implicit none
+!
+      character(len=*), intent(in) :: string
+      character(len=*), intent(in) :: substring
+!
+      logical :: substring_found
+!
+      integer :: start_, substring_length, cursor
+!
+      substring_length = len(trim(substring))
+!
+      start_ = 1
+      cursor = start_ + substring_length - 1
+!
+      do while (cursor .lt. len(string))
+!
+         if (string(start_ : cursor) == trim(substring)) then
+!
+            substring_found = .true.
+            return
+!
+         else
+!
+            start_ = start_ + 1
+            cursor = cursor + 1
+!
+         endif
+      enddo
+!
+      substring_found = .false.
+!
+   end function is_substring_in_string
+!
+!
 end module string_utilities
