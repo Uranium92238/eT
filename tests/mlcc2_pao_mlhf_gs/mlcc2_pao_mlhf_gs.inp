@@ -17,8 +17,8 @@ end solver cholesky
 
 solver scf
    algorithm:          mo-scf-diis
-   energy threshold:   1.0d-12
-   gradient threshold: 1.0d-12
+   energy threshold:   1.0d-11
+   gradient threshold: 1.0d-11
 end solver scf
 
 method
@@ -27,8 +27,8 @@ method
 end method
 
 solver cc gs
-   omega threshold:  1.0d-10
-   energy threshold: 1.0d-10
+   omega threshold:  1.0d-11
+   energy threshold: 1.0d-11
 end solver cc gs
 
 active atoms
