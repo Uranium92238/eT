@@ -1870,13 +1870,16 @@ contains
    end function get_n_mm_molecules_input_file
 !
 !
-   subroutine get_geometry_input_file(this, n_atoms, symbols, &
-                                       positions, basis_sets, units_angstrom, is_ghost)
+   subroutine get_geometry_input_file(this, n_atoms, symbols,  &
+                                      positions, basis_sets,   &
+                                      charge, units_angstrom,  &
+                                      is_ghost)
 !!
 !!    Get geometry
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!    Modified by Åsmund H. Tveten, Oct 2019. Generalized to Bohr units.
 !!    Modified by Tor S. Haugland, May 2021. Added ghost atoms.
+!!    Modified by SDF, Jun 2021. Added atomic charges.
 !!
 !!    Reads the geometry from the output file and sets it in the
 !!    list of atoms.
@@ -1896,6 +1899,7 @@ contains
       logical, dimension(n_atoms), intent(out) :: is_ghost
 !
       real(dp), dimension(3, n_atoms), intent(out) :: positions ! x, y, z
+      integer, dimension(n_atoms), intent(out) :: charge
 !
       logical, intent(out) :: units_angstrom ! True if units are Ångström/unspecified, false if Bohr
 !
@@ -1909,12 +1913,15 @@ contains
       character(len=100) :: current_basis
       logical :: is_ghost_atom = .false.
 !
+      integer :: cursor
+!
       start_ = 1 ! Specifies the line of the first and required basis
 !
 !     Are units specified?
 !     Note that units can only be specified as the first line of the geometry
 !
       units_angstrom = .true. ! Default units are Angstrom
+      charge = 0 ! Default charge is zero
 !
       if (this%geometry(1)(1:6) == 'units:') then
 !
@@ -1968,7 +1975,24 @@ contains
             is_ghost(current_atom)   = is_ghost_atom
 !
             string = adjustl(string(3:200))
-            read(string(1:), *) positions(:, current_atom)
+!
+            if (is_substring_in_string(string, 'q')) then
+!
+                  cursor = set_cursor_to_substring(string, 'q')
+                  read(string(1 : cursor - 1), *) positions(:, current_atom)
+!
+                  string = adjustl(string(cursor+1:200))
+!
+                  if (string(1:1) .ne. '=') &
+                        call output%error_msg('in asignment of charge to atom in the geometry')
+!
+                  string = adjustl(string(2:200))
+                  read(string, *) charge(current_atom)
+            else
+!
+                  read(string(1:), *) positions(:, current_atom)
+!
+            endif
 !
          endif
 !
@@ -2021,6 +2045,7 @@ contains
 !
       current_molecule     = 0
       n_atoms_per_molecule = 0
+      cursor = 0
 !
 !     Loop through the MM atoms specified on input
 !
@@ -2036,19 +2061,23 @@ contains
 !
 !        Determine molecule index
 !
-         cursor = set_cursor_to_substring(string, 'mol')
+         if (is_substring_in_string(string, 'mol')) then
+            cursor = set_cursor_to_substring(string, 'mol')
+         else
+            call output%error_msg('could not find mol in MM geometry')
+         endif
+!
          string = adjustl(string(cursor+1:200))
 !
-         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         if (string(1:1) .ne. '=') call output%error_msg('in mol specification in MM geometry')
          string = adjustl(string(2:200))
-
+!
          cursor = first_instance_of_character(string, ']')
+!
          read(string(1:cursor-1),*) current_molecule
          string = adjustl(string(cursor+1:200))
 !
          n_atoms_per_molecule(current_molecule) = n_atoms_per_molecule(current_molecule) + 1
-!
-!        Determine position
 !
          cursor = first_instance_of_character(string, '[')
 !
@@ -2059,10 +2088,15 @@ contains
 !
 !        Determine chi
 !
-         cursor = set_cursor_to_substring(string, 'chi')
+         if (is_substring_in_string(string, 'chi')) then
+            cursor = set_cursor_to_substring(string, 'chi')
+         else
+            call output%error_msg('could not find chi in MM geometry')
+         endif
+!
          string = adjustl(string(cursor+1:200))
 !
-         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         if (string(1:1) .ne. '=') call output%error_msg('in chi specification in MM geometry')
          string = adjustl(string(2:200))
 !
          cursor = first_instance_of_character(string,',')
@@ -2071,10 +2105,15 @@ contains
 !
 !        Determine eta
 !
-         cursor = set_cursor_to_substring(string, 'eta')
+         if (is_substring_in_string(string, 'eta')) then
+            cursor = set_cursor_to_substring(string, 'eta')
+         else
+            call output%error_msg('could not find eta in MM geometry')
+         endif
+!
          string = trim(adjustl(string(cursor+1:200)))
 !
-         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         if (string(1:1) .ne. '=') call output%error_msg('in chi specification in MM geometry')
          string = adjustl(string(2:200))
 !
          cursor = first_instance_of_character(string,']')
@@ -2133,6 +2172,7 @@ contains
 !
       current_atom      = 0
       current_molecule  = 0
+      cursor            = 0
 !
       do record = 1, this%n_mm_atom_lines
 !
@@ -2146,10 +2186,15 @@ contains
 !
 !        Determine molecule index
 !
-         cursor = set_cursor_to_substring(string, 'mol')
+         if (is_substring_in_string(string, 'mol')) then
+            cursor = set_cursor_to_substring(string, 'mol')
+         else
+            call output%error_msg('could not find mol in MM geometry')
+         endif
+!
          string = adjustl(string(cursor+1:200))
 !
-         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         if (string(1:1) .ne. '=') call output%error_msg('in mol specification in MM geometry')
          string = adjustl(string(2:200))
 
          cursor = first_instance_of_character(string, ']')
@@ -2170,7 +2215,7 @@ contains
          cursor = first_instance_of_character(string, 'q')
          string = adjustl(string(cursor+1:200))
 !
-         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         if (string(1:1) .ne. '=') call output%error_msg('in charge specification in MM geometry')
          string = adjustl(string(2:200))
 !
          cursor = first_instance_of_character(string,']')

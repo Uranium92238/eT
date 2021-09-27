@@ -568,6 +568,7 @@ contains
                                        centers(I)%coordinates,    &
                                        centers(I)%basis,          &
                                        ao%basis_type_,            &
+                                       centers(I)%charge,         &
                                        centers(I)%is_ghost())
 !
       enddo
@@ -606,6 +607,7 @@ contains
                                        ao_template%centers(i)%coordinates,   &
                                        ao_template%centers(i)%basis,         &
                                        ao_template%basis_type_,              &
+                                       ao_template%centers(i)%charge,        &
                                        ao_template%centers(i)%is_ghost())
 !
       enddo
@@ -1838,6 +1840,7 @@ contains
       do I = 1, ao%n_centers
 !
          if (ao%centers(I)%is_ghost()) cycle
+         if (ao%centers(I)%number_ == ao%centers(I)%charge) cycle ! No electrons on this atom
 !
 !        Read the atomic density at the Ith center and set pointer
 !        to the relevant portion of the array
@@ -3446,6 +3449,7 @@ contains
 !
          if (all(unique_center_indices /= I)) cycle
          if (ao%centers(I)%is_ghost()) cycle ! No density to generate for ghost atom
+         if (ao%centers(I)%number_ == ao%centers(I)%charge) cycle ! No electrons on this atom
 !
          n_centers = n_centers + 1
          center_indices(n_centers) = I

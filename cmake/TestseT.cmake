@@ -70,6 +70,8 @@ add_eT_runtest(hf_dipole                                    "eT;short;hf;sad;dip
 add_eT_runtest(hf_quadrupole                                "eT;short;hf;sad;quadrupole")
 add_eT_runtest(hf_anion                                     "eT;short;hf;sad;charged")
 add_eT_runtest(hf_hydroxyl                                  "eT;short;hf;sad;charged")
+add_eT_runtest(hf_hydroxyl_charge_sad                       "eT;short;hf;sad;charged")
+add_eT_runtest(hf_oxonium_charge_sad                        "eT;short;hf;sad;charged")
 add_eT_runtest(restart_hf                                   "eT;short;hf;restart")
 #
 add_eT_runtest(hf_visualization                             "eT;short;hf;visualization")

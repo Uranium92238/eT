@@ -1,9 +1,12 @@
 
 # eT v1.4.0
+<<<<<<< HEAD
+
 ### Bugfixes
 - Fixed some errors in memory handling that can occur for large systems and/or on machines with limited memory resources. eT-program/eT!852
 
 ### Features
+>>>>>>> 5643c570cb3c61e7855f9ae1c504c90a1aeb13bc
 - Timers for Fock matrix construction for coupled cluster. eT-program/eT!849
 - `cc_propagation` and `complex_fft` file names are now starting with `output_name.*` and automatically copied to the output directory. eT-program/eT!854
 - Added option to plot CNTOs and NTOs. eT-program/eT!816
@@ -18,6 +21,7 @@
 - Default algorithm for ground state in CC3 changed to multimodel Newton. eT-program/eT!892
 - Full and multimodel Newton-Raphson algorithm now available for ground state multipliers. The default algorithm for CC3 is changed from DIIS to multimodel Newton. eT-program/eT!895
 - Jacobian transpose transformation for CCS with Cholesky vectors, scaling is N^4. eT-program/eT!897
+- SAD can now run with charges on atoms. eT-program/eT!832
 
 ### Optimization
 - Adding option for overlap screening to CC calculation of one electron integral. eT-program/eT!851

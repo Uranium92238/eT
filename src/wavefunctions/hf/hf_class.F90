@@ -543,8 +543,9 @@ contains
 !
          n_electrons = wf%get_n_electrons_in_density()
 !
-         if (nint(n_electrons) - wf%ao%charge .ne. wf%ao%get_n_electrons()) &
-            call output%error_msg('mismatch in number of electrons from initial guess')
+         if (nint(n_electrons) .ne. wf%ao%get_n_electrons()) &
+            call output%warning_msg('mismatch in number of electrons from initial guess. &
+                                     &It can be beneficial to assign charges to atoms.')
 !
       elseif (trim(guess) == 'core' .or. trim(guess) == 'CORE') then
 !
