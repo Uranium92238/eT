@@ -37,7 +37,7 @@ module parameters
    integer, parameter :: minor_version = 4
    integer, parameter :: patch_version = 0
 !
-   character(len=27), parameter :: version_name = "Eos (development)"
+   character(len=27), parameter :: version_name = "Eos"
 !
 !  Integers
 !

@@ -1,12 +1,9 @@
-
 # eT v1.4.0
-<<<<<<< HEAD
 
 ### Bugfixes
 - Fixed some errors in memory handling that can occur for large systems and/or on machines with limited memory resources. eT-program/eT!852
 
 ### Features
->>>>>>> 5643c570cb3c61e7855f9ae1c504c90a1aeb13bc
 - Timers for Fock matrix construction for coupled cluster. eT-program/eT!849
 - `cc_propagation` and `complex_fft` file names are now starting with `output_name.*` and automatically copied to the output directory. eT-program/eT!854
 - Added option to plot CNTOs and NTOs. eT-program/eT!816
