@@ -402,22 +402,22 @@ def complexify_line(line, parameter_list, continuation_mem_batch_setup):
 
         if n_substitutions > 0:
             continuation_mem_batch_setup = False
-            return line
+            return line, continuation_mem_batch_setup
 
         (line, n_substitutions) = subn(r"\)\s*\n", ", element_size=2*dp)\n", line)
 
         if n_substitutions > 0:
             continuation_mem_batch_setup = False
-            return line
+            return line, continuation_mem_batch_setup
 
-        return line
+        return line, continuation_mem_batch_setup
 
     # Change complexifiable submodules to complex version
     for module in complexifiable_modules:
         if module in line:
             line = sub(r"\b" + module + r"\b", module.rpartition("_r")[0] + "_c", line)
 
-    return line
+    return line, continuation_mem_batch_setup
 
 
 def get_parameter_list(source_directory):
@@ -569,7 +569,7 @@ def autogenerate_complex_files(source_directory, parameter_list):
                         # Complexify variables, procedures and general complexification
                         line = complexify_from_set(line, variable_set)
                         line = complexify_from_set(line, procedure_set)
-                        line = complexify_line(
+                        line, continuation_mem_batch_setup = complexify_line(
                             line, parameter_list, continuation_mem_batch_setup
                         )
 
@@ -608,7 +608,7 @@ def complexify_modules(src_dir, parameter_list):
                 for line in lines:
 
                     if len(line.strip()) > 1:
-                        line = complexify_line(
+                        line, continuation_mem_batch_setup = complexify_line(
                             line, parameter_list, continuation_mem_batch_setup
                         )
                     c_file.write(line)
