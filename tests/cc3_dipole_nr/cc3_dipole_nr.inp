@@ -1,0 +1,55 @@
+system
+   name: H2O He
+end system
+
+do
+  ground state
+  mean value
+end do
+
+cc mean value
+   dipole
+end cc mean value
+
+memory
+   available: 8
+end memory
+
+method
+   hf
+   cc3
+end method
+
+! Solver settings:
+
+solver scf
+   algorithm: scf-diis
+   gradient threshold: 1.0d-11
+   energy threshold: 1.0d-11
+end solver scf
+
+solver cc gs
+   omega threshold: 1.0d-11
+   energy threshold: 1.0d-11
+end solver cc gs
+
+solver cc multipliers
+   multimodel newton: off
+   algorithm: newton-raphson
+   threshold: 1.0d-11
+end solver cc multipliers
+
+solver cholesky
+   threshold: 1.0d-11
+end solver cholesky
+
+! Geometry:
+
+geometry
+basis: cc-pVDZ
+ H          0.86681        0.60144        5.00000
+ H         -0.86681        0.60144        5.00000
+ O          0.00000       -0.07579        5.00000
+ He         0.10000       -0.02000        7.53000
+end geometry
+

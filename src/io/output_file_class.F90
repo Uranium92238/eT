@@ -60,6 +60,8 @@ module output_file_class
       procedure, public :: mute   => mute_output_file
       procedure, public :: unmute => unmute_output_file
 !
+      procedure, public :: initialize => initialize_output_file
+!
       procedure, private :: should_print => should_print_output_file
 !
    end type output_file
@@ -87,6 +89,22 @@ contains
 !
       character(len=*), intent(in) :: name_
 !
+      call the_file%initialize(name_)
+!
+   end function new_output_file
+!
+!
+   subroutine initialize_output_file(the_file, name_)
+!!
+!!    Initialize
+!!    Written by Sarai D. Folkestad, Sep 2021
+!!
+      implicit none
+!
+      class(output_file), intent(inout) :: the_file
+!
+      character(len=*), intent(in) :: name_
+!
       the_file%name_ = name_
 !
       the_file%access_ = 'sequential'
@@ -102,7 +120,7 @@ contains
 !
       the_file%warning_counter = 0
 !
-   end function new_output_file
+   end subroutine initialize_output_file
 !
 !
    subroutine set_global_print_level_output_file(the_file, print_level)

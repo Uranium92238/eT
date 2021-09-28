@@ -23,20 +23,20 @@ module record_storer_class
 !!    Record storer class module
 !!    Written by Eirik F. Kjønstad, 2020
 !!
-!!    Object for storing a set of records (real, double precision). Provides 
-!!    a single interface for records that are either stored on file or in memory, 
+!!    Object for storing a set of records (real, double precision). Provides
+!!    a single interface for records that are either stored on file or in memory,
 !!    depending on user settings or the memory available to the calculation.
 !!
 !
-   use kinds 
+   use kinds
    use range_class
-   use memory_manager_class, only: mem   
-   use global_out, only: output  
+   use memory_manager_class, only: mem
+   use global_out, only: output
    use batching_index_class, only: batching_index
    use array_list_class, only: array_list
    use direct_stream_file_class, only: direct_stream_file
 !
-   implicit none 
+   implicit none
 !
    type :: record_storer
 !
@@ -46,10 +46,10 @@ module record_storer_class
 !
 !     Maximum number of records & dimensionality of each record
 !
-      integer, private :: n_records 
+      integer, private :: n_records
       integer, private :: record_dim
 !
-!     Linked list of arrays for storing records in memory 
+!     Linked list of arrays for storing records in memory
 !
       type(array_list), allocatable, private :: linked_arrays
 !
@@ -59,15 +59,15 @@ module record_storer_class
 !
 !     Are the records stored in memory?
 !
-      logical, private :: in_memory 
+      logical, private :: in_memory
 !
 !     File for storing records
 !
       type(direct_stream_file), allocatable, private :: file_
 !
-!     Storing ranges for each of the blocks loaded into memory 
+!     Storing ranges for each of the blocks loaded into memory
 !
-      integer, private :: n_blocks 
+      integer, private :: n_blocks
       type(range_), dimension(:), allocatable, private :: blocks
 !
    contains
@@ -75,7 +75,7 @@ module record_storer_class
 !     Three main routines to access records in storer
 !
 !     - Prepare to hold a set of records in memory
-!     - Load sets a pointer to array where the records are stored 
+!     - Load sets a pointer to array where the records are stored
 !     - Free up space allocated with prepare
 !
       procedure, public :: prepare_records &
@@ -91,17 +91,17 @@ module record_storer_class
 !     Initializations and finalizations
 !
       procedure, public :: initialize &
-                        => initialize_record_storer 
+                        => initialize_record_storer
 !
       procedure, public :: finalize &
-                        => finalize_record_storer 
+                        => finalize_record_storer
 !
-!     # elements that will be allocated on load of one record 
+!     # elements that will be allocated on load of one record
 !
       procedure, public :: required_to_load_record &
                         => required_to_load_record_record_storer
 !
-!     Set/get records by copying out/into storer 
+!     Set/get records by copying out/into storer
 !
       generic, public :: copy_record_in &
                       => copy_record_in_single_record, &
@@ -111,13 +111,13 @@ module record_storer_class
                       => copy_record_out_single_record, &
                          copy_record_out_range
 !
-!     Store changes made to records temporarily held in memory 
+!     Store changes made to records temporarily held in memory
 !
       procedure, public :: store &
-                        => store_record_storer 
+                        => store_record_storer
 !
       procedure, private :: update_loaded_blocks ! If file storage, some records may be loaded into memory
-                                                 ! If so, this routine updates these loaded blocks when the 
+                                                 ! If so, this routine updates these loaded blocks when the
                                                  ! records are changed
 !
       procedure, private :: load_records
@@ -152,13 +152,13 @@ contains
 !!
 !!    name_:            Name of storer.
 !!
-!!    record_dim:       The length of each record (i.e. the dimensionality of the array 
+!!    record_dim:       The length of each record (i.e. the dimensionality of the array
 !!                      you want to store in each record)
 !!
-!!    n_records:        The number of records (you can store arrays in 
+!!    n_records:        The number of records (you can store arrays in
 !!                      records 1,2,3,..., n_records)
 !!
-!!    records_in_mem:   Store records in memory if true. 
+!!    records_in_mem:   Store records in memory if true.
 !!                      Stores records on direct stream file if false.
 !!
       implicit none
@@ -168,21 +168,21 @@ contains
       character(len=*), intent(in) :: name_
 !
       integer, intent(in) :: record_dim
-      integer, intent(in) :: n_records 
+      integer, intent(in) :: n_records
       logical, intent(in) :: records_in_mem
 !
       storer%name_       = trim(name_)
-      storer%record_dim  = record_dim 
-      storer%n_records   = n_records 
+      storer%record_dim  = record_dim
+      storer%n_records   = n_records
 !
       storer%in_memory = records_in_mem
       storer%n_blocks = 0
 !
-      if (storer%in_memory) then 
+      if (storer%in_memory) then
 !
          call output%printf('n', 'Storage ('// trim(storer%name_)//'): memory', fs='(t6,a)')
 !
-      else 
+      else
 !
          call output%printf('n', 'Storage ('//trim(storer%name_)//'): file', fs='(t6,a)')
 !
@@ -193,26 +193,26 @@ contains
 !
    function required_to_load_record_record_storer(storer) result(required)
 !!
-!!    Required to load record 
-!!    Written by Eirik F. Kjønstad, Mar 2020 
+!!    Required to load record
+!!    Written by Eirik F. Kjønstad, Mar 2020
 !!
-!!    Returns the number of elements that will be allocated 
-!!    if a single record is loaded. 
+!!    Returns the number of elements that will be allocated
+!!    if a single record is loaded.
 !!
-!!    Equals the record dimension if records are read from file into memory. 
+!!    Equals the record dimension if records are read from file into memory.
 !!    Equals zero if records are already in memory.
 !!
-      implicit none 
+      implicit none
 !
-      class(record_storer) :: storer 
+      class(record_storer) :: storer
 !
       integer :: required
 !
-      if (storer%in_memory) then 
+      if (storer%in_memory) then
 !
-         required = 0 
+         required = 0
 !
-      else 
+      else
 !
          required = storer%record_dim
 !
@@ -223,56 +223,56 @@ contains
 !
    subroutine prepare_records_record_storer(storer, batches)
 !!
-!!    Prepare records 
-!!    Written by Eirik F. Kjønstad, 2020 
+!!    Prepare records
+!!    Written by Eirik F. Kjønstad, 2020
 !!
 !!    Makes preparations needed to load records for one or more
 !!    batching indices. No preparations if in memory. Allocates arrays
 !!    for each batching index if records are on file.
 !!
-!!    batches: Array of batching indices. The number of batching indices 
-!!             you need is equal to the number of records you need to hold 
-!!             simultaneously. E.g., if you have a loop over i and j and 
-!!             possibly need to hold different sets of records for i and j. 
+!!    batches: Array of batching indices. The number of batching indices
+!!             you need is equal to the number of records you need to hold
+!!             simultaneously. E.g., if you have a loop over i and j and
+!!             possibly need to hold different sets of records for i and j.
 !!
-!!             This is to ensure that a file storer can temporarily load 
+!!             This is to ensure that a file storer can temporarily load
 !!             i and j records independently into memory.
 !!
 !!    The routine allocates enough memory to hold any batch, i.e.
-!!    it allocates the maximum batch length for the index. The allocated 
+!!    it allocates the maximum batch length for the index. The allocated
 !!    number of elements is therefore
 !!
-!!       # elements allocated = record_dim * ( batches(1)%max_length 
+!!       # elements allocated = record_dim * ( batches(1)%max_length
 !!                                           + batches(2)%max_length
 !!                                           + ... )
-!!    
-      implicit none 
+!!
+      implicit none
 !
-      class(record_storer) :: storer 
+      class(record_storer) :: storer
 !
       type(batching_index), dimension(:) :: batches
 !
       integer :: k
 !
-      if (.not. storer%in_memory) then 
+      if (.not. storer%in_memory) then
 !
 !        Open file with read-write access
 !
          call storer%file_%open_('readwrite')
 !
-!        Set up an array for each batching index 
-!        by adding arrays to the linked list 
+!        Set up an array for each batching index
+!        by adding arrays to the linked list
 !
-!        Records will be read into these arrays 
+!        Records will be read into these arrays
 !
          storer%n_blocks = size(batches)
 !
          do k = 1, storer%n_blocks
 !
            call storer%linked_arrays%push_back(storer%record_dim, &
-                                               batches(k)%max_length) 
+                                               batches(k)%max_length)
 !
-         enddo 
+         enddo
 !
 !        Allocate blocks for holding range information
 !
@@ -285,21 +285,21 @@ contains
 !
    subroutine free_records_record_storer(storer)
 !!
-!!    Free records 
-!!    Written by Eirik F. Kjønstad, 2020 
+!!    Free records
+!!    Written by Eirik F. Kjønstad, 2020
 !!
-!!    Frees memory temporarily used to keep records. 
+!!    Frees memory temporarily used to keep records.
 !!
-!!    No action if in memory. Deallocates arrays allocated in 
+!!    No action if in memory. Deallocates arrays allocated in
 !!    the prepare_records routine if on file.
 !!
-      implicit none 
+      implicit none
 !
-      class(record_storer) :: storer 
+      class(record_storer) :: storer
 !
-      if (.not. storer%in_memory) then 
+      if (.not. storer%in_memory) then
 !
-!        Deallocate all arrays temporarily allocated in the linked list 
+!        Deallocate all arrays temporarily allocated in the linked list
 !
          call storer%linked_arrays%finalize()
 !
@@ -309,33 +309,33 @@ contains
 !
          storer%n_blocks = 0
 !
-!        Close file 
+!        Close file
 !
          call storer%file_%close_()
 !
       endif
 !
    end subroutine free_records_record_storer
-! 
+!
 !
    subroutine copy_record_out_single_record(storer, x, n)
 !!
-!!    Copy record out 
-!!    Written by Eirik F. Kjønstad, 2020 
+!!    Copy record out
+!!    Written by Eirik F. Kjønstad, 2020
 !!
 !!    Copies the nth record into x.
 !!
-      implicit none 
+      implicit none
 !
-      class(record_storer) :: storer 
+      class(record_storer) :: storer
 !
-      real(dp), dimension(storer%record_dim), intent(out) :: x 
+      real(dp), dimension(storer%record_dim), intent(out) :: x
 !
       integer, intent(in) :: n
 !
-      if (.not. storer%in_memory) then 
+      if (.not. storer%in_memory) then
 !
-!        If record is on file, read record from file 
+!        If record is on file, read record from file
 !
          call storer%file_%open_('read')
 !
@@ -343,9 +343,9 @@ contains
 !
          call storer%file_%close_()
 !
-      else 
+      else
 !
-!        If records are in memory, copy the record 
+!        If records are in memory, copy the record
 !
          call dcopy(storer%record_dim,    &
                     storer%array_p(:, n), &
@@ -353,7 +353,7 @@ contains
                     x,                    &
                     1)
 !
-      endif       
+      endif
 !
    end subroutine copy_record_out_single_record
 !
@@ -361,21 +361,21 @@ contains
    subroutine copy_record_out_range(storer, x, a_range)
 !!
 !!    Copy record out
-!!    Written by Eirik F. Kjønstad, 2020 
+!!    Written by Eirik F. Kjønstad, 2020
 !!
 !!    Copies an range of records into x.
 !!
-      implicit none 
+      implicit none
 !
-      class(record_storer) :: storer 
+      class(record_storer) :: storer
 !
       class(range_), intent(in) :: a_range
 !
-      real(dp), dimension(1), intent(out) :: x 
+      real(dp), dimension(1), intent(out) :: x
 !
-      if (.not. storer%in_memory) then 
+      if (.not. storer%in_memory) then
 !
-!        If on file, read from file 
+!        If on file, read from file
 !
          call storer%file_%open_('read')
 !
@@ -383,62 +383,62 @@ contains
 !
          call storer%file_%close_()
 !
-      else 
+      else
 !
-!        If records are in memory, copy the record 
+!        If records are in memory, copy the record
 !
          call dcopy(storer%record_dim*a_range%length, &
                     storer%array_p(:, a_range%first), &
                     1, x, 1)
 !
-      endif       
+      endif
 !
    end subroutine copy_record_out_range
-!  
+!
 !
    subroutine load_records(storer, x, first, last, block_)
 !!
-!!    Load records 
+!!    Load records
 !!    Written by Eirik F. Kjønstad, 2020
 !!
 !!    Specific procedure for the generic "load".
 !!
-!!    x:         pointer to load records into  
+!!    x:         pointer to load records into
 !!
 !!    first:     first record to load into x
 !!    last:      last record to load into x
 !!
-!!    block_:    (optional, integer) x is pointed to this 
-!!               block in memory. Default is 1. 
+!!    block_:    (optional, integer) x is pointed to this
+!!               block in memory. Default is 1.
 !!
-!!               The blocks are ordered in the same order as "batches" in the 
-!!               prepare_records routine. E.g., if [batch_i, batch_j] was sent to 
-!!               prepare_records, then the i records should be loaded with block=1  
-!!               and the j records with block=2. 
+!!               The blocks are ordered in the same order as "batches" in the
+!!               prepare_records routine. E.g., if [batch_i, batch_j] was sent to
+!!               prepare_records, then the i records should be loaded with block=1
+!!               and the j records with block=2.
 !!
-!!               When loading records from file, we will read from file only if the 
-!!               requested block is not already loaded into an earlier block. E.g.,  
-!!               for a loop over i and j (corresponding to blocks 1 and 2), then we 
-!!               check whether j records are already loaded into the i block. If they 
-!!               are, then x is set to point to the i block. Similarly, for i, j, and  
-!!               k (blocks 1, 2, and 3), j can point to i blocks and k can point to 
-!!               i and j blocks. This is done to avoid incorrectly overwriting 
+!!               When loading records from file, we will read from file only if the
+!!               requested block is not already loaded into an earlier block. E.g.,
+!!               for a loop over i and j (corresponding to blocks 1 and 2), then we
+!!               check whether j records are already loaded into the i block. If they
+!!               are, then x is set to point to the i block. Similarly, for i, j, and
+!!               k (blocks 1, 2, and 3), j can point to i blocks and k can point to
+!!               i and j blocks. This is done to avoid incorrectly overwriting
 !!               loaded pointers.
 !!
-!!               If the records are in memory, the value of "block" will not 
+!!               If the records are in memory, the value of "block" will not
 !!               be used. In this case x is just set to the specified range.
 !!
-      implicit none 
+      implicit none
 !
       class(record_storer) :: storer
 !
-      integer, intent(in) :: first, last 
+      integer, intent(in) :: first, last
 !
-      real(dp), dimension(:,:), pointer, contiguous :: x 
+      real(dp), dimension(:,:), pointer, contiguous :: x
 !
       integer, intent(in), optional :: block_
 !
-      integer :: block_local, block_length, length 
+      integer :: block_local, block_length, length
 !
       integer :: stored_in_block, k, first_offset, last_offset
 !
@@ -449,56 +449,56 @@ contains
 !
       length = last - first + 1
 !
-      if (length .lt. 0) then 
+      if (length .lt. 0) then
 !
          call output%error_msg('Tried to load invalid range [(i0),(i0)]', ints=[first, last])
 !
       endif
 !
-      if (.not. storer%in_memory) then 
+      if (.not. storer%in_memory) then
 !
-!        Check if the records are already stored in another block 
+!        Check if the records are already stored in another block
 !
-         stored_in_block = -1 
-! 
-         do k = 1, storer%n_blocks 
-! 
+         stored_in_block = -1
+!
+         do k = 1, storer%n_blocks
+!
             if (storer%blocks(k)%contains_(range_(first, last))) stored_in_block = k
 !
          enddo
 !
-         if (stored_in_block .ne. -1 .and. stored_in_block .le. block_local) then 
-! 
-!           If records are already loaded into an earlier block, 
-!           we set the pointer to that block 
-! 
+         if (stored_in_block .ne. -1 .and. stored_in_block .le. block_local) then
+!
+!           If records are already loaded into an earlier block,
+!           we set the pointer to that block
+!
             first_offset = first - storer%blocks(stored_in_block)%first + 1
             last_offset  = last  - storer%blocks(stored_in_block)%first + 1
 !
             call storer%linked_arrays%get_array(x, stored_in_block, first_offset, last_offset)
-! 
-         else 
 !
-!           Otherwise, we load into the specified block 
+         else
+!
+!           Otherwise, we load into the specified block
 !           Get the pointer to the block and read records into it
 !
             call storer%linked_arrays%get_array(x, block_local, n_columns=block_length)
 !
 !           Sanity check: does the specified length exceed the block length?
 !
-            if (length .gt. block_length) then 
+            if (length .gt. block_length) then
 !
                call output%error_msg('Tried to read (i0) elements into block nr. (i0), &
                                      &but that block can only hold (i0) elements.', &
                                      ints=[length, block_local, block_length])
 !
-            endif 
+            endif
 !
-!           Read records 
+!           Read records
 !
             call storer%file_%read_(x, first, last)
 !
-!           Store the block range information in the storer 
+!           Store the block range information in the storer
 !
             storer%blocks(block_local) = range_(first, last)
 !
@@ -506,44 +506,44 @@ contains
 !
       else
 !
-!        If records are in memory, set x to the requested subset of records 
+!        If records are in memory, set x to the requested subset of records
 !
          x => storer%array_p(:, first : last)
 !
-      endif 
+      endif
 !
    end subroutine load_records
 !
 !
    subroutine load_range(storer, x, a_range, block_)
 !!
-!!    Load range 
+!!    Load range
 !!    Written by Eirik F. Kjønstad, 2020
 !!
 !!    Specific procedure for the generic "load".
 !!
-!!    x:       pointer to load records into  
+!!    x:       pointer to load records into
 !!
 !!    a_range: range of records to load into x
 !!
-!!    block_:  (optional, integer) x is pointed to this 
-!!             block in memory. Default is 1. 
+!!    block_:  (optional, integer) x is pointed to this
+!!             block in memory. Default is 1.
 !!
-!!             The blocks are ordered in the same order as "batches" in the 
-!!             prepare_records routine. E.g., if [batch_i, batch_j] was sent to 
-!!             prepare_records, then the i records should be loaded with block=1  
+!!             The blocks are ordered in the same order as "batches" in the
+!!             prepare_records routine. E.g., if [batch_i, batch_j] was sent to
+!!             prepare_records, then the i records should be loaded with block=1
 !!             and the j records with block=2.
 !!
-!!             If the records are in memory, the value of "block" will not 
+!!             If the records are in memory, the value of "block" will not
 !!             be used. In this case x is just set to the specified range.
 !!
-      implicit none 
+      implicit none
 !
       class(record_storer) :: storer
 !
       class(range_), intent(in) :: a_range
 !
-      real(dp), dimension(:,:), pointer, contiguous :: x 
+      real(dp), dimension(:,:), pointer, contiguous :: x
 !
       integer, intent(in), optional :: block_
 !
@@ -555,40 +555,40 @@ contains
    subroutine store_record_storer(storer, x, a_range)
 !!
 !!    Store
-!!    Written by Eirik F. Kjønstad, 2020 
+!!    Written by Eirik F. Kjønstad, 2020
 !!
-!!    Stores changes made to records temporarily held in memory. 
+!!    Stores changes made to records temporarily held in memory.
 !!
-!!    x:       pointer to records 
-!!    a_range: range of records associated with x 
+!!    x:       pointer to records
+!!    a_range: range of records associated with x
 !!
-!!    If records are kept in memory, the changes made to  
-!!    the loaded pointer is permanent and this routine does not 
+!!    If records are kept in memory, the changes made to
+!!    the loaded pointer is permanent and this routine does not
 !!    have any effect.
 !!
-!!    If records are kept on file, the changes made to 
-!!    the loaded pointer is lost when a new set of records 
+!!    If records are kept on file, the changes made to
+!!    the loaded pointer is lost when a new set of records
 !!    is loaded. This routine stores the records to file
-!!    so that they are not lost when a new set of records 
+!!    so that they are not lost when a new set of records
 !!    are loaded into memory.
 !!
-      implicit none 
+      implicit none
 !
-      class(record_storer) :: storer 
+      class(record_storer) :: storer
 !
       class(range_), intent(in) :: a_range
 !
-      real(dp), dimension(:,:), pointer, contiguous :: x 
+      real(dp), dimension(:,:), pointer, contiguous :: x
 !
-      if (.not. storer%in_memory) then 
+      if (.not. storer%in_memory) then
 !
-!        Write to file 
+!        Write to file
 !
          call storer%file_%write_(x,                  &
                                   a_range%first,      &
                                   a_range%get_last())
 !
-!        Make sure blocks in memory are updated 
+!        Make sure blocks in memory are updated
 !
          call storer%update_loaded_blocks(x, a_range%first, a_range%get_last())
 !
@@ -600,36 +600,36 @@ contains
 !
    subroutine store_single_record(storer, x, n)
 !!
-!!    Store single record 
-!!    Written by Eirik F. Kjønstad, 2020 
+!!    Store single record
+!!    Written by Eirik F. Kjønstad, 2020
 !!
-!!    Stores changes made to a given record. 
+!!    Stores changes made to a given record.
 !!
-!!    If records are kept in memory, the changes made to  
-!!    the loaded pointer is permanent and this routine does not 
+!!    If records are kept in memory, the changes made to
+!!    the loaded pointer is permanent and this routine does not
 !!    have any effect.
 !!
-!!    If records are kept on file, the changes made to 
-!!    the loaded pointer is lost when a new set of records 
+!!    If records are kept on file, the changes made to
+!!    the loaded pointer is lost when a new set of records
 !!    is loaded. This routine stores the records to file
-!!    so that they are not lost when a new set of records 
+!!    so that they are not lost when a new set of records
 !!    are loaded into memory.
 !!
-      implicit none 
+      implicit none
 !
-      class(record_storer) :: storer 
+      class(record_storer) :: storer
 !
-      integer, intent(in) :: n 
+      integer, intent(in) :: n
 !
-      real(dp), dimension(:,:) :: x 
+      real(dp), dimension(:,:) :: x
 !
-      if (.not. storer%in_memory) then 
+      if (.not. storer%in_memory) then
 !
-!        Write record to file 
+!        Write record to file
 !
          call storer%file_%write_(x, n, n)
 !
-!        Make sure blocks in memory are updated 
+!        Make sure blocks in memory are updated
 !
          call storer%update_loaded_blocks(x, n, n)
 !
@@ -640,22 +640,22 @@ contains
 !
    subroutine copy_record_in_range(storer, x, a_range)
 !!
-!!    Set range 
+!!    Set range
 !!    Written by Eirik F. Kjønstad, 2020
 !!
 !!    Saves array x in the storer by writing to file or copying the array.
 !!
-      implicit none 
+      implicit none
 !
       class(record_storer) :: storer
 !
       class(range_), intent(in) :: a_range
 !
-      real(dp), dimension(1,1), intent(in) :: x 
+      real(dp), dimension(1,1), intent(in) :: x
 !
-      if (.not. storer%in_memory) then 
+      if (.not. storer%in_memory) then
 !
-!        Save records to file 
+!        Save records to file
 !
          call storer%file_%open_('write')
 !
@@ -667,9 +667,9 @@ contains
 !
          call storer%update_loaded_blocks(x, a_range%first, a_range%get_last())
 !
-      else 
+      else
 !
-!        If records are in memory, copy into memory 
+!        If records are in memory, copy into memory
 !
          call dcopy(storer%record_dim*a_range%length,                      &
                     x,                                                     &
@@ -677,19 +677,19 @@ contains
                     storer%array_p(:, a_range%first : a_range%get_last()), &
                     1)
 !
-      endif 
+      endif
 !
    end subroutine copy_record_in_range
 !
 !
    subroutine copy_record_in_single_record(storer, x, n)
 !!
-!!    Set copy single record 
+!!    Set copy single record
 !!    Written by Eirik F. Kjønstad, 2020
 !!
 !!    Saves array x in the storer by writing to file or copying the array.
 !!
-      implicit none 
+      implicit none
 !
       class(record_storer) :: storer
 !
@@ -697,9 +697,9 @@ contains
 !
       real(dp), dimension(storer%record_dim), intent(in) :: x
 !
-      if (.not. storer%in_memory) then 
+      if (.not. storer%in_memory) then
 !
-!        If records are on file, save records on file 
+!        If records are on file, save records on file
 !
          call storer%file_%open_('write')
 !
@@ -707,13 +707,13 @@ contains
 !
          call storer%file_%close_()
 !
-!        If record is loaded in memory, overwrite record 
+!        If record is loaded in memory, overwrite record
 !
          call storer%update_loaded_blocks(x, n, n)
 !
-      else 
+      else
 !
-!        If records are in memory, copy into memory 
+!        If records are in memory, copy into memory
 !
          call dcopy(storer%record_dim,       &
                     x,                       &
@@ -721,41 +721,41 @@ contains
                     storer%array_p(:, n),    &
                     1)
 !
-      endif 
+      endif
 !
    end subroutine copy_record_in_single_record
 !
 !
    subroutine update_loaded_blocks(storer, x, first, last)
 !!
-!!    Update loaded blocks  
+!!    Update loaded blocks
 !!    Written by Eirik F. Kjønstad, Apr 2020
 !!
 !!    Copies x into loaded blocks corresponding to the range given by first and last.
 !!
 !!    Assumes that storer%in_memory is false and should only be called in this case.
 !!
-      implicit none 
+      implicit none
 !
-      class(record_storer) :: storer 
+      class(record_storer) :: storer
 !
-      integer, intent(in) :: first, last 
+      integer, intent(in) :: first, last
 !
-      real(dp), dimension(storer%record_dim, last - first + 1), intent(in) :: x 
+      real(dp), dimension(storer%record_dim, last - first + 1), intent(in) :: x
 !
       real(dp), dimension(:,:), pointer, contiguous :: array_p
 !
-      integer :: k, n, length, first_offset, last_offset 
+      integer :: k, n, length, first_offset, last_offset
 !
       do k = 1, storer%n_blocks
 !
-!        Skip to next block if [first, last] has no elements in common with the block 
+!        Skip to next block if [first, last] has no elements in common with the block
 !
          if (.not. storer%blocks(k)%contains_(range_(first, last))) cycle
 !
-         if (storer%blocks(k)%contains_(range_(first, last))) then 
+         if (storer%blocks(k)%contains_(range_(first, last))) then
 !
-!           range is subset of the kth block: copy entire block 
+!           range is subset of the kth block: copy entire block
 !
             length = last - first + 1
 !
@@ -768,17 +768,17 @@ contains
                        x,                          &
                        1,                          &
                        array_p,                    &
-                       1)      
+                       1)
 !
-         else 
+         else
 !
 !           range is not subset: copy elements one-by-one
 !
             call storer%linked_arrays%get_array(array_p, k)
 !
-            do n = first, last 
+            do n = first, last
 !
-               if (storer%blocks(k)%contains_(n)) then 
+               if (storer%blocks(k)%contains_(n)) then
 !
                   call dcopy(storer%record_dim,                            &
                              x(:, n - first + 1),                          &
@@ -799,25 +799,25 @@ contains
 !
    subroutine initialize_record_storer(storer)
 !!
-!!    Initialize  
-!!    Written by Eirik F. Kjønstad, Nov 2019 
+!!    Initialize
+!!    Written by Eirik F. Kjønstad, Nov 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(record_storer) :: storer 
+      class(record_storer) :: storer
 !
       call output%printf('debug', 'Doing preparations for storer (a0)', &
                          chars=[storer%name_], fs='(/t3,a)')
 !
-!     Allocate file and linked-list object for storing records in memory 
+!     Allocate file and linked-list object for storing records in memory
 !
       storer%file_         = direct_stream_file(storer%name_, storer%record_dim)
-      storer%linked_arrays = array_list() 
+      storer%linked_arrays = array_list()
 !
-      if (storer%in_memory) then 
+      if (storer%in_memory) then
 !
 !        If in memory, allocate a single array in the linked list
-!        to hold all records, and set pointer to this array 
+!        to hold all records, and set pointer to this array
 !
          call storer%linked_arrays%push_back(storer%record_dim, &
                                              storer%n_records)
@@ -831,21 +831,25 @@ contains
 !
    subroutine finalize_record_storer(storer)
 !!
-!!    Finalize  
-!!    Written by Eirik F. Kjønstad, Nov 2019 
+!!    Finalize
+!!    Written by Eirik F. Kjønstad, Nov 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(record_storer) :: storer 
+      class(record_storer) :: storer
 !
       call output%printf('debug', 'Doing finalizations for storer (a0)', &
                          chars=[storer%name_], fs='(/t3,a)')
 !
-      if (storer%in_memory) then 
+      if (storer%in_memory) then
 !
-            call storer%linked_arrays%finalize()
+         call storer%linked_arrays%finalize()
 !
-      endif 
+      else
+!
+         call storer%file_%delete_()
+!
+      endif
 !
    end subroutine finalize_record_storer
 !

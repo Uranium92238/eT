@@ -101,8 +101,8 @@ module atomic_center_class
       procedure :: get_molden_order &
                 => get_molden_order_atomic_center
 !
-      procedure :: get_cartesian_normalization_factors &
-                => get_cartesian_normalization_factors_atomic_center
+      procedure :: get_ao_normalization_factors &
+                => get_ao_normalization_factors_atomic_center
 !
       procedure :: get_identifier_string &
                 => get_identifier_string_atomic_center
@@ -136,6 +136,7 @@ contains
                               coordinates,      &
                               basis,            &
                               basis_type_,      &
+                              charge,           &
                               is_ghost) result(center)
 !!
 !!    New atomic center
@@ -145,7 +146,7 @@ contains
 !
       type(atomic_center) :: center
 !
-      integer, intent(in) :: libint_number, input_number
+      integer, intent(in) :: libint_number, input_number, charge
 !
       character(len=2), intent(in) :: symbol
 !
@@ -162,16 +163,18 @@ contains
       center%basis         = basis
       center%coordinates   = coordinates
       center%input_number  = input_number
+      center%charge        = charge
 !
       call center%symbol_to_number()
 !
-      center%charge = 0
       center%nuclear_charge = center%number_
-!
       if (is_ghost) center%nuclear_charge = 0
 !
       if (center%number_ .eq. -1) &
          call output%error_msg('illegal atomic symbol, check the eT.inp file ')
+!
+      if (center%charge .gt. center%number_) &
+            call output%error_msg('Positive charge exceeds atomic number')
 !
       call center%rename_core_valence_dunning_sets() ! Otherwise Libint looks for 'augmentation'
                                                      ! files that don't exist for these basis sets
@@ -322,9 +325,10 @@ contains
 !
       do j = 1, center%n_shells
 !
-         center%shells(j) = shell(first=int(first_ao_in_shell(j)),  &
-                                  length=int(n_aos_in_shell(j)),    &
-                                  number_=int(shell_numbers(j)))
+         center%shells(j) = shell(first=int(first_ao_in_shell(j)), &
+                                  length=int(n_aos_in_shell(j)),   &
+                                  number_=int(shell_numbers(j)),   &
+                                  cartesian=center%cartesian)
 !
          center%n_ao = center%n_ao + center%shells(j)%length
 !
@@ -411,7 +415,10 @@ contains
          call output%error_msg("Atom multiplicity not supported for Z > (i0)", &
                                 ints=[size(atomic_multiplicities)])
 !
-      multiplicity = atomic_multiplicities(center%number_)
+      if (center%number_ == center%charge) &
+         call output%error_msg('Cannot assign multiplicity without electrons')
+!
+      multiplicity = atomic_multiplicities(center%number_ - center%charge)
 !
    end function get_ground_state_multiplicity_atomic_center
 !
@@ -578,7 +585,7 @@ contains
 !
 !        Sanity check -> does shell have the correct angular momentum
 !
-         if (angular_momentum_from_symbol(ang_mom) .ne. center%shells(sh)%l) &
+         if (angular_momentum_from_symbol(ang_mom) .ne. center%shells(sh)%get_angular_momentum()) &
             call output%error_msg('Mismatch in angular momentum in read_shell_basis_info')
 !
 !        Set number of primitives and initialize exponents and coefficient array
@@ -812,7 +819,7 @@ contains
       do s = 1, center%n_shells
 !
          map(offset : offset+center%shells(s)%length-1) = &
-            center%shells(s)%get_molden_order(center%cartesian)
+            center%shells(s)%get_molden_order()
 !
          offset = offset + center%shells(s)%length
 !
@@ -821,9 +828,9 @@ contains
    end function get_molden_order_atomic_center
 !
 !
-   function get_cartesian_normalization_factors_atomic_center(center) result(factors)
+   function get_ao_normalization_factors_atomic_center(center) result(factors)
 !!
-!!    Get cartesian normalization factors
+!!    Get AO normalization factors
 !!    Written by Alexander C. Paul, May 2021
 !!
       implicit none
@@ -839,13 +846,13 @@ contains
       do s = 1, center%n_shells
 !
          factors(offset : offset+center%shells(s)%length-1) = &
-            center%shells(s)%get_cartesian_normalization_factor()
+            center%shells(s)%get_normalization_factor()
 !
          offset = offset + center%shells(s)%length
 !
       end do
 !
-   end function get_cartesian_normalization_factors_atomic_center
+   end function get_ao_normalization_factors_atomic_center
 !
 !
    pure function get_identifier_string_atomic_center(center) result(identifier)
@@ -860,7 +867,16 @@ contains
       class(atomic_center), intent(in) :: center
       character(len=50) :: identifier
 !
-      identifier = trim(center%symbol) // "_" // trim(center%basis)
+      character(len=5) :: charge_sign
+
+      if (center%charge .lt. 0) then
+         charge_sign = 'minus'
+      else
+         charge_sign = 'plus'
+      endif
+!
+      write(identifier, '(5a,i2.2)') trim(center%symbol), '_', trim(center%basis), &
+                                     '_', charge_sign, abs(center%charge)
 !
    end function get_identifier_string_atomic_center
 !

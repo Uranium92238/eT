@@ -237,8 +237,6 @@ module ccs_class
       procedure :: set_fock                                      => set_fock_ccs
       procedure :: set_fock_complex                              => set_fock_ccs_complex
 !
-      procedure :: get_orbital_differences                       => get_orbital_differences_ccs
-!
       procedure :: set_excitation_energies                       => set_excitation_energies_ccs
 !
 !     Procedures related to the Fock matrix
@@ -273,6 +271,8 @@ module ccs_class
 !     Routines related to the F transformation
 !
       procedure :: F_transformation                              => F_transformation_ccs
+      procedure :: F_x_transformation                            => F_x_transformation_ccs
+      procedure :: F_x_mu_transformation                         => F_x_mu_transformation_ccs
 !
       procedure :: F_ccs_a1_0                                    => F_ccs_a1_0_ccs
       procedure :: F_ccs_a1_1                                    => F_ccs_a1_1_ccs
@@ -435,7 +435,8 @@ module ccs_class
 !
       procedure :: print_dominant_x_amplitudes                   => print_dominant_x_amplitudes_ccs
       procedure :: print_dominant_amplitudes                     => print_dominant_amplitudes_ccs
-      procedure :: print_dominant_x1                             => print_dominant_x1_ccs
+!
+      procedure, private :: print_dominant_x1
 !
       procedure :: make_bath_orbital                             => make_bath_orbital_ccs
 !
@@ -454,7 +455,12 @@ module ccs_class
 !
 !     Initialize wavefunction
 !
-      procedure :: initialize                                    => initialize_ccs
+      procedure :: initialize => initialize_ccs
+!
+      procedure :: construct_ntos &
+                => construct_ntos_ccs
+      procedure :: construct_ntos_or_cntos &
+                => construct_ntos_or_cntos_ccs
 !
    end type ccs
 !
@@ -799,42 +805,6 @@ contains
    end subroutine set_initial_multipliers_guess_ccs
 !
 !
-   subroutine get_orbital_differences_ccs(wf, orbital_differences, N)
-!!
-!!    Get orbital differences
-!!    Written by Sarai D. Folkestad, Sep 2018
-!!
-!!    Sets the (ground state) orbital differences vector:
-!!
-!!       epsilon_ai = epsilon_a - epsilon_i
-!!
-!!    Here, the epsilon vector has dimensionality N = n_t1
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      integer, intent(in) :: N
-!
-      real(dp), dimension(N), intent(out) :: orbital_differences
-!
-      integer :: a, i, ai
-!
-!$omp parallel do private(i,a,ai)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            orbital_differences(ai) = wf%orbital_energies(a + wf%n_o) - wf%orbital_energies(i)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine get_orbital_differences_ccs
-!
-!
    subroutine construct_Jacobian_transform_ccs(wf, r_or_l, X, R, w)
 !!
 !!    Construct Jacobian transform
@@ -1103,7 +1073,7 @@ contains
    end subroutine print_dominant_x_amplitudes_ccs
 !
 !
-   subroutine print_dominant_x1_ccs(wf, x1, tag)
+   subroutine print_dominant_x1(wf, x1, tag)
 !!
 !!    Print dominant x1
 !!    Written by Eirik F. Kjønstad, Dec 2018
@@ -1165,7 +1135,7 @@ contains
       call mem%dealloc(dominant_values, n_elements)
       call mem%dealloc(abs_x1, wf%n_t1)
 !
-   end subroutine print_dominant_x1_ccs
+   end subroutine print_dominant_x1
 !
 !
    subroutine set_cvs_start_indices_ccs(wf, start_indices)
@@ -1443,6 +1413,20 @@ contains
 !
       type(sequential_file) :: file_temp_1, file_temp_2
 !
+!     Initialize temporary files
+!
+      file_temp_1 = sequential_file('approximate_doubles_temp_1')
+      file_temp_2 = sequential_file('approximate_doubles_temp_2')
+!
+      call file_temp_1%open_('readwrite', 'rewind')
+!
+      call mem%alloc(L_Jkj, wf%eri%n_J, wf%n_o, wf%n_o)
+      call wf%eri%get_cholesky_mo(L_Jkj, 1, wf%n_o, 1, wf%n_o)
+!
+      call mem%alloc(L_kjJ, wf%n_o, wf%n_o, wf%eri%n_J)
+      call sort_123_to_231(L_Jkj, L_kjJ, wf%eri%n_J, wf%n_o, wf%n_o)
+      call mem%dealloc(L_Jkj, wf%eri%n_J, wf%n_o, wf%n_o)
+!
 !     Prepare for batching
 !
       req0 = 0
@@ -1460,23 +1444,9 @@ contains
 !
       call mem%batch_setup(batch_a, batch_b, req0, req1_a, req1_b, req2)
 !
-!     Initialize temporary files
-!
-      file_temp_1 = sequential_file('approximate_doubles_temp_1')
-      file_temp_2 = sequential_file('approximate_doubles_temp_2')
-!
 !     :: Construct term 1 and store in file_temp_1
 !
 !        P_aibj (- sum_k R_bk g_kjai)/(-eps_aibj + omega^CCS)/(1 + delta_ai,bj)
-!
-      call file_temp_1%open_('readwrite', 'rewind')
-!
-      call mem%alloc(L_Jkj, wf%eri%n_J, wf%n_o, wf%n_o)
-      call wf%eri%get_cholesky_mo(L_Jkj, 1, wf%n_o, 1, wf%n_o)
-!
-      call mem%alloc(L_kjJ, wf%n_o, wf%n_o, wf%eri%n_J)
-      call sort_123_to_231(L_Jkj, L_kjJ, wf%eri%n_J, wf%n_o, wf%n_o)
-      call mem%dealloc(L_Jkj, wf%eri%n_J, wf%n_o, wf%n_o)
 !
       do current_a_batch = 1, batch_a%num_batches
 !
@@ -1646,6 +1616,8 @@ contains
          call mem%dealloc(R_aibj, batch_a%length, wf%n_o, batch_a%length, wf%n_o)
 !
       enddo
+!
+      call mem%batch_finalize()
 !
       call mem%dealloc(L_kjJ, wf%n_o, wf%n_o, wf%eri%n_J)
 !
@@ -2579,6 +2551,131 @@ contains
       call mem%dealloc(v, wf%ao%n)
 !
    end subroutine construct_MO_screening_for_cd_ccs
+!
+!
+   subroutine construct_ntos_ccs(wf, ntos, k, n_sig_v, n_sig_o, l_or_r,threshold)
+!!
+!!    Construct NTOs
+!!    Written by Sarai D. Folkestad, May 2020
+!!
+!!    'ntos' : array to store NTO orbital coefficients
+!!
+!!    'k' : which excited state to construct NTOs for
+!!
+!!    'n_sig_v' and 'n_sig_o' : The number of significant occupied and virtuals
+!!
+!!    'l_or_r' : excited state vector type
+!!
+!!     Constructs the M and N matrices
+!!
+!!       M_ij += sum_a R_ai R_aj
+!!       N_ab += sum_i R_ai R_bi
+!!
+!!    and diagonalizes them.
+!!    The NTOs are then constructed and stored in 'ntos'
+!!
+!!    This constitutes a singular value decomposition
+!!    of the excitation vectors.
+!!
+!!       N = RR^T = V D1 V^T
+!!       M = R^TR = U D2 U^T
+!!
+!!    If a threshold is given, the significant occupied and virtual
+!!    orbitals (n_o and n_v)
+!!    are determined by considering the
+!!    eigenvalues of M and N, using the criterion
+!!
+!!       1 - sum_i e_i < threshold,
+!!
+!!    where the eigenvalues are ordered from largest to smallest.
+!    Otherwise n_sig_o = n_sig_v = 1.
+!
+      use nto_tool_class, only: nto_tool
+!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(out) :: ntos
+!
+      real(dp), intent(in) :: threshold
+!
+      integer, intent(in) :: k
+      integer, intent(out) :: n_sig_v, n_sig_o
+!
+      character(len=*), intent(in) :: l_or_r
+!
+      type(nto_tool), allocatable :: orbital_tool
+!
+      real(dp), dimension(:), allocatable :: X
+!
+      call output%printf('n', '- Constructing NTOs for state (i0)', &
+                         ints=[k], ffs='(/t3,a)')
+!
+      call mem%alloc(X, wf%n_es_amplitudes)
+!
+      call wf%read_excited_state(X, k, k, trim(l_or_r))
+!
+      orbital_tool = nto_tool(wf%n_o, wf%n_v, wf%ao%n, wf%n_t1)
+!
+      call orbital_tool%initialize()
+!
+      call orbital_tool%add_excited_state(X(1:wf%n_t1))
+!
+      call orbital_tool%transform_orbitals(wf%orbital_coefficients, ntos)
+!
+      call orbital_tool%get_n_active_orbitals(n_sig_o, n_sig_v, threshold)
+!
+      call orbital_tool%cleanup
+!
+      call mem%dealloc(X, wf%n_es_amplitudes)
+!
+   end subroutine construct_ntos_ccs
+!
+!
+   subroutine construct_ntos_or_cntos_ccs(wf, orbitals, k, n_sig_v, n_sig_o, &
+                                          l_or_r, type_, threshold)
+!!
+!!    Construct NTOs or CNTOs
+!!    Written by Sarai D. Folkestad, May 2020
+!!
+!!    Wrapper to construct either NTOs or CNTOs
+!!
+!!    orbitals : NTOs/CNTOs
+!!
+!!    n_sig_o, n_sig_v : number of occupied and virtual NTOs/CNTOs
+!!
+!!    l_or_r : use left or right excitation vectors
+!!
+!!    type_ : 'ntos' or 'cntos'
+!!
+!!    threshold : threshold to determine n_sig_o and n_sig_v
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(out) :: orbitals
+!
+      real(dp), intent(in) :: threshold
+!
+      integer, intent(in) :: k
+      integer, intent(out) :: n_sig_v, n_sig_o
+!
+      character(len=*), intent(in) :: l_or_r
+      character(len=*), intent(in) :: type_
+!
+      if (trim(type_) == 'nto') then
+!
+         call wf%construct_ntos(orbitals, k, n_sig_v, n_sig_o, l_or_r,threshold)
+!
+      else if (trim(type_) == 'cnto') then
+!
+         call output%error_msg('Cannot plot CNTOs for ' // trim(wf%name_))
+!
+      endif
+!
+   end subroutine construct_ntos_or_cntos_ccs
 !
 !
 end module ccs_class

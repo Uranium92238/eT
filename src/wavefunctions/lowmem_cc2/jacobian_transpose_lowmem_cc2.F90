@@ -262,6 +262,8 @@ contains
          enddo
       enddo
 !
+      call mem%batch_finalize()
+!
 !     Term 2: sigma_ai += sum_b Y_ba b_bi
 !
       call dgemm('T', 'N',    &
@@ -337,6 +339,8 @@ contains
 !
          enddo
       enddo
+!
+      call mem%batch_finalize()
 !
       call mem%dealloc(X_ck, wf%n_v, wf%n_o)
 !
@@ -470,6 +474,8 @@ contains
          enddo
       enddo
 !
+      call mem%batch_finalize()
+!
       call dgemm('N', 'T',    &
                   wf%n_v,     &
                   wf%n_o,     &
@@ -590,6 +596,8 @@ contains
 !
          enddo
       enddo
+!
+      call mem%batch_finalize()
 !
       call timer%turn_off()
 !
@@ -749,6 +757,8 @@ contains
 !
          enddo
       enddo
+!
+      call mem%batch_finalize()
 !
       call timer%turn_off()
 !
@@ -941,6 +951,8 @@ contains
          enddo
       enddo
 !
+      call mem%batch_finalize()
+!
       call timer%turn_off()
 !
    end subroutine effective_jacobian_transpose_cc2_c1_lowmem_cc2
@@ -1046,6 +1058,8 @@ contains
 !
          enddo
       enddo
+!
+      call mem%batch_finalize()
 !
       call timer%turn_off()
 !
@@ -1203,6 +1217,8 @@ contains
 !
          enddo
       enddo
+!
+      call mem%batch_finalize()
 !
       call timer%turn_off()
 !
@@ -1388,6 +1404,8 @@ contains
 !
          enddo
       enddo
+!
+      call mem%batch_finalize()
 !
       call timer%turn_off()
 !

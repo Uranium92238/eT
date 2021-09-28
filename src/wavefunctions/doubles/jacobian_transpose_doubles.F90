@@ -377,6 +377,8 @@ contains
 !
       enddo ! batch_a
 !
+      call mem%batch_finalize()
+!
 !     :: Term 2: sigma_ai =+ sum_bjc c_akbj g_bjik = sum_bjc c_akbj (g_ikbj)^T
 !
       call mem%alloc(g_ikbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
@@ -543,6 +545,8 @@ contains
          call mem%dealloc(L_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
       enddo ! batch_c
+!
+      call mem%batch_finalize()
 !
       call add_1432_to_1234(one, sigma_ajbi, sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !

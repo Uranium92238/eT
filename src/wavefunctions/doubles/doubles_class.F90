@@ -189,6 +189,13 @@ module doubles_class
 !
       procedure :: print_amplitude_info                  => print_amplitude_info_doubles
 !
+!
+      procedure :: construct_cntos_for_plotting &
+                => construct_cntos_for_plotting_doubles
+      procedure :: construct_ntos_or_cntos &
+                => construct_ntos_or_cntos_doubles
+!
+
    end type doubles
 !
    interface
@@ -420,5 +427,128 @@ contains
 !
    end subroutine get_orbital_differences_doubles
 !
+!
+   subroutine construct_cntos_for_plotting_doubles(wf, cntos, k, n_sig_v, &
+                                                   n_sig_o, l_or_r, threshold)
+!!
+!!    Construct CNTOs for plotting
+!!    Written by Sarai D. Folkestad, May 2020
+!!
+!!    'cntos' : array to store CNTO orbital coefficients
+!!
+!!    'k' : which excited state to construct CNTOs for
+!!
+!!    'n_sig_v' and 'n_sig_o' : The number of significant occupied and virtuals
+!!
+!!    'l_or_r' : excited state vector type
+!!
+!!     Constructs the M and N matrices
+!!
+!!       M_ij += sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R^k_aibjR^k_blaj)
+!!       N_ab += sum_i R_ai R_bi + 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R^k_aicjR^k_bicj)
+!!
+!!    and diagonalizes them.
+!!    The CNTOs are then constructed and stored in 'cntos'
+!!
+!!    Significant occupied and virtual orbitals (n_sig_o and n_sig_v)
+!!    are determined by considering the
+!!    eigenvalues of M and N, using the criterion
+!!
+!!       1 - sum_i e_i < threshold,
+!!
+!!    where the eigenvalues are ordered from largest to smallest.
+!!
+!
+      use cnto_tool_class, only: cnto_tool
+!
+      implicit none
+!
+      class(doubles) :: wf
+!
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(out) :: cntos
+!
+      real(dp), intent(in) :: threshold
+!
+      integer, intent(in)  :: k
+      integer, intent(out) :: n_sig_v, n_sig_o
+!
+      character(len=*), intent(in) :: l_or_r
+!
+      real(dp), dimension(:), allocatable :: X
+!
+      type(cnto_tool), allocatable :: orbital_tool
+!
+      integer :: n_singles_and_doubles
+!
+      call output%printf('n', '- Constructing CNTOs for state (i0)', &
+                         ints=[k], ffs='(/t3,a)')
+!
+      call mem%alloc(X, wf%n_es_amplitudes)
+!
+      call wf%read_excited_state(X, k, k, trim(l_or_r))
+!
+      n_singles_and_doubles = wf%n_t1 + wf%n_t1*(wf%n_t1 + 1)/2
+!
+      orbital_tool = cnto_tool(wf%n_o, wf%n_v, wf%ao%n, n_singles_and_doubles)
+!
+      call orbital_tool%initialize()
+!
+      call orbital_tool%add_excited_state(X(1:n_singles_and_doubles))
+!
+      call orbital_tool%transform_orbitals(wf%orbital_coefficients, cntos)
+!
+      call orbital_tool%get_n_active_orbitals(n_sig_o, n_sig_v, threshold)
+!
+      call orbital_tool%cleanup
+!
+      call mem%dealloc(X, wf%n_es_amplitudes)
+!
+   end subroutine construct_cntos_for_plotting_doubles
+!
+!
+   subroutine construct_ntos_or_cntos_doubles(wf, orbitals, k, &
+                                              n_sig_v, n_sig_o, l_or_r, type_,threshold)
+!!
+!!    Construct NTOs or CNTOs
+!!    Written by Sarai D. Folkestad, May 2020
+!!
+!!    Wrapper to construct either NTOs or CNTOs
+!!
+!!    orbitals : NTOs/CNTOs
+!!
+!!    n_sig_o, n_sig_v : number of occupied and virtual NTOs/CNTOs
+!!
+!!    l_or_r : use left or right excitation vectors
+!!
+!!    type_ : 'ntos' or 'cntos'
+!!
+!!    threshold : threshold to determine n_sig_o and n_sig_v
+!!
+      implicit none
+!
+      class(doubles) :: wf
+!
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(out) :: orbitals
+!
+      real(dp), intent(in) :: threshold
+!
+      integer, intent(in) :: k
+      integer, intent(out) :: n_sig_v, n_sig_o
+!
+      character(len=*), intent(in) :: l_or_r
+      character(len=*), intent(in) :: type_
+!
+      if (trim(type_) == 'nto') then
+!
+         call wf%construct_ntos(orbitals, k, n_sig_v, n_sig_o, l_or_r,threshold)
+!
+      else if (trim(type_) == 'cnto') then
+!
+         call wf%construct_cntos_for_plotting(orbitals, k, n_sig_v, n_sig_o,l_or_r, threshold)
+!
+      endif
+!
+   end subroutine construct_ntos_or_cntos_doubles
+
 !
 end module doubles_class

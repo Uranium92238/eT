@@ -185,6 +185,8 @@ contains
 !
       enddo ! batch_a
 !
+      call mem%batch_finalize()
+!
       call mem%dealloc(X_Jbi, wf%eri%n_J, n_cc2_v, n_cc2_o)
 !
       call timer%turn_off()

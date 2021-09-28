@@ -163,6 +163,9 @@ module wavefunction_class
       procedure :: get_molecular_geometry &
                 => get_molecular_geometry_wavefunction
 !
+      procedure :: get_orbital_differences &
+                => get_orbital_differences_wavefunction
+!
    end type wavefunction
 !
 !
@@ -445,10 +448,7 @@ contains
 !
       real(dp), dimension(n_orbitals, n_orbitals), intent(out) :: S
 !
-      real(dp), dimension(:,:), allocatable :: S_ao, X
-!
-      call mem%alloc(S_ao, wf%ao%n, wf%ao%n)
-      call wf%ao%get_oei('overlap', S_ao)
+      real(dp), dimension(:,:), allocatable :: X
 !
       call mem%alloc(X, n_orbitals, wf%ao%n)
 !
@@ -459,13 +459,11 @@ contains
                   one,           &
                   orbital_coeff, &
                   wf%ao%n,       &
-                  S_ao,          &
+                  wf%ao%s,       &
                   wf%ao%n,       &
                   zero,          &
                   X,             &
                   n_orbitals)
-!
-      call mem%dealloc(S_ao, wf%ao%n, wf%ao%n)
 !
       call dgemm('N', 'N',       &
                   n_orbitals,    &
@@ -996,6 +994,40 @@ contains
 !$omp end parallel do
 !
    end subroutine set_orbital_coefficients_wavefunction
+!
+!
+   subroutine get_orbital_differences_wavefunction(wf, orbital_differences, N)
+!!
+!!
+!!    Get orbital differences
+!!    Written by Sarai D. Folkestad, Sep 2018
+!!
+!!    Sets the (ground state) orbital differences vector:
+!!
+!!       orbital_differences_ai = epsilon_a - epsilon_i
+!!
+      implicit none
+!
+      class(wavefunction), intent(in) :: wf
+      integer, intent(in) :: N
+      real(dp), dimension(N), intent(out) :: orbital_differences
+!
+      integer :: a, i, ai
+!
+!$omp parallel do private(i,a,ai)
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            orbital_differences(ai) = wf%orbital_energies(a + wf%n_o) - wf%orbital_energies(i)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+!
+   end subroutine get_orbital_differences_wavefunction
 !
 !
 end module wavefunction_class

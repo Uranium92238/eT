@@ -1,0 +1,54 @@
+system
+  name: HOF He
+  charge: 0
+  multiplicity: 1
+end system
+
+do
+  response
+end do
+
+method
+  hf
+  ccsd
+end method
+
+solver scf
+  gradient threshold: 1.0d-11
+end solver scf
+
+solver cholesky
+  threshold: 1.0d-11
+end solver cholesky
+
+cc response
+  lr
+  polarizabilities: {11,12,13,21,22,23,31,32,33}
+  frequencies: {0.0d0, 0.05d0}
+  dipole length
+  transition moments
+end cc response
+
+solver cc es
+  singlet states: 4
+  residual threshold: 1.0d-10
+end solver cc es
+
+solver cc multipliers
+  threshold: 1.0d-10
+end solver cc multipliers
+
+solver cc gs
+  omega threshold: 1.0d-10
+end solver cc gs
+
+solver cc response
+  threshold: 1.0d-10
+end solver cc response
+
+geometry
+basis: cc-pVDZ
+O     0.059000000000     0.059000000000     0.000000000000
+H    -0.081000000000     1.022000000000    -0.000000000000
+H     1.022000000000    -0.081000000000    -0.000000000000
+end geometry

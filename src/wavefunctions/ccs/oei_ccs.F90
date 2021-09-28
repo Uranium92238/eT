@@ -34,7 +34,7 @@ contains
 !
    module subroutine get_t1_oei_ccs(wf,         &
                                     oei_type,   &
-                                    oei)
+                                    oei, screening)
 !!
 !!    Get T1 OEI (one-electron integral)
 !!    Written by Eirik F. Kjønstad, 2020 
@@ -63,6 +63,8 @@ contains
 !
       real(dp), dimension(*), target, intent(out) :: oei  
 !
+      logical,  intent(in), optional :: screening
+!
       real(dp), dimension(:,:,:), pointer :: oei_p 
 !
       real(dp), dimension(:,:,:), allocatable :: oei_ao  
@@ -77,7 +79,7 @@ contains
 !
       call mem%alloc(oei_ao, wf%ao%n, wf%ao%n, n_components)
 !
-      call wf%ao%get_oei(oei_type, oei_ao)
+      call wf%ao%get_oei(oei_type, oei_ao, screening)
 !
 !     Transform the AO integrals to the T1-transformed basis
 !
@@ -97,7 +99,7 @@ contains
 !
    module subroutine get_t1_oei_ccs_complex(wf,         &
                                             oei_type,   &
-                                            oei)
+                                            oei, screening)
 !!
 !!    Get T1 OEI (one-electron integral)
 !!    Written by Eirik F. Kjønstad, 2020 
@@ -126,6 +128,8 @@ contains
 !
       complex(dp), dimension(*), target, intent(out) :: oei  
 !
+      logical,  intent(in), optional :: screening
+!
       complex(dp), dimension(:,:,:), pointer :: oei_p 
 !
       real(dp), dimension(:,:), allocatable :: oei_mo ! MO integrals for a given component
@@ -142,7 +146,7 @@ contains
 !
       call mem%alloc(oei_ao, wf%ao%n, wf%ao%n, n_components)
 !
-      call wf%ao%get_oei(oei_type, oei_ao)
+      call wf%ao%get_oei(oei_type, oei_ao, screening)
 !
 !     Transform the AO integrals to the T1-transformed basis
 !

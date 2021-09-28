@@ -159,6 +159,10 @@ module input_file_class
       procedure, private :: get_integer_array_for_keyword
       procedure, private :: get_real_array_for_keyword
 !
+      procedure, private :: section_is_allowed
+      procedure, private :: keyword_is_allowed
+      procedure, private :: check_keyword_and_section
+!
    end type input_file
 !
    interface input_file
@@ -211,6 +215,7 @@ contains
       type(section) :: global_print
       type(section) :: frozen_orbitals
       type(section) :: integrals
+      type(section) :: tdhf
 !
 !     Set input file name, access and format
 !
@@ -323,7 +328,8 @@ contains
                               'mean value',           &
                               'time dependent state', &
                               'cholesky eri',         &
-                              'restart']
+                              'restart',              &
+                              'time dependent hf']
 !
 !
       electric_field%name_    = 'electric field'
@@ -522,14 +528,18 @@ contains
 !
       solver_cc_multipliers%name_    = 'solver cc multipliers'
       solver_cc_multipliers%required = .false.
-      solver_cc_multipliers%keywords = [character(len=30) ::    &
-                                       'algorithm',             &
-                                       'threshold',             &
-                                       'storage',               &
-                                       'crop',                  &
-                                       'diis dimension',        &
-                                       'restart',               &
-                                       'max reduced dimension', &
+      solver_cc_multipliers%keywords = [character(len=30) ::       &
+                                       'algorithm',                &
+                                       'threshold',                &
+                                       'storage',                  &
+                                       'crop',                     &
+                                       'micro iteration storage',  &
+                                       'max micro iterations',     &
+                                       'multimodel newton',        &
+                                       'rel micro threshold',      &
+                                       'diis dimension',           &
+                                       'restart',                  &
+                                       'max reduced dimension',    &
                                        'max iterations']
 !
 !
@@ -596,8 +606,24 @@ contains
                                'plot hf orbitals',          &
                                'plot hf density',           &
                                'plot hf active density',    &
+                               'plot cntos',                &
+                               'plot ntos',                 &
+                               'nto threshold',             &
                                'plot transition densities', &
                                'states to plot']
+!
+!
+      tdhf%name_    = 'tdhf'
+      tdhf%required = .false.
+      tdhf%keywords = [character(len=30) ::    &
+                       'energy threshold',     &
+                       'max iterations',       &
+                       'max reduced dimension',&
+                       'residual threshold',   &
+                       'restart',              &
+                       'storage',              &
+                       'states',               &
+                       'tamm-dancoff']
 !
 !     Gather all sections into the file's section array
 !
@@ -629,7 +655,8 @@ contains
                        solver_scf,                &
                        solver_scf_geoopt,         &
                        system,                    &
-                       visualization]
+                       visualization,             &
+                       tdhf]
 !
       this%is_open = .false.
       this%unit_ = -1
@@ -758,7 +785,7 @@ contains
 !
       class(input_file) :: this
 !
-      integer :: k, start_, end_, i
+      integer :: start_, end_, i
 !
       logical :: recognized
 !
@@ -777,13 +804,7 @@ contains
 !
 !           Check whether section name is valid
 !
-            recognized = .false.
-!
-            do k = 1, size(this%sections)
-!
-               if (this%sections(k)%name_ == section) recognized = .true.
-!
-            enddo
+            recognized = this%section_is_allowed(section)
 !
             if (.not. recognized) then
 !
@@ -1074,6 +1095,8 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
+      call this%check_keyword_and_section(keyword, section)
+!
       if (this%is_keyword_present(keyword, section)) then
 !
 !        Get the keyword value in string format
@@ -1106,6 +1129,8 @@ contains
       integer(i64), intent(inout) :: keyword_value
 !
       character(len=200) :: keyword_value_string
+!
+      call this%check_keyword_and_section(keyword, section)
 !
       if (this%is_keyword_present(keyword, section)) then
 !
@@ -1214,6 +1239,8 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
+      call this%check_keyword_and_section(keyword, section)
+!
       if (this%is_keyword_present(keyword, section)) then
 !
 !        Get the keyword value in string format
@@ -1281,6 +1308,8 @@ contains
       character(len=*), intent(in) :: section
 !
       character(len=200) :: keyword_value
+!
+      call this%check_keyword_and_section(keyword, section)
 !
       if (this%is_keyword_present(keyword, section)) then
 !
@@ -1518,6 +1547,11 @@ contains
       integer :: record, start_, end_
 !
       character(len=200) :: local_keyword
+!
+      if (.not. this%keyword_is_allowed(keyword, section)) then
+         call output%error_msg('Trying to read keyword ((a0)) that is not defined &
+                               &in section: ' // section,  chars=[keyword])
+      end if
 !
 !     Move to the requested section & get the number of records in that section
 !
@@ -1804,11 +1838,11 @@ contains
       do record = 1, this%n_mm_atom_lines
 !
          string = (trim(adjustl(this%mm_geometry(record))))
-         cursor = set_cursor_to_character(string,'=')
+         cursor = first_instance_of_character(string,'=')
 !
          string = string(cursor+1:200)
 !
-         cursor = set_cursor_to_character(string,']')
+         cursor = first_instance_of_character(string,']')
 !
          imolecule = string(1:cursor-1)
          read(imolecule,'(i4)') current_molecule
@@ -1836,13 +1870,16 @@ contains
    end function get_n_mm_molecules_input_file
 !
 !
-   subroutine get_geometry_input_file(this, n_atoms, symbols, &
-                                       positions, basis_sets, units_angstrom, is_ghost)
+   subroutine get_geometry_input_file(this, n_atoms, symbols,  &
+                                      positions, basis_sets,   &
+                                      charge, units_angstrom,  &
+                                      is_ghost)
 !!
 !!    Get geometry
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!    Modified by Åsmund H. Tveten, Oct 2019. Generalized to Bohr units.
 !!    Modified by Tor S. Haugland, May 2021. Added ghost atoms.
+!!    Modified by SDF, Jun 2021. Added atomic charges.
 !!
 !!    Reads the geometry from the output file and sets it in the
 !!    list of atoms.
@@ -1862,6 +1899,7 @@ contains
       logical, dimension(n_atoms), intent(out) :: is_ghost
 !
       real(dp), dimension(3, n_atoms), intent(out) :: positions ! x, y, z
+      integer, dimension(n_atoms), intent(out) :: charge
 !
       logical, intent(out) :: units_angstrom ! True if units are Ångström/unspecified, false if Bohr
 !
@@ -1875,12 +1913,15 @@ contains
       character(len=100) :: current_basis
       logical :: is_ghost_atom = .false.
 !
+      integer :: cursor
+!
       start_ = 1 ! Specifies the line of the first and required basis
 !
 !     Are units specified?
 !     Note that units can only be specified as the first line of the geometry
 !
       units_angstrom = .true. ! Default units are Angstrom
+      charge = 0 ! Default charge is zero
 !
       if (this%geometry(1)(1:6) == 'units:') then
 !
@@ -1934,7 +1975,24 @@ contains
             is_ghost(current_atom)   = is_ghost_atom
 !
             string = adjustl(string(3:200))
-            read(string(1:), *) positions(:, current_atom)
+!
+            if (is_substring_in_string(string, 'q')) then
+!
+                  cursor = set_cursor_to_substring(string, 'q')
+                  read(string(1 : cursor - 1), *) positions(:, current_atom)
+!
+                  string = adjustl(string(cursor+1:200))
+!
+                  if (string(1:1) .ne. '=') &
+                        call output%error_msg('in asignment of charge to atom in the geometry')
+!
+                  string = adjustl(string(2:200))
+                  read(string, *) charge(current_atom)
+            else
+!
+                  read(string(1:), *) positions(:, current_atom)
+!
+            endif
 !
          endif
 !
@@ -1987,6 +2045,7 @@ contains
 !
       current_molecule     = 0
       n_atoms_per_molecule = 0
+      cursor = 0
 !
 !     Loop through the MM atoms specified on input
 !
@@ -2002,21 +2061,25 @@ contains
 !
 !        Determine molecule index
 !
-         cursor = set_cursor_to_substring(string, 'mol')
+         if (is_substring_in_string(string, 'mol')) then
+            cursor = set_cursor_to_substring(string, 'mol')
+         else
+            call output%error_msg('could not find mol in MM geometry')
+         endif
+!
          string = adjustl(string(cursor+1:200))
 !
-         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         if (string(1:1) .ne. '=') call output%error_msg('in mol specification in MM geometry')
          string = adjustl(string(2:200))
-
-         cursor = set_cursor_to_character(string, ']')
+!
+         cursor = first_instance_of_character(string, ']')
+!
          read(string(1:cursor-1),*) current_molecule
          string = adjustl(string(cursor+1:200))
 !
          n_atoms_per_molecule(current_molecule) = n_atoms_per_molecule(current_molecule) + 1
 !
-!        Determine position
-!
-         cursor = set_cursor_to_character(string, '[')
+         cursor = first_instance_of_character(string, '[')
 !
          coordinate = string(1:cursor-1)
          read(coordinate, *) positions(:, current_atom)
@@ -2025,25 +2088,35 @@ contains
 !
 !        Determine chi
 !
-         cursor = set_cursor_to_substring(string, 'chi')
+         if (is_substring_in_string(string, 'chi')) then
+            cursor = set_cursor_to_substring(string, 'chi')
+         else
+            call output%error_msg('could not find chi in MM geometry')
+         endif
+!
          string = adjustl(string(cursor+1:200))
 !
-         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         if (string(1:1) .ne. '=') call output%error_msg('in chi specification in MM geometry')
          string = adjustl(string(2:200))
 !
-         cursor = set_cursor_to_character(string,',')
+         cursor = first_instance_of_character(string,',')
          read(string(1:cursor-1), * ) chi(current_atom)
          string = adjustl(string(cursor+1:200))
 !
 !        Determine eta
 !
-         cursor = set_cursor_to_substring(string, 'eta')
+         if (is_substring_in_string(string, 'eta')) then
+            cursor = set_cursor_to_substring(string, 'eta')
+         else
+            call output%error_msg('could not find eta in MM geometry')
+         endif
+!
          string = trim(adjustl(string(cursor+1:200)))
 !
-         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         if (string(1:1) .ne. '=') call output%error_msg('in chi specification in MM geometry')
          string = adjustl(string(2:200))
 !
-         cursor = set_cursor_to_character(string,']')
+         cursor = first_instance_of_character(string,']')
          read(string(1:cursor-1), * ) eta(current_atom)
 !
          if(abs(eta(current_atom)).lt.1.0d-8) then
@@ -2099,6 +2172,7 @@ contains
 !
       current_atom      = 0
       current_molecule  = 0
+      cursor            = 0
 !
       do record = 1, this%n_mm_atom_lines
 !
@@ -2112,19 +2186,24 @@ contains
 !
 !        Determine molecule index
 !
-         cursor = set_cursor_to_substring(string, 'mol')
+         if (is_substring_in_string(string, 'mol')) then
+            cursor = set_cursor_to_substring(string, 'mol')
+         else
+            call output%error_msg('could not find mol in MM geometry')
+         endif
+!
          string = adjustl(string(cursor+1:200))
 !
-         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         if (string(1:1) .ne. '=') call output%error_msg('in mol specification in MM geometry')
          string = adjustl(string(2:200))
 
-         cursor = set_cursor_to_character(string, ']')
+         cursor = first_instance_of_character(string, ']')
          read(string(1:cursor-1),*) current_molecule
          string = adjustl(string(cursor+1:200))
 !
 !        Determine position
 !
-         cursor = set_cursor_to_character(string, '[')
+         cursor = first_instance_of_character(string, '[')
 !
          coordinate = string(1:cursor-1)
          read(coordinate, *) positions(:, current_atom)
@@ -2133,13 +2212,13 @@ contains
 !
 !        Determine charge
 !
-         cursor = set_cursor_to_character(string, 'q')
+         cursor = first_instance_of_character(string, 'q')
          string = adjustl(string(cursor+1:200))
 !
-         if (string(1:1) .ne. '=') call output%error_msg('Error in MM geometry input.')
+         if (string(1:1) .ne. '=') call output%error_msg('in charge specification in MM geometry')
          string = adjustl(string(2:200))
 !
-         cursor = set_cursor_to_character(string,']')
+         cursor = first_instance_of_character(string,']')
          read(string(1:cursor-1), * ) charge(current_atom)
 !
          if(abs(charge(current_atom)).lt.1.0d-8) then
@@ -2559,7 +2638,334 @@ contains
 !
       endif
 !
-    end subroutine place_records_in_memory_input_file
+   end subroutine place_records_in_memory_input_file
+!
+!
+   function keyword_is_allowed(this, keyword, section) result(allowed)
+!!
+!!    Keyword is allowed
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2019-2021
+!!
+      implicit none
+
+      class(input_file), intent(in) :: this
+!
+      character(len=*), intent(in) :: keyword
+      character(len=*), intent(in) :: section
+!
+      logical :: allowed
+!
+      integer :: i
+!
+      allowed = .false.
+!
+      do i = 1, size(this%sections)
+!
+         if (this%sections(i)%name_ == trim(section)) then
+!
+            allowed = any(this%sections(i)%keywords == trim(keyword))
+            return
+!
+         endif
+      enddo
+!
+   end function keyword_is_allowed
+!
+!
+   function section_is_allowed(this, section) result(allowed)
+!!
+!!    Section is allowed
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2019-2021
+!!
+      implicit none
+
+      class(input_file), intent(in) :: this
+!
+      character(len=*), intent(in) :: section
+!
+      logical :: allowed
+!
+      integer :: k
+!
+      allowed = .false.
+!
+      do k = 1, size(this%sections)
+!
+         if (this%sections(k)%name_ == trim(section)) allowed = .true.
+!
+      enddo
+!
+   end function section_is_allowed
+!
+!
+   subroutine check_keyword_and_section(this, keyword, section)
+!!
+!!    Check keyword and section
+!!    Written by Sarai D. Folkestad, Jul 2021
+!!
+      implicit none
+
+      class(input_file), intent(in) :: this
+!
+      character(len=*), intent(in) :: keyword
+      character(len=*), intent(in) :: section
+!
+      if (.not. this%section_is_allowed(section)) &
+         call output%error_msg('requested keyword from non-existing section (a0)', &
+                               chars=[trim(section)])
+!
+      if (.not. this%keyword_is_allowed(keyword, section)) &
+         call output%error_msg('requested illegal keyword (a0)', chars=[trim(keyword)])
+!
+   end subroutine check_keyword_and_section
+!
+!
+   function get_n_elements_in_string(string) result(n_elements)
+!!
+!!    Get n elements in string
+!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    Gets the number of elements in range or list,
+!!    To be used for reading of input.
+!!
+!!    Ranges should always be given as [a,b].
+!!
+!!    Lists should always be given as {a, b, c, d},
+!!    that is, in set notation.
+!!
+      implicit none
+!
+      character(len=200), intent(inout) :: string
+!
+      integer :: n_elements
+!
+!     Local variables
+!
+      integer :: first, last, n_characters
+      integer :: i
+!
+      n_elements = 0
+!
+      string = adjustl(string)
+!
+      n_characters = len_trim(string)
+!
+      if (string(1:1) == '[') then ! range given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= ']') call output%error_msg('found open range in input file.')
+!
+         do i = 2, n_characters - 1
+!
+            if (string(i:i) == ',') exit
+!
+         enddo
+!
+!        Read first element
+!
+         read(string(2:i-1), *) first
+!
+!        Read last element
+!
+         read(string(i+1:n_characters - 1), *) last
+!
+!        Calculate number of elements
+!
+         n_elements = last - first + 1
+!
+      elseif (string(1:1)=='{') then ! list given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= '}') call output%error_msg('found open set in input file.')
+!
+         n_elements = 1 ! Assuming that the set contains at least one element (otherwize why give list?)
+!
+!        Loop through and count commas
+!
+         do i = 2, n_characters - 1
+!
+            if (string(i:i) == ',') n_elements = n_elements + 1
+!
+         enddo
+!
+      else ! Did not find list or
+!
+         n_elements = 0
+!
+      endif
+!
+   end function get_n_elements_in_string
+!
+!
+   subroutine get_elements_in_string(string, n_elements, elements)
+!!
+!!    Get elements
+!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    Gets the elements from range or list.
+!!    To be used for reading of input.
+!!
+!!    Ranges should always be given as [a,b].
+!!
+!!    Lists should always be given as {a, b, c, d},
+!!    that is, in set notation.
+!!
+      implicit none
+!
+      character(len=200), intent(inout) :: string
+!
+      integer, intent(in) :: n_elements
+!
+      integer, dimension(n_elements), intent(out) :: elements
+!
+!     Local variables
+!
+      integer :: first, last, n_characters, n_elements_found
+      integer :: i, j
+!
+      string = adjustl(string)
+!
+      n_characters = len_trim(string)
+!
+      if (string(1:1) == '[') then ! range given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= ']') call output%error_msg('found open range in input file.')
+!
+         do i = 2, n_characters - 1
+!
+            if (string(i:i) == ',') exit
+!
+         enddo
+!
+!        Read first element
+!
+         read(string(2:i-1), *) first
+!
+!        Read last element
+!
+         read(string(i+1:n_characters - 1), *) last
+!
+!        Sanity check - Is the number of elements found equal to n_elements
+!
+         if (n_elements .ne. last - first + 1) call output%error_msg('Mismatch in number of elements to be read.')
+!
+         do i = 1, n_elements
+!
+            elements(i) = first + i - 1
+!
+         enddo
+!
+      elseif (string(1:1)=='{') then ! list given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= '}') call output%error_msg('found open set in input file.')
+!
+!        Loop through and set the elements
+!
+         first            = 2
+         n_elements_found = 0
+!
+         do j = 1, n_elements
+!
+            do i = first, n_characters - 1
+!
+               if (string(i:i) == ',') exit
+!
+            enddo
+!
+            read(string(first:i-1), *) elements(j)
+!
+            n_elements_found = n_elements_found + 1
+!
+            first = i + 1
+!
+            if (first == n_characters) exit
+!
+         enddo
+!
+         if (n_elements_found .ne. n_elements) call output%error_msg('Mismatch in number of elements to be read.')
+!
+      else ! Did not find list or
+!
+         call output%error_msg('neither list nor range was found.')
+!
+      endif
+!
+   end subroutine get_elements_in_string
+!
+!
+   subroutine get_reals_in_string(string, n_elements, elements)
+!!
+!!    Get reals
+!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
+!!    Modified by Andreas Skeidsvoll, Sep 2019: Reads reals instead of integers
+!!
+!!    Gets the reals from list.
+!!    To be used for reading of input.
+!!
+!!    Lists should always be given as {a, b, c, d},
+!!    that is, in set notation.
+!!
+      implicit none
+!
+      character(len=200), intent(inout) :: string
+!
+      integer, intent(in) :: n_elements
+!
+      real(dp), dimension(n_elements), intent(out) :: elements
+!
+!     Local variables
+!
+      integer :: first, n_characters, n_elements_found
+      integer :: i, j
+!
+      string = adjustl(string)
+!
+      n_characters = len_trim(string)
+!
+      if (string(1:1)=='{') then ! list given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= '}') call output%error_msg('found open set in input file.')
+!
+!        Loop through and set the elements
+!
+         first            = 2
+         n_elements_found = 0
+!
+         do j = 1, n_elements
+!
+            do i = first, n_characters - 1
+!
+               if (string(i:i) == ',') exit
+!
+            enddo
+!
+            read(string(first:i-1), *) elements(j)
+!
+            n_elements_found = n_elements_found + 1
+!
+            first = i + 1
+!
+            if (first == n_characters) exit
+!
+         enddo
+!
+         if (n_elements_found .ne. n_elements) call output%error_msg('Mismatch in number of elements to be read.')
+!
+      else ! Did not find list or
+!
+         call output%error_msg('neither list nor range was found.')
+!
+      endif
+!
+   end subroutine get_reals_in_string
 !
 !
 end module input_file_class

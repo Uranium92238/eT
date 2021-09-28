@@ -1,0 +1,163 @@
+module unit_warning_suppressor
+
+   use warning_suppressor
+   use kinds
+   use parameters
+
+   use funit
+   
+   implicit none
+
+   integer :: dim_ = 2
+
+   type array_struct
+      integer :: a
+      integer :: b 
+   end type array_struct
+
+contains
+
+   @test
+   subroutine test_do_nothing_r()
+
+      implicit none 
+
+      real(dp), dimension(dim_) :: a1 
+      real(dp), dimension(dim_) :: b1
+
+      real(dp), dimension(dim_,dim_) :: a2 
+      real(dp), dimension(dim_,dim_) :: b2 
+
+      real(dp), dimension(dim_,dim_,dim_) :: a3 
+      real(dp), dimension(dim_,dim_,dim_) :: b3 
+
+      real(dp), dimension(dim_,dim_,dim_,dim_) :: a4 
+      real(dp), dimension(dim_,dim_,dim_,dim_) :: b4 
+
+      a1 = two; b1 = a1
+
+      call do_nothing(a1)
+      @assertEqual(a1, b1)
+
+      a2 = two; b2 = a2
+
+      call do_nothing(a2)
+      @assertEqual(a2,b2)
+
+      a3 = two; b3 = a3
+
+      call do_nothing(a3)
+      @assertEqual(a3,b3)
+
+      a4 = two; b4 = a4
+
+      call do_nothing(a4)
+      @assertEqual(a4,b4)
+
+   end subroutine test_do_nothing_r
+
+   @test
+   subroutine test_do_nothing_c()
+
+      implicit none 
+
+      complex(dp), dimension(dim_) :: a1 
+      complex(dp), dimension(dim_) :: b1
+
+      complex(dp), dimension(dim_,dim_) :: a2 
+      complex(dp), dimension(dim_,dim_) :: b2 
+
+      complex(dp), dimension(dim_,dim_,dim_) :: a3 
+      complex(dp), dimension(dim_,dim_,dim_) :: b3 
+
+      complex(dp), dimension(dim_,dim_,dim_,dim_) :: a4 
+      complex(dp), dimension(dim_,dim_,dim_,dim_) :: b4 
+
+      a1 = (two,one); b1 = a1
+
+      call do_nothing(a1)
+      @assertEqual(a1, b1)
+
+      a2 = (two,one); b2 = a2
+
+      call do_nothing(a2)
+      @assertEqual(a2,b2)
+
+      a3 = (two,one); b3 = a3
+
+      call do_nothing(a3)
+      @assertEqual(a3,b3)
+
+      a4 = (two,one); b4 = a4
+
+      call do_nothing(a4)
+      @assertEqual(a4,b4)
+
+   end subroutine test_do_nothing_c
+
+   @test
+   subroutine test_do_nothing_i()
+
+      implicit none 
+
+      integer, dimension(dim_) :: a1 
+      integer, dimension(dim_) :: b1
+
+      integer, dimension(dim_,dim_) :: a2 
+      integer, dimension(dim_,dim_) :: b2 
+
+      integer, dimension(dim_,dim_,dim_) :: a3 
+      integer, dimension(dim_,dim_,dim_) :: b3 
+
+      integer, dimension(dim_,dim_,dim_,dim_) :: a4 
+      integer, dimension(dim_,dim_,dim_,dim_) :: b4 
+
+      a1 = 5; b1 = a1
+
+      call do_nothing(a1)
+      @assertEqual(a1, b1)
+
+      a2 = 5; b2 = a2
+
+      call do_nothing(a2)
+      @assertEqual(a2,b2)
+
+      a3 = 5; b3 = a3
+
+      call do_nothing(a3)
+      @assertEqual(a3,b3)
+
+      a4 = 5; b4 = a4
+
+      call do_nothing(a4)
+      @assertEqual(a4,b4)
+
+   end subroutine test_do_nothing_i
+
+   @test
+   subroutine test_do_nothing_0()
+
+      implicit none 
+
+      integer :: a_int 
+      integer :: b_int
+
+      type(array_struct) :: a_arr
+      type(array_struct) :: b_arr
+
+      a_int = 5; b_int = a_int
+
+      call do_nothing(a_int)
+      @assertEqual(a_int, b_int)
+
+      a_arr = array_struct(1,5)
+      b_arr = array_struct(1,5)
+
+      call do_nothing(a_arr)
+
+      @assertEqual(a_arr%a, b_arr%a)
+      @assertEqual(a_arr%b, b_arr%b)
+
+   end subroutine test_do_nothing_0
+
+end module unit_warning_suppressor

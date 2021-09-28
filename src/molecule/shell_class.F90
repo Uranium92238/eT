@@ -27,49 +27,67 @@ module shell_class
    use kinds
 !
    use range_class
-   use global_out, only : output
-   use memory_manager_class, only : mem
+   use global_out, only: output
+   use memory_manager_class, only: mem
+   use abstract_angular_momentum_class, only: abstract_angular_momentum
 !
    implicit none
 !
    type, extends(range_) :: shell ! AO index range of the shell
 !
-      integer    :: size_cart = -1 ! The number of basis functions in cartesian
-      integer    :: l         = -1 ! The angular momentum
-      integer    :: number_   = -1 ! The shell number (according to the ordering given by Libint)
+      integer :: number_ = -1 ! The shell number (according to the ordering given by Libint)
 !
       integer, private :: n_primitives = 0 ! Number of primitive Gaussians
 !
       real(dp), dimension(:), allocatable, private :: exponents ! Exponents for primitives
       real(dp), dimension(:), allocatable, private :: coefficients ! Coefficients for primitives
 !
+      class(abstract_angular_momentum), allocatable :: angular_momentum
+!
    contains
 !
-      procedure :: determine_angular_momentum => determine_angular_momentum_shell
+      procedure :: initialize_exponents &
+                => initialize_exponents_shell
+      procedure :: initialize_coefficients &
+                => initialize_coefficients_shell
 !
-      procedure :: initialize_exponents       => initialize_exponents_shell
-      procedure :: initialize_coefficients    => initialize_coefficients_shell
+      procedure :: set_exponent_i &
+                => set_exponent_i_shell
+      procedure :: get_exponent_i &
+                => get_exponent_i_shell
 !
-      procedure :: destruct_exponents         => destruct_exponents_shell
-      procedure :: destruct_coefficients      => destruct_coefficients_shell
+      procedure :: set_coefficient_i &
+                => set_coefficient_i_shell
+      procedure :: get_coefficient_i &
+                => get_coefficient_i_shell
 !
-      procedure :: set_exponent_i             => set_exponent_i_shell
-      procedure :: get_exponent_i             => get_exponent_i_shell
+      procedure :: set_n_primitives &
+                => set_n_primitives_shell
+      procedure :: get_n_primitives &
+                => get_n_primitives_shell
 !
-      procedure :: set_coefficient_i          => set_coefficient_i_shell
-      procedure :: get_coefficient_i          => get_coefficient_i_shell
+      procedure :: get_angular_momentum &
+                => get_angular_momentum_shell
 !
-      procedure :: set_n_primitives           => set_n_primitives_shell
-      procedure :: get_n_primitives           => get_n_primitives_shell
+      procedure :: get_angular_momentum_letter &
+                => get_angular_momentum_letter_shell
 !
-      procedure :: get_angular_momentum       => get_angular_momentum_shell
-      procedure :: get_angular_momentum_label => get_angular_momentum_label_shell
-      procedure :: get_molden_order        => get_molden_order_shell
+      procedure :: get_angular_momentum_label &
+                => get_angular_momentum_label_shell
 !
-      procedure :: get_cartesian_normalization_factor &
-                => get_cartesian_normalization_factor_shell
+      procedure :: get_molden_order &
+                => get_molden_order_shell
 !
-      procedure :: cleanup                            => cleanup_shell
+      procedure :: get_normalization_factor &
+                => get_normalization_factor_shell
+!
+      procedure, private :: destruct_exponents &
+                         => destruct_exponents_shell
+      procedure, private :: destruct_coefficients &
+                         => destruct_coefficients_shell
+!
+      procedure :: cleanup &
+                => cleanup_shell
 !
    end type shell
 !
@@ -84,7 +102,7 @@ module shell_class
 contains
 !
 !
-   function new_shell(first, length, number_) result(this)
+   function new_shell(first, length, number_, cartesian) result(this)
 !!
 !!    New shell
 !!    Written by Eirik F. Kjønstad, 2019
@@ -93,64 +111,32 @@ contains
 !!    length:  the number of AOs in the shell
 !!    number_: the shell number in the full list of shells (according to Libint)
 !!
+      use angular_momentum_factory_class
+!
       implicit none
 !
       integer, intent(in) :: first, length
 !
       integer, intent(in) :: number_
 !
+      logical, intent(in) :: cartesian
+!
       type(shell) :: this
+      type(angular_momentum_factory) :: factory
 !
       this%range_ = range_(first, length)
 !
-      call this%determine_angular_momentum()
-!
       this%number_ = number_
+!
+      factory = angular_momentum_factory(cartesian)
+      call factory%create(this%angular_momentum, length)
 !
    end function new_shell
 !
 !
-   subroutine determine_angular_momentum_shell(this)
-!!
-!!    Determine angular momentum
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Determines the angular momentum by counting the number of basis
-!!    functions in the shell (l < 10)
-!!
-      implicit none
-!
-      class(shell) :: this
-!
-      integer :: i
-!
-      i = 0
-      this%l = -1
-!
-      do while (i .lt. 10)
-!
-         if ((2*i + 1) .eq. this%length .or. &
-            (((i+1)*(i+2))/2) .eq. this%length) then
-!
-            this%l = i
-!
-         endif
-!
-         i = i + 1
-!
-      enddo
-!
-      if (this%l .eq. -1) then
-!
-         call output%error_msg('could not determine angular momentum of shell.')
-!
-      endif
-!
-   end subroutine determine_angular_momentum_shell
-!
-!
    subroutine initialize_exponents_shell(this)
 !!
+!!    Initialize exponents
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
@@ -332,7 +318,7 @@ contains
    end function get_n_primitives_shell
 !
 !
-   function get_angular_momentum_label_shell(this, n, cartesian) result(label)
+   function get_angular_momentum_label_shell(this, n) result(label)
 !!
 !!    Get angular momentum label
 !!    written by Alexander C. Paul, Dec 2019
@@ -343,135 +329,51 @@ contains
 !!                NB: assuming default ordering of libint.
 !!                cartesian basis functions: {xx, xy, xz, yy, yz, zz}
 !!                spherical/pure functions:  m_l: {2, 1, 0, -1, -2}
-!!    cartesian:  logical determining if a cartesian or "pure" basis set is used
 !!    label:      string that is returned e.g. d_xx
 !!
-      use angular_momentum
-!
       implicit none
 !
       class(shell), intent(in) :: this
 !
       integer, intent(in) :: n
 !
-      character(len=8) :: label
+      character(len=:), allocatable :: label
 !
-      logical, intent(in) :: cartesian
-!
-      if (cartesian) then
-!
-         select case (this%l)
-            case(0)
-               label = this%get_angular_momentum()
-            case(1)
-               label = this%get_angular_momentum() // ' '  // p_cart(n)
-            case(2)
-               label = this%get_angular_momentum() // ' '  // d_cart(n)
-            case(3)
-               label = this%get_angular_momentum() // ' '  // f_cart(n)
-            case(4)
-               label = this%get_angular_momentum() // ' '  // g_cart(n)
-            case(5)
-               label = this%get_angular_momentum()
-            case default
-               call output%error_msg('Angular momentum of atomic orbital not recognized.')
-         end select
-!
-      else
-!
-         select case (this%l)
-            case(0)
-               label = this%get_angular_momentum()
-            case(1)
-               label = this%get_angular_momentum() // '  ' // p_cart(n)
-            case(2)
-               label = this%get_angular_momentum() // ' '  // d(n)
-            case(3)
-               label = this%get_angular_momentum() // ' '  // f(n)
-            case(4)
-               label = this%get_angular_momentum() // ' '  // g(n)
-            case(5)
-               label = this%get_angular_momentum()
-            case default
-               call output%error_msg('Angular momentum of atomic orbital not recognized.')
-         end select
-!
-      end if
+      label = this%angular_momentum%get_label(n)
 !
    end function get_angular_momentum_label_shell
 !
 !
-   function get_molden_order_shell(this, cartesian) result(map)
+   function get_molden_order_shell(this) result(map)
 !!
 !!    Get Molden order
 !!    Written by Alexander C. Paul, May 2021
 !!
 !!    Return index list mapping AOs to the order molden expects
 !!
-      use angular_momentum
-!
       implicit none
 !
       class(shell), intent(in) :: this
-!
-      logical, intent(in) :: cartesian
 !
       integer, dimension(this%length) :: map
 !
       integer :: i
 !
       do i = 1, this%length
-!
-         if (cartesian) then
-!
-            select case (this%l)
-               case(0)
-                  map(i) = i + this%first - 1
-               case(1)
-                  map(i) = i + this%first - 1
-               case(2)
-                  map(i) = this%first - 1 + d_offsets_cart(i)
-               case(3)
-                  map(i) = this%first - 1 + f_offsets_cart(i)
-               case(4)
-                  map(i) = this%first - 1 + g_offsets_cart(i)
-               case default
-                  call output%error_msg('Molden cannot handle angular momentum beyond l=4.')
-            end select
-!
-         else
-!
-            select case (this%l)
-               case(0)
-                  map(i) = i + this%first - 1
-               case(1)
-                  map(i) = i + this%first - 1
-               case(2)
-                  map(i) = this%first - 1 + d_offsets(i)
-               case(3)
-                  map(i) = this%first - 1 + f_offsets(i)
-               case(4)
-                  map(i) = this%first - 1 + g_offsets(i)
-               case default
-                  call output%error_msg('Molden cannot handle angular momentum beyond l=4.')
-            end select
-!
-         end if
+         map(i) = this%first-1 + this%angular_momentum%get_molden_offset(i)
       end do
 !
    end function get_molden_order_shell
 !
 !
-   function get_cartesian_normalization_factor_shell(this) result(factors)
+   function get_normalization_factor_shell(this) result(factors)
 !!
-!!    Get cartesian normalization factor
+!!    Get normalization factor
 !!    Written by Alexander C. Paul, May 2021
 !!
-!!    Return factor to normalize the cartesian function determined
+!!    Return factor to normalize the AO determined
 !!    by the angular momentum l and the basis function i
 !!
-      use angular_momentum
-!
       implicit none
 !
       class(shell), intent(in) :: this
@@ -482,55 +384,43 @@ contains
 !
       do i = 1, this%length
 !
-         select case (this%l)
-            case(0)
-               factors(i) = one
-            case(1)
-               factors(i) = one
-            case(2)
-               factors(i) = d_cart_normalization(i)
-            case(3)
-               factors(i) = f_cart_normalization(i)
-            case(4)
-               factors(i) = g_cart_normalization(i)
-            case default
-               call output%error_msg('Angular momentum of atomic orbital not recognized.')
-         end select
+         factors(i) = this%angular_momentum%get_normalization_factor(i)
 !
       end do
 !
-   end function get_cartesian_normalization_factor_shell
+   end function get_normalization_factor_shell
 !
 !
-   pure function get_angular_momentum_shell(this) result(l_letter)
+   pure function get_angular_momentum_letter_shell(this) result(l_letter)
 !!
 !!    Get angular momentum
 !!    written by Alexander C. Paul, Dec 2019
 !!
 !!    Convert angular momentum quantum number into the letter s,p,d,f,g,h
 !!
-      use angular_momentum
-!
       implicit none
 !
       class(shell), intent(in) :: this
 !
       character(len=:), allocatable :: l_letter
 !
-      select case (this%l)
-         case(0)
-            l_letter = 's'
-         case(1)
-            l_letter = 'p'
-         case(2)
-            l_letter = 'd'
-         case(3)
-            l_letter = 'f'
-         case(4)
-            l_letter = 'g'
-         case(5)
-            l_letter = 'h'
-      end select
+      l_letter = this%angular_momentum%get_l_string()
+!
+   end function get_angular_momentum_letter_shell
+!
+!
+   pure function get_angular_momentum_shell(this) result(l)
+!!
+!!    Get angular momentum
+!!    written by Alexander C. Paul, Dec 2019
+!!
+      implicit none
+!
+      class(shell), intent(in) :: this
+!
+      integer :: l
+!
+      l = this%angular_momentum%get_l_integer()
 !
    end function get_angular_momentum_shell
 !

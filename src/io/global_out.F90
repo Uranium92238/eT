@@ -20,10 +20,13 @@
 module global_out
 !
    use output_file_class, only : output_file
+   use timings_file_class, only : timings_file
 !
    implicit none
 !
    type(output_file) :: output
+
+   type(timings_file) :: timing
 !
 end module global_out
 !

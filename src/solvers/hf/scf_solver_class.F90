@@ -184,15 +184,13 @@ contains
       logical,            intent(in)           :: skip
       real(dp),           intent(in), optional :: energy_threshold
 !
-!     Set settings from parameters
-!
       solver%max_iterations      = max_iterations
       solver%ao_density_guess    = ao_density_guess
       solver%restart             = restart
       solver%acceleration_type   = acceleration_type
       solver%skip                = skip
 !
-      solver%accelerator_creator = accelerator_factory('scf solver')
+      solver%accelerator_creator = accelerator_factory('solver scf')
 !
     if (present(energy_threshold)) then
 !

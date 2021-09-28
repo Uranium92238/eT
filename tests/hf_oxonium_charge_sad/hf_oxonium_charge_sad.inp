@@ -1,0 +1,31 @@
+system
+   name: OH-
+   charge: -1
+   multiplicity: 1
+end system
+
+do
+   ground state
+end do
+
+method
+   hf
+end method
+
+memory
+   available: 8
+end memory
+
+solver scf
+  algorithm:          scf-diis
+  energy threshold:   1.0d-10
+  gradient threshold: 1.0d-10
+end solver scf
+
+geometry
+basis: 3-21G
+O 0.00000 0.00000 0.00000
+H 0.00000 0.00000 1.00000
+H 0.00000 1.00000 0.00000
+H 1.00000 0.00000 0.00000 q = 1
+end geometry

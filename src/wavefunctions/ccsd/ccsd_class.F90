@@ -98,7 +98,7 @@ module ccsd_class
       procedure, private :: omega_ccsd_c2_d2
       procedure, private :: omega_ccsd_c2_d2_complex
 !
-      procedure, private :: omega_ccsd_e2        
+      procedure, private :: omega_ccsd_e2
       procedure, private :: omega_ccsd_e2_complex
 !
       procedure :: construct_u_aibj                           => construct_u_aibj_ccsd
@@ -124,11 +124,11 @@ module ccsd_class
                         => prepare_for_jacobian_ccsd
 !
       procedure, private :: save_jacobian_c2_intermediates
-      procedure, private :: save_jacobian_d2_intermediate 
-      procedure, private :: save_jacobian_e2_intermediate 
+      procedure, private :: save_jacobian_d2_intermediate
+      procedure, private :: save_jacobian_e2_intermediate
       procedure, private :: save_jacobian_g2_intermediates
       procedure, private :: save_jacobian_h2_intermediates
-      procedure, private :: save_jacobian_j2_intermediate 
+      procedure, private :: save_jacobian_j2_intermediate
 !
 !     Procedures related to Jacobian transpose transformation
 !
@@ -147,8 +147,10 @@ module ccsd_class
       procedure, private :: jacobian_transpose_ccsd_d1
       procedure, private :: jacobian_transpose_ccsd_d1_complex
 !
-      procedure, private :: jacobian_transpose_ccsd_e1
-      procedure, private :: jacobian_transpose_ccsd_e1_complex
+      procedure, private :: jacobian_transpose_ccsd_e1_o3v
+      procedure, private :: jacobian_transpose_ccsd_e1_o3v_complex
+      procedure, private :: jacobian_transpose_ccsd_e1_v3o
+      procedure, private :: jacobian_transpose_ccsd_e1_v3o_complex
 !
       procedure, private :: jacobian_transpose_ccsd_f1
       procedure, private :: jacobian_transpose_ccsd_f1_complex
@@ -219,7 +221,8 @@ module ccsd_class
 !
       procedure :: set_initial_amplitudes_guess     => set_initial_amplitudes_guess_ccsd
       procedure :: set_initial_multipliers_guess    => set_initial_multipliers_guess_ccsd
-      procedure :: set_t2_to_cc2_guess              => set_t2_to_cc2_guess_ccsd
+!
+      procedure, private :: set_t2_to_cc2_guess
 !
       procedure :: read_amplitudes                  => read_amplitudes_ccsd
       procedure :: save_amplitudes                  => save_amplitudes_ccsd
@@ -227,11 +230,12 @@ module ccsd_class
       procedure :: save_multipliers                 => save_multipliers_ccsd
       procedure :: read_multipliers                 => read_multipliers_ccsd
 !
-      procedure :: print_dominant_x2                => print_dominant_x2_ccsd
       procedure :: print_dominant_amplitudes        => print_dominant_amplitudes_ccsd
       procedure :: print_dominant_x_amplitudes      => print_dominant_x_amplitudes_ccsd
 !
-      procedure :: scale_amplitudes                           => scale_amplitudes_ccsd
+      procedure, private :: print_dominant_x2
+!
+      procedure :: scale_amplitudes                 => scale_amplitudes_ccsd
 !
       procedure :: calculate_energy                 => calculate_energy_ccsd
       procedure :: calculate_energy_complex         => calculate_energy_ccsd_complex
@@ -253,6 +257,31 @@ module ccsd_class
 !
       procedure :: initialize  => initialize_ccsd
 !
+!     F transformation
+!
+      procedure :: F_x_mu_transformation => F_x_mu_transformation_ccsd
+!
+      procedure :: F_ccsd_a1_1      => F_ccsd_a1_1_ccsd
+      procedure :: F_ccsd_a2_1      => F_ccsd_a2_1_ccsd
+      procedure :: F_ccsd_a1_2      => F_ccsd_a1_2_ccsd
+      procedure :: F_ccsd_b1_2      => F_ccsd_b1_2_ccsd
+      procedure :: F_ccsd_c1_2      => F_ccsd_c1_2_ccsd
+      procedure :: F_ccsd_d1_2      => F_ccsd_d1_2_ccsd
+      procedure :: F_ccsd_e1_2      => F_ccsd_e1_2_ccsd
+      procedure :: F_ccsd_f1_2      => F_ccsd_f1_2_ccsd
+      procedure :: F_ccsd_g1_2      => F_ccsd_g1_2_ccsd
+      procedure :: F_ccsd_h1_2      => F_ccsd_h1_2_ccsd
+      procedure :: F_ccsd_i1_2      => F_ccsd_i1_2_ccsd
+      procedure :: F_ccsd_j1_2      => F_ccsd_j1_2_ccsd
+      procedure :: F_ccsd_a2_2      => F_ccsd_a2_2_ccsd
+      procedure :: F_ccsd_b2_2      => F_ccsd_b2_2_ccsd
+      procedure :: F_ccsd_c2_2      => F_ccsd_c2_2_ccsd
+      procedure :: F_ccsd_d2_2      => F_ccsd_d2_2_ccsd
+      procedure :: F_ccsd_e2_2      => F_ccsd_e2_2_ccsd
+      procedure :: F_ccsd_f2_2      => F_ccsd_f2_2_ccsd
+      procedure :: F_ccsd_g2_2      => F_ccsd_g2_2_ccsd
+      procedure :: F_ccsd_h2_2      => F_ccsd_h2_2_ccsd
+!
    end type ccsd
 !
 !
@@ -268,6 +297,7 @@ module ccsd_class
       include "mean_value_ccsd_interface.F90"
       include "complex_ccsd_interface.F90"
       include "fock_ccsd_interface.F90"
+      include "F_ccsd_interface.F90"
 !
       include "generated_complex_files/initialize_destruct_ccsd_complex_interface.F90"
       include "generated_complex_files/jacobian_transpose_ccsd_complex_interface.F90"
@@ -433,7 +463,7 @@ contains
    end subroutine set_initial_multipliers_guess_ccsd
 !
 !
-   subroutine set_t2_to_cc2_guess_ccsd(wf)
+   subroutine set_t2_to_cc2_guess(wf)
 !!
 !!    Set t2 amplitudes guess
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
@@ -490,7 +520,7 @@ contains
 !
       call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine set_t2_to_cc2_guess_ccsd
+   end subroutine set_t2_to_cc2_guess
 !
 !
    subroutine print_dominant_amplitudes_ccsd(wf)
@@ -504,7 +534,7 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      call wf%print_dominant_x1(wf%t1,'t')
+      call wf%ccs%print_dominant_amplitudes()
       call wf%print_dominant_x2(wf%t2,'t')
 !
    end subroutine print_dominant_amplitudes_ccsd
@@ -528,13 +558,13 @@ contains
 !
       character(len=*) :: tag
 !
-      call wf%print_dominant_x1(x(1:wf%n_t1),tag)
+      call wf%ccs%print_dominant_x_amplitudes(x(1:wf%n_t1),tag)
       call wf%print_dominant_x2(x(wf%n_t1 + 1:wf%n_gs_amplitudes),tag)
 !
    end subroutine print_dominant_x_amplitudes_ccsd
 !
 !
-   subroutine print_dominant_x2_ccsd(wf, x2, tag)
+   subroutine print_dominant_x2(wf, x2, tag)
 !!
 !!    Print dominant x2
 !!    Written by Eirik F. Kjønstad, Dec 2018
@@ -600,7 +630,7 @@ contains
       call mem%dealloc(dominant_values, n_elements)
       call mem%dealloc(abs_x2, wf%n_t2)
 !
-   end subroutine print_dominant_x2_ccsd
+   end subroutine print_dominant_x2
 !
 !
    subroutine scale_amplitudes_ccsd(wf, t)

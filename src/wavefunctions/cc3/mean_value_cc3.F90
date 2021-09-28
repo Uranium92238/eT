@@ -681,6 +681,8 @@ contains
 !
       endif
 !
+      call mem%batch_finalize()
+!
       call abc_timer%turn_off
 !
    end subroutine density_cc3_mu_ref_abc_cc3
@@ -1248,6 +1250,8 @@ contains
 !
          end if
       end if
+!
+      call mem%batch_finalize()
 !
 !     D_ld -= sum_cik Y_clik t^dc_ik
       call wf%density_cc3_Y_vooo_ov(density_ov, t_abij, Y_clik)

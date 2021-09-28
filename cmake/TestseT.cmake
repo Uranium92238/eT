@@ -22,12 +22,16 @@
 # 	Copied and modified for eT by Rolf H. Myhre, Feb 2019
 #
 macro(add_eT_runtest _name _labels)
+
     add_test(
         ${_name}
         python3 ${PROJECT_BINARY_DIR}/tests/${_name}/test --binary-dir=${PROJECT_BINARY_DIR} --work-dir=${PROJECT_BINARY_DIR}/tests/${_name} --verbose)
-    if(NOT "${_labels}" STREQUAL "")
-        set_tests_properties(${_name} PROPERTIES LABELS "${_labels}")
-    endif()
+   
+    # add "integration-test" as a label for all integration tests
+    string(CONCAT labels "${_labels}" "; integration-test")
+    
+    set_tests_properties(${_name} PROPERTIES LABELS "${labels}")
+    
 endmacro()
 
 # All tests here should contain the label "eT"
@@ -66,12 +70,24 @@ add_eT_runtest(hf_dipole                                    "eT;short;hf;sad;dip
 add_eT_runtest(hf_quadrupole                                "eT;short;hf;sad;quadrupole")
 add_eT_runtest(hf_anion                                     "eT;short;hf;sad;charged")
 add_eT_runtest(hf_hydroxyl                                  "eT;short;hf;sad;charged")
+add_eT_runtest(hf_hydroxyl_charge_sad                       "eT;short;hf;sad;charged")
+add_eT_runtest(hf_oxonium_charge_sad                        "eT;short;hf;sad;charged")
 add_eT_runtest(restart_hf                                   "eT;short;hf;restart")
+#
 add_eT_runtest(hf_visualization                             "eT;short;hf;visualization")
+add_eT_runtest(plot_benzene_mos                             "eT;short;hf;visualization")
+add_eT_runtest(plot_ntos_ccs                                "eT;short;ccs;visualization")
+add_eT_runtest(plot_ntos_ccsd                               "eT;short;ccsd;visualization")
+add_eT_runtest(plot_cntos_ccsd                              "eT;short;ccsd;visualization")
 #
 add_eT_runtest(restart_geoopt                               "eT;short;hf;bfgs;gradient,restart")
 add_eT_runtest(hf_bohr_units                                "eT;short;hf;sad")
 add_eT_runtest(hf_pure_basis                                "eT;short;hf;spherical;pople")
+#
+add_eT_runtest(tdhf_tamm_dancoff_es                         "eT;short;tdhf;tamm-dancoff")
+add_eT_runtest(tdhf_rpa_es                                  "eT;short;tdhf;rpa")
+add_eT_runtest(tdhf_restart                                 "eT;short;tdhf;rpa;restart")
+add_eT_runtest(tdhf_global_restart                          "eT;short;tdhf;rpa;restart")
 #
 add_eT_runtest(uhf_energy                                   "eT;short;uhf")
 add_eT_runtest(uhf_energy_cs                                "eT;short;uhf;atom")
@@ -180,6 +196,8 @@ add_eT_runtest(ccsd_left_es_diis                            "eT;short;ccsd;es;le
 add_eT_runtest(ccsd_es_lanczos                              "eT;short;ccsd;es;eom;lanczos")
 add_eT_runtest(ccsd_cvs_lanczos                             "eT;short;ccsd;es;eom;lanczos;cvs")
 add_eT_runtest(ccsd_eom_polarizability                      "eT;short;ccsd;es;eom")
+add_eT_runtest(ccsd_lr_polarizability_transition_moments_nosym "eT;short;ccsd;es;eom")
+add_eT_runtest(ccsd_lr_polarizability_transition_moments       "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom                 "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom_crop            "eT;short;ccsd;es;eom;crop")
 add_eT_runtest(ccsd_oscillator_strength_eom_records_in_mem  "eT;short;ccsd;es;eom")
@@ -191,6 +209,7 @@ add_eT_runtest(ccsd_td_rk4                                  "eT;short;ccsd;compl
 add_eT_runtest(ccsd_td_rk4_train                            "eT;short;ccsd;complex;td")
 add_eT_runtest(ccsd_td_rk4_many_pulses                      "eT;short;ccsd;complex;td")
 add_eT_runtest(ccsd_td_euler                                "eT;short;ccsd;complex;td")
+add_eT_runtest(ccsd_td_euler_fft                            "eT;short;ccsd;complex;td")
 add_eT_runtest(ccsd_td_gl2                                  "eT;short;ccsd;complex;td")
 add_eT_runtest(ccsd_td_gl2_gaussian_envelope                "eT;short;ccsd;complex;td")
 add_eT_runtest(ccsd_td_gl4                                  "eT;short;ccsd;complex;td")
@@ -217,6 +236,7 @@ add_eT_runtest(cc3_gs_energy                                "eT;short;cc3;gs")
 add_eT_runtest(cc3_gs_energy_nr                             "eT;short;cc3;gs;newton-raphson")
 add_eT_runtest(cc3_gs_energy_multimodel_nr                  "eT;short;cc3;gs;newton-raphson;multimodel")
 add_eT_runtest(cc3_dipole                                   "eT;short;cc3;gs;dipole")
+add_eT_runtest(cc3_dipole_nr                                "eT;short;cc3;gs;newton-raphson;dipole")
 add_eT_runtest(cc3_frozen_core                              "eT;short;cc3;gs;es;frozen core")
 add_eT_runtest(cc3_right_es_energies                        "eT;short;cc3;es;right;diis")
 add_eT_runtest(cc3_right_cvs_es_energies                    "eT;short;cc3;es;right;cvs;diis")
@@ -236,6 +256,7 @@ add_eT_runtest(mlcc2_pao_full_right_es                      "eT;short;mlcc2;es;p
 add_eT_runtest(mlcc2_pao_right_es                           "eT;short;mlcc2;es;pao")
 add_eT_runtest(mlcc2_pao_right_es_fc                        "eT;short;mlcc2;es;pao;fc")
 add_eT_runtest(mlcc2_pao_right_es_frozen_hf                 "eT;short;mlcc2;es;pao;frozen-hf")
+add_eT_runtest(mlcc2_pao_mlhf_gs                            "eT;short;mlcc2;gs;pao;mlhf")
 add_eT_runtest(mlcc2_pao_left_es                            "eT;short;mlcc2;es;pao")
 add_eT_runtest(mlcc2_nto_full_right_es                      "eT;short;mlcc2;es;nto")
 add_eT_runtest(mlcc2_nto_right_es                           "eT;short;mlcc2;es;nto")
@@ -259,6 +280,7 @@ add_eT_runtest(restart_orbitals_mlcc2_cholesky_pao          "eT;short;mlcc2;es;c
 #
 add_eT_runtest(mlccsd_cnto_full_gs                          "eT;short;mlccsd;gs;cnto")
 add_eT_runtest(mlccsd_cnto_gs                               "eT;short;mlccsd;gs;cnto")
+add_eT_runtest(mlccsd_cnto_mlhf_gs                          "eT;short;mlccsd;mlhf;gs;cnto")
 add_eT_runtest(mlccsd_pao_gs                                "eT;short;mlccsd;gs;pao")
 add_eT_runtest(mlccsd_cc2_cnto_gs                           "eT;short;mlccsd;gs;cnto")
 add_eT_runtest(mlccsd_nto_gs                                "eT;short;mlccsd;gs;nto")

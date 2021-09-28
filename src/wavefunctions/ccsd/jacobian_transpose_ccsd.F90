@@ -20,7 +20,7 @@
 submodule (ccsd_class) jacobian_transpose_ccsd
 !
 !!
-!!    Jacobian transpose submodule 
+!!    Jacobian transpose submodule
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the transpose of the Jacobian matrix
@@ -68,7 +68,7 @@ contains
       call mem%alloc(t_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_vovo, wf%n_t1)
 !
-      call wf%save_jacobian_transpose_d1_intermediates(t_vovo) 
+      call wf%save_jacobian_transpose_d1_intermediates(t_vovo)
       call wf%save_jacobian_transpose_g1_intermediates(t_vovo)
 !
 !     Prepare integrals for f1 and e1 intermediates
@@ -125,7 +125,7 @@ contains
 !
    module subroutine jacobian_transpose_transformation_ccsd(wf, b, sigma)
 !!
-!!    Jacobian transpose transformation 
+!!    Jacobian transpose transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the transpose Jacobian transformation, i.e., the transformation
@@ -177,7 +177,8 @@ contains
       call wf%jacobian_transpose_doubles_b1(sigma(1 : wf%n_t1), b_aibj)
 !
       call wf%jacobian_transpose_ccsd_d1(sigma(1 : wf%n_t1), b_aibj)
-      call wf%jacobian_transpose_ccsd_e1(sigma(1 : wf%n_t1), b_aibj)
+      call wf%jacobian_transpose_ccsd_e1_o3v(sigma(1 : wf%n_t1), b_aibj)
+      call wf%jacobian_transpose_ccsd_e1_v3o(sigma(1 : wf%n_t1), b_aibj)
       call wf%jacobian_transpose_ccsd_f1(sigma(1 : wf%n_t1), b_aibj)
       call wf%jacobian_transpose_ccsd_g1(sigma(1 : wf%n_t1), b_aibj)
 !
@@ -231,17 +232,17 @@ contains
    module subroutine save_jacobian_transpose_d1_intermediates(wf, t_aibj)
 !!
 !!    Save Jacobian transpose D1 intermediates
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, and 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, and
 !!    Tor S. Haugland, Oct 2019
-!!    
+!!
 !!    Calculates the intermediate
 !!
 !!       X_lcki = sum_d t_dlck F_id
 !!
 !!    (E. F. K. and S. D. F 2017-2018)
-!!      
+!!
 !!    and write the intermediate to the file 'jacobian_transpose_d1_intermediate'.
-!! 
+!!
 !!    (T. S. H., Nov 2019)
 !!
       implicit none
@@ -251,7 +252,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_ilck
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD D1 intermediate', pl='verbose')
       call timer%turn_on()
@@ -262,8 +263,8 @@ contains
 !
       call dgemm('N','N',               &
                   wf%n_o,               &
-                  (wf%n_o)**2 * wf%n_v, & 
-                  wf%n_v,               & 
+                  (wf%n_o)**2 * wf%n_v, &
+                  wf%n_v,               &
                   one,                  &
                   wf%fock_ia,           & ! F_i_d
                   wf%n_o,               &
@@ -317,7 +318,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: t_ckdl
       real(dp), dimension(:,:), allocatable     :: X_li   ! intermediate, term 2
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD D1', pl='verbose')
       call timer%turn_on()
@@ -336,13 +337,13 @@ contains
 !
       call dgemm('N','T',               &
                   wf%n_v,               &
-                  wf%n_o,               & 
-                  (wf%n_o)**2 * wf%n_v, & 
+                  wf%n_o,               &
+                  (wf%n_o)**2 * wf%n_v, &
                   -one,                 &
                   b_aibj,               & ! b_a_lck
                   wf%n_v,               &
                   X_ilck,               & ! X_i_lck
-                  wf%n_o,               & 
+                  wf%n_o,               &
                   one,                  &
                   sigma_ai,             & ! sigma_a_i
                   wf%n_v)
@@ -359,17 +360,17 @@ contains
       call squareup(wf%t2, t_ckdl, wf%n_v * wf%n_o)
 !
       call dgemm('T','N',               &
-                  wf%n_o,               & 
-                  wf%n_o,               & 
-                  (wf%n_o)*(wf%n_v)**2, & 
-                  one,                  & 
-                  t_ckdl,               & ! t_ckd_l 
-                  (wf%n_o)*(wf%n_v)**2, & 
+                  wf%n_o,               &
+                  wf%n_o,               &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  one,                  &
+                  t_ckdl,               & ! t_ckd_l
+                  (wf%n_o)*(wf%n_v)**2, &
                   b_aibj,               & ! b_ckd_i
-                  (wf%n_o)*(wf%n_v)**2, & 
-                  zero,                 & 
+                  (wf%n_o)*(wf%n_v)**2, &
+                  zero,                 &
                   X_li,                 & ! X_l_i
-                  wf%n_o)                 
+                  wf%n_o)
 !
       call mem%dealloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -398,7 +399,7 @@ contains
    module subroutine save_jacobian_transpose_e1_intermediates(wf, t_aibj, L_ilmd)
 !!
 !!    Save Jacobian transpose E1 intermediates
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, and 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, and
 !!    Tor S. Haugland, Oct 2019
 !!
 !!    Calculates the intermediate
@@ -420,7 +421,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: L_ildm
       real(dp), dimension(:,:,:,:), allocatable :: X_ilck
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD E1 intermediate', pl='verbose')
       call timer%turn_on()
@@ -466,22 +467,18 @@ contains
    end subroutine save_jacobian_transpose_e1_intermediates
 !
 !
-   module subroutine jacobian_transpose_ccsd_e1(wf, sigma_ai, b_aibj)
+   module subroutine jacobian_transpose_ccsd_e1_o3v(wf, sigma_ai, b_aibj)
 !!
-!!    Jacobian transpose CCSD E1
+!!    Jacobian transpose CCSD E1 o3v
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the E1 term,
 !!
-!!       sum_ckdle (b_ckdi L_dale t_kl^ce + b_ckdl L_deia t_kl^ce)
 !!      -sum_ckdlm (b_ckal L_ilmd t_km^cd + b_ckdl L_mlia t_km^cd)
 !!
 !!    and adds it to the transformed vector sigma_ai.
 !!
-!!    The routine adds the third and forth terms first.
-!!
 !!    Modified by Tor S. Haugland, Nov 2019
-!!
 !!    Reads intermediate for term 3 from the file 'jacobian_transpose_e1_intermediate'.
 !!
       implicit none
@@ -491,42 +488,18 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o)                 :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: t_ckdm ! t_km^cd
-      real(dp), dimension(:,:,:,:), allocatable :: t_elck ! t_lk^ec
+      real(dp), dimension(:,:,:,:), allocatable :: t_ckdm, g_mlia
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_mlia
+      real(dp), dimension(:,:), allocatable :: X_ml
 !
-      real(dp), dimension(:,:,:,:), allocatable :: L_aiml ! L_mlia
+      real(dp), dimension(:,:,:,:), allocatable :: X_ilck, L_aiml
 !
-      real(dp), dimension(:,:,:,:), allocatable :: X_ilck ! An intermediate, term 3
+      type(timings), allocatable :: timer
 !
-      real(dp), dimension(:,:), allocatable :: X_ml ! An intermediate, term 4
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_dale
-      real(dp), dimension(:,:,:,:), allocatable :: L_aeld ! L_dale
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_deia
-      real(dp), dimension(:,:,:,:), allocatable :: L_aied ! L_deia
-!
-      real(dp), dimension(:,:,:,:), allocatable :: X_eldi ! An intermediate, term 1
-!
-      real(dp), dimension(:,:), allocatable :: X_de ! An intermediate, term 2
-      real(dp), dimension(:,:), allocatable :: X_ed ! Reordered intermediate, term 2
-!
-!     Batching variables
-!
-      integer :: rec0, rec1!, offset_eld
-!
-      integer :: current_d_batch
-!
-      type(batching_index) :: batch_d
-!
-      type(timings), allocatable :: timer 
-!
-      timer = timings('Jacobian transpose CCSD E1', pl='verbose')
+      timer = timings('Jacobian transpose CCSD E1 o3v', pl='verbose')
       call timer%turn_on()
 !
-!     :: Term 3. - sum_ckdlm b_ckal L_ilmd t_km^cd ::
+!     :: Term 1. - sum_ckdlm b_ckal L_ilmd t_km^cd ::
 !
 !     Read the intermediate X_ilck = sum_md L_ilmd t_mk^dc = sum_md L_il_dm t_dm_ck
 !
@@ -553,7 +526,7 @@ contains
 !
       call mem%dealloc(X_ilck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
-!     :: Term 4. - sum_ckdlm b_ckdl L_mlia t_km^cd ::
+!     :: Term 2. - sum_ckdlm b_ckdl L_mlia t_km^cd ::
 !
 !     Form the intermediate X_ml = sum_ckd t_km^cd b_ckdl
 !                                = sum_ckd t_ckd_m^T b_ckd_l
@@ -613,166 +586,256 @@ contains
       call mem%dealloc(L_aiml, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       call mem%dealloc(X_ml, wf%n_o, wf%n_o)
 !
-!     :: Term 1. sum_ckdle b_ckdi L_dale t_kl^ce ::
+      call timer%turn_off()
 !
-!     Read amplitudes from disk
+   end subroutine jacobian_transpose_ccsd_e1_o3v
+!
+!
+   module subroutine jacobian_transpose_ccsd_e1_v3o(wf, sigma_ai, b_aibj)
+!!
+!!    Jacobian transpose CCSD E1 v3o
+!!    Written by Regina Matveeva and Alexander C. Paul, Sep 2021
+!!    Based on jacobian_transpose_ccsd_e1 by Eirik F. Kjønstad, Sarai D. Folkestad
+!!
+!!    Calculates the E1 term
+!!    sum_ckdle (b_ckdi L_dale t_kl^ce + b_ckdl L_deia t_kl^ce)
+!!
+!!    and adds it to the transformed vector sigma_ai.
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o)                 :: sigma_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
+!
+      real(dp), dimension(:,:,:,:), allocatable :: t_elck
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_eldi, X_lide
+!
+      real(dp), dimension(:,:,:), allocatable :: L_Jvv, Y_Jdi, Y_Jvo
+      real(dp), dimension(:,:,:), allocatable :: L_Jov, Y_Jid
+      real(dp), dimension(:,:,:), allocatable :: Y_Jli, Y_liJ
+!
+      real(dp), dimension(:,:), allocatable :: X_de, X_ia
+      real(dp), dimension(:), allocatable ::   Y_J
+!
+      integer :: req0, req1, batch
+      type(batching_index) :: batch_v
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Jacobian transpose CCSD E1 v3o', pl='verbose')
+      call timer%turn_on()
 !
       call mem%alloc(t_elck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_elck, (wf%n_o)*(wf%n_v))
+      call squareup(wf%t2, t_elck, wf%n_o*wf%n_v)
 !
-!     Form the intermediate X_eldi = sum_ck t_lk^ec b_ckdi
-!                                  = sum_ck t_el_ck b_ck_di
-!
-      call mem%alloc(X_eldi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call dgemm('N','N',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  t_elck,            & ! t_el_ck
-                  (wf%n_o)*(wf%n_v), &
-                  b_aibj,            & ! b_ck_di
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  X_eldi,            & ! X_el_di
-                  (wf%n_o)*(wf%n_v))
-!
-!     sum_dle L_dale X_eldi
-!
-!     Prepare batching over index a
-!
-      rec0 = wf%n_v*wf%n_o*wf%eri%n_J
-!
-      rec1 = wf%n_v*wf%eri%n_J + 2*wf%n_v**2*wf%n_o
-!
-      batch_d = batching_index(wf%n_v)
-      call mem%batch_setup(batch_d, rec0, rec1)
-!
-      do current_d_batch = 1, batch_d%num_batches
-!
-         call batch_d%determine_limits(current_d_batch)
-!
-         call mem%alloc(g_dale, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
-!
-         call wf%eri%get_eri_t1('vvov', g_dale, first_p=batch_d%first, last_p=batch_d%get_last())
-!
-!        Form  L_aeld = L_dale = 2 * g_dale - g_dela
-!                              = 2 * g_dale(d,a,l,e) - g_dale(d,e,l,a)
-!
-         call mem%alloc(L_aeld, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
-         call zero_array(L_aeld, wf%n_o*wf%n_v**2*batch_d%length)
-!
-         call add_4132_to_1234(two, g_dale, L_aeld, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
-!
-         call add_4231_to_1234(-one, g_dale, L_aeld, wf%n_v,  wf%n_v, wf%n_o, batch_d%length)
-!
-         call mem%dealloc(g_dale, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
-!
-!        Add sum_ckdle b_ckdi L_dale t_kl^ce
-!            = sum_eld L_a_eld X_eld_i
-!
-         call dgemm('N','N',                             &
-                     wf%n_v,                             &
-                     wf%n_o,                             &
-                     (wf%n_o)*(wf%n_v)*batch_d%length,   &
-                     one,                                &
-                     L_aeld,                             & ! L_a_eld
-                     wf%n_v,                             &
-                     X_eldi(1, 1, batch_d%first, 1),     & ! X_eld_i
-                     (wf%n_o)*(wf%n_v**2),               &
-                     one,                                &
-                     sigma_ai,                           &
-                     wf%n_v)
-!
-         call mem%dealloc(L_aeld, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
-!
-      enddo ! End of batches over a
-!
-      call mem%dealloc(X_eldi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     :: Term 2. sum_ckdle b_ckdl L_deia t_kl^ce ::
-!
-!     Form the intermediate X_de = sum_ckl b_ckdl t_kl^ce = sum_ckl b_d_lck t_e_lck^T
+!     Form the intermediates from t2 and b2
+!     X_eldi = sum_ck t_lk^ec b_ckdi = sum_ck t_el_ck b_ck_di
+!     X_de = sum_ckl b_ckdl t_kl^ce = sum_ckl b_d_lck t_e_lck^T
 !
       call mem%alloc(X_de, wf%n_v, wf%n_v)
 !
-      call dgemm('N','T',               &
-                  wf%n_v,               &
-                  wf%n_v,               &
-                  (wf%n_v)*(wf%n_o)**2, &
-                  one,                  &
-                  b_aibj,               & ! b_d_lck = b_dlck = b_ckdl
-                  wf%n_v,               &
-                  t_elck,               & ! t_e_lck
-                  wf%n_v,               &
-                  zero,                 &
-                  X_de,                 &
+      call mem%alloc(X_eldi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N','T',           &
+                  wf%n_v,           &
+                  wf%n_v,           &
+                  wf%n_v*wf%n_o**2, &
+                  one,              &
+                  b_aibj,           & ! b_d_lck = b_dlck = b_ckdl
+                  wf%n_v,           &
+                  t_elck,           & ! t_e_lck
+                  wf%n_v,           &
+                  zero,             &
+                  X_de,             &
                   wf%n_v)
+!
+      call dgemm('N','N',        &
+                  wf%n_o*wf%n_v, &
+                  wf%n_o*wf%n_v, &
+                  wf%n_o*wf%n_v, &
+                  one,           &
+                  t_elck,        & ! t_el_ck
+                  wf%n_o*wf%n_v, &
+                  b_aibj,        & ! b_ck_di
+                  wf%n_o*wf%n_v, &
+                  zero,          &
+                  X_eldi,        & ! X_el_di
+                  wf%n_o*wf%n_v)
 !
       call mem%dealloc(t_elck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%alloc(X_ed, wf%n_v, wf%n_v)
+!     Add coulomb contribution from term 1 and exchange from term 2:
+!     Y_J_di = sum_el 2 X_eldi L_J_le - sum_e X_de L_J_ie
 !
-      call sort_12_to_21(X_de, X_ed, wf%n_v, wf%n_v)
+!     Needs to be contracted with L_J_da
+!     sigma_ai += Y_J_di L_J_da
 !
+      call mem%alloc(L_Jov, wf%eri%n_J, wf%n_o, wf%n_v)
+      call wf%eri%get_cholesky_t1(L_Jov, 1, wf%n_o, wf%n_o + 1, wf%n_mo)
+!
+      call mem%alloc(Y_Jid, wf%eri%n_J, wf%n_o, wf%n_v)
+!
+      call dgemm('N','T',               &
+                  wf%eri%n_J*wf%n_o,    &
+                  wf%n_v,               &
+                  wf%n_v,               &
+                  -one,                 &
+                  L_Jov,                & ! L_Ji_e
+                  wf%eri%n_J*wf%n_o,    &
+                  X_de,                 & ! X_d_e
+                  wf%n_v,               &
+                  zero,                 &
+                  Y_Jid,                &
+                  wf%eri%n_J*wf%n_o)
+!
+      call mem%alloc(Y_Jdi, wf%eri%n_J, wf%n_v, wf%n_o)
+      call sort_123_to_132(Y_Jid, Y_Jdi, wf%eri%n_J, wf%n_o, wf%n_v)
+      call mem%dealloc(Y_Jid, wf%eri%n_J, wf%n_o, wf%n_v)
+!
+      call mem%alloc(Y_Jvo, wf%eri%n_J, wf%n_v, wf%n_o)
+      call sort_123_to_132(L_Jov, Y_Jvo, wf%eri%n_J, wf%n_o, wf%n_v)
+!
+      call dgemm('N','N',        &
+                  wf%eri%n_J,    &
+                  wf%n_v*wf%n_o, &
+                  wf%n_v*wf%n_o, &
+                  two,           &
+                  Y_Jvo,         & ! L_J_el
+                  wf%eri%n_J,    &
+                  X_eldi,        & ! X_el_di
+                  wf%n_v*wf%n_o, &
+                  one,           &
+                  Y_Jdi,         & ! Y_J_di
+                  wf%eri%n_J)
+!
+      call mem%dealloc(Y_Jvo, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+!     Resort X_eldi for contraction with L_J_de in batches over e
+!
+      call mem%alloc(X_lide, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+      call sort_1234_to_2431(X_eldi, X_lide, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(X_eldi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(Y_liJ, wf%n_o, wf%n_o, wf%eri%n_J)
+      call zero_array(Y_liJ, wf%n_o**2*wf%eri%n_J)
+!
+      call mem%alloc(X_ia, wf%n_o, wf%n_v)
+      call zero_array(X_ia, wf%n_o*wf%n_v)
+!
+      call mem%alloc(Y_J, wf%eri%n_J)
+      call zero_array(Y_J, wf%eri%n_J)
+!
+!     Contractions with L_J_vv
+!
+      req0 = 0
+      req1 = wf%n_v*wf%eri%n_J
+!
+      batch_v = batching_index(wf%n_v)
+      call mem%batch_setup(batch_v, req0, req1)
+!
+      call mem%alloc(L_Jvv, wf%eri%n_J, wf%n_v, batch_v%max_length)
+!
+      do batch = 1, batch_v%num_batches
+!
+         call batch_v%determine_limits(batch)
+!
+         call wf%eri%get_cholesky_t1(L_Jvv, wf%n_o + 1, wf%n_mo, &
+                                     wf%n_o + batch_v%first,     &
+                                     wf%n_o + batch_v%get_last())
+!
+         call dgemm('T','N',                &
+                    wf%n_o,                 &
+                    batch_v%length,         &
+                    wf%eri%n_J*wf%n_v,      &
+                    one,                    &
+                    Y_Jdi,                  & ! Y_Jd_i
+                    wf%eri%n_J*wf%n_v,      &
+                    L_Jvv,                  & ! L_Jd_a
+                    wf%eri%n_J*wf%n_v,      &
+                    one,                    &
+                    X_ia(:,batch_v%first:), &
+                    wf%n_o)
+!
+         call dgemm('N','T',                       &
+                     wf%n_o**2,                    &
+                     wf%eri%n_J,                   &
+                     wf%n_v*batch_v%length,        &
+                     one,                          &
+                     X_lide(:,:,:,batch_v%first:), & ! X_li_de
+                     wf%n_o**2,                    &
+                     L_Jvv,                        & ! L_J_de
+                     wf%eri%n_J,                   &
+                     one,                          &
+                     Y_liJ,                        & ! Y_li_J
+                     wf%n_o**2)
+!
+         call dgemv('N',                    &
+                    wf%eri%n_J,             &
+                    wf%n_v*batch_v%length,  &
+                    two,                    &
+                    L_Jvv,                  & ! L_J_de
+                    wf%eri%n_J,             &
+                    X_de(:,batch_v%first:), & ! X_de
+                    1,                      &
+                    one,                    &
+                    Y_J, 1)                   ! Y_J
+!
+      end do
+!
+      call mem%dealloc(L_Jvv, wf%eri%n_J, wf%n_v, batch_v%max_length)
+!
+      call mem%batch_finalize
+!
+      call mem%dealloc(X_lide, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
       call mem%dealloc(X_de, wf%n_v, wf%n_v)
+      call mem%dealloc(Y_Jdi, wf%eri%n_J, wf%n_v, wf%n_o)
 !
-!     sum_ckdle b_ckdl L_deia t_kl^ce = sum_de L_deia X_ed
+!     Term 2: Coulomb: sigma_ai += 2 L_J_de X_de L_J_ia = Y_J L_J_ia
 !
-!     Prepare batching over index d
+      call dgemv('T',            &
+                  wf%eri%n_J,    &
+                  wf%n_o*wf%n_v, &
+                  one,           &
+                  L_Jov,         & ! L_J_ia
+                  wf%eri%n_J,    &
+                  Y_J, 1,        & ! Y_J
+                  one,           &
+                  X_ia, 1)         ! X_ia
 !
-      rec0 = wf%n_v*wf%n_o*wf%eri%n_J
-      rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%eri%n_J
+      call mem%dealloc(Y_J, wf%eri%n_J)
 !
-      batch_d = batching_index(wf%n_v)
-      call mem%batch_setup(batch_d, rec0, rec1)
+      call add_21_to_12(one, X_ia, sigma_ai, wf%n_v, wf%n_o)
 !
-      do current_d_batch = 1, batch_d%num_batches
+      call mem%dealloc(X_ia, wf%n_o, wf%n_v)
 !
-!        For each batch, get the limits for the d index
+!     Term 1 Exchange: sigma_ai -= X_eldi L_J_de L_J_la = Y_J_li L_J_la
 !
-         call batch_d%determine_limits(current_d_batch)
+      call mem%alloc(Y_Jli, wf%eri%n_J, wf%n_o, wf%n_o)
+      call sort_123_to_312(Y_liJ, Y_Jli, wf%n_o, wf%n_o, wf%eri%n_J)
+      call mem%dealloc(Y_liJ, wf%n_o, wf%n_o, wf%eri%n_J)
 !
-!        Form g_deia
+      call dgemm('T','N',              &
+                 wf%n_v,               &
+                 wf%n_o,               &
+                 wf%eri%n_J*wf%n_o,    &
+                 -one,                 &
+                 L_Jov,                & ! L_Jl_a
+                 wf%eri%n_J*wf%n_o,    &
+                 Y_Jli,                & ! Y_Jl_i
+                 wf%eri%n_J*wf%n_o,    &
+                 one,                  &
+                 sigma_ai,             &
+                 wf%n_v)
 !
-         call mem%alloc(g_deia, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
-!
-         call wf%eri%get_eri_t1('vvov', g_deia, first_p=batch_d%first, last_p=batch_d%get_last())
-!
-!        Form L_aied = L_deia = 2 * g_deia - g_daie
-!                             = 2 * g_deia(d,e,i,a) - g_deia(d,a,i,e)
-!
-         call mem%alloc(L_aied, wf%n_v, wf%n_o, wf%n_v, batch_d%length)
-         call zero_array(L_aied, wf%n_o*wf%n_v**2*batch_d%length)
-!
-         call add_4321_to_1234(two, g_deia, L_aied, wf%n_v, wf%n_o, wf%n_v, batch_d%length)
-         call add_4123_to_1234(-one, g_deia, L_aied, wf%n_v, wf%n_o, wf%n_v, batch_d%length)
-!
-         call mem%dealloc(g_deia, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
-!
-         call dgemm('N','N',                    &
-                     (wf%n_v)*(wf%n_o),         &
-                     1,                         &
-                     (wf%n_v)*(batch_d%length), &
-                     one,                       &
-                     L_aied,                    & ! L_ai_ed
-                     (wf%n_v)*(wf%n_o),         &
-                     X_ed(1,batch_d%first),     &
-                     (wf%n_v)*(batch_d%length), &
-                     one,                       &
-                     sigma_ai,                  &
-                     (wf%n_v)*(wf%n_o))
-!
-         call mem%dealloc(L_aied, wf%n_v, wf%n_o, wf%n_v, batch_d%length)
-!
-      enddo ! End of batches over d
-!
-      call mem%dealloc(X_ed, wf%n_v, wf%n_v)
+      call mem%dealloc(L_Jov, wf%eri%n_J, wf%n_o, wf%n_v)
+      call mem%dealloc(Y_Jli, wf%eri%n_J, wf%n_o, wf%n_o)
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_transpose_ccsd_e1
+   end subroutine jacobian_transpose_ccsd_e1_v3o
 !
 !
    module subroutine save_jacobian_transpose_f1_intermediates(wf, t_aibj, g_ikmc)
@@ -786,7 +849,7 @@ contains
 !!       X_ikdl = sum_mc t_lm^cd g_ikmc = t_mcdl g_ikmc
 !!
 !!    (E. F. K. and S. D. F. 2017-2018)
-!! 
+!!
 !!       X_lidk = sum_mc t_mk^dc g_mlic = t_mcdk g_limc
 !!
 !!    adds them reordered together
@@ -809,7 +872,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: X_kdli
       real(dp), dimension(:,:,:,:), allocatable :: X_lidk
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD F1 intermediate', pl='verbose')
       call timer%turn_on()
@@ -840,7 +903,7 @@ contains
 !     X_lidk = sum_mc t_mk^dc g_mlic = t_mcdk g_limc
 !
 !     Pretend that g_ikmc is g_mlic and reorder to g_limc
-!   
+!
       call mem%alloc(g_limc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
       call sort_1234_to_2314(g_ikmc, g_limc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
@@ -926,13 +989,13 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: X_kiml
       real(dp), dimension(:,:,:,:), allocatable :: X_mkli
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD F1', pl='verbose')
       call timer%turn_on()
 !
-!     :: Term 1. and Term 2. 
-!     
+!     :: Term 1. and Term 2.
+!
 !        sum_ckdlm b_akdl t_lm^cd g_ikmc + sum_ckdlm b_akdl t_mk^dc g_mlic
 !        = sum_kdl b_akdl X_kdli
 !
@@ -1063,7 +1126,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: t_cekl
       real(dp), dimension(:,:,:,:), allocatable :: g_icde, g_idce
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
 !     Batching variables
 !
@@ -1128,6 +1191,8 @@ contains
          call mem%dealloc(g_idce, wf%n_o, batch_d%length, wf%n_v, wf%n_v)
 !
       enddo ! End of batches over d
+!
+      call mem%batch_finalize()
 !
       call mem%dealloc(t_cekl, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -1201,7 +1266,7 @@ contains
 !
       integer :: rec1, rec0
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD G1', pl='verbose')
       call timer%turn_on()
@@ -1297,6 +1362,8 @@ contains
 !
       enddo ! End of batches over e
 !
+      call mem%batch_finalize()
+!
       call mem%dealloc(X_kdei, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
 !     :: Term 3. - sum_ckdle b_cldi t_kl^ce g_keda ::
@@ -1370,6 +1437,8 @@ contains
 !
       enddo ! End of batches over a
 !
+      call mem%batch_finalize()
+!
       call mem%dealloc(X_kedi, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
 !     :: Term 1. - sum_ckdle b_akdl t_kl^ce g_icde ::
@@ -1440,7 +1509,7 @@ contains
 !
       type(batching_index) :: batch_b
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD B2', pl='verbose')
       call timer%turn_on()
@@ -1574,6 +1643,8 @@ contains
 !
       enddo ! End of batches over b
 !
+      call mem%batch_finalize()
+!
 !     Add  - sum_ck b_aick g_cbjk = - sum_ck b_ai_ck g_ck_bj
 !
       call dgemm('N','N',            &
@@ -1582,7 +1653,7 @@ contains
                   (wf%n_o)*(wf%n_v), &
                   -one,              &
                   b_aibj,            & ! "b_ai_ck"
-                  (wf%n_o)*(wf%n_v), &   
+                  (wf%n_o)*(wf%n_v), &
                   g_ckbj,            & ! g_ck_bj
                   (wf%n_o)*(wf%n_v), &
                   one,               &
@@ -1633,7 +1704,7 @@ contains
 !
       type(batching_index) :: batch_b
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD C2', pl='verbose')
       call timer%turn_on()
@@ -1718,6 +1789,8 @@ contains
 !
       enddo ! End of batches over b
 !
+      call mem%batch_finalize()
+!
 !     Reorder to b_ajck = b_akcj
 !
       call mem%alloc(b_ajck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -1775,7 +1848,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_ckbj ! An intermediate
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD D2 intermediate', pl='verbose')
       call timer%turn_on()
@@ -1841,7 +1914,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_ckbj ! An intermediate
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD D2', pl='verbose')
       call timer%turn_on()
@@ -1905,7 +1978,7 @@ contains
       real(dp), dimension(:,:), allocatable     :: X_jl   ! An intermediate, term 1
       real(dp), dimension(:,:), allocatable     :: X_cb   ! An intermediate, term 3
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD E2', pl='verbose')
       call timer%turn_on()
@@ -1964,7 +2037,7 @@ contains
                   wf%n_v,               &
                   b_aibj,               & ! b_c_jai
                   wf%n_v,               &
-                  one,                  & 
+                  one,                  &
                   sigma_aibj,           & ! sigma_b_jai, but we will symmetrize later on
                   (wf%n_v))
 !
@@ -1978,7 +2051,7 @@ contains
    module subroutine save_jacobian_transpose_f2_intermediates(wf, t_ckdl, L_dlbi)
 !!
 !!    Save Jacobian transpose f2 intermediates
-!!    Written by Eirik F. Kjønstad, Tor S. Haugland and 
+!!    Written by Eirik F. Kjønstad, Tor S. Haugland and
 !!    Sarai D. Folkestad, Nov 2019
 !!
 !!    Calculates the F2 intermediate,
@@ -1999,7 +2072,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_ckbi ! An intermediate, term 2
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD F2 intermediate', pl='verbose')
       call timer%turn_on()
@@ -2013,9 +2086,9 @@ contains
                   (wf%n_v)*(wf%n_o), &
                   (wf%n_v)*(wf%n_o), &
                   one,               &
-                  t_ckdl,            & 
+                  t_ckdl,            &
                   (wf%n_v)*(wf%n_o), &
-                  L_dlbi,            & 
+                  L_dlbi,            &
                   (wf%n_v)*(wf%n_o), &
                   zero,              &
                   X_ckbi,            &
@@ -2071,7 +2144,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: sigma_ajbi ! sigma_aibj contribution
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD F2', pl='verbose')
       call timer%turn_on()
@@ -2235,15 +2308,15 @@ contains
    module subroutine save_jacobian_transpose_g2_intermediates(wf, t_aibj, g_kdib)
 !!
 !!    Save Jacobian transpose g2 intermediates
-!!    Written by Tor S. Haugland, Eirik F. Kjønstad and 
+!!    Written by Tor S. Haugland, Eirik F. Kjønstad and
 !!    S. D. Folkestad, Nov 2019
 !!
-!!    Constructs intermediates 
+!!    Constructs intermediates
 !!
 !!       X_clbi = sum_dk t_ckdl g_kbid (E. F. K. and S. D. F., 2017-2018)
 !!       X_clib = sum_kd t_clkd g_kdib (T. S. H., Nov 2019)
 !!
-!!    and saves them to files 'jacobian_transpose_g2_intermediate' 
+!!    and saves them to files 'jacobian_transpose_g2_intermediate'
 !!    and 'jacobian_transpose_g2_intermediate_2'
 !!
 !!       (T. S. H., Nov 2019)
@@ -2265,7 +2338,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: t_clkd
       real(dp), dimension(:,:,:,:), allocatable :: X_clib
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD G2 intermediates', pl='verbose')
       call timer%turn_on()
@@ -2313,7 +2386,7 @@ contains
 !
       call mem%dealloc(X_clbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     :: Intermediate X_clib 
+!     :: Intermediate X_clib
 !
 !     Form t_clkd = t_kl^cd
 !
@@ -2386,7 +2459,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: X_clbi ! An intermediate, term 1
       real(dp), dimension(:,:,:,:), allocatable :: X_clib ! An intermediate, term 2
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD G2', pl='verbose')
       call timer%turn_on()
@@ -2473,7 +2546,7 @@ contains
    module subroutine save_jacobian_transpose_i2_intermediates(wf, t_aibj, g_ovov)
 !!
 !!    Save Jacobian transpose i2 intermediates
-!!    Written by Tor S. Haugland, Eirik F. Kjønstad and 
+!!    Written by Tor S. Haugland, Eirik F. Kjønstad and
 !!    Sarai D. Folkestad, Nov 2019
 !!
 !!    Construct intermediate
@@ -2498,7 +2571,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_klij ! An intermediate, terms 1 & 2
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD I2 intermediate', pl='verbose')
       call timer%turn_on()
@@ -2596,7 +2669,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_klij ! An intermediate, terms 1 & 2
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD I2', pl='verbose')
       call timer%turn_on()
@@ -2701,7 +2774,7 @@ contains
 !!    Save Jacobian transpose e2 oo intermediate
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
-!!    Constructs the intermediate 
+!!    Constructs the intermediate
 !!
 !!       X_jl = sum_kcd L_kcjd t_kl^cd
 !!
@@ -2718,9 +2791,9 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: t_ckdl
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: L_ckdj ! L_kcjd
 !
-      real(dp), dimension(:,:), allocatable :: X_jl 
+      real(dp), dimension(:,:), allocatable :: X_jl
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD E2 oo intermediate', pl='verbose')
       call timer%turn_on()
@@ -2763,7 +2836,7 @@ contains
 !!    Save Jacobian transpose e2 vv intermediate
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
-!!    Constructs the intermediate 
+!!    Constructs the intermediate
 !!
 !!       X_cd = sum_kdl t_kl^cd L_ldkb
 !!
@@ -2782,7 +2855,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: X_cb
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD E2 vv intermediate', pl='verbose')
       call timer%turn_on()

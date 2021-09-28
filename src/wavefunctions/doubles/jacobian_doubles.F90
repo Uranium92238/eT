@@ -619,6 +619,8 @@ contains
 !
       enddo ! End batching over a
 !
+      call mem%batch_finalize()
+!
       call mem%dealloc(c_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call timer%turn_off()
@@ -715,6 +717,8 @@ contains
          call mem%dealloc(g_aibc, wf%n_v, wf%n_o, wf%n_v, batch_b%length)
 !
       enddo ! End of batches over b
+!
+      call mem%batch_finalize()
 !
       call timer%turn_off()
 !

@@ -34,22 +34,25 @@ module parameters
 !  Version
 !
    integer, parameter :: major_version = 1
-   integer, parameter :: minor_version = 3
-   integer, parameter :: patch_version = 9
-   character(len=27), parameter :: version_name = "Disco"
+   integer, parameter :: minor_version = 4
+   integer, parameter :: patch_version = 0
+!
+   character(len=27), parameter :: version_name = "Eos"
 !
 !  Integers
 !
-   real(dp), parameter :: zero  =  0.0D0
-   real(dp), parameter :: one   =  1.0D0
-   real(dp), parameter :: two   =  2.0D0
-   real(dp), parameter :: three =  3.0D0
-   real(dp), parameter :: four  =  4.0D0
-   real(dp), parameter :: five  =  5.0D0
-   real(dp), parameter :: six   =  6.0D0
-   real(dp), parameter :: seven =  7.0D0
-   real(dp), parameter :: eight =  8.0D0
-   real(dp), parameter :: ten   = 10.0D0
+   real(dp), parameter :: zero   =  0.0D0
+   real(dp), parameter :: one    =  1.0D0
+   real(dp), parameter :: two    =  2.0D0
+   real(dp), parameter :: three  =  3.0D0
+   real(dp), parameter :: four   =  4.0D0
+   real(dp), parameter :: five   =  5.0D0
+   real(dp), parameter :: six    =  6.0D0
+   real(dp), parameter :: seven  =  7.0D0
+   real(dp), parameter :: eight  =  8.0D0
+   real(dp), parameter :: nine   =  9.0D0
+   real(dp), parameter :: ten    = 10.0D0
+   real(dp), parameter :: eleven = 11.0D0
 !
 !  Fractions
 !
@@ -67,9 +70,14 @@ module parameters
 !
 !  Square roots
 !
-   real(dp), parameter :: inv_sqrt_3 = one/sqrt(three)
-   real(dp), parameter :: inv_sqrt_5 = one/sqrt(five)
-   real(dp), parameter :: inv_sqrt_7 = one/sqrt(seven)
+   real(dp), parameter :: sqrt_3 = sqrt(three)
+   real(dp), parameter :: sqrt_5 = sqrt(five)
+!
+   real(dp), parameter :: inv_sqrt_3  = one/sqrt_3
+   real(dp), parameter :: inv_sqrt_5  = one/sqrt_5
+   real(dp), parameter :: inv_sqrt_7  = one/sqrt(seven)
+   real(dp), parameter :: inv_sqrt_9  = one/sqrt(nine)
+   real(dp), parameter :: inv_sqrt_11 = one/sqrt(eleven)
 !
 !  Complex integers
 !

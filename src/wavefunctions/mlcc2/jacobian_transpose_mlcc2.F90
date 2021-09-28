@@ -446,6 +446,8 @@ contains
 !
       enddo ! batch_a
 !
+      call mem%batch_finalize()
+!
 !     Term 2: sum_bjk c_akbj g_bjik
 !
 !        a, k, b, j : CC2 orbitals
@@ -644,6 +646,8 @@ contains
          call mem%dealloc(L_cajb, batch_c%length, n_cc2_v, n_cc2_o, n_cc2_v)
 !
       enddo ! batch_c
+!
+      call mem%batch_finalize()
 !
       call add_2143_to_1234(one, sigma_iajb, sigma_aibj, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
 !

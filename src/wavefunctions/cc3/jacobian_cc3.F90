@@ -198,6 +198,8 @@ contains
 !
       call mem%dealloc(X_abid, wf%n_v, wf%n_v, wf%n_o, batch_d%max_length)
 !
+      call mem%batch_finalize()
+!
       call wf%X_abid%close_()
 !
 !     :: X_ajil term ::
@@ -501,6 +503,8 @@ contains
          end if
 !
       endif
+!
+      call mem%batch_finalize()
 !
       call mem%dealloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
 !
@@ -1006,6 +1010,8 @@ contains
          end if
 !
       endif
+!
+      call mem%batch_finalize()
 !
       call mem%dealloc(F_ov_ck, wf%n_v, wf%n_o)
 !

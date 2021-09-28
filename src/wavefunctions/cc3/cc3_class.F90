@@ -500,6 +500,8 @@ contains
 !
       call mem%dealloc(Y_ebck, wf%n_v**3, batch_k%max_length)
 !
+      call mem%batch_finalize()
+!
    end subroutine save_tbar_intermediates_cc3
 !
 !
@@ -1083,6 +1085,8 @@ contains
          end if
 !
       endif
+!
+      call mem%batch_finalize()
 !
    end subroutine L_R_overlap_triples_cc3
 !

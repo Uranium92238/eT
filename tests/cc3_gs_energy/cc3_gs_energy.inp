@@ -24,6 +24,7 @@ solver scf
 end solver scf
 
 solver cc gs
+   algorithm: diis
    energy threshold: 1.0d-10
    omega threshold:  1.0d-10
 end solver cc gs

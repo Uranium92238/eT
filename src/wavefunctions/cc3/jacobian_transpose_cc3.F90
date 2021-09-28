@@ -194,6 +194,8 @@ contains
 !
       call wf%X_abid%close_()
 !
+      call mem%batch_finalize()
+!
 !     :: X_ajil term ::
 !
       call wf%X_ajil%open_('read')
@@ -506,6 +508,8 @@ contains
          end if
 !
       endif
+!
+      call mem%batch_finalize()
 !
       call wf%jacobian_transpose_cc3_b1_x_ai(X_ai, sigma_ai)
 !
@@ -1155,6 +1159,8 @@ contains
 !
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
+      call mem%batch_finalize()
+!
 !     Contribution of the Y_cmjk to sigma1
 !
       call wf%jacobian_transpose_cc3_c3_a1_y_o(sigma_ai, Y_cmjk)
@@ -1544,6 +1550,8 @@ contains
       call mem%dealloc(X_J_kl, wf%eri%n_J, wf%n_o, wf%n_o)
       call mem%dealloc(X_J_lk, wf%eri%n_J, wf%n_o, wf%n_o)
 !
+      call mem%batch_finalize()
+!
    end subroutine jacobian_transpose_cc3_c3_a1_y_o_cc3
 !
 !
@@ -1585,7 +1593,7 @@ contains
 !
       req_0 = 0
       req_k = 2*wf%n_v**3 + 2*wf%n_v*wf%eri%n_J + 2*wf%n_o*wf%eri%n_J
-      req_v = wf%n_v*wf%eri%n_J + wf%n_o*wf%eri%n_J
+      req_v = wf%n_v*wf%eri%n_J + 2*wf%n_o*wf%eri%n_J
       req_2 = 0
 !
       call mem%batch_setup(batch_k, batch_v, req_0, req_k, req_v, req_2)
@@ -1735,6 +1743,8 @@ contains
 !
       call mem%dealloc(Y_beck, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
       call mem%dealloc(Y_ebck, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
+!
+      call mem%batch_finalize()
 !
    end subroutine jacobian_transpose_cc3_c3_a1_y_v_cc3
 !

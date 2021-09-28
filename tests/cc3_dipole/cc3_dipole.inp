@@ -35,7 +35,8 @@ end solver cc gs
 
 solver cc multipliers
    threshold: 1.0d-11
-   algorithm: diis
+   algorithm: newton-raphson
+   multimodel newton: on
 end solver cc multipliers
 
 solver cholesky

@@ -104,20 +104,8 @@ contains
 !
       end if
 !
-      engine%gs_algorithm          = 'diis'
-!
-      if (wf%name_ .eq. 'ccs' .or. &
-          wf%name_ .eq. 'cc2' .or. &
-          wf%name_ .eq. 'cc3' .or. &
-          wf%name_ .eq. 'low memory cc2') then
-!
-         engine%multipliers_algorithm = 'diis'
-!
-      else
-!
-         engine%multipliers_algorithm = 'davidson'
-!
-      end if
+      call engine%set_default_gs_algorithm(wf)
+      call engine%set_default_multipliers_algorithm(wf)
 !
       engine%integrator            = 'rk4'
 !

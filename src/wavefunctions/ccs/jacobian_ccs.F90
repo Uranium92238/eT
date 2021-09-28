@@ -191,6 +191,9 @@ contains
 !
 !     :: Term 1: rho_ai = sum_bj 2 g_aijb * c_bj ::
 !
+      call mem%alloc(X_J, wf%eri%n_J)
+      call zero_array(X_J, wf%eri%n_J)
+!
       req0 = 0
 !
       req1_j = wf%n_v*wf%eri%n_J + wf%n_v
@@ -198,9 +201,6 @@ contains
       batch_j = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_j, req0, req1_j)
-!
-      call mem%alloc(X_J, wf%eri%n_J)
-      call zero_array(X_J, wf%eri%n_J)
 !
       call mem%alloc(L_J_jb, wf%eri%n_J, batch_j%max_length, wf%n_v)
       call mem%alloc(c_jb, batch_j%max_length*wf%n_v)
@@ -236,6 +236,8 @@ contains
 !
       enddo !batch_j
 !
+      call mem%batch_finalize()
+!
       call mem%dealloc(L_J_jb, wf%eri%n_J, batch_j%max_length, wf%n_v)
       call mem%dealloc(c_jb, wf%n_v*batch_j%max_length)
 !
@@ -270,6 +272,8 @@ contains
                      wf%n_v*wf%n_o)
 !
       enddo !batch_i
+!
+      call mem%batch_finalize()
 !
       call mem%dealloc(L_J_ai, wf%eri%n_J, wf%n_v, batch_i%max_length)
       call mem%dealloc(X_J, wf%eri%n_J)
@@ -362,6 +366,8 @@ contains
 !
          enddo ! batch_b
       enddo ! batch_i
+!
+      call mem%batch_finalize()
 !
       call timer%turn_off()
 !

@@ -8,6 +8,10 @@ method
   lowmem-cc2
 end method
 
+print
+   output print level: verbose
+end print
+
 memory
    available: 8
 end memory

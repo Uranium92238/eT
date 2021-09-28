@@ -20,7 +20,7 @@
 submodule (hf_class) initialize_destruct_hf
 !
 !!
-!!    Initialize destruct submodule 
+!!    Initialize destruct submodule
 !!
 !!    Gathers routines that initialize and destruct the HF type-bound variables.
 !!
@@ -210,7 +210,7 @@ contains
 !
    module subroutine initialize_frozen_CCT_hf(wf)
 !!
-!!    Initialize frozen CC^T 
+!!    Initialize frozen CC^T
 !!    Written by Sarai D. Folkestad, Jan 2020
 !!
 !!
@@ -225,7 +225,7 @@ contains
 !
    module subroutine destruct_frozen_CCT_hf(wf)
 !!
-!!    Destruct frozen CC^T  
+!!    Destruct frozen CC^T
 !!    Written by Sarai D. Folkestad, Jan 2020
 !!
 !!
@@ -236,6 +236,40 @@ contains
       if (allocated(wf%frozen_CCT)) call mem%dealloc(wf%frozen_CCT, wf%ao%n, wf%ao%n)
 !
    end subroutine destruct_frozen_CCT_hf
+!
+!
+   module subroutine initialize_tdhf_quantities_hf(wf, n_states)
+!!
+!!    Initialize tdhf quantities
+!!    Written by Sarai D. Folkestad, May 2021
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+      integer, intent(in) :: n_states
+!
+      wf%n_tdhf_vectors = n_states
+!
+      call wf%initialize_tdhf_files()
+      call mem%alloc(wf%tdhf_excitation_energies, wf%n_tdhf_vectors)
+!
+   end subroutine initialize_tdhf_quantities_hf
+!
+!
+   module subroutine destruct_tdhf_excitation_energies_hf(wf)
+!!
+!!    Destruct TDHF excitation energies
+!!    Written by Sarai D. Folkestad, May 2021
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+      if (allocated(wf%tdhf_excitation_energies)) &
+         call mem%dealloc(wf%tdhf_excitation_energies, wf%n_tdhf_vectors)
+!
+   end subroutine destruct_tdhf_excitation_energies_hf
 !
 !
 end submodule initialize_destruct_hf

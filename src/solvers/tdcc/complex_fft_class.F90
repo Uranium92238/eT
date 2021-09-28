@@ -110,10 +110,10 @@ contains
 !
       call solver%read_settings()
 !
-      solver%time_series_file = sequential_file(trim(solver%file_name), 'formatted')
-      solver%angular_frequency_series_file = sequential_file('complex_fft_'              &
-                                                             // trim(solver%file_name)   &
-                                                             // '_to_angular_frequency', &
+      solver%time_series_file = sequential_file('eT.' // trim(solver%file_name) // '.out', &
+                                                'formatted')
+      solver%angular_frequency_series_file = sequential_file('eT.complex_fft.'                    &
+                                                             // trim(solver%file_name) // '.out', &
                                                              'formatted')
 !
    end function new_complex_fft

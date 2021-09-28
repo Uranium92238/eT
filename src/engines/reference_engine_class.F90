@@ -112,7 +112,6 @@ contains
       engine%skip_scf         = .false.
 !
       call engine%read_settings()
-      call engine%check_algorithm()
 !
    end function new_reference_engine
 !
@@ -151,6 +150,8 @@ contains
 !
       class(reference_engine), intent(in)    :: engine
       class(hf),               intent(inout) :: wf
+!
+      call engine%check_algorithm()
 !
       if ((.not. engine%restart) .and.  &
           (.not. engine%skip_scf) .and. &
@@ -337,7 +338,7 @@ contains
          sad_wf = uhf(fractional_uniform_valence=.true., &
                       multiplicity=multiplicity)
 !
-         call sad_wf%prepare([center],  embedding=.false., charge=0)
+         call sad_wf%prepare([center],  embedding=.false., charge=center%charge)
 !
          sad_solver = scf_solver(restart=.false.,                       &
                                  ao_density_guess=ao_density_guess,     &
@@ -501,8 +502,7 @@ contains
 !
       do i = 1, n_orbitals_to_plot
 !
-         write(orbital_file_tags(i), '(i4.4)') orbitals_to_plot(i)
-         orbital_file_tags(i) = 'MO_' // trim(orbital_file_tags(i))
+         write(orbital_file_tags(i), '(a,i4.4)') 'MO_', orbitals_to_plot(i)
 !
       enddo
 !
