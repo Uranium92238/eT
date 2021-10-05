@@ -26,16 +26,24 @@ module convergence_tool_class
 !
    use kinds
    use global_out,                      only: output
-   use abstract_convergence_tool_class, only: abstract_convergence_tool
 !
    implicit none
 !
-   type, extends(abstract_convergence_tool) :: convergence_tool
+   type :: convergence_tool
+!
+      real(dp) :: energy_threshold
+      real(dp) :: residual_threshold
+      logical  :: energy_convergence
 !
    contains
 !
-      procedure :: has_converged  => has_converged_convergence_tool
-      procedure :: print_settings => print_settings_convergence_tool
+      procedure, public :: has_converged
+      procedure, public :: print_settings
+      procedure, public :: set_energy_threshold
+      procedure, public :: set_residual_threshold
+      procedure, public :: get_energy_threshold
+      procedure, public :: get_residual_threshold
+
 !
    end type convergence_tool
 !
@@ -68,7 +76,7 @@ contains
    end function new_convergence_tool
 !
 !
-   pure function has_converged_convergence_tool(this, residual_norm, dE, iteration) result(converged)
+   pure function has_converged(this, residual_norm, dE, iteration) result(converged)
 !!
 !!    Has converged
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
@@ -111,10 +119,10 @@ contains
          if (converged_residual .and. iteration .eq. 1) converged = .true.
       endif
 !
-   end function has_converged_convergence_tool
+   end function has_converged
 !
 !
-   subroutine print_settings_convergence_tool(this)
+   subroutine print_settings(this)
 !!
 !!    Print
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018-2020
@@ -132,7 +140,68 @@ contains
          call output%printf('m', 'Energy threshold:             (e11.4)', &
                          reals=[this%energy_threshold], fs='(t6,a)')
 !
-   end subroutine print_settings_convergence_tool
+   end subroutine print_settings
+!
+!
+   subroutine get_energy_threshold(this, energy_threshold)
+!!
+!!    Get energy thresholds
+!!    Written by Sarai D. Folkestad, 2020
+!!
+      implicit none
+!
+      class(convergence_tool), intent(inout) :: this
+      real(dp),                intent(out)    :: energy_threshold
+!
+      energy_threshold = this%energy_threshold
+!
+   end subroutine get_energy_threshold
+!
+!
+   subroutine get_residual_threshold(this, residual_threshold)
+!!
+!!    Get residual thresholds
+!!    Written by Sarai D. Folkestad, 2020
+!!
+      implicit none
+!
+      class(convergence_tool), intent(inout) :: this
+      real(dp),                intent(out)    :: residual_threshold
+!
+      residual_threshold = this%residual_threshold
+!
+   end subroutine get_residual_threshold
+!
+!
+   subroutine set_energy_threshold(this, energy_threshold)
+!!
+!!    Set energy thresholds
+!!    Written by Sarai D. Folkestad, 2020
+!!
+      implicit none
+!
+      class(convergence_tool), intent(inout) :: this
+      real(dp),                intent(in)    :: energy_threshold
+!
+      this%energy_threshold = energy_threshold
+      this%energy_convergence = .true.
+!
+   end subroutine set_energy_threshold
+!
+!
+   subroutine set_residual_threshold(this, residual_threshold)
+!!
+!!    Set residual thresholds
+!!    Written by Sarai D. Folkestad, 2020
+!!
+      implicit none
+!
+      class(convergence_tool), intent(inout) :: this
+      real(dp),                intent(in)    :: residual_threshold
+!
+      this%residual_threshold = residual_threshold
+!
+   end subroutine set_residual_threshold
 !
 !
 end module convergence_tool_class

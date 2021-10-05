@@ -60,7 +60,7 @@ module abstract_cc_es_class
    use es_ip_projection_tool_class, only: es_ip_projection_tool
    use es_rm_core_projection_tool_class, only: es_rm_core_projection_tool
 !
-   use abstract_convergence_tool_class, only: abstract_convergence_tool 
+   use convergence_tool_class, only: convergence_tool
 !
    implicit none
 !
@@ -74,7 +74,7 @@ module abstract_cc_es_class
 !
       integer :: max_iterations
 !
-      class(abstract_convergence_tool), allocatable :: convergence_checker
+      class(convergence_tool), allocatable :: convergence_checker
 !
       logical :: restart
 !

@@ -57,7 +57,6 @@ module scf_solver_class
    use accelerator_factory_class,         only: accelerator_factory
    use accelerator_tool_class,            only: accelerator_tool
 !
-   use abstract_convergence_tool_class,   only: abstract_convergence_tool
    use convergence_tool_class,            only: convergence_tool
 !
    implicit none
@@ -83,7 +82,7 @@ module scf_solver_class
       class(accelerator_tool), allocatable,   private :: accelerator
       type(accelerator_factory), allocatable, private :: accelerator_creator
 !
-      class(abstract_convergence_tool), allocatable :: convergence_checker
+      class(convergence_tool), allocatable :: convergence_checker
 !
    contains
 !
