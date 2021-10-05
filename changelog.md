@@ -1,3 +1,7 @@
+# eT v1.4.1
+### Bugfixes
+- Changed warnings about wrong memory estimates to verbose prints. eT-program/eT!911
+
 # eT v1.4.0
 
 ### Bugfixes
