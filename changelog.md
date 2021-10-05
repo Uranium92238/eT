@@ -1,5 +1,6 @@
 # eT v1.5.0
-
+### Structure
+- Merged the `abstract_convergence_tool` and the `convergence_tool` classes. eT-program/eT!909
 
 # eT v1.4.1
 ### Bugfixes

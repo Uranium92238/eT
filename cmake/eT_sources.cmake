@@ -95,7 +95,6 @@ set(eT_fortran_sources
    src/fields/electric_field_class.F90
    src/solver_tools/precondition_tool_class.F90
    src/solver_tools/asymmetric_lanczos_tool_class.F90
-   src/solver_tools/abstract_convergence_tool_class.F90
    src/solver_tools/convergence_tool_class.F90
 #
    src/solver_tools/transformation_tool_class.F90

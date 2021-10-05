@@ -35,8 +35,6 @@ module bfgs_geoopt_hf_class
    use bfgs_tool_class,       only: bfgs_tool
    use timings_class,         only: timings
 !
-
-   use abstract_convergence_tool_class,   only: abstract_convergence_tool 
    use convergence_tool_class,            only: convergence_tool 
 !
    implicit none
@@ -54,7 +52,7 @@ module bfgs_geoopt_hf_class
 !
       integer :: max_iterations
 !
-      class(abstract_convergence_tool), allocatable :: convergence_checker
+      class(convergence_tool), allocatable :: convergence_checker
 !
       real(dp) :: max_step 
 !
