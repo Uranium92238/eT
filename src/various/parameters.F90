@@ -34,10 +34,10 @@ module parameters
 !  Version
 !
    integer, parameter :: major_version = 1
-   integer, parameter :: minor_version = 4
+   integer, parameter :: minor_version = 5
    integer, parameter :: patch_version = 0
 !
-   character(len=27), parameter :: version_name = "Eos"
+   character(len=27), parameter :: version_name = "Furia (development)"
 !
 !  Integers
 !
