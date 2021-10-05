@@ -19,23 +19,23 @@
 module memory_tracker_class
 !
 !!
-!!    Memory tracker 
+!!    Memory tracker
 !!    Written by Eirik F. Kjønstad, June 2021
 !!
-!!    Keeps track of memory used and causes error stops when the memory exceeds the 
-!!    specified maximum. The tracker object must be notified about allocations and 
+!!    Keeps track of memory used and causes error stops when the memory exceeds the
+!!    specified maximum. The tracker object must be notified about allocations and
 !!    deallocations (via "update").
 !!
 !
-   use kinds 
-   use global_out, only: output 
+   use kinds
+   use global_out, only: output
 !
-   type :: memory_tracker 
+   type :: memory_tracker
 !
-      integer(i64), private :: current  
+      integer(i64), private :: current
       integer(i64), private :: max_allowed
 !
-   contains 
+   contains
 !
       procedure, public :: update
 !
@@ -51,7 +51,7 @@ module memory_tracker_class
    end interface memory_tracker
 !
 !
-contains 
+contains
 !
 !
    function new_memory_tracker(max_allowed) result(this)
@@ -61,13 +61,13 @@ contains
 !!
 !!    max_allowed: the maximum memory usage allowed (in bytes)
 !!
-      implicit none 
+      implicit none
 !
-      type(memory_tracker) :: this 
+      type(memory_tracker) :: this
 !
       integer(i64), intent(in) :: max_allowed
 !
-      this%current = 0 
+      this%current = 0
       this%max_allowed = max_allowed
 !
       call output%printf('debug', 'Memory tracker initialized - allowed memory: (i0) B', &
@@ -78,25 +78,25 @@ contains
 !
    subroutine update(this, bytes_allocated)
 !!
-!!    Update 
+!!    Update
 !!    Written by Eirik F. Kjønstad, June 2021
 !!
-      implicit none 
+      implicit none
 !
-      class(memory_tracker), intent(inout) :: this 
+      class(memory_tracker), intent(inout) :: this
 !
-      integer(i64), intent(in) :: bytes_allocated 
+      integer(i64), intent(in) :: bytes_allocated
 !
       this%current = this%current + bytes_allocated
 !
       call output%printf('debug', 'Current memory used ((i0)/(i0))', &
                            ints=[int(this%current), int(this%max_allowed)])
 !
-      if (this%current .gt. this%max_allowed) then 
+      if (this%current .gt. this%max_allowed) then
 !
-         call output%warning_msg('Exceeded expected memory in memory tracker. &
-                               &(i0) B used out of (i0) B allowed.', &
-                               ints=[int(this%current), int(this%max_allowed)])    
+         call output%printf('v','Exceeded expected memory in memory tracker. &
+                           &(i0) B used out of (i0) B allowed.', &
+                            ints=[int(this%current), int(this%max_allowed)])
 !
       endif
 !
@@ -106,11 +106,11 @@ contains
    subroutine destructor(this)
 !!
 !!    Destructor
-!!    Written by Eirik F. Kjønstad, June 2021 
+!!    Written by Eirik F. Kjønstad, June 2021
 !!
-      implicit none 
+      implicit none
 !
-      type(memory_tracker) :: this 
+      type(memory_tracker) :: this
 !
       call output%printf('debug', 'Memory tracker finalized - allowed memory: (i0) B', &
                          ints=[int(this%max_allowed)])
