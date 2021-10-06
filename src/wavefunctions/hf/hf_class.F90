@@ -85,7 +85,7 @@ module hf_class
 !
       logical :: plot_active_density
 !
-      integer :: gradient_dimension
+      integer :: packed_gradient_dimension
       type(output_file) :: mo_information_file
 !
    contains
@@ -178,6 +178,7 @@ module hf_class
 !
       procedure :: construct_roothan_hall_gradient             => construct_roothan_hall_gradient_hf
       procedure :: get_packed_roothan_hall_gradient            => get_packed_roothan_hall_gradient_hf
+      procedure :: get_roothan_hall_gradient                   => get_roothan_hall_gradient_hf
 !
       procedure :: construct_molecular_gradient                => construct_molecular_gradient_hf
 !
@@ -222,9 +223,9 @@ module hf_class
       procedure :: prepare_for_scf => prepare_for_scf_hf
       procedure :: get_energy => get_energy_hf
 !
-      procedure :: get_F => get_F_hf
-      procedure :: get_gradient => get_gradient_hf
-      procedure :: set_C_and_e => set_C_and_e_hf
+      procedure :: get_F         => get_F_hf
+      procedure :: get_gradient  => get_gradient_hf
+      procedure :: set_C_and_e   => set_C_and_e_hf
       procedure :: can_do_cumulative_fock => can_do_cumulative_fock_hf
       procedure :: set_orbital_coefficients_from_reduced_ao_C &
                 => set_orbital_coefficients_from_reduced_ao_C_hf
@@ -833,25 +834,45 @@ contains
 !
       real(dp), dimension(wf%n_mo*(wf%n_mo - 1)/2, wf%n_densities), intent(inout) :: G
 !
-      real(dp), dimension(:,:), allocatable :: G_sq, Po, Pv
-!
-      call mem%alloc(Po, wf%ao%n, wf%ao%n)
-      call mem%alloc(Pv, wf%ao%n, wf%ao%n)
-!
-      call wf%construct_projection_matrices(Po, Pv, wf%ao_density)
+      real(dp), dimension(:,:), allocatable :: G_sq
 !
       call mem%alloc(G_sq, wf%n_mo, wf%n_mo)
 !
-      call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock)
-!
-      call mem%dealloc(Po, wf%ao%n, wf%ao%n)
-      call mem%dealloc(Pv, wf%ao%n, wf%ao%n)
+      call wf%get_roothan_hall_gradient(G_sq)
 !
       call packin_anti(G(:,1), G_sq, wf%n_mo)
 !
       call mem%dealloc(G_sq, wf%n_mo, wf%n_mo)
 !
    end subroutine get_packed_roothan_hall_gradient_hf
+!
+!
+   subroutine get_roothan_hall_gradient_hf(wf, G)
+!!
+!!    Get Roothan-Hall gradient
+!!    Written by Eirik F. Kjønstad, Nov 2018
+!!
+!!    Constructs and returns the RH gradient
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo**2, wf%n_densities), intent(inout) :: G
+!
+      real(dp), dimension(:,:), allocatable :: Po, Pv
+!
+      call mem%alloc(Po, wf%ao%n, wf%ao%n)
+      call mem%alloc(Pv, wf%ao%n, wf%ao%n)
+!
+      call wf%construct_projection_matrices(Po, Pv, wf%ao_density)
+!
+      call wf%construct_roothan_hall_gradient(G, Po, Pv, wf%ao_fock)
+!
+      call mem%dealloc(Po, wf%ao%n, wf%ao%n)
+      call mem%dealloc(Pv, wf%ao%n, wf%ao%n)
+!
+   end subroutine get_roothan_hall_gradient_hf
 !
 !
    subroutine construct_roothan_hall_gradient_hf(wf, G, Po, Pv, F)
@@ -1268,7 +1289,7 @@ contains
 !
       call wf%set_n_mo()
 !
-      wf%gradient_dimension = wf%n_mo*(wf%n_mo - 1)/2
+      wf%packed_gradient_dimension = wf%n_mo*(wf%n_mo - 1)/2
 !
    end subroutine prepare_hf
 !
@@ -1546,7 +1567,7 @@ contains
 !
       dim_ = wf%n_mo
       n_densities = wf%n_densities
-      gradient_dimension = wf%gradient_dimension
+      gradient_dimension = wf%packed_gradient_dimension
 !
       call wf%print_screening_settings()
 !
@@ -1641,7 +1662,7 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%gradient_dimension), intent(out) :: G
+      real(dp), dimension(wf%packed_gradient_dimension), intent(out) :: G
 !
       call wf%get_packed_roothan_hall_gradient(G)
 !
@@ -1999,12 +2020,12 @@ contains
       implicit none
 !
       class(hf), intent(in) :: wf
-      real(dp), dimension(wf%gradient_dimension), intent(in) :: G
+      real(dp), dimension(wf%packed_gradient_dimension), intent(in) :: G
 !
       logical :: cumulative
 !
       cumulative = .false.
-      if (get_abs_max(G, wf%gradient_dimension) .lt. wf%cumulative_fock_threshold) &
+      if (get_abs_max(G, wf%packed_gradient_dimension) .lt. wf%cumulative_fock_threshold) &
          cumulative = .true.
 !
    end function can_do_cumulative_fock_hf
