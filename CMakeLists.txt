@@ -112,6 +112,7 @@ set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
 if(ENABLE_FORCED_BATCHING)
     message(STATUS "Forced batching enabled")
     target_compile_definitions(eT PUBLIC _FORCED_BATCHING)
+    target_compile_definitions(eT_library PUBLIC _FORCED_BATCHING)
 endif()
 
 if(ENABLE_RUNTIME_CHECKS)
