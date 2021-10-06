@@ -1,1858 +1,537 @@
+  ------------------------------------------------------------
+  Configuration date: 2021-10-06 10:20:02 UTC +02:00
+  Git branch:         hf-cleanup-oao-stuff
+  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
 
-  One-electron integrals (overlap)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.28
-
-  Cholesky decomposition of AO overlap
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
+  Description                                 wall[s]         cpu[s]    cpu/wall
+  -------------------------------------------------------------------------------------
+  One-electron integrals (overlap)             0.00            0.00      0.75
+  Cholesky decomposition of AO        
+  overlap                                      0.00            0.00        --
+  Time initializing AO tool                    0.03            0.03      1.06
 
   :: Hartree-Fock engine
   =========================
 
-
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  AO G construction
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  1.88
-
-  SCF solver
-  wall time (sec):                 0.06
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  0.53
-
-  Hartree-Fock engine
-  wall time (sec):                 0.06
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  0.53
-
+  Description                                 wall[s]         cpu[s]    cpu/wall
+  -------------------------------------------------------------------------------------
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.67
+  AO G construction                            0.03            0.05      1.79
+  SCF solver                                   0.03            0.05      1.63
+  Hartree-Fock engine                          0.03            0.05      1.61
 
   :: Excited state coupled cluster engine
   ==========================================
 
-
   1) Cholesky decomposition of the electron repulsion integrals
 
-  Cholesky; time to determine auxiliary basis
-  wall time (sec):                 0.03
-  cpu time (sec):                  0.06
-  cpu/wall ratio:                  1.99
-
-  Cholesky; time to construct (J|K), decompose, and invert
-  wall time (sec):                 0.02
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  1.93
-
-  Diagonal test
-  wall time (sec):                 0.04
-  cpu time (sec):                  0.09
-  cpu/wall ratio:                  2.02
-
-  Construct and write Cholesky vectors
-  wall time (sec):                 0.02
-  cpu time (sec):                  0.05
-  cpu/wall ratio:                  2.05
-
-  Cholesky decomposition of ERIs
-  wall time (sec):                 0.12
-  cpu time (sec):                  0.23
-  cpu/wall ratio:                  2.00
-
+  Description                                 wall[s]         cpu[s]    cpu/wall
+  -------------------------------------------------------------------------------------
+  Cholesky: time to determine         
+  auxiliary basis                              0.13            0.18      1.39
+  Cholesky: time to construct         
+  (J|K), decompose, and invert                 0.06            0.09      1.63
+  Diagonal test                                0.14            0.23      1.61
+  Construct and write Cholesky        
+  vectors                                      0.10            0.13      1.36
+  Cholesky decomposition of ERIs               0.42            0.63      1.49
 
   2) Preparation of MO basis and integrals
 
+  Description                                 wall[s]         cpu[s]    cpu/wall
+  -------------------------------------------------------------------------------------
 
   3) Calculation of the ground state (diis algorithm)
 
-  Copy Cholesky MO to T1
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.01
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  3.34
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.37
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.11
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.21
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  9.14
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  1.79
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.23
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.08
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  8.15
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  1.66
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                 22.22
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  0.94
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.05
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  0.99
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                 10.04
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.05
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.38
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  0.94
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  1.52
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                 21.34
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.13
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.34
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.07
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.36
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.01
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.17
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.66
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.34
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.02
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.03
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.41
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.09
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  0.99
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.01
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  0.74
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  7.25
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  1.51
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                 22.85
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.15
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.09
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                 24.61
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.08
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.12
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  1.97
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                 25.29
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  0.93
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.12
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  0.99
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.05
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.43
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.62
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.13
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.01
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.20
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.97
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.17
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.08
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  0.99
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  0.90
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.78
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.40
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.08
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.01
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.01
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.20
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  1.64
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  0.93
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.91
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.27
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.15
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.64
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  1.88
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  0.98
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.90
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.39
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.13
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.01
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.02
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.37
-
-  Update t1 cholesky
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Construct eri integrals
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.61
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.09
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.01
-
-  Construct CCS Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  0.95
-
-  Construct CCSD Omega
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  DIIS CC GS iteration time
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  CC GS solver time
-  wall time (sec):                 0.17
-  cpu time (sec):                  0.33
-  cpu/wall ratio:                  1.98
-
+  Description                                 wall[s]         cpu[s]    cpu/wall
+  -------------------------------------------------------------------------------------
+  Copy Cholesky MO to T1                       0.00            0.00      1.55
+  Construct eri integrals                      0.01            0.02      2.72
+  Update t1 cholesky                           0.00            0.00      1.65
+  Construct eri integrals                      0.01            0.02      3.35
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.01      1.32
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.34
+  Update t1 cholesky                           0.00            0.00      1.40
+  Construct eri integrals                      0.01            0.02      3.22
+  DIIS CC GS iteration time                    0.02            0.04      1.83
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.39
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.48
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      0.91
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.35
+  Update t1 cholesky                           0.00            0.00      0.71
+  Construct eri integrals                      0.00            0.02      3.64
+  DIIS CC GS iteration time                    0.02            0.04      1.77
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.74
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.66
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.17
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.19
+  Update t1 cholesky                           0.00            0.00      0.95
+  Construct eri integrals                      0.00            0.02      4.58
+  DIIS CC GS iteration time                    0.02            0.03      1.89
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.63
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.45
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.45
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      0.88
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.07
+  Update t1 cholesky                           0.00            0.00      1.51
+  Construct eri integrals                      0.00            0.02      4.88
+  DIIS CC GS iteration time                    0.02            0.03      1.88
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.57
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.69
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.21
+  Update t1 cholesky                           0.00            0.00      0.67
+  Construct eri integrals                      0.00            0.02      4.99
+  DIIS CC GS iteration time                    0.02            0.04      2.06
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.62
+  Fock matrix construction (T1 basis)         0.00            0.00      1.31
+  Construct CCS Omega                          0.00            0.00      0.05
+  Construct CCSD Omega                         0.01            0.01      1.19
+  Update t1 cholesky                           0.00            0.00      1.24
+  Construct eri integrals                      0.00            0.02      4.17
+  DIIS CC GS iteration time                    0.02            0.04      2.02
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.46
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.45
+  Fock matrix construction (T1 basis)         0.00            0.00      1.07
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.02
+  Update t1 cholesky                           0.00            0.00      1.35
+  Construct eri integrals                      0.01            0.02      3.10
+  DIIS CC GS iteration time                    0.02            0.03      1.60
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.68
+  Fock matrix construction (T1 basis)         0.00            0.00      1.54
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.35
+  Update t1 cholesky                           0.00            0.00      1.18
+  Construct eri integrals                      0.01            0.02      2.99
+  DIIS CC GS iteration time                    0.02            0.04      1.88
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.78
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.59
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.50
+  Update t1 cholesky                           0.00            0.00      0.81
+  Construct eri integrals                      0.01            0.02      2.95
+  DIIS CC GS iteration time                    0.02            0.03      1.84
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.16
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.31
+  Update t1 cholesky                           0.00            0.00      1.30
+  Construct eri integrals                      0.01            0.02      2.73
+  DIIS CC GS iteration time                    0.02            0.03      1.70
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.55
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.75
+  Fock matrix construction (T1 basis)         0.00            0.00      1.49
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.34
+  Update t1 cholesky                           0.00            0.00      1.24
+  Construct eri integrals                      0.01            0.02      3.61
+  DIIS CC GS iteration time                    0.02            0.04      1.95
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.79
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.68
+  Fock matrix construction (T1 basis)         0.00            0.00      1.64
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.29
+  Update t1 cholesky                           0.00            0.00      1.20
+  Construct eri integrals                      0.00            0.02      3.42
+  DIIS CC GS iteration time                    0.02            0.03      1.92
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.75
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.71
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.66
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.17
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.37
+  Update t1 cholesky                           0.00            0.00      1.61
+  Construct eri integrals                      0.01            0.02      2.72
+  DIIS CC GS iteration time                    0.02            0.03      1.72
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.70
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.49
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.38
+  Update t1 cholesky                           0.00            0.00      1.50
+  Construct eri integrals                      0.01            0.02      2.89
+  DIIS CC GS iteration time                    0.02            0.04      1.76
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.67
+  Fock matrix construction (T1 basis)         0.00            0.00      1.55
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.00            0.01      1.71
+  Update t1 cholesky                           0.00            0.00      1.49
+  Construct eri integrals                      0.00            0.02      3.34
+  DIIS CC GS iteration time                    0.02            0.03      1.85
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.68
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.71
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.50
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.31
+  Update t1 cholesky                           0.00            0.00      0.82
+  Construct eri integrals                      0.01            0.02      2.87
+  DIIS CC GS iteration time                    0.02            0.03      1.74
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.63
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.64
+  Fock matrix construction (T1 basis)         0.00            0.00      1.54
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.30
+  Update t1 cholesky                           0.00            0.00      1.42
+  Construct eri integrals                      0.01            0.02      3.37
+  DIIS CC GS iteration time                    0.02            0.03      1.88
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.76
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.56
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.13
+  Update t1 cholesky                           0.00            0.00      1.30
+  Construct eri integrals                      0.00            0.02      3.30
+  DIIS CC GS iteration time                    0.02            0.03      1.66
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.66
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.70
+  Fock matrix construction (T1 basis)         0.00            0.00      1.50
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.41
+  Update t1 cholesky                           0.00            0.00      1.61
+  Construct eri integrals                      0.01            0.02      2.85
+  DIIS CC GS iteration time                    0.02            0.04      1.86
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.71
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.67
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      0.95
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.31
+  Update t1 cholesky                           0.00            0.00      0.69
+  Construct eri integrals                      0.00            0.02      4.67
+  DIIS CC GS iteration time                    0.02            0.04      1.72
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.51
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.05
+  DIIS CC GS iteration time                    0.01            0.01      1.05
+  CC GS solver time                            0.42            0.76      1.81
 
   4) Calculation of the excited state (davidson algorithm)
      Calculating right vectors
 
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                 23.55
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  One-electron integrals (hamiltonian)
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Prepare for Jacobian CCSD
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.11
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.00
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.03
-
-  Davidson: CC ES iteration 1
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  1.94
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                 17.84
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.28
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.36
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.08
-
-  Davidson: CC ES iteration 2
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.08
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.06
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.32
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.39
-
-  Davidson: CC ES iteration 3
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  2.07
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.09
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.16
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.19
-
-  Davidson: CC ES iteration 4
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  1.97
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.27
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.07
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.20
-
-  Davidson: CC ES iteration 5
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  2.09
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.39
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.09
-
-  Davidson: CC ES iteration 6
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.02
-  cpu/wall ratio:                  1.80
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.07
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.35
-
-  Davidson: CC ES iteration 7
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  2.30
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.07
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.10
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Davidson: CC ES iteration 8
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  1.90
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.32
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.05
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.03
-
-  Davidson: CC ES iteration 9
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  1.86
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.19
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.17
-
-  Davidson: CC ES iteration 10
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  2.12
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.29
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.39
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.09
-
-  Davidson: CC ES iteration 11
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  1.88
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.13
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.39
-
-  Davidson: CC ES iteration 12
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  2.10
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.03
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.32
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.28
-
-  Davidson: CC ES iteration 13
-  wall time (sec):                 0.02
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  2.05
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.15
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.19
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.35
-
-  Davidson: CC ES iteration 14
-  wall time (sec):                 0.02
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  2.05
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.17
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.00
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  1.92
-
-  Davidson: CC ES iteration 15
-  wall time (sec):                 0.02
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  1.85
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  1.97
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.04
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  1.89
-
-  Davidson: CC ES iteration 16
-  wall time (sec):                 0.02
-  cpu time (sec):                  0.05
-  cpu/wall ratio:                  2.13
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  1.79
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  1.96
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  9.88
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.08
-
-  Davidson: CC ES iteration 17
-  wall time (sec):                 0.02
-  cpu time (sec):                  0.04
-  cpu/wall ratio:                  1.96
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.12
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.02
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.36
-
-  Davidson: CC ES iteration 18
-  wall time (sec):                 0.02
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  1.90
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.17
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.14
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Davidson: CC ES iteration 19
-  wall time (sec):                 0.02
-  cpu time (sec):                  0.04
-  cpu/wall ratio:                  2.09
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.03
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.31
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.40
-
-  Davidson: CC ES iteration 20
-  wall time (sec):                 0.02
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  1.87
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.03
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.35
-
-  Davidson: CC ES iteration 21
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  2.08
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.38
-
-  Davidson: CC ES iteration 22
-  wall time (sec):                 0.01
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  2.12
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.10
-
-  Jacobian CCS transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.00
-  cpu/wall ratio:                  1.00
-
-  Jacobian CCSD transformation
-  wall time (sec):                 0.00
-  cpu time (sec):                  0.01
-  cpu/wall ratio:                  2.04
-
-  Davidson: CC ES iteration 23
-  wall time (sec):                 0.02
-  cpu time (sec):                  0.03
-  cpu/wall ratio:                  1.94
-
-  CCSD excited state (right)
-  wall time (sec):                 0.35
-  cpu time (sec):                  0.71
-  cpu/wall ratio:                  2.01
-
-  Excited state coupled cluster engine
-  wall time (sec):                 0.64
-  cpu time (sec):                  1.27
-  cpu/wall ratio:                  2.00
+  Description                                 wall[s]         cpu[s]    cpu/wall
+  -------------------------------------------------------------------------------------
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.74
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.51
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.23
+  Prepare for Jacobian CCSD                    0.01            0.01      1.14
+  Jacobian CCS transformation                  0.00            0.00      1.59
+  Jacobian CCSD transformation                 0.01            0.02      1.16
+  Jacobian CCS transformation                  0.00            0.00      1.60
+  Jacobian CCSD transformation                 0.01            0.02      1.14
+  Jacobian CCS transformation                  0.00            0.00      1.38
+  Jacobian CCSD transformation                 0.01            0.01      1.00
+  Davidson: CC ES iteration 1                  0.05            0.05      1.06
+  Jacobian CCS transformation                  0.00            0.00      1.74
+  Jacobian CCSD transformation                 0.01            0.02      1.05
+  Jacobian CCS transformation                  0.00            0.00      0.93
+  Jacobian CCSD transformation                 0.01            0.02      1.22
+  Jacobian CCS transformation                  0.00            0.00      1.49
+  Jacobian CCSD transformation                 0.01            0.02      1.17
+  Davidson: CC ES iteration 2                  0.05            0.05      1.16
+  Jacobian CCS transformation                  0.00            0.00      0.95
+  Jacobian CCSD transformation                 0.01            0.02      1.20
+  Jacobian CCS transformation                  0.00            0.00      1.70
+  Jacobian CCSD transformation                 0.01            0.02      1.26
+  Jacobian CCS transformation                  0.00            0.00      1.76
+  Jacobian CCSD transformation                 0.01            0.02      1.21
+  Davidson: CC ES iteration 3                  0.05            0.06      1.18
+  Jacobian CCS transformation                  0.00            0.00      0.93
+  Jacobian CCSD transformation                 0.01            0.02      1.25
+  Jacobian CCS transformation                  0.00            0.00      1.82
+  Jacobian CCSD transformation                 0.01            0.02      1.20
+  Jacobian CCS transformation                  0.00            0.00      0.92
+  Jacobian CCSD transformation                 0.01            0.02      1.18
+  Davidson: CC ES iteration 4                  0.05            0.06      1.18
+  Jacobian CCS transformation                  0.00            0.00      1.75
+  Jacobian CCSD transformation                 0.01            0.02      1.23
+  Jacobian CCS transformation                  0.00            0.00      0.86
+  Jacobian CCSD transformation                 0.01            0.02      1.14
+  Jacobian CCS transformation                  0.00            0.00      1.52
+  Jacobian CCSD transformation                 0.01            0.02      1.27
+  Davidson: CC ES iteration 5                  0.05            0.06      1.17
+  Jacobian CCS transformation                  0.00            0.00      0.92
+  Jacobian CCSD transformation                 0.01            0.02      1.23
+  Jacobian CCS transformation                  0.00            0.00      1.53
+  Jacobian CCSD transformation                 0.01            0.02      1.31
+  Jacobian CCS transformation                  0.00            0.00      1.66
+  Jacobian CCSD transformation                 0.01            0.02      1.18
+  Davidson: CC ES iteration 6                  0.05            0.06      1.17
+  Jacobian CCS transformation                  0.00            0.00      1.74
+  Jacobian CCSD transformation                 0.01            0.02      1.26
+  Jacobian CCS transformation                  0.00            0.00      1.83
+  Jacobian CCSD transformation                 0.01            0.02      1.17
+  Jacobian CCS transformation                  0.00            0.00      0.98
+  Jacobian CCSD transformation                 0.02            0.02      1.11
+  Davidson: CC ES iteration 7                  0.05            0.06      1.16
+  Jacobian CCS transformation                  0.00            0.00      1.33
+  Jacobian CCSD transformation                 0.01            0.01      1.07
+  Jacobian CCS transformation                  0.00            0.00      0.57
+  Jacobian CCSD transformation                 0.01            0.01      0.88
+  Jacobian CCS transformation                  0.00            0.00      1.18
+  Jacobian CCSD transformation                 0.02            0.02      1.05
+  Davidson: CC ES iteration 8                  0.05            0.05      1.01
+  Jacobian CCS transformation                  0.00            0.00      1.45
+  Jacobian CCSD transformation                 0.01            0.01      1.04
+  Jacobian CCS transformation                  0.00            0.00      1.32
+  Jacobian CCSD transformation                 0.02            0.01      0.99
+  Jacobian CCS transformation                  0.00            0.00      1.59
+  Jacobian CCSD transformation                 0.01            0.02      1.20
+  Davidson: CC ES iteration 9                  0.05            0.06      1.07
+  Jacobian CCS transformation                  0.00            0.00      1.86
+  Jacobian CCSD transformation                 0.01            0.01      1.21
+  Jacobian CCS transformation                  0.00            0.00      1.80
+  Jacobian CCSD transformation                 0.01            0.01      1.23
+  Jacobian CCS transformation                  0.00            0.00      1.76
+  Jacobian CCSD transformation                 0.01            0.02      1.19
+  Davidson: CC ES iteration 10                 0.05            0.06      1.13
+  Jacobian CCS transformation                  0.00            0.00      0.82
+  Jacobian CCSD transformation                 0.01            0.01      1.19
+  Jacobian CCS transformation                  0.00            0.00      0.91
+  Jacobian CCSD transformation                 0.01            0.02      1.11
+  Jacobian CCS transformation                  0.00            0.00      1.58
+  Jacobian CCSD transformation                 0.01            0.02      1.26
+  Davidson: CC ES iteration 11                 0.05            0.06      1.19
+  Jacobian CCS transformation                  0.00            0.00      1.07
+  Jacobian CCSD transformation                 0.01            0.02      1.21
+  Jacobian CCS transformation                  0.00            0.00      1.83
+  Jacobian CCSD transformation                 0.01            0.02      1.14
+  Jacobian CCS transformation                  0.00            0.00      1.00
+  Jacobian CCSD transformation                 0.01            0.02      1.17
+  Davidson: CC ES iteration 12                 0.06            0.07      1.17
+  Jacobian CCS transformation                  0.00            0.00      1.87
+  Jacobian CCSD transformation                 0.01            0.02      1.22
+  Jacobian CCS transformation                  0.00            0.00      1.91
+  Jacobian CCSD transformation                 0.02            0.02      1.25
+  Jacobian CCS transformation                  0.00            0.00      1.99
+  Jacobian CCSD transformation                 0.02            0.02      1.12
+  Davidson: CC ES iteration 13                 0.06            0.07      1.16
+  Jacobian CCS transformation                  0.00            0.00      0.95
+  Jacobian CCSD transformation                 0.01            0.02      1.18
+  Jacobian CCS transformation                  0.00            0.00      2.07
+  Jacobian CCSD transformation                 0.01            0.02      1.20
+  Jacobian CCS transformation                  0.00            0.00      0.93
+  Jacobian CCSD transformation                 0.01            0.02      1.21
+  Davidson: CC ES iteration 14                 0.06            0.07      1.15
+  Jacobian CCS transformation                  0.00            0.00      1.83
+  Jacobian CCSD transformation                 0.01            0.02      1.19
+  Jacobian CCS transformation                  0.00            0.00      0.93
+  Jacobian CCSD transformation                 0.01            0.02      1.18
+  Jacobian CCS transformation                  0.00            0.00      1.66
+  Jacobian CCSD transformation                 0.01            0.02      1.25
+  Davidson: CC ES iteration 15                 0.06            0.07      1.18
+  Jacobian CCS transformation                  0.00            0.00      0.88
+  Jacobian CCSD transformation                 0.01            0.02      1.21
+  Jacobian CCS transformation                  0.00            0.00      0.92
+  Jacobian CCSD transformation                 0.01            0.02      1.20
+  Jacobian CCS transformation                  0.00            0.00      1.66
+  Jacobian CCSD transformation                 0.01            0.02      1.17
+  Davidson: CC ES iteration 16                 0.06            0.07      1.19
+  Jacobian CCS transformation                  0.00            0.00      0.95
+  Jacobian CCSD transformation                 0.01            0.02      1.19
+  Jacobian CCS transformation                  0.00            0.00      1.82
+  Jacobian CCSD transformation                 0.01            0.02      1.22
+  Jacobian CCS transformation                  0.00            0.00      0.93
+  Jacobian CCSD transformation                 0.01            0.02      1.18
+  Davidson: CC ES iteration 17                 0.06            0.07      1.17
+  Jacobian CCS transformation                  0.00            0.00      0.93
+  Jacobian CCSD transformation                 0.01            0.02      1.24
+  Jacobian CCS transformation                  0.00            0.00      1.06
+  Jacobian CCSD transformation                 0.01            0.02      1.27
+  Jacobian CCS transformation                  0.00            0.00      1.88
+  Jacobian CCSD transformation                 0.02            0.02      1.14
+  Davidson: CC ES iteration 18                 0.06            0.08      1.19
+  Jacobian CCS transformation                  0.00            0.00      1.03
+  Jacobian CCSD transformation                 0.01            0.02      1.18
+  Jacobian CCS transformation                  0.00            0.00      2.06
+  Jacobian CCSD transformation                 0.02            0.02      1.22
+  Jacobian CCS transformation                  0.00            0.00      1.02
+  Jacobian CCSD transformation                 0.02            0.02      1.05
+  Davidson: CC ES iteration 19                 0.07            0.08      1.16
+  Jacobian CCS transformation                  0.00            0.00      1.16
+  Jacobian CCSD transformation                 0.02            0.02      1.20
+  Jacobian CCS transformation                  0.00            0.00      1.06
+  Jacobian CCSD transformation                 0.02            0.02      1.19
+  Jacobian CCS transformation                  0.00            0.00      2.05
+  Jacobian CCSD transformation                 0.02            0.02      1.21
+  Davidson: CC ES iteration 20                 0.07            0.08      1.19
+  Jacobian CCS transformation                  0.00            0.00      1.82
+  Jacobian CCSD transformation                 0.02            0.02      1.12
+  Jacobian CCS transformation                  0.00            0.00      1.03
+  Jacobian CCSD transformation                 0.01            0.02      1.19
+  Davidson: CC ES iteration 21                 0.05            0.06      1.20
+  Jacobian CCS transformation                  0.00            0.00      1.03
+  Jacobian CCSD transformation                 0.02            0.02      1.25
+  Jacobian CCS transformation                  0.00            0.00      1.14
+  Jacobian CCSD transformation                 0.02            0.02      1.15
+  Davidson: CC ES iteration 22                 0.05            0.06      1.20
+  Jacobian CCS transformation                  0.00            0.00      1.03
+  Jacobian CCSD transformation                 0.02            0.02      1.22
+  Jacobian CCS transformation                  0.00            0.00      1.00
+  Jacobian CCSD transformation                 0.01            0.02      1.19
+  Davidson: CC ES iteration 23                 0.05            0.06      1.21
+  CCSD excited state (right)                   1.29            1.50      1.16
+  Excited state coupled cluster       
+  engine                                       2.14            2.90      1.35
 
 
   :: Total time
   ================
-
-  Total time in eT
-  wall time (sec):                 0.72
-  cpu time (sec):                  1.33
-  cpu/wall ratio:                  1.86
+  Total time in eT                             2.23            3.00      1.35

@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.3 - an electronic structure program
+                     eT 1.5 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco
+   This is eT 1.5.0 Furia (development)
   ------------------------------------------------------------
-  Configuration date: 2021-06-07 12:48:33 UTC +02:00
-  Git branch:         update-test-refs-new
-  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Configuration date: 2021-10-06 10:20:02 UTC +02:00
+  Git branch:         hf-cleanup-oao-stuff
+  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
-  PCM:                ON
+  PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-06-07 12:49:27 UTC +02:00
+  Calculation started: 2021-10-06 10:32:15 UTC +02:00
 
 
   :: Input file
@@ -131,6 +131,8 @@
      Maximum iterations:                   100
      Acceleration type:                   diis
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
@@ -151,49 +153,50 @@
 
      DIIS dimension:   8
 
-     Storage (solver scf_e): memory
-     Storage (solver scf_x): memory
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.797967663339     0.8878E-01     0.7880E+02
-     2           -78.828051235097     0.7207E-01     0.3008E-01
-     3           -78.844373860361     0.6304E-02     0.1632E-01
-     4           -78.844670616794     0.2583E-02     0.2968E-03
-     5           -78.844712924276     0.5434E-03     0.4231E-04
-     6           -78.844714487781     0.5177E-04     0.1564E-05
-     7           -78.844714511580     0.3869E-05     0.2380E-07
-     8           -78.844714511778     0.9754E-06     0.1980E-09
-     9           -78.844714511794     0.2316E-06     0.1626E-10
-    10           -78.844714511796     0.5755E-07     0.1336E-11
-    11           -78.844714511796     0.8195E-08     0.1421E-13
-    12           -78.844714511796     0.2796E-08     0.4263E-13
-    13           -78.844714511796     0.9666E-09     0.4263E-13
-    14           -78.844714511796     0.1904E-09     0.5684E-13
-    15           -78.844714511796     0.9392E-11     0.4263E-13
+     1           -78.797967663339     0.9846E-01     0.7880E+02
+     2           -78.828051235097     0.4580E-01     0.3008E-01
+     3           -78.844390947122     0.5686E-02     0.1634E-01
+     4           -78.844671885505     0.1871E-02     0.2809E-03
+     5           -78.844712382238     0.3969E-03     0.4050E-04
+     6           -78.844714473163     0.5479E-04     0.2091E-05
+     7           -78.844714511466     0.3013E-05     0.3830E-07
+     8           -78.844714511775     0.8681E-06     0.3087E-09
+     9           -78.844714511793     0.2748E-06     0.1832E-10
+    10           -78.844714511796     0.4003E-07     0.2160E-11
+    11           -78.844714511796     0.1118E-07     0.1421E-12
+    12           -78.844714511796     0.2816E-08     0.1279E-12
+    13           -78.844714511796     0.1160E-08     0.2842E-13
+    14           -78.844714511796     0.3002E-09     0.5684E-13
+    15           -78.844714511796     0.2935E-10     0.8527E-13
+    16           -78.844714511796     0.3527E-11     0.1421E-13
   ---------------------------------------------------------------
-  Convergence criterion met in 15 iterations!
+  Convergence criterion met in 16 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.666604330139
+     HOMO-LUMO gap:                  0.666604330128
      Nuclear repulsion energy:      12.167611407170
      Electronic energy:            -91.012325918966
      Total energy:                 -78.844714511796
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.51293
-     Total cpu time (sec):               0.95592
+     Total wall time (sec):              2.58300
+     Total cpu time (sec):               4.66635
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 616.520 KB
+  Peak memory usage during the execution of eT: 637.680 KB
 
-  Total wall time in eT (sec):              0.52152
-  Total cpu time in eT (sec):               0.96577
+  Total wall time in eT (sec):              2.60600
+  Total cpu time in eT (sec):               4.68973
 
-  Calculation ended: 2021-06-07 12:49:27 UTC +02:00
+  Calculation ended: 2021-10-06 10:32:18 UTC +02:00
 
   - Implementation references:
 

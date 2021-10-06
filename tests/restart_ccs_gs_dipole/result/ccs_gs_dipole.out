@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.3 - an electronic structure program
+                     eT 1.5 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco
+   This is eT 1.5.0 Furia (development)
   ------------------------------------------------------------
-  Configuration date: 2021-06-07 12:48:33 UTC +02:00
-  Git branch:         update-test-refs-new
-  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Configuration date: 2021-10-06 10:20:02 UTC +02:00
+  Git branch:         hf-cleanup-oao-stuff
+  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
-  PCM:                ON
+  PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-06-07 12:49:51 UTC +02:00
+  Calculation started: 2021-10-06 10:32:28 UTC +02:00
 
 
   :: Input file
@@ -143,6 +143,8 @@
      Maximum iterations:                   100
      Acceleration type:                   diis
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
@@ -163,33 +165,33 @@
 
      DIIS dimension:   8
 
-     Storage (solver scf_e): memory
-     Storage (solver scf_x): memory
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -74.889701962821     0.8468E-01     0.7489E+02
-     2           -74.940474931397     0.1479E-01     0.5077E-01
-     3           -74.942053887929     0.1666E-02     0.1579E-02
-     4           -74.942080036155     0.4571E-04     0.2615E-04
-     5           -74.942080053391     0.1184E-04     0.1724E-07
-     6           -74.942080057695     0.1579E-06     0.4304E-08
-     7           -74.942080057696     0.4561E-09     0.4832E-12
-     8           -74.942080057696     0.1563E-12     0.4263E-13
+     1           -74.889701962820     0.1071E+00     0.7489E+02
+     2           -74.940474931397     0.1469E-01     0.5077E-01
+     3           -74.942054999957     0.2353E-02     0.1580E-02
+     4           -74.942080036553     0.5610E-04     0.2504E-04
+     5           -74.942080053363     0.1780E-04     0.1681E-07
+     6           -74.942080057695     0.2053E-06     0.4333E-08
+     7           -74.942080057696     0.9667E-09     0.3695E-12
+     8           -74.942080057696     0.7843E-12     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 8 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.865206190621
+     HOMO-LUMO gap:                  0.865206190622
      Nuclear repulsion energy:       8.002366974166
      Electronic energy:            -82.944447031862
      Total energy:                 -74.942080057696
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.04246
-     Total cpu time (sec):               0.02662
+     Total wall time (sec):              0.04100
+     Total cpu time (sec):               0.04756
 
 
   :: CCS wavefunction
@@ -273,8 +275,8 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.3515E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.3515E-15
+     Maximal difference between approximate and actual diagonal:              0.3746E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.3746E-15
 
   - Settings for integral handling:
 
@@ -284,8 +286,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00326
-     Total cpu time (sec):               0.00726
+     Total wall time (sec):              0.02100
+     Total cpu time (sec):               0.02260
 
 
   2) Preparation of MO basis and integrals
@@ -303,6 +305,8 @@
 
   - CC ground state solver settings:
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-10
      Max number of iterations:      100
 
@@ -310,12 +314,12 @@
 
      DIIS dimension:   8
 
-     Storage (cc_gs_diis_e): file
-     Storage (cc_gs_diis_x): file
+     Storage (cc_gs_diis_errors): file
+     Storage (cc_gs_diis_parameters): file
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -74.942080057696     0.3511E-12     0.7494E+02
+    1           -74.942080057696     0.1203E-11     0.7494E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -343,8 +347,8 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.00096
-     Total cpu time (sec):               0.00096
+     Total wall time (sec):              0.00400
+     Total cpu time (sec):               0.00343
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -369,12 +373,12 @@
 
      DIIS dimension:   8
 
-     Storage (cc_multipliers_diis_e): file
-     Storage (cc_multipliers_diis_x): file
+     Storage (cc_multipliers_diis_errors): file
+     Storage (cc_multipliers_diis_parameters): file
 
   Iteration    Norm residual
   ----------------------------
-    1          0.7024E-12
+    1          0.2407E-11
   ----------------------------
   Convergence criterion met in 1 iterations!
 
@@ -398,8 +402,8 @@
 
   - Finished solving the ccs multipliers equations
 
-     Total wall time (sec):              0.00062
-     Total cpu time (sec):               0.00062
+     Total wall time (sec):              0.00200
+     Total cpu time (sec):               0.00241
 
 
   5) Calculation of ground state properties
@@ -422,17 +426,17 @@
 
   - Timings for the CCS mean value calculation
 
-     Total wall time (sec):              0.00606
-     Total cpu time (sec):               0.01006
+     Total wall time (sec):              0.03000
+     Total cpu time (sec):               0.03264
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 61.824 KB
+  Peak memory usage during the execution of eT: 59.476 KB
 
-  Total wall time in eT (sec):              0.05602
-  Total cpu time in eT (sec):               0.04883
+  Total wall time in eT (sec):              0.09000
+  Total cpu time in eT (sec):               0.09783
 
-  Calculation ended: 2021-06-07 12:49:51 UTC +02:00
+  Calculation ended: 2021-10-06 10:32:28 UTC +02:00
 
   - Implementation references:
 

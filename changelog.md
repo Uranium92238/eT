@@ -1,4 +1,7 @@
 # eT v1.5.0
+
+### Features
+- Using orthogonal AO (OAO) basis for HF/UHF gradient in Roothan-Hall SCF solver. eT-program/eT!914
 ### Structure
 - Merged the `abstract_convergence_tool` and the `convergence_tool` classes. eT-program/eT!909
 

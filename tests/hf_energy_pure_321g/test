@@ -19,7 +19,7 @@ from filters import get_hf_filter
 assert version_info.major == 2
 
 # construct filter(s)
-threshold = 1.0e-10
+threshold = 1.0e-9
 
 f = get_hf_filter(threshold)
 g = [get_filter(abs_tolerance=threshold, ignore_sign=True)]

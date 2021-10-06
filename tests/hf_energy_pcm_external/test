@@ -19,14 +19,14 @@ from filters import get_hf_filter
 assert version_info.major == 2
 
 # construct filter(s)
-threshold = 1.0e-10
+threshold = 1.0e-9
 
 f = get_hf_filter(threshold)
 
 # QM/PCM energies
 f.append(get_filter(from_string='QM/PCM SCF Contribution:',
                     num_lines=2,
-                    abs_tolerance=1.0e-10,
+                    abs_tolerance=1.0e-9,
                     mask=[1]))
 
 # invoke the command line interface parser which returns options

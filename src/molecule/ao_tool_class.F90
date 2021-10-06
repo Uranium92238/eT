@@ -174,12 +174,6 @@ module ao_tool_class
       procedure, public :: get_reduced_ao_metric &
                         => get_reduced_ao_metric_ao_tool
 !
-      procedure, public :: orthonormal_ao_pivot_basis_transformation &
-                        => orthonormal_ao_pivot_basis_transformation_ao_tool ! Y = P^T X P, where P are pivots
-!
-      procedure, public :: orthonormal_ao_pivot_transformation &
-                        => orthonormal_ao_pivot_transformation_ao_tool ! Y = P X
-!
       procedure, public :: get_n_orthonormal_ao &
                         => get_n_orthonormal_ao_ao_tool
 !
@@ -2179,95 +2173,6 @@ contains
                   ao%n_orthonormal_ao)
 !
    end subroutine get_reduced_ao_metric_ao_tool
-!
-!
-   subroutine orthonormal_ao_pivot_basis_transformation_ao_tool(ao, X, Y)
-!!
-!!    OAO pivot basis transformation
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020
-!!
-!!    Constructs
-!!
-!!       Y = P^T X P,
-!!
-!!    where P is the pivot matrix from Cholesky decomposition of the AO overlap matrix.
-!!
-      implicit none
-!
-      class(ao_tool), intent(in) :: ao
-!
-      real(dp), dimension(ao%n, ao%n), intent(in) :: X
-!
-      real(dp), dimension(ao%n_orthonormal_ao, ao%n_orthonormal_ao), intent(out) :: Y
-!
-      real(dp), dimension(:,:), allocatable :: XP
-!
-      call mem%alloc(XP, ao%n, ao%n_orthonormal_ao)
-!
-      call dgemm('N', 'N',  &
-                  ao%n,     &
-                  ao%n_orthonormal_ao, &
-                  ao%n,     &
-                  one,      &
-                  X,        &
-                  ao%n,     &
-                  ao%P,     &
-                  ao%n,     &
-                  zero,     &
-                  XP,       &
-                  ao%n)
-!
-      call dgemm('T', 'N',  &
-                  ao%n_orthonormal_ao, &
-                  ao%n_orthonormal_ao, &
-                  ao%n,     &
-                  one,      &
-                  ao%P,     &
-                  ao%n,     &
-                  XP,       &
-                  ao%n,     &
-                  zero,     &
-                  Y,        &
-                  ao%n_orthonormal_ao)
-!
-      call mem%dealloc(XP, ao%n, ao%n_orthonormal_ao)
-!
-   end subroutine orthonormal_ao_pivot_basis_transformation_ao_tool
-!
-!
-   subroutine orthonormal_ao_pivot_transformation_ao_tool(ao, X, Y)
-!!
-!!    OAO pivot transformation
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020
-!!
-!!    Constructs
-!!
-!!       Y = P X,
-!!
-!!    where P is the pivot matrix from Cholesky decomposition of the AO overlap matrix.
-!!
-      implicit none
-!
-      class(ao_tool), intent(in) :: ao
-!
-      real(dp), dimension(ao%n_orthonormal_ao, ao%n_orthonormal_ao), intent(in) :: X
-!
-      real(dp), dimension(ao%n, ao%n_orthonormal_ao), intent(out) :: Y
-!
-      call dgemm('N', 'N',  &
-                  ao%n,     &
-                  ao%n_orthonormal_ao, &
-                  ao%n_orthonormal_ao, &
-                  one,      &
-                  ao%P,     &
-                  ao%n,     &
-                  X,        &
-                  ao%n_orthonormal_ao, &
-                  zero,     &
-                  Y,        &
-                  ao%n)
-!
-   end subroutine orthonormal_ao_pivot_transformation_ao_tool
 !
 !
    function get_n_orthonormal_ao_ao_tool(ao) result(n_orthonormal_ao)

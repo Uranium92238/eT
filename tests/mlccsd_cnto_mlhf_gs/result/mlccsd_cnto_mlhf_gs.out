@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.4 - an electronic structure program
+                     eT 1.5 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.4.0 Eos (development)
+   This is eT 1.5.0 Furia (development)
   ------------------------------------------------------------
-  Configuration date: 2021-06-09 18:05:00 UTC +02:00
-  Git branch:         tests_for_mlcc_in_mlhf
-  Git hash:           f8c97e9081c1e2d95bce483ebecd339031343cca
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2021-10-06 10:20:02 UTC +02:00
+  Git branch:         hf-cleanup-oao-stuff
+  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
-  Runtime checks:     ON
+  Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-06-09 18:23:33 UTC +02:00
+  Calculation started: 2021-10-06 10:31:47 UTC +02:00
 
 
   :: Input file
@@ -170,6 +170,8 @@
      Maximum iterations:                   100
      Acceleration type:                   diis
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-11
      Energy threshold:              0.1000E-11
 
@@ -196,29 +198,29 @@
 
      DIIS dimension:   8
 
-     Storage (solver scf_e): memory
-     Storage (solver scf_x): memory
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1          -151.947468513542     0.3742E+00     0.1519E+03
      2          -151.974601172021     0.2066E+00     0.2713E-01
-     3          -151.982329885144     0.2854E-01     0.7729E-02
+     3          -151.982329885145     0.2854E-01     0.7729E-02
      4          -151.982556015098     0.5571E-02     0.2261E-03
-     5          -151.982567509735     0.1186E-02     0.1149E-04
+     5          -151.982567509736     0.1186E-02     0.1149E-04
      6          -151.982568065640     0.1713E-03     0.5559E-06
      7          -151.982568078837     0.1854E-04     0.1320E-07
-     8          -151.982568079070     0.5108E-05     0.2337E-09
-     9          -151.982568079086     0.7388E-06     0.1620E-10
-    10          -151.982568079087     0.7490E-07     0.2274E-12
-    11          -151.982568079087     0.1483E-07     0.8527E-13
-    12          -151.982568079086     0.4122E-08     0.2842E-13
-    13          -151.982568079086     0.5962E-09     0.2842E-13
-    14          -151.982568079086     0.8899E-10     0.0000E+00
-    15          -151.982568079086     0.2016E-10     0.2842E-13
-    16          -151.982568079086     0.3174E-11     0.5684E-13
-    17          -151.982568079086     0.1060E-11     0.5684E-13
-    18          -151.982568079086     0.1236E-12     0.2842E-13
+     8          -151.982568079070     0.5108E-05     0.2336E-09
+     9          -151.982568079086     0.7388E-06     0.1614E-10
+    10          -151.982568079087     0.7490E-07     0.3411E-12
+    11          -151.982568079087     0.1483E-07     0.2842E-13
+    12          -151.982568079087     0.4122E-08     0.5684E-13
+    13          -151.982568079087     0.5962E-09     0.2842E-13
+    14          -151.982568079087     0.8899E-10     0.2842E-13
+    15          -151.982568079087     0.2016E-10     0.2842E-13
+    16          -151.982568079087     0.3170E-11     0.5684E-13
+    17          -151.982568079087     0.1060E-11     0.0000E+00
+    18          -151.982568079087     0.1227E-12     0.8527E-13
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -227,18 +229,18 @@
      HOMO-LUMO gap:                  0.719739301321
      Nuclear repulsion energy:      37.239924244742
      Electronic energy:           -189.222492323828
-     Total energy:                -151.982568079086
+     Total energy:                -151.982568079087
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
      Active energy:               -104.520372954648
-     Active-inactive energy:        19.190975819373
+     Active-inactive energy:        19.190975819374
      Inactive energy:             -103.893095188554
 
   - Timings for the MLHF ground state calculation
 
-     Total wall time (sec):              0.68433
-     Total cpu time (sec):               1.30537
+     Total wall time (sec):              1.32400
+     Total cpu time (sec):               2.49817
 
 
   :: MLCCSD wavefunction
@@ -318,7 +320,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9457E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1764E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1734E-14
 
   - Settings for integral handling:
 
@@ -328,8 +330,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.64007
-     Total cpu time (sec):               1.27257
+     Total wall time (sec):              0.73300
+     Total cpu time (sec):               1.22329
 
 
   2) Preparation of MO basis and integrals
@@ -338,11 +340,11 @@
 
   - Summary of CCS calculation for NTOs/CNTOs:
 
-     Wall time for CCS ground calculation (sec):                   0.00
-     CPU time for CCS ground calculation (sec):                    0.00
+     Wall time for CCS ground calculation (sec):                   0.01
+     CPU time for CCS ground calculation (sec):                    0.01
 
-     Wall time for CCS excited calculation (sec):                  0.01
-     CPU time for CCS excited calculation (sec):                   0.03
+     Wall time for CCS excited calculation (sec):                  0.08
+     CPU time for CCS excited calculation (sec):                   0.08
 
   - MLCCSD orbital partitioning:
 
@@ -370,6 +372,8 @@
 
   - CC ground state solver settings:
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
      Max number of iterations:      100
@@ -378,8 +382,8 @@
 
      DIIS dimension:   8
 
-     Storage (cc_gs_diis_e): file
-     Storage (cc_gs_diis_x): file
+     Storage (cc_gs_diis_errors): file
+     Storage (cc_gs_diis_parameters): file
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
@@ -392,11 +396,11 @@
     7          -152.027918946757     0.2133E-05     0.1058E-07
     8          -152.027918960053     0.5547E-06     0.1330E-07
     9          -152.027918958871     0.1586E-06     0.1181E-08
-   10          -152.027918958983     0.4517E-07     0.1122E-09
+   10          -152.027918958984     0.4517E-07     0.1122E-09
    11          -152.027918958826     0.7293E-08     0.1575E-09
    12          -152.027918958897     0.1528E-08     0.7128E-10
-   13          -152.027918958857     0.4242E-09     0.3985E-10
-   14          -152.027918958833     0.7821E-10     0.2427E-10
+   13          -152.027918958858     0.4242E-09     0.3982E-10
+   14          -152.027918958833     0.7821E-10     0.2430E-10
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -413,33 +417,33 @@
         5      1        0.005420382501
         2      1       -0.005048708236
         4      2       -0.002543548099
-        9      1        0.002206699722
-        6      1       -0.002203884395
-        1      1       -0.001818592511
+        9      1        0.002206699725
+        6      1       -0.002203884394
+        1      1       -0.001818592510
        17      1       -0.001668717154
-        7      1        0.001516758373
+        7      1        0.001516758372
         1      5       -0.001440301550
-       12      1        0.000817687494
+       12      1        0.000817687489
      ------------------------------------
 
   - Finished solving the MLCCSD ground state equations
 
-     Total wall time (sec):              0.04741
-     Total cpu time (sec):               0.09456
+     Total wall time (sec):              0.18000
+     Total cpu time (sec):               0.21924
 
   - Timings for the MLCCSD ground state calculation
 
-     Total wall time (sec):              0.71256
-     Total cpu time (sec):               1.41540
+     Total wall time (sec):              1.03400
+     Total cpu time (sec):               1.56555
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 10.068360 MB
+  Peak memory usage during the execution of eT: 10.326664 MB
 
-  Total wall time in eT (sec):              1.40950
-  Total cpu time in eT (sec):               2.73994
+  Total wall time in eT (sec):              2.38600
+  Total cpu time in eT (sec):               4.09390
 
-  Calculation ended: 2021-06-09 18:23:34 UTC +02:00
+  Calculation ended: 2021-10-06 10:31:50 UTC +02:00
 
   - Implementation references:
 
