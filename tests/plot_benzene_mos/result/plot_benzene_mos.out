@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.4 - an electronic structure program
+                     eT 1.5 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.4.0 Eos (development)
+   This is eT 1.5.0 Furia (development)
   ------------------------------------------------------------
-  Configuration date: 2021-06-13 14:22:55 UTC +02:00
-  Git branch:         mlcc3-core-valence-exc
-  Git hash:           2f6ebc0bd1a4226361833664db781e064ed96566
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2021-10-06 10:20:02 UTC +02:00
+  Git branch:         hf-cleanup-oao-stuff
+  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-06-15 12:22:30 UTC +02:00
+  Calculation started: 2021-10-06 10:32:23 UTC +02:00
 
 
   :: Input file
@@ -153,6 +153,8 @@
      Maximum iterations:                   100
      Acceleration type:                   diis
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-06
      Energy threshold:              0.1000E-06
 
@@ -173,30 +175,31 @@
 
      DIIS dimension:   1
 
-     Storage (solver scf_e): memory
-     Storage (solver scf_x): memory
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -227.854539124139     0.1914E-01     0.2279E+03
-     2          -227.887715006051     0.5061E-02     0.3318E-01
-     3          -227.889769895360     0.1289E-02     0.2055E-02
-     4          -227.889899603219     0.3291E-03     0.1297E-03
-     5          -227.889907905955     0.8400E-04     0.8303E-05
-     6          -227.889908443177     0.2147E-04     0.5372E-06
-     7          -227.889908478210     0.5495E-05     0.3503E-07
-     8          -227.889908480498     0.1408E-05     0.2289E-08
-     9          -227.889908480653     0.3611E-06     0.1548E-09
-    10          -227.889908480655     0.9270E-07     0.1421E-11
+     1          -227.854539124139     0.2909E-01     0.2279E+03
+     2          -227.887715006051     0.7963E-02     0.3318E-01
+     3          -227.889769895360     0.1966E-02     0.2055E-02
+     4          -227.889899603219     0.4998E-03     0.1297E-03
+     5          -227.889907905955     0.1259E-03     0.8303E-05
+     6          -227.889908443177     0.3209E-04     0.5372E-06
+     7          -227.889908478210     0.8258E-05     0.3503E-07
+     8          -227.889908480499     0.2127E-05     0.2289E-08
+     9          -227.889908480653     0.5482E-06     0.1545E-09
+    10          -227.889908480654     0.1413E-06     0.1251E-11
+    11          -227.889908480679     0.3646E-07     0.2470E-10
   ---------------------------------------------------------------
-  Convergence criterion met in 10 iterations!
+  Convergence criterion met in 11 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.545512821817
+     HOMO-LUMO gap:                  0.545512829729
      Nuclear repulsion energy:     202.713706646500
-     Electronic energy:           -430.603615127155
-     Total energy:                -227.889908480655
+     Electronic energy:           -430.603615127180
+     Total energy:                -227.889908480679
 
 
   3) Plot orbitals and/or density
@@ -216,17 +219,17 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.48281
-     Total cpu time (sec):               2.87064
+     Total wall time (sec):              3.30300
+     Total cpu time (sec):               6.17744
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 1.548960 MB
+  Peak memory usage during the execution of eT: 1.544976 MB
 
-  Total wall time in eT (sec):              1.49125
-  Total cpu time in eT (sec):               2.88006
+  Total wall time in eT (sec):              3.32300
+  Total cpu time in eT (sec):               6.19949
 
-  Calculation ended: 2021-06-15 12:22:31 UTC +02:00
+  Calculation ended: 2021-10-06 10:32:26 UTC +02:00
 
   - Implementation references:
 

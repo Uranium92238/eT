@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.4 - an electronic structure program
+                     eT 1.5 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.4.0 Eos (development)
+   This is eT 1.5.0 Furia (development)
   ------------------------------------------------------------
-  Configuration date: 2021-07-15 21:50:36 UTC +02:00
-  Git branch:         tdhf-restart
-  Git hash:           03e4d247c1392bd4fae9dcc85e314cc6b61fdc80
-  Fortran compiler:   GNU 10.2.0
-  C compiler:         GNU 10.2.0
-  C++ compiler:       GNU 10.2.0
+  Configuration date: 2021-10-06 10:20:02 UTC +02:00
+  Git branch:         hf-cleanup-oao-stuff
+  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-07-15 22:07:57 UTC +02:00
+  Calculation started: 2021-10-06 10:31:10 UTC +02:00
 
 
   :: Input file
@@ -69,7 +69,7 @@
      end tdhf
 
 
-  Running on 4 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -143,7 +143,7 @@
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:               -78.492359869042
+     Energy of initial guess:               -78.492359869065
      Number of electrons in guess:           12.000000000000
 
   - Screening and integral thresholds:
@@ -163,27 +163,27 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.796357979446     0.9059E-01     0.7880E+02
-     2           -78.828453237473     0.7130E-01     0.3210E-01
-     3           -78.843222387150     0.8290E-02     0.1477E-01
-     4           -78.843604035493     0.2415E-02     0.3816E-03
-     5           -78.843645357974     0.3300E-03     0.4132E-04
-     6           -78.843646180978     0.5523E-04     0.8230E-06
-     7           -78.843646204481     0.5847E-05     0.2350E-07
-     8           -78.843646205182     0.2352E-05     0.7013E-09
-     9           -78.843646205256     0.2067E-06     0.7370E-10
-    10           -78.843646205256     0.1571E-07     0.4547E-12
-    11           -78.843646205256     0.4353E-08     0.1421E-12
-    12           -78.843646205256     0.1445E-08     0.4263E-13
-    13           -78.843646205256     0.5059E-09     0.1421E-13
-    14           -78.843646205256     0.1398E-09     0.0000E+00
-    15           -78.843646205256     0.1658E-10     0.0000E+00
+     1           -78.796357979384     0.9791E-01     0.7880E+02
+     2           -78.828453237445     0.7078E-01     0.3210E-01
+     3           -78.843281517241     0.6747E-02     0.1483E-01
+     4           -78.843608975052     0.2753E-02     0.3275E-03
+     5           -78.843645123311     0.3974E-03     0.3615E-04
+     6           -78.843646182586     0.5223E-04     0.1059E-05
+     7           -78.843646204409     0.6084E-05     0.2182E-07
+     8           -78.843646205153     0.2132E-05     0.7439E-09
+     9           -78.843646205256     0.3153E-06     0.1025E-09
+    10           -78.843646205256     0.2623E-07     0.4547E-12
+    11           -78.843646205256     0.5559E-08     0.2842E-13
+    12           -78.843646205256     0.1724E-08     0.2842E-13
+    13           -78.843646205256     0.7589E-09     0.2842E-13
+    14           -78.843646205256     0.1286E-09     0.2842E-13
+    15           -78.843646205256     0.2324E-10     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.645693538836
+     HOMO-LUMO gap:                  0.645693538823
      Nuclear repulsion energy:      12.167611407170
      Electronic energy:            -91.011257612426
      Total energy:                 -78.843646205256
@@ -200,6 +200,10 @@
      Storage (tdhf_davidson_trials): memory
      Storage (tdhf_davidson_transforms): memory
 
+  Requested restart. Reading in solution from file.
+
+  Requested restart. Reading in solution from file.
+
   - Davidson solver settings
 
      Number of singlet states:               2
@@ -210,8 +214,8 @@
 
    Root  omega (Re)        omega (Im)         |residual|   Delta omega (Re)
   ------------------------------------------------------------------------
-     1   0.078189601099    0.000000000000     0.1396E-10   0.7819E-01
-     2   0.142327765332    0.000000000000     0.2414E-10   0.1423E+00
+     1   0.078189601095    0.000000000000     0.1396E-10   0.7819E-01
+     2   0.142327765331    0.000000000000     0.2412E-10   0.1423E+00
   ------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -221,24 +225,24 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.279624035267        7.608957564107
-        2                  0.377263522398       10.265863339237
+        1                  0.279624035259        7.608957563911
+        2                  0.377263522396       10.265863339180
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Timings for the RHF properties calculation
 
-     Total wall time (sec):              0.45300
-     Total cpu time (sec):               1.42539
+     Total wall time (sec):              1.29200
+     Total cpu time (sec):               2.21982
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 225.492 KB
+  Peak memory usage during the execution of eT: 212.036 KB
 
-  Total wall time in eT (sec):              0.49400
-  Total cpu time in eT (sec):               1.46144
+  Total wall time in eT (sec):              1.33400
+  Total cpu time in eT (sec):               2.26317
 
-  Calculation ended: 2021-07-15 22:07:58 UTC +02:00
+  Calculation ended: 2021-10-06 10:31:12 UTC +02:00
 
   - Implementation references:
 

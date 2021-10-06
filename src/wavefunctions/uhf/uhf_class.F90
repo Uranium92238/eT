@@ -882,8 +882,8 @@ contains
 !
       call mem%alloc(F, wf%n_mo, wf%n_mo, wf%n_densities)
 !
-      call wf%ao_to_orthonormal_ao_transformation(F(:,:,1), wf%ao_fock_a)
-      call wf%ao_to_orthonormal_ao_transformation(F(:,:,2), wf%ao_fock_b)
+      call wf%ao_to_oao_transformation(F(:,:,1), wf%ao_fock_a)
+      call wf%ao_to_oao_transformation(F(:,:,2), wf%ao_fock_b)
 !
       call packin(F_packed, F(:,:,1), wf%n_mo)
       call packin(F_packed(wf%n_mo*(wf%n_mo + 1)/2 + 1:), F(:,:,2), wf%n_mo)

@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.3 - an electronic structure program
+                     eT 1.5 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco
+   This is eT 1.5.0 Furia (development)
   ------------------------------------------------------------
-  Configuration date: 2021-06-07 12:48:33 UTC +02:00
-  Git branch:         update-test-refs-new
-  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Configuration date: 2021-10-06 10:20:02 UTC +02:00
+  Git branch:         hf-cleanup-oao-stuff
+  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
-  PCM:                ON
+  PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-06-07 12:49:54 UTC +02:00
+  Calculation started: 2021-10-06 10:30:03 UTC +02:00
 
 
   :: Input file
@@ -150,12 +150,14 @@
      Maximum iterations:                   100
      Acceleration type:                   diis
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:              -178.316435989142
+     Energy of initial guess:              -178.316435989155
      Number of electrons in guess:           20.000000000000
 
   - Screening and integral thresholds:
@@ -170,43 +172,43 @@
 
      DIIS dimension:   8
 
-     Storage (solver scf_e): memory
-     Storage (solver scf_x): memory
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1          -177.452460025510     0.7565E-01     0.1775E+03
-     2          -177.479057956533     0.1346E-01     0.2660E-01
-     3          -177.480054154999     0.4309E-02     0.9962E-03
-     4          -177.480180562238     0.1844E-02     0.1264E-03
-     5          -177.480194220839     0.3631E-03     0.1366E-04
-     6          -177.480195441222     0.7394E-04     0.1220E-05
-     7          -177.480195516819     0.2206E-04     0.7560E-07
-     8          -177.480195527024     0.5084E-05     0.1021E-07
-     9          -177.480195527847     0.1218E-05     0.8233E-09
-    10          -177.480195527874     0.2531E-06     0.2640E-10
-    11          -177.480195527875     0.4375E-07     0.1194E-11
-    12          -177.480195527875     0.9241E-08     0.2274E-12
-    13          -177.480195527875     0.4370E-08     0.1137E-12
-    14          -177.480195527875     0.1744E-08     0.1705E-12
-    15          -177.480195527875     0.3643E-09     0.2842E-12
-    16          -177.480195527875     0.1712E-09     0.2274E-12
-    17          -177.480195527875     0.5855E-10     0.8527E-13
-    18          -177.480195527875     0.5043E-11     0.1137E-12
+     2          -177.479057956534     0.1129E-01     0.2660E-01
+     3          -177.480052448592     0.4142E-02     0.9945E-03
+     4          -177.480180104061     0.1387E-02     0.1277E-03
+     5          -177.480194080187     0.4312E-03     0.1398E-04
+     6          -177.480195433667     0.8262E-04     0.1353E-05
+     7          -177.480195516708     0.2289E-04     0.8304E-07
+     8          -177.480195527015     0.4801E-05     0.1031E-07
+     9          -177.480195527843     0.1045E-05     0.8288E-09
+    10          -177.480195527874     0.2388E-06     0.3084E-10
+    11          -177.480195527875     0.5236E-07     0.7674E-12
+    12          -177.480195527875     0.9618E-08     0.1421E-12
+    13          -177.480195527875     0.4310E-08     0.1705E-12
+    14          -177.480195527875     0.1983E-08     0.5684E-13
+    15          -177.480195527875     0.6772E-09     0.1421E-12
+    16          -177.480195527875     0.1634E-09     0.5684E-13
+    17          -177.480195527875     0.4727E-10     0.2842E-13
+    18          -177.480195527875     0.8076E-11     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.600390987886
+     HOMO-LUMO gap:                  0.600390987894
      Nuclear repulsion energy:      48.499011140892
      Electronic energy:           -225.979206668767
      Total energy:                -177.480195527875
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.82439
-     Total cpu time (sec):               1.61296
+     Total wall time (sec):              2.71000
+     Total cpu time (sec):               5.09646
 
 
   :: CC2 wavefunction
@@ -294,7 +296,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9471E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.1084E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1128E-14
 
   - Settings for integral handling:
 
@@ -304,8 +306,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.35773
-     Total cpu time (sec):               0.70511
+     Total wall time (sec):              1.21600
+     Total cpu time (sec):               2.02301
 
 
   2) Preparation of MO basis and integrals
@@ -323,6 +325,8 @@
 
   - CC ground state solver settings:
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
      Max number of iterations:      100
@@ -331,27 +335,27 @@
 
      DIIS dimension:   8
 
-     Storage (cc_gs_diis_e): file
-     Storage (cc_gs_diis_x): file
+     Storage (cc_gs_diis_errors): file
+     Storage (cc_gs_diis_parameters): file
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
     1          -177.877001409677     0.4674E-01     0.1779E+03
     2          -177.878674723964     0.9225E-02     0.1673E-02
-    3          -177.879094696948     0.1669E-02     0.4200E-03
-    4          -177.879150335164     0.5273E-03     0.5564E-04
+    3          -177.879094696947     0.1669E-02     0.4200E-03
+    4          -177.879150335163     0.5273E-03     0.5564E-04
     5          -177.879146466204     0.9144E-04     0.3869E-05
-    6          -177.879146277703     0.1165E-04     0.1885E-06
+    6          -177.879146277702     0.1165E-04     0.1885E-06
     7          -177.879146253559     0.3927E-05     0.2414E-07
     8          -177.879146237884     0.1639E-05     0.1568E-07
     9          -177.879146249877     0.3173E-06     0.1199E-07
    10          -177.879146248545     0.6848E-07     0.1332E-08
-   11          -177.879146248482     0.1241E-07     0.6352E-10
+   11          -177.879146248481     0.1241E-07     0.6349E-10
    12          -177.879146248449     0.2381E-08     0.3212E-10
    13          -177.879146248424     0.5290E-09     0.2515E-10
    14          -177.879146248423     0.6468E-10     0.1307E-11
-   15          -177.879146248424     0.1009E-10     0.1137E-11
-   16          -177.879146248424     0.2178E-11     0.2842E-13
+   15          -177.879146248424     0.1009E-10     0.1108E-11
+   16          -177.879146248424     0.2176E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -365,22 +369,22 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        1      9        0.022050116778
-        3      9        0.008444448645
-        4      7        0.006514017945
-       14      9       -0.005581547297
-        4     10        0.005276241552
-        5      6        0.005084191936
+        1      9        0.022050116775
+        3      9        0.008444448646
+        4      7        0.006514017946
+       14      9       -0.005581547298
+        4     10        0.005276241556
+        5      6        0.005084191937
        14      6       -0.004916693498
-       10      7        0.004447459944
+       10      7        0.004447459943
         5      4       -0.004325455304
-        3      6       -0.004315437316
+        3      6       -0.004315437318
      ------------------------------------
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.14140
-     Total cpu time (sec):               0.28140
+     Total wall time (sec):              0.42700
+     Total cpu time (sec):               0.55800
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -405,8 +409,8 @@
 
      DIIS dimension:   8
 
-     Storage (cc_multipliers_diis_e): file
-     Storage (cc_multipliers_diis_x): file
+     Storage (cc_multipliers_diis_errors): file
+     Storage (cc_multipliers_diis_parameters): file
 
   Iteration    Norm residual
   ----------------------------
@@ -434,22 +438,22 @@
      -----------------------------------
         a       i         tbar(a,i)
      -----------------------------------
-        1      9        0.036962642261
-        3      9        0.012935991801
-        4      7        0.012258896995
-       14      9       -0.011861824006
-        4     10        0.010369057365
-       14      6       -0.010065074998
-        3      6       -0.009844666363
-        5      6        0.009547250034
+        1      9        0.036962642256
+        3      9        0.012935991802
+        4      7        0.012258896998
+       14      9       -0.011861824007
+        4     10        0.010369057374
+       14      6       -0.010065074999
+        3      6       -0.009844666366
+        5      6        0.009547250037
        22      8       -0.008767267832
         5      4       -0.008015599057
      ------------------------------------
 
   - Finished solving the cc2 multipliers equations
 
-     Total wall time (sec):              0.14114
-     Total cpu time (sec):               0.28112
+     Total wall time (sec):              0.51000
+     Total cpu time (sec):               0.58303
 
 
   5) Calculation of ground state properties
@@ -472,17 +476,17 @@
 
   - Timings for the CC2 mean value calculation
 
-     Total wall time (sec):              0.65021
-     Total cpu time (sec):               1.28956
+     Total wall time (sec):              2.19800
+     Total cpu time (sec):               3.21129
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 28.117840 MB
+  Peak memory usage during the execution of eT: 28.066664 MB
 
-  Total wall time in eT (sec):              1.49500
-  Total cpu time in eT (sec):               2.92765
+  Total wall time in eT (sec):              4.96300
+  Total cpu time in eT (sec):               8.36363
 
-  Calculation ended: 2021-06-07 12:49:55 UTC +02:00
+  Calculation ended: 2021-10-06 10:30:08 UTC +02:00
 
   - Implementation references:
 

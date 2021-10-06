@@ -235,7 +235,8 @@ module hf_class
       procedure :: construct_initial_idempotent_density &
                 => construct_initial_idempotent_density_hf
 !
-      procedure, non_overridable :: ao_to_orthonormal_ao_transformation => ao_to_orthonormal_ao_transformation_hf
+      procedure, non_overridable :: ao_to_oao_transformation => ao_to_oao_transformation_hf
+      procedure, non_overridable :: oao_to_ao_transformation => oao_to_ao_transformation_hf
 !
       procedure :: ao_to_reduced_ao_transformation &
                 => ao_to_reduced_ao_transformation_hf
@@ -905,9 +906,7 @@ contains
 !
       call mem%dealloc(tmp, wf%ao%n, wf%ao%n)
 !
-!     Transform G_ao to OAO pivot basis: G = P^T G_ao P
-!
-      call wf%ao%orthonormal_ao_pivot_basis_transformation(G_ao, G)
+      call wf%ao_to_oao_transformation(G, G_ao)
 !
       call mem%dealloc(G_ao, wf%ao%n, wf%ao%n)
 !
@@ -1619,7 +1618,7 @@ contains
 !
       call mem%alloc(F, wf%n_mo, wf%n_mo)
 !
-      call wf%ao_to_orthonormal_ao_transformation(F, wf%ao_fock)
+      call wf%ao_to_oao_transformation(F, wf%ao_fock)
       call packin(F_packed, F, wf%n_mo)
 !
       call mem%dealloc(F, wf%n_mo, wf%n_mo)
@@ -1849,7 +1848,7 @@ contains
    end subroutine ao_to_reduced_ao_transformation_hf
 !
 !
-   subroutine ao_to_orthonormal_ao_transformation_hf(wf, X_orthonormal_ao, X_ao)
+   subroutine ao_to_oao_transformation_hf(wf, X_oao, X_ao)
 !!
 !!    AO to OAO transformation
 !!    Written by Sarai D. Folkestad, 2020
@@ -1857,7 +1856,7 @@ contains
 !!    Transforms a matrix from the AO basis to the
 !!    orthonormal AO (OAO) basis
 !!
-!!       X_orthonormal_ao = L^-1 P^T X_ao P L^-T,
+!!       X_oao = L^-1 P^T X_ao P L^-T,
 !!
 !!    where
 !!
@@ -1866,14 +1865,15 @@ contains
 !!    defines the Cholesky decomposition of the
 !!    atomic orbital overlap matrix S.
 !!
+      use array_utilities, only: symmetric_sandwich, symmetric_sandwich_right_transposition
       implicit none
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: X_orthonormal_ao
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: X_oao
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in)  :: X_ao
 !
-      real(dp), dimension(:,:), allocatable :: X, L_inv
+      real(dp), dimension(:,:), allocatable :: L_inv
       real(dp), dimension(:,:), allocatable :: X_reduced_ao
 !
       integer :: info
@@ -1882,51 +1882,56 @@ contains
       call dcopy(wf%n_mo**2, wf%ao%L, 1, L_inv, 1)
 !
       call dtrtri('l','n', wf%n_mo, L_inv, wf%n_mo, info)
-!
       if (info .ne. 0) call output%error_msg('problem with inversion of Cholesky factor of S')
-!
-!     Construct reduced AO Fock matrix, F' = P^T F P
 !
       call mem%alloc(X_reduced_ao, wf%n_mo, wf%n_mo)
 !
-      call wf%ao_to_reduced_ao_transformation(X_reduced_ao, X_ao)
+      call symmetric_sandwich(X_reduced_ao, X_ao, wf%ao%P, wf%ao%n, wf%n_mo)
+      call symmetric_sandwich_right_transposition(X_oao, X_reduced_ao, L_inv, wf%n_mo, wf%n_mo)
 !
-!     Construct orthogonal AO Fock matrix, X_orthonormal_ao = L^-1 X_reduced_ao L^-T
+      call mem%dealloc(X_reduced_ao, wf%n_mo, wf%n_mo)
+      call mem%dealloc(L_inv, wf%n_mo, wf%n_mo)
+!
+   end subroutine ao_to_oao_transformation_hf
+!
+!
+   subroutine oao_to_ao_transformation_hf(wf, X_oao, X_ao)
+!!
+!!    OAO to AO transformation
+!!    Written by Sarai D. Folkestad, Oct 2021
+!!
+!!    Transforms a matrix from the AO basis to the
+!!    orthonormal AO (OAO) basis
+!!
+!!        X_ao = P L X_oao L^T P^T,
+!!
+!!    where
+!!
+!!       P^T S P = L L^T
+!!
+!!    defines the Cholesky decomposition of the
+!!    atomic orbital overlap matrix S.
+!!
+!
+      use array_utilities, only: symmetric_sandwich_right_transposition
+!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X_oao
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(out)  :: X_ao
+!
+      real(dp), dimension(:,:), allocatable :: X
 !
       call mem%alloc(X, wf%n_mo, wf%n_mo)
 !
-      call dgemm('N', 'N',    &
-                  wf%n_mo,    &
-                  wf%n_mo,    &
-                  wf%n_mo,    &
-                  one,        &
-                  L_inv,      &
-                  wf%n_mo,    &
-                  X_reduced_ao,      &
-                  wf%n_mo,    &
-                  zero,       &
-                  X,          &
-                  wf%n_mo)
+      call symmetric_sandwich_right_transposition(X, X_oao, wf%ao%L, wf%n_mo, wf%n_mo)
+      call symmetric_sandwich_right_transposition(X_ao, X, wf%ao%P, wf%n_mo, wf%ao%n)
 !
-      call mem%dealloc(X_reduced_ao, wf%n_mo, wf%n_mo)
-!
-      call dgemm('N', 'T',    &
-                  wf%n_mo,    &
-                  wf%n_mo,    &
-                  wf%n_mo,    &
-                  one,        &
-                  X,          &
-                  wf%n_mo,    &
-                  L_inv,      &
-                  wf%n_mo,    &
-                  zero,       &
-                  X_orthonormal_ao,      &
-                  wf%n_mo)
-!
-      call mem%dealloc(L_inv, wf%n_mo, wf%n_mo)
       call mem%dealloc(X, wf%n_mo, wf%n_mo)
 !
-   end subroutine ao_to_orthonormal_ao_transformation_hf
+   end subroutine oao_to_ao_transformation_hf
 !
 !
    function is_restart_possible_hf(wf) result(restart_is_possible)

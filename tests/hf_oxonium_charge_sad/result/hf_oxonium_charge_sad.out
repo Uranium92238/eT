@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.3 - an electronic structure program
+                     eT 1.5 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco (development version)
+   This is eT 1.5.0 Furia (development)
   ------------------------------------------------------------
-  Configuration date: 2021-06-03 16:16:20 UTC +02:00
-  Git branch:         charge-on-atoms
-  Git hash:           01b51f2394ee81d49469826df5038e4a99fd98b4
-  Fortran compiler:   GNU 10.2.0
-  C compiler:         GNU 10.2.0
-  C++ compiler:       GNU 10.2.0
+  Configuration date: 2021-10-06 10:20:02 UTC +02:00
+  Git branch:         hf-cleanup-oao-stuff
+  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-06-03 16:22:07 UTC +02:00
+  Calculation started: 2021-10-06 10:32:29 UTC +02:00
 
 
   :: Input file
@@ -64,7 +64,7 @@
      end solver scf
 
 
-  Running on 4 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -130,13 +130,15 @@
      Maximum iterations:                   100
      Acceleration type:                   diis
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
 
   - Setting initial AO density to sad
 
-  Warning: mismatch in number of electrons from initial guess.  it is 
-           recomended to assign charges to atoms.
+  Warning: mismatch in number of electrons from initial guess. It can 
+           be beneficial to assign charges to atoms.
 
      Energy of initial guess:               -75.381736253010
      Number of electrons in guess:           10.000000000000
@@ -154,50 +156,50 @@
 
      DIIS dimension:   8
 
-     Storage (solver scf_e): memory
-     Storage (solver scf_x): memory
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -75.546988127223     0.1609E+00     0.7555E+02
-     2           -75.693696603119     0.1002E+00     0.1467E+00
-     3           -75.738737447575     0.1490E-01     0.4504E-01
-     4           -75.740969822771     0.7501E-02     0.2232E-02
-     5           -75.742497229853     0.3040E-02     0.1527E-02
-     6           -75.742687483785     0.3384E-03     0.1903E-03
-     7           -75.742689924007     0.4037E-04     0.2440E-05
-     8           -75.742689961435     0.3246E-05     0.3743E-07
-     9           -75.742689961847     0.7172E-06     0.4112E-09
-    10           -75.742689961854     0.1051E-06     0.7134E-11
-    11           -75.742689961854     0.1274E-07     0.3837E-12
-    12           -75.742689961854     0.3543E-08     0.5684E-13
-    13           -75.742689961854     0.5614E-09     0.4263E-13
-    14           -75.742689961854     0.6208E-10     0.5684E-13
+     1           -75.546988127223     0.1856E+00     0.7555E+02
+     2           -75.693696603119     0.1156E+00     0.1467E+00
+     3           -75.738684003894     0.1524E-01     0.4499E-01
+     4           -75.741162693306     0.6797E-02     0.2479E-02
+     5           -75.742508776510     0.2476E-02     0.1346E-02
+     6           -75.742687254544     0.3768E-03     0.1785E-03
+     7           -75.742689950334     0.2111E-04     0.2696E-05
+     8           -75.742689961582     0.2625E-05     0.1125E-07
+     9           -75.742689961841     0.1023E-05     0.2595E-09
+    10           -75.742689961854     0.1822E-06     0.1234E-10
+    11           -75.742689961854     0.2010E-07     0.5400E-12
+    12           -75.742689961854     0.3653E-08     0.1137E-12
+    13           -75.742689961854     0.6806E-09     0.1137E-12
+    14           -75.742689961854     0.8527E-10     0.8527E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.382376599560
+     HOMO-LUMO gap:                  0.382376599571
      Nuclear repulsion energy:      13.822807444953
      Electronic energy:            -89.565497406807
      Total energy:                 -75.742689961854
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.05600
-     Total cpu time (sec):               0.10329
+     Total wall time (sec):              0.09400
+     Total cpu time (sec):               0.12694
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 48.116 KB
+  Peak memory usage during the execution of eT: 49.980 KB
 
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.07600
-  Total cpu time in eT (sec):               0.11691
+  Total wall time in eT (sec):              0.10900
+  Total cpu time in eT (sec):               0.14140
 
-  Calculation ended: 2021-06-03 16:22:07 UTC +02:00
+  Calculation ended: 2021-10-06 10:32:29 UTC +02:00
 
   - Implementation references:
 
