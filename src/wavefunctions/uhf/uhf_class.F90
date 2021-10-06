@@ -100,6 +100,7 @@ module uhf_class
 !     Roothan-Hall gradient
 !
       procedure :: get_packed_roothan_hall_gradient      => get_packed_roothan_hall_gradient_uhf
+      procedure :: get_roothan_hall_gradient             => get_roothan_hall_gradient_uhf
 !
 !     Class variable initialize and destruct routines
 !
@@ -238,7 +239,7 @@ contains
 !
       call wf%set_n_mo()
 !
-      wf%gradient_dimension = wf%n_mo*(wf%n_mo - 1)/2*wf%n_densities
+      wf%packed_gradient_dimension = wf%n_mo*(wf%n_mo - 1)/2*wf%n_densities
 !
       if (wf%fractional_uniform_valence) then
 !
@@ -313,37 +314,54 @@ contains
 !
       real(dp), dimension(wf%n_mo*(wf%n_mo - 1)/2, wf%n_densities), intent(inout) :: G
 !
-      real(dp), dimension(:,:), allocatable :: G_sq
-      real(dp), dimension(:), allocatable :: G_pck
+      real(dp), dimension(:,:,:), allocatable :: G_sq
+!
+      call mem%alloc(G_sq, wf%n_mo, wf%n_mo, 2)
+!
+      call wf%get_roothan_hall_gradient(G_sq)
+!
+      call packin_anti(G(:,1), G_sq(:,:,1), wf%ao%n)
+      call packin_anti(G(:,2), G_sq(:,:,2), wf%ao%n)
+!
+      call mem%dealloc(G_sq, wf%n_mo, wf%n_mo, 2)
+!
+   end subroutine get_packed_roothan_hall_gradient_uhf
+!
+!
+   subroutine get_roothan_hall_gradient_uhf(wf, G)
+!!
+!!    Get Roothan-Hall gradient
+!!    Written by Eirik F. Kjønstad, Nov 2018
+!!
+!!    Constructs and returns the gradient. For UHF,
+!!    both the alpha and beta gradients are
+!!    returned as follows: [G_a G_b]
+!!
+      implicit none
+!
+      class(uhf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo**2, wf%n_densities), intent(inout) :: G
+!
       real(dp), dimension(:,:), allocatable :: Po, Pv
 !
       call mem%alloc(Po, wf%ao%n, wf%ao%n)
       call mem%alloc(Pv, wf%ao%n, wf%ao%n)
-      call mem%alloc(G_pck, wf%n_mo*(wf%n_mo - 1)/2)
-      call mem%alloc(G_sq, wf%n_mo, wf%n_mo)
 !
 !     Alpha gradient
 !
       call wf%construct_projection_matrices(Po, Pv, wf%ao_density_a)
-      call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock_a)
-!
-      call packin_anti(G_pck, G_sq, wf%ao%n)
-      call dcopy(wf%ao%n*(wf%ao%n - 1)/2, G_pck, 1, G, 1)
+      call wf%construct_roothan_hall_gradient(G(:,1), Po, Pv, wf%ao_fock_a)
 !
 !     Beta gradient
 !
       call wf%construct_projection_matrices(Po, Pv, wf%ao_density_b)
-      call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock_b)
-!
-      call packin_anti(G_pck, G_sq, wf%ao%n)
-      call dcopy(wf%ao%n*(wf%ao%n - 1)/2, G_pck, 1, G(1, 2), 1)
+      call wf%construct_roothan_hall_gradient(G(:,2), Po, Pv, wf%ao_fock_b)
 !
       call mem%dealloc(Po, wf%ao%n, wf%ao%n)
       call mem%dealloc(Pv, wf%ao%n, wf%ao%n)
-      call mem%dealloc(G_pck, wf%n_mo*(wf%n_mo - 1)/2)
-      call mem%dealloc(G_sq, wf%n_mo, wf%n_mo)
 !
-   end subroutine get_packed_roothan_hall_gradient_uhf
+   end subroutine get_roothan_hall_gradient_uhf
 !
 !
    subroutine read_settings_uhf(wf)

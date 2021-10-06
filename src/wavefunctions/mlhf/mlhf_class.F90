@@ -305,7 +305,7 @@ contains
 !     Allocate active mo specific arrays
 !     and construct them
 !
-      wf%gradient_dimension = (wf%n_mo**2)*wf%n_densities
+      wf%packed_gradient_dimension = (wf%n_mo**2)*wf%n_densities
 !
       call wf%initialize_imo_to_mo()
       call identity_array(wf%imo_to_mo, wf%n_mo)
@@ -1324,7 +1324,7 @@ contains
 !     Calculate the new n_mo and initialize orbital coefficients and
 !     orbital energies with it
 !
-      wf%gradient_dimension = (wf%n_mo**2)*wf%n_densities
+      wf%packed_gradient_dimension = (wf%n_mo**2)*wf%n_densities
 !
       call wf%initialize_orbital_coefficients()
       call wf%initialize_orbital_energies()
@@ -1871,7 +1871,7 @@ contains
 !
       class(mlhf) :: wf
 !
-      real(dp), dimension(wf%gradient_dimension), intent(out) :: G
+      real(dp), dimension(wf%packed_gradient_dimension), intent(out) :: G
       real(dp), dimension(:,:), allocatable :: F,  X
 !
       integer :: a, i 
