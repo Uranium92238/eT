@@ -2,6 +2,11 @@
 ### Structure
 - Merged the `abstract_convergence_tool` and the `convergence_tool` classes. eT-program/eT!909
 
+
+# eT v1.4.2
+### Bugfixes
+- Fixed bug that made it impossible to enable the forced batching expert option. eT-program/eT!916
+
 # eT v1.4.1
 ### Bugfixes
 - Changed warnings about wrong memory estimates to verbose prints. eT-program/eT!911
