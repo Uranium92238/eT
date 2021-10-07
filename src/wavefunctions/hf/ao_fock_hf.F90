@@ -1311,4 +1311,26 @@ contains
    end subroutine set_screening_and_precision_thresholds_hf
 !
 !
+   module subroutine set_gradient_threshold_hf(wf, gradient_threshold)
+!!
+!!    Set gradient thresholds
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Sets the screening thresholds for Coulomb and exchange
+!!    integrals given the convergence threshold for the gradient
+!!    unless other thresholds are already set on input.
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+      real(dp), intent(in) :: gradient_threshold
+!
+      wf%gradient_threshold = gradient_threshold
+!
+      call wf%set_screening_and_precision_thresholds(wf%gradient_threshold)
+!
+   end subroutine set_gradient_threshold_hf
+!
+!
 end submodule ao_fock

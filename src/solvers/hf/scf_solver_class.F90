@@ -66,7 +66,6 @@ module scf_solver_class
 !     Starting guess
       logical, private            :: restart
       logical, private            :: skip
-      character(len=200), private :: ao_density_guess
 !
 !     Iterative loop
       integer,  private :: max_iterations 
@@ -89,8 +88,6 @@ module scf_solver_class
       procedure :: run &
                 => run_scf_solver
 !
-      procedure, private :: read_settings &
-                         => read_settings_scf_solver
 !
       procedure, private :: do_scf_step &
                          => do_scf_step_scf_solver
@@ -125,7 +122,14 @@ module scf_solver_class
 !
 contains
 !
-   function new_scf_solver(restart, acceleration_type, skip) result(solver)
+   function new_scf_solver(restart,             &
+                           acceleration_type,   &
+                           max_iterations,      &
+                           skip,                &
+                           dim_,                &
+                           n_equations,         &
+                           gradient_dimension,  &
+                           convergence_checker) result(solver)
 !!
 !!    New SCF solver
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -133,25 +137,27 @@ contains
       implicit none
 !
       type(scf_solver)             :: solver
-      logical,          intent(in) :: restart
-      character(len=*), intent(in) :: acceleration_type
-      logical,          intent(in) :: skip
+      logical,                   intent(in) :: restart
+      character(len=*),          intent(in) :: acceleration_type
+      logical,                   intent(in) :: skip
+      type(convergence_tool),    intent(in) :: convergence_checker
+      integer, intent(in) :: dim_
+      integer, intent(in) :: n_equations
+      integer, intent(in) :: gradient_dimension, max_iterations
 ! 
 !     Set defaults
 !
       solver%restart             = restart
-      solver%ao_density_guess    = 'sad'
-      solver%max_iterations      = 100
+      solver%max_iterations      = max_iterations
       solver%acceleration_type   = acceleration_type
       solver%skip                = skip
+      solver%dim_                = dim_
+      solver%n_equations         = n_equations
+      solver%gradient_dimension  = gradient_dimension
 !
 !     Initialize convergence checker with default threshols
 !
-      solver%convergence_checker = convergence_tool(energy_threshold   = 1.0D-7,   &
-                                                    residual_threshold = 1.0D-7,   &
-                                                    energy_convergence = .false.)
-!
-      call solver%read_settings()
+      solver%convergence_checker = convergence_checker
 !
       solver%accelerator_creator = accelerator_factory('solver scf')
 !
@@ -160,13 +166,12 @@ contains
    end function new_scf_solver
 !
 !
-   function new_scf_solver_from_parameters(restart,            &
-                                        max_iterations,        &
-                                        ao_density_guess,      &
-                                        gradient_threshold,    &
-                                        acceleration_type,     &
-                                        skip,                  &
-                                        energy_threshold) result(solver)
+   function new_scf_solver_from_parameters(restart,               &
+                                           max_iterations,        &
+                                           gradient_threshold,    &
+                                           acceleration_type,     &
+                                           skip,                  &
+                                           energy_threshold, gradient_dimension) result(solver)
 !!
 !!    New SCF solver from parameters
 !!    Written by Tor S. Haugland and Sarai D. Folkestad, 2019-2020
@@ -177,17 +182,17 @@ contains
 !
       logical,            intent(in)           :: restart
       integer,            intent(in)           :: max_iterations
-      character(len=*),   intent(in)           :: ao_density_guess
       real(dp),           intent(in)           :: gradient_threshold
       character(len=*),   intent(in)           :: acceleration_type
       logical,            intent(in)           :: skip
       real(dp),           intent(in), optional :: energy_threshold
+      integer, intent(in) :: gradient_dimension
 !
       solver%max_iterations      = max_iterations
-      solver%ao_density_guess    = ao_density_guess
       solver%restart             = restart
       solver%acceleration_type   = acceleration_type
       solver%skip                = skip
+      solver%gradient_dimension  = gradient_dimension
 !
       solver%accelerator_creator = accelerator_factory('solver scf')
 !
@@ -233,18 +238,6 @@ contains
       call timer%turn_on()
 !
       iteration_timer = timings('SCF iteration', pl='normal')
-!
-!     Wave function must initialize 
-!     necessary arrays, set start guesses, 
-!     and inform solver about the dimensions of the problem
-!
-      call wf%prepare_for_scf(solver%restart,                                 & 
-                              solver%skip,                                    & 
-                              trim(solver%ao_density_guess),                  &
-                              solver%convergence_checker%residual_threshold,  &
-                              solver%dim_,                                    &
-                              solver%n_equations,                             &
-                              solver%gradient_dimension)
 !
 !     If there is only one AO, equations are solved
 !
@@ -317,48 +310,6 @@ contains
       call timer%turn_off()
 !
    end subroutine run_scf_solver
-!
-!
-   subroutine read_settings_scf_solver(solver)
-!!
-!!    Read settings
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!! 
-      implicit none 
-!
-      class(scf_solver) :: solver 
-!
-      real(dp) :: energy_threshold, gradient_threshold
-!
-      if (input%is_keyword_present('gradient threshold', 'solver scf')) then
-!
-         call input%get_keyword('gradient threshold',  &
-                                'solver scf',          &
-                                gradient_threshold)
-!
-         call solver%convergence_checker%set_residual_threshold(gradient_threshold)
-!
-      endif
-!
-      if (input%is_keyword_present('energy threshold', 'solver scf')) then
-!
-         call input%get_keyword('energy threshold',  &
-                                'solver scf',        &
-                                energy_threshold)
-!
-         call solver%convergence_checker%set_energy_threshold(energy_threshold)
-!
-      endif
-!
-      call input%get_keyword('max iterations',      &
-                             'solver scf',          &
-                             solver%max_iterations)
-!
-      call input%get_keyword('ao density guess',    &
-                             'solver scf',          &
-                             solver%ao_density_guess)
-!
-   end subroutine read_settings_scf_solver
 !
 !
    subroutine do_scf_step_scf_solver(solver, F_packed, C, e)

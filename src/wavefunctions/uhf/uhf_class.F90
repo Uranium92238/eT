@@ -252,6 +252,8 @@ contains
       wf%frozen_core = .false.
       wf%frozen_hf_mos = .false.
 !
+      call wf%set_screening_and_precision_thresholds(wf%gradient_threshold)
+!
    end subroutine prepare_uhf
 !
 !

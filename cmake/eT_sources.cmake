@@ -102,6 +102,7 @@ set(eT_fortran_sources
    src/solver_tools/rpa_transformation_tool_class.F90
 #
    src/solver_tools/tdhf_solver_factory_class.F90
+   src/solver_tools/scf_solver_factory_class.F90
 #
    src/solver_tools/start_vector_tool_class.F90
    src/solver_tools/tdhf_start_vector_tool_class.F90

@@ -198,6 +198,9 @@ contains
 !!    Determine gradient 
 !!    Written by Eirik F. Kjønstad, June 2019 
 !!
+!
+      use scf_solver_factory_class, only: scf_solver_factory
+!
       implicit none 
 !
       class(bfgs_geoopt_hf) :: solver 
@@ -206,7 +209,8 @@ contains
 !
       real(dp), dimension(3, wf%n_atomic_centers) :: geometry, gradient 
 !
-      type(scf_solver), allocatable :: hf_gs_solver
+      class(scf_solver), allocatable :: hf_gs_solver
+      type(scf_solver_factory), allocatable :: factory
 !
       logical :: restart
 !
@@ -224,7 +228,11 @@ contains
 !
       if (solver%restart .or. solver%iteration > 1) restart = .true.
 !
-      hf_gs_solver = scf_solver(restart = restart, acceleration_type = 'diis', skip = .false.)
+      call wf%prepare_for_scf(restart=restart, skip=.false.)
+!
+      factory = scf_solver_factory(acceleration_type='diis')
+      call factory%create(wf, hf_gs_solver, restart, skip=.false.)
+!
       call hf_gs_solver%run(wf)
       call wf%print_summary(write_mo_info=.false.)
 !

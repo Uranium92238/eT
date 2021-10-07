@@ -56,6 +56,7 @@ module hf_class
 !
       real(dp) :: coulomb_threshold  = 1.0D-12   ! Screening threshold (Fock, Coulomb)
       real(dp) :: exchange_threshold = 1.0D-10   ! Screening threshold (Fock, exchange)
+      real(dp) :: gradient_threshold = 1.0D-7    ! Gradient threshold for SCF equations
 !
       real(dp) :: cumulative_fock_threshold = 1.0d0
 !
@@ -187,6 +188,7 @@ module hf_class
       procedure :: set_n_mo                                    => set_n_mo_hf
 !
       procedure :: set_screening_and_precision_thresholds      => set_screening_and_precision_thresholds_hf
+      procedure :: set_gradient_threshold                      => set_gradient_threshold_hf
       procedure :: print_screening_settings                    => print_screening_settings_hf
 !
       procedure :: prepare_for_roothan_hall                    => prepare_for_roothan_hall_hf
@@ -395,6 +397,11 @@ contains
       call input%get_keyword('cumulative fock threshold',      &
                                         'solver scf',          &
                                         wf%cumulative_fock_threshold)
+!
+      wf%gradient_threshold = 1.0d-7
+      call input%get_keyword('gradient threshold',             &
+                                        'solver scf',          &
+                                        wf%gradient_threshold)
 !
    end subroutine read_hf_settings_hf
 !
@@ -1290,6 +1297,8 @@ contains
 !
       wf%packed_gradient_dimension = wf%n_mo*(wf%n_mo - 1)/2
 !
+      call wf%set_screening_and_precision_thresholds(wf%gradient_threshold)
+!
    end subroutine prepare_hf
 !
 !
@@ -1505,8 +1514,7 @@ contains
    end subroutine flip_final_orbitals_hf
 !
 !
-   subroutine prepare_for_scf_hf(wf, restart, skip, ao_density_guess, &
-      gradient_threshold, dim_, n_densities, gradient_dimension)
+   subroutine prepare_for_scf_hf(wf, restart, skip, ao_density_guess)
 !!
 !!    Prepare for SCF
 !!    Written by Sarai D. Folkestad
@@ -1523,15 +1531,17 @@ contains
 !
       logical, intent(in)           :: restart
       logical, intent(in)           :: skip
-      character(len=*), intent(in)  :: ao_density_guess
-      real(dp)                      :: gradient_threshold
-      integer, intent(out)          :: dim_
-      integer, intent(out)          :: n_densities
-      integer, intent(out)          :: gradient_dimension
+      character(len=200), intent(in), optional :: ao_density_guess
+      character(len=200) :: ao_density_guess_local
 !
       wf%cumulative_fock = .false.
 !
-      call wf%set_screening_and_precision_thresholds(gradient_threshold)
+      ao_density_guess_local = 'sad'
+      call input%get_keyword('ao density guess',    &
+                             'solver scf',          &
+                             ao_density_guess_local)
+!
+      if(present(ao_density_guess)) ao_density_guess_local = ao_density_guess
 !
       call wf%ao%construct_stored_oei('hamiltonian')
 !
@@ -1550,23 +1560,19 @@ contains
 !
          if (skip) then
 
-            if (.not. wf%control_gradient_convergence(gradient_threshold)) &
+            if (.not. wf%control_gradient_convergence(wf%gradient_threshold)) &
                call output%error_msg('cannot skip scf when gradient has not converged.')
          endif
 !
       else
 !
          call output%printf('m', '- Setting initial AO density to &
-                            &'//trim(ao_density_guess), fs='(/t3,a)')
+                            &'//trim(ao_density_guess_local), fs='(/t3,a)')
 !
-         call wf%set_initial_ao_density_guess(ao_density_guess)
+         call wf%set_initial_ao_density_guess(ao_density_guess_local)
          call wf%prepare_for_roothan_hall()
 !
       endif
-!
-      dim_ = wf%n_mo
-      n_densities = wf%n_densities
-      gradient_dimension = wf%packed_gradient_dimension
 !
       call wf%print_screening_settings()
 !
