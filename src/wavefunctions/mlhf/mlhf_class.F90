@@ -229,6 +229,8 @@ contains
       call wf%initialize_frozen_CCT()
       call zero_array(wf%frozen_CCT, wf%ao%n**2)
 !
+      call wf%set_screening_and_precision_thresholds(wf%gradient_threshold)
+!
    end subroutine prepare_mlhf
 !
 !
@@ -1372,6 +1374,7 @@ contains
 !!
 !
       use scf_solver_class, only: scf_solver
+      use scf_solver_factory_class, only: scf_solver_factory
 !
       implicit none
 !
@@ -1379,6 +1382,8 @@ contains
 !
       type(hf), allocatable             :: full_space_wf
       class(scf_solver), allocatable    :: full_space_solver
+!
+      type(scf_solver_factory) :: factory
 !
       call output%printf('m', '- Initial full hf optimization to a gradient threshold of (e9.2)', &
                   reals=[wf%full_space_hf_threshold], &
@@ -1392,12 +1397,13 @@ contains
 !
       call full_space_wf%prepare()
 !
-      full_space_solver = scf_solver(restart              = .false.,                    &
-                                     max_iterations       = 20,                         &
-                                     ao_density_guess     = 'sad',                      &
-                                     gradient_threshold   = wf%full_space_hf_threshold, &
-                                     acceleration_type    = 'diis',                     &
-                                     skip                 = .false.)
+      call full_space_wf%set_gradient_threshold(wf%full_space_hf_threshold)
+      call full_space_wf%prepare_for_scf(restart=.false., skip=.false.)
+!
+      factory = scf_solver_factory(acceleration_type = 'diis', max_iterations = 20, &
+                                   energy_threshold = wf%full_space_hf_threshold)
+!
+      call factory%create(full_space_wf, full_space_solver, restart=.false., skip=.false.)
 !
       call full_space_solver%run(full_space_wf)
 !

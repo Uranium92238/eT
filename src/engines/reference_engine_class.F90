@@ -71,8 +71,6 @@ module reference_engine_class
 !
       procedure :: do_ground_state                     => do_ground_state_reference_engine
 !
-      procedure, private :: check_algorithm            => check_algorithm_reference_engine
-!
    end type reference_engine
 !
 !
@@ -150,8 +148,6 @@ contains
 !
       class(reference_engine), intent(in)    :: engine
       class(hf),               intent(inout) :: wf
-!
-      call engine%check_algorithm()
 !
       if ((.not. engine%restart) .and.  &
           (.not. engine%skip_scf) .and. &
@@ -272,6 +268,7 @@ contains
       use atomic_center_class,    only: atomic_center
       use uhf_class,              only: uhf
       use timings_class,          only: timing
+      use scf_solver_factory_class, only: scf_solver_factory
 !
       implicit none
 !
@@ -279,7 +276,7 @@ contains
       class(hf)                        :: wf
 !
       type(uhf),        allocatable :: sad_wf
-      type(scf_solver), allocatable :: sad_solver
+      class(scf_solver), allocatable :: sad_solver
 !
       character(len=200)    :: ao_density_guess
       real(dp)              :: gradient_threshold
@@ -300,6 +297,9 @@ contains
 !
       type(atomic_center) :: center
 !
+      type(scf_solver_factory) :: factory
+!
+
       call engine%tasks%print_('sad')
 !
       sad_generation_timer = timings('SAD generation time', pl='normal')
@@ -340,12 +340,13 @@ contains
 !
          call sad_wf%prepare([center],  embedding=.false., charge=center%charge)
 !
-         sad_solver = scf_solver(restart=.false.,                       &
-                                 ao_density_guess=ao_density_guess,     &
-                                 max_iterations=max_iterations,         &
-                                 gradient_threshold=gradient_threshold, &
-                                 acceleration_type='none',              &
-                                 skip = .false.)
+         call sad_wf%set_gradient_threshold(gradient_threshold)
+         call sad_wf%prepare_for_scf(restart=.false., skip=.false., ao_density_guess=ao_density_guess)
+!
+         factory = scf_solver_factory(acceleration_type='none',              &
+                                      max_iterations=100)
+!
+         call factory%create(sad_wf, sad_solver, restart=.false., skip=.false.)
 !
          call sad_solver%run(sad_wf)
 !
@@ -739,45 +740,28 @@ contains
 !!    Constructs the solver specified on input.
 !!    Solves the ground state.
 !!
+!
+      use scf_solver_factory_class, only: scf_solver_factory
+!
       implicit none
 !
       class(reference_engine), intent(in)       :: engine
       class(hf), intent(inout)                  :: wf
 !
       class(scf_solver),  allocatable           :: scf
-      character(len=200)                        :: acceleration_type
+!
+      type(scf_solver_factory) :: factory
 !
       call engine%tasks%print_('gs solver')
 !
-      acceleration_type = 'none'
+      call wf%prepare_for_scf(engine%restart, engine%skip_scf)
 !
-      if (trim(engine%algorithm) == 'scf-diis' .or. &
-          trim(engine%algorithm) == 'mo-scf-diis') acceleration_type = 'diis'
+      factory = scf_solver_factory()
+      call factory%create(wf, scf, engine%restart, engine%skip_scf)
 !
-      scf = scf_solver(engine%restart, acceleration_type, engine%skip_scf)
       call scf%run(wf)
 !
    end subroutine do_ground_state_reference_engine
-!
-!
-   subroutine check_algorithm_reference_engine(engine)
-!!
-!!    Check algorithm
-!!    Written by Sarai D. Folkestad, 2020
-!!
-      implicit none
-
-      class(reference_engine), intent(in) :: engine
-!
-      if (trim(engine%algorithm) .ne. 'scf-diis'    .and. &
-          trim(engine%algorithm) .ne. 'scf'         .and. &
-          trim(engine%algorithm) .ne. 'mo-scf-diis') then
-!
-         call output%error_msg('did not recognize SCF algorithm')
-!
-      endif
-!
-   end subroutine check_algorithm_reference_engine
 !
 !
 end module reference_engine_class
