@@ -1382,9 +1382,9 @@ contains
       batch_a = batching_index(wf%n_v)
       batch_c = batching_index(wf%n_v)
 
-      call mem%batch_setup(batch_a, batch_c, req0, req1_a, req1_c, req2)
+      call mem%batch_setup(batch_a, batch_c, req0, req1_a, req1_c, req2, &
+                           tag='add_doubles_M_and_N_cnto_mlcc2')
 !
-
       call mem%alloc(R_ibja, wf%n_o, wf%n_v, wf%n_o, batch_a%max_length)
       call mem%alloc(R_kdlc, wf%n_o, wf%n_v, wf%n_o, batch_c%max_length)
 !

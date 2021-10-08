@@ -734,7 +734,7 @@ contains
       req1 = wf%n_v*wf%eri%n_J
 !
       batch_v = batching_index(wf%n_v)
-      call mem%batch_setup(batch_v, req0, req1)
+      call mem%batch_setup(batch_v, req0, req1, 'jacobian_transpose_ccsd_e1_v3o')
 !
       call mem%alloc(L_Jvv, wf%eri%n_J, wf%n_v, batch_v%max_length)
 !
@@ -1155,7 +1155,7 @@ contains
       rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%eri%n_J
 !
       batch_d = batching_index(wf%n_v)
-      call mem%batch_setup(batch_d, rec0, rec1)
+      call mem%batch_setup(batch_d, rec0, rec1, 'save_jacobian_transpose_g1_intermediates')
 !
 !     Loop over the d-batches
 !
@@ -1321,7 +1321,7 @@ contains
 !     Initialize batching variable
 !
       batch_e = batching_index(wf%n_v)
-      call mem%batch_setup(batch_e, rec0, rec1)
+      call mem%batch_setup(batch_e, rec0, rec1, 'jacobian_transpose_ccsd_g1 1')
 !
 !     Loop over the e-batches
 !
@@ -1404,7 +1404,7 @@ contains
 !     Initialize batching variable
 !
       batch_a = batching_index(wf%n_v)
-      call mem%batch_setup(batch_a, rec0, rec1)
+      call mem%batch_setup(batch_a, rec0, rec1, 'jacobian_transpose_ccsd_g1 2')
 !
 !     Loop over the a-batches
 !
@@ -1606,7 +1606,7 @@ contains
 !     Initialize batching variable
 !
       batch_b = batching_index(wf%n_v)
-      call mem%batch_setup(batch_b, rec0, rec1)
+      call mem%batch_setup(batch_b, rec0, rec1, 'jacobian_transpose_ccsd_b2')
 !
 !     Loop over the number of b batches
 !
@@ -1753,7 +1753,7 @@ contains
 !     Initialize batching variable
 !
       batch_b = batching_index(wf%n_v)
-      call mem%batch_setup(batch_b, rec0, rec1)
+      call mem%batch_setup(batch_b, rec0, rec1, 'jacobian_transpose_ccsd_c2')
 !
 !     Loop over the b-batches
 !

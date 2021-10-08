@@ -23,15 +23,15 @@ submodule (doubles_class) jacobian_doubles
 !!    Jacobian submodule
 !!
 !!    Routines for the linear transform of trial
-!!    vectors by the Jacobian matrix 
+!!    vectors by the Jacobian matrix
 !!
 !!    ρ_i = A * c_i,
 !!
 !!    where
-!!   
+!!
 !!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
-!!  
-! 
+!!
+!
    implicit none
 !
 !
@@ -54,7 +54,7 @@ contains
 !
    module subroutine jacobian_transformation_doubles(wf, c, rho)
 !!
-!!    Jacobian transformation 
+!!    Jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !!    Directs the transformation by the doubles Jacobi matrix,
@@ -126,10 +126,10 @@ contains
 !!    Save jacobian a1 intermediates
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2019
 !!
-!!    Constructs the intermediates 
+!!    Constructs the intermediates
 !!
-!!       Y_jl   = t_ckdj L_kcld 
-!!       Y_bd   = t_blck L_kcld 
+!!       Y_jl   = t_ckdj L_kcld
+!!       Y_bd   = t_blck L_kcld
 !!
 !!    Which are constructed in save_jacobian_a1_intermediates
 !!    and stored on files
@@ -197,7 +197,7 @@ contains
 !
       call wf%jacobian_a1_intermediate_vv%close_('keep')
 !
-!     Y_jl = t_ckdj L_kcld 
+!     Y_jl = t_ckdj L_kcld
 !
 !     Note: pretend that t_blck is t_ckdj
 !     Using symmetry L_dlck = L_ckdl (L_kcld = L_ldkc)
@@ -257,7 +257,7 @@ contains
 !
 !     Intermediates
 !
-      real(dp), dimension(:), allocatable       :: X_J 
+      real(dp), dimension(:), allocatable       :: X_J
 !
       real(dp), dimension(:,:), allocatable     :: X_ck, X_kc
       real(dp), dimension(:,:), allocatable     :: Y_il
@@ -274,9 +274,9 @@ contains
       timer = timings('Jacobian doubles A1', pl='verbose')
       call timer%turn_on()
 !
-!     Term 1: sum_bjck L_kcjb u_aick c_bj   
+!     Term 1: sum_bjck L_kcjb u_aick c_bj
 !
-!     2 sum_bjck g_kcjb u_aick c_bj = L_Jkc L_Jjb c_bj u_aick      
+!     2 sum_bjck g_kcjb u_aick c_bj = L_Jkc L_Jjb c_bj u_aick
 !
       call mem%alloc(L_Jov, wf%eri%n_J, wf%n_o, wf%n_v)
       call wf%eri%get_cholesky_t1(L_Jov, 1, wf%n_o, wf%n_o + 1, wf%n_mo)
@@ -300,9 +300,9 @@ contains
       call mem%dealloc(c_jb, wf%n_o, wf%n_v)
       call mem%alloc(X_kc, wf%n_o, wf%n_v)
 !
-      call dgemv('T',            & 
+      call dgemv('T',            &
                   wf%eri%n_J,    &
-                  wf%n_v*wf%n_o, &                  
+                  wf%n_v*wf%n_o, &
                   two,           &
                   L_Jov,         &
                   wf%eri%n_J,    &
@@ -318,7 +318,7 @@ contains
       call sort_12_to_21(X_kc, X_ck, wf%n_o, wf%n_v)
       call mem%dealloc(X_kc, wf%n_o, wf%n_v)
 !
-!     - sum_bjck g_kbjc u_aick c_bj = L_Jkb L_Jjc c_bj u_aick      
+!     - sum_bjck g_kbjc u_aick c_bj = L_Jkb L_Jjc c_bj u_aick
 !
       call mem%alloc(X_Jkj, wf%eri%n_J, wf%n_o, wf%n_o)
 !
@@ -361,7 +361,7 @@ contains
                   (wf%n_v)*(wf%n_o), &
                   (wf%n_v)*(wf%n_o), &
                   one,               &
-                  wf%u_aibj,         & 
+                  wf%u_aibj,         &
                   (wf%n_v)*(wf%n_o), &
                   X_ck,              &
                   1,                 &
@@ -411,7 +411,7 @@ contains
                   wf%n_o,     &
                   wf%n_o,     &
                   -one,       &
-                  c_ai,       & ! c_ak 
+                  c_ai,       & ! c_ak
                   wf%n_v,     &
                   Y_il,       &
                   wf%n_o,     &
@@ -581,7 +581,7 @@ contains
 !
       batch_a = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_a, req0, req1)
+      call mem%batch_setup(batch_a, req0, req1, 'jacobian_doubles_d1')
 !
       do current_a_batch = 1, batch_a%num_batches
 !
@@ -658,7 +658,7 @@ contains
 !
 !     :: Term 1. - sum_k g_aikj c_bk ::
 !
-!     rho_bjai =- c_bk g_kjai 
+!     rho_bjai =- c_bk g_kjai
 !
       call mem%alloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -674,7 +674,7 @@ contains
                   g_kjai,               & ! g_k,jai
                   wf%n_o,               &
                   one,                  &
-                  rho_aibj,             & ! rho_b,jai -> will be (ai,bj)-symmetrized 
+                  rho_aibj,             & ! rho_b,jai -> will be (ai,bj)-symmetrized
                   wf%n_v)
 !
       call mem%dealloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
@@ -689,7 +689,7 @@ contains
 !
       batch_b = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_b, req0, req1)
+      call mem%batch_setup(batch_b, req0, req1, 'jacobian_doubles_a2')
 !
       do current_b_batch = 1, batch_b%num_batches
 !

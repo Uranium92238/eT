@@ -311,7 +311,8 @@ contains
       batch_i = batching_index(wf%n_o)
       batch_j = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
+      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2, &
+                           tag='construct_fock_ai_t1_ccs')
 !
       do current_i_batch = 1, batch_i%num_batches
 !
@@ -472,7 +473,8 @@ contains
       batch_i = batching_index(i_range%length)
       batch_j = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
+      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2, &
+                           tag='construct_fock_ia_t1_ccs')
 !
       do current_i_batch = 1, batch_i%num_batches
 !
@@ -638,7 +640,8 @@ contains
       batch_i = batching_index(wf%n_o)
       batch_a = batching_index(interval_a%length)
 !
-      call mem%batch_setup(batch_i, batch_a, req0, req1_i, req1_a, req2)
+      call mem%batch_setup(batch_i, batch_a, req0, req1_i, req1_a, req2, &
+                           tag='construct_fock_ab_t1_ccs')
 !
       do current_i_batch = 1, batch_i%num_batches
 !
@@ -799,7 +802,8 @@ contains
       batch_i = batching_index(i_range%length)
       batch_k = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2)
+      call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2, &
+                           tag='F_ccs_c1_1_ccs')
 !
       do current_i_batch = 1, batch_i%num_batches
 !

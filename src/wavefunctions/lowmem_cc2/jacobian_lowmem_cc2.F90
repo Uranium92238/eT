@@ -164,7 +164,7 @@ contains
       batch_i = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_k, batch_j, batch_i, req0, req1_k, req1_j, req1_i, &
-            req2_kj, req2_ki, req2_ji, req3)
+            req2_kj, req2_ki, req2_ji, req3, tag='save_jacobian_a1_2_intermediate_lowmem_cc2')
 !
       do current_k_batch = 1, batch_k%num_batches
 !
@@ -325,7 +325,8 @@ contains
       batch_k = batching_index(wf%n_o)
       batch_j = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_k, batch_j, req0, req1_k, req1_j, req2)
+      call mem%batch_setup(batch_k, batch_j, req0, req1_k, req1_j, req2, &
+                           tag='save_jacobian_a1_3_intermediate_lowmem_cc2')
 !
       do current_k_batch = 1, batch_k%num_batches
 !
@@ -548,7 +549,8 @@ contains
       batch_j = batching_index(wf%n_o)
       batch_k = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_j, batch_k, req0, req1_j, req1_k, req2)
+      call mem%batch_setup(batch_j, batch_k, req0, req1_j, req1_k, req2, &
+                           tag='jacobian_cc2_a1_lowmem_cc2 1')
 !
       do current_j_batch = 1, batch_j%num_batches
 !
@@ -626,7 +628,8 @@ contains
       batch_a = batching_index(wf%n_v)
       batch_c = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_a, batch_c, req0, req1_a, req1_c, req2)
+      call mem%batch_setup(batch_a, batch_c, req0, req1_a, req1_c, req2, &
+                           tag='jacobian_cc2_a1_lowmem_cc2 2')
 !
       do current_a_batch = 1, batch_a%num_batches
 !
@@ -819,7 +822,8 @@ contains
       batch_a = batching_index(wf%n_v)
       batch_c = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_a, batch_c, req0, req1_a, req1_c, req2)
+      call mem%batch_setup(batch_a, batch_c, req0, req1_a, req1_c, req2, &
+                           tag='effective_jacobian_cc2_a1_lowmem_cc2')
 !
       do current_c_batch = 1, batch_c%num_batches
 !
@@ -1029,7 +1033,8 @@ contains
       batch_i = batching_index(wf%n_o)
       batch_k = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2)
+      call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2, &
+                           tag='effective_jacobian_cc2_b1_lowmem_cc2')
 !
       do current_i_batch = 1, batch_i%num_batches
 !
@@ -1191,7 +1196,8 @@ contains
       batch_b = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_i, batch_a, batch_b, req0, req1_i, req1_a, req1_b, &
-                           req2_ia, req2_ib, req2_ab, req3)
+                           req2_ia, req2_ib, req2_ab, req3, &
+                           tag='effective_jacobian_cc2_c1_lowmem_cc2')
 !
       do current_a_batch = 1, batch_a%num_batches
 !
@@ -1378,7 +1384,8 @@ contains
       batch_j = batching_index(wf%n_o)
       batch_k = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_j, batch_k, req0, req1_j, req1_k, req2)
+      call mem%batch_setup(batch_j, batch_k, req0, req1_j, req1_k, req2, &
+                           tag='effective_jacobian_cc2_d1_lowmem_cc2')
 !
       do current_j_batch = 1, batch_j%num_batches
 !
@@ -1561,7 +1568,8 @@ contains
       batch_b = batching_index(wf%n_v)
       batch_c = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2)
+      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2, &
+                           tag='effective_jacobian_cc2_e1_lowmem_cc2')
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -1757,7 +1765,8 @@ contains
       batch_a = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_i, batch_k, batch_a, req0, req1_i, req1_k, req1_a, &
-                           req2_ik, req2_ia, req2_ka, req3)
+                           req2_ik, req2_ia, req2_ka, req3, &
+                           tag='effective_jacobian_cc2_f1_lowmem_cc2')
 !
       do current_k_batch = 1, batch_k%num_batches
 !

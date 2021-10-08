@@ -167,7 +167,7 @@ contains
       req_0 = 0
       req_d = wf%n_o * wf%n_v**2
 !
-      call mem%batch_setup(batch_d, req_0, req_d)
+      call mem%batch_setup(batch_d, req_0, req_d, 'jacobian_cc3_t3_a2')
 !
       call wf%X_abid%open_('read')
 !
@@ -326,6 +326,7 @@ contains
       call mem%batch_setup(batch_i, batch_j, batch_k,  &
                            req_0, req_i, req_1, req_1, &
                            req_2, req_2, req_2, req_3, &
+                           'jacobian_cc3_t3_b2',       &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -676,6 +677,7 @@ contains
       call mem%batch_setup(batch_i, batch_j, batch_k,  &
                            req_0, req_i, req_1, req_1, &
                            req_2, req_2, req_2, req_3, &
+                           'jacobian_cc3_c3_a',        &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(c_abc, wf%n_v, wf%n_v, wf%n_v)

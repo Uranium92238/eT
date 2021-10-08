@@ -743,7 +743,7 @@ contains
       else !Read and write
 !
          batcher = batching_index(eri%n_mo**2)
-         call mem%batch_setup(batcher, 0, eri%n_J, 2*dp)
+         call mem%batch_setup(batcher, 0, eri%n_J, 'set_t1_to_mo_c', element_size=2*dp)
          call mem%alloc(array, batcher%max_length*eri%n_J)
 !
          call eri%cholesky_mo%open_('read')
@@ -892,7 +892,7 @@ contains
 !
       type(batching_index) :: batch_o
 !
-      integer :: o_batch
+      integer :: o_batch, req0, req1
 !
       if (eri%cholesky_mem) then
 !
@@ -910,9 +910,12 @@ contains
 !
       else
 !
+         req0 = 0
+         req1 = eri%n_J*(eri%n_o*max(eri%n_v, eri%n_o) + eri%n_o**2)
+!
          batch_o = batching_index(eri%n_o)
-         call mem%batch_setup(batch_o, 0, &
-               eri%n_J*(eri%n_o*max(eri%n_v, eri%n_o) + eri%n_o**2), 2*dp)
+         call mem%batch_setup(batch_o, req0, req1, 'construct_cholesky_t1_oo_c', &
+                              element_size=2*dp)
 !
          call mem%alloc(L_J_oo, eri%n_J*batch_o%max_length*eri%n_o)
          call mem%alloc(L_J_ox, eri%n_J*batch_o%max_length*max(eri%n_v, eri%n_o))
@@ -1001,7 +1004,8 @@ contains
 !
          batch_o = batching_index(eri%n_o)
          batch_v = batching_index(eri%n_v)
-         call mem%batch_setup(batch_o, batch_v, 0, 2*eri%n_J*eri%n_o, eri%n_J*eri%n_o, 0, 2*dp)
+         call mem%batch_setup(batch_o, batch_v, 0, 2*eri%n_J*eri%n_o, eri%n_J*eri%n_o, 0, &
+                              'construct_cholesky_t1_vo_c 1', element_size=2*dp)
 !
          call mem%alloc(L_J_ij, eri%n_J*eri%n_o*batch_o%max_length)
          call mem%alloc(L_J_ji, eri%n_J*batch_o%max_length*eri%n_o)
@@ -1070,7 +1074,8 @@ contains
          batch_o = batching_index(eri%n_o)
          batch_v = batching_index(eri%n_v)
          req = eri%n_J*(eri%n_o + max(eri%n_v,eri%n_o))
-         call mem%batch_setup(batch_o, batch_v, 0, req, req, 0, 2*dp)
+         call mem%batch_setup(batch_o, batch_v, 0, req, req, 0, &
+                              'construct_cholesky_t1_vo_c 2', element_size=2*dp)
 !
          call mem%alloc(L_J_ij, eri%n_J*batch_o%max_length*max(eri%n_v, eri%n_o))
          call mem%alloc(L_J_ji, eri%n_J*batch_o%max_length*eri%n_o)
@@ -1195,7 +1200,8 @@ contains
          call zcopy(eri%n_J*eri%n_v**2, eri%L_J_vv_mo, 1, eri%L_J_vv_t1, 1)
 !
          batch_v = batching_index(eri%n_v)
-         call mem%batch_setup(batch_v, 0, eri%n_J*eri%n_v, 2*dp)
+         call mem%batch_setup(batch_v, 0, eri%n_J*eri%n_v, 'construct_cholesky_t1_vv_c 1', &
+                              element_size=2*dp)
 !
          call mem%alloc(L_J_vv, eri%n_J, eri%n_v, batch_v%max_length)
 !
@@ -1225,7 +1231,8 @@ contains
       else
 !
          batch_v = batching_index(eri%n_v)
-         call mem%batch_setup(batch_v, 0, 2*eri%n_J*max(eri%n_v, eri%n_o), 2*dp)
+         call mem%batch_setup(batch_v, 0, 2*eri%n_J*max(eri%n_v, eri%n_o), 'construct_cholesky_t1_vv_c 1', &
+                              element_size=2*dp)
 !
          call mem%alloc(L_J_xv, eri%n_J, batch_v%max_length, max(eri%n_v, eri%n_o))
          call mem%alloc(L_J_vv, eri%n_J, batch_v%max_length, max(eri%n_v, eri%n_o))
@@ -1601,7 +1608,7 @@ contains
 !!    Get ERI T1 packed mem
 !!    Written by Rolf H. Myhre Jun 2020
 !!
-!!    Adds the memory usage for get ERI that depends on 
+!!    Adds the memory usage for get ERI that depends on
 !!    dimensions p and q to req_pq
 !!    Note that req_pq must be initialized outside
 !!    This routine is meant for estimates for the batching manager.

@@ -233,10 +233,10 @@ contains
       req_ab = wf%n_v**2 + (max(wf%n_v, wf%n_o))**2
 !
       call mem%batch_setup(batch_a, batch_b, req_0, req_a, req_b, req_ab, &
-                           req_single_batch=max_req)
+                           'omega_ccsd_a2', req_single_batch=max_req)
 !
 !     Figure out the batch dependent dimensions and allocate g+- and work
-!     Work is used for omega+- and the packed vvvv eri integrals. 
+!     Work is used for omega+- and the packed vvvv eri integrals.
 !     Must take the edge case where n_o is greater than n_v into account.
 !     the subblocks of g_vvvv won't be symmetric when batch_a .ne. batch_b and can't be packed
 !

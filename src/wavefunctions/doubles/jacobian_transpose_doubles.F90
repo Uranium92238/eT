@@ -20,7 +20,7 @@
 submodule (doubles_class) jacobian_transpose_doubles
 !
 !!
-!!    Jacobian transpose submodule 
+!!    Jacobian transpose submodule
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the transpose of the Jacobian matrix
@@ -53,13 +53,13 @@ contains
 !!       jacobian_transpose_a1_intermdiate_oo
 !!       jacobian_transpose_a1_intermdiate_vv
 !!
-!!    u_bjck = u^bc_jk =  2 t^bc_jk - t^bc_kj 
+!!    u_bjck = u^bc_jk =  2 t^bc_jk - t^bc_kj
 !!           = -(2 g_bjck - g_bkcj)/eps^bc_jk
-!!    
+!!
 !!    Adapted by Tor S. Haugland, Oct 2019
 !!
 !!    Isolated the intermediates from the
-!!    jacobian_transpose_doubles_a1_doubles and wrote them to file. 
+!!    jacobian_transpose_doubles_a1_doubles and wrote them to file.
 !!
       implicit none
 !
@@ -156,7 +156,7 @@ contains
    module subroutine jacobian_transpose_doubles_a1_doubles(wf, sigma_ai, c_bj, u)
 !!
 !!    Jacobian transpose doubles A1
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    and Alexander C. Paul, Feb 2019
 !!
 !!    Calculates the A1 term,
@@ -316,7 +316,7 @@ contains
   module subroutine jacobian_transpose_doubles_b1_doubles(wf, sigma_ai, c_bjck)
 !!
 !!    Jacobian transpose doubles B1
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    and Alexander C. Paul, Feb 2019
 !!
 !!    Calculates the B1 term,
@@ -348,7 +348,7 @@ contains
 !
       batch_a = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_a, req0, req1)
+      call mem%batch_setup(batch_a, req0, req1, 'jacobian_transpose_doubles_b1')
 !
       do current_a_batch = 1, batch_a%num_batches
 !
@@ -510,7 +510,7 @@ contains
 !
       batch_c = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_c, req0, req1)
+      call mem%batch_setup(batch_c, req0, req1, 'jacobian_transpose_doubles_a2')
 !
       do current_c_batch = 1, batch_c%num_batches
 !

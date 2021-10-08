@@ -151,7 +151,7 @@ contains
 !
       batch_a = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_a, req0, req1)
+      call mem%batch_setup(batch_a, req0, req1, tag='omega_cc2_a1_mlcc2')
 !
       do current_a_batch = 1, batch_a%num_batches
 !

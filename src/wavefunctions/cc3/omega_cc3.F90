@@ -198,6 +198,7 @@ contains
       call mem%batch_setup(batch_i, batch_j, batch_k,  &
                            req_0, req_i, req_1, req_1, &
                            req_2, req_2, req_2, req_3, &
+                           'omega_cc3_a',              &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)

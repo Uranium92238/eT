@@ -628,7 +628,8 @@ contains
          batch_i = batching_index(davidson%dim_red)
          batch_j = batching_index(davidson%dim_red)
 !
-         call mem%batch_setup(batch_i, batch_j, req_0, req_1_i, req_1_j, req_2)
+         call mem%batch_setup(batch_i, batch_j, req_0, req_1_i, req_1_j, req_2, &
+                              'construct_reduced_metric 1')
 !
          call davidson%construct_reduced_submetric(batch_i, batch_j)
 !
@@ -665,7 +666,8 @@ contains
          batch_j = batching_index(dimension_=davidson%dim_red, &
                                   offset=0)
 !
-         call mem%batch_setup(batch_i, batch_j, req_0, req_1_i, req_1_j, req_2)
+         call mem%batch_setup(batch_i, batch_j, req_0, req_1_i, req_1_j, req_2, &
+                              'construct_reduced_metric 2')
 !
          call davidson%construct_reduced_submetric(batch_i, batch_j)
 !
@@ -713,7 +715,7 @@ contains
             call batch_j%determine_limits(current_j_batch)
 !
             if (batch_j%first .gt. batch_i%get_last()) cycle ! Nothing to calculate;
-                                                       ! go to next batch of j 
+                                                       ! go to next batch of j
 !
             j_interval = range_(batch_j%first, &
                                 min(batch_i%get_last(), batch_j%get_last()) - &

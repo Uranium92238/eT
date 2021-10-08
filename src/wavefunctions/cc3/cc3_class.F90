@@ -481,7 +481,7 @@ contains
       req_1 = wf%n_v**3
 !
       batch_k = batching_index(wf%n_o)
-      call mem%batch_setup(batch_k, req_0, req_1)
+      call mem%batch_setup(batch_k, req_0, req_1, 'save_tbar_intermediate_cc3')
       call mem%alloc(Y_ebck, wf%n_v**3, batch_k%max_length)
 !
       call wf%Y_ebck_tbar%open_('write')
@@ -723,6 +723,7 @@ contains
       call mem%batch_setup(batch_i, batch_j, batch_k,  &
                            req_0, req_i, req_1, req_1, &
                            req_2, req_2, req_2, req_3, &
+                           'L_R_overlap_triples',      &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(R_abc, wf%n_v, wf%n_v, wf%n_v)

@@ -438,7 +438,7 @@ contains
 !
       batch_c = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_c, req0, req1)
+      call mem%batch_setup(batch_c, req0, req1, tag='F_ccs_c1_1_ccs')
 !
       do current_c_batch = 1, batch_c%num_batches
 !

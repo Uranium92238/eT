@@ -534,6 +534,7 @@ contains
       call mem%batch_setup(batch_i, batch_j, batch_k,  &
                            req_0, req_i, req_1, req_1, &
                            req_2, req_2, req_2, req_3, &
+                           'density_cc3_mu_nu_ijk',    &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(R_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -1216,9 +1217,10 @@ contains
       req_2 = 6*wf%n_o*wf%n_v + wf%n_o**2
       req_3 = 0
 !
-      call mem%batch_setup(batch_a, batch_b, batch_c,  &
-                           req_0, req_a, req_1, req_1, &
-                           req_2, req_2, req_2, req_3, &
+      call mem%batch_setup(batch_a, batch_b, batch_c,   &
+                           req_0, req_a, req_1, req_1,  &
+                           req_2, req_2, req_2, req_3,  &
+                           'density_cc3_mu_nu_abc',     &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(R_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
@@ -1699,9 +1701,10 @@ contains
       req_2 = 2*wf%n_o*wf%n_v
       req_3 = 0
 !
-      call mem%batch_setup(batch_i, batch_j, batch_k,  &
-                           req_0, req_i, req_1, req_1, &
-                           req_2, req_2, req_2, req_3, &
+      call mem%batch_setup(batch_i, batch_j, batch_k,     &
+                           req_0, req_i, req_1, req_1,    &
+                           req_2, req_2, req_2, req_3,    &
+                           'density_cc3_mu_nu_ov_Z_term', &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -2050,7 +2053,7 @@ contains
       req_0 = 0
       req_i = 2*wf%n_v**3
 !
-      call mem%batch_setup(batch_i, req_0, req_i)
+      call mem%batch_setup(batch_i, req_0, req_i, 'density_cc3_Y_vvvo_ov')
 !
       call mem%alloc(Y_vvvo, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
 !
