@@ -850,7 +850,7 @@ contains
 !!    we have to construct all the intermediate vectors in batches and write them to temp_file
 !!    before reading them in and constructing the final vectors.
 !!
-      implicit none 
+      implicit none
 !
       class(mo_eri_tool), intent(inout) :: eri
 !
@@ -869,7 +869,7 @@ contains
 !
       batcher = batching_index(eri%n_mo)
 !
-      call mem%batch_setup(batcher, 0, 2*eri%n_J*eri%n_mo)
+      call mem%batch_setup(batcher, 0, 2*eri%n_J*eri%n_mo, 'update_cholesky_mo')
       all_in_mem = (batcher%num_batches .eq. 1)
 !
       call mem%alloc(L_J_1, eri%n_J * batcher%max_length * eri%n_mo)
@@ -1558,7 +1558,7 @@ contains
 !$omp parallel do private(x, y, pq, rs, p, q, r, s)
             do y = 1, (dim_p*dim_q+1)/2
                do x = 1, dim_p*dim_q + mod(dim_p*dim_q+1,2)
-!         
+!
                   if (x .le. y + tridim) then
                      pq = x
                      rs = y + tridim
@@ -1566,14 +1566,14 @@ contains
                      pq = y
                      rs = x - tridim - 1
                   endif
-!         
+!
                   p = mod(pq-1,dim_p)
                   r = mod(rs-1,dim_p)
                   q = (pq-1)/dim_p
                   s = (rs-1)/dim_p
-!         
+!
                   g_to(x,y) = alpha*g_from(first_p+p, first_q+q, first_p+r, first_q+s)
-!         
+!
                enddo
             enddo
 !$omp end parallel do
@@ -1583,7 +1583,7 @@ contains
 !$omp parallel do private(x, y, pq, rs, p, q, r, s)
             do y = 1, (dim_p*dim_q+1)/2
                do x = 1, dim_p*dim_q + mod(dim_p*dim_q+1,2)
-!         
+!
                   if (x .le. y + tridim) then
                      pq = x
                      rs = y + tridim
@@ -1591,14 +1591,14 @@ contains
                      pq = y
                      rs = x - tridim - 1
                   endif
-!         
+!
                   q = mod(pq-1,dim_q)
                   s = mod(rs-1,dim_q)
                   p = (pq-1)/dim_q
                   r = (rs-1)/dim_q
-!         
+!
                   g_to(x,y) = alpha*g_from(first_p+p, first_q+q, first_p+r, first_q+s)
-!         
+!
                enddo
             enddo
 !$omp end parallel do
@@ -1612,7 +1612,7 @@ contains
 !$omp parallel do private(x, y, pq, rs, p, q, r, s)
             do y = 1, (dim_p*dim_q+1)/2
                do x = 1, dim_p*dim_q + mod(dim_p*dim_q+1,2)
-!         
+!
                   if (x .le. y + tridim) then
                      pq = x
                      rs = y + tridim
@@ -1620,15 +1620,15 @@ contains
                      pq = y
                      rs = x - tridim - 1
                   endif
-!         
+!
                   p = mod(pq-1,dim_p)
                   r = mod(rs-1,dim_p)
                   q = (pq-1)/dim_p
                   s = (rs-1)/dim_p
-!         
+!
                   g_to(x,y) =  beta*g_to(x,y) &
                             + alpha*g_from(first_p+p,first_q+q,first_p+r,first_q+s)
-!         
+!
                enddo
             enddo
 !$omp end parallel do
@@ -1638,7 +1638,7 @@ contains
 !$omp parallel do private(x, y, pq, rs, p, q, r, s)
             do y = 1, (dim_p*dim_q+1)/2
                do x = 1, dim_p*dim_q + mod(dim_p*dim_q+1,2)
-!         
+!
                   if (x .le. y + tridim) then
                      pq = x
                      rs = y + tridim
@@ -1646,15 +1646,15 @@ contains
                      pq = y
                      rs = x - tridim - 1
                   endif
-!         
+!
                   q = mod(pq-1,dim_q)
                   s = mod(rs-1,dim_q)
                   p = (pq-1)/dim_q
                   r = (rs-1)/dim_q
-!         
+!
                   g_to(x,y) =  beta*g_to(x,y) &
                             + alpha*g_from(first_p+p,first_q+q,first_p+r,first_q+s)
-!         
+!
                enddo
             enddo
 !$omp end parallel do

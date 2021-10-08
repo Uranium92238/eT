@@ -2411,7 +2411,7 @@ contains
    end subroutine initialize_batching_tracker
 !
 !
-   subroutine batch_setup_1_memory_manager(mem, batch_p, req0, req1, element_size)
+   subroutine batch_setup_1_memory_manager(mem, batch_p, req0, req1, tag, element_size)
 !!
 !!    Batch setup 1
 !!    Written by Rolf H. Myhre and Eirik F. Kjønstad, December 2018
@@ -2437,7 +2437,10 @@ contains
       integer, intent(in) :: req0
       integer, intent(in) :: req1
 !
+      character(len=*), intent(in) :: tag
+!
       integer, intent(in), optional :: element_size
+!
 !
       integer(i64):: req0_tot
       integer(i64):: req1_min
@@ -2499,11 +2502,15 @@ contains
 !
       call mem%initialize_batching_tracker(req0_tot + req1_min*int(batch_p%max_length, kind=i64))
 !
+      if (batch_p%num_batches > 1) then
+         call output%printf('v', 'Batching in (a0)', chars=[tag])
+      end if
+!
    end subroutine batch_setup_1_memory_manager
 !
 !
    subroutine batch_setup_2_memory_manager(mem, batch_p, batch_q, req0, req1_p, req1_q, &
-                                           req2, element_size, req_single_batch)
+                                           req2, tag, element_size, req_single_batch)
 !!
 !!    Batch setup 2
 !!    Written by Rolf H. Myhre and Eirik F. Kjønstad, Dec 2018
@@ -2546,8 +2553,11 @@ contains
       integer, intent(in) :: req1_q
       integer, intent(in) :: req2
 !
+      character(len=*), intent(in) :: tag
+!
       integer, intent(in), optional :: element_size
       integer, intent(in), optional :: req_single_batch
+!
 !
       logical :: figured_out
 !
@@ -2739,14 +2749,21 @@ contains
       endif
 !
       call mem%initialize_batching_tracker(max_memory_usage)
-
+!
+!
+      if (any([batch_p%num_batches, batch_q%num_batches] > 1)) then
+!
+         call output%printf('v', 'Batching in (a0)', chars=[tag])
+!
+      end if
+!
    end subroutine batch_setup_2_memory_manager
 !
 !
    subroutine batch_setup_3_memory_manager(mem, batch_p, batch_q, batch_r, req0, &
                                            req1_p, req1_q, req1_r, req2_pq,      &
-                                           req2_pr, req2_qr, req3, element_size, &
-                                           req_single_batch)
+                                           req2_pr, req2_qr, req3, tag,          &
+                                           element_size, req_single_batch)
 !!
 !!    Batch setup 3
 !!    This is setup for three batch indices
@@ -2796,8 +2813,11 @@ contains
 !
       integer, intent(in) :: req3
 !
+      character(len=*), intent(in) :: tag
+!
       integer, intent(in), optional :: element_size
       integer, intent(in), optional :: req_single_batch
+!
 !
       integer(i64):: req0_tot
 !
@@ -3016,6 +3036,12 @@ contains
       endif
 !
       call mem%initialize_batching_tracker(max_memory_usage)
+!
+      if (any([batch_p%num_batches, batch_q%num_batches, batch_r%num_batches] > 1)) then
+!
+         call output%printf('v', 'Batching in (a0)', chars=[tag])
+!
+      end if
 !
    end subroutine batch_setup_3_memory_manager
 !

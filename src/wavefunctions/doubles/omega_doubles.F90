@@ -20,7 +20,7 @@
 submodule (doubles_class) omega_doubles
 !
 !!
-!!    Omega submodule 
+!!    Omega submodule
 !!
 !!    Routines to construct
 !!
@@ -59,8 +59,8 @@ contains
 !
       integer :: current_a_batch
 !
-      type(timings) :: timer 
-!  
+      type(timings) :: timer
+!
       timer = timings('omega doubles a1', pl='verbose')
       call timer%turn_on()
 !
@@ -93,7 +93,7 @@ contains
 !
       batch_a = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_a, req0, req1)
+      call mem%batch_setup(batch_a, req0, req1, 'omega_doubles_a1')
 !
       do current_a_batch = 1, batch_a%num_batches
 !
@@ -114,12 +114,12 @@ contains
                      wf%n_o,                 &
                      wf%eri%n_J*wf%n_v,      &
                      one,                    &
-                     L_aJb,                  & 
+                     L_aJb,                  &
                      batch_a%length,         &
-                     X_Jbi,                  & 
+                     X_Jbi,                  &
                      wf%eri%n_J*wf%n_v,      &
                      one,                    &
-                     omega(batch_a%first,1), & 
+                     omega(batch_a%first,1), &
                      wf%n_v)
 !
          call mem%dealloc(L_aJb, batch_a%length, wf%eri%n_J, wf%n_v)
@@ -160,8 +160,8 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_kbji
       real(dp), dimension(:,:,:,:), allocatable :: g_jbki
 !
-      type(timings) :: timer 
-!  
+      type(timings) :: timer
+!
       timer = timings('omega doubles b1', pl='verbose')
       call timer%turn_on()
 !
@@ -223,7 +223,7 @@ contains
       real(dp), dimension(:,:), allocatable :: F_bj
 !
       type(timings) :: timer
-!  
+!
       timer = timings('omega doubles c1', pl='verbose')
       call timer%turn_on()
 !

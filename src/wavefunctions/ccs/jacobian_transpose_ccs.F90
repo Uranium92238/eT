@@ -191,7 +191,7 @@ contains
       batch_j = batching_index(wf%n_o)
 !
       req = wf%eri%n_J*wf%n_v
-      call mem%batch_setup(batch_j, 0, req)
+      call mem%batch_setup(batch_j, 0, req, tag='jacobian_transpose_ccs_b1_ccs 1')
 !
       call mem%alloc(L_Jbj, wf%eri%n_J, wf%n_v, batch_j%max_length)
 !
@@ -223,7 +223,7 @@ contains
       batch_i = batching_index(wf%n_o)
 !
       req = 2*wf%eri%n_J*wf%n_v + wf%n_v
-      call mem%batch_setup(batch_i, 0, req)
+      call mem%batch_setup(batch_i, 0, req, tag='jacobian_transpose_ccs_b1_ccs 2')
 !
       do current_i_batch = 1, batch_i%num_batches
 !
@@ -272,7 +272,8 @@ contains
       req_i = 2*wf%eri%n_J*wf%n_o
       req_ai = wf%eri%n_J
 !
-      call mem%batch_setup(batch_a, batch_i, req, req_a, req_i, req_ai)
+      call mem%batch_setup(batch_a, batch_i, req, req_a, req_i, req_ai, &
+                           tag='jacobian_transpose_ccs_b1_ccs 3')
 !
       call mem%alloc(L_Jba, wf%eri%n_J, wf%n_v, batch_a%max_length)
 !

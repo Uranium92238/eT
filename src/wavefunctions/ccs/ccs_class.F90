@@ -1442,7 +1442,8 @@ contains
       batch_a = batching_index(wf%n_v)
       batch_b = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_a, batch_b, req0, req1_a, req1_b, req2)
+      call mem%batch_setup(batch_a, batch_b, req0, req1_a, req1_b, req2, &
+                           tag='approximate_double_excitation_vectors_ccs')
 !
 !     :: Construct term 1 and store in file_temp_1
 !

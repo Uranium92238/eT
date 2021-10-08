@@ -122,7 +122,8 @@ contains
       batch_b = batching_index(wf%n_v)
       batch_c = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2)
+      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2, &
+                           tag='omega_cc2_a1_lowmem_cc2')
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -253,7 +254,8 @@ contains
       batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_b, batch_j, batch_k, req0, req1_b, &
-                    req1_j, req1_k, req2_bj, req2_bk, req2_jk, req3)
+                    req1_j, req1_k, req2_bj, req2_bk, req2_jk, req3, &
+                    tag='omega_cc2_b1_lowmem_cc2')
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -429,7 +431,8 @@ contains
       batch_i = batching_index(wf%n_o)
       batch_j = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
+      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2, &
+                           tag='omega_cc2_c1_lowmem_cc2')
 !
       do current_i_batch = 1, batch_i%num_batches
 !

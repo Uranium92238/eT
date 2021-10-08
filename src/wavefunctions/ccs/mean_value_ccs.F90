@@ -299,7 +299,7 @@ contains
 !
       batch_i = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, req0, req1_i)
+      call mem%batch_setup(batch_i, req0, req1_i, tag='calculate_energy_ccs 1')
 !
       do current_i_batch = 1, batch_i%num_batches
 !
@@ -345,7 +345,7 @@ contains
       req_single_batch = wf%eri%n_J*wf%n_v*wf%n_o + wf%eri%n_J*(wf%n_o**2)
 !
       call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2, &
-                           req_single_batch=req_single_batch)
+                           req_single_batch=req_single_batch, tag='calculate_energy_ccs 2')
 !
       do current_i_batch = 1, batch_i%num_batches
 !

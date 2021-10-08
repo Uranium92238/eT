@@ -1500,7 +1500,7 @@ contains
       rec1 = max(rec1_d2_2, rec1_d2_3, rec1_d2_3to4, rec1_d2_4, rec1_d2_5)
 !
       batch_b = batching_index(wf%n_ccsd_v)
-      call mem%batch_setup(batch_b, rec0, rec1)
+      call mem%batch_setup(batch_b, rec0, rec1, tag='jacobian_ccsd_d2_mlccsd')
 !
 !     Start looping over b-batches
 !
@@ -3112,7 +3112,7 @@ contains
       req1 = n_a_v*(wf%eri%n_J) + 2*(wf%n_o)*(n_a_v)**2 + (wf%n_o)*(wf%n_ccsd_o**2)
 !
       batch_b = batching_index(wf%n_ccsd_v)
-      call mem%batch_setup(batch_b, req0, req1)
+      call mem%batch_setup(batch_b, req0, req1, tag='save_jacobian_d2_intermediate_mlccsd')
 !
 !     Start looping over b-batches
 !

@@ -872,7 +872,8 @@ contains
       batch_c = batching_index(wf%n_v)
       batch_d = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_c, batch_d, req0, req1_c, req1_d, req2)
+      call mem%batch_setup(batch_c, batch_d, req0, req1_c, req1_d, req2, &
+                           tag='F_ccsd_c1_2_ccsd')
 !
       do current_c_batch = 1, batch_c%num_batches
 !
@@ -1179,7 +1180,7 @@ contains
 !
       batch_d = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_d, req0, req1)
+      call mem%batch_setup(batch_d, req0, req1, tag='F_ccsd_e1_2_ccsd 1')
 !
       do current_d_batch = 1, batch_d%num_batches
 !
@@ -1278,7 +1279,7 @@ contains
 !
       batch_d = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_d, req0, req1)
+      call mem%batch_setup(batch_d, req0, req1, tag='F_ccsd_e1_2_ccsd 2')
 !
       do current_d_batch = 1, batch_d%num_batches
 !
@@ -1359,7 +1360,7 @@ contains
 !
       batch_d = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_d, req0, req1)
+      call mem%batch_setup(batch_d, req0, req1, tag='F_ccsd_e1_2_ccsd 3')
 !
       do current_d_batch = 1, batch_d%num_batches
 !
@@ -1698,7 +1699,7 @@ contains
 !
       batch_d = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_d, req0, req1)
+      call mem%batch_setup(batch_d, req0, req1, tag='F_ccsd_h1_2_ccsd')
 !
       do current_d_batch = 1, batch_d%num_batches
 !
@@ -2780,7 +2781,7 @@ contains
 !
       batch_d = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_d, req0, req1)
+      call mem%batch_setup(batch_d, req0, req1, tag='F_ccsd_b2_2_ccsd')
 !
       do current_d_batch = 1, batch_d%num_batches
 !
@@ -3217,7 +3218,7 @@ contains
 !
       batch_d = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_d, req0, req1)
+      call mem%batch_setup(batch_d, req0, req1, tag='F_ccsd_e2_2_ccsd 1')
 !
       do current_d_batch = 1, batch_d%num_batches
 !
@@ -3288,7 +3289,7 @@ contains
 !
       batch_d = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_d, req0, req1)
+      call mem%batch_setup(batch_d, req0, req1, tag='F_ccsd_e2_2_ccsd 2')
 !
       do current_d_batch = 1, batch_d%num_batches
 !

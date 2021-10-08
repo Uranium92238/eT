@@ -3305,7 +3305,7 @@ contains
 !
       batch_p = batching_index(n_mo)
 !
-      call mem%batch_setup(batch_p, req0, req1)
+      call mem%batch_setup(batch_p, req0, req1, 'construct_cholesky_mo_vectors')
 !
 !     Loop over the number of a batches
 !
@@ -3701,7 +3701,7 @@ contains
 !
       batch_J = batching_index(this%n_cholesky)
 !
-      call mem%batch_setup(batch_J, req0, req1)
+      call mem%batch_setup(batch_J, req0, req1, 'diagonal_test')
 !
 !     Loop over the number of a batches
 !

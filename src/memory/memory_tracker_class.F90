@@ -33,7 +33,7 @@ module memory_tracker_class
    type :: memory_tracker
 !
       integer(i64), private :: current
-      integer(i64), private :: max_allowed
+      integer(i64), private :: max_allowed, max_used
 !
    contains
 !
@@ -68,6 +68,7 @@ contains
       integer(i64), intent(in) :: max_allowed
 !
       this%current = 0
+      this%max_used = 0
       this%max_allowed = max_allowed
 !
       call output%printf('debug', 'Memory tracker initialized - allowed memory: (i0) B', &
@@ -89,8 +90,7 @@ contains
 !
       this%current = this%current + bytes_allocated
 !
-      call output%printf('debug', 'Current memory used ((i0)/(i0))', &
-                           ints=[int(this%current), int(this%max_allowed)])
+      if (this%current > this%max_used) this%max_used = this%current
 !
       if (this%current .gt. this%max_allowed) then
 !
@@ -112,8 +112,8 @@ contains
 !
       type(memory_tracker) :: this
 !
-      call output%printf('debug', 'Memory tracker finalized - allowed memory: (i0) B', &
-                         ints=[int(this%max_allowed)])
+      call output%printf('debug', 'Memory tracker finalized - allowed: (i0) B  used: (i0) B', &
+                         ints=[int(this%max_allowed),int(this%max_used)])
 !
    end subroutine destructor
 !

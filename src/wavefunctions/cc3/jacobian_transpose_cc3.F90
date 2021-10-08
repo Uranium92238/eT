@@ -161,7 +161,7 @@ contains
       req_0 = 0
       req_d = wf%n_o * wf%n_v**2
 !
-      call mem%batch_setup(batch_d, req_0, req_d)
+      call mem%batch_setup(batch_d, req_0, req_d, 'jacobian_transpose_cc3_t3_a1')
 !
       call wf%X_abid%open_('read')
 !
@@ -326,9 +326,10 @@ contains
       req_2 = 2*wf%n_o*wf%n_v
       req_3 = 0
 !
-      call mem%batch_setup(batch_i, batch_j, batch_k,  &
-                           req_0, req_i, req_1, req_1, &
-                           req_2, req_2, req_2, req_3, &
+      call mem%batch_setup(batch_i, batch_j, batch_k,       &
+                           req_0, req_i, req_1, req_1,      &
+                           req_2, req_2, req_2, req_3,      &
+                           'jacobian_transpose_cc3_t3_b1',  &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -830,9 +831,10 @@ contains
       req_2 = 4*wf%n_o*wf%n_v + wf%n_v**2
       req_3 = 0
 !
-      call mem%batch_setup(batch_i, batch_j, batch_k,  &
-                           req_0, req_i, req_1, req_1, &
-                           req_2, req_2, req_2, req_3, &
+      call mem%batch_setup(batch_i, batch_j, batch_k,       &
+                           req_0, req_i, req_1, req_1,      &
+                           req_2, req_2, req_2, req_3,      &
+                           'jacobian_transpose_cc3_c3_a',   &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -1424,7 +1426,8 @@ contains
       call mem%alloc(X_J_lk, wf%eri%n_J, wf%n_o, wf%n_o)
       call mem%alloc(X_J_kl, wf%eri%n_J, wf%n_o, wf%n_o)
 !
-      call mem%batch_setup(batch_k, batch_v, req_0, req_k, req_v, req_2)
+      call mem%batch_setup(batch_k, batch_v, req_0, req_k, req_v, req_2, &
+                           'jacobian_transpose_cc3_c3_a1_y_o')
 !
       call mem%alloc(Y_mjck, wf%n_v, batch_k%max_length, wf%n_o, wf%n_o)
 !
@@ -1596,7 +1599,8 @@ contains
       req_v = wf%n_v*wf%eri%n_J + 2*wf%n_o*wf%eri%n_J
       req_2 = 0
 !
-      call mem%batch_setup(batch_k, batch_v, req_0, req_k, req_v, req_2)
+      call mem%batch_setup(batch_k, batch_v, req_0, req_k, req_v, req_2, &
+                           'jacobian_transpose_cc3_c3_a1_y_v')
 !
       call mem%alloc(Y_ebck, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
       call mem%alloc(Y_beck, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)

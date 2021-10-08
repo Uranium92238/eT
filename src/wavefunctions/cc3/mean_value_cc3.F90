@@ -381,6 +381,7 @@ contains
       call mem%batch_setup(batch_a, batch_b, batch_c,  &
                            req_0, req_a, req_1, req_1, &
                            req_2, req_2, req_2, req_3, &
+                           'density_cc3_mu_ref_abc',   &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(t_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
@@ -907,6 +908,7 @@ contains
       call mem%batch_setup(batch_i, batch_j, batch_k,  &
                            req_0, req_i, req_1, req_1, &
                            req_2, req_2, req_2, req_3, &
+                           'density_cc3_mu_ref_ijk',   &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)

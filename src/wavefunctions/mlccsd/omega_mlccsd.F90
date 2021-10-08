@@ -258,7 +258,8 @@ contains
       batch_a = batching_index(wf%n_ccsd_v)
       batch_b = batching_index(wf%n_ccsd_v)
 !
-      call mem%batch_setup(batch_a, batch_b, req0, req1_a, req1_b, rec2)
+      call mem%batch_setup(batch_a, batch_b, req0, req1_a, req1_b, rec2, &
+                           tag='omega_ccsd_b2_mlccsd')
 !
 !     Start looping over a-batches
 !
@@ -903,7 +904,7 @@ contains
 !
       batch_a = batching_index(wf%n_ccsd_v)
 !
-      call mem%batch_setup(batch_a, req0, req1)
+      call mem%batch_setup(batch_a, req0, req1, tag='omega_ccsd_d2_mlccsd')
 !
 !     Loop over the number of a batches
 !

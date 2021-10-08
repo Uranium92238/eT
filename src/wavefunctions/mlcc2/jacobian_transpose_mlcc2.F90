@@ -416,7 +416,7 @@ contains
 !
       batch_a = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_a, req0, req1)
+      call mem%batch_setup(batch_a, req0, req1, tag='jacobian_transpose_cc2_b1_mlcc2')
 !
       do current_a_batch = 1, batch_a%num_batches
 !
@@ -608,7 +608,7 @@ contains
 !
       batch_c = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_c, req0, req1)
+      call mem%batch_setup(batch_c, req0, req1, tag='jacobian_transpose_cc2_a2_mlcc2')
 !
       do current_c_batch = 1, batch_c%num_batches
 !
