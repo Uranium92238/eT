@@ -251,7 +251,7 @@ contains
       implicit none
 
       class(general_eigen_davidson), intent(in) :: this
-      logical, dimension(this%n_solutions), intent(out) :: converged
+      logical, dimension(this%n_solutions), intent(in) :: converged
       integer, intent(in) :: iteration
 !
       if (.not. all(converged)) then
@@ -306,8 +306,9 @@ contains
       implicit none
 !
       class(general_eigen_davidson), intent(inout) :: this
-      real(dp), dimension(this%n_solutions), intent(out) :: residual_norm, omega
-      logical, dimension(this%n_solutions), intent(out) :: converged, residual_lt_lindep
+      real(dp), dimension(this%n_solutions), intent(in)  :: omega
+      real(dp), dimension(this%n_solutions), intent(out) :: residual_norm
+      logical, dimension(this%n_solutions), intent(out)  :: converged, residual_lt_lindep
       integer, intent(in) :: iteration
 !
       real(dp), dimension(:), allocatable :: residual
