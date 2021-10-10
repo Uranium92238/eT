@@ -287,6 +287,13 @@ module ccs_class
       procedure :: construct_eta                                 => construct_eta_ccs
       procedure :: construct_eta_complex                         => construct_eta_ccs_complex
 !
+!     Procedures related to the multiplier solver
+!
+      procedure :: print_banner_davidson_cc_multipliers          => print_banner_davidson_cc_multipliers_ccs
+      procedure :: get_initial_cc_multipliers                    => get_initial_cc_multipliers_ccs
+      procedure :: get_cc_multipliers_preconditioner             => get_cc_multipliers_preconditioner_ccs
+      procedure :: cc_multipliers_summary                        => cc_multipliers_summary_ccs
+!
 !     Procedures related to the Jacobian transformation
 !
       procedure :: construct_Jacobian_transform                  => construct_Jacobian_transform_ccs

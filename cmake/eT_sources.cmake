@@ -98,22 +98,32 @@ set(eT_fortran_sources
    src/solver_tools/convergence_tool_class.F90
 #
    src/solver_tools/transformation_tool_class.F90
+   src/solver_tools/cc_jacobian_transformation_tool_class.F90
    src/solver_tools/tamm_dancoff_transformation_tool_class.F90
    src/solver_tools/rpa_transformation_tool_class.F90
 #
+   src/solver_tools/cc_multipliers_solver_factory_class.F90
    src/solver_tools/tdhf_solver_factory_class.F90
    src/solver_tools/scf_solver_factory_class.F90
 #
    src/solver_tools/start_vector_tool_class.F90
+   src/solver_tools/cc_multipliers_start_vector_tool_class.F90
    src/solver_tools/tdhf_start_vector_tool_class.F90
 #
    src/solver_tools/preconditioner_getter_class.F90
+   src/solver_tools/cc_multipliers_preconditioner_getter_class.F90
    src/solver_tools/rpa_preconditioner_getter_class.F90
    src/solver_tools/tamm_dancoff_preconditioner_getter_class.F90
+#
+   src/solver_tools/rhs_linear_equation_tool_class.F90
+   src/solver_tools/cc_multipliers_rhs_tool_class.F90
 #
    src/solver_tools/eigen_storage_tool_class.F90
    src/solver_tools/tamm_dancoff_eigen_storage_tool_class.F90
    src/solver_tools/rpa_eigen_storage_tool_class.F90
+#
+   src/solver_tools/linear_storage_tool_class.F90
+   src/solver_tools/cc_multipliers_linear_storage_tool_class.F90
 #
    src/solvers/hf/scf_solver_class.F90
    src/solvers/hf/bfgs_geoopt_hf_class.F90
@@ -140,6 +150,7 @@ set(eT_fortran_sources
    src/solvers/cc/asymmetric_lanczos_cc_es_class.F90
 #
    src/solvers/general_eigen_davidson_solver_class.F90
+   src/solvers/general_linear_davidson_solver_class.F90
 #
    src/tools/index_invert.F90
    src/tools/reordering.F90

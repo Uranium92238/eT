@@ -38,7 +38,8 @@ module rpa_transformation_tool_class
    contains
 !
       procedure, public :: transform => transform_rpa
-! 
+      procedure, public :: initialize  => initialize_rpa
+!
    end type  rpa_transformation_tool
 !
    interface  rpa_transformation_tool
@@ -65,19 +66,42 @@ contains
    end function new_rpa_transformation_tool
 !
 !
-   subroutine transform_rpa(this, trial, transform)
+   subroutine transform_rpa(this, trial, transform, frequency)
 !!
 !!    Transform
 !!    Written by Sarai D. Folkestad, May 2021
 !!
+!!    Modified by Regina Matveeva, Sep 2021
+!!    Added frequency (necessary due to a modification of the transformation_tool)
+!!
+      use warning_suppressor, only: do_nothing
+!
       implicit none
 !
       class(rpa_transformation_tool), intent(in)   :: this
-      real(dp), dimension(this%n_parameters) :: trial, transform 
+      real(dp), dimension(this%n_parameters) :: trial, transform
+      real(dp), intent(in) :: frequency
 !
+      call do_nothing(frequency)
       call this%wf%rpa_transformation(trial, transform)
 !
    end subroutine transform_rpa
+!
+!
+   subroutine initialize_rpa(this)
+!!
+!!    Initialize
+!!    Written by Regina Matveeva, Sept 2021
+!!
+      use warning_suppressor, only: do_nothing
+!
+      implicit none
+!
+      class(rpa_transformation_tool), intent(in)   :: this
+!
+      call do_nothing(this)
+!
+   end subroutine initialize_rpa
 !
 !
 end module rpa_transformation_tool_class

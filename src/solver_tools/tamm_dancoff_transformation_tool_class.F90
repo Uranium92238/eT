@@ -38,6 +38,7 @@ module tamm_dancoff_transformation_tool_class
    contains
 !
       procedure, public :: transform => transform_tamm_dancoff
+      procedure, public :: initialize  => initialize_tamm_dancoff
 !
    end type  tamm_dancoff_transformation_tool
 !
@@ -65,19 +66,42 @@ contains
    end function new_tamm_dancoff_transformation_tool
 !
 !
-   subroutine transform_tamm_dancoff(this, trial, transform)
+   subroutine transform_tamm_dancoff(this, trial, transform, frequency)
 !!
 !!    Transform
 !!    Written by Sarai D. Folkestad, May 2021
 !!
+!!    Modified by Regina Matveeva, Sept 2021
+!!    Added frequency (necessary due to a modification of the transformation_tool)
+!!
+      use warning_suppressor, only: do_nothing
+!
       implicit none
 !
       class(tamm_dancoff_transformation_tool), intent(in)   :: this
       real(dp), dimension(this%n_parameters) :: trial, transform
+      real(dp), intent(in) :: frequency
 !
+      call do_nothing(frequency)
       call this%wf%tamm_dancoff_transformation(trial, transform)
 !
    end subroutine transform_tamm_dancoff
+!
+!
+   subroutine initialize_tamm_dancoff(this)
+!!
+!!    Initialize
+!!    Written by Regina Matveeva, Sept 2021
+!!
+      use warning_suppressor, only: do_nothing
+!
+      implicit none
+!
+      class(tamm_dancoff_transformation_tool), intent(in) :: this
+!
+      call do_nothing(this)
+!
+   end subroutine initialize_tamm_dancoff
 !
 !
 end module tamm_dancoff_transformation_tool_class

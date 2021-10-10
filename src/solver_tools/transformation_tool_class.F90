@@ -39,13 +39,14 @@ module transformation_tool_class
 !
    contains
 !
-      procedure (transform_transformation_tool), deferred :: transform
+      procedure (transform_transformation_tool),  deferred :: transform
+      procedure (initialize_transformation_tool), deferred :: initialize
 !
    end type  transformation_tool
 !
    abstract interface
 !
-      subroutine transform_transformation_tool(this, trial, transform)
+      subroutine transform_transformation_tool(this, trial, transform, frequency)
 !
          use parameters
 !
@@ -55,10 +56,23 @@ module transformation_tool_class
 !
          class(transformation_tool), intent(in) :: this
          real(dp), dimension(this%n_parameters) :: trial, transform
+         real(dp), intent(in) :: frequency
 !
       end subroutine
 !
 !
+      subroutine initialize_transformation_tool(this)
+!
+         use parameters
+!
+         import transformation_tool
+!
+         implicit none
+!
+         class(transformation_tool), intent(in) :: this
+!
+      end subroutine
    end interface
+!
 !
 end module transformation_tool_class

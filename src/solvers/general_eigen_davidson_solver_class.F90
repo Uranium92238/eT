@@ -123,6 +123,7 @@ contains
       real(dp), dimension(:), allocatable :: residual_norm
       real(dp), dimension(:), allocatable :: c, residual
       real(dp), dimension(:), allocatable :: omega
+      real(dp) :: dummy = zero
 !
       call this%davidson%initialize()
 !
@@ -162,7 +163,7 @@ contains
          do trial = this%davidson%first_new_trial(), this%davidson%last_new_trial()
 !
             call this%davidson%get_trial(c, trial)
-            call this%transformer%transform(c, residual)
+            call this%transformer%transform(c, residual, dummy)
             call this%davidson%set_transform(residual, trial)
 !
          enddo
