@@ -33,7 +33,7 @@ module gs_engine_class
    use timings_class,         only: timings
    use task_list_class,       only: task_list
 !
-   type, extends(abstract_engine) :: gs_engine 
+   type, extends(abstract_engine) :: gs_engine
 !
       character(len=200) :: multipliers_algorithm
 !
@@ -77,9 +77,9 @@ module gs_engine_class
 !
    interface gs_engine
 !
-      procedure :: new_gs_engine 
+      procedure :: new_gs_engine
 !
-   end interface gs_engine 
+   end interface gs_engine
 !
 !
 contains
@@ -87,15 +87,15 @@ contains
 !
    function new_gs_engine(wf) result(engine)
 !!
-!!    New GS engine  
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    New GS engine
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
 !     Needed for defaults and sanity checks
       class(ccs), intent(in)       :: wf
 !
-      type(gs_engine) :: engine 
+      type(gs_engine) :: engine
 !
       call engine%set_default_gs_algorithm(wf)
 !
@@ -118,11 +118,11 @@ contains
 !!
       implicit none
 !
-      class(gs_engine), intent(inout) :: engine 
+      class(gs_engine), intent(inout) :: engine
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      if (wf%name_ == 'cc3') then 
+      if (wf%name_ == 'cc3') then
 !
          engine%gs_algorithm = 'newton-raphson'
 !
@@ -142,11 +142,11 @@ contains
 !!
       implicit none
 !
-      class(gs_engine), intent(inout) :: engine 
+      class(gs_engine), intent(inout) :: engine
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      if (wf%name_ == 'cc3') then 
+      if (wf%name_ == 'cc3') then
 !
          engine%multipliers_algorithm = 'newton-raphson'
 !
@@ -202,7 +202,7 @@ contains
 !
       call engine%tasks%print_('mo preparations')
 !
-      call wf%mo_preparations() 
+      call wf%mo_preparations()
 !
       call engine%do_ground_state(wf)
 !
@@ -239,7 +239,7 @@ contains
       engine%multipliers_restart = input%is_keyword_present('restart', 'solver cc multipliers')
 !
 !     global restart
-      if (input%is_keyword_present('restart', 'do')) then 
+      if (input%is_keyword_present('restart', 'do')) then
 !
          engine%gs_restart = .true.
          engine%multipliers_restart = .true.
@@ -313,7 +313,7 @@ contains
 !
       class(amplitude_updater), allocatable :: t_updater
 !
-      character(len=200) :: storage 
+      character(len=200) :: storage
 !
       call engine%tasks%print_('gs solver')
 !
@@ -363,14 +363,14 @@ contains
       use citation_class,           only : citation
       use citation_printer_class,   only : eT_citations
 !
-      implicit none 
+      implicit none
 !
-      class(gs_engine), intent(in) :: engine 
+      class(gs_engine), intent(in) :: engine
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
       character(len=*), intent(in) :: global_storage
-      character(len=*), intent(in) :: section 
+      character(len=*), intent(in) :: section
 !
       logical :: scale_amplitudes, scale_residual
 !
@@ -386,10 +386,10 @@ contains
 !
       integer :: max_iterations
 !
-      logical :: records_in_memory, multipliers 
+      logical :: records_in_memory, multipliers
       character(len=200) :: storage
 !
-      if (section == 'solver cc multipliers') then 
+      if (section == 'solver cc multipliers') then
 !
          multipliers = .true.
          algorithm = engine%multipliers_algorithm
@@ -403,7 +403,7 @@ contains
 !
       if (algorithm == 'diis') then
 !
-         if (multipliers) then 
+         if (multipliers) then
 !
             scale_amplitudes = .false.
             scale_residual = .false.
@@ -419,7 +419,7 @@ contains
                                           scale_amplitudes = scale_amplitudes,   &
                                           scale_residual   = scale_residual)
 !
-      elseif (algorithm == 'newton-raphson') then 
+      elseif (algorithm == 'newton-raphson') then
 !
          if (trim(wf%name_) == 'cc2') &
             call output%error_msg('Newton-Raphson not implemented for CC2')
@@ -439,7 +439,7 @@ contains
          if (trim(global_storage) == 'memory') records_in_memory = .true.
          if (trim(storage) == 'memory') records_in_memory = .true.
 !
-         if (multipliers) then 
+         if (multipliers) then
 !
             scale_amplitudes = .false.
             scale_residual = .false.
@@ -453,10 +453,10 @@ contains
 !
          end if
 !
-!        Determine which transformation to use - exact or approximate Jacobian - 
+!        Determine which transformation to use - exact or approximate Jacobian -
 !        and then construct the t_updater
 !
-         if (engine%enable_multimodel_newton(wf, section)) then 
+         if (engine%enable_multimodel_newton(wf, section)) then
 !
             transformer = approximate_jacobian_transformer(side)
 !
@@ -476,7 +476,7 @@ contains
 !
             call eT_citations%add(reference)
 !
-         else 
+         else
 !
             transformer = jacobian_transformer(side)
 !
@@ -485,17 +485,17 @@ contains
          t_updater = newton_raphson_updater(n_amplitudes       = wf%n_gs_amplitudes, &
                                             scale_amplitudes   = scale_amplitudes,   &
                                             scale_residual     = scale_residual,     &
-                                            relative_threshold = relative_threshold, &   
-                                            records_in_memory  = records_in_memory,  & 
+                                            relative_threshold = relative_threshold, &
+                                            records_in_memory  = records_in_memory,  &
                                             max_iterations     = max_iterations,     &
                                             transformer        = transformer)
 !
-      else 
+      else
 !
          call output%error_msg('(a0) is not a valid ground state algorithm.', &
                                   chars=[engine%gs_algorithm])
 !
-      endif       
+      endif
 !
    end subroutine initialize_amplitude_updater_gs_engine
 !
@@ -507,13 +507,13 @@ contains
 !!
 !!    Default is yes for CC3 and no for other CC methods
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      character(len=*), intent(in) :: section 
+      character(len=*), intent(in) :: section
 !
-      logical :: enable 
+      logical :: enable
 !
       character(len=200) :: multimodel_newton
 !
@@ -540,18 +540,30 @@ contains
 !!    After this routine, the wavefunction has the cluster amplitudes
 !!    and the multipliers stored in memory.
 !!
-      use diis_cc_multipliers_class,      only: diis_cc_multipliers
-      use davidson_cc_multipliers_class,  only: davidson_cc_multipliers
-      use amplitude_updater_class,        only: amplitude_updater
+!!    Modified by Regina Matveeva, Sep 2021
+!!
+!!    Replaced the davidson_cc_multipliers_solver with general_linear_davidson_solver
+!!    in combination with cc_multipliers_solver_factory
+!!
+!
+      use general_linear_davidson_class,       only: general_linear_davidson
+      use cc_multipliers_solver_factory_class, only: cc_multipliers_solver_factory
+      use diis_cc_multipliers_class,           only: diis_cc_multipliers
+      use string_utilities,                    only: convert_to_uppercase
+      use amplitude_updater_class,             only: amplitude_updater
 !
       implicit none
 !
-      class(gs_engine), intent(inout) :: engine 
-!
+      class(gs_engine), intent(inout) :: engine
       class(ccs), intent(inout) :: wf
 !
-      type(diis_cc_multipliers), allocatable     :: diis_solver
-      type(davidson_cc_multipliers), allocatable :: davidson_solver
+      class(general_linear_davidson),     allocatable  :: solver
+      type(cc_multipliers_solver_factory)              :: solver_factory
+      type(diis_cc_multipliers),          allocatable  :: diis_solver
+!
+      type(timings), allocatable :: timer
+!
+      real(dp), dimension(:), allocatable :: frequencies
 !
       class(amplitude_updater), allocatable :: tbar_updater
 !
@@ -561,7 +573,12 @@ contains
 !
       call engine%tasks%print_('multipliers solver')
 !
-      if (trim(engine%multipliers_algorithm) == 'davidson') then 
+      timer = timings(trim(convert_to_uppercase(wf%name_)) // ' multipliers')
+      call timer%turn_on()
+!
+      call wf%initialize_multipliers()
+!
+      if (trim(engine%multipliers_algorithm) == 'davidson') then
 !
          if (trim(wf%name_) == 'cc2' .or.            &
              trim(wf%name_) == 'low memory cc2' .or. &
@@ -572,12 +589,21 @@ contains
 !
          end if
 !
-         davidson_solver = davidson_cc_multipliers(wf, engine%multipliers_restart)
-         call davidson_solver%run(wf)
-         call davidson_solver%cleanup(wf)
+         call wf%print_banner_davidson_cc_multipliers()
+!
+         call solver_factory%create(wf, solver)
+!
+         call mem%alloc(frequencies, 1)
+         frequencies = zero
+!
+         call solver%run(frequencies)
+!
+         call mem%dealloc(frequencies, 1)
+!
+         call wf%cc_multipliers_summary()
 !
       elseif (trim(engine%multipliers_algorithm) == 'diis' .or. &
-              trim(engine%multipliers_algorithm) == 'newton-raphson') then 
+              trim(engine%multipliers_algorithm) == 'newton-raphson') then
 !
          storage = 'disk'
          call input%get_keyword('storage', 'solver cc multipliers', storage)
@@ -591,9 +617,21 @@ contains
 !
       else
 !
-         call output%error_msg('Could not recognize multipliers algorithm ' // trim(engine%multipliers_algorithm))
+         call output%error_msg('Could not recognize multipliers algorithm (a0)', &
+                               chars=[trim(engine%multipliers_algorithm)])
 !
       endif
+!
+      call timer%turn_off()
+!
+      call output%printf('m', '- Finished solving the (a0) multipliers equations', &
+                         fs='(/t3,a)', chars=[trim(convert_to_uppercase(wf%name_))])
+!
+      call output%printf('m', 'Total wall time (sec):  (f20.5)', &
+                         reals=[timer%get_elapsed_time('wall')], fs='(/t6,a)')
+!
+      call output%printf('m', 'Total cpu time (sec):   (f20.5)', &
+                         reals=[timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine do_multipliers_gs_engine
 !
@@ -692,26 +730,26 @@ contains
 !
    subroutine do_cholesky_gs_engine(wf)
 !!
-!!    Do Cholesky 
+!!    Do Cholesky
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Feb 2020
 !!
 !!    Performs Cholesky decomposition of the electron repulsion integral matrix.
 !!
 !!    For reduced space coupled cluster calculations (frozen HF or MLHF)
 !!    the MO screening can be used to reduce the number of Cholesky vectors,
-!!    as the accuracy of the integrals in the active MO basis, 
-!!    rather than the AO basis, is targeted. For details, see 
+!!    as the accuracy of the integrals in the active MO basis,
+!!    rather than the AO basis, is targeted. For details, see
 !!    Folkestad, S. D., Kjønstad, E. F., and Koch, H., JCP, 150(19), 194112 (2019).
 !!
 !!
       use eri_cd_class, only: eri_cd
       use t1_eri_tool_class, only: t1_eri_tool
 !
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
-      type(eri_cd), allocatable :: eri_cholesky_solver 
+      type(eri_cd), allocatable :: eri_cholesky_solver
 !
       logical :: do_MO_screening
 !
@@ -734,16 +772,16 @@ contains
          call eri_cholesky_solver%run(wf%ao, screening_vector)   ! Do the Cholesky decomposition
                                                                      ! using the MO screening
 !
-         call mem%dealloc(screening_vector, wf%ao%n, wf%ao%n) 
+         call mem%dealloc(screening_vector, wf%ao%n, wf%ao%n)
 !
       else
 !
-         call eri_cholesky_solver%run(wf%ao) ! Do the Cholesky decomposition 
+         call eri_cholesky_solver%run(wf%ao) ! Do the Cholesky decomposition
 !
       endif
 !
-      call eri_cholesky_solver%diagonal_test(wf%ao)  ! Determine the largest 
-                                                         ! deviation in the ERI matrix 
+      call eri_cholesky_solver%diagonal_test(wf%ao)  ! Determine the largest
+                                                         ! deviation in the ERI matrix
 !
       wf%eri = t1_eri_tool(wf%n_o, wf%n_v, eri_cholesky_solver%get_n_cholesky(), wf%need_g_abcd)
 !

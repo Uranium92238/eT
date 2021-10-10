@@ -259,12 +259,12 @@ contains
       real(dp), dimension(6) :: q_electronic
       real(dp), dimension(6) :: q_nuclear
       real(dp), dimension(6) :: q_total
-!      
+!
       character(len=4), dimension(:), allocatable :: components
 !
       call engine%tasks%print_('expectation value')
 !
-      if(engine%dipole) then 
+      if(engine%dipole) then
 !
          call engine%calculate_dipole_moment(wf, mu_electronic, mu_nuclear, mu_total)
 !

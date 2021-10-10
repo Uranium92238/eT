@@ -76,6 +76,9 @@ module davidson_tool_class
       procedure :: red_dim_exceeds_max  => red_dim_exceeds_max_davidson_tool
       procedure :: update_reduced_dim   => update_reduced_dim_davidson_tool
 !
+      procedure :: update_reduced_space &
+                => update_reduced_space_davidson_tool
+!
       procedure :: print_settings       => print_settings_davidson_tool
 !
 !     Other routines
@@ -967,6 +970,22 @@ contains
       davidson%dim_red = davidson%dim_red + davidson%n_new_trials
 !
    end subroutine update_reduced_dim_davidson_tool
+!
+!
+   subroutine update_reduced_space_davidson_tool(davidson)
+!!
+!!    Update reduced space
+!!    Written by Sarai D. Folkestad, May 2021
+!!
+      implicit none
+!
+      class(davidson_tool), intent(inout) :: davidson
+!
+      if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+      call davidson%update_reduced_dim()
+      call davidson%orthonormalize_trial_vecs()
+!
+   end subroutine update_reduced_space_davidson_tool
 !
 !
    function red_dim_exceeds_max_davidson_tool(davidson) result(exceeds_max)
