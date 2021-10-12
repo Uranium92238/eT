@@ -53,39 +53,54 @@ contains
       character(len=*), intent(in), optional :: task
       type(timings) :: timer
 !
+      real(dp), dimension(:,:), allocatable :: h, F_eff
+!
       timer = timings('Fock matrix construction (T1 basis)', pl='n')
       call timer%turn_on()
 !
+      call mem%alloc(h, wf%n_mo, wf%n_mo)
+      call mem%alloc(F_eff, wf%n_mo, wf%n_mo)
+!
+      call zero_array(F_eff, wf%n_mo**2)
+!
+      call wf%get_t1_oei('hamiltonian', h, screening=.true.)
+!
+      if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_eff)
+!
       if (.not. present(task)) then
 !
-         call wf%construct_fock_ai_t1()
-         call wf%construct_fock_ia_t1()
-         call wf%construct_fock_ab_t1()
-         call wf%construct_fock_ij_t1()
-         return
-!
-      endif
-!
-      if (trim(task) == 'gs') then
-!
-         call wf%construct_fock_ai_t1()
-!
-      elseif (trim(task) == 'multipliers') then
-!
-         call wf%construct_fock_ia_t1()
-         call wf%construct_fock_ab_t1()
-         call wf%construct_fock_ij_t1()
-!
-      elseif (trim(task) == 'es') then
-!
-         call wf%construct_fock_ab_t1()
-         call wf%construct_fock_ij_t1()
+         call wf%construct_fock_ai_t1(h, F_eff)
+         call wf%construct_fock_ia_t1(h, F_eff)
+         call wf%construct_fock_ab_t1(h, F_eff)
+         call wf%construct_fock_ij_t1(h, F_eff)
 !
       else
 !
-         call output%error_msg('did not recognize task in construct_fock_ccs')
+         if (trim(task) == 'gs') then
 !
-      endif
+            call wf%construct_fock_ai_t1(h, F_eff)
+!
+         elseif (trim(task) == 'multipliers') then
+!
+            call wf%construct_fock_ia_t1(h, F_eff)
+            call wf%construct_fock_ab_t1(h, F_eff)
+            call wf%construct_fock_ij_t1(h, F_eff)
+!
+         elseif (trim(task) == 'es') then
+!
+            call wf%construct_fock_ab_t1(h, F_eff)
+            call wf%construct_fock_ij_t1(h, F_eff)
+!
+         else
+!
+            call output%error_msg('did not recognize task in construct_fock_ccs')
+!
+         endif
+!
+      endif 
+!
+      call mem%dealloc(h, wf%n_mo, wf%n_mo)
+      call mem%dealloc(F_eff, wf%n_mo, wf%n_mo)
 !
       call timer%turn_off()
 !
@@ -230,7 +245,7 @@ contains
    end subroutine add_t1_fock_length_dipole_term_ccs
 !
 !
-   module subroutine construct_fock_ai_t1_ccs(wf)
+   module subroutine construct_fock_ai_t1_ccs(wf, h, F_eff)
 !!
 !!    Construct Fock ai T1,
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -239,7 +254,7 @@ contains
 !!    basis using the MO integrals and the current single
 !!    amplitudes:
 !!
-!!       F_ai = sum_j (2*g_aijj - g_ajji) + (effective Fock contributions)
+!!       F_ai = h_ai + sum_j (2*g_aijj - g_ajji) + (effective Fock contributions)
 !!
 !!    Effective Fock contributions:
 !!
@@ -258,7 +273,8 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: F_pq
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff 
 !
       integer :: i, j, a
 !
@@ -270,27 +286,17 @@ contains
 !
       type(batching_index) :: batch_i, batch_j
 !
-!     Set F_pq = h_pq (t1-transformed) 
+!     Set Fock matrix to h + effective Fock contributions
 !
-      call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
-!
-      call wf%get_t1_oei('hamiltonian', F_pq, screening=.true.)
-!
-!     Add effective contributions to Fock matrix 
-!
-      if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_pq)
-!
-!$omp parallel do
+!$omp parallel do private(a, i)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
-            wf%fock_ai(a,i) = F_pq(a + wf%n_o, i) 
+            wf%fock_ai(a,i) = h(a + wf%n_o, i) + F_eff(a + wf%n_o, i) 
 !
          enddo
       enddo
 !$omp end parallel do
-!
-      call mem%dealloc(F_pq, wf%n_mo, wf%n_mo)
 !
 !     Add occupied-virtual contributions: F_ai = F_ai + sum_j (2*g_aijj - g_ajji)
 !
@@ -369,7 +375,7 @@ contains
    end subroutine construct_fock_ai_t1_ccs
 !
 !
-   module subroutine construct_fock_ia_t1_ccs(wf, first_i, last_i, first_a, last_a)
+   module subroutine construct_fock_ia_t1_ccs(wf, h, F_eff, first_i, last_i, first_a, last_a)
 !!
 !!    Construct Fock ia T1,
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -378,7 +384,7 @@ contains
 !!    basis using the MO integrals and the current single
 !!    amplitudes:
 !!
-!!       F_ia = sum_j (2*g_iajj - g_ijja) + (effective Fock contributions)
+!!       F_ia = h_ia + sum_j (2*g_iajj - g_ijja) + (effective Fock contributions)
 !!
 !!    Effective Fock contributions:
 !!
@@ -403,11 +409,12 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff 
+!
       integer, intent(in), optional :: first_i, last_i, first_a, last_a
 !
       type(range_) :: i_range, interval_a
-!
-      real(dp), dimension(:,:), allocatable :: F_pq
 !
       integer :: i, j, a
 !
@@ -432,27 +439,17 @@ contains
 !
       endif
 !
-!     Set F_pq = h_pq (t1-transformed) 
-!
-      call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
-!
-      call wf%get_t1_oei('hamiltonian', F_pq, screening=.true.)
-!
-!     Add effective contributions to Fock matrix 
-!
-      if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_pq)
+!     Set Fock matrix to h + effective Fock contributions
 !
 !$omp parallel do
       do a = interval_a%first, interval_a%get_last()
          do i = i_range%first, i_range%get_last()
 !
-            wf%fock_ia(i, a) = F_pq(i, a + wf%n_o)
+            wf%fock_ia(i, a) = h(i, a + wf%n_o) + F_eff(i, a + wf%n_o)
 !
          enddo
       enddo
 !$omp end parallel do
-!
-      call mem%dealloc(F_pq, wf%n_mo, wf%n_mo)
 !
 !     Add occupied-virtual contributions: F_ia = F_ia + sum_j (2*g_iajj - g_ijja)
 !
@@ -536,7 +533,7 @@ contains
    end subroutine construct_fock_ia_t1_ccs
 !
 !
-   module subroutine construct_fock_ab_t1_ccs(wf, first_a, last_a, first_b, last_b)
+   module subroutine construct_fock_ab_t1_ccs(wf, h, F_eff, first_a, last_a, first_b, last_b)
 !!
 !!    Construct Fock ab T1,
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -545,7 +542,7 @@ contains
 !!    basis using the MO integrals and the current single
 !!    amplitudes:
 !!
-!!       F_ab = sum_i (2*g_abii - g_aiib) + (effective Fock contributions)
+!!       F_ab = h_ab + sum_i (2*g_abii - g_aiib) + (effective Fock contributions)
 !!
 !!    Effective Fock contributions:
 !!
@@ -570,11 +567,12 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff 
+!
       integer, intent(in), optional :: first_a, last_a, first_b, last_b
 !
       type(range_) :: interval_a, interval_b
-!
-      real(dp), dimension(:,:), allocatable :: F_pq
 !
       integer :: i, a, b
 !
@@ -599,27 +597,17 @@ contains
 !
       endif
 !
-!     Set F_pq = h_pq (t1-transformed) 
-!
-      call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
-!
-      call wf%get_t1_oei('hamiltonian', F_pq, screening=.true.)
-!
-!     Add effective contributions to Fock matrix 
-!
-      if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_pq)
+!     Set Fock matrix to h + effective Fock contributions
 !
 !$omp parallel do
       do b = interval_b%first, interval_b%get_last()
          do a = interval_a%first, interval_a%get_last()
 !
-            wf%fock_ab(a, b) = F_pq(a + wf%n_o, b + wf%n_o)
+            wf%fock_ab(a, b) = h(a + wf%n_o, b + wf%n_o) + F_eff(a + wf%n_o, b + wf%n_o)
 !
          enddo
       enddo
 !$omp end parallel do
-!
-      call mem%dealloc(F_pq, wf%n_mo, wf%n_mo)
 !
 !     Add virtual-virtual contributions: F_ab = h_ab + sum_i (2*g_abii - g_aiib) 
 !
@@ -700,7 +688,7 @@ contains
    end subroutine construct_fock_ab_t1_ccs
 !
 !
-   module subroutine construct_fock_ij_t1_ccs(wf, first_i, last_i, first_j, last_j)
+   module subroutine construct_fock_ij_t1_ccs(wf, h, F_eff, first_i, last_i, first_j, last_j)
 !!
 !!    Construct Fock ij T1,
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -709,7 +697,7 @@ contains
 !!    basis using the MO integrals and the current single
 !!    amplitudes:
 !!
-!!       F_ij = sum_k (2*g_ijkk - g_ikkj) + (effective Fock contributions)
+!!       F_ij = h_ij + sum_k (2*g_ijkk - g_ikkj) + (effective Fock contributions)
 !!
 !!    Effective Fock contributions:
 !!
@@ -734,11 +722,12 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff 
+!
       integer, intent(in), optional :: first_i, last_i, first_j, last_j
 !
       type(range_) :: i_range, j_range
-!
-      real(dp), dimension(:,:), allocatable :: F_pq
 !
       integer :: i, j, k
 !
@@ -761,27 +750,17 @@ contains
 !
       endif
 !
-!     Set F_pq = h_pq (t1-transformed) 
-!
-      call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
-!
-      call wf%get_t1_oei('hamiltonian', F_pq, screening=.true.)
-!
-!     Add effective contributions to Fock matrix 
-!
-      if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_pq)
+!     Set Fock matrix to h + effective Fock contributions
 !
 !$omp parallel do
       do j = j_range%first, j_range%get_last()
          do i = i_range%first, i_range%get_last()
 !
-            wf%fock_ij(i,j) = F_pq(i, j)
+            wf%fock_ij(i,j) = h(i,j) + F_eff(i, j)
 !
          enddo
       enddo
 !$omp end parallel do
-!
-      call mem%dealloc(F_pq, wf%n_mo, wf%n_mo)
 !
 !     Add occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
