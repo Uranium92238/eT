@@ -499,24 +499,26 @@ subroutine print_program_banner()
 !
    call output%print_separator('m',72,'-', fs='(t3,a)')
 !
-   call output%printf('m', 'J. H. Andersen, '   // &
-                           'A. Balbi, '         // &
-                           'S. Coriani, '       // &
-                           'S. D. Folkestad, '  // &
-                           'T. Giovannini, '    // &
-                           'L. Goletto, '       // &
-                           'T. S. Haugland, '   // &
-                           'A. Hutcheson, '     // &
-                           'I-M. Høyvik, '      // &
-                           'E. F. Kjønstad, '   // &
-                           'H. Koch, '          // &
-                           'T. Moitra, '        // &
-                           'R. H. Myhre, '      // &
-                           'A. C. Paul, '       // &
-                           'S. Roet, '          // &
-                           'M. Scavino, '       // &
-                           'A. Skeidsvoll, '    // &
-                           'Å. H. Tveten',         &
+   call output%printf('m', 'J. H. Andersen, '         // &
+                           'A. Balbi, '               // &
+                           'S. Coriani, '             // &
+                           'S. D. Folkestad, '        // &
+                           'T. Giovannini, '          // &
+                           'L. Goletto, '             // &
+                           'T. S. Haugland, '         // &
+                           'A. Hutcheson, '           // &
+                           'I-M. Høyvik, '            // &
+                           'E. F. Kjønstad, '         // &
+                           'H. Koch, '                // &
+                           'R. Matveeva, '            // &
+                           'T. Moitra, '              // &
+                           'R. H. Myhre, '            // &
+                           'A. C. Paul, '             // &
+                           'S. Roet, '                // &
+                           'M. Scavino, '             // &
+                           'A. K. Schnack-Petersen, ' // &
+                           'A. S. Skeidsvoll, '       // &
+                           'Å. H. Tveten',               &
                            ffs='(t4,a)', fs='(t4,a)', ll=68)
 !
    call output%print_separator('m',72,'-', fs='(t3,a)')

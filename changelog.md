@@ -12,6 +12,10 @@
 ### Optimization
 - One-electron and effective contributions to the CC-Fock matrix are now calculated once instead of multiple times per Fock construction. eT-program/eT!925
 
+# eT v1.4.3
+### Bugfixes
+- Update list of authors. eT-program/eT!927
+
 # eT v1.4.2
 ### Bugfixes
 - Fixed bug that made it impossible to enable the forced batching expert option. eT-program/eT!916
