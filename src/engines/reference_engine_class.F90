@@ -250,142 +250,38 @@ contains
    subroutine generate_sad_density_reference_engine(engine, wf)
 !!
 !!    Generate SAD density
-!!    Written by Tor S. Haugland, Sep 2019
-!!
-!!    Generates SAD density for every unique (atom, basis) pair.
-!!
-!!       1: a molecular system with only one atom for every (atom, basis) is created.
-!!       2: an UHF wavefunction is created for that system.
-!!       3: the wavefunction is run through a SCF solver.
-!!       4: the density files are moved to where the wavefunction expects them to be.
-!!
-!!    Modified by Tor S. Haugland, Nov 2019
-!!
-!!    Removed deletion of files generated in SCF for SAD to fix a re-occuring bug.
-!!    Added "Found SAD". Only loop over unique atoms.
-!!
-      use sequential_file_class,  only: sequential_file
-      use atomic_center_class,    only: atomic_center
-      use uhf_class,              only: uhf
-      use timings_class,          only: timing
-      use scf_solver_factory_class, only: scf_solver_factory
+!!    Written by Sarai D. Folkestad, Oct 2021
+!
+      use sad_tool_class, only: sad_tool
+      use atomic_center_class, only: atomic_center
 !
       implicit none
 !
       class(reference_engine)          :: engine
       class(hf)                        :: wf
 !
-      type(uhf),        allocatable :: sad_wf
-      class(scf_solver), allocatable :: sad_solver
+      type(atomic_center), dimension(:), allocatable :: centers
 !
-      character(len=200)    :: ao_density_guess
-      real(dp)              :: gradient_threshold
-      integer               :: max_iterations
-      integer               :: I
+      type(sad_tool) :: sad
 !
-      character(len=200)    :: name_
-      integer               :: multiplicity
+      real(dp) :: gradient_threshold
 !
-      character(len=200)    :: alpha_fname
-      character(len=200)    :: beta_fname
-      type(sequential_file) :: alpha_density_file
-      type(sequential_file) :: beta_density_file
-!
-      integer, dimension(wf%n_atomic_centers) :: unique_atom_index
-!
-      type(timings), allocatable :: sad_generation_timer
-!
-      type(atomic_center) :: center
-!
-      type(scf_solver_factory) :: factory
-!
-
       call engine%tasks%print_('sad')
-!
-      sad_generation_timer = timings('SAD generation time', pl='normal')
-      call sad_generation_timer%turn_on()
-!
-      ao_density_guess   = 'core'
-      max_iterations     = 100
 !
       gradient_threshold = 1.0D-6
       call input%get_keyword('gradient threshold', 'solver scf', gradient_threshold)
-      gradient_threshold = min(1.0D-6, gradient_threshold)
 !
-      call wf%ao%get_SAD_center_indices(unique_atom_index)
+      sad = sad_tool(gradient_threshold)
 !
-!     For every unique atom, generate SAD density to file
+      allocate(centers(wf%ao%get_n_centers()))
+      call wf%ao%get_centers(centers, 1, wf%ao%get_n_centers())
 !
-      call timing%mute()
+      call sad%generate(wf%ao%get_n_centers(), centers)
 !
-      do I = 1, wf%n_atomic_centers
-!
-         if (all(unique_atom_index /= I)) cycle
-!
-         call wf%ao%get_center(I, center)
-!
-         name_ = "sad_" // trim(center%get_identifier_string())
-!
-         alpha_fname = trim(name_) // '_alpha'
-         beta_fname  = trim(name_) // '_beta'
-!
-!        Prepare molecule of the chosen atom
-!
-         call output%mute()
-!
-         multiplicity = center%get_ground_state_multiplicity()
-!
-         sad_wf = uhf(fractional_uniform_valence=.true., &
-                      multiplicity=multiplicity)
-!
-         call sad_wf%prepare([center],  embedding=.false., charge=center%charge)
-!
-         call sad_wf%set_gradient_threshold(gradient_threshold)
-         call sad_wf%prepare_for_scf(restart=.false., skip=.false., ao_density_guess=ao_density_guess)
-!
-         factory = scf_solver_factory(acceleration_type='none',              &
-                                      max_iterations=100)
-!
-         call factory%create(sad_wf, sad_solver, restart=.false., skip=.false.)
-!
-         call sad_solver%run(sad_wf)
-!
-         call sad_wf%orbital_file%delete_()
-         call sad_wf%cleanup()
-!
-         deallocate(sad_wf)
-!
-         call output%unmute()
-!
-         call output%printf('v', 'Generated atomic density for ' //  &
-                            adjustl(center%symbol) // ' using UHF/(a0)', &
-                            chars=[center%basis], fs='(t6,a)')
-!
-!        Move density files to where ao_tool can use them,
-!        but first delete SAD if it already exists.
-!
-         alpha_density_file = sequential_file(alpha_fname)
-         if (alpha_density_file%exists()) call alpha_density_file%delete_()
-!
-         beta_density_file  = sequential_file(beta_fname)
-         if (beta_density_file%exists())  call beta_density_file%delete_()
-!
-         alpha_density_file = sequential_file('ao_density_a')
-         call alpha_density_file%copy(alpha_fname)
-         call alpha_density_file%delete_()
-!
-         beta_density_file  = sequential_file('ao_density_b')
-         call beta_density_file%copy(beta_fname)
-         call beta_density_file%delete_()
-!
-      enddo
+      deallocate(centers)
 !
 !     Libint is overwritten by SAD. Re-initialize.
-!
       call wf%ao%export_centers_to_libint()
-!
-      call timing%unmute()
-      call sad_generation_timer%turn_off()
 !
    end subroutine generate_sad_density_reference_engine
 !

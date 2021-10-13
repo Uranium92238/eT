@@ -20,6 +20,8 @@
 set(eT_fortran_sources
    src/eT_program.F90
 #
+   src/sad/sad_tool_class.F90
+#
    src/engines/abstract_engine_class.F90
    src/engines/reference_engine_class.F90
    src/engines/hf_geoopt_engine_class.F90

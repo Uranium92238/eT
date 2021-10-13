@@ -7,6 +7,7 @@
 ### Structure
 - Moved the SCF preparations for HF outside of SCF solver. eT-program/eT!908
 - Merged the `abstract_convergence_tool` and the `convergence_tool` classes. eT-program/eT!909
+- SAD handled in the sad\_tool\_class. eT-program/eT!926
 
 ### Optimization
 - One-electron and effective contributions to the CC-Fock matrix are now calculated once instead of multiple times per Fock construction. eT-program/eT!925
