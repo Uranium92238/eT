@@ -510,13 +510,14 @@ subroutine print_program_banner()
                            'I-M. Høyvik, '            // &
                            'E. F. Kjønstad, '         // &
                            'H. Koch, '                // &
+                           'R. Matveeva, '            // &
                            'T. Moitra, '              // &
                            'R. H. Myhre, '            // &
                            'A. C. Paul, '             // &
                            'S. Roet, '                // &
                            'M. Scavino, '             // &
                            'A. K. Schnack-Petersen, ' // &
-                           'A. Skeidsvoll, '          // &
+                           'A. S. Skeidsvoll, '       // &
                            'Å. H. Tveten',               &
                            ffs='(t4,a)', fs='(t4,a)', ll=68)
 !
