@@ -373,6 +373,8 @@ contains
 !!
 !!    Get the n first values that add up to sum or more
 !!
+      implicit none 
+!
       integer, intent(in) :: dim_
 !
       real(dp), dimension(dim_), intent(in) :: values
