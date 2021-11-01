@@ -71,6 +71,7 @@ module davidson_cc_es_class
    type, extends(abstract_cc_es) :: davidson_cc_es
 !
       integer :: max_dim_red
+!
       type(eigen_davidson_tool), allocatable :: davidson
 !
    contains
@@ -82,6 +83,9 @@ module davidson_cc_es_class
 !
       procedure :: read_settings &
                 => read_settings_davidson_cc_es
+!
+      procedure :: read_davidson_settings &
+                => read_davidson_settings_davidson_cc_es
 !
    end type davidson_cc_es
 !
@@ -113,7 +117,6 @@ contains
       logical,          intent(in)     :: restart
 !
       real(dp) :: lindep_threshold
-      integer  :: max_dim_red
       logical  :: records_in_memory
 !
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state (' &
@@ -136,13 +139,13 @@ contains
 !     Set defaults
 !
       solver%n_singlet_states     = 0
+      solver%max_dim_red          = 0
       solver%max_iterations       = 100
       solver%restart              = restart
       solver%transformation       = trim(transformation)
       solver%es_type              = 'valence'
 !
       records_in_memory           = .false.
-      max_dim_red                 = max(100, 10*solver%n_singlet_states)
 !
 !     Initialize convergence checker with default threshols
 !
@@ -150,7 +153,7 @@ contains
                                                     residual_threshold = 1.0d-3,   &
                                                     energy_convergence = .false.)
 !
-      call solver%read_settings(max_dim_red, records_in_memory)
+      call solver%read_settings(records_in_memory)
 !
       call solver%print_es_settings()
 !
@@ -158,11 +161,11 @@ contains
 !
       lindep_threshold = min(1.0d-11, 0.1d0*solver%convergence_checker%residual_threshold)
       solver%davidson = eigen_davidson_tool('cc_es_davidson',        &
-                                             wf%n_es_amplitudes,     &
-                                             solver%n_singlet_states,&
-                                             lindep_threshold,       &
-                                             max_dim_red,            &
-                                             records_in_memory)
+                                            wf%n_es_amplitudes,      &
+                                            solver%n_singlet_states, &
+                                            lindep_threshold,        &
+                                            solver%max_dim_red,      &
+                                            records_in_memory)
 !
    end function new_davidson_cc_es
 !
@@ -421,7 +424,7 @@ contains
    end subroutine set_precondition_vector_davidson_cc_es
 !
 !
-   subroutine read_settings_davidson_cc_es(solver, max_dim_red, records_in_memory)
+   subroutine read_settings_davidson_cc_es(solver, records_in_memory)
 !!
 !!    Read settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -429,13 +432,30 @@ contains
       implicit none
 !
       class(davidson_cc_es) :: solver
-      integer, intent(inout) :: max_dim_red
       logical, intent(inout) :: records_in_memory
 !
       call solver%read_es_settings(records_in_memory)
-      call input%get_keyword('max reduced dimension', 'solver cc es', max_dim_red)
+      call solver%read_davidson_settings()
 !
    end subroutine read_settings_davidson_cc_es
+!
+!
+   subroutine read_davidson_settings_davidson_cc_es(solver)
+!!
+!!    Read Davidson settings
+!!    Written by Andreas S. Skeidsvoll, Oct 2021
+!!
+      implicit none
+!
+      class(davidson_cc_es) :: solver
+!
+      solver%max_dim_red = max(100, 10*solver%n_singlet_states)
+!
+      call input%get_keyword('max reduced dimension', &
+                             'solver cc es',          &
+                             solver%max_dim_red)
+!
+   end subroutine read_davidson_settings_davidson_cc_es
 !
 !
 end module davidson_cc_es_class
