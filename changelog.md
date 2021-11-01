@@ -6,6 +6,7 @@
 ### Features
 - Using orthogonal AO (OAO) basis for HF/UHF gradient in Roothan-Hall SCF solver. eT-program/eT!914
 - When the code is batching a tag will be printed now for verbose print level. eT-program/eT!919
+- Added CI pipeline that runs a simple program to parse the Fortran code and identify various code-issues. eT-program/eT!937
 
 ### Structure
 - Moved the SCF preparations for HF outside of SCF solver. eT-program/eT!908

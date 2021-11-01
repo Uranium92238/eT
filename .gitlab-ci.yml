@@ -2,6 +2,7 @@ image: registry.gitlab.com/et-program/et/alpine-for-et
 
 stages:
   - pystyle
+  - code-quality
   - build
   - run
   - prepare-release
@@ -14,6 +15,20 @@ pystyle:
   script:
     - pip install black
     - black --check --diff .
+  only:
+    - master
+    - development
+    - merge_requests
+    - /^release\/\d+\.\d+$/
+
+code-quality:
+  stage: code-quality
+  image: python:latest
+  script:
+    - git clone https://github.com/eirik-kjonstad/fortran-code-quality.git
+    - cd fortran-code-quality
+    - git checkout tags/v1.0.0 -b v1.0.0
+    - python3 FortranQuality.py --path ../src
   only:
     - master
     - development
