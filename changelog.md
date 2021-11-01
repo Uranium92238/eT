@@ -12,6 +12,9 @@
 ### Optimization
 - One-electron and effective contributions to the CC-Fock matrix are now calculated once instead of multiple times per Fock construction. eT-program/eT!925
 
+### Bugfixes
+- `max_dim_red` of excited state Davidson solvers is now set to `max(100,10*n_singlet_states)` after the number of singlet states have been read from input. eT-program/eT!932
+
 # eT v1.4.3
 ### Bugfixes
 - Update list of authors. eT-program/eT!927

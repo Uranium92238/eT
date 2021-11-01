@@ -168,11 +168,11 @@ contains
 !     Set defaults
 !
       solver%n_singlet_states                   = 0
+      solver%max_dim_red                        = 0
       solver%max_iterations                     = 100
       solver%max_micro_iterations               = 100
       solver%relative_micro_residual_threshold  = 1.0d-1
       solver%restart                            = restart
-      solver%max_dim_red                        = max(100, 10*solver%n_singlet_states)
       solver%transformation                     = trim(transformation)
       solver%es_type                            = 'valence'
       solver%prepare_wf                         = .true.
@@ -828,24 +828,26 @@ contains
 !
    subroutine read_davidson_settings_nonlinear_davidson_cc_es(solver)
 !!
-!!    Read settings
+!!    Read Davidson settings
 !!    Written by Eirik F. Kjønstad, Jan 2020
 !!
       implicit none
 !
       class(nonlinear_davidson_cc_es) :: solver
 !
-      call input%get_keyword('max reduced dimension',  &
-                                        'solver cc es',           &
-                                        solver%max_dim_red)
+      solver%max_dim_red = max(100, 10*solver%n_singlet_states)
 !
-      call input%get_keyword('max micro iterations',  &
-                                        'solver cc es',           &
-                                        solver%max_micro_iterations)
+      call input%get_keyword('max reduced dimension', &
+                             'solver cc es',          &
+                             solver%max_dim_red)
 !
-      call input%get_keyword('rel micro threshold',    &
-                                        'solver cc es',           &
-                                        solver%relative_micro_residual_threshold)
+      call input%get_keyword('max micro iterations', &
+                             'solver cc es',         &
+                             solver%max_micro_iterations)
+!
+      call input%get_keyword('rel micro threshold', &
+                             'solver cc es',        &
+                             solver%relative_micro_residual_threshold)
 !
    end subroutine read_davidson_settings_nonlinear_davidson_cc_es
 !
