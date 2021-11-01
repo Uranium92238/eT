@@ -1,5 +1,8 @@
 # eT v1.5.0
 
+### Bugfixes
+- Two workarounds added to circumvent bugs in the Intel compiler (ifort). File destructors no longer check whether the file is open. Two OpenMP loops are incorrectly optimized with -O3 and have been modified to circumvent incorrect compiler optimization. eT-program/eT!936
+
 ### Features
 - Using orthogonal AO (OAO) basis for HF/UHF gradient in Roothan-Hall SCF solver. eT-program/eT!914
 - When the code is batching a tag will be printed now for verbose print level. eT-program/eT!919

@@ -135,9 +135,6 @@ module sequential_file_class
                                     read_l_1_sequential_file,   &
                                     read_char_sequential_file
 !
-      final :: destructor
-!
-!
    end type sequential_file
 !
    interface sequential_file
@@ -1430,23 +1427,6 @@ contains
       endif
 !
    end subroutine read_char_sequential_file
-!
-!
-   subroutine destructor(the_file)
-!!
-!!    Destructor 
-!!    Written by Rolf H. Myhre, Sep 2019 
-!!
-      implicit none 
-!
-      type(sequential_file) :: the_file
-!
-      if (the_file%is_open) then
-         call output%error_msg('Destructor for file (a0) called &
-                               &while the file is still open', chars=[the_file%name_])
-      endif
-!
-   end subroutine destructor
 !
 !
 end module sequential_file_class
