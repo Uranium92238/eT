@@ -232,7 +232,7 @@ contains
                            reals=[new_omega_re(n),                                &
                                   new_omega_im(n),                                &
                                   residual_norm(n),                               &
-                                  dabs(this%davidson%omega_re(n) - omega(n))],    &
+                                  abs(this%davidson%omega_re(n) - omega(n))],    &
                                   ll=120)
 !
       enddo

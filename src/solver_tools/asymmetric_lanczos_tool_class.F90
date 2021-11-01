@@ -430,13 +430,13 @@ contains
       call lanczos%construct_s(i, pA, s)
 !
       s_dot_r = ddot(lanczos%n_parameters, s, 1, r, 1)
-      lanczos%beta_(i) = dsqrt(dabs(s_dot_r))
+      lanczos%beta_(i) = sqrt(abs(s_dot_r))
       lanczos%gamma_(i)= sign(lanczos%beta_(i), s_dot_r)
 !
 !     If the overlap of r and s is below the threshold,
 !     the chain is terminated at the current iteration
 !
-      if (dabs(s_dot_r) .lt. s_dot_r_threshold) then
+      if (abs(s_dot_r) .lt. s_dot_r_threshold) then
 !
           lanczos%chain_length = i
 !
@@ -626,16 +626,16 @@ contains
         if(lanczos%normalization=='symmetric')then
 !
           overlap = ddot(lanczos%n_parameters, p, 1, q, 1)
-          factor = one/dsqrt(dabs(overlap))
+          factor = one/sqrt(abs(overlap))
 !
           call dscal(lanczos%n_parameters, factor, q, 1)
-          call dscal(lanczos%n_parameters, dsign(factor,overlap), p, 1)
+          call dscal(lanczos%n_parameters, sign(factor,overlap), p, 1)
 !
         else if (lanczos%normalization=='asymmetric')then
 !
           overlap = ddot(lanczos%n_parameters, p, 1, q, 1)
-          factor= one/dabs(overlap)
-          call dscal(lanczos%n_parameters, dsign(factor,overlap), p, 1) 
+          factor= one/abs(overlap)
+          call dscal(lanczos%n_parameters, sign(factor,overlap), p, 1) 
 !
         else 
 !

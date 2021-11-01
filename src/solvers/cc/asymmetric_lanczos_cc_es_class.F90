@@ -270,12 +270,12 @@ contains
 !
          if(solver%normalization=="symmetric")then
 !
-            norm_p1q1 = dsqrt(dabs(overlap))
+            norm_p1q1 = sqrt(abs(overlap))
 !
             factor = one/norm_p1q1
 !
             call dscal(wf%n_es_amplitudes, factor, xiX, 1)
-            call dscal(wf%n_es_amplitudes, dsign(factor,overlap), etaX, 1)
+            call dscal(wf%n_es_amplitudes, sign(factor,overlap), etaX, 1)
 !         
          else if (solver%normalization=="asymmetric") then
 !

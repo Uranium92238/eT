@@ -177,8 +177,6 @@ module stream_file_class
                            write_0_log_stream_file,        &
                            write_1_log_stream_file
 !
-      final :: destructor
-!
    end type stream_file
 !
    interface stream_file
@@ -211,24 +209,6 @@ contains
       endif
 !
    end function new_stream_file
-!
-!
-   subroutine destructor(the_file)
-!!
-!!    Destructor
-!!    Written by Rolf H. Myhre, Feb. 2020
-!!
-      implicit none
-!
-      type(stream_file) :: the_file
-!
-      if (the_file%get_open()) then
-         call output%error_msg('Destructor for file (a0) called &
-                               &while the file is still open',  &
-                               chars=[the_file%get_name()])
-      endif
-!
-   end subroutine destructor
 !
 !!
 !! Wrapper routines for read_x_real_dp_abstract_stream

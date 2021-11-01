@@ -8,8 +8,6 @@ with integrals for one-body operators and electron repulsion enabled.
 Libint has the dependencies [Eigen 3](http://eigen.tuxfamily.org/index.php?title=Main_Page) and [Boost](https://www.boost.org).
 To compile Libint, follow the instructions below or consult the [Libint Wiki](https://github.com/evaleev/libint/wiki).
 
-*ifort 2021.1, 2021.2 and 2021.3 are currently not supported,
-as these compilers [behave unexpectedly](https://community.intel.com/t5/Intel-Fortran-Compiler/Finalization-of-deallocated-objects-during-allocation-by/td-p/1245875).
 
 ## Installing Libint
 Download the [Libint library for eT](https://www.etprogram.org/libint/libint-2.7.0-beta.1.tgz).

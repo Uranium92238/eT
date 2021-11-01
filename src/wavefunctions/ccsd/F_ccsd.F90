@@ -414,7 +414,10 @@ contains
 !
 !     rho_aibj =+ X_ia * tbar_bj
 !
-!$omp parallel do private(j,b,i,a)
+!     Collapse(2) is a workaround for Intel compiler bug 
+!     that somehow messes up the loop with -O3 when there
+!     is not collapse statement
+!$omp parallel do private(j,b,i,a) collapse(2)
       do j = 1, wf%n_o
          do b = 1, wf%n_v
             do i = 1, wf%n_o
@@ -539,7 +542,10 @@ contains
 !
 !     rho_aibj =+ X_ib * tbar_aj
 !
-!$omp parallel do private(j,b,i,a)
+!     Collapse(2) is a workaround for Intel (2021) compiler bug 
+!     that somehow messes up the loop with -O3 when there
+!     is not collapse statement
+!$omp parallel do private(j,b,i,a) collapse(2)
       do j = 1, wf%n_o
          do b = 1, wf%n_v
             do i = 1, wf%n_o
