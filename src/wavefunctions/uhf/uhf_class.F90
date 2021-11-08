@@ -274,6 +274,7 @@ contains
       character(len=*) :: guess
 !
       real(dp) :: alpha_prefactor, beta_prefactor
+      real(dp), dimension(:,:), allocatable :: h
 !
       if (trim(guess) == 'sad' .or. trim(guess) == 'SAD') then
 !
@@ -287,7 +288,10 @@ contains
 !
       elseif (trim(guess) == 'core' .or. trim(guess) == 'CORE') then
 !
-         call wf%set_ao_density_to_core_guess(wf%ao%h)
+         call mem%alloc(h, wf%ao%n, wf%ao%n)
+         call wf%get_ao_h(h)
+         call wf%set_ao_density_to_core_guess(h)
+         call mem%dealloc(h, wf%ao%n, wf%ao%n)
 !
       else
 !

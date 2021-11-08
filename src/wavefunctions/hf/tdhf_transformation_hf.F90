@@ -114,7 +114,7 @@ contains
 !
             deg_ = deg_*deg_12*deg_34
 !
-            call wf%ao%get_eri(g_ABCD, s1, s2, s3, s4)
+            call wf%get_ao_g(g_ABCD, s1, s2, s3, s4)
 !
             g_ABCD_p(1 : wf%ao%shells(s1)%length, 1 : wf%ao%shells(s2)%length, &
                   1 : wf%ao%shells(s3)%length, 1 : wf%ao%shells(s4)%length) &

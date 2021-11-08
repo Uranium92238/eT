@@ -42,6 +42,7 @@ contains
 !
       class(hf), intent(inout) :: wf
       logical, intent(in) :: cumulative
+      real(dp), dimension(:,:), allocatable :: h
 !
       if (.not. cumulative) then
 !
@@ -55,11 +56,13 @@ contains
 !
 !     Set the two-electron part
 !
-      call dcopy(wf%ao%n**2,  wf%ao_G, 1, wf%ao_fock, 1)
+      call dcopy(wf%ao%n**2, wf%ao_G, 1, wf%ao_fock, 1)
 !
 !     Add the one-electron part
 !
-      call daxpy(wf%ao%n**2, one, wf%ao%h, 1, wf%ao_fock, 1)
+      call mem%alloc(h, wf%ao%n, wf%ao%n)
+      call wf%get_ao_h(h)
+      call daxpy(wf%ao%n**2, one, h, 1, wf%ao_fock, 1)
 !
 !     Embedding contribution
 !
@@ -77,7 +80,9 @@ contains
 !
 !     Energy
 !
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao%h)
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h)
+!
+      call mem%dealloc(h, wf%ao%n, wf%ao%n)
 !
    end subroutine update_fock_and_energy_hf
 !
@@ -366,7 +371,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%ao%get_eri(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8), skip)
+               call wf%get_ao_g(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8), skip)
 !
                if (skip == 1) cycle
 !
@@ -584,7 +589,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%ao%get_eri(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8), skip)
+               call wf%get_ao_g(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8), skip)
 !
                if (skip == 1) cycle
 !
@@ -750,7 +755,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%ao%get_eri(g, s1, s2, s3, s4, precision_thr/temp7, skip)
+               call wf%get_ao_g(g, s1, s2, s3, s4, precision_thr/temp7, skip)
 !
                if (skip == 1) cycle
 !
@@ -901,7 +906,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%ao%get_eri(g, s1, s2, s3, s4, precision_thr/temp8, skip)
+               call wf%get_ao_g(g, s1, s2, s3, s4, precision_thr/temp8, skip)
 !
                if (skip == 1) cycle
 !

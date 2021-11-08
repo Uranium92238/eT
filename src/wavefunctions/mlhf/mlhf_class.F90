@@ -261,6 +261,7 @@ contains
       class(mlhf) :: wf
 !
       real(dp) :: n_electrons
+      real(dp), dimension(:,:), allocatable :: h
 !
       type(timings) :: timer
 !
@@ -278,11 +279,13 @@ contains
 !
 !     Add the one-electron part
 ! 
-      call daxpy(wf%ao%n**2, one, wf%ao%h, 1, wf%ao_fock, 1)
+      call mem%alloc(h, wf%ao%n, wf%ao%n)
+      call wf%get_ao_h(h)
+      call daxpy(wf%ao%n**2, one, h, 1, wf%ao_fock, 1)
 !
       call timer%turn_off()
 !
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao%h)
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h)
 !
       n_electrons = wf%get_n_electrons_in_density()
 !
@@ -322,7 +325,7 @@ contains
 !
 !     Inactive energy contribution
 !
-      wf%inactive_energy = wf%calculate_hf_energy_from_G(wf%G_De_ao, wf%ao%h)
+      wf%inactive_energy = wf%calculate_hf_energy_from_G(wf%G_De_ao, h)
 !
 !     Construct active ao density
 !
@@ -334,6 +337,8 @@ contains
       call wf%mlhf_file%write_(wf%inactive_energy)
       call wf%mlhf_file%write_(wf%G_De_ao, wf%ao%n**2)
       call wf%mlhf_file%close_
+!
+      call mem%dealloc(h, wf%ao%n, wf%ao%n)
 !
    end subroutine prepare_for_roothan_hall_mlhf
 !
@@ -367,11 +372,15 @@ contains
       logical, intent(in) :: cumulative 
 !
       real(dp), dimension(:,:), allocatable :: G
+      real(dp), dimension(:,:), allocatable :: h
 !
       type(timings) :: timer
 !
       timer = timings('AO Fock construction', pl='normal')
       call timer%turn_on()
+!
+      call mem%alloc(h, wf%ao%n, wf%ao%n)
+      call wf%get_ao_h(h)
 !
       if (cumulative) then
 !
@@ -407,13 +416,15 @@ contains
 !
 !        Add the one-electron part
 !
-         call daxpy(wf%ao%n**2, one, wf%ao%h, 1, wf%ao_fock, 1)
+         call daxpy(wf%ao%n**2, one, h, 1, wf%ao_fock, 1)
 !
       endif
 !
       call timer%turn_off()
 !
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao%h)
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h)
+!
+      call mem%dealloc(h, wf%ao%n, wf%ao%n)
 !
 !     Transformation of the AO fock in the MO basis
 !
