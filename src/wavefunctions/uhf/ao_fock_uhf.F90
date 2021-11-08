@@ -46,6 +46,7 @@ contains
       class(uhf), intent(inout) :: wf
 !
       real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in) :: prev_ao_density
+      real(dp), dimension(:,:), allocatable :: h
 !
       logical :: cumulative
 !
@@ -62,7 +63,10 @@ contains
 !
       cumulative = .true.
 !
-      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, wf%ao_density_b, wf%ao%h, cumulative)
+      call mem%alloc(h, wf%ao%n, wf%ao%n)
+      call wf%get_ao_h(h)
+      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, wf%ao_density_b, h, cumulative)
+      call mem%dealloc(h, wf%ao%n, wf%ao%n)
 !
 !     Restore density
 !
@@ -90,9 +94,13 @@ contains
 !
       class(uhf), intent(inout) :: wf
 !      
+      real(dp), dimension(:,:), allocatable :: h
       real(dp), dimension(:,:), allocatable :: h_wx_eff
 !
 !     QM/MM and PCM specific work
+!
+      call mem%alloc(h, wf%ao%n, wf%ao%n)
+      call wf%get_ao_h(h)
 !
       if (wf%embedded) then
 !
@@ -100,7 +108,7 @@ contains
 !
          call mem%alloc(h_wx_eff, wf%ao%n, wf%ao%n)
 !
-         call dcopy(wf%ao%n**2, wf%ao%h, 1, h_wx_eff, 1)
+         call dcopy(wf%ao%n**2, h, 1, h_wx_eff, 1)
          call daxpy(wf%ao%n**2, one, wf%ao%v, 1, h_wx_eff, 1)
 !
          call wf%construct_ao_spin_fock(wf%ao_density,   &
@@ -115,9 +123,11 @@ contains
          call wf%construct_ao_spin_fock(wf%ao_density,   &
                                         wf%ao_density_a, &
                                         wf%ao_density_b, &
-                                        wf%ao%h, cumulative=.false.)
+                                        h, cumulative=.false.)
 !
       endif    
+!
+      call mem%dealloc(h, wf%ao%n, wf%ao%n)
 !
    end subroutine update_fock_and_energy_non_cumulative_uhf
 !
@@ -134,6 +144,7 @@ contains
 !
       class(uhf), intent(inout) :: wf
       logical, intent(in) :: cumulative
+      real(dp), dimension(:,:), allocatable :: h
 !
       if (.not. cumulative) then
 !
@@ -153,7 +164,10 @@ contains
 !
       endif
 !
-      call wf%calculate_uhf_energy(wf%ao%h)
+      call mem%alloc(h, wf%ao%n, wf%ao%n)
+      call wf%get_ao_h(h)
+      call wf%calculate_uhf_energy(h)
+      call mem%dealloc(h, wf%ao%n, wf%ao%n)
 !      
    end subroutine update_fock_and_energy_uhf
 !

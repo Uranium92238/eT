@@ -186,6 +186,8 @@ module hf_class
 !     Integral related routines
 !
       procedure :: set_n_mo                                    => set_n_mo_hf
+      procedure :: get_ao_h                                    => get_ao_h_hf
+      procedure :: get_ao_g                                    => get_ao_g_hf
 !
       procedure :: set_screening_and_precision_thresholds      => set_screening_and_precision_thresholds_hf
       procedure :: set_gradient_threshold                      => set_gradient_threshold_hf
