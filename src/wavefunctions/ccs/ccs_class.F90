@@ -1388,7 +1388,7 @@ contains
 !!    are used for all three loops using the maximal memory requirement.
 !!
 !
-      use reordering, only : add_to_packed, sort_12_to_21
+      use reordering, only : sort_12_to_21
       use direct_stream_file_class, only: direct_stream_file
       use array_utilities, only : scale_diagonal
 !
