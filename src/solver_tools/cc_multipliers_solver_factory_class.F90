@@ -178,6 +178,7 @@ contains
 
       call input%get_keyword('threshold', 'solver cc multipliers', this%residual_threshold)
 !
+      storage = 'disk'
       call input%get_keyword('storage', 'solver cc multipliers', storage)
       if (trim(storage) == 'disk') this%records_in_memory = .false.
 !
