@@ -3,6 +3,7 @@
 ### Bugfixes
 - Two workarounds added to circumvent bugs in the Intel compiler (ifort). File destructors no longer check whether the file is open. Two OpenMP loops are incorrectly optimized with -O3 and have been modified to circumvent incorrect compiler optimization. eT-program/eT!936
 - Disk storage default for davidson solver to obtain multipliers. eT-program/eT!942
+- `max_dim_red` of excited state Davidson solvers is now set to `max(100,10*n_singlet_states)` after the number of singlet states have been read from input. eT-program/eT!932
 
 ### Features
 - Using orthogonal AO (OAO) basis for HF/UHF gradient in Roothan-Hall SCF solver. eT-program/eT!914
@@ -17,9 +18,7 @@
 
 ### Optimization
 - One-electron and effective contributions to the CC-Fock matrix are now calculated once instead of multiple times per Fock construction. eT-program/eT!925
-
-### Bugfixes
-- `max_dim_red` of excited state Davidson solvers is now set to `max(100,10*n_singlet_states)` after the number of singlet states have been read from input. eT-program/eT!932
+- Removed an unnecessary o3v3 term in CCSD Jacobian transpose C2. eT-program/eT!946
 
 # eT v1.4.3
 ### Bugfixes
