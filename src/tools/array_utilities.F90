@@ -3223,4 +3223,29 @@ contains
    end subroutine add_to_subblock
 !
 !
+   function get_euclidean_distance(point1, point2, N) result(distance)
+!!
+!!    Get euclidean distance
+!!    Written by Alexander C. Paul, Nov 2021
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+      real(dp), dimension(n), intent(in) :: point1, point2
+!
+      real(dp) :: distance
+!
+      integer  :: i
+!
+      distance = zero
+!
+      do i = 1, n
+         distance = distance + (point1(i) - point2(i))**2
+      end do
+!
+      distance = sqrt(distance)
+!
+   end function
+!
+!
 end module array_utilities
