@@ -250,6 +250,8 @@ module ao_tool_class
       procedure, private :: initialize_centers_from_input_file
       procedure, private :: initialize_center_shells
 !
+      procedure, private :: check_for_close_atoms
+!
       procedure, private :: set_atomic_center_positions
 !
       procedure, private :: initialize_total_charge
@@ -361,6 +363,8 @@ contains
 !
       print_z_matrix = input%is_keyword_present('z-matrix', 'print')
       if (print_z_matrix) call ao%print_z_matrix()
+!
+      call ao%check_for_close_atoms()
 !
       call ao%calculate_n_aos()
       call ao%calculate_n_shells()
@@ -3341,6 +3345,37 @@ contains
       enddo
 !
    end subroutine get_centers_ao_tool
+!
+!
+   subroutine check_for_close_atoms(ao)
+!!
+!!    Check for close atoms
+!!    Written by Alexander C. Paul, Nov 2021
+!!
+      use array_utilities, only: get_euclidean_distance
+!
+      implicit none
+!
+      class(ao_tool), intent(in) :: ao
+!
+      integer  :: c1, c2
+      real(dp) :: distance
+!
+      do c1 = 2, ao%n_centers
+         do c2 = 1, c1-1
+!
+            distance = get_euclidean_distance(ao%centers(c1)%coordinates, &
+                                              ao%centers(c2)%coordinates, 3)
+!
+            if (distance < 0.1) then
+               call output%warning_msg('Atoms (i0) and (i0) are closer than 0.1 Angstrom.', &
+                                       ints=[c2, c1])
+            end if
+!
+         end do
+      end do
+!
+   end subroutine check_for_close_atoms
 !
 !
 end module ao_tool_class
