@@ -1495,10 +1495,11 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: sigma_aijb ! sigma_aibj contribution
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_ckjb
       real(dp), dimension(:,:,:,:), allocatable :: g_ckbj ! g_ckjb & g_cbjk
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_cbjk_restricted ! g_cbjk, batch over b
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_vo, L_J_ov, W_vo_J
 !
       integer :: k, j, b, c
 !
@@ -1565,39 +1566,59 @@ contains
 !
 !     :: Term 3. sum_ck b_aick L_ckjb ::
 !
-!     Form g_ckjb
+!     2 sum_ck b_aick g_ckjb
 !
-      call mem%alloc(g_ckjb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call mem%alloc(L_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
 !
-      call wf%eri%get_eri_t1('voov', g_ckjb)
+      call wf%eri%get_cholesky_t1(L_J_vo, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
 !
-!     Reorder to g_ckbj = g_ckjb
+      call mem%alloc(W_vo_J, wf%n_v, wf%n_o, wf%eri%n_J)
 !
-      call mem%alloc(g_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call dgemm('N', 'T',          &
+                  wf%n_v * wf%n_o,  &
+                  wf%eri%n_J,       &
+                  wf%n_v * wf%n_o,  &
+                  one,              &
+                  b_aibj,           & ! b_ai,ck
+                  wf%n_v * wf%n_o,  &
+                  L_J_vo,           & ! L_J,ck
+                  wf%eri%n_J,       &
+                  zero,             &
+                  W_vo_J,           &
+                  wf%n_v * wf%n_o)
 !
-      call sort_1234_to_1243(g_ckjb, g_ckbj, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(g_ckjb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!     Add 2 * sum_ck b_aick g_ckjb = 2 * W_ai_J L_jb^J
 !
-!     Add 2 * sum_ck b_aick g_ckjb = 2 * sum_ck b_aick g_ckbj
+      call mem%alloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
 !
-      call dgemm('N','N',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  two,               &
-                  b_aibj,            & ! "b_ai_ck"
-                  (wf%n_o)*(wf%n_v), &
-                  g_ckbj,            & ! g_ck_bj
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  sigma_aibj,        &
-                  (wf%n_o)*(wf%n_v))
+      call wf%eri%get_cholesky_t1(L_J_ov, 1, wf%n_o, wf%n_o + 1, wf%n_mo)
+!
+      call sort_123_to_132(L_J_ov, L_J_vo, wf%eri%n_J, wf%n_o, wf%n_v)
+!
+      call mem%dealloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v * wf%n_o,   &
+                 wf%n_v * wf%n_o,   &
+                 wf%eri%n_J,        &
+                 two,               &
+                 W_vo_J,            &
+                 wf%n_v * wf%n_o,   &
+                 L_J_vo,            &
+                 wf%eri%n_J,        &
+                 one,               &
+                 sigma_aibj,        &
+                 wf%n_v * wf%n_o)
+!
+      call mem%dealloc(L_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+      call mem%dealloc(W_vo_J, wf%n_o, wf%n_v, wf%eri%n_J)
 !
 !     - sum_ck b_aick g_cbjk
 !
 !     Prepare to batch over b to make g_cb_jk = g_cbjk successively
 !
+      call mem%alloc(g_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(g_ckbj, (wf%n_o*wf%n_v)**2) ! g_cbjk reordered
 !
       rec0 = wf%n_o**2*wf%eri%n_J
@@ -1626,9 +1647,9 @@ contains
 !        Place in reordered full space vector and deallocate restricted vector
 !
 !$omp parallel do schedule(static) private(k,j,b,c)
-         do k = 1, wf%n_o
-            do j = 1, wf%n_o
-               do b = batch_b%first, batch_b%get_last()
+         do j = 1, wf%n_o
+            do b = batch_b%first, batch_b%get_last()
+               do k = 1, wf%n_o
                   do c = 1, wf%n_v
 !
                      g_ckbj(c,k,b,j) = g_cbjk_restricted(c,b-batch_b%first+1,j,k)

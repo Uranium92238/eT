@@ -19,6 +19,7 @@
 
 ### Optimization
 - One-electron and effective contributions to the CC-Fock matrix are now calculated once instead of multiple times per Fock construction. eT-program/eT!925
+- Removed an o3v3 term in CCSD Jacobian transpose B2. eT-program/eT!945
 - Removed an unnecessary o3v3 term in CCSD Jacobian transpose C2. eT-program/eT!946
 
 # eT v1.4.3
