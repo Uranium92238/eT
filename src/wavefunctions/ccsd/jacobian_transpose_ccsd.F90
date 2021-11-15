@@ -1686,7 +1686,6 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: sigma_aibj
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_ibck
       real(dp), dimension(:,:,:,:), allocatable :: g_cbik
       real(dp), dimension(:,:,:,:), allocatable :: g_ckbi ! g_cbik
 !
@@ -1694,6 +1693,8 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: sigma_ajbi ! sigma_aibj contribution
 !
       real(dp), dimension(:,:,:,:), allocatable :: b_ajck ! b_akcj
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_vo, L_J_ov, W_vo_J
 !
       integer :: k, i, b, c
 !
@@ -1711,30 +1712,46 @@ contains
 !
 !     :: Term 1. - sum_ck b_ajck g_ibck ::
 !
-!     Form g_ibck
+      call mem%alloc(L_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+      call wf%eri%get_cholesky_t1(L_J_vo, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
 !
-      call mem%alloc(g_ibck, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call mem%alloc(W_vo_J, wf%n_v, wf%n_o, wf%eri%n_J)
 !
-      call wf%eri%get_eri_t1('ovvo', g_ibck)
+      call dgemm('N', 'T',          &
+                  wf%n_o * wf%n_v,  &
+                  wf%eri%n_J,       &
+                  wf%n_o * wf%n_v,  &
+                  one,              &
+                  b_aibj,           & ! b_aj,ck
+                  wf%n_o * wf%n_v,  &
+                  L_J_vo,           & ! L_J,ck
+                  wf%eri%n_J,       &
+                  zero,             &
+                  W_vo_J,           & ! W_aj,J
+                  wf%n_o * wf%n_v)
 !
-!     Calculate and add - sum_ck b_ajck g_ibck = - sum_ck b_aj_ck g_ib_ck^T(c,k,i,b)
+      call mem%dealloc(L_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+      call mem%alloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
+      call wf%eri%get_cholesky_t1(L_J_ov, 1, wf%n_o, wf%n_o + 1, wf%n_mo)
 !
       call mem%alloc(sigma_ajib, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  -one,              &
-                  b_aibj,            & ! b_aj_ck
-                  (wf%n_o)*(wf%n_v), &
-                  g_ibck,            & ! g_ib_ck
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  sigma_ajib,        &
-                  (wf%n_o)*(wf%n_v))
+      call dgemm('N', 'N',          &
+                  wf%n_o * wf%n_v,  &
+                  wf%n_o * wf%n_v,  &
+                  wf%eri%n_J,       &
+                  -one,             &
+                  W_vo_J,           & ! W_aj,J
+                  wf%n_o * wf%n_v,  &
+                  L_J_ov,           & ! L_J,ib
+                  wf%eri%n_J,       &
+                  zero,             &
+                  sigma_ajib,       &
+                  wf%n_o * wf%n_v)
 !
-      call mem%dealloc(g_ibck, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call mem%dealloc(W_vo_J, wf%n_v, wf%n_o, wf%eri%n_J)
+      call mem%dealloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
 !
       call add_1423_to_1234(one, sigma_ajib, sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
