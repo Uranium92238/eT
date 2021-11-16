@@ -1241,209 +1241,23 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o)                 :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: b_dicl ! b_cidl
+      real(dp), dimension(:,:,:,:), allocatable :: b_dicl, t_kecl
 !
-      real(dp), dimension(:,:,:,:), allocatable :: X_diek ! An intermediate, term 2
-      real(dp), dimension(:,:,:,:), allocatable :: X_kdei ! Reordered intermediate, term 2
+      real(dp), dimension(:,:,:,:), allocatable :: X_dike, X_kide, X_kdli
 !
-      real(dp), dimension(:,:,:,:), allocatable :: X_kedi ! Reordered intermediate, term 3
+      real(dp), dimension(:,:,:), allocatable :: L_J_ov, L_J_vv
+      real(dp), dimension(:,:,:), allocatable :: Y_J_cl, Y_J_di, Y_J_oo
+      real(dp), dimension(:,:),   allocatable :: s_ia
 !
-      real(dp), dimension(:,:,:,:), allocatable :: X_kdli ! An intermediate, term 1
-!
-      real(dp), dimension(:,:,:,:), allocatable :: t_clek ! t_kl^ce
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_kade
-      real(dp), dimension(:,:,:,:), allocatable :: g_akde
-      real(dp), dimension(:,:,:,:), allocatable :: g_keda
-!
-!     Batching variables
-!
-      integer :: current_a_batch = 0
-      integer :: current_e_batch = 0
-!
-      type(batching_index) :: batch_a
-      type(batching_index) :: batch_e
-!
-      integer :: rec1, rec0
+      type(batching_index) :: batch_v
+      integer :: batch, req0, req1
 !
       type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCSD G1', pl='verbose')
       call timer%turn_on()
 !
-!     :: Term 2. - sum_ckdle b_cidl t_kl^ce g_kade ::
-!
-!     X_diek = sum_cl b_cidl t_kl^ce = sum_cl b_di_cl t_cl_ek
-!
-!     Reorder to b_dicl = b_cidl
-!
-      call mem%alloc(b_dicl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call sort_1234_to_3214(b_aibj, b_dicl, wf%n_v, wf%n_o, wf%n_v, wf%n_o) ! b_aibj = b_cidl
-!
-!     Order amplitudes as t_clek = t_kl^ce
-!
-      call mem%alloc(t_clek, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup_and_sort_1234_to_1432(wf%t2, t_clek, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Form the intermediate X_diek = sum_cl b_di_cl t_cl_ek
-!
-      call mem%alloc(X_diek, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call dgemm('N','N',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  b_dicl,            & ! b_di_cl
-                  (wf%n_o)*(wf%n_v), &
-                  t_clek,            & ! t_cl_ek
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  X_diek,            &
-                  (wf%n_o)*(wf%n_v))
-!
-      call mem%dealloc(b_dicl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     - sum_ckdle b_cidl t_kl^ce g_kade = sum_kde g_kade X_diek
-!
-!     Reorder X_diek to X_kdei
-!
-      call mem%alloc(X_kdei, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-      call sort_1234_to_4132(X_diek, X_kdei, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(X_diek, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Prepare batching over index e
-!
-      rec0 = wf%n_v*wf%n_o*wf%eri%n_J
-      rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%eri%n_J
-!
-!     Initialize batching variable
-!
-      batch_e = batching_index(wf%n_v)
-      call mem%batch_setup(batch_e, rec0, rec1, 'jacobian_transpose_ccsd_g1 1')
-!
-!     Loop over the e-batches
-!
-      do current_e_batch = 1, batch_e%num_batches
-!
-!        For each batch, get the limits for the e index
-!
-         call batch_e%determine_limits(current_e_batch)
-!
-!        Form g_kade
-!
-         call mem%alloc(g_kade, wf%n_o, wf%n_v, wf%n_v, batch_e%length)
-!
-         call wf%eri%get_eri_t1('ovvv', g_kade, first_s=batch_e%first, last_s=batch_e%get_last())
-!
-!        Reorder to g_akde = g_kade
-!
-         call mem%alloc(g_akde, wf%n_v, wf%n_o, wf%n_v, batch_e%length)
-!
-         call sort_1234_to_2134(g_kade, g_akde, wf%n_o, wf%n_v, wf%n_v, batch_e%length)
-!
-         call mem%dealloc(g_kade, wf%n_o, wf%n_v, wf%n_v, batch_e%length)
-!
-         call dgemm('N','N',                             &
-                     wf%n_v,                             &
-                     wf%n_o,                             &
-                     (wf%n_o)*(wf%n_v)*(batch_e%length), &
-                     -one,                               &
-                     g_akde,                             &
-                     wf%n_v,                             &
-                     X_kdei(1, 1, batch_e%first,1),      &
-                     (wf%n_o)*(wf%n_v)**2,               &
-                     one,                                &
-                     sigma_ai,                           &
-                     wf%n_v)
-!
-         call mem%dealloc(g_akde, wf%n_v, wf%n_o, wf%n_v, batch_e%length)
-!
-      enddo ! End of batches over e
-!
-      call mem%batch_finalize()
-!
-      call mem%dealloc(X_kdei, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-!
-!     :: Term 3. - sum_ckdle b_cldi t_kl^ce g_keda ::
-!
-!     X_diek = sum_cl b_cldi t_kl^ce = sum_cl b_di_cl t_cl_ek
-!
-      call mem%alloc(X_diek, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call dgemm('T','N',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  b_aibj,            & ! b_cl_di
-                  (wf%n_o)*(wf%n_v), &
-                  t_clek,            & ! t_cl_ek
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  X_diek,            &
-                  (wf%n_o)*(wf%n_v))
-!
-      call mem%dealloc(t_clek, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     - sum_kde X_diek g_keda
-!
-!     Reorder X_diek to X_kedi
-!
-      call mem%alloc(X_kedi, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-      call sort_1234_to_4312(X_diek, X_kedi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(X_diek, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Prepare batching over a
-!
-      rec0 = wf%n_v*wf%n_o*wf%eri%n_J
-      rec1 = (wf%n_v**2)*(wf%n_o) + wf%n_v*wf%eri%n_J
-!
-!     Initialize batching variable
-!
-      batch_a = batching_index(wf%n_v)
-      call mem%batch_setup(batch_a, rec0, rec1, 'jacobian_transpose_ccsd_g1 2')
-!
-!     Loop over the a-batches
-!
-      do current_a_batch = 1, batch_a%num_batches
-!
-!        For each batch, get the limits for the a index
-!
-         call batch_a%determine_limits(current_a_batch)
-!
-!        Form g_keda
-!
-         call mem%alloc(g_keda, wf%n_o, wf%n_v, wf%n_v, batch_a%length)
-!
-         call wf%eri%get_eri_t1('ovvv', g_keda, first_s=batch_a%first, last_s=batch_a%get_last())
-!
-         call dgemm('T','N',                    &
-                     batch_a%length,            &
-                     wf%n_o,                    &
-                     (wf%n_o)*(wf%n_v)**2,      &
-                     -one,                      &
-                     g_keda,                    & ! g_ked_a
-                     (wf%n_o)*(wf%n_v)**2,      &
-                     X_kedi,                    & ! X_ked_i
-                     (wf%n_o)*(wf%n_v)**2,      &
-                     one,                       &
-                     sigma_ai(batch_a%first,1), &
-                     wf%n_v)
-!
-         call mem%dealloc(g_keda, wf%n_o, wf%n_v, wf%n_v, batch_a%length)
-!
-      enddo ! End of batches over a
-!
-      call mem%batch_finalize()
-!
-      call mem%dealloc(X_kedi, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-!
 !     :: Term 1. - sum_ckdle b_akdl t_kl^ce g_icde ::
-!
-!     Get intermediate X_kdl_i from file
 !
       call mem%alloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -1453,20 +1267,175 @@ contains
 !
 !     Add - sum_ckdle b_akdl t_kl^ce g_icde = - sum_dkl b_a_kdl X_kdl_i
 !
-      call dgemm('N','N',               &
-                  wf%n_v,               &
-                  wf%n_o,               &
-                  (wf%n_v)*(wf%n_o)**2, &
-                  -one,                 &
-                  b_aibj,               & ! b_aibj
-                  wf%n_v,               &
-                  X_kdli,               & ! X_kdl_i
-                  (wf%n_v)*(wf%n_o)**2, &
-                  one,                  &
-                  sigma_ai,             &
+      call dgemm('N','N',           &
+                  wf%n_v,           &
+                  wf%n_o,           &
+                  wf%n_v*wf%n_o**2, &
+                  -one,             &
+                  b_aibj,           & ! b_a_kdl
+                  wf%n_v,           &
+                  X_kdli,           & ! X_kdl_i
+                  wf%n_v*wf%n_o**2, &
+                  one,              &
+                  sigma_ai,         &
                   wf%n_v)
 !
       call mem%dealloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+!     :: Term 2 sigma^a_i -= sum_ckdle b^cd_il t^ce_kl g_kade
+!     :: Term 3 sigma^a_i -= sum_ckdle b^cd_li t^ce_kl g_keda
+!
+      call mem%alloc(t_kecl, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call squareup_and_sort_1234_to_2314(wf%t2, t_kecl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Term 2: X_dike = sum_cl b_cidl t_kl^ce
+!             Y_J_ki = X_dike L_J_de
+!             sigma_ai += L_J_ka Y_J_ki
+!
+      call mem%alloc(b_dicl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_3214(b_aibj, b_dicl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(X_dike, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+      call dgemm('N','T',       &
+                 wf%n_o*wf%n_v, &
+                 wf%n_o*wf%n_v, &
+                 wf%n_o*wf%n_v, &
+                 one,           &
+                 b_dicl,        & ! b_di_cl
+                 wf%n_o*wf%n_v, &
+                 t_kecl,        & ! t_ke_cl
+                 wf%n_o*wf%n_v, &
+                 zero,          &
+                 X_dike,        &
+                 wf%n_o*wf%n_v)
+!
+      call mem%dealloc(b_dicl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(X_kide, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+      call sort_1234_to_3214(X_dike, X_kide, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(X_dike, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+!     Term 3: Y_J_cl = sum_ek  t^ce_kl L_J_ke
+!             Y_J_di = sum_cdl b^cd_li Y_J_cl
+!             sigma_ai += sum_Jd L_J_da Y_J_di
+!
+      call mem%alloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
+      call wf%eri%get_cholesky_t1(L_J_ov, 1, wf%n_o, 1+wf%n_o, wf%n_mo)
+!
+      call mem%alloc(Y_J_cl, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+      call dgemm('N','N',        &
+                  wf%eri%n_J,    &
+                  wf%n_v*wf%n_o, &
+                  wf%n_v*wf%n_o, &
+                  one,           &
+                  L_J_ov,        & ! L_J_ke
+                  wf%eri%n_J,    &
+                  t_kecl,        & ! t_ke_cl
+                  wf%n_v*wf%n_o, &
+                  zero,          &
+                  Y_J_cl,        & ! Y_J_cl
+                  wf%eri%n_J)
+!
+      call mem%dealloc(t_kecl, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call mem%alloc(Y_J_di, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+      call dgemm('N','N',        &
+                  wf%eri%n_J,    &
+                  wf%n_v*wf%n_o, &
+                  wf%n_v*wf%n_o, &
+                  one,           &
+                  Y_J_cl,        & ! Y_J_cl
+                  wf%eri%n_J,    &
+                  b_aibj,        & ! b_cl_di
+                  wf%n_v*wf%n_o, &
+                  zero,          &
+                  Y_J_di,        & ! Y_J_di
+                  wf%eri%n_J)
+!
+      call mem%dealloc(Y_J_cl, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+!     Contractions with L_J_vv
+!
+      call mem%alloc(s_ia, wf%n_o, wf%n_v)
+      call zero_array(s_ia, wf%n_o*wf%n_v)
+!
+      call mem%alloc(Y_J_oo, wf%eri%n_J, wf%n_o, wf%n_o)
+      call zero_array(Y_J_oo, wf%eri%n_J*wf%n_o**2)
+!
+      req0 = 0
+      req1 = wf%eri%n_J*wf%n_v
+!
+      batch_v = batching_index(wf%n_v)
+!
+      call mem%batch_setup(batch_v, req0, req1, 'jacobian_transpose_g1')
+!
+      call mem%alloc(L_J_vv, wf%eri%n_J, wf%n_v, batch_v%max_length)
+!
+      do batch = 1, batch_v%num_batches
+!
+         call batch_v%determine_limits(batch)
+!
+         call wf%eri%get_cholesky_t1(L_J_vv, wf%n_o + 1, wf%n_mo, &
+                                     wf%n_o + batch_v%first,      &
+                                     wf%n_o + batch_v%get_last())
+!
+         call dgemm('N','T',                       &
+                     wf%eri%n_J,                   &
+                     wf%n_o**2,                    &
+                     wf%n_v*batch_v%length,        &
+                     one,                          &
+                     L_J_vv,                       & ! L_J_de
+                     wf%eri%n_J,                   &
+                     X_kide(:,:,:,batch_v%first:), & ! X_ki_de
+                     wf%n_o**2,                    &
+                     one,                          &
+                     Y_J_oo,                       & ! Y_J_ki
+                     wf%eri%n_J)
+!
+         call dgemm('T','N',                &
+                    wf%n_o,                 &
+                    batch_v%length,         &
+                    wf%eri%n_J*wf%n_v,      &
+                    one,                    &
+                    Y_J_di,                 & ! Y_Jd_i
+                    wf%eri%n_J*wf%n_v,      &
+                    L_J_vv,                 & ! L_Jd_a
+                    wf%eri%n_J*wf%n_v,      &
+                    one,                    &
+                    s_ia(:,batch_v%first:), &
+                    wf%n_o)
+!
+      end do
+!
+      call mem%dealloc(L_J_vv, wf%eri%n_J, wf%n_v, batch_v%max_length)
+      call mem%batch_finalize()
+!
+      call mem%dealloc(Y_J_di, wf%eri%n_J, wf%n_v, wf%n_o)
+      call mem%dealloc(X_kide, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+!
+      call add_21_to_12(-one, s_ia, sigma_ai, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(s_ia, wf%n_o, wf%n_v)
+!
+!     Final contraction for Term2
+!
+      call dgemm('T','N',              &
+                  wf%n_v,              &
+                  wf%n_o,              &
+                  wf%eri%n_J*wf%n_o,   &
+                  -one,                &
+                  L_J_ov,              & ! L_Jk_a
+                  wf%eri%n_J*wf%n_o,   &
+                  Y_J_oo,              & ! L_Jk_i
+                  wf%eri%n_J*wf%n_o,   &
+                  one,                 &
+                  sigma_ai,            & ! sigma_ai
+                  wf%n_v)
+!
+      call mem%dealloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
+      call mem%dealloc(Y_J_oo, wf%eri%n_J, wf%n_o, wf%n_o)
 !
       call timer%turn_off()
 !
