@@ -55,7 +55,6 @@ module atomic_center_class
 !
       integer :: n_shells
       type(shell), dimension(:), allocatable :: shells
-!
       character(len=100) :: basis
 !
       real(dp), dimension(3) :: coordinates ! x, y, z
@@ -423,7 +422,7 @@ contains
    end function get_ground_state_multiplicity_atomic_center
 !
 !
-  subroutine read_basis_info_atomic_center(center)
+   subroutine read_basis_info_atomic_center(center)
 !!
 !!    Read basis info
 !!    Written by Sarai D. Folkestad, Dec 2018

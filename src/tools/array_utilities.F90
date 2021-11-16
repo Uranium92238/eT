@@ -520,7 +520,7 @@ contains
       integer :: info
       integer :: I, J
 !
-      cholesky_vectors = matrix
+      call dcopy(dim_**2, matrix, 1, cholesky_vectors, 1)
 !
       call mem%alloc(work, (2*dim_))
 !
@@ -630,7 +630,7 @@ contains
 !
 !     Store A in Ainv to prevent it from being overwritten by LAPACK
 !
-      Ainv = A
+      call dcopy(n**2, A, 1, Ainv, 1)
 !
 !     dtrtri computes the inverse of a real upper or lower triangular
 !     matrix A.

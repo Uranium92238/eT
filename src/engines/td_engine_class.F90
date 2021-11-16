@@ -112,6 +112,7 @@ contains
       engine%propagation        = .false.
       engine%fft_dipole_moment  = .false.   
       engine%fft_electric_field = .false.
+      engine%ri                 = .false.
 !
       call engine%read_settings()
 !
@@ -383,9 +384,17 @@ contains
 !
       engine%tasks = task_list()
 !
-      call engine%tasks%add(label='cholesky', &
-                            description='Cholesky decomposition of the electron &
-                                         &repulsion integrals')
+      if (engine%ri) then
+!
+         call engine%tasks%add(label='ri', &
+                               description='RI approximation of the electron &
+                                           &repulsion integrals')
+!
+      else
+         call engine%tasks%add(label='cholesky', &
+                               description='Cholesky decomposition of the electron &
+                                           &repulsion integrals')
+      endif
 !
       call engine%tasks%add(label='mo preparations',                             &
                             description='Preparation of MO basis and integrals')

@@ -34,6 +34,7 @@
 
 // Basis set and atoms
 eTBasis basis;
+BasisSet ri_basis;
 vector<Atom> atoms;
 
 /*
@@ -42,6 +43,8 @@ vector<Atom> atoms;
 */
 vector<Engine> electronic_repulsion(omp_get_max_threads());
 vector<Engine> electronic_repulsion_1der(omp_get_max_threads());
+vector<Engine> electronic_repulsion_2c(omp_get_max_threads());
+vector<Engine> electronic_repulsion_3c(omp_get_max_threads());
 vector<Engine> kinetic(omp_get_max_threads());
 vector<Engine> kinetic_1der(omp_get_max_threads());
 vector<Engine> nuclear(omp_get_max_threads());
@@ -341,4 +344,55 @@ void initialize_coulomb_external_unit_charges(const double *coordinates, const i
 
     }
 
+}
+
+void set_ri_basis(const char *basisSetString){
+
+    ri_basis = BasisSet(string(&basisSetString[0]), atoms);
+
+
+}
+
+void initialize_eri_2c(const double eri_precision){
+
+   electronic_repulsion_2c[0] = Engine(Operator::coulomb, ri_basis.max_nprim(), ri_basis.max_l());
+
+   electronic_repulsion_2c[0].set(BraKet::xs_xs);
+   electronic_repulsion_2c[0].set_precision(eri_precision);
+
+
+    for (int i = 1; i < omp_get_max_threads(); i++){
+
+        electronic_repulsion_2c[i] = electronic_repulsion_2c[0];
+
+    }
+
+}
+
+
+void initialize_eri_3c(const double eri_precision){
+
+
+    electronic_repulsion_3c[0] = Engine(Operator::coulomb,
+                                        max(basis.max_nprim(), int(ri_basis.max_nprim())),
+                                        max(basis.max_l(), int(ri_basis.max_l())));
+
+    electronic_repulsion_3c[0].set(BraKet::xs_xx);
+    electronic_repulsion_3c[0].set_precision(eri_precision);
+
+
+    for (int i = 1; i < omp_get_max_threads(); i++){
+
+        electronic_repulsion_3c[i] = electronic_repulsion_3c[0];
+
+    }
+
+}
+
+
+void prepare_for_ri(const double eri_precision, const char *basisSetString){
+
+    set_ri_basis(basisSetString);
+    initialize_eri_2c(eri_precision);
+    initialize_eri_3c(eri_precision);
 }

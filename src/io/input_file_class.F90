@@ -368,7 +368,8 @@ contains
                            'cholesky storage',   &
                            'mo eri in memory',   &
                            't1 eri in memory',   &
-                           'eri storage']
+                           'eri storage',        &
+                           'ri']
 !
 !
       memory%name_    = 'memory'

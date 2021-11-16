@@ -23,4 +23,5 @@ set(eT_CXX_sources
    src/libint/atom_init.cpp
    src/libint/oei.cpp
    src/libint/eri.cpp
+   src/libint/ri_basis.cpp
 )

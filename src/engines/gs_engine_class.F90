@@ -38,9 +38,11 @@ module gs_engine_class
       character(len=200) :: multipliers_algorithm
 !
       character(len=200) :: gs_algorithm
+      character(len=200) :: ri_basis_set
 !
       logical :: gs_restart
       logical :: multipliers_restart
+      logical :: ri
 !
    contains
 !
@@ -62,7 +64,7 @@ module gs_engine_class
 !
       procedure, nopass :: calculate_quadrupole_moment   => calculate_quadrupole_moment_gs_engine
 !
-      procedure, nopass :: do_cholesky                   => do_cholesky_gs_engine
+      procedure :: do_cholesky                   => do_cholesky_gs_engine
 !
       procedure, nopass, private :: enable_multimodel_newton
 !
@@ -100,6 +102,8 @@ contains
       call engine%set_default_gs_algorithm(wf)
 !
       engine%gs_restart          = .false.
+      engine%multipliers_restart = .false.
+      engine%ri                  = .false.
 !
       call engine%read_settings()
 !
@@ -196,8 +200,6 @@ contains
       class(gs_engine) :: engine
       class(ccs)       :: wf
 !
-      call engine%tasks%print_('cholesky')
-!
       call engine%do_cholesky(wf)
 !
       call engine%tasks%print_('mo preparations')
@@ -246,6 +248,13 @@ contains
 !
       end if
 !
+      if (input%is_keyword_present('ri', 'integrals')) then
+!
+         engine%ri = .true.
+         call input%get_keyword('ri', 'integrals', engine%ri_basis_set)
+!
+      end if
+!
       engine%plot_density = input%is_keyword_present('plot cc density', 'visualization')
 !
    end subroutine read_gs_settings_gs_engine
@@ -274,9 +283,17 @@ contains
 !
       engine%tasks = task_list()
 !
-      call engine%tasks%add(label='cholesky', &
-                            description='Cholesky decomposition of the electron &
-                                         &repulsion integrals')
+      if (engine%ri) then
+!
+         call engine%tasks%add(label='ri', &
+                               description='RI approximation of the electron &
+                                           &repulsion integrals')
+!
+      else
+         call engine%tasks%add(label='cholesky', &
+                               description='Cholesky decomposition of the electron &
+                                           &repulsion integrals')
+      endif
 !
       call engine%tasks%add(label='mo preparations',                             &
                             description='Preparation of MO basis and integrals')
@@ -728,7 +745,7 @@ contains
    end subroutine calculate_quadrupole_moment_gs_engine
 !
 !
-   subroutine do_cholesky_gs_engine(wf)
+   subroutine do_cholesky_gs_engine(engine, wf)
 !!
 !!    Do Cholesky
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Feb 2020
@@ -743,54 +760,79 @@ contains
 !!
 !!
       use eri_cd_class, only: eri_cd
+      use eri_ri_class, only: eri_ri
       use t1_eri_tool_class, only: t1_eri_tool
 !
       implicit none
 !
-      class(ccs) :: wf
+      class(gs_engine), intent(in) :: engine
+!
+      class(ccs) :: wf 
 !
       type(eri_cd), allocatable :: eri_cholesky_solver
+      type(eri_ri), allocatable :: ri_solver
 !
       logical :: do_MO_screening
 !
       real(dp), dimension(:,:), allocatable, target :: screening_vector
 !
-      call output%printf('v', 'Doing Cholesky decomposition of the ERIs.')
+      if (engine%ri) then
 !
-      do_MO_screening = input%is_keyword_present('mo screening', 'solver cholesky')
+         call engine%tasks%print_('ri')
 !
-      eri_cholesky_solver = eri_cd(wf%ao)
+         ri_solver = eri_ri(engine%ri_basis_set, wf%ao%get_libint_epsilon())
+         call ri_solver%initialize()
 !
-      if (do_MO_screening) then
+         call ri_solver%run(wf%ao)
 !
-         call output%printf('m', 'Using the MO screening for the Cholesky decomposition', &
-                        fs='(/t3,a)')
+         wf%eri = t1_eri_tool(wf%n_o, wf%n_v, ri_solver%get_n_J(), wf%need_g_abcd)
+         call wf%eri%initialize()
 !
-         call mem%alloc(screening_vector, wf%ao%n, wf%ao%n)
-         call wf%construct_MO_screening_for_cd(screening_vector)
+         call ri_solver%construct_cholesky_mo_vectors(wf%ao, wf%ao%n, wf%n_mo, &
+                                                      wf%orbital_coefficients, wf%eri)
 !
-         call eri_cholesky_solver%run(wf%ao, screening_vector)   ! Do the Cholesky decomposition
-                                                                     ! using the MO screening
-!
-         call mem%dealloc(screening_vector, wf%ao%n, wf%ao%n)
+         call ri_solver%cleanup()
 !
       else
 !
-         call eri_cholesky_solver%run(wf%ao) ! Do the Cholesky decomposition
+         call engine%tasks%print_('cholesky')
+!
+         do_MO_screening = input%is_keyword_present('mo screening', 'solver cholesky')
+!
+         eri_cholesky_solver = eri_cd(wf%ao)
+!
+         if (do_MO_screening) then
+!
+            call output%printf('m', 'Using the MO screening for the Cholesky decomposition', &
+                           fs='(/t3,a)')
+!
+            call mem%alloc(screening_vector, wf%ao%n, wf%ao%n)
+            call wf%construct_MO_screening_for_cd(screening_vector)
+!
+            call eri_cholesky_solver%run(wf%ao, screening_vector)   ! Do the Cholesky decomposition
+                                                                        ! using the MO screening
+!
+            call mem%dealloc(screening_vector, wf%ao%n, wf%ao%n)
+!
+         else
+!
+            call eri_cholesky_solver%run(wf%ao) ! Do the Cholesky decomposition
+!
+         endif
+!
+         call eri_cholesky_solver%diagonal_test(wf%ao)  ! Determine the largest
+                                                            ! deviation in the ERI matrix
+!
+         wf%eri = t1_eri_tool(wf%n_o, wf%n_v, eri_cholesky_solver%get_n_cholesky(), wf%need_g_abcd)
+!
+         call wf%eri%initialize()
+!
+         call eri_cholesky_solver%construct_cholesky_mo_vectors(wf%ao, wf%ao%n, wf%n_mo, &
+                                                      wf%orbital_coefficients, wf%eri)
+!
+         call eri_cholesky_solver%cleanup()
 !
       endif
-!
-      call eri_cholesky_solver%diagonal_test(wf%ao)  ! Determine the largest
-                                                         ! deviation in the ERI matrix
-!
-      wf%eri = t1_eri_tool(wf%n_o, wf%n_v, eri_cholesky_solver%get_n_cholesky(), wf%need_g_abcd)
-!
-      call wf%eri%initialize()
-!
-      call eri_cholesky_solver%construct_cholesky_mo_vectors(wf%ao, wf%ao%n, wf%n_mo, &
-                                                   wf%orbital_coefficients, wf%eri)
-!
-      call eri_cholesky_solver%cleanup()
 !
    end subroutine do_cholesky_gs_engine
 !

@@ -219,6 +219,7 @@ contains
       engine%plot_density           = .false.
       engine%plot_mn_densities      = .false.
       engine%plot_es_densities      = .false.
+      engine%ri                     = .false.
 !
       call engine%read_settings()
 !
@@ -1731,9 +1732,17 @@ contains
 !
       engine%tasks = task_list()
 !
-      call engine%tasks%add(label='cholesky', &
-                            description='Cholesky decomposition of the electron &
-                                         &repulsion integrals')
+      if (engine%ri) then
+!
+         call engine%tasks%add(label='ri', &
+                               description='RI approximation of the electron &
+                                           &repulsion integrals')
+!
+      else
+         call engine%tasks%add(label='cholesky', &
+                               description='Cholesky decomposition of the electron &
+                                           &repulsion integrals')
+      endif
 !
       call engine%tasks%add(label='mo preparations',                             &
                             description='Preparation of MO basis and integrals')

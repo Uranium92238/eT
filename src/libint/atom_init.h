@@ -28,7 +28,6 @@ extern "C" {
 
 void get_shell_numbers(int *atom, int *shells);
 void get_first_ao_in_shells(int *atom, int *first_ao_in_shell);
-void get_n_shells_on_atoms(int *nsoa);
 void get_n_shells_on_atom(int *atom, int *n_shells);
 void get_n_aos_in_shell(int *atom, int *n_aos_in_shell);
 void initialize_shell_to_first_ao();
