@@ -51,7 +51,6 @@ module ccsd_class
       type(sequential_file), private :: jacobian_transpose_e2_vv_intermediate
       type(sequential_file), private :: jacobian_transpose_f2_intermediate
       type(sequential_file), private :: jacobian_transpose_g2_intermediate
-      type(sequential_file), private :: jacobian_transpose_g2_intermediate_2
       type(sequential_file), private :: jacobian_transpose_i2_intermediate
 !
    contains
