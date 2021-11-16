@@ -876,7 +876,7 @@ contains
       endif
 !
       write(identifier, '(5a,i2.2)') trim(center%symbol), '_', trim(center%basis), &
-                                     '_', charge_sign, abs(center%charge)
+                                     '_', trim(charge_sign), abs(center%charge)
 !
    end function get_identifier_string_atomic_center
 !

@@ -97,6 +97,11 @@ module reordering
                    squareup_and_sort_1234_to_2413_complex
    end interface squareup_and_sort_1234_to_2413
 !
+   interface squareup_and_sort_1234_to_2314
+      procedure :: squareup_and_sort_1234_to_2314, &
+                   squareup_and_sort_1234_to_2314_complex
+   end interface squareup_and_sort_1234_to_2314
+!
    interface sort_1234_to_2314
       procedure :: sort_1234_to_2314, &
                    sort_1234_to_2314_complex
@@ -312,8 +317,8 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q
 !
-      complex(dp), dimension(dim_p, dim_q), intent(in) :: x_p_q
-      complex(dp), dimension(dim_q, dim_p) :: x_q_p
+      complex(dp), dimension(dim_p, dim_q), intent(in)  :: x_p_q
+      complex(dp), dimension(dim_q, dim_p), intent(out) :: x_q_p
 !
       integer :: p, q
 !
@@ -348,8 +353,8 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q
 !
-      real(dp), dimension(dim_p, dim_q) :: y_p_q
-      real(dp), dimension(dim_q, dim_p), intent(in) :: x
+      real(dp), dimension(dim_p, dim_q), intent(inout) :: y_p_q
+      real(dp), dimension(dim_q, dim_p), intent(in)    :: x
 !
       integer :: p, q
 !
@@ -1446,6 +1451,85 @@ contains
 !$omp end parallel do
 !
    end subroutine squareup_and_sort_1234_to_2413_complex
+!
+!
+   subroutine squareup_and_sort_1234_to_2314(x_pqrs, x_qrps, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Squareup and sort 1234 to 2314
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Square up and reorder the array x_pqrs to x_qspr (i.e., 1234 to 2314).
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
+      real(dp), dimension(dim_q, dim_r, dim_p, dim_s), intent(out)     :: x_qrps
+!
+      integer :: p, q, r, s, rs, pq, pqrs
+!
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,pqrs)
+      do s = 1, dim_s
+         do p = 1, dim_p
+            do r = 1, dim_r
+!
+               rs = dim_r*(s-1) + r
+!
+               do q = 1, dim_q
+!
+                  pq = dim_p*(q-1) + p
+                  pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
+!
+                  x_qrps(q,r,p,s) = x_pqrs(pqrs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine squareup_and_sort_1234_to_2314
+!
+!
+   subroutine squareup_and_sort_1234_to_2314_complex(x_pqrs, x_qrps, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Squareup and sort 1234 to 2314
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
+!!
+!!    Square up and reorder the array x_pqrs to x_qspr (i.e., 1234 to 2413).
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      complex(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
+      complex(dp), dimension(dim_q, dim_r, dim_p, dim_s), intent(out)     :: x_qrps
+!
+      integer :: p, q, r, s, rs, pq, pqrs
+!
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,pqrs)
+      do s = 1, dim_s
+         do p = 1, dim_p
+            do r = 1, dim_r
+!
+               rs = dim_r*(s-1) + r
+!
+               do q = 1, dim_q
+!
+                  pq = dim_p*(q-1) + p
+                  pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
+!
+                  x_qrps(q,r,p,s) = x_pqrs(pqrs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine squareup_and_sort_1234_to_2314_complex
 !
 !
    subroutine sort_1234_to_2314(x_pqrs, x_qrps, dim_p, dim_q, dim_r, dim_s)
