@@ -10,14 +10,14 @@ To compile Libint, follow the instructions below or consult the [Libint Wiki](ht
 
 
 ## Installing Libint
-Download the [Libint library for eT](https://www.etprogram.org/libint/libint-2.7.0-beta.1.tgz).
+Download the [Libint library for eT](https://www.etprogram.org/libint/libint-2.7.0-beta.6.tgz).
 Unpack the tar file:
 ```shell
-tar -xvzf libint-2.7.0-beta.1.tgz
+tar -xvzf libint-2.7.0-beta.6.tgz
 ```
 Enter the generated folder:
 ```shell
-cd libint-2.7.0-beta.1
+cd libint-2.7.0-beta.6
 ```
 Compile:
 ```shell

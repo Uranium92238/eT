@@ -52,15 +52,6 @@ interface
 !
    end subroutine get_n_aos_in_shell_c
 !
-   subroutine get_n_shells_on_atoms_c(nsoa) bind(C, name='get_n_shells_on_atoms')
-!
-      use iso_c_binding
-!
-      implicit none
-!
-      integer(c_int), dimension(1,1) :: nsoa
-!
-   end subroutine get_n_shells_on_atoms_c
 !
    subroutine get_n_shells_on_atom_c(atom, n_shells) bind(C, name='get_n_shells_on_atom')
 !

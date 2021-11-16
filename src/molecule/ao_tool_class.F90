@@ -53,6 +53,7 @@ module ao_tool_class
 !     Vector of shell intervals (first, last, length)
 !
       type(range_), dimension(:), allocatable, public :: shells
+      type(range_), dimension(:), allocatable, public :: ri_shells
 !
 !     Various useful index mappings
 !
@@ -119,6 +120,12 @@ module ao_tool_class
 !
       procedure, public :: get_eri &
                         => get_eri_ao_tool ! ERI = electron repulsion integral
+!
+      procedure, public :: get_eri_2c &
+                        => get_eri_2c_ao_tool
+!
+      procedure, public :: get_eri_3c &
+                        => get_eri_3c_ao_tool
 !
       procedure, public :: get_eri_1der &
                         => get_eri_1der_ao_tool
@@ -270,6 +277,9 @@ module ao_tool_class
 !
       procedure, private :: get_subset_index
       procedure, private :: shp_on_same_atom
+!
+      procedure, private :: get_local_eri_precision
+      procedure, private, nopass :: skip_integral
 !
       final :: destructor
 !
@@ -1262,15 +1272,7 @@ contains
 !
 !     Set precision to non-default value if requested
 !
-      if (present(precision_)) then
-!
-         precision_local = precision_
-!
-      else
-!
-         precision_local = ao%libint_epsilon
-!
-      endif
+      precision_local = ao%get_local_eri_precision(precision_)
 !
 !     Get the integrals g from Libint
 !
@@ -1282,15 +1284,7 @@ contains
 !
 !     Return skip if requested; otherwise, zero g if skip_local = 1
 !
-      if (present(skip)) then
-!
-         skip = skip_local
-!
-      else
-!
-         if (skip_local .eq. 1) call zero_array(g, int(n_A * n_B * n_C * n_D))
-!
-      endif
+      call skip_integral(g, n_A*n_B*n_C*n_D, skip_local, skip)
 !
    end subroutine get_eri_ao_tool
 !
@@ -3347,6 +3341,175 @@ contains
    end subroutine get_centers_ao_tool
 !
 !
+   subroutine get_eri_2c_ao_tool(ao, g, J, K, precision_, skip)
+!!
+!!    Get ERI 2 center
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020
+!!
+!!    Two optional arguments:
+!!
+!!       precision_:  (intent in) Double precision real corresponding to the Libint precision
+!!                   'epsilon' to use when calculating the integral. Does not guarantee a precision
+!!                   to the given value and should therefore be selected conservatively.
+!!
+!!       skip:       (intent out) If present, this integer will be 1 if Libint decided not to
+!!                   calculate the integral; it will be zero otherwise. If it is present, g will
+!!                   not be zeroed out if Libint decides not to calculate g. Thus, only pass 'skip'
+!!                   to the routine if you wish to avoid zeroing out elements that are negligible.
+!!
+!
+      use array_utilities, only: zero_array
+      use shell_class, only: shell
+!
+      implicit none
+!
+      class(ao_tool), intent(in) :: ao
+!
+      type(shell), intent(in) :: J, K
+!
+      real(dp), dimension(J%length * K%length), intent(out) :: g
+!
+      real(dp), optional, intent(in) :: precision_
+      integer, optional, intent(out) :: skip
+!
+      integer(c_int) :: J_, K_
+      integer(c_int) :: n_J, n_K
+!
+      integer(c_int) :: skip_local
+!
+      real(dp) :: precision_local
+!
+      J_ = int(J%number_, c_int)
+      K_ = int(K%number_, c_int)
+!
+      n_J = int(J%length, c_int)
+      n_K = int(K%length, c_int)
+!
+      precision_local = ao%get_local_eri_precision(precision_)
+!
+      call get_eri_2c_c(g,                &
+                     J_, K_,              &
+                     precision_local,     &
+                     skip_local,          &
+                     n_J, n_K)
+!
+      call skip_integral(g, n_J*n_K, skip_local, skip)
+!
+   end subroutine get_eri_2c_ao_tool
+!
+!
+   subroutine get_eri_3c_ao_tool(ao, g, J, C, D, precision_, skip)
+!!
+!!    Get ERI 3 center
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020
+!!
+!!       precision_:  (intent in) Double precision real corresponding to the Libint precision
+!!                   'epsilon' to use when calculating the integral. Does not guarantee a precision
+!!                   to the given value and should therefore be selected conservatively.
+!!
+!!       skip:       (intent out) If present, this integer will be 1 if Libint decided not to
+!!                   calculate the integral; it will be zero otherwise. If it is present, g will
+!!                   not be zeroed out if Libint decides not to calculate g. Thus, only pass 'skip'
+!!                   to the routine if you wish to avoid zeroing out elements that are negligible.
+!!
+!
+      use shell_class, only: shell
+      use array_utilities, only: zero_array
+!
+      implicit none
+!
+      class(ao_tool), intent(in) :: ao
+!
+      integer, intent(in) :: C, D
+!
+      type(shell), intent(in) :: J
+!
+      real(dp), dimension(J%length * &
+                          ao%shells(C)%length * ao%shells(D)%length), intent(out) :: g
+!
+      real(dp), optional, intent(in) :: precision_
+      integer, optional, intent(out) :: skip
+!
+      integer(c_int) :: J_, C_, D_
+      integer(c_int) :: n_J, n_C, n_D
+!
+      integer(c_int) :: skip_local
+!
+      real(dp) :: precision_local
+!
+      J_ = int(J%number_, c_int)
+      C_ = int(C, c_int)
+      D_ = int(D, c_int)
+!
+      n_J = int(J%length, c_int)
+      n_C = int(ao%shells(C)%length, c_int)
+      n_D = int(ao%shells(D)%length, c_int)
+!
+      precision_local = ao%get_local_eri_precision(precision_)
+!
+      call get_eri_3c_c(g,                 &
+                     J_, C_, D_,           &
+                     precision_local,      &
+                     skip_local,           &
+                     n_J, n_C, n_D)
+!
+      call skip_integral(g, n_J*n_C*n_D, skip_local, skip)
+!
+   end subroutine get_eri_3c_ao_tool
+!
+!
+   pure function get_local_eri_precision(ao, precision_) result(precision_local)
+!!
+!!    Get local ERI precision
+!!    Written by Sarai D. Folkestad, Sep 2021
+!!
+      implicit none
+!
+      class(ao_tool), intent(in)           :: ao
+      real(dp),       intent(in), optional :: precision_
+!
+      real(dp) :: precision_local
+!
+      if (present(precision_)) then
+!
+         precision_local = precision_
+!
+      else
+!
+         precision_local = ao%libint_epsilon
+!
+      endif
+!
+   end function get_local_eri_precision
+!
+!
+   subroutine skip_integral(g, size_, skip_local, skip)
+!!
+!!    Skip integral
+!!    Written by Sarai D. Folkestad, 2021
+!
+      use array_utilities, only: zero_array
+!
+      implicit none
+!
+      integer, intent(out), optional :: skip
+      integer, intent(in) :: skip_local
+      integer, intent(in) :: size_
+      real(dp), dimension(size_), intent(inout) :: g
+!
+      if (present(skip)) then
+!
+         skip = skip_local
+!
+      else
+!
+         if (skip_local .eq. 1) call zero_array(g, size_)
+!
+      endif
+!
+   end subroutine skip_integral
+!
+!
    subroutine check_for_close_atoms(ao)
 !!
 !!    Check for close atoms
@@ -3357,7 +3520,6 @@ contains
       implicit none
 !
       class(ao_tool), intent(in) :: ao
-!
       integer  :: c1, c2
       real(dp) :: distance
 !

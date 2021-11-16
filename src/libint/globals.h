@@ -31,7 +31,8 @@
 // Global variables declared in this file
 
 // Basis set, atoms, and AOs
-extern eTBasis basis;  
+extern eTBasis basis;
+extern libint2::BasisSet ri_basis;
 extern vector<libint2::Atom> atoms;                          
 extern vector<vector<int>> atom_to_shell_list;
 extern vector<int> shell_to_first_ao;       
@@ -39,7 +40,9 @@ extern vector<int> shell_to_first_ao;
 /* Vectors of Libint engines. 
    Length of vectors is equal to number of threads 
 */
-extern vector<libint2::Engine> electronic_repulsion; 
+extern vector<libint2::Engine> electronic_repulsion;
+extern vector<libint2::Engine> electronic_repulsion_2c;
+extern vector<libint2::Engine> electronic_repulsion_3c;
 extern vector<libint2::Engine> electronic_repulsion_1der;     
 extern vector<libint2::Engine> kinetic;                       
 extern vector<libint2::Engine> kinetic_1der;

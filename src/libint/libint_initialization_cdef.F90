@@ -131,4 +131,14 @@ interface
    end subroutine set_eri_precision_c
 !
 !
+   subroutine prepare_for_ri_c(eri_precision, basisSet) bind(C, name='prepare_for_ri')
+!
+      use iso_c_binding
+      implicit none
+      real(c_double), value :: eri_precision
+      character(c_char), intent(in)  :: basisSet
+!
+   end subroutine prepare_for_ri_c
+!
+!
 end interface

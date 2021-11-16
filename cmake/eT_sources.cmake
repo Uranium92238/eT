@@ -70,6 +70,7 @@ set(eT_fortran_sources
    src/molecule/ao_tool_class.F90
    src/molecule/periodic_table.F90
    src/molecule/shell_class.F90
+   src/molecule/ri_basis_class.F90
 #
    src/solver_tools/cholesky_array_list_class.F90
    src/solver_tools/bfgs_tool_class.F90
@@ -142,6 +143,7 @@ set(eT_fortran_sources
    src/solvers/cc/davidson_cc_es_class.F90
    src/solvers/cc/abstract_cc_es_class.F90
    src/solvers/cholesky/eri_cd_class.F90
+   src/solvers/cholesky/eri_ri_class.F90
    src/solvers/tdcc/cc_propagation_class.F90
    src/solvers/tdcc/euler_cc_propagation_class.F90
    src/solvers/tdcc/gl2_cc_propagation_class.F90

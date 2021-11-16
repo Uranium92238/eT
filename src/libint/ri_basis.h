@@ -17,6 +17,8 @@
 //  along with this program. If not, see <https://www.gnu.org/licenses/>.
 //
 // -----------------------------------------------------------------------
+#include <vector>
+#include "globals.h"
 
 #ifdef __cplusplus
 // Are we compiling this with a C++ compiler? Add extern "C" { ... }
@@ -24,23 +26,9 @@ extern "C" {
 #else
 #endif
 
-void get_eri(double *g, 
-             const int s1, const int s2, const int s3, const int s4, 
-             const double epsilon_, int *skip, 
-             const int n1, const int n2, const int n3, const int n4);
-
-void get_eri_2c(double *g,
-             const int J, const int K,
-             const double epsilon_, int *skip,
-             const int nJ, const int nK);
-
-void get_eri_3c(double *g,
-             const int J, const int s3, const int s4,
-             const double epsilon_, int *skip,
-             const int nJ, const int n3, const int n4);
-
-
-void get_eri_1der(double *g, const int s1, const int s2, const int s3, const int s4);
+void get_n_ri_shells(int *n_shells);
+void get_n_ri_ao(int *n_ao);
+void get_ri_shell_size(int *shell, int *size);
 
 #ifdef __cplusplus
 }

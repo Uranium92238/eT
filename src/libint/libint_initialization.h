@@ -53,6 +53,10 @@ void initialize_coulomb_external_charges(const double *charges, const double *co
                                          const int n_points);
 void initialize_coulomb_external_unit_charges(const double *coordinates, const int n_points);
 void initialize_shell2atom();
+void set_ri_basis(const char *basisSetString);
+void initialize_eri_2c(const double eri_precision);
+void initialize_eri_3c(const double eri_precision);
+void prepare_for_ri(const double eri_precision, const char *basisSetString);
 
 #ifdef __cplusplus
 }
