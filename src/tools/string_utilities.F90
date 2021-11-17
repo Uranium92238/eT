@@ -163,37 +163,37 @@ contains
 !
    subroutine convert_to_lowercase(string)
 !!
-!!    Convert to lowercase 
-!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!    Convert to lowercase
+!!    Written by Eirik F. Kjønstad, Mar 2019
 !!
 !!    Adapted from routines posted on the Stack-exchange.
-!!    
-!!    Assumes ASCII table for representing characters as integers, 
+!!
+!!    Assumes ASCII table for representing characters as integers,
 !!    where the lowercase letter is +32 relative to the uppercase letters.
 !!
 !!    Note: uppercase (65-90) and lowercase (97-122).
 !!
-      implicit none 
+      implicit none
 !
-      character(len=*), intent(inout) :: string 
+      character(len=*), intent(inout) :: string
 !
       integer :: character, current_character
 !
       do character = 1, len(string)
 !
-!        Represent character as integer 
-!  
-         current_character = ichar(string(character : character)) 
+!        Represent character as integer
 !
-!        Convert if character is in the range of uppercase characters 
+         current_character = ichar(string(character : character))
+!
+!        Convert if character is in the range of uppercase characters
 !
          if (current_character >= 65 .and. current_character <= 90) then ! Between A and Z
 !
-            current_character = current_character + 32 
+            current_character = current_character + 32
 !
          endif
 !
-!        Replace the character by the (possibly) lowercased letter 
+!        Replace the character by the (possibly) lowercased letter
 !
          string(character : character) = char(current_character)
 !
@@ -205,35 +205,35 @@ contains
    function convert_char_to_uppercase(char_) result(char_out)
 !!
 !!    Convert to uppercase
-!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!    Written by Eirik F. Kjønstad, Mar 2019
 !!
 !!    Adapted from routines posted on the Stack-exchange.
-!!    
-!!    Assumes ASCII table for representing characters as integers, 
+!!
+!!    Assumes ASCII table for representing characters as integers,
 !!    where the lowercase letter is +32 relative to the uppercase letters.
 !!
 !!    Note: uppercase (65-90) and lowercase (97-122).
 !!
-      implicit none 
+      implicit none
 !
-      character, intent(in) :: char_ 
-      character :: char_out 
+      character, intent(in) :: char_
+      character :: char_out
 !
       integer :: char_int
 !
-!     Represent character as integer 
-!  
-      char_int = ichar(char_) 
+!     Represent character as integer
 !
-!     Convert if character is in the range of uppercase characters 
+      char_int = ichar(char_)
+!
+!     Convert if character is in the range of uppercase characters
 !
       if (char_int >= 97 .and. char_int <= 122) then ! Between a and z
 !
-         char_int = char_int - 32 
+         char_int = char_int - 32
 !
       endif
 !
-!     Replace the character by the (possibly) uppercased letter 
+!     Replace the character by the (possibly) uppercased letter
 !
      char_out = char(char_int)
 !
@@ -242,20 +242,20 @@ contains
 !
    function convert_to_uppercase(string) result(string_out)
 !!
-!!    Convert to lowercase 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!    Convert to lowercase
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    Adapted from routines posted on the Stack-exchange.
-!!    
-!!    Assumes ASCII table for representing characters as integers, 
+!!
+!!    Assumes ASCII table for representing characters as integers,
 !!    where the lowercase letter is +32 relative to the uppercase letters.
 !!
 !!    Note: uppercase (65-90) and lowercase (97-122).
 !!
-      implicit none 
+      implicit none
 !
       character(len=*), intent(in) :: string
-      character(len=500) :: string_out 
+      character(len=500) :: string_out
 !
       integer :: character, current_character
 !
@@ -268,19 +268,19 @@ contains
 !
       do character = 1, len(string)
 !
-!        Represent character as integer 
-!  
-         current_character = ichar(string(character : character)) 
+!        Represent character as integer
 !
-!        Convert if character is in the range of uppercase characters 
+         current_character = ichar(string(character : character))
+!
+!        Convert if character is in the range of uppercase characters
 !
          if (current_character >= 97 .and. current_character <= 122) then ! Between a and z
 !
-            current_character = current_character - 32 
+            current_character = current_character - 32
 !
          endif
 !
-!        Replace the character by the (possibly) lowercased letter 
+!        Replace the character by the (possibly) lowercased letter
 !
          string_out(character : character) = char(current_character)
 !
@@ -300,12 +300,12 @@ contains
 !!                   on output the index of unique elements in strings. 0 elsewhere.
 !!                   n_unique = count( indices /= 0 )
 !!    n_strings:  check first `n_strings` values of strings
-!!    strings:    array of strings to check for unique. 
+!!    strings:    array of strings to check for unique.
 !!
 !!    Example: strings = ['a', 'b', 'a', 'c'], n_strings = 4
 !!             will return indices = [1, 2, 4, 0]
-!!    
-      implicit none 
+!!
+      implicit none
 !
       integer,                                intent(in)   :: n_strings
       integer, dimension(n_strings),          intent(out)  :: indices
@@ -355,7 +355,7 @@ contains
       start_ = 1
       cursor = start_ + substring_length - 1
 !
-      do while (cursor .lt. len(string))
+      do while (cursor .le. len(string))
 !
          if (string(start_ : cursor) == trim(substring)) then
 !
