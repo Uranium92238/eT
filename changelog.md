@@ -1,3 +1,7 @@
+# eT v1.4.4
+### Bugfixes
+- Find substring in string also if it contains the last character. eT-program/eT!952
+
 # eT v1.4.3
 ### Bugfixes
 - Update list of authors. eT-program/eT!927
