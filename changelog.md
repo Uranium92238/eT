@@ -24,6 +24,11 @@
 - Removed an o3v3 term in CCSD Jacobian transpose B2. eT-program/eT!945
 - Removed an unnecessary o3v3 term in CCSD Jacobian transpose C2. eT-program/eT!946
 
+
+# eT v1.4.4
+### Bugfixes
+- Find substring in string also if it contains the last character. eT-program/eT!952
+
 # eT v1.4.3
 ### Bugfixes
 - Update list of authors. eT-program/eT!927
