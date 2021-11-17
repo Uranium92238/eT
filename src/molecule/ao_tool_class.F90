@@ -31,7 +31,7 @@ module ao_tool_class
 !
    use parameters
    use named_range_class
-   use iso_c_binding,         only: c_int
+   use iso_c_binding,         only: c_int, c_null_char, c_char
 !
    use global_in,             only: input
    use global_out,            only: output
@@ -1005,8 +1005,6 @@ contains
 !!
 !!    Modified by EFK and SDF, 2020: generalized to any number of components.
 !
-      use iso_c_binding
-!
       implicit none
 !
       class(ao_tool), intent(in) :: ao
@@ -1155,7 +1153,6 @@ contains
 !!    where k refers to the shell centers (k = 1, 2 refers to A, B) and q to their xyz-coord.
 !!
       use array_utilities, only: zero_array
-      use iso_c_binding
 !
       implicit none
 !
@@ -1284,7 +1281,7 @@ contains
 !
 !     Return skip if requested; otherwise, zero g if skip_local = 1
 !
-      call skip_integral(g, n_A*n_B*n_C*n_D, skip_local, skip)
+      call skip_integral(g, int(n_A*n_B*n_C*n_D), int(skip_local), skip)
 !
    end subroutine get_eri_ao_tool
 !
@@ -1334,8 +1331,6 @@ contains
 !!
       use libint_initialization, only: initialize_coulomb_external_charges_c
 !
-      use iso_c_binding
-!
       implicit none
 !
       type(point_charges), intent(in) :: pc
@@ -1356,9 +1351,6 @@ contains
 !!    embedding (QM/MM)
 !!
       use libint_initialization, only: initialize_coulomb_external_charges_c
-
-!
-      use iso_c_binding
 !
       implicit none
 !
@@ -1379,8 +1371,6 @@ contains
 !!    Written by Sarai D. Folkestad, 2020
 !!
       use libint_initialization, only: initialize_coulomb_external_unit_charges_c
-!
-      use iso_c_binding
 !
       implicit none
 !
@@ -2975,7 +2965,6 @@ contains
 !!    Construct OEI screened (one-electron integral)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2021
 !
-      use iso_c_binding
       use array_utilities, only: zero_array
 !
       implicit none
@@ -3393,7 +3382,7 @@ contains
                      skip_local,          &
                      n_J, n_K)
 !
-      call skip_integral(g, n_J*n_K, skip_local, skip)
+      call skip_integral(g, int(n_J*n_K), int(skip_local), skip)
 !
    end subroutine get_eri_2c_ao_tool
 !
@@ -3453,7 +3442,7 @@ contains
                      skip_local,           &
                      n_J, n_C, n_D)
 !
-      call skip_integral(g, n_J*n_C*n_D, skip_local, skip)
+      call skip_integral(g, int(n_J*n_C*n_D), int(skip_local), skip)
 !
    end subroutine get_eri_3c_ao_tool
 !

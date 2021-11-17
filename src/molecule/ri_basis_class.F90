@@ -125,7 +125,7 @@ contains
 !
       do i = 1, this%n_shells
 !
-      shell_(1) = i
+      shell_(1) = int(i, kind=c_int)
       call get_ri_shell_size_c(shell_, n_ao_c)
       this%shells(i) = shell(first=offset + 1,       &
                              length=int(n_ao_c(1)),  &
