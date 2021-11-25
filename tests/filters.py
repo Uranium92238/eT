@@ -40,9 +40,7 @@ def get_hf_filter(
         )
 
     if convergence:
-        g.append(
-            get_filter(string="Convergence criterion met in", abs_tolerance=1.0e-10)
-        )
+        g.append(get_filter(string="Convergence criterion met in", abs_tolerance=1))
 
     if not restart:
         g.append(
