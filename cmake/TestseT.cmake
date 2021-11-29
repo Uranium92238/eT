@@ -179,6 +179,7 @@ add_eT_runtest(ccsd_es_false_positive_defect                "eT;medium;ccsd;es;r
 add_eT_runtest(ccsd_right_es_replace_red_space              "eT;short;ccsd;es;right;red_space")
 add_eT_runtest(ccsd_right_es_diis                           "eT;short;ccsd;es;right;diis")
 add_eT_runtest(ccsd_right_cvs_es_energies                   "eT;short;ccsd;es;right;cvs")
+add_eT_runtest(ccsd_right_cvs_ccX-dz                        "eT;short;ccsd;es;right;cvs;ccX-dz")
 add_eT_runtest(ccsd_right_cvs_es_energies_diis              "eT;short;ccsd;es;right;cvs;diis")
 add_eT_runtest(ccsd_right_ip_energies                       "eT;short;ccsd;ip;right")
 add_eT_runtest(ccsd_right_ip_diis                           "eT;short;ccsd;ip;right;diis")
