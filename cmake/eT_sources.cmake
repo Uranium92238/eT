@@ -215,6 +215,10 @@ set(eT_fortran_sources
    src/wavefunctions/hf/file_handling_hf.F90
    src/wavefunctions/hf/tdhf_transformation_hf.F90
 #
+   src/wavefunctions/cuhf/cuhf_class.F90
+#
+   src/wavefunctions/rohf/rohf_class.F90
+#
    src/wavefunctions/uhf/uhf_class.F90
    src/wavefunctions/uhf/initialize_destruct_uhf.F90
    src/wavefunctions/uhf/set_get_uhf.F90

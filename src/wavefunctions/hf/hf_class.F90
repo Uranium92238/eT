@@ -237,8 +237,8 @@ module hf_class
       procedure :: set_orbital_coefficients_from_orthonormal_ao_C &
                 => set_orbital_coefficients_from_orthonormal_ao_C_hf
 !
-      procedure :: construct_initial_idempotent_density &
-                => construct_initial_idempotent_density_hf
+      procedure :: diagonalize_fock &
+                => diagonalize_fock_hf
 !
       procedure, non_overridable :: ao_to_oao_transformation => ao_to_oao_transformation_hf
       procedure, non_overridable :: oao_to_ao_transformation => oao_to_ao_transformation_hf
@@ -269,6 +269,8 @@ module hf_class
       procedure :: get_tamm_dancoff_preconditioner             => get_tamm_dancoff_preconditioner_hf
       procedure :: get_tdhf_start_vector                       => get_tdhf_start_vector_hf
       procedure :: tdhf_summary                                => tdhf_summary_hf
+!
+      procedure :: finalize_gs => finalize_gs_hf
 !
    end type hf
 !
@@ -945,7 +947,6 @@ contains
    end subroutine construct_roothan_hall_gradient_hf
 !
 !
-!
    function get_n_electrons_in_density_hf(wf) result(n)
 !!
 !!    Get number of electrons in density
@@ -989,7 +990,7 @@ contains
 !
       call dcopy(wf%ao%n**2, h_wx, 1, wf%ao_fock, 1)
 !
-      call wf%construct_initial_idempotent_density()
+      call wf%diagonalize_fock()
 !
    end subroutine set_ao_density_to_core_guess_hf
 !
@@ -1263,7 +1264,7 @@ contains
          call output%printf('m', 'Overall charge:               (i25)', &
                             ints=[wf%ao%charge], fs='(t6, a)')
 !
-      call wf%construct_initial_idempotent_density()
+      call wf%diagonalize_fock()
 !
    end subroutine prepare_for_roothan_hall_hf
 !
@@ -1678,7 +1679,7 @@ contains
    end subroutine get_gradient_hf
 !
 !
-   subroutine construct_initial_idempotent_density_hf(wf)
+   subroutine diagonalize_fock_hf(wf)
 !!
 !!    Construct initial idempotent density
 !!    Written by Sarai D. Folkestad
@@ -1708,7 +1709,7 @@ contains
 !
       call wf%update_ao_density()
 !
-   end subroutine construct_initial_idempotent_density_hf
+   end subroutine diagonalize_fock_hf
 !
 !
    subroutine set_orbital_coefficients_from_reduced_ao_C_hf(wf, C, orbital_coefficients)
@@ -2042,6 +2043,25 @@ contains
          cumulative = .true.
 !
    end function can_do_cumulative_fock_hf
+!
+!
+   subroutine finalize_gs_hf(wf)
+!!
+!!    Finalize gs
+!!    Written by Sarai D. Folkestad, Nov 2021
+!!
+!!    Nothing to do for RHF
+!!
+!
+      use warning_suppressor, only: do_nothing
+!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+      call do_nothing(wf)
+!
+   end subroutine finalize_gs_hf
 !
 !
 end module hf_class

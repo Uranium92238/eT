@@ -535,7 +535,7 @@ contains
 !
 !        Standard Roothan-Hall step to generate idempotent density
 !
-         call wf%construct_initial_idempotent_density()
+         call wf%diagonalize_fock()
 !
       endif
 !

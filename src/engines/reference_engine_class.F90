@@ -657,6 +657,8 @@ contains
 !
       call scf%run(wf)
 !
+      call wf%finalize_gs()
+!
    end subroutine do_ground_state_reference_engine
 !
 !

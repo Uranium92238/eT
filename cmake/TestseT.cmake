@@ -100,6 +100,13 @@ add_eT_runtest(uhf_file_check                               "eT;short;uhf;spin;e
 add_eT_runtest(restart_uhf                                  "eT;short;uhf;spin")
 add_eT_runtest(restart_uhf_v1.0                             "eT;short;uhf;spin;v1.0")
 #
+add_eT_runtest(cuhf_atomic_doublet                          "eT;short;cuhf;spin")
+add_eT_runtest(cuhf_molecular_triplet                       "eT;short;cuhf;spin")
+add_eT_runtest(cuhf_energy_3-21g                            "eT;short;cuhf;pople")
+#
+add_eT_runtest(rohf_closed_shell                            "eT;short;rohf;spin")
+add_eT_runtest(rohf_molecular_triplet                       "eT;short;rohf;spin")
+#
 add_eT_runtest(mlhf_cholesky_energy                         "eT;short;mlhf;sad;cholesky")
 add_eT_runtest(mlhf_pao_energy                              "eT;short;mlhf;sad;pao")
 add_eT_runtest(mlhf_pao_energy_central_atom                 "eT;short;mlhf;sad;pao;central-atom")
