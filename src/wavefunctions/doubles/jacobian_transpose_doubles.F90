@@ -330,54 +330,77 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_bjck
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)  :: sigma_ai
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_bjca, g_ikbj
+      real(dp), dimension(:,:,:,:), allocatable :: g_ikbj
 !
-      type(batching_index) :: batch_a
+      real(dp), dimension(:,:,:), allocatable :: W_J_vo, L_J_vo, L_J_vv
 !
-      integer :: req0, req1, current_a_batch
+      integer :: req0, req1, batch 
+!
+      type(batching_index), allocatable :: batch_a 
 !
       type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose doubles B1', pl='verbose')
       call timer%turn_on()
 !
-!     :: Term 1: sigma_ai =+ sum_bjc c_bjci g_bjca = sum_bjc (g_bjca)^T c_bjci
+!     :: Term 2: sigma_ai =+ c_bjci g_bjca = (L_J_bj c_bjci) L_J_ca = L_J_ca W_J_ci 
 !
-      req0 = (wf%n_v)*(wf%n_o)*(wf%eri%n_J)
-      req1 = max((wf%n_v)*(wf%eri%n_J) + (wf%n_o)*(wf%n_v)**2, 2*(wf%n_o)*(wf%n_v)**2)
+      call mem%alloc(L_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+      call wf%eri%get_cholesky_t1(L_J_vo, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
+!
+      call mem%alloc(W_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',          &
+                  wf%eri%n_J,       &
+                  wf%n_v * wf%n_o,  &
+                  wf%n_v * wf%n_o,  &
+                  one,              &
+                  L_J_vo,           & ! L_J,bj
+                  wf%eri%n_J,       &
+                  c_bjck,           & ! c_bj,ci
+                  wf%n_v * wf%n_o,  &
+                  zero,             &
+                  W_J_vo,           & ! W_J,ci
+                  wf%eri%n_J)
+!
+      call mem%dealloc(L_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+      req0 = 0
+      req1 = wf%n_v*wf%eri%n_J
 !
       batch_a = batching_index(wf%n_v)
-!
       call mem%batch_setup(batch_a, req0, req1, 'jacobian_transpose_doubles_b1')
 !
-      do current_a_batch = 1, batch_a%num_batches
+      call mem%alloc(L_J_vv, wf%eri%n_J, wf%n_v, batch_a%max_length)
 !
-         call batch_a%determine_limits(current_a_batch)
+      do batch = 1, batch_a%num_batches
 !
-         call mem%alloc(g_bjca, wf%n_v, wf%n_o, wf%n_v, batch_a%length)
+         call batch_a%determine_limits(batch)
 !
-         call wf%eri%get_eri_t1('vovv', g_bjca, first_s=batch_a%first, last_s=batch_a%get_last())
+         call wf%eri%get_cholesky_t1(L_J_vv, wf%n_o + 1, wf%n_mo, &
+                                     wf%n_o + batch_a%first,     &
+                                     wf%n_o + batch_a%get_last())
 !
-!        sigma_ai =+ sum_bjc g_abjc * c_bjci
+         call dgemm('T', 'N',                      &
+                     batch_a%get_length(),         &
+                     wf%n_o,                       &
+                     wf%n_v * wf%eri%n_J,          &
+                     one,                          &
+                     L_J_vv,                       & ! L_Jc,a
+                     wf%n_v * wf%eri%n_J,          &
+                     W_J_vo,                       & ! W_Jc,i
+                     wf%n_v * wf%eri%n_J,          &
+                     one,                          &
+                     sigma_ai(batch_a%first, 1),   &
+                     wf%n_v)         
 !
-         call dgemm('T', 'N',                    & ! transposed g_bjca
-                     batch_a%length,             &
-                     wf%n_o,                     &
-                     (wf%n_o)*(wf%n_v)**2,       &
-                     one,                        &
-                     g_bjca,                     & ! g_a_bjc
-                     (wf%n_o)*(wf%n_v)**2,       &
-                     c_bjck,                     & ! c_bjc_i
-                     (wf%n_o)*(wf%n_v)**2,       &
-                     one,                        &
-                     sigma_ai(batch_a%first, 1), &
-                     wf%n_v)
+      enddo
 !
-         call mem%dealloc(g_bjca, wf%n_v, wf%n_o, wf%n_v, batch_a%length)
-!
-      enddo ! batch_a
+      call mem%dealloc(L_J_vv, wf%eri%n_J, wf%n_v, batch_a%max_length)
 !
       call mem%batch_finalize()
+!
+      call mem%dealloc(W_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
 !
 !     :: Term 2: sigma_ai =+ sum_bjc c_akbj g_bjik = sum_bjc c_akbj (g_ikbj)^T
 !
