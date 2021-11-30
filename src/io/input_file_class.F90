@@ -227,26 +227,15 @@ contains
 !
 !     Set method section
 !
-      this%rf_wfs = [character(len=30) :: 'hf','uhf','mlhf']
-!
-      this%cc_wfs = [character(len=30) ::   &
-                           'ccs',               &
-                           'mp2',               &
-                           'cc2',               &
-                           'lowmem-cc2',        &
-                           'ccsd',              &
-                           'cc3',               &
-                           'ccsd(t)',           &
-                           'mlcc2',             &
-                           'mlccsd']
-!
       method%name_    = 'method'
       method%required = .false.
 !
       this%rf_wfs = [character(len=30) :: &
                         'hf',  &
                         'uhf', &
-                        'mlhf']
+                        'mlhf',&
+                        'cuhf', &
+                        'rohf']
 !
       this%cc_wfs = [character(len=30) :: &
                         'ccs',                &
@@ -467,6 +456,7 @@ contains
                             'one-electron integral cutoff', &
                             'print orbitals',               &
                             'restart',                      &
+                            'rohf coupling parameters',     &
                             'skip',                         &
                             'storage',                      &
                             'write molden']

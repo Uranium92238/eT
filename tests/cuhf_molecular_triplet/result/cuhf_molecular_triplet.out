@@ -1,0 +1,206 @@
+
+
+
+                     eT 1.5 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
+   A. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.5.0 Furia (development)
+  ------------------------------------------------------------
+  Configuration date: 2021-10-29 09:08:10 UTC +02:00
+  Git branch:         cuhf-new-new
+  Git hash:           38de6a8dd84be43cf4032a3e02487c7346e26339
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-10-29 09:13:00 UTC +02:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: O2
+        charge: 0
+        multiplicity: 3
+     end system
+
+     method
+        cuhf
+     end method
+
+     memory
+        available: 8
+     end memory
+
+     solver scf
+        algorithm:          scf-diis
+        energy threshold:   1.0d-12
+        gradient threshold: 1.0d-12
+     end solver scf
+
+     do
+        ground state
+     end do
+
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: CUHF wavefunction
+  =======================
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  O     0.000000000000     0.000000000000     0.000000000000        1
+        2  O     0.000000000000     0.000000000000     1.208000000000        2
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  O     0.000000000000     0.000000000000     0.000000000000        1
+        2  O     0.000000000000     0.000000000000     2.282789158475        2
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               28
+     Number of orthonormal atomic orbitals:   28
+
+  - Molecular orbital details:
+
+     Number of alpha electrons:               9
+     Number of beta electrons:                7
+     Number of virtual alpha orbitals:       19
+     Number of virtual beta orbitals:        21
+     Number of molecular orbitals:           28
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a CUHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:              -149.807063350854
+     Number of electrons in guess:           16.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-17
+     Exchange screening threshold:   0.1000E-15
+     ERI cutoff:                     0.1000E-17
+     One-electron integral  cutoff:  0.1000E-22
+     Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-11
+     Energy threshold:              0.1000E-11
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1          -149.589618401230     0.3103E-01     0.1496E+03
+     2          -149.606236838358     0.7431E-02     0.1662E-01
+     3          -149.608005598348     0.9545E-03     0.1769E-02
+     4          -149.607984653333     0.1260E-03     0.2095E-04
+     5          -149.607987078031     0.2288E-04     0.2425E-05
+     6          -149.607986658183     0.2929E-05     0.4198E-06
+     7          -149.607986598273     0.2188E-06     0.5991E-07
+     8          -149.607986594229     0.1293E-07     0.4043E-08
+     9          -149.607986594666     0.9862E-09     0.4370E-09
+    10          -149.607986594647     0.1629E-09     0.1967E-10
+    11          -149.607986594647     0.1248E-10     0.3979E-12
+    12          -149.607986594647     0.4762E-12     0.2274E-12
+  ---------------------------------------------------------------
+  Convergence criterion met in 12 iterations!
+
+  - Summary of CUHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap (alpha):          0.959378708598
+     HOMO-LUMO gap (beta):           0.681470871175
+     Nuclear repulsion energy:      28.035878724238
+     Electronic energy:           -177.643865318886
+     Total energy:                -149.607986594647
+
+  - CUHF wavefunction spin expectation values:
+
+     Sz:                   1.00000000
+     Sz(Sz + 1):           2.00000000
+     S^2:                  2.00000000
+     Spin contamination:   0.00000000
+
+  - Timings for the CUHF ground state calculation
+
+     Total wall time (sec):              1.09300
+     Total cpu time (sec):               2.08151
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 287.160 KB
+
+  Total wall time in eT (sec):              1.12700
+  Total cpu time in eT (sec):               2.11595
+
+  Calculation ended: 2021-10-29 09:13:02 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+
+  eT terminated successfully!

@@ -36,6 +36,8 @@ program eT_program
    use hf_class,     only: hf
    use uhf_class,    only: uhf
    use mlhf_class,   only: mlhf
+   use cuhf_class,   only: cuhf
+   use rohf_class,   only: rohf
 !
    use omp_lib
 !
@@ -236,9 +238,11 @@ subroutine reference_calculation(ref_wf)
    use hf_geoopt_engine_class, only: hf_geoopt_engine
    use tdhf_engine_class,     only: tdhf_engine
 !
-   use hf_class, only: hf
-   use uhf_class, only: uhf
+   use hf_class,   only: hf
+   use uhf_class,  only: uhf
    use mlhf_class, only: mlhf
+   use cuhf_class, only: cuhf
+   use rohf_class, only: rohf
 !
    implicit none
 !
@@ -257,6 +261,14 @@ subroutine reference_calculation(ref_wf)
    elseif (trim(ref_wf_name) == 'uhf') then
 !
       ref_wf = uhf()
+!
+   elseif (trim(ref_wf_name) == 'cuhf') then
+!
+      ref_wf = cuhf()
+!
+   elseif (trim(ref_wf_name) == 'rohf') then
+!
+      ref_wf = rohf()
 !
    elseif (trim(ref_wf_name) == 'mlhf') then
 !

@@ -17,10 +17,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (uhf_class) ao_fock 
+submodule (uhf_class) ao_fock
 !
 !!
-!!    AO Fock submodule 
+!!    AO Fock submodule
 !!
 !!    Collects the routines used in the construction of the AO Fock matrix.
 !!
@@ -83,7 +83,7 @@ contains
 !!
 !!    Update Fock and energy
 !!    Written by Eirik F. Kjønstad, Sep 2018
-!!    Modified for QM/MM by Tommaso Giovannini, July 2019 
+!!    Modified for QM/MM by Tommaso Giovannini, July 2019
 !!
 !!    This routine guides the construction of the Fock matrix (or matrices for
 !!    unrestricted wavefunctions) from the current AO density (or densities).
@@ -93,7 +93,7 @@ contains
       implicit none
 !
       class(uhf), intent(inout) :: wf
-!      
+!
       real(dp), dimension(:,:), allocatable :: h
       real(dp), dimension(:,:), allocatable :: h_wx_eff
 !
@@ -116,7 +116,7 @@ contains
                                        wf%ao_density_b,  &
                                        h_wx_eff, cumulative=.false.)
 !
-         call mem%dealloc(h_wx_eff, wf%ao%n, wf%ao%n) 
+         call mem%dealloc(h_wx_eff, wf%ao%n, wf%ao%n)
 !
       else
 !
@@ -125,7 +125,7 @@ contains
                                         wf%ao_density_b, &
                                         h, cumulative=.false.)
 !
-      endif    
+      endif
 !
       call mem%dealloc(h, wf%ao%n, wf%ao%n)
 !
@@ -150,16 +150,16 @@ contains
 !
           call wf%update_fock_and_energy_non_cumulative()
 !
-      else 
-!      
+      else
+!
          if (wf%embedded) then
-!         
+!
             call wf%update_fock_and_energy_non_cumulative()
-!            
-         else 
-!         
+!
+         else
+!
             call wf%update_fock_and_energy_cumulative(wf%previous_ao_density)
-!         
+!
          endif
 !
       endif
@@ -207,7 +207,7 @@ contains
 !
       real(dp) :: max_D_schwarz, max_eri_schwarz
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('AO Fock construction', 'normal')
       call timer%turn_on()

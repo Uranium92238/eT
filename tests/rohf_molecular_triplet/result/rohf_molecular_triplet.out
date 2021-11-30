@@ -1,0 +1,220 @@
+
+
+
+                     eT 1.5 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.5.0 Furia (development)
+  ------------------------------------------------------------
+  Configuration date: 2021-11-26 17:05:26 UTC +01:00
+  Git branch:         rohf-canonicalization
+  Git hash:           db315a5333dd3f09f5acc98eaaf894575b7f25ae
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-11-26 17:14:57 UTC +01:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: H2OHe
+        charge: 0
+        multiplicity: 3
+     end system
+
+     method
+        rohf
+     end method
+
+     memory
+        available: 8
+     end memory
+
+     solver scf
+        algorithm:          scf-diis
+        energy threshold:   1.0d-12
+        gradient threshold: 1.0d-12
+        print orbitals
+     end solver scf
+
+     do
+        ground state
+     end do
+
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+  Warning: ROHF orbital energies are not uniquely defined,  and may not 
+           fulfill Koopmans theorem
+
+
+  :: ROHF wavefunction
+  =======================
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  H    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  H    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
+
+  - Molecular orbital details:
+
+     Number of alpha electrons:               6
+     Number of beta electrons:                4
+     Number of virtual alpha orbitals:       18
+     Number of virtual beta orbitals:        20
+     Number of molecular orbitals:           24
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a ROHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:               -75.972387078118
+     Number of electrons in guess:           10.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-17
+     Exchange screening threshold:   0.1000E-15
+     ERI cutoff:                     0.1000E-17
+     One-electron integral  cutoff:  0.1000E-22
+     Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-11
+     Energy threshold:              0.1000E-11
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -75.777822929320     0.4115E-01     0.7578E+02
+     2           -75.795130016623     0.9067E-02     0.1731E-01
+     3           -75.796612652343     0.4737E-02     0.1483E-02
+     4           -75.796900621993     0.1378E-02     0.2880E-03
+     5           -75.796963578864     0.2946E-03     0.6296E-04
+     6           -75.796965390143     0.6203E-04     0.1811E-05
+     7           -75.796964949737     0.1699E-04     0.4404E-06
+     8           -75.796964978404     0.1725E-05     0.2867E-07
+     9           -75.796964999997     0.1349E-06     0.2159E-07
+    10           -75.796964997003     0.3836E-07     0.2994E-08
+    11           -75.796964997728     0.5910E-08     0.7240E-09
+    12           -75.796964997733     0.1526E-08     0.5116E-11
+    13           -75.796964997742     0.2078E-09     0.9237E-11
+    14           -75.796964997744     0.6746E-10     0.2430E-11
+    15           -75.796964997745     0.1812E-10     0.3837E-12
+    16           -75.796964997745     0.3470E-11     0.2842E-12
+    17           -75.796964997745     0.1359E-11     0.2842E-13
+    18           -75.796964997745     0.1795E-12     0.2842E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 18 iterations!
+
+  - Summary of ROHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap (alpha):          0.324576137677
+     HOMO-LUMO gap (beta):           0.696066352054
+     Nuclear repulsion energy:       8.002366974166
+     Electronic energy:            -83.799331971911
+     Total energy:                 -75.796964997745
+
+  - ROHF wavefunction spin expectation values:
+
+     Sz:                   1.00000000
+     Sz(Sz + 1):           2.00000000
+     S^2:                  2.00000000
+     Spin contamination:   0.00000000
+
+  - Timings for the ROHF ground state calculation
+
+     Total wall time (sec):              0.80200
+     Total cpu time (sec):               1.41355
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 211.896 KB
+
+  :: There was 1 warning during the execution of eT. ::
+
+  Total wall time in eT (sec):              0.83500
+  Total cpu time in eT (sec):               1.44665
+
+  Calculation ended: 2021-11-26 17:14:58 UTC +01:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+
+  eT terminated successfully!

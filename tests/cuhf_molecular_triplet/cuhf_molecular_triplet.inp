@@ -1,0 +1,29 @@
+system
+   name: O2
+   charge: 0
+   multiplicity: 3
+end system
+
+method
+   cuhf
+end method
+
+memory
+   available: 8
+end memory
+
+solver scf
+   algorithm:          scf-diis
+   energy threshold:   1.0d-12
+   gradient threshold: 1.0d-12
+end solver scf
+
+do
+   ground state
+end do
+
+geometry
+basis: cc-pVDZ
+O 0.00000 0.000000 0.00000
+O 0.00000 0.000000 1.20800
+end geometry

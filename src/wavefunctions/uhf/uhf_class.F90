@@ -138,10 +138,12 @@ module uhf_class
 !
       procedure :: get_F                                 => get_F_uhf
       procedure :: set_C_and_e                           => set_C_and_e_uhf
-      procedure :: construct_initial_idempotent_density  => construct_initial_idempotent_density_uhf
+      procedure :: diagonalize_fock  => diagonalize_fock_uhf
       procedure :: print_energy                          => print_energy_uhf
       procedure :: get_spin_contamination                => get_spin_contamination_uhf
       procedure :: get_exact_s2                          => get_exact_s2_uhf
+      procedure :: construct_natural_occupation_number_basis &
+                => construct_natural_occupation_number_basis_uhf
 !
    end type uhf
 !
@@ -947,7 +949,7 @@ contains
    end subroutine set_C_and_e_uhf
 !
 !
-   subroutine construct_initial_idempotent_density_uhf(wf)
+   subroutine diagonalize_fock_uhf(wf)
 !!
 !!    Construct initial idempotent density
 !!    Written by Sarai D. Folkestad
@@ -986,7 +988,7 @@ contains
 !
       call wf%update_ao_density()
 !
-   end subroutine construct_initial_idempotent_density_uhf
+   end subroutine diagonalize_fock_uhf
 !
 !
    function get_spin_contamination_uhf(wf) result(spin_contamination)
@@ -1121,6 +1123,80 @@ contains
                          reals=[contamination], fs='(t6,a)')
 !
    end subroutine print_spin_uhf
+!
+!
+   subroutine construct_natural_occupation_number_basis_uhf(wf, C_NO, occupations)
+!!
+!!    Construct natural occupation number basis
+!!    Written by Sarai D. Folkestad, 2020
+!!
+!!    Finds the orbital basis that diagonalises the idempotent
+!!    charge density matrix
+!!    (see for instance Pulay and Hammilton, J. Chem. Phys. 88, 4926 (1988))
+!!
+!!    Solves
+!!
+!!       DSC = Ce
+!!
+!!    using S = PL(PL)^T
+!!
+!!    Returns the NO basis (C_NO) and the
+!!    occupation numbers.
+!!
+!
+      use array_utilities, only: copy_and_scale
+      use array_utilities, only: symmetric_sandwich
+!
+      implicit none
+!
+      class(uhf) :: wf
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(out) :: C_NO
+      real(dp), dimension(wf%n_mo),          intent(out) :: occupations
+!
+      real(dp), dimension(:), allocatable :: work
+      real(dp), dimension(:,:), allocatable :: D, PL, X
+      integer :: info
+!
+      call mem%alloc(PL, wf%ao%n, wf%n_mo)
+!
+      call dgemm('n', 'n',                   &
+                  wf%ao%n, wf%n_mo, wf%n_mo, &
+                  one,                       &
+                  wf%ao%P, wf%ao%n,          &
+                  wf%ao%L, wf%n_mo,          &
+                  zero,                      &
+                  PL, wf%ao%n)
+!
+      call mem%alloc(X, wf%ao%n, wf%ao%n)
+      call copy_and_scale(half, wf%ao_density, X, wf%ao%n**2)
+!
+      call mem%alloc(D, wf%ao%n, wf%ao%n)
+      call symmetric_sandwich(D, X, PL, wf%ao%n, wf%n_mo)
+!
+      call mem%dealloc(X, wf%ao%n, wf%ao%n)
+      call mem%dealloc(PL, wf%ao%n, wf%n_mo)
+!
+      call dscal(wf%ao%n**2, -one, D, 1) ! Scale to get eigenvalues in convenient order
+!
+      call mem%alloc(work, 3*wf%n_mo)
+!
+      call dsyev( 'v',          &
+                  'l',          &
+                  wf%n_mo,      &
+                  D,            &
+                  wf%n_mo,      &
+                  occupations,  &
+                  work,         &
+                  3*wf%n_mo,    &
+                  info)
+!
+      call mem%dealloc(work, 3*wf%n_mo)
+      call dscal(wf%n_mo, -one, occupations, 1) ! Scale back eigenvalues
+!
+      call wf%set_orbital_coefficients_from_orthonormal_ao_C(D, C_NO)
+      call mem%dealloc(D, wf%ao%n, wf%ao%n)
+!
+   end subroutine construct_natural_occupation_number_basis_uhf
 !
 !
 end module uhf_class
