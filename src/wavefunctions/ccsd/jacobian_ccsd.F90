@@ -1359,9 +1359,8 @@ contains
 !!    Jacobian CCSD I2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
-!!    rho_aibj^I2 =  sum_c F_bc * c_ai,cj - sum_k F_jk * c_ai,bk
-!!                   + sum_ck L_bj,kc * c_ai,ck
-!!                   - sum_ck ( g_kc,bj * c_ak,ci + g_ki,bc * c_ak,cj )
+!!    rho_aibj^I2 = sum_ck L_bj,kc * c_ai,ck
+!!                - sum_ck ( g_kc,bj * c_ak,ci + g_ki,bc * c_ak,cj )
 !!
       implicit none
 !
@@ -1383,40 +1382,6 @@ contains
 !
       timer = timings('Jacobian CCSD I2 transformation', pl='verbose')
       call timer%turn_on()
-!
-!     :: sum_c F_bc c_ai,cj ::
-!
-!     rho_bjai =+ F_bc c_cjai
-!
-      call dgemm('N','N',                 &
-                  wf%n_v,                 &
-                  (wf%n_v)*(wf%n_o)**2,   &
-                  wf%n_v,                 &
-                  one,                    &
-                  wf%fock_ab,             & ! F_b,c
-                  wf%n_v,                 &
-                  c_aibj,                 & ! c_c,jai
-                  wf%n_v,                 &
-                  one,                    &
-                  rho_aibj,               & ! rho_b,jai -> will be (ai,bj)-symmetrized
-                  wf%n_v)
-!
-!     :: - sum_k F_jk * c_aibk  ::
-!
-!     rho_aibj += - sum_k F_jk * c_aibk = - sum_k c_aibk F_ij(k,j)^T
-!
-      call dgemm('N', 'N',                &
-                  (wf%n_o)*((wf%n_v)**2), &
-                  wf%n_o,                 &
-                  wf%n_o,                 &
-                  -one,                   &
-                  c_aibj,                 & ! c_aib_k
-                  (wf%n_o)*((wf%n_v)**2), &
-                  wf%fock_ij,             & ! F_k_j
-                  wf%n_o,                 &
-                  one,                    &
-                  rho_aibj,               & ! rho_aib_j
-                  (wf%n_o)*((wf%n_v)**2))
 !
 !     rho_aibj =+ c_aick L_bjkc = c_aick L_ck,bj
 !

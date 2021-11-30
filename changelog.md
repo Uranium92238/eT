@@ -19,11 +19,12 @@
 - Merged the `abstract_convergence_tool` and the `convergence_tool` classes. eT-program/eT!909
 - SAD handled in the sad\_tool\_class. eT-program/eT!926
 - Removed unused routines in reordering. eT-program/eT!939
+- Moved a Fock matrix term from CCSD Jacobian into doubles Jacobian. eT-program/eT!949
 
 ### Optimization
 - One-electron and effective contributions to the CC-Fock matrix are now calculated once instead of multiple times per Fock construction. eT-program/eT!925
 - Removed an unnecessary non-iterative o3v3 term (the G2-2 intermediate) as well as an iterative o3v3 term in CCSD Jacobian transpose G2. eT-program/eT!946
-- Removed two o3v3 terms and an unnecessary g_ovvv construction in CCSD Jacobian transpose G1. eT-program/eT!944
+- Removed two o3v3 terms and an unnecessary g\_ovvv construction in CCSD Jacobian transpose G1. eT-program/eT!944
 - Removed an o3v3 term in CCSD Jacobian transpose B2. eT-program/eT!945
 - Removed an unnecessary o3v3 term in CCSD Jacobian transpose C2. eT-program/eT!946
 - Removed an o3v3 term in Jacobian CCSD D2 and reduced integral costs in the term. eT-program/eT!951

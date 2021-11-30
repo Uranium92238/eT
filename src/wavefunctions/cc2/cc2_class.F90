@@ -49,8 +49,8 @@ module cc2_class
 !
       procedure :: prepare_for_jacobian                        => prepare_for_jacobian_cc2
 !
-      procedure :: jacobian_transformation                     => jacobian_transformation_cc2
-      procedure :: jacobian_cc2_b2                             => jacobian_cc2_b2_cc2
+      procedure, private :: jacobian_doubles_b2 &
+                         => jacobian_doubles_b2_cc2 
 !
 !     Jacobian transpose
 !

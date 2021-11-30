@@ -83,6 +83,7 @@ module doubles_class
       procedure, private :: jacobian_doubles_c1
       procedure, private :: jacobian_doubles_d1
       procedure, private :: jacobian_doubles_a2
+      procedure, private :: jacobian_doubles_b2
 !
       procedure, private :: save_jacobian_a1_intermediates
 !

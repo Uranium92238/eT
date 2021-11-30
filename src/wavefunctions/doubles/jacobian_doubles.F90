@@ -103,14 +103,15 @@ contains
       call wf%jacobian_doubles_c1(rho(1 : wf%n_t1), c_aibj)
       call wf%jacobian_doubles_d1(rho(1 : wf%n_t1), c_aibj)
 !
-      call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
 !     Contributions to transformed doubles
 !
       call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(rho_aibj, wf%n_t1**2)
 !
       call wf%jacobian_doubles_a2(rho_aibj, c(1 : wf%n_t1))
+      call wf%jacobian_doubles_b2(rho_aibj, c_aibj)
+!
+      call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call scale_diagonal(half, rho_aibj, wf%n_t1)
 !
@@ -723,6 +724,57 @@ contains
       call timer%turn_off()
 !
    end subroutine jacobian_doubles_a2
+!
+!
+   module subroutine jacobian_doubles_b2(wf, rho_aibj, c_aibj)
+!!
+!!    Jacobian doubles B2
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018 & 2021
+!!
+!!    rho_aibj^B2 =  sum_c F_bc * c_ai,cj - sum_k F_jk * c_ai,bk
+!!
+      implicit none 
+!
+      class(doubles), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)    :: c_aibj  
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: rho_aibj  
+!
+!     :: sum_c F_bc c_ai,cj ::
+!
+!     rho_bjai =+ F_bc c_cjai
+!
+      call dgemm('N','N',                 &
+                  wf%n_v,                 &
+                  (wf%n_v)*(wf%n_o)**2,   &
+                  wf%n_v,                 &
+                  one,                    &
+                  wf%fock_ab,             & ! F_b,c
+                  wf%n_v,                 &
+                  c_aibj,                 & ! c_c,jai
+                  wf%n_v,                 &
+                  one,                    &
+                  rho_aibj,               & ! rho_b,jai -> will be (ai,bj)-symmetrized
+                  wf%n_v)
+!
+!     :: - sum_k F_jk * c_aibk  ::
+!
+!     rho_aibj += - sum_k F_jk * c_aibk = - sum_k c_aibk F_ij(k,j)^T
+!
+      call dgemm('N', 'N',                &
+                  (wf%n_o)*((wf%n_v)**2), &
+                  wf%n_o,                 &
+                  wf%n_o,                 &
+                  -one,                   &
+                  c_aibj,                 & ! c_aib_k
+                  (wf%n_o)*((wf%n_v)**2), &
+                  wf%fock_ij,             & ! F_k_j
+                  wf%n_o,                 &
+                  one,                    &
+                  rho_aibj,               & ! rho_aib_j
+                  (wf%n_o)*((wf%n_v)**2))
+!
+   end subroutine jacobian_doubles_b2 
 !
 !
 end submodule jacobian_doubles
