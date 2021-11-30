@@ -326,7 +326,7 @@ contains
       implicit none
 
       class(general_linear_davidson), intent(in) :: this
-      logical, dimension(this%n_solutions), intent(out) :: converged
+      logical, dimension(this%n_solutions), intent(in) :: converged
       integer, intent(in) :: iteration
 !
       if (.not. all(converged)) then
