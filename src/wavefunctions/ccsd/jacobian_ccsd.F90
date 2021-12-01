@@ -63,7 +63,7 @@ contains
       call wf%save_jacobian_d2_intermediate()
       call wf%save_jacobian_e2_intermediate()
       call wf%save_jacobian_g2_intermediates()
-      call wf%save_jacobian_h2_intermediates()
+      call wf%save_jacobian_h2_intermediate()
       call wf%save_jacobian_j2_intermediate()
 !
       call prep_timer%turn_off()
@@ -1281,10 +1281,13 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: c_ldbj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: Y_aild
       real(dp), dimension(:,:,:,:), allocatable :: Y_ajkd
 !
       real(dp), dimension(:,:,:,:), allocatable :: rho_ajbi
+!
+      real(dp), dimension(:,:,:,:), allocatable :: t_vovo, t_aikc
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_ov, V_J_vo, W_J_vo
 !
       type(timings), allocatable :: timer
 !
@@ -1292,30 +1295,80 @@ contains
       call timer%turn_on()
 !
 !     Term 1: Y_aild c_bldj
+!  
+!     t_ciak g_kcld c_bldj
+!     = (L_kc^J t_ciak) (L_ld^J c_bldj)
+!     = W_ai^J V_bj^J
 !
-      call mem%alloc(Y_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call mem%alloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
+      call wf%eri%get_cholesky_t1(L_J_ov, &
+                                  1, wf%n_o, &
+                                  wf%n_o + 1, wf%n_mo)
 !
-      call wf%jacobian_h2_intermediate_voov_1%open_('read', 'rewind')
-      call wf%jacobian_h2_intermediate_voov_1%read_(Y_aild, wf%n_t1**2)
-      call wf%jacobian_h2_intermediate_voov_1%close_('keep')
+!     t_ciak -> t_aikc
+!
+      call mem%alloc(t_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_vovo, wf%n_t1)
+!
+      call mem%alloc(t_aikc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_3241(t_vovo, t_aikc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(t_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(W_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'T',          &
+                  wf%eri%n_J,       &
+                  wf%n_v * wf%n_o,  &
+                  wf%n_v * wf%n_o,  &
+                  one,              &
+                  L_J_ov,           & ! L_J,kc
+                  wf%eri%n_J,       &
+                  t_aikc,           &
+                  wf%n_v * wf%n_o,  &
+                  zero,             &
+                  W_J_vo,           &
+                  wf%eri%n_J)
+!
+      call mem%dealloc(t_aikc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     c_bldj -> c_ldbj
 !
       call mem%alloc(c_ldbj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
       call sort_1234_to_2314(c_aibj, c_ldbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call dgemm('N', 'N', &
-                  wf%n_v*wf%n_o, &
-                  wf%n_v*wf%n_o, &
-                  wf%n_v*wf%n_o, &
-                  one,           &
-                  Y_aild,        &
-                  wf%n_v*wf%n_o, &
-                  c_ldbj,        &
-                  wf%n_v*wf%n_o, &
-                  one,           &
-                  rho_aibj,      &
-                  wf%n_v*wf%n_o)
+      call mem%alloc(V_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(Y_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call dgemm('N', 'N',          &
+                  wf%eri%n_J,       &
+                  wf%n_v * wf%n_o,  &
+                  wf%n_v * wf%n_o,  &
+                  one,              &
+                  L_J_ov,           & ! L_J,ld
+                  wf%eri%n_J,       &
+                  c_ldbj,           &
+                  wf%n_v * wf%n_o,  &
+                  zero,             &
+                  V_J_vo,           &
+                  wf%eri%n_J)
+!
+      call mem%dealloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
+!
+      call dgemm('T', 'N',          &
+                  wf%n_v * wf%n_o,  &
+                  wf%n_v * wf%n_o,  &
+                  wf%eri%n_J,       &
+                  one,              &
+                  W_J_vo,           &
+                  wf%eri%n_J,       &
+                  V_J_vo,           &
+                  wf%eri%n_J,       &
+                  one,              &
+                  rho_aibj,         &
+                  wf%n_v * wf%n_o)  
+!
+      call mem%dealloc(V_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+      call mem%dealloc(W_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
 !
 !     Term 2: Y_ajkd c_bkdi
 !
@@ -1323,9 +1376,9 @@ contains
 !
       call mem%alloc(Y_ajkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call wf%jacobian_h2_intermediate_voov_2%open_('read', 'rewind')
-      call wf%jacobian_h2_intermediate_voov_2%read_(Y_ajkd, wf%n_t1**2)
-      call wf%jacobian_h2_intermediate_voov_2%close_('keep')
+      call wf%jacobian_h2_intermediate%open_('read', 'rewind')
+      call wf%jacobian_h2_intermediate%read_(Y_ajkd, wf%n_t1**2)
+      call wf%jacobian_h2_intermediate%close_('keep')
 !
       call mem%alloc(rho_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -2081,22 +2134,18 @@ contains
    end subroutine save_jacobian_g2_intermediates
 !
 !
-   module subroutine save_jacobian_h2_intermediates(wf)
+   module subroutine save_jacobian_h2_intermediate(wf)
 !!
 !!    Save jacobian h2 intermediates
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2019
 !!
 !!    Constructs the intermediates
 !!
-!!       Y_aild = t_ciak g_kcld
 !!       Y_ajkd = t_cjal g_kcld
 !!
-!!    The intermediates are stored in the files:
+!!    The intermediate is stored in the file
 !!
-!!       jacobian_h2_intermediate_voov_1
-!!       jacobian_h2_intermediate_voov_2
-!!
-!!    which are wavefunction variables
+!!       jacobian_h2_intermediate_voov
 !!
       implicit none
 !
@@ -2106,49 +2155,19 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_kcld
       real(dp), dimension(:,:,:,:), allocatable :: g_lckd
-      real(dp), dimension(:,:,:,:), allocatable :: t_aikc
-      real(dp), dimension(:,:,:,:), allocatable :: Y_aild
+      real(dp), dimension(:,:,:,:), allocatable :: t_ajcl
       real(dp), dimension(:,:,:,:), allocatable :: Y_ajkd
 
       timer = timings('Jacobian CCSD H2 intermediate construction', pl='verbose')
       call timer%turn_on()
 !
-      call mem%alloc(t_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-      call squareup_and_sort_1234_to_1423(wf%t2, t_aikc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     Y_ajkd = t_alcj g_kcld
 !
       call mem%alloc(g_kcld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%eri%get_eri_t1('ovov', g_kcld)
 !
-!     Y_aild = t_ciak g_kcld
-!
-      call mem%alloc(Y_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-      call dgemm('N', 'N', &
-                  wf%n_v*wf%n_o, &
-                  wf%n_v*wf%n_o, &
-                  wf%n_v*wf%n_o, &
-                  one,           &
-                  t_aikc,        &
-                  wf%n_v*wf%n_o, &
-                  g_kcld,        &
-                  wf%n_v*wf%n_o, &
-                  zero,          &
-                  Y_aild,        &
-                  wf%n_v*wf%n_o)
-!
-      wf%jacobian_h2_intermediate_voov_1 = sequential_file('jacobian_h2_intermediate_voov_1_ccsd')
-      call wf%jacobian_h2_intermediate_voov_1%open_('write', 'rewind')
-!
-      call wf%jacobian_h2_intermediate_voov_1%write_(Y_aild, wf%n_t1**2)
-!
-      call mem%dealloc(Y_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-      call wf%jacobian_h2_intermediate_voov_1%close_('keep')
-!
-!     Y_ajkd = t_alcj g_kcld
-!
-!     Note: pretend that t_aikc is t_ajcl
+      call mem%alloc(t_ajcl, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call squareup_and_sort_1234_to_1423(wf%t2, t_ajcl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(g_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call sort_1234_to_1432(g_kcld, g_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -2161,7 +2180,7 @@ contains
                   wf%n_v*wf%n_o, &
                   wf%n_v*wf%n_o, &
                   one,           &
-                  t_aikc,        & ! t_ajlc
+                  t_ajcl,        & 
                   wf%n_v*wf%n_o, &
                   g_lckd,        &
                   wf%n_v*wf%n_o, &
@@ -2170,20 +2189,20 @@ contains
                   wf%n_v*wf%n_o)
 !
       call mem%dealloc(g_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call mem%dealloc(t_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(t_ajcl, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      wf%jacobian_h2_intermediate_voov_2 = sequential_file('jacobian_h2_intermediate_voov_2_ccsd')
-      call wf%jacobian_h2_intermediate_voov_2%open_('write', 'rewind')
+      wf%jacobian_h2_intermediate = sequential_file('jacobian_h2_intermediate_ccsd')
+      call wf%jacobian_h2_intermediate%open_('write', 'rewind')
 !
-      call wf%jacobian_h2_intermediate_voov_2%write_(Y_ajkd, wf%n_t1**2)
+      call wf%jacobian_h2_intermediate%write_(Y_ajkd, wf%n_t1**2)
 !
       call mem%dealloc(Y_ajkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call wf%jacobian_h2_intermediate_voov_2%close_('keep')
+      call wf%jacobian_h2_intermediate%close_('keep')
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_h2_intermediates
+   end subroutine save_jacobian_h2_intermediate
 !
 !
    module subroutine save_jacobian_j2_intermediate(wf)

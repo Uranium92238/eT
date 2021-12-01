@@ -29,6 +29,7 @@
 - Removed an unnecessary o3v3 term in CCSD Jacobian transpose C2. eT-program/eT!946
 - Removed an o3v3 term in Jacobian CCSD D2 and reduced integral costs in the term. eT-program/eT!951
 - Replaced an o1v3nJ by an o2v2nJ contraction in Jacobian transpose doubles B1. eT-program/eT!948 
+- Removed an iterative and a non-iterative o3v3 term in CCSD Jacobian H2. eT-program/eT!958
 
 # eT v1.4.4
 ### Bugfixes

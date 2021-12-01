@@ -38,8 +38,7 @@ module ccsd_class
       type(sequential_file), private :: jacobian_d2_intermediate
       type(sequential_file), private :: jacobian_e2_intermediate
       type(sequential_file), private :: jacobian_g2_intermediate_vovo
-      type(sequential_file), private :: jacobian_h2_intermediate_voov_1
-      type(sequential_file), private :: jacobian_h2_intermediate_voov_2
+      type(sequential_file), private :: jacobian_h2_intermediate
       type(sequential_file), private :: jacobian_j2_intermediate_oooo
 !
       type(sequential_file), private :: jacobian_transpose_d1_intermediate
@@ -126,7 +125,7 @@ module ccsd_class
       procedure, private :: save_jacobian_d2_intermediate
       procedure, private :: save_jacobian_e2_intermediate
       procedure, private :: save_jacobian_g2_intermediates
-      procedure, private :: save_jacobian_h2_intermediates
+      procedure, private :: save_jacobian_h2_intermediate
       procedure, private :: save_jacobian_j2_intermediate
 !
 !     Procedures related to Jacobian transpose transformation
