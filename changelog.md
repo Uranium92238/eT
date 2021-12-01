@@ -28,8 +28,10 @@
 - Removed an o3v3 term in CCSD Jacobian transpose B2. eT-program/eT!945
 - Removed an unnecessary o3v3 term in CCSD Jacobian transpose C2. eT-program/eT!946
 - Removed an o3v3 term in Jacobian CCSD D2 and reduced integral costs in the term. eT-program/eT!951
-- Replaced an o1v3nJ by an o2v2nJ contraction in Jacobian transpose doubles B1. eT-program/eT!948 
+- Replaced an o1v3nJ by an o2v2nJ contraction in Jacobian transpose doubles B1. eT-program/eT!948
 - Removed an iterative and a non-iterative o3v3 term in CCSD Jacobian H2. eT-program/eT!958
+- Pipeline runs every n-th test (n: number of threads) starting with test i (i: thread number). eT-program/eT!960
+- Reduced size of Lanczos test for valence states. eT-program/eT!960
 
 # eT v1.4.4
 ### Bugfixes
