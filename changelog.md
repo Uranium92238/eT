@@ -32,6 +32,7 @@
 - Removed an iterative and a non-iterative o3v3 term in CCSD Jacobian H2. eT-program/eT!958
 - Pipeline runs every n-th test (n: number of threads) starting with test i (i: thread number). eT-program/eT!960
 - Reduced size of Lanczos test for valence states. eT-program/eT!960
+- Removed an o3v3 term in CCSD Jacobian I2. eT-program/eT!959
 
 # eT v1.4.4
 ### Bugfixes
