@@ -21,7 +21,7 @@ cd libint-2.7.0-beta.6
 ```
 Compile:
 ```shell
-cmake . -DCMAKE_INSTALL_PREFIX=/where/you/want/to/install/libint/libint-2.7.0-beta.1 -DCMAKE_C_COMPILER=[C compiler] -DCMAKE_CXX_COMPILER=[C++ compiler] -DCMAKE_CXX_FLAGS=[C++ compiler flags]
+cmake . -DCMAKE_INSTALL_PREFIX=/where/you/want/to/install/libint/libint-2.7.0-beta.6 -DCMAKE_C_COMPILER=[C compiler] -DCMAKE_CXX_COMPILER=[C++ compiler] -DCMAKE_CXX_FLAGS=[C++ compiler flags]
 cmake --build .
 ```
 CMake will attempt to install Libint in the directory specified by `-DCMAKE_INSTALL_PREFIX`.
