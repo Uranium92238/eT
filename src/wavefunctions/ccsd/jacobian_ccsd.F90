@@ -1431,34 +1431,70 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_bjkc
       real(dp), dimension(:,:,:,:), allocatable :: g_bckj
 !
+      real(dp), dimension(:,:,:), allocatable :: L_J_ov, L_J_vo, W_J_vo
+!
       type(timings), allocatable :: timer
 !
       timer = timings('Jacobian CCSD I2 transformation', pl='verbose')
       call timer%turn_on()
+!
+!     rho_bjai =- g_bjkc c_akci = g_bj,kc c_kc,ai
+!
+!     L_bj^J L_kc^J c_kc,ai = L_bj^J W_ai^J
+!
+      call mem%alloc(c_kcai, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call sort_1234_to_2314(c_aibj, c_kcai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
+!
+      call wf%eri%get_cholesky_t1(L_J_ov,       &
+                                    1, wf%n_o,  &
+                                    wf%n_o + 1, wf%n_mo)
+!
+      call mem%alloc(W_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',             &
+                  wf%eri%n_J,          &
+                  wf%n_o * wf%n_v,     &
+                  wf%n_o * wf%n_v,     &
+                  one,                 &
+                  L_J_ov,              &
+                  wf%eri%n_J,          &
+                  c_kcai,              &
+                  wf%n_o * wf%n_v,     &
+                  zero,                &
+                  W_J_vo,              &
+                  wf%eri%n_J)
+!
+      call mem%dealloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
+!
+      call mem%alloc(L_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+      call wf%eri%get_cholesky_t1(L_J_vo,                &
+                                    wf%n_o + 1, wf%n_mo, &     
+                                    1, wf%n_o)
+!
+      call dgemm('T', 'N',             &
+                  wf%n_o * wf%n_v,     &
+                  wf%n_o * wf%n_v,     &
+                  wf%eri%n_J,          &
+                  -one,                &
+                  W_J_vo,              &
+                  wf%eri%n_J,          &
+                  L_J_vo,              &
+                  wf%eri%n_J,          &
+                  one,                 &
+                  rho_aibj,            & 
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(W_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+      call mem%dealloc(L_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
 !
 !     rho_aibj =+ c_aick L_bjkc = c_aick L_ck,bj
 !
       call mem%alloc(g_bjkc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call wf%eri%get_eri_t1('voov', g_bjkc)
-!
-!     rho_bjai =- g_bjkc c_akci = g_bj,kc c_kc,ai
-!
-      call mem%alloc(c_kcai, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-      call sort_1234_to_2314(c_aibj, c_kcai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call dgemm('N', 'N',             &
-                  (wf%n_o)*(wf%n_v),   &
-                  (wf%n_o)*(wf%n_v),   &
-                  (wf%n_o)*(wf%n_v),   &
-                  -one,                &
-                  g_bjkc,              &
-                  (wf%n_o)*(wf%n_v),   &
-                  c_kcai,              &
-                  (wf%n_o)*(wf%n_v),   &
-                  one,                 &
-                  rho_aibj,            & ! rho_bj,ai -> will be (ai,bj)-symmetrized
-                  (wf%n_o)*(wf%n_v))
 !
 !     Construct L_bjkc ordered as L_ckbj = 2 g_bjkc - g_bckj
 !
