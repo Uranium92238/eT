@@ -189,6 +189,7 @@ contains
 !     Set the two-electron part
 !
       call dcopy(wf%ao%n**2, wf%ao_G, 1, wf%ao_fock, 1)
+      call dscal(wf%ao%n**2, half, wf%ao_fock, 1)
 !
 !     Add the one-electron part
 !

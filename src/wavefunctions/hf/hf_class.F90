@@ -702,7 +702,7 @@ contains
    end subroutine construct_ao_density_hf
 !
 !
-   real(dp) function calculate_hf_energy_from_G_hf(wf, half_GD_wx, h_wx) result(hf_energy)
+   real(dp) function calculate_hf_energy_from_G_hf(wf, GD_wx, h_wx) result(hf_energy)
 !!
 !!    Calculate HF energy from G(D)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -731,13 +731,13 @@ contains
 !
       real(dp) :: ddot
 !
-      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: half_GD_wx
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: GD_wx
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: h_wx
 !
       hf_energy = zero
 !
       hf_energy = hf_energy + ddot((wf%ao%n)**2, h_wx, 1, wf%ao_density, 1)
-      hf_energy = hf_energy + half*ddot((wf%ao%n)**2, wf%ao_density, 1, half_GD_wx, 1)
+      hf_energy = hf_energy + quarter*ddot((wf%ao%n)**2, wf%ao_density, 1, GD_wx, 1)
 
    end function calculate_hf_energy_from_G_hf
 !
@@ -1132,7 +1132,7 @@ contains
          do q = 1, 3
 
            call symmetric_sum(G_wxqk(:,:,q,k), wf%ao%n)
-           call dscal(wf%ao%n**2, half, G_wxqk(:,:,q,k), 1)
+           call dscal(wf%ao%n**2, quarter, G_wxqk(:,:,q,k), 1)
 
          enddo
 
