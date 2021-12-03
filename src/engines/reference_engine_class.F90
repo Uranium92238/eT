@@ -283,6 +283,10 @@ contains
 !     Libint is overwritten by SAD. Re-initialize.
       call wf%ao%export_centers_to_libint()
 !
+!     Re-determine status of a file because SAD may have deleted it 
+!     (so the status must go from "old" -> "new")
+      call wf%orbital_file%determine_status() 
+!
    end subroutine generate_sad_density_reference_engine
 !
 !

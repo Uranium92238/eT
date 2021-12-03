@@ -128,8 +128,10 @@ set(eT_fortran_sources
    src/solver_tools/linear_storage_tool_class.F90
    src/solver_tools/cc_multipliers_linear_storage_tool_class.F90
 #
+   src/solver_tools/functions/function_class.F90
+   src/solver_tools/functions/hf_energy_function_class.F90
+#
    src/solvers/hf/scf_solver_class.F90
-   src/solvers/hf/bfgs_geoopt_hf_class.F90
    src/solvers/hf/accelerator_tool_class.F90
    src/solvers/hf/accelerator_factory_class.F90
    src/solvers/hf/null_accelerator_tool_class.F90
@@ -152,6 +154,7 @@ set(eT_fortran_sources
    src/solvers/tdcc/rk4_cc_propagation_class.F90
    src/solvers/tdcc/complex_fft_class.F90
    src/solvers/cc/asymmetric_lanczos_cc_es_class.F90
+   src/solvers/bfgs_solver_class.F90
 #
    src/solvers/general_eigen_davidson_solver_class.F90
    src/solvers/general_linear_davidson_solver_class.F90
@@ -181,6 +184,7 @@ set(eT_fortran_sources
    src/tools/maps/block_class.F90
    src/tools/orbitals/nto_tool_class.F90
    src/tools/orbitals/cnto_tool_class.F90
+   src/tools/redundant_internal_coords_class.F90
 #
    src/tools/citation_printer_class.F90
    src/tools/citation_class.F90

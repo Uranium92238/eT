@@ -30,8 +30,6 @@ module hf_geoopt_engine_class
    use hf_class,        only: hf
    use task_list_class, only: task_list
 !
-   use bfgs_geoopt_hf_class, only: bfgs_geoopt_hf
-!
    type, extends(reference_engine) :: hf_geoopt_engine
 !
    contains
@@ -69,7 +67,6 @@ contains
       engine%tag         = 'geometry optimization'
 !
       engine%algorithm        = 'bfgs'
-      engine%ao_density_guess = 'sad'
       engine%restart          = .false.
       engine%plot_orbitals    = .false.
       engine%plot_density     = .false.
@@ -90,12 +87,23 @@ contains
 !!    Run
 !!    Written by Eirik F. Kjønstad, 2019
 !!
+      use kinds
+      use hf_energy_function_class, only: hf_energy_function
+      use redundant_internal_coords_class, only: redundant_internal_coords
+      use bfgs_solver_class, only: bfgs_solver 
+!
       implicit none
 !
       class(hf_geoopt_engine), intent(in)    :: engine
       class(hf),               intent(inout) :: wf
 !
-      type(bfgs_geoopt_hf) :: bfgs_geoopt
+      type(hf_energy_function), allocatable :: energy_function 
+      type(redundant_internal_coords), allocatable :: internals
+!
+      class(bfgs_solver), allocatable :: solver 
+!
+      integer :: max_iterations
+      real(dp) :: max_step, energy_threshold, gradient_threshold
 !
       if (wf%ao%has_ghost_atoms()) &
          call output%warning_msg("Ghosts are experimental in geometry optimization.")
@@ -103,21 +111,40 @@ contains
       if (wf%embedded) &
          call output%error_msg('geometry optimization with embedding is not supported')
 !
-      if (.not. engine%restart .and. (trim(engine%ao_density_guess) == 'sad')) then
-!
-!        Generate SAD if requested
-!
-         call engine%generate_sad_density(wf)
-!
-      endif
-!
       if (trim(engine%algorithm) == 'bfgs') then
 !
          call engine%tasks%print_('optimize geometry')
 !
-         bfgs_geoopt = bfgs_geoopt_hf(engine%restart)
-         call bfgs_geoopt%run(wf)
-         call bfgs_geoopt%cleanup()
+         max_iterations = 100
+         call input%get_keyword('max iterations', 'solver scf geoopt', max_iterations)
+!
+         max_step = 0.5d0
+         call input%get_keyword('max step', 'solver scf geoopt', max_step)
+!
+         energy_threshold = 1.0d-6
+         call input%get_keyword('energy threshold', 'solver scf geoopt', energy_threshold)
+!
+         gradient_threshold = 3.0d-4
+         call input%get_keyword('gradient threshold', 'solver scf geoopt', gradient_threshold)
+!
+         energy_function = hf_energy_function(wf)
+!
+         internals = redundant_internal_coords(3*wf%n_atomic_centers)
+!
+         call wf%initialize_redundant_internal_coordinates(internals)
+!
+         solver = bfgs_solver(energy_function,     &
+                              internals,           &
+                              max_iterations,      &
+                              max_step,            &
+                              energy_threshold,    &
+                              gradient_threshold)
+!
+         call solver%initialize()
+         call solver%run()
+         call solver%finalize()
+!
+         deallocate(internals)
 !
       else
 !
