@@ -241,6 +241,7 @@ subroutine reference_calculation(ref_wf)
    use hf_class,   only: hf
    use uhf_class,  only: uhf
    use mlhf_class, only: mlhf
+   use qed_hf_class, only: qed_hf
    use cuhf_class, only: cuhf
    use rohf_class, only: rohf
 !
@@ -273,6 +274,10 @@ subroutine reference_calculation(ref_wf)
    elseif (trim(ref_wf_name) == 'mlhf') then
 !
       ref_wf = mlhf()
+!
+   elseif (trim(ref_wf_name) == 'qed-hf') then
+!
+      ref_wf = qed_hf()
 !
    else
 !

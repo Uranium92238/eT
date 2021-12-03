@@ -70,6 +70,7 @@ set(eT_fortran_sources
    src/molecule/ao_tool_class.F90
    src/molecule/periodic_table.F90
    src/molecule/shell_class.F90
+   src/molecule/qed_tool_class.F90
    src/molecule/ri_basis_class.F90
 #
    src/solver_tools/cholesky_array_list_class.F90
@@ -230,6 +231,8 @@ set(eT_fortran_sources
    src/wavefunctions/uhf/ao_fock_uhf.F90
 #
    src/wavefunctions/mlhf/mlhf_class.F90
+#
+   src/wavefunctions/qed_hf/qed_hf_class.F90
 #
    src/wavefunctions/mp2/mp2_class.F90
    src/wavefunctions/mp2/mean_value_mp2.F90

@@ -119,6 +119,11 @@ add_eT_runtest(mlhf_quadrupole                              "eT;short;mlhf;quadr
 add_eT_runtest(restart_mlhf                                 "eT;short;mlhf;sad;pao;restart")
 add_eT_runtest(mlhf_active_inactive_basis                   "eT;short;mlhf;basis")
 #
+add_eT_runtest(qed_hf_energy_polarization                   "eT;short;qed_hf")
+add_eT_runtest(qed_hf_energy_polarization_quadrupole        "eT;short;qed_hf")
+add_eT_runtest(qed_hf_energy_wavevector                     "eT;short;qed_hf")
+add_eT_runtest(qed_hf_energy_wavevector_modes               "eT;short;qed_hf")
+#
 add_eT_runtest(mp2_energy                                   "eT;short;hf;mp2")
 add_eT_runtest(mp2_energy_qmmmnopol                         "eT;short;hf;mp2;qmmm;mmnopol")
 add_eT_runtest(mp2_energy_qmfq                              "eT;short;hf;mp2;qmmm;fq")

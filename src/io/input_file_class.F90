@@ -215,6 +215,7 @@ contains
       type(section) :: global_print
       type(section) :: frozen_orbitals
       type(section) :: integrals
+      type(section) :: qed
       type(section) :: tdhf
 !
 !     Set input file name, access and format
@@ -231,10 +232,11 @@ contains
       method%required = .false.
 !
       this%rf_wfs = [character(len=30) :: &
-                        'hf',  &
-                        'uhf', &
-                        'mlhf',&
-                        'cuhf', &
+                        'hf',     &
+                        'uhf',    &
+                        'mlhf',   &
+                        'qed-hf', &
+                        'cuhf',   &
                         'rohf']
 !
       this%cc_wfs = [character(len=30) :: &
@@ -416,6 +418,22 @@ contains
                      'input',              &
                      'tesserae area',      &
                      'solver type']
+!
+! 
+      qed%name_    = 'qed'
+      qed%required = .false.
+      qed%keywords = [character(len=30) :: &
+                     'coherent state',     &
+                     'coupling bilinear',  &
+                     'coupling self',      &
+                     'coupling',           &
+                     'frequency',          &
+                     'hf coherent state',  &
+                     'modes',              &
+                     'photons',            &
+                     'polarization',       &
+                     'quadrupole oei',     &
+                     'wavevector']
 !
 !
       global_print%name_    = 'print'
@@ -635,6 +653,7 @@ contains
                        memory,                    &
                        method,                    &
                        pcm,                       &
+                       qed,                       &
                        solver_cholesky,           &
                        solver_cc_gs,              &
                        solver_cc_es,              &

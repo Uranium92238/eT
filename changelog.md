@@ -11,6 +11,7 @@
 - Convergence testing now with tolerance of +-1, to avoid fails due to numerics. eT-program/eT!938
 - Added CI pipeline that runs a simple program to parse the Fortran code and identify various code-issues. eT-program/eT!937
 - Added check for close lying/overlapping atoms. eT-program/eT!943
+- Added new reference method: QED Hartree-Fock (qed-hf). eT-program/eT!941
 - Added basis sets ccX-nZ basis sets. eT-program/eT!955
 - ROHF and CUHF. eT-program/eT!957
 - Cartesian BFGS geometry optimization solver (for Hartree-Fock theory) replaced by a more robust BFGS solver that uses redundant internal coordinates. eT-program/eT!918
