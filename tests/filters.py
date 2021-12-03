@@ -305,3 +305,20 @@ def get_polarizability_filter(tolerance):
     ]
 
     return f
+
+
+def get_geoopt_filter(tolerance):
+    """
+    Returns filter for geometry optimization
+    """
+    from runtest import get_filter
+
+    f = [
+        get_filter(
+            from_string="- Summary of geometry optimization:",
+            num_lines=15,
+            abs_tolerance=tolerance,
+        ),
+    ]
+
+    return f

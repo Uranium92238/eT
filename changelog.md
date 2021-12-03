@@ -13,6 +13,7 @@
 - Added check for close lying/overlapping atoms. eT-program/eT!943
 - Added basis sets ccX-nZ basis sets. eT-program/eT!955
 - ROHF and CUHF. eT-program/eT!957
+- Cartesian BFGS geometry optimization solver (for Hartree-Fock theory) replaced by a more robust BFGS solver that uses redundant internal coordinates. eT-program/eT!918
 
 ### Structure
 - Moved the SCF preparations for HF outside of SCF solver. eT-program/eT!908

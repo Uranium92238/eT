@@ -60,7 +60,8 @@ add_eT_runtest(hf_energy_6-31g_pol                          "eT;short;hf;sad;pop
 add_eT_runtest(hf_energy_cartesian_basis_set                "eT;short;hf;sad;cartesian")
 add_eT_runtest(hf_energy_external_basis                     "eT;short;hf;sad;cartesian;externalbasis")
 add_eT_runtest(hf_energy_ghost                              "eT;short;hf;sad")
-add_eT_runtest(hf_geoopt                                    "eT;short;hf;bfgs;gradient")
+add_eT_runtest(hf_geoopt_bfgs_h2o                           "eT;short;hf;bfgs;gradient")
+add_eT_runtest(hf_geoopt_bfgs_c2h4                          "eT;short;hf;bfgs;gradient")
 add_eT_runtest(hf_scf_energy                                "eT;short;hf;sad")
 add_eT_runtest(hf_energy_qmmmnopol                          "eT;short;hf;sad;qmmm;mmnopol")
 add_eT_runtest(hf_energy_qmfq                               "eT;short;hf;sad;qmmm;fq")
@@ -80,7 +81,6 @@ add_eT_runtest(plot_ntos_ccs                                "eT;short;ccs;visual
 add_eT_runtest(plot_ntos_ccsd                               "eT;short;ccsd;visualization")
 add_eT_runtest(plot_cntos_ccsd                              "eT;short;ccsd;visualization")
 #
-add_eT_runtest(restart_geoopt                               "eT;short;hf;bfgs;gradient,restart")
 add_eT_runtest(hf_bohr_units                                "eT;short;hf;sad")
 add_eT_runtest(hf_pure_basis                                "eT;short;hf;spherical;pople")
 #

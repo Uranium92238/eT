@@ -166,6 +166,9 @@ module wavefunction_class
       procedure :: get_orbital_differences &
                 => get_orbital_differences_wavefunction
 !
+      procedure :: initialize_redundant_internal_coordinates &
+                => initialize_redundant_internal_coordinates_wavefunction
+!
    end type wavefunction
 !
 !
@@ -1028,6 +1031,50 @@ contains
 !
 !
    end subroutine get_orbital_differences_wavefunction
+!
+!
+   subroutine initialize_redundant_internal_coordinates_wavefunction(wf, internals)
+!!
+!!    Initialize redundant internal coordinates
+!!    Written by Eirik F. Kjønstad, 2021
+!!
+      use atomic_center_class, only: atomic_center
+      use redundant_internal_coords_class, only: redundant_internal_coords
+!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      class(redundant_internal_coords), intent(inout) :: internals
+!
+      integer, dimension(:), allocatable :: Z 
+      real(dp), dimension(:,:), allocatable :: R
+!
+      type(atomic_center), allocatable :: center 
+!
+      integer :: k
+!
+      call mem%alloc(Z, wf%n_atomic_centers)
+      call mem%alloc(R, 3, wf%n_atomic_centers)
+!
+      R = wf%get_molecular_geometry()
+!
+      allocate(center)
+!
+      do k = 1, wf%n_atomic_centers
+!
+         call wf%ao%get_center(k, center)
+!
+         Z(k) = center%number_
+!
+      enddo
+!
+      call internals%initialize(R, Z)
+!
+      call mem%dealloc(R, 3, wf%n_atomic_centers)
+      call mem%dealloc(Z, wf%n_atomic_centers)      
+!
+   end subroutine initialize_redundant_internal_coordinates_wavefunction
 !
 !
 end module wavefunction_class

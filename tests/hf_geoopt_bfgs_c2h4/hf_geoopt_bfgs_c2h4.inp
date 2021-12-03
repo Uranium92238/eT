@@ -1,0 +1,27 @@
+system
+  name: ethene
+end system
+
+do
+  ground state geoopt
+end do
+
+method
+  hf
+end method
+
+solver scf
+  algorithm: scf-diis
+  energy threshold: 1.0d-11
+  gradient threshold: 1.0d-11
+end solver scf
+
+geometry
+basis: sto-3g
+  H      1.1610      0.0661      1.0238
+  C      0.6579     -0.0045      0.0639
+  H      1.3352     -0.0830     -0.7815
+  C     -0.6579      0.0045     -0.0639
+  H     -1.3355      0.0830      0.7812
+  H     -1.1608     -0.0661     -1.0239
+end geometry

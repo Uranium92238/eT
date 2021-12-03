@@ -18,16 +18,9 @@ solver scf
   gradient threshold: 1.0d-11
 end solver scf
 
-solver scf geoopt
-  algorithm: bfgs
-  max step: 0.5d0
-  energy threshold:   1.0d-10
-  gradient threshold: 1.0d-10
-end solver scf geoopt
-
 geometry
 basis: cc-pVDZ
-H 0.0000 0.0000 0.0000
-H 1.0000 0.0000 0.0000
-O 0.0000 1.0000 0.0000
+  O  0.000000  0.000000  0.000000
+  H  0.758602  0.000000  0.504284
+  H  0.758602  0.000000  -0.504284
 end geometry
