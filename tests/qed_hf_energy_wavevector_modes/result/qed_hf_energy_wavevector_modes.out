@@ -1,0 +1,372 @@
+
+
+
+                     eT 1.5 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.5.0 Furia (development)
+  ------------------------------------------------------------
+  Configuration date: 2021-10-20 15:53:52 UTC +02:00
+  Git branch:         QEDHF_get_integrals
+  Git hash:           293f91b11c377cab08a6e0100968e5934a214577
+  Fortran compiler:   GNU 11.1.0
+  C compiler:         GNU 11.1.0
+  C++ compiler:       GNU 11.1.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2021-10-20 15:59:42 UTC +02:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: HOF-He
+        charge: 0
+     end system
+
+     do
+        ground state
+     end do
+
+     print
+        output print level: debug
+     end print
+
+     memory
+        available: 8
+     end memory
+
+     solver scf
+        algorithm:          scf-diis
+        energy threshold:   1.0d-10
+        gradient threshold: 1.0d-10
+     end solver scf
+
+     method
+        qed-hf
+     end method
+
+     qed
+        modes:        10
+        frequency:    {0.5, 0.5, 1.0, 1.0, 1.5, 1.5, 2.0, 2.0, 2.5, 2.5}
+        wavevector:   {0, 0, 1}
+        coupling:     {0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05}
+     end qed
+
+
+  Running on 4 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: QED-RHF wavefunction
+  ==========================
+
+  Libint electron repulsion integral precision:  0.1000E-23
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  F    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
+        4 He     0.000000000000     0.000000000000     7.500000000000        4
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  F    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
+        4 He     0.000000000000     0.000000000000    14.172945934238        4
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               38
+     Number of orthonormal atomic orbitals:   38
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         28
+     Number of molecular orbitals:       38
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a QED-RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+     Generated atomic density for H  using UHF/cc-pvdz
+     Generated atomic density for F  using UHF/cc-pvdz
+     Generated atomic density for O  using UHF/cc-pvdz
+     Generated atomic density for He using UHF/cc-pvdz
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:              -178.239190650956
+     Number of electrons in guess:           20.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-15
+     Exchange screening threshold:   0.1000E-13
+     ERI cutoff:                     0.1000E-15
+     One-electron integral  cutoff:  0.1000E-20
+     Cumulative Fock threshold:      0.0000E+00
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
+
+  Doing preparations for storer solver scf_errors
+
+  Doing preparations for storer solver scf_parameters
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1          -177.388308248768     0.7765E-01     0.1774E+03
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+     2          -177.414692897632     0.1110E-01     0.2638E-01
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+     3          -177.415698431587     0.4044E-02     0.1006E-02
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+     4          -177.415817185332     0.1320E-02     0.1188E-03
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+     5          -177.415830578843     0.3473E-03     0.1339E-04
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+     6          -177.415831602698     0.8902E-04     0.1024E-05
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+     7          -177.415831682526     0.2129E-04     0.7983E-07
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+     8          -177.415831692601     0.4701E-05     0.1008E-07
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+     9          -177.415831693293     0.1061E-05     0.6917E-09
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+    10          -177.415831693322     0.2134E-06     0.2916E-10
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+    11          -177.415831693323     0.4853E-07     0.8527E-12
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+    12          -177.415831693323     0.9511E-08     0.5684E-13
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+    13          -177.415831693323     0.2879E-08     0.2842E-13
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+    14          -177.415831693323     0.5877E-09     0.0000E+00
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+    15          -177.415831693323     0.1915E-09     0.1137E-12
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+  Memory tracker initialized - allowed memory: 0 B
+  Memory tracker finalized - allowed: 0 B  used: 0 B
+    16          -177.415831693323     0.7426E-10     0.1705E-12
+  ---------------------------------------------------------------
+  Convergence criterion met in 16 iterations!
+
+  Doing finalizations for storer solver scf_errors
+
+  Doing finalizations for storer solver scf_parameters
+
+  - Summary of QED-RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.643182903665
+     Nuclear repulsion energy:      48.518317619727
+     Electronic energy:           -225.934149313050
+     Total energy:                -177.415831693323
+
+  - QED Parameters and properties
+
+     Optimize photons?   :    True
+
+     Mode 1
+      Frequency          :    0.500000000000
+      Polarization       :    1.000000000000    0.000000000000    0.000000000000
+      Coupling           :    0.050000000000
+         Bilinear        :    0.025000000000
+         Self            :    0.001250000000
+      Coherent state     :   -0.031525791406
+
+     Mode 2
+      Frequency          :    0.500000000000
+      Polarization       :    0.000000000000    1.000000000000    0.000000000000
+      Coupling           :    0.050000000000
+         Bilinear        :    0.025000000000
+         Self            :    0.001250000000
+      Coherent state     :   -0.023097849655
+
+     Mode 3
+      Frequency          :    1.000000000000
+      Polarization       :    1.000000000000    0.000000000000    0.000000000000
+      Coupling           :    0.050000000000
+         Bilinear        :    0.035355339059
+         Self            :    0.001250000000
+      Coherent state     :   -0.022292100886
+
+     Mode 4
+      Frequency          :    1.000000000000
+      Polarization       :    0.000000000000    1.000000000000    0.000000000000
+      Coupling           :    0.050000000000
+         Bilinear        :    0.035355339059
+         Self            :    0.001250000000
+      Coherent state     :   -0.016332646122
+
+     Mode 5
+      Frequency          :    1.500000000000
+      Polarization       :    1.000000000000    0.000000000000    0.000000000000
+      Coupling           :    0.050000000000
+         Bilinear        :    0.043301270189
+         Self            :    0.001250000000
+      Coherent state     :   -0.018201424155
+
+     Mode 6
+      Frequency          :    1.500000000000
+      Polarization       :    0.000000000000    1.000000000000    0.000000000000
+      Coupling           :    0.050000000000
+         Bilinear        :    0.043301270189
+         Self            :    0.001250000000
+      Coherent state     :   -0.013335549716
+
+     Mode 7
+      Frequency          :    2.000000000000
+      Polarization       :    1.000000000000    0.000000000000    0.000000000000
+      Coupling           :    0.050000000000
+         Bilinear        :    0.050000000000
+         Self            :    0.001250000000
+      Coherent state     :   -0.015762895703
+
+     Mode 8
+      Frequency          :    2.000000000000
+      Polarization       :    0.000000000000    1.000000000000    0.000000000000
+      Coupling           :    0.050000000000
+         Bilinear        :    0.050000000000
+         Self            :    0.001250000000
+      Coherent state     :   -0.011548924828
+
+     Mode 9
+      Frequency          :    2.500000000000
+      Polarization       :    1.000000000000    0.000000000000    0.000000000000
+      Coupling           :    0.050000000000
+         Bilinear        :    0.055901699437
+         Self            :    0.001250000000
+      Coherent state     :   -0.014098762526
+
+     Mode 10
+      Frequency          :    2.500000000000
+      Polarization       :    0.000000000000    1.000000000000    0.000000000000
+      Coupling           :    0.050000000000
+         Bilinear        :    0.055901699437
+         Self            :    0.001250000000
+      Coherent state     :   -0.010329672393
+
+  - Timings for the QED-RHF ground state calculation
+
+     Total wall time (sec):              1.11584
+     Total cpu time (sec):               4.42450
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 738.184 KB
+
+  Total wall time in eT (sec):              1.14304
+  Total cpu time in eT (sec):               4.46269
+
+  Calculation ended: 2021-10-20 15:59:43 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+
+  eT terminated successfully!
