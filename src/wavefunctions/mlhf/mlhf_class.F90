@@ -276,6 +276,7 @@ contains
 !     and add the contribution to the Fock matrix
 !
       call wf%construct_ao_G(wf%ao_density, wf%ao_fock)
+      call dscal(wf%ao%n**2, half, wf%ao_fock, 1)
 !
 !     Add the one-electron part
 ! 
@@ -397,7 +398,7 @@ contains
                                 G,                                &
                                 C_screening=.true. )
 !
-         call daxpy(wf%ao%n**2, one, G, 1, wf%ao_fock, 1)
+         call daxpy(wf%ao%n**2, half, G, 1, wf%ao_fock, 1)
 !
          call mem%dealloc(G, wf%ao%n, wf%ao%n)
 !
@@ -413,6 +414,7 @@ contains
          call wf%construct_ao_G(wf%ao_density,                    &
                                 wf%ao_fock,                       &
                                 C_screening=.true.)
+         call dscal(wf%ao%n**2, half, wf%ao_fock, 1)
 !
 !        Add the one-electron part
 !
@@ -440,8 +442,8 @@ contains
 !
 !     Add G_De to Fock 
 !
-      call daxpy(wf%n_mo**2, one, wf%G_De_mo, 1, wf%mo_fock, 1)
-      call daxpy(wf%n_mo**2, one, wf%G_De_imo, 1, wf%imo_fock, 1)
+      call daxpy(wf%n_mo**2, half, wf%G_De_mo, 1, wf%mo_fock, 1)
+      call daxpy(wf%n_mo**2, half, wf%G_De_imo, 1, wf%imo_fock, 1)
 !
 !     Add the Tr[Da * G(De)] and inactive energy contributions to the energy
 !
@@ -976,8 +978,6 @@ contains
 !
       end do
 !
-      E_G_De = two * E_G_De
-!
       get_active_energy_G_De_term_mlhf = E_G_De
 !
    end function get_active_energy_G_De_term_mlhf
@@ -1500,7 +1500,7 @@ contains
 !
       call wf%mo_transform(wf%G_De_ao, mo_frozen_mlhf_fock)
 !
-      call daxpy(wf%n_mo**2, one, mo_frozen_mlhf_fock, 1, wf%mo_fock_frozen, 1)
+      call daxpy(wf%n_mo**2, half, mo_frozen_mlhf_fock, 1, wf%mo_fock_frozen, 1)
 !
       call mem%dealloc(mo_frozen_mlhf_fock, wf%n_mo, wf%n_mo)
 !
@@ -1541,7 +1541,7 @@ contains
 !     Add the MLHF inactive Fock term in the AO basis, G_De_ao, to the AO Fock
 !
       call dcopy(wf%ao%n**2, wf%ao_fock, 1, F_effective, 1)
-      call daxpy(wf%ao%n**2, one, wf%G_De_ao, 1, F_effective, 1)      
+      call daxpy(wf%ao%n**2, half, wf%G_De_ao, 1, F_effective, 1)
 !
       call wf%mo_transform(F_effective, wf%mo_fock)
 !
@@ -2003,7 +2003,7 @@ contains
 !
    subroutine destruct_imo_fock_mlhf(wf)
 !!
-!!    Destruct IMO to MO 
+!!    Destruct IMO fock
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
 !!    and Linda Goletto, Jan 2019
 !!

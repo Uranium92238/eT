@@ -102,7 +102,7 @@ contains
          call daxpy(wf%ao%n**2, -one, wf%previous_ao_density(1,1,2), 1, D_diff, 1)
 !
          call wf%construct_ao_G(D_diff, G)
-         call daxpy(wf%ao%n**2, one, G, 1, wf%ao_F_cs, 1)
+         call daxpy(wf%ao%n**2, half, G, 1, wf%ao_F_cs, 1)
 !
          call mem%dealloc(D_diff, wf%ao%n, wf%ao%n)
          call mem%dealloc(G, wf%ao%n, wf%ao%n)
@@ -110,6 +110,7 @@ contains
       else
 !
          call wf%construct_ao_G(wf%ao_density, wf%ao_F_cs)
+         call dscal(wf%ao%n**2, half, wf%ao_F_cs, 1)
          call daxpy(wf%ao%n**2, one, wf%ao%h, 1, wf%ao_F_cs, 1)
 !
       endif
@@ -179,7 +180,7 @@ contains
 !
       do thread = 1, n_threads
 !
-         call daxpy(wf%ao%n**2, one, F(1, (thread - 1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
+         call daxpy(wf%ao%n**2, half, F(1, (thread - 1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
 !
       enddo
 !

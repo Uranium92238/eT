@@ -289,8 +289,8 @@ contains
       if (.not. local_cumulative) call dcopy(wf%ao%n**2, h_wx, 1, wf%ao_fock_a, 1)
       do thread = 1, n_threads
 !
-         call daxpy(wf%ao%n**2, one, F(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
-         call daxpy(wf%ao%n**2, two, X_alpha(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
+         call daxpy(wf%ao%n**2, half, F(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
+         call daxpy(wf%ao%n**2, one, X_alpha(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
 !
       enddo
 !
@@ -300,8 +300,8 @@ contains
       if (.not. local_cumulative) call dcopy(wf%ao%n**2, h_wx, 1, wf%ao_fock_b, 1)
       do thread = 1, n_threads
 !
-         call daxpy(wf%ao%n**2, one, F(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_b, 1)
-         call daxpy(wf%ao%n**2, two, X_beta(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_b, 1)
+         call daxpy(wf%ao%n**2, half, F(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_b, 1)
+         call daxpy(wf%ao%n**2, one, X_beta(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_b, 1)
 !
       enddo
 !
