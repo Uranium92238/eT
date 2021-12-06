@@ -22,6 +22,7 @@
 - SAD handled in the sad\_tool\_class. eT-program/eT!926
 - Removed unused routines in reordering. eT-program/eT!939
 - Moved a Fock matrix term from CCSD Jacobian into doubles Jacobian. eT-program/eT!949
+- Cleanup of use statements in HF hierarchy. eT-program/eT!966
 - G(D) definition changed to (2g\_wxyz - g\_wzyx)D\_yz.  eT-program/eT!964
 
 ### Optimization

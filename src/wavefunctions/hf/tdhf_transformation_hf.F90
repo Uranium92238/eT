@@ -45,6 +45,9 @@ contains
 !!
 !!    Where D is non-symmetric
 !!
+!
+      use omp_lib
+!
       implicit none
 !
       class(hf) :: wf
@@ -413,6 +416,9 @@ contains
 !!
 !!    sigma = Ab
 !!
+!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(hf) :: wf
@@ -444,6 +450,9 @@ contains
 !!
 !!       sigma = (A + B)(A - B) b = (A + B) c, for c = (A - B) b
 !!
+!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(hf) :: wf

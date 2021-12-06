@@ -25,8 +25,10 @@ module cuhf_class
 !!    See Tsuchimochi and Scuseria, J. Chem. Phys. 133, 141102 (2010)
 !!
 !
-   use uhf_class
-   use omp_lib
+   use parameters
+!
+   use memory_manager_class, only: mem
+   use uhf_class,            only: uhf
 !
    implicit none
 !
@@ -133,7 +135,9 @@ contains
 !!       F^beta_wz  -= F^c_wz
 !!
 !
-      use array_utilities, only: copy_and_scale
+      use omp_lib
+      use array_utilities, only: copy_and_scale, get_abs_max, zero_array
+      use reordering, only: symmetric_sum
 !
       implicit none
 !

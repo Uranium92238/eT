@@ -25,21 +25,14 @@ module hf_class
 !!    Wavefunction class for restricted (closed-shell) Hartree-Fock theory.
 !!
 !
-   use wavefunction_class
+   use parameters
+   use memory_manager_class, only: mem
+   use wavefunction_class,   only: wavefunction
 !
-   use reordering
+   use global_out, only: output
+   use global_in,  only: input
 !
-   use timings_class,         only : timings
-   use array_utilities,       only : get_abs_max, sandwich
-   use array_utilities,       only : full_cholesky_decomposition
-   use array_utilities,       only : get_n_highest
-   use array_utilities,       only : identity_array
-   use output_file_class,     only : output_file
-   use sequential_file_class, only : sequential_file
-   use array_utilities,       only : zero_array
-   use range_class
-   use omp_lib
-!
+   use output_file_class, only : output_file
    use stream_file_class, only: stream_file
 !
    implicit none
@@ -538,6 +531,10 @@ contains
 !!    Sets initial AO density (or densities) to the
 !!    appropriate initial guess requested by the solver.
 !!
+!
+
+      use array_utilities, only : zero_array
+!
       implicit none
 !
       class(hf) :: wf
@@ -638,6 +635,9 @@ contains
 !!
 !!    Prepares frozen Fock terms and sets the HF energy
 !!
+!
+      use array_utilities, only : zero_array
+!
       implicit none
 !
       class(hf) :: wf
@@ -793,6 +793,10 @@ contains
 !!    D: AO density matrix, S: AO overlap matrix. Both are assumed
 !!    to be allocated and properly set.
 !!
+!
+      use array_utilities, only : identity_array
+      use timings_class,     only : timings
+!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -840,6 +844,9 @@ contains
 !!
 !!    Constructs and returns the RH gradient as an anti-symmetric packed array
 !!
+!
+      use reordering, only: packin_anti
+!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -899,6 +906,10 @@ contains
 !!    where Po = 1/2 D S and Pv = 1 - Po. In Po, D is the AO density and S
 !!    is the AO overlap matrix.
 !!
+!
+      use array_utilities, only : sandwich
+      use timings_class,   only : timings
+!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -1070,6 +1081,10 @@ contains
 !!    x = (q,k), where q denotes the component (x,y, or z) and k
 !!    denotes the atom (k = 1,2,3,...,n_atoms).
 !!
+!
+      use reordering, only: sort_12_to_21, symmetric_sum
+      use timings_class,     only : timings
+!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -1376,6 +1391,9 @@ contains
 !!
 !!       - Embedding QM/MM or PCM fock
 !!
+!
+      use array_utilities, only : zero_array
+!
       implicit none
 !
       class(hf) :: wf
@@ -1528,6 +1546,9 @@ contains
 !!
 !!    3. Prints screenings
 !!
+!
+      use array_utilities, only : zero_array
+!
       implicit none
 !
       class(hf)                     :: wf
@@ -1991,6 +2012,9 @@ contains
 !!
 !!    Prints energy and gradient.
 !!
+!
+      use array_utilities, only : get_abs_max
+!
       implicit none
 !
       class(hf),  intent(inout)  :: wf
@@ -2031,6 +2055,9 @@ contains
 !!    Do cumulative Fock
 !!    Written by Sarai D. Folkestad
 !!
+!
+      use array_utilities, only : get_abs_max
+!
       implicit none
 !
       class(hf), intent(in) :: wf

@@ -93,6 +93,9 @@ contains
 !!    Save the AO density (or densities, if unrestricted) based
 !!    on the current orbital coefficient matrix (or matrices).
 !!
+!
+      use sequential_file_class, only: sequential_file
+!
       implicit none
 !
       class(uhf) :: wf

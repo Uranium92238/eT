@@ -105,6 +105,9 @@ contains
 !!    Cumulative construction of two-electron part and not
 !!    full Fock matrix
 !!
+!
+      use timings_class,     only : timings
+!
       implicit none
 !
       class(hf), intent(inout) :: wf
@@ -148,6 +151,9 @@ contains
 !!    Called by solver when a new density has been obtained and
 !!    the next Fock and energy is to be computed.
 !!
+!
+      use timings_class,     only : timings
+!
       implicit none
 !
       class(hf), intent(inout) :: wf
@@ -187,6 +193,11 @@ contains
 !!                 Coulomb and exchange screening will target the MO basis G(D). Used in
 !!                 MLHF when constructing G(Da). Default: false.
 !!
+!
+      use omp_lib
+      use array_utilities, only: get_abs_max, zero_array
+      use reordering, only: symmetric_sum
+!
       implicit none
 !
       class(hf), intent(inout):: wf
@@ -292,6 +303,10 @@ contains
 !!    Routine partly based on Hartree-Fock implementation shipped with
 !!    the Libint 2 integral package by E. Valeev.
 !!
+!
+      use omp_lib
+      use range_class, only: range_
+!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -481,6 +496,11 @@ contains
 !!    the MOs are local, which means that screening for G(Da) in the MO basis is more efficient
 !!    than screening for G(Da) in the AO basis.
 !!
+!
+      use omp_lib
+      use range_class, only: range_
+      use timings_class,     only : timings
+!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -684,6 +704,10 @@ contains
 !!    Note: the contributions from each thread need to be added to a single
 !!    n_ao x n_ao matrix & symmetrized to get the Coulomb part of G(D)_αβ.
 !!
+!
+      use omp_lib
+      use range_class, only: range_
+!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -832,6 +856,10 @@ contains
 !!    Note: the contributions from each thread need to be added to a single
 !!    n_ao x n_ao matrix & symmetrized to get the exchange part of G(D)_αβ.
 !!
+!
+      use omp_lib
+      use range_class, only: range_
+!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -981,6 +1009,11 @@ contains
 !!    of D_wx^1/2 for each shell pair (A,B), where w and x is in A and B,
 !!    respectively.
 !!
+!
+      use omp_lib
+      use range_class, only: range_
+      use array_utilities, only: get_abs_max
+!
       implicit none
 !
       class(hf) :: wf
@@ -1046,6 +1079,9 @@ contains
 !!    where contributions from different threads are gathered column blocks
 !!    of the incoming F matrix.
 !!
+!
+      use omp_lib
+!
       implicit none
 !
       class(hf), intent(in) :: wf
