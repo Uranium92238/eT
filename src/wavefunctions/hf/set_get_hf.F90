@@ -57,6 +57,9 @@ contains
 !!
 !!    Sets the AO density from input
 !!
+!
+      use reordering, only: squareup
+!
       implicit none
 !
       class(hf) :: wf
@@ -75,6 +78,9 @@ contains
 !!
 !!    Sets the AO Fock from input
 !!
+!
+      use reordering, only: squareup
+!
       implicit none
 !
       class(hf) :: wf
@@ -93,6 +99,9 @@ contains
 !!
 !!    Sets the AO Fock from input
 !!
+!
+      use reordering, only: packin
+!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -111,6 +120,9 @@ contains
 !!
 !!    Packs the AO density into D.
 !!
+!
+      use reordering, only: packin
+!
       implicit none
 !
       class(hf), intent(in) :: wf

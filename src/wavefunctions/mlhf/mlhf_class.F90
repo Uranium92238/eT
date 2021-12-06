@@ -53,11 +53,15 @@ module mlhf_class
 !!    and I-M. Høyvik, Mol. Phys. (2019).
 !!
 !
-   use hf_class
+   use hf_class, only: hf
+!
+   use parameters
+!
+   use memory_manager_class, only: mem
+   use global_out,           only: output
+   use global_in,            only: input
 !
    use stream_file_class, only : stream_file
-   use string_utilities, only : convert_to_uppercase
-!
 !
    implicit none
 !
@@ -197,6 +201,7 @@ contains
 !!    and constructs screening vectors
 !!
       use atomic_center_class, only: atomic_center
+      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -255,6 +260,7 @@ contains
 !!
 !
       use array_utilities, only : identity_array
+      use timings_class,     only : timings
 !
       implicit none
 !
@@ -366,6 +372,7 @@ contains
 !!
 !
       use array_utilities, only: symmetric_sandwich_right_transposition, symmetric_sandwich
+      use timings_class,     only : timings
 !
       implicit none
 !
@@ -1147,6 +1154,9 @@ contains
 !!
 !!    Constructs G(De) in the MO basis
 !!
+!
+      use timings_class,     only : timings
+!
       implicit none
 !
       class(mlhf), intent(inout) :: wf
@@ -1177,6 +1187,9 @@ contains
 !!    Prints information related to the wavefunction, most of which is meaningful
 !!    only for a properly converged wavefunction.
 !!
+!
+      use string_utilities, only : convert_to_uppercase
+!
       implicit none
 !
       class(mlhf), intent(inout) :: wf
@@ -1219,6 +1232,7 @@ contains
 !
       use array_utilities, only : copy_and_scale
       use cholesky_orbital_tool_class, only: cholesky_orbital_tool
+      use timings_class,     only : timings
 !
       implicit none
 !
@@ -1316,7 +1330,7 @@ contains
 !!    and Linda Goletto, Oct 2019
 !!
 !
-      use array_utilities, only : symmetric_sandwich
+      use array_utilities, only : symmetric_sandwich, identity_array
 !
       implicit none
 !
@@ -1459,6 +1473,9 @@ contains
 !!    In case of a reduction, the MLHF inactive fock term 
 !!    has to be updated to the new MO basis
 !!
+!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(mlhf) :: wf
@@ -1520,7 +1537,7 @@ contains
 !!    and mixing of virtual orbitals, respectively.
 !!
 !
-      use array_utilities, only: block_diagonalize_symmetric
+      use array_utilities, only: block_diagonalize_symmetric, zero_array
 !
       implicit none
 !

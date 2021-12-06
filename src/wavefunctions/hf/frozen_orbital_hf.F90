@@ -514,7 +514,7 @@ contains
 !!    and mixing of virtual orbitals, respectively.
 !!
 !
-      use array_utilities, only: block_diagonalize_symmetric
+      use array_utilities, only: block_diagonalize_symmetric, zero_array
 !
       implicit none
 !

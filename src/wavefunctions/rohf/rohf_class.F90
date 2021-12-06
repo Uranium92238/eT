@@ -25,7 +25,13 @@ module rohf_class
 !!    See Tsuchimochi and Scuseria, J. Chem. Phys. 133, 141102 (2010)
 !!
 !
-   use cuhf_class
+
+   use parameters
+   use cuhf_class, only: cuhf
+!
+   use memory_manager_class, only: mem
+   use global_out,           only: output
+   use global_in,            only: input
 !
    implicit none
 !

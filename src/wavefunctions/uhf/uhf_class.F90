@@ -24,9 +24,12 @@ module uhf_class
 !!    Written by Eirik F. Kjønstad, Sep 2018
 !!
 !
-   use hf_class
+   use hf_class, only: hf
 !
-   use omp_lib
+   use parameters
+   use memory_manager_class, only: mem
+   use global_out,           only: output
+   use global_in,            only: input
 !
    implicit none
 !
@@ -223,6 +226,7 @@ contains
 !!    and constructs screening vectors
 !!
       use atomic_center_class, only: atomic_center
+      use stream_file_class, only: stream_file
 !
       implicit none
 !
@@ -267,7 +271,7 @@ contains
 !!    Sets initial AO density (or densities) to the
 !!    appropriate initial guess requested by the solver.
 !!
-      use array_utilities, only: copy_and_scale
+      use array_utilities, only: copy_and_scale, zero_array
 !
       implicit none
 !
@@ -316,6 +320,9 @@ contains
 !!    both the alpha and beta gradients are
 !!    returned as follows: [G_a G_b]
 !!
+!
+      use reordering, only: packin_anti
+!
       implicit none
 !
       class(uhf), intent(in) :: wf
@@ -579,6 +586,9 @@ contains
 !!    densities to be spherically symmetric if the zeroth iteration
 !!    density possesses this symmetry.
 !!
+!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(uhf) :: wf
@@ -840,6 +850,9 @@ contains
 !!    Make orbital info file
 !!    Written by Alexander C. Paul Nov 2020
 !!
+!
+      use output_file_class, only : output_file
+!
       implicit none
 !
       class(uhf), intent(inout) :: wf

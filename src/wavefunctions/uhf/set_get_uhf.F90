@@ -38,6 +38,9 @@ contains
 !!
 !!    Sets the AO Fock.
 !!
+!
+      use reordering, only: squareup
+!
       implicit none
 !
       class(uhf) :: wf
@@ -70,6 +73,9 @@ contains
 !!
 !!    Returns the AO Fock
 !!
+!
+      use reordering, only: packin
+!
       implicit none
 !
       class(uhf), intent(in) :: wf
