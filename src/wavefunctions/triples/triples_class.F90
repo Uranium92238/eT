@@ -28,7 +28,6 @@ module triples_class
 !!
 !
    use ccsd_class, only: ccsd
-   use batching_index_class, only : batching_index
    use parameters
 !
    implicit none
@@ -188,7 +187,7 @@ contains
 !!
 !!    Note: v_abc contains V^abc in the end
 !!    Note: This routine does the same as calling construct_W twice:
-!!          once with t2 and c1-transformed integrals and 
+!!          once with t2 and c1-transformed integrals and
 !!          once with R2 and t1-transformed integrals
 !!
 !!    Each permutation is obtained by two calls to construct_W_permutation
@@ -311,7 +310,7 @@ contains
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Jan 2021
 !!
 !!    Calculates one permutation of the triples amplitudes:
-!!    These contributions are: 
+!!    These contributions are:
 !!    1. Contraction of a doubles amplitude and a v^3o integral over a virtual index
 !!    W_bac = t^bd_ji*(ad|ck)
 !!
@@ -368,7 +367,7 @@ contains
 !!    Divide by orbital (energy) differences
 !!    Written by Rolf H. Myhre, January 2019
 !!
-!!    Divide an array of triples amplitudes (single i,j,k) 
+!!    Divide an array of triples amplitudes (single i,j,k)
 !!    by the respective orbital energy differences eps^abc_ijk
 !!
 !!    omega: If present divide by eps^abc_ijk - omega instead of eps^abc_ijk
@@ -390,11 +389,11 @@ contains
       epsilon_ijk = wf%orbital_energies(i) + wf%orbital_energies(j)  &
                   + wf%orbital_energies(k)
 !
-      if (present(omega)) then 
+      if (present(omega)) then
 !
          epsilon_ijk = epsilon_ijk + omega
 !
-      end if 
+      end if
 !
 !$omp parallel do schedule(static) private(c,b,a,epsilon_c,epsilon_cb)
       do c = 1,wf%n_v
@@ -436,6 +435,7 @@ contains
 !!    mo:               use the "normal" MO integral (for CCSD(T))
 !!    left:             return integral in 1324 order (for the transpose Jacobian)
 !!
+      use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_1324, sort_1234_to_2134
 !
       implicit none
@@ -500,7 +500,7 @@ contains
 !!    Setups the vvov integral and the pointer for a triples calculation
 !!    The integral is given in batches over the occupied indices
 !!
-!!    The integral is returned in 2413 order 
+!!    The integral is returned in 2413 order
 !!
 !!    g_vvov:           final sorted integral array
 !!    point:            pointer to g_vvov integral
@@ -508,6 +508,7 @@ contains
 !!    left:             The integral is returned in 1243 order
 !!                      (for the transpose Jacobian)
 !!
+      use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_2413, sort_1234_to_1243
 !
       implicit none
@@ -542,7 +543,7 @@ contains
 !
          call sort_1234_to_1243(unordered_g_vvov, g_vvov, &
                                 wf%n_v, wf%n_v, batch_r%length, wf%n_v)
-!            
+!
       end if
 !
       point(1:wf%n_v, 1:wf%n_v, 1:wf%n_v, 1:batch_r%length) => g_vvov
@@ -565,6 +566,7 @@ contains
 !!    unordered_g_ovov: help array for reordering
 !!    mo:               if present and true use the "normal" MO integral
 !!
+      use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_2413
 !
       implicit none
@@ -625,6 +627,7 @@ contains
 !!    c_ai:             if present and true use the c1-transformed integral
 !!    mo:               if present and true use the "normal" MO integral
 !!
+      use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_3124
 !
       implicit none
@@ -690,6 +693,7 @@ contains
 !!    point:            pointer to g_ooov integral
 !!    unordered_g_ooov: help array for reordering
 !!
+      use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_4213
 !
       implicit none
@@ -722,7 +726,7 @@ contains
 !!    Point vvvo
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Dec 2020
 !!
-!!    Sets a pointer to a v3o integral 
+!!    Sets a pointer to a v3o integral
 !!    where the occupied index can be batched over
 !!    NB: The occupied index needs to be the last index
 !!
@@ -730,7 +734,7 @@ contains
 !!    g_vvvo: Integral array in vvvo order
 !!    length: length of the batch
 !!
-      implicit none 
+      implicit none
 !
       class(triples), intent(in) :: wf
 !
@@ -750,7 +754,7 @@ contains
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Dec 2020
 !!
 !!    Sets a pointer to a o^3v integral where two occupied indices are batched
-!!    NB: The integral is sorted v, o, batch1, batch2 
+!!    NB: The integral is sorted v, o, batch1, batch2
 !!        and the batches are equally long
 !!
 !!    point:   pointer to g_ooov integral
@@ -758,7 +762,7 @@ contains
 !!    length1: length of the batch for the second to last index
 !!    length2: length of the batch for the last index
 !!
-      implicit none 
+      implicit none
 !
       class(triples), intent(in) :: wf
 !
@@ -778,7 +782,7 @@ contains
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Dec 2020
 !!
 !!    Sets a pointer to a v^2o^2 integral where both occupied indices are batched
-!!    NB: The occupied indices need to be the last ones 
+!!    NB: The occupied indices need to be the last ones
 !!        and the batches are equally long
 !!
 !!    point:   pointer to g_ovov integral
@@ -786,7 +790,7 @@ contains
 !!    length1: length of the batch for the second to last index
 !!    length2: length of the batch for the last index
 !!
-      implicit none 
+      implicit none
 !
       class(triples), intent(in) :: wf
 !

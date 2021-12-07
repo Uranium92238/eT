@@ -20,14 +20,14 @@
 submodule (mp2_class) mean_value_mp2
 !
 !!
-!!    Mean-value submodule 
+!!    Mean-value submodule
 !!
-!!    Contains routines related to the mean values, i.e. 
-!!    the construction of density matrices as well as expectation 
+!!    Contains routines related to the mean values, i.e.
+!!    the construction of density matrices as well as expectation
 !!    value calculation.
 !!
 !
-   implicit none 
+   implicit none
 !
 !
 contains
@@ -46,12 +46,15 @@ contains
 !!
 !!       L_aibj = 2*g_aibj - g_ajbi.
 !!
-!!    On entry, it is assumed that the energy is equal to the HF energy 
+!!    On entry, it is assumed that the energy is equal to the HF energy
 !!    (i.e. the routine only adds the correction to the energy variable).
 !!
+      use array_utilities, only: copy_and_scale
+      use reordering, only: add_1432_to_1234
+!
       implicit none
 !
-      class(mp2), intent(inout) :: wf 
+      class(mp2), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_aibj
       real(dp), dimension(:,:,:,:), allocatable :: L_aibj

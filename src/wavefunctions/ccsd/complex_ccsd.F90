@@ -72,6 +72,8 @@ contains
 !!
 !!       ddt_amplitudes = -i*omega
 !!
+      use array_utilities, only: scale_diagonal
+!
       implicit none
 !
       class(ccsd), intent(inout) :: wf

@@ -28,14 +28,20 @@ module lowmem_cc2_class
 !!    to treat larger systems than the standard CC2 wavefunction.
 !!
 !
-   use ccs_class
+   use ccs_class, only: ccs
+!
+   use parameters
+   use global_out, only: output
+   use timings_class, only: timings
+   use memory_manager_class, only: mem
+   use stream_file_class, only: stream_file
 !
    implicit none
 !
    type, extends(ccs) :: lowmem_cc2
 !
-      type(sequential_file) :: jacobian_a1_intermediate_vv
-      type(sequential_file) :: jacobian_a1_intermediate_oo
+      type(stream_file) :: jacobian_a1_intermediate_vv
+      type(stream_file) :: jacobian_a1_intermediate_oo
 !
    contains
 !
@@ -109,6 +115,8 @@ contains
 !!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use wavefunction_class, only: wavefunction
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf

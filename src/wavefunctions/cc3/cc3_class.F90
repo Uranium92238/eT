@@ -27,13 +27,10 @@ module cc3_class
    use triples_class, only: triples
 !
    use parameters
-   use memory_manager_class, only: mem
-   use batching_index_class, only : batching_index
    use global_out, only: output
    use timings_class, only: timings
-   use direct_stream_file_class, only : direct_stream_file
-   use array_utilities, only: zero_array
-   use reordering
+   use memory_manager_class, only: mem
+   use direct_stream_file_class, only: direct_stream_file
 !
    implicit none
 !
@@ -457,6 +454,8 @@ contains
 !!    Y_ebck = sum_aij tbar^abc_ijk * t^ae_ij
 !!    Later used in the right transition density matrix
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(cc3) :: wf
@@ -513,6 +512,7 @@ contains
 !!    Computes L^T * R for full space L and R (singles, doubles, triples)
 !!
       use array_utilities, only: copy_and_scale
+      use reordering, only: squareup_and_sort_1234_to_1324, add_1243_to_1234
 !
       implicit none
 !
@@ -600,6 +600,10 @@ contains
 !!       L_mu3 = (omega - eps^abc_ijk)^-1 (L_mu1 < mu1| [H,tau_nu3] |R >
 !!                                       + L_mu2 < mu2| [H,tau_nu3] |R >)
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: squareup_and_sort_1234_to_1324
+      use reordering, only: construct_contravariant_t3
+!
       implicit none
 !
       class(cc3) :: wf

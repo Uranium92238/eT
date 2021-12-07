@@ -170,7 +170,8 @@ contains
 !!    NB: Terms where mu == nu are separated out in construct_es_density
 !!        and construct_right_transition_density
 !!
-      use array_utilities, only: scale_diagonal
+      use array_utilities, only: scale_diagonal, zero_array
+      use reordering, only: squareup
 !
       implicit none
 !
@@ -243,6 +244,8 @@ contains
 !!          D^R_kc += sum_abij R^a_i tbar^ab_ij (2t^bc_jk - t^bc_kj)
 !!                   -sum_abij tbar^ab_ij (R^b_k t^ac_ij + R^c_j t^ab_ik)
 !!
+      use reordering, only: squareup, add_1432_to_1234
+!
       implicit none
 !
       class(doubles) :: wf
@@ -477,6 +480,9 @@ contains
 !!
 !!       eta^X_mu = < Lambda| [X, tau_mu] |CC >
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: symmetrize_and_add_to_packed
+!
       implicit none
 !
       class(doubles), intent(in) :: wf
@@ -541,6 +547,8 @@ contains
 !!
 !!       A1 = - sum_ckdl (tb_ckal X_id t_ckdl + tb_ckdi X_la t_ckdl)
 !!
+      use reordering, only: squareup
+!
       implicit none
 !
       class(doubles), intent(in) :: wf
@@ -714,6 +722,8 @@ contains
 !!
 !!       B2 = sum_c tb_aicj X_cb - sum_k tb_aibk X_jk
 !!
+      use reordering, only: squareup, sort_1234_to_1243, add_1243_to_1234
+!
       implicit none
 !
       class(doubles), intent(in) :: wf
@@ -822,6 +832,9 @@ contains
 !!
 !!       xi^X_mu = < mu| exp(-T) X exp(T)|R >
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: symmetrize_and_add_to_packed
+!
       implicit none
 !
       class(doubles), intent(in) :: wf
@@ -895,6 +908,9 @@ contains
 !!
 !!    where u_aick = 2t_ckai - t_ciak
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: squareup, add_1432_to_1234
+!
       implicit none
 !
       class(doubles), intent(in) :: wf
@@ -969,6 +985,8 @@ contains
 !!
 !!       A2 = sum_c t_aicj X_bc - sum_k t_aibk X_kj
 !!
+      use reordering, only: squareup
+!
       implicit none
 !
       class(doubles), intent(in) :: wf
@@ -1062,6 +1080,9 @@ contains
 !!
 !!    where u_ckdl = 2*t_ckdl - t_cldk
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: squareup, add_1432_to_1234
+!
       implicit none
 !
       class(doubles), intent(in) :: wf

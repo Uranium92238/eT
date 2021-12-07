@@ -44,7 +44,10 @@ contains
 !!    Directs the construction of the projection vector < mu| exp(-T) H exp(T) |R >
 !!    for the current amplitudes of the object wfn
 !!
-      use array_utilities, only: scale_diagonal
+      use array_utilities, only: scale_diagonal, zero_array
+      use reordering, only: squareup_and_sort_1234_to_1324
+      use reordering, only: symmetrize_add_contra_to_packed
+      use reordering, only: construct_contravariant_t3
 !
       implicit none
 !
@@ -103,6 +106,10 @@ contains
 !!    The doubles part is returned as
 !!    ~Omega^ab_ij = 2 Omega^ab_ij - Omega^ba_ij
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: sort_12_to_21
+      use reordering, only: construct_contravariant_t3
+!
       implicit none
 !
       class(cc3) :: wf
@@ -502,6 +509,8 @@ contains
 !!    with
 !!    ~omega^ab_ij = 2 omega^ab_ij - omega^ba_ij
 !!
+      use reordering, only: sort_123_to_312, sort_123_to_213
+!
       implicit none
 !
       class(cc3), intent(in) :: wf

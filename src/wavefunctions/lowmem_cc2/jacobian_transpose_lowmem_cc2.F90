@@ -44,6 +44,8 @@ contains
 !!    Effective Jacobian transpose transformation
 !!    Written by Sarai Dery Folkestad, Jun 2019
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(lowmem_cc2) :: wf
@@ -123,6 +125,11 @@ contains
 !!
 !!       Y_ba = sum_bj t_bjck L_kcja = - sum_bj g_bjck L_kcja / ε_bjck
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_3214_to_1234, add_3412_to_1234
+      use reordering, only: add_1432_to_1234, add_2143_to_1234, add_2341_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -368,6 +375,10 @@ contains
 !!
 !!       X_ij = sum_bck t_ckbj L_ibkc
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_3412_to_1234, add_1432_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -508,6 +519,8 @@ contains
 !!
 !!    The term is calculated in batches over the b and c.
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -617,6 +630,10 @@ contains
 !!
 !!    The term is calculated in batches over the b and c.
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: sort_1234_to_4321
+      use reordering, only: add_2341_to_1234, add_2143_to_1234, add_4123_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -779,6 +796,10 @@ contains
 !!
 !!    The term is calculated in batches over the k, b, c
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array, copy_and_scale
+      use reordering, only: add_3214_to_1234, add_2143_to_1234, add_4321_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -973,6 +994,8 @@ contains
 !!
 !!    The term is calculated in batches over the k and j.
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -1082,6 +1105,11 @@ contains
 !!
 !!    The term is calculated in batches over the k and j.
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_4321_to_1234, add_4123_to_1234
+      use reordering, only: add_2143_to_1234, add_2341_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -1242,6 +1270,10 @@ contains
 !!
 !!    The term is calculated in batches over the k, j and c indices.
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array, copy_and_scale
+      use reordering, only: add_1432_to_1234, add_2143_to_1234, add_4321_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf

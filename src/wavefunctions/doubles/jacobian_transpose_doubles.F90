@@ -61,6 +61,8 @@ contains
 !!    Isolated the intermediates from the
 !!    jacobian_transpose_doubles_a1_doubles and wrote them to file.
 !!
+      use reordering, only: sort_1234_to_3214
+!
       implicit none
 !
       class(doubles), intent(inout) :: wf
@@ -105,7 +107,7 @@ contains
 !     Save Y_ik
 !
       wf%jacobian_transpose_a1_intermediate_oo = &
-                                          sequential_file('jacobian_transpose_intermediate_a1_oo')
+                                          stream_file('jacobian_transpose_intermediate_a1_oo')
       call wf%jacobian_transpose_a1_intermediate_oo%open_('write', 'rewind')
 !
       call wf%jacobian_transpose_a1_intermediate_oo%write_(Y_ik, wf%n_o**2)
@@ -134,7 +136,7 @@ contains
 !     Save Y_ca
 !
       wf%jacobian_transpose_a1_intermediate_vv = &
-                                          sequential_file('jacobian_transpose_intermediate_a1_vv')
+                                          stream_file('jacobian_transpose_intermediate_a1_vv')
       call wf%jacobian_transpose_a1_intermediate_vv%open_('write', 'rewind')
 !
       call wf%jacobian_transpose_a1_intermediate_vv%write_(Y_ca, wf%n_v**2)
@@ -171,6 +173,9 @@ contains
 !!    Use saved intermediates to construct Y_ik and Y_ca.
 !!    Create intermediate X_kc using transpose to save time re-ordering g_iakc
 !!
+      use array_utilities, only: copy_and_scale
+      use reordering, only: sort_12_to_21, add_1432_to_1234, sort_12_to_21
+!
       implicit none
 !
       class(doubles) :: wf
@@ -323,6 +328,8 @@ contains
 !!
 !!    sigma_ai =+ sum_bjc c_bjci g_bjca - c_akbj g_bjik
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(doubles) :: wf
@@ -334,16 +341,16 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable :: W_J_vo, L_J_vo, L_J_vv
 !
-      integer :: req0, req1, batch 
+      integer :: req0, req1, batch
 !
-      type(batching_index), allocatable :: batch_a 
+      type(batching_index), allocatable :: batch_a
 !
       type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose doubles B1', pl='verbose')
       call timer%turn_on()
 !
-!     :: Term 2: sigma_ai =+ c_bjci g_bjca = (L_J_bj c_bjci) L_J_ca = L_J_ca W_J_ci 
+!     :: Term 2: sigma_ai =+ c_bjci g_bjca = (L_J_bj c_bjci) L_J_ca = L_J_ca W_J_ci
 !
       call mem%alloc(L_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
       call wf%eri%get_cholesky_t1(L_J_vo, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
@@ -392,7 +399,7 @@ contains
                      wf%n_v * wf%eri%n_J,          &
                      one,                          &
                      sigma_ai(batch_a%first, 1),   &
-                     wf%n_v)         
+                     wf%n_v)
 !
       enddo
 !
@@ -443,6 +450,11 @@ contains
 !!
 !!    Now uses BLAS dger for outer-product instead of for-loops.
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array, copy_and_scale
+      use reordering, only: sort_12_to_21, add_1432_to_1234
+      use reordering, only: add_2143_to_1234, add_4123_to_1234
+!
       implicit none
 !
       class(doubles) :: wf

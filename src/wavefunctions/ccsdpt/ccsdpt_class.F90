@@ -31,13 +31,10 @@ module ccsdpt_class
    use triples_class, only: triples
 !
    use parameters
-   use memory_manager_class, only: mem
-   use batching_index_class, only : batching_index
    use global_out, only: output
    use timings_class, only: timings
+   use memory_manager_class, only: mem
    use direct_stream_file_class, only : direct_stream_file
-   use array_utilities, only: entrywise_product, zero_array
-   use reordering
 !
    implicit none
 !
@@ -117,6 +114,9 @@ contains
 !!
 !!       X^abc = W^abc + t_ai(jb|kc) + t_bj(ia|kc) + t_ck(ia|jb)
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: squareup_and_sort_1234_to_1324
+!
       implicit none
 !
       class(ccsdpt) :: wf
@@ -546,6 +546,8 @@ contains
 !!
 !!    The result has to be scaled by 1/3 to obtain the final energy correction
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccsdpt), intent(inout) :: wf

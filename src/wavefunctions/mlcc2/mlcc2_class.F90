@@ -1,4 +1,4 @@
-!construct_c1_integrals
+!
 !
 !  eT - a coupled cluster program
 !  Copyright (C) 2016-2021 the authors of eT
@@ -20,7 +20,7 @@
 module mlcc2_class
 !
 !!
-!!    Multilevel Coupled cluster singles and perturbative doubles (MLCC2) class module  
+!!    Multilevel Coupled cluster singles and perturbative doubles (MLCC2) class module
 !!    Written by Sarai D. Folkestad, June 2017 and spring 2019
 !!
 !!    This MLCC2 wavefunction is given by
@@ -31,10 +31,10 @@ module mlcc2_class
 !!    and S_2 is a double excitation operator which only contains
 !!    excitations within an active orbital space (the CC2 orbitals)
 !!
-!!    The S_2 operator is determined to first order in the 
+!!    The S_2 operator is determined to first order in the
 !!    fluctuation potential U (H = F + U).
 !!
-!!    This class handles the ground and excited states for 
+!!    This class handles the ground and excited states for
 !!    MLCC2.
 !!
 !!    For further references on MLCC see:
@@ -42,8 +42,14 @@ module mlcc2_class
 !!       Myhre, R. H., & Koch, H., JCP, 145(4), 044111 (2016)
 !!
 !
-   use ccs_class
+   use ccs_class, only: ccs
+!
+   use parameters
+   use global_out, only: output
+   use timings_class, only: timings
+   use memory_manager_class, only: mem
    use stream_file_class, only: stream_file
+   use sequential_file_class, only: sequential_file
 !
    implicit none
 !
@@ -257,7 +263,7 @@ module mlcc2_class
       include "./initialize_destruct_mlcc2_interface.F90"
       include "./fock_mlcc2_interface.F90"
 !
-   end interface 
+   end interface
 !
 contains
 !
@@ -269,8 +275,9 @@ contains
 !!
 !!    Adapted by Sarai D. Folkestad from CCS constructer, 2019
 !!
-      use citation_class,           only : citation
-      use citation_printer_class,   only : eT_citations
+      use citation_class,         only : citation
+      use citation_printer_class, only : eT_citations
+      use wavefunction_class,     only: wavefunction
 !
       implicit none
 !
@@ -278,7 +285,7 @@ contains
 !
       class(wavefunction), intent(in) :: template_wf
 !
-      type(citation), allocatable :: reference 
+      type(citation), allocatable :: reference
 !
       wf%name_ = 'mlcc2'
 !
@@ -376,10 +383,12 @@ contains
 !!    Reads the cc and mlcc sections of the
 !!    input file.
 !!
-!!    Calls two routines that handle 
+!!    Calls two routines that handle
 !!    reading of orbital type etc. The routine will be
 !!    overwritten for MLCCSD.
 !!
+      use global_in, only: input
+!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
@@ -408,11 +417,11 @@ contains
 !!
 !!       - 'cnto restart'
 !!       - 'cnto states' (requested)
-!!    
+!!
 !!     NTO settings:
 !!
 !!       - 'nto states' (requested)
-!!   
+!!
 !!    Cholesky and Cholesky/PAO settings:
 !!
 !!       - 'cholesky threshold'
@@ -422,6 +431,8 @@ contains
 !!       - reads the number of occupied cntos and ntos (requested keyword for CNTO/NTO)
 !!       - reads the number of virtual cntos and canonical
 !!
+      use global_in, only: input
+!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
@@ -491,7 +502,7 @@ contains
          call input%get_keyword('cholesky threshold', 'mlcc', &
                wf%cholesky_orbital_threshold)
 !
-      else 
+      else
 !
          call output%error_msg('could not recognize the orbital type')
 !
@@ -515,34 +526,37 @@ contains
 !!
 !!    where
 !!
-!!       ε_aibj = ε_a - ε_i + ε_b - ε_j 
+!!       ε_aibj = ε_a - ε_i + ε_b - ε_j
 !!
 !!    and ε_r is the r'th orbital energy.
 !!
-!!    Assumes that x2 is already allocated 
+!!    Assumes that x2 is already allocated
 !!    and constructed.
 !!
+      use reordering, only: squareup, add_1432_to_1234
+      use array_utilities, only: copy_and_scale
+!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), allocatable :: s_aibj
 !
-      call mem%alloc(s_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)  
+      call mem%alloc(s_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
       call squareup(wf%x2, s_aibj, wf%n_cc2_v*wf%n_cc2_o)
 !
       call copy_and_scale(two, s_aibj, wf%u_aibj, (wf%n_cc2_v**2)*(wf%n_cc2_o**2))
       call add_1432_to_1234(-one, s_aibj, wf%u_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
-!    
-      call mem%dealloc(s_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)     
+!
+      call mem%dealloc(s_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
    end subroutine construct_u_aibj_mlcc2
 !
 !
    subroutine calculate_energy_mlcc2(wf)
 !!
-!!    Calculate energy 
+!!    Calculate energy
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!
 !!       E = E_HF + sum_aibj t_i^a*t_j^b L_iajb + sum_aibj s_ij^ab L_iajb
@@ -550,12 +564,12 @@ contains
 !!    with
 !!
 !!       s_aibj = - g_aibj/ε_aibj, {a,i,b,j} are CC2 orbitals
-!! 
-      implicit none 
+!!
+      implicit none
 !
-      class(mlcc2), intent(inout) :: wf 
+      class(mlcc2), intent(inout) :: wf
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb 
+      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb
 !
       real(dp) :: correlation_energy
 !
@@ -565,14 +579,14 @@ contains
 !
       call wf%eri%get_eri_t1('ovov', g_iajb, 1, wf%n_o, 1, wf%n_v, 1, wf%n_o, 1, wf%n_v)
 !
-      correlation_energy = zero 
+      correlation_energy = zero
 !
 !     t1-contribution
 !
 !$omp parallel do private(a,i,b,j) reduction(+:correlation_energy)
       do b = 1, wf%n_v
-         do i = 1, wf%n_o 
-            do j = 1, wf%n_o 
+         do i = 1, wf%n_o
+            do j = 1, wf%n_o
                do a = 1, wf%n_v
 !
                   correlation_energy = correlation_energy + &
@@ -603,8 +617,8 @@ contains
 !
 !$omp parallel do private(a,i,b,j) reduction(+:correlation_energy)
       do b = 1, wf%n_cc2_v
-         do i = 1, wf%n_cc2_o 
-            do j = 1, wf%n_cc2_o 
+         do i = 1, wf%n_cc2_o
+            do j = 1, wf%n_cc2_o
                do a = 1, wf%n_cc2_v
 !
                   correlation_energy = correlation_energy - (g_aibj(a,i,b,j)/&
@@ -618,7 +632,7 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%dealloc(g_iajb, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v)
       call mem%dealloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
@@ -669,14 +683,14 @@ contains
 !
    subroutine get_orbital_differences_mlcc2(wf, orbital_differences, N)
 !!
-!!    Get orbital differences 
+!!    Get orbital differences
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2019
 !!
       implicit none
 !
       class(mlcc2), intent(in) :: wf
 !
-      integer, intent(in) :: N 
+      integer, intent(in) :: N
       real(dp), dimension(N), intent(out) :: orbital_differences
 !
       integer :: a, i, ai, b, j, bj, aibj
@@ -685,16 +699,16 @@ contains
 !
       if (N .eq. wf%n_t1) return ! Requested only singles orbital differences
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
       do a = 1, wf%n_cc2_v
          do i = 1, wf%n_cc2_o
 !
             ai = wf%n_cc2_v*(i - 1) + a
 !
-            do j = 1, wf%n_cc2_o 
+            do j = 1, wf%n_cc2_o
                do b = 1, wf%n_cc2_v
 !
-                  bj = wf%n_cc2_v*(j-1) + b 
+                  bj = wf%n_cc2_v*(j-1) + b
 !
                   if (ai .ge. bj) then
 !
@@ -709,7 +723,7 @@ contains
                   endif
 !
                enddo
-            enddo  
+            enddo
 !
          enddo
       enddo
@@ -720,10 +734,10 @@ contains
 !
    subroutine construct_multiplier_equation_mlcc2(wf, equation)
 !!
-!!    Construct multiplier equation 
+!!    Construct multiplier equation
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!
-!!    Constructs 
+!!    Constructs
 !!
 !!       t-bar^T A + eta,
 !!
@@ -735,19 +749,22 @@ contains
 !!
 !!    where
 !!
-!!       η_aibj = 2 L_iajb       
+!!       η_aibj = 2 L_iajb
 !!
 !!    and uses this to set up 'equation'
 !!
 !!       η_ai + sum_bj tbar_bj A_bj,ai + sum_bjck tbar_bjck A_{bjck,ai}
 !!
-      implicit none 
+      use array_utilities, only: zero_array
+      use reordering, only: symmetric_sum, add_2143_to_1234, add_2341_to_1234
 !
-      class(mlcc2), intent(inout) :: wf 
+      implicit none
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation 
+      class(mlcc2), intent(inout) :: wf
 !
-      real(dp), dimension(:), allocatable :: eta 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
+!
+      real(dp), dimension(:), allocatable :: eta
       real(dp), dimension(:,:,:,:), allocatable :: t2bar
       real(dp), dimension(:,:,:,:), allocatable :: g_iajb
 !
@@ -766,7 +783,7 @@ contains
       call symmetric_sum(t2bar, wf%n_cc2_o*wf%n_cc2_v)
 !
       call mem%alloc(g_iajb, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v)
-!      
+!
       call wf%eri%get_eri_t1('ovov', g_iajb,                &
                              1, wf%n_cc2_o, &
                              1, wf%n_cc2_v, &
@@ -805,7 +822,7 @@ contains
 !     equation = sum_bj tbar_bj A_bj,ai
 !
       call zero_array(equation, wf%n_gs_amplitudes)
-!  
+!
       call wf%jacobian_transpose_ccs_a1(equation, wf%t1bar)
       call wf%jacobian_transpose_ccs_b1(equation, wf%t1bar)
       call wf%jacobian_transpose_cc2_a1(equation, wf%t1bar, wf%n_cc2_o, wf%n_cc2_v, &
@@ -819,7 +836,7 @@ contains
 !
       call mem%dealloc(t2bar, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
-!     Add eta, equation = t-bar^T A + eta 
+!     Add eta, equation = t-bar^T A + eta
 !
       call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
@@ -833,7 +850,7 @@ contains
 !
    subroutine construct_x2_mlcc2(wf)
 !!
-!!    Construct x2 
+!!    Construct x2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
 !!
 !!    Construct
@@ -842,10 +859,12 @@ contains
 !!
 !!    where
 !!
-!!       ε_aibj = ε_a - ε_i + ε_b - ε_j 
+!!       ε_aibj = ε_a - ε_i + ε_b - ε_j
 !!
 !!    and ε_r is the r'th orbital energy.
 !!
+      use reordering, only: packin
+!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
@@ -854,8 +873,8 @@ contains
 !
       integer :: a, i, b, j
 !
-      call mem%alloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)  
-      call mem%alloc(s_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)  
+      call mem%alloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
+      call mem%alloc(s_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
       call wf%eri%get_eri_t1('vovo', g_aibj,1, wf%n_cc2_v, &
                                             1, wf%n_cc2_o, &
@@ -863,8 +882,8 @@ contains
                                             1, wf%n_cc2_o)
 !
 !$omp parallel do private(a, i, b, j)
-      do b = 1, wf%n_cc2_v 
-         do j = 1, wf%n_cc2_o 
+      do b = 1, wf%n_cc2_v
+         do j = 1, wf%n_cc2_o
             do i = 1, wf%n_cc2_o
                do a = 1, wf%n_cc2_v
 !
@@ -877,14 +896,14 @@ contains
 !
                enddo
             enddo
-         enddo 
+         enddo
       enddo
 !$omp end parallel do
 !
-      call packin(wf%x2, s_aibj, wf%n_cc2_o*wf%n_cc2_v)    
+      call packin(wf%x2, s_aibj, wf%n_cc2_o*wf%n_cc2_v)
 !
-      call mem%dealloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)      
-      call mem%dealloc(s_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)      
+      call mem%dealloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
+      call mem%dealloc(s_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
    end subroutine construct_x2_mlcc2
 !
@@ -894,6 +913,10 @@ contains
 !!    Construct t2bar
 !!    Written by Sarai D. Folkestad, May, 2019
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: symmetric_sum, add_2143_to_1234
+      use reordering, only: add_2341_to_1234, packin
+!
       implicit none
 !
       class(mlcc2) :: wf
@@ -959,6 +982,8 @@ contains
 !!    Get CVS projector
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
@@ -977,7 +1002,7 @@ contains
 !
          i = core_MOs(core)
 !
-         if ((i .lt. 1) .or. (i  .gt. wf%n_cc2_o)) then 
+         if ((i .lt. 1) .or. (i  .gt. wf%n_cc2_o)) then
             call output%error_msg('Core orbital (i0) is not CC2 orbital', ints=[i])
          end if
 !
@@ -995,13 +1020,13 @@ contains
 !
             ai = wf%n_cc2_v*(i - 1) + a
 !
-            do j = 1, wf%n_cc2_o 
+            do j = 1, wf%n_cc2_o
                do b = 1, wf%n_cc2_v
 !
                   bj = wf%n_cc2_v*(j - 1) + b
 !
                   aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
-!                  
+!
                   projector(aibj + wf%n_o*wf%n_v) = one
 !
                enddo
@@ -1092,17 +1117,19 @@ contains
 !!    Partitions the orbitals and
 !!    determines the number of amplitudes.
 !!
-!!    Determines the MLCC basis (occupied-occupied and virtual-virtual 
+!!    Determines the MLCC basis (occupied-occupied and virtual-virtual
 !!    Fock matrices are block diagonal).
 !!
 !!    Prepares the MO Cholesky vectors
 !!
 !!    Transforms all frozen constributions to the Fock matrix
 !!    from the old (canonical) MO basis to the MLCC basis.
-!!    This update is done twice, once after orbital partitioning 
-!!    and once after occupied-occupied and virtual-virtual 
+!!    This update is done twice, once after orbital partitioning
+!!    and once after occupied-occupied and virtual-virtual
 !!    Fock matrices are block diagonalized.
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(mlcc2) :: wf
@@ -1128,7 +1155,7 @@ contains
       call wf%determine_n_gs_amplitudes()
       call wf%determine_n_es_amplitudes()
 !
-!     Frozen fock terms transformed from the canonical MO basis to 
+!     Frozen fock terms transformed from the canonical MO basis to
 !     the basis of orbital partitioning
 !
       if (wf%exists_frozen_fock_terms) &
@@ -1156,7 +1183,7 @@ contains
       call wf%eri%update_cholesky_mo(T)
       call mem%dealloc(T, wf%n_mo, wf%n_mo)
 !
-!     Frozen fock terms transformed from the basis of orbital partitioning to 
+!     Frozen fock terms transformed from the basis of orbital partitioning to
 !     the MLCC basis
 !
       if (wf%exists_frozen_fock_terms) &
@@ -1177,6 +1204,8 @@ contains
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad and
 !!    Alexander C. Paul , 2018
 !!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       class(mlcc2) :: wf
@@ -1253,7 +1282,7 @@ contains
 !
    subroutine update_MO_fock_contributions_mlcc2(wf, C_old)
 !!
-!!    Updates MO Fock contributions 
+!!    Updates MO Fock contributions
 !!    Written by Sarai D. Folkestad, Nov 2019
 !!
 !!    Updates the frozen contributions to the fock matrix
@@ -1285,12 +1314,14 @@ contains
    subroutine print_X1_diagnostics_mlcc2(wf, X, label)
 !!
 !!    Print X1 diagnostics
-!!    Written by Sarai D. Folkestad, Nov 2019       
+!!    Written by Sarai D. Folkestad, Nov 2019
 !!
+      use array_utilities, only: get_l2_norm
+!
       implicit none
 !
       class(mlcc2), intent(in) :: wf
-!     
+!
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X
 !
       character(len=1), intent(in) :: label
@@ -1308,7 +1339,7 @@ contains
       do i = 1, wf%n_cc2_o
          do a = 1, wf%n_cc2_v
 !
-            ai = wf%n_cc2_v*(i-1) + a 
+            ai = wf%n_cc2_v*(i-1) + a
             ai_full = wf%n_v*(i-1) + a
 !
             X_internal(ai) = X(ai_full)
@@ -1341,7 +1372,7 @@ contains
 !!    Written by Sarai D. Folkestad, May 2020
 !!
 !!    Reads MLCC orbitals and partitionings from file
-!!    and transforms frozen Fock matrices and Cholesky vectors to 
+!!    and transforms frozen Fock matrices and Cholesky vectors to
 !!    the MLCC basis
 !!
       implicit none
@@ -1373,7 +1404,7 @@ contains
       call wf%determine_n_gs_amplitudes()
       call wf%determine_n_es_amplitudes()
 !
-!     Frozen fock terms transformed from the canonical MO basis to 
+!     Frozen fock terms transformed from the canonical MO basis to
 !     the basis of orbital partitioning
 !
       if (wf%exists_frozen_fock_terms) &

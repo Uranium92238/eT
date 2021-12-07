@@ -48,6 +48,8 @@ contains
 !!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ
 !!    part, where it is equal to t_i^a.
 !!
+      use array_utilities, only: zero_array, sandwich
+!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -117,6 +119,8 @@ contains
 !!
 !!    Based on t1_transform_ccs by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
+      use array_utilities, only: zero_array, sandwich
+!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -170,12 +174,12 @@ contains
 !!    Add t1 terms and transform
 !!    Written by Tor S. Haugland, Nov 2019 (as do_visualization)
 !!
-!!    Here Z, on input, is assumed to be the density matrix with no T1 contributions 
+!!    Here Z, on input, is assumed to be the density matrix with no T1 contributions
 !!    - the so-called T1-transformed density matrix.
 !!    The routine adds the missing T1 contributions to Z and transforms it
 !!    with the AO coefficients to obtain a density as needed by the visualization tool.
 !!
-!!       Z_alpha,beta = (sum_pq  Z_pq C_alpha,p C_beta,q) 
+!!       Z_alpha,beta = (sum_pq  Z_pq C_alpha,p C_beta,q)
 !!
 !!    Renamed and moved here, by Alexander C. Paul, May 2020
 !!

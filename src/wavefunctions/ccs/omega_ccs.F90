@@ -22,7 +22,7 @@ submodule (ccs_class) omega_ccs
 !!
 !!    Omega submodule
 !!
-!!    Routines to construct 
+!!    Routines to construct
 !!
 !!    Omega_mu =  < mu | exp(-T) H exp(T) | R >
 !!
@@ -38,13 +38,15 @@ contains
 !!    Construct Omega (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_t1), intent(out) :: omega
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Construct CCS Omega', pl='normal')
       call timer%turn_on()

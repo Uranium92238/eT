@@ -90,8 +90,8 @@ contains
 !!    left transition density, as the equations are the same, but the
 !!    required information is different for the left GS and the left ES.
 !!
-      use array_utilities, only: add_to_subblock
-      use range_class
+      use array_utilities, only: add_to_subblock, zero_array
+      use range_class, only: range_
 !
       implicit none
 !
@@ -179,6 +179,11 @@ contains
 !!
 !!       sum_mu L_mu < mu| E_pq |HF >
 !!
+      use reordering, only: squareup_and_sort_1234_to_1324
+      use reordering, only: sort_12_to_21, sort_1234_to_3412
+      use reordering, only: construct_covariant_1324
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(cc3), intent(in) :: wf
@@ -262,7 +267,9 @@ contains
 !!          D_kl += -1/2 sum_ij,abc t^abc_ijk tbar^abc_ijl
 !!
       use omp_lib
-      use array_utilities, only: copy_and_scale
+      use batching_index_class, only: batching_index
+      use array_utilities, only: copy_and_scale, zero_array
+      use reordering, only: construct_contravariant_t3
 !
       implicit none
 !
@@ -707,6 +714,8 @@ contains
 !!    All permutations for a,b,c have to be considered
 !!    due to the restrictions in the a,b,c loops
 !!
+      use reordering, only: sort_123_to_132
+!
       implicit none
 !
       class(cc3) :: wf
@@ -790,6 +799,10 @@ contains
 !!    vv-block:
 !!       rho^L_cd += 1/2 sum_{abijk} tbar^abc_ijk t^abd_ijk
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: construct_contravariant_t3, add_21_to_12
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(cc3) :: wf
@@ -1282,6 +1295,8 @@ contains
 !!    All permutations for i,j,k have to be considered
 !!    due to the restrictions in the i,j,k loops
 !!
+      use reordering, only: sort_123_to_132
+!
       implicit none
 !
       class(cc3) :: wf
@@ -1349,6 +1364,8 @@ contains
 !!    NB: u_abc changes from in to out,
 !!        so this should be the last routine called in a i,j,k loop
 !!
+      use reordering, only: sort_123_to_213, sort_123_to_312
+!
       implicit none
 !
       class(cc3) :: wf

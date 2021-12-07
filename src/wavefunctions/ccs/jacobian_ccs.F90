@@ -68,6 +68,8 @@ contains
 !!
 !!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -113,7 +115,7 @@ contains
       timer = timings('Jacobian CCS A1', pl='verbose')
       call timer%turn_on()
 !
-!     sum_b F_a_b c_b_i 
+!     sum_b F_a_b c_b_i
 !
       call dgemm('N', 'N',     &
                   wf%n_v,      &
@@ -143,7 +145,7 @@ contains
                   rho1,        &
                   wf%n_v)
 !
-      
+
       call timer%turn_off()
 !
    end subroutine jacobian_ccs_a1_ccs
@@ -163,6 +165,10 @@ contains
 !!
 !!    Separate calculation of both terms due to batching.
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: sort_123_to_213
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf

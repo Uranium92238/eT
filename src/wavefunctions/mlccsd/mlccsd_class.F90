@@ -20,7 +20,7 @@
 module mlccsd_class
 !
 !!
-!!    Multilevel Coupled cluster singles and doubles (MLCCSD) class module  
+!!    Multilevel Coupled cluster singles and doubles (MLCCSD) class module
 !!    Written by Sarai D. Folkestad, June 2017 and spring 2019
 !!
 !!    This MLCCSD wavefunction is given by
@@ -33,11 +33,11 @@ module mlccsd_class
 !!    and T_2 is a double excitation operator which only contains
 !!    excitations within another active orbital space (the CCSD orbitals)
 !!
-!!    The S_2 operator is determined to first order in the 
-!!    fluctuation potential U (H = F + U). T_2 is treated to infinite order 
+!!    The S_2 operator is determined to first order in the
+!!    fluctuation potential U (H = F + U). T_2 is treated to infinite order
 !!    in U.
 !!
-!!    This class handles the ground and excited states for 
+!!    This class handles the ground and excited states for
 !!    MLCCSD.
 !!
 !!    For further references on MLCC see:
@@ -46,7 +46,13 @@ module mlccsd_class
 !!       Folkestad, S. D., & Koch, H.,  JCTC 16, 1, 179-189 (2020)
 !!
 !
-   use mlcc2_class
+   use mlcc2_class, only: mlcc2
+!
+   use parameters
+   use global_out, only: output
+   use timings_class, only: timings
+   use memory_manager_class, only: mem
+   use sequential_file_class, only: sequential_file
 !
    implicit none
 !
@@ -72,8 +78,8 @@ module mlccsd_class
       integer :: n_t2
 !
       real(dp), dimension(:), allocatable :: t2
-      real(dp), dimension(:,:), allocatable :: O_o, O_v ! Orthogonal transformation matrix 
-                                                        ! which transforms between MLCCSD basis 
+      real(dp), dimension(:,:), allocatable :: O_o, O_v ! Orthogonal transformation matrix
+                                                        ! which transforms between MLCCSD basis
                                                         ! and basis for CC2 amplitude determination
 !
 !     Intermediates for Jacobian transformation
@@ -113,7 +119,7 @@ module mlccsd_class
 !
       procedure :: construct_cholesky_orbitals  => construct_cholesky_orbitals_mlccsd
       procedure :: construct_paos               => construct_paos_mlccsd
-!      
+!
       procedure :: construct_cc2_cnto_transformation_matrices &
                   => construct_cc2_cnto_transformation_matrices_mlccsd
 !
@@ -191,7 +197,7 @@ module mlccsd_class
       procedure :: save_jacobian_g2_intermediates  => save_jacobian_g2_intermediates_mlccsd
       procedure :: save_jacobian_h2_intermediates  => save_jacobian_h2_intermediates_mlccsd
       procedure :: save_jacobian_j2_intermediates  => save_jacobian_j2_intermediates_mlccsd
-!  
+!
 !     Excited state
 !
       procedure :: print_X1_diagnostics       =>  print_X1_diagnostics_mlccsd
@@ -241,7 +247,7 @@ module mlccsd_class
       procedure :: save_mlcc_orbitals             => save_mlcc_orbitals_mlccsd
       procedure :: read_mlcc_orbitals             => read_mlcc_orbitals_mlccsd
 !
-!     Cleanup 
+!     Cleanup
 !
       procedure :: cleanup                        => cleanup_mlccsd
 !
@@ -249,7 +255,7 @@ module mlccsd_class
 !
       procedure :: initialize                     => initialize_mlccsd
 !
-!     Restart 
+!     Restart
 !
       procedure :: mo_preparations_from_restart   => mo_preparations_from_restart_mlccsd
 !
@@ -267,7 +273,7 @@ module mlccsd_class
       include "./jacobian_mlccsd_interface.F90"
       include "./fock_mlccsd_interface.F90"
 !
-   end interface 
+   end interface
 !
 contains
 !
@@ -279,16 +285,18 @@ contains
 !!
 !!    Adapted by Sarai D. Folkestad from CCS constructer, 2020
 !!
-      use citation_class,           only : citation
-      use citation_printer_class,   only : eT_citations
+      use citation_class,         only: citation
+      use citation_printer_class, only: eT_citations
+      use wavefunction_class,     only: wavefunction
+      use stream_file_class,      only: stream_file
 !
       implicit none
 !
-      class(mlccsd), intent(inout) :: wf 
+      class(mlccsd), intent(inout) :: wf
 !
       class(wavefunction), intent(in) :: template_wf
 !
-      type(citation), allocatable :: reference 
+      type(citation), allocatable :: reference
 !
 !     If we have a CC2 level, we will set the AO fock matrix from the template wavefunction.
 !     The AO fock is currently only constructed for the reference wavefunctions.
@@ -328,7 +336,7 @@ contains
          call output%warning_msg("Ghosts are experimental in multilevel.")
 !
       if (wf%bath_orbital) call output%error_msg('Bath orbitals not yet implemented for MLCCSD')
-!      
+!
       call wf%read_mlcc_settings()
 !
       wf%n_t1 = (wf%n_o)*(wf%n_v)
@@ -342,8 +350,8 @@ contains
 !
          call wf%initialize_ao_fock()
 !
-         call dcopy(wf%ao%n**2, template_wf%ao_fock, 1, wf%ao_fock, 1)                                                 
-!                               
+         call dcopy(wf%ao%n**2, template_wf%ao_fock, 1, wf%ao_fock, 1)
+!
          call wf%initialize_mo_fock()
 !
       endif
@@ -383,9 +391,11 @@ contains
 !!    Reads the mlcc sections of the
 !!    input file.
 !!
-!!    Calls two routines that handle 
+!!    Calls two routines that handle
 !!    reading of orbital type etc.
 !!
+      use global_in, only: input
+!
       implicit none
 !
       class(mlccsd), intent(inout) :: wf
@@ -411,7 +421,7 @@ contains
 !
       if (wf%do_cc2 .and. wf%do_ccs) &
             call input%get_required_keyword('cc2 orbitals', 'mlcc', wf%cc2_orbital_type)
-!     
+!
       call input%get_required_keyword('ccsd orbitals', 'mlcc', wf%ccsd_orbital_type)
 !
 !     Get specific CC2 and CCSD orbital settings
@@ -432,15 +442,15 @@ contains
 !!    Partitions the orbitals and
 !!    determines the number of amplitudes.
 !!
-!!    Determines the MLCC basis (occupied-occupied and virtual-virtual 
+!!    Determines the MLCC basis (occupied-occupied and virtual-virtual
 !!    Fock matrices are block diagonal).
 !!
 !!    Prepares the MO Cholesky vectors
 !!
 !!    Transforms all frozen constributions to the Fock matrix
 !!    from the old (canonical) MO basis to the MLCC basis.
-!!    This update is done twice, once after orbital partitioning 
-!!    and once after occupied-occupied and virtual-virtual 
+!!    This update is done twice, once after orbital partitioning
+!!    and once after occupied-occupied and virtual-virtual
 !!    Fock matrices are block diagonalized.
 !!
 !!    If there is a CC2 space, we must construct the transformation matrix which transforms
@@ -587,6 +597,9 @@ contains
 !!    Construct X2 in packed form and store in wf%x2
 !!
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: packin
+!
       implicit none
 !
       class(mlccsd), intent(inout) :: wf
@@ -637,11 +650,14 @@ contains
 !
    subroutine construct_u_aibj_mlccsd(wf)
 !!
-!!    Construct u 
+!!    Construct u
 !!    Written by Sarai D. Folkestad, Jul 2019
 !!
 !!    Note: assumes wf%x2 in memory
 !!
+      use reordering, only: squareup, add_1432_to_1234
+      use array_utilities, only: copy_and_scale
+!
       implicit none
 !
       class(mlccsd), intent(inout) :: wf
@@ -673,17 +689,17 @@ contains
 !
    subroutine get_orbital_differences_mlccsd(wf, orbital_differences, N)
 !!
-!!    Get orbital differences 
+!!    Get orbital differences
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2019
 !!
       implicit none
 !
       class(mlccsd), intent(in) :: wf
 !
-      integer, intent(in) :: N 
+      integer, intent(in) :: N
       real(dp), dimension(N), intent(out) :: orbital_differences
 !
-      integer :: a, i, ai, b, j, bj, aibj, n_a_o, n_a_v 
+      integer :: a, i, ai, b, j, bj, aibj, n_a_o, n_a_v
 !
       if ((N .ne. wf%n_gs_amplitudes) .and. (N .ne. wf%n_es_amplitudes)) &
          call output%error_msg('Could not recognize length of orbital differences vector')
@@ -695,23 +711,23 @@ contains
          n_a_o = wf%n_ccsd_o + wf%n_cc2_o
          n_a_v = wf%n_ccsd_v + wf%n_cc2_v
 !
-      else ! do_cc2 = .true. and N = wf%n_gs_amplitudes 
+      else ! do_cc2 = .true. and N = wf%n_gs_amplitudes
 !
          n_a_o = wf%n_ccsd_o
          n_a_v = wf%n_ccsd_v
 !
       endif
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
       do a = 1, n_a_v
-         do i = 1, n_a_o 
+         do i = 1, n_a_o
 !
             ai = n_a_v*(i - 1) + a
 !
-            do j = 1, n_a_o 
+            do j = 1, n_a_o
                do b = 1, n_a_v
 !
-                  bj = n_a_v*(j - 1) + b 
+                  bj = n_a_v*(j - 1) + b
 !
                   if (ai .ge. bj) then
 !
@@ -726,7 +742,7 @@ contains
                   endif
 !
                enddo
-            enddo  
+            enddo
 !
          enddo
       enddo
@@ -739,19 +755,21 @@ contains
 !!
 !!    Construct CC2 amplitudes
 !!    Written by Sarai D. Folkestad, 2019
-!! 
-!!    If wf%do_cc2 = .true., the CC2 amplitudes will 
+!!
+!!    If wf%do_cc2 = .true., the CC2 amplitudes will
 !!    be calculated in the basis where the occupied-occupied
 !!    and virtual-virtual Fock matrices are diagonal in the
-!!    CC2-CCSD blocks. 
+!!    CC2-CCSD blocks.
 !!
 !!       s_AIBJ = -g_AIBJ/e_AIBJ
 !!
-!!    The amplitudes are afterwards 
+!!    The amplitudes are afterwards
 !!    transformed to the MLCCSD basis
 !!
-!!       s_aibj = sum_AIBJ U_Aa U_Ii U_Bb U_Jj s_AIBJ. 
-!!    
+!!       s_aibj = sum_AIBJ U_Aa U_Ii U_Bb U_Jj s_AIBJ.
+!!
+      use reordering, only: sort_123_to_132, sort_1234_to_2143
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -771,7 +789,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: X_akdj
       real(dp), dimension(:,:,:,:), allocatable :: X_ckdj
 !
-      integer :: n_a_o, n_a_v, last_a_o, last_a_v ! Total and last  active indices 
+      integer :: n_a_o, n_a_v, last_a_o, last_a_v ! Total and last  active indices
 !
       integer :: a, i, b, j
 !
@@ -861,7 +879,7 @@ contains
                   s_iajb(i, a, j, b) = s_iajb(i, a, j, b)/&
                         (wf%orbital_energies_cc2(wf%n_o + a) &
                         +  wf%orbital_energies_cc2(wf%n_o + b) &
-                        -  wf%orbital_energies_cc2(i) & 
+                        -  wf%orbital_energies_cc2(i) &
                         -  wf%orbital_energies_cc2(j) )
 !
                enddo
@@ -960,6 +978,8 @@ contains
 !!
 !!    Modified for MLCCSD by Sarai D. Folkestad, 2019
 !!
+      use reordering, only: squareup
+!
       implicit none
 !
       class(mlccsd), intent(inout) :: wf
@@ -1031,6 +1051,8 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(mlccsd), intent(inout) :: wf
@@ -1047,9 +1069,9 @@ contains
 !
          call wf%set_t2_to_cc2_guess()
 !
-      else 
+      else
 !
-         if (wf%t_file%exists()) then 
+         if (wf%t_file%exists()) then
 !
             call output%printf('m', 'Requested restart. Reading in solution from file.', &
                           fs='(/t3,a)')
@@ -1099,7 +1121,7 @@ contains
 !!    t_aibj = - g_aibj/ε_aibj
 !!
 !!    Modified for MLCCSD by Sarai D. Folkestad, Nov 2019
-!!    
+!!
       implicit none
 !
       class(mlccsd) :: wf
@@ -1109,8 +1131,8 @@ contains
       integer :: a, b, i, j, ai, bj, aibj
 !
       call mem%alloc(g_aibj, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
-      call wf%eri%get_eri_t1('vovo', g_aibj, 1, wf%n_ccsd_v, 1, wf%n_ccsd_o, &  
-                                             1, wf%n_ccsd_v, 1, wf%n_ccsd_o)  
+      call wf%eri%get_eri_t1('vovo', g_aibj, 1, wf%n_ccsd_v, 1, wf%n_ccsd_o, &
+                                             1, wf%n_ccsd_v, 1, wf%n_ccsd_o)
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
       do a = 1, wf%n_ccsd_v
@@ -1148,38 +1170,38 @@ contains
 !
    subroutine form_newton_raphson_t_estimate_mlccsd(wf, t, dt)
 !!
-!!    Form Newton-Raphson t estimate 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!    Form Newton-Raphson t estimate
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
 !!    Here, t is the full amplitude vector and dt is the correction to the amplitude vector.
 !!
-!!    The correction is assumed to be obtained from either 
+!!    The correction is assumed to be obtained from either
 !!    solving the Newton-Raphson equation
 !!
-!!       A dt = -omega, 
+!!       A dt = -omega,
 !!
 !!    where A and omega are given in the biorthonormal basis,
-!!    or from the quasi-Newton equation (A ~ diagonal with diagonal = epsilon) 
+!!    or from the quasi-Newton equation (A ~ diagonal with diagonal = epsilon)
 !!
 !!        dt = -omega/epsilon
 !!
-!!    Epsilon is the vector of orbital differences. 
+!!    Epsilon is the vector of orbital differences.
 !!
-!!    On exit, t = t + dt, where the appropriate basis change has been accounted 
+!!    On exit, t = t + dt, where the appropriate basis change has been accounted
 !!    for (in particular for the double amplitudes in CCSD wavefunctions). Also,
 !!    dt is expressed in the basis compatible with t.
 !!
-      implicit none 
+      implicit none
 !
-      class(mlccsd), intent(in) :: wf 
+      class(mlccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: dt 
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: dt
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t
 !
-      integer :: ai, aiai 
+      integer :: ai, aiai
 !
-!     Change dt doubles diagonal to match the definition of the 
-!     double amplitudes 
+!     Change dt doubles diagonal to match the definition of the
+!     double amplitudes
 !
 !$omp parallel do private(ai, aiai)
       do ai = 1, wf%n_ccsd_o*wf%n_ccsd_v
@@ -1187,12 +1209,12 @@ contains
          aiai = ai*(ai - 3)/2 + 2*ai
          dt(wf%n_t1 + aiai) = two*dt(wf%n_t1 + aiai)
 !
-      enddo 
-!$omp end parallel do 
+      enddo
+!$omp end parallel do
 !
-!     Add the dt vector to the t vector 
+!     Add the dt vector to the t vector
 !
-      call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)    
+      call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)
 !
    end subroutine form_newton_raphson_t_estimate_mlccsd
 !
@@ -1203,6 +1225,8 @@ contains
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad and
 !!    Alexander C. Paul , 2018
 !!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -1248,12 +1272,14 @@ contains
    subroutine print_X1_diagnostics_mlccsd(wf, X, label)
 !!
 !!    Print X1 diagnostics
-!!    Written by Sarai D. Folkestad, Nov 2019        
+!!    Written by Sarai D. Folkestad, Nov 2019
 !!
+      use array_utilities, only: get_l2_norm
+!
       implicit none
 !
       class(mlccsd), intent(in) :: wf
-!     
+!
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X
 !
       character(len=1), intent(in) :: label
@@ -1271,7 +1297,7 @@ contains
       do i = 1, wf%n_ccsd_o
          do a = 1, wf%n_ccsd_v
 !
-            ai = wf%n_ccsd_v*(i - 1) + a 
+            ai = wf%n_ccsd_v*(i - 1) + a
             ai_full = wf%n_v*(i - 1) + a
 !
             X_internal(ai) = X(ai_full)
@@ -1303,6 +1329,8 @@ contains
 !!    Get CVS projector
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(mlccsd), intent(inout) :: wf
@@ -1321,7 +1349,7 @@ contains
 !
          i = core_MOs(core)
 !
-         if (i  .gt. wf%n_ccsd_o) then 
+         if (i  .gt. wf%n_ccsd_o) then
             call output%error_msg('Core orbital (i0) is not CCSD orbital', ints=[i])
          end if
 !
@@ -1342,13 +1370,13 @@ contains
 !
             ai = n_a_v*(i - 1) + a
 !
-            do j = 1, n_a_o 
+            do j = 1, n_a_o
                do b = 1, n_a_v
 !
                   bj = n_a_v*(j - 1) + b
 !
                   aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
-!                  
+!
                   projector(aibj + wf%n_o*wf%n_v) = one
 !
                enddo
@@ -1396,7 +1424,7 @@ contains
 !!    Written by Sarai D. Folkestad, May 2020
 !!
 !!    Reads MLCC orbitals and partitionings from file
-!!    and transforms frozen Fock matrices and Cholesky vectors to 
+!!    and transforms frozen Fock matrices and Cholesky vectors to
 !!    the MLCC basis
 !!
       implicit none
@@ -1424,7 +1452,7 @@ contains
       call wf%determine_n_gs_amplitudes()
       call wf%determine_n_es_amplitudes()
 !
-!     Frozen fock terms transformed from the canonical MO basis to 
+!     Frozen fock terms transformed from the canonical MO basis to
 !     the basis of orbital partitioning
 !
       if (wf%exists_frozen_fock_terms) &
@@ -1437,23 +1465,22 @@ contains
 !
    subroutine scale_amplitudes_mlccsd(wf, t)
 !!
-!!    Scale amplitudes 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!    Scale amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
 !!    Scales t to conform with the convention used in the wavefunction:
 !!
-!!       t1 <- t1 
+!!       t1 <- t1
 !!       t2_aiai <- two * t2_aiai
 !!       ...
 !!
-!
       use array_utilities, only: scale_diagonal
 !
-      implicit none 
+      implicit none
 !
-      class(mlccsd), intent(in) :: wf 
+      class(mlccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t
 !
       call scale_diagonal(two,                                    &
                           t(wf%n_t1 + 1 : wf%n_gs_amplitudes),    &

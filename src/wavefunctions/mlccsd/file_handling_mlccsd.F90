@@ -23,7 +23,7 @@ submodule (mlccsd_class) file_handling_mlccsd
 !!    File handling submodule
 !!
 !!    Gathers routines that save wavefunction parameters to file,
-!!    and reads them from file, plus other routines related to the 
+!!    and reads them from file, plus other routines related to the
 !!    handling of the files that belong to the wavefunction.
 !!
 !
@@ -57,11 +57,11 @@ contains
 !!
 !!    Read amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!    Adapted to return the number of read amplitdues if requested 
+!!    Adapted to return the number of read amplitdues if requested
 !!    by Alexander C. Paul, Oct 2020
 !!
-!!    read_n: returns the number of amplitudes read. 
-!!            This is especially useful e.g. in CCSD to provide a start guess 
+!!    read_n: returns the number of amplitudes read.
+!!            This is especially useful e.g. in CCSD to provide a start guess
 !!            for the doubles if only singles were found on file.
 !!
       implicit none
@@ -88,7 +88,7 @@ contains
 !
    module subroutine read_excitation_vector_file_mlccsd(wf, file_, vector, energy, read_n)
 !!
-!!    Read excitation vector file 
+!!    Read excitation vector file
 !!    Written by Alexander C. Paul, Sep 2020
 !!
 !!    Reads excitation vector from file structured as follows:
@@ -96,9 +96,11 @@ contains
 !!
 !!    read_n: optionally returns the number of amplitudes read
 !!
+      use stream_file_class, only: stream_file
+!
       implicit none
 !
-      class(mlccsd), intent(inout) :: wf 
+      class(mlccsd), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
@@ -126,15 +128,17 @@ contains
 !
    module subroutine save_excitation_vector_on_file_mlccsd(wf, file_, vector, energy)
 !!
-!!    Save excitation vector on file 
+!!    Save excitation vector on file
 !!    Written by Alexander C. Paul, Sep 2020
 !!
 !!    Writes excitation vector o file structured as follows:
 !!    excitation_energy, n_t1, X1
 !!
+      use stream_file_class, only: stream_file
+!
       implicit none
 !
-      class(mlccsd), intent(inout) :: wf 
+      class(mlccsd), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
@@ -170,9 +174,14 @@ contains
 !!    R^a_i = 1/2 L^a_i
 !!    R^ab_ij = 1/6 (2L^ab_ij + L^ba_ij)
 !!
+      use stream_file_class, only: stream_file
+      use array_utilities, only: zero_array, copy_and_scale
+      use reordering, only: construct_packed_contravariant
+      use reordering, only: construct_packed_covariant
+!
       implicit none
 !
-      class(mlccsd), intent(inout) :: wf 
+      class(mlccsd), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
@@ -208,14 +217,14 @@ contains
 !
 !              2R^ab_ij - R^ba_ij
                alpha = two
-               call construct_packed_contravariant(vector(wf%n_t1+1:wf%n_es_amplitudes), & 
+               call construct_packed_contravariant(vector(wf%n_t1+1:wf%n_es_amplitudes), &
                                                    temp, n_v, n_o)
 !
             else if (restart_from == 'right' .and. restart_to == 'left') then
 !
 !              1/3 (2L^ab_ij + L^ba_ij)
                alpha = half
-               call construct_packed_covariant(vector(wf%n_t1+1:wf%n_es_amplitudes), & 
+               call construct_packed_covariant(vector(wf%n_t1+1:wf%n_es_amplitudes), &
                                                temp, n_v, n_o)
 !
             end if
@@ -245,12 +254,12 @@ contains
 !!
 !!    File format:
 !!
-!!    1: n_ccs_o, n_ccs_v, n_cc2_o, n_cc2_v, n_ccsd_o, n_ccsd_v, orbitals 
+!!    1: n_ccs_o, n_ccs_v, n_cc2_o, n_cc2_v, n_ccsd_o, n_ccsd_v, orbitals
 !!    2: orbital energies
 !!
-      implicit none 
+      implicit none
 !
-      class(mlccsd), intent(inout) :: wf 
+      class(mlccsd), intent(inout) :: wf
 !
       call wf%orbital_coefficients_mlcc_file%open_('write','rewind')
 !
@@ -280,19 +289,19 @@ contains
 !!
 !!    File format:
 !!
-!!    1: n_ccs_o, n_ccs_v, n_cc2_o, n_cc2_v, n_ccsd_o, n_ccsd_v, orbitals 
+!!    1: n_ccs_o, n_ccs_v, n_cc2_o, n_cc2_v, n_ccsd_o, n_ccsd_v, orbitals
 !!    2: orbital energies
 !!
-      implicit none 
+      implicit none
 !
-      class(mlccsd), intent(inout) :: wf 
+      class(mlccsd), intent(inout) :: wf
 !
       call wf%orbital_coefficients_mlcc_file%open_('read','rewind')
 !
       call wf%orbital_coefficients_mlcc_file%read_(wf%n_ccs_o)
       call wf%orbital_coefficients_mlcc_file%read_(wf%n_ccs_v)
       call wf%orbital_coefficients_mlcc_file%read_(wf%n_cc2_o)
-      call wf%orbital_coefficients_mlcc_file%read_(wf%n_cc2_v) 
+      call wf%orbital_coefficients_mlcc_file%read_(wf%n_cc2_v)
       call wf%orbital_coefficients_mlcc_file%read_(wf%n_ccsd_o)
       call wf%orbital_coefficients_mlcc_file%read_(wf%n_ccsd_v)
 !

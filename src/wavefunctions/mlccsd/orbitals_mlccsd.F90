@@ -33,17 +33,17 @@ submodule (mlccsd_class) orbitals_mlccsd
 !!
 !!    2. If the number of active/inactive orbitals not determined
 !!       on input, it is determined during orbital construction.
-!!       Orbital coefficient matrix is ordered according to 
+!!       Orbital coefficient matrix is ordered according to
 !!       active and inactive:
-!!       
+!!
 !!          C = [active occupied, inactive occupied, active virtual, inactive virtual]
 !!
-!!    3. The Fock matrix is constructed, and the F_oo and F_vv blocks are block 
+!!    3. The Fock matrix is constructed, and the F_oo and F_vv blocks are block
 !!       diagonalized, such that the active-active and inactive-inactive
-!!       blocks are diagonal. The corresponding basis is the basis used in the 
+!!       blocks are diagonal. The corresponding basis is the basis used in the
 !!       MLCC calculation.
 !!
-!!    Note that step 1 and 2 happens at the same time, in the routines 
+!!    Note that step 1 and 2 happens at the same time, in the routines
 !!    which constructs the orbitals
 !!
 !
@@ -54,14 +54,14 @@ contains
 !
    module subroutine orbital_partitioning_mlccsd(wf)
 !!
-!!    Orbital partitioning 
+!!    Orbital partitioning
 !!    Written by Sarai D. Folkestad, Jul 2019
 !!
-!!    This routine drives the orbital 
+!!    This routine drives the orbital
 !!    partitioning for MLCCSD
 !!
-!!    Based on which orbital types are requested on 
-!!    input, we construct the new orbital basis 
+!!    Based on which orbital types are requested on
+!!    input, we construct the new orbital basis
 !!    and set:
 !!
 !!       - n_ccsd_o, n_ccsd_v, n_cc2_o, n_cc2_v, n_ccs_o, n_ccs_v
@@ -72,7 +72,7 @@ contains
 !!
 !!       - first_ccs_o, last_ccs_o, first_ccs_v, last_ccs_v
 !!
-!!    NOTE: This routine should always be 
+!!    NOTE: This routine should always be
 !!    followed by a routine which block diagonalizes
 !!    the Fock matrix!
 !!
@@ -97,8 +97,8 @@ contains
          if (wf%cc2_orbital_type .ne. wf%ccsd_orbital_type)  then
 !
                call output%error_msg('CCSD and CC2 orbital types must be the same!')
-         endif   
-!  
+         endif
+!
       endif
 !
       if (trim(wf%ccsd_orbital_type) == 'cnto-approx' .or. &
@@ -106,14 +106,14 @@ contains
 !
 !        Set orbital space sizes
 !
-!        Note: If do_ccs and do_cc2, then n_cc2_o and n_cc2_v 
+!        Note: If do_ccs and do_cc2, then n_cc2_o and n_cc2_v
 !              is set directly from input.<
 !
          if (wf%do_cc2 .and. .not. wf%do_ccs) then
 !
             wf%n_cc2_o = wf%n_o - wf%n_ccsd_o
             wf%n_cc2_v = wf%n_v - wf%n_ccsd_v
-!  
+!
          elseif (.not. wf%do_cc2) then
 !
             wf%n_cc2_o = 0
@@ -152,7 +152,7 @@ contains
             elseif (trim(wf%ccsd_orbital_type) == 'cnto') then
 !
                call wf%construct_cc2_cnto_transformation_matrices(T_o, T_v)
-!      
+!
             endif
 !
             call wf%write_cnto_transformation_matrices(T_o, T_v)
@@ -232,24 +232,24 @@ contains
 !!
 !!    For an MLCCSD calculation with CC2, we must swap MO basis
 !!    to detemine the CC2 double amplitudes. This routine
-!!    constructs the transformation matrices (occupied and virtual) 
+!!    constructs the transformation matrices (occupied and virtual)
 !!    of that transformation.
 !!
 !!    The orthogonal transformation matrix
 !!    is defined as
 !!
-!!       O = C1^T S C2, 
+!!       O = C1^T S C2,
 !!
 !!    where C1 is the CC2 basis, C2 is the CCSD basis,
 !!    and S is the AO overlap matrix.
 !!
-!!    Since this transformation only will mix occupied 
-!!    orbitals with occupied orbitals, and virtual orbitals 
+!!    Since this transformation only will mix occupied
+!!    orbitals with occupied orbitals, and virtual orbitals
 !!    with virtual orbitals, we store only the two diagonal blocks
 !!
 !!       O_o (n_o x n_o)
 !!
-!!    and 
+!!    and
 !!
 !!       O_v (n_v x n_v).
 !!
@@ -343,18 +343,19 @@ contains
 !!    decomposing the HF AO density and the
 !!    HF virtual AO density
 !!
-!!    See A. M. J. Sánchez de Merás, H. Koch, 
+!!    See A. M. J. Sánchez de Merás, H. Koch,
 !!    I. G. Cuesta, and L. Boman (J. Chem. Phys. 132, 204105 (2010))
 !!    for more information on active space generation
 !!    using Cholesky decomposition
 !!
-!!    'occupied_only' : Optional argument that is used to 
-!!                      determine if we construct occuped 
-!!                      Cholesky orbitals only, or if we also 
+!!    'occupied_only' : Optional argument that is used to
+!!                      determine if we construct occuped
+!!                      Cholesky orbitals only, or if we also
 !!                      construct the virtual Cholesky orbitals
 !!                      Default: .false.
 !!
       use cholesky_orbital_tool_class, only: cholesky_orbital_tool
+!
       implicit none
 !
       class(mlccsd), intent(inout) :: wf
@@ -370,7 +371,7 @@ contains
 !
       type(cholesky_orbital_tool), allocatable :: cd_tool_o, cd_tool_v
 !
-      occupied_only_local = .false. 
+      occupied_only_local = .false.
 !
       if (present(occupied_only)) occupied_only_local = occupied_only
 !
@@ -382,7 +383,7 @@ contains
       if (wf%do_cc2 .and. wf%do_ccs) then
 !
          call wf%ao%get_aos_in_subset('cc2', first_ao_cc2, last_ao_cc2)
-!         
+!
          n_active_aos_cc2 = last_ao_cc2 - first_ao_cc2 + 1
 !
       endif
@@ -426,7 +427,7 @@ contains
 !
       call cd_tool_o%cleanup()
 !
-!     Virtual orbitals    
+!     Virtual orbitals
 !
       if (.not. occupied_only_local) then
 !
@@ -467,7 +468,7 @@ contains
 !
       endif
 !
-      call mem%dealloc(C, wf%ao%n, wf%ao%n)  
+      call mem%dealloc(C, wf%ao%n, wf%ao%n)
 !
    end subroutine construct_cholesky_orbitals_mlccsd
 !
@@ -482,12 +483,12 @@ contains
 !!
 !!    1. Construct PAOs on active atoms
 !!
-!!    2. Orthonormalize these active virtual orbitals 
+!!    2. Orthonormalize these active virtual orbitals
 !!
 !!    3. PAOs for the remaining system by projecting out
 !!       both occupied and active virtuals out of all  AOs
 !!
-!!    4. Orthonormalize these inactive virtual orbitals 
+!!    4. Orthonormalize these inactive virtual orbitals
 !!
       implicit none
 !
@@ -542,7 +543,7 @@ contains
 !
       call mem%dealloc(S, n_active_aos, n_active_aos)
 !
-      wf%n_ccsd_v = rank 
+      wf%n_ccsd_v = rank
 !
 !     Set the active virtual orbital coefficients
 !
@@ -550,7 +551,7 @@ contains
 !
       call mem%dealloc(PAO_coeff, wf%ao%n, n_active_aos)
 !
-      if (rank .lt. wf%n_v) then 
+      if (rank .lt. wf%n_v) then
 !
          if (wf%do_cc2 .and. wf%do_ccs) then
 !
@@ -558,7 +559,7 @@ contains
 !
             n_active_aos = last_ao - first_ao + 1
 !
-!           1. Set up occupied + virtual CCSD density 
+!           1. Set up occupied + virtual CCSD density
 !
             call dgemm('N', 'T',             &
                      wf%ao%n,                &
@@ -574,9 +575,9 @@ contains
                      wf%ao%n)
 !
             if (wf%exists_frozen_fock_terms) then
-!  
+!
                call daxpy(wf%ao%n**2, one, wf%frozen_CCT, 1, D, 1)
-!  
+!
             endif
 !
 !           2. Construct PAOs for active atoms
@@ -604,7 +605,7 @@ contains
 !
             call mem%dealloc(PAO_coeff, wf%ao%n, n_active_aos)
 !
-            if (wf%n_ccsd_v + wf%n_cc2_v .lt. wf%n_v) then 
+            if (wf%n_ccsd_v + wf%n_cc2_v .lt. wf%n_v) then
 !
 !              Set virtual inactive
 !
@@ -645,7 +646,7 @@ contains
 !
                call mem%dealloc(S, wf%ao%n, wf%ao%n)
 !
-               wf%n_ccs_v = rank 
+               wf%n_ccs_v = rank
 !
 !              6. Set inactive virtuals
 !
@@ -656,7 +657,7 @@ contains
 !
             endif
 !
-         else 
+         else
 !
 !           Set virtual inactive
 !
@@ -699,11 +700,11 @@ contains
 !
             if (wf%do_cc2) then
 !
-               wf%n_cc2_v = rank 
+               wf%n_cc2_v = rank
 !
             elseif (wf%do_ccs) then
 !
-               wf%n_ccs_v = rank 
+               wf%n_ccs_v = rank
 !
             endif
 !
@@ -730,12 +731,15 @@ contains
 !!
 !!       - Run CCS calculation
 !!
-!!       - Construct M and N for CNTOs 
+!!       - Construct M and N for CNTOs
 !!
 !!       - Diagonalize M and N
 !!
 !!       - Write transformation matrices to file
 !!
+      use global_in, only: input
+      use reordering, only: squareup
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -811,11 +815,12 @@ contains
 !!    Performs CC2 calculation for CNTO
 !!    construction.
 !!
-!
+      use t1_eri_tool_class, only: t1_eri_tool
       use quasi_newton_updater_class, only: quasi_newton_updater
       use diis_cc_gs_class, only: diis_cc_gs
       use davidson_cc_es_class, only: davidson_cc_es
       use cc2_class, only: cc2
+      use global_in, only: input
 !
       implicit none
 !
@@ -833,17 +838,17 @@ contains
       type(cc2), allocatable :: cc2_wf
 !
       type(diis_cc_gs), allocatable :: cc_gs_solver_diis
-      type(quasi_newton_updater), allocatable :: t_updater 
+      type(quasi_newton_updater), allocatable :: t_updater
 !
       type(davidson_cc_es), allocatable :: cc_es_solver_davidson
 !
       type(timings) :: timer_gs, timer_es
 !
       real(dp), dimension(:), allocatable :: R
-!  
+!
       integer :: n, n_es
 !
-      character(len=200) :: storage 
+      character(len=200) :: storage
 !
       call output%printf('m', 'Running CC2 calculation for CNTOs.', fs='(/t3,a)')
 !
@@ -914,18 +919,18 @@ contains
          call cc2_wf%read_excited_state(R,               &
                                         cnto_states(n),  &
                                         cnto_states(n),  &
-                                        transformation)   
+                                        transformation)
 !
          call dcopy(cc2_wf%n_t1, R, 1, R_ai(1, 1,n), 1)
          call dcopy(cc2_wf%n_t2, R(cc2_wf%n_t1 + 1), 1, R_aibj(1,n), 1)
 !
-      enddo  
+      enddo
 !
       call mem%dealloc(R, cc2_wf%n_t1 + cc2_wf%n_t2)
 !
 !     Cleanup and print
 !
-      call cc2_wf%cleanup() 
+      call cc2_wf%cleanup()
 !
       if (.not. input%is_keyword_present('print cc2 calculation','mlcc')) &
          call output%unmute()
@@ -965,7 +970,7 @@ contains
                                           [wf%n_ccsd_o, wf%n_cc2_o, wf%n_ccs_o],  &
                                           [wf%n_ccsd_v, wf%n_cc2_v, wf%n_ccs_v],  &
                                           wf%orbital_coefficients,                &
-                                          wf%orbital_energies) 
+                                          wf%orbital_energies)
 !
    end subroutine construct_semicanonical_mlcc_orbitals_mlccsd
 !
@@ -975,6 +980,8 @@ contains
 !!    Construct orbitals cc2
 !!    Written by Sarai D. Folkestad
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(mlccsd), intent(inout) :: wf
@@ -996,7 +1003,7 @@ contains
                                        [wf%n_ccsd_o + wf%n_cc2_o, wf%n_ccs_o],   &
                                        [wf%n_ccsd_v + wf%n_cc2_v, wf%n_ccs_v],   &
                                        wf%orbital_coefficients_cc2,              &
-                                       wf%orbital_energies_cc2) 
+                                       wf%orbital_energies_cc2)
 !
       call wf%initialize_O_o()
       call wf%initialize_O_v()

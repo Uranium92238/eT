@@ -57,7 +57,7 @@ contains
 !
    module subroutine jacobian_transpose_transformation_ccs(wf, b, sigma)
 !!
-!!    Jacobian transpose transformation 
+!!    Jacobian transpose transformation
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
 !!    Calculates the transpose Jacobian transformation, i.e., the transformation
@@ -69,6 +69,8 @@ contains
 !!
 !!       sigma_mu = (b^T A)_mu = sum_ck b_ck A_ck,mu.
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -76,7 +78,7 @@ contains
       real(dp), dimension(wf%n_t1), intent(in)  :: b
       real(dp), dimension(wf%n_t1), intent(out) :: sigma
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCS', pl='normal')
       call timer%turn_on()
@@ -109,7 +111,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_ai
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian transpose CCS A1', pl='verbose')
       call timer%turn_on()
@@ -154,13 +156,17 @@ contains
 !!    Jacobian transpose B1 (CCS)
 !!    Written by Sarai D. Folkestad, Jun 2019
 !!
-!!    Calculates the (CCS) B1 term of the Jacobian transpose 
-!!    transfromation. 
+!!    Calculates the (CCS) B1 term of the Jacobian transpose
+!!    transfromation.
 !!
 !!       B1 = sum_bj L_bjia b_bj
 !!          = sum_bj (2 g_bjia b_bj - g_baij b_bj)
 !!          = sum_bjJ (2 L^J_bj L^J_ia b_bj - L^J_baL^J_ij b_bj)
-!!    
+!!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: sort_123_to_132
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -178,7 +184,7 @@ contains
       real(dp), dimension(:,:), allocatable :: sigma_ia
       real(dp), dimension(:), allocatable :: X_J
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       integer :: i, a
 !

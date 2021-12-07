@@ -25,6 +25,7 @@
 - G(D) definition changed to (2g\_wxyz - g\_wzyx)D\_yz.  eT-program/eT!964
 - Cleanup of use statements in HF hierarchy. eT-program/eT!966
 - Removed unused routine in abstract\_file\_class.F90. eT-program/eT!967
+- Cleanup of use statements in CC hierarchy. eT-program/eT!969
 
 ### Optimization
 - One-electron and effective contributions to the CC-Fock matrix are now calculated once instead of multiple times per Fock construction. eT-program/eT!925

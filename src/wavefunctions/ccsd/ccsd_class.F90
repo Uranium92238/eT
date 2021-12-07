@@ -24,7 +24,13 @@ module ccsd_class
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
 !!
 !
-   use doubles_class
+   use doubles_class, only: doubles
+!
+   use parameters
+   use global_out, only: output
+   use timings_class, only: timings
+   use memory_manager_class, only: mem
+   use sequential_file_class, only: sequential_file
 !
    implicit none
 !
@@ -316,6 +322,8 @@ contains
 !!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use wavefunction_class, only: wavefunction
+!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
@@ -349,6 +357,8 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
@@ -415,6 +425,9 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
+      use array_utilities, only: copy_and_scale
+      use reordering, only: construct_packed_contravariant
+!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
@@ -573,6 +586,9 @@ contains
 !!    tag specified the printed label for the vector, e.g. tag = "t" for
 !!    the cluster amplitudes.
 !!
+      use array_utilities, only: get_n_highest, zero_array
+      use index_invert, only : invert_compound_index, invert_packed_index
+!
       implicit none
 !
       class(ccsd), intent(in) :: wf
@@ -642,6 +658,8 @@ contains
 !!       t2_aiai <- two * t2_aiai
 !!       ...
 !!
+      use array_utilities, only: scale_diagonal
+!
       implicit none
 !
       class(ccsd), intent(in) :: wf

@@ -133,6 +133,8 @@ contains
 !!    corresponding to terms of the ground state density
 !!    and the left transition density.
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs) :: wf
@@ -267,6 +269,9 @@ contains
 !!         = E_hf + sum_aibj 2 t_i^a L^J_ia L^J_jb t_j^b
 !!                - sum_aibj t_i^a L^J_ja L^J_ib t_j^b
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf

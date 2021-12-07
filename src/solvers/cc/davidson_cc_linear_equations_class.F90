@@ -43,7 +43,7 @@ module davidson_cc_linear_equations_class
 !!
 !
    use kinds
-   use ccs_class
+   use ccs_class, only: ccs
    use linear_davidson_tool_class
 !
    implicit none
@@ -114,6 +114,8 @@ contains
 !!                      solver is meant to solve. This is printed to output so that the user
 !!                      can tell which kinds of linear equations are solved.
 !!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       type(davidson_cc_linear_equations) :: solver
@@ -225,6 +227,8 @@ contains
 !!
 !!       transformation:   Whether to use A or A^T ("right" or "left", respectively).
 !!
+      use sequential_file_class, only: sequential_file
+!
       implicit none
 !
       class(davidson_cc_linear_equations) :: solver
@@ -369,6 +373,8 @@ contains
 !!    Cleanup
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       class(ccs) :: wf
@@ -434,6 +440,8 @@ contains
 !!    Read settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+      use global_in, only: input
+!
       implicit none
 !
       class(davidson_cc_linear_equations) :: solver

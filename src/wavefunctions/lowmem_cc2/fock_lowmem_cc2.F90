@@ -44,6 +44,7 @@ contains
 !!
 !!    Depending on the 'task' different blocks (ij, ai, ia, ab) will be constructed
 !
+      use array_utilities, only: zero_array
       use batching_index_class, only : batching_index
 !
       implicit none
@@ -109,6 +110,6 @@ contains
       call timer%turn_off()
 !
    end subroutine construct_fock_lowmem_cc2
-!                            
+!
 !
 end submodule fock_lowmem_cc2

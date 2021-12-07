@@ -22,7 +22,7 @@ submodule (mlcc2_class) omega_mlcc2
 !!
 !!    Omega submodule
 !!
-!!    Based on the CC2 routines written by Sarai D. Folkestad 
+!!    Based on the CC2 routines written by Sarai D. Folkestad
 !!    and Eirik F. Kjønstad
 !!
 !!    Routines to construct
@@ -43,6 +43,8 @@ contains
 !!    Directs the construction of the omega vector < mu | exp(-T) H exp(T) | R >
 !!    for the current wavefunction amplitudes.
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
@@ -91,10 +93,13 @@ contains
 !!
 !!    Index restrictions:
 !!
-!!       b, i, c, j : CC2 orbitals 
+!!       b, i, c, j : CC2 orbitals
 !!
 !!       a : unrestricted
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: sort_123_to_213
+!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
@@ -114,7 +119,7 @@ contains
       integer :: current_a_batch
 !
       type(timings) :: timer
-!  
+!
       timer = timings('omega mlcc2 a1')
       call timer%turn_on()
 !
@@ -160,7 +165,7 @@ contains
          call mem%alloc(L_Jab, wf%eri%n_J, batch_a%length, n_cc2_v)
          call wf%eri%get_cholesky_t1(L_Jab,                             &
                                           wf%n_o + batch_a%first,       &
-                                          wf%n_o + batch_a%get_last(),  & 
+                                          wf%n_o + batch_a%get_last(),  &
                                           wf%n_o + first_cc2_v,         &
                                           wf%n_o + last_cc2_v)
 !
@@ -173,12 +178,12 @@ contains
                      n_cc2_o,                          &
                      wf%eri%n_J*n_cc2_v,               &
                      one,                              &
-                     L_aJb,                            & 
+                     L_aJb,                            &
                      batch_a%length,                   &
-                     X_Jbi,                            & 
+                     X_Jbi,                            &
                      wf%eri%n_J*n_cc2_v,               &
                      one,                              &
-                     omega(batch_a%first,first_cc2_o), & 
+                     omega(batch_a%first,first_cc2_o), &
                      wf%n_v)
 !
          call mem%dealloc(L_aJb, batch_a%length, wf%eri%n_J, n_cc2_v)
@@ -211,6 +216,8 @@ contains
 !!
 !!       i : unrestricted
 !!
+      use reordering, only: sort_1234_to_3214
+!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
@@ -222,8 +229,8 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_kbji
       real(dp), dimension(:,:,:,:), allocatable :: g_jbki
 !
-      type(timings) :: timer 
-!  
+      type(timings) :: timer
+!
       timer = timings('omega mlcc2 b1')
       call timer%turn_on()
 !
@@ -290,7 +297,7 @@ contains
       integer :: b, j, a, i
 !
       type(timings) :: timer
-!  
+!
       timer = timings('omega mlcc2 c1')
       call timer%turn_on()
 !
@@ -330,7 +337,7 @@ contains
 !
             omega(a + first_cc2_v - 1, i + first_cc2_o - 1) = &
                      omega(a + first_cc2_v - 1, i + first_cc2_o - 1) + omega_ai(a, i)
-                           
+
 !
          enddo
       enddo

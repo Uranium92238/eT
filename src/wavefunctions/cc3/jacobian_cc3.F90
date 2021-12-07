@@ -59,7 +59,9 @@ contains
 !!    On exit, c is overwritten by rho. That is, c(ai) = rho_a_i,
 !!    and c(aibj) = rho_aibj.
 !!
-      use array_utilities, only: scale_diagonal
+      use array_utilities, only: scale_diagonal, zero_array
+      use reordering, only: squareup_and_sort_1234_to_1324
+      use reordering, only: symmetrize_add_contra_to_packed
 !
       implicit none
 !
@@ -140,6 +142,8 @@ contains
 !!           u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk
 !!                     - 2t^acb_ijk - 2t_cba_ijk - 2t_bac_ijk
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(cc3) :: wf
@@ -245,6 +249,10 @@ contains
 !!
 !!    where: ~rho^ab_ij = 2 rho^ab_ij - rho^ba_ij
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: squareup_and_sort_1234_to_1324
+      use reordering, only: construct_contravariant_t3
+!
       implicit none
 !
       class(cc3) :: wf
@@ -545,6 +553,10 @@ contains
 !!
 !!    Based on omega_cc3_a_cc3 written by Rolf H. Myhre
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: squareup_and_sort_1234_to_1324, sort_12_to_21
+      use reordering, only: construct_contravariant_t3
+!
       implicit none
 !
       class(cc3) :: wf
@@ -1034,6 +1046,8 @@ contains
 !!
 !!    F_ia_c1 = sum_j L_iajj' = sum_j 2 g_iajj' - g_ij'ja
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(cc3) :: wf
@@ -1092,6 +1106,8 @@ contains
 !!    Note that rho_abij has to be symmetrized outside of this routine
 !!    This routine is also used for Z_bcjk = tbar^abc_ijk R^a_i
 !!
+      use reordering, only: sort_123_to_312, sort_123_to_213
+!
       implicit none
 !
       class(cc3) :: wf
