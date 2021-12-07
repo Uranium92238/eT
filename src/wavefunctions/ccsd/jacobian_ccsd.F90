@@ -179,6 +179,60 @@ contains
    end subroutine jacobian_transformation_ccsd
 !
 !
+   module subroutine approximate_Jacobian_transform_ccsd(wf, r_or_l, X, R, w)
+!!
+!!    Approximate Jacobian transform
+!!    Written by Eirik F. Kjønstad, Mar 2021
+!!
+!!    Wrapper for a lower-level Jacobian transformation that is the best approximation
+!!    with a lower computational scaling.
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: r_or_l
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)  :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: R
+!
+      real(dp), intent(in), optional :: w
+!
+      if (trim(r_or_l) == 'left') &
+         call output%error_msg('Approximate CCSD Jacobian transpose not &
+                                &yet supported.')
+!
+      call wf%doubles%construct_Jacobian_transform(r_or_l, X, R, w)
+!
+   end subroutine approximate_Jacobian_transform_ccsd
+!
+!
+   module subroutine prepare_for_approximate_Jacobians_ccsd(wf, r_or_l)
+!!
+!!    Prepare for approximate Jacobians
+!!    Written by Eirik F. Kjønstad, Mar 2021
+!!
+!!    Wrapper for preparations to a lower-level Jacobian transformation that is
+!!    the best approximation with a lower computational scaling.
+!!
+!!    r_or_l: 'left', 'right', or 'both'
+!!            (prepares for A^T, A, or both A^T and A)
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: r_or_l
+!
+      if (trim(r_or_l) == 'left') &
+         call output%error_msg('Approximate CCSD Jacobian transpose not &
+                                &yet supported.')
+!
+      call wf%doubles%prepare_for_Jacobians(r_or_l)
+!
+   end subroutine prepare_for_approximate_Jacobians_ccsd
+!
+!
    module subroutine jacobian_ccsd_b2(wf, rho_aibj, c_ai)
 !!
 !!    Jacobian CCSD B2

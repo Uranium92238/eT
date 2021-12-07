@@ -134,7 +134,13 @@ module ccsd_class
       procedure, private :: save_jacobian_h2_intermediate
       procedure, private :: save_jacobian_j2_intermediate
 !
+      procedure, public :: approximate_Jacobian_transform &
+                        => approximate_Jacobian_transform_ccsd
+!
 !     Procedures related to Jacobian transpose transformation
+!
+      procedure, public :: prepare_for_approximate_Jacobians &
+                        => prepare_for_approximate_Jacobians_ccsd
 !
       procedure, public :: prepare_for_jacobian_transpose               &
                         => prepare_for_jacobian_transpose_ccsd
