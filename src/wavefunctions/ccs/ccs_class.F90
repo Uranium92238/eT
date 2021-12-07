@@ -24,27 +24,19 @@ module ccs_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-   use wavefunction_class
+   use wavefunction_class, only: wavefunction
+!
+   use parameters
+   use global_in, only: input
+   use global_out, only: output
+   use timings_class, only: timings
+   use memory_manager_class, only: mem
+   use stream_file_class, only: stream_file
+!
+   use array_utilities, only: zdot
 !
    use t1_eri_tool_class,   only : t1_eri_tool
    use t1_eri_tool_c_class, only : t1_eri_tool_c
-!
-   use reordering
-!
-   use direct_stream_file_class, only : direct_stream_file
-   use stream_file_class,        only : stream_file
-   use sequential_file_class,    only : sequential_file
-   use string_utilities,         only : convert_to_uppercase
-   use array_utilities,          only : zero_array, zero_array_complex
-   use array_utilities,          only : sandwich
-   use array_utilities,          only : get_l2_norm, copy_and_scale, copy_and_scale_complex, zdot
-   use array_utilities,          only : get_abs_max_w_index, get_n_lowest, get_n_highest
-   use array_utilities,          only : quicksort_with_index_descending, are_vectors_parallel
-   use index_invert,             only : invert_compound_index, invert_packed_index
-   use batching_index_class,     only : batching_index
-   use timings_class,            only : timings
-!
-   use hf_class, only : hf
 !
    implicit none
 !
@@ -556,6 +548,8 @@ contains
 !!    Print banner
 !!    Written by Sarai D. Folkestad, Dec 2019
 !!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -741,6 +735,8 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -912,6 +908,7 @@ contains
 !!    Wrapper for a lower-level Jacobian transformation that is the best approximation
 !!    with a lower computational scaling.
 !!
+      use array_utilities, only: zero_array
       use warning_suppressor
 !
       implicit none
@@ -972,6 +969,8 @@ contains
 !!    Get CVS projector
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -1088,6 +1087,9 @@ contains
 !!    tag specified the printed label for the vector, e.g. tag = "t" for
 !!    the cluster amplitudes.
 !!
+      use array_utilities, only: get_n_highest
+      use index_invert, only: invert_compound_index
+!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -1251,6 +1253,8 @@ contains
 !!    Makes bath orbital with all corresponding integrals
 !!    zero
 !!
+      use array_utilities, only: zero_array, copy_and_scale
+!
       implicit none
 !
       class(ccs) :: wf
@@ -1326,6 +1330,8 @@ contains
 !!    Only excitations into the last virtual orbital
 !!    (the bath orbital) are allowed.
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -1384,10 +1390,12 @@ contains
 !!    but note that the same batching structure (sizes and numbers of batches)
 !!    are used for all three loops using the maximal memory requirement.
 !!
-!
-      use reordering, only : sort_12_to_21
+      use batching_index_class, only: batching_index
+      use reordering, only: sort_12_to_21, sort_123_to_231, sort_1234_to_3412
+      use reordering, only: symmetric_sum, packin
       use direct_stream_file_class, only: direct_stream_file
-      use array_utilities, only : scale_diagonal
+      use array_utilities, only: scale_diagonal, zero_array
+      use sequential_file_class, only: sequential_file
 !
       implicit none
 !
@@ -1404,8 +1412,8 @@ contains
       real(dp), dimension(:,:,:), allocatable :: L_Jai, L_Jbj, L_Jkj, L_kjJ, L_Jac, L_Jbc
       real(dp), dimension(:,:,:), allocatable :: X_Jai, X_Jbj, X_aiJ, X_bjJ
 !
-      real(dp), dimension(:,:,:,:), allocatable          :: R_aibj, R_bjai
-      real(dp), dimension(:,:,:,:), allocatable          :: R_ibj_a, R_aibj_old, R_aibj_batch
+      real(dp), dimension(:,:,:,:), allocatable :: R_aibj, R_bjai
+      real(dp), dimension(:,:,:,:), allocatable :: R_ibj_a, R_aibj_old, R_aibj_batch
 !
       real(dp), dimension(:), allocatable :: R_aibj_packed
 !
@@ -2482,6 +2490,8 @@ contains
 !!    Get X1 diagnostics
 !!    Written by Eirik F. Kjønstad, Dec 2018
 !!
+      use array_utilities, only: get_l2_norm
+!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2519,6 +2529,8 @@ contains
 !!    See J. Chem. Phys. 150, 194112 (2019) for further
 !!    details
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs), intent(in) :: wf

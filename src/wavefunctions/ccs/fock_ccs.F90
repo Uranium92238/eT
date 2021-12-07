@@ -46,6 +46,7 @@ contains
 !!
 !
       use timings_class, only: timings
+      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -97,7 +98,7 @@ contains
 !
          endif
 !
-      endif 
+      endif
 !
       call mem%dealloc(h, wf%n_mo, wf%n_mo)
       call mem%dealloc(F_eff, wf%n_mo, wf%n_mo)
@@ -110,18 +111,18 @@ contains
    module subroutine add_frozen_fock_terms_ccs(wf, F_pq)
 !!
 !!    Add frozen Fock terms
-!!    Written by Sarai D. Folkestad, 2019 
+!!    Written by Sarai D. Folkestad, 2019
 !!
 !!    Adds the frozen core contributions to
 !!    the effective T1-transformed Fock matrix.
 !!
-!!    Isolated into subroutine by Eirik F. Kjønstad, 2019    
+!!    Isolated into subroutine by Eirik F. Kjønstad, 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq
 !
       real(dp), dimension(:,:), allocatable :: F_pq_frozen
 !
@@ -130,7 +131,7 @@ contains
       call wf%construct_t1_frozen_fock_terms(F_pq_frozen)
       call daxpy(wf%n_mo**2, one, F_pq_frozen, 1, F_pq, 1)
 !
-      call mem%dealloc(F_pq_frozen, wf%n_mo, wf%n_mo)      
+      call mem%dealloc(F_pq_frozen, wf%n_mo, wf%n_mo)
 !
    end subroutine add_frozen_fock_terms_ccs
 !
@@ -142,7 +143,7 @@ contains
 !!
       implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
@@ -165,6 +166,8 @@ contains
 !!    where μ is the vector of electric dipole integral matrices and E is a uniform classical electric
 !!    vector field. This routine does not have to be overwritten in descendants.
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -185,7 +188,7 @@ contains
       call daxpy((wf%n_mo)**2, -electric_field(1), mu(:,:,1), 1, potential(:,:,1), 1)
       call daxpy((wf%n_mo)**2, -electric_field(2), mu(:,:,2), 1, potential(:,:,2), 1)
       call daxpy((wf%n_mo)**2, -electric_field(3), mu(:,:,3), 1, potential(:,:,3), 1)
-!     
+!
       call mem%dealloc(mu, wf%n_mo, wf%n_mo, 3)
 !
 !$omp parallel do private(i,j)
@@ -266,15 +269,14 @@ contains
 !!
 !!       Added batching for N^2 memory requirement.
 !!
-!
       use batching_index_class, only : batching_index
 !
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h 
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff
 !
       integer :: i, j, a
 !
@@ -292,7 +294,7 @@ contains
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
-            wf%fock_ai(a,i) = h(a + wf%n_o, i) + F_eff(a + wf%n_o, i) 
+            wf%fock_ai(a,i) = h(a + wf%n_o, i) + F_eff(a + wf%n_o, i)
 !
          enddo
       enddo
@@ -302,16 +304,16 @@ contains
 !
 !     batching over i and j
 !
-!     To use batch_setup with batch_j, we assume that the integrals to compute 
-!     are g_aijk and g_ajki (with no repeating j index). This overestimates the 
+!     To use batch_setup with batch_j, we assume that the integrals to compute
+!     are g_aijk and g_ajki (with no repeating j index). This overestimates the
 !     required memory, but avoids the incorrect memory usage that can otherwise
 !     occur.
 !
       req0 = 0
 !
-      req1_i = max(wf%n_v, wf%n_o)*wf%eri%n_J 
-      req1_j = max(wf%n_v, wf%n_o)*wf%eri%n_J 
-! 
+      req1_i = max(wf%n_v, wf%n_o)*wf%eri%n_J
+      req1_j = max(wf%n_v, wf%n_o)*wf%eri%n_J
+!
       req2 = 2*wf%n_v*wf%n_o
 !
       batch_i = batching_index(wf%n_o)
@@ -409,8 +411,8 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h 
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff
 !
       integer, intent(in), optional :: first_i, last_i, first_a, last_a
 !
@@ -455,17 +457,17 @@ contains
 !
 !     batching over i and j
 !
-!     To use batch_setup with batch_j, we assume that the integrals to compute 
-!     are g_iajk and g_ikja (with no repeating j index). This overestimates the 
+!     To use batch_setup with batch_j, we assume that the integrals to compute
+!     are g_iajk and g_ikja (with no repeating j index). This overestimates the
 !     required memory, but avoids the incorrect memory usage that can otherwise
 !     occur.
 !
       req0 = 0
 !
-      req1_i = max(interval_a%length, wf%n_o)*wf%eri%n_J 
-      req1_j = max(interval_a%length, wf%n_o)*wf%eri%n_J 
+      req1_i = max(interval_a%length, wf%n_o)*wf%eri%n_J
+      req1_j = max(interval_a%length, wf%n_o)*wf%eri%n_J
 !
-      req2 = 2*interval_a%length*wf%n_o 
+      req2 = 2*interval_a%length*wf%n_o
 !
       batch_i = batching_index(i_range%length)
       batch_j = batching_index(wf%n_o)
@@ -515,7 +517,7 @@ contains
                         + two*g_iajj(i, a, j, j) - g_ijja(i, j, j, a)
 !
                   enddo
-               enddo 
+               enddo
             enddo
 !$omp end parallel do
 !
@@ -567,8 +569,8 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h 
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff
 !
       integer, intent(in), optional :: first_a, last_a, first_b, last_b
 !
@@ -609,19 +611,19 @@ contains
       enddo
 !$omp end parallel do
 !
-!     Add virtual-virtual contributions: F_ab = h_ab + sum_i (2*g_abii - g_aiib) 
+!     Add virtual-virtual contributions: F_ab = h_ab + sum_i (2*g_abii - g_aiib)
 !
 !     batching over a and i
 !
-!     To use batch_setup with batch_i, we assume that the integrals to compute 
-!     are g_abik and g_akbi (with no repeating i index). This overestimates the 
+!     To use batch_setup with batch_i, we assume that the integrals to compute
+!     are g_abik and g_akbi (with no repeating i index). This overestimates the
 !     required memory, but avoids the incorrect memory usage that can otherwise
 !     occur.
 !
       req0 = 0
 !
-      req1_i = max(interval_b%length, wf%n_o)*wf%eri%n_J 
-      req1_a = max(interval_b%length, wf%n_o)*wf%eri%n_J 
+      req1_i = max(interval_b%length, wf%n_o)*wf%eri%n_J
+      req1_a = max(interval_b%length, wf%n_o)*wf%eri%n_J
 !
       req2 =  2*wf%n_o*(interval_b%length)
 !
@@ -722,8 +724,8 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h 
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff
 !
       integer, intent(in), optional :: first_i, last_i, first_j, last_j
 !
@@ -766,15 +768,15 @@ contains
 !
 !     Batching over i and k
 !
-!     To use batch_setup with batch_i, we assume that the integrals to compute 
-!     are g_ijkl and g_ilkj (with no repeating i index). This overestimates the 
+!     To use batch_setup with batch_i, we assume that the integrals to compute
+!     are g_ijkl and g_ilkj (with no repeating i index). This overestimates the
 !     required memory, but avoids the incorrect memory usage that can otherwise
 !     occur.
 !
       req0 = 0
 !
-      req1_i = wf%eri%n_J*wf%n_o 
-      req1_k = wf%eri%n_J*wf%n_o 
+      req1_i = wf%eri%n_J*wf%n_o
+      req1_k = wf%eri%n_J*wf%n_o
 !
       req2 = 2*(wf%n_o**2)
 !

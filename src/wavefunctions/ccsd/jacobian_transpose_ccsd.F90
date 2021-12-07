@@ -48,6 +48,10 @@ contains
 !!
 !!    Creates intermediates needed in the jacobian transpose calculation.
 !!
+      use array_utilities, only: copy_and_scale, zero_array
+      use reordering, only: squareup, add_3214_to_1234
+      use reordering, only: add_2143_to_1234, add_2341_to_1234
+!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
@@ -137,6 +141,10 @@ contains
 !!    sent to the routine. On exit, the vector b is equal to sigma (the transformed
 !!    vector).
 !!
+      use reordering, only: squareup, packin, symmetric_sum
+      use reordering, only: sort_1234_to_1324, sort_1234_to_1324
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
@@ -306,6 +314,8 @@ contains
 !!    Reads intermediate for term 1 from the file 'jacobian_transpose_d1_intermediate'. Removed
 !!    re-order in term 2.
 !!
+      use reordering, only: squareup
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -412,6 +422,8 @@ contains
 !!
 !!    (T. S. H., Nov 2019)
 !!
+      use reordering, only: sort_1234_to_1243
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -481,6 +493,9 @@ contains
 !!    Modified by Tor S. Haugland, Nov 2019
 !!    Reads intermediate for term 3 from the file 'jacobian_transpose_e1_intermediate'.
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: squareup, add_3421_to_1234, add_2431_to_1234
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -602,6 +617,12 @@ contains
 !!
 !!    and adds it to the transformed vector sigma_ai.
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: squareup, sort_123_to_132
+      use reordering, only: sort_123_to_132, sort_1234_to_2431
+      use reordering, only: add_21_to_12, sort_123_to_312
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -860,6 +881,10 @@ contains
 !!
 !!    (A. S. and S. D. F. Nov 2019)
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: sort_1234_to_4132, sort_1234_to_2314
+      use reordering, only: add_4123_to_1234, add_3421_to_1234
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -970,6 +995,9 @@ contains
 !!
 !!    Reads intermediate for term 1 and 2 from the file 'jacobian_transpose_f1_intermediate'.
 !!
+      use reordering, only: squareup_and_sort_1234_to_1324, sort_1234_to_2413
+      use reordering, only: sort_1234_to_3142, sort_1234_to_4123
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1115,6 +1143,10 @@ contains
 !!
 !!    (T. H. S., Oct 2019)
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: sort_1234_to_1324, sort_1234_to_3241
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1234,6 +1266,11 @@ contains
 !!
 !!    Reads intermediate for term 1 from the file 'jacobian_transpose_g1_intermediate'.
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: squareup_and_sort_1234_to_2314
+      use reordering, only: sort_1234_to_3214, add_21_to_12
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1453,6 +1490,10 @@ contains
 !!
 !!    and adds it to the transformed vector sigma_aibj.
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_1243_to_1234, sort_123_to_132, sort_1234_to_1243
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1669,6 +1710,10 @@ contains
 !!
 !!    and adds it to the transformed vector sigma_aibj.
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: add_1423_to_1234, sort_1234_to_1432, add_1432_to_1234
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -2132,6 +2177,10 @@ contains
 !!
 !!    Reads term 2 intermediate from the file 'jacobian_transpose_f2_intermediate'.
 !!
+      use reordering, only: squareup, add_4321_to_1234, add_4123_to_1234
+      use reordering, only: sort_1234_to_3412, add_1432_to_1234
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -2323,6 +2372,8 @@ contains
 !!
 !!    and saves them to files 'jacobian_transpose_g2_intermediate'
 !!
+      use reordering, only: sort_1234_to_1432, sort_1234_to_4123
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -2401,6 +2452,9 @@ contains
 !!    Reads term 1 and 2 intermediates from the files 'jacobian_transpose_g2_intermediate'
 !!    and 'jacobian_transpose_g2_intermediate_2'.
 !!
+      use reordering, only: sort_1234_to_1432, sort_1234_to_1423, squareup
+      use reordering, only: add_1432_to_1234, add_1423_to_1234
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -2560,6 +2614,8 @@ contains
 !!
 !!       (T. S. H., Nov 2019)
 !!
+      use reordering, only: sort_1234_to_2413
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -2656,6 +2712,9 @@ contains
 !!
 !!    Reads term 2 intermediate from the file 'jacobian_transpose_i2_intermediate'.
 !!
+      use reordering, only: squareup_and_sort_1234_to_2413
+      use reordering, only: sort_1234_to_2413
+!
       implicit none
 !
       class(ccsd) :: wf

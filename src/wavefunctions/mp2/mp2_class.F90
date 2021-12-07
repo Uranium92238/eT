@@ -24,7 +24,11 @@ module mp2_class
 !!    Written by Andreas Skeidsvoll, 2018
 !!
 !
-   use ccs_class
+   use ccs_class, only: ccs
+!
+   use parameters
+   use global_out, only: output
+   use memory_manager_class, only: mem
 !
    implicit none
 !
@@ -57,6 +61,7 @@ contains
 !!    Initialize
 !!    Written by Andreas Skeidsvoll, 2018
 !!
+      use wavefunction_class, only: wavefunction
       use array_utilities, only: zero_array
 !
       implicit none
@@ -87,12 +92,12 @@ contains
 !
    subroutine print_gs_summary_mp2(wf)
 !!
-!!    Print ground state summary 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!    Print ground state summary
+!!    Written by Eirik F. Kjønstad, Dec 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mp2), intent(inout) :: wf 
+      class(mp2), intent(inout) :: wf
 !
       call output%printf('m', '- Ground state summary:', fs='(/t3,a)')
 !

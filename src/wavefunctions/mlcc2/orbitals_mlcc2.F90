@@ -33,17 +33,17 @@ submodule (mlcc2_class) orbitals_mlcc2
 !!
 !!    2. If the number of active/inactive orbitals not determined
 !!       on input, it is determined during orbital construction.
-!!       Orbital coefficient matrix is ordered according to 
+!!       Orbital coefficient matrix is ordered according to
 !!       active and inactive:
-!!       
+!!
 !!          C = [active occupied, inactive occupied, active virtual, inactive virtual]
 !!
-!!    3. The Fock matrix is constructed, and the F_oo and F_vv blocks are block 
+!!    3. The Fock matrix is constructed, and the F_oo and F_vv blocks are block
 !!       diagonalized, such that the active-active and inactive-inactive
-!!       blocks are diagonal. The corresponding basis is the basis used in the 
+!!       blocks are diagonal. The corresponding basis is the basis used in the
 !!       MLCC calculation.
 !!
-!!    Note that step 1 and 2 happens at the same time, in the routines 
+!!    Note that step 1 and 2 happens at the same time, in the routines
 !!    which constructs the orbitals
 !!
 !!
@@ -56,19 +56,19 @@ contains
 !
    module subroutine orbital_partitioning_mlcc2(wf)
 !!
-!!    Orbital partitioning 
+!!    Orbital partitioning
 !!    Written by Sarai D. Folkestad, May 2019
 !!
-!!    This routine drives the orbital 
-!!    partitioning for MLCC2 
+!!    This routine drives the orbital
+!!    partitioning for MLCC2
 !!
-!!    Based on which orbitals are requested on 
-!!    input, we construct this new orbital basis 
+!!    Based on which orbitals are requested on
+!!    input, we construct this new orbital basis
 !!    and sets, n_cc2_o, n_cc2_v, n_ccs_o and n_ccs_v,
 !!    first_cc2_o, last_cc2_o, first_cc2_v, last_cc2_v
 !!    first_ccs_o, last_ccs_o, first_ccs_v, last_ccs_v
 !!
-!!    NOTE: This routine shold always be 
+!!    NOTE: This routine shold always be
 !!    followed by a routine which block diagonalizes
 !!    the Fock matrix!
 !!
@@ -171,14 +171,14 @@ contains
 !!    decomposing the HF AO density and the
 !!    HF virtual AO density
 !!
-!!    See A. M. J. Sánchez de Merás, H. Koch, 
+!!    See A. M. J. Sánchez de Merás, H. Koch,
 !!    I. G. Cuesta, and L. Boman (J. Chem. Phys. 132, 204105 (2010))
 !!    for more information on active space generation
 !!    using Cholesky decomposition
 !!
-!!    'occupied_only' : Optional argument that is used to 
-!!                      determine if we construct occuped 
-!!                      Cholesky orbitals only, or if we also 
+!!    'occupied_only' : Optional argument that is used to
+!!                      determine if we construct occuped
+!!                      Cholesky orbitals only, or if we also
 !!                      construct the virtual Cholesky orbitals
 !!                      default: .false.
 !!
@@ -198,11 +198,11 @@ contains
 !
       type(cholesky_orbital_tool), allocatable :: cd_tool_o, cd_tool_v
 !
-      occupied_only_local = .false. 
+      occupied_only_local = .false.
 !
       if (present(occupied_only)) occupied_only_local = occupied_only
 !
-!     Construct occupied orbitals     
+!     Construct occupied orbitals
 !
       call wf%ao%get_aos_in_subset('cc2', first_ao, last_ao)
 !
@@ -227,7 +227,7 @@ contains
 !
       call cd_tool_o%cleanup()
 !
-!     Construct virtual orbitals     
+!     Construct virtual orbitals
 !
       if (.not. occupied_only_local) then
 !
@@ -256,22 +256,21 @@ contains
 !
 !
    module subroutine construct_block_diagonal_fock_orbitals_mlcc2(wf, n_levels, n_occupied_list, &
-                                          n_virtual_list, orbital_coefficients, orbital_energies) 
+                                          n_virtual_list, orbital_coefficients, orbital_energies)
 !!
-!!    Construct block diagonal Fock MOs 
+!!    Construct block diagonal Fock MOs
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!
 !!    This routine constructs the MOs which
 !!    block-diagonalize the occupied-occupied
 !!    and virutal-virtual blocks of the Fock matrix s.t.
-!!    the active-active, and inactive-inactive blocks are 
+!!    the active-active, and inactive-inactive blocks are
 !!    diagonal.
-!!   
-!!    Note that after this routine, the Fock matrix in wf 
+!!
+!!    Note that after this routine, the Fock matrix in wf
 !!    corresponds to the old basis but the MOs are updated.
 !!
-!
-      use array_utilities, only : block_diagonalize_symmetric
+      use array_utilities, only : block_diagonalize_symmetric, zero_array
 !
       implicit none
 !
@@ -376,8 +375,8 @@ contains
 !!
 !!    Used to construct CNTOs.
 !!
-!!    set_to_zero determines if M and N are set to zero initially. This makes it possible for 
-!!    the routine to be used to add to M and N if we are using more than one excitation vector 
+!!    set_to_zero determines if M and N are set to zero initially. This makes it possible for
+!!    the routine to be used to add to M and N if we are using more than one excitation vector
 !!    to generate the CNTOs.
 !!
       implicit none
@@ -495,6 +494,8 @@ contains
 !!    Transform orbital coefficients to CNTO
 !!    basis.
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(mlcc2) :: wf
@@ -600,12 +601,14 @@ contains
 !!
 !!       - Run CCS calculation
 !!
-!!       - Construct M and N for CNTOs 
+!!       - Construct M and N for CNTOs
 !!
 !!       - Diagonalize M and N
 !!
 !!       - Write transformation matrices to file
 !!
+      use direct_stream_file_class, only: direct_stream_file
+      use global_in, only: input
 !
       implicit none
 !
@@ -640,7 +643,7 @@ contains
       call mem%alloc(R_ai, wf%n_v, wf%n_o, n_cnto_states)
       call mem%alloc(omega_ccs, n_cnto_states)
 !
-!     Run CCS calculation 
+!     Run CCS calculation
 !
       call wf%ccs_calculation_for_cntos(r_or_l, n_cnto_states, R_ai, wf%cnto_states, omega_ccs)
 !
@@ -651,7 +654,7 @@ contains
       doubles_file = direct_stream_file('approximate_doubles', wf%n_v*wf%n_o**2)
 !
       call mem%alloc(R_ai_k, wf%n_v, wf%n_o)
-!   
+!
       do k = 1, n_cnto_states
 !
          call dcopy(wf%n_t1, R_ai(1,1,k), 1, R_ai_k, 1)
@@ -689,7 +692,7 @@ contains
 !!
 !!    Used to construct occupied NTOs.
 !!
-!!    set_to_zero determines if contributions are added to, or overwrites M and N. 
+!!    set_to_zero determines if contributions are added to, or overwrites M and N.
 !!
 !!
       implicit none
@@ -780,7 +783,7 @@ contains
 !!
 !!       - Run CCS calculation
 !!
-!!       - Construct M NTOs 
+!!       - Construct M NTOs
 !!
 !!       - Diagonalize M
 !!
@@ -788,6 +791,7 @@ contains
 !!
 !
       use array_utilities, only: diagonalize_symmetric
+      use global_in, only: input
 !
       implicit none
 !
@@ -819,12 +823,12 @@ contains
       set_to_zero = .true.
 !
       call mem%alloc(R_ai_k, wf%n_v, wf%n_o)
-!   
+!
       do k = 1, n_nto_states
 !
          call dcopy(wf%n_t1, R_ai(1,1,k), 1, R_ai_k, 1)
 !
-!        Add contribution to M 
+!        Add contribution to M
 !
          call wf%construct_M_nto(R_ai_k, T_o, set_to_zero)
 !
@@ -851,7 +855,9 @@ contains
 !!
 !!    Construct occupiued NTOs, leave canonical virtuals
 !!
-      implicit none 
+      use array_utilities, only: zero_array
+!
+      implicit none
 !
       class(mlcc2) :: wf
 !
@@ -892,12 +898,12 @@ contains
 !!
 !!    1. Construct PAOs on active atoms
 !!
-!!    2. Orthonormalize these active virtual orbitals 
+!!    2. Orthonormalize these active virtual orbitals
 !!
 !!    3. PAOs for the remaining system by projecting out
 !!       both occupied and active virtuals out of all  AOs
 !!
-!!    4. Orthonormalize these inactive virtual orbitals 
+!!    4. Orthonormalize these inactive virtual orbitals
 !!
       implicit none
 !
@@ -913,7 +919,7 @@ contains
 !
       n_active_aos = last_ao - first_ao + 1
 !
-!     1. Set up occupied density 
+!     1. Set up occupied density
 !
       call mem%alloc(D, wf%ao%n, wf%ao%n)
 !
@@ -952,7 +958,7 @@ contains
 !
       call mem%dealloc(S, n_active_aos, n_active_aos)
 !
-      wf%n_cc2_v = rank 
+      wf%n_cc2_v = rank
 !
 !     Set the active virtual orbital coefficients
 !
@@ -966,7 +972,7 @@ contains
 !
       call mem%dealloc(PAO_coeff, wf%ao%n, n_active_aos)
 !
-      if (rank .lt. wf%n_v) then 
+      if (rank .lt. wf%n_v) then
 !
 !        Set virtual inactive
 !
@@ -1007,7 +1013,7 @@ contains
 !
          call mem%dealloc(S, wf%ao%n, wf%ao%n)
 !
-         wf%n_ccs_v = rank 
+         wf%n_ccs_v = rank
 !
 !        6. Set inactive virtuals
 !
@@ -1100,11 +1106,12 @@ contains
 !!    Performs CCS calculation for CNTO (and NTO)
 !!    construction.
 !!
-!
-      use amplitude_updater_class,        only: amplitude_updater
-      use quasi_newton_updater_class,     only: quasi_newton_updater
-      use diis_cc_gs_class,               only: diis_cc_gs
-      use davidson_cc_es_class,           only: davidson_cc_es
+      use t1_eri_tool_class,           only: t1_eri_tool
+      use amplitude_updater_class,     only: amplitude_updater
+      use quasi_newton_updater_class,  only: quasi_newton_updater
+      use diis_cc_gs_class,            only: diis_cc_gs
+      use davidson_cc_es_class,        only: davidson_cc_es
+      use global_in, only: input
 !
       implicit none
 !
@@ -1120,14 +1127,14 @@ contains
 !
       real(dp), dimension(n_cnto_states), intent(out), optional :: omega_ccs
 !
-      character(len=200) :: storage 
+      character(len=200) :: storage
 !
 !     Local variables
 !
       type(ccs), allocatable :: ccs_wf
 !
       type(diis_cc_gs), allocatable :: cc_gs_solver_diis
-      class(amplitude_updater), allocatable :: t_updater 
+      class(amplitude_updater), allocatable :: t_updater
 !
       type(davidson_cc_es), allocatable :: cc_es_solver_davidson
 !
@@ -1212,21 +1219,21 @@ contains
                                         cnto_states(n),     &
                                         cnto_states(n),     &
                                         transformation,     &
-                                        all_omega_ccs(n))   
+                                        all_omega_ccs(n))
 !
-      enddo  
+      enddo
 !
 !     2. Excitation energies (if requested)
 !
-      if (present(omega_ccs)) then  
+      if (present(omega_ccs)) then
 !
 !        Return only the excitation energies in cnto_states
 !
          do n = 1, n_cnto_states
 !
-            omega_ccs(n) = all_omega_ccs(cnto_states(n))   
+            omega_ccs(n) = all_omega_ccs(cnto_states(n))
 !
-         enddo  
+         enddo
 !
       endif
 !
@@ -1234,7 +1241,7 @@ contains
 !
 !     Cleanup and print
 !
-      call ccs_wf%cleanup() 
+      call ccs_wf%cleanup()
 !
       if (.not. input%is_keyword_present('print ccs calculation','mlcc')) &
          call output%unmute()
@@ -1261,7 +1268,7 @@ contains
 !!    Check orthonormality of MOs
 !!    Write Sarai D. Folkestad, Sep 2019
 !!
-!!    Checks that 
+!!    Checks that
 !!
 !!       C^T S C = I
 !!
@@ -1333,7 +1340,7 @@ contains
 !
    module subroutine add_doubles_M_and_N_cnto_mlcc2(wf, M, N, doubles_file)
 !!
-!!    Add doubles M and N CNTO 
+!!    Add doubles M and N CNTO
 !!    Written by Sarai D. Folkestad, Feb 2020
 !!
 !!    The CNTO matrices are defined as
@@ -1341,13 +1348,15 @@ contains
 !!       M_ij = ( sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibl R_ajbl )
 !!       N_ab = ( sum_i R_ai R_bi + 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
 !!
-!!    In this routine the doubles part 
+!!    In this routine the doubles part
 !!
 !!       M_ij += ( 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibl R_ajbl )
 !!       N_ab += ( 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
 !!
 !!    is added for the R_aibj on doubles_file
 !!
+      use batching_index_class, only: batching_index
+      use direct_stream_file_class, only: direct_stream_file
 !
       implicit none
 !
@@ -1446,7 +1455,7 @@ contains
 !
 !$omp parallel do private (a, i)
          do a = 1, batch_a%length
-            do i = 1, wf%n_o           
+            do i = 1, wf%n_o
 !
                N(a + batch_a%first - 1, a + batch_a%first - 1) &
                   = N(a + batch_a%first - 1, a + batch_a%first - 1) &
@@ -1481,7 +1490,7 @@ contains
 !!
 !!    Used to construct CNTOs.
 !!
-!!    set_to_zero determines if contributions are added to, or overwrites M and N. 
+!!    set_to_zero determines if contributions are added to, or overwrites M and N.
 !!
 !!
       implicit none
@@ -1554,7 +1563,7 @@ contains
 !
       call wf%construct_block_diagonal_fock_orbitals(n_levels, [wf%n_cc2_o, wf%n_ccs_o],   &
                                           [wf%n_cc2_v, wf%n_ccs_v], wf%orbital_coefficients, &
-                                          wf%orbital_energies) 
+                                          wf%orbital_energies)
 !
    end subroutine construct_semicanonical_mlcc_orbitals_mlcc2
 !

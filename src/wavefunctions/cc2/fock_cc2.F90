@@ -46,6 +46,7 @@ contains
 !!
 !
       use timings_class, only: timings
+      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -108,6 +109,6 @@ contains
       call timer%turn_off()
 !
    end subroutine construct_fock_cc2
-!                            
+!
 !
 end submodule fock_cc2

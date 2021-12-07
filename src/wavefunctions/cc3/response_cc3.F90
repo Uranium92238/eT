@@ -103,8 +103,8 @@ contains
 !!    NB: Terms where mu == nu are separated out in construct_es_density
 !!        and construct_right_transition_density
 !!
-      use array_utilities, only: add_to_subblock
-      use range_class
+      use array_utilities, only: add_to_subblock, zero_array
+      use range_class, only: range_
 !
       implicit none
 !
@@ -205,7 +205,10 @@ contains
 !!
 !!       sum_mu,nu L_mu < mu| E_pq |nu > R_nu
 !!
-      use array_utilities, only: scale_diagonal
+      use array_utilities, only: scale_diagonal, zero_array
+      use reordering, only: squareup_and_sort_1234_to_1324
+      use reordering, only: construct_covariant_1324
+      use reordering, only: sort_1234_to_3412, sort_12_to_21
 !
       implicit none
 !
@@ -380,7 +383,12 @@ contains
 !!    Also construct the intermediate Z_bcjk needed for the ov-block
 !!          Z_bcjk = sum{ai} tbar^abc_ijk R^a_i
 !!
-      use array_utilities, only: copy_and_scale
+      use batching_index_class, only: batching_index
+      use array_utilities, only: copy_and_scale, zero_array
+      use reordering, only: squareup_and_sort_1234_to_1324, symmetrize_12_and_34
+      use reordering, only: construct_contravariant_t3
+      use reordering, only: add_21_to_12, add_2134_to_1234
+
 !
       implicit none
 !
@@ -1075,6 +1083,10 @@ contains
 !!          D^R_kl -= 1/2 sum_{abcij} tbar^abc_ijl R^abc_ijk
 !!
       use omp_lib
+      use batching_index_class, only: batching_index
+      use reordering, only: squareup_and_sort_1234_to_2413
+      use reordering, only: construct_contravariant_t3
+      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -1631,6 +1643,10 @@ contains
 !!    NB: the covariant Z intermediate (~Z = 1/3 (2 Z_bcjk + Z_bckj))
 !!        is used in this routine.
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: construct_contravariant_t3, add_21_to_12
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(cc3) :: wf
@@ -1902,6 +1918,8 @@ contains
 !!    D^R_ld += sum_abcijk 1/2 tbar^abc_ijk R^ab_ij(2t^cd_kl-t^cd_lk)
 !!           += sum_ck Z_ck (2t^cd_kl-t^cd_lk)
 !!
+      use reordering, only: add_21_to_12
+!
       implicit none
 !
       class(cc3) :: wf
@@ -1997,6 +2015,8 @@ contains
 !!    D^ES_ld -= sum_abcijk L^abc_ijk t^ab_lj R^cd_ki
 !!            -= sum_cik Yt_clik R^cd_ki
 !!
+      use reordering, only: sort_1234_to_2134
+!
       implicit none
 !
       class(cc3), intent(in) :: wf
@@ -2036,6 +2056,8 @@ contains
 !!    D_Ld -= sum_abcijk tbar^abc_ijk t^bD_jk R^ac_iL
 !!         -= sum_abcijk Y_Daci R^ac_iL
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(cc3), intent(inout) :: wf

@@ -55,7 +55,7 @@ module davidson_cc_es_class
 !!
 !
    use kinds
-   use ccs_class
+   use ccs_class, only: ccs
    use eigen_davidson_tool_class
    use abstract_cc_es_class, only: abstract_cc_es
 !
@@ -108,6 +108,8 @@ contains
 !!    Modified by Andreas S. Skeidsvoll, Oct 2020
 !!    Added max_dim_red and n_singlet_states consistency checks.
 !!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       type(davidson_cc_es) :: solver
@@ -445,6 +447,8 @@ contains
 !!    Read Davidson settings
 !!    Written by Andreas S. Skeidsvoll, Oct 2021
 !!
+      use global_in, only: input
+!
       implicit none
 !
       class(davidson_cc_es) :: solver

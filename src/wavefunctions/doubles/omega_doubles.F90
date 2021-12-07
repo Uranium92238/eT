@@ -44,6 +44,9 @@ contains
 !!
 !!    and adds it to the projection vector omega
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: sort_123_to_213
+!
       implicit none
 !
       class(doubles), intent(inout) :: wf
@@ -150,6 +153,8 @@ contains
 !!
 !!    and adds it to the projection vector (omega)
 !!
+      use reordering, only: sort_1234_to_3214
+!
       implicit none
 !
       class(doubles), intent(inout) :: wf
@@ -213,6 +218,8 @@ contains
 !!       u_ai_bj = 2*t_ai_bj - t_aj_bi
 !!
 !!
+      use reordering, only: sort_12_to_21
+!
       implicit none
 !
       class(doubles), intent(in) :: wf

@@ -20,7 +20,7 @@
 submodule (mlcc2_class) jacobian_transpose_mlcc2
 !
 !!
-!!    Jacobian transpose submodule 
+!!    Jacobian transpose submodule
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the transpose of the Jacobian matrix
@@ -55,6 +55,9 @@ contains
 !!    sent to the routine. On exit, the vector c is equal to sigma (the transformed
 !!    vector).
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: squareup, symmetric_sum, packin
+!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
@@ -141,6 +144,8 @@ contains
 !!
 !!       a, i : unrestricted
 !!
+      use reordering, only: sort_1234_to_3214
+!
       implicit none
 !
       class(mlcc2) :: wf
@@ -245,7 +250,7 @@ contains
       do b = 1, n_cc2_v
          do j = 1, n_cc2_o
             do c = 1, n_cc2_v
-               do i = 1, wf%n_o              
+               do i = 1, wf%n_o
 !
                   g_icjb(i, c, j, b) = g_iajb(i, c + first_v - 1, j + first_o - 1, b + first_v - 1)
 !
@@ -267,9 +272,9 @@ contains
                   n_cc2_o,                &
                   (n_cc2_o)*(n_cc2_v**2), &
                   one,                    &
-                  g_icjb,                 & 
+                  g_icjb,                 &
                   wf%n_o,                 &
-                  u_cjbk,                 & 
+                  u_cjbk,                 &
                   (n_cc2_o)*(n_cc2_v**2), &
                   zero,                   &
                   Y_ik,                   &
@@ -279,7 +284,7 @@ contains
 !
 !     sigma_ai -= c_ak Y_ik
 !
-      call dgemm('N', 'T',          & 
+      call dgemm('N', 'T',          &
                   wf%n_v,           &
                   wf%n_o,           &
                   n_cc2_o,          &
@@ -336,12 +341,12 @@ contains
 !
 !     sigma_ai -= c_ci * Y_ca
 !
-      call dgemm('T', 'N',          & 
+      call dgemm('T', 'N',          &
                   wf%n_v,           &
                   wf%n_o,           &
                   n_cc2_v,          &
                   -one,             &
-                  Y_ca,             & 
+                  Y_ca,             &
                   n_cc2_v,          &
                   c_ai(first_v, 1), & ! c_c_i
                   wf%n_v,           &
@@ -373,18 +378,20 @@ contains
 !!
 !!    Index restrictions:
 !!
-!!       Term 1: 
+!!       Term 1:
 !!
 !!          b, j, c, i : CC2 orbitals
 !!
 !!          a : unretricted
 !!
-!!       Term 2: 
+!!       Term 2:
 !!
 !!          a, k, b, j : CC2 orbitals
 !!
 !!          i : unretricted
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(mlcc2) :: wf
@@ -429,7 +436,7 @@ contains
 !
 !        sigma_ai =+ sum_bjc g_abjc c_bjci
 !
-         call dgemm('T', 'N',                                  & 
+         call dgemm('T', 'N',                                  &
                      batch_a%length,                           &
                      n_cc2_o,                                  &
                      (n_cc2_o)*(n_cc2_v**2),                   &
@@ -461,7 +468,7 @@ contains
 !
 !     - sum_bjk c_akbj g_ikbj
 !
-      call dgemm('N', 'T',               & 
+      call dgemm('N', 'T',               &
                   n_cc2_v,               &
                   wf%n_o,                &
                   (n_cc2_v)*(n_cc2_o)**2,&
@@ -504,12 +511,16 @@ contains
 !!
 !!       Term 3:
 !!
-!!          k : unrestricted 
+!!          k : unrestricted
 !!
 !!       Term 4:
 !!
-!!          c : unrestricted 
+!!          c : unrestricted
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_4123_to_1234, add_1432_to_1234, add_2143_to_1234
+!
       implicit none
 !
       class(mlcc2) :: wf
@@ -674,7 +685,7 @@ contains
 !!
 !!    Index restrictions:
 !!
-!!       a, i, b, j : CC2 orbitals 
+!!       a, i, b, j : CC2 orbitals
 !!
       implicit none
 !

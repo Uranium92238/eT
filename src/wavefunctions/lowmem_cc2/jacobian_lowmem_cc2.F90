@@ -20,7 +20,7 @@
 submodule (lowmem_cc2_class) jacobian
 !
 !!
-!!    Jacobian submodule 
+!!    Jacobian submodule
 !!
 !!    Routines for the lowmem CC2 linear transform of trial
 !!    vectors by the Jacobian matrix
@@ -30,16 +30,16 @@ submodule (lowmem_cc2_class) jacobian
 !!    where
 !!
 !!    A_mu,nu = < mu | exp(-T) [H, τ_nu] exp(T) | R >.
-!!  
+!!
 !!    These routines build the effective Jacobian transformation
-!!    as described in 
+!!    as described in
 !!
 !!       C. Hättig and F. Weigend, J. Chem. Phys. 113, 5154 (2000).
 !!
-!!    We operate with an N^2 memory limit, and perform 
-!!    batching for all terms where tensors of rank > 2 
+!!    We operate with an N^2 memory limit, and perform
+!!    batching for all terms where tensors of rank > 2
 !!    are used.
-!!    
+!!
 !!   Modified by Linda Goletto and Anders Hutcheson, Oct 2019
 !!
 !!   Introduced intermediates in the jacobian_doubles_a1
@@ -57,8 +57,8 @@ contains
 !!    Prepare for Jacobian
 !!    Written by Linda Goletto, Oct 2019
 !!
-!!    Gets occupied and virtual orbital energies and construcs 
-!!    the jacobian_doubles_a1_doubles routine second and 
+!!    Gets occupied and virtual orbital energies and construcs
+!!    the jacobian_doubles_a1_doubles routine second and
 !!    third intermediates
 !!
       implicit none
@@ -96,9 +96,9 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad,
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
-!!    Constructs the intermediate 
+!!    Constructs the intermediate
 !!
-!!       X_ji   = L_kcjb t^cb_ki  
+!!       X_ji   = L_kcjb t^cb_ki
 !!
 !!    and stores it on the file:
 !!
@@ -111,6 +111,10 @@ contains
 !!    Transferred here as separate subroutine in order to only
 !!    compute X_ji once at the beginning of the calculation
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_1432_to_1234
+!
       implicit none
 !
       class(lowmem_cc2) :: wf
@@ -174,7 +178,7 @@ contains
 !
             call batch_j%determine_limits(current_j_batch)
 !
-!           L_kcjb = 2 g_kcjb - g_jckb 
+!           L_kcjb = 2 g_kcjb - g_jckb
 !
             call mem%alloc(g_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
 !
@@ -204,7 +208,7 @@ contains
                                                       1, wf%n_v, batch_i%first, batch_i%get_last())
 !
 !$omp parallel do private(i,b,k,c,eps_ik)
-               do i = 1, batch_i%length 
+               do i = 1, batch_i%length
                   do k = 1, batch_k%length
 !
                      eps_ik = eps_o(i + batch_i%first - 1) + eps_o(k + batch_k%first - 1)
@@ -245,7 +249,7 @@ contains
 !
       call mem%batch_finalize()
 !
-      wf%jacobian_a1_intermediate_oo = sequential_file('jacobian_a1_2_intermediate_oo_lowmem_cc2')
+      wf%jacobian_a1_intermediate_oo = stream_file('jacobian_a1_2_intermediate_oo_lowmem_cc2')
       call wf%jacobian_a1_intermediate_oo%open_('write', 'rewind')
 !
       call wf%jacobian_a1_intermediate_oo%write_(X_ji, wf%n_o**2)
@@ -267,7 +271,7 @@ contains
 !!
 !!    Constructs the intermediate
 !!
-!!       X_ab = t_akcj L_kcjb 
+!!       X_ab = t_akcj L_kcjb
 !!
 !!    and stores it on the file:
 !!
@@ -280,6 +284,10 @@ contains
 !!    Transferred here as separate subroutine in order to only
 !!    compute X_ab once at the beginning of the calculation
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_1432_to_1234
+!
       implicit none
 !
       class(lowmem_cc2) :: wf
@@ -366,7 +374,7 @@ contains
             call mem%alloc(t_akcj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
 !
 !$omp parallel do private(j,c,k,a)
-            do j = 1, batch_j%length 
+            do j = 1, batch_j%length
                do k = 1, batch_k%length
                   eps_jk = eps_o(j + batch_j%first - 1) + eps_o(k + batch_k%first - 1)
                   do c = 1, wf%n_v
@@ -405,7 +413,7 @@ contains
 !
       call mem%batch_finalize()
 !
-      wf%jacobian_a1_intermediate_vv = sequential_file('jacobian_a1_intermediate_vv_doubles')
+      wf%jacobian_a1_intermediate_vv = stream_file('jacobian_a1_intermediate_vv_doubles')
       call wf%jacobian_a1_intermediate_vv%open_('write', 'rewind')
 !
       call wf%jacobian_a1_intermediate_vv%write_(X_ab, wf%n_v**2)
@@ -427,8 +435,10 @@ contains
 !!
 !!    Constructs the effective Jacobian transformation
 !!    for lowmem CC2 according to
-!!    
+!!
 !!       C. Hättig and F. Weigend, J. Chem. Phys. 113, 5154 (2000).
+!!
+      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -496,9 +506,13 @@ contains
 !!
 !!    Reads two intermediates, which are prepared in prepare_for_jacobian
 !!
-!!       X_ab  =  L_kcjb t^ac_kj 
-!!       X_ji   = L_kcjb t^cb_ki 
+!!       X_ab  =  L_kcjb t^ac_kj
+!!       X_ji   = L_kcjb t^cb_ki
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_1243_to_1234, add_1342_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -592,7 +606,7 @@ contains
                         one,                       &
                         L_kcbj,                    & ! L_kc_bj
                         (batch_k%length)*(wf%n_v), &
-                        c_bj(1, batch_j%first),    & ! c_bj 
+                        c_bj(1, batch_j%first),    & ! c_bj
                         (wf%n_v)*(wf%n_o),         &
                         zero,                      &
                         X_kc_batch,                & ! X_kc
@@ -709,8 +723,8 @@ contains
 !
       call mem%dealloc(X_kc, wf%n_o, wf%n_v)
 !
-!     :: Term 2:  - L_kcjb t^cb_ki c_aj :: 
-!     
+!     :: Term 2:  - L_kcjb t^cb_ki c_aj ::
+!
 !     rho_ai = rho_ai - c_aj X_ji
 !
       call mem%alloc(X_ji, wf%n_o, wf%n_o)
@@ -782,6 +796,8 @@ contains
 !!    and adds it to rho_ai
 !!    The term is calculated in batches over the a and c indices.
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -993,9 +1009,10 @@ contains
 !!            + sum_{kcl} F_kc (1/(ε_{akci} + ω)) * (g_akli c_cl + g_cilk c_al)
 !!          = 2 sum_{kcl} F_kc (- 2*X_ckai - 2*X_aick + X_ciak + X_akci)
 !!
-!!    and adds it to rho_ai     
+!!    and adds it to rho_ai
 !!
-!!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -1148,8 +1165,12 @@ contains
 !!
 !!    Modified by Linda Goletto and Anders Hutcheson, Oct 2019
 !!
-!!    Integrals, g_akbc and g_bjac, moved out of i batching loop 
+!!    Integrals, g_akbc and g_bjac, moved out of i batching loop
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_1423_to_1234, add_2413_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -1337,12 +1358,15 @@ contains
 !!    Calculates the D1 contribution using an implicit
 !!    calculation of the doubles vector
 !!
-!!       D1 = sum_ckbj - L_kijb  (- g_aklj * c_bl - g_bjlk * c_al) (omega - ε_akbj)^-1 
+!!       D1 = sum_ckbj - L_kijb  (- g_aklj * c_bl - g_bjlk * c_al) (omega - ε_akbj)^-1
 !!          = sum_kjb L_kijb  (X_bjak + X_akbj)
 !!          = sum_kjb L_kijb  Y_ajbk
 !!
 !!    and adds it to the rho_ai vector.
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: add_1432_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -1530,6 +1554,9 @@ contains
 !!
 !!    and adds it to the rho_ai vector.
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: add_3214_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -1719,8 +1746,12 @@ contains
 !!
 !!    Modified by Linda Goletto and Anders Hutcheson, Oct 2019
 !!
-!!    Integral, g_abkc, moved out of i batching loop 
+!!    Integral, g_abkc, moved out of i batching loop
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_1243_to_1234, add_1342_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf

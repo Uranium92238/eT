@@ -27,7 +27,7 @@ module cc_multipliers_start_vector_tool_class
 !
    use kinds
    use start_vector_tool_class,             only: start_vector_tool
-   use ccs_class
+   use ccs_class, only: ccs
 !
    implicit none
 !

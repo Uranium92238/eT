@@ -46,6 +46,7 @@ contains
 !
       use batching_index_class, only : batching_index
       use timings_class, only: timings
+      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -113,5 +114,5 @@ contains
       call timer%turn_off()
 !
    end subroutine construct_fock_mlccsd
-!                            
+!
 end submodule fock_mlccsd

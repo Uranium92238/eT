@@ -27,7 +27,6 @@ module wavefunction_class
    use parameters
    use global_out,            only: output
    use memory_manager_class,  only: mem
-   use global_in,             only: input
    use ao_tool_class,         only: ao_tool
    use environment_class,     only: environment
 !
@@ -764,6 +763,7 @@ contains
 !!    or polarizable (QM/FQ or PCM)
 !!
       use environment_factory_class, only: environment_factory
+      use global_in, only: input
 !
       implicit none
 !
@@ -1041,16 +1041,16 @@ contains
       use atomic_center_class, only: atomic_center
       use redundant_internal_coords_class, only: redundant_internal_coords
 !
-      implicit none 
+      implicit none
 !
-      class(wavefunction), intent(in) :: wf 
+      class(wavefunction), intent(in) :: wf
 !
       class(redundant_internal_coords), intent(inout) :: internals
 !
-      integer, dimension(:), allocatable :: Z 
+      integer, dimension(:), allocatable :: Z
       real(dp), dimension(:,:), allocatable :: R
 !
-      type(atomic_center), allocatable :: center 
+      type(atomic_center), allocatable :: center
 !
       integer :: k
 !
@@ -1072,7 +1072,7 @@ contains
       call internals%initialize(R, Z)
 !
       call mem%dealloc(R, 3, wf%n_atomic_centers)
-      call mem%dealloc(Z, wf%n_atomic_centers)      
+      call mem%dealloc(Z, wf%n_atomic_centers)
 !
    end subroutine initialize_redundant_internal_coordinates_wavefunction
 !

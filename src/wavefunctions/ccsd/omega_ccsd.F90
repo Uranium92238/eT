@@ -44,6 +44,9 @@ contains
 !!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
 !!    for the current amplitudes of the object wfn
 !!
+      use reordering, only: squareup, symmetric_sum, sort_1234_to_1324, packin
+      use array_utilities, only: scale_diagonal, zero_array
+!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
@@ -144,7 +147,14 @@ contains
 !!    In general, _p dimensions are given by dim*(dim+1)/2,
 !!          while _m dimensions are given by dim*(dim-1)/2
 !!
-      use packed_array_utilities_r
+      use batching_index_class, only: batching_index
+      use packed_array_utilities_r, only: add_double_packed_plus_minus
+      use packed_array_utilities_r, only: add_single_packed_plus_minus
+      use packed_array_utilities_r, only: construct_plus_minus_1324_from_full
+      use packed_array_utilities_r, only: construct_plus_minus_1324_from_RFP
+      use packed_array_utilities_r, only: construct_plus_minus_2413_from_packed
+      use packed_array_utilities_r, only: scale_double_packed_diagonal
+      use packed_array_utilities_r, only: scale_double_packed_blocks
 !
       implicit none
 !
@@ -438,6 +448,8 @@ contains
 !!    Then the contraction over cd is performed, and the results added to g_klij.
 !!    t_ak_bl is then reordered as t_ab_kl and the contraction over kl is performed.
 !!
+      use reordering, only: add_1324_to_1234, sort_1234_to_1324
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -540,7 +552,13 @@ contains
 !!
 !!    t2_u2 will contain t^ab_ji in the upper triangle and ~t^ab_ij in the lower triangle
 !!
-      use packed_array_utilities_r
+      use packed_array_utilities_r, only: construct_full_contra_in_place
+      use packed_array_utilities_r, only: symmetrize_and_pack
+      use packed_array_utilities_r, only: construct_1432_and_contra
+      use array_utilities, only: copy_and_scale
+      use reordering, only: sort_1234_to_1324, sort_1234_to_1432
+
+
 !
       implicit none
 !
@@ -664,6 +682,9 @@ contains
 !!    Both are permuted added to the projection vector element omega2(ai,bj) of
 !!    the wavefunction object wf.
 !!
+      use array_utilities, only: copy_and_scale
+      use reordering, only: add_1432_to_1234
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -819,6 +840,9 @@ contains
 !!
 !!       u_aibj = 2t_aibj - t_ajbi
 !!
+      use reordering, only: squareup, add_1432_to_1234
+      use array_utilities, only: copy_and_scale
+!
       implicit none
 !
       class(ccsd), intent(inout) :: wf

@@ -4387,7 +4387,7 @@ contains
    end subroutine packin_4_from_1324_order_complex
 !
 !
-   subroutine packin_and_add_from_1324_order_real(packed, unpacked, dim_p, dim_q)
+   subroutine packin_and_add_from_1324_order(packed, unpacked, dim_p, dim_q)
 !!
 !!    Pack in and add symmetric matrix ordered 1324
 !!    Written by Rolf H. Myhre, Oct 2019
@@ -4435,7 +4435,7 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine packin_and_add_from_1324_order_real
+   end subroutine packin_and_add_from_1324_order
 !
 !
    subroutine packin_anti(packed, unpacked, N)

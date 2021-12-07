@@ -35,8 +35,12 @@ module qed_hf_class
 !!    Check out the QED tool for more details.
 !!
 !
-   use hf_class 
+   use hf_class, only: hf
    use qed_tool_class, only: qed_tool
+!
+   use parameters
+   use memory_manager_class, only: mem
+   use global_out, only: output
 !
    implicit none
 !
@@ -61,11 +65,11 @@ module qed_hf_class
    end type qed_hf
 !
 !
-   interface qed_hf 
+   interface qed_hf
 !
       procedure :: new_qed_hf
 !
-   end interface qed_hf 
+   end interface qed_hf
 !
 !
 contains
@@ -124,10 +128,10 @@ contains
 !
       class(qed_hf) :: wf
 !
-      class(atomic_center), dimension(:), optional, intent(in) :: centers 
-      integer, intent(in), optional :: charge 
+      class(atomic_center), dimension(:), optional, intent(in) :: centers
+      integer, intent(in), optional :: charge
 !
-      logical, intent(in), optional :: embedding 
+      logical, intent(in), optional :: embedding
 !
       if (present(embedding)) then
          if (embedding) call output%error_msg("Embedding not supported in QED-HF")
@@ -213,7 +217,7 @@ contains
 !!
       use string_utilities, only: convert_to_uppercase
 !
-      implicit none 
+      implicit none
 !
       class(qed_hf), intent(inout) :: wf
 !

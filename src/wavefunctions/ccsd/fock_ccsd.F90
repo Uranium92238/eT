@@ -43,7 +43,8 @@ contains
 !!       F_pq = h_pq + sum_k (2*g_pqkk - g_pkkq) + (effective Fock contributions)
 !!
 !!    Depending on the 'task' different blocks (ij, ai, ia, ab) will be constructed
-!
+!!
+      use array_utilities, only: zero_array
       use warning_suppressor, only: do_nothing
       use timings_class, only: timings
 !
@@ -80,6 +81,6 @@ contains
       call timer%turn_off()
 !
    end subroutine construct_fock_ccsd
-!                            
+!
 !
 end submodule fock_ccsd

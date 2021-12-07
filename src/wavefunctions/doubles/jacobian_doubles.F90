@@ -70,6 +70,9 @@ contains
 !!    On exit, c is overwritten by rho. That is, c_ai = rho_ai,
 !!    and c_aibj = rho_aibj.
 !!
+      use reordering, only: squareup, symmetrize_and_add_to_packed
+      use array_utilities, only: zero_array, scale_diagonal
+!
       implicit none
 !
       class(doubles), intent(inout) :: wf
@@ -140,6 +143,9 @@ contains
 !!
 !!    which are wavefunction variables
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: add_2143_to_1234, add_2341_to_1234, squareup
+!
       implicit none
 !
       class(doubles) :: wf
@@ -189,7 +195,7 @@ contains
                   Y_bd,                &
                   wf%n_v)
 !
-      wf%jacobian_a1_intermediate_vv = sequential_file('jacobian_a1_intermediate_vv_doubles')
+      wf%jacobian_a1_intermediate_vv = stream_file('jacobian_a1_intermediate_vv_doubles')
       call wf%jacobian_a1_intermediate_vv%open_('write', 'rewind')
 !
       call wf%jacobian_a1_intermediate_vv%write_(Y_bd, wf%n_v**2)
@@ -221,7 +227,7 @@ contains
       call mem%dealloc(t_blck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      wf%jacobian_a1_intermediate_oo = sequential_file('jacobian_a1_intermediate_oo_doubles')
+      wf%jacobian_a1_intermediate_oo = stream_file('jacobian_a1_intermediate_oo_doubles')
       call wf%jacobian_a1_intermediate_oo%open_('write', 'rewind')
 !
       call wf%jacobian_a1_intermediate_oo%write_(Y_jl, wf%n_o**2)
@@ -243,6 +249,8 @@ contains
 !!    rho_ai^A1 = sum_ckdl L_kcld (u_ki^ca c_dl - t_kl^ad c_ci  - t_ki^cd c_al)
 !!              = sum_ckdl L_kcld u_ki^ca c_dl - Y_ac c_ci - Y_il c_al)
 !!
+      use reordering, only: sort_12_to_21, sort_123_to_132
+!
       implicit none
 !
       class(doubles) :: wf
@@ -435,6 +443,9 @@ contains
 !!    rho_ai^B1 = sum_bj F_jb (2*c_aibj - c_ajbi)
 !!              = sum_bj F_jb v_aijb
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: add_1243_to_1234, add_1342_to_1234
+!
       implicit none
 !
       class(doubles) :: wf
@@ -488,6 +499,9 @@ contains
 !!    rho_ai^C1 = - sum_bjk L_jikb c_ajbk
 !!              = - sum_bjk (2*g_jikb - g_kijb) c_ajbk
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: add_1432_to_1234, add_3412_to_1234
+!
       implicit none
 !
       class(doubles) :: wf
@@ -547,6 +561,10 @@ contains
 !!
 !!    rho_ai^D1 =  sum_bcj L_abjc c_bicj
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: sort_1234_to_1432, add_1432_to_1234
+      use array_utilities, only: copy_and_scale
+!
       implicit none
 !
       class(doubles) :: wf
@@ -636,6 +654,8 @@ contains
 !!
 !!    rho_aibj^A2 = sum_c g_aibc c_cj - sum_k g_aikj c_bk
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(doubles) :: wf
@@ -733,12 +753,12 @@ contains
 !!
 !!    rho_aibj^B2 =  sum_c F_bc * c_ai,cj - sum_k F_jk * c_ai,bk
 !!
-      implicit none 
+      implicit none
 !
       class(doubles), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)    :: c_aibj  
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: rho_aibj  
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)    :: c_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: rho_aibj
 !
 !     :: sum_c F_bc c_ai,cj ::
 !
@@ -774,7 +794,7 @@ contains
                   rho_aibj,               & ! rho_aib_j
                   (wf%n_o)*((wf%n_v)**2))
 !
-   end subroutine jacobian_doubles_b2 
+   end subroutine jacobian_doubles_b2
 !
 !
 end submodule jacobian_doubles

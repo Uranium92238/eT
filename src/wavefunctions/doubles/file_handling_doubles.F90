@@ -23,7 +23,7 @@ submodule (doubles_class) file_handling_doubles
 !!    File handling submodule
 !!
 !!    Gathers routines that save wavefunction parameters to file,
-!!    and reads them from file, plus other routines related to the 
+!!    and reads them from file, plus other routines related to the
 !!    handling of the files that belong to the wavefunction.
 !!
 !
@@ -43,7 +43,7 @@ contains
 !!
 !!    read_n: optionally adds the number of amplitudes read to read_n
 !!
-      implicit none 
+      implicit none
 !
       class(doubles), intent(inout) :: wf
 !
@@ -84,9 +84,9 @@ contains
 !!
 !!    File format: energy, n_t1, t1, n_t2, t2
 !!
-      implicit none 
+      implicit none
 !
-      class(doubles), intent(inout) :: wf 
+      class(doubles), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
@@ -104,19 +104,19 @@ contains
 !
    module subroutine read_excitation_vector_file_doubles(wf, file_, vector, energy, read_n)
 !!
-!!    Read excitation vector file 
+!!    Read excitation vector file
 !!    Written by Alexander C. Paul, Sep 2020
 !!
 !!    Reads excitation vector from file structured as follows:
 !!    excitation_energy, n_t1, X1, n_t2, X2
 !!
-!!    read_n: optionally returns the number of amplitudes read. 
-!!            This is especially useful e.g. in CCSD to provide a start guess 
+!!    read_n: optionally returns the number of amplitudes read.
+!!            This is especially useful e.g. in CCSD to provide a start guess
 !!            for the doubles if only singles were found on file.
 !!
       implicit none
 !
-      class(doubles), intent(inout) :: wf 
+      class(doubles), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
@@ -144,7 +144,7 @@ contains
 !
    module subroutine save_excitation_vector_on_file_doubles(wf, file_, vector, energy)
 !!
-!!    Save excitation vector file 
+!!    Save excitation vector file
 !!    Written by Alexander C. Paul, Sep 2020
 !!
 !!    Writes excitation vector o file structured as follows:
@@ -152,7 +152,7 @@ contains
 !!
       implicit none
 !
-      class(doubles), intent(inout) :: wf 
+      class(doubles), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
@@ -188,9 +188,13 @@ contains
 !!    R^a_i = 1/2 L^a_i
 !!    R^ab_ij = 1/6 (2L^ab_ij + L^ba_ij)
 !!
+      use reordering, only: construct_packed_contravariant
+      use reordering, only: construct_packed_covariant
+      use array_utilities, only: copy_and_scale, zero_array
+!
       implicit none
 !
-      class(doubles), intent(inout) :: wf 
+      class(doubles), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
@@ -223,14 +227,14 @@ contains
 !
 !              2R^ab_ij - R^ba_ij
                alpha = two
-               call construct_packed_contravariant(vector(wf%n_t1+1:wf%n_es_amplitudes), & 
+               call construct_packed_contravariant(vector(wf%n_t1+1:wf%n_es_amplitudes), &
                                                    temp, wf%n_v ,wf%n_o)
 !
             else if (restart_from == 'left' .and. restart_to == 'right') then
 !
 !              1/3 (2L^ab_ij + L^ba_ij)
                alpha = half
-               call construct_packed_covariant(vector(wf%n_t1+1:wf%n_es_amplitudes), & 
+               call construct_packed_covariant(vector(wf%n_t1+1:wf%n_es_amplitudes), &
                                                temp, wf%n_v ,wf%n_o)
 !
             end if
@@ -253,4 +257,4 @@ contains
    end subroutine get_restart_vector_doubles
 !
 !
-end submodule file_handling_doubles 
+end submodule file_handling_doubles

@@ -49,6 +49,7 @@ contains
 !!    unordered_g_vvvo: help array for reordering
 !!    c_ai:             use the c1-transformed integral
 !!
+      use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_2413
 !
       implicit none
@@ -129,6 +130,7 @@ contains
 !!    point:            pointer to g_vvov integral
 !!    unordered_g_vvov: help array for reordering
 !!
+      use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_1324
 !
       implicit none
@@ -198,6 +200,7 @@ contains
 !!    point:            pointer to g_vvov integral
 !!    unordered_g_ovov: help array for reordering
 !!
+      use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_1324
 !
       implicit none
@@ -268,6 +271,7 @@ contains
 !!    unordered_g_oovo: help array for reordering
 !!    c_ai:             use the c1-transformed integral
 !!
+      use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_1243
 !
       implicit none
@@ -344,7 +348,7 @@ contains
 !!    point:            pointer to g_ooov integral
 !!    unordered_g_ooov: help array for reordering
 !!
-!!
+      use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_2134
 !
       implicit none
@@ -494,6 +498,8 @@ contains
 !!
 !!    based on omega_cc3_W_calc written by Rolf H. Myhre
 !!
+      use reordering, only: add_132_to_123, add_213_to_123, add_312_to_123
+!
       implicit none
 !
       class(cc3) :: wf

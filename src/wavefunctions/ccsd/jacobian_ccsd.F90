@@ -89,6 +89,10 @@ contains
 !!    On exit, c is overwritten by rho. That is, c_ai = rho_ai,
 !!    and c_aibj = rho_aibj.
 !!
+      use array_utilities, only: scale_diagonal, zero_array
+      use reordering, only: symmetric_sum, sort_1234_to_1324, squareup
+      use reordering, only: packin_and_add_from_1324_order
+!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
@@ -162,7 +166,7 @@ contains
 !
       call scale_diagonal(half, rho_abij, wf%n_v, wf%n_o)
 !
-      call packin_and_add_from_1324_order_real(rho(wf%n_t1+1:), rho_abij, wf%n_v, wf%n_o)
+      call packin_and_add_from_1324_order(rho(wf%n_t1+1:), rho_abij, wf%n_v, wf%n_o)
 !
       call mem%dealloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -182,6 +186,8 @@ contains
 !!
 !!    rho_aibj^B2 = - sum_kc (F_kc t_ij^ac c_bk + F_kc t_ik^ab c_cj)
 !!
+      use reordering, only: squareup
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -292,6 +298,12 @@ contains
 !!    rho_aibj^C2 = sum_kcl g_ljkc (t_ki^ac c_bl + t_li^bc c_ak + t_lk^ba c_ci)
 !!                 - sum_kcl L_ljkc (t_il^ab c_ck + t_ik^ac c_bl)
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: add_1432_to_1234, sort_1234_to_3142
+      use reordering, only: sort_1234_to_1342, add_3124_to_1234
+      use reordering, only: add_1243_to_1234, add_4213_to_1234
+      use reordering, only: sort_1234_to_1423, squareup
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -302,11 +314,11 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_ljkc ! g_ljkc
       real(dp), dimension(:,:,:,:), allocatable :: L_ljck ! L_ljkc
 !
-      real(dp), dimension(:,:,:,:), allocatable :: X_ljai   ! An intermediate, term 1
-      real(dp), dimension(:,:,:,:), allocatable :: X_kjbi   ! An intermediate, term 2
-      real(dp), dimension(:,:,:,:), allocatable :: X_ljki   ! An intermediate, term 3
-      real(dp), dimension(:,:,:,:), allocatable :: X_klij   ! X_kj_li reordered
-      real(dp), dimension(:,:), allocatable     :: X_lj     ! An intermediate, term 4
+      real(dp), dimension(:,:,:,:), allocatable :: X_ljai  ! An intermediate, term 1
+      real(dp), dimension(:,:,:,:), allocatable :: X_kjbi  ! An intermediate, term 2
+      real(dp), dimension(:,:,:,:), allocatable :: X_ljki  ! An intermediate, term 3
+      real(dp), dimension(:,:,:,:), allocatable :: X_klij  ! X_kj_li reordered
+      real(dp), dimension(:,:), allocatable     :: X_lj    ! An intermediate, term 4
       real(dp), dimension(:,:,:,:), allocatable :: Y_ljai  ! An intermediate, term 5
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_akci ! t_ki^ac
@@ -569,21 +581,28 @@ contains
 !!     2:     - (L_J,kc t_akci) V_J,bj  = - M_J,ai V_J,bj (N5)
 !!     3:      2 L_J,kc V_J,bj t_aick   = 2 (L_J,kc t_aick) V_J,bj = 2 Z_J,ai V_J,bj (N5)
 !!     4:      - W_J,kj L_J,bd t_aidk   = - WL_kjbd t_aidk (o3v3)
-!!     5 and 6:  2 (Y_J L_J,bd) t_aidj - (L_J,kd V_J,bk) t_aidj  
+!!     5 and 6:  2 (Y_J L_J,bd) t_aidj - (L_J,kd V_J,bk) t_aidj
 !!                                      = (2 N_bd - Z_bd) t_aidj (N5)
 !!                                      = X_bd t_aidj
 !!
-      implicit none 
+      use batching_index_class, only: batching_index
+      use array_utilities, only: copy_and_scale, zero_array
+      use reordering, only: sort_12_to_21, sort_123_to_213, sort_1234_to_4132
+      use reordering, only: sort_1234_to_1432, sort_1234_to_3241
+      use reordering, only: sort_1234_to_1243, sort_1234_to_1423
+      use reordering, only: add_1243_to_1234, add_1432_to_1234, squareup
 !
-      class(ccsd), intent(inout) :: wf 
+      implicit none
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: rho_aibj 
+      class(ccsd), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai 
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: rho_aibj
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
 !
       type(timings), allocatable :: timer
 !
-      real(dp), dimension(:,:,:,:), allocatable ::  X_kijb, rho_aijb 
+      real(dp), dimension(:,:,:,:), allocatable ::  X_kijb, rho_aijb
 !
       real(dp), dimension(:), allocatable :: Y_J
 !
@@ -592,11 +611,11 @@ contains
       real(dp), dimension(:,:,:), allocatable :: L_J_ov, L_J_vv, M_J_vo, V_J_vo, V_vJo
       real(dp), dimension(:,:,:), allocatable :: W_J_oo, Z_J_vo
 !
-      real(dp), dimension(:,:,:,:), allocatable :: rho_ajbi, t_aijd, t_aikc, t_ajdk 
+      real(dp), dimension(:,:,:,:), allocatable :: rho_ajbi, t_aijd, t_aikc, t_ajdk
       real(dp), dimension(:,:,:,:), allocatable :: t_vovo, WL_oovv, WL_bidk, WL_dkbj
 !
       integer :: req0, req1, batch
-      type(batching_index), allocatable :: batch_v 
+      type(batching_index), allocatable :: batch_v
 !
       timer = timings('Jacobian CCSD D2 transformation', pl='verbose')
       call timer%turn_on()
@@ -639,7 +658,7 @@ contains
                                            1, wf%n_o, 1, wf%n_o, &
                                            qp=.false.)
 !
-!     Y_J = L_J,kc c_ck     
+!     Y_J = L_J,kc c_ck
 !
       call mem%alloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
       call wf%eri%get_cholesky_t1(L_J_ov, 1, wf%n_o, wf%n_o + 1, wf%n_mo)
@@ -676,7 +695,7 @@ contains
       call zero_array(N_vv, wf%n_v**2)
 !
       req0 = 0
-      req1 = wf%eri%n_J * wf%n_v 
+      req1 = wf%eri%n_J * wf%n_v
 !
       batch_v = batching_index(wf%n_v)
 !
@@ -711,7 +730,7 @@ contains
 !
 !        WL_kibd = W_J,ki L_J,bd
 !
-         call dgemm('T', 'N',                                           & 
+         call dgemm('T', 'N',                                           &
                      wf%n_o**2,                                         &
                      wf%n_v * batch_v%length,                           &
                      wf%eri%n_J,                                        &
@@ -739,7 +758,7 @@ contains
                      N_vv(1, batch_v%first),          &
                      wf%n_v * batch_v%length)
 !
-      enddo 
+      enddo
 !
       call mem%dealloc(L_J_vv, wf%eri%n_J, wf%n_v, batch_v%max_length)
 !
@@ -771,7 +790,7 @@ contains
       call mem%dealloc(V_vJo, wf%n_v, wf%eri%n_J, wf%n_o)
 !
 !     X_bd = two * N_bd - Z_bd
-!    
+!
       call mem%alloc(X_vv, wf%n_v, wf%n_v)
 !
       call copy_and_scale(two, N_vv, X_vv, wf%n_v**2)
@@ -810,7 +829,7 @@ contains
 !     M_J,ai = L_J,kc t_akci
 !
 !     Sort t_akci to t_aikc
-!     
+!
       call sort_1234_to_1423(t_vovo, t_aikc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(M_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
@@ -973,6 +992,9 @@ contains
 !!
 !!    which is constructed in prepare_for_jacobian
 !!
+      use array_utilities, only: copy_and_scale
+      use reordering, only: add_1432_to_1234
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1030,6 +1052,9 @@ contains
 !!
 !!    L_kc,ld = 2*g_kc,ld - g_kd,lc = 2*g_kcld(kc,ld) - 2*g_kcld(kd,lc)
 !!
+      use reordering, only: add_4123_to_1234, add_4321_to_1234, squareup
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1272,6 +1297,9 @@ contains
 !!                   = sum_dl Y_aild c_bldj
 !!                     + sum_dk Y_ajkd c_bkdi
 !!
+      use reordering, only: sort_1234_to_2314, sort_1234_to_3241
+      use reordering, only: squareup, add_1432_to_1234
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1295,7 +1323,7 @@ contains
       call timer%turn_on()
 !
 !     Term 1: Y_aild c_bldj
-!  
+!
 !     t_ciak g_kcld c_bldj
 !     = (L_kc^J t_ciak) (L_ld^J c_bldj)
 !     = W_ai^J V_bj^J
@@ -1365,7 +1393,7 @@ contains
                   wf%eri%n_J,       &
                   one,              &
                   rho_aibj,         &
-                  wf%n_v * wf%n_o)  
+                  wf%n_v * wf%n_o)
 !
       call mem%dealloc(V_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
       call mem%dealloc(W_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
@@ -1415,6 +1443,10 @@ contains
 !!    rho_aibj^I2 = sum_ck L_bj,kc * c_ai,ck
 !!                - sum_ck ( g_kc,bj * c_ak,ci + g_ki,bc * c_ak,cj )
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: sort_1234_to_2314, sort_1234_to_1432
+      use reordering, only: add_3421_to_1234, add_3124_to_1234, add_3214_to_1234
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1471,7 +1503,7 @@ contains
       call mem%alloc(L_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
 !
       call wf%eri%get_cholesky_t1(L_J_vo,                &
-                                    wf%n_o + 1, wf%n_mo, &     
+                                    wf%n_o + 1, wf%n_mo, &
                                     1, wf%n_o)
 !
       call dgemm('T', 'N',             &
@@ -1484,7 +1516,7 @@ contains
                   L_J_vo,              &
                   wf%eri%n_J,          &
                   one,                 &
-                  rho_aibj,            & 
+                  rho_aibj,            &
                   (wf%n_o)*(wf%n_v))
 !
       call mem%dealloc(W_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
@@ -1572,6 +1604,8 @@ contains
 !!                       + sum_ckdl t_ak,bl * g_kc,ld * c_ci,dj
 !!                   =    sum_ckld Y_klij * c_ak,bl
 !!                       + sum_ckdl t_ak,bl * g_kc,ld * c_ci,dj
+      use reordering, only: sort_1234_to_1324, squareup_and_sort_1234_to_1324
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1678,6 +1712,8 @@ contains
 !!
 !!    rho_abij^K2 =    sum_kl g_kilj * c_akbl
 !!
+      use reordering, only: sort_1234_to_1324
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1742,6 +1778,9 @@ contains
 !!    and the intermediate is stored in the file jacobian_c2_intermediate
 !!    which is a wf variable.
 !!
+      use reordering, only: sort_1234_to_2314, sort_1234_to_3214, squareup
+      use reordering, only: add_3214_to_1234, sort_1234_to_4312
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1896,6 +1935,11 @@ contains
 !!    and the intermediate is stored in the file jacobian_d2_intermediate
 !!    which is a wf variable.
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: squareup_and_sort_1234_to_2413
+      use reordering, only: sort_1234_to_4231, sort_1234_to_3124
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -2014,6 +2058,9 @@ contains
 !!    and the intermediate is stored in the file jacobian_e2_intermediate
 !!    which is a wf variable
 !!
+      use reordering, only: add_2143_to_1234, add_2341_to_1234, squareup
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -2101,6 +2148,10 @@ contains
 !!
 !!    which are wavefunction variables
 !!
+      use reordering, only: add_2143_to_1234, add_2341_to_1234
+      use reordering, only: squareup, sort_1234_to_1432
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -2183,6 +2234,9 @@ contains
 !!
 !!       jacobian_h2_intermediate_voov
 !!
+      use reordering, only: squareup_and_sort_1234_to_1423
+      use reordering, only: sort_1234_to_1432
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -2216,7 +2270,7 @@ contains
                   wf%n_v*wf%n_o, &
                   wf%n_v*wf%n_o, &
                   one,           &
-                  t_ajcl,        & 
+                  t_ajcl,        &
                   wf%n_v*wf%n_o, &
                   g_lckd,        &
                   wf%n_v*wf%n_o, &
@@ -2256,6 +2310,9 @@ contains
 !!
 !!    which are wavefunction variables
 !!
+      use reordering, only: sort_1234_to_1324
+      use reordering, only: squareup_and_sort_1234_to_1324
+!
       implicit none
 !
       class(ccsd) :: wf
