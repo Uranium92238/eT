@@ -23,15 +23,15 @@ submodule (cc2_class) jacobian_cc2
 !!    Jacobian submodule
 !!
 !!    Routines for the linear transform of trial
-!!    vectors by the Jacobian matrix 
+!!    vectors by the Jacobian matrix
 !!
 !!    ρ_i = A * c_i,
 !!
 !!    where
-!!   
+!!
 !!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
-!!  
-! 
+!!
+!
    implicit none
 !
 !
@@ -66,17 +66,17 @@ contains
 !!
 !!    Jacobian doubles B2 CC2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 and 2021
-!!    
+!!
 !!    rho_aibj =+ c_aibj * (eps_a - eps_i)
 !!
 !!    Note that a symmetrization is needed after this term.
 !!
-      implicit none 
+      implicit none
 !
-      class(cc2), intent(in) :: wf 
+      class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)    :: c_aibj  
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: rho_aibj 
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)    :: c_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: rho_aibj
 !
       integer :: i, j, a, b
 !

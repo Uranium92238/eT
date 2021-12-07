@@ -1,0 +1,46 @@
+system
+   name: H2O
+   charge: 0
+end system
+
+method
+  hf
+  ccsd
+end method
+
+print
+   output print level: verbose
+end print
+
+memory
+   available: 8
+end memory
+
+solver cholesky
+   threshold: 1.0d-11
+end solver cholesky
+
+solver scf
+   algorithm:          scf-diis
+   energy threshold:   1.0d-11
+   gradient threshold: 1.0d-11
+end solver scf
+
+solver cc gs
+   multimodel newton: on
+   algorithm: newton-raphson
+   energy threshold: 1.0d-11
+   omega threshold:  1.0d-11
+end solver cc gs
+
+do
+   ground state
+end do
+
+geometry
+basis: sto-3g
+ H          0.86681        0.60144        5.00000
+ H         -0.86681        0.60144        5.00000
+ O          0.00000       -0.07579        5.00000
+end geometry
+

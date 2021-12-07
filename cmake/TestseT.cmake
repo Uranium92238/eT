@@ -179,6 +179,7 @@ add_eT_runtest(ccsd_frozen_hf_frozen_core_gs_energy         "eT;short;ccsd;gs;fr
 add_eT_runtest(ccsd_gs_energy_qmmmnopol                     "eT;short;ccsd;gs;qmmm;mmnopol")
 add_eT_runtest(ccsd_gs_energy_qmfq                          "eT;short;ccsd;gs;qmmm;fq")
 add_eT_runtest(ccsd_gs_energy_1c_cd                         "eT;short;ccsd;gs;1c-cd")
+add_eT_runtest(ccsd_gs_energy_multimodel_nr                 "eT;short;ccsd;gs;multimodel")
 add_eT_runtest(ccsd_dipole                                  "eT;short;ccsd;gs;dipole")
 add_eT_runtest(ccsd_dipole_fc                               "eT;short;ccsd;gs;dipole;frozen core")
 add_eT_runtest(ccsd_quadrupole                              "eT;short;ccsd;gs;quadrupole")

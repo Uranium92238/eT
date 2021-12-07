@@ -83,6 +83,11 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj
 !
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian doubles transformation', pl='normal')
+      call timer%turn_on()
+!
       call zero_array(rho, wf%n_t1 + wf%n_t2)
 !
 !     CCS contributions
@@ -121,6 +126,8 @@ contains
       call symmetrize_and_add_to_packed(rho(wf%n_t1+1:), rho_aibj, wf%n_t1)
 !
       call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_transformation_doubles
 !

@@ -88,7 +88,6 @@ module doubles_class
       procedure, private :: jacobian_doubles_c1
       procedure, private :: jacobian_doubles_d1
       procedure, private :: jacobian_doubles_a2
-!
       procedure, public  :: jacobian_doubles_b2 ! public because of intel
 !
       procedure, private :: save_jacobian_a1_intermediates
