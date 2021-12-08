@@ -35,6 +35,8 @@ module mo_eri_tool_c_class
 !!    Calling get_eri_mo_mem returns an estimate for the amount of memory needed
 !!
 !
+   use parameters
+!
    use global_out,   only : output
    use global_in,    only : input
 !
@@ -46,7 +48,7 @@ module mo_eri_tool_c_class
    use timings_class,            only : timings
    use batching_index_class,     only : batching_index
 !
-   use reordering
+   use reordering, only: sort_123_to_132
 !
    implicit none
 !

@@ -76,7 +76,7 @@ contains
 !!
 !!    Note: v_abc contains W^abc in the end
 !!
-      use reordering
+      use reordering, only: sort_123_to_312, sort_123_to_213
 !
       implicit none
 !
@@ -192,7 +192,7 @@ contains
 !!
 !!    Each permutation is obtained by two calls to construct_W_permutation
 !!
-      use reordering
+      use reordering, only: sort_123_to_312, sort_123_to_213
 !
       implicit none
 !

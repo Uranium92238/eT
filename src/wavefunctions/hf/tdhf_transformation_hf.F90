@@ -26,8 +26,6 @@ submodule (hf_class) tdhf_transformation
 !!    And relevant routines for the calculation of these transformations.
 !!
 !
-   use array_utilities
-!
    implicit none
 !
 !
@@ -47,6 +45,7 @@ contains
 !!
 !
       use omp_lib
+      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -320,6 +319,8 @@ contains
 !!
 !!    4. Add one electron terms
 !!
+      use array_utilities, only: transpose_
+!
       implicit none
 !
       class(hf) :: wf
@@ -547,6 +548,8 @@ contains
 !!    Get TDHF start vectors
 !!    Written by Sarai D. Folkestad, May 2021
 !!
+      use array_utilities, only: zero_array, get_n_lowest
+!
       implicit none
 !
       class(hf) :: wf

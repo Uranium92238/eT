@@ -32,7 +32,7 @@ module qed_tool_class
    use global_out,            only: output
    use memory_manager_class,  only: mem
    use ao_tool_class,         only: ao_tool
-   use array_utilities
+   use array_utilities,       only: zero_array, symmetric_sandwich
 !
    implicit none
 !
@@ -554,8 +554,8 @@ contains
 !!
 !!    Coherent state z is given from the bilinear coupling g_b and frequency w,
 !!       z = - <g_b> / w = - Tr[D g_b] / w
-!!             
-      implicit none 
+!!
+      implicit none
 !
       class(qed_tool) :: qed
       real(dp), dimension(qed%n_ao, qed%n_ao) :: ao_density
