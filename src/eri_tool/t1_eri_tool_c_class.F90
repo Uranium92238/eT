@@ -37,6 +37,8 @@ module t1_eri_tool_c_class
 !!    Calling get_eri_t1_mem returns an estimate for the amount of memory needed
 !!
 !
+   use parameters
+!
    use global_out,   only : output
    use global_in,    only : input
 !
@@ -49,7 +51,7 @@ module t1_eri_tool_c_class
    use timings_class,            only : timings
    use batching_index_class,     only : batching_index
 !
-   use reordering
+   use reordering, only: sort_123_to_132, sort_1234_to_3412, add_132_to_123
 !
    implicit none
 !

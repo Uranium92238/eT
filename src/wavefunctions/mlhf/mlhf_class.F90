@@ -24,19 +24,19 @@ module mlhf_class
 !!    and Sarai D. Folkestad, 2019
 !!
 !!    An initial idempotent density D, is
-!!    partitioned into an active and an external part 
+!!    partitioned into an active and an external part
 !!
 !!       D = D^a + D^e
 !!
 !!    The Hartree-Fock energy expression becomes
 !!
 !!       E = e(D^a) + e(D^e) + 2Tr[D^aG(D^e)],
-!!    
-!!    where 
+!!
+!!    where
 !!
 !!       e(D^x) = 2Tr(hD^x) + Tr(D^xG(D^x)).
 !!
-!!    In the MLHF procedure, we only optimize the 
+!!    In the MLHF procedure, we only optimize the
 !!    active density (i.e., only rotate among the active orbitals)
 !!
 !!    The Fock matrix of the active space is
@@ -48,7 +48,7 @@ module mlhf_class
 !!    The SCF procedure is always performed in the MO basis, either
 !!    with the standard Roothan-Hall procedure or with DIIS acceleration.
 !!
-!!    For further information, 
+!!    For further information,
 !!    see S. Sæther, T. Kjærgaard, H. Koch, and I-M. Høyvik, JCTC 13, no. 11 (2017),
 !!    and I-M. Høyvik, Mol. Phys. (2019).
 !!
@@ -207,10 +207,10 @@ contains
 !
       class(mlhf) :: wf
 !
-      class(atomic_center), dimension(:), optional, intent(in) :: centers       
-      integer, intent(in), optional :: charge 
+      class(atomic_center), dimension(:), optional, intent(in) :: centers
+      integer, intent(in), optional :: charge
 !
-      logical, intent(in), optional :: embedding 
+      logical, intent(in), optional :: embedding
 !
       wf%orbital_file = stream_file('hf_orbitals')
 !
@@ -285,7 +285,7 @@ contains
       call dscal(wf%ao%n**2, half, wf%ao_fock, 1)
 !
 !     Add the one-electron part
-! 
+!
       call mem%alloc(h, wf%ao%n, wf%ao%n)
       call wf%get_ao_h(h)
       call daxpy(wf%ao%n**2, one, h, 1, wf%ao_fock, 1)
@@ -377,7 +377,7 @@ contains
       implicit none
 !
       class(mlhf), intent(inout) :: wf
-      logical, intent(in) :: cumulative 
+      logical, intent(in) :: cumulative
 !
       real(dp), dimension(:,:), allocatable :: G
       real(dp), dimension(:,:), allocatable :: h
@@ -409,7 +409,7 @@ contains
 !
          call mem%dealloc(G, wf%ao%n, wf%ao%n)
 !
-         call daxpy(wf%ao%n**2, one, wf%previous_ao_density, 1, wf%ao_density, 1)         
+         call daxpy(wf%ao%n**2, one, wf%previous_ao_density, 1, wf%ao_density, 1)
 !
       else
 !
@@ -447,7 +447,7 @@ contains
 !
       call symmetric_sandwich(wf%G_De_mo, wf%G_De_imo, wf%imo_to_mo, wf%n_mo, wf%n_mo)
 !
-!     Add G_De to Fock 
+!     Add G_De to Fock
 !
       call daxpy(wf%n_mo**2, half, wf%G_De_mo, 1, wf%mo_fock, 1)
       call daxpy(wf%n_mo**2, half, wf%G_De_imo, 1, wf%imo_fock, 1)
@@ -827,7 +827,7 @@ contains
 !!
       implicit none
 !
-      class(mlhf) :: wf               
+      class(mlhf) :: wf
 !
       call input%get_keyword('cholesky threshold', 'multilevel hf', wf%cholesky_threshold)
       call input%get_keyword('initial hf threshold', 'multilevel hf', wf%full_space_hf_threshold)
@@ -865,14 +865,10 @@ contains
 !!    on exit the first n_v vectors of C_paos are active PAOs
 !!    and wf%n_v is updated.
 !!
-!
-      use array_utilities
-!
       implicit none
 !
       class(mlhf)   :: wf
 !
-
       integer, intent(in)   :: n_active_aos
       real(dp), dimension(wf%ao%n, n_active_aos), intent(out)  :: C_pao
 !
@@ -950,7 +946,7 @@ contains
                   wf%frozen_CCT, &
                   wf%ao%n)
 !
-      call mem%dealloc(C_pao_copy, wf%ao%n, wf%ao%n)      
+      call mem%dealloc(C_pao_copy, wf%ao%n, wf%ao%n)
 !
       call dscal(wf%ao%n**2, two, wf%ao_density, 1)
 !
@@ -1118,7 +1114,7 @@ contains
       implicit none
 !
       class(mlhf) :: wf
-! 
+!
       call wf%save_ao_density()
 !
       call wf%destruct_orbital_energies()
@@ -1378,7 +1374,7 @@ contains
 !
       call symmetric_sandwich(wf%G_De_imo, wf%G_De_ao, wf%orbital_coefficients, wf%ao%n, wf%n_mo)
       call dcopy(wf%n_mo**2, wf%G_De_imo, 1, wf%G_De_mo, 1)
-!      
+!
       call identity_array(wf%imo_to_mo, wf%n_mo)
       call wf%update_ao_density()
 !
@@ -1393,7 +1389,7 @@ contains
 !!    Written by Anders Hutcheson and Linda Goletto, 2019
 !!
 !!    Performs an initial optimization of the full space wavefunction
-!!    to a low threshold that can be read from input (otherwise set 
+!!    to a low threshold that can be read from input (otherwise set
 !!    to 1.0d-1), in order to start the multilevelcalculation with
 !!    a better starting density.
 !!
@@ -1452,7 +1448,7 @@ contains
 !!    Written by Sarai D. Folkestad, Oct 2019
 !!
 !!    This routine prepares the frozen Fock contributions
-!!    to coupled cluster. 
+!!    to coupled cluster.
 !!
 !!    Always included
 !!
@@ -1470,7 +1466,7 @@ contains
 !!
 !!    Modified by Linda Goletto, Nov 2019
 !!
-!!    In case of a reduction, the MLHF inactive fock term 
+!!    In case of a reduction, the MLHF inactive fock term
 !!    has to be updated to the new MO basis
 !!
 !
@@ -1529,11 +1525,11 @@ contains
 !!    Diagonalize Fock frozen HF orbitals
 !!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
 !!
-!!    Does a diagonalization of the Fock matrix in the 
+!!    Does a diagonalization of the Fock matrix in the
 !!    MO basis where the frozen HF orbitals have been removed
 !!
 !!    Fock matrix is no longer diagonal, because determining
-!!    the frozen HF orbitals entails mixing of occupied orbitals 
+!!    the frozen HF orbitals entails mixing of occupied orbitals
 !!    and mixing of virtual orbitals, respectively.
 !!
 !
@@ -1549,7 +1545,7 @@ contains
       integer, dimension(2)                  :: block_dim
       integer                                :: n_blocks
 !
-!     We do one Roothan-Hall step to get a diagonal Fock matrix 
+!     We do one Roothan-Hall step to get a diagonal Fock matrix
 !     (this should only entail occupied-occupied and virtual-virtual orbital mixing.)
 !
       call mem%alloc(F_effective, wf%ao%n, wf%ao%n)
@@ -1591,7 +1587,7 @@ contains
                   wf%n_mo,                &
                   one,                    &
                   wf%orbital_coefficients,&
-                  wf%ao%n) 
+                  wf%ao%n)
 !
       call dgemm('N', 'N',                                &
                   wf%ao%n,                                &
@@ -1604,7 +1600,7 @@ contains
                   wf%n_mo,                                &
                   one,                                    &
                   wf%orbital_coefficients(1, wf%n_o + 1), &
-                  wf%ao%n)    
+                  wf%ao%n)
 !
       call mem%dealloc(C_copy, wf%ao%n, wf%n_mo)
 !
@@ -1619,9 +1615,9 @@ contains
 !!    Get number of active hf atoms
 !!    Written by Sarai D. Folkestad and Linda Goletto, Dec 2019
 !!
-!!    Sets the number of active hf atoms in the system 
+!!    Sets the number of active hf atoms in the system
 !!
-      implicit none 
+      implicit none
 !
       class(mlhf), intent(in)  :: wf
 !
@@ -1651,11 +1647,11 @@ contains
       call output%printf('m', 'Occupied orbitals:    Cholesky', fs='(/t6,a)')
 !
       if (wf%cholesky_virtuals) then
-!     
+!
          call output%printf('m', 'Virtual orbitals:     Cholesky', fs='(t6,a)')
 !
       else
-!     
+!
          call output%printf('m', 'Virtual orbitals:     PAOs', fs='(t6,a)')
 !
       endif
@@ -1710,7 +1706,7 @@ contains
 !
 !     Eliminate the core orbitals if frozen core requested
 !
-!     MO coefficients for core orbitals are placed in 
+!     MO coefficients for core orbitals are placed in
 !     wf%orbital_coefficients_fc and removed from wf%orbital_coefficients
 !     the number of frozen core orbitals is wf%n_frozen_core_orbitals
 !
@@ -1718,7 +1714,7 @@ contains
 !
 !     Cholesky decomposition of density for reduced space CC calculation
 !
-!     MO coefficients for frozen hf orbitals now placed in 
+!     MO coefficients for frozen hf orbitals now placed in
 !     wf%orbital_coefficients_frozen_hf and removed from wf%orbital_coefficients
 !     the number of frozen hf orbitals is wf%n_frozen_hf_orbitals
 !
@@ -1780,7 +1776,7 @@ contains
 !!    Prepare for CC
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Prepares frozen fock terms, 
+!!    Prepares frozen fock terms,
 !!    and places energy in hf_energy
 !!
       implicit none
@@ -1791,12 +1787,12 @@ contains
 !
       wf%exists_frozen_fock_terms = .true. ! Always true for MLHF
 !
-!     Change the MOs if frozen core or frozen hf 
+!     Change the MOs if frozen core or frozen hf
 !     is requested
 !
       call wf%prepare_mos()
 !
-!     Prepare frozen Fock terms from frozen core 
+!     Prepare frozen Fock terms from frozen core
 !     and frozen HF
 !
       call wf%prepare_frozen_fock_terms()
@@ -1831,7 +1827,7 @@ contains
 !!
 !!    Set C and e
 !!    Written by Sarai D. Folkestad, 2020
-!! 
+!!
 !!    Sets the orbital coefficients from the orthonormal MO
 !!    update matrix C
 !!
@@ -1848,7 +1844,7 @@ contains
 !
       call mem%alloc(C_old, wf%ao%n, wf%n_mo)
 !
-!     Back to initial MO basis 
+!     Back to initial MO basis
 !
       call dgemm('N', 'T',                   &
                   wf%ao%n,                   &
@@ -1896,10 +1892,10 @@ contains
 !!
 !!    Returns the gradient F_ov in the initial MO basis
 !!
-!!    If the gradient norm is sufficiently small, 
+!!    If the gradient norm is sufficiently small,
 !!    'cumulative_fock' is enabled
 !!
-      use reordering, only: packin 
+      use reordering, only: packin
       use array_utilities, only: symmetric_sandwich
       implicit none
 !
@@ -1908,7 +1904,7 @@ contains
       real(dp), dimension(wf%packed_gradient_dimension), intent(out) :: G
       real(dp), dimension(:,:), allocatable :: F,  X
 !
-      integer :: a, i 
+      integer :: a, i
 !
       call mem%alloc(F, wf%n_o, wf%n_v)
 !
@@ -1920,7 +1916,7 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%alloc(X, wf%n_o, wf%n_mo)
 !
@@ -1960,8 +1956,8 @@ contains
 !
    subroutine initialize_imo_to_mo_mlhf(wf)
 !!
-!!    Initialize IMO to MO 
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
+!!    Initialize IMO to MO
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    and Linda Goletto, Jan 2019
 !!
 !!    Modified by Ida-Marie Hoyvik, Oct 2019
@@ -1980,8 +1976,8 @@ contains
 !
    subroutine destruct_imo_to_mo_mlhf(wf)
 !!
-!!    Destruct IMO to MO 
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
+!!    Destruct IMO to MO
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    and Linda Goletto, Jan 2019
 !!
 !!    Destructs the transformation matrix which transforms between
@@ -2000,8 +1996,8 @@ contains
 !
    subroutine initialize_imo_fock_mlhf(wf)
 !!
-!!    Initialize IMO to MO 
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
+!!    Initialize IMO to MO
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    and Linda Goletto, Jan 2019
 !!
 !!    Modified by Ida-Marie Hoyvik, Oct 2019
@@ -2021,7 +2017,7 @@ contains
    subroutine destruct_imo_fock_mlhf(wf)
 !!
 !!    Destruct IMO fock
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    and Linda Goletto, Jan 2019
 !!
 !!    Destructs the transformation matrix which transforms between
@@ -2040,16 +2036,16 @@ contains
 !
    function get_nuclear_dipole_mlhf(wf) result(d)
 !!
-!!    Get nuclear dipole 
+!!    Get nuclear dipole
 !!    Written by Sarai D. Folkestad, 2021
 !!
       use point_charges_class, only: point_charges
 !
-      implicit none 
+      implicit none
 !
-      class(mlhf), intent(in) :: wf 
+      class(mlhf), intent(in) :: wf
 !
-      real(dp), dimension(3) :: d 
+      real(dp), dimension(3) :: d
 !
       type(point_charges) :: pc
 !
@@ -2061,16 +2057,16 @@ contains
 !
    function get_nuclear_quadrupole_mlhf(wf) result(q)
 !!
-!!    Get nuclear quadrupole 
+!!    Get nuclear quadrupole
 !!    Written by Sarai D. Folkestad, 2021
 !!
       use point_charges_class, only: point_charges
 !
-      implicit none 
+      implicit none
 !
-      class(mlhf), intent(in) :: wf 
+      class(mlhf), intent(in) :: wf
 !
-      real(dp), dimension(6) :: q 
+      real(dp), dimension(6) :: q
 !
       type(point_charges) :: pc
 !
