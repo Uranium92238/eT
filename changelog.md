@@ -28,6 +28,7 @@
 - Removed unused routine in abstract\_file\_class.F90. eT-program/eT!967
 - Cleanup of use statements in CC hierarchy. eT-program/eT!969
 - No module imports all reordering and array utilities anymore. eT-program/eT!970
+- Added unit tests for angular momentum class. eT-program/eT!972
 
 ### Optimization
 - One-electron and effective contributions to the CC-Fock matrix are now calculated once instead of multiple times per Fock construction. eT-program/eT!925

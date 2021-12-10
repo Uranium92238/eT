@@ -26,7 +26,7 @@ module shell_class
 !
    use kinds
 !
-   use range_class
+   use range_class, only: range_
    use global_out, only: output
    use memory_manager_class, only: mem
    use abstract_angular_momentum_class, only: abstract_angular_momentum
@@ -111,7 +111,7 @@ contains
 !!    length:  the number of AOs in the shell
 !!    number_: the shell number in the full list of shells (according to Libint)
 !!
-      use angular_momentum_factory_class
+      use angular_momentum_factory_class, only: angular_momentum_factory
 !
       implicit none
 !

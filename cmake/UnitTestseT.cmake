@@ -16,7 +16,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
-#  Based on the cmake/TestseT.cmake file of the public 
+#  Based on the cmake/TestseT.cmake file of the public
 #   Dalton program (LGPL v2.1)
 #
 #  Copied and modified for eT by Rolf H. Myhre, Feb 2019
@@ -39,3 +39,6 @@ macro(add_eT_unittest _name _labels)
 endmacro()
 
 add_eT_unittest(warning_suppressor "dummy; warning-suppression")
+#
+add_eT_unittest(angular_momentum "angular-momentum")
+add_eT_unittest(cart_angular_momentum_7 "angular-momentum")

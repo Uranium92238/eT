@@ -1,0 +1,44 @@
+module unit_cart_angular_momentum_7
+
+   use parameters
+   use abstract_angular_momentum_class, only: abstract_angular_momentum
+   use angular_momentum_factory_class, only: angular_momentum_factory
+
+   use output_file_class, only: output_file
+   use global_out, only: output
+
+   use funit
+
+   implicit none
+
+contains
+!
+!
+! Intentionally failing test with l > 6
+!
+!
+   @test(ifdef=INCLUDE_INTENTIONALLY_BROKEN)
+   subroutine test_cartesian_l_greater_6()
+
+      implicit none
+
+      type(angular_momentum_factory) :: factory
+      class(abstract_angular_momentum), allocatable :: angular_momentum
+
+      logical :: cartesian = .true.
+      integer :: l = 7
+      integer :: length = 36
+
+      output = output_file('unit_testing.out')
+      call output%open_()
+
+      factory = angular_momentum_factory(cartesian)
+      call factory%create(angular_momentum, length)
+
+      @assertEqual(l, -1, message='intentional broken test')
+      call output%close_()
+
+   end subroutine test_cartesian_l_greater_6
+
+
+end module unit_cart_angular_momentum_7

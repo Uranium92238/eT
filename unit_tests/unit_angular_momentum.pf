@@ -1,0 +1,457 @@
+module unit_angular_momentum
+
+   use parameters
+   use abstract_angular_momentum_class, only: abstract_angular_momentum
+   use angular_momentum_factory_class, only: angular_momentum_factory
+
+   use output_file_class, only: output_file
+   use global_out, only: output
+
+   use funit
+
+   implicit none
+
+contains
+!
+   subroutine test_angular_momentum(l, l_label,  cartesian, length, offsets, &
+                                    components, normalization)
+
+      implicit none
+
+      integer, intent(in) :: l
+      character(len=1), intent(in) :: l_label
+
+      logical, intent(in) :: cartesian
+      integer, intent(in) :: length
+
+      integer, dimension(length), intent(in) :: offsets
+      real(dp), dimension(length), intent(in) :: normalization
+      character(len=*), dimension(length), intent(in) :: components
+
+      type(angular_momentum_factory) :: factory
+      class(abstract_angular_momentum), allocatable :: angular_momentum
+
+      integer :: p
+      character(len=10) :: label
+
+      factory = angular_momentum_factory(cartesian)
+      call factory%create(angular_momentum, length)
+
+      @assertEqual(l+1, angular_momentum%get_l_integer())
+      @assertEqual(l_label, angular_momentum%get_l_string())
+
+      do p = 1, length
+         @assertEqual(normalization(p), angular_momentum%get_normalization_factor(p), tolerance=1.0d-10)
+         @assertEqual(offsets(p), angular_momentum%get_molden_offset(p))
+
+         write(label, '(3a)') l_label, ' ', components(p)
+         @assertEqual(trim(label), angular_momentum%get_label(p))
+      end do
+
+   end subroutine test_angular_momentum
+!
+!
+!  Cartesian angular momentum
+!  --------------------------
+!
+   @test
+   subroutine test_cartesian_s()
+
+      implicit none
+
+      integer :: l = 0
+      character(len=1) :: l_label = 's'
+      logical :: cartesian = .true.
+
+      integer ::        length =  1
+      integer,          dimension(1) :: offsets
+      character(len=1), dimension(1) :: components
+      real(dp),         dimension(1) :: normalization
+
+      offsets = 1
+      components = ''
+      normalization = one
+
+      call test_angular_momentum(l, l_label, cartesian, length, offsets, &
+                                 components, normalization)
+
+   end subroutine test_cartesian_s
+
+
+   @test
+   subroutine test_cartesian_p()
+
+      implicit none
+
+      logical :: cartesian = .true.
+      integer :: l = 1
+
+      integer ::        length =  3
+      integer,          dimension(3) :: offsets
+      character(len=1), dimension(3) :: components
+      real(dp),         dimension(3) :: normalization
+
+      character(len=1) :: l_label = 'p'
+
+      integer :: p
+
+      offsets = [(p, p=1, length)]
+      components = ['x', 'y', 'z']
+      normalization = one
+
+      call test_angular_momentum(l, l_label, cartesian, length, offsets, &
+                                 components, normalization)
+
+   end subroutine test_cartesian_p
+
+
+   @test
+   subroutine test_cartesian_d()
+
+      implicit none
+
+      logical :: cartesian = .true.
+      integer :: l = 2
+
+      integer ::        length =  6
+      integer,          dimension(6) :: offsets
+      character(len=2), dimension(6) :: components
+      real(dp),         dimension(6) :: normalization
+
+      character(len=1) :: l_label = 'd'
+
+      offsets = [1,4,6,2,3,5]
+      components = ['xx','xy','xz','yy','yz','zz']
+      normalization = [one, inv_sqrt_3, inv_sqrt_3, one, inv_sqrt_3, one]
+
+      call test_angular_momentum(l, l_label, cartesian, length, offsets, &
+                                 components, normalization)
+
+   end subroutine test_cartesian_d
+
+
+   @test
+   subroutine test_cartesian_f()
+
+      implicit none
+
+      logical :: cartesian = .true.
+      integer :: l = 3
+
+      integer ::        length =  10
+      integer,          dimension(10) :: offsets
+      character(len=3), dimension(10) :: components
+      real(dp),         dimension(10) :: normalization
+
+      character(len=1) :: l_label = 'f'
+
+      offsets = [1,7,10,4,2,3,6,9,8,5]
+      components = ['xxx','xxy','xxz','xyy','xyz','xzz','yyy','yyz','yzz','zzz']
+      normalization = [one, inv_sqrt_5, inv_sqrt_5, inv_sqrt_5, &
+                       inv_sqrt_5*inv_sqrt_3, inv_sqrt_5, &
+                       one, inv_sqrt_5, inv_sqrt_5, one]
+
+      call test_angular_momentum(l, l_label, cartesian, length, offsets, &
+                                 components, normalization)
+
+   end subroutine test_cartesian_f
+
+
+   @test
+   subroutine test_cartesian_g()
+
+      implicit none
+
+      logical :: cartesian = .true.
+      integer :: l = 4
+
+      integer ::        length =  15
+      integer,          dimension(15) :: offsets
+      character(len=4), dimension(15) :: components
+      real(dp),         dimension(15) :: normalization
+
+      character(len=1) :: l_label = 'g'
+
+      offsets = [1,11,15,2,3,7,12,10,14,4,6,13,5,8,9]
+      components = ['xxxx','xxxy','xxxz','xxyy','xxyz','xxzz','xyyy','xyyz', &
+                    'xyzz','xzzz','yyyy','yyyz','yyzz','yzzz','zzzz']
+      normalization = [one,  inv_sqrt_7, inv_sqrt_7, &
+                      inv_sqrt_7*inv_sqrt_5*sqrt_3, inv_sqrt_7*inv_sqrt_5, &
+                      inv_sqrt_7*inv_sqrt_5*sqrt_3, inv_sqrt_7, &
+                      inv_sqrt_7*inv_sqrt_5, inv_sqrt_7*inv_sqrt_5, &
+                      inv_sqrt_7, one, inv_sqrt_7, &
+                      inv_sqrt_7*inv_sqrt_5*sqrt_3, inv_sqrt_7, one]
+
+      call test_angular_momentum(l, l_label, cartesian, length, offsets, &
+                                 components, normalization)
+
+   end subroutine test_cartesian_g
+
+
+   @test
+   subroutine test_cartesian_h()
+
+      implicit none
+
+      logical :: cartesian = .true.
+      integer :: l = 5
+
+      integer ::        length =  21
+      integer,          dimension(21) :: offsets
+      character(len=5), dimension(21) :: components
+      real(dp),         dimension(21) :: normalization
+
+      character(len=1) :: l_label = 'h'
+      integer :: p
+
+      offsets = [(p, p=1, length)]
+      components = ['xxxxx','xxxxy','xxxxz','xxxyy','xxxyz','xxxzz','xxyyy', &
+                    'xxyyz','xxyzz','xxzzz','xyyyy','xyyyz','xyyzz','xyzzz', &
+                    'xzzzz','yyyyy','yyyyz','yyyzz','yyzzz','yzzzz','zzzzz']
+      normalization = [one, inv_sqrt_9, inv_sqrt_9, inv_sqrt_3*inv_sqrt_7, &
+                       third*inv_sqrt_7, inv_sqrt_7, inv_sqrt_3*inv_sqrt_7, &
+                       inv_sqrt_3*inv_sqrt_5*inv_sqrt_7, inv_sqrt_3*inv_sqrt_5*inv_sqrt_7, &
+                       inv_sqrt_3*inv_sqrt_7, inv_sqrt_9, third*inv_sqrt_7, &
+                       inv_sqrt_3*inv_sqrt_5*inv_sqrt_7, third*inv_sqrt_7, &
+                       inv_sqrt_9, one, inv_sqrt_9, inv_sqrt_3*inv_sqrt_7, &
+                       inv_sqrt_3*inv_sqrt_7, inv_sqrt_9, one]
+
+      call test_angular_momentum(l, l_label, cartesian, length, offsets, &
+                                 components, normalization)
+
+   end subroutine test_cartesian_h
+
+
+   @test
+   subroutine test_cartesian_i()
+
+      implicit none
+
+      logical :: cartesian = .true.
+      integer :: l = 6
+
+      integer ::        length =  28
+      integer,          dimension(28) :: offsets
+      character(len=6), dimension(28) :: components
+      real(dp),         dimension(28) :: normalization
+
+      character(len=1) :: l_label = 'i'
+      integer :: p
+
+      offsets = [(p, p=1, length)]
+      components = ['xxxxxx','xxxxxy','xxxxxz','xxxxyy','xxxxyz','xxxxzz','xxxyyy', &
+                    'xxxyyz','xxxyzz','xxxzzz','xxyyyy','xxyyyz','xxyyzz','xxyzzz', &
+                    'xxzzzz','xyyyyy','xyyyyz','xyyyzz','xyyzzz','xyzzzz','xzzzzz', &
+                    'yyyyyy','yyyyyz','yyyyzz','yyyzzz','yyzzzz','yzzzzz','zzzzzz']
+      normalization = [one, inv_sqrt_11, inv_sqrt_11, inv_sqrt_3*inv_sqrt_11, &
+                       third*inv_sqrt_11, inv_sqrt_3*inv_sqrt_11, &
+                       inv_sqrt_3*inv_sqrt_7*inv_sqrt_11*sqrt_5, &
+                       inv_sqrt_3*inv_sqrt_7*inv_sqrt_11, &
+                       inv_sqrt_3*inv_sqrt_7*inv_sqrt_11, &
+                       inv_sqrt_3*inv_sqrt_7*inv_sqrt_11*sqrt_5, &
+                       inv_sqrt_3*inv_sqrt_11, inv_sqrt_3*inv_sqrt_7*inv_sqrt_11, &
+                       inv_sqrt_5*inv_sqrt_7*inv_sqrt_11, inv_sqrt_3*inv_sqrt_7*inv_sqrt_11, &
+                       inv_sqrt_3*inv_sqrt_11, inv_sqrt_11, third*inv_sqrt_11, &
+                       inv_sqrt_3*inv_sqrt_7*inv_sqrt_11, inv_sqrt_3*inv_sqrt_7*inv_sqrt_11, &
+                       third*inv_sqrt_11, inv_sqrt_11, one, &
+                       inv_sqrt_11, inv_sqrt_3*inv_sqrt_11, &
+                       inv_sqrt_3*inv_sqrt_7*inv_sqrt_11*sqrt_5, &
+                       inv_sqrt_3*inv_sqrt_11, inv_sqrt_11, one]
+
+      call test_angular_momentum(l, l_label, cartesian, length, offsets, &
+                                 components, normalization)
+
+   end subroutine test_cartesian_i
+!
+!
+!  Spherical angular momentum
+!  --------------------------
+!
+   @test
+   subroutine test_spherical_s()
+
+      implicit none
+
+      logical :: cartesian = .false.
+      integer :: l = 0
+
+      integer ::        length =  1
+      integer,          dimension(1) :: offsets
+      character(len=1), dimension(1) :: components
+      real(dp),         dimension(1) :: normalization
+
+      character(len=1) :: l_label = 's'
+
+      offsets = 1
+      components = ''
+      normalization = one
+
+      call test_angular_momentum(l, l_label, cartesian, length, offsets, &
+                                 components, normalization)
+
+   end subroutine test_spherical_s
+
+
+   @test
+   subroutine test_spherical_d()
+
+      implicit none
+
+      integer :: p
+
+      logical :: cartesian = .false.
+      integer :: l = 2
+
+      integer ::        length =  5
+      integer,          dimension(5) :: offsets
+      character(len=2), dimension(5) :: components
+      real(dp),         dimension(5) :: normalization
+
+      character(len=1) :: l_label = 'd'
+
+      offsets = [3,4,2,5,1]
+      components = ['-2','-1',' 0',' 1',' 2']
+      normalization = [(one, p=1, length)]
+
+      call test_angular_momentum(l, l_label, cartesian, length, offsets, &
+                                 components, normalization)
+
+   end subroutine test_spherical_d
+
+
+   @test
+   subroutine test_spherical_f()
+
+      implicit none
+
+      integer :: p
+
+      logical :: cartesian = .false.
+      integer :: l = 3
+
+      integer ::        length =  7
+      integer,          dimension(7) :: offsets
+      character(len=2), dimension(7) :: components
+      real(dp),         dimension(7) :: normalization
+
+      character(len=1) :: l_label = 'f'
+
+      offsets = [4,5,3,6,2,7,1]
+      components = ['-3','-2','-1',' 0',' 1',' 2',' 3']
+      normalization = [(one, p=1, length)]
+
+      call test_angular_momentum(l, l_label, cartesian, length, offsets, &
+                                 components, normalization)
+
+   end subroutine test_spherical_f
+
+
+   @test
+   subroutine test_spherical_g()
+
+      implicit none
+
+      integer :: p
+
+      logical :: cartesian = .false.
+      integer :: l = 4
+
+      integer ::        length =  9
+      integer,          dimension(9) :: offsets
+      character(len=2), dimension(9) :: components
+      real(dp),         dimension(9) :: normalization
+
+      character(len=1) :: l_label = 'g'
+
+      offsets = [5,6,4,7,3,8,2,9,1]
+      components = ['-4','-3','-2','-1',' 0',' 1',' 2',' 3',' 4']
+      normalization = [(one, p=1, length)]
+
+      call test_angular_momentum(l, l_label, cartesian, length, offsets, &
+                                 components, normalization)
+
+   end subroutine test_spherical_g
+
+
+   @test
+   subroutine test_spherical_h()
+
+      implicit none
+
+      integer :: p
+
+      logical :: cartesian = .false.
+      integer :: l = 5
+
+      integer ::        length =  11
+      integer,          dimension(11) :: offsets
+      character(len=2), dimension(11) :: components
+      real(dp),         dimension(11) :: normalization
+
+      character(len=1)  :: l_label = 'h'
+
+      offsets = [(p, p=1, length)]
+      components = ['-5','-4','-3','-2','-1',' 0',' 1',' 2',' 3',' 4', ' 5']
+      normalization = [(one, p=1, length)]
+
+      call test_angular_momentum(l, l_label, cartesian, length, offsets, &
+                                 components, normalization)
+
+   end subroutine test_spherical_h
+
+
+   @test
+   subroutine test_spherical_i()
+
+      implicit none
+
+      integer :: p
+
+      logical :: cartesian = .false.
+      integer :: l = 6
+
+      integer ::        length =  13
+      integer,          dimension(13) :: offsets
+      character(len=2), dimension(13) :: components
+      real(dp),         dimension(13) :: normalization
+
+      character(len=1) :: l_label = 'i'
+
+      offsets = [(p, p=1, length)]
+      components = ['-6','-5','-4','-3','-2','-1',' 0',' 1',' 2',' 3',' 4', ' 5', ' 6']
+      normalization = [(one, p=1, length)]
+
+      call test_angular_momentum(l, l_label, cartesian, length, offsets, &
+                                 components, normalization)
+
+   end subroutine test_spherical_i
+!
+!
+! Intentionally failing test with l > 6
+!
+!
+   @test(ifdef=INCLUDE_INTENTIONALLY_BROKEN)
+   subroutine test_spherical_l_greater_6()
+
+      implicit none
+
+      type(angular_momentum_factory) :: factory
+      class(abstract_angular_momentum), allocatable :: angular_momentum
+
+      logical :: cartesian = .false.
+      integer :: l = 7
+      integer :: length =  15
+
+      output = output_file('unit_testing.out')
+      call output%open_()
+
+      factory = angular_momentum_factory(cartesian)
+      call factory%create(angular_momentum, length)
+
+      @assertEqual(l, -1, message='intentional broken test')
+      call output%close_()
+
+   end subroutine test_spherical_l_greater_6
+
+
+end module unit_angular_momentum
