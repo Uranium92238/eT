@@ -163,6 +163,9 @@ module input_file_class
       procedure, private :: keyword_is_allowed
       procedure, private :: check_keyword_and_section
 !
+      procedure, public :: get_n_state_guesses
+      procedure, public :: get_state_guesses
+!
    end type input_file
 !
    interface input_file
@@ -515,7 +518,8 @@ contains
                               'rel micro threshold',      &
                               'chain length',             &
                               'lanczos normalization',    &
-                              'remove core']
+                              'remove core',              &
+                              'state guesses']
 !
 !
       solver_cc_gs%name_    = 'solver cc gs'
@@ -2730,6 +2734,55 @@ contains
    end subroutine check_keyword_and_section
 !
 !
+   function get_n_sets_and_ranges(string) result(n_elements)
+!!
+!!    Get n sets and ranges in string
+!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    Gets the number of sets/ranges in a string,
+!!    To be used for reading of input.
+!!
+!!    Ranges should always be given as [a,b].
+!!
+!!    Lists/ranges should always be given as {a, b, c, d},
+!!    that is, in set notation.
+!!
+      implicit none
+!
+      character(len=200), intent(inout) :: string
+!
+      integer :: n_elements
+!
+      integer :: i
+      integer :: n_set_start, n_set_end
+      integer :: n_range_start, n_range_end
+!
+      n_set_start = 0
+      n_set_end   = 0
+!
+      n_range_start = 0
+      n_range_end   = 0
+!
+      string = adjustl(string)
+!
+      do i = 1, len_trim(string)
+!
+         if (string(i:i) == '{') n_set_start = n_set_start + 1
+         if (string(i:i) == '}') n_set_end = n_set_end + 1
+!
+         if (string(i:i) == '[') n_range_start = n_range_start + 1
+         if (string(i:i) == ']') n_range_end = n_range_end + 1
+!
+      enddo
+!
+      if (n_set_start /= n_set_end) call output%error_msg('found open set in input file')
+      if (n_range_start /= n_range_end) call output%error_msg('found open range in input file')
+!
+      n_elements = n_set_start + n_range_start
+!
+   end function get_n_sets_and_ranges
+!
+!
    function get_n_elements_in_string(string) result(n_elements)
 !!
 !!    Get n elements in string
@@ -2976,6 +3029,105 @@ contains
       endif
 !
    end subroutine get_reals_in_string
+!
+!
+   function get_n_state_guesses(this) result(n_guesses)
+!!
+!!
+      implicit none
+!
+      class(input_file) :: this
+!
+      integer :: n_guesses
+!
+      character(len=200) :: state_guesses
+!
+      call this%get_keyword('state guesses', 'solver cc es', state_guesses)
+!
+      n_guesses = get_n_sets_and_ranges(state_guesses)
+!
+   end function get_n_state_guesses
+!
+!
+   subroutine get_state_guesses(this, occupied, virtual, n_states)
+!!
+!!    Get state guesses
+!!    Written by Sarai D. Folkestad, Dec 2021
+!!
+!!    state guesses: {i=1, a=2}, {i=2, a=2}, {i=1, a=1}
+!!
+!!    Provided as a (comma separated) list of sets.
+!!
+!!    A set comprises of two elements which are
+!!    the occupied and virtual indices of the start vector
+!!
+!!    'i =' provides occupied index
+!!    'a =' provides virtual index
+!!
+!
+      implicit none
+!
+      class(input_file) :: this
+!
+      integer, intent(in) :: n_states
+      integer, dimension(n_states), intent(out) :: virtual, occupied
+!
+      character(len=200) :: state_guesses
+      character(len=200), dimension(:), allocatable :: split_string
+!
+      integer :: n_elements, cursor_a, cursor_i, i, n_occupied, n_virtual
+!
+      call this%get_keyword('state guesses', 'solver cc es', state_guesses)
+      state_guesses = adjustl(state_guesses)
+!
+      n_occupied = n_instances_of_character(state_guesses, 'i')
+      n_virtual = n_instances_of_character(state_guesses, 'a')
+!
+      if (n_virtual /= n_occupied) &
+         call output%error_msg('in keyword (state guesses)')
+!
+      if (n_virtual /= n_states) &
+         call output%error_msg('in keyword (state guesses)')
+!
+!     {i=1, a=2}, {i=2, a=2}, {i=1, a=1} -> i=1, a=2} i=2, a=2} i=1, a=1}
+      call remove_delimiter_from_string(state_guesses, '{')
+!
+      n_elements = n_instances_of_character(state_guesses, '}')
+!
+      if (n_elements /= n_states) &
+         call output%error_msg('in keyword (state guesses)')
+!
+      allocate(split_string(n_elements))
+!
+!     i=1, a=2} i=2, a=2} i=1, a=1} -> string array ("i=1, a=2", "i=2, a=2", "i=1, a=1")
+      call split_at_delimiter(state_guesses, n_elements, split_string, '}')
+!
+      do i = 1, n_elements
+!
+         call remove_delimiter_from_string(split_string(i), '=')
+         call remove_delimiter_from_string(split_string(i), ',')
+!
+         cursor_i = set_cursor_to_substring(split_string(i), 'i')
+         cursor_a = set_cursor_to_substring(split_string(i), 'a')
+!
+         if (cursor_i < cursor_a) then
+!
+            read(split_string(i)(cursor_i + 1 : cursor_a -1), *) occupied(i)
+            read(split_string(i)(cursor_a + 1:), *) virtual(i)
+!
+         else
+!
+            read(split_string(i)(cursor_a + 1 : cursor_i -1), *) virtual(i)
+            read(split_string(i)(cursor_i + 1:), *) occupied(i)
+!
+         endif
+!
+      enddo
+!
+      deallocate(split_string)
+!
+   end subroutine get_state_guesses
+!
 !
 !
 end module input_file_class

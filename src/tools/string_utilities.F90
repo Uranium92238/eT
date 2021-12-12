@@ -375,4 +375,78 @@ contains
    end function is_substring_in_string
 !
 !
+   subroutine split_at_delimiter(string, n, array_of_strings, delimiter)
+!!
+!!    Split at delimiter
+!!    Written by Sarai D. Folkestad, 2021
+!!
+      implicit none
+!
+      character(len=*), intent(in) :: string
+!
+      integer, intent(in) :: n
+!
+      character(len=200), dimension(n), intent(out) :: array_of_strings
+!
+      character, intent(in) :: delimiter
+!
+      integer :: string_length, cursor_2, cursor_1, counter
+!
+      character(len=1000) :: left_aligned_string
+!
+      string_length = len_trim(adjustl(string))
+      if (string_length > 1000) stop "String too long for split_at_delimiter routine"
+!
+      left_aligned_string = adjustl(string)
+!
+      cursor_2 = 1
+      cursor_1 = 1
+!
+      counter = 0
+!
+      do while (cursor_2 .le. string_length)
+!
+         if (trim(left_aligned_string(cursor_1:)) == '') return
+!
+         if (left_aligned_string(cursor_2:cursor_2) == delimiter) then
+!
+            if (cursor_1 == cursor_2) cycle
+!
+            counter =  counter + 1
+            if (counter > n) stop "too many substrings for split_at_delimiter routine"
+!
+            array_of_strings(counter) = trim(adjustl(left_aligned_string(cursor_1:cursor_2 - 1)))
+            cursor_1 = cursor_2 + 1
+!
+         endif
+!
+         cursor_2 = cursor_2 + 1
+!
+      enddo
+!
+   end subroutine split_at_delimiter
+!
+!
+   subroutine remove_delimiter_from_string(string, delimiter)
+!!
+!!    Remove delimiter from string
+!!    Written by Sarai D. Folkestad, Dec 2021
+!!
+      implicit none
+!
+      character(len=*), intent(inout) :: string
+!
+      character, intent(in) :: delimiter
+!
+      integer :: i
+!
+      do i = 1, len(string)
+!
+         if (string(i:i) == delimiter) string(i:) = string(i+1:)
+!
+      enddo
+!
+   end subroutine remove_delimiter_from_string
+!
+!
 end module string_utilities
