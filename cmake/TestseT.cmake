@@ -151,6 +151,7 @@ add_eT_runtest(cc2_frozen_core                              "eT;short;cc2;gs;es;
 add_eT_runtest(cc2_right_es_energies                        "eT;short;cc2;es;right")
 add_eT_runtest(cc2_right_es_energies_diis                   "eT;short;cc2;es;right;diis")
 add_eT_runtest(cc2_right_cvs_es_energies                    "eT;short;cc2;es;right;cvs")
+add_eT_runtest(cc2_right_cvs_es_energies_manual_guess       "eT;short;cc2;es;right;cvs")
 add_eT_runtest(cc2_right_cvs_es_energies_diis               "eT;short;cc2;es;right;cvs;diis")
 add_eT_runtest(cc2_right_ip_energies                        "eT;short;cc2;es;right")
 add_eT_runtest(cc2_right_ip_diis                            "eT;short;cc2;es;right;diis")
