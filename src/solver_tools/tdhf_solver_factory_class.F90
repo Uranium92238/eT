@@ -206,27 +206,27 @@ contains
       this%restart              = .false.
 !
 !
-      call input%get_keyword('states', 'tdhf', this%n_states)
+      call input%get_keyword('states', 'solver tdhf', this%n_states)
       if (this%n_states == 0) call output%error_msg('can not solve for 0 TDHF eigenstates')
 !
-      call input%get_keyword('max reduced dimension', 'tdhf', this%max_dim_red)
-      call input%get_keyword('max iterations', 'tdhf', this%max_iterations)
+      call input%get_keyword('max reduced dimension', 'solver tdhf', this%max_dim_red)
+      call input%get_keyword('max iterations', 'solver tdhf', this%max_iterations)
 
-      call input%get_keyword('residual threshold', 'tdhf', this%residual_threshold)
+      call input%get_keyword('residual threshold', 'solver tdhf', this%residual_threshold)
 
-      if (input%is_keyword_present('energy threshold', 'tdhf')) then
+      if (input%is_keyword_present('energy threshold', 'solver tdhf')) then
 !
-         call input%get_keyword('energy threshold', 'tdhf', this%energy_threshold)
+         call input%get_keyword('energy threshold', 'solver tdhf', this%energy_threshold)
          this%energy_convergence = .true.
 !
       endif
 !
-      call input%get_keyword('storage', 'tdhf', storage)
+      call input%get_keyword('storage', 'solver tdhf', storage)
       if (trim(storage) == 'file') this%records_in_memory = .false.
 !
-      this%tamm_dancoff = input%is_keyword_present('tamm-dancoff', 'tdhf')
+      this%tamm_dancoff = input%is_keyword_present('tamm-dancoff', 'solver tdhf')
 !
-      this%restart = input%is_keyword_present('restart', 'tdhf') &
+      this%restart = input%is_keyword_present('restart', 'solver tdhf') &
                     .or. input%is_keyword_present('restart', 'do')
 !
    end subroutine read_settings

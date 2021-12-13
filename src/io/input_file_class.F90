@@ -243,14 +243,14 @@ contains
                         'rohf']
 !
       this%cc_wfs = [character(len=30) :: &
-                        'ccs',                &
-                        'mp2',                &
-                        'cc2',                &
-                        'lowmem-cc2',         &
-                        'ccsd',               &
-                        'cc3',                &
-                        'ccsd(t)',            &
-                        'mlcc2',              &
+                        'ccs',            &
+                        'mp2',            &
+                        'cc2',            &
+                        'lowmem-cc2',     &
+                        'ccsd',           &
+                        'cc3',            &
+                        'ccsd(t)',        &
+                        'mlcc2',          &
                         'mlccsd']
 !
       allocate(method%keywords(size(this%rf_wfs) &
@@ -315,13 +315,13 @@ contains
       calculations%name_    = 'do'
       calculations%required = .true.
       calculations%keywords = [character(len=30) ::   &
+                              'cholesky eri',         &
                               'ground state',         &
                               'ground state geoopt',  &
                               'excited state',        &
                               'response',             &
                               'mean value',           &
                               'time dependent state', &
-                              'cholesky eri',         &
                               'restart',              &
                               'time dependent hf']
 !
@@ -422,7 +422,7 @@ contains
                      'tesserae area',      &
                      'solver type']
 !
-! 
+!
       qed%name_    = 'qed'
       qed%required = .false.
       qed%keywords = [character(len=30) :: &
@@ -510,7 +510,6 @@ contains
                               'storage',                  &
                               'singlet states',           &
                               'diis dimension',           &
-                              'max micro iterations',     &
                               'max reduced dimension',    &
                               'davidson preconvergence',  &
                               'preconvergence threshold', &
@@ -599,11 +598,25 @@ contains
 !
       system%name_    = 'system'
       system%required = .true.
-      system%keywords = [character(len=30) ::'name', &
-                        'cartesian gaussians',       &
-                        'pure gaussians',            &
-                        'charge',                    &
+      system%keywords = [character(len=30) ::   &
+                        'name',                 &
+                        'cartesian gaussians',  &
+                        'pure gaussians',       &
+                        'charge',               &
                         'multiplicity']
+!
+!
+      tdhf%name_    = 'solver tdhf'
+      tdhf%required = .false.
+      tdhf%keywords = [character(len=30) ::    &
+                       'energy threshold',     &
+                       'max iterations',       &
+                       'max reduced dimension',&
+                       'residual threshold',   &
+                       'restart',              &
+                       'storage',              &
+                       'states',               &
+                       'tamm-dancoff']
 !
 !
       visualization%name_    = 'visualization'
@@ -625,19 +638,6 @@ contains
                                'plot transition densities', &
                                'states to plot']
 !
-!
-      tdhf%name_    = 'tdhf'
-      tdhf%required = .false.
-      tdhf%keywords = [character(len=30) ::    &
-                       'energy threshold',     &
-                       'max iterations',       &
-                       'max reduced dimension',&
-                       'residual threshold',   &
-                       'restart',              &
-                       'storage',              &
-                       'states',               &
-                       'tamm-dancoff']
-!
 !     Gather all sections into the file's section array
 !
       this%sections = [active_atoms,              &
@@ -651,26 +651,26 @@ contains
                        global_print,              &
                        hf_mean_value,             &
                        integrals,                 &
+                       memory,                    &
+                       method,                    &
                        mlcc,                      &
                        mlhf,                      &
                        mm,                        &
-                       memory,                    &
-                       method,                    &
                        pcm,                       &
                        qed,                       &
-                       solver_cholesky,           &
-                       solver_cc_gs,              &
                        solver_cc_es,              &
+                       solver_cc_gs,              &
                        solver_cc_multipliers,     &
-                       solver_cc_response,        &
                        solver_cc_propagation,     &
+                       solver_cc_response,        &
+                       solver_cholesky,           &
                        solver_fft_dipole_moment,  &
                        solver_fft_electric_field, &
                        solver_scf,                &
                        solver_scf_geoopt,         &
                        system,                    &
-                       visualization,             &
-                       tdhf]
+                       tdhf,                      &
+                       visualization]
 !
       this%is_open = .false.
       this%unit_ = -1

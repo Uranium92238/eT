@@ -8,30 +8,30 @@
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
    This is eT 1.5.0 Furia (development)
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-12-13 17:02:21 UTC +01:00
+  Git branch:         input-cleanup
+  Git hash:           4c2cc6bf523455801cdf275544d28013b6da142b
+  Fortran compiler:   GNU 9.3.0
+  C compiler:         GNU 9.3.0
+  C++ compiler:       GNU 9.3.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:31:05 UTC +02:00
+  Calculation started: 2021-12-13 17:04:02 UTC +01:00
 
 
   :: Input file
@@ -62,10 +62,10 @@
         hf
      end method
 
-     tdhf
+     solver tdhf
        states: 2
        residual threshold: 1.0d-10
-     end tdhf
+     end solver tdhf
 
 
   Running on 2 OMP threads
@@ -130,16 +130,6 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-09
-     Energy threshold:              0.1000E-09
-
   - Setting initial AO density to sad
 
      Energy of initial guess:               -78.492359869065
@@ -152,6 +142,16 @@
      ERI cutoff:                     0.1000E-15
      One-electron integral  cutoff:  0.1000E-20
      Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
 
   - DIIS tool settings:
 
@@ -169,14 +169,14 @@
      5           -78.843645123311     0.3974E-03     0.3615E-04
      6           -78.843646182586     0.5223E-04     0.1059E-05
      7           -78.843646204409     0.6084E-05     0.2182E-07
-     8           -78.843646205153     0.2132E-05     0.7441E-09
-     9           -78.843646205256     0.3153E-06     0.1024E-09
-    10           -78.843646205256     0.2623E-07     0.5258E-12
-    11           -78.843646205256     0.5559E-08     0.0000E+00
-    12           -78.843646205256     0.1724E-08     0.2842E-13
-    13           -78.843646205256     0.7589E-09     0.8527E-13
-    14           -78.843646205256     0.1286E-09     0.1421E-13
-    15           -78.843646205256     0.2324E-10     0.4263E-13
+     8           -78.843646205153     0.2132E-05     0.7440E-09
+     9           -78.843646205256     0.3153E-06     0.1025E-09
+    10           -78.843646205256     0.2623E-07     0.3553E-12
+    11           -78.843646205256     0.5559E-08     0.1137E-12
+    12           -78.843646205256     0.1724E-08     0.7105E-13
+    13           -78.843646205256     0.7589E-09     0.2842E-13
+    14           -78.843646205256     0.1286E-09     0.2842E-13
+    15           -78.843646205256     0.2323E-10     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -308,7 +308,7 @@
 
    Root  omega (Re)        omega (Im)         |residual|   Delta omega (Re)
   ------------------------------------------------------------------------
-     1   0.078189601085    0.000000000000     0.1393E-07   0.4816E-10
+     1   0.078189601085    0.000000000000     0.1393E-07   0.4825E-10
      2   0.142327765142    0.000000000000     0.3061E-06   0.1661E-08
   ------------------------------------------------------------------------
 
@@ -317,7 +317,7 @@
 
    Root  omega (Re)        omega (Im)         |residual|   Delta omega (Re)
   ------------------------------------------------------------------------
-     1   0.078189601094    0.000000000000     0.1927E-08   0.9233E-11
+     1   0.078189601094    0.000000000000     0.1927E-08   0.9292E-11
      2   0.142327765317    0.000000000000     0.1722E-07   0.1742E-09
   ------------------------------------------------------------------------
 
@@ -326,8 +326,8 @@
 
    Root  omega (Re)        omega (Im)         |residual|   Delta omega (Re)
   ------------------------------------------------------------------------
-     1   0.078189601095    0.000000000000     0.1292E-09   0.5774E-12
-     2   0.142327765323    0.000000000000     0.2173E-08   0.5954E-11
+     1   0.078189601095    0.000000000000     0.1293E-09   0.5593E-12
+     2   0.142327765323    0.000000000000     0.2173E-08   0.5965E-11
   ------------------------------------------------------------------------
 
   Iteration:                 15
@@ -335,8 +335,8 @@
 
    Root  omega (Re)        omega (Im)         |residual|   Delta omega (Re)
   ------------------------------------------------------------------------
-     1   0.078189601095    0.000000000000     0.1423E-10   0.6778E-13
-     2   0.142327765331    0.000000000000     0.7896E-09   0.7955E-11
+     1   0.078189601095    0.000000000000     0.1429E-10   0.3754E-13
+     2   0.142327765331    0.000000000000     0.7895E-09   0.7956E-11
   ------------------------------------------------------------------------
 
   Iteration:                 16
@@ -344,8 +344,8 @@
 
    Root  omega (Re)        omega (Im)         |residual|   Delta omega (Re)
   ------------------------------------------------------------------------
-     1   0.078189601095    0.000000000000     0.1391E-10   0.2610E-13
-     2   0.142327765331    0.000000000000     0.2430E-09   0.9334E-13
+     1   0.078189601095    0.000000000000     0.1386E-10   0.5662E-13
+     2   0.142327765331    0.000000000000     0.2431E-09   0.7844E-13
   ------------------------------------------------------------------------
 
   Iteration:                 17
@@ -353,8 +353,8 @@
 
    Root  omega (Re)        omega (Im)         |residual|   Delta omega (Re)
   ------------------------------------------------------------------------
-     1   0.078189601095    0.000000000000     0.1395E-10   0.3798E-13
-     2   0.142327765331    0.000000000000     0.2412E-10   0.5843E-13
+     1   0.078189601095    0.000000000000     0.1410E-10   0.1368E-13
+     2   0.142327765331    0.000000000000     0.2409E-10   0.6090E-13
   ------------------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -364,24 +364,24 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.279624035259        7.608957563911
+        1                  0.279624035259        7.608957563912
         2                  0.377263522396       10.265863339180
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Timings for the RHF properties calculation
 
-     Total wall time (sec):              5.40400
-     Total cpu time (sec):               9.83411
+     Total wall time (sec):              3.38217
+     Total cpu time (sec):               6.70209
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 232.124 KB
+  Peak memory usage during the execution of eT: 322.072 KB
 
-  Total wall time in eT (sec):              5.44500
-  Total cpu time in eT (sec):               9.87453
+  Total wall time in eT (sec):              3.40067
+  Total cpu time in eT (sec):               6.72097
 
-  Calculation ended: 2021-10-06 10:31:10 UTC +02:00
+  Calculation ended: 2021-12-13 17:04:06 UTC +01:00
 
   - Implementation references:
 

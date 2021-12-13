@@ -8,30 +8,30 @@
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
    This is eT 1.5.0 Furia (development)
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2021-12-13 17:02:21 UTC +01:00
+  Git branch:         input-cleanup
+  Git hash:           4c2cc6bf523455801cdf275544d28013b6da142b
+  Fortran compiler:   GNU 9.3.0
+  C compiler:         GNU 9.3.0
+  C++ compiler:       GNU 9.3.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:31:24 UTC +02:00
+  Calculation started: 2021-12-13 17:04:07 UTC +01:00
 
 
   :: Input file
@@ -63,10 +63,10 @@
         hf
      end method
 
-     tdhf
+     solver tdhf
        states: 2
        residual threshold: 1.0d-10
-     end tdhf
+     end solver tdhf
 
 
   Running on 2 OMP threads
@@ -127,16 +127,6 @@
 
   1) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-09
-     Energy threshold:              0.1000E-09
-
   - Requested restart. Reading orbitals from file
 
   - Screening and integral thresholds:
@@ -146,6 +136,16 @@
      ERI cutoff:                     0.1000E-15
      One-electron integral  cutoff:  0.1000E-20
      Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
 
   - DIIS tool settings:
 
@@ -193,8 +193,8 @@
 
    Root  omega (Re)        omega (Im)         |residual|   Delta omega (Re)
   ------------------------------------------------------------------------
-     1   0.078189601095    0.000000000000     0.1408E-10   0.7819E-01
-     2   0.142327765331    0.000000000000     0.2412E-10   0.1423E+00
+     1   0.078189601095    0.000000000000     0.1409E-10   0.7819E-01
+     2   0.142327765331    0.000000000000     0.2414E-10   0.1423E+00
   ------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -211,17 +211,17 @@
 
   - Timings for the RHF properties calculation
 
-     Total wall time (sec):              0.28200
-     Total cpu time (sec):               0.54567
+     Total wall time (sec):              0.17871
+     Total cpu time (sec):               0.31246
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 212.036 KB
+  Peak memory usage during the execution of eT: 213.784 KB
 
-  Total wall time in eT (sec):              0.32300
-  Total cpu time in eT (sec):               0.58706
+  Total wall time in eT (sec):              0.19637
+  Total cpu time in eT (sec):               0.33110
 
-  Calculation ended: 2021-10-06 10:31:24 UTC +02:00
+  Calculation ended: 2021-12-13 17:04:08 UTC +01:00
 
   - Implementation references:
 
