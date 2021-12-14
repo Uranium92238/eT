@@ -52,7 +52,7 @@ contains
 !
       class(cc2), intent(inout) :: wf
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Prepare for Jacobian transpose CC2', pl='normal')
       call timer%turn_on()
@@ -75,8 +75,11 @@ contains
 !!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >.
 !!
 !!    The transformation is performed as sigma^T = c^T A, where c is the vector
-!!    sent to the routine. 
+!!    sent to the routine.
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: squareup, symmetric_sum, packin
+!
       implicit none
 !
       class(cc2), intent(inout) :: wf

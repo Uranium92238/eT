@@ -63,7 +63,7 @@ contains
       call wf%save_jacobian_d2_intermediate()
       call wf%save_jacobian_e2_intermediate()
       call wf%save_jacobian_g2_intermediates()
-      call wf%save_jacobian_h2_intermediates()
+      call wf%save_jacobian_h2_intermediate()
       call wf%save_jacobian_j2_intermediate()
 !
       call prep_timer%turn_off()
@@ -73,7 +73,7 @@ contains
 !
    module subroutine jacobian_transformation_ccsd(wf, c, rho)
 !!
-!!    Jacobian transformation 
+!!    Jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !!    Directs the transformation by the CCSD Jacobi matrix,
@@ -89,6 +89,10 @@ contains
 !!    On exit, c is overwritten by rho. That is, c_ai = rho_ai,
 !!    and c_aibj = rho_aibj.
 !!
+      use array_utilities, only: scale_diagonal, zero_array
+      use reordering, only: symmetric_sum, sort_1234_to_1324, squareup
+      use reordering, only: packin_and_add_from_1324_order
+!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
@@ -162,7 +166,7 @@ contains
 !
       call scale_diagonal(half, rho_abij, wf%n_v, wf%n_o)
 !
-      call packin_and_add_from_1324_order_real(rho(wf%n_t1+1:), rho_abij, wf%n_v, wf%n_o)
+      call packin_and_add_from_1324_order(rho(wf%n_t1+1:), rho_abij, wf%n_v, wf%n_o)
 !
       call mem%dealloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -175,6 +179,60 @@ contains
    end subroutine jacobian_transformation_ccsd
 !
 !
+   module subroutine approximate_Jacobian_transform_ccsd(wf, r_or_l, X, R, w)
+!!
+!!    Approximate Jacobian transform
+!!    Written by Eirik F. Kjønstad, Mar 2021
+!!
+!!    Wrapper for a lower-level Jacobian transformation that is the best approximation
+!!    with a lower computational scaling.
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: r_or_l
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)  :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: R
+!
+      real(dp), intent(in), optional :: w
+!
+      if (trim(r_or_l) == 'left') &
+         call output%error_msg('Approximate CCSD Jacobian transpose not &
+                                &yet supported.')
+!
+      call wf%doubles%construct_Jacobian_transform(r_or_l, X, R, w)
+!
+   end subroutine approximate_Jacobian_transform_ccsd
+!
+!
+   module subroutine prepare_for_approximate_Jacobians_ccsd(wf, r_or_l)
+!!
+!!    Prepare for approximate Jacobians
+!!    Written by Eirik F. Kjønstad, Mar 2021
+!!
+!!    Wrapper for preparations to a lower-level Jacobian transformation that is
+!!    the best approximation with a lower computational scaling.
+!!
+!!    r_or_l: 'left', 'right', or 'both'
+!!            (prepares for A^T, A, or both A^T and A)
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: r_or_l
+!
+      if (trim(r_or_l) == 'left') &
+         call output%error_msg('Approximate CCSD Jacobian transpose not &
+                                &yet supported.')
+!
+      call wf%doubles%prepare_for_Jacobians(r_or_l)
+!
+   end subroutine prepare_for_approximate_Jacobians_ccsd
+!
+!
    module subroutine jacobian_ccsd_b2(wf, rho_aibj, c_ai)
 !!
 !!    Jacobian CCSD B2
@@ -182,6 +240,8 @@ contains
 !!
 !!    rho_aibj^B2 = - sum_kc (F_kc t_ij^ac c_bk + F_kc t_ik^ab c_cj)
 !!
+      use reordering, only: squareup
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -292,6 +352,12 @@ contains
 !!    rho_aibj^C2 = sum_kcl g_ljkc (t_ki^ac c_bl + t_li^bc c_ak + t_lk^ba c_ci)
 !!                 - sum_kcl L_ljkc (t_il^ab c_ck + t_ik^ac c_bl)
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: add_1432_to_1234, sort_1234_to_3142
+      use reordering, only: sort_1234_to_1342, add_3124_to_1234
+      use reordering, only: add_1243_to_1234, add_4213_to_1234
+      use reordering, only: sort_1234_to_1423, squareup
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -302,11 +368,11 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_ljkc ! g_ljkc
       real(dp), dimension(:,:,:,:), allocatable :: L_ljck ! L_ljkc
 !
-      real(dp), dimension(:,:,:,:), allocatable :: X_ljai   ! An intermediate, term 1
-      real(dp), dimension(:,:,:,:), allocatable :: X_kjbi   ! An intermediate, term 2
-      real(dp), dimension(:,:,:,:), allocatable :: X_ljki   ! An intermediate, term 3
-      real(dp), dimension(:,:,:,:), allocatable :: X_klij   ! X_kj_li reordered
-      real(dp), dimension(:,:), allocatable     :: X_lj     ! An intermediate, term 4
+      real(dp), dimension(:,:,:,:), allocatable :: X_ljai  ! An intermediate, term 1
+      real(dp), dimension(:,:,:,:), allocatable :: X_kjbi  ! An intermediate, term 2
+      real(dp), dimension(:,:,:,:), allocatable :: X_ljki  ! An intermediate, term 3
+      real(dp), dimension(:,:,:,:), allocatable :: X_klij  ! X_kj_li reordered
+      real(dp), dimension(:,:), allocatable     :: X_lj    ! An intermediate, term 4
       real(dp), dimension(:,:,:,:), allocatable :: Y_ljai  ! An intermediate, term 5
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_akci ! t_ki^ac
@@ -412,7 +478,7 @@ contains
 !
       call mem%dealloc(X_ljki, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
-!     t_bakl = t_lk^ba = t_blak 
+!     t_bakl = t_lk^ba = t_blak
 !
       call mem%alloc(t_akci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_akci, (wf%n_o)*(wf%n_v))
@@ -542,69 +608,78 @@ contains
    end subroutine jacobian_ccsd_c2
 !
 !
-  module subroutine jacobian_ccsd_d2(wf, rho_aibj, c_ai)
+   module subroutine jacobian_ccsd_d2(wf, rho_aibj, c_ai)
 !!
 !!    Jacobian CCSD D2
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018 & 2021
 !!
 !!    rho_aibj^D2 = - sum_kcd g_kcbd (t_ij^cd c_ak + t_kj^ad c_ci + t_ik^ca c_dj)
 !!                       + sum_kcd L_kcbd (t_ik^ac c_dj + t_ij^ad c_ck)
 !!
-!!    Note: the code is structured so that we batch over the index b,
-!!          where the integrals are made as g_kc_db = g_kcbd and held
-!!          in some ordering or other throughout a given batch (i.e.,
-!!          all five terms are constructed gradually in the batches).
+!!    The first term is constructed via a pre-calculated intermediate X:
 !!
-!!    The first term is constructed from the D2 intermediate: 
+!!       - sum_kcd g_kcbd t_ij^cd c_ak = - c_ak X_kijb
 !!
-!!       - sum_kcd g_kcbd t_ij^cd c_ak = - sum_d c_ak X_kijb  
+!!    The remaining terms are:
 !!
+!!       -g_kcbd c_ci t_kj^ad = - (L_J,kc c_ci) L_J,bd t_akdj = - W_J,ki L_J,bd t_akdj
+!!       -g_kcbd c_dj t_ik^ca = - L_J,kc (L_J,bd c_dj) t_akci = - L_J,kc V_J,bj t_akci
+!!      2 g_kcbd c_dj t_ik^ac = 2 L_J,kc (L_J,bd c_dj) t_aick = 2 L_J,kc V_J,bj t_aick
+!!       -g_kdbc c_dj t_ik^ac = - (L_J,kd c_dj) L_J,bc t_aick = - W_J,kj L_J,bc t_aick
+!!      2 g_kcbd c_ck t_ij^ad = 2 (L_J,kc c_ck) L_J,bd t_aidj = 2 Y_J    L_J,bd t_aidj
+!!       -g_kdbc c_ck t_ij^ad = - L_J,kd (L_J,bc c_ck) t_aidj = - L_J,kd V_J,bk t_aidj
+!!
+!!    We perform the final contractions as:
+!!
+!!     1:     -  W_J,ki L_J,bd t_akdj   = -WL_kibd t_akdj (o3v3)
+!!     2:     - (L_J,kc t_akci) V_J,bj  = - M_J,ai V_J,bj (N5)
+!!     3:      2 L_J,kc V_J,bj t_aick   = 2 (L_J,kc t_aick) V_J,bj = 2 Z_J,ai V_J,bj (N5)
+!!     4:      - W_J,kj L_J,bd t_aidk   = - WL_kjbd t_aidk (o3v3)
+!!     5 and 6:  2 (Y_J L_J,bd) t_aidj - (L_J,kd V_J,bk) t_aidj
+!!                                      = (2 N_bd - Z_bd) t_aidj (N5)
+!!                                      = X_bd t_aidj
+!!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: copy_and_scale, zero_array
+      use reordering, only: sort_12_to_21, sort_123_to_213, sort_1234_to_4132
+      use reordering, only: sort_1234_to_1432, sort_1234_to_3241
+      use reordering, only: sort_1234_to_1243, sort_1234_to_1423
+      use reordering, only: add_1243_to_1234, add_1432_to_1234, squareup
+!
       implicit none
 !
-      class(ccsd) :: wf
+      class(ccsd), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)     :: c_ai
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: rho_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: rho_aibj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_bdkc ! g_kcbd
-      real(dp), dimension(:,:,:,:), allocatable :: g_ckbd ! g_kcbd reordered
-      real(dp), dimension(:,:,:,:), allocatable :: L_ckbd ! L_kcbd = 2 g_kcbd - g-kdbc
-!
-      real(dp), dimension(:,:,:,:), allocatable :: t_dkaj ! t_kj^ad
-      real(dp), dimension(:,:,:,:), allocatable :: t_aick ! t_ik^ca
-      real(dp), dimension(:,:,:,:), allocatable :: t_aijd ! t_ij^ad
-!
-      real(dp), dimension(:,:,:,:), allocatable :: X_k_ijb ! Intermediate, term 1
-      real(dp), dimension(:,:,:,:), allocatable :: X_bdki  ! Intermediate, term 2
-      real(dp), dimension(:,:,:,:), allocatable :: X_ib_dk ! The above intermediate, reordered
-      real(dp), dimension(:,:,:,:), allocatable :: X_ckb_j ! An intermediate, term 3
-      real(dp), dimension(:,:,:,:), allocatable :: Y_ckb_j ! An intermediate, term 4
-!      
-      real(dp), dimension(:,:), allocatable :: X_bd    ! An intermediate, term 5
-!
-      real(dp), dimension(:,:,:,:), allocatable :: rho_aijb ! rho_aibj, batching over b
-      real(dp), dimension(:,:,:,:), allocatable :: rho_ibaj ! rho_aibj, batching over b
-      real(dp), dimension(:,:,:,:), allocatable :: rho_aib_j ! rho_aibj, batching over b
-      real(dp), dimension(:,:,:,:), allocatable :: rho_baij ! rho_aibj, batching over b
-!
-      integer :: req1, req0
-      integer :: current_b_batch
-!
-      type(batching_index) :: batch_b
-
-      integer :: b, i, j, a
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
 !
       type(timings), allocatable :: timer
+!
+      real(dp), dimension(:,:,:,:), allocatable ::  X_kijb, rho_aijb
+!
+      real(dp), dimension(:), allocatable :: Y_J
+!
+      real(dp), dimension(:,:), allocatable :: c_kc, N_vv, X_vv, Z_vv
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_ov, L_J_vv, M_J_vo, V_J_vo, V_vJo
+      real(dp), dimension(:,:,:), allocatable :: W_J_oo, Z_J_vo
+!
+      real(dp), dimension(:,:,:,:), allocatable :: rho_ajbi, t_aijd, t_aikc, t_ajdk
+      real(dp), dimension(:,:,:,:), allocatable :: t_vovo, WL_oovv, WL_bidk, WL_dkbj
+!
+      integer :: req0, req1, batch
+      type(batching_index), allocatable :: batch_v
 !
       timer = timings('Jacobian CCSD D2 transformation', pl='verbose')
       call timer%turn_on()
 !
-!     Use intermediate to form term 1
+!     Term 1: - sum_kcd g_kcbd t_ij^cd c_ak = - c_ak X_kijb
 !
-      call mem%alloc(X_k_ijb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call mem%alloc(X_kijb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
       call wf%jacobian_d2_intermediate%open_('read','rewind')
-      call wf%jacobian_d2_intermediate%read_(X_k_ijb, (wf%n_o)**3*(wf%n_v))
+      call wf%jacobian_d2_intermediate%read_(X_kijb, (wf%n_o)**3*(wf%n_v))
       call wf%jacobian_d2_intermediate%close_('keep')
 !
       call mem%alloc(rho_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
@@ -614,351 +689,340 @@ contains
                   (wf%n_v)*(wf%n_o)**2,   &
                   wf%n_o,                 &
                   -one,                   &
-                  c_ai,                   & ! c_a_k
+                  c_ai,                   & ! c_a,k
                   wf%n_v,                 &
-                  X_k_ijb,                & ! X_k_ijb
+                  X_kijb,                 & ! X_k,ijb
                   wf%n_o,                 &
                   zero,                   &
-                  rho_aijb,               & ! rho_aijb
-                  wf%n_v)   
+                  rho_aijb,               & ! rho_a,ijb
+                  wf%n_v)
 !
-      call add_1243_to_1234(one, rho_aijb, rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o) 
+      call add_1243_to_1234(one, rho_aijb, rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
       call mem%dealloc(rho_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call mem%dealloc(X_k_ijb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(X_kijb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
-!     Initialize batching variable
+!     Construct intermediates used in terms 2 to 6
 !
-      req0 = (wf%n_o**2)*(wf%n_v**2) + wf%n_v*wf%n_o*wf%eri%n_J
-      req1 = wf%n_v**2*wf%n_o                         &
-            + wf%n_v*wf%eri%n_J                       &
-            + max(2*(wf%n_o**3),                      &
-                  (wf%n_o**3) + (wf%n_o**2)*(wf%n_v), &
-                  2*(wf%n_o)*(wf%n_v**2),             &
-                  2*(wf%n_o**2)*(wf%n_v))
-
+!     W_J,ki = L_J,kc c_ci
 !
-      batch_b = batching_index(wf%n_v)
-      call mem%batch_setup(batch_b, req0, req1)
+      call mem%alloc(W_J_oo, wf%eri%n_J, wf%n_o, wf%n_o)
 !
-!     Start looping over b-batches
+      call wf%eri%construct_cholesky_oo_c1(W_J_oo, c_ai, &
+                                           1, wf%n_o, 1, wf%n_o, &
+                                           qp=.false.)
+!
+!     Y_J = L_J,kc c_ck
+!
+      call mem%alloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
+      call wf%eri%get_cholesky_t1(L_J_ov, 1, wf%n_o, wf%n_o + 1, wf%n_mo)
 !
-      do current_b_batch = 1, batch_b%num_batches
+      call mem%alloc(Y_J, wf%eri%n_J)
 !
-!        Get batching limits for current b-batch
+      call mem%alloc(c_kc, wf%n_o, wf%n_v)
+      call sort_12_to_21(c_ai, c_kc, wf%n_v, wf%n_o)
 !
-         call batch_b%determine_limits(current_b_batch)
+      call dgemm('N', 'N',          &
+                  wf%eri%n_J,       &
+                  1,                &
+                  wf%n_o * wf%n_v,  &
+                  one,              &
+                  L_J_ov,           &
+                  wf%eri%n_J,       &
+                  c_kc,             &
+                  wf%n_o * wf%n_v,  &
+                  zero,             &
+                  Y_J,              &
+                  wf%eri%n_J)
 !
-!        Form g_kc_db = g_kcbd & reorder 
+      call mem%dealloc(c_kc, wf%n_o, wf%n_v)
 !
-         call mem%alloc(g_bdkc, batch_b%length, wf%n_v, wf%n_o, wf%n_v)
+!     Make intermediates that require L_J_vv
 !
-         call wf%eri%get_eri_t1('vvov', g_bdkc, first_p=batch_b%first, last_p=batch_b%get_last())
+      call mem%alloc(V_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+      call zero_array(V_J_vo, wf%eri%n_J * wf%n_v * wf%n_o)
 !
-!        :: Term 2. - sum_kcd g_kcbd t_kj^ad c_ci ::
+      call mem%alloc(WL_oovv, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+      call zero_array(WL_oovv, wf%n_v**2 * wf%n_o**2)
 !
-!        X_bdki = g_bdkc c_ci 
+      call mem%alloc(N_vv, wf%n_v, wf%n_v)
+      call zero_array(N_vv, wf%n_v**2)
 !
-         call mem%alloc(X_bdki, batch_b%length, wf%n_v, wf%n_o, wf%n_o)
+      req0 = 0
+      req1 = wf%eri%n_J * wf%n_v
 !
-         call dgemm('N','N',                             &
-                     (wf%n_v)*(wf%n_o)*(batch_b%length), &
-                     wf%n_o,                             &
-                     wf%n_v,                             &
-                     one,                                &
-                     g_bdkc,                             & ! g_bdk,c
-                     (wf%n_v)*(wf%n_o)*(batch_b%length), &
-                     c_ai,                               & ! c_c,i 
-                     wf%n_v,                             &
-                     zero,                               &
-                     X_bdki,                             & ! X_bdk,i
-                     (wf%n_v)*(wf%n_o)*(batch_b%length))         
+      batch_v = batching_index(wf%n_v)
 !
-!        sum_kcd g_kcbd t_kj^ad c_ci = sum_kd (sum_c c_ci g_kcbd) t_kj^ad
-!                                    = sum_kd X_bdki t_jk^da
-!                                    = sum_kd X_ib_dk t_dk_aj
+      call mem%batch_setup(batch_v, req0, req1, 'jacobian_ccsd_d2')
 !
-!        Reorder X_bdki to X_ibdk 
+      call mem%alloc(L_J_vv, wf%eri%n_J, wf%n_v, batch_v%max_length)
 !
-          call mem%alloc(X_ib_dk, wf%n_o, batch_b%length, wf%n_v, wf%n_o)
-          call sort_1234_to_4123(X_bdki, X_ib_dk, batch_b%length, wf%n_v, wf%n_o, wf%n_o)
+      do batch = 1, batch_v%num_batches
 !
-          call mem%dealloc(X_bdki, wf%n_o, wf%n_v, wf%n_o, batch_b%length)
+         call batch_v%determine_limits(batch)
 !
-!        Reorder t_djak to t_dkaj
+         call wf%eri%get_cholesky_t1(L_J_vv(:,:,1:batch_v%length),   &
+                                     wf%n_o + 1,                     &
+                                     wf%n_mo,                        &
+                                     wf%n_o + batch_v%first,         &
+                                     wf%n_o + batch_v%get_last())
 !
-         call mem%alloc(t_dkaj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!        V_J,bj = L_J,bd c_dj
 !
-         call squareup_and_sort_1234_to_1432(wf%t2, t_dkaj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+         call dgemm('N', 'N',                      &
+                     wf%eri%n_J * wf%n_v,          &
+                     wf%n_o,                       &
+                     batch_v%length,               &
+                     one,                          &
+                     L_J_vv(:,:,1:batch_v%length), & ! L_Jb,d
+                     wf%eri%n_J * wf%n_v,          &
+                     c_ai(batch_v%first, 1),       & ! c_d,j
+                     wf%n_v,                       &
+                     one,                          &
+                     V_J_vo,                       &
+                     wf%eri%n_J * wf%n_v)
 !
-!        Calculate rho_ib_aj = - sum_dk X_ib_dk t_dk_aj
+!        WL_kibd = W_J,ki L_J,bd
 !
-         call mem%alloc(rho_ibaj, wf%n_o, batch_b%length, wf%n_v, wf%n_o)
+         call dgemm('T', 'N',                                           &
+                     wf%n_o**2,                                         &
+                     wf%n_v * batch_v%length,                           &
+                     wf%eri%n_J,                                        &
+                     one,                                               &
+                     W_J_oo,                                            &
+                     wf%eri%n_J,                                        &
+                     L_J_vv(:,:,1:batch_v%length),                      &
+                     wf%eri%n_J,                                        &
+                     one,                                               &
+                     WL_oovv(:,:,:,batch_v%first:batch_v%get_last()),   &
+                     wf%n_o**2)
 !
-         call dgemm('N','N',                    &
-                     (wf%n_o)*(batch_b%length), &
-                     (wf%n_o)*(wf%n_v),         &
-                     (wf%n_o)*(wf%n_v),         &
-                     -one,                      &
-                     X_ib_dk,                   & ! X_ib_dk
-                     (wf%n_o)*(batch_b%length), &
-                     t_dkaj,                    & ! t_dk_aj
-                     (wf%n_o)*(wf%n_v),         &
-                     zero,                      &
-                     rho_ibaj,                  & ! rho_ib_aj
-                     (wf%n_o)*(batch_b%length))
+!        N_bd = Y_J L_J,bd
 !
-         call mem%dealloc(X_ib_dk, wf%n_o, batch_b%length, wf%n_v, wf%n_o)
-         call mem%dealloc(t_dkaj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!        Add rho_ibaj (batch over b) ro rho_aibj (full space)
-!
-!$omp parallel do private(b, j, i, a)
-         do a = 1, wf%n_v
-            do j = 1, wf%n_o
-               do b = 1, batch_b%length
-                  do i = 1, wf%n_o
-!
-                     rho_aibj(a,i,batch_b%first + b - 1,j) = rho_aibj(a,i,batch_b%first + b - 1,j) &
-                                                            + rho_ibaj(i,b,a,j)
-!
-                  enddo
-               enddo
-            enddo
-         enddo
-!$omp end parallel do
-!
-         call mem%dealloc(rho_ibaj, wf%n_o, batch_b%length, wf%n_v, wf%n_o)
-!
-!        :: Term 3. - sum_kcd g_kcbd t_ik^ca c_dj ::
-!
-!        sum_d g_bdkc c_dj = sum_d g_ckb_d c_d_j
-!
-!        Reorder g_bdkc to g_ckbd 
-!
-         call mem%alloc(g_ckbd, wf%n_v, wf%n_o, batch_b%length, wf%n_v)
-!
-         call sort_1234_to_4312(g_bdkc, g_ckbd, batch_b%length, wf%n_v, wf%n_o, wf%n_v)
-!
-         call mem%dealloc(g_bdkc, batch_b%length, wf%n_v, wf%n_o, wf%n_v)
-!
-!        Form the intermediate X_ckb_j = sum_d g_ckb_d c_d_j
-!
-         call mem%alloc(X_ckb_j, wf%n_v, wf%n_o, batch_b%length, wf%n_o)
-!
-         call dgemm('N','N',                             &
-                     (wf%n_v)*(wf%n_o)*(batch_b%length), &
-                     wf%n_o,                             &
-                     wf%n_v,                             &
-                     one,                                &
-                     g_ckbd,                             & ! g_ckb_d
-                     (wf%n_v)*(wf%n_o)*(batch_b%length), &
-                     c_ai,                               & ! c_d_j
-                     wf%n_v,                             &
-                     zero,                               &
-                     X_ckb_j,                            & ! X_ckb_j
-                     (wf%n_v)*(wf%n_o)*(batch_b%length))
-!
-!        Order amplitudes as t_ai_ck = t_ik^ca = t_ki^ac (t_ak,ci)
-!
-         call mem%alloc(t_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-         call squareup_and_sort_1234_to_1432(wf%t2, t_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!        Form rho_aib_j = -sum_kcd g_kcbd t_ik^ca c_dj = sum_ck t_ai_ck X_ckb_j
-!
-         call mem%alloc(rho_aib_j, wf%n_v, wf%n_o, batch_b%length, wf%n_o)
-!
-         call dgemm('N','N',                    &
-                     (wf%n_v)*(wf%n_o),         &
-                     (wf%n_o)*(batch_b%length), &
-                     (wf%n_v)*(wf%n_o),         &
-                     -one,                      &
-                     t_aick,                    & ! t_ai_ck
-                     (wf%n_v)*(wf%n_o),         &
-                     X_ckb_j,                   & ! X_ck_bj
-                     (wf%n_v)*(wf%n_o),         &
-                     zero,                      &
-                     rho_aib_j,                 & ! rho_aibj
-                     (wf%n_v)*(wf%n_o))
-!
-         call mem%dealloc(X_ckb_j, wf%n_v, wf%n_o, batch_b%length, wf%n_o)
-         call mem%dealloc(t_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!        Add rho_aibj to rho_aibj
-!
-!$omp parallel do private(b, j, i, a)
-         do j = 1, wf%n_o
-            do b = 1, batch_b%length
-               do i = 1, wf%n_o
-                  do a = 1, wf%n_v
-!
-                     rho_aibj(a,i,batch_b%first + b - 1,j) = rho_aibj(a,i,batch_b%first + b - 1,j) &
-                                                            + rho_aib_j(a,i,b,j)
-!
-                 enddo
-               enddo
-            enddo
-         enddo
-!$omp end parallel do
-!
-!        Deallocations for term 3 (keep g_ckb_d = g_kcbd)
-!
-         call mem%dealloc(rho_aib_j, wf%n_v, wf%n_o, batch_b%length, wf%n_o)
-!
-!        :: Term 4.  sum_kcd L_kcbd t_ik^ac c_dj ::
-!
-!        sum_d L_kcbd c_dj = sum_d L_ckb_d c_dj
-!
-!        Form L_ckb_d = L_kcbd = 2 * g_kcbd - g_kdbc = 2 * g_ckb_d(ckb, d) - g_ckb_d(dkb, c)
-!
-         call mem%alloc(L_ckbd, wf%n_v, wf%n_o, batch_b%length, wf%n_v)
-         call zero_array(L_ckbd, (wf%n_v**2)*wf%n_o*batch_b%length)
-!
-!        Note: exchange g_ck_bd(dk,bc) -> 4231
-!
-         call add_4231_to_1234(-one, g_ckbd, L_ckbd, wf%n_v, wf%n_o, batch_b%length, wf%n_v)
-         call daxpy((wf%n_v)**2*(wf%n_o)*(batch_b%length), two, g_ckbd, 1, L_ckbd, 1)
-!
-         call mem%dealloc(g_ckbd, wf%n_v, wf%n_o, batch_b%length, wf%n_v)
-!
-!        Form the intermediate Y_ckb_j = sum_d L_kcbd c_dj = sum_d L_ckb_d c_dj
-!
-         call mem%alloc(Y_ckb_j, wf%n_v, wf%n_o, batch_b%length, wf%n_o)
-!
-         call dgemm('N','N',                             &
-                     (wf%n_v)*(wf%n_o)*(batch_b%length), &
-                     wf%n_o,                             &
-                     wf%n_v,                             &
-                     one,                                &
-                     L_ckbd,                             & ! L_ckb_d
-                     (wf%n_v)*(wf%n_o)*(batch_b%length), &
-                     c_ai,                               & ! c_d_j
-                     wf%n_v,                             &
-                     zero,                               &
-                     Y_ckb_j,                            & ! Y_ckb_j
-                     (wf%n_v)*(wf%n_o)*(batch_b%length))
-!
-!        Order amplitudes as t_ai_ck = t_ik^ac = t2(aick)
-!
-         call mem%alloc(t_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-         call squareup(wf%t2, t_aick, (wf%n_o)*(wf%n_v))
-!
-!        Form rho_aib_j =  sum_ck t_ai_ck Y_ckb_j
-!
-         call mem%alloc(rho_aib_j, wf%n_v, wf%n_o, batch_b%length, wf%n_o)
-!
-         call dgemm('N','N',                    &
-                     (wf%n_o)*(wf%n_v),         &
-                     (wf%n_o)*(batch_b%length), &
-                     (wf%n_o)*(wf%n_v),         &
-                     one,                       &
-                     t_aick,                    & ! t_ai_ck
-                     (wf%n_o)*(wf%n_v),         &
-                     Y_ckb_j,                   & ! Y_ck_bj
-                     (wf%n_o)*(wf%n_v),         &
-                     zero,                      &
-                     rho_aib_j,                 & ! rho_ai_bj
-                     (wf%n_o)*(wf%n_v))
-!
-         call mem%dealloc(Y_ckb_j, wf%n_v, wf%n_o, batch_b%length, wf%n_o)
-         call mem%dealloc(t_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!        Add rho_aib_j to rho_aibj
-!
-!$omp parallel do private(b, j, i, a)
-         do j = 1, wf%n_o
-            do b = 1, batch_b%length
-               do i = 1, wf%n_o
-                  do a = 1, wf%n_v
-!
-                     rho_aibj(a,i,batch_b%first + b - 1,j) = rho_aibj(a,i,batch_b%first + b - 1,j) &
-                                                            + rho_aib_j(a,i,b,j)
-!
-                  enddo
-               enddo
-            enddo
-         enddo
-!$omp end parallel do
-!
-!        Deallocations for term 4 (keep L_ckb_d = L_kcbd)
-!
-         call mem%dealloc(rho_aib_j, wf%n_v, wf%n_o, batch_b%length, wf%n_o)
-!
-!        :: Term 5.  sum_kcd L_kcbd t_ij^ad c_ck ::
-!
-!        Form the intermediate X_1,bd = sum_ck c_ck L_kcbd = sum_ck c_1,ck L_ckb_d
-!
-!        Note: c_ai is interpreted as c_1,ai in the matrix multiplication
-!
-         call mem%alloc(X_bd, 1, (batch_b%length)*(wf%n_v))
-!
-         call dgemv('T',                        &
-                     (wf%n_o)*(wf%n_v),         &
-                     (batch_b%length)*(wf%n_v), &
-                     one,                       &
-                     L_ckbd,                    & ! L_ck_bd
-                     (wf%n_o)*(wf%n_v),         &
-                     c_ai,                      & ! c_ck
-                     1,                         &
-                     zero,                      &
-                     X_bd,                      & ! X_bd
-                     1)
-!
-!        Order amplitudes as t_ai_jd = t_ij^ad
-!
-         call mem%alloc(t_aijd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-         call squareup_and_sort_1234_to_1243(wf%t2, t_aijd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!        Form rho_b_aij =  sum_kcd L_kcbd t_ij^ad c_ck
-!                       =  sum_d X_bd t_d_aij
-!
-!        Note: X_bd is interpreted as X_b_d in the matrix multiplication
-!
-         call mem%alloc(rho_baij, batch_b%length, wf%n_v, wf%n_o, wf%n_o)
-!
-         call dgemm('N','T',               &
-                     batch_b%length,       &
-                     (wf%n_v)*(wf%n_o)**2, &
-                     wf%n_v,               &
-                     one,                  &
-                     X_bd,                 & ! X_b_d
-                     batch_b%length,       &
-                     t_aijd,               & ! t_aij_d
-                     (wf%n_v)*(wf%n_o)**2, &
-                     zero,                 &
-                     rho_baij,             & ! rho_b_aij
-                     batch_b%length)
-!
-         call mem%dealloc(X_bd, 1, (batch_b%length)*(wf%n_v))
-         call mem%dealloc(t_aijd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-!        Add rho_baij to rho_aibj
-!
-!$omp parallel do private(b, j, i, a)
-         do j = 1, wf%n_o
-            do i = 1, wf%n_o
-               do a = 1, wf%n_v
-                  do b = 1, batch_b%length
-!
-                     rho_aibj(a,i,batch_b%first + b - 1,j) = rho_aibj(a,i,batch_b%first + b - 1,j) &
-                                                            + rho_baij(b,a,i,j)
-!
-                  enddo
-               enddo
-            enddo
-         enddo
-!$omp end parallel do
-!
-!        Final deallocations in batching loop
-!
-         call mem%dealloc(rho_baij, batch_b%length, wf%n_v, wf%n_o, wf%n_o)
-         call mem%dealloc(L_ckbd, wf%n_v, wf%n_o,batch_b%length, wf%n_v)
-!
-      enddo ! End of batches over b
+         call dgemm('T','N',                          &
+                     wf%n_v * batch_v%length,         &
+                     1,                               &
+                     wf%eri%n_J,                      &
+                     one,                             &
+                     L_J_vv(:,:,1:batch_v%length),    &
+                     wf%eri%n_J,                      &
+                     Y_J,                             &
+                     wf%eri%n_J,                      &
+                     one,                             &
+                     N_vv(1, batch_v%first),          &
+                     wf%n_v * batch_v%length)
+!
+      enddo
+!
+      call mem%dealloc(L_J_vv, wf%eri%n_J, wf%n_v, batch_v%max_length)
 !
       call mem%batch_finalize()
+!
+!     Z_bd = L_J,kd V_J,bk
+!
+!     Sort V_Jbk as V_bJk
+!
+      call mem%alloc(V_vJo, wf%n_v, wf%eri%n_J, wf%n_o)
+!
+      call sort_123_to_213(V_J_vo, V_vJo, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+      call mem%alloc(Z_vv, wf%n_v, wf%n_v)
+!
+      call dgemm('N', 'N',             &
+                  wf%n_v,              &
+                  wf%n_v,              &
+                  wf%eri%n_J * wf%n_o, &
+                  one,                 &
+                  V_vJo,               & ! V_b,Jk
+                  wf%n_v,              &
+                  L_J_ov,              & ! L_Jk,d
+                  wf%eri%n_J * wf%n_o, &
+                  zero,                &
+                  Z_vv,                &
+                  wf%n_v)
+!
+      call mem%dealloc(V_vJo, wf%n_v, wf%eri%n_J, wf%n_o)
+!
+!     X_bd = two * N_bd - Z_bd
+!
+      call mem%alloc(X_vv, wf%n_v, wf%n_v)
+!
+      call copy_and_scale(two, N_vv, X_vv, wf%n_v**2)
+      call daxpy(wf%n_v**2, -one, Z_vv, 1, X_vv, 1)
+!
+      call mem%dealloc(N_vv, wf%n_v, wf%n_v)
+      call mem%dealloc(Z_vv, wf%n_v, wf%n_v)
+!
+!     Z_J,ai = L_J,kc t_aick
+!
+      call mem%alloc(t_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call squareup(wf%t2, t_vovo, wf%n_t1)
+!
+!     Sort t_aick to t_aikc
+!
+      call mem%alloc(t_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+      call sort_1234_to_1243(t_vovo, t_aikc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(Z_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'T',          &
+                  wf%eri%n_J,       &
+                  wf%n_v * wf%n_o,  &
+                  wf%n_v * wf%n_o,  &
+                  one,              &
+                  L_J_ov,           & ! L_J,kc
+                  wf%eri%n_J,       &
+                  t_aikc,           & ! t_ai,kc
+                  wf%n_v * wf%n_o,  &
+                  zero,             &
+                  Z_J_vo,           &
+                  wf%eri%n_J)
+!
+!     M_J,ai = L_J,kc t_akci
+!
+!     Sort t_akci to t_aikc
+!
+      call sort_1234_to_1423(t_vovo, t_aikc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(M_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'T',          &
+                  wf%eri%n_J,       &
+                  wf%n_o * wf%n_v,  &
+                  wf%n_o * wf%n_v,  &
+                  one,              &
+                  L_J_ov,           & ! L_J,kc
+                  wf%eri%n_J,       &
+                  t_aikc,           & ! t_ai,kc
+                  wf%n_o * wf%n_v,  &
+                  zero,             &
+                  M_J_vo,           &
+                  wf%eri%n_J)
+!
+      call mem%dealloc(t_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+!     Term 1: -WL_kibd t_akdj
+!
+      call mem%alloc(t_ajdk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call sort_1234_to_1432(t_vovo, t_ajdk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(WL_bidk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call sort_1234_to_3241(WL_oovv, WL_bidk, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+!
+      call mem%alloc(rho_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'T',          &
+                  wf%n_v * wf%n_o,  &
+                  wf%n_v * wf%n_o,  &
+                  wf%n_v * wf%n_o,  &
+                  -one,             &
+                  t_ajdk,           &
+                  wf%n_v * wf%n_o,  &
+                  WL_bidk,          &
+                  wf%n_v * wf%n_o,  &
+                  zero,             &
+                  rho_ajbi,         &
+                  wf%n_v * wf%n_o)
+!
+      call mem%dealloc(WL_bidk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call add_1432_to_1234(one, rho_ajbi, rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(t_ajdk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(rho_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Term 4. - WL_kjbd t_aidk
+!
+      call mem%alloc(WL_dkbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call sort_1234_to_4132(WL_oovv, WL_dkbj, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+!
+      call dgemm('N', 'N',          &
+                  wf%n_v * wf%n_o,  &
+                  wf%n_v * wf%n_o,  &
+                  wf%n_v * wf%n_o,  &
+                  -one,             &
+                  t_vovo,           & ! t_ai,dk
+                  wf%n_v * wf%n_o,  &
+                  WL_dkbj,          &
+                  wf%n_v * wf%n_o,  &
+                  one,              &
+                  rho_aibj,         &
+                  wf%n_v * wf%n_o)
+!
+      call mem%dealloc(WL_dkbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Term 2. - M_J,ai V_J,bj
+!
+      call dgemm('T', 'N',          &
+                  wf%n_v * wf%n_o,  &
+                  wf%n_v * wf%n_o,  &
+                  wf%eri%n_J,       &
+                  -one,             &
+                  M_J_vo,           &
+                  wf%eri%n_J,       &
+                  V_J_vo,           &
+                  wf%eri%n_J,       &
+                  one,              &
+                  rho_aibj,         &
+                  wf%n_v * wf%n_o)
+!
+      call mem%dealloc(M_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+!     Term 3. 2 Z_J,ai V_J,bj
+!
+      call dgemm('T', 'N',          &
+                  wf%n_v * wf%n_o,  &
+                  wf%n_v * wf%n_o,  &
+                  wf%eri%n_J,       &
+                  two,              &
+                  Z_J_vo,           &
+                  wf%eri%n_J,       &
+                  V_J_vo,           &
+                  wf%eri%n_J,       &
+                  one,              &
+                  rho_aibj,         &
+                  wf%n_v * wf%n_o)
+!
+!     Terms 5 and 6. X_bd t_aidj
+!
+      call mem%alloc(t_aijd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+      call sort_1234_to_1243(t_vovo, t_aijd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(rho_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+      call dgemm('N', 'T',             &
+                  wf%n_o**2 * wf%n_v,  &
+                  wf%n_v,              &
+                  wf%n_v,              &
+                  one,                 &
+                  t_aijd,              &
+                  wf%n_o**2 * wf%n_v,  &
+                  X_vv,                &
+                  wf%n_v,              &
+                  zero,                &
+                  rho_aijb,            &
+                  wf%n_o**2 * wf%n_v)
+!
+      call add_1243_to_1234(one, rho_aijb, rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(rho_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+      call mem%dealloc(t_aijd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(t_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(WL_oovv, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+!
+      call mem%dealloc(V_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+      call mem%dealloc(W_J_oo, wf%eri%n_J, wf%n_o, wf%n_o)
+      call mem%dealloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
+      call mem%dealloc(Y_J, wf%eri%n_J)
+      call mem%dealloc(X_vv, wf%n_v, wf%n_v)
+      call mem%dealloc(Z_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
 !
       call timer%turn_off()
 !
@@ -974,7 +1038,7 @@ contains
 !!                  - sum_ckld t_bj,dl * L_kc,ld * c_ak,ci
 !!                = sum_ck Y_bjck (2c_aick - c_akci)
 !!                = sum_ck Y_bjck v_aick
-!!                        
+!!
 !!    with
 !!
 !!       Y_bjck = t_bj,dl * L_kc,ld
@@ -982,6 +1046,9 @@ contains
 !!
 !!    which is constructed in prepare_for_jacobian
 !!
+      use array_utilities, only: copy_and_scale
+      use reordering, only: add_1432_to_1234
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1023,7 +1090,7 @@ contains
 !
       call mem%dealloc(v_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(Y_bjck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!      
+!
       call timer%turn_off()
 !
    end subroutine jacobian_ccsd_e2
@@ -1039,6 +1106,9 @@ contains
 !!
 !!    L_kc,ld = 2*g_kc,ld - g_kd,lc = 2*g_kcld(kc,ld) - 2*g_kcld(kd,lc)
 !!
+      use reordering, only: add_4123_to_1234, add_4321_to_1234, squareup
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1131,10 +1201,10 @@ contains
                   wf%n_o,               &
                   ((wf%n_v)**2)*wf%n_o, &
                   one,                  &
-                  c_aibj,               & ! c_ckd_j 
-                  ((wf%n_v)**2)*wf%n_o, &    
-                  L_dlck,               & 
-                  ((wf%n_v)**2)*wf%n_o, &    
+                  c_aibj,               & ! c_ckd_j
+                  ((wf%n_v)**2)*wf%n_o, &
+                  L_dlck,               &
+                  ((wf%n_v)**2)*wf%n_o, &
                   zero,                 &
                   Z_jl,                 &
                   wf%n_o)
@@ -1150,7 +1220,7 @@ contains
                   -one,                   &
                   t_djai,                 & ! t_aib,l
                   ((wf%n_v)**2)*(wf%n_o), &
-                  Z_jl,                   & 
+                  Z_jl,                   &
                   wf%n_o,                 &
                   one,                    &
                   rho_aibj,               &
@@ -1172,7 +1242,7 @@ contains
 !!    rho_aibj^G2 =  - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck
 !!                       - sum_ckdl t_ck_bl * L_kc,ld * c_ai,dj
 !!                       - sum_ckld t_ck,dj * L_kc,ld * c_ai,bl
-!!                = - sum_ck Y_bjck c_aick 
+!!                = - sum_ck Y_bjck c_aick
 !!                  - sum_d Y_bd c_aidj
 !!                  - sum_l Y_jl c_aibl
 !!
@@ -1243,7 +1313,7 @@ contains
 !
       call mem%dealloc(Y_bd, wf%n_v, wf%n_v)
 !
-!     Term 3: - Y_jl c_aibl 
+!     Term 3: - Y_jl c_aibl
 !
       call mem%alloc(Y_jl, wf%n_o, wf%n_o)
 !
@@ -1262,7 +1332,7 @@ contains
                   wf%n_o,              &
                   one,                 &
                   rho_aibj,            &
-                  (wf%n_v**2)*wf%n_o) 
+                  (wf%n_v**2)*wf%n_o)
 !
       call mem%dealloc(Y_jl, wf%n_o, wf%n_o)
 !
@@ -1279,8 +1349,11 @@ contains
 !!       rho_aibj^H2 =  sum_ckdl t_ci,ak * g_kc,ld * c_bl,dj
 !!                     + sum_ckdl t_cj,al * g_kc,ld * c_bk,di
 !!                   = sum_dl Y_aild c_bldj
-!!                     + sum_dk Y_ajkd c_bkdi 
+!!                     + sum_dk Y_ajkd c_bkdi
 !!
+      use reordering, only: sort_1234_to_2314, sort_1234_to_3241
+      use reordering, only: squareup, add_1432_to_1234
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1290,10 +1363,13 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: c_ldbj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: Y_aild
       real(dp), dimension(:,:,:,:), allocatable :: Y_ajkd
 !
       real(dp), dimension(:,:,:,:), allocatable :: rho_ajbi
+!
+      real(dp), dimension(:,:,:,:), allocatable :: t_vovo, t_aikc
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_ov, V_J_vo, W_J_vo
 !
       type(timings), allocatable :: timer
 !
@@ -1302,29 +1378,79 @@ contains
 !
 !     Term 1: Y_aild c_bldj
 !
-      call mem%alloc(Y_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!     t_ciak g_kcld c_bldj
+!     = (L_kc^J t_ciak) (L_ld^J c_bldj)
+!     = W_ai^J V_bj^J
 !
-      call wf%jacobian_h2_intermediate_voov_1%open_('read', 'rewind')
-      call wf%jacobian_h2_intermediate_voov_1%read_(Y_aild, wf%n_t1**2)
-      call wf%jacobian_h2_intermediate_voov_1%close_('keep')
+      call mem%alloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
+      call wf%eri%get_cholesky_t1(L_J_ov, &
+                                  1, wf%n_o, &
+                                  wf%n_o + 1, wf%n_mo)
+!
+!     t_ciak -> t_aikc
+!
+      call mem%alloc(t_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_vovo, wf%n_t1)
+!
+      call mem%alloc(t_aikc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_3241(t_vovo, t_aikc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(t_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(W_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'T',          &
+                  wf%eri%n_J,       &
+                  wf%n_v * wf%n_o,  &
+                  wf%n_v * wf%n_o,  &
+                  one,              &
+                  L_J_ov,           & ! L_J,kc
+                  wf%eri%n_J,       &
+                  t_aikc,           &
+                  wf%n_v * wf%n_o,  &
+                  zero,             &
+                  W_J_vo,           &
+                  wf%eri%n_J)
+!
+      call mem%dealloc(t_aikc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     c_bldj -> c_ldbj
 !
       call mem%alloc(c_ldbj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
       call sort_1234_to_2314(c_aibj, c_ldbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call dgemm('N', 'N', &
-                  wf%n_v*wf%n_o, &
-                  wf%n_v*wf%n_o, &
-                  wf%n_v*wf%n_o, &
-                  one,           &
-                  Y_aild,        &
-                  wf%n_v*wf%n_o, &
-                  c_ldbj,        &
-                  wf%n_v*wf%n_o, &
-                  one,           &
-                  rho_aibj,      &
-                  wf%n_v*wf%n_o)
+      call mem%alloc(V_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(Y_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call dgemm('N', 'N',          &
+                  wf%eri%n_J,       &
+                  wf%n_v * wf%n_o,  &
+                  wf%n_v * wf%n_o,  &
+                  one,              &
+                  L_J_ov,           & ! L_J,ld
+                  wf%eri%n_J,       &
+                  c_ldbj,           &
+                  wf%n_v * wf%n_o,  &
+                  zero,             &
+                  V_J_vo,           &
+                  wf%eri%n_J)
+!
+      call mem%dealloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
+!
+      call dgemm('T', 'N',          &
+                  wf%n_v * wf%n_o,  &
+                  wf%n_v * wf%n_o,  &
+                  wf%eri%n_J,       &
+                  one,              &
+                  W_J_vo,           &
+                  wf%eri%n_J,       &
+                  V_J_vo,           &
+                  wf%eri%n_J,       &
+                  one,              &
+                  rho_aibj,         &
+                  wf%n_v * wf%n_o)
+!
+      call mem%dealloc(V_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+      call mem%dealloc(W_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
 !
 !     Term 2: Y_ajkd c_bkdi
 !
@@ -1332,9 +1458,9 @@ contains
 !
       call mem%alloc(Y_ajkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call wf%jacobian_h2_intermediate_voov_2%open_('read', 'rewind')
-      call wf%jacobian_h2_intermediate_voov_2%read_(Y_ajkd, wf%n_t1**2)
-      call wf%jacobian_h2_intermediate_voov_2%close_('keep')
+      call wf%jacobian_h2_intermediate%open_('read', 'rewind')
+      call wf%jacobian_h2_intermediate%read_(Y_ajkd, wf%n_t1**2)
+      call wf%jacobian_h2_intermediate%close_('keep')
 !
       call mem%alloc(rho_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1349,7 +1475,7 @@ contains
                   wf%n_v*wf%n_o, &
                   zero,          &
                   rho_ajbi,      &
-                  wf%n_v*wf%n_o)  
+                  wf%n_v*wf%n_o)
 !
       call mem%dealloc(Y_ajkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call mem%dealloc(c_ldbj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
@@ -1368,10 +1494,13 @@ contains
 !!    Jacobian CCSD I2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
-!!    rho_aibj^I2 =  sum_c F_bc * c_ai,cj - sum_k F_jk * c_ai,bk
-!!                   + sum_ck L_bj,kc * c_ai,ck
-!!                   - sum_ck ( g_kc,bj * c_ak,ci + g_ki,bc * c_ak,cj )
+!!    rho_aibj^I2 = sum_ck L_bj,kc * c_ai,ck
+!!                - sum_ck ( g_kc,bj * c_ak,ci + g_ki,bc * c_ak,cj )
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: sort_1234_to_2314, sort_1234_to_1432
+      use reordering, only: add_3421_to_1234, add_3124_to_1234, add_3214_to_1234
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1388,70 +1517,72 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_bjkc
       real(dp), dimension(:,:,:,:), allocatable :: g_bckj
 !
+      real(dp), dimension(:,:,:), allocatable :: L_J_ov, L_J_vo, W_J_vo
+!
       type(timings), allocatable :: timer
 !
       timer = timings('Jacobian CCSD I2 transformation', pl='verbose')
       call timer%turn_on()
 !
-!     :: sum_c F_bc c_ai,cj ::
+!     rho_bjai =- g_bjkc c_akci = g_bj,kc c_kc,ai
 !
-!     rho_bjai =+ F_bc c_cjai
+!     L_bj^J L_kc^J c_kc,ai = L_bj^J W_ai^J
 !
-      call dgemm('N','N',                 &
-                  wf%n_v,                 &
-                  (wf%n_v)*(wf%n_o)**2,   &
-                  wf%n_v,                 &
-                  one,                    &
-                  wf%fock_ab,             & ! F_b,c
-                  wf%n_v,                 &
-                  c_aibj,                 & ! c_c,jai
-                  wf%n_v,                 &
-                  one,                    &
-                  rho_aibj,               & ! rho_b,jai -> will be (ai,bj)-symmetrized 
-                  wf%n_v)
+      call mem%alloc(c_kcai, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call sort_1234_to_2314(c_aibj, c_kcai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     :: - sum_k F_jk * c_aibk  ::
+      call mem%alloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
 !
-!     rho_aibj += - sum_k F_jk * c_aibk = - sum_k c_aibk F_ij(k,j)^T
+      call wf%eri%get_cholesky_t1(L_J_ov,       &
+                                    1, wf%n_o,  &
+                                    wf%n_o + 1, wf%n_mo)
 !
-      call dgemm('N', 'N',                &
-                  (wf%n_o)*((wf%n_v)**2), &
-                  wf%n_o,                 &
-                  wf%n_o,                 &
-                  -one,                   &
-                  c_aibj,                 & ! c_aib_k
-                  (wf%n_o)*((wf%n_v)**2), &
-                  wf%fock_ij,             & ! F_k_j
-                  wf%n_o,                 &
-                  one,                    &
-                  rho_aibj,               & ! rho_aib_j
-                  (wf%n_o)*((wf%n_v)**2))
+      call mem%alloc(W_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
 !
-!     rho_aibj =+ c_aick L_bjkc = c_aick L_ck,bj 
+      call dgemm('N', 'N',             &
+                  wf%eri%n_J,          &
+                  wf%n_o * wf%n_v,     &
+                  wf%n_o * wf%n_v,     &
+                  one,                 &
+                  L_J_ov,              &
+                  wf%eri%n_J,          &
+                  c_kcai,              &
+                  wf%n_o * wf%n_v,     &
+                  zero,                &
+                  W_J_vo,              &
+                  wf%eri%n_J)
+!
+      call mem%dealloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
+!
+      call mem%alloc(L_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+      call wf%eri%get_cholesky_t1(L_J_vo,                &
+                                    wf%n_o + 1, wf%n_mo, &
+                                    1, wf%n_o)
+!
+      call dgemm('T', 'N',             &
+                  wf%n_o * wf%n_v,     &
+                  wf%n_o * wf%n_v,     &
+                  wf%eri%n_J,          &
+                  -one,                &
+                  W_J_vo,              &
+                  wf%eri%n_J,          &
+                  L_J_vo,              &
+                  wf%eri%n_J,          &
+                  one,                 &
+                  rho_aibj,            &
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(W_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+      call mem%dealloc(L_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+!
+!     rho_aibj =+ c_aick L_bjkc = c_aick L_ck,bj
 !
       call mem%alloc(g_bjkc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call wf%eri%get_eri_t1('voov', g_bjkc)
 !
-!     rho_bjai =- g_bjkc c_akci = g_bj,kc c_kc,ai
-!
-      call mem%alloc(c_kcai, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-      call sort_1234_to_2314(c_aibj, c_kcai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call dgemm('N', 'N',             &
-                  (wf%n_o)*(wf%n_v),   &
-                  (wf%n_o)*(wf%n_v),   &
-                  (wf%n_o)*(wf%n_v),   &
-                  -one,                &
-                  g_bjkc,              &
-                  (wf%n_o)*(wf%n_v),   &
-                  c_kcai,              &
-                  (wf%n_o)*(wf%n_v),   &
-                  one,                 &
-                  rho_aibj,            & ! rho_bj,ai -> will be (ai,bj)-symmetrized
-                  (wf%n_o)*(wf%n_v))
-!
-!     Construct L_bjkc ordered as L_ckbj = 2 g_bjkc - g_bckj 
+!     Construct L_bjkc ordered as L_ckbj = 2 g_bjkc - g_bckj
 !
       call mem%alloc(L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1467,7 +1598,7 @@ contains
 !
       call add_3124_to_1234(-one, g_bckj, L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     rho_aibj =- g_bcki c_akcj =- g_bi,kc c_kc,aj 
+!     rho_aibj =- g_bcki c_akcj =- g_bi,kc c_kc,aj
 !
       call mem%alloc(g_bikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call sort_1234_to_1432(g_bckj, g_bikc, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -1483,7 +1614,7 @@ contains
                   -one,                &
                   g_bikc,              &
                   (wf%n_o)*(wf%n_v),   &
-                  c_kcai,              & ! c_kc,aj 
+                  c_kcai,              & ! c_kc,aj
                   (wf%n_o)*(wf%n_v),   &
                   zero,                &
                   rho_biaj,            &
@@ -1501,9 +1632,9 @@ contains
       call dgemm('N', 'N',             &
                   (wf%n_o)*(wf%n_v),   &
                   (wf%n_o)*(wf%n_v),   &
-                  (wf%n_o)*(wf%n_v),   & 
+                  (wf%n_o)*(wf%n_v),   &
                   one,                 &
-                  c_aibj,              & ! c_ai,ck 
+                  c_aibj,              & ! c_ai,ck
                   (wf%n_o)*(wf%n_v),   &
                   L_ckbj,              &
                   (wf%n_o)*(wf%n_v),   &
@@ -1527,6 +1658,8 @@ contains
 !!                       + sum_ckdl t_ak,bl * g_kc,ld * c_ci,dj
 !!                   =    sum_ckld Y_klij * c_ak,bl
 !!                       + sum_ckdl t_ak,bl * g_kc,ld * c_ci,dj
+      use reordering, only: sort_1234_to_1324, squareup_and_sort_1234_to_1324
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1554,7 +1687,7 @@ contains
 !
       call wf%jacobian_j2_intermediate_oooo%read_(Y_klij, wf%n_o**4)
 !
-      call wf%jacobian_j2_intermediate_oooo%close_('keep') 
+      call wf%jacobian_j2_intermediate_oooo%close_('keep')
 !
 !     rho_abij += c_ab_kl * X_kl_ij
 !
@@ -1573,7 +1706,7 @@ contains
 !
 !     Y_kl_ij = g_kl_cd * c_cd_ij
 !
-!     Construct g_kcld ordered as g_klcd 
+!     Construct g_kcld ordered as g_klcd
 !
       call mem%alloc(g_kcld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
@@ -1633,6 +1766,8 @@ contains
 !!
 !!    rho_abij^K2 =    sum_kl g_kilj * c_akbl
 !!
+      use reordering, only: sort_1234_to_1324
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1687,32 +1822,35 @@ contains
 !!    Save jacobian c2 intermediates
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2019
 !!
-!!    Constructs the intermediates for Jacobian C2: 
+!!    Constructs the intermediates for Jacobian C2:
 !!
-!!       X_ljai = sum_ck g_ljkc t_ki^ac  
-!!       X_kjbi = sum_lc g_ljkc t_li^bc 
-!!       Y_ljai = sum_kc L_ljkc t_ik^ac 
+!!       X_ljai = sum_ck g_ljkc t_ki^ac
+!!       X_kjbi = sum_lc g_ljkc t_li^bc
+!!       Y_ljai = sum_kc L_ljkc t_ik^ac
 !!
 !!    used in the c2-term. This is done only once in prepare_for_jacobian
 !!    and the intermediate is stored in the file jacobian_c2_intermediate
 !!    which is a wf variable.
 !!
+      use reordering, only: sort_1234_to_2314, sort_1234_to_3214, squareup
+      use reordering, only: add_3214_to_1234, sort_1234_to_4312
+!
       implicit none
 !
       class(ccsd) :: wf
 !
       type(timings), allocatable :: timer
 !
-      real(dp), dimension(:,:,:,:), allocatable :: X_ljai 
-      real(dp), dimension(:,:,:,:), allocatable :: X_kjbi 
-      real(dp), dimension(:,:,:,:), allocatable :: Y_ljai 
+      real(dp), dimension(:,:,:,:), allocatable :: X_ljai
+      real(dp), dimension(:,:,:,:), allocatable :: X_kjbi
+      real(dp), dimension(:,:,:,:), allocatable :: Y_ljai
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_ljkc, t_akci, t_kcai, g_kjlc, L_ljkc
 !
       timer = timings('Jacobian CCSD C2 intermediates construction', pl='verbose')
       call timer%turn_on()
 !
-!     Intermediate X_ljai 
+!     Intermediate X_ljai
 !
 !     Form g_ljkc
 !
@@ -1747,7 +1885,7 @@ contains
                   (wf%n_o)*(wf%n_v), &
                   zero,              &
                   X_ljai,            & ! X_lj_ai
-                  (wf%n_o)**2)   
+                  (wf%n_o)**2)
 !
       wf%jacobian_c2_intermediate_oovo_1 = sequential_file('jacobian_c2_intermediate_oovo_1_ccsd')
       call wf%jacobian_c2_intermediate_oovo_1%open_('write', 'rewind')
@@ -1756,7 +1894,7 @@ contains
 !
       call mem%dealloc(X_ljai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Intermediate X_kjbi 
+!     Intermediate X_kjbi
 !
 !     Reorder to g_kj_lc = g_lj_kc = g_ljkc
 !                  3214      1234
@@ -1791,17 +1929,17 @@ contains
       call wf%jacobian_c2_intermediate_oovo_2%close_('keep')
 !
       call mem%dealloc(X_kjbi, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-!  
-!     Intermediate Y_ljai = sum_kc L_ljkc t_ik^ac = sum_kc L_lj,kc t_kc,ai 
 !
-!     L_lj,kc = 2 g_ljkc - g_kjlc 
+!     Intermediate Y_ljai = sum_kc L_ljkc t_ik^ac = sum_kc L_lj,kc t_kc,ai
+!
+!     L_lj,kc = 2 g_ljkc - g_kjlc
 !
       call mem%alloc(L_ljkc, wf%N_o, wf%n_o, wf%n_o, wf%n_v)
 !
-      L_ljkc = two*g_ljkc 
+      L_ljkc = two*g_ljkc
       call add_3214_to_1234(-one, g_ljkc, L_ljkc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
-!     t_kc,ai = t_ik^ac = t_aick 
+!     t_kc,ai = t_ik^ac = t_aick
 !
       call mem%alloc(t_kcai, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
       call sort_1234_to_4312(t_akci, t_kcai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -1813,13 +1951,13 @@ contains
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
                   one,               &
-                  L_ljkc,            & 
+                  L_ljkc,            &
                   (wf%n_o)**2,       &
-                  t_kcai,            & 
+                  t_kcai,            &
                   (wf%n_o)*(wf%n_v), &
                   zero,              &
-                  Y_ljai,            & 
-                  (wf%n_o)**2)    
+                  Y_ljai,            &
+                  (wf%n_o)**2)
 !
       call mem%dealloc(L_ljkc, wf%N_o, wf%n_o, wf%n_o, wf%n_v)
       call mem%dealloc(t_kcai, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
@@ -1843,14 +1981,19 @@ contains
 !!    Save jacobian d2 intermediate
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2019
 !!
-!!    Constructs the intermediate 
+!!    Constructs the intermediate
 !!
-!!       X_kbij = sum_dl g_kcbd t_ij^cd 
+!!       X_kbij = sum_dl g_kcbd t_ij^cd
 !!
 !!    used in the d2-term. This is done only once in prepare_for_jacobian
 !!    and the intermediate is stored in the file jacobian_d2_intermediate
 !!    which is a wf variable.
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: squareup_and_sort_1234_to_2413
+      use reordering, only: sort_1234_to_4231, sort_1234_to_3124
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -1881,7 +2024,7 @@ contains
       req1 = wf%n_v*wf%eri%n_J + 2*(wf%n_o)*(wf%n_v)**2 + 2*(wf%n_o)**3
 !
       batch_b = batching_index(wf%n_v)
-      call mem%batch_setup(batch_b, req0, req1)
+      call mem%batch_setup(batch_b, req0, req1, 'save_jacobian_d2_intermediate')
 !
 !     Start looping over b-batches
 !
@@ -1926,7 +2069,7 @@ contains
 !
          call mem%dealloc(g_cdkb, wf%n_v, wf%n_v, wf%n_o, batch_b%length)
 !
-!        Reorder to X_k_ijb = X_ij_kb & add to the full space X 
+!        Reorder to X_k_ijb = X_ij_kb & add to the full space X
 !
          call mem%alloc(X_k_ijb, wf%n_o, wf%n_o, wf%n_o, batch_b%length)
          call sort_1234_to_3124(X_ij_kb, X_k_ijb, wf%n_o, wf%n_o, wf%n_o, (batch_b%length))
@@ -1939,7 +2082,7 @@ contains
 !
       call mem%batch_finalize()
 !
-!     Store intermediate to file 
+!     Store intermediate to file
 !
       wf%jacobian_d2_intermediate = sequential_file('jacobian_d2_intermediate_ccsd')
       call wf%jacobian_d2_intermediate%open_('write', 'rewind')
@@ -1961,7 +2104,7 @@ contains
 !!    Save jacobian e2 intermediate
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2019
 !!
-!!    Constructs the intermediate 
+!!    Constructs the intermediate
 !!
 !!       Y_bjck = sum_dl t_bjdl L_ldkc
 !!
@@ -1969,6 +2112,9 @@ contains
 !!    and the intermediate is stored in the file jacobian_e2_intermediate
 !!    which is a wf variable
 !!
+      use reordering, only: add_2143_to_1234, add_2341_to_1234, squareup
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -2025,7 +2171,7 @@ contains
 !
       call wf%jacobian_e2_intermediate%close_('keep')
 !
-      call timer%turn_off()      
+      call timer%turn_off()
 !
    end subroutine save_jacobian_e2_intermediate
 !
@@ -2035,9 +2181,9 @@ contains
 !!    Save jacobian g2 intermediates
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2019
 !!
-!!    Constructs the intermediate 
+!!    Constructs the intermediate
 !!
-!!       Y_bjck = t_bldj L_kcdl 
+!!       Y_bjck = t_bldj L_kcdl
 !!
 !!    The intermediates are stored in the file:
 !!
@@ -2045,8 +2191,8 @@ contains
 !!
 !!    G2 also needs intermediates formed for A1 term:
 !!
-!!       Y_jl   = t_ckdj L_kcld 
-!!       Y_bd   = t_blck L_kcld 
+!!       Y_jl   = t_ckdj L_kcld
+!!       Y_bd   = t_blck L_kcld
 !!
 !!    Which are constructed in save_jacobian_a1_intermediates
 !!    and stored on files
@@ -2056,6 +2202,10 @@ contains
 !!
 !!    which are wavefunction variables
 !!
+      use reordering, only: add_2143_to_1234, add_2341_to_1234
+      use reordering, only: squareup, sort_1234_to_1432
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -2125,23 +2275,22 @@ contains
    end subroutine save_jacobian_g2_intermediates
 !
 !
-   module subroutine save_jacobian_h2_intermediates(wf)
+   module subroutine save_jacobian_h2_intermediate(wf)
 !!
 !!    Save jacobian h2 intermediates
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2019
 !!
-!!    Constructs the intermediates 
+!!    Constructs the intermediates
 !!
-!!       Y_aild = t_ciak g_kcld
 !!       Y_ajkd = t_cjal g_kcld
 !!
-!!    The intermediates are stored in the files:
+!!    The intermediate is stored in the file
 !!
-!!       jacobian_h2_intermediate_voov_1
-!!       jacobian_h2_intermediate_voov_2
+!!       jacobian_h2_intermediate_voov
 !!
-!!    which are wavefunction variables
-!!
+      use reordering, only: squareup_and_sort_1234_to_1423
+      use reordering, only: sort_1234_to_1432
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -2150,49 +2299,19 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_kcld
       real(dp), dimension(:,:,:,:), allocatable :: g_lckd
-      real(dp), dimension(:,:,:,:), allocatable :: t_aikc
-      real(dp), dimension(:,:,:,:), allocatable :: Y_aild
+      real(dp), dimension(:,:,:,:), allocatable :: t_ajcl
       real(dp), dimension(:,:,:,:), allocatable :: Y_ajkd
-     
+
       timer = timings('Jacobian CCSD H2 intermediate construction', pl='verbose')
       call timer%turn_on()
 !
-      call mem%alloc(t_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-      call squareup_and_sort_1234_to_1423(wf%t2, t_aikc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     Y_ajkd = t_alcj g_kcld
 !
       call mem%alloc(g_kcld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%eri%get_eri_t1('ovov', g_kcld)
 !
-!     Y_aild = t_ciak g_kcld
-!
-      call mem%alloc(Y_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-      call dgemm('N', 'N', &
-                  wf%n_v*wf%n_o, &
-                  wf%n_v*wf%n_o, &
-                  wf%n_v*wf%n_o, &
-                  one,           &
-                  t_aikc,        &
-                  wf%n_v*wf%n_o, &
-                  g_kcld,        &
-                  wf%n_v*wf%n_o, &
-                  zero,          &
-                  Y_aild,        &
-                  wf%n_v*wf%n_o)
-!
-      wf%jacobian_h2_intermediate_voov_1 = sequential_file('jacobian_h2_intermediate_voov_1_ccsd')
-      call wf%jacobian_h2_intermediate_voov_1%open_('write', 'rewind')
-!
-      call wf%jacobian_h2_intermediate_voov_1%write_(Y_aild, wf%n_t1**2)
-!
-      call mem%dealloc(Y_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-      call wf%jacobian_h2_intermediate_voov_1%close_('keep')
-!
-!     Y_ajkd = t_alcj g_kcld
-!
-!     Note: pretend that t_aikc is t_ajcl
+      call mem%alloc(t_ajcl, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call squareup_and_sort_1234_to_1423(wf%t2, t_ajcl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(g_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call sort_1234_to_1432(g_kcld, g_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -2205,29 +2324,29 @@ contains
                   wf%n_v*wf%n_o, &
                   wf%n_v*wf%n_o, &
                   one,           &
-                  t_aikc,        & ! t_ajlc
+                  t_ajcl,        &
                   wf%n_v*wf%n_o, &
-                  g_lckd,        & 
+                  g_lckd,        &
                   wf%n_v*wf%n_o, &
                   zero,          &
                   Y_ajkd,        &
-                  wf%n_v*wf%n_o)       
+                  wf%n_v*wf%n_o)
 !
       call mem%dealloc(g_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call mem%dealloc(t_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(t_ajcl, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      wf%jacobian_h2_intermediate_voov_2 = sequential_file('jacobian_h2_intermediate_voov_2_ccsd')
-      call wf%jacobian_h2_intermediate_voov_2%open_('write', 'rewind')
+      wf%jacobian_h2_intermediate = sequential_file('jacobian_h2_intermediate_ccsd')
+      call wf%jacobian_h2_intermediate%open_('write', 'rewind')
 !
-      call wf%jacobian_h2_intermediate_voov_2%write_(Y_ajkd, wf%n_t1**2)
+      call wf%jacobian_h2_intermediate%write_(Y_ajkd, wf%n_t1**2)
 !
       call mem%dealloc(Y_ajkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call wf%jacobian_h2_intermediate_voov_2%close_('keep')
+      call wf%jacobian_h2_intermediate%close_('keep')
 !
       call timer%turn_off()
 !
-   end subroutine save_jacobian_h2_intermediates
+   end subroutine save_jacobian_h2_intermediate
 !
 !
    module subroutine save_jacobian_j2_intermediate(wf)
@@ -2245,6 +2364,9 @@ contains
 !!
 !!    which are wavefunction variables
 !!
+      use reordering, only: sort_1234_to_1324
+      use reordering, only: squareup_and_sort_1234_to_1324
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -2255,7 +2377,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_klcd
       real(dp), dimension(:,:,:,:), allocatable :: t_cdij
       real(dp), dimension(:,:,:,:), allocatable :: Y_klij
-     
+
       timer = timings('Jacobian CCSD J2 intermediate construction', pl='verbose')
       call timer%turn_on()
 !
@@ -2275,14 +2397,14 @@ contains
       call mem%alloc(Y_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
       call dgemm('N', 'N',    &
-                  wf%n_o**2,  &  
-                  wf%n_o**2,  &  
-                  wf%n_v**2,  &  
+                  wf%n_o**2,  &
+                  wf%n_o**2,  &
+                  wf%n_v**2,  &
                   one,        &
                   g_klcd,     &
-                  wf%n_o**2,  & 
+                  wf%n_o**2,  &
                   t_cdij,     &
-                  wf%n_v**2,  &  
+                  wf%n_v**2,  &
                   zero,       &
                   Y_klij,     &
                   wf%n_o**2)

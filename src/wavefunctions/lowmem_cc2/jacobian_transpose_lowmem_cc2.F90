@@ -44,6 +44,8 @@ contains
 !!    Effective Jacobian transpose transformation
 !!    Written by Sarai Dery Folkestad, Jun 2019
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(lowmem_cc2) :: wf
@@ -123,6 +125,11 @@ contains
 !!
 !!       Y_ba = sum_bj t_bjck L_kcja = - sum_bj g_bjck L_kcja / ε_bjck
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_3214_to_1234, add_3412_to_1234
+      use reordering, only: add_1432_to_1234, add_2143_to_1234, add_2341_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -167,7 +174,8 @@ contains
       call mem%alloc(Y_ba, wf%n_v, wf%n_v)
       call zero_array(Y_ba, wf%n_v**2)
 !
-      call mem%batch_setup(batch_j, batch_k, req0, req1_j, req1_k, req2)
+      call mem%batch_setup(batch_j, batch_k, req0, req1_j, req1_k, req2, &
+                           tag='jacobian_transpose_cc2_a1_lowmem_cc2 1')
 !
       do current_j_batch = 1, batch_j%num_batches
 !
@@ -293,7 +301,8 @@ contains
       batch_i = batching_index(wf%n_o)
       batch_k = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2)
+      call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2, &
+                           tag='jacobian_transpose_cc2_a1_lowmem_cc2 2')
 !
       do current_i_batch = 1, batch_i%num_batches
 !
@@ -366,6 +375,10 @@ contains
 !!
 !!       X_ij = sum_bck t_ckbj L_ibkc
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_3412_to_1234, add_1432_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -405,7 +418,8 @@ contains
       batch_b = batching_index(wf%n_v)
       batch_c = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2)
+      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2, &
+                           tag='jacobian_transpose_cc2_b1_lowmem_cc2')
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -505,6 +519,8 @@ contains
 !!
 !!    The term is calculated in batches over the b and c.
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -542,7 +558,8 @@ contains
       batch_b = batching_index(wf%n_v)
       batch_c = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2)
+      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2, &
+                           tag='effective_jacobian_transpose_cc2_a1_lowmem_cc2')
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -613,6 +630,10 @@ contains
 !!
 !!    The term is calculated in batches over the b and c.
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: sort_1234_to_4321
+      use reordering, only: add_2341_to_1234, add_2143_to_1234, add_4123_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -650,7 +671,8 @@ contains
       batch_b = batching_index(wf%n_v)
       batch_c = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2)
+      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2, &
+                           tag='effective_jacobian_transpose_cc2_b1_lowmem_cc2')
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -774,6 +796,10 @@ contains
 !!
 !!    The term is calculated in batches over the k, b, c
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array, copy_and_scale
+      use reordering, only: add_3214_to_1234, add_2143_to_1234, add_4321_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -818,7 +844,8 @@ contains
       batch_c = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_k, batch_b, batch_c, req0, req1_k, req1_b, req1_c, &
-                           req2_kb, req2_kc, req2_bc, req3)
+                           req2_kb, req2_kc, req2_bc, req3, &
+                           tag='effective_jacobian_transpose_cc2_c1_lowmem_cc2')
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -967,6 +994,8 @@ contains
 !!
 !!    The term is calculated in batches over the k and j.
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -1004,7 +1033,8 @@ contains
       batch_j = batching_index(wf%n_o)
       batch_k = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_j, batch_k, req0, req1_j, req1_k, req2)
+      call mem%batch_setup(batch_j, batch_k, req0, req1_j, req1_k, req2, &
+                           tag='effective_jacobian_transpose_cc2_d1_lowmem_cc2')
 !
       do current_j_batch = 1, batch_j%num_batches
 !
@@ -1075,6 +1105,11 @@ contains
 !!
 !!    The term is calculated in batches over the k and j.
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_4321_to_1234, add_4123_to_1234
+      use reordering, only: add_2143_to_1234, add_2341_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -1112,7 +1147,8 @@ contains
       batch_j = batching_index(wf%n_o)
       batch_k = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_j, batch_k, req0, req1_j, req1_k, req2)
+      call mem%batch_setup(batch_j, batch_k, req0, req1_j, req1_k, req2, &
+                           tag='effective_jacobian_transpose_cc2_e1_lowmem_cc2')
 !
       do current_j_batch = 1, batch_j%num_batches
 !
@@ -1234,6 +1270,10 @@ contains
 !!
 !!    The term is calculated in batches over the k, j and c indices.
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array, copy_and_scale
+      use reordering, only: add_1432_to_1234, add_2143_to_1234, add_4321_to_1234
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -1278,7 +1318,8 @@ contains
       batch_c = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_k, batch_j, batch_c, req0, req1_k, req1_j, req1_c, &
-                           req2_kj, req2_kj, req2_jc, req3)
+                           req2_kj, req2_kj, req2_jc, req3, &
+                           tag='effective_jacobian_transpose_cc2_f1_lowmem_cc2')
 !
       do current_k_batch = 1, batch_k%num_batches
 !

@@ -21,6 +21,8 @@ set(_LIBINT_NORMAL_SEARCH
 #Save location if set in environment
 set(LIBINT2_ENV $ENV{LIBINT2_ROOT})
 
+set(LIBINT2_DATA $ENV{LIBINT_DATA_PATH})
+
 set(LIBINT2_GLOB_DIR)
 
 # Must use glob instead of find_path because path depends on version
@@ -76,11 +78,15 @@ if(LIBINT2_GLOB_DIR)
                 PATH_SUFFIXES lib lib/.libs)
 
    #Try to find the Libint data path
-   file(GLOB_RECURSE _BASIS_DIR ${_BASE_PATH}/*/3-21g.g94)
+   if (LIBINT2_DATA)
+      file(GLOB_RECURSE _BASIS_DIR ${LIBINT2_DATA}/3-21g.g94)
+   else ()
+      file(GLOB_RECURSE _BASIS_DIR ${_BASE_PATH}/*/3-21g.g94)
+   endif()
    if(_BASIS_DIR)
       get_filename_component(Libint2_BASIS_DIR ${_BASIS_DIR} PATH)
    endif()
-
+   message(STATUS "Libint2 will search for basis sets from ${Libint2_BASIS_DIR}")
 endif()
 
 # Let the module handle the variables

@@ -46,6 +46,7 @@ contains
 !!
 !
       use timings_class, only: timings
+      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -53,46 +54,61 @@ contains
       character(len=*), intent(in), optional :: task
       type(timings) :: timer
 !
+      real(dp), dimension(:,:), allocatable :: h, F_eff
+!
       timer = timings('Fock matrix construction (T1 basis)', pl='n')
       call timer%turn_on()
 !
+      call mem%alloc(h, wf%n_mo, wf%n_mo)
+      call mem%alloc(F_eff, wf%n_mo, wf%n_mo)
+!
+      call zero_array(F_eff, wf%n_mo**2)
+!
+      call wf%get_t1_oei('hamiltonian', h, screening=.true.)
+!
+      if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_eff)
+!
       if (.not. present(task)) then
 !
-         call wf%construct_fock_ai_t1()
-         call wf%construct_fock_ia_t1()
-         call wf%construct_fock_ab_t1()
-         call wf%construct_fock_ij_t1()
-         return
-!
-      endif
-!
-      if (trim(task) == 'gs') then
-!
-         call wf%construct_fock_ai_t1()
-         call wf%construct_fock_ia_t1()
-!
-      elseif (trim(task) == 'es') then
-!
-         call wf%construct_fock_ai_t1()
-         call wf%construct_fock_ab_t1()
-         call wf%construct_fock_ij_t1()
-!
-      elseif (trim(task) == 'multipliers') then
-!
-         call wf%construct_fock_ai_t1()
-         call wf%construct_fock_ia_t1()
-         call wf%construct_fock_ab_t1()
-         call wf%construct_fock_ij_t1()
+         call wf%construct_fock_ai_t1(h, F_eff)
+         call wf%construct_fock_ia_t1(h, F_eff)
+         call wf%construct_fock_ab_t1(h, F_eff)
+         call wf%construct_fock_ij_t1(h, F_eff)
 !
       else
 !
-         call output%error_msg('did not recognize task in construct_fock_cc2')
+         if (trim(task) == 'gs') then
+!
+            call wf%construct_fock_ai_t1(h, F_eff)
+            call wf%construct_fock_ia_t1(h, F_eff)
+!
+         elseif (trim(task) == 'es') then
+!
+            call wf%construct_fock_ai_t1(h, F_eff)
+            call wf%construct_fock_ab_t1(h, F_eff)
+            call wf%construct_fock_ij_t1(h, F_eff)
+!
+         elseif (trim(task) == 'multipliers') then
+!
+            call wf%construct_fock_ai_t1(h, F_eff)
+            call wf%construct_fock_ia_t1(h, F_eff)
+            call wf%construct_fock_ab_t1(h, F_eff)
+            call wf%construct_fock_ij_t1(h, F_eff)
+!
+         else
+!
+            call output%error_msg('did not recognize task in construct_fock_cc2')
+!
+         endif
 !
       endif
+!
+      call mem%dealloc(h, wf%n_mo, wf%n_mo)
+      call mem%dealloc(F_eff, wf%n_mo, wf%n_mo)
 !
       call timer%turn_off()
 !
    end subroutine construct_fock_cc2
-!                            
+!
 !
 end submodule fock_cc2

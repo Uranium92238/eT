@@ -36,6 +36,8 @@ program eT_program
    use hf_class,     only: hf
    use uhf_class,    only: uhf
    use mlhf_class,   only: mlhf
+   use cuhf_class,   only: cuhf
+   use rohf_class,   only: rohf
 !
    use omp_lib
 !
@@ -236,9 +238,12 @@ subroutine reference_calculation(ref_wf)
    use hf_geoopt_engine_class, only: hf_geoopt_engine
    use tdhf_engine_class,     only: tdhf_engine
 !
-   use hf_class, only: hf
-   use uhf_class, only: uhf
+   use hf_class,   only: hf
+   use uhf_class,  only: uhf
    use mlhf_class, only: mlhf
+   use qed_hf_class, only: qed_hf
+   use cuhf_class, only: cuhf
+   use rohf_class, only: rohf
 !
    implicit none
 !
@@ -258,9 +263,21 @@ subroutine reference_calculation(ref_wf)
 !
       ref_wf = uhf()
 !
+   elseif (trim(ref_wf_name) == 'cuhf') then
+!
+      ref_wf = cuhf()
+!
+   elseif (trim(ref_wf_name) == 'rohf') then
+!
+      ref_wf = rohf()
+!
    elseif (trim(ref_wf_name) == 'mlhf') then
 !
       ref_wf = mlhf()
+!
+   elseif (trim(ref_wf_name) == 'qed-hf') then
+!
+      ref_wf = qed_hf()
 !
    else
 !
@@ -510,13 +527,14 @@ subroutine print_program_banner()
                            'I-M. Høyvik, '            // &
                            'E. F. Kjønstad, '         // &
                            'H. Koch, '                // &
+                           'R. Matveeva, '            // &
                            'T. Moitra, '              // &
                            'R. H. Myhre, '            // &
                            'A. C. Paul, '             // &
                            'S. Roet, '                // &
                            'M. Scavino, '             // &
                            'A. K. Schnack-Petersen, ' // &
-                           'A. Skeidsvoll, '          // &
+                           'A. S. Skeidsvoll, '       // &
                            'Å. H. Tveten',               &
                            ffs='(t4,a)', fs='(t4,a)', ll=68)
 !

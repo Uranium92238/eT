@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.3 - an electronic structure program
+                     eT 1.5 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco
+   This is eT 1.5.0 Furia (development)
   ------------------------------------------------------------
-  Configuration date: 2021-06-07 12:48:33 UTC +02:00
-  Git branch:         update-test-refs-new
-  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Configuration date: 2021-10-06 10:20:02 UTC +02:00
+  Git branch:         hf-cleanup-oao-stuff
+  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
-  PCM:                ON
+  PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-06-07 12:50:58 UTC +02:00
+  Calculation started: 2021-10-06 10:30:26 UTC +02:00
 
 
   :: Input file
@@ -157,6 +157,8 @@
      Maximum iterations:                   100
      Acceleration type:                   diis
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
@@ -174,26 +176,26 @@
 
      DIIS dimension:   8
 
-     Storage (solver scf_e): memory
-     Storage (solver scf_x): memory
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.2914E-11     0.7884E+02
+     1           -78.843851693631     0.5168E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.645629080248
+     HOMO-LUMO gap:                  0.645629080245
      Nuclear repulsion energy:      12.116100574587
      Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.02280
-     Total cpu time (sec):               0.03086
+     Total wall time (sec):              0.03000
+     Total cpu time (sec):               0.05737
 
 
   :: CCSD wavefunction
@@ -293,8 +295,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.12108
-     Total cpu time (sec):               0.24045
+     Total wall time (sec):              0.42700
+     Total cpu time (sec):               0.65763
 
 
   2) Preparation of MO basis and integrals
@@ -312,6 +314,8 @@
 
   - CC ground state solver settings:
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
      Max number of iterations:      100
@@ -322,8 +326,8 @@
 
      DIIS dimension:   8
 
-     Storage (cc_gs_diis_e): file
-     Storage (cc_gs_diis_x): file
+     Storage (cc_gs_diis_errors): file
+     Storage (cc_gs_diis_parameters): file
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
@@ -341,15 +345,15 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        1      5        0.014740597524
+        1      5        0.014740597522
        14      4       -0.009546856220
         7      4        0.008284826483
        15      5       -0.006124828873
         4      5        0.005606072698
         6      2        0.005476844297
-        2      4        0.005318591701
+        2      4        0.005318591702
        13      5        0.005269818337
-        5      6        0.004933006906
+        5      6        0.004933006903
        11      6       -0.003454309399
      ------------------------------------
 
@@ -359,7 +363,7 @@
      --------------------------------------------------
         2      4       2      4       -0.047351708919
         5      6       5      6       -0.046240574404
-        9      3       9      3       -0.041367012248
+        9      3       9      3       -0.041367012249
         3      4       3      4       -0.036659067517
         6      5       6      5       -0.034554012170
         1      5       1      5       -0.034177347751
@@ -371,8 +375,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.01521
-     Total cpu time (sec):               0.03114
+     Total wall time (sec):              0.03600
+     Total cpu time (sec):               0.06351
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -397,8 +401,8 @@
 
      DIIS dimension:   8
 
-     Storage (cc_multipliers_diis_e): file
-     Storage (cc_multipliers_diis_x): file
+     Storage (cc_multipliers_diis_errors): file
+     Storage (cc_multipliers_diis_parameters): file
 
   Requested restart. Reading multipliers from file.
 
@@ -414,16 +418,16 @@
      -----------------------------------
         a       i         tbar(a,i)
      -----------------------------------
-        1      5        0.022790118898
-       14      4       -0.015907507091
+        1      5        0.022790118893
+       14      4       -0.015907507090
         7      4        0.014297181947
-        4      5        0.011712306721
+        4      5        0.011712306722
        15      5       -0.010007216961
         6      2        0.009083547622
        13      5        0.008770531160
-        2      4        0.006954460294
-        5      6        0.006820250278
-        3      4        0.006765159553
+        2      4        0.006954460297
+        5      6        0.006820250273
+        3      4        0.006765159555
      ------------------------------------
 
      Largest double amplitudes:
@@ -433,19 +437,19 @@
         5      6       5      6       -0.092500754791
         2      4       2      4       -0.092085328213
         6      5       5      6        0.089666625590
-        2      4       5      6       -0.083792278098
-        9      3       9      3       -0.082167759498
+        2      4       5      6       -0.083792278099
+        9      3       9      3       -0.082167759499
         2      4       6      5        0.077164163662
-        2      4       1      5       -0.076342716082
+        2      4       1      5       -0.076342716081
         7      4       5      6        0.071424572152
         3      4       3      4       -0.071282985174
-        6      5       6      5       -0.068075967747
+        6      5       6      5       -0.068075967748
      --------------------------------------------------
 
   - Finished solving the ccsd multipliers equations
 
-     Total wall time (sec):              0.00674
-     Total cpu time (sec):               0.01474
+     Total wall time (sec):              0.03200
+     Total cpu time (sec):               0.03511
 
 
   5) Calculation of the excited states (diis algorithm)
@@ -467,6 +471,8 @@
      Calculation type:    valence
      Excitation vectors:  right
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
@@ -477,15 +483,15 @@
 
      DIIS dimension:  20
 
-     Storage (diis_cc_es_001_e): file
-     Storage (diis_cc_es_001_x): file
+     Storage (diis_cc_es_001_errors): file
+     Storage (diis_cc_es_001_parameters): file
 
   - DIIS tool settings:
 
      DIIS dimension:  20
 
-     Storage (diis_cc_es_002_e): file
-     Storage (diis_cc_es_002_x): file
+     Storage (diis_cc_es_002_errors): file
+     Storage (diis_cc_es_002_parameters): file
      Restarting right vector 1 from file r_001.
 
   Iteration:                  1
@@ -525,7 +531,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.8560E-11
-     2      0.356038966715       0.7119E-02
+     2      0.356038966714       0.7119E-02
   -----------------------------------------------
 
   Iteration:                  6
@@ -760,14 +766,14 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      6        0.964249868485
+        1      6        0.964249868484
         4      6        0.121847295825
         6      6       -0.036249387510
        13      6       -0.030061485952
         1      3       -0.011074241439
        22      6        0.008603353606
        19      5       -0.007863834135
-        1      5        0.007857920534
+        1      5        0.007857920555
        10      6        0.007675079118
         9      6       -0.007427820492
      ------------------------------------
@@ -783,7 +789,7 @@
         1      4       2      6       -0.061512599150
         3      4       1      6       -0.054854109240
         6      5       1      6        0.046260935197
-        4      5       1      6       -0.038260256938
+        4      5       1      6       -0.038260256937
         7      4       1      6        0.032958804244
         4      4       2      6       -0.032734134559
      --------------------------------------------------
@@ -799,13 +805,13 @@
      -----------------------------------
         1      5        0.957314847871
         2      4       -0.137091155508
-        4      5        0.090812850216
-        1      2       -0.071675967622
+        4      5        0.090812850215
+        1      2       -0.071675967621
         3      4       -0.054796039253
         5      6       -0.040602500552
-       13      5       -0.029458132227
+       13      5       -0.029458132228
         7      4        0.025825254324
-        4      2       -0.021074995286
+        4      2       -0.021074995285
        10      5        0.013972713306
      ------------------------------------
 
@@ -813,14 +819,14 @@
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        2      4       1      5       -0.082435001503
+        2      4       1      5       -0.082435001502
         1      5       1      5       -0.081686786865
         1      5       6      5        0.054811008558
-        1      4       2      5       -0.048159897951
+        1      4       2      5       -0.048159897950
         1      5       4      5       -0.042695435568
         3      4       1      5       -0.039841925825
         1      5       5      6       -0.039669396138
-        2      5       3      5       -0.037629696694
+        2      5       3      5       -0.037629696693
         1      2       3      4        0.032609865471
         4      4       2      5       -0.031072898992
      --------------------------------------------------
@@ -831,15 +837,15 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.247194255572        6.726498310302
-        2                  0.356085057592        9.689567958101
+        1                  0.247194255572        6.726498310303
+        2                  0.356085057592        9.689567958102
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              0.15621
-     Total cpu time (sec):               0.31168
+     Total wall time (sec):              0.54800
+     Total cpu time (sec):               0.62068
 
 
   5) Calculation of the excited states (diis algorithm)
@@ -861,6 +867,8 @@
      Calculation type:    valence
      Excitation vectors:  left
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
@@ -871,15 +879,15 @@
 
      DIIS dimension:  20
 
-     Storage (diis_cc_es_001_e): file
-     Storage (diis_cc_es_001_x): file
+     Storage (diis_cc_es_001_errors): file
+     Storage (diis_cc_es_001_parameters): file
 
   - DIIS tool settings:
 
      DIIS dimension:  20
 
-     Storage (diis_cc_es_002_e): file
-     Storage (diis_cc_es_002_x): file
+     Storage (diis_cc_es_002_errors): file
+     Storage (diis_cc_es_002_parameters): file
      Restarting left vector 1 from file l_001.
      Restarting left vector 2 from file r_002.
 
@@ -896,7 +904,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.247194255572       0.6938E-11
-     2      0.364308810220       0.6073E-01
+     2      0.364308810221       0.6073E-01
   -----------------------------------------------
 
   Iteration:                  3
@@ -1141,7 +1149,7 @@
      Electronic state nr. 1
 
      Energy (Hartree):                  0.247194255572
-     Fraction singles (|L1|/|L|):       0.942536368056
+     Fraction singles (|L1|/|L|):       0.942536368057
 
      Largest single amplitudes:
      -----------------------------------
@@ -1150,26 +1158,26 @@
         1      6        0.934321066335
         4      6        0.114002382604
         6      6       -0.032814400824
-       13      6       -0.027947643733
-        1      3       -0.010930020792
-        1      5        0.007879253272
+       13      6       -0.027947643734
+        1      3       -0.010930020791
+        1      5        0.007879253291
        22      6        0.007408446951
        10      6        0.006944886702
        19      5       -0.006882560535
-        9      6       -0.006676723236
+        9      6       -0.006676723237
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         L(ai,bj)
      --------------------------------------------------
-        2      4       1      6       -0.171079645375
-        6      5       1      6        0.100212340581
-        3      4       1      6       -0.099658455494
-        1      5       1      6       -0.089486547886
-        4      5       1      6       -0.079266906023
-        1      6       5      6       -0.071510175859
-        7      4       1      6        0.068318341917
+        2      4       1      6       -0.171079645373
+        6      5       1      6        0.100212340582
+        3      4       1      6       -0.099658455492
+        1      5       1      6       -0.089486547887
+        4      5       1      6       -0.079266906022
+        1      6       5      6       -0.071510175861
+        7      4       1      6        0.068318341918
         1      2       1      6       -0.065029437022
         4      4       2      6       -0.055727685952
         3      5       2      6       -0.042559408816
@@ -1187,10 +1195,10 @@
         1      5        0.920088349284
         2      4       -0.130880085863
         4      5        0.082954102257
-        1      2       -0.066949838481
+        1      2       -0.066949838480
         3      4       -0.051783287686
         5      6       -0.035952688613
-       13      5       -0.027083554109
+       13      5       -0.027083554110
         7      4        0.022267567554
         4      2       -0.019543419768
        10      5        0.012292234036
@@ -1200,12 +1208,12 @@
      --------------------------------------------------
         a      i       b      j         L(ai,bj)
      --------------------------------------------------
-        1      5       1      5       -0.160292538734
-        2      4       1      5       -0.141010853922
-        3      4       1      5       -0.088409690093
-        1      5       5      6       -0.085732644499
+        1      5       1      5       -0.160292538737
+        2      4       1      5       -0.141010853920
+        3      4       1      5       -0.088409690091
+        1      5       5      6       -0.085732644502
         4      4       2      5       -0.059886875057
-        1      5       6      5        0.058600304295
+        1      5       6      5        0.058600304296
         2      5       2      5       -0.056836923109
         7      4       1      5        0.051021542268
         1      2       3      4        0.050766399787
@@ -1218,15 +1226,15 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.247194255572        6.726498310299
-        2                  0.356085057593        9.689567958107
+        1                  0.247194255572        6.726498310300
+        2                  0.356085057593        9.689567958109
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CCSD excited state equations (left)
 
-     Total wall time (sec):              0.14144
-     Total cpu time (sec):               0.28364
+     Total wall time (sec):              0.66000
+     Total cpu time (sec):               0.73082
 
 
   6) Calculation of excited state properties (EOM)
@@ -1239,7 +1247,7 @@
      -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.247194255572
-     Excitation energy [eV]:            6.726498310302
+     Excitation energy [eV]:            6.726498310303
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
@@ -1256,7 +1264,7 @@
      -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.356085057592
-     Excitation energy [eV]:            9.689567958101
+     Excitation energy [eV]:            9.689567958102
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
@@ -1271,17 +1279,17 @@
 
   - Timings for the CCSD response calculation
 
-     Total wall time (sec):              0.44399
-     Total cpu time (sec):               0.88633
+     Total wall time (sec):              1.71800
+     Total cpu time (sec):               2.12350
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 16.353896 MB
+  Peak memory usage during the execution of eT: 16.323964 MB
 
-  Total wall time in eT (sec):              0.48751
-  Total cpu time in eT (sec):               0.94595
+  Total wall time in eT (sec):              1.81200
+  Total cpu time in eT (sec):               2.24448
 
-  Calculation ended: 2021-06-07 12:50:58 UTC +02:00
+  Calculation ended: 2021-10-06 10:30:27 UTC +02:00
 
   - Implementation references:
 

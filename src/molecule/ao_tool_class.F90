@@ -31,7 +31,7 @@ module ao_tool_class
 !
    use parameters
    use named_range_class
-   use iso_c_binding,         only: c_int
+   use iso_c_binding,         only: c_int, c_null_char, c_char
 !
    use global_in,             only: input
    use global_out,            only: output
@@ -53,6 +53,7 @@ module ao_tool_class
 !     Vector of shell intervals (first, last, length)
 !
       type(range_), dimension(:), allocatable, public :: shells
+      type(range_), dimension(:), allocatable, public :: ri_shells
 !
 !     Various useful index mappings
 !
@@ -120,6 +121,12 @@ module ao_tool_class
       procedure, public :: get_eri &
                         => get_eri_ao_tool ! ERI = electron repulsion integral
 !
+      procedure, public :: get_eri_2c &
+                        => get_eri_2c_ao_tool
+!
+      procedure, public :: get_eri_3c &
+                        => get_eri_3c_ao_tool
+!
       procedure, public :: get_eri_1der &
                         => get_eri_1der_ao_tool
 !
@@ -173,12 +180,6 @@ module ao_tool_class
 !
       procedure, public :: get_reduced_ao_metric &
                         => get_reduced_ao_metric_ao_tool
-!
-      procedure, public :: orthonormal_ao_pivot_basis_transformation &
-                        => orthonormal_ao_pivot_basis_transformation_ao_tool ! Y = P^T X P, where P are pivots
-!
-      procedure, public :: orthonormal_ao_pivot_transformation &
-                        => orthonormal_ao_pivot_transformation_ao_tool ! Y = P X
 !
       procedure, public :: get_n_orthonormal_ao &
                         => get_n_orthonormal_ao_ao_tool
@@ -236,8 +237,8 @@ module ao_tool_class
       procedure, public :: print_basis_set_molden &
                         => print_basis_set_molden_ao_tool
 !
-      procedure, public :: get_SAD_center_indices &
-                        => get_SAD_center_indices_ao_tool
+      procedure, public :: get_centers &
+                        => get_centers_ao_tool
 !
       procedure, private :: construct_cs_eri_max_screenings ! Cauchy-Schwarz (CS),
                                                             ! electron repulsion integrals (ERIs)
@@ -255,6 +256,8 @@ module ao_tool_class
       procedure, private :: initialize_centers_from_ao_tool
       procedure, private :: initialize_centers_from_input_file
       procedure, private :: initialize_center_shells
+!
+      procedure, private :: check_for_close_atoms
 !
       procedure, private :: set_atomic_center_positions
 !
@@ -274,6 +277,9 @@ module ao_tool_class
 !
       procedure, private :: get_subset_index
       procedure, private :: shp_on_same_atom
+!
+      procedure, private :: get_local_eri_precision
+      procedure, private, nopass :: skip_integral
 !
       final :: destructor
 !
@@ -367,6 +373,8 @@ contains
 !
       print_z_matrix = input%is_keyword_present('z-matrix', 'print')
       if (print_z_matrix) call ao%print_z_matrix()
+!
+      call ao%check_for_close_atoms()
 !
       call ao%calculate_n_aos()
       call ao%calculate_n_shells()
@@ -997,8 +1005,6 @@ contains
 !!
 !!    Modified by EFK and SDF, 2020: generalized to any number of components.
 !
-      use iso_c_binding
-!
       implicit none
 !
       class(ao_tool), intent(in) :: ao
@@ -1147,7 +1153,6 @@ contains
 !!    where k refers to the shell centers (k = 1, 2 refers to A, B) and q to their xyz-coord.
 !!
       use array_utilities, only: zero_array
-      use iso_c_binding
 !
       implicit none
 !
@@ -1264,15 +1269,7 @@ contains
 !
 !     Set precision to non-default value if requested
 !
-      if (present(precision_)) then
-!
-         precision_local = precision_
-!
-      else
-!
-         precision_local = ao%libint_epsilon
-!
-      endif
+      precision_local = ao%get_local_eri_precision(precision_)
 !
 !     Get the integrals g from Libint
 !
@@ -1284,15 +1281,7 @@ contains
 !
 !     Return skip if requested; otherwise, zero g if skip_local = 1
 !
-      if (present(skip)) then
-!
-         skip = skip_local
-!
-      else
-!
-         if (skip_local .eq. 1) call zero_array(g, int(n_A * n_B * n_C * n_D))
-!
-      endif
+      call skip_integral(g, int(n_A*n_B*n_C*n_D), int(skip_local), skip)
 !
    end subroutine get_eri_ao_tool
 !
@@ -1342,8 +1331,6 @@ contains
 !!
       use libint_initialization, only: initialize_coulomb_external_charges_c
 !
-      use iso_c_binding
-!
       implicit none
 !
       type(point_charges), intent(in) :: pc
@@ -1364,9 +1351,6 @@ contains
 !!    embedding (QM/MM)
 !!
       use libint_initialization, only: initialize_coulomb_external_charges_c
-
-!
-      use iso_c_binding
 !
       implicit none
 !
@@ -1387,8 +1371,6 @@ contains
 !!    Written by Sarai D. Folkestad, 2020
 !!
       use libint_initialization, only: initialize_coulomb_external_unit_charges_c
-!
-      use iso_c_binding
 !
       implicit none
 !
@@ -2179,95 +2161,6 @@ contains
                   ao%n_orthonormal_ao)
 !
    end subroutine get_reduced_ao_metric_ao_tool
-!
-!
-   subroutine orthonormal_ao_pivot_basis_transformation_ao_tool(ao, X, Y)
-!!
-!!    OAO pivot basis transformation
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020
-!!
-!!    Constructs
-!!
-!!       Y = P^T X P,
-!!
-!!    where P is the pivot matrix from Cholesky decomposition of the AO overlap matrix.
-!!
-      implicit none
-!
-      class(ao_tool), intent(in) :: ao
-!
-      real(dp), dimension(ao%n, ao%n), intent(in) :: X
-!
-      real(dp), dimension(ao%n_orthonormal_ao, ao%n_orthonormal_ao), intent(out) :: Y
-!
-      real(dp), dimension(:,:), allocatable :: XP
-!
-      call mem%alloc(XP, ao%n, ao%n_orthonormal_ao)
-!
-      call dgemm('N', 'N',  &
-                  ao%n,     &
-                  ao%n_orthonormal_ao, &
-                  ao%n,     &
-                  one,      &
-                  X,        &
-                  ao%n,     &
-                  ao%P,     &
-                  ao%n,     &
-                  zero,     &
-                  XP,       &
-                  ao%n)
-!
-      call dgemm('T', 'N',  &
-                  ao%n_orthonormal_ao, &
-                  ao%n_orthonormal_ao, &
-                  ao%n,     &
-                  one,      &
-                  ao%P,     &
-                  ao%n,     &
-                  XP,       &
-                  ao%n,     &
-                  zero,     &
-                  Y,        &
-                  ao%n_orthonormal_ao)
-!
-      call mem%dealloc(XP, ao%n, ao%n_orthonormal_ao)
-!
-   end subroutine orthonormal_ao_pivot_basis_transformation_ao_tool
-!
-!
-   subroutine orthonormal_ao_pivot_transformation_ao_tool(ao, X, Y)
-!!
-!!    OAO pivot transformation
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020
-!!
-!!    Constructs
-!!
-!!       Y = P X,
-!!
-!!    where P is the pivot matrix from Cholesky decomposition of the AO overlap matrix.
-!!
-      implicit none
-!
-      class(ao_tool), intent(in) :: ao
-!
-      real(dp), dimension(ao%n_orthonormal_ao, ao%n_orthonormal_ao), intent(in) :: X
-!
-      real(dp), dimension(ao%n, ao%n_orthonormal_ao), intent(out) :: Y
-!
-      call dgemm('N', 'N',  &
-                  ao%n,     &
-                  ao%n_orthonormal_ao, &
-                  ao%n_orthonormal_ao, &
-                  one,      &
-                  ao%P,     &
-                  ao%n,     &
-                  X,        &
-                  ao%n_orthonormal_ao, &
-                  zero,     &
-                  Y,        &
-                  ao%n)
-!
-   end subroutine orthonormal_ao_pivot_transformation_ao_tool
 !
 !
    function get_n_orthonormal_ao_ao_tool(ao) result(n_orthonormal_ao)
@@ -3072,7 +2965,6 @@ contains
 !!    Construct OEI screened (one-electron integral)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2021
 !
-      use iso_c_binding
       use array_utilities, only: zero_array
 !
       implicit none
@@ -3414,49 +3306,227 @@ contains
    end subroutine print_basis_set_molden_ao_tool
 !
 !
-   subroutine get_SAD_center_indices_ao_tool(ao, center_indices)
+   subroutine get_centers_ao_tool(ao, centers, first, last)
 !!
-!!    Get SAD center indices
-!!    Written by Tor S. Haugland and Sarai D. Folkestad, Jun 2021
+!!    Get centers
+!!    Written by Sarai D. Folkestad, 2021
 !!
-!!    Collects the indices of unique atoms, excluding ghost atoms.
+      implicit none
+!
+      class(ao_tool), intent(in) :: ao
+!
+      integer, intent(in) :: first, last
+!
+      type(atomic_center), dimension(last - first + 1) :: centers
+!
+      integer :: I
+!
+      do I = first, last
+!
+         centers(I - first + 1) = ao%centers(I)
+!
+      enddo
+!
+   end subroutine get_centers_ao_tool
+!
+!
+   subroutine get_eri_2c_ao_tool(ao, g, J, K, precision_, skip)
+!!
+!!    Get ERI 2 center
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020
+!!
+!!    Two optional arguments:
+!!
+!!       precision_:  (intent in) Double precision real corresponding to the Libint precision
+!!                   'epsilon' to use when calculating the integral. Does not guarantee a precision
+!!                   to the given value and should therefore be selected conservatively.
+!!
+!!       skip:       (intent out) If present, this integer will be 1 if Libint decided not to
+!!                   calculate the integral; it will be zero otherwise. If it is present, g will
+!!                   not be zeroed out if Libint decides not to calculate g. Thus, only pass 'skip'
+!!                   to the routine if you wish to avoid zeroing out elements that are negligible.
 !!
 !
-      use string_utilities, only: index_of_unique_strings
+      use array_utilities, only: zero_array
+      use shell_class, only: shell
 !
       implicit none
 !
-      class(ao_tool),                           intent(in) :: ao
-      integer, dimension(ao%n_centers),         intent(out) :: center_indices
+      class(ao_tool), intent(in) :: ao
 !
-      integer :: n_centers, I
+      type(shell), intent(in) :: J, K
 !
-      character(len=50), dimension(ao%n_centers) :: atom_and_basis
-      integer, dimension(ao%n_centers) :: unique_center_indices
+      real(dp), dimension(J%length * K%length), intent(out) :: g
 !
-      do I = 1, ao%n_centers
+      real(dp), optional, intent(in) :: precision_
+      integer, optional, intent(out) :: skip
 !
-         atom_and_basis(I) = ao%centers(I)%get_identifier_string()
+      integer(c_int) :: J_, K_
+      integer(c_int) :: n_J, n_K
 !
-      enddo
+      integer(c_int) :: skip_local
 !
-      call index_of_unique_strings(unique_center_indices, ao%n_centers, atom_and_basis)
+      real(dp) :: precision_local
 !
-      center_indices = 0
-      n_centers = 0
+      J_ = int(J%number_, c_int)
+      K_ = int(K%number_, c_int)
 !
-      do I = 1, ao%n_centers
+      n_J = int(J%length, c_int)
+      n_K = int(K%length, c_int)
 !
-         if (all(unique_center_indices /= I)) cycle
-         if (ao%centers(I)%is_ghost()) cycle ! No density to generate for ghost atom
-         if (ao%centers(I)%number_ == ao%centers(I)%charge) cycle ! No electrons on this atom
+      precision_local = ao%get_local_eri_precision(precision_)
 !
-         n_centers = n_centers + 1
-         center_indices(n_centers) = I
+      call get_eri_2c_c(g,                &
+                     J_, K_,              &
+                     precision_local,     &
+                     skip_local,          &
+                     n_J, n_K)
 !
-      enddo
+      call skip_integral(g, int(n_J*n_K), int(skip_local), skip)
 !
-   end subroutine get_SAD_center_indices_ao_tool
+   end subroutine get_eri_2c_ao_tool
+!
+!
+   subroutine get_eri_3c_ao_tool(ao, g, J, C, D, precision_, skip)
+!!
+!!    Get ERI 3 center
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020
+!!
+!!       precision_:  (intent in) Double precision real corresponding to the Libint precision
+!!                   'epsilon' to use when calculating the integral. Does not guarantee a precision
+!!                   to the given value and should therefore be selected conservatively.
+!!
+!!       skip:       (intent out) If present, this integer will be 1 if Libint decided not to
+!!                   calculate the integral; it will be zero otherwise. If it is present, g will
+!!                   not be zeroed out if Libint decides not to calculate g. Thus, only pass 'skip'
+!!                   to the routine if you wish to avoid zeroing out elements that are negligible.
+!!
+!
+      use shell_class, only: shell
+      use array_utilities, only: zero_array
+!
+      implicit none
+!
+      class(ao_tool), intent(in) :: ao
+!
+      integer, intent(in) :: C, D
+!
+      type(shell), intent(in) :: J
+!
+      real(dp), dimension(J%length * &
+                          ao%shells(C)%length * ao%shells(D)%length), intent(out) :: g
+!
+      real(dp), optional, intent(in) :: precision_
+      integer, optional, intent(out) :: skip
+!
+      integer(c_int) :: J_, C_, D_
+      integer(c_int) :: n_J, n_C, n_D
+!
+      integer(c_int) :: skip_local
+!
+      real(dp) :: precision_local
+!
+      J_ = int(J%number_, c_int)
+      C_ = int(C, c_int)
+      D_ = int(D, c_int)
+!
+      n_J = int(J%length, c_int)
+      n_C = int(ao%shells(C)%length, c_int)
+      n_D = int(ao%shells(D)%length, c_int)
+!
+      precision_local = ao%get_local_eri_precision(precision_)
+!
+      call get_eri_3c_c(g,                 &
+                     J_, C_, D_,           &
+                     precision_local,      &
+                     skip_local,           &
+                     n_J, n_C, n_D)
+!
+      call skip_integral(g, int(n_J*n_C*n_D), int(skip_local), skip)
+!
+   end subroutine get_eri_3c_ao_tool
+!
+!
+   pure function get_local_eri_precision(ao, precision_) result(precision_local)
+!!
+!!    Get local ERI precision
+!!    Written by Sarai D. Folkestad, Sep 2021
+!!
+      implicit none
+!
+      class(ao_tool), intent(in)           :: ao
+      real(dp),       intent(in), optional :: precision_
+!
+      real(dp) :: precision_local
+!
+      if (present(precision_)) then
+!
+         precision_local = precision_
+!
+      else
+!
+         precision_local = ao%libint_epsilon
+!
+      endif
+!
+   end function get_local_eri_precision
+!
+!
+   subroutine skip_integral(g, size_, skip_local, skip)
+!!
+!!    Skip integral
+!!    Written by Sarai D. Folkestad, 2021
+!
+      use array_utilities, only: zero_array
+!
+      implicit none
+!
+      integer, intent(out), optional :: skip
+      integer, intent(in) :: skip_local
+      integer, intent(in) :: size_
+      real(dp), dimension(size_), intent(inout) :: g
+!
+      if (present(skip)) then
+!
+         skip = skip_local
+!
+      else
+!
+         if (skip_local .eq. 1) call zero_array(g, size_)
+!
+      endif
+!
+   end subroutine skip_integral
+!
+!
+   subroutine check_for_close_atoms(ao)
+!!
+!!    Check for close atoms
+!!    Written by Alexander C. Paul, Nov 2021
+!!
+      use array_utilities, only: get_euclidean_distance
+!
+      implicit none
+!
+      class(ao_tool), intent(in) :: ao
+      integer  :: c1, c2
+      real(dp) :: distance
+!
+      do c1 = 2, ao%n_centers
+         do c2 = 1, c1-1
+!
+            distance = get_euclidean_distance(ao%centers(c1)%coordinates, &
+                                              ao%centers(c2)%coordinates, 3)
+!
+            if (distance < 0.1) then
+               call output%warning_msg('Atoms (i0) and (i0) are closer than 0.1 Angstrom.', &
+                                       ints=[c2, c1])
+            end if
+!
+         end do
+      end do
+!
+   end subroutine check_for_close_atoms
 !
 !
 end module ao_tool_class

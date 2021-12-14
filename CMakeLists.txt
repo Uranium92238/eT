@@ -95,15 +95,15 @@ endif()
 # Make library for compilation information
 add_library(get_compilation_info ${CMAKE_BINARY_DIR}/get_compilation_info.F90)
 
-# Make eT library 
+# Make eT library
 include(eT_library)
 
-# Make eT executable from eT_program.F90 and link the executable 
-# to eT library source as well as other libraries 
+# Make eT executable from eT_program.F90 and link the executable
+# to eT library source as well as other libraries
 add_executable(eT ${CMAKE_SOURCE_DIR}/src/eT_program.F90)
 
-target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} 
-                         ${PCMSolver_LIBRARY} ${EXTRA_LINKER_FLAGS} 
+target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY}
+                         ${PCMSolver_LIBRARY} ${EXTRA_LINKER_FLAGS}
                          get_compilation_info eT_library)
 
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
@@ -138,16 +138,17 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/get_compilation_info.in ${CMAKE_BINARY_
 
 if(ENABLE_PFUNIT)
 
-  # pFUnit - Fortran unit testing package 
+  # pFUnit - Fortran unit testing package
 
-  cmake_minimum_required(VERSION 3.12) # Due to GFTL (used by pFUnit), 
-                                       # which sets <prefix>_ROOT CMake variables, 
+  cmake_minimum_required(VERSION 3.12) # Due to GFTL (used by pFUnit),
+                                       # which sets <prefix>_ROOT CMake variables,
                                        # assuming >= 3.12 policy (CMP0074)
 
   find_package(PFUNIT)
 
   if(PFUNIT_FOUND)
-    enable_testing()  
+    enable_testing()
+    add_definitions(-DINCLUDE_INTENTIONALLY_BROKEN)
     include(UnitTestseT)
     message(STATUS "Unit testing requested, and pFUnit successfully located!")
   else()
@@ -155,4 +156,3 @@ if(ENABLE_PFUNIT)
   endif()
 
 endif()
-

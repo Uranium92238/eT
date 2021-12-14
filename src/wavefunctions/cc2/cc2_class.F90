@@ -24,7 +24,12 @@ module cc2_class
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
 !!
 !
-   use doubles_class
+   use doubles_class, only: doubles
+!
+   use parameters
+   use global_out, only: output
+   use timings_class, only: timings
+   use memory_manager_class, only: mem
 !
    implicit none
 !
@@ -34,41 +39,58 @@ module cc2_class
 !
 !     Ground state
 !
-      procedure :: construct_fock                              => construct_fock_cc2
-      procedure :: construct_omega                             => construct_omega_cc2
-      procedure :: calculate_energy                            => calculate_energy_cc2
+      procedure :: construct_fock &
+                => construct_fock_cc2
+!
+      procedure :: construct_omega &
+                => construct_omega_cc2
+!
+      procedure :: calculate_energy &
+                => calculate_energy_cc2
 !
 !     Amplitudes and multipliers
 !
-      procedure :: construct_t2                                => construct_t2_cc2
-      procedure :: construct_u_aibj                            => construct_u_aibj_cc2
+      procedure :: construct_t2 &
+                => construct_t2_cc2
+      procedure :: construct_u_aibj &
+                => construct_u_aibj_cc2
 !
-      procedure :: construct_t2bar                             => construct_t2bar_cc2
+      procedure :: construct_t2bar &
+                => construct_t2bar_cc2
 !
 !     Jacobian
 !
-      procedure :: prepare_for_jacobian                        => prepare_for_jacobian_cc2
+      procedure :: prepare_for_jacobian &
+                => prepare_for_jacobian_cc2
 !
-      procedure :: jacobian_transformation                     => jacobian_transformation_cc2
-      procedure :: jacobian_cc2_b2                             => jacobian_cc2_b2_cc2
+      procedure :: jacobian_doubles_b2 &
+                => jacobian_doubles_b2_cc2
 !
 !     Jacobian transpose
 !
-      procedure :: prepare_for_jacobian_transpose              => prepare_for_jacobian_transpose_cc2
+      procedure :: prepare_for_jacobian_transpose &
+                => prepare_for_jacobian_transpose_cc2
 !
-      procedure :: jacobian_transpose_transformation           => jacobian_transpose_transformation_cc2
-      procedure :: jacobian_transpose_cc2_b2                   => jacobian_transpose_cc2_b2_cc2
+      procedure :: jacobian_transpose_transformation &
+                => jacobian_transpose_transformation_cc2
+      procedure :: jacobian_transpose_cc2_b2 &
+                => jacobian_transpose_cc2_b2_cc2
 !
 !     Multiplier equation
 !
-      procedure :: prepare_for_multiplier_equation             => prepare_for_multiplier_equation_cc2
-      procedure :: construct_multiplier_equation               => construct_multiplier_equation_cc2
+      procedure :: prepare_for_multiplier_equation &
+                => prepare_for_multiplier_equation_cc2
+      procedure :: construct_multiplier_equation &
+                => construct_multiplier_equation_cc2
 !
 !     Initialize and destruct
 !
-      procedure :: initialize_amplitudes                       => initialize_amplitudes_cc2
-      procedure :: destruct_amplitudes                         => destruct_amplitudes_cc2
-      procedure :: destruct_multipliers                        => destruct_multipliers_cc2
+      procedure :: initialize_amplitudes &
+                => initialize_amplitudes_cc2
+      procedure :: destruct_amplitudes &
+                => destruct_amplitudes_cc2
+      procedure :: destruct_multipliers &
+                => destruct_multipliers_cc2
 !
 !     Properties
 !
@@ -77,7 +99,8 @@ module cc2_class
 !
 !     Initialize wavefunction
 !
-      procedure :: initialize                                  => initialize_cc2
+      procedure :: initialize &
+                => initialize_cc2
 !
    end type cc2
 !
@@ -102,6 +125,9 @@ contains
 !!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use wavefunction_class, only: wavefunction
+         use reordering, only: packin
+!
       implicit none
 !
       class(cc2), intent(inout) :: wf
@@ -142,6 +168,8 @@ contains
 !!
 !!    and ε_r is the r'th orbital energy.
 !!
+      use reordering, only: packin
+!
       implicit none
 !
       class(cc2), intent(inout) :: wf
@@ -187,6 +215,10 @@ contains
 !!    Construct t2bar
 !!    Written by Sarai D. Folkestad, May, 2019
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: symmetric_sum, add_2143_to_1234
+      use reordering, only: add_2341_to_1234, packin
+!
       implicit none
 !
       class(cc2) :: wf

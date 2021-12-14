@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+
+from pathlib import Path
+import sys
+
+# we make sure we can import runtest and runtest_config
+sys.path.append(str(Path(__file__).parents[1]))
+
+# we import essential functions from the runtest library
+from runtest import version_info, cli, run
+
+# this tells runtest how to run your code
+from runtest_config import configure
+
+# functions to get the filters
+from filters import get_hf_filter
+from filters import get_geoopt_filter
+
+# we stop the script if the major version is not compatible
+assert version_info.major == 2
+
+# construct filter(s)
+threshold = 1.0e-9
+
+g = get_hf_filter(threshold)
+f = get_geoopt_filter(threshold)
+f.extend(g)
+
+# invoke the command line interface parser which returns options
+options = cli()
+
+ierr = 0
+inp = 'hf_geoopt_bfgs_h2o.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
+
+sys.exit(ierr)

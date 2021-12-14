@@ -27,7 +27,7 @@ submodule (ccsd_class) multiplier_equation_ccsd
 !!       t-bar^T A + eta = 0,
 !!
 !!    where t-bar is the multiplier vector, and
-!! 
+!!
 !!       A_mu,nu = < mu | exp(-T) [H, τ_nu] exp(T) | R >
 !!       eta_mu  = < R | exp(-T) [H, τ_mu] exp(T) | R >.
 !!
@@ -61,6 +61,9 @@ contains
 !!    Note: the routine assumes that eta is initialized and that the Fock matrix
 !!    has been constructed.
 !!
+      use reordering, only: add_2143_to_1234, add_2341_to_1234, packin
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccsd), intent(inout) :: wf

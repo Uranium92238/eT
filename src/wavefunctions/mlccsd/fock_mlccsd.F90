@@ -46,14 +46,17 @@ contains
 !
       use batching_index_class, only : batching_index
       use timings_class, only: timings
+      use array_utilities, only: zero_array
 !
       implicit none
 !
-      class(mlccsd), intent(inout)              :: wf
+      class(mlccsd), intent(inout) :: wf
       character(len=*), intent(in), optional :: task
 !
       integer :: n_a_o, n_a_v
       type(timings) :: timer
+!
+      real(dp), dimension(:,:), allocatable :: h, F_eff
 !
       timer = timings('Fock matrix construction (T1 basis)', pl='n')
       call timer%turn_on()
@@ -61,42 +64,55 @@ contains
       n_a_o = wf%n_cc2_o + wf%n_ccsd_o
       n_a_v = wf%n_cc2_v + wf%n_ccsd_v
 !
+      call mem%alloc(h, wf%n_mo, wf%n_mo)
+      call mem%alloc(F_eff, wf%n_mo, wf%n_mo)
+!
+      call zero_array(F_eff, wf%n_mo**2)
+!
+      call wf%get_t1_oei('hamiltonian', h, screening=.true.)
+!
+      if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_eff)
+!
       if (.not. present(task)) then
 !
-         call wf%construct_fock_ai_t1()
-         call wf%construct_fock_ia_t1()
-         call wf%construct_fock_ab_t1()
-         call wf%construct_fock_ij_t1()
-         return
-!
-      endif
-!
-      if (trim(task) == 'block diagonalize fock') then
-!
-         call wf%construct_fock_ab_t1()
-         call wf%construct_fock_ij_t1()
-!
-      elseif (trim(task) == 'gs') then
-!
-         call wf%construct_fock_ai_t1()
-         call wf%construct_fock_ia_t1(1, n_a_o, 1, n_a_v)
-         call wf%construct_fock_ab_t1(1, wf%n_ccsd_v, 1, n_a_v)
-         call wf%construct_fock_ij_t1(1, n_a_o, 1, wf%n_ccsd_o)
-!
-      elseif (trim(task) == 'multipliers' .or. task == 'es') then
-!
-         call wf%construct_fock_ia_t1()
-         call wf%construct_fock_ab_t1()
-         call wf%construct_fock_ij_t1()
+         call wf%construct_fock_ai_t1(h, F_eff)
+         call wf%construct_fock_ia_t1(h, F_eff)
+         call wf%construct_fock_ab_t1(h, F_eff)
+         call wf%construct_fock_ij_t1(h, F_eff)
 !
       else
 !
-         call output%error_msg('did not recognize task in construct_fock_mlccsd')
+         if (trim(task) == 'block diagonalize fock') then
+!
+            call wf%construct_fock_ab_t1(h, F_eff)
+            call wf%construct_fock_ij_t1(h, F_eff)
+!
+         elseif (trim(task) == 'gs') then
+!
+            call wf%construct_fock_ai_t1(h, F_eff)
+            call wf%construct_fock_ia_t1(h, F_eff, 1, n_a_o, 1, n_a_v)
+            call wf%construct_fock_ab_t1(h, F_eff, 1, wf%n_ccsd_v, 1, n_a_v)
+            call wf%construct_fock_ij_t1(h, F_eff, 1, n_a_o, 1, wf%n_ccsd_o)
+!
+         elseif (trim(task) == 'multipliers' .or. task == 'es') then
+!
+            call wf%construct_fock_ia_t1(h, F_eff)
+            call wf%construct_fock_ab_t1(h, F_eff)
+            call wf%construct_fock_ij_t1(h, F_eff)
+!
+         else
+!
+            call output%error_msg('did not recognize task in construct_fock_mlccsd')
+!
+         endif
 !
       endif
+!
+      call mem%dealloc(h, wf%n_mo, wf%n_mo)
+      call mem%dealloc(F_eff, wf%n_mo, wf%n_mo)
 !
       call timer%turn_off()
 !
    end subroutine construct_fock_mlccsd
-!                            
+!
 end submodule fock_mlccsd

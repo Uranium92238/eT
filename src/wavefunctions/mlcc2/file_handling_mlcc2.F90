@@ -23,7 +23,7 @@ submodule (mlcc2_class) file_handling_mlcc2
 !!    File handling submodule
 !!
 !!    Gathers routines that save wavefunction parameters to file,
-!!    and reads them from file, plus other routines related to the 
+!!    and reads them from file, plus other routines related to the
 !!    handling of the files that belong to the wavefunction.
 !!
 !
@@ -43,7 +43,7 @@ contains
 !!
 !!    read_n: optionally adds the number of amplitudes read to read_n
 !!
-      implicit none 
+      implicit none
 !
       class(mlcc2), intent(inout) :: wf
 !
@@ -84,14 +84,14 @@ contains
 !!
 !!    File format: energy, n_t1, t1, n_x2, t2
 !!
-      implicit none 
+      implicit none
 !
-      class(mlcc2), intent(inout) :: wf 
+      class(mlcc2), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
       integer, intent(in) :: n
-      real(dp), dimension(n), intent(in) :: vector 
+      real(dp), dimension(n), intent(in) :: vector
 !
       integer(i64) :: m
 !
@@ -110,12 +110,12 @@ contains
 !!
 !!    File format:
 !!
-!!    1: n_ccs_o, n_ccs_v, n_cc2_o, n_cc2_v, orbitals 
+!!    1: n_ccs_o, n_ccs_v, n_cc2_o, n_cc2_v, orbitals
 !!    2: orbital energies
 !!
-      implicit none 
+      implicit none
 !
-      class(mlcc2), intent(inout) :: wf 
+      class(mlcc2), intent(inout) :: wf
 !
       call wf%orbital_coefficients_mlcc_file%open_('write','rewind')
 !
@@ -143,19 +143,19 @@ contains
 !!
 !!    File format:
 !!
-!!    1: n_ccs_o, n_ccs_v, n_cc2_o, n_cc2_v, orbitals 
+!!    1: n_ccs_o, n_ccs_v, n_cc2_o, n_cc2_v, orbitals
 !!    2: orbital energies
 !!
-      implicit none 
+      implicit none
 !
-      class(mlcc2), intent(inout) :: wf 
+      class(mlcc2), intent(inout) :: wf
 !
       call wf%orbital_coefficients_mlcc_file%open_('read','rewind')
 !
       call wf%orbital_coefficients_mlcc_file%read_(wf%n_ccs_o)
       call wf%orbital_coefficients_mlcc_file%read_(wf%n_ccs_v)
       call wf%orbital_coefficients_mlcc_file%read_(wf%n_cc2_o)
-      call wf%orbital_coefficients_mlcc_file%read_(wf%n_cc2_v) 
+      call wf%orbital_coefficients_mlcc_file%read_(wf%n_cc2_v)
 !
       call wf%orbital_coefficients_mlcc_file%read_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
       call wf%orbital_coefficients_mlcc_file%close_('keep')
@@ -171,7 +171,7 @@ contains
 !
    module subroutine read_excitation_vector_file_mlcc2(wf, file_, vector, energy, read_n)
 !!
-!!    Read excitation vector file 
+!!    Read excitation vector file
 !!    Written by Alexander C. Paul, Sep 2020
 !!
 !!    Reads excitation vector from file structured as follows:
@@ -181,7 +181,7 @@ contains
 !!
       implicit none
 !
-      class(mlcc2), intent(inout) :: wf 
+      class(mlcc2), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
@@ -209,7 +209,7 @@ contains
 !
    module subroutine save_excitation_vector_on_file_mlcc2(wf, file_, vector, energy)
 !!
-!!    Save excitation vector on file 
+!!    Save excitation vector on file
 !!    Written by Alexander C. Paul, Sep 2020
 !!
 !!    Writes excitation vector o file structured as follows:
@@ -217,7 +217,7 @@ contains
 !!
       implicit none
 !
-      class(mlcc2), intent(inout) :: wf 
+      class(mlcc2), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
@@ -253,9 +253,13 @@ contains
 !!    R^a_i = 1/2 L^a_i
 !!    R^ab_ij = 1/6 (2L^ab_ij + L^ba_ij)
 !!
+      use array_utilities, only: copy_and_scale, zero_array
+      use reordering, only: construct_packed_contravariant
+      use reordering, only: construct_packed_covariant
+!
       implicit none
 !
-      class(mlcc2), intent(inout) :: wf 
+      class(mlcc2), intent(inout) :: wf
 !
       type(stream_file), intent(inout) :: file_
 !
@@ -288,14 +292,14 @@ contains
 !
 !              2R^ab_ij - R^ba_ij
                alpha = two
-               call construct_packed_contravariant(vector(wf%n_t1+1:wf%n_es_amplitudes), & 
+               call construct_packed_contravariant(vector(wf%n_t1+1:wf%n_es_amplitudes), &
                                                    temp, wf%n_cc2_v, wf%n_cc2_o)
 !
             else if (restart_from == 'left' .and. restart_to == 'right') then
 !
 !              1/3 (2L^ab_ij + L^ba_ij)
                alpha = half
-               call construct_packed_covariant(vector(wf%n_t1+1:wf%n_es_amplitudes), & 
+               call construct_packed_covariant(vector(wf%n_t1+1:wf%n_es_amplitudes), &
                                                temp, wf%n_cc2_v, wf%n_cc2_o)
 !
             end if

@@ -55,7 +55,8 @@ contains
 !!
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-      use array_utilities, only: copy_and_scale
+      use array_utilities, only: copy_and_scale, zero_array
+      use reordering, only: construct_covariant_1324, symmetrize_add_to_packed
 !
       implicit none
 !
@@ -134,6 +135,8 @@ contains
 !!
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(cc3) :: wf
@@ -161,7 +164,7 @@ contains
       req_0 = 0
       req_d = wf%n_o * wf%n_v**2
 !
-      call mem%batch_setup(batch_d, req_0, req_d)
+      call mem%batch_setup(batch_d, req_0, req_d, 'jacobian_transpose_cc3_t3_a1')
 !
       call wf%X_abid%open_('read')
 !
@@ -244,7 +247,10 @@ contains
 !!           u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk
 !!                     - 2t^acb_ijk - 2t_cba_ijk - 2t_bac_ijk
 !!
-      use array_utilities
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: squareup_and_sort_1234_to_1324
+      use reordering, only: construct_contravariant_t3
 !
       implicit none
 !
@@ -326,9 +332,10 @@ contains
       req_2 = 2*wf%n_o*wf%n_v
       req_3 = 0
 !
-      call mem%batch_setup(batch_i, batch_j, batch_k,  &
-                           req_0, req_i, req_1, req_1, &
-                           req_2, req_2, req_2, req_3, &
+      call mem%batch_setup(batch_i, batch_j, batch_k,       &
+                           req_0, req_i, req_1, req_1,      &
+                           req_2, req_2, req_2, req_3,      &
+                           'jacobian_transpose_cc3_t3_b1',  &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -536,6 +543,8 @@ contains
 !!
 !!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops
 !!
+      use reordering, only: sort_123_to_312, sort_123_to_213
+!
       implicit none
 !
       class(cc3) :: wf
@@ -602,6 +611,8 @@ contains
 !!           u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk
 !!                     - 2t^acb_ijk - 2t_cba_ijk - 2t_bac_ijk
 !!
+      use reordering, only: sort_123_to_132
+!
       implicit none
 !
       class(cc3), intent(inout) :: wf
@@ -717,6 +728,11 @@ contains
 !!    sigma_1 += c_mu3 < mu3| [[H,T_2],tau_nu1] |R >
 !!    sigma_2 += c_mu3 < mu3| [H,tau_ nu2] |R >
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: squareup_and_sort_1234_to_1324
+      use reordering, only: construct_contravariant_t3
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(cc3) :: wf
@@ -830,9 +846,10 @@ contains
       req_2 = 4*wf%n_o*wf%n_v + wf%n_v**2
       req_3 = 0
 !
-      call mem%batch_setup(batch_i, batch_j, batch_k,  &
-                           req_0, req_i, req_1, req_1, &
-                           req_2, req_2, req_2, req_3, &
+      call mem%batch_setup(batch_i, batch_j, batch_k,       &
+                           req_0, req_i, req_1, req_1,      &
+                           req_2, req_2, req_2, req_3,      &
+                           'jacobian_transpose_cc3_c3_a',   &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -1252,6 +1269,8 @@ contains
 !!    All permutations for i,j,k have to be considered
 !!    due to the restrictions in the i,j,k loops
 !!
+      use reordering, only: sort_123_to_312, sort_123_to_213
+!
       implicit none
 !
       class(cc3) :: wf
@@ -1391,6 +1410,9 @@ contains
 !!    sigma_1 += sum_cmj Y_cmjk * g_mjcd
 !!    sigma_1 += sum_cmk Y_cmjk * g_mdck
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: sort_1234_to_2314, sort_123_to_132
+!
       implicit none
 !
       class(cc3) :: wf
@@ -1424,7 +1446,8 @@ contains
       call mem%alloc(X_J_lk, wf%eri%n_J, wf%n_o, wf%n_o)
       call mem%alloc(X_J_kl, wf%eri%n_J, wf%n_o, wf%n_o)
 !
-      call mem%batch_setup(batch_k, batch_v, req_0, req_k, req_v, req_2)
+      call mem%batch_setup(batch_k, batch_v, req_0, req_k, req_v, req_2, &
+                           'jacobian_transpose_cc3_c3_a1_y_o')
 !
       call mem%alloc(Y_mjck, wf%n_v, batch_k%max_length, wf%n_o, wf%n_o)
 !
@@ -1564,6 +1587,10 @@ contains
 !!    sigma_cl += sum_bek Y_ebck * g_lkbe
 !!    sigma_bl += sum_cek Y_ebck * g_leck
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: sort_1234_to_2134, sort_123_to_132, sort_123_to_312
+!
       implicit none
 !
       class(cc3) :: wf
@@ -1596,7 +1623,8 @@ contains
       req_v = wf%n_v*wf%eri%n_J + 2*wf%n_o*wf%eri%n_J
       req_2 = 0
 !
-      call mem%batch_setup(batch_k, batch_v, req_0, req_k, req_v, req_2)
+      call mem%batch_setup(batch_k, batch_v, req_0, req_k, req_v, req_2, &
+                           'jacobian_transpose_cc3_c3_a1_y_v')
 !
       call mem%alloc(Y_ebck, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
       call mem%alloc(Y_beck, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)

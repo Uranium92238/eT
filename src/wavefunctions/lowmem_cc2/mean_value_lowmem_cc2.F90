@@ -20,14 +20,14 @@
 submodule (lowmem_cc2_class) mean_value_lowmem_cc2
 !
 !!
-!!    Mean-value submodule 
+!!    Mean-value submodule
 !!
-!!    Contains routines related to the mean values, i.e. 
-!!    the construction of density matrices as well as expectation 
+!!    Contains routines related to the mean values, i.e.
+!!    the construction of density matrices as well as expectation
 !!    value calculation.
 !!
 !
-   implicit none 
+   implicit none
 !
 !
 contains
@@ -42,6 +42,8 @@ contains
 !!     Calculates the lowmem CC2 energy. This is only equal to the actual
 !!     energy when the ground state equations are solved, of course.
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -69,7 +71,8 @@ contains
       batch_i = batching_index(wf%n_o)
       batch_j = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
+      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2, &
+                           tag='calculate_energy_lowmem_cc2')
 !
       correlation_energy = zero
 !

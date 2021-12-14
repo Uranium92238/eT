@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.3 - an electronic structure program
+                     eT 1.5 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco
+   This is eT 1.5.0 Furia (development)
   ------------------------------------------------------------
-  Configuration date: 2021-06-07 12:48:33 UTC +02:00
-  Git branch:         update-test-refs-new
-  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Configuration date: 2021-10-06 10:20:02 UTC +02:00
+  Git branch:         hf-cleanup-oao-stuff
+  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
-  PCM:                ON
+  PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-06-07 12:49:38 UTC +02:00
+  Calculation started: 2021-10-06 10:32:24 UTC +02:00
 
 
   :: Input file
@@ -180,12 +180,14 @@
      Maximum iterations:                   100
      Acceleration type:                   diis
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:               -76.294484481333
+     Energy of initial guess:               -76.294484481340
      Number of electrons in guess:           10.000000000000
 
   - Screening and integral thresholds:
@@ -200,37 +202,37 @@
 
      DIIS dimension:   8
 
-     Storage (solver scf_e): memory
-     Storage (solver scf_x): memory
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -75.788161655070     0.3993E-01     0.7579E+02
-     2           -75.808941489079     0.1083E-01     0.2078E-01
-     3           -75.811275449256     0.6066E-02     0.2334E-02
-     4           -75.811835703061     0.1683E-02     0.5603E-03
-     5           -75.812020958294     0.1116E-02     0.1853E-03
-     6           -75.812155197949     0.3768E-03     0.1342E-03
-     7           -75.812192333340     0.2317E-03     0.3714E-04
-     8           -75.812202250575     0.8426E-04     0.9917E-05
-     9           -75.812203029923     0.1429E-04     0.7793E-06
-    10           -75.812203038183     0.4217E-05     0.8260E-08
-    11           -75.812203038919     0.1266E-05     0.7360E-09
-    12           -75.812203039121     0.3267E-06     0.2017E-09
-    13           -75.812203039128     0.8200E-07     0.7248E-11
-    14           -75.812203039129     0.3791E-07     0.2842E-12
-    15           -75.812203039129     0.9767E-08     0.1421E-12
-    16           -75.812203039129     0.1792E-08     0.2842E-13
-    17           -75.812203039129     0.6246E-09     0.4263E-13
-    18           -75.812203039129     0.1205E-09     0.1421E-13
-    19           -75.812203039129     0.2157E-10     0.0000E+00
+     1           -75.788161655089     0.3252E-01     0.7579E+02
+     2           -75.808941489083     0.1152E-01     0.2078E-01
+     3           -75.811265221222     0.6642E-02     0.2324E-02
+     4           -75.811810403468     0.1736E-02     0.5452E-03
+     5           -75.812026633273     0.8460E-03     0.2162E-03
+     6           -75.812150049123     0.4146E-03     0.1234E-03
+     7           -75.812190840523     0.2121E-03     0.4079E-04
+     8           -75.812202157492     0.6723E-04     0.1132E-04
+     9           -75.812203027757     0.1211E-04     0.8703E-06
+    10           -75.812203037793     0.3984E-05     0.1004E-07
+    11           -75.812203039026     0.1178E-05     0.1233E-08
+    12           -75.812203039125     0.2772E-06     0.9844E-10
+    13           -75.812203039129     0.7015E-07     0.3979E-11
+    14           -75.812203039129     0.1986E-07     0.2842E-12
+    15           -75.812203039129     0.8196E-08     0.2842E-13
+    16           -75.812203039129     0.2014E-08     0.1421E-13
+    17           -75.812203039129     0.5363E-09     0.2842E-13
+    18           -75.812203039129     0.1928E-09     0.5684E-13
+    19           -75.812203039129     0.3314E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 19 iterations!
 
   - Summary of UHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap (alpha):          0.335293734288
-     HOMO-LUMO gap (beta):           0.722713238691
+     HOMO-LUMO gap (alpha):          0.335293734253
+     HOMO-LUMO gap (beta):           0.722713238608
      Nuclear repulsion energy:       9.307879526626
      Electronic energy:            -85.120082565755
      Total energy:                 -75.812203039129
@@ -238,7 +240,7 @@
   - Summary of QM/MM energetics:
                                          a.u.             eV     kcal/mol
      QM/MM SCF Contribution:        -0.042676818996    -1.16130   -26.780
-     QM/MM Electrostatic Energy:    -0.013696279435    -0.37269    -8.595
+     QM/MM Electrostatic Energy:    -0.013696279436    -0.37269    -8.595
 
   - UHF wavefunction spin expectation values:
 
@@ -249,17 +251,17 @@
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):              0.46820
-     Total cpu time (sec):               0.89320
+     Total wall time (sec):              1.45800
+     Total cpu time (sec):               2.69051
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 209.744 KB
+  Peak memory usage during the execution of eT: 209.624 KB
 
-  Total wall time in eT (sec):              0.48371
-  Total cpu time in eT (sec):               0.90870
+  Total wall time in eT (sec):              1.49800
+  Total cpu time in eT (sec):               2.73197
 
-  Calculation ended: 2021-06-07 12:49:39 UTC +02:00
+  Calculation ended: 2021-10-06 10:32:26 UTC +02:00
 
   - Implementation references:
 

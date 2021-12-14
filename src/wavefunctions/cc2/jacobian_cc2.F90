@@ -23,15 +23,15 @@ submodule (cc2_class) jacobian_cc2
 !!    Jacobian submodule
 !!
 !!    Routines for the linear transform of trial
-!!    vectors by the Jacobian matrix 
+!!    vectors by the Jacobian matrix
 !!
 !!    ρ_i = A * c_i,
 !!
 !!    where
-!!   
+!!
 !!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
-!!  
-! 
+!!
+!
    implicit none
 !
 !
@@ -62,92 +62,28 @@ contains
    end subroutine prepare_for_jacobian_cc2
 !
 !
-   module subroutine jacobian_transformation_cc2(wf, c, rho)
+   module subroutine jacobian_doubles_b2_cc2(wf, rho_aibj, c_aibj)
 !!
-!!    Jacobian transformation
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
+!!    Jacobian doubles B2 CC2
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 and 2021
 !!
-!!    Directs the transformation by the cc2 Jacobi matrix,
+!!    rho_aibj =+ c_aibj * (eps_a - eps_i)
 !!
-!!       A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >,
-!!
-!!    where the basis employed for the brackets is biorthonormal.
-!!    The transformation is rho = A c, i.e.,
-!!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck
-!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
-!!
-!!    On exit, c is overwritten by rho. That is, c_ai = rho_ai,
-!!    and c_aibj = rho_aibj.
+!!    Note that a symmetrization is needed after this term.
 !!
       implicit none
 !
-      class(cc2), intent(inout) :: wf
+      class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(in)  :: c
-      real(dp), dimension(wf%n_t1 + wf%n_t2), intent(out) :: rho
-!
-      real(dp), dimension(:,:,:,:), allocatable :: c_aibj
-      real(dp), dimension(:,:,:,:), allocatable :: rho_aibj
-!
-      type(timings) :: timer
-!
-      timer = timings('Jacobian transformation CC2', pl='normal')
-      call timer%turn_on()
-!
-      call zero_array(rho, wf%n_t1 + wf%n_t2)
-!
-!     Doubles contributions
-!
-      call wf%doubles%jacobian_transformation(c, rho)
-!
-!     CC2 contributions
-!
-      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%alloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call zero_array(rho_aibj, wf%n_t1**2)
-      call squareup(c(wf%n_t1+1:), c_aibj, wf%n_t1)
-!
-      call scale_diagonal(two, c_aibj, wf%n_t1)
-!
-      call wf%jacobian_cc2_b2(rho_aibj, c_aibj)
-!
-      call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call add_to_packed_real(rho(wf%n_t1+1:), rho_aibj, wf%n_t1)
-!
-      call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call timer%turn_off()
-!
-   end subroutine jacobian_transformation_cc2
-!
-!
-   module subroutine jacobian_cc2_b2_cc2(wf, rho_aibj, c_aibj)
-!!
-!!    Jacobian CC2 B2
-!!    Written by Sarai D. Folkestad Eirik F. Kjønstad Jan 2019
-!!
-!!    rho_aibj^B2 = ε_aibj c_aibj/(1/Δ_aibj) 
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: c_aibj
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(out)     :: rho_aibj   
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)    :: c_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: rho_aibj
 !
       integer :: i, j, a, b
 !
       type(timings) :: timer
 !
-      timer = timings('Jacobian CC2 B2', pl='verbose')
+      timer = timings('Jacobian doubles B2 CC2', pl='verbose')
       call timer%turn_on()
-!
-!     c_aibj/(1/Δ_aibj) 
-!
-      call scale_diagonal(half, c_aibj, wf%n_o*wf%n_v)
 !
 !$omp parallel do private(a, i, b, j)
       do j = 1, wf%n_o
@@ -157,9 +93,7 @@ contains
 !
                   rho_aibj(a,i,b,j) = rho_aibj(a,i,b,j) + c_aibj(a,i,b,j)*&
                                           (- wf%orbital_energies(i) &
-                                           - wf%orbital_energies(j) &
-                                           + wf%orbital_energies(wf%n_o + a) &
-                                           + wf%orbital_energies(wf%n_o + b) )
+                                           + wf%orbital_energies(wf%n_o + a))
 !
                enddo
             enddo
@@ -169,7 +103,7 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_cc2_b2_cc2
+   end subroutine jacobian_doubles_b2_cc2
 !
 !
 end submodule jacobian_cc2

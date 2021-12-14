@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.3 - an electronic structure program
+                     eT 1.5 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco
+   This is eT 1.5.0 Furia (development)
   ------------------------------------------------------------
-  Configuration date: 2021-06-07 12:48:33 UTC +02:00
-  Git branch:         update-test-refs-new
-  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Configuration date: 2021-10-06 10:20:02 UTC +02:00
+  Git branch:         hf-cleanup-oao-stuff
+  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
-  PCM:                ON
+  PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-06-07 12:49:36 UTC +02:00
+  Calculation started: 2021-10-06 10:30:08 UTC +02:00
 
 
   :: Input file
@@ -126,12 +126,14 @@
      Maximum iterations:                   100
      Acceleration type:                   diis
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:             -7530.568190922015
+     Energy of initial guess:             -7530.568190922046
      Number of electrons in guess:           55.000000000000
 
   - Screening and integral thresholds:
@@ -146,27 +148,28 @@
 
      DIIS dimension:   8
 
-     Storage (solver scf_e): memory
-     Storage (solver scf_x): memory
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1         -7530.542527047890     0.1562E-02     0.7531E+04
-     2         -7530.543242039053     0.6254E-03     0.7150E-03
-     3         -7530.543345749138     0.2859E-03     0.1037E-03
-     4         -7530.543363707361     0.1677E-04     0.1796E-04
-     5         -7530.543363803163     0.3497E-05     0.9580E-07
-     6         -7530.543363806697     0.1160E-05     0.3534E-08
-     7         -7530.543363807135     0.8127E-07     0.4384E-09
-     8         -7530.543363807137     0.3141E-08     0.1819E-11
-     9         -7530.543363807137     0.4896E-10     0.0000E+00
+     1         -7530.542527047885     0.4281E-01     0.7531E+04
+     2         -7530.543242039054     0.1751E-02     0.7150E-03
+     3         -7530.543343909524     0.6922E-03     0.1019E-03
+     4         -7530.543363599998     0.6722E-04     0.1969E-04
+     5         -7530.543363805165     0.7224E-05     0.2052E-06
+     6         -7530.543363806803     0.3314E-05     0.1639E-08
+     7         -7530.543363807132     0.2769E-06     0.3283E-09
+     8         -7530.543363807134     0.1487E-07     0.2728E-11
+     9         -7530.543363807135     0.2640E-09     0.9095E-12
+    10         -7530.543363807137     0.4194E-10     0.1819E-11
   ---------------------------------------------------------------
-  Convergence criterion met in 9 iterations!
+  Convergence criterion met in 10 iterations!
 
   - Summary of UHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap (alpha):          0.289543125868
-     HOMO-LUMO gap (beta):           0.696523627952
+     HOMO-LUMO gap (alpha):          0.289543124728
+     HOMO-LUMO gap (beta):           0.696523627897
      Nuclear repulsion energy:       0.000000000000
      Electronic energy:          -7530.543363807137
      Total energy:               -7530.543363807137
@@ -180,17 +183,17 @@
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):              1.70958
-     Total cpu time (sec):               3.37935
+     Total wall time (sec):             13.10900
+     Total cpu time (sec):              24.00571
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 473.520 KB
+  Peak memory usage during the execution of eT: 482.676 KB
 
-  Total wall time in eT (sec):              1.71598
-  Total cpu time in eT (sec):               3.38575
+  Total wall time in eT (sec):             13.14100
+  Total cpu time in eT (sec):              24.04278
 
-  Calculation ended: 2021-06-07 12:49:38 UTC +02:00
+  Calculation ended: 2021-10-06 10:30:21 UTC +02:00
 
   - Implementation references:
 

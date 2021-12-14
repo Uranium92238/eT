@@ -514,7 +514,7 @@ contains
 !!    and mixing of virtual orbitals, respectively.
 !!
 !
-      use array_utilities, only: block_diagonalize_symmetric
+      use array_utilities, only: block_diagonalize_symmetric, zero_array
 !
       implicit none
 !
@@ -621,6 +621,7 @@ contains
       call mem%alloc(ao_F_fc, wf%ao%n, wf%ao%n)
 !
       call wf%construct_ao_G(D, ao_F_fc)
+      call dscal(wf%ao%n**2, half, ao_F_fc, 1)
 !
       call wf%mo_transform(ao_F_fc, mo_fc_fock)
 !
@@ -677,6 +678,7 @@ contains
       call mem%alloc(ao_F_frozen_hf, wf%ao%n, wf%ao%n)
 !
       call wf%construct_ao_G(D, ao_F_frozen_hf)
+      call dscal(wf%ao%n**2, half, ao_F_frozen_hf, 1)
 !
       call wf%mo_transform(ao_F_frozen_hf, mo_frozen_hf_fock)
 !

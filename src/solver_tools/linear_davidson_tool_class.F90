@@ -25,14 +25,14 @@ module linear_davidson_tool_class
 !!
 !!    A tool to help solve an eigenvalue equation A X_n = F X_n
 !!    for symmetric A using the Davidson algorithm. It is tailored to
-!!    be usable also in cases where A cannot be stored, but where the 
-!!    transformation X -> A X is implemented. 
+!!    be usable also in cases where A cannot be stored, but where the
+!!    transformation X -> A X is implemented.
 !!
-!!    Using the tool: after using the constructor, 
+!!    Using the tool: after using the constructor,
 !!
-!!       1. Set the initial set of trial vectors by constructing 
-!!          them and calling davidson%set_trial(c, n) for n = 1,2,... When you are 
-!!          done writing trials, call davidson%orthonormalize_trial_vecs() 
+!!       1. Set the initial set of trial vectors by constructing
+!!          them and calling davidson%set_trial(c, n) for n = 1,2,... When you are
+!!          done writing trials, call davidson%orthonormalize_trial_vecs()
 !!          to make sure the trial vectors are orthonormalized.
 !!
 !!       2. (Optional) Set preconditioner by call davidson%set_preconditioner(P),
@@ -43,56 +43,56 @@ module linear_davidson_tool_class
 !!          (Here shown for one linear equation.)
 !!
 !!          do while (.not. converged ...)
-!!    
-!!             I. Preparations of reduced space for iteration 
+!!
+!!             I. Preparations of reduced space for iteration
 !!
 !!             if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
 !!
 !!             call davidson%update_reduced_dim()
 !!
-!!             call davidson%orthonormalize_trial_vecs() 
+!!             call davidson%orthonormalize_trial_vecs()
 !!
-!!             II. Read new trial, transform it, & store the result 
+!!             II. Read new trial, transform it, & store the result
 !!
 !!             call davidson%get_trial(c, davidson%dim_red)
-!!             Transform: c <- A c 
+!!             Transform: c <- A c
 !!             call davidson%set_transform(c, davidson%dim_red)
 !!
-!!             III. Solve reduced problem 
-!!             
+!!             III. Solve reduced problem
+!!
 !!             call davidson%solve_reduced_problem()
 !!
-!!             IV. Construct residual and use it to generate new trial vectors 
+!!             IV. Construct residual and use it to generate new trial vectors
 !!
 !!             call davidson%construct_residual(R, 1)
-!!                
+!!
 !!             ...
 !!
 !!             if (residual_norm >= thr) call davidson%add_new_trial(R)
 !!
-!!          enddo ! end of iterative loop 
+!!          enddo ! end of iterative loop
 !!
-!! 
-!!    Modified by Eirik F. Kjønstad and Josefine H. Andersen, 2019. 
 !!
-!!    Generalization of tool routines to handle multiple frequencies 
-!!    and multiple right-hand-sides. Adapted from routines written by 
+!!    Modified by Eirik F. Kjønstad and Josefine H. Andersen, 2019.
+!!
+!!    Generalization of tool routines to handle multiple frequencies
+!!    and multiple right-hand-sides. Adapted from routines written by
 !!    Josefine H. Andersen.
 !!
 !
    use davidson_tool_class
 !
-   use memory_manager_class, only: mem 
+   use memory_manager_class, only: mem
    use math_utilities, only: delta
 !
-   type, extends(davidson_tool) :: linear_davidson_tool 
+   type, extends(davidson_tool) :: linear_davidson_tool
 !
       real(dp), dimension(:,:), allocatable :: F_red
-      real(dp), dimension(:,:), pointer :: F 
+      real(dp), dimension(:,:), pointer :: F
 !
       integer :: n_rhs
 !
-   contains 
+   contains
 !
       procedure :: construct_residual                 => construct_residual_linear_davidson_tool
       procedure :: solve_reduced_problem              => solve_reduced_problem_linear_davidson_tool
@@ -129,36 +129,36 @@ contains
                                              max_dim_red, n_equations, &
                                              records_in_memory) result(davidson)
 !!
-!!    New linear Davidson tool 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    New linear Davidson tool
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    name_ :            Name of solver tool (used for temporary files)
 !!
 !!    n_parameters:      Dimensionality of the full vector space (A is n_parameters x n_parameters)
 !!
-!!    lindep_threshold:  Norm threshold for new trial vector after being added to the trial 
+!!    lindep_threshold:  Norm threshold for new trial vector after being added to the trial
 !!                       space. If the vector, after orthonormalization against the existing
-!!                       trial space, has a norm below this threshold, then we assume that the 
-!!                       trial basis has become linearly dependent. This causes an error stop. 
+!!                       trial space, has a norm below this threshold, then we assume that the
+!!                       trial basis has become linearly dependent. This causes an error stop.
 !!
 !!    max_dim_red:       Maximum dimension of the reduced space. When exceeding this dimensionality,
-!!                       the solutions are set as the basis for the new trial space. 
+!!                       the solutions are set as the basis for the new trial space.
 !!
-!!    F:                 If n_equations = 1, then F is the vector for the 
-!!                       right-hand-side of the single linear equation 
+!!    F:                 If n_equations = 1, then F is the vector for the
+!!                       right-hand-side of the single linear equation
 !!
 !!                         (A - freq) X = F.   (*)
 !!
-!!                       If n_equations > 1, then F is the vector for the 
+!!                       If n_equations > 1, then F is the vector for the
 !!                       right-hand-side of the set of equations
 !!
 !!                         (A - freq_k) X_k = F,    k = 1, 2, ..., n_frequencies.  (**)
-!!    
-!!    n_equations:       Number of equations / number of solutions. 
 !!
-      implicit none 
+!!    n_equations:       Number of equations / number of solutions.
+!!
+      implicit none
 !
-      type(linear_davidson_tool) :: davidson 
+      type(linear_davidson_tool) :: davidson
 !
       character(len=*), intent(in) :: name_
 !
@@ -168,7 +168,7 @@ contains
 !
       logical, intent(in) :: records_in_memory
 !
-!     Perform tasks common to constructor 
+!     Perform tasks common to constructor
 !
       call davidson%general_preparations(name_, n_parameters, n_equations, &
                            lindep_threshold, max_dim_red, 1, records_in_memory)
@@ -180,30 +180,30 @@ contains
                                              max_dim_red, n_rhs, n_frequencies, &
                                              records_in_memory) result(davidson)
 !!
-!!    New linear Davidson tool 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    New linear Davidson tool
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    name_ :            Name of solver tool (used for temporary files)
 !!
 !!    n_parameters:      Dimensionality of the full vector space (A is n_parameters x n_parameters)
 !!
-!!    lindep_threshold:  Norm threshold for new trial vector after being added to the trial 
+!!    lindep_threshold:  Norm threshold for new trial vector after being added to the trial
 !!                       space. If the vector, after orthonormalization against the existing
-!!                       trial space, has a norm below this threshold, then we assume that the 
-!!                       trial basis has become linearly dependent. This causes an error stop. 
+!!                       trial space, has a norm below this threshold, then we assume that the
+!!                       trial basis has become linearly dependent. This causes an error stop.
 !!
 !!    max_dim_red:       Maximum dimension of the reduced space. When exceeding this dimensionality,
-!!                       the solutions are set as the basis for the new trial space. 
+!!                       the solutions are set as the basis for the new trial space.
 !!
 !!    F:                 The columns of F contain the right-hand-side vectors of the set of equations
 !!
 !!                         (A - freq_k) X_k = F_k,   F_k = F(:,k),   k = 1, 2, ..., n_frequencies. (***)
-!!                                                   
-!!    n_equations:       Number of equations / number of solutions. 
 !!
-      implicit none 
+!!    n_equations:       Number of equations / number of solutions.
+!!
+      implicit none
 !
-      type(linear_davidson_tool) :: davidson 
+      type(linear_davidson_tool) :: davidson
 !
       character(len=*), intent(in) :: name_
 !
@@ -213,7 +213,7 @@ contains
 !
       logical, intent(in) :: records_in_memory
 !
-!     Perform tasks common to constructor 
+!     Perform tasks common to constructor
 !
       call davidson%general_preparations(name_, n_parameters, n_frequencies, &
                               lindep_threshold, max_dim_red, n_rhs, records_in_memory)
@@ -225,16 +225,16 @@ contains
                                              n_parameters, n_equations, lindep_threshold, &
                                              max_dim_red, n_rhs, records_in_memory)
 !!
-!!    General preparations  
-!!    Written by Eirik F. Kjønstad, 2019 
+!!    General preparations
+!!    Written by Eirik F. Kjønstad, 2019
 !!
-!!    Performs tasks that are in common for different constructors of the tool. 
-!!    
-      implicit none 
+!!    Performs tasks that are in common for different constructors of the tool.
+!!
+      implicit none
 !
-      class(linear_davidson_tool) :: davidson 
+      class(linear_davidson_tool) :: davidson
 !
-      character(len=*), intent(in) :: name_ 
+      character(len=*), intent(in) :: name_
 !
       integer, intent(in) :: n_parameters, n_equations, max_dim_red, n_rhs
 !
@@ -242,7 +242,7 @@ contains
 !
       logical, intent(in) :: records_in_memory
 !
-!     Set tool parameters 
+!     Set tool parameters
 !
       davidson%name_ = trim(name_)
       davidson%n_parameters = n_parameters
@@ -253,10 +253,10 @@ contains
 !
       davidson%do_precondition = .false. ! Switches to true if 'set_preconditioner' is called
 !
-!     Set some initial values 
+!     Set some initial values
 !
-      davidson%dim_red      = 0    
-      davidson%n_new_trials = davidson%n_solutions 
+      davidson%dim_red      = 0
+      davidson%n_new_trials = davidson%n_solutions
 !
       call davidson%print_settings()
 !
@@ -279,9 +279,9 @@ contains
 !!    Set frequencies
 !!    Written by Eirik F. Kjønstad, 2020
 !!
-      implicit none 
+      implicit none
 !
-      class(linear_davidson_tool), intent(inout) :: davidson 
+      class(linear_davidson_tool), intent(inout) :: davidson
 !
       real(dp), dimension(davidson%n_solutions), intent(in) :: frequencies
 !
@@ -295,13 +295,13 @@ contains
 !!    Set rhs
 !!    Written by Sarai D. Folkestad, 2021
 !!
-      implicit none 
+      implicit none
 !
-      class(linear_davidson_tool), intent(inout) :: davidson 
+      class(linear_davidson_tool), intent(inout) :: davidson
 
       real(dp), dimension(davidson%n_parameters, davidson%n_rhs), target, intent(in) :: rhs
 !
-!     Set F  
+!     Set F
 !
       davidson%F(1:davidson%n_parameters, 1:davidson%n_rhs) => rhs
 !
@@ -310,27 +310,27 @@ contains
 !
    subroutine set_trials_to_preconditioner_guess_linear_davidson(davidson)
 !!
-!!    Set trials to precondtioner guess 
-!!    Written by Eirik F. Kjønstad, 2019 
+!!    Set trials to precondtioner guess
+!!    Written by Eirik F. Kjønstad, 2019
 !!
-!!    If the preconditiner Q is set, this routine determines 
+!!    If the preconditiner Q is set, this routine determines
 !!    initial guesses for the solution by assuming Q = A:
 !!
-!!       (A - freq) X = F => X = (Q - freq)^-1 F 
+!!       (A - freq) X = F => X = (Q - freq)^-1 F
 !!
-      implicit none 
+      implicit none
 !
-      class(linear_davidson_tool) :: davidson 
+      class(linear_davidson_tool) :: davidson
 !
-      real(dp), dimension(:), allocatable :: c 
+      real(dp), dimension(:), allocatable :: c
 !
-      integer :: i 
+      integer :: i
 !
       call mem%alloc(c, davidson%n_parameters)
 !
       do i = 1, davidson%n_solutions
 !
-         if (davidson%n_rhs == 1) then 
+         if (davidson%n_rhs == 1) then
 !
             call dcopy(davidson%n_parameters, davidson%F(:,1), 1, c, 1)
 !
@@ -338,7 +338,7 @@ contains
 !
             call dcopy(davidson%n_parameters, davidson%F(:,i), 1, c, 1)
 !
-         endif 
+         endif
 !
          call davidson%preconditioner%do_(c,                               &
                                           shift=davidson%omega_re(i),   &
@@ -357,14 +357,14 @@ contains
 !!
 !!    Construct reduced gradient
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
-!! 
+!!
 !!    Constructs the gradient vector(s) in the reduced space:
 !!
-!!       F_ik = c_i^T * F_k 
+!!       F_ik = c_i^T * F_k
 !!
 !!    Modified by Eirik F. Kjønstad and Josefine H. Andersen, 2019.
 !!
-!!    Generalization to multiple frequencies and multiple right-hand-sides. 
+!!    Generalization to multiple frequencies and multiple right-hand-sides.
 !!
       implicit none
 !
@@ -376,20 +376,20 @@ contains
 !
       integer :: current_i_batch, req_0, req_1, prev_dim_red
 !
-      type(batching_index), allocatable :: batch_i 
+      type(batching_index), allocatable :: batch_i
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Davidson: time to construct reduced gradient', 'v')
       call timer%turn_on()
 !
-!     Prepare reduced F by allocating over copying previously calculated elements 
+!     Prepare reduced F by allocating over copying previously calculated elements
 !
       prev_dim_red = davidson%dim_red - davidson%n_new_trials
 !
-      if (prev_dim_red .eq. 0) then 
+      if (prev_dim_red .eq. 0) then
 !
-!        First iteration; allocate reduced space gradient 
+!        First iteration; allocate reduced space gradient
 !
          call mem%alloc(davidson%F_red, davidson%dim_red, davidson%n_rhs)
 !
@@ -415,7 +415,7 @@ contains
 !
       endif
 !
-!     Set up batching of trial vectors to compute new elements to the gradient 
+!     Set up batching of trial vectors to compute new elements to the gradient
 !
       req_0 = 0
       req_1 = davidson%trials%required_to_load_record()
@@ -423,7 +423,7 @@ contains
       batch_i = batching_index(dimension_=davidson%n_new_trials, &
                                offset=prev_dim_red)
 !
-      call mem%batch_setup(batch_i, req_0, req_1)
+      call mem%batch_setup(batch_i, req_0, req_1, 'construct_reduced_gradient')
 !
       call davidson%trials%prepare_records([batch_i])
 !
@@ -459,28 +459,28 @@ contains
 !
    subroutine solve_reduced_problem_linear_davidson_tool(davidson)
 !!
-!!    Solve reduced problem 
+!!    Solve reduced problem
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    Solves the reduced space equations:
 !!
-!!       (A - freq) X = F,  
+!!       (A - freq) X = F,
 !!
-!!    where there can be many frequencies and right-hand-sides (see *, **, and *** 
+!!    where there can be many frequencies and right-hand-sides (see *, **, and ***
 !!    in the constructors).
 !!
-!!    In more detail, the routine performs three actions: 1) constructs the reduced space 
-!!    quantities, 2) uses these to solve the reduced space problem, and 3) sets number of new trials 
+!!    In more detail, the routine performs three actions: 1) constructs the reduced space
+!!    quantities, 2) uses these to solve the reduced space problem, and 3) sets number of new trials
 !!    to zero (prepares the tool for the next task, which is the receiving of new residuals
 !!    to make another new set of trial vectors).
 !!
 !!    Modified by Eirik F. Kjønstad and Josefine H. Andersen, 2019.
 !!
-!!    Generalization to multiple frequencies and multiple right-hand-sides. 
+!!    Generalization to multiple frequencies and multiple right-hand-sides.
 !!
-      implicit none 
+      implicit none
 !
-      class(linear_davidson_tool) :: davidson 
+      class(linear_davidson_tool) :: davidson
 !
       integer, dimension(:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
 !
@@ -489,12 +489,12 @@ contains
       integer :: i, j, k
       integer :: info ! Error integer for dgesv routine (LU factorization)
 !
-!     Construct reduced space quantities 
+!     Construct reduced space quantities
 !
       call davidson%construct_reduced_matrix()
       call davidson%construct_reduced_gradient()
 !
-!     (Re-)allocate the reduced space solution vector 
+!     (Re-)allocate the reduced space solution vector
 !
       if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, &
                                                       davidson%dim_red - davidson%n_new_trials, &
@@ -509,19 +509,19 @@ contains
 !
       do k = 1, davidson%n_solutions
 !
-!        Set X_k equal to the right-hand-side for dgesv 
+!        Set X_k equal to the right-hand-side for dgesv
 !
-         if (davidson%n_rhs == 1) then ! X_k = F 
+         if (davidson%n_rhs == 1) then ! X_k = F
 !
             davidson%X_red(:,k) = davidson%F_red(:,1)
 !
-         else ! X_k = F_k 
+         else ! X_k = F_k
 !
             davidson%X_red(:,k) = davidson%F_red(:,k)
 !
          endif
 !
-!        Make M_k = A - freq_k * I 
+!        Make M_k = A - freq_k * I
 !
          do i = 1, davidson%dim_red
             do j = 1, davidson%dim_red
@@ -531,26 +531,26 @@ contains
             enddo
          enddo
 !
-!        Solve M_k X_k = F, or 
-!              M_k X_k = F_k         
+!        Solve M_k X_k = F, or
+!              M_k X_k = F_k
 !
          ipiv = 0
          info = 0
 !
          call dgesv(davidson%dim_red,     &
-                     1,                   & ! Number of RHS 
+                     1,                   & ! Number of RHS
                      M_k,                 &
                      davidson%dim_red,    &
                      ipiv,                &
-                     davidson%X_red(:,k), & ! Solution on exit 
+                     davidson%X_red(:,k), & ! Solution on exit
                      davidson%dim_red,    &
                      info)
 !
-         if (info .ne. 0) then 
+         if (info .ne. 0) then
 !
             call output%error_msg('could not solve linear equation in Davidson tool.')
 !
-         endif 
+         endif
 !
       enddo
 !
@@ -566,37 +566,37 @@ contains
 !
    subroutine construct_residual_linear_davidson_tool(davidson, R, n)
 !!
-!!    Construct residual 
+!!    Construct residual
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-!!    Constructs the nth residual. 
+!!    Constructs the nth residual.
 !!
 !!    If one RHS, this is:
 !!
-!!       R = (A - freq_n)*X_n - F 
+!!       R = (A - freq_n)*X_n - F
 !!
-!!    If multiple RHS, this is: 
-!!   
-!!       R = (A - freq_n)*X_n - F_n  
+!!    If multiple RHS, this is:
+!!
+!!       R = (A - freq_n)*X_n - F_n
 !!
 !!    Modified by Eirik F. Kjønstad and Josefine H. Andersen, 2019.
 !!
-!!    Generalization to multiple frequencies and multiple right-hand-sides. 
+!!    Generalization to multiple frequencies and multiple right-hand-sides.
 !!
-      implicit none 
+      implicit none
 !
-      class(linear_davidson_tool), intent(inout) :: davidson 
+      class(linear_davidson_tool), intent(inout) :: davidson
 !
-      real(dp), dimension(davidson%n_parameters) :: R 
+      real(dp), dimension(davidson%n_parameters) :: R
 !
       integer, intent(in) :: n
 !
-      real(dp), dimension(:), allocatable :: X 
+      real(dp), dimension(:), allocatable :: X
 !
       call mem%alloc(X, davidson%n_parameters)
 !
       call davidson%construct_solution(X, n) ! X = X_n
-      call davidson%construct_AX(R, n) ! R = A X_n 
+      call davidson%construct_AX(R, n) ! R = A X_n
 !
       call daxpy(davidson%n_parameters, -davidson%omega_re(n), X, 1, R, 1) ! R = (A - freq_n) X_n
 !
@@ -604,36 +604,36 @@ contains
 !
       if (davidson%n_rhs == 1) then ! R = (A - freq_n) X_n - F
 !
-         call daxpy(davidson%n_parameters, -one, davidson%F, 1, R, 1) 
+         call daxpy(davidson%n_parameters, -one, davidson%F, 1, R, 1)
 !
       else ! R = (A - freq_n) X_n - F_n
 !
-         call daxpy(davidson%n_parameters, -one, davidson%F(:,n), 1, R, 1) 
+         call daxpy(davidson%n_parameters, -one, davidson%F(:,n), 1, R, 1)
 !
-      endif 
+      endif
 !
    end subroutine construct_residual_linear_davidson_tool
 !
 !
    subroutine destruct_reduced_space_quantities_linear_davidson_tool(davidson)
 !!
-!!    Destruct reduced space quantities 
+!!    Destruct reduced space quantities
 !!    Written by Eirik F. Kjønstad, Jan 2020
 !!
 !!    Deallocates reduced space quantities, e.g. when re-setting the reduced space,
 !!    or upon destruction of the Davidson tool.
 !!
-      implicit none 
+      implicit none
 !
       class(linear_davidson_tool) :: davidson
 !
       if (allocated(davidson%A_red)) &
          call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
 !
-      if (allocated(davidson%X_red)) & 
+      if (allocated(davidson%X_red)) &
          call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
 !
-      if (allocated(davidson%F_red)) & 
+      if (allocated(davidson%F_red)) &
          call mem%dealloc(davidson%F_red, davidson%dim_red, davidson%n_rhs)
 !
    end subroutine destruct_reduced_space_quantities_linear_davidson_tool
@@ -641,12 +641,12 @@ contains
 !
    subroutine destructor_linear_davidson_tool(davidson)
 !!
-!!    Destructor  
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Destructor
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      type(linear_davidson_tool) :: davidson 
+      type(linear_davidson_tool) :: davidson
 !
       call davidson%destruct_reduced_space_quantities()
 !

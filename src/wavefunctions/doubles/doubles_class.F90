@@ -30,8 +30,13 @@ module doubles_class
 !!    but need specialized routines.
 !!
 !
-   use ccs_class
-   use array_utilities, only : scale_diagonal
+   use ccs_class, only: ccs
+!
+   use parameters
+   use global_out, only: output
+   use timings_class, only: timings
+   use memory_manager_class, only: mem
+   use stream_file_class, only: stream_file
 !
    implicit none
 !
@@ -48,11 +53,11 @@ module doubles_class
 !
       integer :: n_t2
 !
-      type(sequential_file) :: jacobian_a1_intermediate_vv
-      type(sequential_file) :: jacobian_a1_intermediate_oo
+      type(stream_file) :: jacobian_a1_intermediate_vv
+      type(stream_file) :: jacobian_a1_intermediate_oo
 !
-      type(sequential_file) :: jacobian_transpose_a1_intermediate_vv
-      type(sequential_file) :: jacobian_transpose_a1_intermediate_oo
+      type(stream_file) :: jacobian_transpose_a1_intermediate_vv
+      type(stream_file) :: jacobian_transpose_a1_intermediate_oo
 !
    contains
 !
@@ -83,6 +88,7 @@ module doubles_class
       procedure, private :: jacobian_doubles_c1
       procedure, private :: jacobian_doubles_d1
       procedure, private :: jacobian_doubles_a2
+      procedure, public  :: jacobian_doubles_b2 ! public because of intel
 !
       procedure, private :: save_jacobian_a1_intermediates
 !
@@ -242,6 +248,8 @@ contains
 !!    Get CVS projector
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(doubles), intent(inout) :: wf
@@ -343,6 +351,8 @@ contains
 !!    for an IP calculation (valence).
 !!
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(doubles), intent(in) :: wf

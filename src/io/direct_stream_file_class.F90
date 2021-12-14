@@ -110,8 +110,6 @@ module direct_stream_file_class
 !
       procedure :: get_n_records             => get_n_records_direct_stream_file
 !
-      final :: destructor
-!
    end type direct_stream_file
 !
    interface direct_stream_file
@@ -170,24 +168,6 @@ contains
       the_file%record_length = rec_dim*the_file%word_size
 !
    end function new_direct_stream_file
-!
-!
-   subroutine destructor(the_file)
-!!
-!!    Destructor
-!!    Written by Rolf H. Myhre, Feb. 2020
-!!
-      implicit none
-!
-      type(direct_stream_file) :: the_file
-!
-      if (the_file%get_open()) then
-         call output%error_msg('Destructor for file (a0) called &
-                               &while the file is still open',  &
-                               chars=[the_file%get_name()])
-      endif
-!
-   end subroutine destructor
 !
 !
    subroutine read_1_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)

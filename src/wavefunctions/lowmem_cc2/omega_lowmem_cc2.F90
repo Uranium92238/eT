@@ -20,9 +20,9 @@
 submodule (lowmem_cc2_class) omega_lowmem_cc2
 !
 !!
-!!    Omega submodule 
+!!    Omega submodule
 !!
-!!    Routines to construct 
+!!    Routines to construct
 !!
 !!    Ω =  < mu | exp(-T) H exp(T) | R >
 !!
@@ -34,20 +34,22 @@ contains
 !
    module subroutine construct_omega_lowmem_cc2(wf, omega)
 !!
-!!    Construct omega 
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
+!!    Construct omega
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
 !!    Direqts the construction of the projection vector < mu | exp(-T) H exp(T) | R >
 !!    for the current wavefunction amplitudes.
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_t1), intent(out) :: omega
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Construct omega lowmem-cc2', pl='normal')
       call timer%turn_on()
@@ -68,15 +70,15 @@ contains
    module subroutine omega_cc2_a1_lowmem_cc2(wf, omega, eps_o, eps_v)
 !!
 !!    Omega CC2 A1 term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
 !!    Calculates the A1 term,
 !!
 !!       A1: sum_cjb u_bj_ci * g_abjc,
 !!
-!!    with 
-!!       
+!!    with
+!!
 !!       u_bj_ci = 2*t_bj_ci - t_bi_cj
 !!
 !!    and
@@ -85,6 +87,8 @@ contains
 !!
 !!    and adds it to the projection vector omega
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -107,7 +111,7 @@ contains
 !
       type(batching_index) :: batch_b, batch_c
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('omega cc2 a1 lowmem', pl='verbose')
       call timer%turn_on()
@@ -122,7 +126,8 @@ contains
       batch_b = batching_index(wf%n_v)
       batch_c = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2)
+      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2, &
+                           tag='omega_cc2_a1_lowmem_cc2')
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -148,7 +153,7 @@ contains
 !
                   do  j = 1, wf%n_o
                      do b = 1, (batch_b%length)
-!                 
+!
                         u_bjci(b,j,c,i) = -(two*g_bicj(b,i,c,j) - g_bicj(b,j,c,i))&
                                                                 /(eps_ci +  &
                                                                   eps_v(b + batch_b%first - 1)&
@@ -161,7 +166,7 @@ contains
 !
             call mem%dealloc(g_bicj, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
 !
-!           Omega_ai += sum_bjc u_bicj g_abjc       
+!           Omega_ai += sum_bjc u_bicj g_abjc
 !
             call mem%alloc(g_abjc, batch_b%length,wf%n_v, batch_c%length,wf%n_o)
 !
@@ -197,7 +202,7 @@ contains
    module subroutine omega_cc2_b1_lowmem_cc2(wf, omega, eps_o, eps_v)
 !!
 !!    Omega CC2 B1 term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
 !!    Calculates the B1 term,
@@ -211,6 +216,9 @@ contains
 !!    and adds it to the projection vector (omega) of
 !!    the wavefunction object wf.
 !!
+      use reordering, only: sort_1234_to_3214
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -231,7 +239,7 @@ contains
 !
       type(batching_index) :: batch_b, batch_j, batch_k
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('omega cc2 b1 lowmem', pl='verbose')
       call timer%turn_on()
@@ -246,14 +254,15 @@ contains
       req2_bk = wf%eri%n_J
       req2_jk = 0
 !
-      req3 = (wf%n_v) + 2*(wf%n_o) 
+      req3 = (wf%n_v) + 2*(wf%n_o)
 !
       batch_b = batching_index(wf%n_v)
       batch_j = batching_index(wf%n_o)
       batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_b, batch_j, batch_k, req0, req1_b, &
-                    req1_j, req1_k, req2_bj, req2_bk, req2_jk, req3)
+                    req1_j, req1_k, req2_bj, req2_bk, req2_jk, req3, &
+                    tag='omega_cc2_b1_lowmem_cc2')
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -267,7 +276,7 @@ contains
 !
                call batch_k%determine_limits(current_k_batch)
 !
-!               Construct t_ajbk = - g_ajbk/e_ajbk, 
+!               Construct t_ajbk = - g_ajbk/e_ajbk,
 !               store in g_ajbk to avoid double memory requirement
 !
                call mem%alloc(g_ajbk, wf%n_v, batch_j%length,&
@@ -301,10 +310,10 @@ contains
                call wf%eri%get_eri_t1('ovoo', g_jbki,              &
                                       batch_j%first, batch_j%get_last(), &
                                       batch_b%first, batch_b%get_last(), &
-                                      batch_k%first, batch_k%get_last(), & 
+                                      batch_k%first, batch_k%get_last(), &
                                       1, wf%n_o)
 !
-!              Omega_ai += sum_jbk t_ajbk g_jbki       
+!              Omega_ai += sum_jbk t_ajbk g_jbki
 !
                call dgemm('N','N',                                             &
                            wf%n_v,                                             &
@@ -330,7 +339,7 @@ contains
                call wf%eri%get_eri_t1('ovoo', g_kbji,              &
                                       batch_k%first, batch_k%get_last(), &
                                       batch_b%first, batch_b%get_last(), &
-                                      batch_j%first, batch_j%get_last(), & 
+                                      batch_j%first, batch_j%get_last(), &
                                       1, wf%n_o)
 !
                call mem%alloc(g_jbki, batch_j%length, batch_b%length, &
@@ -376,15 +385,15 @@ contains
    module subroutine omega_cc2_c1_lowmem_cc2(wf, omega, eps_o, eps_v)
 !!
 !!    Omega CC2 C1 term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
 !!    Calculates the C1 term,
 !!
 !!       C1: sum_bj u_ai_bj * F_{jb},
 !!
-!!    with 
-!!       
+!!    with
+!!
 !!       u_ai_bj = 2*t_ai_bj - t_aj_bi
 !!
 !!    and
@@ -394,6 +403,8 @@ contains
 !!    and adds it to the projection vector (omega) of
 !!    the wavefunction object wf.
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
@@ -414,7 +425,7 @@ contains
 !
       type(batching_index) :: batch_j, batch_i
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('omega cc2 c1 lowmem', pl='verbose')
       call timer%turn_on()
@@ -429,7 +440,8 @@ contains
       batch_i = batching_index(wf%n_o)
       batch_j = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
+      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2, &
+                           tag='omega_cc2_c1_lowmem_cc2')
 !
       do current_i_batch = 1, batch_i%num_batches
 !
@@ -451,15 +463,15 @@ contains
 !           Construct u_aibj
 !
 !$omp parallel do schedule(static) private(i, j, a, b)
-            do b = 1, wf%n_v 
+            do b = 1, wf%n_v
                do j = 1, batch_j%length
-                  do i = 1, batch_i%length 
+                  do i = 1, batch_i%length
                      do a = 1, wf%n_v
 !
                         u_aibj(a,i,b,j) = (-two*g_aibj(a,i,b,j)+g_aibj(b,i,a,j))/(eps_v(a) &
                                                              + eps_v(b) &
                                                              - eps_o(i + batch_i%first - 1) &
-                                                             - eps_o(j + batch_j%first - 1)) 
+                                                             - eps_o(j + batch_j%first - 1))
 !
                      enddo
                   enddo
@@ -474,7 +486,7 @@ contains
             call mem%alloc(F_bj, wf%n_v, batch_j%length)
 !
 !$omp parallel do schedule(static) private(b,j)
-            do b = 1, wf%n_v 
+            do b = 1, wf%n_v
                do j = 1, batch_j%length
 !
                      F_bj(b, j) = wf%fock_ia(j + batch_j%first - 1, b)
@@ -499,7 +511,7 @@ contains
                        one,                          &
                        omega(omega_offset),          &
                        wf%n_v*wf%n_o)
-!        
+!
             call mem%dealloc(u_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
             call mem%dealloc(F_bj, wf%n_v, batch_j%length)
 !

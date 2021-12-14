@@ -59,6 +59,8 @@ module abstract_stream_class
       procedure :: get_file_size    => get_file_size_abstract_stream
       procedure :: copy             => copy_abstract_stream
 !
+      procedure :: determine_status => determine_status_abstract_stream
+!
 !     Error handling
       procedure :: check_io_status  => check_io_status_abstract_stream
       procedure :: should_be_open   => should_be_open_abstract_stream
@@ -298,13 +300,27 @@ contains
 !!
       implicit none
 !
-      class(abstract_stream), intent(inout) :: the_file
+      class(abstract_stream), intent(in) :: the_file
 !
       logical :: it_exists
 !
       inquire(file=trim(the_file%name_), exist=it_exists)
 !
-      if(it_exists) then
+   end function exists_abstract_stream
+!
+!
+   subroutine determine_status_abstract_stream(the_file)
+!!
+!!    Determine status
+!!    Written by Eirik F. Kjønstad, 2021
+!!
+!!    Sets status based on whether or not the file exists.
+!!
+      implicit none 
+!
+      class(abstract_stream), intent(inout) :: the_file
+!
+      if (the_file%exists()) then
 !
          the_file%status_ = 'old'
 !
@@ -314,8 +330,7 @@ contains
 !
       end if
 !
-!
-   end function exists_abstract_stream
+   end subroutine determine_status_abstract_stream
 !
 !
    function get_file_size_abstract_stream(the_file) result(file_size)

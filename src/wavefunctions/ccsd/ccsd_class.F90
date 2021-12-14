@@ -24,7 +24,13 @@ module ccsd_class
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
 !!
 !
-   use doubles_class
+   use doubles_class, only: doubles
+!
+   use parameters
+   use global_out, only: output
+   use timings_class, only: timings
+   use memory_manager_class, only: mem
+   use sequential_file_class, only: sequential_file
 !
    implicit none
 !
@@ -38,8 +44,7 @@ module ccsd_class
       type(sequential_file), private :: jacobian_d2_intermediate
       type(sequential_file), private :: jacobian_e2_intermediate
       type(sequential_file), private :: jacobian_g2_intermediate_vovo
-      type(sequential_file), private :: jacobian_h2_intermediate_voov_1
-      type(sequential_file), private :: jacobian_h2_intermediate_voov_2
+      type(sequential_file), private :: jacobian_h2_intermediate
       type(sequential_file), private :: jacobian_j2_intermediate_oooo
 !
       type(sequential_file), private :: jacobian_transpose_d1_intermediate
@@ -51,7 +56,6 @@ module ccsd_class
       type(sequential_file), private :: jacobian_transpose_e2_vv_intermediate
       type(sequential_file), private :: jacobian_transpose_f2_intermediate
       type(sequential_file), private :: jacobian_transpose_g2_intermediate
-      type(sequential_file), private :: jacobian_transpose_g2_intermediate_2
       type(sequential_file), private :: jacobian_transpose_i2_intermediate
 !
    contains
@@ -127,10 +131,16 @@ module ccsd_class
       procedure, private :: save_jacobian_d2_intermediate
       procedure, private :: save_jacobian_e2_intermediate
       procedure, private :: save_jacobian_g2_intermediates
-      procedure, private :: save_jacobian_h2_intermediates
+      procedure, private :: save_jacobian_h2_intermediate
       procedure, private :: save_jacobian_j2_intermediate
 !
+      procedure, public :: approximate_Jacobian_transform &
+                        => approximate_Jacobian_transform_ccsd
+!
 !     Procedures related to Jacobian transpose transformation
+!
+      procedure, public :: prepare_for_approximate_Jacobians &
+                        => prepare_for_approximate_Jacobians_ccsd
 !
       procedure, public :: prepare_for_jacobian_transpose               &
                         => prepare_for_jacobian_transpose_ccsd
@@ -318,6 +328,8 @@ contains
 !!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use wavefunction_class, only: wavefunction
+!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
@@ -351,6 +363,8 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
@@ -417,6 +431,9 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
+      use array_utilities, only: copy_and_scale
+      use reordering, only: construct_packed_contravariant
+!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
@@ -575,6 +592,9 @@ contains
 !!    tag specified the printed label for the vector, e.g. tag = "t" for
 !!    the cluster amplitudes.
 !!
+      use array_utilities, only: get_n_highest, zero_array
+      use index_invert, only : invert_compound_index, invert_packed_index
+!
       implicit none
 !
       class(ccsd), intent(in) :: wf
@@ -644,6 +664,8 @@ contains
 !!       t2_aiai <- two * t2_aiai
 !!       ...
 !!
+      use array_utilities, only: scale_diagonal
+!
       implicit none
 !
       class(ccsd), intent(in) :: wf

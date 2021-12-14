@@ -26,6 +26,9 @@ f = [
                mask=[2])
 ]
 
+
+g = [get_filter(abs_tolerance=1.0e-7)]
+
 checkfiles = ["ccsd_es_lanczos.lanczos30_X",
               "ccsd_es_lanczos.lanczos30_Y",
               "ccsd_es_lanczos.lanczos30_Z"]
@@ -37,12 +40,15 @@ checkfiles = [test_dir / i for i in checkfiles]
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_es_lanczos.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'ccsd_es_lanczos.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f,
+                     'lanczos30_X': g,
+                     'lanczos30_Y': g,
+                     'lanczos30_Z': g})
 
 missing_files = [i for i in checkfiles if not i.exists()]
 filerror = len(missing_files)

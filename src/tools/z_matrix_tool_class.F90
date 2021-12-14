@@ -25,7 +25,7 @@ module z_matrix_tool_class
 !!
 !!    Always use the following connections:
 !!
-!!       R_i-1 is the distance connection, 
+!!       R_i-1 is the distance connection,
 !!       R_i-2 is the angle connection,
 !!       R_i-3 is the dihedral connection
 !!
@@ -101,7 +101,7 @@ contains
 !!    Written by Sarai D. Folkestad, 2020
 !!
       implicit none
-!  
+!
       class(z_matrix_tool) :: z_matrix
 !
       allocate(z_matrix%symbols(z_matrix%n_atoms))
@@ -111,7 +111,7 @@ contains
       call mem%alloc(z_matrix%dihedrals, z_matrix%n_atoms)
 !
       z_matrix%distances = zero
-      z_matrix%angles    = zero   
+      z_matrix%angles    = zero
       z_matrix%dihedrals = zero
 !
    end subroutine initialize_z_matrix_tool
@@ -140,6 +140,8 @@ contains
 !!    Construct Z-matrix
 !!    Written by Sarai D. Folkestad, 2020
 !!
+      use array_utilities, only: get_euclidean_distance
+!
       implicit none
 !
       class(z_matrix_tool) :: z_matrix
@@ -147,7 +149,7 @@ contains
       real(dp), dimension(3, z_matrix%n_atoms), intent(in)       :: R
       character(len=2), dimension(z_matrix%n_atoms), intent(in)  :: symbols
 !
-      real(dp), dimension(3) :: R_ji, R_kj, R_ij, R_jk, R_lk
+      real(dp), dimension(3) :: R_kj, R_ij, R_jk, R_lk
       real(dp), dimension(3) :: A, B
 !
       real(dp) :: cos_phi, sin_phi
@@ -160,43 +162,41 @@ contains
 !
       do i = 2, z_matrix%n_atoms
 !
-         R_ji = R(:, i) - R(:, i - 1) 
+         z_matrix%distances(i) = get_euclidean_distance(R(:, i), R(:, i - 1), 3)
 !
-         z_matrix%distances(i) = norm_R3(R_ji)
-!
-      enddo  
+      enddo
 !
 !     Calculate angles
 !
-!        r sin(theta) = |v1 x v2| 
+!        r sin(theta) = |v1 x v2|
 !        r cos(theta) = v1 . v2
 !
 !        theta = atan2(r sin(theta), r cos(theta))
 !
-!        v1 = R_ij 
-!        v2 = R_kj 
+!        v1 = R_ij
+!        v2 = R_kj
 !
       do i = 3, z_matrix%n_atoms
 !
-         R_ij = R(:, i - 2) - R(:, i - 1) 
-         R_kj = R(:, i) - R(:, i - 1) 
+         R_ij = R(:, i - 2) - R(:, i - 1)
+         R_kj = R(:, i) - R(:, i - 1)
 !
          cos_phi = dot_R3(R_ij, R_kj)
          sin_phi = norm_R3(cross_product_R3(R_ij, R_kj))
 !
          z_matrix%angles(i) = atan2(sin_phi, cos_phi)
 !
-      enddo 
+      enddo
 !
 !     Calculate dihedrals
 !
 !        See equations (3) and (4)
 !        A. Blondel and M. Karplus, J. Comput. Chem., 17(9), 1132-1141, (1996).
-!        
+!
       do i = 4, z_matrix%n_atoms
 !
          R_ij = R(:, i - 3) - R(:, i - 2) ! F, J. Comput. Chem., 17(9), 1132-1141, (1996)
-         R_jk = R(:, i - 2) - R(:, i - 1) ! G, J. Comput. Chem., 17(9), 1132-1141, (1996) 
+         R_jk = R(:, i - 2) - R(:, i - 1) ! G, J. Comput. Chem., 17(9), 1132-1141, (1996)
          R_lk = R(:, i) - R(:, i - 1)     ! H, J. Comput. Chem., 17(9), 1132-1141, (1996)
 !
          A = cross_product_R3(R_ij, R_jk)
@@ -210,7 +210,7 @@ contains
          if (z_matrix%dihedrals(i) .lt. zero ) &
             z_matrix%dihedrals(i) = z_matrix%dihedrals(i) + two*pi
 !
-      enddo   
+      enddo
 !
 !
    end subroutine construct_z_matrix_tool
@@ -297,11 +297,11 @@ contains
 !
    subroutine convert_to_cartesian_z_matrix_tool(z_matrix, R)
 !!
-!!    Convert to cartesian 
+!!    Convert to cartesian
 !!    Written by Sarai D. Folkestad
 !!
 !!    Converts z matrix to cartesian coordinates
-!     
+!
       use array_utilities, only: zero_array
 !
       implicit none
@@ -345,26 +345,26 @@ contains
          sin_theta = sin(z_matrix%angles(i))
          cos_theta = cos(z_matrix%angles(i))
          sin_phi = sin(z_matrix%dihedrals(i))
-         cos_phi = cos(z_matrix%dihedrals(i)) 
+         cos_phi = cos(z_matrix%dihedrals(i))
 !
 !        Projections along the unit vectors e_1, e_2, e_3
 !        multiplied by the distance from R_i-1 to R_i
 !
-         x = z_matrix%distances(i)*cos_theta          
+         x = z_matrix%distances(i)*cos_theta
          y = z_matrix%distances(i)*sin_phi*sin_theta
          z = z_matrix%distances(i)*cos_phi*sin_theta
 !
 !        Position relative to R_i-1
 !
-         R(1, i) = e_1(1)*x + e_2(1)*y + e_3(1)*z  
-         R(2, i) = e_1(2)*x + e_2(2)*y + e_3(2)*z  
-         R(3, i) = e_1(3)*x + e_2(3)*y + e_3(3)*z  
+         R(1, i) = e_1(1)*x + e_2(1)*y + e_3(1)*z
+         R(2, i) = e_1(2)*x + e_2(2)*y + e_3(2)*z
+         R(3, i) = e_1(3)*x + e_2(3)*y + e_3(3)*z
 !
 !        Prosition relative to origin (0,0,0)
 !
-         R(1, i) = R(1, i) + R(1, i - 1) 
-         R(2, i) = R(2, i) + R(2, i - 1) 
-         R(3, i) = R(3, i) + R(3, i - 1) 
+         R(1, i) = R(1, i) + R(1, i - 1)
+         R(2, i) = R(2, i) + R(2, i - 1)
+         R(3, i) = R(3, i) + R(3, i - 1)
 !
       enddo
 

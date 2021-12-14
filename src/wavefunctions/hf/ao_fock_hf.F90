@@ -38,10 +38,14 @@ contains
 !!
 !!    Call either cumulative or non-cumulative updating depending on options
 !!
+!
+      use array_utilities, only: copy_and_scale
+!
       implicit none
 !
       class(hf), intent(inout) :: wf
       logical, intent(in) :: cumulative
+      real(dp), dimension(:,:), allocatable :: h
 !
       if (.not. cumulative) then
 !
@@ -55,11 +59,13 @@ contains
 !
 !     Set the two-electron part
 !
-      call dcopy(wf%ao%n**2,  wf%ao_G, 1, wf%ao_fock, 1)
+      call copy_and_scale(half, wf%ao_G, wf%ao_fock, wf%ao%n**2)
 !
 !     Add the one-electron part
 !
-      call daxpy(wf%ao%n**2, one, wf%ao%h, 1, wf%ao_fock, 1)
+      call mem%alloc(h, wf%ao%n, wf%ao%n)
+      call wf%get_ao_h(h)
+      call daxpy(wf%ao%n**2, one, h, 1, wf%ao_fock, 1)
 !
 !     Embedding contribution
 !
@@ -77,7 +83,9 @@ contains
 !
 !     Energy
 !
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao%h)
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h)
+!
+      call mem%dealloc(h, wf%ao%n, wf%ao%n)
 !
    end subroutine update_fock_and_energy_hf
 !
@@ -97,6 +105,9 @@ contains
 !!    Cumulative construction of two-electron part and not
 !!    full Fock matrix
 !!
+!
+      use timings_class,     only : timings
+!
       implicit none
 !
       class(hf), intent(inout) :: wf
@@ -140,6 +151,9 @@ contains
 !!    Called by solver when a new density has been obtained and
 !!    the next Fock and energy is to be computed.
 !!
+!
+      use timings_class,     only : timings
+!
       implicit none
 !
       class(hf), intent(inout) :: wf
@@ -179,6 +193,11 @@ contains
 !!                 Coulomb and exchange screening will target the MO basis G(D). Used in
 !!                 MLHF when constructing G(Da). Default: false.
 !!
+!
+      use omp_lib
+      use array_utilities, only: get_abs_max, zero_array
+      use reordering, only: symmetric_sum
+!
       implicit none
 !
       class(hf), intent(inout):: wf
@@ -273,7 +292,7 @@ contains
 !!
 !!    This routine constructs the entire two-electron part of the Fock matrix,
 !!
-!!       F_αβ =+ sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ (= G(D)_αβ),
+!!       G_αβ =+ sum_γδ 2g_αβγδ D_γδ - sum_γδ g_αδγβ D_γδ,
 !!
 !!    where contributions from different threads are gathered column blocks
 !!    of the incoming F matrix.
@@ -284,6 +303,10 @@ contains
 !!    Routine partly based on Hartree-Fock implementation shipped with
 !!    the Libint 2 integral package by E. Valeev.
 !!
+!
+      use omp_lib
+      use range_class, only: range_
+!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -317,7 +340,7 @@ contains
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34,     &
 !$omp w, x, y, z, temp1, temp2, temp3, d1, d2, d3, d4, d5, d6, thread, thread_offset,         &
 !$omp temp4, temp5, temp6, temp7, temp8, w_red, x_red, tot_dim, y_red, z_red, wxyz, g,        &
-!$omp shp_eri_schwarz_s1s2, shp_density_schwarz_s1s2, deg_12_34,                                &
+!$omp shp_eri_schwarz_s1s2, shp_density_schwarz_s1s2, deg_12_34,                              &
 !$omp shp_density_schwarz_s3s2, shp_density_schwarz_s3s1, skip) schedule(dynamic)
       do s1s2 = 1, n_sig_shp
 !
@@ -366,7 +389,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%ao%get_eri(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8), skip)
+               call wf%get_ao_g(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8), skip)
 !
                if (skip == 1) cycle
 !
@@ -409,13 +432,13 @@ contains
 !
                            temp = g(wxyz)
 !
-                           temp1 = half*temp*d1
-                           temp2 = half*temp*d2
+                           temp1 = temp*d1
+                           temp2 = temp*d2
 !
-                           temp3 = eighth*temp*d3
-                           temp4 = eighth*temp*d4
-                           temp5 = eighth*temp*d5
-                           temp6 = eighth*temp*d6
+                           temp3 = quarter*temp*d3
+                           temp4 = quarter*temp*d4
+                           temp5 = quarter*temp*d5
+                           temp6 = quarter*temp*d6
 !
                            F(w, thread_offset + x) = F(w, thread_offset + x) + temp1
                            F(y, thread_offset + x) = F(y, thread_offset + x) - temp6
@@ -448,7 +471,7 @@ contains
 !!
 !!    This routine constructs the entire two-electron part of the Fock matrix,
 !!
-!!       F_αβ =+ sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ (= G(D)_αβ),
+!!       G_αβ =+ sum_γδ 2 * g_αβγδ D_γδ - sum_γδ g_αδγβ D_γδ,
 !!
 !!    where contributions from different threads are gathered column blocks
 !!    of the incoming F matrix.
@@ -473,6 +496,11 @@ contains
 !!    the MOs are local, which means that screening for G(Da) in the MO basis is more efficient
 !!    than screening for G(Da) in the AO basis.
 !!
+!
+      use omp_lib
+      use range_class, only: range_
+      use timings_class,     only : timings
+!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -584,7 +612,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%ao%get_eri(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8), skip)
+               call wf%get_ao_g(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8), skip)
 !
                if (skip == 1) cycle
 !
@@ -627,13 +655,13 @@ contains
 !
                            temp = g(wxyz)
 !
-                           temp1 = half*temp*d1
-                           temp2 = half*temp*d2
+                           temp1 = temp*d1
+                           temp2 = temp*d2
 !
-                           temp3 = eighth*temp*d3
-                           temp4 = eighth*temp*d4
-                           temp5 = eighth*temp*d5
-                           temp6 = eighth*temp*d6
+                           temp3 = quarter*temp*d3
+                           temp4 = quarter*temp*d4
+                           temp5 = quarter*temp*d5
+                           temp6 = quarter*temp*d6
 !
                            F(w, thread_offset + x) = F(w, thread_offset + x) + temp1
                            F(y, thread_offset + x) = F(y, thread_offset + x) - temp6
@@ -668,7 +696,7 @@ contains
 !!
 !!    This routine constructs the Coulomb two-electron part of the Fock matrix,
 !!
-!!       F_αβ = F_αβ + sum_γδ g_αβγδ D_γδ,
+!!       G_αβ = G_αβ + sum_γδ g_αβγδ D_γδ,
 !!
 !!    where contributions from different threads are gathered column blocks
 !!    of the incoming F matrix.
@@ -676,6 +704,10 @@ contains
 !!    Note: the contributions from each thread need to be added to a single
 !!    n_ao x n_ao matrix & symmetrized to get the Coulomb part of G(D)_αβ.
 !!
+!
+      use omp_lib
+      use range_class, only: range_
+!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -750,7 +782,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%ao%get_eri(g, s1, s2, s3, s4, precision_thr/temp7, skip)
+               call wf%get_ao_g(g, s1, s2, s3, s4, precision_thr/temp7, skip)
 !
                if (skip == 1) cycle
 !
@@ -788,8 +820,8 @@ contains
 !
                            temp = g(wxyz)
 !
-                           temp1 = half*temp*d1
-                           temp2 = half*temp*d2
+                           temp1 = temp*d1
+                           temp2 = temp*d2
 !
                            F(w, thread_offset + x) = F(w, thread_offset + x) + temp1
                            F(y, thread_offset + z) = F(y, thread_offset + z) + temp2
@@ -814,16 +846,20 @@ contains
 !!    AO Fock exchange construction loop
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-!!    This routine constructs the entire two-electron part of the Fock matrix,
+!!    This routine constructs the exchange part of two-electron contribution Fock matrix,
 !!
-!!       F_αβ = F_αβ - 1/2 * sum_γδ g_αδγβ D_γδ,
+!!       G_αβ = G_αβ - sum_γδ g_αδγβ D_γδ,
 !!
 !!    where contributions from different threads are gathered column blocks
-!!    of the incoming F matrix.
+!!    of the incoming G matrix.
 !!
 !!    Note: the contributions from each thread need to be added to a single
 !!    n_ao x n_ao matrix & symmetrized to get the exchange part of G(D)_αβ.
 !!
+!
+      use omp_lib
+      use range_class, only: range_
+!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -901,7 +937,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%ao%get_eri(g, s1, s2, s3, s4, precision_thr/temp8, skip)
+               call wf%get_ao_g(g, s1, s2, s3, s4, precision_thr/temp8, skip)
 !
                if (skip == 1) cycle
 !
@@ -941,10 +977,10 @@ contains
 !
                            temp = g(wxyz)
 !
-                           temp3 = eighth*temp*d3
-                           temp4 = eighth*temp*d4
-                           temp5 = eighth*temp*d5
-                           temp6 = eighth*temp*d6
+                           temp3 = quarter*temp*d3
+                           temp4 = quarter*temp*d4
+                           temp5 = quarter*temp*d5
+                           temp6 = quarter*temp*d6
 !
                            F(y, thread_offset + x) = F(y, thread_offset + x) - temp6
                            F(w, thread_offset + z) = F(w, thread_offset + z) - temp3
@@ -973,6 +1009,11 @@ contains
 !!    of D_wx^1/2 for each shell pair (A,B), where w and x is in A and B,
 !!    respectively.
 !!
+!
+      use omp_lib
+      use range_class, only: range_
+      use array_utilities, only: get_abs_max
+!
       implicit none
 !
       class(hf) :: wf
@@ -1031,13 +1072,16 @@ contains
 !!    Construct AO G 1der
 !!    Written by Eirik F. Kjønstad, 2019
 !!
-!!    This routine constructs the entire two-electron part of the Fock matrix,
+!!    This routine constructs the two-electron part of the Fock matrix G(D),
 !!
-!!       F_αβqk = sum_γδ g_αβγδqk D_γδ - 1/2 * sum_γδ g_αδγβqk D_γδ (= G(D)_αβqk),
+!!       G_αβqk = sum_γδ 2 * g_αβγδqk D_γδ - sum_γδ g_αδγβqk D_γδ (= G(D)_αβqk),
 !!
 !!    where contributions from different threads are gathered column blocks
 !!    of the incoming F matrix.
 !!
+!
+      use omp_lib
+!
       implicit none
 !
       class(hf), intent(in) :: wf
@@ -1145,13 +1189,13 @@ contains
                                  enddo
                               enddo
 !
-                              temp1 = half*temp*d1
-                              temp2 = half*temp*d2
+                              temp1 = temp*d1
+                              temp2 = temp*d2
 !
-                              temp3 = eighth*temp*d3
-                              temp4 = eighth*temp*d4
-                              temp5 = eighth*temp*d5
-                              temp6 = eighth*temp*d6
+                              temp3 = quarter*temp*d3
+                              temp4 = quarter*temp*d4
+                              temp5 = quarter*temp*d5
+                              temp6 = quarter*temp*d6
 !
                               do k = 1, 4
                                  do q = 1, 3
@@ -1309,6 +1353,28 @@ contains
       endif
 !
    end subroutine set_screening_and_precision_thresholds_hf
+!
+!
+   module subroutine set_gradient_threshold_hf(wf, gradient_threshold)
+!!
+!!    Set gradient thresholds
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Sets the screening thresholds for Coulomb and exchange
+!!    integrals given the convergence threshold for the gradient
+!!    unless other thresholds are already set on input.
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+      real(dp), intent(in) :: gradient_threshold
+!
+      wf%gradient_threshold = gradient_threshold
+!
+      call wf%set_screening_and_precision_thresholds(wf%gradient_threshold)
+!
+   end subroutine set_gradient_threshold_hf
 !
 !
 end submodule ao_fock

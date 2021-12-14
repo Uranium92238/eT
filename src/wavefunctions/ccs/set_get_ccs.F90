@@ -95,56 +95,6 @@ contains
    end subroutine get_multipliers_ccs
 !
 !
-   module subroutine set_fock_ccs(wf, F_pq)
-!!
-!!    Set Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-!!    Sets the different blocks of the Fock matrix based on the full
-!!    matrix sent to the routine.
-!!
-      implicit none
-!
-      class(ccs), intent(inout) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_pq
-!
-      integer :: i, j, a, b
-!
-!$omp parallel do private(i,j)
-      do j = 1, wf%n_o
-         do i = 1, wf%n_o
-!
-            wf%fock_ij(i,j) = F_pq(i,j)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-!$omp parallel do private(i,a)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            wf%fock_ia(i,a) = F_pq(i, wf%n_o + a)
-            wf%fock_ai(a,i) = F_pq(wf%n_o + a, i)
-!
-         enddo
-      enddo
-!$omp end parallel do 
-!
-!$omp parallel do private(a,b)
-      do b = 1, wf%n_v
-         do a = 1, wf%n_v
-!
-            wf%fock_ab(a,b) = F_pq(wf%n_o + a, wf%n_o + b)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine set_fock_ccs
-!
-!
    module subroutine set_excitation_energies_ccs(wf, energies, side)
 !!
 !!    Set excitation energies

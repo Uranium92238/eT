@@ -520,7 +520,7 @@ contains
       integer :: info
       integer :: I, J
 !
-      cholesky_vectors = matrix
+      call dcopy(dim_**2, matrix, 1, cholesky_vectors, 1)
 !
       call mem%alloc(work, (2*dim_))
 !
@@ -630,7 +630,7 @@ contains
 !
 !     Store A in Ainv to prevent it from being overwritten by LAPACK
 !
-      Ainv = A
+      call dcopy(n**2, A, 1, Ainv, 1)
 !
 !     dtrtri computes the inverse of a real upper or lower triangular
 !     matrix A.
@@ -1247,6 +1247,27 @@ contains
       get_l2_norm = sqrt(ddot(n, X, 1, X, 1))
 !
    end function get_l2_norm
+!
+!
+   function get_root_mean_square(X, n) result(rms)
+!!
+!!    Get root mean square
+!!    Written by Eirik F. Kjønstad, 2021
+!!
+!!    Get root-mean-square, RMS = sqrt(X^T X / n)
+!!
+      implicit none 
+!
+      integer, intent(in) :: n 
+      real(dp), dimension(n), intent(in) :: X 
+!
+      real(dp) :: ddot, rms
+!
+      rms = ddot(n, X, 1, X, 1)/real(n, kind=dp)
+!
+      rms = sqrt(rms)
+!
+   end function get_root_mean_square 
 !
 !
    subroutine transpose_(A, A_trans, dim_)
@@ -3221,6 +3242,139 @@ contains
 !$omp end parallel do
 !
    end subroutine add_to_subblock
+!
+!
+   subroutine calculate_pseudoinverse(Ainv, A, m, n, tau)
+!!
+!!    Calculate pseudoinverse
+!!    Written by Eirik F. Kjønstad, 2021
+!!
+!!    The pseudoinverse is computed via an SVD:
+!!
+!!       A    = U S V^T 
+!!       Ainv = V S-1 U^T 
+!!
+!!    In S-1, diagonals with singular values (S) below tau*max(S) are set to zero.
+!!
+      implicit none 
+!
+      integer, intent(in) :: m, n
+!
+      real(dp), dimension(m,n), intent(in)  :: A
+      real(dp), dimension(n,m), intent(out) :: Ainv
+!
+      real(dp), intent(in) :: tau
+!
+      real(dp), dimension(:), allocatable   :: S, Sinv 
+      real(dp), dimension(:,:), allocatable :: U, VT, Acopy
+!
+      real(dp), dimension(:), allocatable :: work 
+      integer :: lwork 
+!
+      integer :: error_integer, k, l, j, min_mn
+!
+      real(dp) :: max_singular
+!
+      min_mn = min(m,n)
+!
+      call mem%alloc(Acopy, m, n)
+      call copy_and_scale(one, A, Acopy, m*n)
+!
+      lwork = 2000 * min_mn
+      call mem%alloc(work, lwork)
+!
+      call mem%alloc(S, min_mn)
+      call mem%alloc(U, m, min_mn)
+      call mem%alloc(VT, min_mn, n)
+!
+      error_integer = 0 
+!
+      call dgesvd('S', 'S', &
+                   m, &
+                   n, &
+                   Acopy, &
+                   m, &
+                   S, &
+                   U, &
+                   m, &
+                   VT, &
+                   min_mn, &
+                   work, &
+                   lwork, &
+                   error_integer)
+!
+      call mem%dealloc(work, lwork)
+      call mem%dealloc(Acopy, m, n)
+!
+      if (error_integer .ne. 0) &
+         call output%error_msg('SVD failed in pseudoinverse: (i0)', ints=[error_integer])
+!
+      max_singular = maxval(S, min_mn)
+!
+      call mem%alloc(Sinv, min_mn)
+!
+      do k = 1, min_mn
+!
+         if (S(k) .lt. tau*max_singular) then 
+!
+            Sinv(k) = zero 
+!
+         else
+!
+            Sinv(k) = one/S(k)
+!
+         endif
+!
+      enddo
+!
+      call mem%dealloc(S, min_mn)
+!
+!     (Ainv)_kl = V_kj S-1_j U^T_jl 
+!
+      call zero_array(Ainv, m*n)
+!
+!$omp parallel do schedule(static) private(k,l,j)
+      do k = 1, n 
+         do l = 1, m 
+            do j = 1, min_mn
+!
+               Ainv(k,l) = Ainv(k,l) + VT(j,k)*Sinv(j)*U(l,j)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call mem%dealloc(U, m, min_mn)
+      call mem%dealloc(Sinv, min_mn)
+      call mem%dealloc(VT, min_mn, n)
+!
+   end subroutine calculate_pseudoinverse
+!
+!
+   function get_euclidean_distance(point1, point2, N) result(distance)
+!!
+!!    Get euclidean distance
+!!    Written by Alexander C. Paul, Nov 2021
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+      real(dp), dimension(n), intent(in) :: point1, point2
+!
+      real(dp) :: distance
+!
+      integer  :: i
+!
+      distance = zero
+!
+      do i = 1, n
+         distance = distance + (point1(i) - point2(i))**2
+      end do
+!
+      distance = sqrt(distance)
+!
+   end function
 !
 !
 end module array_utilities

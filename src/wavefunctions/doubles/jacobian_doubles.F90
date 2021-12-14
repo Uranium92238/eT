@@ -23,15 +23,15 @@ submodule (doubles_class) jacobian_doubles
 !!    Jacobian submodule
 !!
 !!    Routines for the linear transform of trial
-!!    vectors by the Jacobian matrix 
+!!    vectors by the Jacobian matrix
 !!
 !!    ρ_i = A * c_i,
 !!
 !!    where
-!!   
+!!
 !!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
-!!  
-! 
+!!
+!
    implicit none
 !
 !
@@ -54,7 +54,7 @@ contains
 !
    module subroutine jacobian_transformation_doubles(wf, c, rho)
 !!
-!!    Jacobian transformation 
+!!    Jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !!    Directs the transformation by the doubles Jacobi matrix,
@@ -70,6 +70,9 @@ contains
 !!    On exit, c is overwritten by rho. That is, c_ai = rho_ai,
 !!    and c_aibj = rho_aibj.
 !!
+      use reordering, only: squareup, symmetrize_and_add_to_packed
+      use array_utilities, only: zero_array, scale_diagonal
+!
       implicit none
 !
       class(doubles), intent(inout) :: wf
@@ -79,6 +82,11 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian doubles transformation', pl='normal')
+      call timer%turn_on()
 !
       call zero_array(rho, wf%n_t1 + wf%n_t2)
 !
@@ -103,20 +111,23 @@ contains
       call wf%jacobian_doubles_c1(rho(1 : wf%n_t1), c_aibj)
       call wf%jacobian_doubles_d1(rho(1 : wf%n_t1), c_aibj)
 !
-      call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
 !     Contributions to transformed doubles
 !
       call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(rho_aibj, wf%n_t1**2)
 !
       call wf%jacobian_doubles_a2(rho_aibj, c(1 : wf%n_t1))
+      call wf%jacobian_doubles_b2(rho_aibj, c_aibj)
+!
+      call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call scale_diagonal(half, rho_aibj, wf%n_t1)
 !
       call symmetrize_and_add_to_packed(rho(wf%n_t1+1:), rho_aibj, wf%n_t1)
 !
       call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_transformation_doubles
 !
@@ -126,10 +137,10 @@ contains
 !!    Save jacobian a1 intermediates
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2019
 !!
-!!    Constructs the intermediates 
+!!    Constructs the intermediates
 !!
-!!       Y_jl   = t_ckdj L_kcld 
-!!       Y_bd   = t_blck L_kcld 
+!!       Y_jl   = t_ckdj L_kcld
+!!       Y_bd   = t_blck L_kcld
 !!
 !!    Which are constructed in save_jacobian_a1_intermediates
 !!    and stored on files
@@ -139,6 +150,9 @@ contains
 !!
 !!    which are wavefunction variables
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: add_2143_to_1234, add_2341_to_1234, squareup
+!
       implicit none
 !
       class(doubles) :: wf
@@ -188,7 +202,7 @@ contains
                   Y_bd,                &
                   wf%n_v)
 !
-      wf%jacobian_a1_intermediate_vv = sequential_file('jacobian_a1_intermediate_vv_doubles')
+      wf%jacobian_a1_intermediate_vv = stream_file('jacobian_a1_intermediate_vv_doubles')
       call wf%jacobian_a1_intermediate_vv%open_('write', 'rewind')
 !
       call wf%jacobian_a1_intermediate_vv%write_(Y_bd, wf%n_v**2)
@@ -197,7 +211,7 @@ contains
 !
       call wf%jacobian_a1_intermediate_vv%close_('keep')
 !
-!     Y_jl = t_ckdj L_kcld 
+!     Y_jl = t_ckdj L_kcld
 !
 !     Note: pretend that t_blck is t_ckdj
 !     Using symmetry L_dlck = L_ckdl (L_kcld = L_ldkc)
@@ -220,7 +234,7 @@ contains
       call mem%dealloc(t_blck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      wf%jacobian_a1_intermediate_oo = sequential_file('jacobian_a1_intermediate_oo_doubles')
+      wf%jacobian_a1_intermediate_oo = stream_file('jacobian_a1_intermediate_oo_doubles')
       call wf%jacobian_a1_intermediate_oo%open_('write', 'rewind')
 !
       call wf%jacobian_a1_intermediate_oo%write_(Y_jl, wf%n_o**2)
@@ -242,6 +256,8 @@ contains
 !!    rho_ai^A1 = sum_ckdl L_kcld (u_ki^ca c_dl - t_kl^ad c_ci  - t_ki^cd c_al)
 !!              = sum_ckdl L_kcld u_ki^ca c_dl - Y_ac c_ci - Y_il c_al)
 !!
+      use reordering, only: sort_12_to_21, sort_123_to_132
+!
       implicit none
 !
       class(doubles) :: wf
@@ -257,7 +273,7 @@ contains
 !
 !     Intermediates
 !
-      real(dp), dimension(:), allocatable       :: X_J 
+      real(dp), dimension(:), allocatable       :: X_J
 !
       real(dp), dimension(:,:), allocatable     :: X_ck, X_kc
       real(dp), dimension(:,:), allocatable     :: Y_il
@@ -274,9 +290,9 @@ contains
       timer = timings('Jacobian doubles A1', pl='verbose')
       call timer%turn_on()
 !
-!     Term 1: sum_bjck L_kcjb u_aick c_bj   
+!     Term 1: sum_bjck L_kcjb u_aick c_bj
 !
-!     2 sum_bjck g_kcjb u_aick c_bj = L_Jkc L_Jjb c_bj u_aick      
+!     2 sum_bjck g_kcjb u_aick c_bj = L_Jkc L_Jjb c_bj u_aick
 !
       call mem%alloc(L_Jov, wf%eri%n_J, wf%n_o, wf%n_v)
       call wf%eri%get_cholesky_t1(L_Jov, 1, wf%n_o, wf%n_o + 1, wf%n_mo)
@@ -300,9 +316,9 @@ contains
       call mem%dealloc(c_jb, wf%n_o, wf%n_v)
       call mem%alloc(X_kc, wf%n_o, wf%n_v)
 !
-      call dgemv('T',            & 
+      call dgemv('T',            &
                   wf%eri%n_J,    &
-                  wf%n_v*wf%n_o, &                  
+                  wf%n_v*wf%n_o, &
                   two,           &
                   L_Jov,         &
                   wf%eri%n_J,    &
@@ -318,7 +334,7 @@ contains
       call sort_12_to_21(X_kc, X_ck, wf%n_o, wf%n_v)
       call mem%dealloc(X_kc, wf%n_o, wf%n_v)
 !
-!     - sum_bjck g_kbjc u_aick c_bj = L_Jkb L_Jjc c_bj u_aick      
+!     - sum_bjck g_kbjc u_aick c_bj = L_Jkb L_Jjc c_bj u_aick
 !
       call mem%alloc(X_Jkj, wf%eri%n_J, wf%n_o, wf%n_o)
 !
@@ -361,7 +377,7 @@ contains
                   (wf%n_v)*(wf%n_o), &
                   (wf%n_v)*(wf%n_o), &
                   one,               &
-                  wf%u_aibj,         & 
+                  wf%u_aibj,         &
                   (wf%n_v)*(wf%n_o), &
                   X_ck,              &
                   1,                 &
@@ -411,7 +427,7 @@ contains
                   wf%n_o,     &
                   wf%n_o,     &
                   -one,       &
-                  c_ai,       & ! c_ak 
+                  c_ai,       & ! c_ak
                   wf%n_v,     &
                   Y_il,       &
                   wf%n_o,     &
@@ -434,6 +450,9 @@ contains
 !!    rho_ai^B1 = sum_bj F_jb (2*c_aibj - c_ajbi)
 !!              = sum_bj F_jb v_aijb
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: add_1243_to_1234, add_1342_to_1234
+!
       implicit none
 !
       class(doubles) :: wf
@@ -487,6 +506,9 @@ contains
 !!    rho_ai^C1 = - sum_bjk L_jikb c_ajbk
 !!              = - sum_bjk (2*g_jikb - g_kijb) c_ajbk
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: add_1432_to_1234, add_3412_to_1234
+!
       implicit none
 !
       class(doubles) :: wf
@@ -546,6 +568,10 @@ contains
 !!
 !!    rho_ai^D1 =  sum_bcj L_abjc c_bicj
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: sort_1234_to_1432, add_1432_to_1234
+      use array_utilities, only: copy_and_scale
+!
       implicit none
 !
       class(doubles) :: wf
@@ -581,7 +607,7 @@ contains
 !
       batch_a = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_a, req0, req1)
+      call mem%batch_setup(batch_a, req0, req1, 'jacobian_doubles_d1')
 !
       do current_a_batch = 1, batch_a%num_batches
 !
@@ -635,6 +661,8 @@ contains
 !!
 !!    rho_aibj^A2 = sum_c g_aibc c_cj - sum_k g_aikj c_bk
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(doubles) :: wf
@@ -658,7 +686,7 @@ contains
 !
 !     :: Term 1. - sum_k g_aikj c_bk ::
 !
-!     rho_bjai =- c_bk g_kjai 
+!     rho_bjai =- c_bk g_kjai
 !
       call mem%alloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -674,7 +702,7 @@ contains
                   g_kjai,               & ! g_k,jai
                   wf%n_o,               &
                   one,                  &
-                  rho_aibj,             & ! rho_b,jai -> will be (ai,bj)-symmetrized 
+                  rho_aibj,             & ! rho_b,jai -> will be (ai,bj)-symmetrized
                   wf%n_v)
 !
       call mem%dealloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
@@ -689,7 +717,7 @@ contains
 !
       batch_b = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_b, req0, req1)
+      call mem%batch_setup(batch_b, req0, req1, 'jacobian_doubles_a2')
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -723,6 +751,57 @@ contains
       call timer%turn_off()
 !
    end subroutine jacobian_doubles_a2
+!
+!
+   module subroutine jacobian_doubles_b2(wf, rho_aibj, c_aibj)
+!!
+!!    Jacobian doubles B2
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018 & 2021
+!!
+!!    rho_aibj^B2 =  sum_c F_bc * c_ai,cj - sum_k F_jk * c_ai,bk
+!!
+      implicit none
+!
+      class(doubles), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)    :: c_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: rho_aibj
+!
+!     :: sum_c F_bc c_ai,cj ::
+!
+!     rho_bjai =+ F_bc c_cjai
+!
+      call dgemm('N','N',                 &
+                  wf%n_v,                 &
+                  (wf%n_v)*(wf%n_o)**2,   &
+                  wf%n_v,                 &
+                  one,                    &
+                  wf%fock_ab,             & ! F_b,c
+                  wf%n_v,                 &
+                  c_aibj,                 & ! c_c,jai
+                  wf%n_v,                 &
+                  one,                    &
+                  rho_aibj,               & ! rho_b,jai -> will be (ai,bj)-symmetrized
+                  wf%n_v)
+!
+!     :: - sum_k F_jk * c_aibk  ::
+!
+!     rho_aibj += - sum_k F_jk * c_aibk = - sum_k c_aibk F_ij(k,j)^T
+!
+      call dgemm('N', 'N',                &
+                  (wf%n_o)*((wf%n_v)**2), &
+                  wf%n_o,                 &
+                  wf%n_o,                 &
+                  -one,                   &
+                  c_aibj,                 & ! c_aib_k
+                  (wf%n_o)*((wf%n_v)**2), &
+                  wf%fock_ij,             & ! F_k_j
+                  wf%n_o,                 &
+                  one,                    &
+                  rho_aibj,               & ! rho_aib_j
+                  (wf%n_o)*((wf%n_v)**2))
+!
+   end subroutine jacobian_doubles_b2
 !
 !
 end submodule jacobian_doubles

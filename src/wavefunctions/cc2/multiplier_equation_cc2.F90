@@ -27,7 +27,7 @@ submodule (cc2_class) multiplier_equation_cc2
 !!       t-bar^T A + eta = 0,
 !!
 !!    where t-bar is the multiplier vector, and
-!! 
+!!
 !!       A_mu,nu = < mu | exp(-T) [H, τ_nu] exp(T) | R >
 !!       eta_mu  = < R | exp(-T) [H, τ_mu] exp(T) | R >.
 !!
@@ -66,10 +66,10 @@ contains
 !
    module subroutine construct_multiplier_equation_cc2(wf, equation)
 !!
-!!    Construct multiplier equation 
+!!    Construct multiplier equation
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!
-!!    Constructs 
+!!    Constructs
 !!
 !!       t-bar^T A + eta,
 !!
@@ -81,19 +81,22 @@ contains
 !!
 !!    where
 !!
-!!       η_aibj = 2 L_iajb       
+!!       η_aibj = 2 L_iajb
 !!
 !!    and uses this to set up 'equation'
 !!
 !!       η_ai + sum_bj tbar_bj A_bj,ai + sum_bjck tbar_bjck A_{bjck,ai}
 !!
-      implicit none 
+      use array_utilities, only: zero_array
+      use reordering, only: symmetric_sum, add_2143_to_1234, add_2341_to_1234
 !
-      class(cc2), intent(inout) :: wf 
+      implicit none
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation 
+      class(cc2), intent(inout) :: wf
 !
-      real(dp), dimension(:), allocatable :: eta 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
+!
+      real(dp), dimension(:), allocatable :: eta
       real(dp), dimension(:,:,:,:), allocatable :: t2bar
       real(dp), dimension(:,:,:,:), allocatable :: g_iajb
 !
@@ -143,7 +146,7 @@ contains
 !     equation = sum_bj tbar_bj A_bj,ai
 !
       call zero_array(equation, wf%n_gs_amplitudes)
-!  
+!
       call wf%jacobian_transpose_ccs_a1(equation, wf%t1bar)
       call wf%jacobian_transpose_ccs_b1(equation, wf%t1bar)
       call wf%jacobian_transpose_doubles_a1(equation, wf%t1bar, wf%u_aibj)
@@ -154,7 +157,7 @@ contains
 !
       call mem%dealloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Add eta, equation = t-bar^T A + eta 
+!     Add eta, equation = t-bar^T A + eta
 !
       call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)

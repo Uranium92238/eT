@@ -22,7 +22,7 @@ submodule (cc3_class) prepare_jacobian_transform
 !!
 !!    Prepare jacobian transformation
 !!
-!!    Routines setting up the files containing intermediates for the linear 
+!!    Routines setting up the files containing intermediates for the linear
 !!    transform of trial vectors by the Jacobian matrix and its transpose.
 !!
 !!    X_dbai = - sum_cjk (2 * t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_kcjd
@@ -44,7 +44,7 @@ contains
 !
       class(cc3), intent(inout) :: wf
 !
-      type(timings) :: prep_timer      
+      type(timings) :: prep_timer
 !
       call output%printf('v', 'Preparing for (a0) right excited state equations', &
                          chars=[trim(wf%name_)], fs='(/t3,a)')
@@ -96,21 +96,26 @@ contains
 !!
 !!    Prepare intermediates for jacobian CC3 transformations
 !!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
-!!    Adapted to a contravariant representation of t3 
+!!    Adapted to a contravariant representation of t3
 !!    by Rolf H. Myhre and Alexander C. Paul, Sep 2020
 !!
 !!    Construct X_abdi and X_ajil needed in CC3 jacobian transpose and store on disk
-!!    For that: construct t^abc_ijk in single batches of ijk 
+!!    For that: construct t^abc_ijk in single batches of ijk
 !!    and contract with the respective integrals
 !!
 !!    t^abc = - (eps^abc)^-1 P^abc_ijk(sum_d t^ad_ij(bd|ck) - sum_l t^ab_il(lj|ck))
 !!
 !!    X_abid -= sum_jck u^abc_ijk g_kcjd
 !!    X_ajil -= sum_bck u^abc_ijk g_lbkc
-!!    where 
-!!       u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk 
+!!    where
+!!       u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk
 !!                 - 2t^acb_ijk - 2t_cba_ijk - 2t_bac_ijk
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: squareup_and_sort_1234_to_1324, sort_1234_to_1342
+      use reordering, only: construct_contravariant_t3
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(cc3) :: wf
@@ -184,7 +189,7 @@ contains
       req_0 = req_0 + wf%n_v**3 + wf%n_v*wf%n_o**3
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
-!     Need less memory if we don't need to batch, so we overwrite the maximum 
+!     Need less memory if we don't need to batch, so we overwrite the maximum
 !     required memory in batch_setup
 !
       req_single_batch = req_0 + req_1_eri*wf%n_o + 2*wf%n_v**3*wf%n_o &
@@ -195,9 +200,10 @@ contains
       req_2 = 2*wf%n_o*wf%n_v
       req_3 = 0
 !
-      call mem%batch_setup(batch_i, batch_j, batch_k,  &
-                           req_0, req_i, req_1, req_1, &
-                           req_2, req_2, req_2, req_3, &
+      call mem%batch_setup(batch_i, batch_j, batch_k,            &
+                           req_0, req_i, req_1, req_1,           &
+                           req_2, req_2, req_2, req_3,           &
+                           'prepare_cc3_jacobian_intermediates', &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -454,7 +460,7 @@ contains
 !
       call wf%X_dbai%close_('delete')
 !
-!     sort X_alji to ajil and write to disk 
+!     sort X_alji to ajil and write to disk
 !
       call mem%alloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
@@ -480,7 +486,7 @@ contains
 !!
 !!    Construct X intermediates
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
-!!    Adapted to a contravariant representation of t3 
+!!    Adapted to a contravariant representation of t3
 !!    by Rolf H. Myhre and Alexander C. Paul, Sep 2020
 !!
 !!    Constructs the intermediates X_vvvo and X_vooo
@@ -491,6 +497,8 @@ contains
 !!
 !!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops
 !!
+      use reordering, only: sort_123_to_312, sort_123_to_213
+!
       implicit none
 !
       class(cc3) :: wf
@@ -516,7 +524,7 @@ contains
 !     X_alik -= sum_bc,j u_bca g_lbjc
       call wf%construct_Y_vooo_permutation(i, k, u_abc, g_lbjc, X_alji, -one)
 !
-!     bac -> cba 
+!     bac -> cba
 !     cab -> bca
       call sort_123_to_312(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
@@ -580,6 +588,9 @@ contains
 !!
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: sort_1234_to_3241
+!
       implicit none
 !
       class(cc3) :: wf
@@ -596,7 +607,7 @@ contains
 !
       batch_i = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, req_0, req_i)
+      call mem%batch_setup(batch_i, req_0, req_i, 'sort_x_to_abid_and_write_cc3')
 !
       wf%X_abid = direct_stream_file('X_abid',wf%n_v**2)
       call wf%X_abid%open_('write')

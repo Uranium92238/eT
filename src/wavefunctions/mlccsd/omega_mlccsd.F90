@@ -22,11 +22,11 @@ submodule (mlccsd_class) omega_mlccsd
 !!
 !!    Omega submodule (MLCCSD)
 !!
-!!    Routines to construct 
+!!    Routines to construct
 !!
 !!    Omega =  < mu | exp(-T) H exp(T) | R >
 !!
-!!    Based on omega_ccsd.F90 written by Sarai D. Folkestad 
+!!    Based on omega_ccsd.F90 written by Sarai D. Folkestad
 !!    and Eirik F. Kjønstad
 !!
 !!    Modified for MLCCSD by restricting indices to the active space.
@@ -45,8 +45,8 @@ contains
 !!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
 !!    for the current amplitudes of the object wf
 !!
-!
-      use array_utilities, only : scale_diagonal
+      use array_utilities, only : scale_diagonal, zero_array
+      use reordering, only: squareup, packin
 !
       implicit none
 !
@@ -113,8 +113,8 @@ contains
 !!    Omega A2 term
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!    Modified for MLCCSD by Sarai D. Folkestad 2017-2019
-!!      
-!!    A2 = g_aibj 
+!!
+!!    A2 = g_aibj
 !!
 !!    INDEX RESTRICTIONS
 !!
@@ -136,7 +136,7 @@ contains
       integer :: n_a_o, n_a_v
 !
       timer = timings('Omega MLCCSD a2', pl='v')
-!      
+!
       call timer%turn_on()
 !
       n_a_o = wf%n_cc2_o + wf%n_ccsd_o
@@ -161,7 +161,7 @@ contains
 !!    Omega B2 term
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!    Modified for MLCCSD by Sarai D. Folkestad 2017-2019
-!!      
+!!
 !!    B2 =  sum_(cd)g_acbd * x_cidj = B2.1 + B.2.2
 !!
 !!    Structure: Batching over both a and b for B2.2.
@@ -180,6 +180,8 @@ contains
 !!
 !!    c, d, are CC2 indices
 !!
+      use batching_index_class, only: batching_index
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -222,7 +224,7 @@ contains
       integer :: req0, req1_a, req1_b, rec2
 !
       integer :: current_a_batch
-      integer :: current_b_batch    
+      integer :: current_b_batch
 !
       integer :: n_v_packed, n_o_packed, batch_a_packed
 !
@@ -258,7 +260,8 @@ contains
       batch_a = batching_index(wf%n_ccsd_v)
       batch_b = batching_index(wf%n_ccsd_v)
 !
-      call mem%batch_setup(batch_a, batch_b, req0, req1_a, req1_b, rec2)
+      call mem%batch_setup(batch_a, batch_b, req0, req1_a, req1_b, rec2, &
+                           tag='omega_ccsd_b2_mlccsd')
 !
 !     Start looping over a-batches
 !
@@ -313,7 +316,7 @@ contains
 !
                            g_p_abcd(ab, cd) = diag_factor*(g_acbd(a, c, b, d) + g_acbd(a, d, b, c))
 !
-                           g_m_abcd(ab, cd) = diag_factor*(g_acbd(a, d, b, c) - g_acbd(a, c, b, d)) 
+                           g_m_abcd(ab, cd) = diag_factor*(g_acbd(a, d, b, c) - g_acbd(a, c, b, d))
 !                          a and b and c and d switched
 !
                         enddo
@@ -326,7 +329,7 @@ contains
               do i = 1, wf%n_ccsd_o
                  do j = 1, i
 !
-                     ij = (i*(i-3)/2) + i + j 
+                     ij = (i*(i-3)/2) + i + j
 !
                      do c = 1, n_a_v
                         do d = 1, c
@@ -397,7 +400,7 @@ contains
                      do a = 1, batch_a%length
                         do b = 1, a
 !
-                           ab = (a*(a-3)/2) + a + b 
+                           ab = (a*(a-3)/2) + a + b
 !
 !                          Reorder into omega2_aibj
 !
@@ -465,7 +468,7 @@ contains
                do i = 1, wf%n_ccsd_o
                   do j = 1, i
 !
-                     ij = (i*(i-3)/2) + i + j 
+                     ij = (i*(i-3)/2) + i + j
 !
                      do c = 1, n_a_v
                         do d = 1, c
@@ -592,6 +595,8 @@ contains
 !!
 !!    k, l, c, d are CC2 + CCSD orbitals
 !!
+      use reordering, only: sort_1234_to_1324, add_1324_to_1234
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -705,7 +710,7 @@ contains
       do l = 1, n_a_o
          do k = 1, n_a_o
             do b = 1, wf%n_ccsd_v
-              do a = 1, wf%n_ccsd_v              
+              do a = 1, wf%n_ccsd_v
 !
                   x_abkl(a, b, k, l) = x_aibj(a, k, b, l)
 !
@@ -761,6 +766,10 @@ contains
 !!
 !!    c, k, d, l are CCSD + CC2 indices
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: sort_1234_to_2341, sort_1234_to_3241, symmetric_sum
+      use array_utilities, only: zero_array
+!
       implicit none
 
       class(mlccsd) :: wf
@@ -839,7 +848,7 @@ contains
 !
       call wf%eri%get_eri_t1('ovov', g_kdlc, 1, n_a_o, 1, n_a_v, 1, n_a_o, 1, n_a_v)
 !
-!     Sort g_kdlc to g_dlck 
+!     Sort g_kdlc to g_dlck
 !
       call mem%alloc(g_dlck, n_a_v, n_a_o, n_a_v, n_a_o)
 !
@@ -903,7 +912,7 @@ contains
 !
       batch_a = batching_index(wf%n_ccsd_v)
 !
-      call mem%batch_setup(batch_a, req0, req1)
+      call mem%batch_setup(batch_a, req0, req1, tag='omega_ccsd_d2_mlccsd')
 !
 !     Loop over the number of a batches
 !
@@ -972,7 +981,7 @@ contains
 !
                      omega2_aibj(a + batch_a%first - 1, i, b, j) = &
                                     omega2_aibj(a + batch_a%first - 1, i, b, j) &
-                                    + omega_a_batch(a, i, b, j)               
+                                    + omega_a_batch(a, i, b, j)
 !
                   enddo
                enddo
@@ -1089,10 +1098,13 @@ contains
 !!
 !!    INDEX RESTRICTIONS:
 !!
-!!    a, i, b, j are CCSD indices 
+!!    a, i, b, j are CCSD indices
 !!
 !!    c, d, k, l are CC2 + CCSD indices
 !!
+      use reordering, only: add_1432_to_1234, symmetric_sum
+      use array_utilities, only: copy_and_scale
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -1106,10 +1118,10 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: omega2_aibj ! For storing E2.2 & E2.1
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_ldkc 
-      real(dp), dimension(:,:,:,:), allocatable :: L_ldkc 
-      real(dp), dimension(:,:,:,:), allocatable :: u_aild 
-      real(dp), dimension(:,:,:,:), allocatable :: Z_aikc 
+      real(dp), dimension(:,:,:,:), allocatable :: g_ldkc
+      real(dp), dimension(:,:,:,:), allocatable :: L_ldkc
+      real(dp), dimension(:,:,:,:), allocatable :: u_aild
+      real(dp), dimension(:,:,:,:), allocatable :: Z_aikc
       real(dp), dimension(:,:,:), allocatable   :: L_J_kc, L_J_ai ! Cholesky vectors, term 1
       real(dp), dimension(:,:,:), allocatable   :: X_bj_J         ! Intermediate, term 1
 !
@@ -1133,7 +1145,7 @@ contains
       call mem%alloc(L_ldkc, n_a_o, n_a_v, n_a_o, n_a_v)
 !
       call copy_and_scale(two, g_ldkc, L_ldkc, (n_a_o**2)*(n_a_v**2))
-      call add_1432_to_1234(-one, g_ldkc, L_ldkc, n_a_o, n_a_v, n_a_o, n_a_v)     
+      call add_1432_to_1234(-one, g_ldkc, L_ldkc, n_a_o, n_a_v, n_a_o, n_a_v)
 !
       call mem%dealloc(g_ldkc, n_a_o, n_a_v, n_a_o, n_a_v)
 !
@@ -1275,28 +1287,30 @@ contains
 !!
 !!    c, d, k, l are CC2 + CCSD indices
 !!
+      use reordering, only: symmetric_sum
+!
       implicit none
 !
       class(mlccsd) :: wf
 !
-      real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o), & 
+      real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o), &
                   intent(inout):: omega_aibj
 !
       real(dp), dimension(wf%n_ccsd_v + wf%n_cc2_v, wf%n_ccsd_o + wf%n_cc2_o, &
                           wf%n_ccsd_v + wf%n_cc2_v, wf%n_ccsd_o + wf%n_cc2_o), intent(in) :: x_aibj
 !
 !
-      real(dp), dimension(:,:,:,:), allocatable :: omega2_bjai 
-      real(dp), dimension(:,:,:,:), allocatable :: g_ldkc      
-      real(dp), dimension(:,:,:,:), allocatable :: u_bldk         
-      real(dp), dimension(:,:,:,:), allocatable :: u_cldj        
+      real(dp), dimension(:,:,:,:), allocatable :: omega2_bjai
+      real(dp), dimension(:,:,:,:), allocatable :: g_ldkc
+      real(dp), dimension(:,:,:,:), allocatable :: u_bldk
+      real(dp), dimension(:,:,:,:), allocatable :: u_cldj
       real(dp), dimension(:,:,:,:), allocatable :: x_cjai
       real(dp), dimension(:,:,:,:), allocatable :: x_aibk
 !
-      real(dp), dimension(:,:), allocatable :: X_bc         
-      real(dp), dimension(:,:), allocatable :: Y_kj 
+      real(dp), dimension(:,:), allocatable :: X_bc
+      real(dp), dimension(:,:), allocatable :: Y_kj
 !
-      type(timings) :: timer 
+      type(timings) :: timer
 !
       integer :: k, l, d, b, c, a, i, j
 !
@@ -1308,7 +1322,7 @@ contains
       n_a_o = wf%n_cc2_o + wf%n_ccsd_o
       n_a_v = wf%n_cc2_v + wf%n_ccsd_v
 !
-!     Form u_bkdl = 2 * x_kl^bd - x_lk^bd  ordered as u_bldk 
+!     Form u_bkdl = 2 * x_kl^bd - x_lk^bd  ordered as u_bldk
 !
       call mem%alloc(u_bldk,  wf%n_ccsd_v, n_a_o, n_a_v, n_a_o)
 !
@@ -1392,7 +1406,7 @@ contains
                   one,                             &
                   X_bc,                            &
                   wf%n_ccsd_v,                     &
-                  x_cjai,                          & 
+                  x_cjai,                          &
                   n_a_v,                           &
                   zero,                            &
                   omega2_bjai,                     &
@@ -1448,7 +1462,7 @@ contains
                  one,                 &
                  g_ldkc,              & ! g_k_cld
                  n_a_o,               &
-                 u_cldj,              & 
+                 u_cldj,              &
                  (n_a_o)*(n_a_v**2),  &
                  one,                 &
                  Y_kj,                &
@@ -1480,7 +1494,7 @@ contains
                  wf%n_ccsd_o,                      &
                  n_a_o,                            &
                  -one,                             &
-                 x_aibk,                           & 
+                 x_aibk,                           &
                  (wf%n_ccsd_o)*(wf%n_ccsd_v)**2,   &
                  Y_kj,                             &
                  n_a_o,                            &
@@ -1502,4 +1516,4 @@ contains
    end subroutine omega_ccsd_f2_mlccsd
 !
 !
-end submodule omega_mlccsd 
+end submodule omega_mlccsd

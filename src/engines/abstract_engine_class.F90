@@ -187,7 +187,7 @@ contains
          call output%printf('m', 'y:     (f14.7)', fs='(t6,a)', reals=[total(2)])
          call output%printf('m', 'z:     (f14.7)', fs='(t6,a)', reals=[total(3)])
 !      
-         dipole_norm = dsqrt(total(1)**2 + total(2)**2 + total(3)**2)
+         dipole_norm = sqrt(total(1)**2 + total(2)**2 + total(3)**2)
 !
          call output%printf('m', '|mu|:  (f14.7)', fs='(/t6,a)', reals=[dipole_norm])
 !

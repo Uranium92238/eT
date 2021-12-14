@@ -37,6 +37,40 @@ interface
    end subroutine get_eri_c
 !
 !
+   subroutine get_eri_3c_c(g, J, s3, s4, &
+                        epsilon_, skip,    &
+                        nJ, n3, n4) bind(C, name='get_eri_3c')
+!
+      use iso_c_binding
+!
+      implicit none
+!
+      real(c_double), dimension(*), intent(out) :: g
+      integer(c_int), value :: J, s3, s4
+      real(c_double), value :: epsilon_
+      integer(c_int), intent(out) :: skip
+      integer(c_int), value :: nJ, n3, n4
+!
+   end subroutine get_eri_3c_c
+!
+!
+   subroutine get_eri_2c_c(g, J, K, &
+                        epsilon_, skip,    &
+                        nJ, nK) bind(C, name='get_eri_2c')
+!
+      use iso_c_binding
+!
+      implicit none
+!
+      real(c_double), dimension(*), intent(out) :: g
+      integer(c_int), value :: J, K
+      real(c_double), value :: epsilon_
+      integer(c_int), intent(out) :: skip
+      integer(c_int), value :: nJ, nK
+!
+   end subroutine get_eri_2c_c
+!
+!
    subroutine get_eri_1der_c(g_wxyzqk, s1, s2, s3, s4) bind(C, name='get_eri_1der')
 !
       use iso_c_binding

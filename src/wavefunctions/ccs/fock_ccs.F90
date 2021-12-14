@@ -46,6 +46,7 @@ contains
 !!
 !
       use timings_class, only: timings
+      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -53,39 +54,54 @@ contains
       character(len=*), intent(in), optional :: task
       type(timings) :: timer
 !
+      real(dp), dimension(:,:), allocatable :: h, F_eff
+!
       timer = timings('Fock matrix construction (T1 basis)', pl='n')
       call timer%turn_on()
 !
+      call mem%alloc(h, wf%n_mo, wf%n_mo)
+      call mem%alloc(F_eff, wf%n_mo, wf%n_mo)
+!
+      call zero_array(F_eff, wf%n_mo**2)
+!
+      call wf%get_t1_oei('hamiltonian', h, screening=.true.)
+!
+      if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_eff)
+!
       if (.not. present(task)) then
 !
-         call wf%construct_fock_ai_t1()
-         call wf%construct_fock_ia_t1()
-         call wf%construct_fock_ab_t1()
-         call wf%construct_fock_ij_t1()
-         return
-!
-      endif
-!
-      if (trim(task) == 'gs') then
-!
-         call wf%construct_fock_ai_t1()
-!
-      elseif (trim(task) == 'multipliers') then
-!
-         call wf%construct_fock_ia_t1()
-         call wf%construct_fock_ab_t1()
-         call wf%construct_fock_ij_t1()
-!
-      elseif (trim(task) == 'es') then
-!
-         call wf%construct_fock_ab_t1()
-         call wf%construct_fock_ij_t1()
+         call wf%construct_fock_ai_t1(h, F_eff)
+         call wf%construct_fock_ia_t1(h, F_eff)
+         call wf%construct_fock_ab_t1(h, F_eff)
+         call wf%construct_fock_ij_t1(h, F_eff)
 !
       else
 !
-         call output%error_msg('did not recognize task in construct_fock_ccs')
+         if (trim(task) == 'gs') then
+!
+            call wf%construct_fock_ai_t1(h, F_eff)
+!
+         elseif (trim(task) == 'multipliers') then
+!
+            call wf%construct_fock_ia_t1(h, F_eff)
+            call wf%construct_fock_ab_t1(h, F_eff)
+            call wf%construct_fock_ij_t1(h, F_eff)
+!
+         elseif (trim(task) == 'es') then
+!
+            call wf%construct_fock_ab_t1(h, F_eff)
+            call wf%construct_fock_ij_t1(h, F_eff)
+!
+         else
+!
+            call output%error_msg('did not recognize task in construct_fock_ccs')
+!
+         endif
 !
       endif
+!
+      call mem%dealloc(h, wf%n_mo, wf%n_mo)
+      call mem%dealloc(F_eff, wf%n_mo, wf%n_mo)
 !
       call timer%turn_off()
 !
@@ -95,18 +111,18 @@ contains
    module subroutine add_frozen_fock_terms_ccs(wf, F_pq)
 !!
 !!    Add frozen Fock terms
-!!    Written by Sarai D. Folkestad, 2019 
+!!    Written by Sarai D. Folkestad, 2019
 !!
 !!    Adds the frozen core contributions to
 !!    the effective T1-transformed Fock matrix.
 !!
-!!    Isolated into subroutine by Eirik F. Kjønstad, 2019    
+!!    Isolated into subroutine by Eirik F. Kjønstad, 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq
 !
       real(dp), dimension(:,:), allocatable :: F_pq_frozen
 !
@@ -115,7 +131,7 @@ contains
       call wf%construct_t1_frozen_fock_terms(F_pq_frozen)
       call daxpy(wf%n_mo**2, one, F_pq_frozen, 1, F_pq, 1)
 !
-      call mem%dealloc(F_pq_frozen, wf%n_mo, wf%n_mo)      
+      call mem%dealloc(F_pq_frozen, wf%n_mo, wf%n_mo)
 !
    end subroutine add_frozen_fock_terms_ccs
 !
@@ -127,7 +143,7 @@ contains
 !!
       implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
@@ -150,6 +166,8 @@ contains
 !!    where μ is the vector of electric dipole integral matrices and E is a uniform classical electric
 !!    vector field. This routine does not have to be overwritten in descendants.
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -170,7 +188,7 @@ contains
       call daxpy((wf%n_mo)**2, -electric_field(1), mu(:,:,1), 1, potential(:,:,1), 1)
       call daxpy((wf%n_mo)**2, -electric_field(2), mu(:,:,2), 1, potential(:,:,2), 1)
       call daxpy((wf%n_mo)**2, -electric_field(3), mu(:,:,3), 1, potential(:,:,3), 1)
-!     
+!
       call mem%dealloc(mu, wf%n_mo, wf%n_mo, 3)
 !
 !$omp parallel do private(i,j)
@@ -230,7 +248,7 @@ contains
    end subroutine add_t1_fock_length_dipole_term_ccs
 !
 !
-   module subroutine construct_fock_ai_t1_ccs(wf)
+   module subroutine construct_fock_ai_t1_ccs(wf, h, F_eff)
 !!
 !!    Construct Fock ai T1,
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -239,7 +257,7 @@ contains
 !!    basis using the MO integrals and the current single
 !!    amplitudes:
 !!
-!!       F_ai = sum_j (2*g_aijj - g_ajji) + (effective Fock contributions)
+!!       F_ai = h_ai + sum_j (2*g_aijj - g_ajji) + (effective Fock contributions)
 !!
 !!    Effective Fock contributions:
 !!
@@ -251,14 +269,14 @@ contains
 !!
 !!       Added batching for N^2 memory requirement.
 !!
-!
       use batching_index_class, only : batching_index
 !
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: F_pq
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff
 !
       integer :: i, j, a
 !
@@ -270,48 +288,39 @@ contains
 !
       type(batching_index) :: batch_i, batch_j
 !
-!     Set F_pq = h_pq (t1-transformed) 
+!     Set Fock matrix to h + effective Fock contributions
 !
-      call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
-!
-      call wf%get_t1_oei('hamiltonian', F_pq, screening=.true.)
-!
-!     Add effective contributions to Fock matrix 
-!
-      if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_pq)
-!
-!$omp parallel do
+!$omp parallel do private(a, i)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
-            wf%fock_ai(a,i) = F_pq(a + wf%n_o, i) 
+            wf%fock_ai(a,i) = h(a + wf%n_o, i) + F_eff(a + wf%n_o, i)
 !
          enddo
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(F_pq, wf%n_mo, wf%n_mo)
-!
 !     Add occupied-virtual contributions: F_ai = F_ai + sum_j (2*g_aijj - g_ajji)
 !
 !     batching over i and j
 !
-!     To use batch_setup with batch_j, we assume that the integrals to compute 
-!     are g_aijk and g_ajki (with no repeating j index). This overestimates the 
+!     To use batch_setup with batch_j, we assume that the integrals to compute
+!     are g_aijk and g_ajki (with no repeating j index). This overestimates the
 !     required memory, but avoids the incorrect memory usage that can otherwise
 !     occur.
 !
       req0 = 0
 !
-      req1_i = max(wf%n_v, wf%n_o)*wf%eri%n_J 
-      req1_j = max(wf%n_v, wf%n_o)*wf%eri%n_J 
-! 
+      req1_i = max(wf%n_v, wf%n_o)*wf%eri%n_J
+      req1_j = max(wf%n_v, wf%n_o)*wf%eri%n_J
+!
       req2 = 2*wf%n_v*wf%n_o
 !
       batch_i = batching_index(wf%n_o)
       batch_j = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
+      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2, &
+                           tag='construct_fock_ai_t1_ccs')
 !
       do current_i_batch = 1, batch_i%num_batches
 !
@@ -368,7 +377,7 @@ contains
    end subroutine construct_fock_ai_t1_ccs
 !
 !
-   module subroutine construct_fock_ia_t1_ccs(wf, first_i, last_i, first_a, last_a)
+   module subroutine construct_fock_ia_t1_ccs(wf, h, F_eff, first_i, last_i, first_a, last_a)
 !!
 !!    Construct Fock ia T1,
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -377,7 +386,7 @@ contains
 !!    basis using the MO integrals and the current single
 !!    amplitudes:
 !!
-!!       F_ia = sum_j (2*g_iajj - g_ijja) + (effective Fock contributions)
+!!       F_ia = h_ia + sum_j (2*g_iajj - g_ijja) + (effective Fock contributions)
 !!
 !!    Effective Fock contributions:
 !!
@@ -402,11 +411,12 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff
+!
       integer, intent(in), optional :: first_i, last_i, first_a, last_a
 !
       type(range_) :: i_range, interval_a
-!
-      real(dp), dimension(:,:), allocatable :: F_pq
 !
       integer :: i, j, a
 !
@@ -431,48 +441,39 @@ contains
 !
       endif
 !
-!     Set F_pq = h_pq (t1-transformed) 
-!
-      call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
-!
-      call wf%get_t1_oei('hamiltonian', F_pq, screening=.true.)
-!
-!     Add effective contributions to Fock matrix 
-!
-      if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_pq)
+!     Set Fock matrix to h + effective Fock contributions
 !
 !$omp parallel do
       do a = interval_a%first, interval_a%get_last()
          do i = i_range%first, i_range%get_last()
 !
-            wf%fock_ia(i, a) = F_pq(i, a + wf%n_o)
+            wf%fock_ia(i, a) = h(i, a + wf%n_o) + F_eff(i, a + wf%n_o)
 !
          enddo
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(F_pq, wf%n_mo, wf%n_mo)
-!
 !     Add occupied-virtual contributions: F_ia = F_ia + sum_j (2*g_iajj - g_ijja)
 !
 !     batching over i and j
 !
-!     To use batch_setup with batch_j, we assume that the integrals to compute 
-!     are g_iajk and g_ikja (with no repeating j index). This overestimates the 
+!     To use batch_setup with batch_j, we assume that the integrals to compute
+!     are g_iajk and g_ikja (with no repeating j index). This overestimates the
 !     required memory, but avoids the incorrect memory usage that can otherwise
 !     occur.
 !
       req0 = 0
 !
-      req1_i = max(interval_a%length, wf%n_o)*wf%eri%n_J 
-      req1_j = max(interval_a%length, wf%n_o)*wf%eri%n_J 
+      req1_i = max(interval_a%length, wf%n_o)*wf%eri%n_J
+      req1_j = max(interval_a%length, wf%n_o)*wf%eri%n_J
 !
-      req2 = 2*interval_a%length*wf%n_o 
+      req2 = 2*interval_a%length*wf%n_o
 !
       batch_i = batching_index(i_range%length)
       batch_j = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
+      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2, &
+                           tag='construct_fock_ia_t1_ccs')
 !
       do current_i_batch = 1, batch_i%num_batches
 !
@@ -516,7 +517,7 @@ contains
                         + two*g_iajj(i, a, j, j) - g_ijja(i, j, j, a)
 !
                   enddo
-               enddo 
+               enddo
             enddo
 !$omp end parallel do
 !
@@ -534,7 +535,7 @@ contains
    end subroutine construct_fock_ia_t1_ccs
 !
 !
-   module subroutine construct_fock_ab_t1_ccs(wf, first_a, last_a, first_b, last_b)
+   module subroutine construct_fock_ab_t1_ccs(wf, h, F_eff, first_a, last_a, first_b, last_b)
 !!
 !!    Construct Fock ab T1,
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -543,7 +544,7 @@ contains
 !!    basis using the MO integrals and the current single
 !!    amplitudes:
 !!
-!!       F_ab = sum_i (2*g_abii - g_aiib) + (effective Fock contributions)
+!!       F_ab = h_ab + sum_i (2*g_abii - g_aiib) + (effective Fock contributions)
 !!
 !!    Effective Fock contributions:
 !!
@@ -568,11 +569,12 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff
+!
       integer, intent(in), optional :: first_a, last_a, first_b, last_b
 !
       type(range_) :: interval_a, interval_b
-!
-      real(dp), dimension(:,:), allocatable :: F_pq
 !
       integer :: i, a, b
 !
@@ -597,48 +599,39 @@ contains
 !
       endif
 !
-!     Set F_pq = h_pq (t1-transformed) 
-!
-      call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
-!
-      call wf%get_t1_oei('hamiltonian', F_pq, screening=.true.)
-!
-!     Add effective contributions to Fock matrix 
-!
-      if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_pq)
+!     Set Fock matrix to h + effective Fock contributions
 !
 !$omp parallel do
       do b = interval_b%first, interval_b%get_last()
          do a = interval_a%first, interval_a%get_last()
 !
-            wf%fock_ab(a, b) = F_pq(a + wf%n_o, b + wf%n_o)
+            wf%fock_ab(a, b) = h(a + wf%n_o, b + wf%n_o) + F_eff(a + wf%n_o, b + wf%n_o)
 !
          enddo
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(F_pq, wf%n_mo, wf%n_mo)
-!
-!     Add virtual-virtual contributions: F_ab = h_ab + sum_i (2*g_abii - g_aiib) 
+!     Add virtual-virtual contributions: F_ab = h_ab + sum_i (2*g_abii - g_aiib)
 !
 !     batching over a and i
 !
-!     To use batch_setup with batch_i, we assume that the integrals to compute 
-!     are g_abik and g_akbi (with no repeating i index). This overestimates the 
+!     To use batch_setup with batch_i, we assume that the integrals to compute
+!     are g_abik and g_akbi (with no repeating i index). This overestimates the
 !     required memory, but avoids the incorrect memory usage that can otherwise
 !     occur.
 !
       req0 = 0
 !
-      req1_i = max(interval_b%length, wf%n_o)*wf%eri%n_J 
-      req1_a = max(interval_b%length, wf%n_o)*wf%eri%n_J 
+      req1_i = max(interval_b%length, wf%n_o)*wf%eri%n_J
+      req1_a = max(interval_b%length, wf%n_o)*wf%eri%n_J
 !
       req2 =  2*wf%n_o*(interval_b%length)
 !
       batch_i = batching_index(wf%n_o)
       batch_a = batching_index(interval_a%length)
 !
-      call mem%batch_setup(batch_i, batch_a, req0, req1_i, req1_a, req2)
+      call mem%batch_setup(batch_i, batch_a, req0, req1_i, req1_a, req2, &
+                           tag='construct_fock_ab_t1_ccs')
 !
       do current_i_batch = 1, batch_i%num_batches
 !
@@ -697,7 +690,7 @@ contains
    end subroutine construct_fock_ab_t1_ccs
 !
 !
-   module subroutine construct_fock_ij_t1_ccs(wf, first_i, last_i, first_j, last_j)
+   module subroutine construct_fock_ij_t1_ccs(wf, h, F_eff, first_i, last_i, first_j, last_j)
 !!
 !!    Construct Fock ij T1,
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -706,7 +699,7 @@ contains
 !!    basis using the MO integrals and the current single
 !!    amplitudes:
 !!
-!!       F_ij = sum_k (2*g_ijkk - g_ikkj) + (effective Fock contributions)
+!!       F_ij = h_ij + sum_k (2*g_ijkk - g_ikkj) + (effective Fock contributions)
 !!
 !!    Effective Fock contributions:
 !!
@@ -731,11 +724,12 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: h
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_eff
+!
       integer, intent(in), optional :: first_i, last_i, first_j, last_j
 !
       type(range_) :: i_range, j_range
-!
-      real(dp), dimension(:,:), allocatable :: F_pq
 !
       integer :: i, j, k
 !
@@ -758,48 +752,39 @@ contains
 !
       endif
 !
-!     Set F_pq = h_pq (t1-transformed) 
-!
-      call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
-!
-      call wf%get_t1_oei('hamiltonian', F_pq, screening=.true.)
-!
-!     Add effective contributions to Fock matrix 
-!
-      if (wf%exists_frozen_fock_terms) call wf%add_frozen_fock_terms(F_pq)
+!     Set Fock matrix to h + effective Fock contributions
 !
 !$omp parallel do
       do j = j_range%first, j_range%get_last()
          do i = i_range%first, i_range%get_last()
 !
-            wf%fock_ij(i,j) = F_pq(i, j)
+            wf%fock_ij(i,j) = h(i,j) + F_eff(i, j)
 !
          enddo
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(F_pq, wf%n_mo, wf%n_mo)
-!
 !     Add occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
 !     Batching over i and k
 !
-!     To use batch_setup with batch_i, we assume that the integrals to compute 
-!     are g_ijkl and g_ilkj (with no repeating i index). This overestimates the 
+!     To use batch_setup with batch_i, we assume that the integrals to compute
+!     are g_ijkl and g_ilkj (with no repeating i index). This overestimates the
 !     required memory, but avoids the incorrect memory usage that can otherwise
 !     occur.
 !
       req0 = 0
 !
-      req1_i = wf%eri%n_J*wf%n_o 
-      req1_k = wf%eri%n_J*wf%n_o 
+      req1_i = wf%eri%n_J*wf%n_o
+      req1_k = wf%eri%n_J*wf%n_o
 !
       req2 = 2*(wf%n_o**2)
 !
       batch_i = batching_index(i_range%length)
       batch_k = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2)
+      call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2, &
+                           tag='F_ccs_c1_1_ccs')
 !
       do current_i_batch = 1, batch_i%num_batches
 !

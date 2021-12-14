@@ -48,9 +48,6 @@ module abstract_cc_es_class
    use ccs_class, only : ccs
 !
    use es_start_vector_tool_class, only : es_start_vector_tool
-   use es_valence_start_vector_tool_class, only: es_valence_start_vector_tool
-   use es_cvs_start_vector_tool_class, only: es_cvs_start_vector_tool
-   use es_ip_start_vector_tool_class, only: es_ip_start_vector_tool
 !
    use precondition_tool_class, only: precondition_tool
 !
@@ -60,7 +57,7 @@ module abstract_cc_es_class
    use es_ip_projection_tool_class, only: es_ip_projection_tool
    use es_rm_core_projection_tool_class, only: es_rm_core_projection_tool
 !
-   use abstract_convergence_tool_class, only: abstract_convergence_tool 
+   use convergence_tool_class, only: convergence_tool
 !
    implicit none
 !
@@ -74,7 +71,7 @@ module abstract_cc_es_class
 !
       integer :: max_iterations
 !
-      class(abstract_convergence_tool), allocatable :: convergence_checker
+      class(convergence_tool), allocatable :: convergence_checker
 !
       logical :: restart
 !
@@ -422,33 +419,54 @@ contains
 !!    Initialize start vector tool 
 !!    Written by Eirik F. Kjønstad, Sep 2019 
 !!
+      use es_manual_start_vector_tool_class,    only: es_manual_start_vector_tool
+      use es_valence_start_vector_tool_class,   only: es_valence_start_vector_tool
+      use es_cvs_start_vector_tool_class,       only: es_cvs_start_vector_tool
+      use es_ip_start_vector_tool_class,        only: es_ip_start_vector_tool
+!
       implicit none
 !
       class(abstract_cc_es) :: solver 
 !
       class(ccs) :: wf 
 !
-      if (trim(solver%es_type) == 'valence') then 
-!
-         solver%start_vectors = es_valence_start_vector_tool(wf)
-!
-      elseif (trim(solver%es_type) == 'core') then 
+      if (trim(solver%es_type) == 'core') then 
 !
          call wf%read_cvs_settings()
-         solver%start_vectors = es_cvs_start_vector_tool(wf)
-!
-      elseif (trim(solver%es_type) == 'ionize') then 
-!
-         solver%start_vectors = es_ip_start_vector_tool(wf)
-!
-      elseif (trim(solver%es_type) == 'remove core') then
+
+      elseif (trim(solver%es_type) == 'remove core') then 
 !
          call wf%read_rm_core_settings()
-         solver%start_vectors = es_valence_start_vector_tool(wf)
+!
+      endif
+!
+      if (input%is_keyword_present('state guesses', 'solver cc es')) then 
+!
+         solver%start_vectors = es_manual_start_vector_tool(wf)
 !
       else 
 !
-         call output%error_msg('could not recognize excited state type in abstract_cc_es')
+         if (trim(solver%es_type) == 'valence') then 
+!
+            solver%start_vectors = es_valence_start_vector_tool(wf)
+!
+         elseif (trim(solver%es_type) == 'core') then 
+!
+            solver%start_vectors = es_cvs_start_vector_tool(wf)
+!
+         elseif (trim(solver%es_type) == 'ionize') then 
+!
+            solver%start_vectors = es_ip_start_vector_tool(wf)
+!
+         elseif (trim(solver%es_type) == 'remove core') then
+!
+            solver%start_vectors = es_valence_start_vector_tool(wf)
+!
+         else 
+!
+            call output%error_msg('could not recognize excited state type in abstract_cc_es')
+!
+         endif
 !
       endif
 !

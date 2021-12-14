@@ -133,6 +133,8 @@ contains
 !!    corresponding to terms of the ground state density
 !!    and the left transition density.
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs) :: wf
@@ -267,6 +269,9 @@ contains
 !!         = E_hf + sum_aibj 2 t_i^a L^J_ia L^J_jb t_j^b
 !!                - sum_aibj t_i^a L^J_ja L^J_ib t_j^b
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -299,7 +304,7 @@ contains
 !
       batch_i = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, req0, req1_i)
+      call mem%batch_setup(batch_i, req0, req1_i, tag='calculate_energy_ccs 1')
 !
       do current_i_batch = 1, batch_i%num_batches
 !
@@ -345,7 +350,7 @@ contains
       req_single_batch = wf%eri%n_J*wf%n_v*wf%n_o + wf%eri%n_J*(wf%n_o**2)
 !
       call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2, &
-                           req_single_batch=req_single_batch)
+                           req_single_batch=req_single_batch, tag='calculate_energy_ccs 2')
 !
       do current_i_batch = 1, batch_i%num_batches
 !

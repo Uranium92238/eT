@@ -17,10 +17,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (uhf_class) ao_fock 
+submodule (uhf_class) ao_fock
 !
 !!
-!!    AO Fock submodule 
+!!    AO Fock submodule
 !!
 !!    Collects the routines used in the construction of the AO Fock matrix.
 !!
@@ -46,6 +46,7 @@ contains
       class(uhf), intent(inout) :: wf
 !
       real(dp), dimension(wf%ao%n**2, wf%n_densities), intent(in) :: prev_ao_density
+      real(dp), dimension(:,:), allocatable :: h
 !
       logical :: cumulative
 !
@@ -62,7 +63,10 @@ contains
 !
       cumulative = .true.
 !
-      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, wf%ao_density_b, wf%ao%h, cumulative)
+      call mem%alloc(h, wf%ao%n, wf%ao%n)
+      call wf%get_ao_h(h)
+      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, wf%ao_density_b, h, cumulative)
+      call mem%dealloc(h, wf%ao%n, wf%ao%n)
 !
 !     Restore density
 !
@@ -79,7 +83,7 @@ contains
 !!
 !!    Update Fock and energy
 !!    Written by Eirik F. Kjønstad, Sep 2018
-!!    Modified for QM/MM by Tommaso Giovannini, July 2019 
+!!    Modified for QM/MM by Tommaso Giovannini, July 2019
 !!
 !!    This routine guides the construction of the Fock matrix (or matrices for
 !!    unrestricted wavefunctions) from the current AO density (or densities).
@@ -89,10 +93,14 @@ contains
       implicit none
 !
       class(uhf), intent(inout) :: wf
-!      
+!
+      real(dp), dimension(:,:), allocatable :: h
       real(dp), dimension(:,:), allocatable :: h_wx_eff
 !
 !     QM/MM and PCM specific work
+!
+      call mem%alloc(h, wf%ao%n, wf%ao%n)
+      call wf%get_ao_h(h)
 !
       if (wf%embedded) then
 !
@@ -100,7 +108,7 @@ contains
 !
          call mem%alloc(h_wx_eff, wf%ao%n, wf%ao%n)
 !
-         call dcopy(wf%ao%n**2, wf%ao%h, 1, h_wx_eff, 1)
+         call dcopy(wf%ao%n**2, h, 1, h_wx_eff, 1)
          call daxpy(wf%ao%n**2, one, wf%ao%v, 1, h_wx_eff, 1)
 !
          call wf%construct_ao_spin_fock(wf%ao_density,   &
@@ -108,16 +116,18 @@ contains
                                        wf%ao_density_b,  &
                                        h_wx_eff, cumulative=.false.)
 !
-         call mem%dealloc(h_wx_eff, wf%ao%n, wf%ao%n) 
+         call mem%dealloc(h_wx_eff, wf%ao%n, wf%ao%n)
 !
       else
 !
          call wf%construct_ao_spin_fock(wf%ao_density,   &
                                         wf%ao_density_a, &
                                         wf%ao_density_b, &
-                                        wf%ao%h, cumulative=.false.)
+                                        h, cumulative=.false.)
 !
-      endif    
+      endif
+!
+      call mem%dealloc(h, wf%ao%n, wf%ao%n)
 !
    end subroutine update_fock_and_energy_non_cumulative_uhf
 !
@@ -134,26 +144,30 @@ contains
 !
       class(uhf), intent(inout) :: wf
       logical, intent(in) :: cumulative
+      real(dp), dimension(:,:), allocatable :: h
 !
       if (.not. cumulative) then
 !
           call wf%update_fock_and_energy_non_cumulative()
 !
-      else 
-!      
+      else
+!
          if (wf%embedded) then
-!         
+!
             call wf%update_fock_and_energy_non_cumulative()
-!            
-         else 
-!         
+!
+         else
+!
             call wf%update_fock_and_energy_cumulative(wf%previous_ao_density)
-!         
+!
          endif
 !
       endif
 !
-      call wf%calculate_uhf_energy(wf%ao%h)
+      call mem%alloc(h, wf%ao%n, wf%ao%n)
+      call wf%get_ao_h(h)
+      call wf%calculate_uhf_energy(h)
+      call mem%dealloc(h, wf%ao%n, wf%ao%n)
 !      
    end subroutine update_fock_and_energy_uhf
 !
@@ -173,6 +187,12 @@ contains
 !!    not calculate the energy - a separate call is required to get the
 !!    unrestricted Hartree-Fock energy.
 !!
+!
+      use omp_lib
+      use array_utilities, only: get_abs_max, zero_array
+      use reordering, only: symmetric_sum
+      use timings_class,     only : timings
+!
       implicit none
 !
       class(uhf), intent(inout) :: wf
@@ -193,7 +213,7 @@ contains
 !
       real(dp) :: max_D_schwarz, max_eri_schwarz
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('AO Fock construction', 'normal')
       call timer%turn_on()
@@ -275,8 +295,8 @@ contains
       if (.not. local_cumulative) call dcopy(wf%ao%n**2, h_wx, 1, wf%ao_fock_a, 1)
       do thread = 1, n_threads
 !
-         call daxpy(wf%ao%n**2, one, F(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
-         call daxpy(wf%ao%n**2, two, X_alpha(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
+         call daxpy(wf%ao%n**2, half, F(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
+         call daxpy(wf%ao%n**2, one, X_alpha(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
 !
       enddo
 !
@@ -286,8 +306,8 @@ contains
       if (.not. local_cumulative) call dcopy(wf%ao%n**2, h_wx, 1, wf%ao_fock_b, 1)
       do thread = 1, n_threads
 !
-         call daxpy(wf%ao%n**2, one, F(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_b, 1)
-         call daxpy(wf%ao%n**2, two, X_beta(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_b, 1)
+         call daxpy(wf%ao%n**2, half, F(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_b, 1)
+         call daxpy(wf%ao%n**2, one, X_beta(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_b, 1)
 !
       enddo
 !

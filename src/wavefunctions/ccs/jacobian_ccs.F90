@@ -68,6 +68,8 @@ contains
 !!
 !!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -113,7 +115,7 @@ contains
       timer = timings('Jacobian CCS A1', pl='verbose')
       call timer%turn_on()
 !
-!     sum_b F_a_b c_b_i 
+!     sum_b F_a_b c_b_i
 !
       call dgemm('N', 'N',     &
                   wf%n_v,      &
@@ -143,7 +145,7 @@ contains
                   rho1,        &
                   wf%n_v)
 !
-      
+
       call timer%turn_off()
 !
    end subroutine jacobian_ccs_a1_ccs
@@ -163,6 +165,10 @@ contains
 !!
 !!    Separate calculation of both terms due to batching.
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: sort_123_to_213
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -200,7 +206,7 @@ contains
 !
       batch_j = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_j, req0, req1_j)
+      call mem%batch_setup(batch_j, req0, req1_j, tag='jacobian_ccs_b1_ccs 1')
 !
       call mem%alloc(L_J_jb, wf%eri%n_J, batch_j%max_length, wf%n_v)
       call mem%alloc(c_jb, batch_j%max_length*wf%n_v)
@@ -247,7 +253,7 @@ contains
 
       batch_i = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, req0, req1_i)
+      call mem%batch_setup(batch_i, req0, req1_i, tag='jacobian_ccs_b1_ccs 2')
 !
       call mem%alloc(L_J_ai, wf%eri%n_J, wf%n_v, batch_i%max_length)
 !
@@ -290,7 +296,8 @@ contains
       batch_i = batching_index(wf%n_o)
       batch_a = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_i, batch_a, req0, req1_i, req1_a, req2)
+      call mem%batch_setup(batch_i, batch_a, req0, req1_i, req1_a, req2, &
+                           tag='jacobian_ccs_b1_ccs 3')
 !
       do current_i_batch = 1, batch_i%num_batches
 !

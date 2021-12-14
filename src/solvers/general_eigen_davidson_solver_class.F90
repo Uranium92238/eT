@@ -123,6 +123,7 @@ contains
       real(dp), dimension(:), allocatable :: residual_norm
       real(dp), dimension(:), allocatable :: c, residual
       real(dp), dimension(:), allocatable :: omega
+      real(dp) :: dummy = zero
 !
       call this%davidson%initialize()
 !
@@ -162,7 +163,7 @@ contains
          do trial = this%davidson%first_new_trial(), this%davidson%last_new_trial()
 !
             call this%davidson%get_trial(c, trial)
-            call this%transformer%transform(c, residual)
+            call this%transformer%transform(c, residual, dummy)
             call this%davidson%set_transform(residual, trial)
 !
          enddo
@@ -231,7 +232,7 @@ contains
                            reals=[new_omega_re(n),                                &
                                   new_omega_im(n),                                &
                                   residual_norm(n),                               &
-                                  dabs(this%davidson%omega_re(n) - omega(n))],    &
+                                  abs(this%davidson%omega_re(n) - omega(n))],    &
                                   ll=120)
 !
       enddo
@@ -251,7 +252,7 @@ contains
       implicit none
 
       class(general_eigen_davidson), intent(in) :: this
-      logical, dimension(this%n_solutions), intent(out) :: converged
+      logical, dimension(this%n_solutions), intent(in) :: converged
       integer, intent(in) :: iteration
 !
       if (.not. all(converged)) then
@@ -306,8 +307,9 @@ contains
       implicit none
 !
       class(general_eigen_davidson), intent(inout) :: this
-      real(dp), dimension(this%n_solutions), intent(out) :: residual_norm, omega
-      logical, dimension(this%n_solutions), intent(out) :: converged, residual_lt_lindep
+      real(dp), dimension(this%n_solutions), intent(in)  :: omega
+      real(dp), dimension(this%n_solutions), intent(out) :: residual_norm
+      logical, dimension(this%n_solutions), intent(out)  :: converged, residual_lt_lindep
       integer, intent(in) :: iteration
 !
       real(dp), dimension(:), allocatable :: residual

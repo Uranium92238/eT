@@ -62,7 +62,7 @@ module diis_tool_class
 !!
 !
    use parameters
-!  
+!
    use global_out,            only: output
    use array_utilities,       only: zero_array
    use sequential_file_class, only: sequential_file
@@ -87,7 +87,7 @@ module diis_tool_class
       logical, private :: crop            ! Conjugate residual with optimal trial vectors
                                           ! J. Chem. Theory Comput. 2015, 11, 4, 1518-1524
 !
-      integer, private :: dim_G 
+      integer, private :: dim_G
 !
       real(dp), dimension(:,:), allocatable, private :: G     ! DIIS matrix, G_ij = e_i^T e_j
 !
@@ -96,7 +96,7 @@ module diis_tool_class
 !     Mappings that keep track storage position for errors and parameters
 !
 !        - index:    DIIS matrix index
-!        - record:   storage index 
+!        - record:   storage index
 !
       integer, dimension(:), allocatable, private :: index_to_record
       integer, dimension(:), allocatable, private :: record_to_index
@@ -305,8 +305,8 @@ contains
 !!    Update
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2021
 !!
-!!    e: current error 
-!!    x: current parameter 
+!!    e: current error
+!!    x: current parameter
 !!
 !!    Determines the extrapolated DIIS vector <x> and sets x = <x>.
 !!
@@ -385,11 +385,11 @@ contains
       real(dp), dimension(this%n_equations), intent(in)  :: e
       real(dp), dimension(this%n_parameters), intent(in) :: x
 !
-      integer :: record 
+      integer :: record
 !
       if (this%iteration .gt. this%dimension_) then
 !
-         call this%modify_mappings_to_remove_oldest_record() 
+         call this%modify_mappings_to_remove_oldest_record()
 !
       endif
 !
@@ -406,7 +406,7 @@ contains
 !!    Modify mappings to remove oldest record
 !!    Written by Eirik F. Kjønstad, 2019
 !!
-!!    Reorders records as follows: ABCD -> BCDA  
+!!    Reorders records as follows: ABCD -> BCDA
 !!
 !!    The oldest record (A) then appears last and will be overwritten next.
 !!
@@ -453,7 +453,7 @@ contains
 !
       real(dp), dimension(this%n_equations), intent(in) :: e
 !
-      real(dp), dimension(:,:), allocatable :: G 
+      real(dp), dimension(:,:), allocatable :: G
 !
       call mem%alloc(G, this%dim_G, this%dim_G)
 !
@@ -472,15 +472,15 @@ contains
 !
 !
    subroutine extract_old_G_elements(this, G)
-!! 
+!!
 !!    Extract old G elements
 !!    Written by Eirik F. Kjønstad, 2021
 !!
-      implicit none 
+      implicit none
 !
-      class(diis_tool), intent(in) :: this 
+      class(diis_tool), intent(in) :: this
 !
-      real(dp), dimension(this%dim_G, this%dim_G), intent(out) :: G 
+      real(dp), dimension(this%dim_G, this%dim_G), intent(out) :: G
 !
       if (this%iteration .gt. this%dimension_) then
 !
@@ -513,7 +513,7 @@ contains
 !!
 !!       G(i,element) = e_i^T e = G(element,i)          i = 1,2, ..., element
 !!
-!!    e: current error 
+!!    e: current error
 !!
       implicit none
 !
@@ -538,7 +538,7 @@ contains
       req_0 = 0
       req_1 = this%errors%required_to_load_record()
 !
-      call mem%batch_setup(batch_i, req_0, req_1)
+      call mem%batch_setup(batch_i, req_0, req_1, 'construct_new_G_elements')
 !
       call this%errors%prepare_records([batch_i])
 !
@@ -577,11 +577,11 @@ contains
 !!
 !!    Extrapolates the parameter vector and stores the result in x.
 !!
-      implicit none 
+      implicit none
 !
-      class(diis_tool), intent(inout) :: this 
+      class(diis_tool), intent(inout) :: this
 !
-      real(dp), dimension(this%n_parameters), intent(out) :: x 
+      real(dp), dimension(this%n_parameters), intent(out) :: x
 !
       call this%solve_diis_equation()
 !
@@ -597,16 +597,16 @@ contains
 !!
 !!    Solve the DIIS equation G w = H for the DIIS weights w
 !!
-      implicit none 
+      implicit none
 !
-      class(diis_tool), intent(inout) :: this 
+      class(diis_tool), intent(inout) :: this
 !
       integer, dimension(:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
 !
-      real(dp), dimension(:), allocatable   :: padded_H 
-      real(dp), dimension(:,:), allocatable :: padded_G 
+      real(dp), dimension(:), allocatable   :: padded_H
+      real(dp), dimension(:,:), allocatable :: padded_G
 !
-      integer :: info, dim_ 
+      integer :: info, dim_
 !
       dim_ = this%dim_G + 1
 !
@@ -648,11 +648,11 @@ contains
 !!
 !!    padded_H = (0 .... 0 -1)
 !!
-      implicit none 
+      implicit none
 !
-      class(diis_tool), intent(in) :: this 
+      class(diis_tool), intent(in) :: this
 !
-      real(dp), dimension(this%dim_G + 1), intent(out) :: padded_H 
+      real(dp), dimension(this%dim_G + 1), intent(out) :: padded_H
 !
       padded_H(1 : this%dim_G) = zero
       padded_H(this%dim_G + 1) = -one
@@ -689,7 +689,7 @@ contains
 !
       enddo
 !
-      padded_G(this%dim_G + 1, this%dim_G + 1) = zero 
+      padded_G(this%dim_G + 1, this%dim_G + 1) = zero
 !
    end subroutine construct_padded_G
 !
@@ -731,7 +731,7 @@ contains
 !
       batch_i = batching_index(this%dim_G)
 !
-      call mem%batch_setup(batch_i, req_0, req_1)
+      call mem%batch_setup(batch_i, req_0, req_1, 'construct_extrapolated_vector')
 !
       call y_vectors%prepare_records([batch_i])
 !
@@ -752,7 +752,7 @@ contains
 !
          enddo
 !
-      enddo 
+      enddo
 !
       call y_vectors%free_records()
 !
@@ -778,7 +778,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: e ! Extrapolated error vector < e >
 !
-      integer :: record 
+      integer :: record
 !
 !     Overwrite x with <x>
 !
@@ -794,7 +794,7 @@ contains
 !
       call this%errors%copy_record_in(e, record)
 !
-!     Use <e> to update DIIS matrix     
+!     Use <e> to update DIIS matrix
 !
       call this%construct_new_G_elements(this%G,         &
                                          e,              &

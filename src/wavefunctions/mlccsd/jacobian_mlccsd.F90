@@ -45,13 +45,17 @@ contains
 !!    Prepare for Jacobian
 !!    Written by Sarai D. Folkestad, 2019
 !!
-      implicit none 
+      use array_utilities, only: zero_array
+      use reordering, only: add_2143_to_1234, add_2341_to_1234
+      use reordering, only: sort_1234_to_2143, sort_1234_to_2413
+!
+      implicit none
 !
       class(mlccsd), intent(inout) :: wf
 !
       real(dp), dimension(:,:,:,:), allocatable :: L_ckdl, g_kcld, g_ckdl, g_klcd
 !
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       type(timings), allocatable :: timer
 !
@@ -81,7 +85,7 @@ contains
       call wf%save_jacobian_d2_intermediate()
 !
       call mem%alloc(g_kcld, n_a_o, n_a_v, n_a_o, n_a_v)
-      call wf%eri%get_eri_t1('ovov', g_kcld, 1, n_a_o, 1, n_a_v, 1, n_a_o, 1, n_a_v) 
+      call wf%eri%get_eri_t1('ovov', g_kcld, 1, n_a_o, 1, n_a_v, 1, n_a_o, 1, n_a_v)
 !
       call mem%alloc(L_ckdl, n_a_v, n_a_o, n_a_v, n_a_o)
       call zero_array(L_ckdl, n_a_v**2 * n_a_o**2)
@@ -131,7 +135,9 @@ contains
 !!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck
 !!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
 !!
-      use array_utilities, only: scale_diagonal
+      use array_utilities, only: scale_diagonal, zero_array
+      use reordering, only: symmetric_sum, sort_1234_to_1324
+      use reordering, only: add_1324_to_1234, packin, squareup
 !
       implicit none
 !
@@ -146,7 +152,7 @@ contains
 !
       integer :: i, j, a, b ! Index
 !
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       type(timings), allocatable :: timer
 !
@@ -185,7 +191,7 @@ contains
       call zero_array(rho_aibj, n_a_v**2 * n_a_o**2)
 !
       call wf%jacobian_cc2_a2(rho_aibj, c(1 : wf%n_t1), n_a_o, n_a_v, &
-                             1, 1, n_a_o, n_a_v)   
+                             1, 1, n_a_o, n_a_v)
 !
       if (wf%do_cc2) call wf%jacobian_cc2_b2(rho_aibj, c_aibj)
 !
@@ -251,7 +257,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(rho_aibj_ccsd, wf%n_ccsd_v, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o) 
+      call mem%dealloc(rho_aibj_ccsd, wf%n_ccsd_v, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o)
 !
       call scale_diagonal(half, rho_aibj, n_a_o*n_a_v)
 !
@@ -269,7 +275,7 @@ contains
 !!    Jacobian CC2 B2
 !!    Written by Sarai Dery Folkestad, 2019
 !!
-!!    The doubles-doubles part of the CC2 Jacobian in non-canonical basis  
+!!    The doubles-doubles part of the CC2 Jacobian in non-canonical basis
 !!
 !!       rho_aibj += F_bc c_cjai - F_kj c_aibk
 !!
@@ -277,6 +283,8 @@ contains
 !!
 !!    All indices are CC2 indices
 !!
+      use array_utilities, only: copy_and_scale
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -284,9 +292,9 @@ contains
       real(dp), dimension(wf%n_cc2_v + wf%n_ccsd_v, wf%n_cc2_o + wf%n_ccsd_o,&
                      wf%n_cc2_v + wf%n_ccsd_v, wf%n_cc2_o + wf%n_ccsd_o), intent(inout) :: c_aibj
       real(dp), dimension(wf%n_cc2_v + wf%n_ccsd_v, wf%n_cc2_o + wf%n_ccsd_o,&
-                     wf%n_cc2_v + wf%n_ccsd_v, wf%n_cc2_o + wf%n_ccsd_o), intent(inout) :: rho_aibj   
+                     wf%n_cc2_v + wf%n_ccsd_v, wf%n_cc2_o + wf%n_ccsd_o), intent(inout) :: rho_aibj
 !
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj_cc2, c_aibj_cc2
 !
@@ -325,13 +333,13 @@ contains
                   -one,                &
                   c_aibj_cc2,          & ! c_aibk
                   (n_a_v**2)*(n_a_o),  &
-                  wf%mo_fock,          & ! F_kj 
+                  wf%mo_fock,          & ! F_kj
                   wf%n_mo,             &
                   one,                 &
                   rho_aibj_cc2,        &
                   (n_a_v**2)*(n_a_o))
 !
-!     Zero out CCSD part 
+!     Zero out CCSD part
 !
 !$omp parallel do private(j, b, i, a) collapse(2)
       do j = 1, wf%n_ccsd_o
@@ -370,8 +378,8 @@ contains
 !!
 !!    a, i, b, j are CCSD indices
 !!
-!!    k is full index in first term and CCSD + CC2 in second term 
-!!    c is full index in second term and CCSD + CC2 in first term 
+!!    k is full index in first term and CCSD + CC2 in second term
+!!    c is full index in second term and CCSD + CC2 in first term
 !!
       implicit none
 !
@@ -380,15 +388,15 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                         :: c_ai
       real(dp), dimension(wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o) :: rho_aibj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: x_cjai   
-      real(dp), dimension(:,:,:,:), allocatable :: x_aibk   
-      real(dp), dimension(:,:,:,:), allocatable :: Y_kjai  
+      real(dp), dimension(:,:,:,:), allocatable :: x_cjai
+      real(dp), dimension(:,:,:,:), allocatable :: x_aibk
+      real(dp), dimension(:,:,:,:), allocatable :: Y_kjai
 !
-      real(dp), dimension(:,:), allocatable :: Y_kj         
+      real(dp), dimension(:,:), allocatable :: Y_kj
 !
       type(timings), allocatable :: timer
 !
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       integer :: j, i, a, c, ai, cj, aicj, k, bk, aibk, b
 !
@@ -453,17 +461,17 @@ contains
                   -one,                            &
                   c_ai,                            & ! c_bk
                   wf%n_v,                          &
-                  Y_kjai,                          & 
+                  Y_kjai,                          &
                   wf%n_o,                          &
                   zero,                            &
                   rho_aibj,                        & ! Will symmetrize later
-                  wf%n_ccsd_v)  
+                  wf%n_ccsd_v)
 !
       call mem%dealloc(Y_kjai, wf%n_o, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o)
 !
 !     :: Term 2. - sum_kc F_kc x_ik^ab c_cj ::
 !
-!     Form Y_kj = sum_c F_kc c_cj 
+!     Form Y_kj = sum_c F_kc c_cj
 !
       call mem%alloc(Y_kj, n_a_o, wf%n_ccsd_o)
 !
@@ -484,7 +492,7 @@ contains
 !
       call mem%alloc(x_aibk, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, n_a_o)
 !
-!$omp parallel do private(k, b, i, a, bk, ai, aibk) collapse(2) 
+!$omp parallel do private(k, b, i, a, bk, ai, aibk) collapse(2)
       do k = 1, n_a_o
          do b = 1, wf%n_ccsd_v
 !
@@ -509,7 +517,7 @@ contains
                    wf%n_ccsd_o,                     &
                    n_a_o,                           &
                    -one,                            &
-                   x_aibk,                          & 
+                   x_aibk,                          &
                    (wf%n_ccsd_o)*(wf%n_ccsd_v)**2,  &
                    Y_kj,                            &
                    n_a_o,                           &
@@ -540,6 +548,8 @@ contains
 !!
 !!     c, k are CCSD + CC2, l is unrestricted
 !!
+      use array_utilities, only: copy_and_scale
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -550,7 +560,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_ljai
 !
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       n_a_o = wf%n_ccsd_o + wf%n_cc2_o
       n_a_v = wf%n_ccsd_v + wf%n_cc2_v
@@ -574,7 +584,7 @@ contains
                   one,                             &
                   c_ai,                            & ! c_bl
                   wf%n_v,                          &
-                  X_ljai,                          & 
+                  X_ljai,                          &
                   wf%n_o,                          &
                   one,                             &
                   rho_aibj,                        & ! We will symmetrize after
@@ -592,7 +602,7 @@ contains
 !!
 !!    Adapted for MLCCSD by Sarai D. Folkestad, 2019
 !!
-!!    rho_aibj^C2 += sum_kcl g_ljkc x_li^bc c_ak 
+!!    rho_aibj^C2 += sum_kcl g_ljkc x_li^bc c_ak
 !!
 !!    INDEX RESTRICTIONS:
 !!
@@ -600,6 +610,8 @@ contains
 !!
 !!    l and c are CCSD + CC2, k is unrestricted
 !!
+      use reordering, only: add_1432_to_1234
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -612,7 +624,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: X_kjbi
       real(dp), dimension(:,:,:,:), allocatable :: rho_ajbi
 !
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       n_a_o = wf%n_ccsd_o + wf%n_cc2_o
       n_a_v = wf%n_ccsd_v + wf%n_cc2_v
@@ -642,7 +654,7 @@ contains
                   X_kjbi,                          &
                   wf%n_o,                          &
                   zero,                            &
-                  rho_ajbi,                        & 
+                  rho_ajbi,                        &
                   wf%n_ccsd_v)
 !
       call mem%dealloc(X_kjbi, wf%n_o, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
@@ -670,6 +682,8 @@ contains
 !!
 !!    k and l are CCSD + CC2, c is unrestricted
 !!
+      use reordering, only: sort_1234_to_3142, add_3124_to_1234
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -682,7 +696,7 @@ contains
       real(dp), dimension(wf%n_ccsd_o + wf%n_cc2_o, wf%n_ccsd_o, &
                   wf%n_ccsd_o + wf%n_cc2_o, wf%n_v), intent(in) :: g_ljkc
 !
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       real(dp), dimension(:,:,:,:), allocatable :: Y_ljki
       real(dp), dimension(:,:,:,:), allocatable :: Y_klij
@@ -705,12 +719,12 @@ contains
                   wf%n_ccsd_o,               &
                   wf%n_v,                    &
                   one,                       &
-                  g_ljkc,                    & 
+                  g_ljkc,                    &
                   (n_a_o**2)*wf%n_ccsd_o,    &
                   c_ai,                      & ! c_c_i
                   wf%n_v,                    &
                   zero,                      &
-                  Y_ljki,                    & 
+                  Y_ljki,                    &
                   (n_a_o**2)*wf%n_ccsd_o)
 !
 !     Reorder to Y_ljki as Y_kjli
@@ -755,9 +769,9 @@ contains
                   (wf%n_ccsd_o)**2, &
                   (n_a_o)**2,       &
                   one,              &
-                  x_bakl,           & 
+                  x_bakl,           &
                   (wf%n_ccsd_v)**2, &
-                  Y_klij,           & 
+                  Y_klij,           &
                   (n_a_o)**2,       &
                   zero,             &
                   rho_baij,         & ! rho_ba_ij
@@ -781,7 +795,7 @@ contains
 !!
 !!    Adapted for MLCCSD by Sarai D. Folkestad, 2019
 !!
-!!    rho_aibj^C2 += - sum_kcl L_ljkc x_il^ab c_ck  
+!!    rho_aibj^C2 += - sum_kcl L_ljkc x_il^ab c_ck
 !!
 !!    INDEX RESTRICTIONS:
 !!
@@ -801,7 +815,7 @@ contains
       real(dp), dimension(wf%n_ccsd_o + wf%n_cc2_o, &
                   wf%n_ccsd_o, wf%n_v, wf%n_o), intent(in) :: L_ljck
 !
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       real(dp), dimension(:,:), allocatable :: Y_lj
       real(dp), dimension(:,:,:,:), allocatable :: x_aibl
@@ -822,12 +836,12 @@ contains
                   1,                      &
                   (wf%n_o)*(wf%n_v),      &
                   one,                    &
-                  L_ljck,                 & 
+                  L_ljck,                 &
                   (n_a_o)*(wf%n_ccsd_o),  &
                   c_ai,                   & ! c_ck
                   (wf%n_o)*(wf%n_v),      &
                   zero,                   &
-                  Y_lj,                   & 
+                  Y_lj,                   &
                   (n_a_o)*(wf%n_ccsd_o))
 !
 !     Order the amplitudes as x_ai_bl = x_il^ab
@@ -861,12 +875,12 @@ contains
                   wf%n_ccsd_o,                     &
                   n_a_o,                           &
                   -one,                            &
-                  x_aibl,                          & 
+                  x_aibl,                          &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v)**2,  &
-                  Y_lj,                            & 
+                  Y_lj,                            &
                   n_a_o,                           &
                   one,                             &
-                  rho_aibj,                        & 
+                  rho_aibj,                        &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v)**2)
 !
       call mem%dealloc(Y_lj, n_a_o, wf%n_ccsd_o)
@@ -903,9 +917,9 @@ contains
       call timer%turn_on()
 !
       n_a_o = wf%n_ccsd_o + wf%n_cc2_o
-      n_a_v = wf%n_ccsd_v + wf%n_cc2_v               
+      n_a_v = wf%n_ccsd_v + wf%n_cc2_v
 !
-      call wf%jacobian_ccsd_c2_1(rho_aibj, c_ai) 
+      call wf%jacobian_ccsd_c2_1(rho_aibj, c_ai)
       call wf%jacobian_ccsd_c2_2(rho_aibj, c_ai)
 !
       call mem%alloc(g_ljkc, wf%n_o, wf%n_ccsd_o, wf%n_o, wf%n_v)
@@ -940,14 +954,14 @@ contains
             do j = 1, wf%n_ccsd_o
                do l = 1, n_a_o
 !
-                  L_ljck(l, j, c, k) = two*g_ljkc(l, j, k, c) - g_ljkc(k, j, l, c) 
+                  L_ljck(l, j, c, k) = two*g_ljkc(l, j, k, c) - g_ljkc(k, j, l, c)
 !
                enddo
             enddo
          enddo
       enddo
 !$omp end parallel do
-!    
+!
       call mem%dealloc(g_ljkc, wf%n_o, wf%n_ccsd_o, wf%n_o, wf%n_v)
 !
       call wf%jacobian_ccsd_c2_4(rho_aibj, c_ai, L_ljck)
@@ -968,7 +982,7 @@ contains
 !!
 !!    rho_aibj^D2 += - sum_kcd g_kcbd x_ij^cd c_ak
 !!
-!     INDEX RESTRICTIONS 
+!     INDEX RESTRICTIONS
 !
 !     k unrestricted, c, d CC2 + CCSD
 !
@@ -985,7 +999,7 @@ contains
 !     :: Term 1. - sum_kcd g_kcbd x_ij^cd c_ak ::
 !
 !     X_kibj = g_kcbd x_ij^cd
-!     
+!
       call mem%alloc(X_kibj, wf%n_o, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
       wf%jacobian_d2_intermediate = sequential_file('jacobian_d2_intermediate_ccsd')
@@ -995,7 +1009,7 @@ contains
 !
       call wf%jacobian_d2_intermediate%close_('keep')
 !
-!     Form rho_aibj = - sum_k c_ak X_kibj 
+!     Form rho_aibj = - sum_k c_ak X_kibj
 !
       call dgemm('N', 'N',                            &
                   wf%n_ccsd_v,                        &
@@ -1024,9 +1038,12 @@ contains
 !!
 !!    rho_aibj^D2 += - sum_kcd g_kcbd x_kj^ad c_ci
 !!
-!     INDEX RESTRICTIONS 
+!     INDEX RESTRICTIONS
 !
 !     c unrestricted, k, d CC2 + CCSD
+!
+      use batching_index_class, only: batching_index
+      use reordering, only: add_1432_to_1234
 !
       implicit none
 !
@@ -1041,8 +1058,8 @@ contains
       real(dp), dimension(wf%n_ccsd_v + wf%n_cc2_v, wf%n_ccsd_o + wf%n_cc2_o, &
                            batch_b%length, wf%n_v), intent(in) :: g_dkbc
 !
-      integer :: n_a_o, n_a_v 
-!  
+      integer :: n_a_o, n_a_v
+!
       real(dp), dimension(:,:,:,:), allocatable :: Y_dkbi
       real(dp), dimension(:,:,:,:), allocatable :: x_ajdk
       real(dp), dimension(:,:,:,:), allocatable :: rho_ajbi
@@ -1076,7 +1093,7 @@ contains
       call mem%alloc(x_ajdk, wf%n_ccsd_v, wf%n_ccsd_o, n_a_v, n_a_o)
 !
 !$omp parallel do private(k, d, j, a, ak, dj, akdj) collapse(2)
-      do k = 1, n_a_o 
+      do k = 1, n_a_o
          do d = 1, n_a_v
             do j = 1, wf%n_ccsd_o
 !
@@ -1093,7 +1110,7 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
 !    Calculate rho_ib_aj = - sum_dk Y_dkbi x_ajdk
 !
@@ -1106,10 +1123,10 @@ contains
                  -one,                             &
                  x_ajdk,                           &
                  (wf%n_ccsd_o)*(wf%n_ccsd_v),      &
-                 Y_dkbi,                           & 
+                 Y_dkbi,                           &
                  (n_a_o)*(n_a_v),                  &
                  zero,                             &
-                 rho_ajbi,                         & 
+                 rho_ajbi,                         &
                  (wf%n_ccsd_o)*(wf%n_ccsd_v))
 !
       call mem%dealloc(Y_dkbi, n_a_v, n_a_o, batch_b%length, wf%n_ccsd_o)
@@ -1132,9 +1149,11 @@ contains
 !!
 !!    rho_aibj^D2 += - sum_kcd g_kcbd x_ik^ca c_dj
 !!
-!     INDEX RESTRICTIONS 
+!     INDEX RESTRICTIONS
 !
 !     d unrestricted, k, c CC2 + CCSD
+!
+      use batching_index_class, only: batching_index
 !
       implicit none
 !
@@ -1150,7 +1169,7 @@ contains
       real(dp), dimension(wf%n_ccsd_o + wf%n_cc2_o, &
                   wf%n_ccsd_v + wf%n_cc2_v, batch_b%length, wf%n_v), intent(in) :: g_kcbd
 !
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       real(dp), dimension(:,:,:,:), allocatable :: Y_kcbj
       real(dp), dimension(:,:,:,:), allocatable :: x_aikc
@@ -1171,7 +1190,7 @@ contains
                   wf%n_ccsd_o,                        &
                   wf%n_v,                             &
                   one,                                &
-                  g_kcbd,                             & 
+                  g_kcbd,                             &
                   (n_a_v)*(n_a_o)*(batch_b%length),   &
                   c_ai,                               & ! c_dj
                   wf%n_v,                             &
@@ -1208,12 +1227,12 @@ contains
                      (wf%n_ccsd_o)*(batch_b%length),  &
                      (n_a_v)*(n_a_o),                 &
                      -one,                            &
-                     x_aikc,                          & 
+                     x_aikc,                          &
                      (wf%n_ccsd_v)*(wf%n_ccsd_o),     &
-                     Y_kcbj,                          & 
+                     Y_kcbj,                          &
                      (n_a_v)*(n_a_o),                 &
                      one,                             &
-                     rho_aibj,                        & 
+                     rho_aibj,                        &
                      (wf%n_ccsd_v)*(wf%n_ccsd_o))
 !
       call mem%dealloc(Y_kcbj, n_a_o, n_a_v, batch_b%length, wf%n_ccsd_o)
@@ -1231,9 +1250,11 @@ contains
 !!
 !!    rho_aibj^D2 += sum_kcd L_kcbd x_ik^ac c_dj
 !!
-!     INDEX RESTRICTIONS 
+!     INDEX RESTRICTIONS
 !
 !    d unrestricted, k, c CC2 + CCSD
+!
+      use batching_index_class, only: batching_index
 !
       implicit none
 !
@@ -1249,7 +1270,7 @@ contains
       real(dp), dimension(wf%n_ccsd_v + wf%n_cc2_v, &
                   wf%n_ccsd_o + wf%n_cc2_o, batch_b%length, wf%n_v), intent(in) :: L_ckbd
 !
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       real(dp), dimension(:,:,:,:), allocatable :: Y_ckbj
       real(dp), dimension(:,:,:,:), allocatable :: x_aick
@@ -1270,12 +1291,12 @@ contains
                   wf%n_ccsd_o,                        &
                   wf%n_v,                             &
                   one,                                &
-                  L_ckbd,                             & 
+                  L_ckbd,                             &
                   (n_a_v)*(n_a_o)*(batch_b%length),   &
                   c_ai,                               & ! c_dj
                   wf%n_v,                             &
                   zero,                               &
-                  Y_ckbj,                             & 
+                  Y_ckbj,                             &
                   (n_a_v)*(n_a_o)*(batch_b%length))
 !
       call mem%alloc(x_aick, wf%n_ccsd_v, wf%n_ccsd_o, n_a_v, n_a_o)
@@ -1308,9 +1329,9 @@ contains
                   (wf%n_ccsd_o)*(batch_b%length),  &
                   (n_a_o)*(n_a_v),                 &
                   one,                             &
-                  x_aick,                          & 
+                  x_aick,                          &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),     &
-                  Y_ckbj,                          & 
+                  Y_ckbj,                          &
                   (n_a_o)*(n_a_v),                 &
                   one,                             &
                   rho_aibj,                        & ! rho_ai_bj
@@ -1331,9 +1352,12 @@ contains
 !!
 !!    rho_aibj^D2 +=  sum_kcd L_kcbd x_ij^ad c_ck
 !!
-!     INDEX RESTRICTIONS 
+!     INDEX RESTRICTIONS
 !
 !     c, k unrestricted, d CC2 + CCSD
+!
+      use batching_index_class, only: batching_index
+      use reordering, only: add_3124_to_1234
 !
       implicit none
 !
@@ -1349,7 +1373,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, batch_b%length, &
                   wf%n_ccsd_v + wf%n_cc2_v), intent(in) :: L_ckbd
 !
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       real(dp), dimension(:,:), allocatable :: X_bd
 !
@@ -1397,7 +1421,7 @@ contains
                enddo
             enddo
          enddo
-      enddo 
+      enddo
 !$omp end parallel do
 !
 !     Form rho_b_aij =  =  sum_d X_bd t_d_aij
@@ -1409,7 +1433,7 @@ contains
                   (wf%n_ccsd_v)*(wf%n_ccsd_o)**2,  &
                   n_a_v,                           &
                   one,                             &
-                  X_bd,                            & 
+                  X_bd,                            &
                   batch_b%length,                  &
                   x_aijd,                          &
                   (wf%n_ccsd_v)*(wf%n_ccsd_o)**2,  &
@@ -1435,6 +1459,10 @@ contains
 !!
 !!    Adapted for MLCCSD by Sarai D. Folkestad, 2019
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_2134_to_1234, add_2431_to_1234
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -1453,7 +1481,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: L_ckbd
       real(dp), dimension(:,:,:,:), allocatable :: L_ckbd_4
       real(dp), dimension(:,:,:,:), allocatable :: L_ckbd_5
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       integer :: rec1, rec0
       integer :: rec1_d2_2, rec1_d2_3, rec1_d2_3to4, rec1_d2_4, rec1_d2_5
@@ -1480,11 +1508,11 @@ contains
                  wf%n_ccsd_v*wf%n_ccsd_o**2*n_a_v)       ! from d2_5
 !
 !     g_kcbd, g_dkbc, L_bd^J, rho_aibj, rho_ajbi, Y_dkbi
-      rec1_d2_2 = wf%n_v*wf%eri%n_J + wf%n_o*wf%n_v**2 + n_a_v*n_a_o*wf%n_v + & 
+      rec1_d2_2 = wf%n_v*wf%eri%n_J + wf%n_o*wf%n_v**2 + n_a_v*n_a_o*wf%n_v + &
                   2*wf%n_ccsd_v*wf%n_ccsd_o**2 + n_a_v*n_a_o*wf%n_ccsd_o
 !
 !     g_kcbd, g_kcbd_3, rho_aibj, Y_kcbj
-      rec1_d2_3 = wf%n_o*wf%n_v**2 + n_a_v*n_a_o*wf%n_v + & 
+      rec1_d2_3 = wf%n_o*wf%n_v**2 + n_a_v*n_a_o*wf%n_v + &
                   wf%n_ccsd_v*wf%n_ccsd_o**2 + n_a_v*n_a_o*wf%n_ccsd_o
 !
 !     g_kcbd, L_kcbd, rho_aibj
@@ -1495,12 +1523,12 @@ contains
                   wf%n_ccsd_v*wf%n_ccsd_o**2 + n_a_v*n_a_o*wf%n_ccsd_o
 !
 !     L_ckbd_5, rho_aibj
-      rec1_d2_5 = wf%n_v*wf%n_o*n_a_v + 2*wf%n_ccsd_v*wf%n_ccsd_o**2 + n_a_v 
+      rec1_d2_5 = wf%n_v*wf%n_o*n_a_v + 2*wf%n_ccsd_v*wf%n_ccsd_o**2 + n_a_v
 !
       rec1 = max(rec1_d2_2, rec1_d2_3, rec1_d2_3to4, rec1_d2_4, rec1_d2_5)
 !
       batch_b = batching_index(wf%n_ccsd_v)
-      call mem%batch_setup(batch_b, rec0, rec1)
+      call mem%batch_setup(batch_b, rec0, rec1, tag='jacobian_ccsd_d2_mlccsd')
 !
 !     Start looping over b-batches
 !
@@ -1554,7 +1582,7 @@ contains
             enddo
          enddo
 !$omp end parallel do
-!        
+!
          call wf%jacobian_ccsd_d2_3(rho_aibj_batch, c_ai, batch_b, g_kcbd_3)
 !
          call mem%dealloc(g_kcbd_3, n_a_o, n_a_v, batch_b%length, wf%n_v)
@@ -1607,7 +1635,7 @@ contains
 !
          call wf%jacobian_ccsd_d2_5(rho_aibj_batch, c_ai, batch_b, L_ckbd_5)
 !
-         call mem%dealloc(L_ckbd_5, wf%n_v, wf%n_o, batch_b%length, n_a_v) 
+         call mem%dealloc(L_ckbd_5, wf%n_v, wf%n_o, batch_b%length, n_a_v)
 !
 !$omp parallel do private(j, b, i, a) collapse(2)
          do j = 1, wf%n_ccsd_o
@@ -1626,7 +1654,7 @@ contains
 !$omp end parallel do
 !
          call mem%dealloc(rho_aibj_batch, wf%n_ccsd_v, wf%n_ccsd_o, batch_b%length, wf%n_ccsd_o)
-!   
+!
       enddo
 !
       call mem%batch_finalize()
@@ -1667,7 +1695,7 @@ contains
 !
       type(timings), allocatable :: timer
 !
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       real(dp), dimension(:,:,:,:), allocatable :: c_aick
       real(dp), dimension(:,:,:,:), allocatable :: X_ckbj
@@ -1701,7 +1729,7 @@ contains
 !
                   c_aick(a, i, c, k) =- c_aibj(a, k, c, i) &
                                        + two*c_aibj(a, i, c, k)
-                                       
+
 !
                enddo
             enddo
@@ -1714,7 +1742,7 @@ contains
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
                   (n_a_o)*(n_a_v),              &
                   one,                          &
-                  c_aick,                       & 
+                  c_aick,                       &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
                   X_ckbj,                       &
                   (n_a_o)*(n_a_v),              &
@@ -1748,6 +1776,9 @@ contains
 !!
 !!    c, k, d, l are CCSD + CC2 indices
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: add_2341_to_1234, add_2143_to_1234, add_1243_to_1234
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -1764,7 +1795,7 @@ contains
       real(dp), dimension(:,:), allocatable :: Y_db
       real(dp), dimension(:,:), allocatable :: Z_jl
 !
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       type(timings), allocatable :: timer
 !
@@ -1806,7 +1837,7 @@ contains
                   c_aibj,              & ! c_blck
                   n_a_v,               &
                   zero,                &
-                  Y_db,                & 
+                  Y_db,                &
                   n_a_v)
 !
       call mem%alloc(x_aijd, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o, n_a_v)
@@ -1817,7 +1848,7 @@ contains
 !
             dj = n_a_v*(j - 1) + d
 !
-            do i = 1, wf%n_ccsd_o 
+            do i = 1, wf%n_ccsd_o
                do a = 1, wf%n_ccsd_v
 !
                   ai = n_a_v*(i - 1) + a
@@ -1869,7 +1900,7 @@ contains
                   one,                 &
                   c_aibj,              &  ! c_ckdj
                   (n_a_v**2)*(n_a_o),  &
-                  L_ckdl,              & 
+                  L_ckdl,              &
                   (n_a_v**2)*(n_a_o),  &
                   zero,                &
                   Z_jl,                &
@@ -1904,12 +1935,12 @@ contains
                   wf%n_ccsd_o,                        &
                   n_a_o,                              &
                   -one,                               &
-                  x_aibl,                             & 
+                  x_aibl,                             &
                   ((wf%n_ccsd_v)**2)*(wf%n_ccsd_o),   &
-                  Z_jl,                               & 
+                  Z_jl,                               &
                   wf%n_ccsd_o,                        &
                   one,                                &
-                  rho_aibj,                           & 
+                  rho_aibj,                           &
                   ((wf%n_ccsd_v)**2)*(wf%n_ccsd_o))
 !
       call mem%dealloc(x_aibl, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, n_a_o)
@@ -1948,7 +1979,7 @@ contains
                          wf%n_ccsd_v + wf%n_cc2_v, wf%n_ccsd_o + wf%n_cc2_o), intent(in) :: c_aibj
 !
 !
-      integer :: n_a_o, n_a_v 
+      integer :: n_a_o, n_a_v
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_ckbj
       real(dp), dimension(:,:,:,:), allocatable :: c_aick
@@ -1999,9 +2030,9 @@ contains
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
                   (n_a_o)*(n_a_v),              &
                   -one,                         &
-                  c_aick,                       & 
+                  c_aick,                       &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
-                  X_ckbj,                       & 
+                  X_ckbj,                       &
                   (n_a_o)*(n_a_v),              &
                   one,                          &
                   rho_aibj,                     &
@@ -2041,9 +2072,9 @@ contains
                   ((wf%n_ccsd_o)**2)*(wf%n_ccsd_v),   &
                   n_a_v,                              &
                   -one,                               &
-                  X_db,                               & 
+                  X_db,                               &
                   n_a_v,                              &
-                  c_djai,                             & 
+                  c_djai,                             &
                   n_a_v,                              &
                   one,                                &
                   rho_aibj,                           & ! we will symmetrize after
@@ -2084,7 +2115,7 @@ contains
                   -one,                               &
                   c_aibl,                             &
                   ((wf%n_ccsd_v)**2)*(wf%n_ccsd_o),   &
-                  X_lj,                               & 
+                  X_lj,                               &
                   n_a_o,                              &
                   one,                                &
                   rho_aibj,                           &
@@ -2114,6 +2145,8 @@ contains
 !!    c, k, d, l are CC2 + CCSD indices
 !!
 !!
+      use reordering, only: add_1432_to_1234
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -2172,7 +2205,7 @@ contains
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
                   (n_a_o)*(n_a_v),              &
                   one,                          &
-                  X_aidl,                       & 
+                  X_aidl,                       &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
                   c_dlbj,                       &
                   (n_a_o)*(n_a_v),              &
@@ -2220,7 +2253,7 @@ contains
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
                   (n_a_o)*(n_a_v),              &
                   one,                          &
-                  X_ajdk,                       & 
+                  X_ajdk,                       &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
                   c_dkbi,                       &
                   (n_a_o)*(n_a_v),              &
@@ -2256,7 +2289,7 @@ contains
 !!
 !!       a, i, b, j are CCSD indices
 !!
-!!       c is CC2 index 
+!!       c is CC2 index
 !!
       implicit none
 !
@@ -2299,7 +2332,7 @@ contains
                   one,                                         &
                   wf%fock_ab,                                  & ! F_bc
                   wf%n_v,                                      &
-                  c_cjai,                                      & 
+                  c_cjai,                                      &
                   n_a_v,                                       &
                   one,                                         &
                   rho_aibj,                                    & ! We will symmetrize after
@@ -2334,7 +2367,7 @@ contains
                   wf%n_o,                          & ! F_kj
                   one,                             &
                   rho_aibj,                        &
-                  (wf%n_ccsd_v**2)*(wf%n_ccsd_o))      
+                  (wf%n_ccsd_v**2)*(wf%n_ccsd_o))
 !
       call mem%dealloc(c_aibk, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, n_a_o)
 !
@@ -2354,8 +2387,10 @@ contains
 !!
 !!       a, i, b, j are CCSD indices
 !!
-!!       c, k is CC2 + CCSD index 
+!!       c, k is CC2 + CCSD index
 !!
+      use reordering, only: sort_1234_to_2314, add_1432_to_1234
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -2382,7 +2417,7 @@ contains
 !     sum_ck L_bj,kc*c_ai,ck - sum_ck ( g_kc,bj*c_ak,ci + g_ki,bc*c_ak,cj ) ::
 !
 !     sum_ck ( g_bj,kc*(2*c_ai,ck - c_ak,ci) - g_bc,kj*c_ai,ck - g_ki,bc*c_ak,cj )
-!     sum_ck ( g_bj,kc*Y_kcai - g_bc,kj*c_ai,ck - g_ki,bc*c_ak,cj )   
+!     sum_ck ( g_bj,kc*Y_kcai - g_bc,kj*c_ai,ck - g_ki,bc*c_ak,cj )
 !
 !     Construct g_bj,kc
 !
@@ -2392,7 +2427,7 @@ contains
 !
       call mem%alloc(Y_kcai, n_a_o, n_a_v, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-!     Y_kcai = (2*c_ai,ck - c_ak,ci) 
+!     Y_kcai = (2*c_ai,ck - c_ak,ci)
 !
 !$omp parallel do private (i, a, c, k) collapse(2)
       do i = 1, wf%n_ccsd_o
@@ -2414,11 +2449,11 @@ contains
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
                   (n_a_o)*(n_a_v),              &
                   one,                          &
-                  g_bjkc,                       & 
+                  g_bjkc,                       &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
-                  Y_kcai,                       & 
+                  Y_kcai,                       &
                   (n_a_o)*(n_a_v),              &
-                  one,                          & 
+                  one,                          &
                   rho_aibj,                     & ! We will symmeterize after
                   (wf%n_ccsd_o)*(wf%n_ccsd_v))
 !
@@ -2427,7 +2462,7 @@ contains
 
       call mem%alloc(g_bckj, wf%n_ccsd_v, n_a_v, n_a_o, wf%n_ccsd_o)
 !
-      call wf%eri%get_eri_t1('vvoo', g_bckj, 1, wf%n_ccsd_v, 1, n_a_v, 1, n_a_o, 1, wf%n_ccsd_o) 
+      call wf%eri%get_eri_t1('vvoo', g_bckj, 1, wf%n_ccsd_v, 1, n_a_v, 1, n_a_o, 1, wf%n_ccsd_o)
 !
       call mem%alloc(g_ckbj, n_a_v, n_a_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
@@ -2442,7 +2477,7 @@ contains
 !$omp parallel do private (k, c, i, a) collapse(2)
       do k = 1, n_a_o
          do c = 1, n_a_v
-            do i = 1, wf%n_ccsd_o 
+            do i = 1, wf%n_ccsd_o
                do a = 1, wf%n_ccsd_v
 !
                   c_aick(a, i, c, k) = c_aibj(a, i, c, k)
@@ -2458,12 +2493,12 @@ contains
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
                   (n_a_o)*(n_a_v),              &
                   -one,                         &
-                  c_aick,                       & 
+                  c_aick,                       &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
-                  g_ckbj,                       & 
+                  g_ckbj,                       &
                   (n_a_o)*(n_a_v),              &
                   one,                          &
-                  rho_aibj,                     & 
+                  rho_aibj,                     &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v))
 !
       call mem%dealloc(c_aick, wf%n_ccsd_v, wf%n_ccsd_o, n_a_v, n_a_o)
@@ -2475,7 +2510,7 @@ contains
 !$omp parallel do private(k, c, j, a) collapse(2)
       do k = 1, n_a_o
          do c = 1, n_a_v
-            do j = 1, wf%n_ccsd_o 
+            do j = 1, wf%n_ccsd_o
                do a = 1, wf%n_ccsd_v
 !
                   c_ajck(a, j, c, k) = c_aibj(a, k, c, j)
@@ -2511,7 +2546,7 @@ contains
 !
    end subroutine jacobian_ccsd_i2_2_mlccsd
 !
-!      
+!
    module subroutine jacobian_ccsd_i2_mlccsd(wf, rho_aibj, c_aibj)
 !!
 !!    Jacobian CCSD I2
@@ -2610,12 +2645,12 @@ contains
                   (wf%n_ccsd_o)**2, &
                   (n_a_o)**2,       &
                   one,              &
-                  c_abkl,           & 
+                  c_abkl,           &
                   (wf%n_ccsd_v)**2, &
                   X_klij,           & ! X_kl_ij
                   (n_a_o)**2,       &
                   one,              &
-                  rho_abij,         & 
+                  rho_abij,         &
                   (wf%n_ccsd_v)**2)
 !
       call mem%dealloc(c_abkl, wf%n_ccsd_v, wf%n_ccsd_v, n_a_o, n_a_o)
@@ -2689,7 +2724,7 @@ contains
                   (wf%n_ccsd_o)**2,    &
                   (n_a_o)**2,          &
                   one,                 &
-                  x_abkl,              & 
+                  x_abkl,              &
                   (wf%n_ccsd_v)**2,    &
                   X_klij,              & ! X_kl_ij
                   (n_a_o)**2,          &
@@ -2718,6 +2753,8 @@ contains
 !!    For the last term we batch over a and b and
 !!    add each batch to rho_aibj
 !!
+      use reordering, only: sort_1234_to_1324
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -2781,7 +2818,7 @@ contains
                   (wf%n_ccsd_o)**2, &
                   (n_a_o)**2,       &
                   one,              &
-                  c_abkl,           & 
+                  c_abkl,           &
                   (wf%n_ccsd_v)**2, &
                   g_klij,           & ! g_kl_ij
                   (n_a_o)**2,       &
@@ -2805,17 +2842,17 @@ contains
 !!
 !!    Adapted for MLCCSD by Sarai D. Folkestad, 2019
 !!
-!!    Constructs the intermediates for Jacobian C2: 
+!!    Constructs the intermediates for Jacobian C2:
 !!
 !!       X_ljai = sum_ck g_ljkc x_ki^ac - sum_kc L_ljkc x_ik^ac
 !!
-!!          Index restrictions: a, i, j are CCSD indices, 
-!!          c and k are CCSD + CC2 indices, and l is unrestricted 
+!!          Index restrictions: a, i, j are CCSD indices,
+!!          c and k are CCSD + CC2 indices, and l is unrestricted
 !!
 !!       X_kjbi = g_ljkc x_li^bc
 !!
-!!          Index restrictions: b, i, j are CCSD indices, 
-!!          c and l are CCSD + CC2 indices, and k is unrestricted 
+!!          Index restrictions: b, i, j are CCSD indices,
+!!          c and l are CCSD + CC2 indices, and k is unrestricted
 !!
 !!    used in the c2-term. This is done only once in prepare_for_jacobian
 !!    and the intermediate is stored in the file jacobian_c2_intermediate_oovo_1
@@ -2827,8 +2864,8 @@ contains
 !
       type(timings), allocatable :: timer
 !
-      real(dp), dimension(:,:,:,:), allocatable :: X_ljai 
-      real(dp), dimension(:,:,:,:), allocatable :: X_kjbi 
+      real(dp), dimension(:,:,:,:), allocatable :: X_ljai
+      real(dp), dimension(:,:,:,:), allocatable :: X_kjbi
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_ljck, g_kjcl, L_ljck
 !
@@ -2874,8 +2911,8 @@ contains
 !
 !     X_ljai = sum_ck g_ljkc x_ki^ac
 !
-!     Index restrictions: a, i, j are CCSD indices, 
-!     c and k are CCSD + CC2 indices, and l is unrestricted 
+!     Index restrictions: a, i, j are CCSD indices,
+!     c and k are CCSD + CC2 indices, and l is unrestricted
 !
 !     Reorder g_ljkc as g_ljck and restrict indices (j, c, k) to active space
 !
@@ -2914,8 +2951,8 @@ contains
 !
 !       X_kjbi = g_ljkc x_li^bc
 !
-!          Index restrictions: b, i, j are CCSD indices, 
-!          c and l are CCSD + CC2 indices, and k is unrestricted 
+!          Index restrictions: b, i, j are CCSD indices,
+!          c and l are CCSD + CC2 indices, and k is unrestricted
 !
 !     Reorder g_ljkc as g_kjcl and restrict indices (j, c, l) to active space
 !
@@ -2942,12 +2979,12 @@ contains
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
                   (n_a_o)*(n_a_v),              &
                   one,                          &
-                  g_kjcl,                       &  ! g_kj_cl 
+                  g_kjcl,                       &  ! g_kj_cl
                   (wf%n_o)*(wf%n_ccsd_o),       &
                   x_ckai,                       &  ! x_cl_bi (x^cb_il)
                   (n_a_o)*(n_a_v),              &
                   zero,                         &
-                  X_kjbi,                       & 
+                  X_kjbi,                       &
                   (wf%n_o)*(wf%n_ccsd_o))
 !
       call mem%dealloc(g_kjcl, wf%n_o, wf%n_ccsd_o, n_a_v, n_a_o)
@@ -2962,8 +2999,8 @@ contains
 !
 !     X_ljai += - sum_kc L_ljkc x_ik^ac
 !
-!        Index restrictions: a, i, j are CCSD indices, 
-!        c and k are CCSD + CC2 indices, and l is unrestricted 
+!        Index restrictions: a, i, j are CCSD indices,
+!        c and k are CCSD + CC2 indices, and l is unrestricted
 !
 !     Construct L_ljck = 2 g_ljkc - g_kjlc
 !
@@ -2976,7 +3013,7 @@ contains
                do l = 1, wf%n_o
 !
                   L_ljck(l, j, c, k) = two*g_ljkc(l, j, k, c) &
-                                         - g_ljkc(k, j, l, c) 
+                                         - g_ljkc(k, j, l, c)
 !
                enddo
             enddo
@@ -2994,7 +3031,7 @@ contains
       do i = 1, wf%n_ccsd_o
          do a = 1, wf%n_ccsd_v
 !
-            ai = n_a_v*(i - 1) + a 
+            ai = n_a_v*(i - 1) + a
 !
             do k = 1, n_a_o
                do c = 1, n_a_v
@@ -3015,12 +3052,12 @@ contains
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
                   (n_a_o)*(n_a_v),              &
                   -one,                         &
-                  L_ljck,                       & 
+                  L_ljck,                       &
                   (wf%n_o)*(wf%n_ccsd_o),       &
-                  x_ckai,                       & 
+                  x_ckai,                       &
                   (n_a_o)*(n_a_v),              &
                   one,                          &
-                  X_ljai,                       & 
+                  X_ljai,                       &
                   (wf%n_o)*(wf%n_ccsd_o))
 !
       call mem%dealloc(x_ckai, n_a_v, n_a_o, wf%n_ccsd_v, wf%n_ccsd_o)
@@ -3045,17 +3082,21 @@ contains
 !!
 !!    Adapted for MLCCSD by Sarai D. Folkestad, 2019
 !!
-!!    Constructs the intermediate 
+!!    Constructs the intermediate
 !!
-!!       X_kibj = sum_dl g_kcbd x_ij^cd 
+!!       X_kibj = sum_dl g_kcbd x_ij^cd
 !!
-!!       Index restrictions: b, i, j are CCSD indices,  
+!!       Index restrictions: b, i, j are CCSD indices,
 !!       c and d are CC2 + CCSD indices, and k is unrestricted
 !!
 !!    used in the d2-term. This is done only once in prepare_for_jacobian
 !!    and the intermediate is stored in the file jacobian_d2_intermediate
 !!    which is a wf variable.
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: sort_1234_to_4231
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -3112,7 +3153,7 @@ contains
       req1 = n_a_v*(wf%eri%n_J) + 2*(wf%n_o)*(n_a_v)**2 + (wf%n_o)*(wf%n_ccsd_o**2)
 !
       batch_b = batching_index(wf%n_ccsd_v)
-      call mem%batch_setup(batch_b, req0, req1)
+      call mem%batch_setup(batch_b, req0, req1, tag='save_jacobian_d2_intermediate_mlccsd')
 !
 !     Start looping over b-batches
 !
@@ -3179,7 +3220,7 @@ contains
 !
       call mem%batch_finalize()
 !
-!     Store intermediate to file 
+!     Store intermediate to file
 !
       wf%jacobian_d2_intermediate = sequential_file('jacobian_d2_intermediate_ccsd')
       call wf%jacobian_d2_intermediate%open_('write', 'rewind')
@@ -3201,11 +3242,11 @@ contains
 !!
 !!    Adapted for MLCCSD by Sarai D. Folkestad, 2019
 !!
-!!    Constructs the intermediate 
+!!    Constructs the intermediate
 !!
-!!       X_ckbj = sum_dl L_kcld x_jl^bd 
+!!       X_ckbj = sum_dl L_kcld x_jl^bd
 !!
-!!       Index restrictions: b, j are CCSD indices,  
+!!       Index restrictions: b, j are CCSD indices,
 !!       l, d, k and c are CC2 + CCSD indices.
 !!
 !!    used in the e2-term. This is done only once in prepare_for_jacobian
@@ -3234,9 +3275,9 @@ contains
       n_a_o = wf%n_ccsd_o + wf%n_cc2_o
       n_a_v = wf%n_ccsd_v + wf%n_cc2_v
 !
-!     X_ckbj = sum_dl L_kcld x_jl^bd 
+!     X_ckbj = sum_dl L_kcld x_jl^bd
 !
-!     Index restrictions: b, j are CCSD indices,  
+!     Index restrictions: b, j are CCSD indices,
 !     l, d, k and c are CC2 + CCSD indices.
 !
       call mem%alloc(x_dlbj, n_a_v, n_a_o, wf%n_ccsd_v, wf%n_ccsd_o)
@@ -3268,17 +3309,17 @@ contains
                  (wf%n_ccsd_o)*(wf%n_ccsd_v),   &
                  (n_a_o)*(n_a_v),               &
                  one,                           &
-                 L_ckdl,                        & 
+                 L_ckdl,                        &
                  (n_a_o)*(n_a_v),               &
-                 x_dlbj,                        & 
+                 x_dlbj,                        &
                  (n_a_o)*(n_a_v),               &
                  zero,                          &
-                 X_ckbj,                        & 
+                 X_ckbj,                        &
                  (n_a_o)*(n_a_v))
 !
       call mem%dealloc(x_dlbj, n_a_v, n_a_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-!     Store intermediate to file 
+!     Store intermediate to file
 !
       wf%jacobian_e2_intermediate = sequential_file('jacobian_e2_intermediate_ccsd')
       call wf%jacobian_e2_intermediate%open_('write', 'rewind')
@@ -3299,15 +3340,15 @@ contains
 !!
 !!    Adapted for MLCCSD by Sarai D. Folkestad, 2019
 !!
-!!    Constructs the intermediate 
+!!    Constructs the intermediate
 !!
-!!       X_ckbj = sum_dl L_kcld x_lj^bd 
+!!       X_ckbj = sum_dl L_kcld x_lj^bd
 !!
-!!       X_db = sum_ckl L_kcld x_lk^bc 
+!!       X_db = sum_ckl L_kcld x_lk^bc
 !!
 !!       X_lj = sum_cdl L_kcld x_kj^cd
 !!
-!!       Index restrictions: b, j are CCSD indices,  
+!!       Index restrictions: b, j are CCSD indices,
 !!       l, d, k and c are CC2 + CCSD indices.
 !!
 !!    used in the g2-term. This is done only once in prepare_for_jacobian
@@ -3315,6 +3356,8 @@ contains
 !!    jacobian_G2_intermediate_vv, and jacobian_G2_intermediate_oo which
 !!    are wf variables.
 !!
+      use reordering, only: squareup
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -3336,9 +3379,9 @@ contains
       n_a_o = wf%n_ccsd_o + wf%n_cc2_o
       n_a_v = wf%n_ccsd_v + wf%n_cc2_v
 !
-!     X_ckbj = sum_dl L_kcld x_lj^bd 
+!     X_ckbj = sum_dl L_kcld x_lj^bd
 !
-!     Index restrictions: b, j are CCSD indices,  
+!     Index restrictions: b, j are CCSD indices,
 !     l, d, k and c are CC2 + CCSD indices.
 !
 !     x_bldj ordered as x_dlbj
@@ -3367,24 +3410,24 @@ contains
 !
       call mem%alloc(X_ckbj, n_a_v, n_a_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-!     X_ckbj = sum_dl x_bldj * L_kcld 
+!     X_ckbj = sum_dl x_bldj * L_kcld
 !
       call dgemm('N', 'N',                      &
                   (n_a_o)*(n_a_v),              &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
                   (n_a_o)*(n_a_v),              &
                   one,                          &
-                  L_ckdl,                       & 
+                  L_ckdl,                       &
                   (n_a_o)*(n_a_v),              &
                   x_dlbj,                       &
                   (n_a_o)*(n_a_v),              &
                   zero,                         &
-                  X_ckbj,                       & 
+                  X_ckbj,                       &
                   (n_a_o)*(n_a_v))
 !
       call mem%dealloc(x_dlbj, n_a_v, n_a_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-!     Store intermediate to file 
+!     Store intermediate to file
 !
       wf%jacobian_g2_intermediate_vovo = sequential_file('jacobian_g2_intermediate_vovo_ccsd')
       call wf%jacobian_g2_intermediate_vovo%open_('write', 'rewind')
@@ -3393,9 +3436,9 @@ contains
 !
       call mem%dealloc(X_ckbj, n_a_v, n_a_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-!     X_db = sum_dl L_kcld x_lk^bc 
+!     X_db = sum_dl L_kcld x_lk^bc
 !
-!     Index restrictions: b, j are CCSD indices,  
+!     Index restrictions: b, j are CCSD indices,
 !     l, d, k and c are CC2 + CCSD indices.
 !
       call mem%alloc(x_blck, n_a_v, n_a_o, n_a_v, n_a_o)
@@ -3416,7 +3459,7 @@ contains
                   X_db,               &
                   n_a_v)
 !
-!     Store intermediate to file 
+!     Store intermediate to file
 !
       wf%jacobian_g2_intermediate_vv = sequential_file('jacobian_g2_intermediate_vv_ccsd')
       call wf%jacobian_g2_intermediate_vv%open_('write', 'rewind')
@@ -3427,10 +3470,10 @@ contains
 !
 !     X_lj = sum_cdl L_kcld x_kj^ck
 !
-!     Index restrictions: b, j are CCSD indices,  
+!     Index restrictions: b, j are CCSD indices,
 !     l, d, k and c are CC2 + CCSD indices.
 !
-!     NOTE: treat x_blck as x_ckdj 
+!     NOTE: treat x_blck as x_ckdj
 !
       call mem%alloc(X_lj, n_a_o, wf%n_ccsd_o)
 !
@@ -3441,7 +3484,7 @@ contains
                   wf%n_ccsd_o,         &
                   (n_a_v**2)*(n_a_o),  &
                   one,                 &
-                  L_ckdl,              & 
+                  L_ckdl,              &
                   (n_a_v**2)*(n_a_o),  &
                   x_blck,              & ! x_ckdj
                   (n_a_v**2)*(n_a_o),  &
@@ -3451,7 +3494,7 @@ contains
 !
       call mem%dealloc(x_blck, n_a_v, n_a_o, n_a_v, n_a_o)
 !
-!     Store intermediate to file 
+!     Store intermediate to file
 !
       wf%jacobian_g2_intermediate_oo = sequential_file('jacobian_g2_intermediate_oo_ccsd')
       call wf%jacobian_g2_intermediate_oo%open_('write', 'rewind')
@@ -3472,19 +3515,21 @@ contains
 !!
 !!    Adapted for MLCCSD by Sarai D. Folkestad, 2019
 !!
-!!    Constructs the intermediate 
+!!    Constructs the intermediate
 !!
 !!       X_aidl = x^ca_ik g_kcld
 !!
 !!       X_ajdk = x^ca_jl g_kcld
 !!
-!!       Index restrictions: a and i are CCSD indices,  
+!!       Index restrictions: a and i are CCSD indices,
 !!       l, d, k and c are CC2 + CCSD indices.
 !!
 !!    used in the h2-term. This is done only once in prepare_for_jacobian
 !!    and the intermediate is stored in the file jacobian_h2_intermediate_ovov_1
 !!    and jacobian_h2_intermediate_ovov_2 which are wf variables.
 !!
+      use reordering, only: sort_1234_to_1432
+!
       implicit none
 !
       class(mlccsd) :: wf
@@ -3507,7 +3552,7 @@ contains
 !
 !     X_aidl = x^ca_ik g_kcld
 !
-!     Index restrictions: a and i are CCSD indices,  
+!     Index restrictions: a and i are CCSD indices,
 !     l, d, k and c are CC2 + CCSD indices.
 !
 !     x_ak,ci ordered as x_aikc
@@ -3533,7 +3578,7 @@ contains
          enddo
       enddo
 !$omp end parallel do
-! 
+!
       call mem%alloc(X_aidl, wf%n_ccsd_v, wf%n_ccsd_o, n_a_v, n_a_o)
 !
       call dgemm('N', 'N',                      &
@@ -3541,17 +3586,17 @@ contains
                   (n_a_o)*(n_a_v),              &
                   (n_a_o)*(n_a_v),              &
                   one,                          &
-                  x_aick,                       & 
+                  x_aick,                       &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v),  &
-                  g_ckdl,                       & 
+                  g_ckdl,                       &
                   (n_a_o)*(n_a_v),              &
                   zero,                         &
-                  X_aidl,                       & 
+                  X_aidl,                       &
                   (wf%n_ccsd_o)*(wf%n_ccsd_v))
 !
       call mem%dealloc(x_aick, wf%n_ccsd_v, wf%n_ccsd_o, n_a_v, n_a_o)
 !
-!     Store intermediate to file 
+!     Store intermediate to file
 !
       wf%jacobian_h2_intermediate_vovo_1 = sequential_file('jacobian_h2_intermediate_vovo_1_ccsd')
       call wf%jacobian_h2_intermediate_vovo_1%open_('write', 'rewind')
@@ -3563,7 +3608,7 @@ contains
 !
 !     X_ajdk = x^ca_jl g_kcld
 !
-!     Index restrictions: a i, and j are CCSD indices,  
+!     Index restrictions: a i, and j are CCSD indices,
 !     l, d, k and c are CC2 + CCSD indices.
 !
 !     x_alcj ordered as x_ajlc
@@ -3613,7 +3658,7 @@ contains
       call mem%dealloc(g_cldk, n_a_v, n_a_o, n_a_v, n_a_o)
       call mem%dealloc(x_ajcl, wf%n_ccsd_v, wf%n_ccsd_o, n_a_v, n_a_o)
 !
-!     Store intermediate to file 
+!     Store intermediate to file
 !
       wf%jacobian_h2_intermediate_vovo_2 = sequential_file('jacobian_h2_intermediate_vovo_2_ccsd')
       call wf%jacobian_h2_intermediate_vovo_2%open_('write', 'rewind')
@@ -3635,11 +3680,11 @@ contains
 !!
 !!    Adapted for MLCCSD by Sarai D. Folkestad, 2019
 !!
-!!    Constructs the intermediate 
+!!    Constructs the intermediate
 !!
 !!       X_klij = g_kcld x^cd_ij
 !!
-!!       Index restrictions: i and j are CCSD indices,  
+!!       Index restrictions: i and j are CCSD indices,
 !!       l, d, k and c are CC2 + CCSD indices.
 !!
 !!    Also saves the integral g_kcld ordered as g_klcd
@@ -3654,7 +3699,7 @@ contains
 !
       real(dp), dimension(wf%n_ccsd_o + wf%n_cc2_o, wf%n_ccsd_o + wf%n_cc2_o, &
                wf%n_ccsd_v + wf%n_cc2_v, wf%n_ccsd_v + wf%n_cc2_v), intent(in) :: g_klcd
-!  
+!
       real(dp), dimension(:,:,:,:), allocatable :: x_cdij, X_klij
 !
       type(timings), allocatable :: timer
@@ -3664,7 +3709,7 @@ contains
 !
 !     X_klij = g_kcld x^cd_ij
 !
-!     Index restrictions: i and j are CCSD indices,  
+!     Index restrictions: i and j are CCSD indices,
 !     l, d, k and c are CC2 + CCSD indices.
 !
       timer = timings('Jacobian MLCCSD J2 intermediate', pl='v')
@@ -3704,17 +3749,17 @@ contains
                   (wf%n_ccsd_o)**2, &
                   (n_a_v)**2,       &
                   one,              &
-                  g_klcd,           & 
+                  g_klcd,           &
                   (n_a_o)**2,       &
                   x_cdij,           &
                   (n_a_v)**2,       &
                   zero,             &
-                  X_klij,           & 
+                  X_klij,           &
                   (n_a_o)**2)
 !
       call mem%dealloc(x_cdij, n_a_v, n_a_v, wf%n_ccsd_o, wf%n_ccsd_o)
 !
-!     Store intermediate to file 
+!     Store intermediate to file
 !
       wf%jacobian_j2_intermediate_oooo = sequential_file('jacobian_j2_intermediate_oooo_ccsd')
       call wf%jacobian_j2_intermediate_oooo%open_('write', 'rewind')

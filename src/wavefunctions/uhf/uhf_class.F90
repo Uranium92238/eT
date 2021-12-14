@@ -24,9 +24,12 @@ module uhf_class
 !!    Written by Eirik F. Kjønstad, Sep 2018
 !!
 !
-   use hf_class
+   use hf_class, only: hf
 !
-   use omp_lib
+   use parameters
+   use memory_manager_class, only: mem
+   use global_out,           only: output
+   use global_in,            only: input
 !
    implicit none
 !
@@ -100,6 +103,7 @@ module uhf_class
 !     Roothan-Hall gradient
 !
       procedure :: get_packed_roothan_hall_gradient      => get_packed_roothan_hall_gradient_uhf
+      procedure :: get_roothan_hall_gradient             => get_roothan_hall_gradient_uhf
 !
 !     Class variable initialize and destruct routines
 !
@@ -137,10 +141,12 @@ module uhf_class
 !
       procedure :: get_F                                 => get_F_uhf
       procedure :: set_C_and_e                           => set_C_and_e_uhf
-      procedure :: construct_initial_idempotent_density  => construct_initial_idempotent_density_uhf
+      procedure :: diagonalize_fock  => diagonalize_fock_uhf
       procedure :: print_energy                          => print_energy_uhf
       procedure :: get_spin_contamination                => get_spin_contamination_uhf
       procedure :: get_exact_s2                          => get_exact_s2_uhf
+      procedure :: construct_natural_occupation_number_basis &
+                => construct_natural_occupation_number_basis_uhf
 !
    end type uhf
 !
@@ -220,6 +226,7 @@ contains
 !!    and constructs screening vectors
 !!
       use atomic_center_class, only: atomic_center
+      use stream_file_class, only: stream_file
 !
       implicit none
 !
@@ -238,7 +245,7 @@ contains
 !
       call wf%set_n_mo()
 !
-      wf%gradient_dimension = wf%n_mo*(wf%n_mo - 1)/2*wf%n_densities
+      wf%packed_gradient_dimension = wf%n_mo*(wf%n_mo - 1)/2*wf%n_densities
 !
       if (wf%fractional_uniform_valence) then
 !
@@ -251,6 +258,8 @@ contains
       wf%frozen_core = .false.
       wf%frozen_hf_mos = .false.
 !
+      call wf%set_screening_and_precision_thresholds(wf%gradient_threshold)
+!
    end subroutine prepare_uhf
 !
 !
@@ -262,7 +271,7 @@ contains
 !!    Sets initial AO density (or densities) to the
 !!    appropriate initial guess requested by the solver.
 !!
-      use array_utilities, only: copy_and_scale
+      use array_utilities, only: copy_and_scale, zero_array
 !
       implicit none
 !
@@ -271,6 +280,7 @@ contains
       character(len=*) :: guess
 !
       real(dp) :: alpha_prefactor, beta_prefactor
+      real(dp), dimension(:,:), allocatable :: h
 !
       if (trim(guess) == 'sad' .or. trim(guess) == 'SAD') then
 !
@@ -284,7 +294,10 @@ contains
 !
       elseif (trim(guess) == 'core' .or. trim(guess) == 'CORE') then
 !
-         call wf%set_ao_density_to_core_guess(wf%ao%h)
+         call mem%alloc(h, wf%ao%n, wf%ao%n)
+         call wf%get_ao_h(h)
+         call wf%set_ao_density_to_core_guess(h)
+         call mem%dealloc(h, wf%ao%n, wf%ao%n)
 !
       else
 !
@@ -307,43 +320,63 @@ contains
 !!    both the alpha and beta gradients are
 !!    returned as follows: [G_a G_b]
 !!
+!
+      use reordering, only: packin_anti
+!
       implicit none
 !
       class(uhf), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo*(wf%n_mo - 1)/2, wf%n_densities), intent(inout) :: G
 !
-      real(dp), dimension(:,:), allocatable :: G_sq
-      real(dp), dimension(:), allocatable :: G_pck
+      real(dp), dimension(:,:,:), allocatable :: G_sq
+!
+      call mem%alloc(G_sq, wf%n_mo, wf%n_mo, 2)
+!
+      call wf%get_roothan_hall_gradient(G_sq)
+!
+      call packin_anti(G(:,1), G_sq(:,:,1), wf%ao%n)
+      call packin_anti(G(:,2), G_sq(:,:,2), wf%ao%n)
+!
+      call mem%dealloc(G_sq, wf%n_mo, wf%n_mo, 2)
+!
+   end subroutine get_packed_roothan_hall_gradient_uhf
+!
+!
+   subroutine get_roothan_hall_gradient_uhf(wf, G)
+!!
+!!    Get Roothan-Hall gradient
+!!    Written by Eirik F. Kjønstad, Nov 2018
+!!
+!!    Constructs and returns the gradient. For UHF,
+!!    both the alpha and beta gradients are
+!!    returned as follows: [G_a G_b]
+!!
+      implicit none
+!
+      class(uhf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo**2, wf%n_densities), intent(inout) :: G
+!
       real(dp), dimension(:,:), allocatable :: Po, Pv
 !
       call mem%alloc(Po, wf%ao%n, wf%ao%n)
       call mem%alloc(Pv, wf%ao%n, wf%ao%n)
-      call mem%alloc(G_pck, wf%n_mo*(wf%n_mo - 1)/2)
-      call mem%alloc(G_sq, wf%n_mo, wf%n_mo)
 !
 !     Alpha gradient
 !
       call wf%construct_projection_matrices(Po, Pv, wf%ao_density_a)
-      call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock_a)
-!
-      call packin_anti(G_pck, G_sq, wf%ao%n)
-      call dcopy(wf%ao%n*(wf%ao%n - 1)/2, G_pck, 1, G, 1)
+      call wf%construct_roothan_hall_gradient(G(:,1), Po, Pv, wf%ao_fock_a)
 !
 !     Beta gradient
 !
       call wf%construct_projection_matrices(Po, Pv, wf%ao_density_b)
-      call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock_b)
-!
-      call packin_anti(G_pck, G_sq, wf%ao%n)
-      call dcopy(wf%ao%n*(wf%ao%n - 1)/2, G_pck, 1, G(1, 2), 1)
+      call wf%construct_roothan_hall_gradient(G(:,2), Po, Pv, wf%ao_fock_b)
 !
       call mem%dealloc(Po, wf%ao%n, wf%ao%n)
       call mem%dealloc(Pv, wf%ao%n, wf%ao%n)
-      call mem%dealloc(G_pck, wf%n_mo*(wf%n_mo - 1)/2)
-      call mem%dealloc(G_sq, wf%n_mo, wf%n_mo)
 !
-   end subroutine get_packed_roothan_hall_gradient_uhf
+   end subroutine get_roothan_hall_gradient_uhf
 !
 !
    subroutine read_settings_uhf(wf)
@@ -553,6 +586,9 @@ contains
 !!    densities to be spherically symmetric if the zeroth iteration
 !!    density possesses this symmetry.
 !!
+!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(uhf) :: wf
@@ -814,6 +850,9 @@ contains
 !!    Make orbital info file
 !!    Written by Alexander C. Paul Nov 2020
 !!
+!
+      use output_file_class, only : output_file
+!
       implicit none
 !
       class(uhf), intent(inout) :: wf
@@ -882,8 +921,8 @@ contains
 !
       call mem%alloc(F, wf%n_mo, wf%n_mo, wf%n_densities)
 !
-      call wf%ao_to_orthonormal_ao_transformation(F(:,:,1), wf%ao_fock_a)
-      call wf%ao_to_orthonormal_ao_transformation(F(:,:,2), wf%ao_fock_b)
+      call wf%ao_to_oao_transformation(F(:,:,1), wf%ao_fock_a)
+      call wf%ao_to_oao_transformation(F(:,:,2), wf%ao_fock_b)
 !
       call packin(F_packed, F(:,:,1), wf%n_mo)
       call packin(F_packed(wf%n_mo*(wf%n_mo + 1)/2 + 1:), F(:,:,2), wf%n_mo)
@@ -923,7 +962,7 @@ contains
    end subroutine set_C_and_e_uhf
 !
 !
-   subroutine construct_initial_idempotent_density_uhf(wf)
+   subroutine diagonalize_fock_uhf(wf)
 !!
 !!    Construct initial idempotent density
 !!    Written by Sarai D. Folkestad
@@ -962,7 +1001,7 @@ contains
 !
       call wf%update_ao_density()
 !
-   end subroutine construct_initial_idempotent_density_uhf
+   end subroutine diagonalize_fock_uhf
 !
 !
    function get_spin_contamination_uhf(wf) result(spin_contamination)
@@ -1097,6 +1136,80 @@ contains
                          reals=[contamination], fs='(t6,a)')
 !
    end subroutine print_spin_uhf
+!
+!
+   subroutine construct_natural_occupation_number_basis_uhf(wf, C_NO, occupations)
+!!
+!!    Construct natural occupation number basis
+!!    Written by Sarai D. Folkestad, 2020
+!!
+!!    Finds the orbital basis that diagonalises the idempotent
+!!    charge density matrix
+!!    (see for instance Pulay and Hammilton, J. Chem. Phys. 88, 4926 (1988))
+!!
+!!    Solves
+!!
+!!       DSC = Ce
+!!
+!!    using S = PL(PL)^T
+!!
+!!    Returns the NO basis (C_NO) and the
+!!    occupation numbers.
+!!
+!
+      use array_utilities, only: copy_and_scale
+      use array_utilities, only: symmetric_sandwich
+!
+      implicit none
+!
+      class(uhf) :: wf
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(out) :: C_NO
+      real(dp), dimension(wf%n_mo),          intent(out) :: occupations
+!
+      real(dp), dimension(:), allocatable :: work
+      real(dp), dimension(:,:), allocatable :: D, PL, X
+      integer :: info
+!
+      call mem%alloc(PL, wf%ao%n, wf%n_mo)
+!
+      call dgemm('n', 'n',                   &
+                  wf%ao%n, wf%n_mo, wf%n_mo, &
+                  one,                       &
+                  wf%ao%P, wf%ao%n,          &
+                  wf%ao%L, wf%n_mo,          &
+                  zero,                      &
+                  PL, wf%ao%n)
+!
+      call mem%alloc(X, wf%ao%n, wf%ao%n)
+      call copy_and_scale(half, wf%ao_density, X, wf%ao%n**2)
+!
+      call mem%alloc(D, wf%ao%n, wf%ao%n)
+      call symmetric_sandwich(D, X, PL, wf%ao%n, wf%n_mo)
+!
+      call mem%dealloc(X, wf%ao%n, wf%ao%n)
+      call mem%dealloc(PL, wf%ao%n, wf%n_mo)
+!
+      call dscal(wf%ao%n**2, -one, D, 1) ! Scale to get eigenvalues in convenient order
+!
+      call mem%alloc(work, 3*wf%n_mo)
+!
+      call dsyev( 'v',          &
+                  'l',          &
+                  wf%n_mo,      &
+                  D,            &
+                  wf%n_mo,      &
+                  occupations,  &
+                  work,         &
+                  3*wf%n_mo,    &
+                  info)
+!
+      call mem%dealloc(work, 3*wf%n_mo)
+      call dscal(wf%n_mo, -one, occupations, 1) ! Scale back eigenvalues
+!
+      call wf%set_orbital_coefficients_from_orthonormal_ao_C(D, C_NO)
+      call mem%dealloc(D, wf%ao%n, wf%ao%n)
+!
+   end subroutine construct_natural_occupation_number_basis_uhf
 !
 !
 end module uhf_class

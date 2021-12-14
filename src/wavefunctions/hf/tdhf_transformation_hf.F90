@@ -26,8 +26,6 @@ submodule (hf_class) tdhf_transformation
 !!    And relevant routines for the calculation of these transformations.
 !!
 !
-   use array_utilities
-!
    implicit none
 !
 !
@@ -45,6 +43,10 @@ contains
 !!
 !!    Where D is non-symmetric
 !!
+!
+      use omp_lib
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(hf) :: wf
@@ -114,7 +116,7 @@ contains
 !
             deg_ = deg_*deg_12*deg_34
 !
-            call wf%ao%get_eri(g_ABCD, s1, s2, s3, s4)
+            call wf%get_ao_g(g_ABCD, s1, s2, s3, s4)
 !
             g_ABCD_p(1 : wf%ao%shells(s1)%length, 1 : wf%ao%shells(s2)%length, &
                   1 : wf%ao%shells(s3)%length, 1 : wf%ao%shells(s4)%length) &
@@ -317,6 +319,8 @@ contains
 !!
 !!    4. Add one electron terms
 !!
+      use array_utilities, only: transpose_
+!
       implicit none
 !
       class(hf) :: wf
@@ -413,6 +417,9 @@ contains
 !!
 !!    sigma = Ab
 !!
+!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(hf) :: wf
@@ -444,6 +451,9 @@ contains
 !!
 !!       sigma = (A + B)(A - B) b = (A + B) c, for c = (A - B) b
 !!
+!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(hf) :: wf
@@ -538,6 +548,8 @@ contains
 !!    Get TDHF start vectors
 !!    Written by Sarai D. Folkestad, May 2021
 !!
+      use array_utilities, only: zero_array, get_n_lowest
+!
       implicit none
 !
       class(hf) :: wf

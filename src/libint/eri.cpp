@@ -163,3 +163,103 @@ void get_eri_1der(double *g, const int s1, const int s2, const int s3, const int
   }
   return;
 }
+
+void get_eri_2c(double *g,
+             const int J, const int K,
+             const double epsilon_, int *skip,
+             const int nJ, const int nK){
+/*
+
+    Get electron repulsion integrals (eri) 2 center
+    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018-2020
+
+    Gets the integral (L|M), where the auxiliary basis functions L and K
+    belong to shells J and K.
+
+    nJ and nK are the sizes of the shells
+
+
+*/
+  int thread = omp_get_thread_num();
+
+  electronic_repulsion_2c[thread].set_precision(epsilon_);
+
+  const auto& buf_vec = electronic_repulsion_2c[thread].results(); // will point to computed shell sets
+
+  electronic_repulsion_2c[thread].compute(ri_basis[J - 1], ri_basis[K - 1]);
+
+  auto integrals_JK = buf_vec[0]; // Location of computed integrals
+
+   if (integrals_JK == nullptr)
+   {
+      *skip = 1;
+   }
+   else
+   {
+      *skip = 0;
+      auto i = 0;
+
+      for(auto aux_K=0; aux_K<nK; ++aux_K){
+        for(auto aux_J=0; aux_J<nJ; ++aux_J){
+
+            auto aux_JK = nK*aux_J + aux_K;
+
+            g[i] = integrals_JK[aux_JK];
+            ++i;
+         }
+      }
+    }
+
+  return;
+}
+
+void get_eri_3c(double *g,
+             const int J, const int s3, const int s4,
+             const double epsilon_, int *skip,
+             const int nJ, const int n3, const int n4){
+/*
+
+    Get electron repulsion integrals (eri) 3 center
+    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018-2020
+
+    Gets the integral (K|wx), where the auxiliary basis function K is in shell J,
+    and the AOs w and x are in shells s3 and s4
+
+    nJ, n3, and n4 are the sizes of the shells
+
+
+*/
+  int thread = omp_get_thread_num();
+
+  electronic_repulsion_3c[thread].set_precision(epsilon_);
+
+  const auto& buf_vec = electronic_repulsion_3c[thread].results(); // will point to computed shell sets
+
+  electronic_repulsion_3c[thread].compute(ri_basis[J - 1], basis[s3 - 1], basis[s4 - 1]);
+
+  auto integrals_J34 = buf_vec[0]; // Location of computed integrals
+
+   if (integrals_J34 == nullptr)
+   {
+      *skip = 1;
+   }
+   else
+   {
+      *skip = 0;
+      auto i = 0;
+
+      for(auto ao_4=0; ao_4<n4; ++ao_4){
+        for(auto ao_3=0; ao_3<n3; ++ao_3){
+            for(auto aux_J=0; aux_J<nJ; ++aux_J){
+
+                auto aos_J34 = (n4*((n3*aux_J) + ao_3) + ao_4);
+
+                g[i] = integrals_J34[aos_J34];
+                ++i;
+            }
+         }
+      }
+   }
+
+  return;
+}

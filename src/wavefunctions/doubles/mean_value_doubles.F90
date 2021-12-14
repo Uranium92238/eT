@@ -117,6 +117,9 @@ contains
 !!    corresponding to terms of the ground state density
 !!    and the left transition density.
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: squareup
+!
       implicit none
 !
       class(doubles) :: wf
@@ -253,6 +256,8 @@ contains
 !!
 !!          u^{ab}_ij = 2t_aibj - t_ajbi
 !!
+      use reordering, only: add_1432_to_1234
+!
       implicit none
 !
       class(doubles) :: wf

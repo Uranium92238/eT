@@ -48,8 +48,7 @@ module abstract_file_class
 !
    contains
 !
-      procedure :: exists                 => exists_abstract_file
-      procedure :: copy                   => copy_abstract_file
+      procedure :: exists => exists_abstract_file
 !
    end type abstract_file
 !
@@ -72,57 +71,6 @@ contains
       inquire(file=trim(the_file%name_), exist=exists_abstract_file)
 !
    end function exists_abstract_file
-!
-!  
-   subroutine copy_abstract_file(the_file, filename)
-!!
-!!    Copy abstract file
-!!    Written by Alexander C. Paul and Rolf H. Myhre, September 2019
-!!
-      implicit none
-!
-      class(abstract_file) :: the_file
-!
-      character(*), intent(in) :: filename
-!
-      integer :: copy_unit
-!
-!     Character to hold a byte
-      character :: byte
-!
-!     Check that file is closed
-      if(the_file%is_open) then 
-!
-         print *, 'Error in copy: '//the_file%name_//' is not closed'
-         stop
-!
-      endif
-!
-!     Open the file with stream unformatted access
-      open(newunit=the_file%unit_, file=the_file%name_, access='stream', &
-           form='unformatted', action='read')
-!
-!     Open a new file
-      open(newunit=copy_unit, file=trim(filename), access='stream', &
-           form='unformatted', action='write', status='new')
-!
-!
-!     Read byte by byte and write it to the new file
-!
-      do
-!
-         read(the_file%unit_, end=200) byte !Read until end of file, then go to 200
-         write(copy_unit) byte             !Write whatever you just read
-!
-      enddo
-      200 continue !End of file reached, should be done
-!
-!     Close the files
-      close(copy_unit, status='keep')
-      close(the_file%unit_, status='keep')
-!
-!
-   end subroutine copy_abstract_file
 !
 !
 end module abstract_file_class

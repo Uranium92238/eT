@@ -40,9 +40,7 @@ def get_hf_filter(
         )
 
     if convergence:
-        g.append(
-            get_filter(string="Convergence criterion met in", abs_tolerance=1.0e-10)
-        )
+        g.append(get_filter(string="Convergence criterion met in", abs_tolerance=1))
 
     if not restart:
         g.append(
@@ -304,6 +302,23 @@ def get_polarizability_filter(tolerance):
         get_filter(string="<< mu_z, mu_x >>(0.40E-01):", abs_tolerance=tolerance),
         get_filter(string="<< mu_x, mu_x >>(0.60E-01):", abs_tolerance=tolerance),
         get_filter(string="<< mu_z, mu_x >>(0.60E-01):", abs_tolerance=tolerance),
+    ]
+
+    return f
+
+
+def get_geoopt_filter(tolerance):
+    """
+    Returns filter for geometry optimization
+    """
+    from runtest import get_filter
+
+    f = [
+        get_filter(
+            from_string="- Summary of geometry optimization:",
+            num_lines=15,
+            abs_tolerance=tolerance,
+        ),
     ]
 
     return f

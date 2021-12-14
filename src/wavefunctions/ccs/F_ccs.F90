@@ -23,21 +23,21 @@ submodule (ccs_class) F_ccs
 !!    F-transformation submodule
 !!
 !!    Routines for the linear transform of
-!!    vectors by the F matrix 
+!!    vectors by the F matrix
 !!
 !!    ρ = F * c,
 !!
 !!    where
-!!   
+!!
 !!    F_μ,ν = < Λ' | [[ exp(T) H_0 exp(T), τ_μ ], τ_ν ] | R >,
 !!
 !!    Where < Λ' | = < R | + sum_μ tbar_μ < μ |
-!!  
-!!    F transformation routines for CCS written by Sarai D. Folkestad and 
+!!
+!!    F transformation routines for CCS written by Sarai D. Folkestad and
 !!    Eirik F. Kjønstad, Feb 2019, and debugged by Josefine H. Andersen,
 !!    spring 2019.
 !!
-! 
+!
    implicit none
 !
 !
@@ -47,13 +47,13 @@ contains
    module subroutine F_transformation_ccs(wf, c, rho)
 !!
 !!    F transformation
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019     
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019
 !!
 !!    Directs the transformation by the F matrix.
 !!
 !!     F(tbar)_mu,nu = < tbar | [[H-bar,tau_mu],tau_nu] | HF >
 !!
-!!    Modified for ccsd F transformation by 
+!!    Modified for ccsd F transformation by
 !!    (A. K. Schnack-Petersen and) Eirik F. Kjønstad Sep 2021
 !!
       implicit none
@@ -63,7 +63,7 @@ contains
       real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: c
       real(dp), dimension(wf%n_gs_amplitudes), intent(out) :: rho
 !
-      real(dp), dimension(:), allocatable :: tbar 
+      real(dp), dimension(:), allocatable :: tbar
 !
       call mem%alloc(tbar, wf%n_gs_amplitudes)
       call wf%get_multipliers(tbar)
@@ -78,7 +78,7 @@ contains
    module subroutine F_x_transformation_ccs(wf, c, rho, x)
 !!
 !!    F(x) transformation
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019     
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019
 !!
 !!    Directs the transformation by the F matrix, defined by
 !!
@@ -105,17 +105,19 @@ contains
    module subroutine F_x_mu_transformation_ccs(wf, c, rho, x)
 !!
 !!    F(x) mu transformation
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019     
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019
 !!
 !!    Directs the transformation by the F matrix, defined by
 !!
 !!     F(X)_mu,nu = < X | [[H-bar,tau_mu],tau_nu] | HF >
-!!    
+!!
 !!    where < X | = < mu | X_mu
 !!
-      implicit none 
+      use array_utilities, only: zero_array
 !
-      class(ccs), intent(inout) :: wf 
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_t1), intent(in) :: c
       real(dp), dimension(wf%n_t1), intent(out) :: rho
@@ -138,6 +140,9 @@ contains
 !!
 !!    rho_A1,0_ai = 2 * L_iajb * c_bj
 !!
+      use array_utilities, only: zero_array
+      use reordering, only: add_2143_to_1234, add_2341_to_1234
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -174,7 +179,7 @@ contains
                   L_aibj,              &
                   (wf%n_v)*(wf%n_o),   &
                   c_ai,                & ! c_bj
-                  (wf%n_v)*(wf%n_o),   & 
+                  (wf%n_v)*(wf%n_o),   &
                   one,                 &
                   rho_ai,              &
                   (wf%n_v)*(wf%n_o))
@@ -191,7 +196,7 @@ contains
 !!
 !!    rho_A1,1_ai = - (F_ib * tbar_aj + F_ja * tbar_bi) * c_bj
 !!
-!!    Modified for ccsd F transformation by 
+!!    Modified for ccsd F transformation by
 !!    (A. K. Schnack-Petersen and) Eirik F. Kjønstad Sep 2021
 !!
       implicit none
@@ -266,7 +271,7 @@ contains
 !
       call dgemm('T', 'N',    &
                   wf%n_v,     &
-                  wf%n_o,     &  
+                  wf%n_o,     &
                   wf%n_o,     &
                   -one,       &
                   wf%fock_ia, & ! F_j,a
@@ -289,9 +294,12 @@ contains
 !!
 !!    rho_B1,1_ai = - (L_ikjb * tbar_ak + L_jkia * tbar_bk) * c_bj
 !!
-!!    Modified for ccsd F transformation by 
+!!    Modified for ccsd F transformation by
 !!    (A. K. Schnack-Petersen and) Eirik F. Kjønstad Sep 2021
 !!
+      use reordering, only: add_2143_to_1234, add_4123_to_1234
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -315,7 +323,7 @@ contains
       call mem%alloc(g_ikjb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
       call wf%eri%get_eri_t1('ooov', g_ikjb)
 !
-      call mem%alloc(L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)  
+      call mem%alloc(L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
       call zero_array(L_kibj, (wf%n_o**3)*wf%n_v)
       call add_2143_to_1234(two, g_ikjb, L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
@@ -342,7 +350,7 @@ contains
 !
 !      rho_ai += tbar_ak * X_ki
 !
-      call dgemm('N', 'N',             &  
+      call dgemm('N', 'N',             &
                   wf%n_v,              &
                   wf%n_o,              &
                   wf%n_o,              &
@@ -353,7 +361,7 @@ contains
                   wf%n_o,              &
                   one,                 &
                   rho_ai,              &
-                  wf%n_v) 
+                  wf%n_v)
 !
       call mem%dealloc(X_ki, wf%n_o, wf%n_o)
 !
@@ -392,7 +400,7 @@ contains
                   (wf%n_v)*(wf%n_o))
 !
       call mem%dealloc(X_kj, wf%n_o, wf%n_o)
-      call mem%dealloc(L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o) 
+      call mem%dealloc(L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine F_ccs_b1_1_ccs
 !
@@ -405,9 +413,13 @@ contains
 !!    rho_C1,1_ai = (L_cajb * tbar_ci + L_cbia * tbar_cj) * c_bj
 !!                = (X_iajb + X_jbia) * c_bj
 !!
-!!    Modified for ccsd F transformation by 
+!!    Modified for ccsd F transformation by
 !!    (A. K. Schnack-Petersen and) Eirik F. Kjønstad Sep 2021
 !!
+      use batching_index_class, only: batching_index
+      use array_utilities, only: zero_array
+      use reordering, only: add_1432_to_1234, sort_1234_to_2143
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -438,7 +450,7 @@ contains
 !
       batch_c = batching_index(wf%n_v)
 !
-      call mem%batch_setup(batch_c, req0, req1)
+      call mem%batch_setup(batch_c, req0, req1, tag='F_ccs_c1_1_ccs')
 !
       do current_c_batch = 1, batch_c%num_batches
 !
@@ -504,7 +516,7 @@ contains
                   rho_ai,                       &
                   (wf%n_v)*(wf%n_o))
 !
-!     rho_ai += X_bjai * c_bj 
+!     rho_ai += X_bjai * c_bj
 !
       call dgemm('T', 'N',                      &
                   (wf%n_v)*(wf%n_o),            &

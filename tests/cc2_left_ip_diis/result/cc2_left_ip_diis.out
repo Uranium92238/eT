@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.3 - an electronic structure program
+                     eT 1.5 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco
+   This is eT 1.5.0 Furia (development)
   ------------------------------------------------------------
-  Configuration date: 2021-06-07 12:48:33 UTC +02:00
-  Git branch:         update-test-refs-new
-  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Configuration date: 2021-10-06 10:20:02 UTC +02:00
+  Git branch:         hf-cleanup-oao-stuff
+  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
-  PCM:                ON
+  PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-06-07 12:50:01 UTC +02:00
+  Calculation started: 2021-10-06 10:31:47 UTC +02:00
 
 
   :: Input file
@@ -148,6 +148,8 @@
      Maximum iterations:                   100
      Acceleration type:                   diis
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
@@ -168,41 +170,41 @@
 
      DIIS dimension:   8
 
-     Storage (solver scf_e): memory
-     Storage (solver scf_x): memory
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.796606592593     0.9053E-01     0.7880E+02
-     2           -78.828675852657     0.7128E-01     0.3207E-01
-     3           -78.843428154462     0.8290E-02     0.1475E-01
-     4           -78.843809541675     0.2414E-02     0.3814E-03
-     5           -78.843850846799     0.3301E-03     0.4131E-04
-     6           -78.843851669326     0.5527E-04     0.8225E-06
-     7           -78.843851692851     0.5865E-05     0.2353E-07
-     8           -78.843851693557     0.2356E-05     0.7054E-09
-     9           -78.843851693630     0.2071E-06     0.7373E-10
-    10           -78.843851693631     0.1594E-07     0.4121E-12
-    11           -78.843851693631     0.3322E-08     0.1421E-13
-    12           -78.843851693631     0.1197E-08     0.5684E-13
-    13           -78.843851693631     0.4264E-09     0.9948E-13
-    14           -78.843851693631     0.1280E-09     0.1421E-13
-    15           -78.843851693631     0.1479E-10     0.5684E-13
-    16           -78.843851693631     0.2907E-11     0.1421E-13
+     1           -78.796606592585     0.9786E-01     0.7880E+02
+     2           -78.828675852654     0.7077E-01     0.3207E-01
+     3           -78.843487343819     0.6747E-02     0.1481E-01
+     4           -78.843814479549     0.2753E-02     0.3271E-03
+     5           -78.843850612079     0.3973E-03     0.3613E-04
+     6           -78.843851670925     0.5220E-04     0.1059E-05
+     7           -78.843851692779     0.6096E-05     0.2185E-07
+     8           -78.843851693528     0.2137E-05     0.7488E-09
+     9           -78.843851693630     0.3151E-06     0.1026E-09
+    10           -78.843851693631     0.2637E-07     0.4974E-12
+    11           -78.843851693631     0.5634E-08     0.0000E+00
+    12           -78.843851693631     0.1415E-08     0.1421E-13
+    13           -78.843851693631     0.6806E-09     0.1421E-13
+    14           -78.843851693631     0.1491E-09     0.0000E+00
+    15           -78.843851693631     0.2501E-10     0.2842E-13
+    16           -78.843851693631     0.5167E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.645629080248
+     HOMO-LUMO gap:                  0.645629080245
      Nuclear repulsion energy:      12.116100574587
      Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.31161
-     Total cpu time (sec):               0.55137
+     Total wall time (sec):              0.99900
+     Total cpu time (sec):               1.74781
 
 
   :: CC2 wavefunction
@@ -297,8 +299,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.11623
-     Total cpu time (sec):               0.23221
+     Total wall time (sec):              0.39800
+     Total cpu time (sec):               0.62373
 
 
   2) Preparation of MO basis and integrals
@@ -316,6 +318,8 @@
 
   - CC ground state solver settings:
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-10
      Max number of iterations:      100
 
@@ -323,8 +327,8 @@
 
      DIIS dimension:   8
 
-     Storage (cc_gs_diis_e): file
-     Storage (cc_gs_diis_x): file
+     Storage (cc_gs_diis_errors): file
+     Storage (cc_gs_diis_parameters): file
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
@@ -335,19 +339,19 @@
     5           -79.085769937826     0.3615E-04     0.1352E-05
     6           -79.085769725742     0.6004E-05     0.2121E-06
     7           -79.085769729164     0.2063E-05     0.3422E-08
-    8           -79.085769729229     0.3646E-06     0.6526E-10
+    8           -79.085769729229     0.3646E-06     0.6527E-10
     9           -79.085769729230     0.3393E-07     0.9095E-12
    10           -79.085769729553     0.4633E-08     0.3225E-09
-   11           -79.085769729585     0.9303E-09     0.3264E-10
+   11           -79.085769729585     0.9303E-09     0.3266E-10
    12           -79.085769729575     0.2416E-09     0.1073E-10
    13           -79.085769729575     0.4926E-10     0.4547E-12
-   14           -79.085769729575     0.6369E-11     0.3979E-12
+   14           -79.085769729576     0.6368E-11     0.3837E-12
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):   -79.085769729575
+     Final ground state energy (a.u.):   -79.085769729576
 
      Correlation energy (a.u.):           -0.241918035945
 
@@ -355,22 +359,22 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        1      5        0.015071367766
-       14      4       -0.009516336779
+        1      5        0.015071367764
+       14      4       -0.009516336778
         7      4        0.008547796583
        15      5       -0.006232215147
-        5      6        0.005875107063
+        5      6        0.005875107061
         6      2        0.005220429230
        13      5        0.005212699581
-        2      4        0.005071084622
+        2      4        0.005071084623
        11      6       -0.003616248565
         4      5        0.003233309227
      ------------------------------------
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.03154
-     Total cpu time (sec):               0.06353
+     Total wall time (sec):              0.11700
+     Total cpu time (sec):               0.14990
 
 
   4) Calculation of the excited state (diis algorithm)
@@ -392,6 +396,8 @@
      Calculation type:    ionize
      Excitation vectors:  left
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-09
 
      Number of singlet states:               2
@@ -401,21 +407,21 @@
 
      DIIS dimension:  20
 
-     Storage (diis_cc_es_001_e): file
-     Storage (diis_cc_es_001_x): file
+     Storage (diis_cc_es_001_errors): file
+     Storage (diis_cc_es_001_parameters): file
 
   - DIIS tool settings:
 
      DIIS dimension:  20
 
-     Storage (diis_cc_es_002_e): file
-     Storage (diis_cc_es_002_x): file
+     Storage (diis_cc_es_002_errors): file
+     Storage (diis_cc_es_002_parameters): file
 
   Iteration:                  1
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.541952137630       0.7732E+00
+     1      0.541952137631       0.7732E+00
      2      0.603654498072       0.6930E+00
   -----------------------------------------------
 
@@ -423,7 +429,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.400266302969       0.8866E-01
+     1      0.400266303025       0.8866E-01
      2      0.483643887104       0.6831E-01
   -----------------------------------------------
 
@@ -431,39 +437,39 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.356196292016       0.1388E+00
-     2      0.457001044389       0.1269E+00
+     1      0.356196292033       0.1388E+00
+     2      0.457001044419       0.1269E+00
   -----------------------------------------------
 
   Iteration:                  4
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.372920857885       0.1613E-01
-     2      0.464014410672       0.4071E-01
+     1      0.372920857951       0.1613E-01
+     2      0.464014410646       0.4071E-01
   -----------------------------------------------
 
   Iteration:                  5
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.372859815382       0.2527E-02
-     2      0.466176299265       0.2126E-01
+     1      0.372859815373       0.2527E-02
+     2      0.466176299263       0.2126E-01
   -----------------------------------------------
 
   Iteration:                  6
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.373110053691       0.8474E-03
-     2      0.466076093805       0.1992E-01
+     1      0.373110053693       0.8474E-03
+     2      0.466076093808       0.1992E-01
   -----------------------------------------------
 
   Iteration:                  7
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.373152429557       0.3200E-03
+     1      0.373152429558       0.3200E-03
      2      0.467114027681       0.5886E-02
   -----------------------------------------------
 
@@ -487,23 +493,23 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.373113294535       0.8756E-05
-     2      0.467061523444       0.8178E-05
+     1      0.373113294534       0.8756E-05
+     2      0.467061523443       0.8178E-05
   -----------------------------------------------
 
   Iteration:                 11
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.373115246881       0.1936E-05
-     2      0.467060351312       0.2763E-05
+     1      0.373115246880       0.1936E-05
+     2      0.467060351311       0.2763E-05
   -----------------------------------------------
 
   Iteration:                 12
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.373115357209       0.9217E-06
+     1      0.373115357208       0.9217E-06
      2      0.467060105910       0.3386E-06
   -----------------------------------------------
 
@@ -527,24 +533,24 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.373115138477       0.5202E-09
-     2      0.467060161236       0.1070E-07
+     1      0.373115138476       0.5167E-09
+     2      0.467060161235       0.1070E-07
   -----------------------------------------------
 
   Iteration:                 16
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.373115138369       0.6486E-10
-     2      0.467060161211       0.1903E-09
+     1      0.373115138369       0.6578E-10
+     2      0.467060161211       0.1904E-09
   -----------------------------------------------
 
   Iteration:                 17
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.373115138369       0.6486E-10
-     2      0.467060161243       0.4526E-10
+     1      0.373115138369       0.6578E-10
+     2      0.467060161243       0.4520E-10
   -----------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -557,17 +563,17 @@
      Electronic state nr. 1
 
      Energy (Hartree):                  0.373115138369
-     Fraction singles (|L1|/|L|):       0.892235652840
+     Fraction singles (|L1|/|L|):       0.892235652838
 
      Largest single amplitudes:
      -----------------------------------
         a       i         L(a,i)
      -----------------------------------
-       24      6        0.892209650814
-       24      3       -0.005047475754
-       24      5        0.004549889401
-       24      2        0.000452154383
-       24      4        0.000127442537
+       24      6        0.892209650813
+       24      3       -0.005047475753
+       24      5        0.004549889413
+       24      2        0.000452154384
+       24      4        0.000127442536
        24      1       -0.000001554917
         6      1        0.000000000000
         7      1        0.000000000000
@@ -585,8 +591,8 @@
         a       i         L(a,i)
      -----------------------------------
        24      5        0.912040866245
-       24      2       -0.054368206819
-       24      6       -0.004785719374
+       24      2       -0.054368206818
+       24      6       -0.004785719397
        24      3       -0.002051603014
        24      1        0.000411918471
        24      4       -0.000001370957
@@ -602,29 +608,29 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.373115138369       10.152980060070
-        2                  0.467060161243       12.709354342151
+        1                  0.373115138369       10.152980060066
+        2                  0.467060161243       12.709354342134
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CC2 excited state equations (left)
 
-     Total wall time (sec):              0.07733
-     Total cpu time (sec):               0.15327
+     Total wall time (sec):              0.35400
+     Total cpu time (sec):               0.38590
 
   - Timings for the CC2 excited state calculation
 
-     Total wall time (sec):              0.22547
-     Total cpu time (sec):               0.44939
+     Total wall time (sec):              0.87000
+     Total cpu time (sec):               1.16093
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 11.053784 MB
+  Peak memory usage during the execution of eT: 11.024552 MB
 
-  Total wall time in eT (sec):              0.55598
-  Total cpu time in eT (sec):               1.02774
+  Total wall time in eT (sec):              1.93600
+  Total cpu time in eT (sec):               2.97343
 
-  Calculation ended: 2021-06-07 12:50:02 UTC +02:00
+  Calculation ended: 2021-10-06 10:31:49 UTC +02:00
 
   - Implementation references:
 

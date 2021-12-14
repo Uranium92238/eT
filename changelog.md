@@ -1,3 +1,49 @@
+# eT v1.5.0
+
+### Bugfixes
+- Two workarounds added to circumvent bugs in the Intel compiler (ifort). File destructors no longer check whether the file is open. Two OpenMP loops are incorrectly optimized with -O3 and have been modified to circumvent incorrect compiler optimization. eT-program/eT!936
+- Disk storage default for davidson solver to obtain multipliers. eT-program/eT!942
+- `max_dim_red` of excited state Davidson solvers is now set to `max(100,10*n_singlet_states)` after the number of singlet states have been read from input. eT-program/eT!932
+
+### Features
+- Using orthogonal AO (OAO) basis for HF/UHF gradient in Roothan-Hall SCF solver. eT-program/eT!914
+- When the code is batching a tag will be printed now for verbose print level. eT-program/eT!919
+- Now possible to specify start guesses for excited states as `state guesses: {i=1,a=2}, {i=1,a=3}, ...`. eT-program/eT!933
+- Convergence testing now with tolerance of +-1, to avoid fails due to numerics. eT-program/eT!938
+- Added CI pipeline that runs a simple program to parse the Fortran code and identify various code-issues. eT-program/eT!937
+- Added check for close lying/overlapping atoms. eT-program/eT!943
+- Added new reference method: QED Hartree-Fock (qed-hf). eT-program/eT!941
+- Added basis sets ccX-nZ basis sets. eT-program/eT!955
+- ROHF and CUHF. eT-program/eT!957
+- Cartesian BFGS geometry optimization solver (for Hartree-Fock theory) replaced by a more robust BFGS solver that uses redundant internal coordinates. eT-program/eT!918
+- Multimodel CCSD/CC2 is now available for the ground state amplitudes. eT-program/eT!950
+
+### Structure
+- Moved the SCF preparations for HF outside of SCF solver. eT-program/eT!908
+- Merged the `abstract_convergence_tool` and the `convergence_tool` classes. eT-program/eT!909
+- SAD handled in the sad\_tool\_class. eT-program/eT!926
+- Removed unused routines in reordering. eT-program/eT!939
+- Moved a Fock matrix term from CCSD Jacobian into doubles Jacobian. eT-program/eT!949
+- G(D) definition changed to (2g\_wxyz - g\_wzyx)D\_yz.  eT-program/eT!964
+- Cleanup of use statements in HF hierarchy. eT-program/eT!966
+- Removed unused routine in abstract\_file\_class.F90. eT-program/eT!967
+- Cleanup of use statements in CC hierarchy. eT-program/eT!969
+- No module imports all reordering and array utilities anymore. eT-program/eT!970
+- Added unit tests for angular momentum class. eT-program/eT!972
+
+### Optimization
+- One-electron and effective contributions to the CC-Fock matrix are now calculated once instead of multiple times per Fock construction. eT-program/eT!925
+- Removed an unnecessary non-iterative o3v3 term (the G2-2 intermediate) as well as an iterative o3v3 term in CCSD Jacobian transpose G2. eT-program/eT!946
+- Removed two o3v3 terms and an unnecessary g\_ovvv construction in CCSD Jacobian transpose G1. eT-program/eT!944
+- Removed an o3v3 term in CCSD Jacobian transpose B2. eT-program/eT!945
+- Removed an unnecessary o3v3 term in CCSD Jacobian transpose C2. eT-program/eT!946
+- Removed an o3v3 term in Jacobian CCSD D2 and reduced integral costs in the term. eT-program/eT!951
+- Replaced an o1v3nJ by an o2v2nJ contraction in Jacobian transpose doubles B1. eT-program/eT!948
+- Removed an iterative and a non-iterative o3v3 term in CCSD Jacobian H2. eT-program/eT!958
+- Pipeline runs every n-th test (n: number of threads) starting with test i (i: thread number). eT-program/eT!960
+- Reduced size of Lanczos test for valence states. eT-program/eT!960
+- Removed an o3v3 term in CCSD Jacobian I2. eT-program/eT!959
+
 # eT v1.4.4
 ### Bugfixes
 - Find substring in string also if it contains the last character. eT-program/eT!952
@@ -44,6 +90,7 @@
 ### Structure
 - Added block class using the range class. Facilitates the handling of multiple index ranges. eT-program/eT!823
 - Angular momentum tools handle components of the angular momenta. eT-program/eT!864
+- Generalized davidson solver for linear equations. eT-program/eT!901
 
 # eT v1.3.9
 ### Bugfixes

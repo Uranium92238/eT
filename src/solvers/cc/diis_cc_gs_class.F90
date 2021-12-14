@@ -53,7 +53,6 @@ module diis_cc_gs_class
    use diis_tool_class,                   only : diis_tool
    use timings_class,                     only : timings
    use precondition_tool_class,           only : precondition_tool
-   use abstract_convergence_tool_class,   only : abstract_convergence_tool
    use convergence_tool_class,            only : convergence_tool
 !
    use amplitude_updater_class,     only: amplitude_updater
@@ -77,7 +76,7 @@ module diis_cc_gs_class
 !
       class(amplitude_updater), allocatable :: t_updater
 !
-      class(abstract_convergence_tool), allocatable :: convergence_checker
+      class(convergence_tool), allocatable :: convergence_checker
 !
       type(diis_tool), allocatable :: diis
 !

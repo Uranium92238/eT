@@ -31,13 +31,10 @@ module ccsdpt_class
    use triples_class, only: triples
 !
    use parameters
-   use memory_manager_class, only: mem
-   use batching_index_class, only : batching_index
    use global_out, only: output
    use timings_class, only: timings
+   use memory_manager_class, only: mem
    use direct_stream_file_class, only : direct_stream_file
-   use array_utilities, only: entrywise_product, zero_array
-   use reordering
 !
    implicit none
 !
@@ -60,7 +57,7 @@ module ccsdpt_class
       procedure :: estimate_mem_integral_setup => estimate_mem_integral_setup_ccsdpt
 !
       procedure :: print_gs_summary            => print_gs_summary_ccsdpt
-! 
+!
       procedure :: initialize                  => initialize_ccsdpt
 !
    end type ccsdpt
@@ -117,6 +114,9 @@ contains
 !!
 !!       X^abc = W^abc + t_ai(jb|kc) + t_bj(ia|kc) + t_ck(ia|jb)
 !!
+      use batching_index_class, only: batching_index
+      use reordering, only: squareup_and_sort_1234_to_1324
+!
       implicit none
 !
       class(ccsdpt) :: wf
@@ -182,7 +182,7 @@ contains
       req_0 = req_0 + 2*wf%n_v**3
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
-!     Need less memory if we don't need to batch, so we overwrite the maximum 
+!     Need less memory if we don't need to batch, so we overwrite the maximum
 !     required memory in batch_setup
 !
       req_single_batch = req_0 + req_1_eri*wf%n_o + wf%n_v**3*wf%n_o &
@@ -193,9 +193,10 @@ contains
       req_2 = 2*wf%n_o*wf%n_v + wf%n_v**2
       req_3 = 0
 !
-      call mem%batch_setup(batch_i, batch_j, batch_k,  &
-                           req_0, req_i, req_1, req_1, &
-                           req_2, req_2, req_2, req_3, &
+      call mem%batch_setup(batch_i, batch_j, batch_k,             &
+                           req_0, req_i, req_1, req_1,            &
+                           req_2, req_2, req_2, req_3,            &
+                           'calculate_energy_correction_ccsdpt',  &
                            req_single_batch=req_single_batch)
 !
       call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -470,21 +471,21 @@ contains
       do c = 1, wf%n_v
          do b = 1, wf%n_v
             do a = 1, wf%n_v
-!              
-               x_abc(a,b,c) = abc_factor*W_abc(a,b,c) - cba_factor*W_abc(c,b,a) 
-!              
+!
+               x_abc(a,b,c) = abc_factor*W_abc(a,b,c) - cba_factor*W_abc(c,b,a)
+!
                if(i .ne. j) then
-!              
-                  x_abc(a,b,c) = x_abc(a,b,c) - bac_factor*W_abc(b,a,c) 
+!
+                  x_abc(a,b,c) = x_abc(a,b,c) - bac_factor*W_abc(b,a,c)
 !
                end if
-!              
+!
                if(j .ne. k) then
-!              
-                  x_abc(a,b,c) = x_abc(a,b,c) - acb_factor*W_abc(a,c,b) 
-!              
+!
+                  x_abc(a,b,c) = x_abc(a,b,c) - acb_factor*W_abc(a,c,b)
+!
                end if
-!              
+!
             end do
          end do
       end do
@@ -503,28 +504,28 @@ contains
                                         + t1(b,j)*g_ibkc(a,c) &
                                         + t1(c,k)*g_ibjc(a,b))&
 !
-                              - cba_factor*(t1(c,i)*g_jbkc(b,a) & 
-                                          + t1(b,j)*g_ibkc(c,a) & 
+                              - cba_factor*(t1(c,i)*g_jbkc(b,a) &
+                                          + t1(b,j)*g_ibkc(c,a) &
                                           + t1(a,k)*g_ibjc(c,b))
-!              
+!
                if(i .ne. j) then
-!              
+!
                   x_abc(a,b,c) = x_abc(a,b,c)                    &
                                - bac_factor*(t1(b,i)*g_jbkc(a,c) &
                                            + t1(a,j)*g_ibkc(b,c) &
                                            + t1(c,k)*g_ibjc(b,a))
 !
                end if
-!              
+!
                if(j .ne. k) then
-!              
+!
                   x_abc(a,b,c) = x_abc(a,b,c)                    &
                                - acb_factor*(t1(a,i)*g_jbkc(c,b) &
                                            + t1(c,j)*g_ibkc(a,b) &
                                            + t1(b,k)*g_ibjc(a,c))
-!              
+!
                end if
-!              
+!
             end do
          end do
       end do
@@ -538,13 +539,15 @@ contains
 !!    T dot X
 !!    written by Alexander C. Paul and Rolf H. Myhre, Nov 2019
 !!
-!!    Construct linear combination of t and dot with 
+!!    Construct linear combination of t and dot with
 !!    linear combination of V (constructed in construct_V)
 !!
 !!       (4t^abc + t^bca + t^cab)*(X_abc - X_cba)
 !!
 !!    The result has to be scaled by 1/3 to obtain the final energy correction
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(ccsdpt), intent(inout) :: wf
@@ -580,12 +583,12 @@ contains
 !
    subroutine print_gs_summary_ccsdpt(wf)
 !!
-!!    Print ground state summary 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!    Print ground state summary
+!!    Written by Eirik F. Kjønstad, Dec 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsdpt), intent(inout) :: wf 
+      class(ccsdpt), intent(inout) :: wf
 !
       call wf%calculate_energy_correction()
 !
@@ -618,10 +621,10 @@ contains
 !!    Estimate maximum memory needed for ccsd(t) integral setup
 !!
 !!    get_eri_mo_mem returns the memory needed to construct the requested integral
-!!    The dimensions sent in specify if an index is batched (1) or of 
+!!    The dimensions sent in specify if an index is batched (1) or of
 !!    full dimension (n_o/n_v)
 !!    The memory estimate for the first and second pair of indices
-!!    is added to the integers req*. 
+!!    is added to the integers req*.
 !!
       implicit none
 !

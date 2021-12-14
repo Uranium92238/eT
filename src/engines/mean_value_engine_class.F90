@@ -96,6 +96,7 @@ contains
       engine%plot_density         = .false.
 !
       engine%gs_restart           = .false.
+      engine%ri                   = .false.
       engine%multipliers_restart  = .false.
 !
       call engine%read_settings()
@@ -213,9 +214,17 @@ contains
 !
       engine%tasks = task_list()
 !
-      call engine%tasks%add(label='cholesky', &
-                            description='Cholesky decomposition of the electron &
-                                         &repulsion integrals')
+      if (engine%ri) then
+!
+         call engine%tasks%add(label='ri', &
+                               description='RI approximation of the electron &
+                                           &repulsion integrals')
+!
+      else
+         call engine%tasks%add(label='cholesky', &
+                               description='Cholesky decomposition of the electron &
+                                           &repulsion integrals')
+      endif
 !
       call engine%tasks%add(label='mo preparations',                             &
                             description='Preparation of MO basis and integrals')
@@ -259,12 +268,12 @@ contains
       real(dp), dimension(6) :: q_electronic
       real(dp), dimension(6) :: q_nuclear
       real(dp), dimension(6) :: q_total
-!      
+!
       character(len=4), dimension(:), allocatable :: components
 !
       call engine%tasks%print_('expectation value')
 !
-      if(engine%dipole) then 
+      if(engine%dipole) then
 !
          call engine%calculate_dipole_moment(wf, mu_electronic, mu_nuclear, mu_total)
 !

@@ -22,10 +22,10 @@ method
    hf
 end method
 
-tdhf
+solver tdhf
   states: 2
   residual threshold: 1.0d-10
-end tdhf
+end solver tdhf
 
 geometry
 basis: cc-pVDZ

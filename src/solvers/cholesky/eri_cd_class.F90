@@ -59,31 +59,31 @@ module eri_cd_class
 !!    Cholesky decomposition (PCD).
 !!
 !
-   use kinds
+   use parameters
 !
-   use global_out, only : output
-   use global_in,  only : input
+   use global_out, only: output
+   use global_in,  only: input
 !
-   use memory_manager_class, only : mem
+   use memory_manager_class, only: mem
 !
-   use reordering
-   use range_class
-   use array_utilities, only : quicksort_with_index_ascending_int
-   use array_utilities, only : quicksort_with_index_descending_int
-   use array_utilities, only : quicksort_with_index_descending
-   use array_utilities, only : get_n_highest
+   use reordering,      only: sort_123_to_213, sort_123_to_312
+   use range_class,     only: range_
+   use array_utilities, only: quicksort_with_index_ascending_int
+   use array_utilities, only: quicksort_with_index_descending_int
+   use array_utilities, only: quicksort_with_index_descending
+   use array_utilities, only: get_n_highest
 !
-   use array_utilities, only : get_abs_max, is_significant, transpose_
-   use array_utilities, only : reduce_array_int, reduce_vector
+   use array_utilities, only: get_abs_max, is_significant, transpose_
+   use array_utilities, only: reduce_array_int, reduce_vector
 !
-   use sequential_file_class, only : sequential_file
+   use sequential_file_class, only: sequential_file
 !
-   use cholesky_array_list_class, only : cholesky_array_list
+   use cholesky_array_list_class, only: cholesky_array_list
 !
-   use batching_index_class, only : batching_index
-   use ao_tool_class, only : ao_tool
+   use batching_index_class, only: batching_index
+   use ao_tool_class, only: ao_tool
 !
-   use timings_class, only : timings
+   use timings_class, only: timings
 !
    implicit none
 !
@@ -3305,7 +3305,7 @@ contains
 !
       batch_p = batching_index(n_mo)
 !
-      call mem%batch_setup(batch_p, req0, req1)
+      call mem%batch_setup(batch_p, req0, req1, 'construct_cholesky_mo_vectors')
 !
 !     Loop over the number of a batches
 !
@@ -3701,7 +3701,7 @@ contains
 !
       batch_J = batching_index(this%n_cholesky)
 !
-      call mem%batch_setup(batch_J, req0, req1)
+      call mem%batch_setup(batch_J, req0, req1, 'diagonal_test')
 !
 !     Loop over the number of a batches
 !

@@ -137,7 +137,7 @@ contains
    end function new_atomic_center_reader
 !
 !
-   pure subroutine get_centers_atomic_center_reader(this, centers)
+   subroutine get_centers_atomic_center_reader(this, centers)
 !!
 !!    Get centers
 !!    Written by Eirik F. Kjønstad, 2021
