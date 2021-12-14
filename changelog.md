@@ -1,3 +1,8 @@
+# eT v1.5.1
+### Bugfixes
+- Update submodules again. eT-program/eT!977
+
+
 # eT v1.5.0
 
 ### Bugfixes
