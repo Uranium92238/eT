@@ -1,7 +1,10 @@
+# eT v1.5.2
+### Bugfixes
+- Coverage files produced for codecov code coverage. eT-program/eT!979
+
 # eT v1.5.1
 ### Bugfixes
 - Update submodules again. eT-program/eT!977
-
 
 # eT v1.5.0
 
