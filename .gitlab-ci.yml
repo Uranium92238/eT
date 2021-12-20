@@ -79,6 +79,8 @@ run:
     - ctest -I $CI_NODE_INDEX,$n_tests_total,$CI_NODE_TOTAL --output-on-failure
     - >
       if [ "$coverage" == "true" ]; then 
+        shopt -s globstar # Enable ** in gcov
+        gcov -abcfu **    # produce .gcov files for codecov
         curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --import # One-time step
         curl -Os https://uploader.codecov.io/latest/alpine/codecov
         curl -Os https://uploader.codecov.io/latest/alpine/codecov.SHA256SUM
@@ -86,7 +88,7 @@ run:
         gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
         sha256sum -c codecov.SHA256SUM
         chmod +x codecov
-        ./codecov -t ${CODECOV_TOKEN}
+        ./codecov -v -t ${CODECOV_TOKEN}
       fi
   tags:
     - docker
