@@ -1,4 +1,6 @@
 # eT v1.6.0
+### Optimization
+- Coupled cluster Fock matrix construction is N^4 scaling. eT-program/eT!973
 
 # eT v1.5.2
 ### Bugfixes
