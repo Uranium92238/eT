@@ -34,7 +34,7 @@ module cuhf_class
 !
    type, extends(uhf) :: cuhf
 !
-      real(dp), dimension(:,:), allocatable :: ao_F_cs 
+      real(dp), dimension(:,:), allocatable :: ao_F_cs
 !
    contains
 !
@@ -47,13 +47,13 @@ module cuhf_class
 !
    end type cuhf
 !
-   interface cuhf 
+   interface cuhf
 !
-      procedure :: new_cuhf 
+      procedure :: new_cuhf
 !
-   end interface cuhf 
+   end interface cuhf
 !
-contains 
+contains
 !
 !
    function new_cuhf() result(wf)
@@ -78,8 +78,8 @@ contains
 !
    subroutine construct_closed_shell_fock_cuhf(wf, cumulative)
 !!
-!!    Construct closed shell fock 
-!!    Written by Sarai D. Folkestad, 2020 
+!!    Construct closed shell fock
+!!    Written by Sarai D. Folkestad, 2020
 !!
 !!    Constructs
 !!
@@ -89,7 +89,7 @@ contains
 !
       class(cuhf)          :: wf
 !
-      real(dp), dimension(:,:), allocatable :: G, D_diff 
+      real(dp), dimension(:,:), allocatable :: G, D_diff
 !
       logical :: cumulative
 !
@@ -141,7 +141,7 @@ contains
 !
       implicit none
 !
-      class(cuhf)               :: wf
+      class(cuhf) :: wf
 !
       real(dp), dimension(:,:), allocatable :: D_spin_diff
 !
@@ -161,8 +161,8 @@ contains
       call dcopy(wf%ao%n**2, wf%ao_density_a, 1, D_spin_diff, 1)
       call daxpy(wf%ao%n**2, -one, wf%ao_density_b, 1, D_spin_diff, 1)
 !
-      wf%ao_fock_b = zero
-      wf%ao_fock_a = zero
+      call zero_array(wf%ao_fock_b, wf%ao%n**2)
+      call zero_array(wf%ao_fock_a, wf%ao%n**2)
 !
 !$    n_threads = omp_get_max_threads()
 !
@@ -191,7 +191,7 @@ contains
       call mem%dealloc(F, wf%ao%n, wf%ao%n*n_threads)
 !
       call symmetric_sum(wf%ao_fock_a, wf%ao%n)
-      call dscal(wf%ao%n**2, half, wf%ao_fock_a, 1) 
+      call dscal(wf%ao%n**2, half, wf%ao_fock_a, 1)
 !
       call copy_and_scale(-one, wf%ao_fock_a, wf%ao_fock_b, wf%ao%n**2)
 !
@@ -200,7 +200,7 @@ contains
 !
    subroutine update_fock_and_energy_cuhf(wf, cumulative)
 !!
-!!    Update Fock and energy 
+!!    Update Fock and energy
 !!    Written by Sarai D. Folkestad, 2021
 !!
 !
@@ -219,7 +219,7 @@ contains
       call daxpy(wf%ao%n**2, one, wf%ao_F_cs, 1, wf%ao_fock_a, 1)
 !
       call wf%calculate_uhf_energy(wf%ao%h)
-!      
+!
    end subroutine update_fock_and_energy_cuhf
 !
 !
@@ -238,7 +238,7 @@ contains
       call wf%destruct_orbital_coefficients()
       call wf%destruct_fock()
       call wf%destruct_ao_density()
-!      
+!
       call mem%dealloc(wf%ao_F_cs, wf%ao%n, wf%ao%n)
 !
       call wf%destruct_mo_fock()

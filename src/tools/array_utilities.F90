@@ -166,7 +166,7 @@ contains
 !
       integer :: i
 !
-      call zero_array(x,n*n)
+      call zero_array(x,n**2)
 !
 !$omp parallel do private(i) schedule(static)
       do i = 1, n
@@ -1256,10 +1256,10 @@ contains
 !!
 !!    Get root-mean-square, RMS = sqrt(X^T X / n)
 !!
-      implicit none 
+      implicit none
 !
-      integer, intent(in) :: n 
-      real(dp), dimension(n), intent(in) :: X 
+      integer, intent(in) :: n
+      real(dp), dimension(n), intent(in) :: X
 !
       real(dp) :: ddot, rms
 !
@@ -1267,7 +1267,7 @@ contains
 !
       rms = sqrt(rms)
 !
-   end function get_root_mean_square 
+   end function get_root_mean_square
 !
 !
    subroutine transpose_(A, A_trans, dim_)
@@ -3251,12 +3251,12 @@ contains
 !!
 !!    The pseudoinverse is computed via an SVD:
 !!
-!!       A    = U S V^T 
-!!       Ainv = V S-1 U^T 
+!!       A    = U S V^T
+!!       Ainv = V S-1 U^T
 !!
 !!    In S-1, diagonals with singular values (S) below tau*max(S) are set to zero.
 !!
-      implicit none 
+      implicit none
 !
       integer, intent(in) :: m, n
 !
@@ -3265,11 +3265,11 @@ contains
 !
       real(dp), intent(in) :: tau
 !
-      real(dp), dimension(:), allocatable   :: S, Sinv 
+      real(dp), dimension(:), allocatable   :: S, Sinv
       real(dp), dimension(:,:), allocatable :: U, VT, Acopy
 !
-      real(dp), dimension(:), allocatable :: work 
-      integer :: lwork 
+      real(dp), dimension(:), allocatable :: work
+      integer :: lwork
 !
       integer :: error_integer, k, l, j, min_mn
 !
@@ -3287,7 +3287,7 @@ contains
       call mem%alloc(U, m, min_mn)
       call mem%alloc(VT, min_mn, n)
 !
-      error_integer = 0 
+      error_integer = 0
 !
       call dgesvd('S', 'S', &
                    m, &
@@ -3315,9 +3315,9 @@ contains
 !
       do k = 1, min_mn
 !
-         if (S(k) .lt. tau*max_singular) then 
+         if (S(k) .lt. tau*max_singular) then
 !
-            Sinv(k) = zero 
+            Sinv(k) = zero
 !
          else
 !
@@ -3329,13 +3329,13 @@ contains
 !
       call mem%dealloc(S, min_mn)
 !
-!     (Ainv)_kl = V_kj S-1_j U^T_jl 
+!     (Ainv)_kl = V_kj S-1_j U^T_jl
 !
       call zero_array(Ainv, m*n)
 !
 !$omp parallel do schedule(static) private(k,l,j)
-      do k = 1, n 
-         do l = 1, m 
+      do k = 1, n
+         do l = 1, m
             do j = 1, min_mn
 !
                Ainv(k,l) = Ainv(k,l) + VT(j,k)*Sinv(j)*U(l,j)

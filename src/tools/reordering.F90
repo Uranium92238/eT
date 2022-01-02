@@ -592,7 +592,7 @@ contains
 !
 !  And the upper triangles
 !
-!$omp parallel do private(p, q, r, s)
+!$omp parallel do private(p, q, r, s, p_lim)
       do s = 1, dim_r
          do r = 1, s
             do q = 1, dim_p
@@ -3941,7 +3941,7 @@ contains
 !
       integer :: p, q, r, s, pq, rs, pqrs, p_end
 !
-!$omp parallel do schedule(static) collapse(2) private(s,r,q,p,pq,rs,pqrs)
+!$omp parallel do schedule(static) collapse(2) private(s,r,q,p,pq,rs,pqrs,p_end)
       do s = 1, dim_q
          do r = 1, dim_p
             do q = 1, s
@@ -3990,7 +3990,7 @@ contains
 !
       integer :: p, q, r, s, pq, rs, pqrs, p_end
 !
-!$omp parallel do schedule(static) collapse(2) private(s,r,q,p,pq,rs,pqrs)
+!$omp parallel do schedule(static) collapse(2) private(s,r,q,p,pq,rs,pqrs,p_end)
       do s = 1, dim_q
          do r = 1, dim_p
             do q = 1, s
@@ -4484,7 +4484,8 @@ contains
 !
       integer :: p, q, r, s, pq, rs, pqrs, p_end, rq, ps, rqps
 !
-!$omp parallel do schedule(static) collapse(2) private(s,r,q,p,pq,rs,pqrs)
+!$omp parallel do schedule(static) collapse(2) &
+!$omp private(p, q, r, s, rs, rq, pq, ps, pqrs, rqps, p_end)
       do s = 1, dim_q
          do r = 1, dim_p
 !
@@ -4537,7 +4538,8 @@ contains
 !
       integer :: p, q, r, s, pq, rs, pqrs, p_end, rq, ps, rqps
 !
-!$omp parallel do schedule(static) collapse(2) private(s,r,q,p,pq,rs,pqrs)
+!$omp parallel do schedule(static) collapse(2) &
+!$omp private(p,q,r,s,rs, rq, pq, ps, pqrs, rqps, p_end)
       do s = 1, dim_q
          do r = 1, dim_p
 !
@@ -4591,7 +4593,7 @@ contains
 !
       integer :: p, q, r, s, pq, rs, ps, rq, pqrs, rqps
 !
-!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,pqrs)
+!$omp parallel do schedule(static) private(s,r,q,p, rs, rq, pq, ps, pqrs, rqps)
       do s = 1, dim_q
          do q = 1, dim_q
             do r = 1, dim_p
