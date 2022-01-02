@@ -162,12 +162,14 @@ contains
 !!    CUHF equations have been solved prior to the call to this routine
 !!
       use array_utilities, only: symmetric_sandwich, symmetric_sandwich_right_transposition, zero_array
+      use array_utilities, only: generalized_diagonalization_symmetric
       implicit none
 !
       class(rohf), intent(inout) :: wf
 !
       real(dp), dimension(:), allocatable :: occupation_numbers
       real(dp), dimension(:,:), allocatable :: C_no_basis, F_no_a, F_no_b, R, SC
+      real(dp), dimension(:,:), allocatable :: F, S
 !
       integer:: i, j
 !
@@ -244,7 +246,17 @@ contains
 !
 !     Diagonalize to obtain orbital coefficients
 !
-      call wf%hf%diagonalize_fock()
+      call mem%alloc(F, wf%n_mo, wf%n_mo)
+      call mem%alloc(S, wf%n_mo, wf%n_mo)
+!
+      call wf%ao_to_reduced_ao_transformation(F, wf%ao_fock)
+      call wf%ao%get_reduced_ao_metric(S) ! RAO metric
+!
+      call generalized_diagonalization_symmetric(F, S, wf%n_mo, wf%orbital_energies)
+      call wf%set_orbital_coefficients_from_reduced_ao_C(F, wf%orbital_coefficients)
+!
+      call mem%dealloc(F, wf%n_mo, wf%n_mo)
+      call mem%dealloc(S, wf%n_mo, wf%n_mo)
 !
    end subroutine make_rohf_orbitals_rohf
 !

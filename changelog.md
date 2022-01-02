@@ -2,6 +2,10 @@
 ### Optimization
 - Coupled cluster Fock matrix construction is N^4 scaling. eT-program/eT!973
 
+# eT v1.5.3
+### Bugfixes
+- Fixed bugs that appear at -O0 optimization level, and added -O0 to coverage pipelines. eT-program/eT!982
+
 # eT v1.5.2
 ### Bugfixes
 - Coverage files produced for codecov code coverage. eT-program/eT!979

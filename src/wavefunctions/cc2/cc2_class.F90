@@ -308,7 +308,7 @@ contains
 !
       call wf%eri%get_eri_t1('vovo', g_aibj)
 !
-!$omp parallel do private(a, i, b, j)
+!$omp parallel do private(a, i, b, j, eps)
       do j = 1, wf%n_o
          do b = 1, wf%n_v
             do i = 1, wf%n_o
