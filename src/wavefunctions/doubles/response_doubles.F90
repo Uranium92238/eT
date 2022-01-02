@@ -1038,7 +1038,7 @@ contains
 !
       call mem%alloc(X_kj, wf%n_o, wf%n_o)
 !
-!$omp parallel do private(b, c)
+!$omp parallel do private(k, j)
       do j = 1, wf%n_o
          do k = 1, wf%n_o
 !

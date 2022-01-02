@@ -45,7 +45,7 @@ build:
     - git submodule update
     - >
       if [ "$coverage" == "true" ]; then 
-        extra_F_flags=' -fprofile-arcs -ftest-coverage'
+        extra_F_flags=' -fprofile-arcs -ftest-coverage -O0'
       fi
     - ./setup.py --int32 --enable-pfunit --pfunit-dir=/pFUnit/build/installed -FC=gfortran -CXX=g++ -F-flags="$extra_F_flags" $extra_setup_options --pcm
     - cd build

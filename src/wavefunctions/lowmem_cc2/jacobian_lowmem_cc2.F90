@@ -207,7 +207,7 @@ contains
                call wf%eri%get_eri_t1('vovo', g_ckbi, 1, wf%n_v, batch_k%first, batch_k%get_last(), &
                                                       1, wf%n_v, batch_i%first, batch_i%get_last())
 !
-!$omp parallel do private(i,b,k,c,eps_ik)
+!$omp parallel do private(i, b, k, c, eps_ik)
                do i = 1, batch_i%length
                   do k = 1, batch_k%length
 !
@@ -217,8 +217,7 @@ contains
                         do c = 1, wf%n_v
 !
                            g_ckbi(c,k,b,i) = - g_ckbi(c,k,b,i) &
-                                             /(eps_v(c) + eps_v(b) &
-                                             - eps_ik)
+                                             /(eps_v(c) + eps_v(b) - eps_ik)
                         enddo
                      enddo
                   enddo
@@ -373,7 +372,7 @@ contains
 !
             call mem%alloc(t_akcj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
 !
-!$omp parallel do private(j,c,k,a)
+!$omp parallel do private(j, c, k, a, eps_jk)
             do j = 1, batch_j%length
                do k = 1, batch_k%length
                   eps_jk = eps_o(j + batch_j%first - 1) + eps_o(k + batch_k%first - 1)
@@ -381,8 +380,7 @@ contains
                      do a = 1, wf%n_v
 !
                         t_akcj(a,k,c,j) = - g_ckaj(c,k,a,j) &
-                                  /(eps_v(a) + eps_v(c) &
-                                    - eps_jk)
+                                  /(eps_v(a) + eps_v(c) - eps_jk)
 !
                      enddo
                   enddo

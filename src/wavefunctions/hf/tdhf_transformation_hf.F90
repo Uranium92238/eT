@@ -74,9 +74,9 @@ contains
       call mem%alloc(G_thread, wf%ao%n, wf%ao%n, n_threads)
       call zero_array(G_thread, (wf%ao%n**2)*n_threads)
 !
-!$omp parallel do                                                                &
-!$omp private(s1, s2, s3, s4, deg_, s1s2, s1s2_packed, s3s4, deg_12, deg_34,     &
-!$omp w, x, y, z, w_red, x_red, y_red, z_red, g_ABCD, g_ABCD_p, thread) schedule(dynamic)
+!$omp parallel do                                                                 &
+!$omp private(s1, s2, s3, s4, s1s2, s1s2_packed, s3s4, deg_12, deg_34, deg_,&
+!$omp w, x, y, z, w_red, x_red, y_red, z_red, g_ABCD, g_ABCD_p, thread, s3s4_packed) schedule(dynamic)
       do s1s2 = 1, wf%ao%n_sig_eri_shp
 !
          thread = 1

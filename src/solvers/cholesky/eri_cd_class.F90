@@ -3722,7 +3722,7 @@ contains
 !
             call mem%alloc(g_wxK, n_construct_aop, basis_shell_info(K_shp,4))
 !
-!$omp parallel do private(AB_shp, A, B, A_range, B_range, g_ABCD, g_ABCD_p, w, x, J, y, z)
+!$omp parallel do private(AB_shp, A, B, A_range, B_range, g_ABCD, g_ABCD_p, w, x, K, wx, y, z)
             do AB_shp = 1, n_construct_shp
 !
                A = construct_shp_to_shells(AB_shp, 1)

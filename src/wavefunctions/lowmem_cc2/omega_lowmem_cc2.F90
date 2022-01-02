@@ -155,9 +155,7 @@ contains
                      do b = 1, (batch_b%length)
 !
                         u_bjci(b,j,c,i) = -(two*g_bicj(b,i,c,j) - g_bicj(b,j,c,i))&
-                                                                /(eps_ci +  &
-                                                                  eps_v(b + batch_b%first - 1)&
-                                                                - eps_o(j))
+                                        /(eps_ci + eps_v(b + batch_b%first - 1) - eps_o(j))
                       enddo
                    enddo
                enddo

@@ -186,7 +186,7 @@ contains
 !
       integer :: current_i_batch, current_a_batch, current_j_batch
 !
-      integer :: a, i, j, b, jb
+      integer :: a, i, j, b, jb, a_abs, i_abs
 !
       type(batching_index) :: batch_i, batch_a, batch_j
 !
@@ -217,7 +217,7 @@ contains
          call wf%eri%get_cholesky_t1(L_J_jb, batch_j%first, batch_j%get_last(),&
                                                    wf%n_o + 1, wf%n_mo)
 !
-!$omp parallel do private (b, j)
+!$omp parallel do private (b, j, jb)
          do b = 1, wf%n_v
             do j = 1, batch_j%length
 !
@@ -358,12 +358,14 @@ contains
             call mem%dealloc(L_J_ji, wf%eri%n_J, wf%n_o, batch_i%length)
             call mem%dealloc(X_aJj, batch_a%length, wf%eri%n_J, wf%n_o)
 !
-!$omp parallel do private (a, i)
+!$omp parallel do private (a, i, a_abs, i_abs)
             do i = 1, batch_i%length
                do a = 1, batch_a%length
 !
-                  rho_ai(a + batch_a%first - 1, i + batch_i%first - 1) = &
-                     rho_ai(a + batch_a%first - 1, i + batch_i%first - 1) + rho_ai_batch(a, i)
+                  a_abs = a + batch_a%first - 1
+                  i_abs = i + batch_i%first - 1
+!
+                  rho_ai(a_abs, i_abs) = rho_ai(a_abs, i_abs) + rho_ai_batch(a, i)
 !
                enddo
             enddo
