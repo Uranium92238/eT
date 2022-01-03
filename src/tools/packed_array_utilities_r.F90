@@ -633,7 +633,7 @@ contains
       alpha_ = one
       if(present(alpha)) alpha_ = alpha
 !
-!$omp parallel do private(p,q), schedule(guided)
+!$omp parallel do private(p,q,pq,pqrs), schedule(guided)
       do q=1,dim_2
          do p=1,dim_1
             pq = p + (q-1)*dim_1

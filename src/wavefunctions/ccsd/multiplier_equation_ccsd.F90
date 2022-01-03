@@ -77,7 +77,7 @@ contains
 !
       call zero_array(eta, wf%n_gs_amplitudes)
 !
-!$omp parallel do private(i,a)
+!$omp parallel do private(i,a,ai)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !

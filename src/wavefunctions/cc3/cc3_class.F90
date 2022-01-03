@@ -511,7 +511,7 @@ contains
 !!
 !!    Computes L^T * R for full space L and R (singles, doubles, triples)
 !!
-      use array_utilities, only: copy_and_scale
+      use array_utilities, only: copy_and_scale, scale_diagonal
       use reordering, only: squareup_and_sort_1234_to_1324, add_1243_to_1234
 !
       implicit none
@@ -528,8 +528,6 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: L2, R2
 !
       real(dp) :: ddot, L_R_overlap
-!
-      integer :: a, i
 !
       L_R_overlap = ddot(wf%n_es_amplitudes, L, 1, R, 1)
 !
@@ -557,15 +555,7 @@ contains
 !
 !     Scale the right doubles vector by 1 + delta_ai,bj
 !
-!$omp parallel do schedule(static) private(a,i) collapse(2)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            R2(a,a,i,i) = two*R2(a,a,i,i)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call scale_diagonal(two, R2, wf%n_v, wf%n_o)
 !
       call wf%L_R_overlap_triples(wf%left_excitation_energies(left_state),  &
                                   wf%right_excitation_energies(right_state),&
