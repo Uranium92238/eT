@@ -34,6 +34,10 @@ module hf_class
 !
    use output_file_class, only : output_file
    use stream_file_class, only: stream_file
+   use sequential_file_class, only: sequential_file
+!
+   use timings_class, only: timings
+   use range_class, only: range_
 !
    implicit none
 !
@@ -493,8 +497,6 @@ contains
 !!       orbital_coefficients: (n_ao, n_mo) array containing orbital coefficients
 !!       the_file:             output file where the coefficients are to be printed
 !!
-      use output_file_class, only: output_file
-!
       implicit none
 !
       class(hf),                             intent(in) :: wf
@@ -795,7 +797,7 @@ contains
 !!
 !
       use array_utilities, only : identity_array
-      use timings_class,     only : timings
+      use timings_class, only : timings
 !
       implicit none
 !
@@ -1083,7 +1085,7 @@ contains
 !!
 !
       use reordering, only: sort_12_to_21, symmetric_sum
-      use timings_class,     only : timings
+      use timings_class, only : timings
 !
       implicit none
 !

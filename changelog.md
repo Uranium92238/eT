@@ -1,3 +1,7 @@
+# eT v1.5.4
+### Bugfixes
+- Circumvented intel segmentation violation by removing use statements for types in submodules again. eT-program/eT!987
+
 # eT v1.5.3
 ### Bugfixes
 - Fixed bugs that appear at -O0 optimization level, and added -O0 to coverage pipelines. eT-program/eT!982

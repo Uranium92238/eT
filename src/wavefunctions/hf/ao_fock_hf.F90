@@ -106,7 +106,6 @@ contains
 !!    full Fock matrix
 !!
 !
-      use timings_class,     only : timings
 !
       implicit none
 !
@@ -152,7 +151,6 @@ contains
 !!    the next Fock and energy is to be computed.
 !!
 !
-      use timings_class,     only : timings
 !
       implicit none
 !
@@ -305,7 +303,6 @@ contains
 !!
 !
       use omp_lib
-      use range_class, only: range_
 !
       implicit none
 !
@@ -498,8 +495,6 @@ contains
 !!
 !
       use omp_lib
-      use range_class, only: range_
-      use timings_class,     only : timings
 !
       implicit none
 !
@@ -706,7 +701,6 @@ contains
 !!
 !
       use omp_lib
-      use range_class, only: range_
 !
       implicit none
 !
@@ -858,7 +852,6 @@ contains
 !!
 !
       use omp_lib
-      use range_class, only: range_
 !
       implicit none
 !
@@ -1011,7 +1004,6 @@ contains
 !!
 !
       use omp_lib
-      use range_class, only: range_
       use array_utilities, only: get_abs_max
 !
       implicit none

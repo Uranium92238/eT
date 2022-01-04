@@ -23,7 +23,7 @@ submodule (uhf_class) file_handling_uhf
 !!    File handling submodule
 !!
 !!    Gathers routines that save wavefunction parameters to file,
-!!    and reads them from file, plus other routines related to the 
+!!    and reads them from file, plus other routines related to the
 !!    handling of the files that belong to the wavefunction.
 !!
 !
@@ -93,9 +93,6 @@ contains
 !!    Save the AO density (or densities, if unrestricted) based
 !!    on the current orbital coefficient matrix (or matrices).
 !!
-!
-      use sequential_file_class, only: sequential_file
-!
       implicit none
 !
       class(uhf) :: wf

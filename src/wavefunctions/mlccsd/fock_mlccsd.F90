@@ -44,8 +44,6 @@ contains
 !!
 !!    Depending on the 'task' different blocks (ij, ai, ia, ab) will be constructed
 !
-      use batching_index_class, only : batching_index
-      use timings_class, only: timings
       use array_utilities, only: zero_array
 !
       implicit none

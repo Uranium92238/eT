@@ -191,7 +191,6 @@ contains
       use omp_lib
       use array_utilities, only: get_abs_max, zero_array
       use reordering, only: symmetric_sum
-      use timings_class,     only : timings
 !
       implicit none
 !
