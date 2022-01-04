@@ -142,7 +142,6 @@ contains
 !!           u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk
 !!                     - 2t^acb_ijk - 2t_cba_ijk - 2t_bac_ijk
 !!
-      use batching_index_class, only: batching_index
 !
       implicit none
 !
@@ -249,7 +248,6 @@ contains
 !!
 !!    where: ~rho^ab_ij = 2 rho^ab_ij - rho^ba_ij
 !!
-      use batching_index_class, only: batching_index
       use reordering, only: squareup_and_sort_1234_to_1324
       use reordering, only: construct_contravariant_t3
 !
@@ -553,7 +551,6 @@ contains
 !!
 !!    Based on omega_cc3_a_cc3 written by Rolf H. Myhre
 !!
-      use batching_index_class, only: batching_index
       use reordering, only: squareup_and_sort_1234_to_1324, sort_12_to_21
       use reordering, only: construct_contravariant_t3
 !

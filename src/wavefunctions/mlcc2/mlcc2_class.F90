@@ -50,6 +50,7 @@ module mlcc2_class
    use memory_manager_class, only: mem
    use stream_file_class, only: stream_file
    use sequential_file_class, only: sequential_file
+   use direct_stream_file_class, only: direct_stream_file
 !
    implicit none
 !

@@ -111,7 +111,6 @@ contains
 !!       u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk
 !!                 - 2t^acb_ijk - 2t_cba_ijk - 2t_bac_ijk
 !!
-      use batching_index_class, only: batching_index
       use reordering, only: squareup_and_sort_1234_to_1324, sort_1234_to_1342
       use reordering, only: construct_contravariant_t3
       use array_utilities, only: zero_array
@@ -588,7 +587,6 @@ contains
 !!
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-      use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_3241
 !
       implicit none

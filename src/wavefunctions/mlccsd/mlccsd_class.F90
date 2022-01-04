@@ -52,7 +52,9 @@ module mlccsd_class
    use global_out, only: output
    use timings_class, only: timings
    use memory_manager_class, only: mem
+   use stream_file_class, only: stream_file
    use sequential_file_class, only: sequential_file
+   use batching_index_class, only: batching_index
 !
    implicit none
 !

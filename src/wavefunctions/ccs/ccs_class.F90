@@ -24,19 +24,23 @@ module ccs_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
+   use parameters
+!
    use wavefunction_class, only: wavefunction
 !
-   use parameters
    use global_in, only: input
    use global_out, only: output
    use timings_class, only: timings
    use memory_manager_class, only: mem
+!
    use stream_file_class, only: stream_file
 !
-   use array_utilities, only: zdot
+   use range_class, only: range_
 !
    use t1_eri_tool_class,   only : t1_eri_tool
    use t1_eri_tool_c_class, only : t1_eri_tool_c
+!
+   use array_utilities, only: zdot
 !
    implicit none
 !

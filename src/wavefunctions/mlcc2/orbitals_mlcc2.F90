@@ -607,7 +607,6 @@ contains
 !!
 !!       - Write transformation matrices to file
 !!
-      use direct_stream_file_class, only: direct_stream_file
       use global_in, only: input
 !
       implicit none
@@ -1356,7 +1355,6 @@ contains
 !!    is added for the R_aibj on doubles_file
 !!
       use batching_index_class, only: batching_index
-      use direct_stream_file_class, only: direct_stream_file
 !
       implicit none
 !

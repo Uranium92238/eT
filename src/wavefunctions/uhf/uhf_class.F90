@@ -28,8 +28,15 @@ module uhf_class
 !
    use parameters
    use memory_manager_class, only: mem
-   use global_out,           only: output
-   use global_in,            only: input
+!
+   use global_out, only: output
+   use global_in, only: input
+!
+   use sequential_file_class, only: sequential_file
+   use stream_file_class, only: stream_file
+   use output_file_class, only: output_file
+!
+   use timings_class, only: timings
 !
    implicit none
 !
@@ -226,7 +233,6 @@ contains
 !!    and constructs screening vectors
 !!
       use atomic_center_class, only: atomic_center
-      use stream_file_class, only: stream_file
 !
       implicit none
 !
@@ -850,9 +856,6 @@ contains
 !!    Make orbital info file
 !!    Written by Alexander C. Paul Nov 2020
 !!
-!
-      use output_file_class, only : output_file
-!
       implicit none
 !
       class(uhf), intent(inout) :: wf
