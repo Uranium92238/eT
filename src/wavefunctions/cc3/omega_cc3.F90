@@ -106,7 +106,6 @@ contains
 !!    The doubles part is returned as
 !!    ~Omega^ab_ij = 2 Omega^ab_ij - Omega^ba_ij
 !!
-      use batching_index_class, only: batching_index
       use reordering, only: sort_12_to_21
       use reordering, only: construct_contravariant_t3
 !

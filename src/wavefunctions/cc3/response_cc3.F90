@@ -104,7 +104,6 @@ contains
 !!        and construct_right_transition_density
 !!
       use array_utilities, only: add_to_subblock, zero_array
-      use range_class, only: range_
 !
       implicit none
 !
@@ -383,7 +382,6 @@ contains
 !!    Also construct the intermediate Z_bcjk needed for the ov-block
 !!          Z_bcjk = sum{ai} tbar^abc_ijk R^a_i
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: copy_and_scale, zero_array
       use reordering, only: squareup_and_sort_1234_to_1324, symmetrize_12_and_34
       use reordering, only: construct_contravariant_t3
@@ -1083,7 +1081,6 @@ contains
 !!          D^R_kl -= 1/2 sum_{abcij} tbar^abc_ijl R^abc_ijk
 !!
       use omp_lib
-      use batching_index_class, only: batching_index
       use reordering, only: squareup_and_sort_1234_to_2413
       use reordering, only: construct_contravariant_t3
       use array_utilities, only: zero_array
@@ -1643,7 +1640,6 @@ contains
 !!    NB: the covariant Z intermediate (~Z = 1/3 (2 Z_bcjk + Z_bckj))
 !!        is used in this routine.
 !!
-      use batching_index_class, only: batching_index
       use reordering, only: construct_contravariant_t3, add_21_to_12
       use array_utilities, only: zero_array
 !
@@ -2056,7 +2052,6 @@ contains
 !!    D_Ld -= sum_abcijk tbar^abc_ijk t^bD_jk R^ac_iL
 !!         -= sum_abcijk Y_Daci R^ac_iL
 !!
-      use batching_index_class, only: batching_index
 !
       implicit none
 !

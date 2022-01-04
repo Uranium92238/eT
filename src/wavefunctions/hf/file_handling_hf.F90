@@ -90,8 +90,6 @@ contains
 !!    on the current orbital coefficient matrix (or matrices).
 !!
 !
-      use sequential_file_class, only: sequential_file
-!
       implicit none
 !
       class(hf) :: wf
@@ -191,8 +189,6 @@ contains
 !!    Written by Sarai D. Folkestad, 2021
 !!
 !
-      use stream_file_class, only: stream_file
-!
       implicit none
 !
       class(hf), intent(inout) :: wf
@@ -219,8 +215,6 @@ contains
 !!
 !!    Writes file readable by "molden" (https://www3.cmbi.umcn.nl/molden/)
 !!
-      use output_file_class, only: output_file
-!
       implicit none
 !
       class(hf), intent(in) :: wf

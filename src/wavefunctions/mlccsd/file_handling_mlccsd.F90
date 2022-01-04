@@ -96,7 +96,6 @@ contains
 !!
 !!    read_n: optionally returns the number of amplitudes read
 !!
-      use stream_file_class, only: stream_file
 !
       implicit none
 !
@@ -134,7 +133,6 @@ contains
 !!    Writes excitation vector o file structured as follows:
 !!    excitation_energy, n_t1, X1
 !!
-      use stream_file_class, only: stream_file
 !
       implicit none
 !
@@ -174,7 +172,6 @@ contains
 !!    R^a_i = 1/2 L^a_i
 !!    R^ab_ij = 1/6 (2L^ab_ij + L^ba_ij)
 !!
-      use stream_file_class, only: stream_file
       use array_utilities, only: zero_array, copy_and_scale
       use reordering, only: construct_packed_contravariant
       use reordering, only: construct_packed_covariant

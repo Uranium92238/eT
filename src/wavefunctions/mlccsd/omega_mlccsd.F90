@@ -180,7 +180,6 @@ contains
 !!
 !!    c, d, are CC2 indices
 !!
-      use batching_index_class, only: batching_index
 !
       implicit none
 !
@@ -766,7 +765,6 @@ contains
 !!
 !!    c, k, d, l are CCSD + CC2 indices
 !!
-      use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_2341, sort_1234_to_3241, symmetric_sum
       use array_utilities, only: zero_array
 !
