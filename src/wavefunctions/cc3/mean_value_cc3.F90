@@ -91,7 +91,6 @@ contains
 !!    required information is different for the left GS and the left ES.
 !!
       use array_utilities, only: add_to_subblock, zero_array
-      use range_class, only: range_
 !
       implicit none
 !
@@ -267,7 +266,6 @@ contains
 !!          D_kl += -1/2 sum_ij,abc t^abc_ijk tbar^abc_ijl
 !!
       use omp_lib
-      use batching_index_class, only: batching_index
       use array_utilities, only: copy_and_scale, zero_array
       use reordering, only: construct_contravariant_t3
 !
@@ -799,7 +797,6 @@ contains
 !!    vv-block:
 !!       rho^L_cd += 1/2 sum_{abijk} tbar^abc_ijk t^abd_ijk
 !!
-      use batching_index_class, only: batching_index
       use reordering, only: construct_contravariant_t3, add_21_to_12
       use array_utilities, only: zero_array
 !

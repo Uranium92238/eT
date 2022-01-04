@@ -1042,7 +1042,6 @@ contains
 !
 !     c unrestricted, k, d CC2 + CCSD
 !
-      use batching_index_class, only: batching_index
       use reordering, only: add_1432_to_1234
 !
       implicit none
@@ -1153,7 +1152,6 @@ contains
 !
 !     d unrestricted, k, c CC2 + CCSD
 !
-      use batching_index_class, only: batching_index
 !
       implicit none
 !
@@ -1254,7 +1252,6 @@ contains
 !
 !    d unrestricted, k, c CC2 + CCSD
 !
-      use batching_index_class, only: batching_index
 !
       implicit none
 !
@@ -1356,7 +1353,6 @@ contains
 !
 !     c, k unrestricted, d CC2 + CCSD
 !
-      use batching_index_class, only: batching_index
       use reordering, only: add_3124_to_1234
 !
       implicit none
@@ -1459,7 +1455,6 @@ contains
 !!
 !!    Adapted for MLCCSD by Sarai D. Folkestad, 2019
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: zero_array
       use reordering, only: add_2134_to_1234, add_2431_to_1234
 !
@@ -3093,7 +3088,6 @@ contains
 !!    and the intermediate is stored in the file jacobian_d2_intermediate
 !!    which is a wf variable.
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: zero_array
       use reordering, only: sort_1234_to_4231
 !

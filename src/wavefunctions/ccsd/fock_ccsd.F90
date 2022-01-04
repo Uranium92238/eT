@@ -46,7 +46,6 @@ contains
 !!
       use array_utilities, only: zero_array
       use warning_suppressor, only: do_nothing
-      use timings_class, only: timings
 !
       implicit none
 !

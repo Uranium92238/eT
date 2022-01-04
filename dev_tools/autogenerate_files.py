@@ -149,13 +149,9 @@ def write_function_interface(iterator, arguments, outfile):
             outfile.write(line)
             continue
 
-        if code_line.startswith("use"):
-            outfile.write(line)
-            continue
-
         # Reached implicit none
         if code_line.startswith("implicit none"):
-            outfile.write(f"!\n{line}!\n")
+            outfile.write(f"{line}!\n")
             continue
 
         # Write out variable declarations if they are in the argument list

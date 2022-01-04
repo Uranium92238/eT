@@ -27,8 +27,8 @@ module cuhf_class
 !
    use parameters
 !
-   use memory_manager_class, only: mem
    use uhf_class,            only: uhf
+   use memory_manager_class, only: mem
 !
    implicit none
 !

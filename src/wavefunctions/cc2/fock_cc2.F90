@@ -45,7 +45,6 @@ contains
 !!    Depending on the 'task' different blocks (ij, ai, ia, ab) will be constructed
 !!
 !
-      use timings_class, only: timings
       use array_utilities, only: zero_array
 !
       implicit none

@@ -135,7 +135,6 @@ contains
 !!
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-      use batching_index_class, only: batching_index
 !
       implicit none
 !
@@ -247,7 +246,6 @@ contains
 !!           u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk
 !!                     - 2t^acb_ijk - 2t_cba_ijk - 2t_bac_ijk
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: zero_array
       use reordering, only: squareup_and_sort_1234_to_1324
       use reordering, only: construct_contravariant_t3
@@ -728,7 +726,6 @@ contains
 !!    sigma_1 += c_mu3 < mu3| [[H,T_2],tau_nu1] |R >
 !!    sigma_2 += c_mu3 < mu3| [H,tau_ nu2] |R >
 !!
-      use batching_index_class, only: batching_index
       use reordering, only: squareup_and_sort_1234_to_1324
       use reordering, only: construct_contravariant_t3
       use array_utilities, only: zero_array
@@ -1410,7 +1407,6 @@ contains
 !!    sigma_1 += sum_cmj Y_cmjk * g_mjcd
 !!    sigma_1 += sum_cmk Y_cmjk * g_mdck
 !!
-      use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_2314, sort_123_to_132
 !
       implicit none
@@ -1587,7 +1583,6 @@ contains
 !!    sigma_cl += sum_bek Y_ebck * g_lkbe
 !!    sigma_bl += sum_cek Y_ebck * g_leck
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: zero_array
       use reordering, only: sort_1234_to_2134, sort_123_to_132, sort_123_to_312
 !
