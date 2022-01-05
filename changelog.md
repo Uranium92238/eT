@@ -1,3 +1,7 @@
+# eT v1.5.5
+### Copyright
+- Updated copyright year to 2022. eT-program/eT!988
+
 # eT v1.5.4
 ### Bugfixes
 - Circumvented intel segmentation violation by removing use statements for types in submodules again. eT-program/eT!987

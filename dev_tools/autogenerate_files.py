@@ -1,7 +1,7 @@
 #
 #
 #  eT - a coupled cluster program
-#  Copyright (C) 2016-2021 the authors of eT
+#  Copyright (C) 2016-2022 the authors of eT
 #
 #  eT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ def write_license(f):
         "!\n"
         "!\n"
         "!  eT - a coupled cluster program\n"
-        "!  Copyright (C) 2016-2021 the authors of eT\n"
+        "!  Copyright (C) 2016-2022 the authors of eT\n"
         "!\n"
         "!  eT is free software: you can redistribute it and/or modify\n"
         "!  it under the terms of the GNU General Public "
