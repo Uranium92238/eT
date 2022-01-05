@@ -1,4 +1,4 @@
-image: registry.gitlab.com/et-program/et/alpine-for-et
+image: registry.gitlab.com/et-program/et/ubuntu-mkl-for-et
 
 stages:
   - pystyle
@@ -47,11 +47,11 @@ build:
       if [ "$coverage" == "true" ]; then 
         extra_F_flags=' -fprofile-arcs -ftest-coverage -O0'
       fi
-    - ./setup.py --int32 --enable-pfunit --pfunit-dir=/pFUnit/build/installed -FC=gfortran -CXX=g++ -F-flags="$extra_F_flags" $extra_setup_options --pcm
+    - ./setup.py --enable-pfunit --pfunit-dir=/pFUnit/build/installed -FC=gfortran-8 -CXX=g++-8 -F-flags="$extra_F_flags" $extra_setup_options --pcm
     - cd build
     - cmake_command=$(cat setup_cmake_output | head -1)
     - echo ${cmake_command}
-    - make
+    - make -j16
   tags:
     - docker
   only:
@@ -66,25 +66,17 @@ build:
 run:
   stage: run
   needs: ["build"]
-  parallel: 15
   script:
     - cd build
-    - echo I am node $CI_NODE_INDEX out of a total of $CI_NODE_TOTAL nodes
-    # get line that contains the number of tests
-    - n_tests_total=$(ctest -N | tail -1)     
-    # extract total number of tests from the line
-    - n_tests_total=${n_tests_total//[^0-9]/} 
-    - echo There are a total of $n_tests_total tests  
-    # run tests starting from CI_NODE_INDEX with increment CI_NODE_TOTAL
-    - ctest -I $CI_NODE_INDEX,$n_tests_total,$CI_NODE_TOTAL --output-on-failure
+    - ctest -j16 --output-on-failure
     - >
       if [ "$coverage" == "true" ]; then 
         shopt -s globstar # Enable ** in gcov
         gcov -abcfu **    # produce .gcov files for codecov
         curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --import # One-time step
-        curl -Os https://uploader.codecov.io/latest/alpine/codecov
-        curl -Os https://uploader.codecov.io/latest/alpine/codecov.SHA256SUM
-        curl -Os https://uploader.codecov.io/latest/alpine/codecov.SHA256SUM.sig
+        curl -Os https://uploader.codecov.io/latest/ubuntu/codecov
+        curl -Os https://uploader.codecov.io/latest/ubuntu/codecov.SHA256SUM
+        curl -Os https://uploader.codecov.io/latest/ubuntu/codecov.SHA256SUM.sig
         gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
         sha256sum -c codecov.SHA256SUM
         chmod +x codecov
