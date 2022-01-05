@@ -2,6 +2,10 @@
 ### Optimization
 - Coupled cluster Fock matrix construction is N^4 scaling. eT-program/eT!973
 
+# eT v1.5.7
+### Tests
+- Updated CI/CD setup to use MKL-Ubuntu Docker image and adapt to dedicated eT test machine. eT-program/eT!992
+
 # eT v1.5.6
 ### License
 - Updated Readme and added license to `index_invert`. eT-program/eT!990
