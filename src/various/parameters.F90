@@ -1,7 +1,7 @@
 !
 !
 !  eT - a coupled cluster program
-!  Copyright (C) 2016-2021 the authors of eT
+!  Copyright (C) 2016-2022 the authors of eT
 !
 !  eT is free software: you can redistribute it and/or modify
 !  it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ module parameters
 !
    integer, parameter :: major_version = 1
    integer, parameter :: minor_version = 5
-   integer, parameter :: patch_version = 4
+   integer, parameter :: patch_version = 5
 !
    character(len=27), parameter :: version_name = "Furia"
 !
