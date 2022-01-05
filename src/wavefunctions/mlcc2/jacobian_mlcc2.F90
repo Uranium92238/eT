@@ -26,7 +26,7 @@ submodule (mlcc2_class) jacobian_mlcc2
 !!
 !!    where
 !!
-!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | ν >.
+!!    A_μ,ν = < μ |exp(-T) [H, τ_ν] exp(T) | ν >.
 !!
 !!    NOTE: All routines adapted from the CC2 routines written by Sarai D. Folkestad
 !!    and Eirik F. Kjønstad
