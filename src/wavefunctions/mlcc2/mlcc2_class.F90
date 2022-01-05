@@ -581,30 +581,11 @@ contains
       timer = timings('Calculate energy', pl='n')
       call timer%turn_on()
 !
-      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call wf%ccs%calculate_energy()
 !
-      call wf%eri%get_eri_t1('ovov', g_iajb, 1, wf%n_o, 1, wf%n_v, 1, wf%n_o, 1, wf%n_v)
+!     Add doubles contribution
 !
       correlation_energy = zero
-!
-!     t1-contribution
-!
-!$omp parallel do private(a,i,b,j) reduction(+:correlation_energy)
-      do b = 1, wf%n_v
-         do i = 1, wf%n_o
-            do j = 1, wf%n_o
-               do a = 1, wf%n_v
-!
-                  correlation_energy = correlation_energy + &
-                        (wf%t1(a, i)*wf%t1(b, j)*(two*g_iajb(i,a,j,b)-g_iajb(i,b,j,a)))
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call mem%alloc(g_iajb, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v)
       call mem%alloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
@@ -643,9 +624,9 @@ contains
       call mem%dealloc(g_iajb, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v)
       call mem%dealloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
-      wf%correlation_energy = correlation_energy
+      wf%correlation_energy = wf%correlation_energy + correlation_energy
 !
-      wf%energy = wf%hf_energy + correlation_energy
+      wf%energy = wf%energy + correlation_energy
 !
       call timer%turn_off()
 !
