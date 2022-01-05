@@ -2,6 +2,13 @@
 ### Optimization
 - Coupled cluster Fock matrix construction is N^4 scaling. eT-program/eT!973
 
+# eT v1.5.6
+### License
+- Updated Readme and added license to `index_invert`. eT-program/eT!990
+
+# eT v1.5.5
+### Copyright
+- Updated copyright year to 2022. eT-program/eT!988
 
 # eT v1.5.4
 ### Bugfixes
