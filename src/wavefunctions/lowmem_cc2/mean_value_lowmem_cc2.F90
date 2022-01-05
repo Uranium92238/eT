@@ -61,6 +61,11 @@ contains
 !
       type(batching_index) :: batch_i, batch_j
 !
+      type(timings) :: timer
+!
+      timer = timings('Calculate energy', pl='n')
+      call timer%turn_on()
+!
       req0 = 0
 !
       req1_i = (wf%n_v)*(wf%eri%n_J)
@@ -130,6 +135,8 @@ contains
       wf%correlation_energy = correlation_energy
 !
       wf%energy = wf%hf_energy + correlation_energy
+!
+      call timer%turn_off()
 !
    end subroutine calculate_energy_lowmem_cc2
 !
