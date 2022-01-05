@@ -1,7 +1,7 @@
 # Prerequisites
 1. [CMake](https://cmake.org/) (3.7 or newer)
 2. Python 3 (3.6 or newer)
-3. Recent GNU (gfortran, gcc, g++ 8 or newer) or Intel compilers (ifort*, icc, icpc 2019 or newer)
+3. Recent GNU (gfortran, gcc, g++ 8 or newer) or Intel compilers (ifort*, icc, icpc 2020 or newer)
 4. BLAS and LAPACK libraries
 5. [Libint 2 library](https://github.com/evaleev/libint)
 with integrals for one-body operators and electron repulsion enabled.
@@ -72,7 +72,12 @@ tar -xvzf eT-vx.y.z.tar.gz
 tar -xvjf eT-vx.y.z.tar.bz2
 tar -xvf eT-vx.y.z.tar
 ```
-Note that the archives do not include the runtest submodule required for testing.
+Note that the archives do not include the
+[runtest](https://runtest.readthedocs.io/en/latest/)
+submodule required for testing
+or the optional
+[pFUnit](https://github.com/Goddard-Fortran-Ecosystem/pFUnit)
+submodule to run unit tests.
 
 You can also download eT by opening a terminal and cloning the repository:
 ```shell
@@ -88,8 +93,13 @@ but is the most convenient if you intend to contribute.
 
 **Note:**
 `--recursive` is optional, but recommended.
-It will automatically download [runtest](https://runtest.readthedocs.io/en/latest/),
-a python program used to run the test suite.
+It will automatically download the submodules
+[runtest](https://runtest.readthedocs.io/en/latest/),
+a python program used to run the test suite,
+and
+[pFUnit](https://github.com/Goddard-Fortran-Ecosystem/pFUnit),
+to run unit tests.
+Note that pFUnit required CMake version 3.12 or newer.
 If you don't use `--recursive`,
 but later change you mind,
 you can get the submodule with the following commands.

@@ -1,3 +1,7 @@
+# eT v1.5.6
+### License
+- Updated Readme and added license to `index_invert`. eT-program/eT!990
+
 # eT v1.5.5
 ### Copyright
 - Updated copyright year to 2022. eT-program/eT!988
