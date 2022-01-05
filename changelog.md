@@ -2,6 +2,9 @@
 ### Optimization
 - Coupled cluster Fock matrix construction is N^4 scaling. eT-program/eT!973
 
+### Features
+- Added timers for calculate energy. eT-program/eT!993
+
 # eT v1.5.7
 ### Tests
 - Updated CI/CD setup to use MKL-Ubuntu Docker image and adapt to dedicated eT test machine. eT-program/eT!992

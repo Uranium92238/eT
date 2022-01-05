@@ -576,6 +576,11 @@ contains
 !
       integer :: a, i, b, j
 !
+      type(timings) :: timer
+!
+      timer = timings('Calculate energy', pl='n')
+      call timer%turn_on()
+!
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%eri%get_eri_t1('ovov', g_iajb, 1, wf%n_o, 1, wf%n_v, 1, wf%n_o, 1, wf%n_v)
@@ -641,6 +646,8 @@ contains
       wf%correlation_energy = correlation_energy
 !
       wf%energy = wf%hf_energy + correlation_energy
+!
+      call timer%turn_off()
 !
    end subroutine calculate_energy_mlcc2
 !

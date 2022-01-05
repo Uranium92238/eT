@@ -993,6 +993,11 @@ contains
       integer :: a, i, b, j
       integer :: n_doubles_o, n_doubles_v
 !
+      type(timings) :: timer
+!
+      timer = timings('Calculate energy', pl='n')
+      call timer%turn_on()
+!
       n_doubles_v = wf%n_ccsd_v + wf%n_cc2_v
       n_doubles_o = wf%n_ccsd_o + wf%n_cc2_o
 !
@@ -1043,6 +1048,8 @@ contains
 !
       wf%energy = wf%hf_energy + correlation_energy
       wf%correlation_energy = correlation_energy
+!
+      call timer%turn_off()
 !
    end subroutine calculate_energy_mlccsd
 !
