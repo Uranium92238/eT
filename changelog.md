@@ -1,6 +1,7 @@
 # eT v1.6.0
 ### Optimization
 - Coupled cluster Fock matrix construction is N^4 scaling. eT-program/eT!973
+- Reduce memory usage for MLCC energy calculation (reusing CCS routine). eT-program/eT!974
 
 ### Features
 - Added timers for calculate energy. eT-program/eT!993
