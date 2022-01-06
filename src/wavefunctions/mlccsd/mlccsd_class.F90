@@ -993,34 +993,28 @@ contains
       integer :: a, i, b, j
       integer :: n_doubles_o, n_doubles_v
 !
+      type(timings) :: timer
+!
+      timer = timings('Calculate energy', pl='n')
+      call timer%turn_on()
+!
       n_doubles_v = wf%n_ccsd_v + wf%n_cc2_v
       n_doubles_o = wf%n_ccsd_o + wf%n_cc2_o
 !
-      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call wf%eri%get_eri_t1('ovov', g_iajb, 1, wf%n_o, 1, wf%n_v, 1, wf%n_o, 1, wf%n_v)
+      call wf%ccs%calculate_energy()
 !
       correlation_energy = zero
-!
-!$omp parallel do private(a,i,b,j) reduction(+:correlation_energy)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
-!
-                  correlation_energy = correlation_energy + &
-                                 (wf%t1(a,i))*(wf%t1(b,j))* &
-                                 (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
 !
       call mem%alloc(x_aibj, n_doubles_v, n_doubles_o, n_doubles_v, n_doubles_o)
       call wf%construct_x2()
       call squareup(wf%x2, x_aibj, n_doubles_v*n_doubles_o)
+!
+      call mem%alloc(g_iajb, n_doubles_o, n_doubles_v, n_doubles_o, n_doubles_v)
+      call wf%eri%get_eri_t1('ovov', g_iajb, &
+                             1, n_doubles_o, &
+                             1, n_doubles_v, &
+                             1, n_doubles_o, &
+                             1, n_doubles_v)
 !
 !$omp parallel do private(a,i,j,b) reduction(+:correlation_energy)
       do a = 1, n_doubles_v
@@ -1038,11 +1032,13 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(g_iajb, n_doubles_o, n_doubles_v, n_doubles_o, n_doubles_v)
       call mem%dealloc(x_aibj, n_doubles_v, n_doubles_o, n_doubles_v, n_doubles_o)
 !
-      wf%energy = wf%hf_energy + correlation_energy
-      wf%correlation_energy = correlation_energy
+      wf%energy = wf%energy + correlation_energy
+      wf%correlation_energy = wf%correlation_energy + correlation_energy
+!
+      call timer%turn_off()
 !
    end subroutine calculate_energy_mlccsd
 !

@@ -292,7 +292,7 @@ contains
 !
       integer :: i, j, JJ
 !
-      timer = timings('Calculate energy', 'n')
+      timer = timings('Calculate energy (ccs)', 'n')
       call timer%turn_on()
 
       call mem%alloc(X_J, wf%eri%n_J)
