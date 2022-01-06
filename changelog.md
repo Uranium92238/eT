@@ -6,6 +6,14 @@
 ### Features
 - Added timers for calculate energy. eT-program/eT!993
 
+# eT v1.5.9
+### Tests
+- Fix gcov call for MKL-Ubuntu Docker image. eT-program/eT!996
+
+# eT v1.5.8
+### Tests
+- Fix verification of codecov uploader for MKL-Ubuntu Docker image. eT-program/eT!995
+
 # eT v1.5.7
 ### Tests
 - Updated CI/CD setup to use MKL-Ubuntu Docker image and adapt to dedicated eT test machine. eT-program/eT!992

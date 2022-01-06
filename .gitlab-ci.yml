@@ -72,13 +72,13 @@ run:
     - >
       if [ "$coverage" == "true" ]; then 
         shopt -s globstar # Enable ** in gcov
-        gcov -abcfu **    # produce .gcov files for codecov
-        curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --import # One-time step
-        curl -Os https://uploader.codecov.io/latest/ubuntu/codecov
-        curl -Os https://uploader.codecov.io/latest/ubuntu/codecov.SHA256SUM
-        curl -Os https://uploader.codecov.io/latest/ubuntu/codecov.SHA256SUM.sig
-        gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
-        sha256sum -c codecov.SHA256SUM
+        gcov-8 -abcfu **  # produce .gcov files for codecov
+        curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import
+        curl -Os https://uploader.codecov.io/latest/linux/codecov
+        curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
+        curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
+        gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
+        shasum -a 256 -c codecov.SHA256SUM
         chmod +x codecov
         ./codecov -v -t ${CODECOV_TOKEN}
       fi
