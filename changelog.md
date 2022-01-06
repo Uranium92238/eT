@@ -1,3 +1,7 @@
+# eT v1.5.9
+### Tests
+- Fix gcov call for MKL-Ubuntu Docker image. eT-program/eT!996
+
 # eT v1.5.8
 ### Tests
 - Fix verification of codecov uploader for MKL-Ubuntu Docker image. eT-program/eT!995
