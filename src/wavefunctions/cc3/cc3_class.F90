@@ -35,6 +35,9 @@ module cc3_class
    use batching_index_class, only: batching_index
    use range_class, only: range_
 !
+!  Need this to avoid intel compiler segfault
+   use eri_adapter_class, only: eri_adapter
+!
    implicit none
 !
    type, extends(triples) :: cc3
@@ -593,6 +596,10 @@ contains
 !!       L_mu3 = (omega - eps^abc_ijk)^-1 (L_mu1 < mu1| [H,tau_nu3] |R >
 !!                                       + L_mu2 < mu2| [H,tau_nu3] |R >)
 !!
+!
+      use eri_adapter_class, only: eri_adapter
+      use eri_cholesky_disk_class, only: eri_cholesky_disk
+      use eri_1idx_transformed_tool_class, only: eri_1idx_transformed_tool
       use batching_index_class, only: batching_index
       use reordering, only: squareup_and_sort_1234_to_1324
       use reordering, only: construct_contravariant_t3
@@ -694,6 +701,15 @@ contains
       real(dp) :: ddot
       integer :: req_single_batch
 !
+      type(eri_cholesky_disk) :: L_c1
+      type(eri_adapter) :: eri_c1
+!
+      L_c1 = eri_cholesky_disk('C1')
+      call L_c1%initialize(wf%L_t1%n_J, 2, [wf%n_o, wf%n_v])
+!
+      call wf%construct_c1_cholesky(wf%L_t1, L_c1, R1)
+      eri_c1 = eri_adapter(eri_1idx_transformed_tool(wf%L_t1, L_c1), wf%n_o, wf%n_v)
+!
       call mem%alloc(t2, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1324(wf%t2, t2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -702,7 +718,7 @@ contains
       batch_k = batching_index(wf%n_o)
 !
 !     Memory for sorting array and getting the integrals
-      call wf%estimate_mem_c1_integral_setup(req_0, req_1_eri)
+      call wf%estimate_mem_c1_integral_setup(req_0, req_1_eri, eri_c1)
       req_0 = req_0 + 2*wf%n_v**3
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
@@ -801,7 +817,7 @@ contains
          call batch_i%determine_limits(i_batch)
 !
          call wf%setup_vvvo(g_bdci, g_bdci_p, sorting, batch_i)
-         call wf%setup_vvvo(g_bdci_c1, g_bdci_c1_p, sorting, batch_i, c_ai=R1)
+         call wf%setup_vvvo(g_bdci_c1, g_bdci_c1_p, sorting, batch_i, eri_c1=eri_c1)
 !
          call wf%setup_vvov(g_dbic, g_dbic_p, sorting, batch_i, left=.true.)
 !
@@ -810,7 +826,7 @@ contains
             call batch_j%determine_limits(j_batch)
 !
             call wf%setup_oovo(g_ljci, g_ljci_p, sorting, batch_j, batch_i)
-            call wf%setup_oovo(g_ljci_c1, g_ljci_c1_p, sorting, batch_j, batch_i, c_ai=R1)
+            call wf%setup_oovo(g_ljci_c1, g_ljci_c1_p, sorting, batch_j, batch_i, eri_c1=eri_c1)
 !
             call wf%setup_ooov(g_jlic, g_jlic_p, sorting, batch_j, batch_i)
 !
@@ -819,12 +835,12 @@ contains
             if (j_batch .ne. i_batch) then
 !
                call wf%setup_vvvo(g_bdcj, g_bdcj_p, sorting, batch_j)
-               call wf%setup_vvvo(g_bdcj_c1, g_bdcj_c1_p, sorting, batch_j, c_ai=R1)
+               call wf%setup_vvvo(g_bdcj_c1, g_bdcj_c1_p, sorting, batch_j, eri_c1=eri_c1)
 !
                call wf%setup_vvov(g_dbjc, g_dbjc_p, sorting, batch_j, left=.true.)
 !
                call wf%setup_oovo(g_licj, g_licj_p, sorting, batch_i, batch_j)
-               call wf%setup_oovo(g_licj_c1, g_licj_c1_p, sorting, batch_i, batch_j, c_ai=R1)
+               call wf%setup_oovo(g_licj_c1, g_licj_c1_p, sorting, batch_i, batch_j, eri_c1=eri_c1)
 !
                call wf%setup_ooov(g_iljc, g_iljc_p, sorting, batch_i, batch_j)
 !
@@ -849,7 +865,7 @@ contains
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
                   call wf%setup_vvvo(g_bdck, g_bdck_p, sorting, batch_k)
-                  call wf%setup_vvvo(g_bdck_c1, g_bdck_c1_p, sorting, batch_k, c_ai=R1)
+                  call wf%setup_vvvo(g_bdck_c1, g_bdck_c1_p, sorting, batch_k, eri_c1=eri_c1)
 !
                   call wf%setup_vvov(g_dbkc, g_dbkc_p, sorting, batch_k, left=.true.)
 !
@@ -858,10 +874,18 @@ contains
                   call wf%setup_oovo(g_lkci, g_lkci_p, sorting, batch_k, batch_i)
                   call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
 !
-                  call wf%setup_oovo(g_lick_c1, g_lick_c1_p, sorting, batch_i, batch_k, c_ai=R1)
-                  call wf%setup_oovo(g_ljck_c1, g_ljck_c1_p, sorting, batch_j, batch_k, c_ai=R1)
-                  call wf%setup_oovo(g_lkci_c1, g_lkci_c1_p, sorting, batch_k, batch_i, c_ai=R1)
-                  call wf%setup_oovo(g_lkcj_c1, g_lkcj_c1_p, sorting, batch_k, batch_j, c_ai=R1)
+                  call wf%setup_oovo(g_lick_c1, g_lick_c1_p, sorting, &
+                                     batch_i, batch_k, eri_c1=eri_c1)
+!
+                  call wf%setup_oovo(g_ljck_c1, g_ljck_c1_p, sorting, &
+                                     batch_j, batch_k, eri_c1=eri_c1)
+!
+                  call wf%setup_oovo(g_lkci_c1, g_lkci_c1_p, sorting, &
+                                     batch_k, batch_i, eri_c1=eri_c1)
+!
+                  call wf%setup_oovo(g_lkcj_c1, g_lkcj_c1_p, sorting, &
+                                     batch_k, batch_j, eri_c1=eri_c1)
+!
 !
                   call wf%setup_ooov(g_ilkc, g_ilkc_p, sorting, batch_i, batch_k)
                   call wf%setup_ooov(g_jlkc, g_jlkc_p, sorting, batch_j, batch_k)
@@ -908,7 +932,9 @@ contains
                   call wf%point_vooo(g_ljck_p, g_lkcj, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_lkci_p, g_ljci, batch_k%length, batch_i%length)
 !
-                  call wf%setup_oovo(g_lkcj_c1, g_lkcj_c1_p, sorting, batch_k, batch_j, c_ai=R1)
+                  call wf%setup_oovo(g_lkcj_c1, g_lkcj_c1_p, &
+                                    sorting, batch_k, batch_j, eri_c1=eri_c1)
+!
                   call wf%point_vooo(g_lick_c1_p, g_licj_c1, batch_i%length, batch_k%length)
                   call wf%point_vooo(g_ljck_c1_p, g_lkcj_c1, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_lkci_c1_p, g_ljci_c1, batch_k%length, batch_i%length)
@@ -1111,23 +1137,19 @@ contains
 !
       integer, intent(out) :: req0, req1
 !
-      integer :: req_vvvo, req_ovov, req_oovo
+      integer, dimension(2) :: req_vvvo, req_ovov, req_oovo
 !
-      req0  = 0
-      req_vvvo = 0
-      req_ovov = 0
-      req_oovo = 0
+      req_vvvo = wf%eri_t1%get_memory_estimate('vvvo', wf%n_v, wf%n_v, wf%n_v, 1)
+      req_ovov = wf%eri_t1%get_memory_estimate('ovov', 1, wf%n_v, 1, wf%n_v)
+      req_oovo = wf%eri_t1%get_memory_estimate('oovo', wf%n_o, 1, wf%n_v, 1)
 !
-      call wf%eri%get_eri_t1_mem('vvvo', req0, req_vvvo, wf%n_v, wf%n_v, wf%n_v, 1)
-      call wf%eri%get_eri_t1_mem('ovov', req_ovov, req_ovov, 1, wf%n_v, 1, wf%n_v)
-      call wf%eri%get_eri_t1_mem('oovo', req_oovo, req_oovo, wf%n_o, 1, wf%n_v, 1)
-!
-      req1 = max(req_vvvo, req_ovov, req_oovo)
+      req0 = req_vvvo(1)
+      req1 = max(req_vvvo(2), req_ovov(1) + req_ovov(2), req_oovo(1) + req_ovov(2))
 !
    end subroutine estimate_mem_integral_setup_cc3
 !
 !
-   subroutine estimate_mem_c1_integral_setup_cc3(wf, req0, req1)
+   subroutine estimate_mem_c1_integral_setup_cc3(wf, req0, req1, eri_c1)
 !!
 !!    Estimate memory C1 transformed integrals setup
 !!    Written by Alexander C. Paul, Dec 2020
@@ -1146,27 +1168,23 @@ contains
 !!
 !!    NB: The memory requirement is overestimated by the routines.
 !!
+!
+      use eri_adapter_class, only: eri_adapter
+!
       implicit none
       class(cc3), intent(in) :: wf
 !
       integer, intent(out) :: req0, req1
 !
-      integer :: req0_vvvo, req0_oovo
-      integer :: req1_vvvo, req1_oovo
+      type(eri_adapter), intent(in)  :: eri_c1
 !
-      req0_vvvo = 0
-      req1_vvvo = 0
-      req0_oovo = 0
-      req1_oovo = 0
+      integer, dimension(2) :: req_vvvo, req_oovo
 !
-      call wf%eri%get_eri_c1_mem('vvvo', req0_vvvo, req0_vvvo, req0_vvvo, req1_vvvo, &
-                                 req0_vvvo, req1_vvvo, wf%n_v, wf%n_v, wf%n_v, 1)
+      req_vvvo = eri_c1%get_memory_estimate('vvvo', wf%n_v, wf%n_v, wf%n_v, 1)
+      req_oovo = eri_c1%get_memory_estimate('oovo', wf%n_o, 1, wf%n_v, 1)
 !
-      call wf%eri%get_eri_c1_mem('oovo', req0_oovo, req1_oovo, req0_oovo, req1_oovo, &
-                                 req1_oovo, req1_oovo, wf%n_o, 1, wf%n_v, 1)
-!
-      req0 = max(req0_vvvo, req0_oovo)
-      req1 = max(req1_vvvo, req1_oovo)
+      req0 = req_vvvo(1)
+      req1 = max(req_vvvo(2), req_oovo(1) + req_oovo(2))
 !
    end subroutine estimate_mem_c1_integral_setup_cc3
 !

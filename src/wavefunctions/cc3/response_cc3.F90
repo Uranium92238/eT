@@ -204,6 +204,9 @@ contains
 !!
 !!       sum_mu,nu L_mu < mu| E_pq |nu > R_nu
 !!
+      use eri_adapter_class, only: eri_adapter
+      use eri_cholesky_disk_class, only: eri_cholesky_disk
+      use eri_1idx_transformed_tool_class, only: eri_1idx_transformed_tool
       use array_utilities, only: scale_diagonal, zero_array
       use reordering, only: squareup_and_sort_1234_to_1324
       use reordering, only: construct_covariant_1324
@@ -233,6 +236,15 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: L_abij, R_abij
       real(dp), dimension(:,:,:,:), allocatable :: L_ijab, R_ijab
 !
+      type(eri_cholesky_disk) :: L_c1
+      type(eri_adapter) :: eri_c1
+!
+      L_c1 = eri_cholesky_disk('C1')
+      call L_c1%initialize(wf%L_t1%n_J, 2, [wf%n_o, wf%n_v])
+!
+      call wf%construct_c1_cholesky(wf%L_t1, L_c1, R(1:wf%n_t1))
+      eri_c1 = eri_adapter(eri_1idx_transformed_tool(wf%L_t1, L_c1), wf%n_o, wf%n_v)
+!
       call zero_array(d_oo, wf%n_o**2)
       call zero_array(d_ov, wf%n_o*wf%n_v)
       call zero_array(d_vo, wf%n_v*wf%n_o)
@@ -253,7 +265,7 @@ contains
 !
       call wf%density_cc3_mu_nu_ijk(d_oo, d_ov, d_vo, d_vv, omega_l, omega_r, &
                                     L(1:wf%n_t1), L_abij, R(1:wf%n_t1), R_abij, &
-                                    cvs_l, cvs_r, rm_core_l, rm_core_r, es_to_es, r0)
+                                    cvs_l, cvs_r, rm_core_l, rm_core_r, es_to_es, r0, eri_c1)
 !
 !     :: CC3 contribution in batches of a,b,c ::
 !
@@ -270,8 +282,8 @@ contains
       call sort_12_to_21(L(1:wf%n_t1), L_ia, wf%n_v, wf%n_o)
 !
       call wf%density_cc3_mu_nu_abc(d_oo, omega_l, omega_r, L_ia, L_ijab, &
-                                    R(1:wf%n_t1), R_ijab, cvs_l, cvs_r, &
-                                    rm_core_l, rm_core_r)
+                                    R_ijab, cvs_l, cvs_r, &
+                                    rm_core_l, rm_core_r, eri_c1)
 !
       call mem%dealloc(L_ia, wf%n_o, wf%n_v)
       call mem%dealloc(L_ijab, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
@@ -347,7 +359,7 @@ contains
                                                density_vv, omega_L, omega_R,           &
                                                tbar_ai, tbar_abij, R_ai, R_abij,       &
                                                cvs_l, cvs_r, rm_core_l, rm_core_r,     &
-                                               es_to_es, r0)
+                                               es_to_es, r0, eri_c1)
 !!
 !!    One electron density excited-determinant/excited-determinant term
 !!    in batches of the occupied orbitals i,j,k
@@ -386,7 +398,6 @@ contains
       use reordering, only: squareup_and_sort_1234_to_1324, symmetrize_12_and_34
       use reordering, only: construct_contravariant_t3
       use reordering, only: add_21_to_12, add_2134_to_1234
-
 !
       implicit none
 !
@@ -408,6 +419,7 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: R_abij
+      type(eri_adapter), intent(inout)  :: eri_c1
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_abij
 !
@@ -522,7 +534,7 @@ contains
       batch_k = batching_index(wf%n_o)
 !
 !     Memory for sorting array and getting the integrals
-      call wf%estimate_mem_c1_integral_setup(req_0, req_1_eri)
+      call wf%estimate_mem_c1_integral_setup(req_0, req_1_eri, eri_c1)
       req_0 = req_0 + 3*wf%n_v**3 + wf%n_v*wf%n_o + (wf%n_v*wf%n_o)**2
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
@@ -629,7 +641,7 @@ contains
          call batch_i%determine_limits(i_batch)
 !
          call wf%setup_vvvo(g_bdci, g_bdci_p, sorting, batch_i)
-         call wf%setup_vvvo(g_bdci_c1, g_bdci_c1_p, sorting, batch_i, c_ai=R_ai)
+         call wf%setup_vvvo(g_bdci_c1, g_bdci_c1_p, sorting, batch_i, eri_c1=eri_c1)
 !
          call wf%setup_vvov(g_dbic, g_dbic_p, sorting, batch_i, left=.true.)
 !
@@ -638,7 +650,7 @@ contains
             call batch_j%determine_limits(j_batch)
 !
             call wf%setup_oovo(g_ljci, g_ljci_p, sorting, batch_j, batch_i)
-            call wf%setup_oovo(g_ljci_c1, g_ljci_c1_p, sorting, batch_j, batch_i, c_ai=R_ai)
+            call wf%setup_oovo(g_ljci_c1, g_ljci_c1_p, sorting, batch_j, batch_i, eri_c1=eri_c1)
 !
             call wf%setup_ooov(g_jlic, g_jlic_p, sorting, batch_j, batch_i)
 !
@@ -647,12 +659,12 @@ contains
             if (j_batch .ne. i_batch) then
 !
                call wf%setup_vvvo(g_bdcj, g_bdcj_p, sorting, batch_j)
-               call wf%setup_vvvo(g_bdcj_c1, g_bdcj_c1_p, sorting, batch_j, c_ai=R_ai)
+               call wf%setup_vvvo(g_bdcj_c1, g_bdcj_c1_p, sorting, batch_j, eri_c1=eri_c1)
 !
                call wf%setup_vvov(g_dbjc, g_dbjc_p, sorting, batch_j, left=.true.)
 !
                call wf%setup_oovo(g_licj, g_licj_p, sorting, batch_i, batch_j)
-               call wf%setup_oovo(g_licj_c1, g_licj_c1_p, sorting, batch_i, batch_j, c_ai=R_ai)
+               call wf%setup_oovo(g_licj_c1, g_licj_c1_p, sorting, batch_i, batch_j, eri_c1=eri_c1)
 !
                call wf%setup_ooov(g_iljc, g_iljc_p, sorting, batch_i, batch_j)
 !
@@ -677,7 +689,7 @@ contains
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
                   call wf%setup_vvvo(g_bdck, g_bdck_p, sorting, batch_k)
-                  call wf%setup_vvvo(g_bdck_c1, g_bdck_c1_p, sorting, batch_k, c_ai=R_ai)
+                  call wf%setup_vvvo(g_bdck_c1, g_bdck_c1_p, sorting, batch_k, eri_c1=eri_c1)
 !
                   call wf%setup_vvov(g_dbkc, g_dbkc_p, sorting, batch_k, left=.true.)
 !
@@ -686,10 +698,10 @@ contains
                   call wf%setup_oovo(g_lkci, g_lkci_p, sorting, batch_k, batch_i)
                   call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
 !
-                  call wf%setup_oovo(g_lick_c1, g_lick_c1_p, sorting, batch_i, batch_k, c_ai=R_ai)
-                  call wf%setup_oovo(g_ljck_c1, g_ljck_c1_p, sorting, batch_j, batch_k, c_ai=R_ai)
-                  call wf%setup_oovo(g_lkci_c1, g_lkci_c1_p, sorting, batch_k, batch_i, c_ai=R_ai)
-                  call wf%setup_oovo(g_lkcj_c1, g_lkcj_c1_p, sorting, batch_k, batch_j, c_ai=R_ai)
+                  call wf%setup_oovo(g_lick_c1, g_lick_c1_p, sorting, batch_i, batch_k, eri_c1=eri_c1)
+                  call wf%setup_oovo(g_ljck_c1, g_ljck_c1_p, sorting, batch_j, batch_k, eri_c1=eri_c1)
+                  call wf%setup_oovo(g_lkci_c1, g_lkci_c1_p, sorting, batch_k, batch_i, eri_c1=eri_c1)
+                  call wf%setup_oovo(g_lkcj_c1, g_lkcj_c1_p, sorting, batch_k, batch_j, eri_c1=eri_c1)
 !
                   call wf%setup_ooov(g_ilkc, g_ilkc_p, sorting, batch_i, batch_k)
                   call wf%setup_ooov(g_jlkc, g_jlkc_p, sorting, batch_j, batch_k)
@@ -736,7 +748,7 @@ contains
                   call wf%point_vooo(g_ljck_p, g_lkcj, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_lkci_p, g_ljci, batch_k%length, batch_i%length)
 !
-                  call wf%setup_oovo(g_lkcj_c1, g_lkcj_c1_p, sorting, batch_k, batch_j, c_ai=R_ai)
+                  call wf%setup_oovo(g_lkcj_c1, g_lkcj_c1_p, sorting, batch_k, batch_j, eri_c1=eri_c1)
                   call wf%point_vooo(g_lick_c1_p, g_licj_c1, batch_i%length, batch_k%length)
                   call wf%point_vooo(g_ljck_c1_p, g_lkcj_c1, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_lkci_c1_p, g_ljci_c1, batch_k%length, batch_i%length)
@@ -1053,8 +1065,8 @@ contains
 !
 !
    module subroutine density_cc3_mu_nu_abc_cc3(wf, density_oo, omega_L, omega_R, &
-                                               tbar_ia, tbar_ijab, R_ai, R_ijab, &
-                                               cvs_l, cvs_r, rm_core_l, rm_core_r)
+                                               tbar_ia, tbar_ijab, R_ijab, &
+                                               cvs_l, cvs_r, rm_core_l, rm_core_r, eri_c1)
 !!
 !!    One electron density excited-determinant/excited-determinant term
 !!    in batches of the virtual orbitals a,b,c
@@ -1098,8 +1110,8 @@ contains
       real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: tbar_ia
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_v, wf%n_v), intent(in) :: tbar_ijab
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_v, wf%n_v), intent(in) :: R_ijab
+      type(eri_adapter), intent(inout) :: eri_c1
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_ijab
 !
@@ -1211,7 +1223,7 @@ contains
       batch_c = batching_index(wf%n_v)
 !
 !     Memory for sorting array and getting the integrals
-      call wf%estimate_mem_c1_integral_setup_abc(req_0, req_1_eri)
+      call wf%estimate_mem_c1_integral_setup_abc(req_0, req_1_eri, eri_c1)
       req_1_eri = req_1_eri + max(wf%n_v**2*wf%n_o, wf%n_o**2*wf%n_v)
       req_0 = req_0 + 4*wf%n_o**3*n_threads
 !
@@ -1313,7 +1325,7 @@ contains
 !
          call wf%setup_oovo_abc(g_ljak, g_ljak_p, sorting, batch_a)
          call wf%setup_ooov_abc(g_jlka, g_jlka_p, sorting, batch_a)
-         call wf%setup_oovo_abc(g_ljak_c1, g_ljak_c1_p, sorting, batch_a, c_ai=R_ai)
+         call wf%setup_oovo_abc(g_ljak_c1, g_ljak_c1_p, sorting, batch_a, eri_c1=eri_c1)
 !
          do b_batch = 1, a_batch
 !
@@ -1322,7 +1334,7 @@ contains
             call wf%setup_vvvo_abc(g_bdak, g_bdak_p, sorting, batch_b, batch_a)
             call wf%setup_vvov_abc(g_dbka, g_dbka_p, sorting, batch_b, batch_a)
             call wf%setup_ovov_abc(g_jakb, g_jakb_p, sorting, batch_a, batch_b)
-            call wf%setup_vvvo_abc(g_bdak_c1, g_bdak_c1_p, sorting, batch_b, batch_a, c_ai=R_ai)
+            call wf%setup_vvvo_abc(g_bdak_c1, g_bdak_c1_p, sorting, batch_b, batch_a, eri_c1=eri_c1)
 !
             if (b_batch .ne. a_batch) then
 !
@@ -1330,8 +1342,8 @@ contains
                call wf%setup_ooov_abc(g_jlkb, g_jlkb_p, sorting, batch_b)
                call wf%setup_vvvo_abc(g_adbk, g_adbk_p, sorting, batch_a, batch_b)
                call wf%setup_vvov_abc(g_dakb, g_dakb_p, sorting, batch_a, batch_b)
-               call wf%setup_oovo_abc(g_ljbk_c1, g_ljbk_c1_p, sorting, batch_b, c_ai=R_ai)
-               call wf%setup_vvvo_abc(g_adbk_c1, g_adbk_c1_p, sorting, batch_a, batch_b, c_ai=R_ai)
+               call wf%setup_oovo_abc(g_ljbk_c1, g_ljbk_c1_p, sorting, batch_b, eri_c1=eri_c1)
+               call wf%setup_vvvo_abc(g_adbk_c1, g_adbk_c1_p, sorting, batch_a, batch_b, eri_c1=eri_c1)
 !
             else
 !
@@ -1367,12 +1379,12 @@ contains
                   call wf%setup_ovov_abc(g_jakc, g_jakc_p, sorting, batch_a, batch_c)
                   call wf%setup_ovov_abc(g_jbkc, g_jbkc_p, sorting, batch_b, batch_c)
 !
-                  call wf%setup_oovo_abc(g_ljck_c1, g_ljck_c1_p, sorting, batch_c, c_ai=R_ai)
+                  call wf%setup_oovo_abc(g_ljck_c1, g_ljck_c1_p, sorting, batch_c, eri_c1=eri_c1)
 !
-                  call wf%setup_vvvo_abc(g_cdak_c1, g_cdak_c1_p, sorting, batch_c, batch_a, c_ai=R_ai)
-                  call wf%setup_vvvo_abc(g_adck_c1, g_adck_c1_p, sorting, batch_a, batch_c, c_ai=R_ai)
-                  call wf%setup_vvvo_abc(g_cdbk_c1, g_cdbk_c1_p, sorting, batch_c, batch_b, c_ai=R_ai)
-                  call wf%setup_vvvo_abc(g_bdck_c1, g_bdck_c1_p, sorting, batch_b, batch_c, c_ai=R_ai)
+                  call wf%setup_vvvo_abc(g_cdak_c1, g_cdak_c1_p, sorting, batch_c, batch_a, eri_c1=eri_c1)
+                  call wf%setup_vvvo_abc(g_adck_c1, g_adck_c1_p, sorting, batch_a, batch_c, eri_c1=eri_c1)
+                  call wf%setup_vvvo_abc(g_cdbk_c1, g_cdbk_c1_p, sorting, batch_c, batch_b, eri_c1=eri_c1)
+                  call wf%setup_vvvo_abc(g_bdck_c1, g_bdck_c1_p, sorting, batch_b, batch_c, eri_c1=eri_c1)
 !
                else if (c_batch .eq. a_batch) then ! c_batch = b_batch = a_batch
 !
@@ -1419,7 +1431,7 @@ contains
 !
                   call wf%point_oovo_abc(g_ljck_c1_p, g_ljbk_c1, batch_c%length)
 !
-                  call wf%setup_vvvo_abc(g_cdbk_c1, g_cdbk_c1_p, sorting, batch_c, batch_b, c_ai=R_ai)
+                  call wf%setup_vvvo_abc(g_cdbk_c1, g_cdbk_c1_p, sorting, batch_c, batch_b, eri_c1=eri_c1)
                   call wf%point_vvvo_abc(g_bdck_c1_p, g_cdbk_c1, batch_b%length, batch_c%length)
                   call wf%point_vvvo_abc(g_cdak_c1_p, g_bdak_c1, batch_c%length, batch_a%length)
                   call wf%point_vvvo_abc(g_adck_c1_p, g_adbk_c1, batch_a%length, batch_c%length)
@@ -2093,7 +2105,7 @@ contains
                         -one,             &
                         R2(:,:,:,i_tot),  & ! R_ca_l,i
                         wf%n_v**2,        &
-                        Y_vvvo(:,:,:,i),    & ! Y_d_ca,i
+                        Y_vvvo(:,:,:,i),  & ! Y_d_ca,i
                         wf%n_v,           &
                         one,              &
                         density_ov,       &

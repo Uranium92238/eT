@@ -48,7 +48,7 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_iajb ! g_iajb
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajb
 !
       real(dp) :: omp_correlation_energy
 !
@@ -61,7 +61,7 @@ contains
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%eri%get_eri_t1('ovov', g_iajb)
+      call wf%eri_t1%get('ovov', g_iajb)
 !
       omp_correlation_energy = zero
 !

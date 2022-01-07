@@ -198,7 +198,7 @@ contains
 !
       call engine%tasks%print_('cholesky')
 !
-      call engine%do_cholesky(wf)
+      call engine%do_integral_decomposition(wf)
 !
       call engine%tasks%print_('mo preparations')
 !

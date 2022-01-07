@@ -72,6 +72,7 @@ contains
       call wf%omega_doubles_a1(omega(1 : wf%n_t1), wf%u_aibj)
       call wf%omega_doubles_b1(omega(1 : wf%n_t1), wf%u_aibj)
       call wf%omega_doubles_c1(omega(1 : wf%n_t1), wf%u_aibj)
+
 !
 !     Construct doubles contributions
 !
@@ -147,6 +148,7 @@ contains
 !!    In general, _p dimensions are given by dim*(dim+1)/2,
 !!          while _m dimensions are given by dim*(dim-1)/2
 !!
+      use rectangular_full_packed_utilities_r, only: rfp_1234_to_2143
       use batching_index_class, only: batching_index
       use packed_array_utilities_r, only: add_double_packed_plus_minus
       use packed_array_utilities_r, only: add_single_packed_plus_minus
@@ -155,6 +157,7 @@ contains
       use packed_array_utilities_r, only: construct_plus_minus_2413_from_packed
       use packed_array_utilities_r, only: scale_double_packed_diagonal
       use packed_array_utilities_r, only: scale_double_packed_blocks
+      use reordering, only: sort_1234_to_2143
 !
       implicit none
 !
@@ -174,6 +177,8 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_p_cdab
       real(dp), dimension(:,:), allocatable :: g_m_cdab
+      real(dp), dimension(:), allocatable, target :: g_vvvv_order
+      real(dp), dimension(:,:,:,:), pointer :: g_vvvv_order_p, g_vvvv_r4
 !
 !     Work and pointers for integrals and omega2 +-
 !
@@ -184,7 +189,8 @@ contains
 !
 !     Batching and memory handling variables
 !
-      integer :: req_0, req_a, req_b, req_ab, max_req
+      integer :: req_0, req_ab, max_req
+      integer, dimension(2) :: req_a_and_b
 !
       integer :: current_a_batch
       integer :: current_b_batch
@@ -194,6 +200,7 @@ contains
       integer :: ab_p_dim, ab_m_dim, work_dim
       integer :: n_v_p, n_v_m, n_o_p, n_o_m
       integer :: ab_p, ab_m
+      integer :: dim_p, dim_q, dim_r, dim_s
       logical :: dim_gt_one
 !
       type(batching_index) :: batch_a
@@ -233,16 +240,16 @@ contains
       batch_b = batching_index(wf%n_v)
 !
       max_req = n_v_p**2 + n_v_m**2 &
-              + max(wf%n_v**2*(wf%n_v**2+1)/2, n_o_p*n_v_p + n_o_m*n_v_m)
-      call wf%eri%get_eri_t1_packed_mem('vv', max_req, wf%n_v, wf%n_v, qp=right)
+              + 2*max(wf%n_v**2*(wf%n_v**2+1)/2, n_o_p*n_v_p + n_o_m*n_v_m)
+!
+      max_req = max_req &
+               + wf%eri_t1%get_memory_estimate_packed('vv', wf%n_v, wf%n_v)
 !
       req_0 = 0
-      req_a = 0
-      req_b = 0
-      call wf%eri%get_eri_t1_mem('vvvv', req_a, req_b, 1, wf%n_v, 1, wf%n_v, qp=right, sr=right)
-      req_ab = wf%n_v**2 + (max(wf%n_v, wf%n_o))**2
+      req_a_and_b = wf%eri_t1%get_memory_estimate('vvvv', 1, wf%n_v, 1, wf%n_v)
+      req_ab = 2*wf%n_v**2 + (max(wf%n_v, wf%n_o))**2
 !
-      call mem%batch_setup(batch_a, batch_b, req_0, req_a, req_b, req_ab, &
+      call mem%batch_setup(batch_a, batch_b, req_0, req_a_and_b(1), req_a_and_b(2), req_ab, &
                            'omega_ccsd_a2', req_single_batch=max_req)
 !
 !     Figure out the batch dependent dimensions and allocate g+- and work
@@ -263,8 +270,8 @@ contains
       call mem%alloc(g_p_cdab, n_v_p, ab_p_dim)
       call mem%alloc(g_m_cdab, n_v_m, ab_m_dim)
       call mem%alloc(work, work_dim)
+      call mem%alloc(g_vvvv_order, work_dim)
 !
-      g_vvvv => work
       omega2_p_ijab(1:n_o_p*ab_p_dim) => work
       omega2_m_ijab(1:n_o_m*ab_m_dim) => work(n_o_p*ab_p_dim+1:)
 !
@@ -304,6 +311,11 @@ contains
                last_s  = batch_b%get_last()
             endif
 !
+            dim_p = last_p - first_p + 1
+            dim_q = last_q - first_q + 1
+            dim_r = last_r - first_r + 1
+            dim_s = last_s - first_s + 1
+!
 !           If batches are the same, we can compute the packed integral
 !           and double packed g and omega, else we need the full integral block
 !
@@ -316,8 +328,14 @@ contains
 !
                call ccsd_a2_integral_timer%turn_on()
 !
-               call wf%eri%get_eri_t1_packed('vv', g_vvvv, &
-                                             first_p, last_p, first_q, last_q, qp=right)
+               call wf%eri_t1%get_packed('vv', g_vvvv_order, &
+                                       first_p, last_p, first_q, last_q)
+               if (right) then
+                  g_vvvv => work
+                  call rfp_1234_to_2143(g_vvvv_order, g_vvvv, dim_p, dim_q)
+               else
+                  g_vvvv => g_vvvv_order
+               endif
 !
                call ccsd_a2_integral_timer%freeze()
 !
@@ -371,10 +389,31 @@ contains
 !
                call ccsd_a2_integral_timer%turn_on()
 !
-               call wf%eri%get_eri_t1('vvvv', g_vvvv,                   &
+               call wf%eri_t1%get('vvvv', g_vvvv_order,                    &
                                       first_p, last_p, first_q, last_q, &
-                                      first_r, last_r, first_s, last_s, &
-                                      qp=right, sr=right)
+                                      first_r, last_r, first_s, last_s)
+!
+               if (right) then
+!
+                  g_vvvv_order_p(1:dim_p, &
+                                 1:dim_q, &
+                                 1:dim_r, &
+                                 1:dim_s) => g_vvvv_order
+!
+                  g_vvvv_r4(1:dim_p, 1:dim_q, 1:dim_r, 1:dim_s) => work
+                  call sort_1234_to_2143(g_vvvv_order_p, g_vvvv_r4, &
+                                          dim_p, &
+                                          dim_q, &
+                                          dim_r, &
+                                          dim_s)
+!
+                  g_vvvv => work
+!
+               else
+!
+                  g_vvvv => g_vvvv_order
+!
+               endif
 !
                call ccsd_a2_integral_timer%freeze()
 !
@@ -418,13 +457,17 @@ contains
          enddo ! End batching over b
       enddo ! End batching over a
 !
-      g_vvvv        => null()
-      omega2_p_ijab => null()
-      omega2_m_ijab => null()
+      g_vvvv         => null()
+      g_vvvv_r4      => null()
+      g_vvvv_order_p => null()
+      omega2_p_ijab  => null()
+      omega2_m_ijab  => null()
 !
       call mem%dealloc(g_p_cdab, n_v_p, ab_p_dim)
       call mem%dealloc(g_m_cdab, n_v_m, ab_m_dim)
-      call mem%dealloc(work,work_dim)
+      call mem%dealloc(work, work_dim)
+!
+      call mem%dealloc(g_vvvv_order, work_dim)
 !
       call mem%dealloc(t_p_ijcd, n_o_p, n_v_p)
       call mem%dealloc(t_m_ijcd, n_o_m, n_v_m)
@@ -473,7 +516,7 @@ contains
 !     Construct g_aibj and add to omega2
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call wf%eri%get_eri_t1('vovo', g_aibj)
+      call wf%eri_t1%get('vovo', g_aibj)
       call add_1324_to_1234(one, g_aibj, omega_abij,  wf%n_v,  wf%n_v,  wf%n_o,  wf%n_o)
       call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -481,7 +524,7 @@ contains
 !
       call mem%alloc(g_kilj, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
-      call wf%eri%get_eri_t1('oooo', g_kilj)
+      call wf%eri_t1%get('oooo', g_kilj)
 !
       call mem%alloc(g_klij,  wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
@@ -493,7 +536,7 @@ contains
 !
       call mem%alloc(g_kcld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%eri%get_eri_t1('ovov', g_kcld)
+      call wf%eri_t1%get('ovov', g_kcld)
 !
 !     Reorder g_kcld as g_klcd
 !
@@ -546,17 +589,20 @@ contains
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad and Rolf H. Myhre, Feb. 2021
 !!
 !!    C2: ~Omega^ab_ij = -3/2*P^ab_ij(sum_ck  t^bc_ki*( g_kjac - 1/2*sum_dl  t^ad_lj* g_kdlc))
-!!    D2:  Omega^ab_ij =  1/2*P^ab_ij(sum_ck ~t^bc_jk*(~g_aikc + 1/2*sum_dl ~t^ad_il*~g_ldkc))
+!!    D2:  Omega^ab_ij =  1/2*P^ab_ij(sum_ck u^bc_jk*(L_aikc + 1/2*sum_dl u^ad_il*L_ldkc))
 !!
+!!    Contravariant:
 !!    ~X^ab_ij = 2*X^ab_ij - X^ab_ji   X^ab_ij = 1/3*(2*~X^ab_ij + ~X^ab_ji)
 !!
-!!    t2_u2 will contain t^ab_ji in the upper triangle and ~t^ab_ij in the lower triangle
+!!    t2_u2 will contain t^ab_ji in the upper triangle and u^ab_ij (~t^ab_ij) in the lower triangle
+!!    L_aikc = ~g_aikc
 !!
       use packed_array_utilities_r, only: construct_full_contra_in_place
       use packed_array_utilities_r, only: symmetrize_and_pack
       use packed_array_utilities_r, only: construct_1432_and_contra
       use array_utilities, only: copy_and_scale
-      use reordering, only: sort_1234_to_1324, sort_1234_to_1432
+      use reordering, only: sort_1234_to_1324, sort_1234_to_1432, add_3421_to_1234, add_3421_to_1234
+      use reordering, only: sort_1234_to_2314, sort_1234_to_2341
 
 
 !
@@ -584,16 +630,17 @@ contains
       call mem%alloc(D_term, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Add (+/-) g_vvoo in 2314 ordering to both intermediates
-      call wf%eri%get_eri_t1('vvoo', g, qp=.true.)
-      call sort_1234_to_1324(g, C_term, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call wf%eri_t1%get('vvoo', g)
+      call sort_1234_to_2314(g, C_term, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call copy_and_scale(-one, C_term, D_term, (wf%n_o*wf%n_v)**2)
 !
-!     Add 2*g_voov ordered as 4312 to D
-      call wf%eri%get_eri_t1('voov', D_term, alpha=two, beta=one, sr=.true., rspq=.true.)
+!     Add 2*g_aikc ordered as 2g_ckai to D
+      call wf%eri_t1%get('voov', g)
+      call add_3421_to_1234(two, g, D_term, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Use t2_u2 as temporary storage of g_ovov ordered as 2143 and sort to 2314
-      call wf%eri%get_eri_t1('ovov', t2_u2, qp=.true., sr=.true.)
-      call sort_1234_to_1432(t2_u2, g, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     Use t2_u2 as temporary storage of g_ovov
+      call wf%eri_t1%get('ovov', t2_u2)
+      call sort_1234_to_2341(t2_u2, g, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call construct_1432_and_contra(t2, t2_u2, wf%n_v, wf%n_o)
 !
@@ -616,9 +663,9 @@ contains
                  wf%n_o*wf%n_v, &
                  wf%n_o*wf%n_v, &
                  half,          &
-                 t2_u2,         & !~t_dl_ai
+                 t2_u2,         & !u_dl_ai
                  wf%n_o*wf%n_v, &
-                 g,             & !~g_ck_dl
+                 g,             & !L_ck_dl
                  wf%n_o*wf%n_v, &
                  one,           &
                  D_term,        & !D_ck_ai
@@ -642,7 +689,7 @@ contains
                  wf%n_o*wf%n_v, &
                  wf%n_o*wf%n_v, &
                  half,          &
-                 t2_u2,         & !~t_bj_ck
+                 t2_u2,         & !u_bj_ck
                  wf%n_o*wf%n_v, &
                  D_term,        & !D_ck_ai
                  wf%n_o*wf%n_v, &
@@ -720,7 +767,7 @@ contains
 !     Form g_ldkc = g_ldkc
 !
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%eri%get_eri_t1('ovov', g_ldkc)
+      call wf%eri_t1%get('ovov', g_ldkc)
 !
 !     Make the intermediate X_b_c = F_bc - sum_dkl g_ldkc u_kl^bd and set to zero
 !

@@ -3,6 +3,9 @@
 - Coupled cluster Fock matrix construction is N^4 scaling. eT-program/eT!973
 - Reduce memory usage for MLCC energy calculation (reusing CCS routine). eT-program/eT!974
 
+### Structure
+- New ERI and Cholesky vector tools. Autogeneration of complex tools. eT-program/eT!902
+
 ### Features
 - Added timers for calculate energy. eT-program/eT!993
 

@@ -39,6 +39,8 @@ program eT_program
    use cuhf_class,   only: cuhf
    use rohf_class,   only: rohf
 !
+   use abstract_eri_cholesky_class
+!
    use omp_lib
 !
    implicit none

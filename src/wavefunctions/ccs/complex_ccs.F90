@@ -53,6 +53,7 @@ contains
 !!    Allocates complex CCS variables, puts the real variables into the real part of the complex
 !!    variables and zero into the imaginary part, and deallocates the real variables.
 !!
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -101,11 +102,12 @@ contains
          call wf%destruct_gs_density()
       endif
 !
-      wf%eri_complex = t1_eri_tool_c(wf%eri)
-      call wf%eri_complex%initialize()
-      call wf%eri_complex%copy_from_real_t1(wf%eri)
+      call wf%integral_preparations_complex(wf%L_mo%n_J)
 !
-      call wf%eri%cleanup()
+      call wf%complexify_cholesky_vectors(wf%L_mo, wf%L_mo_c)
+      call wf%L_t1_c%set_equal_to(wf%L_mo_c)
+!
+      call wf%construct_t1_cholesky_complex(wf%t1_complex, wf%L_mo_c, wf%L_t1_c)
 !
    end subroutine make_ccs_complex_ccs
 !
@@ -163,7 +165,11 @@ contains
          call wf%destruct_gs_density_complex()
       endif
 !
-      call wf%eri_complex%cleanup()
+      if (allocated(wf%L_t1_c)) call wf%L_t1_c%remove_observer('eri t1 complex')
+!
+      if (allocated(wf%eri_t1_c)) deallocate(wf%eri_t1_c)
+      if (allocated(wf%L_mo_c)) deallocate(wf%L_mo_c)
+      if (allocated(wf%L_t1_c)) deallocate(wf%L_t1_c)
 !
    end subroutine cleanup_ccs_complex_ccs
 !
@@ -248,6 +254,114 @@ contains
       endif
 !
    end subroutine construct_complex_time_derivative_multipliers_ccs
+!
+!
+   module subroutine complexify_cholesky_vectors(wf, L_mo, L_mo_c)
+!!
+!!    Complexify Cholesky vectors
+!!    Written by Sarai D. Folkestad, Sep 2021
+!!
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      class(abstract_eri_cholesky) :: L_mo
+      class(abstract_eri_cholesky_c) :: L_mo_c
+!
+      type(batching_index) :: batch_q
+!
+      integer :: req_0, req_1, batch
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_pq
+!
+      batch_q = batching_index(wf%n_mo)
+!
+      req_0 = 0
+      req_1 = L_mo_c%n_J*wf%n_mo &
+            + L_mo%get_memory_estimate(1, wf%n_mo, 1, 1) &
+            + L_mo_c%get_memory_estimate(1, wf%n_mo, 1, 1)
+!
+      call mem%batch_setup(batch_q, req_0, req_1, tag='Complexify Cholesky')
+!
+      call mem%alloc(L_J_pq, L_mo_c%n_J, wf%n_mo, batch_q%max_length)
+!
+      do batch = 1, batch_q%num_batches
+!
+         call batch_q%determine_limits(batch)
+!
+         call L_mo%get(L_J_pq, 1, wf%n_mo, batch_q%first, batch_q%get_last())
+         call L_mo_c%set(cmplx(L_J_pq, 0.0d0, kind=dp), 1, wf%n_mo, batch_q%first, batch_q%get_last())
+!
+      enddo
+!
+      call mem%dealloc(L_J_pq, L_mo_c%n_J, wf%n_mo, batch_q%max_length)
+!
+      call mem%batch_finalize()
+!
+   end subroutine complexify_cholesky_vectors
+!
+!
+   module subroutine integral_preparations_ccs_complex(wf, n_J)
+!!
+!!    Integral preparations
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      integer, intent(in) :: n_J
+!
+      call output%printf('m', '- Settings for integral handling:', fs='(/t3,a)')
+!
+      call wf%cholesky_factory_complex(n_J)
+      call wf%integral_factory_complex()
+!
+   end subroutine integral_preparations_ccs_complex
+!
+!
+   module subroutine integral_factory_complex(wf)
+!!
+!!    Integral factory complex
+!!    Written by Sarai D. Folkestad, Sep 2021
+!!
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      character(len=200) :: integral_storage
+!
+      logical :: has_room_for_eri
+!
+      logical :: try_to_place_eri_in_memory, eri_in_memory
+!
+      integral_storage = 'memory'
+      call input%get_keyword('eri storage', 'integrals', integral_storage)
+!
+      if (trim(integral_storage) /= 'memory' .and. trim(integral_storage) /= 'none') &
+         call output%error_msg('illegal value for eri storage')
+!
+      try_to_place_eri_in_memory = (integral_storage == 'memory' .and. wf%need_g_abcd)
+      has_room_for_eri = (wf%n_mo**4)*(2*dp) < mem%get_available()/5
+!
+      eri_in_memory = try_to_place_eri_in_memory .and. has_room_for_eri
+!
+      if (eri_in_memory) then
+         wf%eri_t1_c = eri_adapter_c(eri_memory_tool_c(wf%L_t1_c), wf%n_o, wf%n_v)
+      else
+         wf%eri_t1_c = eri_adapter_c(eri_tool_c(wf%L_t1_c), wf%n_o, wf%n_v)
+      endif
+!
+      call wf%L_t1_c%add_observer('eri t1 complex', wf%eri_t1_c%eri)
+!
+      call output%printf('m', &
+                         'ERI matrix in memory:       (l0)', &
+                         logs=[eri_in_memory],               &
+                         fs='(t6,a)')
+!
+   end subroutine integral_factory_complex
 !
 !
 end submodule complex_ccs

@@ -29,7 +29,7 @@ submodule (doubles_class) jacobian_transpose_doubles
 !!
 !!    where
 !!
-!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
+!!    A_μ,ν = < μ |exp(-T) [H, τ_ν] exp(T) | R >.
 !!
 !!
 !
@@ -82,7 +82,7 @@ contains
 !     Both intermediates need g_ovov and u_bjck -> u_cjbk
 !
       call mem%alloc(g_ovov, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%eri%get_eri_t1('ovov', g_ovov)
+      call wf%eri_t1%get('ovov', g_ovov)
 !
       call mem%alloc(u_cjbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call sort_1234_to_3214(u_bjck, u_cjbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -222,7 +222,7 @@ contains
 !
       call mem%alloc(g_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call mem%alloc(L_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%eri%get_eri_t1('ovov', g_iakc)
+      call wf%eri_t1%get('ovov', g_iakc)
 !
       call copy_and_scale(two, g_iakc, L_iakc, wf%n_t1**2)
       call add_1432_to_1234(-one, g_iakc, L_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -352,68 +352,68 @@ contains
 !
 !     :: Term 2: sigma_ai =+ c_bjci g_bjca = (L_J_bj c_bjci) L_J_ca = L_J_ca W_J_ci
 !
-      call mem%alloc(L_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
-      call wf%eri%get_cholesky_t1(L_J_vo, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
+      call mem%alloc(L_J_vo, wf%L_t1%n_J, wf%n_v, wf%n_o)
+      call wf%L_t1%get(L_J_vo, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
 !
-      call mem%alloc(W_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+      call mem%alloc(W_J_vo, wf%L_t1%n_J, wf%n_v, wf%n_o)
 !
       call dgemm('N', 'N',          &
-                  wf%eri%n_J,       &
+                  wf%L_t1%n_J,      &
                   wf%n_v * wf%n_o,  &
                   wf%n_v * wf%n_o,  &
                   one,              &
                   L_J_vo,           & ! L_J,bj
-                  wf%eri%n_J,       &
+                  wf%L_t1%n_J,      &
                   c_bjck,           & ! c_bj,ci
                   wf%n_v * wf%n_o,  &
                   zero,             &
                   W_J_vo,           & ! W_J,ci
-                  wf%eri%n_J)
+                  wf%L_t1%n_J)
 !
-      call mem%dealloc(L_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+      call mem%dealloc(L_J_vo, wf%L_t1%n_J, wf%n_v, wf%n_o)
 !
       req0 = 0
-      req1 = wf%n_v*wf%eri%n_J
+      req1 = wf%n_v*wf%L_t1%n_J
 !
       batch_a = batching_index(wf%n_v)
       call mem%batch_setup(batch_a, req0, req1, 'jacobian_transpose_doubles_b1')
 !
-      call mem%alloc(L_J_vv, wf%eri%n_J, wf%n_v, batch_a%max_length)
+      call mem%alloc(L_J_vv, wf%L_t1%n_J, wf%n_v, batch_a%max_length)
 !
       do batch = 1, batch_a%num_batches
 !
          call batch_a%determine_limits(batch)
 !
-         call wf%eri%get_cholesky_t1(L_J_vv, wf%n_o + 1, wf%n_mo, &
+         call wf%L_t1%get(L_J_vv, wf%n_o + 1, wf%n_mo, &
                                      wf%n_o + batch_a%first,     &
                                      wf%n_o + batch_a%get_last())
 !
          call dgemm('T', 'N',                      &
                      batch_a%get_length(),         &
                      wf%n_o,                       &
-                     wf%n_v * wf%eri%n_J,          &
+                     wf%n_v * wf%L_t1%n_J,          &
                      one,                          &
                      L_J_vv,                       & ! L_Jc,a
-                     wf%n_v * wf%eri%n_J,          &
+                     wf%n_v * wf%L_t1%n_J,          &
                      W_J_vo,                       & ! W_Jc,i
-                     wf%n_v * wf%eri%n_J,          &
+                     wf%n_v * wf%L_t1%n_J,          &
                      one,                          &
                      sigma_ai(batch_a%first, 1),   &
                      wf%n_v)
 !
       enddo
 !
-      call mem%dealloc(L_J_vv, wf%eri%n_J, wf%n_v, batch_a%max_length)
+      call mem%dealloc(L_J_vv, wf%L_t1%n_J, wf%n_v, batch_a%max_length)
 !
       call mem%batch_finalize()
 !
-      call mem%dealloc(W_J_vo, wf%eri%n_J, wf%n_v, wf%n_o)
+      call mem%dealloc(W_J_vo, wf%L_t1%n_J, wf%n_v, wf%n_o)
 !
 !     :: Term 2: sigma_ai =+ sum_bjc c_akbj g_bjik = sum_bjc c_akbj (g_ikbj)^T
 !
       call mem%alloc(g_ikbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%eri%get_eri_t1('oovo', g_ikbj)
+      call wf%eri_t1%get('oovo', g_ikbj)
 !
 !     sigma_ai =- sum_bjk c_akbj g_ikbj
 !
@@ -510,7 +510,7 @@ contains
 !     L_ikjb = 2 g_ikjb - g_jkib (ordered as g_kibj)
 !
       call mem%alloc(g_ikjb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-      call wf%eri%get_eri_t1('ooov', g_ikjb)
+      call wf%eri_t1%get('ooov', g_ikjb)
 !
       call mem%alloc(L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(L_kibj, (wf%n_o**3)*wf%n_v)
@@ -540,8 +540,8 @@ contains
       call mem%alloc(sigma_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(sigma_ajbi, wf%n_t1**2)
 !
-      req0 = (wf%n_v)*(wf%n_o)*(wf%eri%n_J)
-      req1 = max((wf%n_v)*(wf%eri%n_J) + (wf%n_o)*(wf%n_v)**2, 2*(wf%n_o)*(wf%n_v)**2)
+      req0 = (wf%n_v)*(wf%n_o)*(wf%eri_t1%n_J)
+      req1 = max((wf%n_v)*(wf%eri_t1%n_J) + (wf%n_o)*(wf%n_v)**2, 2*(wf%n_o)*(wf%n_v)**2)
 !
       batch_c = batching_index(wf%n_v)
 !
@@ -555,7 +555,7 @@ contains
 !
          call mem%alloc(g_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_cajb, first_p=batch_c%first, last_p=batch_c%get_last())
+         call wf%eri_t1%get('vvov', g_cajb, first_p=batch_c%first, last_p=batch_c%get_last())
 !
          call mem%alloc(L_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !

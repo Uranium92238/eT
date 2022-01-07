@@ -360,10 +360,10 @@ contains
       integrals%required = .false.
       integrals%keywords = [character(len=30) :: &
                            'cholesky storage',   &
-                           'mo eri in memory',   &
-                           't1 eri in memory',   &
                            'eri storage',        &
-                           'ri']
+                           'mo eri in memory',   &
+                           'ri',                 &
+                           't1 eri in memory']
 !
 !
       memory%name_    = 'memory'

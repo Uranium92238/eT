@@ -804,52 +804,52 @@ contains
 !     Read Cholesky vectors L^J_ai and transform them from the MLCCSD
 !     basis to the basis for amplitude construction
 !
-      call mem%alloc(L_J_ai, wf%eri%n_J, n_a_v, n_a_o)
+      call mem%alloc(L_J_ai, wf%eri_t1%n_J, n_a_v, n_a_o)
 !
-      call wf%eri%get_cholesky_t1(L_J_ai, &
+      call wf%L_t1%get(L_J_ai, &
                            1 + wf%n_o,          &
                            last_a_v + wf%n_o,   &
                            1, last_a_o)
 !
-      call mem%alloc(X_J_aj, wf%eri%n_J, n_a_v, n_a_o)
+      call mem%alloc(X_J_aj, wf%eri_t1%n_J, n_a_v, n_a_o)
 !
       call dgemm('N', 'T', &
-                  wf%eri%n_J*(n_a_v), &
+                  wf%eri_t1%n_J*(n_a_v), &
                   n_a_o,                    &
                   n_a_o,                    &
                   one,                      &
                   L_J_ai,                   &
-                  wf%eri%n_J*(n_a_v), &
+                  wf%eri_t1%n_J*(n_a_v), &
                   wf%O_o,                   &
                   n_a_o,                    &
                   zero,                     &
                   X_J_aj,                   &
-                  wf%eri%n_J*(n_a_v))
+                  wf%eri_t1%n_J*(n_a_v))
 !
-      call mem%dealloc(L_J_ai, wf%eri%n_J, n_a_v, n_a_o)
+      call mem%dealloc(L_J_ai, wf%eri_t1%n_J, n_a_v, n_a_o)
 !
-      call mem%alloc(X_J_ja, wf%eri%n_J, n_a_o, n_a_v)
+      call mem%alloc(X_J_ja, wf%eri_t1%n_J, n_a_o, n_a_v)
 !
-      call sort_123_to_132(X_J_aj, X_J_ja, wf%eri%n_J, n_a_v, n_a_o)
+      call sort_123_to_132(X_J_aj, X_J_ja, wf%eri_t1%n_J, n_a_v, n_a_o)
 !
-      call mem%dealloc(X_J_aj, wf%eri%n_J, n_a_v, n_a_o)
+      call mem%dealloc(X_J_aj, wf%eri_t1%n_J, n_a_v, n_a_o)
 !
-      call mem%alloc(X_J_jb, wf%eri%n_J, n_a_o, n_a_v)
+      call mem%alloc(X_J_jb, wf%eri_t1%n_J, n_a_o, n_a_v)
 !
       call dgemm('N', 'T', &
-                  wf%eri%n_J*(n_a_o), &
+                  wf%eri_t1%n_J*(n_a_o), &
                   n_a_v,                    &
                   n_a_v,                    &
                   one,                      &
                   X_J_ja,                   &
-                  wf%eri%n_J*(n_a_o), &
+                  wf%eri_t1%n_J*(n_a_o), &
                   wf%O_v,                   &
                   n_a_v,                    &
                   zero,                     &
                   X_J_jb,                   &
-                  wf%eri%n_J*(n_a_o))
+                  wf%eri_t1%n_J*(n_a_o))
 !
-      call mem%dealloc(X_J_ja, wf%eri%n_J, n_a_o, n_a_v)
+      call mem%dealloc(X_J_ja, wf%eri_t1%n_J, n_a_o, n_a_v)
 !
 !     Construct the amplitudes in this basis
 !     s_AIBJ = - g_AIBJ/ε_AIBJ
@@ -860,17 +860,17 @@ contains
       call dgemm('T', 'N', &
                   (n_a_o)*(n_a_v),   &
                   (n_a_o)*(n_a_v),   &
-                  wf%eri%n_J,  &
+                  wf%eri_t1%n_J,  &
                   -one,              &
                   X_J_jb,            &
-                  wf%eri%n_J,  &
+                  wf%eri_t1%n_J,  &
                   X_J_jb,            &
-                  wf%eri%n_J,  &
+                  wf%eri_t1%n_J,  &
                   zero,              &
                   s_iajb,            &
                   (n_a_o)*(n_a_v))
 !
-      call mem%dealloc(X_J_jb, wf%eri%n_J, n_a_o, n_a_v)
+      call mem%dealloc(X_J_jb, wf%eri_t1%n_J, n_a_o, n_a_v)
 !
 !$omp parallel do private(b, j, a, i) collapse(2)
       do b = 1, n_a_v
@@ -1010,11 +1010,11 @@ contains
       call squareup(wf%x2, x_aibj, n_doubles_v*n_doubles_o)
 !
       call mem%alloc(g_iajb, n_doubles_o, n_doubles_v, n_doubles_o, n_doubles_v)
-      call wf%eri%get_eri_t1('ovov', g_iajb, &
-                             1, n_doubles_o, &
-                             1, n_doubles_v, &
-                             1, n_doubles_o, &
-                             1, n_doubles_v)
+      call wf%eri_t1%get('ovov', g_iajb, &
+                         1, n_doubles_o, &
+                         1, n_doubles_v, &
+                         1, n_doubles_o, &
+                         1, n_doubles_v)
 !
 !$omp parallel do private(a,i,j,b) reduction(+:correlation_energy)
       do a = 1, n_doubles_v
@@ -1062,9 +1062,6 @@ contains
       if (.not. restart) then
 !
          call zero_array(wf%t1, wf%n_t1)
-!
-         call wf%eri%update_t1_integrals(wf%t1)
-!
          call wf%set_t2_to_cc2_guess()
 !
       else
@@ -1078,13 +1075,11 @@ contains
 !
             if(n_amplitudes_read == wf%n_gs_amplitudes) then
 !
-               call wf%eri%update_t1_integrals(wf%t1)
+               call wf%construct_t1_cholesky(wf%t1, wf%L_mo, wf%L_t1)
 !
             else if (n_amplitudes_read == wf%n_t1) then
 !
-               call zero_array(wf%t1, wf%n_t1)
-!
-               call wf%eri%update_t1_integrals(wf%t1)
+               call wf%construct_t1_cholesky(wf%t1, wf%L_mo, wf%L_t1)
 !
                call wf%set_t2_to_cc2_guess()
 !
@@ -1099,8 +1094,6 @@ contains
          else
 !
             call zero_array(wf%t1, wf%n_t1)
-!
-            call wf%eri%update_t1_integrals(wf%t1)
 !
             call wf%set_t2_to_cc2_guess()
 !
@@ -1129,7 +1122,7 @@ contains
       integer :: a, b, i, j, ai, bj, aibj
 !
       call mem%alloc(g_aibj, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
-      call wf%eri%get_eri_t1('vovo', g_aibj, 1, wf%n_ccsd_v, 1, wf%n_ccsd_o, &
+      call wf%eri_t1%get('vovo', g_aibj, 1, wf%n_ccsd_v, 1, wf%n_ccsd_o, &
                                              1, wf%n_ccsd_v, 1, wf%n_ccsd_o)
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
@@ -1247,8 +1240,6 @@ contains
       call wf%destruct_mo_fock_frozen()
       call wf%destruct_frozen_CCT()
 !
-      call wf%eri%cleanup()
-!
       call wf%destruct_nto_states()
       call wf%destruct_cnto_states()
 !
@@ -1263,6 +1254,11 @@ contains
 !
       deallocate(wf%ao)
       if (wf%embedded) deallocate(wf%embedding)
+!
+!     To avoid memory leaks with intel, explicit deallocations
+      deallocate(wf%eri_t1)
+      deallocate(wf%L_mo)
+      deallocate(wf%L_t1)
 !
    end subroutine cleanup_mlccsd
 !
@@ -1443,8 +1439,10 @@ contains
 !
       call mem%alloc(T, wf%n_mo, wf%n_mo)
       call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, canonical_orbitals, T)
-      call wf%eri%update_cholesky_mo(T)
+      call wf%L_mo%basis_transformation(T)
       call mem%dealloc(T, wf%n_mo, wf%n_mo)
+!
+      call wf%L_t1%set_equal_to(wf%L_mo)
 !
       call wf%determine_n_x2_amplitudes()
       call wf%determine_n_gs_amplitudes()

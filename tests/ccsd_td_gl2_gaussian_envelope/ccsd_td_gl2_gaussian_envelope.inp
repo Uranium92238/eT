@@ -17,8 +17,7 @@ memory
 end memory
 
 integrals
-   mo eri in memory
-   t1 eri in memory
+   eri storage: memory
 end integrals
 
 solver cholesky

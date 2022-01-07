@@ -76,8 +76,8 @@ contains
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%eri%get_eri_t1('vovo', g_aibj)
-      call wf%eri%get_eri_t1('ovov', g_iajb)
+      call wf%eri_t1%get('vovo', g_aibj)
+      call wf%eri_t1%get('ovov', g_iajb)
 !
       omp_correlation_energy = zero
 !

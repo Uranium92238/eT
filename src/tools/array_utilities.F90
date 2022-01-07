@@ -71,8 +71,74 @@ module array_utilities
                    get_trace_c
    end interface get_trace
 !
+   interface dsfrk_
+      procedure :: dsfrk_r, &
+                   dsfrk_c
+   end interface dsfrk_
+!
 contains
 !
+   subroutine dsfrk_r(n, k, alpha, A, beta, C)
+!!
+!!    dsfrk real
+!!    Written by Sarai D. Folkestad
+!!
+!!    Wrapper for lapack dsfrk
+!!
+!!       C = alpha*A**T*A + beta*C,
+!!
+!!    where C is returned in upper rectangular
+!!    full packed format.
+!!
+      implicit none
+!
+      integer :: n, k
+      real(dp) :: alpha, beta
+      real(dp), dimension(k,n) :: A
+      real(dp), dimension((n + mod(n+1,2)), n*(n+1)/2) :: C
+!
+      call dsfrk('n', 'U', 'T', n, k, alpha, A, k, beta, C)
+!
+   end subroutine dsfrk_r
+!
+   subroutine dsfrk_c(n, k, alpha, A, beta, C)
+!!
+!!    dsfrk complex
+!!    Written by Rolf H. Myhre
+!!
+!!    lapack dsfrk
+!!
+!!       C = alpha*A**T*A + beta*C,
+!!
+!!    does not exist for complex A and C. In stead
+!!    must make two calls to dsyrk and one call to dgemm.
+!!
+!!    C is returned in upper rectangular
+!!    full packed format.
+!!
+      implicit none
+!
+      integer :: n, k
+      complex(dp) :: alpha, beta
+      complex(dp), dimension(k,n) :: A
+      complex(dp), dimension((n + mod(n+1,2)), n*(n+1)/2) :: C
+!
+      integer :: n1, n2, off
+!
+      n1 = n/2
+      n2 = n - n1
+      off = mod(n+1,2)
+!
+      call zsyrk('L', 'T', n1, k, alpha, A, k, &
+                 beta, C(n2+1+off,1), n+off)
+!
+      call zsyrk('U', 'T', n2, k, alpha, A(1, n2+off), k, &
+                 beta, C(n1+1,1), n+off)
+!
+      call zgemm('T', 'n', n1, n2, k, alpha, A, &
+                 k, A(1, n2+off), k, beta, C, n+off)
+!
+   end subroutine dsfrk_c
 !
    subroutine zero_array(x, n)
 !!

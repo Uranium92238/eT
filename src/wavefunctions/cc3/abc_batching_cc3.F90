@@ -34,7 +34,7 @@ contains
 !
 !
    module subroutine setup_vvvo_abc_cc3(wf, g_vvvo, point, unordered_g_vvvo, &
-                                        batch_p, batch_r, c_ai)
+                                        batch_p, batch_r, eri_c1)
 !!
 !!    Setup vvvo abc
 !!    Written by Alexander C. Paul, Jan 2021
@@ -62,17 +62,17 @@ contains
       real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
 !
       real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_vvvo
-      real(dp), dimension(wf%n_v, wf%n_o), optional, intent(in)  :: c_ai
+      type(eri_adapter), intent(inout), optional  :: eri_c1
 !
-      if (.not. present(c_ai)) then
+      if (.not. present(eri_c1)) then
 !
-         call wf%eri%get_eri_t1('vvvo', unordered_g_vvvo, &
+         call wf%eri_t1%get('vvvo', unordered_g_vvvo, &
                                  first_p=batch_p%first, last_p=batch_p%get_last(), &
                                  first_r=batch_r%first, last_r=batch_r%get_last())
 !
       else
 !
-         call wf%eri%get_eri_c1('vvvo', unordered_g_vvvo, c_ai, &
+         call eri_c1%get('vvvo', unordered_g_vvvo, &
                                  first_p=batch_p%first, last_p=batch_p%get_last(), &
                                  first_r=batch_r%first, last_r=batch_r%get_last())
 !
@@ -143,7 +143,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_vvov
 !
-      call wf%eri%get_eri_t1('vvov', unordered_g_vvov, &
+      call wf%eri_t1%get('vvov', unordered_g_vvov, &
                               first_q=batch_q%first, last_q=batch_q%get_last(), &
                               first_s=batch_s%first, last_s=batch_s%get_last())
 !
@@ -212,7 +212,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_ovov
 !
-      call wf%eri%get_eri_t1('ovov', unordered_g_ovov, &
+      call wf%eri_t1%get('ovov', unordered_g_ovov, &
                               first_q=batch_q%first, last_q=batch_q%get_last(), &
                               first_s=batch_s%first, last_s=batch_s%get_last())
 !
@@ -253,7 +253,7 @@ contains
 !
 !
    module subroutine setup_oovo_abc_cc3(wf, g_oovo, point, unordered_g_oovo, &
-                                        batch_r, c_ai)
+                                        batch_r, eri_c1)
 !!
 !!    Setup oovo abc
 !!    Written by Alexander C. Paul, Jan 2021
@@ -281,17 +281,19 @@ contains
       real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
 !
       real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_oovo
-      real(dp), dimension(wf%n_v, wf%n_o), optional, intent(in)  :: c_ai
+      type(eri_adapter), intent(inout), optional  :: eri_c1
 !
-      if (.not. present(c_ai)) then
+      if (.not. present(eri_c1)) then
 !
-         call wf%eri%get_eri_t1('oovo', unordered_g_oovo, &
-                                 first_r=batch_r%first, last_r=batch_r%get_last())
+         call wf%eri_t1%get('oovo', unordered_g_oovo, &
+                           first_r=batch_r%first,     &
+                           last_r=batch_r%get_last())
 !
       else
 !
-         call wf%eri%get_eri_c1('oovo', unordered_g_oovo, c_ai, &
-                                 first_r=batch_r%first, last_r=batch_r%get_last())
+         call eri_c1%get('oovo', unordered_g_oovo, &
+                         first_r=batch_r%first,    &
+                         last_r=batch_r%get_last())
 !
       end if
 !
@@ -358,11 +360,12 @@ contains
 !
       real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_ooov
 !
-      call wf%eri%get_eri_t1('ooov', unordered_g_ooov, &
-                              first_s=batch_s%first, last_s=batch_s%get_last())
+      call wf%eri_t1%get('ooov', unordered_g_ooov, &
+                        first_s=batch_s%first,     &
+                        last_s=batch_s%get_last())
 !
-      call sort_1234_to_2134(unordered_g_ooov, g_ooov, wf%n_o, wf%n_o, &
-                                                       wf%n_o, batch_s%length)
+      call sort_1234_to_2134(unordered_g_ooov, g_ooov, &
+                             wf%n_o, wf%n_o, wf%n_o, batch_s%length)
 !
       point(1:wf%n_o, 1:wf%n_o, 1:wf%n_o, 1:batch_s%length) => g_ooov
 !
@@ -418,23 +421,19 @@ contains
 !
       integer, intent(out) :: req0, req1
 !
-      integer :: req_vvvo, req_ovov, req_oovo
+      integer, dimension(2) :: req_vvvo, req_ovov, req_oovo
 !
-      req0  = 0
-      req_vvvo = 0
-      req_ovov = 0
-      req_oovo = 0
+      req_vvvo = wf%eri_t1%get_memory_estimate('vvvo', 1, wf%n_v, 1, wf%n_o)
+      req_ovov = wf%eri_t1%get_memory_estimate('ovov', wf%n_o, 1, wf%n_o, 1)
+      req_oovo = wf%eri_t1%get_memory_estimate('oovo', wf%n_o, wf%n_o, 1, wf%n_o)
 !
-      call wf%eri%get_eri_t1_mem('vvvo', req_vvvo, req_vvvo, 1, wf%n_v, 1, wf%n_o)
-      call wf%eri%get_eri_t1_mem('ovov', req_ovov, req_ovov, wf%n_o, 1, wf%n_o, 1)
-      call wf%eri%get_eri_t1_mem('oovo', req0, req_oovo, wf%n_o, wf%n_o, 1, wf%n_o)
-!
-      req1 = max(req_vvvo, req_ovov, req_oovo)
+      req0 = req_oovo(1)
+      req1 = max(req_vvvo(1) + req_vvvo(2), req_ovov(1) + req_ovov(2), req_oovo(2))
 !
    end subroutine estimate_mem_integral_setup_abc_cc3
 !
 !
-   module subroutine estimate_mem_c1_integral_setup_abc_cc3(wf, req0, req1)
+   module subroutine estimate_mem_c1_integral_setup_abc_cc3(wf, req0, req1, eri_c1)
 !!
 !!    Estimate memory C1 transformed integrals setup abc
 !!    Written by Alexander C. Paul, Dec 2020
@@ -442,7 +441,7 @@ contains
 !!    Estimate maximum memory needed for cc3 integral setup
 !!    for the C1-transformed integrals with abc batching
 !!
-!!    get_eri_c1_mem returns the memory needed to construct the requested
+!!   _c1 get_eri_t1_mem returns the memory needed to construct the requested
 !!    c1-transformed integral
 !!    The dimensions sent in specify if an index is batched (1) or of
 !!    full dimension (n_o/n_v)
@@ -453,27 +452,22 @@ contains
 !!
 !!    NB: The memory requirement is overestimated by the routines.
 !!
+!
+      use eri_adapter_class, only: eri_adapter
+!
       implicit none
       class(cc3), intent(in) :: wf
 !
       integer, intent(out) :: req0, req1
+      type(eri_adapter), intent(in) :: eri_c1
 !
-      integer :: req0_vvvo, req0_oovo
-      integer :: req1_vvvo, req1_oovo
+      integer, dimension(2) :: req_vvvo, req_oovo
 !
-      req0_vvvo = 0
-      req1_vvvo = 0
-      req0_oovo = 0
-      req1_oovo = 0
+      req_vvvo = eri_c1%get_memory_estimate('vvvo', 1, wf%n_v, 1, wf%n_o)
+      req_oovo = eri_c1%get_memory_estimate('oovo', wf%n_o, wf%n_o, 1, wf%n_o)
 !
-      call wf%eri%get_eri_c1_mem('vvvo', req1_vvvo, req0_vvvo, req1_vvvo, req0_vvvo, &
-                                 req1_vvvo, req1_vvvo, 1, wf%n_v, 1, wf%n_o)
-!
-      call wf%eri%get_eri_c1_mem('oovo', req0_oovo, req0_oovo, req1_oovo, req0_oovo, &
-                                 req0_oovo, req1_oovo, wf%n_o, wf%n_o, 1, wf%n_o)
-!
-      req0 = max(req0_vvvo, req0_oovo)
-      req1 = max(req1_vvvo, req1_oovo)
+      req0 = req_oovo(1)
+      req1 = max(req_vvvo(1) + req_vvvo(2), req_oovo(2))
 !
    end subroutine estimate_mem_c1_integral_setup_abc_cc3
 !
