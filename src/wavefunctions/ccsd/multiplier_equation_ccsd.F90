@@ -27,9 +27,9 @@ submodule (ccsd_class) multiplier_equation_ccsd
 !!       t-bar^T A + eta = 0,
 !!
 !!    where t-bar is the multiplier vector, and
-!!
-!!       A_mu,nu = < mu | exp(-T) [H, τ_nu] exp(T) | R >
-!!       eta_mu  = < R | exp(-T) [H, τ_mu] exp(T) | R >.
+!! 
+!!       A_mu,nu = < mu |exp(-T) [H, τ_nu] exp(T) | R >
+!!       eta_mu  = < R |exp(-T) [H, τ_mu] exp(T) | R >.
 !!
 !
    implicit none
@@ -92,7 +92,7 @@ contains
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%eri%get_eri_t1('ovov', g_iajb)
+      call wf%eri_t1%get('ovov', g_iajb)
 !
       call mem%alloc(eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(eta_aibj, (wf%n_o*wf%n_v)**2)

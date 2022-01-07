@@ -590,13 +590,13 @@ contains
       call mem%alloc(g_iajb, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v)
       call mem%alloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
-      call wf%eri%get_eri_t1('ovov', g_iajb,                &
+      call wf%eri_t1%get('ovov', g_iajb,                &
                              1, wf%n_cc2_o, &
                              1, wf%n_cc2_v, &
                              1, wf%n_cc2_o, &
                              1, wf%n_cc2_v)
 !
-      call wf%eri%get_eri_t1('vovo', g_aibj,                &
+      call wf%eri_t1%get('vovo', g_aibj,                &
                              1, wf%n_cc2_v, &
                              1, wf%n_cc2_o, &
                              1, wf%n_cc2_v, &
@@ -773,7 +773,7 @@ contains
 !
       call mem%alloc(g_iajb, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v)
 !
-      call wf%eri%get_eri_t1('ovov', g_iajb,                &
+      call wf%eri_t1%get('ovov', g_iajb,                &
                              1, wf%n_cc2_o, &
                              1, wf%n_cc2_v, &
                              1, wf%n_cc2_o, &
@@ -865,7 +865,7 @@ contains
       call mem%alloc(g_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
       call mem%alloc(s_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
-      call wf%eri%get_eri_t1('vovo', g_aibj,1, wf%n_cc2_v, &
+      call wf%eri_t1%get('vovo', g_aibj,1, wf%n_cc2_v, &
                                             1, wf%n_cc2_o, &
                                             1, wf%n_cc2_v, &
                                             1, wf%n_cc2_o)
@@ -926,7 +926,7 @@ contains
 !
       call mem%alloc(g_iajb, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v)
 !
-      call wf%eri%get_eri_t1('ovov', g_iajb,                &
+      call wf%eri_t1%get('ovov', g_iajb,                &
                              1, wf%n_cc2_o, &
                              1, wf%n_cc2_v, &
                              1, wf%n_cc2_o, &
@@ -1138,7 +1138,9 @@ contains
 !
       call mem%alloc(T, wf%n_mo, wf%n_mo)
       call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, canonical_orbitals, T)
-      call wf%eri%update_cholesky_mo(T)
+      call wf%L_mo%basis_transformation(T)
+!
+      call wf%L_t1%set_equal_to(wf%L_mo)
 !
       call wf%determine_n_x2_amplitudes()
       call wf%determine_n_gs_amplitudes()
@@ -1154,7 +1156,6 @@ contains
 !
       call wf%initialize_t1()
       call zero_array(wf%t1, wf%n_t1)
-      call wf%eri%set_t1_to_mo()
 !
       call wf%construct_fock(task = 'block diagonalize fock')
       call wf%destruct_t1()
@@ -1169,8 +1170,10 @@ contains
       call wf%construct_semicanonical_mlcc_orbitals()
 !
       call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, partitioning_orbitals, T)
-      call wf%eri%update_cholesky_mo(T)
+      call wf%L_mo%basis_transformation(T)
       call mem%dealloc(T, wf%n_mo, wf%n_mo)
+!
+      call wf%L_t1%set_equal_to(wf%L_mo)
 !
 !     Frozen fock terms transformed from the basis of orbital partitioning to
 !     the MLCC basis
@@ -1217,13 +1220,16 @@ contains
       call wf%destruct_mo_fock_frozen()
       call wf%destruct_frozen_CCT()
 !
-      call wf%eri%cleanup()
-!
       call wf%destruct_nto_states()
       call wf%destruct_cnto_states()
 !
       deallocate(wf%ao)
       if (wf%embedded) deallocate(wf%embedding)
+!
+!     To avoid memory leaks with intel, explicit deallocations
+      deallocate(wf%eri_t1)
+      deallocate(wf%L_mo)
+      deallocate(wf%L_t1)
 !
    end subroutine cleanup_mlcc2
 !
@@ -1386,8 +1392,10 @@ contains
 !
       call mem%alloc(T, wf%n_mo, wf%n_mo)
       call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, canonical_orbitals, T)
-      call wf%eri%update_cholesky_mo(T)
+      call wf%L_mo%basis_transformation(T)
       call mem%dealloc(T, wf%n_mo, wf%n_mo)
+!
+      call wf%L_t1%set_equal_to(wf%L_mo)
 !
       call wf%determine_n_x2_amplitudes()
       call wf%determine_n_gs_amplitudes()

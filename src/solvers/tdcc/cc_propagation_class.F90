@@ -410,7 +410,7 @@ contains
       call wf%set_multipliers_complex( &
          amplitudes_multipliers(wf%n_gs_amplitudes+1:solver%vector_length))
 !
-      call wf%eri_complex%update_t1_integrals(wf%t1_complex)
+      call wf%construct_t1_cholesky_complex(wf%t1_complex, wf%L_mo_c, wf%L_t1_c)
 !
       call wf%construct_fock_complex()
 !

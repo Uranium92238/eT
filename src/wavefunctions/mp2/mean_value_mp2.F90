@@ -69,7 +69,7 @@ contains
       call timer%turn_on()
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call wf%eri%get_eri_mo('vovo', g_aibj, 1, wf%n_v, 1, wf%n_o, 1, wf%n_v, 1, wf%n_o)
+      call wf%eri_t1%get('vovo', g_aibj, 1, wf%n_v, 1, wf%n_o, 1, wf%n_v, 1, wf%n_o)
 !
       call mem%alloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !

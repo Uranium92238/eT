@@ -10,7 +10,7 @@ end method
 
 integrals
    cholesky storage: disk
-   eri storage:      none 
+   eri storage:      none
 end integrals
 
 memory

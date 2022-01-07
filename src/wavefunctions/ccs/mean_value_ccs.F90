@@ -295,12 +295,12 @@ contains
       timer = timings('Calculate energy (ccs)', 'n')
       call timer%turn_on()
 
-      call mem%alloc(X_J, wf%eri%n_J)
-      call zero_array(X_J, wf%eri%n_J)
+      call mem%alloc(X_J, wf%eri_t1%n_J)
+      call zero_array(X_J, wf%eri_t1%n_J)
 !
       req0 = 0
 !
-      req1_i = wf%eri%n_J*wf%n_v
+      req1_i = wf%eri_t1%n_J*wf%n_v
 !
       batch_i = batching_index(wf%n_o)
 !
@@ -310,44 +310,44 @@ contains
 !
          call batch_i%determine_limits(current_i_batch)
 !
-         call mem%alloc(L_Jai, wf%eri%n_J, wf%n_v, batch_i%length)
-         call wf%eri%get_cholesky_mo(L_Jai, wf%n_o + 1, wf%n_mo, &
-                                     batch_i%first, batch_i%get_last())
+         call mem%alloc(L_Jai, wf%eri_t1%n_J, wf%n_v, batch_i%length)
+         call wf%L_mo%get(L_Jai, wf%n_o + 1, wf%n_mo, &
+                          batch_i%first, batch_i%get_last())
 !
          call dgemm('N', 'N',                &
-                     wf%eri%n_J,             &
+                     wf%eri_t1%n_J,          &
                      1,                      &
                      wf%n_v*batch_i%length,  &
                      one,                    &
                      L_Jai,                  &
-                     wf%eri%n_J,             &
+                     wf%eri_t1%n_J,          &
                      wf%t1(1,batch_i%first), &
                      wf%n_v*wf%n_o,          &
                      one,                    &
                      X_J,                    &
-                     wf%eri%n_J)
+                     wf%eri_t1%n_J)
 !
-         call mem%dealloc(L_Jai, wf%eri%n_J, wf%n_v, batch_i%length)
+         call mem%dealloc(L_Jai, wf%eri_t1%n_J, wf%n_v, batch_i%length)
 !
       enddo
 !
       call mem%batch_finalize()
 !
-      correlation_energy = two*ddot(wf%eri%n_J, X_J, 1, X_J, 1)
+      correlation_energy = two*ddot(wf%eri_t1%n_J, X_J, 1, X_J, 1)
 !
-      call mem%dealloc(X_J, wf%eri%n_J)
+      call mem%dealloc(X_J, wf%eri_t1%n_J)
 !
       req0 = 0
 !
-      req1_i = wf%eri%n_J*wf%n_v
-      req1_j = wf%eri%n_J*wf%n_v
+      req1_i = wf%eri_t1%n_J*wf%n_v
+      req1_j = wf%eri_t1%n_J*wf%n_v
 !
       batch_i = batching_index(wf%n_o)
       batch_j = batching_index(wf%n_o)
 !
-      req2 = 3*wf%eri%n_J
+      req2 = 3*wf%eri_t1%n_J
 !
-      req_single_batch = wf%eri%n_J*wf%n_v*wf%n_o + wf%eri%n_J*(wf%n_o**2)
+      req_single_batch = wf%eri_t1%n_J*wf%n_v*wf%n_o + wf%eri_t1%n_J*(wf%n_o**2)
 !
       call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2, &
                            req_single_batch=req_single_batch, tag='calculate_energy_ccs 2')
@@ -356,8 +356,8 @@ contains
 !
          call batch_i%determine_limits(current_i_batch)
 !
-         call mem%alloc(L_Jia, wf%eri%n_J, batch_i%length, wf%n_v)
-         call wf%eri%get_cholesky_mo(L_Jia,                                   &
+         call mem%alloc(L_Jia, wf%eri_t1%n_J, batch_i%length, wf%n_v)
+         call wf%L_mo%get(L_Jia,                                   &
                                      batch_i%first, batch_i%get_last(), &
                                      wf%n_o + 1, wf%n_mo)
  !
@@ -365,51 +365,51 @@ contains
 !
             call batch_j%determine_limits(current_j_batch)
 !
-            call mem%alloc(X_Jij, wf%eri%n_J, batch_i%length, batch_j%length)
+            call mem%alloc(X_Jij, wf%eri_t1%n_J, batch_i%length, batch_j%length)
 !
-            call dgemm('N', 'N',                   &
-                        wf%eri%n_J*batch_i%length, &
-                        batch_j%length,            &
-                        wf%n_v,                    &
-                        one,                       &
-                        L_Jia,                     &
-                        wf%eri%n_J*batch_i%length, &
-                        wf%t1(1, batch_j%first),   &
-                        wf%n_v,                    &
-                        zero,                      &
-                        X_Jij,                     &
-                        wf%eri%n_J*batch_i%length)
+            call dgemm('N', 'N',                      &
+                        wf%eri_t1%n_J*batch_i%length, &
+                        batch_j%length,               &
+                        wf%n_v,                       &
+                        one,                          &
+                        L_Jia,                        &
+                        wf%eri_t1%n_J*batch_i%length, &
+                        wf%t1(1, batch_j%first),      &
+                        wf%n_v,                       &
+                        zero,                         &
+                        X_Jij,                        &
+                        wf%eri_t1%n_J*batch_i%length)
 !
             if (current_j_batch .ne. current_i_batch) then
 !
-               call mem%alloc(L_Jjb, wf%eri%n_J, batch_j%length, wf%n_v)
+               call mem%alloc(L_Jjb, wf%eri_t1%n_J, batch_j%length, wf%n_v)
 !
-               call wf%eri%get_cholesky_mo(L_Jjb,        &
-                                          batch_j%first, &
-                                          batch_j%get_last(),  &
-                                          wf%n_o + 1, wf%n_mo)
+               call wf%L_mo%get(L_Jjb,                &
+                                batch_j%first,        &
+                                batch_j%get_last(),   &
+                                wf%n_o + 1, wf%n_mo)
 !
-               call mem%alloc(X_Jji, wf%eri%n_J, batch_j%length, batch_i%length)
+               call mem%alloc(X_Jji, wf%eri_t1%n_J, batch_j%length, batch_i%length)
 !
-               call dgemm('N', 'N',                   &
-                           wf%eri%n_J*batch_j%length, &
-                           batch_i%length,            &
-                           wf%n_v,                    &
-                           one,                       &
-                           L_Jjb,                     &
-                           wf%eri%n_J*batch_j%length, &
-                           wf%t1(1, batch_i%first),   &
-                           wf%n_v,                    &
-                           zero,                      &
-                           X_Jji,                     &
-                           wf%eri%n_J*batch_j%length)
+               call dgemm('N', 'N',                      &
+                           wf%eri_t1%n_J*batch_j%length, &
+                           batch_i%length,               &
+                           wf%n_v,                       &
+                           one,                          &
+                           L_Jjb,                        &
+                           wf%eri_t1%n_J*batch_j%length, &
+                           wf%t1(1, batch_i%first),      &
+                           wf%n_v,                       &
+                           zero,                         &
+                           X_Jji,                        &
+                           wf%eri_t1%n_J*batch_j%length)
 !
-               call mem%dealloc(L_Jjb, wf%eri%n_J, batch_j%length, wf%n_v)
+               call mem%dealloc(L_Jjb, wf%eri_t1%n_J, batch_j%length, wf%n_v)
 !
 !$omp parallel do private(j, i, JJ) reduction(+:correlation_energy)
                do j = 1, batch_j%length
                   do i = 1, batch_i%length
-                     do JJ = 1, wf%eri%n_J
+                     do JJ = 1, wf%eri_t1%n_J
 !
                         correlation_energy = correlation_energy - X_Jij(JJ,i,j)*X_Jji(JJ,j,i)
 !
@@ -418,14 +418,14 @@ contains
                enddo
 !$omp end parallel do
 !
-               call mem%dealloc(X_Jji, wf%eri%n_J, batch_j%length, batch_i%length)
+               call mem%dealloc(X_Jji, wf%eri_t1%n_J, batch_j%length, batch_i%length)
 !
             else
 !
 !$omp parallel do private(j, i, JJ) reduction(+:correlation_energy)
                do j = 1, batch_j%length
                   do i = 1, batch_i%length
-                     do JJ = 1, wf%eri%n_J
+                     do JJ = 1, wf%eri_t1%n_J
 !
                         correlation_energy = correlation_energy - X_Jij(JJ,i,j)*X_Jij(JJ,j,i)
 !
@@ -436,11 +436,11 @@ contains
 !
             endif
 !
-            call mem%dealloc(X_Jij, wf%eri%n_J, batch_i%length, batch_j%length)
+            call mem%dealloc(X_Jij, wf%eri_t1%n_J, batch_i%length, batch_j%length)
 !
          enddo
 !
-         call mem%dealloc(L_Jia, wf%eri%n_J, batch_i%length, wf%n_v)
+         call mem%dealloc(L_Jia, wf%eri_t1%n_J, batch_i%length, wf%n_v)
 !
       enddo
 !

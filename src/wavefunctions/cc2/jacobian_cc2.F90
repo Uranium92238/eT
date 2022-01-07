@@ -28,10 +28,10 @@ submodule (cc2_class) jacobian_cc2
 !!    ρ_i = A * c_i,
 !!
 !!    where
-!!
-!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
-!!
-!
+!!   
+!!    A_μ,ν = < μ |exp(-T) [H, τ_ν] exp(T) | R >.
+!!  
+! 
    implicit none
 !
 !

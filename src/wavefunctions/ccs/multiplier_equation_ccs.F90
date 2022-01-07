@@ -27,9 +27,9 @@ submodule (ccs_class) multiplier_equation_ccs
 !!       t-bar^T A + eta = 0,
 !!
 !!    where t-bar is the multiplier vector, and
-!!
-!!       A_mu,nu = < mu | exp(-T) [H, τ_nu] exp(T) | R >
-!!       eta_mu  = < R | exp(-T) [H, τ_mu] exp(T) | R >.
+!! 
+!!       A_mu,nu = < mu |exp(-T) [H, τ_nu] exp(T) | R >
+!!       eta_mu  = < R |exp(-T) [H, τ_mu] exp(T) | R >.
 !!
 !
    implicit none

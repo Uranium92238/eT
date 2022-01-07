@@ -135,8 +135,9 @@ module eri_cd_class
       procedure, public :: run &
                         => run_eri_cd
 !
-      procedure, public :: construct_cholesky_mo_vectors &
-                        => construct_cholesky_mo_vectors_eri_cd
+      procedure :: construct_cholesky_mo_vectors_eri_cd
+!
+      generic, public :: construct_cholesky_mo_vectors => construct_cholesky_mo_vectors_eri_cd
 !
       procedure, public :: diagonal_test &
                         => diagonal_test_eri_cd
@@ -3147,7 +3148,7 @@ contains
 !
 !
    subroutine construct_cholesky_mo_vectors_eri_cd(this, ao, n_ao, n_mo, &
-                                                   orbital_coefficients, integrals)
+                                                   orbital_coefficients, cd_tool)
 !!
 !!    Construct Cholesky MO vectors
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Feb 2020
@@ -3163,7 +3164,7 @@ contains
 !!    Passes the Cholesky vectors to the integrals (eri_tool)
 !!
       use array_utilities, only: zero_array
-      use mo_eri_tool_class, only: mo_eri_tool
+      use abstract_eri_cholesky_class, only: abstract_eri_cholesky
 !
       implicit none
 !
@@ -3175,7 +3176,7 @@ contains
 !
       real(dp), dimension(n_ao, n_mo), intent(in) :: orbital_coefficients
 !
-      class(mo_eri_tool), intent(inout) :: integrals
+      class(abstract_eri_cholesky), intent(inout) :: cd_tool
 !
       integer :: A, B, C, D, K_shp, AB_shp
       integer :: w, x, y, z
@@ -3463,11 +3464,11 @@ contains
          call sort_123_to_312(L_qpJ, L_Jqp, n_mo, batch_p%length, this%n_cholesky)
          call mem%dealloc(L_qpJ, n_mo, batch_p%length, this%n_cholesky)
 !
-         call integrals%set_cholesky_mo(L_Jqp,             &
-                                          1,               &
-                                          n_mo,            &
-                                          batch_p%first,   &
-                                          batch_p%get_last())
+         call cd_tool%set(L_Jqp,           &
+                          1,               &
+                          n_mo,            &
+                          batch_p%first,   &
+                          batch_p%get_last())
 !
          call mem%dealloc(L_Jqp, this%n_cholesky, n_mo, batch_p%length)
 !

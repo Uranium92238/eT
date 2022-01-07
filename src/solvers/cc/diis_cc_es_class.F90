@@ -31,7 +31,7 @@ module diis_cc_es_class
 !! excitation energies omega. Here, A is the coupled cluster
 !! Jacobian matrix:
 !!
-!!       A_mu,nu = < mu | [H-bar, tau_nu] | HF >,    H-bar = e-T H eT.
+!!       A_mu,nu = < mu |[H-bar, tau_nu] | HF >,    H-bar = e-T H eT.
 !!
 !! The equation is solved using the direct inversion of the iterative
 !! subspace (DIIS) algorithm. See Pulay, P. Convergence acceleration

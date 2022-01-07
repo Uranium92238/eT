@@ -226,19 +226,19 @@ contains
 !
 !     2 sum_bjck g_kcjb u_aick c_bj = L_Jkc L_Jjb c_bj u_aick
 !
-      call mem%alloc(L_Jov, wf%eri%n_J, wf%n_o, wf%n_v)
-      call wf%eri%get_cholesky_t1(L_Jov, 1, wf%n_o, wf%n_o + 1, wf%n_mo)
+      call mem%alloc(L_Jov, wf%eri_t1%n_J, wf%n_o, wf%n_v)
+      call wf%L_t1%get(L_Jov, 1, wf%n_o, wf%n_o + 1, wf%n_mo)
 !
       call mem%alloc(c_jb, wf%n_o, wf%n_v)
       call sort_12_to_21(c_ai, c_jb, wf%n_v, wf%n_o)
 !
-      call mem%alloc(X_J, wf%eri%n_J)
+      call mem%alloc(X_J, wf%eri_t1%n_J)
       call dgemv('N',            &
-                  wf%eri%n_J,    &
+                  wf%eri_t1%n_J, &
                   wf%n_v*wf%n_o, &
                   one,           &
                   L_Jov,         &
-                  wf%eri%n_J,    &
+                  wf%eri_t1%n_J, &
                   c_jb,          &
                   1,             &
                   zero,          &
@@ -247,12 +247,12 @@ contains
 !
       call mem%dealloc(c_jb, wf%n_o, wf%n_v)
 !
-      call mem%alloc(L_Jkc, wf%eri%n_J, n_cc2_o, n_cc2_v)
+      call mem%alloc(L_Jkc, wf%eri_t1%n_J, n_cc2_o, n_cc2_v)
 !
 !$omp parallel do private (c, k, J)
       do c = 1, n_cc2_v
          do k = 1, n_cc2_o
-            do J = 1, wf%eri%n_J
+            do J = 1, wf%eri_t1%n_J
 !
                L_Jkc(J, k, c) = L_Jov(J, k + first_cc2_o - 1, c + first_cc2_v - 1)
 !
@@ -264,19 +264,19 @@ contains
       call mem%alloc(X_kc, n_cc2_o, n_cc2_v)
 !
       call dgemv('T',              &
-                  wf%eri%n_J,      &
+                  wf%eri_t1%n_J,   &
                   n_cc2_v*n_cc2_o, &
                   two,             &
                   L_Jkc,           &
-                  wf%eri%n_J,      &
+                  wf%eri_t1%n_J,   &
                   X_J,             &
                   1,               &
                   zero,            &
                   X_kc,            &
                   1)
 !
-      call mem%dealloc(X_J, wf%eri%n_J)
-      call mem%dealloc(L_Jkc, wf%eri%n_J, n_cc2_o, n_cc2_v)
+      call mem%dealloc(X_J, wf%eri_t1%n_J)
+      call mem%dealloc(L_Jkc, wf%eri_t1%n_J, n_cc2_o, n_cc2_v)
 !
       call mem%alloc(X_ck, n_cc2_v, n_cc2_o)
       call sort_12_to_21(X_kc, X_ck, n_cc2_o, n_cc2_v)
@@ -286,40 +286,40 @@ contains
 !
 !     Note: L_J_jc_t1 = L_J_jc = L_J_cj
 !
-      call mem%alloc(X_Jkj, wf%eri%n_J, n_cc2_o, wf%n_o)
+      call mem%alloc(X_Jkj, wf%eri_t1%n_J, n_cc2_o, wf%n_o)
 !
-      call dgemm('N', 'N',            &
-                  wf%eri%n_J*n_cc2_o, &
-                  wf%n_o,             &
-                  wf%n_v,             &
-                  one,                &
-                  L_Jov,              &
-                  wf%eri%n_J*wf%n_o,  &
-                  c_ai,               &
-                  wf%n_v,             &
-                  zero,               &
-                  X_Jkj,              &
-                  wf%eri%n_J*n_cc2_o)
+      call dgemm('N', 'N',                &
+                  wf%eri_t1%n_J*n_cc2_o,  &
+                  wf%n_o,                 &
+                  wf%n_v,                 &
+                  one,                    &
+                  L_Jov,                  &
+                  wf%eri_t1%n_J*wf%n_o,   &
+                  c_ai,                   &
+                  wf%n_v,                 &
+                  zero,                   &
+                  X_Jkj,                  &
+                  wf%eri_t1%n_J*n_cc2_o)
 !
-      call mem%alloc(X_Jjk, wf%eri%n_J, wf%n_o, n_cc2_o)
-      call sort_123_to_132(X_Jkj, X_Jjk, wf%eri%n_J, n_cc2_o, wf%n_o)
-      call mem%dealloc(X_Jkj, wf%eri%n_J, n_cc2_o, wf%n_o)
+      call mem%alloc(X_Jjk, wf%eri_t1%n_J, wf%n_o, n_cc2_o)
+      call sort_123_to_132(X_Jkj, X_Jjk, wf%eri_t1%n_J, n_cc2_o, wf%n_o)
+      call mem%dealloc(X_Jkj, wf%eri_t1%n_J, n_cc2_o, wf%n_o)
 !
       call dgemm('T', 'N',                  &
                   n_cc2_v,                  &
                   n_cc2_o,                  &
-                  wf%eri%n_J*wf%n_o,        &
+                  wf%eri_t1%n_J*wf%n_o,     &
                   -one,                     &
                   L_Jov(1, 1, first_cc2_v), &
-                  wf%eri%n_J*wf%n_o,        &
+                  wf%eri_t1%n_J*wf%n_o,     &
                   X_Jjk,                    &
-                  wf%eri%n_J*wf%n_o,        &
+                  wf%eri_t1%n_J*wf%n_o,     &
                   one,                      &
                   X_ck,                     &
                   n_cc2_v)
 !
-      call mem%dealloc(X_Jjk, wf%eri%n_J, wf%n_o, n_cc2_o)
-      call mem%dealloc(L_Jov, wf%eri%n_J, wf%n_o, wf%n_v)
+      call mem%dealloc(X_Jjk, wf%eri_t1%n_J, wf%n_o, n_cc2_o)
+      call mem%dealloc(L_Jov, wf%eri_t1%n_J, wf%n_o, wf%n_v)
       call mem%alloc(rho_ai_copy, n_cc2_v, n_cc2_o)
 !
       call dgemm('N', 'N',          &
@@ -472,7 +472,7 @@ contains
 !
       call mem%alloc(g_kjai, wf%n_o, n_cc2_o, n_cc2_v, n_cc2_o)
 !
-      call wf%eri%get_eri_t1('oovo', g_kjai, 1, wf%n_o, first_cc2_o, last_cc2_o, &
+      call wf%eri_t1%get('oovo', g_kjai, 1, wf%n_o, first_cc2_o, last_cc2_o, &
                                              first_cc2_v, last_cc2_v, first_cc2_o, last_cc2_o)
 !
       call dgemm('N','N',                 &
@@ -496,8 +496,8 @@ contains
 !
 !        c : unrestricted
 !
-      req0 = (wf%eri%n_J)*(n_cc2_o)*(n_cc2_v)
-      req1 = (n_cc2_o)*(n_cc2_v)**2 + (wf%eri%n_J)*(n_cc2_v)
+      req0 = (wf%eri_t1%n_J)*(n_cc2_o)*(n_cc2_v)
+      req1 = (n_cc2_o)*(n_cc2_v)**2 + (wf%eri_t1%n_J)*(n_cc2_v)
 !
       batch_c = batching_index(wf%n_v)
 !
@@ -509,7 +509,7 @@ contains
 !
          call mem%alloc(g_aibc, n_cc2_v, n_cc2_o, n_cc2_v, batch_c%length)
 !
-         call wf%eri%get_eri_t1('vovv', g_aibc, first_cc2_v, last_cc2_v, &
+         call wf%eri_t1%get('vovv', g_aibc, first_cc2_v, last_cc2_v, &
                                                 first_cc2_o, last_cc2_o, &
                                                 first_cc2_v, last_cc2_v, &
                                                 batch_c%first, batch_c%get_last())
@@ -670,7 +670,7 @@ contains
 !     Make L_jbki ordered as L_kbji (= 2 g_jbki - g_kbji)
 !
       call mem%alloc(g_jbki, n_cc2_o, n_cc2_v, n_cc2_o, wf%n_o)
-      call wf%eri%get_eri_t1('ovoo', g_jbki, first_cc2_o, last_cc2_o, first_cc2_v, last_cc2_v, &
+      call wf%eri_t1%get('ovoo', g_jbki, first_cc2_o, last_cc2_o, first_cc2_v, last_cc2_v, &
                                              first_cc2_o, last_cc2_o, 1, wf%n_o)
 !
       call mem%alloc(L_kbji, n_cc2_o, n_cc2_v, n_cc2_o, wf%n_o)
@@ -706,8 +706,8 @@ contains
       call mem%alloc(c_bkci, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
       call sort_1234_to_3214(c_aibj, c_bkci, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
 !
-      req0 = (n_cc2_o)*(n_cc2_v)*(wf%eri%n_J)
-      req1 = max((n_cc2_v)*(wf%eri%n_J) + (n_cc2_o)*(n_cc2_v)**2, 2*(n_cc2_o)*(n_cc2_v)**2)
+      req0 = (n_cc2_o)*(n_cc2_v)*(wf%eri_t1%n_J)
+      req1 = max((n_cc2_v)*(wf%eri_t1%n_J) + (n_cc2_o)*(n_cc2_v)**2, 2*(n_cc2_o)*(n_cc2_v)**2)
 !
       batch_a = batching_index(wf%n_v)
 !
@@ -719,7 +719,7 @@ contains
 !
          call mem%alloc(g_abkc, batch_a%length, n_cc2_v, n_cc2_o, n_cc2_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_abkc, batch_a%first, batch_a%get_last(),  &
+         call wf%eri_t1%get('vvov', g_abkc, batch_a%first, batch_a%get_last(),  &
                                                 first_cc2_v, last_cc2_v,            &
                                                 first_cc2_o, last_cc2_o,            &
                                                 first_cc2_v, last_cc2_v)
@@ -882,7 +882,7 @@ contains
 !     Construct integrals for both intermediates
 !
       call mem%alloc(g_jbkc, wf%n_o, n_cc2_v, n_cc2_o, wf%n_v)
-      call wf%eri%get_eri_t1('ovov', g_jbkc,                         &
+      call wf%eri_t1%get('ovov', g_jbkc,                             &
                              1, wf%n_o,                              &
                              first_cc2_v, first_cc2_v + n_cc2_v - 1, &
                              first_cc2_o, first_cc2_o + n_cc2_o - 1, &

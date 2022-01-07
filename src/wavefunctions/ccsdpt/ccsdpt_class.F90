@@ -632,18 +632,14 @@ contains
 !
       integer, intent(out) :: req0, req1
 !
-      integer :: req_vvvo, req_ovov, req_oovo
+      integer, dimension(2) :: req_vvvo, req_ovov, req_oovo
 !
-      req0  = 0
-      req_vvvo = 0
-      req_ovov = 0
-      req_oovo = 0
+      req_vvvo = wf%eri_t1%get_memory_estimate('vvvo', wf%n_v, wf%n_v, wf%n_v, 1)
+      req_ovov = wf%eri_t1%get_memory_estimate('ovov', 1, wf%n_v, 1, wf%n_v)
+      req_oovo = wf%eri_t1%get_memory_estimate('oovo', wf%n_o, 1, wf%n_v, 1)
 !
-      call wf%eri%get_eri_mo_mem('vvvo', req0, req_vvvo, wf%n_v, wf%n_v, wf%n_v, 1)
-      call wf%eri%get_eri_mo_mem('ovov', req_ovov, req_ovov, 1, wf%n_v, 1, wf%n_v)
-      call wf%eri%get_eri_mo_mem('oovo', req_oovo, req_oovo, wf%n_o, 1, wf%n_v, 1)
-!
-      req1 = max(req_vvvo, req_ovov, req_oovo)
+      req0 = req_vvvo(1)
+      req1 = max(req_vvvo(2), sum(req_ovov), sum(req_oovo))
 !
    end subroutine estimate_mem_integral_setup_ccsdpt
 !

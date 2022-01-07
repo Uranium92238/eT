@@ -31,7 +31,7 @@ module diis_cc_gs_class
 !! for the cluster amplitudes t_mu in T = sum_mu t_mu tau_mu. The 
 !! cluster amplitude give the (right) coupled cluster ground state as 
 !!
-!!    | CC > = e^T | HF >.
+!!    |CC > = e^T | HF >.
 !!
 !! The equation is solved using the direct inversion of the iterative 
 !! subspace (DIIS) algorithm. See Pulay, P. Convergence acceleration 
@@ -55,7 +55,8 @@ module diis_cc_gs_class
    use precondition_tool_class,           only : precondition_tool
    use convergence_tool_class,            only : convergence_tool
 !
-   use amplitude_updater_class,     only: amplitude_updater
+   use amplitude_updater_class,           only: amplitude_updater
+   use eri_cholesky_disk_class,           only: eri_cholesky_disk
 !
    implicit none
 !
@@ -159,9 +160,6 @@ contains
 !
       call wf%initialize_amplitudes()
 !
-      call wf%eri%set_t1_to_mo()
-      call wf%eri%place_g_mo_in_memory()
-!
       call wf%set_initial_amplitudes_guess(solver%restart)
 !
 !     Determine whether to store records in memory or on file
@@ -232,7 +230,7 @@ contains
 !
       integer :: iteration
 !
-      type(timings), allocatable :: iteration_timer 
+      type(timings), allocatable :: iteration_timer
 !
       call solver%diis%initialize()
 !
@@ -290,8 +288,8 @@ contains
 !           Calculate the next guess for the amplitudes,
 !           and improve it with DIIS extrapolation
 !
+
             call wf%get_amplitudes(amplitudes)
-!
             call solver%t_updater%update(wf, amplitudes, omega)
 !
             call solver%diis%update(omega, amplitudes)
@@ -300,7 +298,7 @@ contains
 !
 !           Update t1-transformed electron repulsion integrals
 !
-            call wf%eri%update_t1_integrals(wf%t1)
+            call wf%construct_t1_cholesky(wf%t1, wf%L_mo, wf%L_t1)
 !
          endif
 !

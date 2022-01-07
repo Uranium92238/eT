@@ -377,7 +377,8 @@ contains
 !
          call zero_array(wf%t1, wf%n_t1)
 !
-         call wf%eri%update_t1_integrals(wf%t1)
+         call wf%construct_t1_cholesky(wf%t1, wf%L_mo, wf%L_t1)
+         !call wf%eri_t1%update()
 !
          call wf%set_t2_to_cc2_guess()
 !
@@ -392,13 +393,14 @@ contains
 !
             if(n_amplitudes_read == wf%n_gs_amplitudes) then
 !
-               call wf%eri%update_t1_integrals(wf%t1)
+               call wf%construct_t1_cholesky(wf%t1, wf%L_mo, wf%L_t1)
+               !call wf%eri_t1%update()
 !
             else if (n_amplitudes_read == wf%n_t1) then
 !
                call zero_array(wf%t1, wf%n_t1)
-!
-               call wf%eri%update_t1_integrals(wf%t1)
+               call wf%construct_t1_cholesky(wf%t1, wf%L_mo, wf%L_t1)
+               !call wf%eri_t1%update()
 !
                call wf%set_t2_to_cc2_guess()
 !
@@ -413,8 +415,8 @@ contains
          else
 !
             call zero_array(wf%t1, wf%n_t1)
-!
-            call wf%eri%update_t1_integrals(wf%t1)
+            call wf%construct_t1_cholesky(wf%t1, wf%L_mo, wf%L_t1)
+            !call wf%eri_t1%update()
 !
             call wf%set_t2_to_cc2_guess()
 !
@@ -489,8 +491,10 @@ contains
 !!
 !!       t_aibj = - g_aibj/epsilon_aibj
 !!
-!!    Note that update_t1_integrals has to be called before this routine.
+!!   SARAI: FIX -> Note that update_t1_integrals has to be called before this routine.
 !!
+!
+!
       implicit none
 !
       class(ccsd) :: wf
@@ -501,7 +505,7 @@ contains
       integer :: a, b, i, j, ai, bj, aibj, b_end
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call wf%eri%get_eri_mo('vovo', g_aibj)
+      call wf%eri_t1%get('vovo', g_aibj) ! OBS SARAI NAME ! SHOULD THIS BE T1
 !
 !$omp parallel do schedule(guided) &
 !$omp private(a, i, b, j, ai, bj, aibj, b_end, eps_ai)
