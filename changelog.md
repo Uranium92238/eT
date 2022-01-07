@@ -6,6 +6,10 @@
 ### Features
 - Added timers for calculate energy. eT-program/eT!993
 
+# eT v1.5.10
+### Bugfixes
+- Fixed memory estimate in `construct_cholesky_t1_oo`. eT-program/eT!998
+
 # eT v1.5.9
 ### Tests
 - Fix gcov call for MKL-Ubuntu Docker image. eT-program/eT!996

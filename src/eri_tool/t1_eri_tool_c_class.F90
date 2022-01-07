@@ -913,14 +913,14 @@ contains
       else
 !
          req0 = 0
-         req1 = eri%n_J*(eri%n_o*max(eri%n_v, eri%n_o) + eri%n_o**2)
+         req1 = eri%n_J*(eri%n_v + eri%n_o)
 !
          batch_o = batching_index(eri%n_o)
          call mem%batch_setup(batch_o, req0, req1, 'construct_cholesky_t1_oo_c', &
                               element_size=2*dp)
 !
          call mem%alloc(L_J_oo, eri%n_J*batch_o%max_length*eri%n_o)
-         call mem%alloc(L_J_ox, eri%n_J*batch_o%max_length*max(eri%n_v, eri%n_o))
+         call mem%alloc(L_J_ox, eri%n_J*batch_o%max_length*eri%n_v)
 !
          do o_batch = 1,batch_o%num_batches
 !
@@ -946,7 +946,7 @@ contains
          enddo
 !
          call mem%dealloc(L_J_oo, eri%n_J*batch_o%max_length*eri%n_o)
-         call mem%dealloc(L_J_ox, eri%n_J*batch_o%max_length*max(eri%n_v, eri%n_o))
+         call mem%dealloc(L_J_ox, eri%n_J*batch_o%max_length*eri%n_v)
 !
          call mem%batch_finalize()
 !
