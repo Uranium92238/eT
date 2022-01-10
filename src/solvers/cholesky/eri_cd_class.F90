@@ -2478,7 +2478,7 @@ contains
 !
       if (sig_neg .gt. 0) &
          call output%printf('n', 'Number of significant negative diagonals: (i0)', &
-                             ints=[sig_neg], fs='(/t6,a')
+                             ints=[sig_neg], fs='(/t6,a)')
 !
 !     Prepare info on basis
 !
