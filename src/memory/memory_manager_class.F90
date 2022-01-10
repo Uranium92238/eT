@@ -2382,7 +2382,7 @@ contains
    end subroutine batch_finalize_memory_manager
 !
 !
-   subroutine initialize_batching_tracker(mem, max_memory_usage)
+   subroutine initialize_batching_tracker(mem, max_memory_usage, tag)
 !!
 !!    Initialize batching tracker
 !!    Written by Eirik F. Kjønstad, June 2021
@@ -2396,6 +2396,7 @@ contains
       class(memory_manager), intent(inout) :: mem
 !
       integer(i64), intent(in) :: max_memory_usage
+      character(len=*), intent(in) :: tag
 !
       if (mem%batching_on) then
 !
@@ -2406,7 +2407,7 @@ contains
       endif
 !
       mem%batching_on = .true.
-      mem%batch_mem_tracker = memory_tracker(max_memory_usage)
+      mem%batch_mem_tracker = memory_tracker(max_memory_usage, tag)
 !
    end subroutine initialize_batching_tracker
 !
@@ -2500,11 +2501,10 @@ contains
 !
       if (force_batch) call batch_p%force_batch()
 !
-      call mem%initialize_batching_tracker(req0_tot + req1_min*int(batch_p%max_length, kind=i64))
+      if (batch_p%num_batches > 1) call output%printf('v', 'Batching in (a0)', chars=[tag])
 !
-      if (batch_p%num_batches > 1) then
-         call output%printf('v', 'Batching in (a0)', chars=[tag])
-      end if
+      call mem%initialize_batching_tracker(req0_tot + req1_min*int(batch_p%max_length, kind=i64), &
+                                           tag)
 !
    end subroutine batch_setup_1_memory_manager
 !
@@ -2748,14 +2748,11 @@ contains
 !
       endif
 !
-      call mem%initialize_batching_tracker(max_memory_usage)
-!
-!
       if (any([batch_p%num_batches, batch_q%num_batches] > 1)) then
-!
          call output%printf('v', 'Batching in (a0)', chars=[tag])
-!
       end if
+!
+      call mem%initialize_batching_tracker(max_memory_usage, tag)
 !
    end subroutine batch_setup_2_memory_manager
 !
@@ -3035,13 +3032,11 @@ contains
 !
       endif
 !
-      call mem%initialize_batching_tracker(max_memory_usage)
-!
       if (any([batch_p%num_batches, batch_q%num_batches, batch_r%num_batches] > 1)) then
-!
          call output%printf('v', 'Batching in (a0)', chars=[tag])
-!
       end if
+!
+      call mem%initialize_batching_tracker(max_memory_usage, tag)
 !
    end subroutine batch_setup_3_memory_manager
 !

@@ -600,23 +600,16 @@ contains
 !
       length = print_position - 1
 !
-      if(nreals .ne. real_count) then
-         print *, "Too many reals in format_print"
-         stop
-      endif
-      if(nints .ne. int_count) then
-         print *, "Too many ints in format_print"
-         stop
-      endif
-      if(ncomplexs .ne. complex_count) then
-         print *, "Too many complexs in format_print"
-      endif
-      if(nlogs .ne. log_count) then
-         print *, "Too many logs in format_print"
-      endif
-      if(nchars .ne. char_count) then
-         print *, "Too many logs in format_print"
-      endif
+      if(nreals .ne. real_count) error stop "Too many reals in format_print"
+!
+      if(nints .ne. int_count) error stop "Too many ints in format_print"
+!
+      if(ncomplexs .ne. complex_count) error stop "Too many complexs in format_print"
+!
+      if(nlogs .ne. log_count) error stop "Too many logs in format_print"
+!
+      if(nchars .ne. char_count) error stop "Too many chars in format_print"
+!
 !
       call the_file%long_string_print(pstring, length, fs, ffs, ll, padd, adv)
 !

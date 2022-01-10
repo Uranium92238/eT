@@ -910,11 +910,10 @@ contains
       integer :: o_batch
 !
       batch_o = batching_index(wf%n_o)
-      call mem%batch_setup(batch_o, 0, L%n_J*(wf%n_o*max(wf%n_v, wf%n_o) + wf%n_o**2), &
-                           tag='Cholesky c1 oo')
+      call mem%batch_setup(batch_o, 0, L%n_J*(wf%n_v + wf%n_o), tag='Cholesky c1 oo')
 !
       call mem%alloc(L_J_oo, L%n_J*batch_o%max_length*wf%n_o)
-      call mem%alloc(L_J_ov, L%n_J*batch_o%max_length*max(wf%n_v, wf%n_o))
+      call mem%alloc(L_J_ov, L%n_J*batch_o%max_length*wf%n_v)
 !
       do o_batch = 1,batch_o%num_batches
 !
@@ -935,7 +934,7 @@ contains
       enddo
 !
       call mem%dealloc(L_J_oo, L%n_J*batch_o%max_length*wf%n_o)
-      call mem%dealloc(L_J_ov, L%n_J*batch_o%max_length*max(wf%n_v, wf%n_o))
+      call mem%dealloc(L_J_ov, L%n_J*batch_o%max_length*wf%n_v)
 !
       call mem%batch_finalize()
 !
