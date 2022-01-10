@@ -8,6 +8,7 @@
 
 ### Features
 - Added timers for calculate energy. eT-program/eT!993
+- Memory tracker now prints the batching tag and memory difference. eT-program/eT!1000
 
 # eT v1.5.11
 ### Bugfixes
