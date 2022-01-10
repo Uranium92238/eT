@@ -1,3 +1,7 @@
+# eT v1.5.11
+### Bugfixes
+- Fixed format in call to printf in `eri_cd_class.F90`. eT-program/eT!1001
+
 # eT v1.5.10
 ### Bugfixes
 - Fixed memory estimate in `construct_cholesky_t1_oo`. eT-program/eT!998
