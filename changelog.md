@@ -10,6 +10,10 @@
 - Added timers for calculate energy. eT-program/eT!993
 - Memory tracker now prints the batching tag and memory difference. eT-program/eT!1000
 
+# eT v1.5.12
+### Tests
+- Added stage to test Intel compilers (ifort/icpc) in Gitlab CI/CD. eT-program/eT!1004
+
 # eT v1.5.11
 ### Bugfixes
 - Fixed format in call to printf in `eri_cd_class.F90`. eT-program/eT!1001
