@@ -5,6 +5,7 @@ stages:
   - code-quality
   - build
   - run
+  - intel
   - prepare-release
   - create-release
 
@@ -90,6 +91,27 @@ run:
     - merge_requests
     - /^release\/\d+\.\d+$/
 
+intel:
+  stage: intel
+  image: registry.gitlab.com/et-program/et/ubuntu-mkl-ifort-for-et
+  script:
+    - git submodule init
+    - git submodule update
+    - ./setup.py -F-flags="$extra_F_flags" $extra_setup_options --pcm
+    - cd build
+    - cmake_command=$(cat setup_cmake_output | head -1)
+    - echo ${cmake_command}
+    - make -j16
+    - ctest -j16 --output-on-failure
+  rules: # Always run if intel=true or if we push commits to master or development
+    - if: '$intel == "true"'
+      when: always
+    - if: '$CI_PROJECT_NAMESPACE == "eT-program" && $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "push"'
+      when: always
+    - if: '$CI_PROJECT_NAMESPACE == "eT-program" && $CI_COMMIT_BRANCH == "development" && $CI_PIPELINE_SOURCE == "push"'
+      when: always
+    - when: never # Default: never run 
+
 prepare-release:
   stage: prepare-release
   image: python:latest
@@ -125,4 +147,4 @@ create-release:
     - if: '$CI_PROJECT_NAMESPACE == "eT-program" && $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "push"'
       when: on_success
     - when: never # Default: never run if the above conditions are false
-
+    
