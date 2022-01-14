@@ -136,6 +136,11 @@ set(eT_fortran_sources
    src/solver_tools/rpa_preconditioner_getter_class.F90
    src/solver_tools/tamm_dancoff_preconditioner_getter_class.F90
 #
+   src/solver_tools/eigen_davidson_print_tool_class.F90
+   src/solver_tools/linear_davidson_print_tool_class.F90
+   src/solver_tools/linear_davidson_single_solution_print_tool_class.F90
+   src/solver_tools/linear_davidson_multiple_solutions_print_tool_class.F90
+#
    src/solver_tools/rhs_linear_equation_tool_class.F90
    src/solver_tools/cc_multipliers_rhs_tool_class.F90
 #
@@ -173,7 +178,7 @@ set(eT_fortran_sources
    src/solvers/cc/asymmetric_lanczos_cc_es_class.F90
    src/solvers/bfgs_solver_class.F90
 #
-   src/solvers/general_eigen_davidson_solver_class.F90
+   src/solvers/eigen_davidson_solver_class.F90
    src/solvers/general_linear_davidson_solver_class.F90
 #
    src/tools/index_invert.F90
