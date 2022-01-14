@@ -111,7 +111,6 @@ contains
 !!    Transferred here as separate subroutine in order to only
 !!    compute X_ji once at the beginning of the calculation
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: zero_array
       use reordering, only: add_1432_to_1234
 !
@@ -283,7 +282,6 @@ contains
 !!    Transferred here as separate subroutine in order to only
 !!    compute X_ab once at the beginning of the calculation
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: zero_array
       use reordering, only: add_1432_to_1234
 !
@@ -507,7 +505,6 @@ contains
 !!       X_ab  =  L_kcjb t^ac_kj
 !!       X_ji   = L_kcjb t^cb_ki
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: zero_array
       use reordering, only: add_1243_to_1234, add_1342_to_1234
 !
@@ -794,7 +791,6 @@ contains
 !!    and adds it to rho_ai
 !!    The term is calculated in batches over the a and c indices.
 !!
-      use batching_index_class, only: batching_index
 !
       implicit none
 !
@@ -1009,7 +1005,6 @@ contains
 !!
 !!    and adds it to rho_ai
 !!
-      use batching_index_class, only: batching_index
 !
       implicit none
 !
@@ -1165,7 +1160,6 @@ contains
 !!
 !!    Integrals, g_akbc and g_bjac, moved out of i batching loop
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: zero_array
       use reordering, only: add_1423_to_1234, add_2413_to_1234
 !
@@ -1362,7 +1356,6 @@ contains
 !!
 !!    and adds it to the rho_ai vector.
 !!
-      use batching_index_class, only: batching_index
       use reordering, only: add_1432_to_1234
 !
       implicit none
@@ -1552,7 +1545,6 @@ contains
 !!
 !!    and adds it to the rho_ai vector.
 !!
-      use batching_index_class, only: batching_index
       use reordering, only: add_3214_to_1234
 !
       implicit none
@@ -1746,7 +1738,6 @@ contains
 !!
 !!    Integral, g_abkc, moved out of i batching loop
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: zero_array
       use reordering, only: add_1243_to_1234, add_1342_to_1234
 !

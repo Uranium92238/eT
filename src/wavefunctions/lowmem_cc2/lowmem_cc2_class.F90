@@ -35,6 +35,8 @@ module lowmem_cc2_class
    use timings_class, only: timings
    use memory_manager_class, only: mem
    use stream_file_class, only: stream_file
+   use direct_stream_file_class, only: direct_stream_file
+   use batching_index_class, only: batching_index
 !
    implicit none
 !
@@ -47,13 +49,35 @@ module lowmem_cc2_class
 !
       procedure :: construct_fock   => construct_fock_lowmem_cc2
 !
-      procedure :: construct_omega  => construct_omega_lowmem_cc2
+!     Omega
 !
-      procedure :: omega_cc2_a1     => omega_cc2_a1_lowmem_cc2
-      procedure :: omega_cc2_b1     => omega_cc2_b1_lowmem_cc2
-      procedure :: omega_cc2_c1     => omega_cc2_c1_lowmem_cc2
+      procedure :: construct_omega &
+                => construct_omega_lowmem_cc2
+      procedure :: omega_cc2 &
+                => omega_cc2_lowmem_cc2
+!
+      procedure :: setup_L_Jvo &
+                => setup_L_Jvo_lowmem_cc2
+      procedure :: setup_L_Jov &
+                => setup_L_Jov_lowmem_cc2
+      procedure :: setup_L_Joo &
+                => setup_L_Joo_lowmem_cc2
+!
+      procedure :: construct_contravariant_t2_single_ij &
+                => construct_contravariant_t2_single_ij_lowmem_cc2
+      procedure :: make_contravariant_doubles_single_ij &
+                => make_contravariant_doubles_single_ij_lowmem_cc2
+!
+      procedure :: omega_cc2_fock &
+                => omega_cc2_fock_lowmem_cc2
+      procedure :: omega_cc2_v2o2J &
+                => omega_cc2_v2o2J_lowmem_cc2
+      procedure :: omega_cc2_Jv2o &
+                => omega_cc2_Jv2o_lowmem_cc2
 !
       procedure :: calculate_energy => calculate_energy_lowmem_cc2
+!
+!     Jacobian transformation
 !
       procedure :: construct_Jacobian_transform       => construct_Jacobian_transform_lowmem_cc2
 !
@@ -76,6 +100,8 @@ module lowmem_cc2_class
       procedure :: effective_jacobian_cc2_d1 => effective_jacobian_cc2_d1_lowmem_cc2
       procedure :: effective_jacobian_cc2_e1 => effective_jacobian_cc2_e1_lowmem_cc2
       procedure :: effective_jacobian_cc2_f1 => effective_jacobian_cc2_f1_lowmem_cc2
+!
+!     Transpose Jacobian transformation
 !
       procedure :: effective_jacobian_transpose_transformation &
                => effective_jacobian_transpose_transformation_lowmem_cc2
