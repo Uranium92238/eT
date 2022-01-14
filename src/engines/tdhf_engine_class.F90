@@ -110,15 +110,15 @@ contains
 !!    Do TDHF
 !!    Written by Sarai D. Folkestad, May 2021
 !!
-      use general_eigen_davidson_class,      only: general_eigen_davidson
-      use tdhf_solver_factory_class, only: tdhf_solver_factory
+      use eigen_davidson_solver_class, only: eigen_davidson_solver
+      use tdhf_solver_factory_class,   only: tdhf_solver_factory
 !
       implicit none
 
       class(tdhf_engine), intent(in) :: engine
       class(hf), intent(inout)       :: wf
 !
-      class(general_eigen_davidson),      allocatable :: solver
+      class(eigen_davidson_solver), allocatable :: solver
       type(tdhf_solver_factory) :: solver_factory
 !
       call engine%tasks%print_('excitation energies')

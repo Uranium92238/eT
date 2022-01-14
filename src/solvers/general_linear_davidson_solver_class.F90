@@ -17,13 +17,13 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module general_linear_davidson_class
+module general_linear_davidson_solver_class
 !
 !!
 !!    General linear Davidson solver class
 !!    Written by Regina Matveeva and Ida-Marie Høyvik, Sept 2021
 !!
-!!    Based on general_eigen_davidson_class by Sarai D. Folkestad
+!!    Based on eigen_davidson_class by Sarai D. Folkestad
 !!
 !!    This solver uses the Davidson algorithm to solve the sets of linear equations
 !!
@@ -40,7 +40,7 @@ module general_linear_davidson_class
 !!
 !!    This solver is a generalization of the ground state multipliers Davidson
 !!    solver (authors Eirik F. Kjønstad, Sarai D. Folkestad) as well as the
-!!    Davidson coupled cluster linear equations solver (autorhs Eirik F. Kjønstad,
+!!    Davidson coupled cluster linear equations solver (authors Eirik F. Kjønstad,
 !!    Sarai D. Folkestad, Josefine H. Andersen)
 !!
 !
@@ -53,10 +53,11 @@ module general_linear_davidson_class
    use start_vector_tool_class,                only: start_vector_tool
    use preconditioner_getter_class,            only: preconditioner_getter
    use rhs_linear_equation_tool_class,         only: rhs_linear_equation_tool
+   use linear_davidson_print_tool_class,       only: linear_davidson_print_tool
 !
    implicit none
 !
-   type :: general_linear_davidson
+   type :: general_linear_davidson_solver
 !
       integer  :: n_solutions
       integer  :: n_rhs
@@ -65,49 +66,48 @@ module general_linear_davidson_class
 !
       class(linear_davidson_tool), allocatable, private :: davidson
 !
-      class(transformation_tool),       allocatable          :: transformer
-      class(linear_storage_tool),       allocatable, private :: storer
-      class(start_vector_tool),         allocatable, private :: start_vector
-      class(preconditioner_getter),     allocatable, private :: preconditioner
-      class(rhs_linear_equation_tool),  allocatable, private :: rhs_getter
+      class(transformation_tool),         allocatable          :: transformer
+      class(linear_storage_tool),         allocatable, private :: storer
+      class(start_vector_tool),           allocatable, private :: start_vector
+      class(preconditioner_getter),       allocatable, private :: preconditioner
+      class(rhs_linear_equation_tool),    allocatable, private :: rhs_getter
+      class(linear_davidson_print_tool),  allocatable, private :: printer
 !
    contains
 !
-      procedure, public :: run => run_general_linear_davidson
-      procedure, public :: get_n_solutions => get_n_solutions_general_linear_davidson
+      procedure, public :: run => run_general_linear_davidson_solver
+      procedure, public :: get_n_solutions => get_n_solutions_general_linear_davidson_solver
 !
-      procedure, private :: print_iteration
-      procedure, private :: print_summary
-      procedure, private :: print_settings
       procedure, private :: test_convergence_and_add_trials
 !
-   end type general_linear_davidson
+end type general_linear_davidson_solver
 !
-   interface general_linear_davidson
+   interface general_linear_davidson_solver
 !
-      procedure :: new_general_linear_davidson
+      procedure :: new_general_linear_davidson_solver
 !
-   end interface general_linear_davidson
+end interface general_linear_davidson_solver
 !
 contains
 !
-   function new_general_linear_davidson(transformer,         &
-                                        davidson,            &
-                                        storer,              &
-                                        start_vector,        &
-                                        preconditioner,      &
-                                        rhs_getter,          &
-                                        n_rhs,               &
-                                        n_solutions,         &
-                                        max_iterations,      &
-                                        residual_threshold) result(this)
+   function new_general_linear_davidson_solver(transformer,         &
+                                               davidson,            &
+                                               storer,              &
+                                               start_vector,        &
+                                               preconditioner,      &
+                                               rhs_getter,          &
+                                               printer,             &
+                                               n_rhs,               &
+                                               n_solutions,         &
+                                               max_iterations,      &
+                                               residual_threshold) result(this)
 !!
 !!    New general linear Davidson
 !!    Written by Sarai D. Folkestad, May 2021
 !!
       implicit none
 !
-      type(general_linear_davidson) :: this
+      type(general_linear_davidson_solver) :: this
 !
       class(transformation_tool),        intent(in) :: transformer
       type(linear_davidson_tool),        intent(in) :: davidson
@@ -115,32 +115,35 @@ contains
       class(start_vector_tool),          intent(in) :: start_vector
       class(preconditioner_getter),      intent(in) :: preconditioner
       class(rhs_linear_equation_tool),   intent(in) :: rhs_getter
+      class(linear_davidson_print_tool), intent(in) :: printer
       integer,                           intent(in) :: max_iterations, n_solutions, n_rhs
       real(dp),                          intent(in) :: residual_threshold
 !
 
-      this%davidson            = davidson
       this%transformer         = transformer
+      this%davidson            = davidson
       this%storer              = storer
       this%start_vector        = start_vector
       this%preconditioner      = preconditioner
       this%rhs_getter          = rhs_getter
+      this%printer             = printer
+!
       this%n_solutions         = n_solutions
       this%n_rhs               = n_rhs
       this%max_iterations      = max_iterations
       this%residual_threshold  = residual_threshold
 !
-   end function new_general_linear_davidson
+   end function new_general_linear_davidson_solver
 !
 !
-   subroutine run_general_linear_davidson(this, frequencies)
+   subroutine run_general_linear_davidson_solver(this, frequencies)
 !!
 !!    Run
 !!    Written by Regina Matveeva and Ida-Marie Høyvik, Sept 2021
 !!
       implicit none
 !
-      class(general_linear_davidson) :: this
+      class(general_linear_davidson_solver) :: this
 !
       real(dp), dimension(this%n_solutions), intent(in) :: frequencies
 !
@@ -212,7 +215,7 @@ contains
          call this%davidson%set_trial(c, trial)
       end do
 !
-      call this%print_settings()
+      call this%printer%print_settings(this%residual_threshold, this%max_iterations)
 !
       call this%transformer%initialize()
 !
@@ -222,9 +225,11 @@ contains
       call mem%alloc(residual_norm, this%n_solutions)
       call mem%alloc(residual, this%davidson%n_parameters)
 !
-      converged            = .false.
+      converged = .false.
 !
       iteration = 0
+!
+      call this%printer%print_iteration_header()
 !
       do while (.not. all(converged) .and. (iteration .le. this%max_iterations))
 !
@@ -253,7 +258,10 @@ contains
 !
          call this%test_convergence_and_add_trials(residual_norm, converged)
 !
-         call this%print_iteration(residual_norm, iteration)
+         call this%printer%print_iteration(this%n_solutions,     &
+                                           residual_norm,        &
+                                           iteration,            &
+                                           this%davidson%dim_red)
 !
          call mem%alloc(solution, this%davidson%n_parameters)
 !
@@ -273,98 +281,14 @@ contains
       call mem%dealloc(residual, this%davidson%n_parameters)
       call mem%dealloc(residual_norm, this%n_solutions)
 !
-      call this%print_summary(converged, iteration)
+      call this%printer%print_summary(this%n_solutions, converged, iteration)
 !
       call mem%dealloc(converged, this%n_solutions)
 !
       call this%davidson%cleanup()
       call mem%dealloc(rhs, this%davidson%n_parameters, this%n_rhs)
 !
-   end subroutine run_general_linear_davidson
-!
-!
-   subroutine print_iteration(this, residual_norm, iteration)
-!!
-!!    Print iteration
-!!    Written by Regina Matveeva, Sep 2021
-!!
-!!    Based on print_iteration in general_eigen_davidson_solver by Sarai D. Folkestad
-!!
-      implicit none
-
-      class(general_linear_davidson), intent(in) :: this
-      real(dp), dimension(this%n_solutions), intent(in) :: residual_norm
-      integer, intent(in) :: iteration
-!
-      integer :: n
-!
-      call output%printf('n', 'Iteration:               (i4)', &
-                        ints=[iteration], fs='(/t3,a)')
-      call output%printf('n', 'Reduced space dimension: (i4)', &
-                        ints=[this%davidson%dim_red])
-!
-      call output%printf('n', ' Solution       Residual norm', fs='(/t3,a)')
-      call output%print_separator('n', 29,'-')
-!
-      do n = 1, this%n_solutions
-!
-         call output%printf('n', ' (i3)              (e11.4)', &
-                            ints=[n], reals=[residual_norm])
-!
-      enddo
-!
-      call output%print_separator('n', 29,'-')
-!
-   end subroutine print_iteration
-!
-!
-   subroutine print_summary(this, converged, iteration)
-!!
-!!    Print summary
-!!    Written Sarai D. Folkestad
-!!
-      implicit none
-
-      class(general_linear_davidson), intent(in) :: this
-      logical, dimension(this%n_solutions), intent(in) :: converged
-      integer, intent(in) :: iteration
-!
-      if (.not. all(converged)) then
-!
-         call output%error_msg("Did not converge in the max number of &
-                               &iterations in Davidson solver.")
-!
-      else
-!
-         call output%printf('m', 'Convergence criterion met in (i0) iterations!', &
-                            ints=[iteration], fs='(t3,a)')
-!
-      endif
-!
-   end subroutine print_summary
-!
-!
-   subroutine print_settings(this)
-!!
-!!    Print settings
-!!    Written by Regina Matveeva, Sept 2021
-!!
-!!    Based on print_settings in general_eigen_davidson_solver by Sarai D. Folkestad
-!!
-      implicit none
-
-      class(general_linear_davidson), intent(in) :: this
-!
-      call output%printf('m', '- Davidson solver settings', fs='(/t3,a)')
-!
-      call output%printf('m', 'Residual threshold:             (e9.2)', &
-                   reals=[this%residual_threshold], &
-                   fs='(/t6,a)')
-!
-      call output%printf('m', 'Max number of iterations:     (i11)', &
-                         ints=[this%max_iterations], fs='(t6,a)')
-!
-   end subroutine print_settings
+   end subroutine run_general_linear_davidson_solver
 !
 !
    subroutine test_convergence_and_add_trials(this,                     &
@@ -384,9 +308,9 @@ contains
 !!
       implicit none
 !
-      class(general_linear_davidson), intent(inout) :: this
-      real(dp), dimension(this%n_solutions), intent(out) :: residual_norm
-      logical, dimension(this%n_solutions), intent(out)  :: converged
+      class(general_linear_davidson_solver), intent(inout) :: this
+      real(dp), dimension(this%n_solutions), intent(out)   :: residual_norm
+      logical, dimension(this%n_solutions), intent(out)    :: converged
 !
       real(dp), dimension(:), allocatable :: residual
 !
@@ -418,19 +342,19 @@ contains
    end subroutine test_convergence_and_add_trials
 !
 !
-   pure function get_n_solutions_general_linear_davidson(this) result(n_solutions)
+   pure function get_n_solutions_general_linear_davidson_solver(this) result(n_solutions)
 !!
 !!    Get n solutions
 !!    Written by Sarai D. Folkestad, May 2021
 !!
       implicit none
 !
-      class(general_linear_davidson), intent(in) :: this
+      class(general_linear_davidson_solver), intent(in) :: this
       integer :: n_solutions
 !
       n_solutions = this%n_solutions
 !
-   end function get_n_solutions_general_linear_davidson
+   end function get_n_solutions_general_linear_davidson_solver
 !
 !
-end module general_linear_davidson_class
+end module general_linear_davidson_solver_class

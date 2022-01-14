@@ -565,18 +565,18 @@ contains
 !!    in combination with cc_multipliers_solver_factory
 !!
 !
-      use general_linear_davidson_class,       only: general_linear_davidson
-      use cc_multipliers_solver_factory_class, only: cc_multipliers_solver_factory
-      use diis_cc_multipliers_class,           only: diis_cc_multipliers
-      use string_utilities,                    only: convert_to_uppercase
-      use amplitude_updater_class,             only: amplitude_updater
+      use general_linear_davidson_solver_class, only: general_linear_davidson_solver
+      use cc_multipliers_solver_factory_class,  only: cc_multipliers_solver_factory
+      use diis_cc_multipliers_class,            only: diis_cc_multipliers
+      use string_utilities,                     only: convert_to_uppercase
+      use amplitude_updater_class,              only: amplitude_updater
 !
       implicit none
 !
       class(gs_engine), intent(inout) :: engine
       class(ccs), intent(inout) :: wf
 !
-      class(general_linear_davidson),     allocatable  :: solver
+      class(general_linear_davidson_solver),     allocatable  :: solver
       type(cc_multipliers_solver_factory)              :: solver_factory
       type(diis_cc_multipliers),          allocatable  :: diis_solver
 !
