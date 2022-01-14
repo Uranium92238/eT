@@ -1,3 +1,7 @@
+# eT v1.5.13
+### Tests
+- Intel CI stage now runs in merge requests, and compressed the build and release stages. eT-program/eT!1009
+
 # eT v1.5.12
 ### Tests
 - Added stage to test Intel compilers (ifort/icpc) in Gitlab CI/CD. eT-program/eT!1004
