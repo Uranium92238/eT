@@ -42,7 +42,6 @@ contains
 !!     Calculates the lowmem CC2 energy. This is only equal to the actual
 !!     energy when the ground state equations are solved, of course.
 !!
-      use batching_index_class, only: batching_index
 !
       implicit none
 !
