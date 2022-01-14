@@ -3,11 +3,9 @@ image: registry.gitlab.com/et-program/et/ubuntu-mkl-for-et
 stages:
   - pystyle
   - code-quality
-  - build
-  - run
+  - gnu
   - intel
-  - prepare-release
-  - create-release
+  - release
 
 pystyle:
   stage: pystyle
@@ -36,8 +34,8 @@ code-quality:
     - merge_requests
     - /^release\/\d+\.\d+$/
 
-build:
-  stage: build
+gnu-build:
+  stage: gnu
   needs: []
   script:
     - whoami
@@ -48,7 +46,7 @@ build:
       if [ "$coverage" == "true" ]; then 
         extra_F_flags=' -fprofile-arcs -ftest-coverage -O0'
       fi
-    - ./setup.py --enable-pfunit --pfunit-dir=/pFUnit/build/installed -FC=gfortran-8 -CXX=g++-8 -F-flags="$extra_F_flags" $extra_setup_options --pcm
+    - ./setup.py -clean --enable-pfunit --pfunit-dir=/pFUnit/build/installed -FC=gfortran-8 -CXX=g++-8 -F-flags="$extra_F_flags" $extra_setup_options --pcm
     - cd build
     - cmake_command=$(cat setup_cmake_output | head -1)
     - echo ${cmake_command}
@@ -64,9 +62,9 @@ build:
     paths: 
       - build/
 
-run:
-  stage: run
-  needs: ["build"]
+gnu-run:
+  stage: gnu
+  needs: ["gnu-build"]
   script:
     - cd build
     - ctest -j16 --output-on-failure
@@ -97,23 +95,20 @@ intel:
   script:
     - git submodule init
     - git submodule update
-    - ./setup.py -FC=ifort -CC=icc -CXX=icpc -F-flags="$extra_F_flags" $extra_setup_options --pcm
+    - ./setup.py -clean -FC=ifort -CC=icc -CXX=icpc -F-flags="$extra_F_flags" $extra_setup_options --pcm
     - cd build
     - cmake_command=$(cat setup_cmake_output | head -1)
     - echo ${cmake_command}
     - make -j16
     - ctest -j16 --output-on-failure
-  rules: # Always run if intel=true or if we push commits to master or development
-    - if: '$intel == "true"'
-      when: always
-    - if: '$CI_PROJECT_NAMESPACE == "eT-program" && $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "push"'
-      when: always
-    - if: '$CI_PROJECT_NAMESPACE == "eT-program" && $CI_COMMIT_BRANCH == "development" && $CI_PIPELINE_SOURCE == "push"'
-      when: always
-    - when: never # Default: never run 
+  only:
+    - master
+    - development
+    - merge_requests
+    - /^release\/\d+\.\d+$/
 
 prepare-release:
-  stage: prepare-release
+  stage: release
   image: python:latest
   script:
     - python3 dev_tools/export_release_info.py 
@@ -129,7 +124,7 @@ prepare-release:
     - when: never # Default: never run if the above conditions are false
 
 create-release:
-  stage: create-release
+  stage: release
   image: registry.gitlab.com/gitlab-org/release-cli
   needs: ["prepare-release"]
   script: 
