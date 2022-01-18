@@ -35,8 +35,8 @@ module cc3_class
    use batching_index_class, only: batching_index
    use range_class, only: range_
 !
-!  Need this to avoid intel compiler segfault
    use eri_adapter_class, only: eri_adapter
+   use eri_cholesky_disk_class, only: eri_cholesky_disk
 !
    implicit none
 !
@@ -62,6 +62,9 @@ module cc3_class
 !
       real(dp), dimension(:,:), allocatable :: L_cc3_density_oo
       real(dp), dimension(:,:), allocatable :: L_cc3_density_vv
+!
+      type(eri_cholesky_disk), allocatable :: L_c1
+      type(eri_adapter), allocatable :: eri_c1
 !
    contains
 !
@@ -112,6 +115,20 @@ module cc3_class
       procedure :: jacobian_cc3_b2_fock                 => jacobian_cc3_b2_fock_cc3
       procedure :: jacobian_cc3_c3_a                    => jacobian_cc3_c3_a_cc3
       procedure :: rho2_fock_cc3_permutation            => rho2_fock_cc3_permutation_cc3
+!
+      procedure :: initialize_eri_c1 &
+                => initialize_eri_c1_cc3
+      procedure :: destruct_eri_c1 &
+                => destruct_eri_c1_cc3
+!
+      procedure :: construct_c1_cholesky     &
+                => construct_c1_cholesky_cc3
+      procedure :: construct_cholesky_c1_oo  &
+                => construct_cholesky_c1_oo_cc3
+      procedure :: construct_cholesky_c1_vo  &
+                => construct_cholesky_c1_vo_cc3
+      procedure :: construct_cholesky_c1_vv  &
+                => construct_cholesky_c1_vv_cc3
 !
 !     Routines related to the transpose of the jacobian
 !
@@ -522,7 +539,7 @@ contains
 !
       implicit none
 !
-      class(cc3), intent(in) :: wf
+      class(cc3), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: L
       integer, intent(in) :: left_state
@@ -530,20 +547,13 @@ contains
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: R
       integer, intent(in) :: right_state
 !
-      real(dp), dimension(:,:), allocatable :: L1, R1
       real(dp), dimension(:,:,:,:), allocatable :: L2, R2
 !
       real(dp) :: ddot, L_R_overlap
 !
       L_R_overlap = ddot(wf%n_es_amplitudes, L, 1, R, 1)
 !
-!     :: Triples contribution to the overlap ::
-!
-      call mem%alloc(L1, wf%n_v, wf%n_o)
-      call mem%alloc(R1, wf%n_v, wf%n_o)
-!
-      call dcopy(wf%n_t1, L, 1, L1, 1)
-      call dcopy(wf%n_t1, R, 1, R1, 1)
+      call wf%construct_c1_cholesky(R(1:wf%n_t1), wf%L_t1, wf%L_c1)
 !
       call mem%alloc(L2, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%alloc(R2, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -565,11 +575,9 @@ contains
 !
       call wf%L_R_overlap_triples(wf%left_excitation_energies(left_state),  &
                                   wf%right_excitation_energies(right_state),&
-                                  L1, L2, R1, R2, L_R_overlap, wf%cvs, wf%rm_core)
+                                  L(1:wf%n_t1), L2, R2, L_R_overlap, wf%cvs, wf%rm_core)
 !
-      call mem%dealloc(L1, wf%n_v, wf%n_o)
       call mem%dealloc(L2, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%dealloc(R1, wf%n_v, wf%n_o)
       call mem%dealloc(R2, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call output%printf('debug', 'Overlap of (i0). left and (i0). right state: (f15.10)', &
@@ -579,7 +587,7 @@ contains
    end function L_R_overlap_cc3
 !
 !
-   subroutine L_R_overlap_triples_cc3(wf, omega_L, omega_R, L1, L2, R1, R2, &
+   subroutine L_R_overlap_triples_cc3(wf, omega_L, omega_R, L1, L2, R2, &
                                       LT_R, cvs, rm_core)
 !!
 !!    Left right overlap triples
@@ -597,10 +605,6 @@ contains
 !!                                       + L_mu2 < mu2| [H,tau_nu3] |R >)
 !!
 !
-      use eri_adapter_class, only: eri_adapter
-      use eri_cholesky_disk_class, only: eri_cholesky_disk
-      use eri_1idx_transformed_tool_class, only: eri_1idx_transformed_tool
-      use batching_index_class, only: batching_index
       use reordering, only: squareup_and_sort_1234_to_1324
       use reordering, only: construct_contravariant_t3
 !
@@ -614,7 +618,7 @@ contains
 !
       real(dp), intent(inout) :: LT_R
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: L1, R1
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: L1
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: L2, R2
 !
       real(dp), dimension(:,:,:,:), allocatable :: t2
@@ -701,15 +705,6 @@ contains
       real(dp) :: ddot
       integer :: req_single_batch
 !
-      type(eri_cholesky_disk) :: L_c1
-      type(eri_adapter) :: eri_c1
-!
-      L_c1 = eri_cholesky_disk('C1')
-      call L_c1%initialize(wf%L_t1%n_J, 2, [wf%n_o, wf%n_v])
-!
-      call wf%construct_c1_cholesky(wf%L_t1, L_c1, R1)
-      eri_c1 = eri_adapter(eri_1idx_transformed_tool(wf%L_t1, L_c1), wf%n_o, wf%n_v)
-!
       call mem%alloc(t2, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1324(wf%t2, t2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -718,7 +713,7 @@ contains
       batch_k = batching_index(wf%n_o)
 !
 !     Memory for sorting array and getting the integrals
-      call wf%estimate_mem_c1_integral_setup(req_0, req_1_eri, eri_c1)
+      call wf%estimate_mem_c1_integral_setup(req_0, req_1_eri)
       req_0 = req_0 + 2*wf%n_v**3
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
@@ -816,8 +811,8 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call wf%setup_vvvo(g_bdci, g_bdci_p, sorting, batch_i)
-         call wf%setup_vvvo(g_bdci_c1, g_bdci_c1_p, sorting, batch_i, eri_c1=eri_c1)
+         call wf%setup_vvvo(wf%eri_t1, g_bdci, g_bdci_p, sorting, batch_i)
+         call wf%setup_vvvo(wf%eri_c1, g_bdci_c1, g_bdci_c1_p, sorting, batch_i)
 !
          call wf%setup_vvov(g_dbic, g_dbic_p, sorting, batch_i, left=.true.)
 !
@@ -825,22 +820,22 @@ contains
 !
             call batch_j%determine_limits(j_batch)
 !
-            call wf%setup_oovo(g_ljci, g_ljci_p, sorting, batch_j, batch_i)
-            call wf%setup_oovo(g_ljci_c1, g_ljci_c1_p, sorting, batch_j, batch_i, eri_c1=eri_c1)
+            call wf%setup_oovo(wf%eri_t1, g_ljci, g_ljci_p, sorting, batch_j, batch_i)
+            call wf%setup_oovo(wf%eri_c1, g_ljci_c1, g_ljci_c1_p, sorting, batch_j, batch_i)
 !
             call wf%setup_ooov(g_jlic, g_jlic_p, sorting, batch_j, batch_i)
 !
-            call wf%setup_ovov(g_ibjc, g_ibjc_p, sorting, batch_i, batch_j)
+            call wf%setup_ovov(wf%eri_t1, g_ibjc, g_ibjc_p, sorting, batch_i, batch_j)
 !
             if (j_batch .ne. i_batch) then
 !
-               call wf%setup_vvvo(g_bdcj, g_bdcj_p, sorting, batch_j)
-               call wf%setup_vvvo(g_bdcj_c1, g_bdcj_c1_p, sorting, batch_j, eri_c1=eri_c1)
+               call wf%setup_vvvo(wf%eri_t1, g_bdcj, g_bdcj_p, sorting, batch_j)
+               call wf%setup_vvvo(wf%eri_c1, g_bdcj_c1, g_bdcj_c1_p, sorting, batch_j)
 !
                call wf%setup_vvov(g_dbjc, g_dbjc_p, sorting, batch_j, left=.true.)
 !
-               call wf%setup_oovo(g_licj, g_licj_p, sorting, batch_i, batch_j)
-               call wf%setup_oovo(g_licj_c1, g_licj_c1_p, sorting, batch_i, batch_j, eri_c1=eri_c1)
+               call wf%setup_oovo(wf%eri_t1, g_licj, g_licj_p, sorting, batch_i, batch_j)
+               call wf%setup_oovo(wf%eri_c1, g_licj_c1, g_licj_c1_p, sorting, batch_i, batch_j)
 !
                call wf%setup_ooov(g_iljc, g_iljc_p, sorting, batch_i, batch_j)
 !
@@ -864,27 +859,23 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call wf%setup_vvvo(g_bdck, g_bdck_p, sorting, batch_k)
-                  call wf%setup_vvvo(g_bdck_c1, g_bdck_c1_p, sorting, batch_k, eri_c1=eri_c1)
+                  call wf%setup_vvvo(wf%eri_t1, g_bdck, g_bdck_p, sorting, batch_k)
+                  call wf%setup_vvvo(wf%eri_c1, g_bdck_c1, g_bdck_c1_p, sorting, batch_k)
 !
                   call wf%setup_vvov(g_dbkc, g_dbkc_p, sorting, batch_k, left=.true.)
 !
-                  call wf%setup_oovo(g_lick, g_lick_p, sorting, batch_i, batch_k)
-                  call wf%setup_oovo(g_ljck, g_ljck_p, sorting, batch_j, batch_k)
-                  call wf%setup_oovo(g_lkci, g_lkci_p, sorting, batch_k, batch_i)
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%setup_oovo(wf%eri_t1, g_lick, g_lick_p, sorting, batch_i, batch_k)
+                  call wf%setup_oovo(wf%eri_t1, g_ljck, g_ljck_p, sorting, batch_j, batch_k)
+                  call wf%setup_oovo(wf%eri_t1, g_lkci, g_lkci_p, sorting, batch_k, batch_i)
+                  call wf%setup_oovo(wf%eri_t1, g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
 !
-                  call wf%setup_oovo(g_lick_c1, g_lick_c1_p, sorting, &
-                                     batch_i, batch_k, eri_c1=eri_c1)
+                  call wf%setup_oovo(wf%eri_c1, g_lick_c1, g_lick_c1_p, sorting, batch_i, batch_k)
 !
-                  call wf%setup_oovo(g_ljck_c1, g_ljck_c1_p, sorting, &
-                                     batch_j, batch_k, eri_c1=eri_c1)
+                  call wf%setup_oovo(wf%eri_c1, g_ljck_c1, g_ljck_c1_p, sorting, batch_j, batch_k)
 !
-                  call wf%setup_oovo(g_lkci_c1, g_lkci_c1_p, sorting, &
-                                     batch_k, batch_i, eri_c1=eri_c1)
+                  call wf%setup_oovo(wf%eri_c1, g_lkci_c1, g_lkci_c1_p, sorting, batch_k, batch_i)
 !
-                  call wf%setup_oovo(g_lkcj_c1, g_lkcj_c1_p, sorting, &
-                                     batch_k, batch_j, eri_c1=eri_c1)
+                  call wf%setup_oovo(wf%eri_c1, g_lkcj_c1, g_lkcj_c1_p, sorting, batch_k, batch_j)
 !
 !
                   call wf%setup_ooov(g_ilkc, g_ilkc_p, sorting, batch_i, batch_k)
@@ -892,8 +883,8 @@ contains
                   call wf%setup_ooov(g_klic, g_klic_p, sorting, batch_k, batch_i)
                   call wf%setup_ooov(g_kljc, g_kljc_p, sorting, batch_k, batch_j)
 !
-                  call wf%setup_ovov(g_ibkc, g_ibkc_p, sorting, batch_i, batch_k)
-                  call wf%setup_ovov(g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
+                  call wf%setup_ovov(wf%eri_t1, g_ibkc, g_ibkc_p, sorting, batch_i, batch_k)
+                  call wf%setup_ovov(wf%eri_t1, g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
 !
                else if (k_batch .eq. i_batch) then ! k_batch == j_batch == i_batch
 !
@@ -927,13 +918,12 @@ contains
 !
                   call wf%point_vvvo(g_dbkc_p, g_dbjc, batch_k%length)
 !
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%setup_oovo(wf%eri_t1, g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
                   call wf%point_vooo(g_lick_p, g_licj, batch_i%length, batch_k%length)
                   call wf%point_vooo(g_ljck_p, g_lkcj, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_lkci_p, g_ljci, batch_k%length, batch_i%length)
 !
-                  call wf%setup_oovo(g_lkcj_c1, g_lkcj_c1_p, &
-                                    sorting, batch_k, batch_j, eri_c1=eri_c1)
+                  call wf%setup_oovo(wf%eri_c1, g_lkcj_c1, g_lkcj_c1_p, sorting, batch_k, batch_j)
 !
                   call wf%point_vooo(g_lick_c1_p, g_licj_c1, batch_i%length, batch_k%length)
                   call wf%point_vooo(g_ljck_c1_p, g_lkcj_c1, batch_j%length, batch_k%length)
@@ -944,7 +934,7 @@ contains
                   call wf%point_vooo(g_jlkc_p, g_kljc, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_klic_p, g_jlic, batch_k%length, batch_i%length)
 !
-                  call wf%setup_ovov(g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
+                  call wf%setup_ovov(wf%eri_t1, g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
                   call wf%point_vvoo(g_ibkc_p, g_ibjc, batch_i%length, batch_k%length)
 !
                endif
@@ -1149,7 +1139,7 @@ contains
    end subroutine estimate_mem_integral_setup_cc3
 !
 !
-   subroutine estimate_mem_c1_integral_setup_cc3(wf, req0, req1, eri_c1)
+   subroutine estimate_mem_c1_integral_setup_cc3(wf, req0, req1)
 !!
 !!    Estimate memory C1 transformed integrals setup
 !!    Written by Alexander C. Paul, Dec 2020
@@ -1168,20 +1158,16 @@ contains
 !!
 !!    NB: The memory requirement is overestimated by the routines.
 !!
-!
-      use eri_adapter_class, only: eri_adapter
-!
       implicit none
+!
       class(cc3), intent(in) :: wf
 !
       integer, intent(out) :: req0, req1
 !
-      type(eri_adapter), intent(in)  :: eri_c1
-!
       integer, dimension(2) :: req_vvvo, req_oovo
 !
-      req_vvvo = eri_c1%get_memory_estimate('vvvo', wf%n_v, wf%n_v, wf%n_v, 1)
-      req_oovo = eri_c1%get_memory_estimate('oovo', wf%n_o, 1, wf%n_v, 1)
+      req_vvvo = wf%eri_c1%get_memory_estimate('vvvo', wf%n_v, wf%n_v, wf%n_v, 1)
+      req_oovo = wf%eri_c1%get_memory_estimate('oovo', wf%n_o, 1, wf%n_v, 1)
 !
       req0 = req_vvvo(1)
       req1 = max(req_vvvo(2), req_oovo(1) + req_oovo(2))
@@ -1336,6 +1322,296 @@ contains
       end if
 !
    end function ijk_amplitudes_are_zero_cc3
+!
+!
+   subroutine construct_c1_cholesky_cc3(wf, c1, L, L_c1)
+!!
+!!    Construct C1 Cholesky
+!!
+!!    Written by Rolf H. Myhre, Jun 2020
+!!
+!!    based on routines by Alexander C. Paul
+!!
+!!    Constructs the "C1 Cholesky vector"
+!!
+      use array_utilities, only: zero_array
+      use abstract_eri_cholesky_class, only: abstract_eri_cholesky
+!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      class(abstract_eri_cholesky), intent(inout) :: L
+      class(abstract_eri_cholesky), intent(inout) :: L_c1
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c1
+!
+      real(dp), dimension(:,:,:), allocatable :: L_Jia
+!
+
+      call wf%construct_cholesky_c1_oo(L, L_c1, c1)
+      call wf%construct_cholesky_c1_vo(L, L_c1, c1)
+      call wf%construct_cholesky_c1_vv(L, L_c1, c1)
+!
+      call mem%alloc(L_Jia, L%n_J, wf%n_o, wf%n_v)
+      call zero_array(L_Jia, L%n_J*wf%n_o*wf%n_v)
+      call L_c1%set(L_Jia, 1, wf%n_o, wf%n_o + 1, wf%n_mo)
+      call mem%dealloc(L_Jia, L%n_J, wf%n_o, wf%n_v)
+!
+      call wf%L_c1%notify_observers()
+!
+   end subroutine construct_c1_cholesky_cc3
+!
+!
+   subroutine construct_cholesky_c1_oo_cc3(wf, L, L_c1, c1)
+!!
+!!    Construct Cholesky oo C1
+!!    Written by Rolf. H. Myhre, Jun 2020
+!!
+!!    based on routines by Alexander C. Paul
+!!
+!!    Computes
+!!
+!!       L_J_ij_C1 = sum_b L_J_ib_T1 c_bj
+!!
+!!    and returns the result in L_J_ij_C1
+!!
+      use abstract_eri_cholesky_class, only: abstract_eri_cholesky
+      use batching_index_class, only: batching_index
+!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      class(abstract_eri_cholesky), intent(inout) :: L
+      class(abstract_eri_cholesky), intent(inout) :: L_c1
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c1
+!
+      real(dp), dimension(:), allocatable :: L_J_oo
+      real(dp), dimension(:), allocatable :: L_J_ov
+!
+      type(batching_index) :: batch_o
+!
+      integer :: o_batch
+!
+      batch_o = batching_index(wf%n_o)
+      call mem%batch_setup(batch_o, 0, L%n_J*(wf%n_v + wf%n_o), tag='Cholesky c1 oo')
+!
+      call mem%alloc(L_J_oo, L%n_J*batch_o%max_length*wf%n_o)
+      call mem%alloc(L_J_ov, L%n_J*batch_o%max_length*wf%n_v)
+!
+      do o_batch = 1,batch_o%num_batches
+!
+         call batch_o%determine_limits(o_batch)
+!
+         call L%get(L_J_ov, batch_o%first, batch_o%get_last(), wf%n_o + 1, wf%n_mo)
+!
+         call dgemm('N', 'N',                               &
+                    L%n_J*batch_o%length, wf%n_o, wf%n_v,   &
+                    one,                                    &
+                    L_J_ov, L%n_J*batch_o%length,           &
+                    c1, wf%n_v,                             &
+                    zero,                                   &
+                    L_J_oo, L%n_J*batch_o%length)
+!
+         call L_c1%set(L_J_oo, batch_o%first, batch_o%get_last(), 1, wf%n_o)
+!
+      enddo
+!
+      call mem%dealloc(L_J_oo, L%n_J*batch_o%max_length*wf%n_o)
+      call mem%dealloc(L_J_ov, L%n_J*batch_o%max_length*wf%n_v)
+!
+      call mem%batch_finalize()
+!
+   end subroutine construct_cholesky_c1_oo_cc3
+!
+!
+   subroutine construct_cholesky_c1_vo_cc3(wf, L, L_c1, c1)
+!!
+!!    Construct Cholesky vo C1
+!!    Written by Rolf. H. Myhre, Jun 2020
+!!
+!!    based on routines by Alexander C. Paul
+!!
+!!    Computes
+!!
+!!       L_J_ai_C1 = sum_b L_J_ab_T1 c_bi - sum_j c_aj L_J_ji_T1
+!!
+!!    and returns the result in L_J_ai_c1
+!!
+      use abstract_eri_cholesky_class, only: abstract_eri_cholesky
+      use array_utilities, only: zero_array
+      use reordering, only: add_132_to_123, sort_123_to_132
+!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      class(abstract_eri_cholesky), intent(inout) :: L
+      class(abstract_eri_cholesky), intent(inout) :: L_c1
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c1
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_ij
+      real(dp), dimension(:,:,:), allocatable :: L_J_ji
+      real(dp), dimension(:,:,:), allocatable :: L_J_ai
+      real(dp), dimension(:,:,:), allocatable :: L_J_ia
+      real(dp), dimension(:,:,:), allocatable :: L_J_ab
+!
+      type(batching_index) :: batch_a, batch_j
+!
+      integer :: a_batch, j_batch, req
+!
+      batch_j = batching_index(wf%n_o)
+      batch_a = batching_index(wf%n_v)
+      req = L%n_J*(wf%n_o + max(wf%n_v,wf%n_o))
+!
+      call mem%batch_setup(batch_j, batch_a, 0, req, req, 0, tag='Cholesky c1 vo')
+!
+      do a_batch = 1, batch_a%num_batches
+!
+         call batch_a%determine_limits(a_batch)
+!
+         call mem%alloc(L_J_ab, L%n_J, batch_a%length, wf%n_v)
+!
+         call L%get(L_J_ab,                        &
+                    wf%n_o + batch_a%first,        &
+                    wf%n_o + batch_a%get_last(),   &
+                    wf%n_o + 1,                    &
+                    wf%n_mo)
+!
+         call mem%alloc(L_J_ai, L%n_J, batch_a%length, wf%n_o)
+!
+         call dgemm('N', 'N',             &
+                    L%n_J*batch_a%length, &
+                    wf%n_o,               &
+                    wf%n_v,               &
+                    one,                  &
+                    L_J_ab,               &
+                    L%n_J*batch_a%length, &
+                    c1,                   &
+                    wf%n_v,               &
+                    zero,                 &
+                    L_J_ai,               &
+                    L%n_J*batch_a%length)
+!
+         call mem%dealloc(L_J_ab, L%n_J, batch_a%length, wf%n_v)
+         call mem%alloc(L_J_ia, L%n_J, wf%n_o, batch_a%length)
+!
+         do j_batch = 1, batch_j%num_batches
+!
+            call batch_j%determine_limits(j_batch)
+!
+            call mem%alloc(L_J_ji, L%n_J, batch_j%length, wf%n_o)
+            call L%get(L_J_ji, batch_j%first, batch_j%get_last(), 1, wf%n_o)
+
+            call mem%alloc(L_J_ij, L%n_J, wf%n_o, batch_j%length)
+            call sort_123_to_132(L_J_ji, L_J_ij, L%n_J, batch_j%length, wf%n_o)
+            call mem%dealloc(L_J_ji, L%n_J, batch_j%length, wf%n_o)
+!
+            call dgemm('N', 'T',       &
+                       L%n_J*wf%n_o,   &
+                       batch_a%length, &
+                       batch_j%length, &
+                       -one,           &
+                       L_J_ij,         &
+                       L%n_J*wf%n_o,   &
+                       c1(batch_a%first, batch_j%first), &
+                       wf%n_v,         &
+                       zero,           &
+                       L_J_ia,         &
+                       L%n_J*wf%n_o)
+!
+            call mem%dealloc(L_J_ij, L%n_J, wf%n_o, batch_j%length)
+            call add_132_to_123(one, L_J_ia, L_J_ai, L%n_J, batch_a%length, wf%n_o)
+!
+         enddo
+!
+         call L_c1%set(L_J_ai, wf%n_o+batch_a%first, wf%n_o+batch_a%get_last(), 1, wf%n_o)
+         call mem%dealloc(L_J_ai, L%n_J, batch_a%length, wf%n_o)
+         call mem%dealloc(L_J_ia, L%n_J, wf%n_o, batch_a%length)
+!
+      enddo
+!
+      call mem%batch_finalize()
+!
+   end subroutine construct_cholesky_c1_vo_cc3
+!
+!
+   subroutine construct_cholesky_c1_vv_cc3(wf, L, L_c1, c1)
+!!
+!!    Construct Cholesky vv C1
+!!    Written by Rolf H. Myhre, Jun 2020
+!!
+!!    based on routines by Alexander C. Paul
+!!
+!!    Computes
+!!
+!!       L_ab_J_c1= - sum_i c_ai L_ib_J_T1 ,
+!!
+!!    and returns the result in L_J_ab_c1
+!!
+      use abstract_eri_cholesky_class, only: abstract_eri_cholesky
+      use reordering, only: sort_123_to_132
+!
+      implicit none
+
+      class(cc3), intent(inout) :: wf
+!
+      class(abstract_eri_cholesky), intent(inout) :: L
+      class(abstract_eri_cholesky), intent(inout) :: L_c1
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c1
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_ab, L_J_ba, L_J_jb, L_J_bj
+!
+      type(batching_index) :: batch_b
+!
+      integer :: b_batch
+!
+      batch_b = batching_index(wf%n_v)
+      call mem%batch_setup(batch_b, 0, 2*L%n_J*max(wf%n_v, wf%n_o), tag='Cholesky c1 vv')
+!
+      do b_batch = 1, batch_b%num_batches
+!
+         call batch_b%determine_limits(b_batch)
+!
+         call mem%alloc(L_J_jb, L%n_J, wf%n_o, batch_b%length)
+         call L%get(L_J_jb, 1, wf%n_o, wf%n_o + batch_b%first, wf%n_o + batch_b%get_last())
+!
+         call mem%alloc(L_J_bj, L%n_J, batch_b%length, wf%n_o)
+         call sort_123_to_132(L_J_jb, L_J_bj, L%n_J, wf%n_o, batch_b%length)
+         call mem%dealloc(L_J_jb, L%n_J, wf%n_o, batch_b%length)
+!
+         call mem%alloc(L_J_ba, L%n_J, batch_b%length, wf%n_v)
+         call dgemm('N', 'T',             &
+                    L%n_J*batch_b%length, &
+                    wf%n_v,               &
+                    wf%n_o,               &
+                    -one,                 &
+                    L_J_bj,               &
+                    L%n_J*batch_b%length, &
+                    c1,                   &
+                    wf%n_v,               &
+                    zero,                 &
+                    L_J_ba,               &
+                    L%n_J*batch_b%length)
+!
+         call mem%dealloc(L_J_bj, L%n_J, batch_b%length, wf%n_o)
+!
+         call mem%alloc(L_J_ab, L%n_J, wf%n_v, batch_b%length)
+         call sort_123_to_132(L_J_ba, L_J_ab, L%n_J, batch_b%length, wf%n_v)
+         call mem%dealloc(L_J_ba, L%n_J, batch_b%length, wf%n_v)
+!
+         call L_c1%set(L_J_ab, wf%n_o+1, wf%n_mo, wf%n_o + batch_b%first, wf%n_o + batch_b%get_last())
+         call mem%dealloc(L_J_ab, L%n_J, wf%n_v, batch_b%length)
+!
+      enddo
+!
+      call mem%batch_finalize()
+!
+   end subroutine construct_cholesky_c1_vv_cc3
 !
 !
 end module cc3_class
