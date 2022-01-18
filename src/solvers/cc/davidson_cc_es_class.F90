@@ -56,13 +56,11 @@ module davidson_cc_es_class
 !
    use kinds
    use ccs_class, only: ccs
-   use eigen_davidson_tool_class
+   use memory_manager_class, only: mem
+   use timings_class, only: timings
+   use global_out, only: output
    use abstract_cc_es_class, only: abstract_cc_es
-!
-   use es_projection_tool_class
-   use es_valence_projection_tool_class, only: es_valence_projection_tool
-   use es_cvs_projection_tool_class, only: es_cvs_projection_tool
-   use es_ip_projection_tool_class, only: es_ip_projection_tool
+   use eigen_davidson_tool_class, only: eigen_davidson_tool
 !
    use convergence_tool_class, only: convergence_tool
 !
@@ -177,6 +175,8 @@ contains
 !!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use array_utilities, only: get_l2_norm
+!
       implicit none
 !
       class(davidson_cc_es) :: solver

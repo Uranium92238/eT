@@ -26,7 +26,6 @@ module null_accelerator_tool_class
 !! Performs the null acceleration (no acceleration)
 !!
 !
-   use kinds
    use parameters
 !
    use accelerator_tool_class, only: accelerator_tool

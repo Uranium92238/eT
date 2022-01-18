@@ -22,28 +22,25 @@ module abstract_cc_es_class
 !!
 !! Abstract coupled cluster excited state solver class module
 !! Written by Eirik F. Kjønstad, Sarai D. Folkestad, June 2019
-!!   
-!! Class that gathers functionality common the CC excited state 
-!! solvers (in particular, DIIS and Davidson). These solvers determine 
-!! states L and R and excitation energies omega that satisfy the 
-!! eigenvalue equation 
+!!
+!! Class that gathers functionality common the CC excited state
+!! solvers (in particular, DIIS and Davidson). These solvers determine
+!! states L and R and excitation energies omega that satisfy the
+!! eigenvalue equation
 !!
 !!    A R = omega R        L^T A = omega L^T,
 !!
-!! where A is the coupled cluster Jacobian matrix, 
+!! where A is the coupled cluster Jacobian matrix,
 !!
-!!    A_mu,nu = < mu | [H-bar, tau_nu] | HF >,    H-bar = e-T H eT. 
+!!    A_mu,nu = < mu | [H-bar, tau_nu] | HF >,    H-bar = e-T H eT.
 !!
 !
    use parameters
 !
    use global_out, only : output
-   use global_in,  only :input
 !
    use memory_manager_class, only : mem
    use timings_class, only : timings
-   use array_utilities, only : get_l2_norm
-   use string_utilities, only : convert_to_uppercase
 !
    use ccs_class, only : ccs
 !
@@ -63,11 +60,11 @@ module abstract_cc_es_class
 !
    type, abstract :: abstract_cc_es
 !
-      character(len=100) :: name_ 
+      character(len=100) :: name_
       character(len=100) :: tag
 !
       character(len=500) :: description1
-      character(len=500) :: description2 
+      character(len=500) :: description2
 !
       integer :: max_iterations
 !
@@ -77,9 +74,9 @@ module abstract_cc_es_class
 !
       integer :: n_singlet_states
 !
-      character(len=40) :: transformation 
-      character(len=40) :: restart_transformation 
-      character(len=40) :: es_type 
+      character(len=40) :: transformation
+      character(len=40) :: restart_transformation
+      character(len=40) :: es_type
 !
       real(dp), dimension(:), allocatable :: energies
 !
@@ -87,7 +84,7 @@ module abstract_cc_es_class
 !
       class(es_start_vector_tool), allocatable  :: start_vectors
       class(es_projection_tool), allocatable    :: projector
-      class(precondition_tool), allocatable     :: preconditioner 
+      class(precondition_tool), allocatable     :: preconditioner
 !
    contains
 !
@@ -95,7 +92,7 @@ module abstract_cc_es_class
 !
       procedure :: print_banner                     => print_banner_abstract_cc_es
 !
-      procedure :: read_es_settings                 => read_es_settings_abstract_cc_es     
+      procedure :: read_es_settings                 => read_es_settings_abstract_cc_es
       procedure :: print_es_settings                => print_es_settings_abstract_cc_es
 !
       procedure :: cleanup                          => cleanup_abstract_cc_es
@@ -171,9 +168,9 @@ contains
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(abstract_cc_es) :: solver 
+      class(abstract_cc_es) :: solver
 !
       call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
@@ -186,12 +183,14 @@ contains
 !
    subroutine read_es_settings_abstract_cc_es(solver, records_in_memory)
 !!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      use global_in, only: input
 !
-      class(abstract_cc_es) :: solver 
+      implicit none
+!
+      class(abstract_cc_es) :: solver
 !
       logical, intent(inout) :: records_in_memory
 !
@@ -212,9 +211,9 @@ contains
       endif
 !
       call input%get_keyword('max iterations', 'solver cc es', solver%max_iterations)
-!               
+!
       call input%get_required_keyword('singlet states', 'solver cc es', solver%n_singlet_states)
-!  
+!
       if (input%is_keyword_present('core excitation', 'solver cc es') .and. .not. &
           input%is_keyword_present('ionization', 'solver cc es')) solver%es_type = 'core'
 !
@@ -230,12 +229,12 @@ contains
 !
    subroutine print_es_settings_abstract_cc_es(solver)
 !!
-!!    Print settings    
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Print settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(abstract_cc_es) :: solver 
+      class(abstract_cc_es) :: solver
 !
       call output%printf('m', '- Settings for coupled cluster excited state &
                          &solver (' //trim(solver%tag) // '):', fs='(/t3,a)')
@@ -257,9 +256,11 @@ contains
 !
    subroutine cleanup_abstract_cc_es(solver, wf)
 !!
-!!    Cleanup 
+!!    Cleanup
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       class(abstract_cc_es) :: solver
@@ -284,30 +285,32 @@ contains
 !
    subroutine print_summary_abstract_cc_es(solver, wf, X, X_order)
 !!
-!!    Print summary 
+!!    Print summary
 !!    Written by Eirik F. Kjønstad, Dec 2018
-!!    Modified by Eirik F. Kjønstad, Mar 2020  
+!!    Modified by Eirik F. Kjønstad, Mar 2020
 !!
-!!    Prints summary of excited states. Lists the dominant amplitudes and 
-!!    the energies, along with fraction of singles. 
+!!    Prints summary of excited states. Lists the dominant amplitudes and
+!!    the energies, along with fraction of singles.
 !!
 !!    X:         array with excited states stored in the columns
 !!
-!!    X_order:   optional index list giving the ordering of states from low 
-!!               to high energy. Default is to assume that X is already 
+!!    X_order:   optional index list giving the ordering of states from low
+!!               to high energy. Default is to assume that X is already
 !!               ordered from low to high energies.
 !!
-!!    Warning: it is assumed on entry that the energies are already ordered according 
+!!    Warning: it is assumed on entry that the energies are already ordered according
 !!             to energy. It is just the states that are not necessarily ordered.
 !!
-!!    Eirik F. Kjønstad, Mar 2020: added X_order to avoid duplicate copy of states 
+!!    Eirik F. Kjønstad, Mar 2020: added X_order to avoid duplicate copy of states
 !!                                 in DIIS solver.
 !!
-      implicit none 
+      use string_utilities, only: convert_to_uppercase
 !
-      class(abstract_cc_es), intent(in) :: solver 
+      implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(abstract_cc_es), intent(in) :: solver
+!
+      class(ccs), intent(in) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes, solver%n_singlet_states), intent(in) :: X
 !
@@ -317,17 +320,17 @@ contains
 !
       integer :: state, state_index
 !
-      character(len=1) :: label ! R or L, depending on whether left or right transformation 
+      character(len=1) :: label ! R or L, depending on whether left or right transformation
 !
 !     Set up list that gives ordering of energies from low to high
 !
       call mem%alloc(X_order_local, solver%n_singlet_states)
 !
-      if (present(X_order)) then 
+      if (present(X_order)) then
 !
          X_order_local = X_order
 !
-      else 
+      else
 !
          do state = 1, solver%n_singlet_states
 !
@@ -335,17 +338,17 @@ contains
 !
          enddo
 !
-      endif 
+      endif
 !
-!     Print excited state vectors 
+!     Print excited state vectors
 !
       label = trim(adjustl(convert_to_uppercase(solver%transformation(1:1))))
 !
       call output%printf('n', '- Excitation vector amplitudes:', fs='(/t3,a)')
 !
-      do state = 1, solver%n_singlet_states 
+      do state = 1, solver%n_singlet_states
 !
-         state_index = X_order_local(state) 
+         state_index = X_order_local(state)
 !
          call output%printf('n', 'Electronic state nr. (i0)', ints=[state], fs='(/t6,a)')
 !
@@ -355,11 +358,11 @@ contains
          call wf%print_X1_diagnostics(X(:,state_index), label)
          call wf%print_dominant_x_amplitudes(X(1, state_index), label)
 !
-      enddo 
+      enddo
 !
       call mem%dealloc(X_order_local, solver%n_singlet_states)
 !
-!     Print excited state energies 
+!     Print excited state energies
 !
       call output%printf('m', '- Electronic excitation energies:', fs='(/t6,a)')
 !
@@ -374,7 +377,7 @@ contains
                             ints=[state], reals=[solver%energies(state),   &
                             solver%energies(state)*Hartree_to_eV], fs='(t6,a)')
 !
-      enddo 
+      enddo
 !
       call output%print_separator('m', 63, '-', fs='(t6,a)')
       call output%printf('m', 'eV/Hartree (CODATA 2014): (f11.8)', &
@@ -390,21 +393,21 @@ contains
 !!
       implicit none
 !
-      class(abstract_cc_es), intent(in) :: solver 
+      class(abstract_cc_es), intent(in) :: solver
       class(ccs), intent(inout)         :: wf
 !
       call wf%initialize_excited_state_files()
       call wf%prepare_for_Jacobians(solver%transformation)
 !
-      if (solver%transformation == 'right') then 
+      if (solver%transformation == 'right') then
 !
          call wf%initialize_right_excitation_energies()
 !
-      else if (solver%transformation == 'left') then 
+      else if (solver%transformation == 'left') then
 !
          call wf%initialize_left_excitation_energies()
 !
-      else if (solver%transformation == 'both') then 
+      else if (solver%transformation == 'both') then
 !
          call wf%initialize_right_excitation_energies()
          call wf%initialize_left_excitation_energies()
@@ -414,11 +417,13 @@ contains
    end subroutine prepare_wf_for_excited_state_abstract_cc_es
 !
 !
-   subroutine initialize_start_vector_tool_abstract_cc_es(solver, wf) 
+   subroutine initialize_start_vector_tool_abstract_cc_es(solver, wf)
 !!
-!!    Initialize start vector tool 
-!!    Written by Eirik F. Kjønstad, Sep 2019 
+!!    Initialize start vector tool
+!!    Written by Eirik F. Kjønstad, Sep 2019
 !!
+      use global_in, only: input
+!
       use es_manual_start_vector_tool_class,    only: es_manual_start_vector_tool
       use es_valence_start_vector_tool_class,   only: es_valence_start_vector_tool
       use es_cvs_start_vector_tool_class,       only: es_cvs_start_vector_tool
@@ -426,35 +431,35 @@ contains
 !
       implicit none
 !
-      class(abstract_cc_es) :: solver 
+      class(abstract_cc_es) :: solver
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
-      if (trim(solver%es_type) == 'core') then 
+      if (trim(solver%es_type) == 'core') then
 !
          call wf%read_cvs_settings()
 
-      elseif (trim(solver%es_type) == 'remove core') then 
+      elseif (trim(solver%es_type) == 'remove core') then
 !
          call wf%read_rm_core_settings()
 !
       endif
 !
-      if (input%is_keyword_present('state guesses', 'solver cc es')) then 
+      if (input%is_keyword_present('state guesses', 'solver cc es')) then
 !
          solver%start_vectors = es_manual_start_vector_tool(wf)
 !
-      else 
+      else
 !
-         if (trim(solver%es_type) == 'valence') then 
+         if (trim(solver%es_type) == 'valence') then
 !
             solver%start_vectors = es_valence_start_vector_tool(wf)
 !
-         elseif (trim(solver%es_type) == 'core') then 
+         elseif (trim(solver%es_type) == 'core') then
 !
             solver%start_vectors = es_cvs_start_vector_tool(wf)
 !
-         elseif (trim(solver%es_type) == 'ionize') then 
+         elseif (trim(solver%es_type) == 'ionize') then
 !
             solver%start_vectors = es_ip_start_vector_tool(wf)
 !
@@ -462,7 +467,7 @@ contains
 !
             solver%start_vectors = es_valence_start_vector_tool(wf)
 !
-         else 
+         else
 !
             call output%error_msg('could not recognize excited state type in abstract_cc_es')
 !
@@ -475,32 +480,32 @@ contains
 !
    subroutine initialize_projection_tool_abstract_cc_es(solver, wf)
 !!
-!!    Initialize projection tool 
-!!    Written by Eirik F. Kjønstad, Sep 2019 
+!!    Initialize projection tool
+!!    Written by Eirik F. Kjønstad, Sep 2019
 !!
       implicit none
 !
-      class(abstract_cc_es) :: solver 
+      class(abstract_cc_es) :: solver
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
-      if (trim(solver%es_type) == 'valence') then 
+      if (trim(solver%es_type) == 'valence') then
 !
          solver%projector = es_valence_projection_tool()
 !
-      elseif (trim(solver%es_type) == 'core') then 
+      elseif (trim(solver%es_type) == 'core') then
 !
          solver%projector = es_cvs_projection_tool(wf)
 !
-      elseif (trim(solver%es_type) == 'ionize') then 
+      elseif (trim(solver%es_type) == 'ionize') then
 !
          solver%projector = es_ip_projection_tool(wf)
 !
-      elseif (trim(solver%es_type) == 'remove core') then 
+      elseif (trim(solver%es_type) == 'remove core') then
 !
          solver%projector = es_rm_core_projection_tool(wf)
 !
-      else 
+      else
 !
          call output%error_msg('could not recognize excited state type in abstract_cc_es')
 !
@@ -535,7 +540,7 @@ contains
 !
          if (solver%projector%active) call solver%projector%do_(X(:,state))
 !
-      enddo 
+      enddo
 !
    end subroutine set_initial_guesses_abstract_cc_es
 !

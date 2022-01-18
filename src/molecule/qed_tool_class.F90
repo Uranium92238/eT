@@ -32,7 +32,6 @@ module qed_tool_class
    use global_out,            only: output
    use memory_manager_class,  only: mem
    use ao_tool_class,         only: ao_tool
-   use array_utilities,       only: zero_array, symmetric_sandwich
 !
    implicit none
 !
@@ -179,6 +178,8 @@ contains
 !!
 !!    Designed to be overwritten by descendants.
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(qed_tool), intent(inout) :: qed
@@ -273,6 +274,8 @@ contains
 !!       mu_wx = <w| (e dot mu_el) |x> + (e dot mu_nuc) S_wx / N_el
 !!          e : transversal polarization vector
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(qed_tool), intent(in) :: qed
@@ -309,6 +312,8 @@ contains
 !!    Q_wx = <w| (e^T dot Q dot e) |x>
 !!       e : transversal polarization vector
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(qed_tool), intent(in) :: qed
@@ -367,7 +372,7 @@ contains
 !!    also known as the dipole self-energy.
 !!       g2_wx = sum_p g_wp g_px = lambda^2 / 2 * sum_p mu_wp mu_px
 !!
-      use array_utilities, only: invert
+      use array_utilities, only: invert, zero_array, symmetric_sandwich
 !
       implicit none
 !

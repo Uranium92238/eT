@@ -69,12 +69,9 @@ module nonlinear_davidson_cc_es_class
 !!
 !
    use parameters
-   use timings_class, only: timings
-   use global_in, only: input
-   use global_out, only: output
    use ccs_class, only: ccs
-   use string_utilities, only: convert_to_uppercase
-   use array_utilities, only: get_l2_norm, zero_array
+   use timings_class, only: timings
+   use global_out, only: output
    use memory_manager_class, only: mem
    use eigen_davidson_tool_class, only: eigen_davidson_tool
    use abstract_cc_es_class, only: abstract_cc_es!
@@ -139,6 +136,8 @@ contains
 !!    Mostly identical to the constructor for the standard Davidson solver
 !!    (Sarai D. Folkestad and Eirik F. Kjønstad, 2018).
 !!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       type(nonlinear_davidson_cc_es) :: solver
@@ -232,6 +231,8 @@ contains
 !!    (see "prepare_wf_for_excited_state" routine). Several tasks are currently re-done,
 !!    but these are all cheap operations and should not affect performance.
 !!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       type(nonlinear_davidson_cc_es) :: solver
@@ -336,6 +337,8 @@ contains
 !!    The solver is used in combination with DIIS as a preconvergence step to increase the
 !!    robustness of DIIS. See "do_davidson_preconvergence" in the DIIS excited state solver.
 !!
+      use array_utilities, only: get_l2_norm, zero_array
+!
       implicit none
 !
       class(nonlinear_davidson_cc_es) :: solver
@@ -550,7 +553,7 @@ contains
 !!       then alpha = omega_k when c is X_k or a trial
 !!       generated from a residual corresponding to a guess for X_k.
 !!
-      use array_utilities, only: invert
+      use array_utilities, only: invert, get_l2_norm, zero_array
 !
       implicit none
 !
@@ -831,6 +834,8 @@ contains
 !!    Read Davidson settings
 !!    Written by Eirik F. Kjønstad, Jan 2020
 !!
+      use global_in, only: input
+!
       implicit none
 !
       class(nonlinear_davidson_cc_es) :: solver

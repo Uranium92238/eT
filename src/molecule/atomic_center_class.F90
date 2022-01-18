@@ -26,9 +26,9 @@ module atomic_center_class
 !
    use parameters
    use global_out, only : output
-   use sequential_file_class, only : sequential_file
+   use sequential_file_class, only: sequential_file
    use shell_class, only : shell
-   use memory_manager_class, only : mem
+   use memory_manager_class, only: mem
 !
    implicit none
 !

@@ -25,8 +25,6 @@ module periodic_table
 !!    Extended from Z=20 to Z=118 by Susi Lehtola, 2020
 !!
 !
-   use kinds
-!
    implicit none
 !
    integer, parameter :: size_periodic_table = 118

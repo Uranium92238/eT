@@ -24,9 +24,10 @@ module eigen_davidson_solver_class
 !! Written by Sarai D. Folkestad, May 2021
 !!
 !
-   use kinds
-   use hf_class
-   use eigen_davidson_tool_class
+   use parameters
+   use hf_class, only: hf
+   use memory_manager_class, only: mem
+   use eigen_davidson_tool_class, only: eigen_davidson_tool
 !
    use convergence_tool_class,          only: convergence_tool
    use transformation_tool_class,       only: transformation_tool
@@ -226,6 +227,9 @@ contains
 !!    - Add new trial if needed and residual norm is greater
 !!      than linear dependence threshold
 !!
+      use global_out, only: output
+      use array_utilities, only: get_l2_norm
+!
       implicit none
 !
       class(eigen_davidson_solver), intent(inout) :: this

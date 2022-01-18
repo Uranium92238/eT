@@ -42,13 +42,11 @@ module cc_propagation_class
 !
    use parameters
    use memory_manager_class, only: mem
-   use global_in, only: input
    use global_out, only: output
    use timings_class, only: timings
    use sequential_file_class, only: sequential_file
    use ccs_class, only: ccs
    use electric_field_class, only: electric_field
-   use array_utilities, only: zdot
 !
    implicit none
 !
@@ -105,7 +103,7 @@ module cc_propagation_class
 !
       procedure(propagation_step), deferred :: step
 !
-   end type cc_propagation  
+   end type cc_propagation
 !
    abstract interface
 !
@@ -323,14 +321,14 @@ contains
 !
    subroutine initializations_cc_propagation(solver)
 !!
-!!    Initializations   
-!!    Written by Eirik F. Kjønstad, Jan 2020 
+!!    Initializations
+!!    Written by Eirik F. Kjønstad, Jan 2020
 !!
 !!    Performs initializations needed for run (if any).
 !!
-      implicit none 
+      implicit none
 !
-      class(cc_propagation), intent(inout) :: solver 
+      class(cc_propagation), intent(inout) :: solver
 !
       call output%printf('v', 'No initializations for (a0)', &
                            chars=[trim(solver%name_)], fs='(/t3,a)')
@@ -372,7 +370,7 @@ contains
 !!    Update the electric field to the field at the given time t, and then the wavefunction
 !!    (amplitudes, multipliers, t1 transformed quantities and Fock matrix).
 !!
-      implicit none 
+      implicit none
 !
       class(cc_propagation) :: solver
       class(ccs), intent(inout) :: wf
@@ -398,7 +396,7 @@ contains
 !!
 !!    Update amplitudes, multipliers, t1 transformed quantities and Fock matrix.
 !!
-      implicit none 
+      implicit none
 !
       class(cc_propagation) :: solver
       class(ccs), intent(inout) :: wf
@@ -428,9 +426,9 @@ contains
 !!
 !!    Print banner of solver.
 !!
-      implicit none 
+      implicit none
 !
-      class(cc_propagation) :: solver 
+      class(cc_propagation) :: solver
 !
       call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
@@ -447,7 +445,7 @@ contains
 !!
 !!    Calculate the energy.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs) :: wf
       class(electric_field) :: field
@@ -468,7 +466,7 @@ contains
 !!
 !!    Write energy to file together with the time t.
 !!
-      implicit none 
+      implicit none
 !
       class(cc_propagation) :: solver
       class(ccs) :: wf
@@ -488,7 +486,9 @@ contains
 !!
 !!    Calculate the dipole moment vector.
 !!
-      implicit none 
+      use array_utilities, only: zdot
+!
+      implicit none
 !
       class(ccs) :: wf
 !
@@ -525,7 +525,7 @@ contains
 !!
 !!    Write the dipole moment vector to file together with the time t.
 !!
-      implicit none 
+      implicit none
 !
       class(cc_propagation) :: solver
       class(ccs) :: wf
@@ -551,7 +551,7 @@ contains
 !!
 !!    Write the electric field vector to file together with the time t.
 !!
-      implicit none 
+      implicit none
 !
       class(cc_propagation) :: solver
       class(electric_field) :: field
@@ -652,12 +652,12 @@ contains
 !
    subroutine print_summary_cc_propagation(solver, wf, field)
 !!
-!!    Print summary 
+!!    Print summary
 !!    Written by Andreas Skeidsvoll, Oct 2018
 !!
 !!    Print the summary of the solver.
 !!
-      implicit none 
+      implicit none
 !
       class(cc_propagation) :: solver
       class(ccs) :: wf
@@ -713,7 +713,7 @@ contains
    subroutine read_settings_cc_propagation(solver)
 !!
 !!    Read settings
-!!    Written by Andreas Skeidsvoll, Feb 2019 
+!!    Written by Andreas Skeidsvoll, Feb 2019
 !!
 !!    Read the settings required to do the propagation.
 !!
@@ -738,7 +738,9 @@ contains
 !!    density matrix output: writes real and imaginary parts of the density matrix to a new set of
 !!                           files at each output step if this is specified
 !!
-      implicit none 
+      use global_in, only: input
+!
+      implicit none
 !
       class(cc_propagation) :: solver
 !
@@ -769,14 +771,14 @@ contains
 !
    subroutine print_settings_cc_propagation(solver)
 !!
-!!    Print settings    
+!!    Print settings
 !!    Written by Andreas Skeidsvoll, Oct 2018
 !!
 !!    Print the settings of the solver related to the time of propagation
 !!
-      implicit none 
+      implicit none
 !
-      class(cc_propagation) :: solver 
+      class(cc_propagation) :: solver
 !
       call output%printf('m', '- Propagation settings:', fs='(/t3,a)')
 !
