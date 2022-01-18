@@ -34,7 +34,8 @@ module atomic_center_reader_class
 !!    The user can then get the centers and sets via get-routines.
 !!
 !
-   use named_range_class
+   use range_class,           only: range_
+   use named_range_class,     only: named_range
    use global_in,             only: input
    use global_out,            only: output
    use kinds,                 only: dp

@@ -19,42 +19,39 @@
 !
 module abstract_hf_solver_class
 !!
-!!    Abstract HF solver class module 
+!!    Abstract HF solver class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-   use global_in,  only : input
-   use global_out, only : output
-!
+   use global_out,                      only : output
    use hf_class,                        only : hf
-   use memory_manager_class,            only : mem
    use timings_class,                   only : timings
-   use abstract_convergence_tool_class, only : abstract_convergence_tool 
+   use abstract_convergence_tool_class, only : abstract_convergence_tool
 !
-   use parameters   
+   use parameters
 !
-   implicit none 
+   implicit none
 !
-   type, abstract :: abstract_hf_solver 
+   type, abstract :: abstract_hf_solver
 !
       character(len=100) :: name_
       character(len=100) :: tag
       character(len=400) :: description
 !
       integer :: max_iterations
-!  
+!
       character(len=200) :: ao_density_guess
 !
       integer, dimension(:), allocatable :: orbitals_to_print
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       logical :: energy_convergence
-!  
+!
       class(abstract_convergence_tool), allocatable :: convergence_checker
 !
       logical :: skip
 !
-   contains 
+   contains
 !
       procedure :: print_banner             => print_banner_abstract_hf_solver
 !
@@ -65,34 +62,34 @@ module abstract_hf_solver_class
                 => control_scf_skip_abstract_hf_solver
 !
       procedure, nopass :: run_single_ao &
-                        => run_single_ao_abstract_hf_solver 
+                        => run_single_ao_abstract_hf_solver
 !
    end type abstract_hf_solver
 !
-contains 
+contains
 !
 !
    subroutine run_single_ao_abstract_hf_solver(wf)
 !!
-!!    Run single AO 
-!!    Written by Eirik F. Kjønstad, 2019 
+!!    Run single AO
+!!    Written by Eirik F. Kjønstad, 2019
 !!
-!!    Special case where n_ao == 1 means that the standard 
-!!    solvers cannot be used. This is because the packed gradient 
-!!    (anti-symmetric) does not exist. 
+!!    Special case where n_ao == 1 means that the standard
+!!    solvers cannot be used. This is because the packed gradient
+!!    (anti-symmetric) does not exist.
 !!
-!!    The equations are already solved, so this routine simply 
+!!    The equations are already solved, so this routine simply
 !!    constructs the required properties for saving in the cleanup
 !!    routine.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       call output%printf('m', 'The system contains just one atomic orbital. &
                          &Just constructing the solutions.', fs='(/t3,a)')
 !
-      call wf%update_fock_and_energy()  
+      call wf%update_fock_and_energy()
 !
       call wf%roothan_hall_update_orbitals() ! F => C
       call wf%update_ao_density()            ! C => D
@@ -105,15 +102,15 @@ contains
 !
    subroutine read_settings_abstract_hf_solver(solver)
 !!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-!!    Reads the settings. This routine is to be overwritten by 
-!!    descendants if more settings need to be set. 
+!!    Reads the settings. This routine is to be overwritten by
+!!    descendants if more settings need to be set.
 !!
-      implicit none 
+      implicit none
 !
-      class(abstract_hf_solver) :: solver 
+      class(abstract_hf_solver) :: solver
 !
       call solver%read_hf_solver_settings()
 !
@@ -122,14 +119,16 @@ contains
 !
    subroutine read_hf_solver_settings_abstract_hf_solver(solver)
 !!
-!!    Read HF solver settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Read HF solver settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    Reads the settings specific to this class.
 !!
-      implicit none 
+      use global_in,  only : input
 !
-      class(abstract_hf_solver) :: solver 
+      implicit none
+!
+      class(abstract_hf_solver) :: solver
 !
       real(dp) :: energy_threshold, gradient_threshold
 !!
@@ -158,9 +157,9 @@ contains
 !!    Print banner
 !!    Written by Rolf H. Myhre, 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(abstract_hf_solver) :: solver 
+      class(abstract_hf_solver) :: solver
 !
       call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')

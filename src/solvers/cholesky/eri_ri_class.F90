@@ -33,12 +33,8 @@ module eri_ri_class
 !
    use parameters
 !
-   use global_out, only : output
-   use global_in,  only : input
-!
    use ao_tool_class, only : ao_tool
    use ri_basis_class, only : ri_basis
-!
    use memory_manager_class, only: mem
 !
    implicit none
@@ -432,6 +428,8 @@ contains
 !!    Print summary
 !!    Written by Sarai D. Folkestad, Aug 2021
 !!
+      use global_out, only : output
+!
       implicit none
 !
       class(eri_ri) :: this

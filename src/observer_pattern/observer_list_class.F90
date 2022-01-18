@@ -29,9 +29,7 @@ module observer_list_class
 !
    use parameters
 !
-   use global_out, only : output
    use observer_node_class, only: observer_node
-   use observer_class, only: observer
 !
    implicit none
 !
@@ -56,7 +54,7 @@ module observer_list_class
       final :: cleanup
 !
    end type observer_list
-!   
+!
 !
 contains
 !
@@ -88,6 +86,9 @@ contains
 !!    Add observer
 !!    Written by Sarai D. Folkestad, Oct 2021
 !!
+      use global_out, only : output
+      use observer_class, only: observer
+!
       implicit none
 !
       class(observer_list) :: this
@@ -134,6 +135,8 @@ contains
 !!    Remove observer
 !!    Written by Sarai D. Folkestad, Oct 2021
 !!
+      use global_out, only : output
+!
       implicit none
 !
       class(observer_list) :: this

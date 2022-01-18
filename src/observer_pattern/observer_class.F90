@@ -30,7 +30,6 @@ module observer_class
 !!
 !
    use parameters
-   use global_out, only : output
 !
    implicit none
 !
@@ -42,7 +41,7 @@ module observer_class
 !
    end type observer
 !
-   abstract interface 
+   abstract interface
 !
       subroutine update_observer(this)
 !!
@@ -54,6 +53,6 @@ module observer_class
 !
       end subroutine
 !
-   end interface     
+   end interface
 !
 end module observer_class

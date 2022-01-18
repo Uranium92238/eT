@@ -44,7 +44,6 @@ module complex_fft_class
    use fftpack_complex_initialization_routines
 !
    use memory_manager_class, only: mem
-   use global_in, only : input
    use global_out, only : output
    use sequential_file_class, only : sequential_file
 !
@@ -129,7 +128,7 @@ contains
 !!
       use iso_fortran_env, only: iostat_end
 !
-      implicit none 
+      implicit none
 !
       class(complex_fft) :: solver
 !
@@ -331,7 +330,7 @@ contains
 !!
 !!    Print the banner of the solver.
 !!
-      implicit none 
+      implicit none
 !
       class(complex_fft) :: solver
 !
@@ -345,12 +344,12 @@ contains
 !
    subroutine print_summary_complex_fft(solver)
 !!
-!!    Print summary 
+!!    Print summary
 !!    Written by Andreas Skeidsvoll, Feb 2019
 !!
 !!    Print the summary of the solver.
 !!
-      implicit none 
+      implicit none
 !
       class(complex_fft) :: solver
 !
@@ -362,7 +361,7 @@ contains
    subroutine read_settings_complex_fft(solver)
 !!
 !!    Read settings
-!!    Written by Andreas Skeidsvoll, May 2019 
+!!    Written by Andreas Skeidsvoll, May 2019
 !!
 !!    Read the settings required to do the complex FFT.
 !!
@@ -374,6 +373,8 @@ contains
 !!                  time
 !!    time step:    the temporal spacing between the values of the time series
 !!
+      use global_in, only: input
+!
       implicit none
 !
       class(complex_fft) :: solver

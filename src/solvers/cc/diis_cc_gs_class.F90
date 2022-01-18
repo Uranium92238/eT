@@ -22,41 +22,35 @@ module diis_cc_gs_class
 !!
 !!	DIIS coupled cluster ground state solver class module
 !!	Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!  
+!!
 !! Solves the ground state coupled cluster equation (or, amplitude
 !! equations)
 !!
 !!    Omega_mu = < mu | H-bar | HF > = 0,     H-bar = e-T H eT,
 !!
-!! for the cluster amplitudes t_mu in T = sum_mu t_mu tau_mu. The 
-!! cluster amplitude give the (right) coupled cluster ground state as 
+!! for the cluster amplitudes t_mu in T = sum_mu t_mu tau_mu. The
+!! cluster amplitude give the (right) coupled cluster ground state as
 !!
 !!    |CC > = e^T | HF >.
 !!
-!! The equation is solved using the direct inversion of the iterative 
-!! subspace (DIIS) algorithm. See Pulay, P. Convergence acceleration 
-!! of iterative sequences. The case of SCF iteration. Chem. Phys. Lett. 
-!! 1980, 73, 393−398. This algorithm combines estimates for the parameters 
-!! and the errors and finds a least-squares solution to the error being 
-!! zero (see diis_tool solver tool for more details). 
+!! The equation is solved using the direct inversion of the iterative
+!! subspace (DIIS) algorithm. See Pulay, P. Convergence acceleration
+!! of iterative sequences. The case of SCF iteration. Chem. Phys. Lett.
+!! 1980, 73, 393−398. This algorithm combines estimates for the parameters
+!! and the errors and finds a least-squares solution to the error being
+!! zero (see diis_tool solver tool for more details).
 !!
 !
    use parameters
 !
-   use global_in,    only : input
-   use global_out,   only : output
+   use global_out,              only: output
+   use memory_manager_class,    only: mem
+   use ccs_class,               only: ccs
+   use diis_tool_class,         only: diis_tool
+   use timings_class,           only: timings
+   use convergence_tool_class,  only: convergence_tool
 !
-   use string_utilities,                  only : convert_to_uppercase
-   use array_utilities,                   only : get_l2_norm
-   use memory_manager_class,              only : mem
-   use ccs_class,                         only : ccs
-   use diis_tool_class,                   only : diis_tool
-   use timings_class,                     only : timings
-   use precondition_tool_class,           only : precondition_tool
-   use convergence_tool_class,            only : convergence_tool
-!
-   use amplitude_updater_class,           only: amplitude_updater
-   use eri_cholesky_disk_class,           only: eri_cholesky_disk
+   use amplitude_updater_class, only: amplitude_updater
 !
    implicit none
 !
@@ -66,10 +60,10 @@ module diis_cc_gs_class
 !
       character(len=500) :: description1 = 'A DIIS CC ground state amplitude equations solver. It uses &
                                            &an extrapolation of previous quasi-Newton perturbation theory &
-                                           &estimates of the next amplitudes. See Helgaker et al., Molecular & 
+                                           &estimates of the next amplitudes. See Helgaker et al., Molecular &
                                            &Electronic Structure Theory, Chapter 13.'
 !
-      integer :: max_iterations 
+      integer :: max_iterations
 !
       logical :: restart
 !
@@ -82,7 +76,7 @@ module diis_cc_gs_class
       type(diis_tool), allocatable :: diis
 !
    contains
-!     
+!
       procedure :: run                      => run_diis_cc_gs
       procedure :: cleanup                  => cleanup_diis_cc_gs
 !
@@ -94,11 +88,11 @@ module diis_cc_gs_class
    end type diis_cc_gs
 !
 !
-   interface diis_cc_gs 
+   interface diis_cc_gs
 !
       procedure :: new_diis_cc_gs
 !
-   end interface diis_cc_gs 
+   end interface diis_cc_gs
 !
 !
 contains
@@ -106,7 +100,7 @@ contains
 !
    function new_diis_cc_gs(wf, restart, t_updater, storage) result(solver)
 !!
-!!    New DIIS CC GS 
+!!    New DIIS CC GS
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    restart:   read amplitudes instead of generating an initial guess
@@ -122,7 +116,7 @@ contains
 !
       class(amplitude_updater), intent(in) :: t_updater
 !
-      character(len=*), intent(in) :: storage 
+      character(len=*), intent(in) :: storage
 !
       integer :: diis_dimension
       logical :: crop ! Standard DIIS if false; CROP variant of DIIS if true
@@ -135,13 +129,13 @@ contains
 !
       call solver%print_banner()
 !
-!     Set standard settings 
+!     Set standard settings
 !
       solver%max_iterations   = 100
       solver%restart          = restart
       solver%t_updater        = t_updater
 !
-      diis_dimension    = 8 
+      diis_dimension    = 8
       crop              = .false.
       records_in_memory = .false.
 !
@@ -164,15 +158,15 @@ contains
 !
 !     Determine whether to store records in memory or on file
 !
-      if (trim(storage) == 'memory') then 
+      if (trim(storage) == 'memory') then
 !
          records_in_memory = .true.
 !
-      elseif (trim(storage) == 'disk') then 
+      elseif (trim(storage) == 'disk') then
 !
          records_in_memory = .false.
 !
-      else 
+      else
 !
          call output%error_msg('Could not recognize keyword storage in solver: ' // &
                                  trim(storage))
@@ -186,18 +180,18 @@ contains
                         dimension_=diis_dimension,   &
                         crop=crop,                   &
                         records_in_memory=records_in_memory)
-! 
+!
    end function new_diis_cc_gs
 !
 !
    subroutine print_settings_diis_cc_gs(solver)
 !!
-!!    Print settings    
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Print settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(diis_cc_gs) :: solver 
+      class(diis_cc_gs) :: solver
 !
       call output%printf('m', '- CC ground state solver settings:', fs='(/t3,a)')
 !
@@ -211,9 +205,11 @@ contains
 !
    subroutine run_diis_cc_gs(solver, wf)
 !!
-!!    Run 
+!!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use array_utilities, only: get_l2_norm
+!
       implicit none
 !
       class(diis_cc_gs) :: solver
@@ -225,8 +221,8 @@ contains
       real(dp) :: energy, previous_energy
       real(dp) :: omega_norm
 !
-      real(dp), dimension(:), allocatable :: omega 
-      real(dp), dimension(:), allocatable :: amplitudes  
+      real(dp), dimension(:), allocatable :: omega
+      real(dp), dimension(:), allocatable :: amplitudes
 !
       integer :: iteration
 !
@@ -253,9 +249,9 @@ contains
       do while (.not. converged .and. iteration .le. solver%max_iterations)
 !
          iteration = iteration + 1
-         call iteration_timer%turn_on()         
+         call iteration_timer%turn_on()
 !
-!        Calculate the energy and error vector omega 
+!        Calculate the energy and error vector omega
 !
          call wf%construct_fock(task = 'gs')
 !
@@ -302,11 +298,11 @@ contains
 !
          endif
 !
-         previous_energy = energy 
+         previous_energy = energy
          call wf%save_amplitudes()
 !
-         call iteration_timer%turn_off()         
-         call iteration_timer%reset()         
+         call iteration_timer%turn_off()
+         call iteration_timer%reset()
 !
       enddo
 !
@@ -325,9 +321,11 @@ contains
 !
    subroutine cleanup_diis_cc_gs(solver, wf)
 !!
-!! 	Cleanup 
+!! 	Cleanup
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       class(diis_cc_gs) :: solver
@@ -353,9 +351,9 @@ contains
 !!    Print banner
 !!    Written by Rolf H. Myhre, 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(diis_cc_gs) :: solver 
+      class(diis_cc_gs) :: solver
 !
       call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
@@ -367,12 +365,14 @@ contains
 !
    subroutine read_settings_diis_cc_gs(solver, crop, diis_dimension)
 !!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      use global_in, only: input
 !
-      class(diis_cc_gs)      :: solver 
+      implicit none
+!
+      class(diis_cc_gs)      :: solver
       logical, intent(inout) :: crop
       integer, intent(inout) :: diis_dimension
 !
@@ -391,7 +391,7 @@ contains
          call solver%convergence_checker%set_residual_threshold(omega_threshold)
 !
       endif
-!      
+!
       call input%get_keyword('max iterations', 'solver cc gs', solver%max_iterations)
 !
       crop = input%is_keyword_present('crop', 'solver cc gs')

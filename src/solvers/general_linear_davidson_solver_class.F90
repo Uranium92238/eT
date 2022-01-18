@@ -44,9 +44,10 @@ module general_linear_davidson_solver_class
 !!    Sarai D. Folkestad, Josefine H. Andersen)
 !!
 !
-   use kinds
-   use hf_class
-   use linear_davidson_tool_class
+   use parameters
+   use hf_class, only: hf
+   use memory_manager_class, only: mem
+   use linear_davidson_tool_class, only: linear_davidson_tool
 !
    use transformation_tool_class,              only: transformation_tool
    use linear_storage_tool_class,              only: linear_storage_tool
@@ -141,6 +142,9 @@ contains
 !!    Run
 !!    Written by Regina Matveeva and Ida-Marie Høyvik, Sept 2021
 !!
+      use global_out, only: output
+      use array_utilities, only: get_l2_norm, zero_array
+!
       implicit none
 !
       class(general_linear_davidson_solver) :: this
@@ -306,6 +310,8 @@ contains
 !!    - Add new trial if needed and residual norm is greater
 !!      than linear dependence threshold
 !!
+      use array_utilities, only: get_l2_norm
+!
       implicit none
 !
       class(general_linear_davidson_solver), intent(inout) :: this

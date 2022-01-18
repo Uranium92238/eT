@@ -30,9 +30,6 @@ module observer_node_class
 !!
 !
    use parameters
-!
-   use global_out, only: output
-!
    use observer_class, only: observer
 !
    implicit none
@@ -51,7 +48,7 @@ module observer_node_class
       procedure :: get_tag => get_tag_observer_node
       procedure :: update => update_observer_node
 !
-   end type observer_node   
+   end type observer_node
 !
    interface observer_node
 !

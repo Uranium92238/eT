@@ -30,7 +30,8 @@ module ao_tool_class
 !!
 !
    use parameters
-   use named_range_class
+   use range_class,           only: range_
+   use named_range_class,     only: named_range
    use iso_c_binding,         only: c_int, c_null_char, c_char
 !
    use global_in,             only: input

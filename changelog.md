@@ -9,6 +9,7 @@
 
 ### Structure
 - New ERI and Cholesky vector tools. Autogeneration of complex tools. eT-program/eT!902
+- Cleanup of use statements in solvers, molecule and observer. eT-program/eT!1012
 
 ### Features
 - Added timers for calculate energy. eT-program/eT!993

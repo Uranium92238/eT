@@ -27,7 +27,6 @@ module accelerator_tool_class
 !!    convergence acceleration to solve equations
 !!
 !
-   use kinds
    use parameters
 !
    implicit none

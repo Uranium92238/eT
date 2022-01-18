@@ -64,16 +64,11 @@ module diis_cc_es_class
 !
    use parameters
    use global_out, only: output
-   use global_in, only: input
    use timings_class, only: timings
    use memory_manager_class, only: mem
    use ccs_class, only: ccs
    use diis_tool_class, only: diis_tool
    use abstract_cc_es_class, only: abstract_cc_es
-   use es_valence_start_vector_tool_class, only: es_valence_start_vector_tool
-   use es_valence_projection_tool_class, only: es_valence_projection_tool
-   use array_utilities, only: quicksort_with_index_ascending, get_l2_norm
-   use string_utilities, only: convert_to_uppercase
    use precondition_tool_class, only: precondition_tool
    use convergence_tool_class, only: convergence_tool
 !
@@ -117,6 +112,8 @@ contains
 !!    New DIIS CC ES
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       type(diis_cc_es) :: solver
@@ -247,6 +244,8 @@ contains
 !!    Read settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+      use global_in, only: input
+!
       implicit none
 !
       class(diis_cc_es)           :: solver
@@ -274,6 +273,8 @@ contains
 !!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use array_utilities, only: quicksort_with_index_ascending, get_l2_norm
+!
       implicit none
 !
       class(diis_cc_es) :: solver
@@ -529,6 +530,7 @@ contains
 !!    Sets up non-linear Davidson solver and runs it to get first guesses
 !!    for the eigenstates.
 !!
+      use global_in, only: input
       use nonlinear_davidson_cc_es_class, only: nonlinear_davidson_cc_es
 !
       implicit none

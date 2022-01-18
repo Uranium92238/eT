@@ -35,9 +35,7 @@ module gl2_cc_propagation_class
    use butcher_tables
    use continuous_output_coefficients
    use memory_manager_class, only: mem
-   use global_out, only: output
    use ccs_class, only: ccs
-   use electric_field_class, only: electric_field
    use cc_propagation_class, only: cc_propagation
 !
    implicit none
@@ -90,19 +88,19 @@ contains
 !
    subroutine initializations_gl2_cc_propagation(solver)
 !!
-!!    Initializations 
+!!    Initializations
 !!    Written by Andreas Skedsvoll, Sep 2019
 !!
 !!    Allocates z1 guess and sets it to zero.
 !!
 !!    Moved from constructor, Eirik F. Kjønstad, Jan 2020.
 !!
-      implicit none 
+      implicit none
 !
-      class(gl2_cc_propagation), intent(inout) :: solver 
+      class(gl2_cc_propagation), intent(inout) :: solver
 !
       call mem%alloc(solver%z1_guess, solver%vector_length)
-      solver%z1_guess = zero_complex      
+      solver%z1_guess = zero_complex
 !
    end subroutine initializations_gl2_cc_propagation
 !
@@ -130,6 +128,9 @@ contains
 !!
 !!    Takes one forward gl2 step
 !!
+      use electric_field_class, only: electric_field
+      use global_out, only: output
+!
       implicit none
 !
       class(gl2_cc_propagation), intent(inout) :: solver
@@ -189,7 +190,7 @@ contains
             converged = .true.
 !
          endif
-! 
+!
 !        Update z vectors
 !
          call zcopy(n, z1_next, 1, z1, 1)
