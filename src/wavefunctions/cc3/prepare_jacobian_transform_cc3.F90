@@ -54,6 +54,8 @@ contains
       prep_timer = timings("Time preparing for CC3 Jacobian", pl='normal')
       call prep_timer%turn_on()
 !
+      call wf%initialize_eri_c1()
+!
       call wf%prepare_cc3_jacobian_intermediates()
 !
       call prep_timer%turn_off()
@@ -260,9 +262,9 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call wf%setup_vvvo(g_bdci, g_bdci_p, sorting, batch_i)
+         call wf%setup_vvvo(wf%eri_t1, g_bdci, g_bdci_p, sorting, batch_i)
 !
-         call wf%setup_ovov(g_lbic, g_lbic_p, sorting, batch_full, batch_i)
+         call wf%setup_ovov(wf%eri_t1, g_lbic, g_lbic_p, sorting, batch_full, batch_i)
 !
          call zero_array(X_dbai, batch_i%length*wf%n_v**3)
          X_dbai_p => X_dbai
@@ -271,18 +273,18 @@ contains
 !
             call batch_j%determine_limits(j_batch)
 !
-            call wf%setup_oovo(g_ljci, g_ljci_p, sorting, batch_j, batch_i)
+            call wf%setup_oovo(wf%eri_t1, g_ljci, g_ljci_p, sorting, batch_j, batch_i)
 !
             if (j_batch .ne. i_batch) then ! read for switched i - j
 !
-               call wf%setup_vvvo(g_bdcj, g_bdcj_p, sorting, batch_j)
+               call wf%setup_vvvo(wf%eri_t1, g_bdcj, g_bdcj_p, sorting, batch_j)
 !
-               call wf%setup_ovov(g_lbjc, g_lbjc_p, sorting, batch_full, batch_j)
+               call wf%setup_ovov(wf%eri_t1, g_lbjc, g_lbjc_p, sorting, batch_full, batch_j)
 !
                call wf%X_dbai%read_range(X_dbaj, batch_j)
                X_dbaj_p => X_dbaj
 !
-               call wf%setup_oovo(g_licj, g_licj_p, sorting, batch_i, batch_j)
+               call wf%setup_oovo(wf%eri_t1, g_licj, g_licj_p, sorting, batch_i, batch_j)
 !
             else ! j_batch == i_batch
 !
@@ -302,14 +304,14 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call wf%setup_vvvo(g_bdck, g_bdck_p, sorting, batch_k)
+                  call wf%setup_vvvo(wf%eri_t1, g_bdck, g_bdck_p, sorting, batch_k)
 !
-                  call wf%setup_oovo(g_lick, g_lick_p, sorting, batch_i, batch_k)
-                  call wf%setup_oovo(g_ljck, g_ljck_p, sorting, batch_j, batch_k)
-                  call wf%setup_oovo(g_lkci, g_lkci_p, sorting, batch_k, batch_i)
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%setup_oovo(wf%eri_t1, g_lick, g_lick_p, sorting, batch_i, batch_k)
+                  call wf%setup_oovo(wf%eri_t1, g_ljck, g_ljck_p, sorting, batch_j, batch_k)
+                  call wf%setup_oovo(wf%eri_t1, g_lkci, g_lkci_p, sorting, batch_k, batch_i)
+                  call wf%setup_oovo(wf%eri_t1, g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
 !
-                  call wf%setup_ovov(g_lbkc, g_lbkc_p, sorting, batch_full, batch_k)
+                  call wf%setup_ovov(wf%eri_t1, g_lbkc, g_lbkc_p, sorting, batch_full, batch_k)
 !
                   call wf%X_dbai%read_range(X_dbak, batch_k)
                   X_dbak_p => X_dbak
@@ -331,7 +333,7 @@ contains
 !
                   call wf%point_vvvo(g_bdck_p, g_bdcj, batch_k%length)
 !
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%setup_oovo(wf%eri_t1, g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
                   call wf%point_vooo(g_lick_p, g_licj, batch_i%length, batch_k%length)
                   call wf%point_vooo(g_ljck_p, g_lkcj, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_lkci_p, g_ljci, batch_k%length, batch_i%length)

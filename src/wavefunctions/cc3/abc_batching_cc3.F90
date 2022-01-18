@@ -33,8 +33,8 @@ submodule (cc3_class) batching_abc
 contains
 !
 !
-   module subroutine setup_vvvo_abc_cc3(wf, g_vvvo, point, unordered_g_vvvo, &
-                                        batch_p, batch_r, eri_c1)
+   module subroutine setup_vvvo_abc_cc3(wf, eri, reordered_g_vvvo, point, g_vvvo, &
+                                        batch_p, batch_r)
 !!
 !!    Setup vvvo abc
 !!    Written by Alexander C. Paul, Jan 2021
@@ -44,10 +44,9 @@ contains
 !!
 !!    The integral is returned in 2413 order
 !!
-!!    g_vvvo:           final sorted integral array
+!!    reordered_g_vvvo: final sorted integral array
 !!    point:            pointer to g_vvvo integral
-!!    unordered_g_vvvo: help array for reordering
-!!    c_ai:             use the c1-transformed integral
+!!    g_vvvo:           help array to get the integral and reorder
 !!
       use reordering, only: sort_1234_to_2413
 !
@@ -55,33 +54,24 @@ contains
 !
       class(cc3) :: wf
 !
+      type(eri_adapter), intent(inout) :: eri
+!
       type(batching_index), intent(in) :: batch_p, batch_r
 !
       real(dp), dimension(wf%n_v, wf%n_o, batch_p%length, batch_r%length), &
-                                                      target, intent(out)  :: g_vvvo
+                                                target, intent(out)  :: reordered_g_vvvo
       real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
 !
-      real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_vvvo
-      type(eri_adapter), intent(inout), optional  :: eri_c1
+      real(dp), dimension(:,:,:,:), intent(out) :: g_vvvo
 !
-      if (.not. present(eri_c1)) then
+      call eri%get('vvvo', g_vvvo, &
+                   first_p=batch_p%first, last_p=batch_p%get_last(), &
+                   first_r=batch_r%first, last_r=batch_r%get_last())
 !
-         call wf%eri_t1%get('vvvo', unordered_g_vvvo, &
-                                 first_p=batch_p%first, last_p=batch_p%get_last(), &
-                                 first_r=batch_r%first, last_r=batch_r%get_last())
-!
-      else
-!
-         call eri_c1%get('vvvo', unordered_g_vvvo, &
-                                 first_p=batch_p%first, last_p=batch_p%get_last(), &
-                                 first_r=batch_r%first, last_r=batch_r%get_last())
-!
-      end if
-!
-       call sort_1234_to_2413(unordered_g_vvvo, g_vvvo, batch_p%length, wf%n_v, &
+       call sort_1234_to_2413(g_vvvo, reordered_g_vvvo, batch_p%length, wf%n_v, &
                                                         batch_r%length, wf%n_o)
 !
-      point(1:wf%n_v, 1:wf%n_o, 1:batch_p%length, 1:batch_r%length) => g_vvvo
+      point(1:wf%n_v, 1:wf%n_o, 1:batch_p%length, 1:batch_r%length) => reordered_g_vvvo
 !
    end subroutine setup_vvvo_abc_cc3
 !
@@ -106,7 +96,7 @@ contains
 !
       integer, intent(in) :: length1, length2
 !
-      real(dp), dimension(wf%n_v, wf%n_o, length1, length2), target, intent(in)  :: g_vvvo
+      real(dp), dimension(wf%n_v, wf%n_o, length1, length2), target, intent(in) :: g_vvvo
       real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
 !
       point(1:wf%n_v, 1:wf%n_o, 1:length1, 1:length2) => g_vvvo
@@ -114,7 +104,7 @@ contains
    end subroutine point_vvvo_abc_cc3
 !
 !
-   module subroutine setup_vvov_abc_cc3(wf, g_vvov, point, unordered_g_vvov, &
+   module subroutine setup_vvov_abc_cc3(wf, reordered_g_vvov, point, g_vvov, &
                                         batch_q, batch_s)
 !!
 !!    Setup vvov abc
@@ -125,9 +115,9 @@ contains
 !!
 !!    The integral is returned in 1324 order
 !!
-!!    g_vvov:           final sorted integral array
+!!    reordered_g_vvov: final sorted integral array
 !!    point:            pointer to g_vvov integral
-!!    unordered_g_vvov: help array for reordering
+!!    g_vvov:           help array to get integral and reorder
 !!
       use reordering, only: sort_1234_to_1324
 !
@@ -138,19 +128,19 @@ contains
       type(batching_index), intent(in) :: batch_q, batch_s
 !
       real(dp), dimension(wf%n_o, wf%n_v, batch_q%length, batch_s%length), &
-                                                      target, intent(out)  :: g_vvov
+                                                target, intent(out)  :: reordered_g_vvov
       real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
 !
-      real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_vvov
+      real(dp), dimension(:,:,:,:), intent(out) :: g_vvov
 !
-      call wf%eri_t1%get('vvov', unordered_g_vvov, &
+      call wf%eri_t1%get('vvov', g_vvov, &
                               first_q=batch_q%first, last_q=batch_q%get_last(), &
                               first_s=batch_s%first, last_s=batch_s%get_last())
 !
-      call sort_1234_to_1324(unordered_g_vvov, g_vvov, wf%n_v, batch_q%length, &
+      call sort_1234_to_1324(g_vvov, reordered_g_vvov, wf%n_v, batch_q%length, &
                                                        wf%n_o, batch_s%length)
 !
-      point(1:wf%n_v, 1:wf%n_o, 1:batch_q%length, 1:batch_s%length) => g_vvov
+      point(1:wf%n_v, 1:wf%n_o, 1:batch_q%length, 1:batch_s%length) => reordered_g_vvov
 !
    end subroutine setup_vvov_abc_cc3
 !
@@ -183,7 +173,7 @@ contains
    end subroutine point_vvov_abc_cc3
 !
 !
-   module subroutine setup_ovov_abc_cc3(wf, g_ovov, point, unordered_g_ovov, &
+   module subroutine setup_ovov_abc_cc3(wf, reordered_g_ovov, point, g_ovov, &
                                         batch_q, batch_s)
 !!
 !!    Setup ovov abc
@@ -194,9 +184,9 @@ contains
 !!
 !!    The integral is returned in 1324 order
 !!
-!!    g_ovov:           final sorted integral array
+!!    reordered_g_ovov: final sorted integral array
 !!    point:            pointer to g_vvov integral
-!!    unordered_g_ovov: help array for reordering
+!!    g_ovov:           help array to get integral and reorder
 !!
       use reordering, only: sort_1234_to_1324
 !
@@ -207,19 +197,19 @@ contains
       type(batching_index), intent(in) :: batch_q, batch_s
 !
       real(dp), dimension(wf%n_o, wf%n_o, batch_q%length, batch_s%length), &
-                                                      target, intent(out)  :: g_ovov
+                                                target, intent(out)  :: reordered_g_ovov
       real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
 !
-      real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_ovov
+      real(dp), dimension(:,:,:,:), intent(out) :: g_ovov
 !
-      call wf%eri_t1%get('ovov', unordered_g_ovov, &
+      call wf%eri_t1%get('ovov', g_ovov, &
                               first_q=batch_q%first, last_q=batch_q%get_last(), &
                               first_s=batch_s%first, last_s=batch_s%get_last())
 !
-       call sort_1234_to_1324(unordered_g_ovov, g_ovov, wf%n_o, batch_q%length, &
+       call sort_1234_to_1324(g_ovov, reordered_g_ovov, wf%n_o, batch_q%length, &
                                                         wf%n_o, batch_s%length)
 !
-      point(1:wf%n_o, 1:wf%n_o, 1:batch_q%length, 1:batch_s%length) => g_ovov
+      point(1:wf%n_o, 1:wf%n_o, 1:batch_q%length, 1:batch_s%length) => reordered_g_ovov
 !
    end subroutine setup_ovov_abc_cc3
 !
@@ -252,8 +242,7 @@ contains
    end subroutine point_ovov_abc_cc3
 !
 !
-   module subroutine setup_oovo_abc_cc3(wf, g_oovo, point, unordered_g_oovo, &
-                                        batch_r, eri_c1)
+   module subroutine setup_oovo_abc_cc3(wf, eri, reordered_g_oovo, point, g_oovo, batch_r)
 !!
 !!    Setup oovo abc
 !!    Written by Alexander C. Paul, Jan 2021
@@ -263,9 +252,9 @@ contains
 !!
 !!    The integral is returned in 1243 order:
 !!
-!!    g_oovo:           final sorted integral array
+!!    reordered_g_oovo: final sorted integral array
 !!    point:            pointer to g_oovo integral
-!!    unordered_g_oovo: help array for reordering
+!!    g_oovo:           help array to get integral and reorder
 !!    c_ai:             use the c1-transformed integral
 !!
       use reordering, only: sort_1234_to_1243
@@ -274,33 +263,22 @@ contains
 !
       class(cc3) :: wf
 !
+      type(eri_adapter), intent(inout) :: eri
+!
       type(batching_index), intent(in) :: batch_r
 !
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o, batch_r%length), &
-                                                target, intent(out)  :: g_oovo
+                                                target, intent(out)  :: reordered_g_oovo
       real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
 !
-      real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_oovo
-      type(eri_adapter), intent(inout), optional  :: eri_c1
+      real(dp), dimension(:,:,:,:), intent(out) :: g_oovo
 !
-      if (.not. present(eri_c1)) then
+      call eri%get('oovo', g_oovo, first_r=batch_r%first, last_r=batch_r%get_last())
 !
-         call wf%eri_t1%get('oovo', unordered_g_oovo, &
-                           first_r=batch_r%first,     &
-                           last_r=batch_r%get_last())
-!
-      else
-!
-         call eri_c1%get('oovo', unordered_g_oovo, &
-                         first_r=batch_r%first,    &
-                         last_r=batch_r%get_last())
-!
-      end if
-!
-      call sort_1234_to_1243(unordered_g_oovo, g_oovo, wf%n_o, wf%n_o, &
+      call sort_1234_to_1243(g_oovo, reordered_g_oovo, wf%n_o, wf%n_o, &
                                                        batch_r%length, wf%n_o)
 !
-      point(1:wf%n_o, 1:wf%n_o, 1:wf%n_o, 1:batch_r%length) => g_oovo
+      point(1:wf%n_o, 1:wf%n_o, 1:wf%n_o, 1:batch_r%length) => reordered_g_oovo
 !
    end subroutine setup_oovo_abc_cc3
 !
@@ -332,7 +310,7 @@ contains
    end subroutine point_oovo_abc_cc3
 !
 !
-   module subroutine setup_ooov_abc_cc3(wf, g_ooov, point, unordered_g_ooov, batch_s)
+   module subroutine setup_ooov_abc_cc3(wf, reordered_g_ooov, point, g_ooov, batch_s)
 !!
 !!    Setup ooov abc
 !!    Written by Alexander C. Paul, Jan 2021
@@ -342,9 +320,9 @@ contains
 !!
 !!    The integral is returned in 1324 order:
 !!
-!!    g_ooov:           final sorted integral array
+!!    reordered_g_ooov: final sorted integral array
 !!    point:            pointer to g_ooov integral
-!!    unordered_g_ooov: help array for reordering
+!!    g_ooov:           help array to get integral and reorder
 !!
       use reordering, only: sort_1234_to_2134
 !
@@ -355,19 +333,17 @@ contains
       type(batching_index), intent(in) :: batch_s
 !
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o, batch_s%length), &
-                                                target, intent(out)  :: g_ooov
+                                                target, intent(out)  :: reordered_g_ooov
       real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
 !
-      real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_ooov
+      real(dp), dimension(:,:,:,:), intent(out) :: g_ooov
 !
-      call wf%eri_t1%get('ooov', unordered_g_ooov, &
-                        first_s=batch_s%first,     &
-                        last_s=batch_s%get_last())
+      call wf%eri_t1%get('ooov', g_ooov, first_s=batch_s%first, last_s=batch_s%get_last())
 !
-      call sort_1234_to_2134(unordered_g_ooov, g_ooov, &
+      call sort_1234_to_2134(g_ooov, reordered_g_ooov, &
                              wf%n_o, wf%n_o, wf%n_o, batch_s%length)
 !
-      point(1:wf%n_o, 1:wf%n_o, 1:wf%n_o, 1:batch_s%length) => g_ooov
+      point(1:wf%n_o, 1:wf%n_o, 1:wf%n_o, 1:batch_s%length) => reordered_g_ooov
 !
    end subroutine setup_ooov_abc_cc3
 !
@@ -433,7 +409,7 @@ contains
    end subroutine estimate_mem_integral_setup_abc_cc3
 !
 !
-   module subroutine estimate_mem_c1_integral_setup_abc_cc3(wf, req0, req1, eri_c1)
+   module subroutine estimate_mem_c1_integral_setup_abc_cc3(wf, req0, req1)
 !!
 !!    Estimate memory C1 transformed integrals setup abc
 !!    Written by Alexander C. Paul, Dec 2020
@@ -453,18 +429,15 @@ contains
 !!    NB: The memory requirement is overestimated by the routines.
 !!
 !
-      use eri_adapter_class, only: eri_adapter
-!
       implicit none
       class(cc3), intent(in) :: wf
 !
       integer, intent(out) :: req0, req1
-      type(eri_adapter), intent(in) :: eri_c1
 !
       integer, dimension(2) :: req_vvvo, req_oovo
 !
-      req_vvvo = eri_c1%get_memory_estimate('vvvo', 1, wf%n_v, 1, wf%n_o)
-      req_oovo = eri_c1%get_memory_estimate('oovo', wf%n_o, wf%n_o, 1, wf%n_o)
+      req_vvvo = wf%eri_c1%get_memory_estimate('vvvo', 1, wf%n_v, 1, wf%n_o)
+      req_oovo = wf%eri_c1%get_memory_estimate('oovo', wf%n_o, wf%n_o, 1, wf%n_o)
 !
       req0 = req_oovo(1)
       req1 = max(req_vvvo(1) + req_vvvo(2), req_oovo(2))

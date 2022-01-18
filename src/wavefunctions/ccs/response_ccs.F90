@@ -270,7 +270,7 @@ contains
 !
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: density
 !
