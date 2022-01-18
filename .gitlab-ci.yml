@@ -89,7 +89,7 @@ gnu-run:
     - merge_requests
     - /^release\/\d+\.\d+$/
 
-intel:
+intel-build:
   stage: intel
   image: registry.gitlab.com/et-program/et/ubuntu-mkl-ifort-for-et
   script:
@@ -100,6 +100,21 @@ intel:
     - cmake_command=$(cat setup_cmake_output | head -1)
     - echo ${cmake_command}
     - make -j16
+  only:
+    - master
+    - development
+    - merge_requests
+    - /^release\/\d+\.\d+$/
+  artifacts:
+    paths: 
+      - build/
+
+intel-run:
+  stage: intel
+  image: registry.gitlab.com/et-program/et/ubuntu-mkl-ifort-for-et
+  needs: ["intel-build"]
+  script:
+    - cd build
     - ctest -j16 --output-on-failure
   only:
     - master

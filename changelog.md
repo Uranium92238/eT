@@ -1,3 +1,7 @@
+# eT v1.5.14
+### Tests
+- Intel CI stage (like GNU) split into two jobs: build and run. eT-program/eT!1014
+
 # eT v1.5.13
 ### Tests
 - Intel CI stage now runs in merge requests, and compressed the build and release stages. eT-program/eT!1009
