@@ -38,7 +38,7 @@ contains
 !!
       implicit none
 !
-      class(cc3) :: wf
+      class(cc3), intent(inout) :: wf
 !
       call mem%alloc(wf%density, wf%n_mo, wf%n_mo)
 !
@@ -56,7 +56,7 @@ contains
 !!
       implicit none
 !
-      class(cc3) :: wf
+      class(cc3), intent(inout) :: wf
 !
       call mem%dealloc(wf%density, wf%n_mo, wf%n_mo)
 !
@@ -74,7 +74,7 @@ contains
 !!
       implicit none
 !
-      class(cc3) :: wf
+      class(cc3), intent(inout) :: wf
 !
       call mem%alloc(wf%r0, wf%n_singlet_states)
 !
@@ -93,7 +93,7 @@ contains
 !!
       implicit none
 !
-      class(cc3) :: wf
+      class(cc3), intent(inout) :: wf
 !
       call mem%dealloc(wf%r0, wf%n_singlet_states)
 !
@@ -103,6 +103,60 @@ contains
       call mem%dealloc(wf%L_cc3_density_vv, wf%n_v, wf%n_v)
 !
    end subroutine destruct_density_intermediates_cc3
+!
+!
+   module subroutine initialize_eri_c1_cc3(wf)
+!!
+!!    Initialize eri c1
+!!    Written by Alexander C. Paul, Jan 2022
+!!
+      use eri_1idx_transformed_tool_class, only: eri_1idx_transformed_tool
+      use array_utilities, only: zero_array
+!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: c1
+!
+      if (.not. allocated(wf%eri_c1)) then
+!
+         wf%L_c1 = eri_cholesky_disk('C1')
+         call wf%L_c1%initialize(wf%L_t1%n_J, 2, [wf%n_o, wf%n_v])
+!
+         call mem%alloc(c1, wf%n_v, wf%n_o)
+         call zero_array(c1, wf%n_t1)
+!
+         call wf%construct_c1_cholesky(c1, wf%L_t1, wf%L_c1)
+         wf%eri_c1 = eri_adapter(eri_1idx_transformed_tool(wf%L_t1, wf%L_c1), wf%n_o, wf%n_v)
+!
+         call wf%L_c1%add_observer('eri C1', wf%eri_c1%eri)
+!
+         call mem%dealloc(c1, wf%n_v, wf%n_o)
+!
+      end if
+!
+   end subroutine initialize_eri_c1_cc3
+!
+!
+   module subroutine destruct_eri_c1_cc3(wf)
+!!
+!!    Destruct eri c1
+!!    Written by Alexander C. Paul, Jan 2022
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      if (allocated(wf%eri_c1)) then
+!
+         call wf%L_c1%remove_observer('eri C1')
+         deallocate(wf%L_c1)
+         deallocate(wf%eri_c1)
+!
+      end if
+!
+   end subroutine destruct_eri_c1_cc3
 !
 !
 end submodule initialize_destruct_cc3

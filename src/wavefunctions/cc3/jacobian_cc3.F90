@@ -59,9 +59,6 @@ contains
 !!    On exit, c is overwritten by rho. That is, c(ai) = rho_a_i,
 !!    and c(aibj) = rho_aibj.
 !!
-      use eri_adapter_class, only: eri_adapter
-      use eri_cholesky_disk_class, only: eri_cholesky_disk
-      use eri_1idx_transformed_tool_class, only: eri_1idx_transformed_tool
       use array_utilities, only: scale_diagonal, zero_array
       use reordering, only: squareup_and_sort_1234_to_1324
       use reordering, only: symmetrize_add_contra_to_packed
@@ -80,27 +77,16 @@ contains
 !
       type(timings), allocatable :: timer
 !
-      type(eri_cholesky_disk) :: L_c1
-      type(eri_adapter) :: eri_c1
-!
       timer = timings('Jacobian CC3 transformation', pl='normal')
       call timer%turn_on()
 !
-      L_c1 = eri_cholesky_disk('C1')
-      call L_c1%initialize(wf%L_t1%n_J, 2, [wf%n_o, wf%n_v])
-!
-      call wf%construct_c1_cholesky(wf%L_t1, L_c1, c(1:wf%n_t1))
-      eri_c1 = eri_adapter(eri_1idx_transformed_tool(wf%L_t1, L_c1), wf%n_o, wf%n_v)
-!
-!     Zero the transformed vector
-!
       call zero_array(rho, wf%n_t1 + wf%n_t2)
-!
-!     :: CCSD contributions to the rho vector ::
 !
       call wf%ccsd%jacobian_transformation(c, rho)
 !
 !     :: Compute CC3 contributions to rho ::
+!
+      call wf%construct_c1_cholesky(c(1:wf%n_t1), wf%L_t1, wf%L_c1)
 !
       call mem%alloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call zero_array(rho_abij, (wf%n_v*wf%n_o)**2)
@@ -115,11 +101,11 @@ contains
 !
 !     CC3-Contributions from the T3-amplitudes
       call wf%jacobian_cc3_t3_a2(c(1:wf%n_t1), rho_abij)
-      call wf%jacobian_cc3_t3_b2(rho_abij, wf%cvs, wf%rm_core, eri_c1)
+      call wf%jacobian_cc3_t3_b2(rho_abij, wf%cvs, wf%rm_core)
 !
 !     CC3-Contributions from the C3-amplitudes
       call wf%jacobian_cc3_c3_a(omega, c_abij, rho, rho_abij, &
-                                wf%cvs, wf%rm_core, eri_c1)
+                                wf%cvs, wf%rm_core)
 !
       call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -247,7 +233,7 @@ contains
    end subroutine jacobian_cc3_t3_a2_cc3
 !
 !
-   module subroutine jacobian_cc3_t3_b2_cc3(wf, rho_abij, cvs, rm_core, eri_c1)
+   module subroutine jacobian_cc3_t3_b2_cc3(wf, rho_abij, cvs, rm_core)
 !!
 !!    Jacobian CC3 T3 B2
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
@@ -270,7 +256,6 @@ contains
       logical, intent(in) :: cvs, rm_core
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_abij
-      type(eri_adapter), intent(inout) :: eri_c1
 !
       real(dp), dimension(:,:,:), allocatable :: t_abc
 !
@@ -318,7 +303,7 @@ contains
 !     C1 transformed Fock matrix
 !
       call mem%alloc(F_ov_ck_c1, wf%n_v, wf%n_o)
-      call wf%construct_c1_fock(F_ov_ck_c1, eri_c1)
+      call wf%construct_c1_fock(F_ov_ck_c1)
 !
       batch_i = batching_index(wf%n_o)
       batch_j = batching_index(wf%n_o)
@@ -389,19 +374,19 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call wf%setup_vvvo(g_bdci, g_bdci_p, sorting, batch_i)
+         call wf%setup_vvvo(wf%eri_t1, g_bdci, g_bdci_p, sorting, batch_i)
 !
          do j_batch = 1, i_batch
 !
             call batch_j%determine_limits(j_batch)
 !
-            call wf%setup_oovo(g_ljci, g_ljci_p, sorting, batch_j, batch_i)
+            call wf%setup_oovo(wf%eri_t1, g_ljci, g_ljci_p, sorting, batch_j, batch_i)
 !
             if (j_batch .ne. i_batch) then
 !
-               call wf%setup_vvvo(g_bdcj, g_bdcj_p, sorting, batch_j)
+               call wf%setup_vvvo(wf%eri_t1, g_bdcj, g_bdcj_p, sorting, batch_j)
 !
-               call wf%setup_oovo(g_licj, g_licj_p, sorting, batch_i, batch_j)
+               call wf%setup_oovo(wf%eri_t1, g_licj, g_licj_p, sorting, batch_i, batch_j)
 !
             else
 !
@@ -417,12 +402,12 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call wf%setup_vvvo(g_bdck, g_bdck_p, sorting, batch_k)
+                  call wf%setup_vvvo(wf%eri_t1, g_bdck, g_bdck_p, sorting, batch_k)
 !
-                  call wf%setup_oovo(g_lick, g_lick_p, sorting, batch_i, batch_k)
-                  call wf%setup_oovo(g_ljck, g_ljck_p, sorting, batch_j, batch_k)
-                  call wf%setup_oovo(g_lkci, g_lkci_p, sorting, batch_k, batch_i)
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%setup_oovo(wf%eri_t1, g_lick, g_lick_p, sorting, batch_i, batch_k)
+                  call wf%setup_oovo(wf%eri_t1, g_ljck, g_ljck_p, sorting, batch_j, batch_k)
+                  call wf%setup_oovo(wf%eri_t1, g_lkci, g_lkci_p, sorting, batch_k, batch_i)
+                  call wf%setup_oovo(wf%eri_t1, g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
 !
 !
                else if (k_batch .eq. i_batch) then !k_batch == j_batch == i_batch
@@ -438,7 +423,7 @@ contains
 !
                   call wf%point_vvvo(g_bdck_p, g_bdcj, batch_k%length)
 !
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%setup_oovo(wf%eri_t1, g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
                   call wf%point_vooo(g_lick_p, g_licj, batch_i%length, batch_k%length)
                   call wf%point_vooo(g_ljck_p, g_lkcj, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_lkci_p, g_ljci, batch_k%length, batch_i%length)
@@ -536,7 +521,7 @@ contains
 !
 !
    module subroutine jacobian_cc3_c3_a_cc3(wf, omega, c_abij, rho_ai, rho_abij, &
-                                           cvs, rm_core, eri_c1)
+                                           cvs, rm_core)
 !!
 !!    Jacobian CC3 C3 A
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Feb 2019
@@ -577,8 +562,6 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_abij
-!
-      type(eri_adapter), intent(inout) :: eri_c1
 !
       real(dp), dimension(:,:,:), allocatable :: c_abc
 !
@@ -680,7 +663,7 @@ contains
       batch_k = batching_index(wf%n_o)
 !
 !     Memory for sorting array and getting the integrals
-      call wf%estimate_mem_c1_integral_setup(req_0, req_1_eri, eri_c1)
+      call wf%estimate_mem_c1_integral_setup(req_0, req_1_eri)
       req_0 = req_0 + wf%n_v**3
       req_1_eri = req_1_eri + max(wf%n_v**3, wf%n_o**2*wf%n_v)
 !
@@ -778,8 +761,8 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call wf%setup_vvvo(g_bdci, g_bdci_p, sorting, batch_i)
-         call wf%setup_vvvo(g_bdci_c1, g_bdci_c1_p, sorting, batch_i, eri_c1=eri_c1)
+         call wf%setup_vvvo(wf%eri_t1, g_bdci, g_bdci_p, sorting, batch_i)
+         call wf%setup_vvvo(wf%eri_c1, g_bdci_c1, g_bdci_c1_p, sorting, batch_i)
 !
          call wf%setup_vvov(g_dbic, g_dbic_p, sorting, batch_i)
 !
@@ -787,22 +770,22 @@ contains
 !
             call batch_j%determine_limits(j_batch)
 !
-            call wf%setup_oovo(g_ljci, g_ljci_p, sorting, batch_j, batch_i)
-            call wf%setup_oovo(g_ljci_c1, g_ljci_c1_p, sorting, batch_j, batch_i, eri_c1=eri_c1)
+            call wf%setup_oovo(wf%eri_t1, g_ljci, g_ljci_p, sorting, batch_j, batch_i)
+            call wf%setup_oovo(wf%eri_c1, g_ljci_c1, g_ljci_c1_p, sorting, batch_j, batch_i)
 !
             call wf%setup_ooov(g_jlic, g_jlic_p, sorting, batch_j, batch_i)
 !
-            call wf%setup_ovov(g_ibjc, g_ibjc_p, sorting, batch_i, batch_j)
+            call wf%setup_ovov(wf%eri_t1, g_ibjc, g_ibjc_p, sorting, batch_i, batch_j)
 !
             if (j_batch .ne. i_batch) then
 !
-               call wf%setup_vvvo(g_bdcj, g_bdcj_p, sorting, batch_j)
-               call wf%setup_vvvo(g_bdcj_c1, g_bdcj_c1_p, sorting, batch_j, eri_c1=eri_c1)
+               call wf%setup_vvvo(wf%eri_t1, g_bdcj, g_bdcj_p, sorting, batch_j)
+               call wf%setup_vvvo(wf%eri_c1, g_bdcj_c1, g_bdcj_c1_p, sorting, batch_j)
 !
                call wf%setup_vvov(g_dbjc, g_dbjc_p, sorting, batch_j)
 !
-               call wf%setup_oovo(g_licj, g_licj_p, sorting, batch_i, batch_j)
-               call wf%setup_oovo(g_licj_c1, g_licj_c1_p, sorting, batch_i, batch_j, eri_c1=eri_c1)
+               call wf%setup_oovo(wf%eri_t1, g_licj, g_licj_p, sorting, batch_i, batch_j)
+               call wf%setup_oovo(wf%eri_c1, g_licj_c1, g_licj_c1_p, sorting, batch_i, batch_j)
 !
                call wf%setup_ooov(g_iljc, g_iljc_p, sorting, batch_i, batch_j)
 !
@@ -826,28 +809,28 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call wf%setup_vvvo(g_bdck, g_bdck_p, sorting, batch_k)
-                  call wf%setup_vvvo(g_bdck_c1, g_bdck_c1_p, sorting, batch_k, eri_c1=eri_c1)
+                  call wf%setup_vvvo(wf%eri_t1, g_bdck, g_bdck_p, sorting, batch_k)
+                  call wf%setup_vvvo(wf%eri_c1, g_bdck_c1, g_bdck_c1_p, sorting, batch_k)
 !
                   call wf%setup_vvov(g_dbkc, g_dbkc_p, sorting, batch_k)
 !
-                  call wf%setup_oovo(g_lick, g_lick_p, sorting, batch_i, batch_k)
-                  call wf%setup_oovo(g_ljck, g_ljck_p, sorting, batch_j, batch_k)
-                  call wf%setup_oovo(g_lkci, g_lkci_p, sorting, batch_k, batch_i)
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%setup_oovo(wf%eri_t1, g_lick, g_lick_p, sorting, batch_i, batch_k)
+                  call wf%setup_oovo(wf%eri_t1, g_ljck, g_ljck_p, sorting, batch_j, batch_k)
+                  call wf%setup_oovo(wf%eri_t1, g_lkci, g_lkci_p, sorting, batch_k, batch_i)
+                  call wf%setup_oovo(wf%eri_t1, g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
 !
-                  call wf%setup_oovo(g_lick_c1, g_lick_c1_p, sorting, batch_i, batch_k, eri_c1=eri_c1)
-                  call wf%setup_oovo(g_ljck_c1, g_ljck_c1_p, sorting, batch_j, batch_k, eri_c1=eri_c1)
-                  call wf%setup_oovo(g_lkci_c1, g_lkci_c1_p, sorting, batch_k, batch_i, eri_c1=eri_c1)
-                  call wf%setup_oovo(g_lkcj_c1, g_lkcj_c1_p, sorting, batch_k, batch_j, eri_c1=eri_c1)
+                  call wf%setup_oovo(wf%eri_c1, g_lick_c1, g_lick_c1_p, sorting, batch_i, batch_k)
+                  call wf%setup_oovo(wf%eri_c1, g_ljck_c1, g_ljck_c1_p, sorting, batch_j, batch_k)
+                  call wf%setup_oovo(wf%eri_c1, g_lkci_c1, g_lkci_c1_p, sorting, batch_k, batch_i)
+                  call wf%setup_oovo(wf%eri_c1, g_lkcj_c1, g_lkcj_c1_p, sorting, batch_k, batch_j)
 !
                   call wf%setup_ooov(g_ilkc, g_ilkc_p, sorting, batch_i, batch_k)
                   call wf%setup_ooov(g_jlkc, g_jlkc_p, sorting, batch_j, batch_k)
                   call wf%setup_ooov(g_klic, g_klic_p, sorting, batch_k, batch_i)
                   call wf%setup_ooov(g_kljc, g_kljc_p, sorting, batch_k, batch_j)
 !
-                  call wf%setup_ovov(g_ibkc, g_ibkc_p, sorting, batch_i, batch_k)
-                  call wf%setup_ovov(g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
+                  call wf%setup_ovov(wf%eri_t1, g_ibkc, g_ibkc_p, sorting, batch_i, batch_k)
+                  call wf%setup_ovov(wf%eri_t1, g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
 !
                else if (k_batch .eq. i_batch) then ! k_batch == j_batch == i_batch
 !
@@ -881,12 +864,12 @@ contains
 !
                   call wf%point_vvvo(g_dbkc_p, g_dbjc, batch_k%length)
 !
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%setup_oovo(wf%eri_t1, g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
                   call wf%point_vooo(g_lick_p, g_licj, batch_i%length, batch_k%length)
                   call wf%point_vooo(g_ljck_p, g_lkcj, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_lkci_p, g_ljci, batch_k%length, batch_i%length)
 !
-                  call wf%setup_oovo(g_lkcj_c1, g_lkcj_c1_p, sorting, batch_k, batch_j, eri_c1=eri_c1)
+                  call wf%setup_oovo(wf%eri_c1, g_lkcj_c1, g_lkcj_c1_p, sorting, batch_k, batch_j)
                   call wf%point_vooo(g_lick_c1_p, g_licj_c1, batch_i%length, batch_k%length)
                   call wf%point_vooo(g_ljck_c1_p, g_lkcj_c1, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_lkci_c1_p, g_ljci_c1, batch_k%length, batch_i%length)
@@ -896,7 +879,7 @@ contains
                   call wf%point_vooo(g_jlkc_p, g_kljc, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_klic_p, g_jlic, batch_k%length, batch_i%length)
 !
-                  call wf%setup_ovov(g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
+                  call wf%setup_ovov(wf%eri_t1, g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
                   call wf%point_vvoo(g_ibkc_p, g_ibjc, batch_i%length, batch_k%length)
 !
                endif
@@ -1046,7 +1029,7 @@ contains
    end subroutine jacobian_cc3_c3_a_cc3
 !
 !
-   module subroutine construct_c1_fock_cc3(wf, F_ia_c1, eri_c1)
+   module subroutine construct_c1_fock_cc3(wf, F_ia_c1)
 !!
 !!    Construct C1-transformed fock matrix
 !!    Written by Alexander C. Paul, Feb 2019
@@ -1057,7 +1040,6 @@ contains
 !!    F_ia_c1 = sum_j L_iajj' = sum_j 2 g_iajj' - g_ij'ja
 !!
 !
-      use eri_adapter_class, only: eri_adapter
       use array_utilities, only: zero_array
 !
       implicit none
@@ -1065,7 +1047,6 @@ contains
       class(cc3) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(out) :: F_ia_c1
-      type(eri_adapter), intent(inout) :: eri_c1
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_iajk
 !
@@ -1077,7 +1058,7 @@ contains
 !
       call mem%alloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call eri_c1%get('ovoo', g_iajk)
+      call wf%eri_c1%get('ovoo', g_iajk)
 !
 !     Add contributions and resort to F_ia_c1(a,i)
 !

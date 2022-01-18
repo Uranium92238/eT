@@ -455,22 +455,22 @@ contains
 !
          call batch_a%determine_limits(a_batch)
 !
-         call wf%setup_oovo_abc(g_ljak, g_ljak_p, sorting, batch_a)
+         call wf%setup_oovo_abc(wf%eri_t1, g_ljak, g_ljak_p, sorting, batch_a)
          call wf%setup_ooov_abc(g_jlka, g_jlka_p, sorting, batch_a)
 !
          do b_batch = 1, a_batch
 !
             call batch_b%determine_limits(b_batch)
 !
-            call wf%setup_vvvo_abc(g_bdak, g_bdak_p, sorting, batch_b, batch_a)
+            call wf%setup_vvvo_abc(wf%eri_t1, g_bdak, g_bdak_p, sorting, batch_b, batch_a)
             call wf%setup_vvov_abc(g_dbka, g_dbka_p, sorting, batch_b, batch_a)
             call wf%setup_ovov_abc(g_jakb, g_jakb_p, sorting, batch_a, batch_b)
 !
             if (b_batch .ne. a_batch) then
 !
-               call wf%setup_oovo_abc(g_ljbk, g_ljbk_p, sorting, batch_b)
+               call wf%setup_oovo_abc(wf%eri_t1, g_ljbk, g_ljbk_p, sorting, batch_b)
                call wf%setup_ooov_abc(g_jlkb, g_jlkb_p, sorting, batch_b)
-               call wf%setup_vvvo_abc(g_adbk, g_adbk_p, sorting, batch_a, batch_b)
+               call wf%setup_vvvo_abc(wf%eri_t1, g_adbk, g_adbk_p, sorting, batch_a, batch_b)
                call wf%setup_vvov_abc(g_dakb, g_dakb_p, sorting, batch_a, batch_b)
 !
             else
@@ -488,14 +488,14 @@ contains
 !
                if (c_batch .ne. b_batch) then ! c_batch != b_batch and c_batch != a_batch
 !
-                  call wf%setup_oovo_abc(g_ljck, g_ljck_p, sorting, batch_c)
+                  call wf%setup_oovo_abc(wf%eri_t1, g_ljck, g_ljck_p, sorting, batch_c)
 !
                   call wf%setup_ooov_abc(g_jlkc, g_jlkc_p, sorting, batch_c)
 !
-                  call wf%setup_vvvo_abc(g_cdak, g_cdak_p, sorting, batch_c, batch_a)
-                  call wf%setup_vvvo_abc(g_adck, g_adck_p, sorting, batch_a, batch_c)
-                  call wf%setup_vvvo_abc(g_cdbk, g_cdbk_p, sorting, batch_c, batch_b)
-                  call wf%setup_vvvo_abc(g_bdck, g_bdck_p, sorting, batch_b, batch_c)
+                  call wf%setup_vvvo_abc(wf%eri_t1, g_cdak, g_cdak_p, sorting, batch_c, batch_a)
+                  call wf%setup_vvvo_abc(wf%eri_t1, g_adck, g_adck_p, sorting, batch_a, batch_c)
+                  call wf%setup_vvvo_abc(wf%eri_t1, g_cdbk, g_cdbk_p, sorting, batch_c, batch_b)
+                  call wf%setup_vvvo_abc(wf%eri_t1, g_bdck, g_bdck_p, sorting, batch_b, batch_c)
 !
                   call wf%setup_vvov_abc(g_dcka, g_dcka_p, sorting, batch_c, batch_a)
                   call wf%setup_vvov_abc(g_dakc, g_dakc_p, sorting, batch_a, batch_c)
@@ -528,7 +528,7 @@ contains
                   call wf%point_oovo_abc(g_ljck_p, g_ljbk, batch_c%length)
                   call wf%point_ooov_abc(g_jlkc_p, g_jlkb, batch_c%length)
 !
-                  call wf%setup_vvvo_abc(g_cdbk, g_cdbk_p, sorting, batch_c, batch_b)
+                  call wf%setup_vvvo_abc(wf%eri_t1, g_cdbk, g_cdbk_p, sorting, batch_c, batch_b)
                   call wf%point_vvvo_abc(g_bdck_p, g_cdbk, batch_b%length, batch_c%length)
                   call wf%point_vvvo_abc(g_cdak_p, g_bdak, batch_c%length, batch_a%length)
                   call wf%point_vvvo_abc(g_adck_p, g_adbk, batch_a%length, batch_c%length)
@@ -991,7 +991,7 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call wf%setup_vvvo(g_bdci, g_bdci_p, sorting, batch_i)
+         call wf%setup_vvvo(wf%eri_t1, g_bdci, g_bdci_p, sorting, batch_i)
 !
          call wf%setup_vvov(g_dbic, g_dbic_p, sorting, batch_i, left=.true.)
 !
@@ -999,19 +999,19 @@ contains
 !
             call batch_j%determine_limits(j_batch)
 !
-            call wf%setup_oovo(g_ljci, g_ljci_p, sorting, batch_j, batch_i)
+            call wf%setup_oovo(wf%eri_t1, g_ljci, g_ljci_p, sorting, batch_j, batch_i)
 !
             call wf%setup_ooov(g_jlic, g_jlic_p, sorting, batch_j, batch_i)
 !
-            call wf%setup_ovov(g_ibjc, g_ibjc_p, sorting, batch_i, batch_j)
+            call wf%setup_ovov(wf%eri_t1, g_ibjc, g_ibjc_p, sorting, batch_i, batch_j)
 !
             if (j_batch .ne. i_batch) then
 !
-               call wf%setup_vvvo(g_bdcj, g_bdcj_p, sorting, batch_j)
+               call wf%setup_vvvo(wf%eri_t1, g_bdcj, g_bdcj_p, sorting, batch_j)
 !
                call wf%setup_vvov(g_dbjc, g_dbjc_p, sorting, batch_j, left=.true.)
 !
-               call wf%setup_oovo(g_licj, g_licj_p, sorting, batch_i, batch_j)
+               call wf%setup_oovo(wf%eri_t1, g_licj, g_licj_p, sorting, batch_i, batch_j)
 !
                call wf%setup_ooov(g_iljc, g_iljc_p, sorting, batch_i, batch_j)
 !
@@ -1033,22 +1033,22 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call wf%setup_vvvo(g_bdck, g_bdck_p, sorting, batch_k)
+                  call wf%setup_vvvo(wf%eri_t1, g_bdck, g_bdck_p, sorting, batch_k)
 !
                   call wf%setup_vvov(g_dbkc, g_dbkc_p, sorting, batch_k, left=.true.)
 !
-                  call wf%setup_oovo(g_lick, g_lick_p, sorting, batch_i, batch_k)
-                  call wf%setup_oovo(g_ljck, g_ljck_p, sorting, batch_j, batch_k)
-                  call wf%setup_oovo(g_lkci, g_lkci_p, sorting, batch_k, batch_i)
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%setup_oovo(wf%eri_t1, g_lick, g_lick_p, sorting, batch_i, batch_k)
+                  call wf%setup_oovo(wf%eri_t1, g_ljck, g_ljck_p, sorting, batch_j, batch_k)
+                  call wf%setup_oovo(wf%eri_t1, g_lkci, g_lkci_p, sorting, batch_k, batch_i)
+                  call wf%setup_oovo(wf%eri_t1, g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
 !
                   call wf%setup_ooov(g_ilkc, g_ilkc_p, sorting, batch_i, batch_k)
                   call wf%setup_ooov(g_jlkc, g_jlkc_p, sorting, batch_j, batch_k)
                   call wf%setup_ooov(g_klic, g_klic_p, sorting, batch_k, batch_i)
                   call wf%setup_ooov(g_kljc, g_kljc_p, sorting, batch_k, batch_j)
 !
-                  call wf%setup_ovov(g_ibkc, g_ibkc_p, sorting, batch_i, batch_k)
-                  call wf%setup_ovov(g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
+                  call wf%setup_ovov(wf%eri_t1, g_ibkc, g_ibkc_p, sorting, batch_i, batch_k)
+                  call wf%setup_ovov(wf%eri_t1, g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
 !
                else if (k_batch .eq. i_batch) then ! k_batch == j_batch == i_batch
 !
@@ -1075,7 +1075,7 @@ contains
 !
                   call wf%point_vvvo(g_dbkc_p, g_dbjc, batch_k%length)
 !
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%setup_oovo(wf%eri_t1, g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
                   call wf%point_vooo(g_lick_p, g_licj, batch_i%length, batch_k%length)
                   call wf%point_vooo(g_ljck_p, g_lkcj, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_lkci_p, g_ljci, batch_k%length, batch_i%length)
@@ -1085,7 +1085,7 @@ contains
                   call wf%point_vooo(g_jlkc_p, g_kljc, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_klic_p, g_jlic, batch_k%length, batch_i%length)
 !
-                  call wf%setup_ovov(g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
+                  call wf%setup_ovov(wf%eri_t1, g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
                   call wf%point_vvoo(g_ibkc_p, g_ibjc, batch_i%length, batch_k%length)
 !
                endif

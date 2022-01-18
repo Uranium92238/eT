@@ -175,7 +175,7 @@ contains
 !
       implicit none
 !
-      class(doubles) :: wf
+      class(doubles), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: density
 !
