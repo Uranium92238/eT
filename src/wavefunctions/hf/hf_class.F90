@@ -1072,7 +1072,7 @@ contains
 !
    subroutine construct_molecular_gradient_hf(wf, E_qk)
 !!
-!!    Contruct molecular gradient
+!!    Construct molecular gradient
 !!    Written by Åsmund H. Tveten and Eirik F. Kjønstad, 2019
 !!
 !!    Constructs the molecular gradient,
