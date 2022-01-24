@@ -1438,7 +1438,7 @@ contains
       call wf%read_mlcc_orbitals()
 !
       call mem%alloc(T, wf%n_mo, wf%n_mo)
-      call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, canonical_orbitals, T)
+      call wf%construct_mo_basis_transformation(wf%orbital_coefficients, canonical_orbitals, T)
       call wf%L_mo%basis_transformation(T)
       call mem%dealloc(T, wf%n_mo, wf%n_mo)
 !

@@ -2938,7 +2938,7 @@ contains
 !
          call mem%dealloc(red_Y_dbik, batch_d%length, wf%n_v, wf%n_o, wf%n_o)
 !
-!        For term 2: contruct rho_abij += g_kbda * Z_kjdi
+!        For term 2: construct rho_abij += g_kbda * Z_kjdi
 !
          call mem%alloc(g_abkd, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
          call sort_1234_to_2431(g_dbic, g_abkd, batch_d%length, wf%n_v, wf%n_o, wf%n_v)

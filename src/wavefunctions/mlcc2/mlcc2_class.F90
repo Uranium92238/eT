@@ -1137,7 +1137,7 @@ contains
       call wf%orbital_partitioning()
 !
       call mem%alloc(T, wf%n_mo, wf%n_mo)
-      call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, canonical_orbitals, T)
+      call wf%construct_mo_basis_transformation(wf%orbital_coefficients, canonical_orbitals, T)
       call wf%L_mo%basis_transformation(T)
 !
       call wf%L_t1%set_equal_to(wf%L_mo)
@@ -1169,7 +1169,7 @@ contains
 !
       call wf%construct_semicanonical_mlcc_orbitals()
 !
-      call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, partitioning_orbitals, T)
+      call wf%construct_mo_basis_transformation(wf%orbital_coefficients, partitioning_orbitals, T)
       call wf%L_mo%basis_transformation(T)
       call mem%dealloc(T, wf%n_mo, wf%n_mo)
 !
@@ -1297,7 +1297,7 @@ contains
 !
       call mem%alloc(T, wf%n_mo, wf%n_mo)
 !
-      call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, C_old, T)
+      call wf%construct_mo_basis_transformation(wf%orbital_coefficients, C_old, T)
 !
       call symmetric_sandwich_right_transposition_replace(wf%mo_fock_frozen, T, wf%n_mo)
 !
@@ -1391,7 +1391,7 @@ contains
       call wf%read_mlcc_orbitals()
 !
       call mem%alloc(T, wf%n_mo, wf%n_mo)
-      call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, canonical_orbitals, T)
+      call wf%construct_mo_basis_transformation(wf%orbital_coefficients, canonical_orbitals, T)
       call wf%L_mo%basis_transformation(T)
       call mem%dealloc(T, wf%n_mo, wf%n_mo)
 !
