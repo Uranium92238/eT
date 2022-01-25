@@ -18,6 +18,9 @@
 - Added timers for calculate energy. eT-program/eT!993
 - Memory tracker now prints the batching tag and memory difference. eT-program/eT!1000
 
+### Tests
+- QED-HF tests are now run with default print level. eT-program/eT!1023
+
 # eT v1.5.14
 ### Tests
 - Intel CI stage (like GNU) split into two jobs: build and run. eT-program/eT!1014
