@@ -269,8 +269,8 @@ contains
 !
          do k = 1, storer%n_blocks
 !
-           call storer%linked_arrays%push_back(storer%record_dim, &
-                                               batches(k)%max_length)
+            call storer%linked_arrays%push_back(storer%record_dim, &
+                                                batches(k)%max_length)
 !
          enddo
 !

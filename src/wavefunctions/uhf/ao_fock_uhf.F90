@@ -148,7 +148,7 @@ contains
 !
       if (.not. cumulative) then
 !
-          call wf%update_fock_and_energy_non_cumulative()
+         call wf%update_fock_and_energy_non_cumulative()
 !
       else
 !

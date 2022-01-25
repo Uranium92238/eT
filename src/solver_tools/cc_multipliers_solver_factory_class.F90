@@ -89,7 +89,7 @@ module cc_multipliers_solver_factory_class
 contains
 !
 !
-    subroutine create_cc_multipliers_solver_factory(this, wf, solver)
+   subroutine create_cc_multipliers_solver_factory(this, wf, solver)
 !!
 !!    Create
 !!    Written by Sarai D. Folkestad, 2021
@@ -157,7 +157,7 @@ contains
                                               residual_threshold = this%residual_threshold, &
                                               frequencies        = [zero])
 !
-    end subroutine create_cc_multipliers_solver_factory
+   end subroutine create_cc_multipliers_solver_factory
 !
 !
    subroutine read_settings(this)

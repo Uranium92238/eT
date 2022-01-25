@@ -820,9 +820,9 @@ contains
 !
       if (n .gt. davidson%dim_red) then
 !
-        call output%error_msg('Tried to construct a full space vector (n = (i0)) that does not &
-                              &correspond to a reduced space solution (dim_red = (i0)).', &
-                              ints=[n, davidson%dim_red])
+         call output%error_msg('Tried to construct a full space vector (n = (i0)) that does not &
+                               &correspond to a reduced space solution (dim_red = (i0)).', &
+                               ints=[n, davidson%dim_red])
 !
       endif
 !
@@ -1029,10 +1029,10 @@ contains
 !
       call output%newline('n')
 !
-    end subroutine print_settings_davidson_tool
+   end subroutine print_settings_davidson_tool
 !
 !
-    subroutine set_lindep_threshold_davidson_tool(davidson, lindep_threshold)
+   subroutine set_lindep_threshold_davidson_tool(davidson, lindep_threshold)
 !!
 !!    Set lindep threshold
 !!    Written by Sarai D. Folkestad, 2021
@@ -1045,7 +1045,7 @@ contains
 !
       davidson%lindep_threshold = lindep_threshold
 !
-    end subroutine set_lindep_threshold_davidson_tool
+   end subroutine set_lindep_threshold_davidson_tool
 !
 !
    subroutine reset_reduced_space_davidson_tool(davidson)

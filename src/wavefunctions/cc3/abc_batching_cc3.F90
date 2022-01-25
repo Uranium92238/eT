@@ -68,8 +68,8 @@ contains
                    first_p=batch_p%first, last_p=batch_p%get_last(), &
                    first_r=batch_r%first, last_r=batch_r%get_last())
 !
-       call sort_1234_to_2413(g_vvvo, reordered_g_vvvo, batch_p%length, wf%n_v, &
-                                                        batch_r%length, wf%n_o)
+      call sort_1234_to_2413(g_vvvo, reordered_g_vvvo, batch_p%length, wf%n_v, &
+                                                       batch_r%length, wf%n_o)
 !
       point(1:wf%n_v, 1:wf%n_o, 1:batch_p%length, 1:batch_r%length) => reordered_g_vvvo
 !
@@ -206,8 +206,8 @@ contains
                               first_q=batch_q%first, last_q=batch_q%get_last(), &
                               first_s=batch_s%first, last_s=batch_s%get_last())
 !
-       call sort_1234_to_1324(g_ovov, reordered_g_ovov, wf%n_o, batch_q%length, &
-                                                        wf%n_o, batch_s%length)
+      call sort_1234_to_1324(g_ovov, reordered_g_ovov, wf%n_o, batch_q%length, &
+                                                       wf%n_o, batch_s%length)
 !
       point(1:wf%n_o, 1:wf%n_o, 1:batch_q%length, 1:batch_s%length) => reordered_g_ovov
 !

@@ -547,63 +547,63 @@ contains
 !!   Modified to fit with the default indentation of eT messages.
 !!
 !
-     implicit none 
+      implicit none 
 !
-     character(kind=c_char), intent(in) :: message(*)
-     integer(c_int) :: length, length_2, i, n_messages
-     character(len=1000), allocatable :: message_eT(:)
+      character(kind=c_char), intent(in) :: message(*)
+      integer(c_int) :: length, length_2, i, n_messages
+      character(len=1000), allocatable :: message_eT(:)
 !
-     length = 0_c_int
-     n_messages = 0_c_int
+      length = 0_c_int
+      n_messages = 0_c_int
 !
-     do
+      do
 !
-       if (message(length + 1_c_int) == c_null_char) exit
+         if (message(length + 1_c_int) == c_null_char) exit
 !
-       if (message(length + 1_c_int) == char(10)) then 
+         if (message(length + 1_c_int) == char(10)) then 
 !         
-          n_messages = n_messages + 1_c_int
+            n_messages = n_messages + 1_c_int
 !
-       endif
+         endif
 !       
-       length = length + 1_c_int
+         length = length + 1_c_int
 !
-     end do
+      end do
 !     
 !     
-     allocate(message_eT(n_messages))
+      allocate(message_eT(n_messages))
 !
-     message_eT = ' '
+      message_eT = ' '
 !     
-     length_2 = 1_c_int
-     n_messages = 1_c_int
+      length_2 = 1_c_int
+      n_messages = 1_c_int
 !
-     do i = 1_c_int, length
+      do i = 1_c_int, length
 !
-        if (message(i) == c_null_char) exit
+         if (message(i) == c_null_char) exit
 !
-        if (message(i) .eq. char(10)) then
+         if (message(i) .eq. char(10)) then
 !
             write(message_eT(n_messages),'(1000a)') message(length_2:i-1) 
             length_2 = i + 1_c_int
             n_messages = n_messages + 1_c_int
 !
-        endif
+         endif
 !
-     enddo
+      enddo
 !
-     do i = 1_c_int, n_messages-1_c_int
+      do i = 1_c_int, n_messages-1_c_int
 !
-      call output%printf('n', trim(message_eT(i)), fs='(t6,a)')
+         call output%printf('n', trim(message_eT(i)), fs='(t6,a)')
 !
-     enddo
+      enddo
 !
-     deallocate(message_eT)
+      deallocate(message_eT)
 !
    end subroutine host_writer
 !
 !
-    subroutine get_potential_at_pcm_points_pcm_environment(embedding, potential, ao)
+   subroutine get_potential_at_pcm_points_pcm_environment(embedding, potential, ao)
 !!
 !!    Get potential at pcm points
 !!    Written by Sarai D. Folkestad
@@ -633,7 +633,7 @@ contains
                                   embedding%pcm_points%r,          &
                                   potential)
 !
-    end subroutine get_potential_at_pcm_points_pcm_environment
+   end subroutine get_potential_at_pcm_points_pcm_environment
 !
 !
 #else

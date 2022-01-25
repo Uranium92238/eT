@@ -44,7 +44,7 @@ module null_accelerator_tool_class
 !
    interface null_accelerator_tool
 !
-     procedure :: new_null_accelerator_tool
+      procedure :: new_null_accelerator_tool
 !
    end interface null_accelerator_tool
 !

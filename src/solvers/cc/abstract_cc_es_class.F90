@@ -257,7 +257,7 @@ contains
 !
       call this%timer%turn_off()
 !
-     call output%printf('m', '- Finished solving the ' //  &
+      call output%printf('m', '- Finished solving the ' //  &
                         trim(convert_to_uppercase(this%wf%name_)) // ' excited state &
                         &equations ('// trim(this%transformation) //')', fs='(/t3,a)')
 !

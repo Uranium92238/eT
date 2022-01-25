@@ -54,7 +54,7 @@ module accelerator_factory_class
 !
    interface accelerator_factory
 !
-     procedure :: new_accelerator_factory
+      procedure :: new_accelerator_factory
 !
    end interface accelerator_factory
 !

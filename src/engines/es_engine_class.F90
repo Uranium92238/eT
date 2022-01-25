@@ -40,7 +40,7 @@ module es_engine_class
 !
       logical :: es_restart
 !
-       logical :: plot_ntos, plot_cntos
+      logical :: plot_ntos, plot_cntos
 !
    contains
 !
@@ -308,7 +308,7 @@ contains
 !
             if (trim(wf%name_) == 'low memory cc2' .or. trim(wf%name_) == 'cc3') then
 !
-                call output%error_msg('Davidson not implemented for CC3 and lowmem CC2')
+               call output%error_msg('Davidson not implemented for CC3 and lowmem CC2')
 !
             end if
 !
@@ -476,13 +476,13 @@ contains
       if (input%is_keyword_present('energy threshold', 'solver cc es') .and. &
           input%is_keyword_present('residual threshold', 'solver cc es')) then
 !
-        call input%get_keyword('energy threshold', 'solver cc es', energy_threshold)
-        call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
+         call input%get_keyword('energy threshold', 'solver cc es', energy_threshold)
+         call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
 !
       else if (input%is_keyword_present('residual threshold', 'solver cc es')) then
 !
-        call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
-        energy_threshold = residual_threshold
+         call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
+         energy_threshold = residual_threshold
 !
       else if (input%is_keyword_present('energy threshold', 'solver cc es')) then
 !

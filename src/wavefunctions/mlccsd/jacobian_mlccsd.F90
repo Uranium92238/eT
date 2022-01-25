@@ -512,18 +512,18 @@ contains
       enddo
 !$omp end parallel do
 !
-       call dgemm('N','N',                          &
-                   (wf%n_ccsd_o)*(wf%n_ccsd_v)**2,  &
-                   wf%n_ccsd_o,                     &
-                   n_a_o,                           &
-                   -one,                            &
-                   x_aibk,                          &
-                   (wf%n_ccsd_o)*(wf%n_ccsd_v)**2,  &
-                   Y_kj,                            &
-                   n_a_o,                           &
-                   one,                             &
-                   rho_aibj,                        & ! rho_aib,j
-                   (wf%n_ccsd_o)*(wf%n_ccsd_v)**2)
+      call dgemm('N','N',                          &
+                  (wf%n_ccsd_o)*(wf%n_ccsd_v)**2,  &
+                  wf%n_ccsd_o,                     &
+                  n_a_o,                           &
+                  -one,                            &
+                  x_aibk,                          &
+                  (wf%n_ccsd_o)*(wf%n_ccsd_v)**2,  &
+                  Y_kj,                            &
+                  n_a_o,                           &
+                  one,                             &
+                  rho_aibj,                        & ! rho_aib,j
+                  (wf%n_ccsd_o)*(wf%n_ccsd_v)**2)
 !
       call mem%dealloc(Y_kj, n_a_o, wf%n_ccsd_o)
       call mem%dealloc(x_aibk, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, n_a_o)
@@ -664,7 +664,7 @@ contains
 !
       call mem%dealloc(rho_ajbi, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-     end subroutine jacobian_ccsd_c2_2_mlccsd
+   end subroutine jacobian_ccsd_c2_2_mlccsd
 !
 !
    module subroutine jacobian_ccsd_c2_3_mlccsd(wf, rho_aibj, c_ai, g_ljkc)
@@ -785,7 +785,7 @@ contains
 !
       call mem%dealloc(rho_baij, wf%n_ccsd_v, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o)
 !
-     end subroutine jacobian_ccsd_c2_3_mlccsd
+   end subroutine jacobian_ccsd_c2_3_mlccsd
 !
 !
    module subroutine jacobian_ccsd_c2_4_mlccsd(wf, rho_aibj, c_ai, L_ljck)
@@ -886,7 +886,7 @@ contains
       call mem%dealloc(Y_lj, n_a_o, wf%n_ccsd_o)
       call mem%dealloc(x_aibl, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, n_a_o)
 !
-     end subroutine jacobian_ccsd_c2_4_mlccsd
+   end subroutine jacobian_ccsd_c2_4_mlccsd
 !
 !
    module subroutine jacobian_ccsd_c2_mlccsd(wf, rho_aibj, c_ai)
@@ -973,7 +973,7 @@ contains
    end subroutine jacobian_ccsd_c2_mlccsd
 !
 !
-  module subroutine jacobian_ccsd_d2_1_mlccsd(wf, rho_aibj, c_ai)
+   module subroutine jacobian_ccsd_d2_1_mlccsd(wf, rho_aibj, c_ai)
 !!
 !!    Jacobian CCSD D2-1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -1029,7 +1029,7 @@ contains
    end subroutine jacobian_ccsd_d2_1_mlccsd
 !
 !
-  module subroutine jacobian_ccsd_d2_2_mlccsd(wf, rho_aibj, c_ai, batch_b, g_dkbc)
+   module subroutine jacobian_ccsd_d2_2_mlccsd(wf, rho_aibj, c_ai, batch_b, g_dkbc)
 !!
 !!    Jacobian CCSD D2-2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -1113,20 +1113,20 @@ contains
 !
 !    Calculate rho_ib_aj = - sum_dk Y_dkbi x_ajdk
 !
-     call mem%alloc(rho_ajbi, wf%n_ccsd_v, wf%n_ccsd_o, batch_b%length, wf%n_ccsd_o)
+      call mem%alloc(rho_ajbi, wf%n_ccsd_v, wf%n_ccsd_o, batch_b%length, wf%n_ccsd_o)
 !
-     call dgemm('N','N',                           &
-                 (wf%n_ccsd_o)*(wf%n_ccsd_v),      &
-                 (wf%n_ccsd_o)*(batch_b%length),   &
-                 (n_a_o)*(n_a_v),                  &
-                 -one,                             &
-                 x_ajdk,                           &
-                 (wf%n_ccsd_o)*(wf%n_ccsd_v),      &
-                 Y_dkbi,                           &
-                 (n_a_o)*(n_a_v),                  &
-                 zero,                             &
-                 rho_ajbi,                         &
-                 (wf%n_ccsd_o)*(wf%n_ccsd_v))
+      call dgemm('N','N',                           &
+                  (wf%n_ccsd_o)*(wf%n_ccsd_v),      &
+                  (wf%n_ccsd_o)*(batch_b%length),   &
+                  (n_a_o)*(n_a_v),                  &
+                  -one,                             &
+                  x_ajdk,                           &
+                  (wf%n_ccsd_o)*(wf%n_ccsd_v),      &
+                  Y_dkbi,                           &
+                  (n_a_o)*(n_a_v),                  &
+                  zero,                             &
+                  rho_ajbi,                         &
+                  (wf%n_ccsd_o)*(wf%n_ccsd_v))
 !
       call mem%dealloc(Y_dkbi, n_a_v, n_a_o, batch_b%length, wf%n_ccsd_o)
       call mem%dealloc(x_ajdk, wf%n_ccsd_v, wf%n_ccsd_o, n_a_v, n_a_o)
@@ -1239,7 +1239,7 @@ contains
    end subroutine jacobian_ccsd_d2_3_mlccsd
 !
 !
-  module subroutine jacobian_ccsd_d2_4_mlccsd(wf, rho_aibj, c_ai, batch_b, L_ckbd)
+   module subroutine jacobian_ccsd_d2_4_mlccsd(wf, rho_aibj, c_ai, batch_b, L_ckbd)
 !!
 !!    Jacobian CCSD D2-4
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -1340,7 +1340,7 @@ contains
    end subroutine jacobian_ccsd_d2_4_mlccsd
 !
 !
-  module subroutine jacobian_ccsd_d2_5_mlccsd(wf, rho_aibj, c_ai, batch_b, L_ckbd)
+   module subroutine jacobian_ccsd_d2_5_mlccsd(wf, rho_aibj, c_ai, batch_b, L_ckbd)
 !!
 !!    Jacobian CCSD D2-4
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -1383,7 +1383,7 @@ contains
 !
 !     :: Term 1.  sum_kcd L_kcbd x_ij^ad c_ck ::
 !
-     call mem%alloc(X_bd, (batch_b%length), (n_a_v))
+      call mem%alloc(X_bd, (batch_b%length), (n_a_v))
 !
       call dgemm('N','N',                    &
                   1,                         &
@@ -1659,7 +1659,7 @@ contains
    end subroutine jacobian_ccsd_d2_mlccsd
 !
 !
-    module subroutine jacobian_ccsd_e2_mlccsd(wf, rho_aibj, c_aibj)
+   module subroutine jacobian_ccsd_e2_mlccsd(wf, rho_aibj, c_aibj)
 !!
 !!    Jacobian CCSD E2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -3298,18 +3298,18 @@ contains
 !
       call mem%alloc(X_ckbj, n_a_v, n_a_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-     call dgemm('N', 'N',                       &
-                 (n_a_o)*(n_a_v),               &
-                 (wf%n_ccsd_o)*(wf%n_ccsd_v),   &
-                 (n_a_o)*(n_a_v),               &
-                 one,                           &
-                 L_ckdl,                        &
-                 (n_a_o)*(n_a_v),               &
-                 x_dlbj,                        &
-                 (n_a_o)*(n_a_v),               &
-                 zero,                          &
-                 X_ckbj,                        &
-                 (n_a_o)*(n_a_v))
+      call dgemm('N', 'N',                       &
+                  (n_a_o)*(n_a_v),               &
+                  (wf%n_ccsd_o)*(wf%n_ccsd_v),   &
+                  (n_a_o)*(n_a_v),               &
+                  one,                           &
+                  L_ckdl,                        &
+                  (n_a_o)*(n_a_v),               &
+                  x_dlbj,                        &
+                  (n_a_o)*(n_a_v),               &
+                  zero,                          &
+                  X_ckbj,                        &
+                  (n_a_o)*(n_a_v))
 !
       call mem%dealloc(x_dlbj, n_a_v, n_a_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !

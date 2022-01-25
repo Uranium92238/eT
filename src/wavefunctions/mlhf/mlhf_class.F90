@@ -997,14 +997,14 @@ contains
 !
       class(mlhf) :: wf
 !
-     call output%printf('m', '- Active orbital space:', &
-            fs='(/t3, a)')
-     call output%printf('m', ' Number of active occupied orbitals: (i8)', &
-            ints=[wf%n_o], ffs='(/t6, a)')
-     call output%printf('m', ' Number of active virtual orbitals:  (i8)', &
-            ints=[wf%n_v], ffs='(t6, a)')
-     call output%printf('m', ' Number of active orbitals:          (i8)', &
-            ints=[wf%n_v+wf%n_o], ffs='(t6, a)')
+      call output%printf('m', '- Active orbital space:', &
+             fs='(/t3, a)')
+      call output%printf('m', ' Number of active occupied orbitals: (i8)', &
+             ints=[wf%n_o], ffs='(/t6, a)')
+      call output%printf('m', ' Number of active virtual orbitals:  (i8)', &
+             ints=[wf%n_v], ffs='(t6, a)')
+      call output%printf('m', ' Number of active orbitals:          (i8)', &
+             ints=[wf%n_v+wf%n_o], ffs='(t6, a)')
 !
    end subroutine print_orbital_space_info_mlhf
 !

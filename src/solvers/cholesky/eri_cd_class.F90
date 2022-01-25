@@ -1944,7 +1944,7 @@ contains
 !
          do CD_shp = 1, n_qual_shp - 1
 !
-             n_qual_aop_in_prev_shps(CD_shp + 1) = n_qual_aop_in_prev_shps(CD_shp) + qual_shp(CD_shp, 3)
+            n_qual_aop_in_prev_shps(CD_shp + 1) = n_qual_aop_in_prev_shps(CD_shp) + qual_shp(CD_shp, 3)
 !
          enddo
 !
@@ -2334,13 +2334,13 @@ contains
 !
             call mem%alloc(D_xy_new, n_new_sig_aop)
 !
-           call reduce_vector(D_xy,                      &
-                             D_xy_new,                   &
-                             sig_shp_to_first_sig_aop,   &
-                             new_sig_shp,                &
-                             n_sig_shp,                  &
-                             n_sig_aop,                  &
-                             n_new_sig_aop)
+            call reduce_vector(D_xy,                       &
+                               D_xy_new,                   &
+                               sig_shp_to_first_sig_aop,   &
+                               new_sig_shp,                &
+                               n_sig_shp,                  &
+                               n_sig_aop,                  &
+                               n_new_sig_aop)
 !
             call mem%dealloc(D_xy, n_sig_aop)
             call mem%alloc(D_xy, n_new_sig_aop)
@@ -2351,13 +2351,13 @@ contains
 !
             call mem%alloc(screening_vector_new, n_new_sig_aop)
 !
-           call reduce_vector(screening_vector,          &
-                             screening_vector_new,       &
-                             sig_shp_to_first_sig_aop,   &
-                             new_sig_shp,                &
-                             n_sig_shp,                  &
-                             n_sig_aop,                  &
-                             n_new_sig_aop)
+            call reduce_vector(screening_vector,           &
+                               screening_vector_new,       &
+                               sig_shp_to_first_sig_aop,   &
+                               new_sig_shp,                &
+                               n_sig_shp,                  &
+                               n_sig_aop,                  &
+                               n_new_sig_aop)
 !
             call mem%dealloc(screening_vector, n_sig_aop)
             call mem%alloc(screening_vector, n_new_sig_aop)
@@ -2799,16 +2799,16 @@ contains
 !
          do shp_in_basis = 1, n_shp_in_basis
 !
-              if (AB == basis_shell_info_full(shp_in_basis, 3)) then ! This shell pair is already
-                                                                    ! in the list, so must only
-                                                                    ! increment n_aops_in_shp.
+            if (AB == basis_shell_info_full(shp_in_basis, 3)) then ! This shell pair is already
+                                                                   ! in the list, so must only
+                                                                   ! increment n_aops_in_shp.
 !
-                 found = .true.
-                 basis_shell_info_full(shp_in_basis, 4) = basis_shell_info_full(shp_in_basis, 4) + 1
+               found = .true.
+               basis_shell_info_full(shp_in_basis, 4) = basis_shell_info_full(shp_in_basis, 4) + 1
 !
-                 exit ! Loop over shp_in_basis
+               exit ! Loop over shp_in_basis
 !
-              endif
+            endif
 !
          enddo
 !
@@ -2853,42 +2853,42 @@ contains
                                                           ! AOs in the shell they
                                                           ! belong to.
 !
-     aops_in_basis = 0
+      aops_in_basis = 0
 !
-    do AB_shp = 1, n_shp_in_basis
+      do AB_shp = 1, n_shp_in_basis
 !
-      A  = basis_shell_info(AB_shp, 1)
-      B  = basis_shell_info(AB_shp, 2)
-      AB = basis_shell_info(AB_shp, 3)
+         A  = basis_shell_info(AB_shp, 1)
+         B  = basis_shell_info(AB_shp, 2)
+         AB = basis_shell_info(AB_shp, 3)
 !
-      A_range = ao%shells(A)
-      B_range = ao%shells(B)
+         A_range = ao%shells(A)
+         B_range = ao%shells(B)
 !
-!     Determine which elements in the shell pair AB are elements of the basis
+!        Determine which elements in the shell pair AB are elements of the basis
 !
-      current_aop_in_shp = 0
+         current_aop_in_shp = 0
 !
-      do I = 1, this%n_cholesky
-         if (cholesky_basis_updated(I,3) == AB) then
+         do I = 1, this%n_cholesky
+            if (cholesky_basis_updated(I,3) == AB) then
 !
-            current_aop_in_shp = current_aop_in_shp + 1
+               current_aop_in_shp = current_aop_in_shp + 1
 !
-            aops_in_basis(AB_shp, current_aop_in_shp) &
-               = cholesky_basis_updated(I,1) - A_range%first + 1
+               aops_in_basis(AB_shp, current_aop_in_shp) &
+                  = cholesky_basis_updated(I,1) - A_range%first + 1
 !
-            aops_in_basis(AB_shp, max_n_basis_aops_in_shp + current_aop_in_shp) &
-               = cholesky_basis_updated(I,2) - B_range%first + 1
+               aops_in_basis(AB_shp, max_n_basis_aops_in_shp + current_aop_in_shp) &
+                  = cholesky_basis_updated(I,2) - B_range%first + 1
 !
-            aops_in_basis(AB_shp, 2*max_n_basis_aops_in_shp + current_aop_in_shp) &
-               = I
+               aops_in_basis(AB_shp, 2*max_n_basis_aops_in_shp + current_aop_in_shp) &
+                  = I
 !
-         endif
+            endif
+         enddo
+!
+         if (current_aop_in_shp .ne. basis_shell_info(AB_shp, 4)) &
+            call output%error_msg('something went wrong in construct_S.')
+!
       enddo
-!
-      if (current_aop_in_shp .ne. basis_shell_info(AB_shp, 4)) &
-         call output%error_msg('something went wrong in construct_S.')
-!
-    enddo
 !
 !     Write basis_shell_data file containing
 !

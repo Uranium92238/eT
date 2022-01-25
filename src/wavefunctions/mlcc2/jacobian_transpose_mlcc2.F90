@@ -210,7 +210,7 @@ contains
       call mem%alloc(L_aick, wf%n_v, wf%n_o, n_cc2_v, n_cc2_o)
 !
 !$omp parallel do private(k, c, i, a) collapse(2)
-       do k = 1, n_cc2_o
+      do k = 1, n_cc2_o
          do c = 1, n_cc2_v
             do i = 1, wf%n_o
                do a = 1, wf%n_v
@@ -309,7 +309,7 @@ contains
             do b = 1, n_cc2_v
                do j = 1, n_cc2_o
 !
-                 g_jbka(j, b, k, a) = g_iajb(j + first_o - 1, b + first_v - 1, k + first_o - 1, a)
+                  g_jbka(j, b, k, a) = g_iajb(j + first_o - 1, b + first_v - 1, k + first_o - 1, a)
 !
                enddo
             enddo

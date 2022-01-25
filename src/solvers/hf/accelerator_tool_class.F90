@@ -69,6 +69,6 @@ module accelerator_tool_class
 !
       end subroutine
 !
-  end interface
+   end interface
 !
 end module accelerator_tool_class

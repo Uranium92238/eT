@@ -318,7 +318,7 @@ contains
    end subroutine jacobian_transpose_doubles_a1_doubles
 !
 !
-  module subroutine jacobian_transpose_doubles_b1_doubles(wf, sigma_ai, c_bjck)
+   module subroutine jacobian_transpose_doubles_b1_doubles(wf, sigma_ai, c_bjck)
 !!
 !!    Jacobian transpose doubles B1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
@@ -437,7 +437,7 @@ contains
    end subroutine jacobian_transpose_doubles_b1_doubles
 !
 !
-  module subroutine jacobian_transpose_doubles_a2_doubles(wf, sigma_aibj, c_ai)
+   module subroutine jacobian_transpose_doubles_a2_doubles(wf, sigma_aibj, c_ai)
 !!
 !!    Jacobian transpose CC2 A2
 !!    Written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019

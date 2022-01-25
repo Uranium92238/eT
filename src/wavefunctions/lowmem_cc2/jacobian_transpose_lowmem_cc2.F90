@@ -750,12 +750,12 @@ contains
             enddo
 !$omp end parallel do
 !
-             call mem%alloc(g_bjca, batch_b%length, wf%n_o, batch_c%length, wf%n_v)
+            call mem%alloc(g_bjca, batch_b%length, wf%n_o, batch_c%length, wf%n_v)
 !
             call wf%eri_t1%get('vovv', g_bjca, batch_b%first, batch_b%get_last(), 1, wf%n_o, &
                                                    batch_c%first, batch_c%get_last(), 1, wf%n_v)
 !
-           call dgemm('T', 'N',                                     &
+            call dgemm('T', 'N',                                    &
                        wf%n_v,                                      &
                        wf%n_o,                                      &
                        (batch_b%length)*(batch_c%length)*(wf%n_o),  &

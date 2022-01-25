@@ -443,7 +443,7 @@ contains
    end subroutine jacobian_doubles_a1
 !
 !
- module subroutine jacobian_doubles_b1(wf, rho_ai, c_aibj)
+   module subroutine jacobian_doubles_b1(wf, rho_ai, c_aibj)
 !!
 !!    Jacobian doubles B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018

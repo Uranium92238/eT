@@ -1038,7 +1038,7 @@ contains
    end subroutine jacobian_ccsd_d2
 !
 !
-    module subroutine jacobian_ccsd_e2(wf, rho_aibj, c_aick)
+   module subroutine jacobian_ccsd_e2(wf, rho_aibj, c_aick)
 !!
 !!    Jacobian CCSD E2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018

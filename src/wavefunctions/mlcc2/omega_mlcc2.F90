@@ -346,7 +346,7 @@ contains
 !
       call timer%turn_off()
 !
-    end subroutine omega_cc2_c1_mlcc2
+   end subroutine omega_cc2_c1_mlcc2
 !
 !
 end submodule omega_mlcc2

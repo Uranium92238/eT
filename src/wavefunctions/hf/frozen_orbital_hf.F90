@@ -25,7 +25,7 @@ submodule (hf_class) frozen_orbital_hf
 !!    Submodule containing routines for frozen orbitals
 !!
 !
-      implicit none
+   implicit none
 !
 !
 contains
@@ -217,7 +217,7 @@ contains
       enddo
 !$omp end parallel do
 !
-     call mem%dealloc(orbital_energies_copy, wf%n_mo)
+      call mem%dealloc(orbital_energies_copy, wf%n_mo)
 !
       wf%n_mo = wf%n_mo  - wf%n_frozen_core_orbitals
       wf%n_o  = wf%n_o  - wf%n_frozen_core_orbitals    
@@ -483,20 +483,20 @@ contains
 !
 !     Add to CC^T inactive virtual density to frozen CC^T
 !
-     call dgemm('N', 'T',       &
-                 wf%ao%n,       &
-                 wf%ao%n,       &
-                 rank,          &
-                 one,           &
-                 PAO_coeff,     &
-                 wf%ao%n,       &
-                 PAO_coeff,     &
-                 wf%ao%n,       &
-                 one,           &
-                 wf%frozen_CCT, &
-                 wf%ao%n)
+      call dgemm('N', 'T',       &
+                  wf%ao%n,       &
+                  wf%ao%n,       &
+                  rank,          &
+                  one,           &
+                  PAO_coeff,     &
+                  wf%ao%n,       &
+                  PAO_coeff,     &
+                  wf%ao%n,       &
+                  one,           &
+                  wf%frozen_CCT, &
+                  wf%ao%n)
 !
-     call mem%dealloc(PAO_coeff, wf%ao%n, wf%ao%n)      
+      call mem%dealloc(PAO_coeff, wf%ao%n, wf%ao%n)      
 !
    end subroutine remove_frozen_hf_orbitals_hf
 !

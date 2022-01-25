@@ -3035,32 +3035,33 @@ contains
 !$omp parallel do private(AB, A_c, B_c, x_ABk, x_ABk_p, w, y, w_f, y_f, k) schedule(dynamic)
       do AB = 1, n_shp
 !
-            A_c = int(shp_list(AB, 1), kind=c_int)
-            B_c = int(shp_list(AB, 2), kind=c_int)
+         A_c = int(shp_list(AB, 1), kind=c_int)
+         B_c = int(shp_list(AB, 2), kind=c_int)
 !
-           call get_oei_c(oei_type_c, x_ABk, A_c, B_c)
+         call get_oei_c(oei_type_c, x_ABk, A_c, B_c)
 !
-           x_ABk_p(1 : ao%shells(A_c)%length, &
-                   1 : ao%shells(B_c)%length, &
-                   1 : n_components)          &
-           => x_ABk(1 : ao%shells(A_c)%length * &
-                        ao%shells(B_c)%length * &
-                        n_components)
+         x_ABk_p(1 : ao%shells(A_c)%length, &
+                 1 : ao%shells(B_c)%length, &
+                 1 : n_components)          &
+         => x_ABk(1 : ao%shells(A_c)%length * &
+                      ao%shells(B_c)%length * &
+                      n_components)
 !
-           do k = 1, n_components
-              do w = 1, ao%shells(A_c)%length
-                 do y = 1, ao%shells(B_c)%length
+         do k = 1, n_components
+            do w = 1, ao%shells(A_c)%length
+               do y = 1, ao%shells(B_c)%length
 !
-                    w_f = ao%shells(A_c)%first - 1 + w
-                    y_f = ao%shells(B_c)%first - 1 + y
+                  w_f = ao%shells(A_c)%first - 1 + w
+                  y_f = ao%shells(B_c)%first - 1 + y
 !
-                    x(w_f, y_f, k) = x_ABk_p(w, y, k)
-                    x(y_f, w_f, k) = x_ABk_p(w, y, k)
+                  x(w_f, y_f, k) = x_ABk_p(w, y, k)
+                  x(y_f, w_f, k) = x_ABk_p(w, y, k)
 !
-                 enddo
-              enddo
-           enddo
+               enddo
+            enddo
          enddo
+!
+      enddo
 !$omp end parallel do
 !
       call mem%dealloc(shp_list, ao%n_sh**2, 2)
@@ -3188,14 +3189,14 @@ contains
       type(range_), allocatable :: aos
       integer :: c
 !
-       do c = 1, ao%n_centers
+      do c = 1, ao%n_centers
 !
          aos = ao%centers(c)%get_ao_range()
-!
+!  
          if (ao%centers(c)%cartesian) then
 !
             factors(aos%first:aos%get_last()) = &
-               ao%centers(c)%get_ao_normalization_factors()
+              ao%centers(c)%get_ao_normalization_factors()
 !
          else
 !

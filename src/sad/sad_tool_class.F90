@@ -34,10 +34,10 @@ module sad_tool_class
 !
    type :: sad_tool
 !
-     real(dp), private :: threshold
-     integer,  private :: max_iterations
+      real(dp), private :: threshold
+      integer,  private :: max_iterations
 !
-     character(len=200), private :: ao_density_guess
+      character(len=200), private :: ao_density_guess
 !
    contains
 !
