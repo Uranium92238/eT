@@ -1,0 +1,79 @@
+module unit_tools
+
+   use parameters
+   use range_class, only: range_
+   use funit
+
+   implicit none
+
+contains
+!
+   @test
+   subroutine test_least_common_multiple()
+
+      use math_utilities, only: lcm
+
+      implicit none
+
+!     least common multiple of 4 and 6 is 12.
+      @assertEqual(12, lcm(4, 6))
+
+   end subroutine test_least_common_multiple
+!
+!  Test range_class
+!
+   @test
+   subroutine test_shift_range()
+
+      implicit none
+
+      type(range_) :: this
+
+      this = range_(1, 15, 1)
+      call this%shift(7)
+
+      @assertEqual(8, this%get_first())
+      @assertEqual(15, this%get_length())
+      @assertEqual(22, this%get_last())
+      @assertEqual(1, this%get_step())
+
+   end subroutine test_shift_range
+!
+!
+   @test
+   subroutine test_shift_first_to()
+
+      implicit none
+
+      type(range_) :: this
+
+      this = range_(1, 15, 1)
+      call this%shift_first_to(15)
+
+      @assertEqual(15, this%get_first())
+      @assertEqual(15, this%get_length())
+      @assertEqual(29, this%get_last())
+      @assertEqual(1, this%get_step())
+
+   end subroutine test_shift_first_to
+!
+!
+   @test
+   subroutine test_shift_last_to()
+
+      implicit none
+
+      type(range_) :: this
+
+      this = range_(1, 15, 1)
+      call this%shift_last_to(10)
+
+      @assertEqual(-4, this%get_first())
+      @assertEqual(15, this%get_length())
+      @assertEqual(10, this%get_last())
+      @assertEqual(1, this%get_step())
+
+   end subroutine test_shift_last_to
+!
+!
+end module unit_tools

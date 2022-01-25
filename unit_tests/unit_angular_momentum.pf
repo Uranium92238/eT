@@ -448,8 +448,8 @@ contains
       factory = angular_momentum_factory(cartesian)
       call factory%create(angular_momentum, length)
 
-      @assertEqual(l, -1, message='intentional broken test')
       call output%close_()
+      @assertEqual(l, -1, message='intentionally broken test')
 
    end subroutine test_spherical_l_greater_6
 

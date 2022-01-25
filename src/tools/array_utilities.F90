@@ -301,39 +301,6 @@ contains
    end function is_significant
 !
 !
-   function n_significant(x, n, threshold) result(n_significant_)
-!!
-!!    Number of significant
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
-!!
-!!    Returns the number of elements in a vector x (of dimension n) larger,
-!!    in absolute value, than "threshold": #i such that abs(x(i)) > threshold.
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      real(dp), dimension(n), intent(in)  :: x
-!
-      real(dp), intent(in)  :: threshold
-!
-      integer :: n_significant_, i = 0
-!
-      n_significant_ = 0
-!
-      do i = 1, n
-!
-         if (abs(x(i)) .gt. threshold) then
-!
-            n_significant_ = n_significant_ + 1
-!
-         endif
-!
-      enddo
-!
-   end function n_significant
-!
-!
    subroutine reduce_vector(vec, vec_reduced, block_firsts, block_significant, n_blocks, dim_, dim_reduced)
 !!
 !!    Reduce vector
@@ -382,56 +349,6 @@ contains
       enddo
 !
    end subroutine reduce_vector
-!
-!
-   subroutine reduce_vector_int(vec, vec_reduced, block_firsts, block_significant, n_blocks, dim_, dim_reduced)
-!!
-!!    Reduce vector int
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Cuts the significant blocks out of a vector and places them in a reduced size vector
-!!
-!!    vec:  vector to cut out blocks from
-!!    dim_: dimension of vec
-!!
-!!    vec_reduced: vector to place the cut-out blocks into (intent: out)
-!!    dim_reduced: dimension of vec_reduced
-!!
-!!    n_blocks:          total number of blocks
-!!    block_significant: a logical array, block_significant(i) == .true. means that i is a significant block
-!!    block_firsts:      an integer array, of dimension n_blocks + 1, containing the first index of each significant block;
-!!                       the (n_blocks)+1-th element equals (last element of the final block) + 1.
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_, dim_reduced, n_blocks
-!
-      logical, dimension(n_blocks), intent(in) :: block_significant
-      integer, dimension(n_blocks + 1), intent(in) :: block_firsts
-!
-      integer, dimension(dim_), intent(in) :: vec
-      integer, dimension(dim_reduced), intent(out) :: vec_reduced
-!
-      integer :: block_, current_pos, first, last, size_
-!
-      current_pos = 1
-!
-      do block_ = 1, n_blocks
-!
-         if (block_significant(block_)) then
-!
-            first = block_firsts(block_)
-            last  = block_firsts(block_ + 1) - 1
-            size_ = last - first + 1
-!
-            vec_reduced(current_pos : current_pos + size_ - 1) = vec(first : last)
-            current_pos = current_pos + size_
-!
-         endif
-!
-      enddo
-!
-   end subroutine reduce_vector_int
 !
 !
    subroutine reduce_array(array, array_reduced, block_firsts, block_significant, n_blocks, dim_, dim_reduced, columns)
@@ -676,39 +593,6 @@ contains
          call output%error_msg('Matrix inversion failed! dgetri error integer: (i0)', ints=[info])
 !
    end subroutine invert_in_place
-!
-!
-   subroutine invert_lower_triangular(Ainv, A, n)
-!!
-!!    Invert lower triagonal
-!!    Written by Sarai D. Folkestad, 2018
-!!
-!!    Inverts lower triangular n x n - matrix A and places the result in Ainv.
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      real(dp), dimension(n, n), intent(in) :: A
-      real(dp), dimension(n, n), intent(out) :: Ainv
-!
-      integer :: info
-!
-!     Store A in Ainv to prevent it from being overwritten by LAPACK
-!
-      call dcopy(n**2, A, 1, Ainv, 1)
-!
-!     dtrtri computes the inverse of a real upper or lower triangular
-!     matrix A.
-!
-      call dtrtri('l','n', n, Ainv, n, info)
-!
-      if (info /= 0) then
-         call output%error_msg('Matrix inversion failed.' // &
-                               ' "Dtrtri" finished with info: (i0)', ints=[info])
-      end if
-!
-   end subroutine invert_lower_triangular
 !
 !
    pure real(dp) function get_abs_max(X, n)

@@ -1,0 +1,76 @@
+module unit_memory
+
+   use parameters
+
+   use output_file_class, only: output_file
+   use global_out, only: output
+
+   use memory_manager_class, only: memory_manager
+
+   use funit
+
+   implicit none
+
+contains
+!
+   @test
+   subroutine test_get_memory_as_character()
+
+      implicit none
+
+      type(memory_manager) :: this
+      integer(i64) :: mem_total
+      character(len=17) :: mem_char, expected
+!
+      output = output_file('unit_testing.out')
+      call output%open_('append')
+!
+      mem_total = 2
+!
+      this = memory_manager(total=mem_total, &
+                            units='gb')
+!
+      mem_char = this%get_memory_as_character(mem_total, all_digits=.true.)
+!
+      expected = '     2000000000 B'
+      @assertEqual(expected, mem_char)
+!
+      mem_char = ''
+      mem_char = this%get_memory_as_character(mem_total)
+!
+      expected = '      0.002000 TB'
+      @assertEqual(expected, mem_char)
+!
+      call output%close_()
+!
+   end subroutine test_get_memory_as_character
+!
+!
+   @test(ifdef=INCLUDE_INTENTIONALLY_BROKEN)
+   subroutine test_print_available_and_leak()
+
+      implicit none
+
+      real(dp), dimension(:,:), allocatable :: array
+
+      type(memory_manager) :: this
+!
+      output = output_file('unit_testing.out')
+      call output%open_('append')
+!
+      this = memory_manager(total=2, &
+                            units='gb')
+!
+      call this%alloc(array, 2, 2)
+!
+      call this%print_available()
+!
+      call this%check_for_leak
+!
+      call output%close_()
+      @assertEqual(1, 1, message='intentionally broken test')
+!
+   end subroutine test_print_available_and_leak
+!
+!
+end module unit_memory
