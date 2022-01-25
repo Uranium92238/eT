@@ -1,0 +1,357 @@
+
+
+
+                     eT 1.6 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.6.0 Galaxy (development)
+  ------------------------------------------------------------
+  Configuration date: 2022-01-24 10:43:10 UTC +01:00
+  Git branch:         qed_update_private_public
+  Git hash:           a864593e8c491792f921f3d29ed209ec74905df5
+  Fortran compiler:   GNU 9.3.0
+  C compiler:         GNU 9.3.0
+  C++ compiler:       GNU 9.3.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     ON
+  ------------------------------------------------------------
+
+  Calculation started: 2022-01-24 11:14:55 UTC +01:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: HOF-He
+        charge: 0
+     end system
+
+     do
+        ground state
+     end do
+
+     print
+        output print level: debug
+     end print
+
+     memory
+        available: 8
+     end memory
+
+     solver scf
+        algorithm:          scf-diis
+        energy threshold:   1.0d-10
+        gradient threshold: 1.0d-10
+     end solver scf
+
+     method
+        qed-hf
+     end method
+
+     qed
+        modes:          1
+        frequency:      {0.5}
+        polarization:   {0, 0, 1}
+        coupling:       {0.05}
+        coherent state: {0.0}
+     end qed
+
+
+  Running on 4 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: QED-RHF wavefunction
+  ==========================
+
+  Libint electron repulsion integral precision:  0.1000E-23
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  F    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
+        4 He     0.000000000000     0.000000000000     7.500000000000        4
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  F    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
+        4 He     0.000000000000     0.000000000000    14.172945934238        4
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               38
+     Number of orthonormal atomic orbitals:   38
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         28
+     Number of molecular orbitals:       38
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a QED-RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+     Generated atomic density for H  using UHF/cc-pvdz
+     Generated atomic density for F  using UHF/cc-pvdz
+     Generated atomic density for O  using UHF/cc-pvdz
+     Generated atomic density for He using UHF/cc-pvdz
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:              -178.311623023973
+     Number of electrons in guess:           20.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-15
+     Exchange screening threshold:   0.1000E-13
+     ERI cutoff:                     0.1000E-15
+     One-electron integral  cutoff:  0.1000E-20
+     Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
+
+  Doing preparations for storer solver scf_errors
+
+  Doing preparations for storer solver scf_parameters
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1          -177.447420684370     0.7569E-01     0.1774E+03
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+     2          -177.474059634300     0.1129E-01     0.2664E-01
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+     3          -177.475058205026     0.4151E-02     0.9986E-03
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+     4          -177.475186639359     0.1381E-02     0.1284E-03
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+     5          -177.475200524554     0.4333E-03     0.1389E-04
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+     6          -177.475201885677     0.8204E-04     0.1361E-05
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+     7          -177.475201969394     0.2303E-04     0.8372E-07
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+     8          -177.475201979825     0.4854E-05     0.1043E-07
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+     9          -177.475201980668     0.1044E-05     0.8430E-09
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+    10          -177.475201980699     0.2420E-06     0.3072E-10
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+    11          -177.475201980700     0.5280E-07     0.1108E-11
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+    12          -177.475201980700     0.9673E-08     0.0000E+00
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+    13          -177.475201980700     0.3445E-08     0.5684E-13
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+    14          -177.475201980700     0.1661E-08     0.1137E-12
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+    15          -177.475201980700     0.6708E-09     0.1137E-12
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+    16          -177.475201980700     0.1430E-09     0.5684E-13
+  Memory tracker initialized - construct_new_G_elements
+  Memory tracker finalized - construct_new_G_elements:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Memory tracker initialized - construct_extrapolated_vector
+  Memory tracker finalized - construct_extrapolated_vector:
+  allowed: 0 B  used: 0 B  difference: 0 B
+  Fock matrix construction using density differences
+    17          -177.475201980700     0.4938E-10     0.2842E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 17 iterations!
+
+  Doing finalizations for storer solver scf_errors
+
+  Doing finalizations for storer solver scf_parameters
+
+  - Summary of QED-RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.601016247373
+     Nuclear repulsion energy:      48.518317619727
+     Electronic energy:           -225.993519600427
+     Total energy:                -177.475201980700
+
+  - QED Parameters and properties
+
+     Optimize photons?   :    False
+     Complete basis?     :    False
+
+     Mode 1
+      Frequency          :    0.500000000000
+      Polarization       :    0.000000000000    0.000000000000    1.000000000000
+      Coupling
+       sqrt(1/eps V)     :    0.050000000000
+       Bilinear          :    0.025000000000
+       Quadratic         :    0.001250000000
+      Coherent state     :    0.000000000000
+
+  - Timings for the QED-RHF ground state calculation
+
+     Total wall time (sec):              1.09779
+     Total cpu time (sec):               4.28185
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 367.968 KB
+
+  Total wall time in eT (sec):              1.12372
+  Total cpu time in eT (sec):               4.31340
+
+  Calculation ended: 2022-01-24 11:14:57 UTC +01:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     QED-HF: https://doi.org/10.1103/PhysRevX.10.041043
+
+  eT terminated successfully!
