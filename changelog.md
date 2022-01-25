@@ -13,6 +13,7 @@
 - Cleanup of use statements in solvers, molecule and observer. eT-program/eT!1012
 - Fix typo in `construct_mo_basis_transformation`. eT-program/eT!1020
 - Removed unused routines and added unit tests for `range_class` and `memory_manager`. eT-program/eT!1022
+- Added abstract solver class. eT-program/eT!1018
 
 ### Features
 - Added timers for calculate energy. eT-program/eT!993

@@ -56,9 +56,11 @@ module abstract_cc_es_class
 !
    use convergence_tool_class, only: convergence_tool
 !
+   use abstract_solver_class, only: abstract_solver
+!
    implicit none
 !
-   type, abstract :: abstract_cc_es
+   type, extends(abstract_solver), abstract :: abstract_cc_es
 !
       character(len=100) :: name_
       character(len=100) :: tag
@@ -86,9 +88,9 @@ module abstract_cc_es_class
       class(es_projection_tool), allocatable    :: projector
       class(precondition_tool), allocatable     :: preconditioner
 !
-   contains
+      class(ccs), pointer :: wf
 !
-      procedure(run_abstract_cc_es), deferred :: run
+   contains
 !
       procedure :: print_banner                     => print_banner_abstract_cc_es
 !
@@ -111,25 +113,10 @@ module abstract_cc_es_class
    end type abstract_cc_es
 !
 !
-   abstract interface
-      subroutine run_abstract_cc_es(solver, wf)
-!
-         import abstract_cc_es, ccs
-!
-         implicit none
-!
-         class(abstract_cc_es) :: solver
-!
-         class(ccs) :: wf
-!
-      end subroutine
-   end interface
-!
-!
 contains
 !
 !
-   subroutine initialize_energies_abstract_cc_es(solver)
+   subroutine initialize_energies_abstract_cc_es(this)
 !!
 !!    Initialize energies
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -138,15 +125,15 @@ contains
 !!
       implicit none
 !
-      class(abstract_cc_es) :: solver
+      class(abstract_cc_es) :: this
 !
-      if (.not. allocated(solver%energies)) &
-            call mem%alloc(solver%energies, solver%n_singlet_states)
+      if (.not. allocated(this%energies)) &
+            call mem%alloc(this%energies, this%n_singlet_states)
 !
    end subroutine initialize_energies_abstract_cc_es
 !
 !
-   subroutine destruct_energies_abstract_cc_es(solver)
+   subroutine destruct_energies_abstract_cc_es(this)
 !!
 !!    Destruct energies
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -155,33 +142,33 @@ contains
 !!
       implicit none
 !
-      class(abstract_cc_es) :: solver
+      class(abstract_cc_es) :: this
 !
-      if (allocated(solver%energies)) &
-            call mem%dealloc(solver%energies, solver%n_singlet_states)
+      if (allocated(this%energies)) &
+            call mem%dealloc(this%energies, this%n_singlet_states)
 !
    end subroutine destruct_energies_abstract_cc_es
 !
 !
-   subroutine print_banner_abstract_cc_es(solver)
+   subroutine print_banner_abstract_cc_es(this)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(abstract_cc_es) :: solver
+      class(abstract_cc_es) :: this
 !
-      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
-      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+      call output%printf('m', ' - ' // trim(this%name_), fs='(/t3,a)')
+      call output%print_separator('m', len(trim(this%name_)) + 6, '-')
 !
-      call output%printf('n', solver%description1, ffs='(/t3,a)', fs='(t3,a)')
-      call output%printf('n', solver%description2, ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('n', this%description1, ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('n', this%description2, ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_abstract_cc_es
 !
 !
-   subroutine read_es_settings_abstract_cc_es(solver, records_in_memory)
+   subroutine read_es_settings_abstract_cc_es(this, records_in_memory)
 !!
 !!    Read settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -190,7 +177,7 @@ contains
 !
       implicit none
 !
-      class(abstract_cc_es) :: solver
+      class(abstract_cc_es) :: this
 !
       logical, intent(inout) :: records_in_memory
 !
@@ -199,62 +186,62 @@ contains
       if (input%is_keyword_present('energy threshold', 'solver cc es')) then
 !
          call input%get_keyword('energy threshold', 'solver cc es', eigenvalue_threshold)
-         call solver%convergence_checker%set_energy_threshold(eigenvalue_threshold)
+         call this%convergence_checker%set_energy_threshold(eigenvalue_threshold)
 !
       endif
 !
       if (input%is_keyword_present('residual threshold', 'solver cc es')) then
 !
          call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
-         call solver%convergence_checker%set_residual_threshold(residual_threshold)
+         call this%convergence_checker%set_residual_threshold(residual_threshold)
 !
       endif
 !
-      call input%get_keyword('max iterations', 'solver cc es', solver%max_iterations)
+      call input%get_keyword('max iterations', 'solver cc es', this%max_iterations)
 !
-      call input%get_required_keyword('singlet states', 'solver cc es', solver%n_singlet_states)
+      call input%get_required_keyword('singlet states', 'solver cc es', this%n_singlet_states)
 !
       if (input%is_keyword_present('core excitation', 'solver cc es') .and. .not. &
-          input%is_keyword_present('ionization', 'solver cc es')) solver%es_type = 'core'
+          input%is_keyword_present('ionization', 'solver cc es')) this%es_type = 'core'
 !
       if (input%is_keyword_present('ionization', 'solver cc es') .and. .not. &
-          input%is_keyword_present('core excitation', 'solver cc es')) solver%es_type = 'ionize'
+          input%is_keyword_present('core excitation', 'solver cc es')) this%es_type = 'ionize'
 !
-      if (input%is_keyword_present('remove core', 'solver cc es')) solver%es_type = 'remove core'
+      if (input%is_keyword_present('remove core', 'solver cc es')) this%es_type = 'remove core'
 !
       call input%place_records_in_memory('solver cc es', records_in_memory)
 !
    end subroutine read_es_settings_abstract_cc_es
 !
 !
-   subroutine print_es_settings_abstract_cc_es(solver)
+   subroutine print_es_settings_abstract_cc_es(this)
 !!
 !!    Print settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
       implicit none
 !
-      class(abstract_cc_es) :: solver
+      class(abstract_cc_es) :: this
 !
       call output%printf('m', '- Settings for coupled cluster excited state &
-                         &solver (' //trim(solver%tag) // '):', fs='(/t3,a)')
+                         &solver (' //trim(this%tag) // '):', fs='(/t3,a)')
 !
       call output%printf('m', 'Calculation type:    (a0)', &
-                         chars=[trim(solver%es_type)], fs='(/t6,a)')
+                         chars=[trim(this%es_type)], fs='(/t6,a)')
       call output%printf('m', 'Excitation vectors:  (a0)', &
-                         chars=[trim(solver%transformation)], fs='(t6,a)')
+                         chars=[trim(this%transformation)], fs='(t6,a)')
 !
-      call solver%convergence_checker%print_settings()
+      call this%convergence_checker%print_settings()
 !
       call output%printf('m', 'Number of singlet states:     (i11)', &
-                         ints=[solver%n_singlet_states], fs='(/t6,a)')
+                         ints=[this%n_singlet_states], fs='(/t6,a)')
       call output%printf('m', 'Max number of iterations:     (i11)', &
-                         ints=[solver%max_iterations], fs='(t6,a)')
+                         ints=[this%max_iterations], fs='(t6,a)')
 !
    end subroutine print_es_settings_abstract_cc_es
 !
 !
-   subroutine cleanup_abstract_cc_es(solver, wf)
+   subroutine cleanup_abstract_cc_es(this)
 !!
 !!    Cleanup
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -263,27 +250,26 @@ contains
 !
       implicit none
 !
-      class(abstract_cc_es) :: solver
-      class(ccs), intent(in) :: wf
+      class(abstract_cc_es), intent(inout) :: this
 !
-      call solver%destruct_energies()
-      call solver%projector%destruct_projection_vector()
+      call this%destruct_energies()
+      call this%projector%destruct_projection_vector()
 !
-      call solver%timer%turn_off()
+      call this%timer%turn_off()
 !
      call output%printf('m', '- Finished solving the ' //  &
-                        trim(convert_to_uppercase(wf%name_)) // ' excited state &
-                        &equations ('// trim(solver%transformation) //')', fs='(/t3,a)')
+                        trim(convert_to_uppercase(this%wf%name_)) // ' excited state &
+                        &equations ('// trim(this%transformation) //')', fs='(/t3,a)')
 !
       call output%printf('m', 'Total wall time (sec): (f20.5)', &
-                         reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+                         reals=[this%timer%get_elapsed_time('wall')], fs='(/t6,a)')
       call output%printf('m', 'Total cpu time (sec):  (f20.5)', &
-                         reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6,a)')
+                         reals=[this%timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cleanup_abstract_cc_es
 !
 !
-   subroutine print_summary_abstract_cc_es(solver, wf, X, X_order)
+   subroutine print_summary_abstract_cc_es(this, X, X_order)
 !!
 !!    Print summary
 !!    Written by Eirik F. Kjønstad, Dec 2018
@@ -308,13 +294,11 @@ contains
 !
       implicit none
 !
-      class(abstract_cc_es), intent(in) :: solver
+      class(abstract_cc_es), intent(in) :: this
 !
-      class(ccs), intent(in) :: wf
+      real(dp), dimension(this%wf%n_es_amplitudes, this%n_singlet_states), intent(in) :: X
 !
-      real(dp), dimension(wf%n_es_amplitudes, solver%n_singlet_states), intent(in) :: X
-!
-      integer, dimension(solver%n_singlet_states), optional, intent(in) :: X_order
+      integer, dimension(this%n_singlet_states), optional, intent(in) :: X_order
 !
       integer, dimension(:), allocatable :: X_order_local
 !
@@ -324,7 +308,7 @@ contains
 !
 !     Set up list that gives ordering of energies from low to high
 !
-      call mem%alloc(X_order_local, solver%n_singlet_states)
+      call mem%alloc(X_order_local, this%n_singlet_states)
 !
       if (present(X_order)) then
 !
@@ -332,7 +316,7 @@ contains
 !
       else
 !
-         do state = 1, solver%n_singlet_states
+         do state = 1, this%n_singlet_states
 !
             X_order_local(state) = state
 !
@@ -342,25 +326,25 @@ contains
 !
 !     Print excited state vectors
 !
-      label = trim(adjustl(convert_to_uppercase(solver%transformation(1:1))))
+      label = trim(adjustl(convert_to_uppercase(this%transformation(1:1))))
 !
       call output%printf('n', '- Excitation vector amplitudes:', fs='(/t3,a)')
 !
-      do state = 1, solver%n_singlet_states
+      do state = 1, this%n_singlet_states
 !
          state_index = X_order_local(state)
 !
          call output%printf('n', 'Electronic state nr. (i0)', ints=[state], fs='(/t6,a)')
 !
          call output%printf('n', 'Energy (Hartree):             (f19.12)', &
-                            reals=[solver%energies(state_index)], fs='(/t6,a)')
+                            reals=[this%energies(state_index)], fs='(/t6,a)')
 !
-         call wf%print_X1_diagnostics(X(:,state_index), label)
-         call wf%print_dominant_x_amplitudes(X(1, state_index), label)
+         call this%wf%print_X1_diagnostics(X(:,state_index), label)
+         call this%wf%print_dominant_x_amplitudes(X(1, state_index), label)
 !
       enddo
 !
-      call mem%dealloc(X_order_local, solver%n_singlet_states)
+      call mem%dealloc(X_order_local, this%n_singlet_states)
 !
 !     Print excited state energies
 !
@@ -371,11 +355,11 @@ contains
       call output%printf('m', ' State                (Hartree)             (eV)', fs='(t6,a)')
       call output%print_separator('m', 63, '-', fs='(t6,a)')
 !
-      do state = 1, solver%n_singlet_states
+      do state = 1, this%n_singlet_states
 !
          call output%printf('m', '(i4)             (f19.12)   (f19.12)',         &
-                            ints=[state], reals=[solver%energies(state),   &
-                            solver%energies(state)*Hartree_to_eV], fs='(t6,a)')
+                            ints=[state], reals=[this%energies(state),   &
+                            this%energies(state)*Hartree_to_eV], fs='(t6,a)')
 !
       enddo
 !
@@ -386,38 +370,37 @@ contains
    end subroutine print_summary_abstract_cc_es
 !
 !
-   subroutine prepare_wf_for_excited_state_abstract_cc_es(solver, wf)
+   subroutine prepare_wf_for_excited_state_abstract_cc_es(this)
 !!
 !!    Prepare wf for excited state
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2019
 !!
       implicit none
 !
-      class(abstract_cc_es), intent(in) :: solver
-      class(ccs), intent(inout)         :: wf
+      class(abstract_cc_es), intent(in) :: this
 !
-      call wf%initialize_excited_state_files()
-      call wf%prepare_for_Jacobians(solver%transformation)
+      call this%wf%initialize_excited_state_files()
+      call this%wf%prepare_for_Jacobians(this%transformation)
 !
-      if (solver%transformation == 'right') then
+      if (this%transformation == 'right') then
 !
-         call wf%initialize_right_excitation_energies()
+         call this%wf%initialize_right_excitation_energies()
 !
-      else if (solver%transformation == 'left') then
+      else if (this%transformation == 'left') then
 !
-         call wf%initialize_left_excitation_energies()
+         call this%wf%initialize_left_excitation_energies()
 !
-      else if (solver%transformation == 'both') then
+      else if (this%transformation == 'both') then
 !
-         call wf%initialize_right_excitation_energies()
-         call wf%initialize_left_excitation_energies()
+         call this%wf%initialize_right_excitation_energies()
+         call this%wf%initialize_left_excitation_energies()
 !
       end if
 !
    end subroutine prepare_wf_for_excited_state_abstract_cc_es
 !
 !
-   subroutine initialize_start_vector_tool_abstract_cc_es(solver, wf)
+   subroutine initialize_start_vector_tool_abstract_cc_es(this)
 !!
 !!    Initialize start vector tool
 !!    Written by Eirik F. Kjønstad, Sep 2019
@@ -431,41 +414,39 @@ contains
 !
       implicit none
 !
-      class(abstract_cc_es) :: solver
+      class(abstract_cc_es) :: this
 !
-      class(ccs) :: wf
+      if (trim(this%es_type) == 'core') then
 !
-      if (trim(solver%es_type) == 'core') then
-!
-         call wf%read_cvs_settings()
+         call this%wf%read_cvs_settings()
 
-      elseif (trim(solver%es_type) == 'remove core') then
+      elseif (trim(this%es_type) == 'remove core') then
 !
-         call wf%read_rm_core_settings()
+         call this%wf%read_rm_core_settings()
 !
       endif
 !
       if (input%is_keyword_present('state guesses', 'solver cc es')) then
 !
-         solver%start_vectors = es_manual_start_vector_tool(wf)
+         this%start_vectors = es_manual_start_vector_tool(this%wf)
 !
       else
 !
-         if (trim(solver%es_type) == 'valence') then
+         if (trim(this%es_type) == 'valence') then
 !
-            solver%start_vectors = es_valence_start_vector_tool(wf)
+            this%start_vectors = es_valence_start_vector_tool(this%wf)
 !
-         elseif (trim(solver%es_type) == 'core') then
+         elseif (trim(this%es_type) == 'core') then
 !
-            solver%start_vectors = es_cvs_start_vector_tool(wf)
+            this%start_vectors = es_cvs_start_vector_tool(this%wf)
 !
-         elseif (trim(solver%es_type) == 'ionize') then
+         elseif (trim(this%es_type) == 'ionize') then
 !
-            solver%start_vectors = es_ip_start_vector_tool(wf)
+            this%start_vectors = es_ip_start_vector_tool(this%wf)
 !
-         elseif (trim(solver%es_type) == 'remove core') then
+         elseif (trim(this%es_type) == 'remove core') then
 !
-            solver%start_vectors = es_valence_start_vector_tool(wf)
+            this%start_vectors = es_valence_start_vector_tool(this%wf)
 !
          else
 !
@@ -478,32 +459,30 @@ contains
    end subroutine initialize_start_vector_tool_abstract_cc_es
 !
 !
-   subroutine initialize_projection_tool_abstract_cc_es(solver, wf)
+   subroutine initialize_projection_tool_abstract_cc_es(this)
 !!
 !!    Initialize projection tool
 !!    Written by Eirik F. Kjønstad, Sep 2019
 !!
       implicit none
 !
-      class(abstract_cc_es) :: solver
+      class(abstract_cc_es) :: this
 !
-      class(ccs) :: wf
+      if (trim(this%es_type) == 'valence') then
 !
-      if (trim(solver%es_type) == 'valence') then
+         this%projector = es_valence_projection_tool()
 !
-         solver%projector = es_valence_projection_tool()
+      elseif (trim(this%es_type) == 'core') then
 !
-      elseif (trim(solver%es_type) == 'core') then
+         this%projector = es_cvs_projection_tool(this%wf)
 !
-         solver%projector = es_cvs_projection_tool(wf)
+      elseif (trim(this%es_type) == 'ionize') then
 !
-      elseif (trim(solver%es_type) == 'ionize') then
+         this%projector = es_ip_projection_tool(this%wf)
 !
-         solver%projector = es_ip_projection_tool(wf)
+      elseif (trim(this%es_type) == 'remove core') then
 !
-      elseif (trim(solver%es_type) == 'remove core') then
-!
-         solver%projector = es_rm_core_projection_tool(wf)
+         this%projector = es_rm_core_projection_tool(this%wf)
 !
       else
 !
@@ -514,31 +493,29 @@ contains
    end subroutine initialize_projection_tool_abstract_cc_es
 !
 !
-   subroutine set_initial_guesses_abstract_cc_es(solver, wf, X, first, last)
+   subroutine set_initial_guesses_abstract_cc_es(this, X, first, last)
 !!
 !!    Set initial guesses
 !!    Written by Alexander C. Paul, Oct 2020
 !!
       implicit none
 !
-      class(abstract_cc_es) :: solver
-!
-      class(ccs) :: wf
+      class(abstract_cc_es) :: this
 !
       integer, intent(in) :: first, last
 !
-      real(dp), dimension(wf%n_es_amplitudes,first:last), intent(out) :: X
+      real(dp), dimension(this%wf%n_es_amplitudes,first:last), intent(out) :: X
 !
       integer :: state
 !
       do state = first, last
 !
-         call solver%start_vectors%get(wf, state, X(:,state),  &
-                                       solver%energies(state), &
-                                       solver%transformation,  &
-                                       solver%restart)
+         call this%start_vectors%get(this%wf, state, X(:,state),  &
+                                       this%energies(state), &
+                                       this%transformation,  &
+                                       this%restart)
 !
-         if (solver%projector%active) call solver%projector%do_(X(:,state))
+         if (this%projector%active) call this%projector%do_(X(:,state))
 !
       enddo
 !

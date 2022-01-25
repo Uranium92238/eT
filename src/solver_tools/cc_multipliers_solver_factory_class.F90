@@ -50,7 +50,7 @@ module cc_multipliers_solver_factory_class
 !!     (See davidson_cc_es solver for more details.)
 !
 
-   use kinds
+   use parameters
    use global_out,                                             only: output
    use transformation_tool_class,                              only: transformation_tool
    use cc_jacobian_transformation_tool_class,                  only: cc_jacobian_transformation_tool
@@ -129,15 +129,7 @@ contains
 !
       lindep_threshold = min(1.0d-11, 0.1d0 * this%residual_threshold)
 !
-      if (this%n_frequencies == 1) then
-!
-         printer = linear_davidson_single_solution_print_tool()
-!
-      else
-!
-         printer = linear_davidson_multiple_solutions_print_tool()
-!
-      endif
+      printer = linear_davidson_single_solution_print_tool()
 !
       davidson = linear_davidson_tool(name_            = 'multipliers_davidson',&
                                       n_parameters      = wf%n_gs_amplitudes,    &
@@ -152,17 +144,18 @@ contains
       preconditioner = cc_multipliers_preconditioner_getter(wf)
       rhs_getter     = cc_multipliers_rhs_tool(wf)
 !
-      solver = general_linear_davidson_solver(transformer           = transformer,         &
-                                              davidson              = davidson,            &
-                                              storer                = storer,              &
-                                              start_vector          = start_vector,        &
-                                              preconditioner        = preconditioner,      &
-                                              rhs_getter            = rhs_getter,          &
-                                              printer               = printer,             &
-                                              n_rhs                 = 1,                   &
-                                              n_solutions           = this%n_frequencies,  &
-                                              max_iterations        = this%max_iterations, &
-                                              residual_threshold    = this%residual_threshold)
+      solver = general_linear_davidson_solver(transformer        = transformer,         &
+                                              davidson           = davidson,            &
+                                              storer             = storer,              &
+                                              start_vector       = start_vector,        &
+                                              preconditioner     = preconditioner,      &
+                                              rhs_getter         = rhs_getter,          &
+                                              printer            = printer,             &
+                                              n_rhs              = 1,                   &
+                                              n_solutions        = this%n_frequencies,  &
+                                              max_iterations     = this%max_iterations, &
+                                              residual_threshold = this%residual_threshold, &
+                                              frequencies        = [zero])
 !
     end subroutine create_cc_multipliers_solver_factory
 !

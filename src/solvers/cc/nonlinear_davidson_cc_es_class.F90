@@ -128,7 +128,7 @@ module nonlinear_davidson_cc_es_class
 contains
 !
 !
-   function new_nonlinear_davidson_cc_es(transformation, wf, restart) result(solver)
+   function new_nonlinear_davidson_cc_es(transformation, wf, restart) result(this)
 !!
 !!    New non-linear Davidson CC ES
 !!    Written by Eirik F. Kjønstad, Nov 2019 and Jan 2020
@@ -140,66 +140,68 @@ contains
 !
       implicit none
 !
-      type(nonlinear_davidson_cc_es) :: solver
-      class(ccs), intent(inout) :: wf
+      type(nonlinear_davidson_cc_es) :: this
+      class(ccs), intent(inout), target :: wf
 !
       character(len=*), intent(in) :: transformation
 !
       logical, intent(in) :: restart
       logical :: records_in_memory
 !
-      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) &
+      this%wf => wf 
+!
+      this%timer = timings(trim(convert_to_uppercase(this%wf%name_)) &
                         // ' excited state (' // trim(transformation) //')', pl='normal')
-      call solver%timer%turn_on()
+      call this%timer%turn_on()
 !
-      solver%name_ = 'Non-linear Davidson coupled cluster excited state solver'
-      solver%tag   = 'Davidson'
+      this%name_ = 'Non-linear Davidson coupled cluster excited state solver'
+      this%tag   = 'Davidson'
 !
-      solver%description1 = 'A non-linear Davidson solver that calculates the lowest&
+      this%description1 = 'A non-linear Davidson solver that calculates the lowest&
                & eigenvalues and the right or left eigenvectors of the Jacobian matrix A.&
                & The eigenvalue problem is solved in a reduced space for fixed energies,&
                & before the energies are updated and a new reduced space built.'
 !
-      solver%description2 = 'See C. Hättig and F. Weigend, J. Chem. Phys. 113, 5154 (2000).'
+      this%description2 = 'See C. Hättig and F. Weigend, J. Chem. Phys. 113, 5154 (2000).'
 !
-      call solver%print_banner()
+      call this%print_banner()
 !
 !     Set defaults
 !
-      solver%n_singlet_states                   = 0
-      solver%max_dim_red                        = 0
-      solver%max_iterations                     = 100
-      solver%max_micro_iterations               = 100
-      solver%relative_micro_residual_threshold  = 1.0d-1
-      solver%restart                            = restart
-      solver%transformation                     = trim(transformation)
-      solver%es_type                            = 'valence'
-      solver%prepare_wf                         = .true.
+      this%n_singlet_states                   = 0
+      this%max_dim_red                        = 0
+      this%max_iterations                     = 100
+      this%max_micro_iterations               = 100
+      this%relative_micro_residual_threshold  = 1.0d-1
+      this%restart                            = restart
+      this%transformation                     = trim(transformation)
+      this%es_type                            = 'valence'
+      this%prepare_wf                         = .true.
 !
       records_in_memory                         = .false.
 !
 !     Initialize convergence checker with default threshols
 !
-      solver%convergence_checker = convergence_tool(energy_threshold   = 1.0d-3,   &
+      this%convergence_checker = convergence_tool(energy_threshold   = 1.0d-3,   &
                                                     residual_threshold = 1.0d-3,   &
                                                     energy_convergence = .false.)
 !
-      call solver%read_settings(records_in_memory)
+      call this%read_settings(records_in_memory)
 !
-      call solver%print_settings()
+      call this%print_settings()
 !
-      if (solver%n_singlet_states == 0) &
+      if (this%n_singlet_states == 0) &
          call output%error_msg('number of excitations must be specified.')
 !
-      wf%n_singlet_states = solver%n_singlet_states
+      this%wf%n_singlet_states = this%n_singlet_states
 !
 !     Initialize Davidson tool
 !
-      solver%davidson = eigen_davidson_tool(name_ = 'nonlin_cc_es_davidson',    &
-                                     n_parameters = wf%n_es_amplitudes,         &
-                                     n_solutions = solver%n_singlet_states,     &
+      this%davidson = eigen_davidson_tool(name_ = 'nonlin_cc_es_davidson',    &
+                                     n_parameters = this%wf%n_es_amplitudes,         &
+                                     n_solutions = this%n_singlet_states,     &
                                      lindep_threshold = 1.0d-11,                &
-                                     max_dim_red = solver%max_dim_red,          &
+                                     max_dim_red = this%max_dim_red,          &
                                      records_in_memory = records_in_memory,     &
                                      non_unit_metric = .true.)
 !
@@ -219,7 +221,7 @@ contains
                                                         records_in_memory,                   &
                                                         n_singlet_states,                    &
                                                         prepare_wf,                          &
-                                                        energy_convergence) result(solver)
+                                                        energy_convergence) result(this)
 !!
 !!    New non-linear Davidson for DIIS preconvergence
 !!    Written by Eirik F. Kjønstad, Jan 2020
@@ -235,9 +237,9 @@ contains
 !
       implicit none
 !
-      type(nonlinear_davidson_cc_es) :: solver
+      type(nonlinear_davidson_cc_es) :: this
 !
-      class(ccs) :: wf
+      class(ccs), target :: wf
 !
       integer, intent(in) :: max_iterations, max_micro_iterations, max_dim_red, n_singlet_states
 !
@@ -248,74 +250,76 @@ contains
 !
       logical, intent(in) :: restart, prepare_wf, energy_convergence, records_in_memory
 !
-      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) &
+      this%wf => wf 
+!
+      this%timer = timings(trim(convert_to_uppercase(this%wf%name_)) &
                         // ' excited state (' // trim(transformation) //')', pl='normal')
-      call solver%timer%turn_on()
+      call this%timer%turn_on()
 !
-      solver%name_ = 'Non-linear Davidson coupled cluster excited state solver'
-      solver%tag   = 'Davidson'
+      this%name_ = 'Non-linear Davidson coupled cluster excited state solver'
+      this%tag   = 'Davidson'
 !
-      solver%description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
+      this%description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
                & the right or left eigenvectors of the Jacobian matrix, A. The eigenvalue &
                & problem is solved in a reduced space, the dimension of which is &
                & expanded until the convergence criteria are met.'
 !
-      solver%description2 = 'A complete description of the algorithm can be found in &
+      this%description2 = 'A complete description of the algorithm can be found in &
                                  & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
-      call solver%print_banner()
+      call this%print_banner()
 !
 !     Set defaults
 !
-      solver%n_singlet_states                   = n_singlet_states
-      solver%max_iterations                     = max_iterations
-      solver%max_micro_iterations               = max_micro_iterations
-      solver%relative_micro_residual_threshold  = relative_micro_residual_threshold
-      solver%restart                            = restart
-      solver%max_dim_red                        = max_dim_red
-      solver%transformation                     = trim(transformation)
-      solver%es_type                            = trim(es_type)
-      solver%prepare_wf                         = prepare_wf
+      this%n_singlet_states                   = n_singlet_states
+      this%max_iterations                     = max_iterations
+      this%max_micro_iterations               = max_micro_iterations
+      this%relative_micro_residual_threshold  = relative_micro_residual_threshold
+      this%restart                            = restart
+      this%max_dim_red                        = max_dim_red
+      this%transformation                     = trim(transformation)
+      this%es_type                            = trim(es_type)
+      this%prepare_wf                         = prepare_wf
 !
-      solver%convergence_checker = convergence_tool(energy_threshold, residual_threshold, &
+      this%convergence_checker = convergence_tool(energy_threshold, residual_threshold, &
                                                     energy_convergence)
 !
-      call solver%print_settings()
+      call this%print_settings()
 !
 !     Initialize Davidson tool
 !
-      solver%davidson = eigen_davidson_tool(name_ = 'nonlin_cc_es_davidson',    &
-                                     n_parameters = wf%n_es_amplitudes,         &
-                                     n_solutions = solver%n_singlet_states,     &
+      this%davidson = eigen_davidson_tool(name_ = 'nonlin_cc_es_davidson',    &
+                                     n_parameters = this%wf%n_es_amplitudes,         &
+                                     n_solutions = this%n_singlet_states,     &
                                      lindep_threshold = 1.0d-11,                &
-                                     max_dim_red = solver%max_dim_red,          &
+                                     max_dim_red = this%max_dim_red,          &
                                      records_in_memory = records_in_memory,     &
                                      non_unit_metric = .true.)
 !
    end function new_nonlinear_davidson_cc_es_preconvergence
 !
 !
-   subroutine print_settings_nonlinear_davidson_cc_es(solver)
+   subroutine print_settings_nonlinear_davidson_cc_es(this)
 !!
 !!    Print settings
 !!    Written by Eirik F. Kjønstad, Jan 2020
 !!
       implicit none
 !
-      class(nonlinear_davidson_cc_es) :: solver
+      class(nonlinear_davidson_cc_es) :: this
 !
-      call solver%print_es_settings()
+      call this%print_es_settings()
 !
       call output%printf('m', 'Max micro iterations:                (i4)',  &
-                         ints=[solver%max_micro_iterations], fs='(t6,a)')
+                         ints=[this%max_micro_iterations], fs='(t6,a)')
 !
       call output%printf('m', 'Relative micro threshold:     (e11.2)', &
-                         reals=[solver%relative_micro_residual_threshold], fs='(t6,a/)')
+                         reals=[this%relative_micro_residual_threshold], fs='(t6,a/)')
 !
    end subroutine print_settings_nonlinear_davidson_cc_es
 !
 !
-   subroutine run_nonlinear_davidson_cc_es(solver, wf)
+   subroutine run_nonlinear_davidson_cc_es(this)
 !!
 !!    Run
 !!    Written by Eirik F. Kjønstad, Nov 2019 and Jan 2020
@@ -341,9 +345,7 @@ contains
 !
       implicit none
 !
-      class(nonlinear_davidson_cc_es) :: solver
-!
-      class(ccs) :: wf
+      class(nonlinear_davidson_cc_es), intent(inout) :: this
 !
 !     Convergence logical arrays, one component for each state
 !
@@ -366,7 +368,7 @@ contains
       real(dp), dimension(:,:), allocatable :: X
 !
 !     Associated residuals, R(:,k) = A(omega_k) X(:,k) - omega_k X(:,k)
-!     The current guess for the energy omega_k is saved in solver%energies(k).
+!     The current guess for the energy omega_k is saved in this%energies(k).
 !
       real(dp), dimension(:,:), allocatable :: R
 !
@@ -375,38 +377,38 @@ contains
 !
 !     Initialize solver tools and prepare wavefunction
 !
-      call solver%initialize_start_vector_tool(wf)
-      call solver%initialize_projection_tool(wf)
+      call this%initialize_start_vector_tool()
+      call this%initialize_projection_tool()
 !
-      if (solver%prepare_wf) call solver%prepare_wf_for_excited_state(wf)
+      if (this%prepare_wf) call this%prepare_wf_for_excited_state()
 !
 !     Initialize energies, residual norms, and convergence arrays
 !
-      call solver%initialize_energies()
-      solver%energies = zero
+      call this%initialize_energies()
+      this%energies = zero
 !
-      call mem%alloc(prev_energies, solver%n_singlet_states)
-      call mem%alloc(residual_norms, solver%n_singlet_states)
+      call mem%alloc(prev_energies, this%n_singlet_states)
+      call mem%alloc(residual_norms, this%n_singlet_states)
 !
-      call zero_array(prev_energies, solver%n_singlet_states)
-      call zero_array(residual_norms, solver%n_singlet_states)
+      call zero_array(prev_energies, this%n_singlet_states)
+      call zero_array(residual_norms, this%n_singlet_states)
 !
-      call mem%alloc(converged, solver%n_singlet_states)
+      call mem%alloc(converged, this%n_singlet_states)
 !
       converged = .false.
 !
 !     Make initial guess on the eigenvectors X = [X1 X2 X3 ...]
 !
-      call mem%alloc(R, wf%n_es_amplitudes, solver%n_singlet_states)
-      call mem%alloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
+      call mem%alloc(R, this%wf%n_es_amplitudes, this%n_singlet_states)
+      call mem%alloc(X, this%wf%n_es_amplitudes, this%n_singlet_states)
 !
-      call solver%set_initial_guesses(wf, X, 1, wf%n_singlet_states)
+      call this%set_initial_guesses(X, 1, this%wf%n_singlet_states)
 !
 !     Enter iterative loop
 !
       iteration = 0
 !
-      do while (.not. all(converged) .and. (iteration .le. solver%max_iterations))
+      do while (.not. all(converged) .and. (iteration .le. this%max_iterations))
 !
          iteration = iteration + 1
 !
@@ -423,35 +425,35 @@ contains
 !
          call output%print_separator('n', 60,'-')
 !
-         do state = 1, solver%n_singlet_states
+         do state = 1, this%n_singlet_states
 !
 !           Construct residual and compute residual norm for the given state,
 !           and update the energy estimate
 !
-            call wf%construct_Jacobian_transform(solver%transformation, &
+            call this%wf%construct_Jacobian_transform(this%transformation, &
                                                  X(:,state),            &
                                                  R(:,state),            &
-                                                 solver%energies(state))
+                                                 this%energies(state))
 !
-            if (solver%projector%active) call solver%projector%do_(R(:,state))
+            if (this%projector%active) call this%projector%do_(R(:,state))
 !
-            solver%energies(state) = ddot(wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
+            this%energies(state) = ddot(this%wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
 !
-            call daxpy(wf%n_es_amplitudes, -solver%energies(state), X(:,state), 1, R(:,state), 1)
+            call daxpy(this%wf%n_es_amplitudes, -this%energies(state), X(:,state), 1, R(:,state), 1)
 !
-            residual_norms(state) = get_l2_norm(R(:,state), wf%n_es_amplitudes)
+            residual_norms(state) = get_l2_norm(R(:,state), this%wf%n_es_amplitudes)
 !
 !           Test the convergence
 !
-            converged(state) = solver%convergence_checker%has_converged(residual_norms(state),&
-                                               solver%energies(state) - prev_energies(state), &
+            converged(state) = this%convergence_checker%has_converged(residual_norms(state),&
+                                               this%energies(state) - prev_energies(state), &
                                                iteration)
 !
 !           Print current residual and energy for the state
 !
             call output%printf('n', '(i2)     (f16.12)     (e11.4)       (e11.4)',   &
-                               reals=[solver%energies(state), residual_norms(state), &
-                                      abs(solver%energies(state) - prev_energies(state))], &
+                               reals=[this%energies(state), residual_norms(state), &
+                                      abs(this%energies(state) - prev_energies(state))], &
                                ints=[state])
 !
          enddo
@@ -463,7 +465,7 @@ contains
 !           Keep energies fixed and solve the eigenvalue problem
 !           approximately by using the Davidson algorithm
 !
-            call solver%do_micro_iterations(wf, X, R,           &
+            call this%do_micro_iterations(X, R,           &
                                             n_micro_iterations, &
                                             n_transformations,  &
                                             residual_norms)
@@ -481,14 +483,14 @@ contains
             call output%printf('m', 'Convergence criterion met in (i0) iterations!', &
                                ints=[iteration], fs='(t3,a)')
 !
-            call solver%print_summary(wf, X)
+            call this%print_summary(X)
 !
          endif
 !
-         call wf%save_excited_state(X, 1, solver%n_singlet_states, &
-                                    solver%transformation, solver%energies)
+         call this%wf%save_excited_state(X, 1, this%n_singlet_states, &
+                                    this%transformation, this%energies)
 !
-         call dcopy(solver%n_singlet_states, solver%energies, 1, prev_energies, 1)
+         call dcopy(this%n_singlet_states, this%energies, 1, prev_energies, 1)
 !
          call macro_iteration_time%turn_off()
          call macro_iteration_time%reset()
@@ -499,19 +501,19 @@ contains
          call output%error_msg('Unable to converge equations in the given maximum number&
                               & of macro iterations. Try to increase the value.')
 !
-      call wf%set_excitation_energies(solver%energies, solver%transformation)
+      call this%wf%set_excitation_energies(this%energies, this%transformation)
 !
-      call mem%dealloc(R, wf%n_es_amplitudes, solver%n_singlet_states)
-      call mem%dealloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
-      call mem%dealloc(prev_energies, solver%n_singlet_states)
-      call mem%dealloc(residual_norms, solver%n_singlet_states)
+      call mem%dealloc(R, this%wf%n_es_amplitudes, this%n_singlet_states)
+      call mem%dealloc(X, this%wf%n_es_amplitudes, this%n_singlet_states)
+      call mem%dealloc(prev_energies, this%n_singlet_states)
+      call mem%dealloc(residual_norms, this%n_singlet_states)
 !
-      call mem%dealloc(converged, solver%n_singlet_states)
+      call mem%dealloc(converged, this%n_singlet_states)
 !
    end subroutine run_nonlinear_davidson_cc_es
 !
 !
-   subroutine do_micro_iterations_nonlinear_davidson_cc_es(solver, wf, X, R,   &
+   subroutine do_micro_iterations_nonlinear_davidson_cc_es(this, X, R,   &
                                                            n_micro_iterations, &
                                                            n_transformations,  &
                                                            residual_norms)
@@ -523,7 +525,7 @@ contains
 !!
 !!       X:  Column k contains the current estimates for solutions to (*)
 !!           The corresponding excitation energy omega_k is assumed to be given by
-!!           solver%energies(k). On exit, the columns contain the updated guesses
+!!           this%energies(k). On exit, the columns contain the updated guesses
 !!           for the solutions to (*).
 !!
 !!       R:  Column k contains the residual corrensponding to X_k,
@@ -557,16 +559,14 @@ contains
 !
       implicit none
 !
-      class(ccs) :: wf
-!
-      class(nonlinear_davidson_cc_es) :: solver
+      class(nonlinear_davidson_cc_es) :: this
 !
 !     Current solution guesses and associated residuals and residual norms
 !
-      real(dp), dimension(wf%n_es_amplitudes, solver%n_singlet_states), intent(inout) :: X
-      real(dp), dimension(wf%n_es_amplitudes, solver%n_singlet_states), intent(in)    :: R
+      real(dp), dimension(this%wf%n_es_amplitudes, this%n_singlet_states), intent(inout) :: X
+      real(dp), dimension(this%wf%n_es_amplitudes, this%n_singlet_states), intent(in)    :: R
 !
-      real(dp), dimension(solver%n_singlet_states), intent(in) :: residual_norms
+      real(dp), dimension(this%n_singlet_states), intent(in) :: residual_norms
 !
 !     On exit, number of micro iterations needed and number of transformations needed
 !
@@ -603,8 +603,8 @@ contains
 !     The residual threshold in the microiterations is taken to be proportional to the maximum
 !     residual norm in the current macroiteration or the final residual threshold
 !
-      micro_residual_threshold = max(half*solver%convergence_checker%residual_threshold, &
-                                 solver%relative_micro_residual_threshold*maxval(residual_norms))
+      micro_residual_threshold = max(half*this%convergence_checker%residual_threshold, &
+                                 this%relative_micro_residual_threshold*maxval(residual_norms))
       lindep_threshold         = min(default_lindep_threshold, micro_residual_threshold)
 !
       if (lindep_threshold .lt. default_lindep_threshold) then
@@ -616,57 +616,57 @@ contains
 !
       endif
 !
-      call solver%davidson%set_lindep_threshold(lindep_threshold)
+      call this%davidson%set_lindep_threshold(lindep_threshold)
 !
       call output%printf('n', 'Starting on microiterations', fs='(/t6,a)')
 !
-      call solver%davidson%initialize()
+      call this%davidson%initialize()
 !
-      call mem%alloc(eps, wf%n_es_amplitudes)
+      call mem%alloc(eps, this%wf%n_es_amplitudes)
 !
-      call wf%get_orbital_differences(eps, wf%n_es_amplitudes)
-      call solver%davidson%set_preconditioner(eps)
+      call this%wf%get_orbital_differences(eps, this%wf%n_es_amplitudes)
+      call this%davidson%set_preconditioner(eps)
 !
-      call mem%dealloc(eps, wf%n_es_amplitudes)
+      call mem%dealloc(eps, this%wf%n_es_amplitudes)
 !
 !     Set up initial trial space and save transforms
 !
-      call mem%alloc(trial_to_state, solver%n_singlet_states)
-      call mem%alloc(c, wf%n_es_amplitudes)
+      call mem%alloc(trial_to_state, this%n_singlet_states)
+      call mem%alloc(c, this%wf%n_es_amplitudes)
 !
-      do state = 1, solver%n_singlet_states
+      do state = 1, this%n_singlet_states
 !
-         call solver%davidson%set_trial(X(:,state), state)
+         call this%davidson%set_trial(X(:,state), state)
          trial_to_state(state) = state
 !
-         call dcopy(wf%n_es_amplitudes, R(:,state), 1, c, 1)
-         call daxpy(wf%n_es_amplitudes, solver%energies(state), X(:,state), 1, c, 1)
+         call dcopy(this%wf%n_es_amplitudes, R(:,state), 1, c, 1)
+         call daxpy(this%wf%n_es_amplitudes, this%energies(state), X(:,state), 1, c, 1)
 !
-         call solver%davidson%set_transform(c, state)
+         call this%davidson%set_transform(c, state)
 !
       enddo
 !
-      call solver%davidson%update_reduced_dim()
+      call this%davidson%update_reduced_dim()
 !
 !     Initialize quantities used in the loop
 !     and enter the iterative micro iterations Davidson loop
 !
-      call mem%alloc(converged, solver%n_singlet_states)
+      call mem%alloc(converged, this%n_singlet_states)
 !
       converged = .false.
 !
       iteration         = 0
       n_transformations = 0
 !
-      call mem%alloc(residual, wf%n_es_amplitudes)
+      call mem%alloc(residual, this%wf%n_es_amplitudes)
 !
-      call mem%alloc(norm_X, solver%n_singlet_states)
-      call mem%alloc(micro_residual_norms, solver%n_singlet_states)
+      call mem%alloc(norm_X, this%n_singlet_states)
+      call mem%alloc(micro_residual_norms, this%n_singlet_states)
 !
-      call zero_array(norm_X, solver%n_singlet_states)
-      call zero_array(micro_residual_norms, solver%n_singlet_states)
+      call zero_array(norm_X, this%n_singlet_states)
+      call zero_array(micro_residual_norms, this%n_singlet_states)
 !
-      do while (.not. all(converged) .and. iteration .le. solver%max_micro_iterations)
+      do while (.not. all(converged) .and. iteration .le. this%max_micro_iterations)
 !
          iteration = iteration + 1
 !
@@ -676,7 +676,7 @@ contains
 !
 !        Solve reduced eigenvalue problem
 !
-         call solver%davidson%solve_reduced_problem()
+         call this%davidson%solve_reduced_problem()
 !
 !        Loop over states and construct residuals, next trial vectors,
 !        as well as check for convergence
@@ -684,7 +684,7 @@ contains
          call output%printf('v', 'Micro iteration: (i0)', ints=[iteration], fs='(/t6,a)')
 !
          call output%printf('v', 'Reduced space dimension: (i0)', &
-                              ints=[solver%davidson%dim_red], fs='(t6,a)')
+                              ints=[this%davidson%dim_red], fs='(t6,a)')
 !
          call output%printf('v', &
                             'Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm', &
@@ -694,15 +694,15 @@ contains
 !
          trial = 0
 !
-         do state = 1, solver%n_singlet_states
+         do state = 1, this%n_singlet_states
 !
-            call solver%davidson%construct_solution(X(:,state), state)
+            call this%davidson%construct_solution(X(:,state), state)
 !
-            call solver%davidson%construct_residual(residual, X(:,state), state)
+            call this%davidson%construct_residual(residual, X(:,state), state)
 !
-            norm_X(state) = get_l2_norm(X(:,state), wf%n_es_amplitudes)
+            norm_X(state) = get_l2_norm(X(:,state), this%wf%n_es_amplitudes)
 !
-            micro_residual_norms(state) = get_l2_norm(residual, wf%n_es_amplitudes)/norm_X(state)
+            micro_residual_norms(state) = get_l2_norm(residual, this%wf%n_es_amplitudes)/norm_X(state)
 !
             converged(state) = micro_residual_norms(state) .le. micro_residual_threshold
 !
@@ -720,14 +720,14 @@ contains
                   trial = trial + 1
 !
                   trial_to_state(trial) = state
-                  call solver%davidson%add_new_trial(residual, state)
+                  call this%davidson%add_new_trial(residual, state)
 !
                endif
 !
             endif
 !
             call output%printf('v', '(i2)     (f16.12)       (f16.12)           (e11.4)', &
-            ints=[state], reals=[solver%davidson%omega_re(state), solver%davidson%omega_im(state), &
+            ints=[state], reals=[this%davidson%omega_re(state), this%davidson%omega_im(state), &
                                  micro_residual_norms(state)], fs='(t6,a)')
 !
          enddo
@@ -738,35 +738,35 @@ contains
 !
 !           Reduced space preparations
 !
-            if (solver%davidson%red_dim_exceeds_max()) then
-               call solver%davidson%set_trials_to_solutions()
+            if (this%davidson%red_dim_exceeds_max()) then
+               call this%davidson%set_trials_to_solutions()
             end if
 !
-            call solver%davidson%update_reduced_dim()
+            call this%davidson%update_reduced_dim()
 !
-            call solver%davidson%orthonormalize_trial_vecs()
+            call this%davidson%orthonormalize_trial_vecs()
 !
 !           Transform new orthonormalized trial vectors
 !
-            do trial = solver%davidson%first_new_trial(), solver%davidson%last_new_trial()
+            do trial = this%davidson%first_new_trial(), this%davidson%last_new_trial()
 !
                n_transformations = n_transformations + 1
 !
-               call solver%davidson%get_trial(c, trial)
+               call this%davidson%get_trial(c, trial)
 !
 !              From which state residual did this trial vector originate?
 !              We use that state's energy in the Jacobian transformation of the trial
 !
-               corresponding_state = trial_to_state(trial - solver%davidson%first_new_trial() + 1)
+               corresponding_state = trial_to_state(trial - this%davidson%first_new_trial() + 1)
 !
-               call wf%construct_Jacobian_transform(solver%transformation,                &
+               call this%wf%construct_Jacobian_transform(this%transformation,                &
                                                     c,                                    &
                                                     residual,                             &
-                                                    solver%energies(corresponding_state))
+                                                    this%energies(corresponding_state))
 !
-               if (solver%projector%active) call solver%projector%do_(residual)
+               if (this%projector%active) call this%projector%do_(residual)
 !
-               call solver%davidson%set_transform(residual, trial)
+               call this%davidson%set_transform(residual, trial)
 !
             enddo
 !
@@ -785,9 +785,9 @@ contains
 !     Hence, we have to normalize the converged states. (This is also why we divide by
 !     the norm of X when testing convergence above.)
 !
-      do state = 1, solver%n_singlet_states
+      do state = 1, this%n_singlet_states
 !
-         call dscal(wf%n_es_amplitudes, one/norm_X(state), X(:, state), 1)
+         call dscal(this%wf%n_es_amplitudes, one/norm_X(state), X(:, state), 1)
 !
       enddo
 !
@@ -799,37 +799,37 @@ contains
 !
 !     Final deallocations before quitting micro iterations
 !
-      call mem%dealloc(c, wf%n_es_amplitudes)
-      call mem%dealloc(residual, wf%n_es_amplitudes)
+      call mem%dealloc(c, this%wf%n_es_amplitudes)
+      call mem%dealloc(residual, this%wf%n_es_amplitudes)
 !
-      call mem%dealloc(norm_X, solver%n_singlet_states)
-      call mem%dealloc(micro_residual_norms, solver%n_singlet_states)
-      call mem%dealloc(trial_to_state, solver%n_singlet_states)
+      call mem%dealloc(norm_X, this%n_singlet_states)
+      call mem%dealloc(micro_residual_norms, this%n_singlet_states)
+      call mem%dealloc(trial_to_state, this%n_singlet_states)
 !
-      call solver%davidson%cleanup()
+      call this%davidson%cleanup()
 !
-      call mem%dealloc(converged, solver%n_singlet_states)
+      call mem%dealloc(converged, this%n_singlet_states)
 !
    end subroutine do_micro_iterations_nonlinear_davidson_cc_es
 !
 !
-   subroutine read_settings_nonlinear_davidson_cc_es(solver, records_in_memory)
+   subroutine read_settings_nonlinear_davidson_cc_es(this, records_in_memory)
 !!
 !!    Read settings
 !!    Written by Eirik F. Kjønstad, Jan 2020
 !!
       implicit none
 !
-      class(nonlinear_davidson_cc_es) :: solver
+      class(nonlinear_davidson_cc_es) :: this
       logical, intent(inout) :: records_in_memory
 !
-      call solver%read_es_settings(records_in_memory)
-      call solver%read_davidson_settings()
+      call this%read_es_settings(records_in_memory)
+      call this%read_davidson_settings()
 !
    end subroutine read_settings_nonlinear_davidson_cc_es
 !
 !
-   subroutine read_davidson_settings_nonlinear_davidson_cc_es(solver)
+   subroutine read_davidson_settings_nonlinear_davidson_cc_es(this)
 !!
 !!    Read Davidson settings
 !!    Written by Eirik F. Kjønstad, Jan 2020
@@ -838,21 +838,21 @@ contains
 !
       implicit none
 !
-      class(nonlinear_davidson_cc_es) :: solver
+      class(nonlinear_davidson_cc_es) :: this
 !
-      solver%max_dim_red = max(100, 10*solver%n_singlet_states)
+      this%max_dim_red = max(100, 10*this%n_singlet_states)
 !
       call input%get_keyword('max reduced dimension', &
                              'solver cc es',          &
-                             solver%max_dim_red)
+                             this%max_dim_red)
 !
       call input%get_keyword('max micro iterations', &
                              'solver cc es',         &
-                             solver%max_micro_iterations)
+                             this%max_micro_iterations)
 !
       call input%get_keyword('rel micro threshold', &
                              'solver cc es',        &
-                             solver%relative_micro_residual_threshold)
+                             this%relative_micro_residual_threshold)
 !
    end subroutine read_davidson_settings_nonlinear_davidson_cc_es
 !

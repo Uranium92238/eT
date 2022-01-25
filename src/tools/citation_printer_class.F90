@@ -147,7 +147,8 @@ contains
 !
       integer :: k
 !
-      character(len=:), allocatable :: doi_citation, apa_citation
+      character(len=:), allocatable :: doi_citation
+      character(len=600) :: apa_citation
 !
       call file%printf('m', '- Implementation references:', fs='(/t3,a/)')
 !

@@ -55,6 +55,8 @@ module asymmetric_lanczos_cc_es_class
 !!
    use parameters
 !
+   use abstract_solver_class, only: abstract_solver
+!
    use ccs_class,             only: ccs
    use timings_class,         only: timings
    use global_out,            only: output
@@ -66,8 +68,8 @@ module asymmetric_lanczos_cc_es_class
 
    implicit none
 
-   type :: asymmetric_lanczos_cc_es
-
+   type, extends(abstract_solver) :: asymmetric_lanczos_cc_es
+!
       character (len=100) :: name_
       character (len=100) :: tag
       character (len=100) :: author
@@ -85,6 +87,8 @@ module asymmetric_lanczos_cc_es_class
 !
       class(es_projection_tool), allocatable :: projector
 !
+      class(ccs), pointer :: wf
+!
    contains
 !
       procedure :: read_settings                   =>  read_settings_asymmetric_lanczos_cc_es
@@ -94,13 +98,13 @@ module asymmetric_lanczos_cc_es_class
       procedure :: destruct_energies               => destruct_energies_asymmetric_lanczos_cc_es
 !
       procedure :: calculate_oscillator_strength   &
-                  => calculate_oscillator_strength_asymmetric_lanczos_cc_es
+                => calculate_oscillator_strength_asymmetric_lanczos_cc_es
 !
       procedure :: run                             => run_asymmetric_lanczos_cc_es
       procedure :: cleanup                         => cleanup_asymmetric_lanczos_cc_es
 !
-      procedure, nopass :: prepare_wf_for_excited_state  &
-                           => prepare_wf_for_excited_state_asymmetric_lanczos_cc_es
+      procedure :: prepare_wf_for_excited_state  &
+                => prepare_wf_for_excited_state_asymmetric_lanczos_cc_es
 !
       procedure :: print_summary => print_summary_asymmetric_lanczos_cc_es
       procedure :: print_banner  => print_banner_asymmetric_lanczos_cc_es
@@ -118,7 +122,7 @@ module asymmetric_lanczos_cc_es_class
 contains
 !
 !
-   function new_asymmetric_lanczos_cc_es(wf) result(solver)
+   function new_asymmetric_lanczos_cc_es(wf) result(this)
 !!
 !!    New asymmetric lanczos CC ES
 !!    Written by Torsha Moitra and Sarai D. Folkestad, Sep 2019
@@ -129,80 +133,82 @@ contains
 !!       - Sets defaults, reads settings amd prints the settings
 !!       - Prepares the wavefunction for Jacobian
 !!          and Jacobian transposetransformation
-!
+!!
       use array_utilities, only: zero_array
       use string_utilities, only: convert_to_uppercase
 !
       implicit none
 !
-      type(asymmetric_lanczos_cc_es) :: solver
+      class(ccs), intent(inout), target :: wf
 !
-      class(ccs), intent(inout) :: wf
+      type(asymmetric_lanczos_cc_es) :: this
 !
-      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state')
-      call solver%timer%turn_on()
+      this%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state')
+      call this%timer%turn_on()
 !
 !     Set printables
 !
-      solver%name_  = 'Asymmetric Lanczos excited state solver'
-      solver%tag    = 'asymmetric lanczos'
+      this%name_  = 'Asymmetric Lanczos excited state solver'
+      this%tag    = 'asymmetric lanczos'
 !
-      solver%description1 = 'An asymmetric Lanczos solver builds a reduced space&
+      this%description1 = 'An asymmetric Lanczos solver builds a reduced space&
                & tridiagonal representation of the CC Jacobian of dimension defined&
                & by the chain length.&
                & Diagonalization of this representation gives the eigenvalues and eigenvectors.'
 !
-      solver%description2 = 'A complete description of the algorithm can be found in &
+      this%description2 = 'A complete description of the algorithm can be found in &
                & S.Coriani et al., J. Chem. Theory Comput. 2012, 8, 5, 1616-1628.'
 !
-      call solver%print_banner()
+      call this%print_banner()
+!
+      this%wf => wf
 !
 !     Set defaults
 !
-      solver%normalization = 'asymmetric'
-      solver%es_type       = 'valence'
+      this%normalization = 'asymmetric'
+      this%es_type       = 'valence'
 !
-      call solver%read_settings()
+      call this%read_settings()
 !
 !     Chain length cannot exceed the number of excited state amplitudes
 !     (actual dimension of A in the basis)
 !
-      if(solver%chain_length .gt. wf%n_es_amplitudes) then
+      if(this%chain_length .gt. wf%n_es_amplitudes) then
 !
-          solver%chain_length = wf%n_es_amplitudes
+          this%chain_length = wf%n_es_amplitudes
 !
           call output%warning_msg('Chain length asked for is reset to: (i0)', &
-              & ints=[solver%chain_length])
+              & ints=[this%chain_length])
 !
       endif
 !
-      call solver%print_settings()
+      call this%print_settings()
 !
-      call solver%initialize_energies()
+      call this%initialize_energies()
 !
 !     Prepare wavefunction for Jacobian transformations
 !
-      call solver%prepare_wf_for_excited_state(wf)
+      call this%prepare_wf_for_excited_state()
 !
-      if (trim(solver%es_type) == 'valence') then
+      if (trim(this%es_type) == 'valence') then
 !
-         solver%projector = es_valence_projection_tool()
+         this%projector = es_valence_projection_tool()
 !
-      elseif (trim(solver%es_type) == 'core') then
+      elseif (trim(this%es_type) == 'core') then
 !
          call wf%read_cvs_settings()
-         solver%projector = es_cvs_projection_tool(wf)
+         this%projector = es_cvs_projection_tool(wf)
 !
       else
 !
-         call output%error_msg('did not recognize the excited state type: ' //trim(solver%es_type))
+         call output%error_msg('did not recognize the excited state type: ' //trim(this%es_type))
 !
       endif
 !
    end function new_asymmetric_lanczos_cc_es
 !
 !
-   subroutine run_asymmetric_lanczos_cc_es (solver,wf)
+   subroutine run_asymmetric_lanczos_cc_es(this)
 !!
 !!    Run
 !!    Written by Torsha Moitra, Sarai D. Folkestad and Sonia Coriani 2019
@@ -222,9 +228,7 @@ contains
 !
       implicit none
 
-      class(asymmetric_lanczos_cc_es) :: solver
-!
-      class(ccs) :: wf
+      class(asymmetric_lanczos_cc_es), intent(inout) :: this
 !
       type(asymmetric_lanczos_tool), allocatable :: lanczos
 !
@@ -242,23 +246,23 @@ contains
 !
 !     Construct the dipole integrals
 !
-      call mem%alloc(dipole_length, wf%n_mo, wf%n_mo, 3)
-      call wf%get_t1_oei('dipole', dipole_length)
+      call mem%alloc(dipole_length, this%wf%n_mo, this%wf%n_mo, 3)
+      call this%wf%get_t1_oei('dipole', dipole_length)
 !
-      call mem%alloc(xiX, wf%n_es_amplitudes)
-      call mem%alloc(etaX, wf%n_es_amplitudes)
+      call mem%alloc(xiX, this%wf%n_es_amplitudes)
+      call mem%alloc(etaX, this%wf%n_es_amplitudes)
 !
       do cartesian=1, 3
 !
 !        Construct the eta and xi vectors
 !
-         call wf%construct_xiX(dipole_length(:,:,cartesian), xiX)
-         call wf%construct_eom_etaX(dipole_length(:,:,cartesian), xiX, etaX)
+         call this%wf%construct_xiX(dipole_length(:,:,cartesian), xiX)
+         call this%wf%construct_eom_etaX(dipole_length(:,:,cartesian), xiX, etaX)
 !
-         if (solver%projector%active) then
+         if (this%projector%active) then
 !
-            call solver%projector%do_(xiX)
-            call solver%projector%do_(etaX)
+            call this%projector%do_(xiX)
+            call this%projector%do_(etaX)
 !
          endif
 !
@@ -266,22 +270,22 @@ contains
 !
 !        The binormalization procedure is either 'symmetric' or 'asymmetric'
 !
-         overlap = ddot(wf%n_es_amplitudes, etaX, 1, xiX, 1)
+         overlap = ddot(this%wf%n_es_amplitudes, etaX, 1, xiX, 1)
 !
-         if(solver%normalization=="symmetric")then
+         if(this%normalization=="symmetric")then
 !
             norm_p1q1 = sqrt(abs(overlap))
 !
             factor = one/norm_p1q1
 !
-            call dscal(wf%n_es_amplitudes, factor, xiX, 1)
-            call dscal(wf%n_es_amplitudes, sign(factor,overlap), etaX, 1)
+            call dscal(this%wf%n_es_amplitudes, factor, xiX, 1)
+            call dscal(this%wf%n_es_amplitudes, sign(factor,overlap), etaX, 1)
 !
-         else if (solver%normalization=="asymmetric") then
+         else if (this%normalization == "asymmetric") then
 !
             factor = one/overlap
 !
-            call dscal(wf%n_es_amplitudes, factor, etaX, 1)
+            call dscal(this%wf%n_es_amplitudes, factor, etaX, 1)
 !
          else
 !
@@ -295,18 +299,18 @@ contains
 !
 !        Initialize the asymmetric Lanczos tool
 !
-         lanczos = asymmetric_lanczos_tool(wf%n_es_amplitudes, solver%chain_length, &
-                                             etaX, xiX, solver%normalization)
+         lanczos = asymmetric_lanczos_tool(this%wf%n_es_amplitudes, this%chain_length, &
+                                             etaX, xiX, this%normalization)
 !
-         call mem%alloc(p_and_q, wf%n_es_amplitudes)
+         call mem%alloc(p_and_q, this%wf%n_es_amplitudes)
 !
-         call mem%alloc(Aq, wf%n_es_amplitudes)
-         call mem%alloc(pA, wf%n_es_amplitudes)
+         call mem%alloc(Aq, this%wf%n_es_amplitudes)
+         call mem%alloc(pA, this%wf%n_es_amplitudes)
 !
 !        Build the Krylov subspace and the tridiagonal matrix T
 !        Loops over the chain-length
 !
-         do iteration = 1, solver%chain_length
+         do iteration = 1, this%chain_length
 !
 !
 !
@@ -314,16 +318,16 @@ contains
 !
 !           q_(i) is stored in p_and_q
             call lanczos%read_q(p_and_q, iteration)
-            call wf%jacobian_transformation(p_and_q, Aq)
+            call this%wf%jacobian_transformation(p_and_q, Aq)
 !
 !           p_(i) is stored in p_and_q
             call lanczos%read_p(p_and_q, iteration)
-            call wf%jacobian_transpose_transformation(p_and_q, pA)
+            call this%wf%jacobian_transpose_transformation(p_and_q, pA)
 !
-            if (solver%projector%active) then
+            if (this%projector%active) then
 !
-               call solver%projector%do_(Aq)
-               call solver%projector%do_(pA)
+               call this%projector%do_(Aq)
+               call this%projector%do_(pA)
 !
             endif
 !
@@ -333,7 +337,7 @@ contains
 !
 !           Calculates beta_(i), gamme_(i), p_(i+1) and q_(i+1)
 !
-            if (iteration .lt. solver%chain_length) then
+            if (iteration .lt. this%chain_length) then
 !
               call lanczos%calculate_beta_gamma_p_q(iteration, Aq, pA)
 !
@@ -342,7 +346,7 @@ contains
 !           Checks if the value of beta is too small then stops iteration
 !           Resets chain length to current iteration.
 !
-            if (lanczos%chain_length .lt. solver%chain_length) then
+            if (lanczos%chain_length .lt. this%chain_length) then
 !
                call output%warning_msg('Chain length value reset = (i4)', &
                   & ints=[lanczos%chain_length], fs='(/t6,a)')
@@ -353,20 +357,20 @@ contains
 !
          enddo
 !
-         solver%chain_length = lanczos%chain_length
+         this%chain_length = lanczos%chain_length
 !
-         call mem%dealloc(Aq, wf%n_es_amplitudes)
-         call mem%dealloc(pA, wf%n_es_amplitudes)
+         call mem%dealloc(Aq, this%wf%n_es_amplitudes)
+         call mem%dealloc(pA, this%wf%n_es_amplitudes)
 !
-         call mem%dealloc(p_and_q, wf%n_es_amplitudes)
+         call mem%dealloc(p_and_q, this%wf%n_es_amplitudes)
 !
 !        Diagonalize T to get the eigenvalues and eigenvectors
 !
-         call mem%alloc(reduced_left, solver%chain_length, solver%chain_length)
-         call mem%alloc(reduced_right, solver%chain_length, solver%chain_length)
+         call mem%alloc(reduced_left, this%chain_length, this%chain_length)
+         call mem%alloc(reduced_right, this%chain_length, this%chain_length)
 !
-         call mem%alloc(eigenvalues_Re, solver%chain_length)
-         call mem%alloc(eigenvalues_Im, solver%chain_length)
+         call mem%alloc(eigenvalues_Re, this%chain_length)
+         call mem%alloc(eigenvalues_Im, this%chain_length)
 !
          call lanczos%diagonalize_T(reduced_left, reduced_right, eigenvalues_Re, eigenvalues_Im)
 !
@@ -374,35 +378,35 @@ contains
 !
          call lanczos%cleanup()
 !
-         call mem%alloc(oscillator_strength, solver%chain_length)
+         call mem%alloc(oscillator_strength, this%chain_length)
 !
 !        Calculate oscillator strength
 !
-         call solver%calculate_oscillator_strength(reduced_left, reduced_right, eigenvalues_Re, &
+         call this%calculate_oscillator_strength(reduced_left, reduced_right, eigenvalues_Re, &
                                                    norm_eta_times_norm_xi, oscillator_strength)
 !
-         call mem%dealloc(reduced_left, solver%chain_length, solver%chain_length)
-         call mem%dealloc(reduced_right, solver%chain_length, solver%chain_length)
+         call mem%dealloc(reduced_left, this%chain_length, this%chain_length)
+         call mem%dealloc(reduced_right, this%chain_length, this%chain_length)
 !
 !        print results from Asymmetric Lanczos solver
 !
-         call solver%print_summary(cartesian, eigenvalues_Re, eigenvalues_Im, &
+         call this%print_summary(cartesian, eigenvalues_Re, eigenvalues_Im, &
                                     oscillator_strength)
 !
-         call mem%dealloc(eigenvalues_Re, solver%chain_length)
-         call mem%dealloc(eigenvalues_Im, solver%chain_length)
-         call mem%dealloc(oscillator_strength, solver%chain_length)
+         call mem%dealloc(eigenvalues_Re, this%chain_length)
+         call mem%dealloc(eigenvalues_Im, this%chain_length)
+         call mem%dealloc(oscillator_strength, this%chain_length)
 !
       enddo
 !
-      call mem%dealloc(xiX,wf%n_es_amplitudes)
-      call mem%dealloc(etaX,wf%n_es_amplitudes)
-      call mem%dealloc(dipole_length,wf%n_mo,wf%n_mo,3)
+      call mem%dealloc(xiX,this%wf%n_es_amplitudes)
+      call mem%dealloc(etaX,this%wf%n_es_amplitudes)
+      call mem%dealloc(dipole_length,this%wf%n_mo,this%wf%n_mo,3)
 !
    end subroutine run_asymmetric_lanczos_cc_es
 !
 !
-   subroutine print_settings_asymmetric_lanczos_cc_es(solver)
+   subroutine print_settings_asymmetric_lanczos_cc_es(this)
 !!
 !!    Print settings
 !!    Written by Torsha Moitra, Nov 2019
@@ -410,21 +414,21 @@ contains
 !!
       implicit none
 !
-      class(asymmetric_lanczos_cc_es) :: solver
+      class(asymmetric_lanczos_cc_es) :: this
 !
       call output%printf('m', '- Settings for coupled cluster excited state &
-                         &solver (' //trim(solver%tag) // '):', fs='(/t3,a)')
+                         &solver (' //trim(this%tag) // '):', fs='(/t3,a)')
 !
-      call output%printf('m', 'Chain length: (i6)', ints=[solver%chain_length], &
+      call output%printf('m', 'Chain length: (i6)', ints=[this%chain_length], &
                          fs='(/t6,a)')
 !
      call output%printf('m', 'Biorthonormalization procedure: (a0)', &
-                        chars=[trim(solver%normalization)], fs='(t6,a)')
+                        chars=[trim(this%normalization)], fs='(t6,a)')
 !
    end subroutine print_settings_asymmetric_lanczos_cc_es
 !
 !
-   subroutine read_settings_asymmetric_lanczos_cc_es(solver)
+   subroutine read_settings_asymmetric_lanczos_cc_es(this)
 !!
 !!    Read settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -434,15 +438,15 @@ contains
 !
       implicit none
 !
-      class(asymmetric_lanczos_cc_es) :: solver
+      class(asymmetric_lanczos_cc_es), intent(inout) :: this
 !
-      call input%get_keyword('chain length', 'solver cc es', solver%chain_length)
+      call input%get_keyword('chain length', 'solver cc es', this%chain_length)
 !
       call input%get_keyword('lanczos normalization', 'solver cc es', &
-                                                   solver%normalization)
+                                                   this%normalization)
 !
       if (input%is_keyword_present('core excitation', 'solver cc es')) &
-            solver%es_type = 'core'
+            this%es_type = 'core'
 !
       if (input%is_keyword_present('ionization', 'solver cc es')) &
             call output%error_msg('Ionization not possible with the asymmetric Lanczos solver')
@@ -450,35 +454,35 @@ contains
    end subroutine read_settings_asymmetric_lanczos_cc_es
 !
 !
-   subroutine initialize_energies_asymmetric_lanczos_cc_es(solver)
+   subroutine initialize_energies_asymmetric_lanczos_cc_es(this)
 !!
 !!    Initialise energies
 !!    Written by Torsha Moitra and Sarai D. Folkestad, Sep 2019
 !!
       implicit none
 !
-      class(asymmetric_lanczos_cc_es) :: solver
+      class(asymmetric_lanczos_cc_es) :: this
 !
-      call mem%alloc(solver%energies, solver%chain_length)
+      call mem%alloc(this%energies, this%chain_length)
 !
    end subroutine initialize_energies_asymmetric_lanczos_cc_es
 !
 !
-   subroutine destruct_energies_asymmetric_lanczos_cc_es(solver)
+   subroutine destruct_energies_asymmetric_lanczos_cc_es(this)
 !!
 !!    Destruct energies
 !!    Written by Torsha Moitra and Sarai D. Folkestad, Sep 2019
 !!
       implicit none
 !
-      class(asymmetric_lanczos_cc_es) :: solver
+      class(asymmetric_lanczos_cc_es) :: this
 !
-      if (allocated(solver%energies)) call mem%dealloc(solver%energies, solver%chain_length)
+      if (allocated(this%energies)) call mem%dealloc(this%energies, this%chain_length)
 !
    end subroutine destruct_energies_asymmetric_lanczos_cc_es
 !
 !
-   subroutine calculate_oscillator_strength_asymmetric_lanczos_cc_es(solver, L, R, eigenvalues, &
+   subroutine calculate_oscillator_strength_asymmetric_lanczos_cc_es(this, L, R, eigenvalues, &
             norm_eta_times_norm_xi, oscillator_strength)
 !!
 !!    Calculate oscillator strength
@@ -494,21 +498,21 @@ contains
 !!
       implicit none
 !
-      class(asymmetric_lanczos_cc_es), intent(in) :: solver
+      class(asymmetric_lanczos_cc_es), intent(in) :: this
 !
-      real(dp), dimension(solver%chain_length, solver%chain_length), intent(in) :: L
-      real(dp), dimension(solver%chain_length, solver%chain_length), intent(in) :: R
+      real(dp), dimension(this%chain_length, this%chain_length), intent(in) :: L
+      real(dp), dimension(this%chain_length, this%chain_length), intent(in) :: R
 !
-      real(dp), dimension(solver%chain_length), intent(in) :: eigenvalues
+      real(dp), dimension(this%chain_length), intent(in) :: eigenvalues
 !
       real(dp), intent(in) :: norm_eta_times_norm_xi
 !
-      real(dp), dimension(solver%chain_length), intent(out) :: oscillator_strength
+      real(dp), dimension(this%chain_length), intent(out) :: oscillator_strength
 
       integer :: j
 !
 !$omp parallel do private(j)
-      do j = 1, solver%chain_length
+      do j = 1, this%chain_length
 !
          oscillator_strength(j) = L(1,j) * R(1,j)
 !
@@ -516,34 +520,34 @@ contains
 !$omp end parallel do
 !
 !$omp parallel do private(j)
-      do j = 1, solver%chain_length
+      do j = 1, this%chain_length
 !
          oscillator_strength(j) = eigenvalues(j) * oscillator_strength(j)
 !
       enddo
 !$omp end parallel do
 !
-      call dscal(solver%chain_length, (two/three)*norm_eta_times_norm_xi, oscillator_strength, 1)
+      call dscal(this%chain_length, (two/three)*norm_eta_times_norm_xi, oscillator_strength, 1)
 !
    end subroutine calculate_oscillator_strength_asymmetric_lanczos_cc_es
 !
 !
-   subroutine prepare_wf_for_excited_state_asymmetric_lanczos_cc_es(wf)
+   subroutine prepare_wf_for_excited_state_asymmetric_lanczos_cc_es(this)
 !!
 !!    Prepare wf for excited state
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2019
 !!
       implicit none
 !
-      class(ccs), intent(inout) :: wf
+      class(asymmetric_lanczos_cc_es) :: this
 !
-      call wf%prepare_for_jacobian()
-      call wf%prepare_for_jacobian_transpose()
+      call this%wf%prepare_for_jacobian()
+      call this%wf%prepare_for_jacobian_transpose()
 !
    end subroutine prepare_wf_for_excited_state_asymmetric_lanczos_cc_es
 !
 !
-   subroutine print_summary_asymmetric_lanczos_cc_es(solver, component, eigenvalues_Re, &
+   subroutine print_summary_asymmetric_lanczos_cc_es(this, component, eigenvalues_Re, &
                eigenvalues_Im, oscillator_strength)
 !!
 !!    Print summary
@@ -554,13 +558,13 @@ contains
 !
       implicit none
 !
-      class(asymmetric_lanczos_cc_es), intent(in) :: solver
+      class(asymmetric_lanczos_cc_es), intent(in) :: this
 !
       integer, intent(in) :: component
 !
-      real(dp), dimension(solver%chain_length), intent(inout)  :: eigenvalues_Re
-      real(dp), dimension(solver%chain_length), intent(in)     :: eigenvalues_Im
-      real(dp), dimension(solver%chain_length), intent(in)     :: oscillator_strength
+      real(dp), dimension(this%chain_length), intent(inout)  :: eigenvalues_Re
+      real(dp), dimension(this%chain_length), intent(in)     :: eigenvalues_Im
+      real(dp), dimension(this%chain_length), intent(in)     :: oscillator_strength
 !
       integer, dimension(:), allocatable :: index_list
 !
@@ -576,13 +580,13 @@ contains
 !
 !     Order the real eigenvalues, we print from lowest to highest
 !
-      call mem%alloc(index_list, solver%chain_length)
+      call mem%alloc(index_list, this%chain_length)
       call quicksort_with_index_ascending(eigenvalues_Re, index_list, &
-                                          solver%chain_length)
+                                          this%chain_length)
 !
 !     Initialize file for entire spectrum for the given component
 !
-      write(chain_length_string, '(i6)') solver%chain_length
+      write(chain_length_string, '(i6)') this%chain_length
 !
       spectrum_file = output_file('eT.lanczos' // trim(adjustl(chain_length_string)) // '_' &
                                    //component_string(component))
@@ -595,7 +599,7 @@ contains
                                 & energy (Re) [a.u]    energy (Im) [a.u.]   Osc. strength  ',   &
                                 fs='(a)', ll=500)
 !
-      do j = 1, solver%chain_length
+      do j = 1, this%chain_length
 !
          call spectrum_file%printf('m', '(i4) (f20.12)  (f20.12) (f20.12)' //    &
                                    ' (f20.12)     (f16.12)', ints=[j],           &
@@ -619,7 +623,7 @@ contains
 !
          call output%printf('m', 'Printing the (i0) lowest excited states for &
                             &each Cartesian component of the electric dipole moment', &
-                            ints = [min(print_in_output, solver%chain_length)], ffs='(/t6,a)', fs='(t6,a)')
+                            ints = [min(print_in_output, this%chain_length)], ffs='(/t6,a)', fs='(t6,a)')
 !
       endif
 !
@@ -632,7 +636,7 @@ contains
       call output%print_separator('minimal', 70, '-', fs='(t6, a)')
 !
 
-      do j = 1, min(print_in_output, solver%chain_length)
+      do j = 1, min(print_in_output, this%chain_length)
 !
          call output%printf('m', '(i4)  (f20.12) (f20.12)    (f16.12)', &
                             ints=[j], reals=[eigenvalues_Re(j), &
@@ -645,30 +649,30 @@ contains
 !
       call output%printf('m', 'For full spectrum see file: ' // spectrum_file%name_, fs='(t6,a)')
 !
-      call mem%dealloc(index_list, solver%chain_length)
+      call mem%dealloc(index_list, this%chain_length)
 !
    end subroutine print_summary_asymmetric_lanczos_cc_es
 !
 !
-   subroutine print_banner_asymmetric_lanczos_cc_es(solver)
+   subroutine print_banner_asymmetric_lanczos_cc_es(this)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(asymmetric_lanczos_cc_es) :: solver
+      class(asymmetric_lanczos_cc_es) :: this
 !
-      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
-      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+      call output%printf('m', ' - ' // trim(this%name_), fs='(/t3,a)')
+      call output%print_separator('m', len(trim(this%name_)) + 6, '-')
 !
-      call output%printf('n', solver%description1, ffs='(/t3,a)', fs='(t3,a)')
-      call output%printf('n', solver%description2, ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('n', this%description1, ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('n', this%description2, ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_asymmetric_lanczos_cc_es
 !
 !
-   subroutine cleanup_asymmetric_lanczos_cc_es(solver, wf)
+   subroutine cleanup_asymmetric_lanczos_cc_es(this)
 !!
 !!    Cleanup
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -677,23 +681,22 @@ contains
 !
       implicit none
 !
-      class(asymmetric_lanczos_cc_es)  :: solver
-      class(ccs), intent(in)           :: wf
+      class(asymmetric_lanczos_cc_es), intent(inout) :: this
 !
-      call solver%destruct_energies()
+      call this%destruct_energies()
 !
-      call solver%projector%destruct_projection_vector()
+      call this%projector%destruct_projection_vector()
 !
-      call solver%timer%turn_off()
+      call this%timer%turn_off()
 !
       call output%printf('m', '- Finished solving the ' //  &
-                         trim(convert_to_uppercase(wf%name_)) // ' excited &
+                         trim(convert_to_uppercase(this%wf%name_)) // ' excited &
                          &state equations.', fs='(/t3,a)')
 !
       call output%printf('m', 'Total wall time (sec): (f20.5)', &
-                         reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+                         reals=[this%timer%get_elapsed_time('wall')], fs='(/t6,a)')
       call output%printf('m', 'Total cpu time (sec):  (f20.5)', &
-                         reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6,a)')
+                         reals=[this%timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cleanup_asymmetric_lanczos_cc_es
 !
