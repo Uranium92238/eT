@@ -818,14 +818,14 @@ contains
       I = 0
 !
       do m = 1, embedding%n_molecules
-        do a = 1, embedding%molecules(m)%n_atoms 
+         do a = 1, embedding%molecules(m)%n_atoms 
 !
-          I = I + 1
+            I = I + 1
 !
-          pc%q(I)   = embedding%molecules(m)%get_q_i(a)
-          pc%r(:,I) = embedding%molecules(m)%get_r_i(a)
+            pc%q(I)   = embedding%molecules(m)%get_q_i(a)
+            pc%r(:,I) = embedding%molecules(m)%get_r_i(a)
 !
-        enddo
+         enddo
       enddo
 !
    end subroutine get_point_charges_fq_environment
@@ -846,13 +846,13 @@ contains
       I = 0
 !
       do m = 1, embedding%n_molecules
-        do a = 1, embedding%molecules(m)%n_atoms 
+         do a = 1, embedding%molecules(m)%n_atoms 
 !
-          I = I + 1
+            I = I + 1
 !
-          r(:,I) = embedding%molecules(m)%get_r_i(a)
+            r(:,I) = embedding%molecules(m)%get_r_i(a)
 !
-        enddo
+         enddo
       enddo
 !
    end subroutine get_positions_fq_environment
@@ -869,9 +869,9 @@ contains
 !
       if (allocated(embedding%D)) then 
 !
-        call mem%dealloc(embedding%D, &
-                        (embedding%n_charges + embedding%n_molecules), &
-                        (embedding%n_charges + embedding%n_molecules))
+         call mem%dealloc(embedding%D, &
+                         (embedding%n_charges + embedding%n_molecules), &
+                         (embedding%n_charges + embedding%n_molecules))
 !
       endif
 !

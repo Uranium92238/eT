@@ -257,25 +257,25 @@ contains
 !!
 !!    "Aq" : The linear transform of q_i by some matrix A
 !!
-     implicit none
+      implicit none
 !
-     class(asymmetric_lanczos_tool), intent(inout) :: lanczos
+      class(asymmetric_lanczos_tool), intent(inout) :: lanczos
 !
-     real(dp), dimension(lanczos%n_parameters), intent(in) :: Aq
-     real(dp) :: ddot
+      real(dp), dimension(lanczos%n_parameters), intent(in) :: Aq
+      real(dp) :: ddot
 !
-     integer, intent(in) :: i
+      integer, intent(in) :: i
 !
-     real(dp), dimension(:), allocatable :: p
+      real(dp), dimension(:), allocatable :: p
 !
-     call mem%alloc(p, lanczos%n_parameters)
+      call mem%alloc(p, lanczos%n_parameters)
 !
-     call lanczos%read_p(p, i)
+      call lanczos%read_p(p, i)
 !
-     lanczos%alpha_(i) = ddot(lanczos%n_parameters, p, 1, Aq, 1)
+      lanczos%alpha_(i) = ddot(lanczos%n_parameters, p, 1, Aq, 1)
 !
-     call mem%dealloc(p, lanczos%n_parameters)
-!
+      call mem%dealloc(p, lanczos%n_parameters)
+!    
    end subroutine calculate_alpha_asymmetric_lanczos_tool
 !
 !
@@ -438,7 +438,7 @@ contains
 !
       if (abs(s_dot_r) .lt. s_dot_r_threshold) then
 !
-          lanczos%chain_length = i
+         lanczos%chain_length = i
 !
       endif
 !
@@ -606,43 +606,43 @@ contains
 !
 !       do it twice for numerical stability
 
-        do j = 1, i
+         do j = 1, i
 !
-!         biorthogonalize against previous
+!           biorthogonalize against previous 
+!
+            call lanczos%read_p(p_j, j)      
+            call lanczos%read_q(q_j, j)      
 
-          call lanczos%read_p(p_j, j)
-          call lanczos%read_q(q_j, j)
-
-          overlap = ddot(lanczos%n_parameters, p_j, 1, q, 1)
-          call daxpy(lanczos%n_parameters, -overlap, q_j, 1, q, 1)
-
-          overlap = ddot(lanczos%n_parameters, p, 1, q_j, 1)
-          call daxpy(lanczos%n_parameters, -overlap, p_j, 1, p, 1)
-
-        enddo
+            overlap = ddot(lanczos%n_parameters, p_j, 1, q, 1) 
+            call daxpy(lanczos%n_parameters, -overlap, q_j, 1, q, 1)   
+   
+            overlap = ddot(lanczos%n_parameters, p, 1, q_j, 1)
+            call daxpy(lanczos%n_parameters, -overlap, p_j, 1, p, 1) 
+!
+         enddo
 
 !       now binormalize new p, q pair
 !
-        if(lanczos%normalization=='symmetric')then
+         if(lanczos%normalization=='symmetric')then
 !
-          overlap = ddot(lanczos%n_parameters, p, 1, q, 1)
-          factor = one/sqrt(abs(overlap))
+            overlap = ddot(lanczos%n_parameters, p, 1, q, 1)
+            factor = one/sqrt(abs(overlap))
 !
-          call dscal(lanczos%n_parameters, factor, q, 1)
-          call dscal(lanczos%n_parameters, sign(factor,overlap), p, 1)
+            call dscal(lanczos%n_parameters, factor, q, 1)
+            call dscal(lanczos%n_parameters, sign(factor,overlap), p, 1)
 !
-        else if (lanczos%normalization=='asymmetric')then
+         else if (lanczos%normalization=='asymmetric')then
 !
-          overlap = ddot(lanczos%n_parameters, p, 1, q, 1)
-          factor= one/abs(overlap)
-          call dscal(lanczos%n_parameters, sign(factor,overlap), p, 1)
+            overlap = ddot(lanczos%n_parameters, p, 1, q, 1)
+            factor= one/abs(overlap)
+            call dscal(lanczos%n_parameters, sign(factor,overlap), p, 1) 
 !
-        else
+         else 
 !
-          call output%error_msg('could not recognize biorthonormalization procedure in asymmetric &
-            &Lanczos tool.')
+            call output%error_msg('could not recognize biorthonormalization procedure in asymmetric &
+               &Lanczos tool.')      
 !
-        endif
+         endif
 !
       enddo
 

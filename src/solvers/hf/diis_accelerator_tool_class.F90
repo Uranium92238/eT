@@ -50,7 +50,7 @@ module diis_accelerator_tool_class
 !
    interface diis_accelerator_tool
 !
-     procedure :: new_diis_accelerator_tool
+      procedure :: new_diis_accelerator_tool
 !
    end interface diis_accelerator_tool
 !

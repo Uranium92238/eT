@@ -110,8 +110,8 @@ module scf_solver_class
 !
    interface scf_solver
 !
-     procedure :: new_scf_solver
-     procedure :: new_scf_solver_from_parameters
+      procedure :: new_scf_solver
+      procedure :: new_scf_solver_from_parameters
 !
    end interface scf_solver
 !
@@ -192,18 +192,18 @@ contains
 !
       solver%accelerator_creator = accelerator_factory('solver scf')
 !
-    if (present(energy_threshold)) then
+      if (present(energy_threshold)) then
 !
-       solver%convergence_checker = convergence_tool(energy_threshold  = energy_threshold,   &
-                                                    residual_threshold = gradient_threshold, &
-                                                    energy_convergence = .true.)
+         solver%convergence_checker = convergence_tool(energy_threshold  = energy_threshold,   &
+                                                       residual_threshold = gradient_threshold, &
+                                                       energy_convergence = .true.)
 !
-    else
+      else
 !
-       solver%convergence_checker = convergence_tool(energy_threshold  = gradient_threshold, &
-                                                    residual_threshold = gradient_threshold, &
-                                                    energy_convergence = .false.)
-    endif
+         solver%convergence_checker = convergence_tool(energy_threshold  = gradient_threshold, &
+                                                       residual_threshold = gradient_threshold, &
+                                                       energy_convergence = .false.)
+      endif
 !
       call solver%print_settings()
 !
@@ -338,10 +338,10 @@ contains
 !
       do i = 1, solver%n_equations
 !
-          offset = ((solver%dim_)*(solver%dim_ + 1)/2)*(i-1)
+         offset = ((solver%dim_)*(solver%dim_ + 1)/2)*(i-1)
 !
-          call squareup(F_packed(offset + 1 :), C(:,:,i), solver%dim_)
-          call diagonalize_symmetric(C(:,:,i), solver%dim_, e(:,i))
+         call squareup(F_packed(offset + 1 :), C(:,:,i), solver%dim_)
+         call diagonalize_symmetric(C(:,:,i), solver%dim_, e(:,i))
 !
       enddo
 !

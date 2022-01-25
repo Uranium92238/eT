@@ -127,7 +127,7 @@ contains
    end subroutine destruct_amplitudes_mlccsd
 !
 !
-    module subroutine initialize_orbital_coefficients_cc2_mlccsd(wf)
+   module subroutine initialize_orbital_coefficients_cc2_mlccsd(wf)
 !!
 !!    Initialize orbital coefficients cc2
 !!    Written by Sarai D. Folkestad, Jan 2020
@@ -138,10 +138,10 @@ contains
 !
       call mem%alloc(wf%orbital_coefficients_cc2, wf%ao%n, wf%n_mo)
 !
-    end subroutine initialize_orbital_coefficients_cc2_mlccsd
+   end subroutine initialize_orbital_coefficients_cc2_mlccsd
 !
 !
-    module subroutine destruct_orbital_coefficients_cc2_mlccsd(wf)
+   module subroutine destruct_orbital_coefficients_cc2_mlccsd(wf)
 !!
 !!    Destruct orbital coefficients cc2
 !!    Written by Sarai D. Folkestad, Jan 2020
@@ -153,10 +153,10 @@ contains
       if (allocated (wf%orbital_coefficients_cc2)) &
         call mem%dealloc(wf%orbital_coefficients_cc2, wf%ao%n, wf%n_mo)
 !
-    end subroutine destruct_orbital_coefficients_cc2_mlccsd
+   end subroutine destruct_orbital_coefficients_cc2_mlccsd
 !
 !
-    module subroutine initialize_orbital_energies_cc2_mlccsd(wf)
+   module subroutine initialize_orbital_energies_cc2_mlccsd(wf)
 !!
 !!    Initialize orbital energies cc2
 !!    Written by Sarai D. Folkestad, Jan 2020
@@ -167,10 +167,10 @@ contains
 !
       call mem%alloc(wf%orbital_energies_cc2, wf%n_mo)
 !
-    end subroutine initialize_orbital_energies_cc2_mlccsd
+   end subroutine initialize_orbital_energies_cc2_mlccsd
 !
 !
-    module subroutine destruct_orbital_energies_cc2_mlccsd(wf)
+   module subroutine destruct_orbital_energies_cc2_mlccsd(wf)
 !!
 !!    Destruct orbital energies cc2
 !!    Written by Sarai D. Folkestad, Jan 2020
@@ -182,10 +182,10 @@ contains
       if (allocated (wf%orbital_energies_cc2)) &
         call mem%dealloc(wf%orbital_energies_cc2, wf%n_mo)
 !
-    end subroutine destruct_orbital_energies_cc2_mlccsd
+   end subroutine destruct_orbital_energies_cc2_mlccsd
 !
 !
-    module subroutine initialize_O_o_mlccsd(wf)
+   module subroutine initialize_O_o_mlccsd(wf)
 !!
 !!    Initialize O_o
 !!    Written by Sarai D. Folkestad, Jan 2020
@@ -196,10 +196,10 @@ contains
 !
       call mem%alloc(wf%O_o,  wf%n_ccsd_o + wf%n_cc2_o,  wf%n_ccsd_o + wf%n_cc2_o)
 !
-    end subroutine initialize_O_o_mlccsd
+   end subroutine initialize_O_o_mlccsd
 !
 !
-    module subroutine destruct_O_o_mlccsd(wf)
+   module subroutine destruct_O_o_mlccsd(wf)
 !!
 !!    Destruct O_o
 !!    Written by Sarai D. Folkestad, Jan 2020
@@ -211,10 +211,10 @@ contains
       if (allocated (wf%O_o)) &
         call mem%dealloc(wf%O_o,  wf%n_ccsd_o + wf%n_cc2_o,  wf%n_ccsd_o + wf%n_cc2_o)
 !
-    end subroutine destruct_O_o_mlccsd
+   end subroutine destruct_O_o_mlccsd
 !
 !
-    module subroutine initialize_O_v_mlccsd(wf)
+   module subroutine initialize_O_v_mlccsd(wf)
 !!
 !!    Initialize O_v 
 !!    Written by Sarai D. Folkestad, Jan 2020
@@ -225,10 +225,10 @@ contains
 !
       call mem%alloc(wf%O_v,  wf%n_ccsd_v + wf%n_cc2_v,  wf%n_ccsd_v + wf%n_cc2_v)
 !
-    end subroutine initialize_O_v_mlccsd
+   end subroutine initialize_O_v_mlccsd
 !
 !
-    module subroutine destruct_O_v_mlccsd(wf)
+   module subroutine destruct_O_v_mlccsd(wf)
 !!
 !!    Destruct O_v
 !!    Written by Sarai D. Folkestad, Jan 2020
@@ -240,7 +240,7 @@ contains
       if (allocated (wf%O_v)) &
         call mem%dealloc(wf%O_v,  wf%n_ccsd_v + wf%n_cc2_v,  wf%n_ccsd_v + wf%n_cc2_v)
 !
-    end subroutine destruct_O_v_mlccsd
+   end subroutine destruct_O_v_mlccsd
 !
 !
 end submodule initialize_desctruct_mlccsd

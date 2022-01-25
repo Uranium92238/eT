@@ -58,9 +58,9 @@ module memory_manager_class
 !     Require that batch setup always gives batching
 !
 #ifdef _FORCED_BATCHING
-      logical, parameter, private :: force_batch = .true.
+   logical, parameter, private :: force_batch = .true.
 #else
-      logical, parameter, private :: force_batch = .false.
+   logical, parameter, private :: force_batch = .false.
 #endif
 !
 !  Class definition
@@ -221,15 +221,15 @@ contains
 !
       if (mem%units == 'gb') then
 !
-        mem%total =  mem%total*1000000000
+         mem%total =  mem%total*1000000000
 !
       elseif (mem%units == 'mb') then
 !
-        mem%total =  mem%total*1000000
+         mem%total =  mem%total*1000000
 !
       elseif (mem%units == 'kb') then
 !
-        mem%total =  mem%total*1000
+         mem%total =  mem%total*1000
 !
       elseif (trim(mem%units) == 'b') then
 !
@@ -237,7 +237,7 @@ contains
 !
       else
 !
-        call output%error_msg('did not recognize the memory unit specified in input')
+         call output%error_msg('did not recognize the memory unit specified in input')
 !
       endif
 !

@@ -60,7 +60,7 @@ module tdhf_solver_factory_class
 contains
 !
 !
-    subroutine create_tdhf_solver_factory(this, wf, solver)
+   subroutine create_tdhf_solver_factory(this, wf, solver)
 !!
 !!    Create
 !!    Written by Sarai D. Folkestad, 2020
@@ -137,7 +137,7 @@ contains
                                      n_solutions           = this%n_states,       &
                                      max_iterations        = this%max_iterations)
 !
-    end subroutine create_tdhf_solver_factory
+   end subroutine create_tdhf_solver_factory
 !
 !
    subroutine create_rpa(wf, transformer, storer, preconditioner)

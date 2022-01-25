@@ -51,11 +51,11 @@ contains
 !
          call wf%update_G_non_cumulative()
 !
-     else
+      else
 !
          call wf%update_G_cumulative(wf%previous_ao_density)
 !
-     endif
+      endif
 !
 !     Set the two-electron part
 !

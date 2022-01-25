@@ -324,8 +324,8 @@ contains
 !$omp end parallel do
 !
 !$omp parallel do private(i, j, c, d, ij, cd)
-              do i = 1, wf%n_ccsd_o
-                 do j = 1, i
+               do i = 1, wf%n_ccsd_o
+                  do j = 1, i
 !
                      ij = (i*(i-3)/2) + i + j
 !
@@ -339,10 +339,10 @@ contains
                            t_m_cdij(cd, ij) = x_aibj(c, i, d, j) &
                                             - x_aibj(d, i, c, j)
 !
-                       enddo
-                    enddo
-                 enddo
-              enddo
+                        enddo
+                     enddo
+                  enddo
+               enddo
 !$omp end parallel do
 !
 !              Dellocate g_acbd
@@ -384,10 +384,10 @@ contains
 !
 !             Deallocate +-g, +-t
 !
-              call mem%dealloc(g_p_abcd, batch_a_packed, n_v_packed)
-              call mem%dealloc(g_m_abcd, batch_a_packed, n_v_packed)
-              call mem%dealloc(t_p_cdij, n_v_packed, n_o_packed)
-              call mem%dealloc(t_m_cdij, n_v_packed, n_o_packed)
+               call mem%dealloc(g_p_abcd, batch_a_packed, n_v_packed)
+               call mem%dealloc(g_m_abcd, batch_a_packed, n_v_packed)
+               call mem%dealloc(t_p_cdij, n_v_packed, n_o_packed)
+               call mem%dealloc(t_m_cdij, n_v_packed, n_o_packed)
 !
 !$omp parallel do private(i, j, a, b, ij, ab)
                do i = 1, wf%n_ccsd_o
@@ -708,7 +708,7 @@ contains
       do l = 1, n_a_o
          do k = 1, n_a_o
             do b = 1, wf%n_ccsd_v
-              do a = 1, wf%n_ccsd_v
+               do a = 1, wf%n_ccsd_v
 !
                   x_abkl(a, b, k, l) = x_aibj(a, k, b, l)
 !

@@ -25,7 +25,7 @@ submodule (ccs_class) t1_ccs
 !!    Submodule containing routines that can be used t1-transform arrays.
 !!
 !
-      implicit none
+   implicit none
 !
 !
 contains

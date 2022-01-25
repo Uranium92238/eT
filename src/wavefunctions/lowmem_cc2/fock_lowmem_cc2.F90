@@ -25,7 +25,7 @@ submodule (lowmem_cc2_class) fock_lowmem_cc2
 !!    Submodule containing routines that can be used to construct the t1-transformed Fock matrix.
 !!
 !
-      implicit none
+   implicit none
 !
 !
 contains

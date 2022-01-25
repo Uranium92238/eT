@@ -238,7 +238,7 @@ contains
 !
       if (this%crop) then
 !
-        call output%printf('n', 'Enabled CROP in the DIIS algorithm.', fs='(/t6,a)')
+         call output%printf('n', 'Enabled CROP in the DIIS algorithm.', fs='(/t6,a)')
 !
       endif
 !
@@ -300,7 +300,7 @@ contains
    end subroutine finalize_diis_tool
 !
 !
-    subroutine update_diis_tool(this, e, x)
+   subroutine update_diis_tool(this, e, x)
 !!
 !!    Update
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2021

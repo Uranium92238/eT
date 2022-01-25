@@ -164,7 +164,7 @@ contains
    end subroutine initialize_visualization
 !
 !
-  subroutine set_up_grid_visualization(plotter, ao)
+   subroutine set_up_grid_visualization(plotter, ao)
 !!
 !!    Set up grid
 !!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Jul 2019

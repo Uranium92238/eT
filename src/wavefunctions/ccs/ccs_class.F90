@@ -1035,15 +1035,15 @@ contains
 !
       do core = 1, n_cores
 !
-        i = core_MOs(core)
+         i = core_MOs(core)
 !
-        do a = 1, wf%n_v
+         do a = 1, wf%n_v
 !
-           ai = wf%n_v*(i - 1) + a
-           projector(ai) = one
+            ai = wf%n_v*(i - 1) + a
+            projector(ai) = one
 !
-        enddo
-     enddo
+         enddo
+      enddo
 !
    end subroutine get_cvs_projector_ccs
 !
@@ -1072,15 +1072,15 @@ contains
 !
       do core = 1, n_cores
 !
-        i = core_MOs(core)
+         i = core_MOs(core)
 !
-        do a = 1, wf%n_v
+         do a = 1, wf%n_v
 !
-           ai = wf%n_v*(i - 1) + a
-           projector(ai) = zero
+            ai = wf%n_v*(i - 1) + a
+            projector(ai) = zero
 !
-        enddo
-     enddo
+         enddo
+      enddo
 !
    end subroutine get_rm_core_projector_ccs
 !

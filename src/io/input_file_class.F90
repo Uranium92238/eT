@@ -2610,7 +2610,7 @@ contains
    end function is_embedding_on_input_file
 !
 !
-  subroutine place_records_in_memory_input_file(this, section, records_in_memory)
+   subroutine place_records_in_memory_input_file(this, section, records_in_memory)
 !!
 !!    Place records in memory
 !!    Written by Sarai D. Folkestad, 2021

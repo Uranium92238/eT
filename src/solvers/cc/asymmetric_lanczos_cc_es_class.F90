@@ -175,9 +175,9 @@ contains
 !
       if(this%chain_length .gt. wf%n_es_amplitudes) then
 !
-          this%chain_length = wf%n_es_amplitudes
+         this%chain_length = wf%n_es_amplitudes
 !
-          call output%warning_msg('Chain length asked for is reset to: (i0)', &
+         call output%warning_msg('Chain length asked for is reset to: (i0)', &
               & ints=[this%chain_length])
 !
       endif
@@ -339,7 +339,7 @@ contains
 !
             if (iteration .lt. this%chain_length) then
 !
-              call lanczos%calculate_beta_gamma_p_q(iteration, Aq, pA)
+               call lanczos%calculate_beta_gamma_p_q(iteration, Aq, pA)
 !
             end if
 !
@@ -422,8 +422,8 @@ contains
       call output%printf('m', 'Chain length: (i6)', ints=[this%chain_length], &
                          fs='(/t6,a)')
 !
-     call output%printf('m', 'Biorthonormalization procedure: (a0)', &
-                        chars=[trim(this%normalization)], fs='(t6,a)')
+      call output%printf('m', 'Biorthonormalization procedure: (a0)', &
+                         chars=[trim(this%normalization)], fs='(t6,a)')
 !
    end subroutine print_settings_asymmetric_lanczos_cc_es
 !

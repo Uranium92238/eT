@@ -26,7 +26,7 @@ code-quality:
   script:
     - git clone https://github.com/eirik-kjonstad/fortran-code-quality.git
     - cd fortran-code-quality
-    - git checkout tags/v1.0.0 -b v1.0.0
+    - git checkout tags/v1.1.1 -b v1.1.1
     - python3 FortranQuality.py --path ../src
   only:
     - master

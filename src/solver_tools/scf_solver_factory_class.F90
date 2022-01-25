@@ -83,7 +83,7 @@ contains
    end function new_scf_solver_factory
 !
 !
-    subroutine create_scf_solver_factory(this, wf, solver, restart, skip)
+   subroutine create_scf_solver_factory(this, wf, solver, restart, skip)
 !!
 !!    Create
 !!    Written by Sarai D. Folkestad, 2020
@@ -108,7 +108,7 @@ contains
                           convergence_checker = this%convergence_checker)
 !
 !
-    end subroutine create_scf_solver_factory
+   end subroutine create_scf_solver_factory
 !
 !
    subroutine read_settings(this)

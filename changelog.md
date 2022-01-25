@@ -1,6 +1,8 @@
 # eT v1.6.0
 ### Features
 - Print tool for eigen and linear Davidson solvers. eT-program/eT!983
+- Added timers for calculate energy. eT-program/eT!993
+- Memory tracker now prints the batching tag and memory difference. eT-program/eT!1000
 - References are now collected in eT_references.F90. eT-program/eT!1019
 
 ### Optimization
@@ -15,11 +17,8 @@
 - Removed unused routines and added unit tests for `range_class` and `memory_manager`. eT-program/eT!1022
 - Added abstract solver class. eT-program/eT!1018
 
-### Features
-- Added timers for calculate energy. eT-program/eT!993
-- Memory tracker now prints the batching tag and memory difference. eT-program/eT!1000
-
 ### Tests
+- Code quality pipeline now detects unexpected indentation level in Fortran source files. eT-program/eT!1017
 - QED-HF tests are now run with default print level. eT-program/eT!1023
 
 # eT v1.5.14

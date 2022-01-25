@@ -25,8 +25,8 @@ module math_utilities
 !!    This module contains routines that perform various math operations.
 !!
 !
-    use parameters
-    use global_out, only : output
+   use parameters
+   use global_out, only : output
 !
    implicit none
 !
@@ -135,10 +135,10 @@ contains
 !
       f = double_factorial_recursive(arg)
 !
-    end function double_factorial
+   end function double_factorial
 !
 !
-    function delta(i,j) result(delta_ij)
+   function delta(i,j) result(delta_ij)
 !!
 !!    Delta
 !!    Written by Eirik F. Kjønstad, 2019
@@ -156,15 +156,15 @@ contains
 !
       if (i == j) then
 !
-        delta_ij = one
+         delta_ij = one
 !
       else
 !
-        delta_ij = zero
+         delta_ij = zero
 !
       endif
 !
-    end function delta
+   end function delta
 !
 !
    function binomial(n, k) result(b)

@@ -266,13 +266,13 @@ contains
 !
       do core = 1, n_cores
 !
-        i = core_MOs(core)
+         i = core_MOs(core)
 !
 !$omp parallel do private (a, ai, j, b, bj, aibj)
-        do a = 1, wf%n_v
+         do a = 1, wf%n_v
 !
-           ai = wf%n_v*(i - 1) + a
-           projector(ai) = one
+            ai = wf%n_v*(i - 1) + a
+            projector(ai) = one
 !
             do j = 1, wf%n_o
                do b = 1, wf%n_v
@@ -284,10 +284,10 @@ contains
 !
                enddo
             enddo
-        enddo
+         enddo
 !$omp end parallel do
 !
-     enddo
+      enddo
 !
    end subroutine get_cvs_projector_doubles
 !
@@ -316,13 +316,13 @@ contains
 !
       do core = 1, n_cores
 !
-        i = core_MOs(core)
+         i = core_MOs(core)
 !
 !$omp parallel do private (a, ai, j, b, bj, aibj)
-        do a = 1, wf%n_v
+         do a = 1, wf%n_v
 !
-           ai = wf%n_v*(i - 1) + a
-           projector(ai) = zero
+            ai = wf%n_v*(i - 1) + a
+            projector(ai) = zero
 !
             do j = 1, wf%n_o
                do b = 1, wf%n_v
@@ -334,10 +334,10 @@ contains
 !
                enddo
             enddo
-        enddo
+         enddo
 !$omp end parallel do
 !
-     enddo
+      enddo
 !
    end subroutine get_rm_core_projector_doubles
 !

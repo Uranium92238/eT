@@ -25,7 +25,7 @@ submodule (mlccsd_class) fock_mlccsd
 !!    Submodule containing routines that can be used to construct the t1-transformed Fock matrix.
 !!
 !
-      implicit none
+   implicit none
 !
 !
 contains

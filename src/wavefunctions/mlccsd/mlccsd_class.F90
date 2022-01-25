@@ -1335,8 +1335,8 @@ contains
 !$omp parallel do private (a, ai)
          do a = 1, wf%n_v
 !
-           ai = wf%n_v*(i - 1) + a
-           projector(ai) = one
+            ai = wf%n_v*(i - 1) + a
+            projector(ai) = one
 !
          enddo
 !$omp end parallel do
@@ -1360,10 +1360,10 @@ contains
 !
                enddo
             enddo
-        enddo
+         enddo
 !$omp end parallel do
 !
-     enddo
+      enddo
 !
    end subroutine get_cvs_projector_mlccsd
 !

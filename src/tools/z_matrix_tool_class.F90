@@ -368,7 +368,7 @@ contains
 !
       enddo
 
-  end subroutine convert_to_cartesian_z_matrix_tool
+   end subroutine convert_to_cartesian_z_matrix_tool
 !
 !
 end module z_matrix_tool_class

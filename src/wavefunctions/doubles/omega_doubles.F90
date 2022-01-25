@@ -254,7 +254,7 @@ contains
 !
       call timer%turn_off()
 !
-    end subroutine omega_doubles_c1_doubles
+   end subroutine omega_doubles_c1_doubles
 !
 !
 end submodule omega_doubles
