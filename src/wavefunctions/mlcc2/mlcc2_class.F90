@@ -276,7 +276,6 @@ contains
 !!
 !!    Adapted by Sarai D. Folkestad from CCS constructer, 2019
 !!
-      use citation_class,         only : citation
       use citation_printer_class, only : eT_citations
       use wavefunction_class,     only: wavefunction
 !
@@ -285,8 +284,6 @@ contains
       class(mlcc2), intent(inout) :: wf
 !
       class(wavefunction), intent(in) :: template_wf
-!
-      type(citation), allocatable :: reference
 !
       wf%name_ = 'mlcc2'
 !
@@ -335,19 +332,7 @@ contains
 !
       endif
 !
-      reference = citation(implementation = 'MLCC2 and MLCCSD',                             &
-                           journal        = 'J. Chem. Theory Comput.',                      &
-                           title_         = 'Multilevel CC2 and CCSD Methods with &
-                                             &Correlated Natural Transition Orbitals',      &
-                           volume         = '16',                                           &
-                           issue          = '1',                                            &
-                           pages          = '179–189',                                      &
-                           year           = '2019',                                         &
-                           doi            = '10.1021/acs.jctc.9b00701',                     &
-                           authors        = [character(len=25) :: 'Sarai Dery Folkestad',   &
-                                                                  'Henrik Koch'])
-!
-      call eT_citations%add(reference)
+      call eT_citations%add("MLCC2 and MLCCSD")
 !
    end subroutine initialize_mlcc2
 !

@@ -177,15 +177,12 @@ contains
 !!    New ERI CD
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      use citation_class,         only: citation
       use citation_printer_class, only: eT_citations
 !
       implicit none
 !
       type(eri_cd)  :: this
       type(ao_tool) :: ao
-!
-      type(citation), allocatable :: reference
 !
       this%timer = timings('Cholesky decomposition of ERIs')
       call this%timer%turn_on()
@@ -212,20 +209,7 @@ contains
 !
 !     Add citation for this implementation
 !
-      reference = citation(implementation = 'Cholesky decomposition of ERIs',            &
-                           journal        = 'J. Chem. Phys.',                            &
-                           title_         = 'An efficient algorithm for Cholesky &
-                                 &decomposition of electron repulsion integrals',        &
-                           volume         = '150',                                       &
-                           issue          = '19',                                        &
-                           pages          = '194112',                                    &
-                           year           = '2019',                                      &
-                           doi            = '10.1063/1.5083802',                         &
-                           authors        = [character(len=25) :: 'Sarai D. Folkestad',  &
-                                                                  'Eirik F. Kjønstad',   &
-                                                                  'Henrik Koch'])
-!
-      call eT_citations%add(reference)
+      call eT_citations%add("Cholesky decomposition of ERIs")
 !
 !     Initialize files
 !

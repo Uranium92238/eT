@@ -1,6 +1,7 @@
 # eT v1.6.0
 ### Features
 - Print tool for eigen and linear Davidson solvers. eT-program/eT!983
+- References are now collected in eT_references.F90. eT-program/eT!1019
 
 ### Optimization
 - Coupled cluster Fock matrix construction is N^4 scaling. eT-program/eT!973
