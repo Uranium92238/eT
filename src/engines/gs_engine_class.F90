@@ -379,8 +379,7 @@ contains
       use quasi_newton_updater_class,   only: quasi_newton_updater
       use newton_raphson_updater_class, only: newton_raphson_updater
 !
-      use citation_class,           only : citation
-      use citation_printer_class,   only : eT_citations
+      use citation_printer_class, only : eT_citations
 !
       implicit none
 !
@@ -398,8 +397,6 @@ contains
       class(amplitude_updater), allocatable :: t_updater
 !
       class(abstract_jacobian_transformer), allocatable :: transformer
-!
-      class(citation), allocatable :: reference
 !
       real(dp) :: relative_threshold
 !
@@ -479,21 +476,7 @@ contains
 !
             transformer = approximate_jacobian_transformer(side)
 !
-            reference = citation(implementation = 'Multimodel Newton algorithm',                  &
-                                 journal        = 'J. Chem. Phys.',                               &
-                                 title_         = 'Accelerated multimodel Newton-type algorithms &
-                                                   &for faster convergence of ground and excited &
-                                                   &state coupled cluster equations',             &
-                                 volume         = '153',                                          &
-                                 issue          = '1',                                            &
-                                 pages          = '014104',                                       &
-                                 year           = '2020',                                         &
-                                 doi            = '10.1063/5.0010989',                            &
-                                 authors        = [character(len=25) :: 'Eirik F. Kjønstad',      &
-                                                                        'Sarai D. Folkestad',     &
-                                                                        'Henrik Koch'])
-!
-            call eT_citations%add(reference)
+            call eT_citations%add('Multimodel Newton algorithm')
 !
          else
 !

@@ -3440,7 +3440,34 @@ contains
 !
       distance = sqrt(distance)
 !
-   end function
+   end function get_euclidean_distance
+!
+!
+   function find_location(array, value_, n) result(index)
+!!
+!!    Find location
+!!    Written by Alexander C. Paul, Jan 2022
+!!
+!!    Returns index of element of array equal to value_
+!!    If no identical element is found the result will be 0.
+!!
+!!    Required because GCC 8 does not know findloc
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+      character(len=*), dimension(n), intent(in) :: array
+      character(len=*), intent(in) :: value_
+!
+      integer :: index
+!
+      do index = 1, n
+         if (value_ == array(index)) return
+      end do
+!
+      index = 0
+!
+   end function find_location
 !
 !
 end module array_utilities

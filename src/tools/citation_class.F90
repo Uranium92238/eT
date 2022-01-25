@@ -21,35 +21,33 @@ module citation_class
 !
 !!
 !!    Citation
-!!    Written by Eirik F. Kjønstad, 2021 
+!!    Written by Eirik F. Kjønstad, 2021
 !!
-!
-   use global_out, only: output
-   use output_file_class, only: output_file
 !
    implicit none
 !
-   type :: citation 
+   type :: citation
 !
-      character(len=600), private :: journal 
-      character(len=600), private :: title_ 
-      character(len=600), private :: volume 
-      character(len=600), private :: issue 
-      character(len=600), private :: pages 
-      character(len=600), private :: year 
-      character(len=600), private :: doi 
-      character(len=600), private :: implementation 
+      character(len=:), allocatable, private :: journal
+      character(len=:), allocatable, private :: title_
+      character(len=:), allocatable, private :: volume
+      character(len=:), allocatable, private :: issue
+      character(len=:), allocatable, private :: pages
+      character(len=:), allocatable, private :: year
+      character(len=:), allocatable, private :: doi
+      character(len=:), allocatable, private :: implementation
 !
-      character(len=600), dimension(:), allocatable, private :: authors  
+!     With GCC-9 we could use len=: and
+!     allocate(this%authors, source=authors) in the constructor
+      character(len=25), dimension(:), allocatable, private :: authors
 !
-   contains 
+   contains
 !
-      procedure, public :: get_doi
       procedure, public :: get_implementation
-!
+      procedure, public :: get_doi_citation_string
       procedure, public :: get_apa_citation_string
 !
-   end type citation 
+   end type citation
 !
    interface citation
 !
@@ -66,7 +64,7 @@ contains
 !!    New citation printer
 !!    Written by Eirik F. Kjønstad, 2021
 !!
-!!    Implementation: describes what method/algorithm/implementation the 
+!!    Implementation: describes what method/algorithm/implementation the
 !!                    citation refers to.
 !!
       implicit none
@@ -92,25 +90,11 @@ contains
       this%pages          = pages
       this%year           = year
       this%doi            = doi
-      this%authors        = authors
+!
+      allocate(this%authors(size(authors)))
+      this%authors = authors
 !
    end function new_citation
-!
-!
-   function get_doi(this) result(doi)
-!!
-!!    Get DOI
-!!    Written by Eirik F. Kjønstad, 2021
-!!
-      implicit none 
-!
-      class(citation), intent(in) :: this 
-!
-      character(len=600) :: doi 
-!
-      doi = this%doi
-!
-   end function get_doi
 !
 !
    function get_implementation(this) result(implementation)
@@ -118,15 +102,31 @@ contains
 !!    Get implementation
 !!    Written by Eirik F. Kjønstad, 2021
 !!
-      implicit none 
+      implicit none
 !
-      class(citation), intent(in) :: this 
+      class(citation), intent(in) :: this
 !
-      character(len=600) :: implementation 
+      character(len=:), allocatable :: implementation
 !
-      implementation = this%implementation
+      implementation = trim(this%implementation)
 !
    end function get_implementation
+!
+!
+   function get_doi_citation_string(this) result(doi_citation)
+!!
+!!    Get DOI citation string
+!!    Written by Eirik F. Kjønstad, 2021
+!!
+      implicit none
+!
+      class(citation), intent(in) :: this
+!
+      character(len=:), allocatable :: doi_citation
+!
+      doi_citation = this%implementation // ": https://doi.org/" // this%doi
+!
+   end function get_doi_citation_string
 !
 !
    function get_apa_citation_string(this) result(string)
@@ -140,15 +140,15 @@ contains
 !!
 !!       Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch (2019). An
 !!       efficient algorithm for Cholesky decomposition of electron repulsion
-!!       integrals. J. Chem. Phys. 150(19), 194112. 
+!!       integrals. J. Chem. Phys. 150(19), 194112.
 !!
-      implicit none 
+      use global_out, only: output
 !
-      class(citation), intent(in) :: this 
+      implicit none
 !
-      character(len=600) :: string 
+      class(citation), intent(in) :: this
 !
-      character(len=600) :: and 
+      character(len=600) :: string
 !
       integer :: author, n_authors
 !
@@ -156,53 +156,52 @@ contains
 !
       if (n_authors             .eq. 0 .or.  &
           len_trim(this%title_) .eq. 0 .or.  &
-          len_trim(this%year)   .eq. 0) then 
-!  
+          len_trim(this%year)   .eq. 0) then
+!
          call output%error_msg('a citation must have both authors, title, and year.')
 !
       endif
 !
 !     Authors
 !
-      string = ''
+      if (n_authors == 1) then
 !
-      do author = 1, n_authors - 1
+         string = trim(this%authors(1))
 !
-         string = trim(string) // ' ' // trim(this%authors(author)) // ','
+      else
 !
-      enddo
+         string = ''
 !
-      and = ''
-      if (n_authors .gt. 1) and = 'and'
+         do author = 1, n_authors - 1
 !
-      string = trim(string) // ' ' // trim(and) // ' ' // trim(this%authors(n_authors)) 
+            string = trim(string) // ' ' // trim(this%authors(author)) // ','
+!
+         enddo
+!
+         write(string, '(3a)') trim(string), ' and ', trim(this%authors(n_authors))
+!
+      end if
 !
 !     Year
 !
-      string = trim(string) // ' (' // trim(this%year) // ')'
+      write(string, '(4a)') trim(string), ' (', trim(this%year), ')'
 !
 !     Title, journal, volume, issue, pages
 !
-      string = trim(string)         &
-      // '. '                       &
-      // trim(this%title_)          
+      write(string, '(3a)') trim(string), '. ', trim(this%title_)
 !
       if (len_trim(this%journal) .gt. 0) then
 !
-            string = trim(string)         &
-            // '. '                       &
-            // trim(this%journal)         
+            write(string, '(3a)') trim(string), '. ', trim(this%journal)
 !
       endif
 !
-      if (len_trim(this%volume) .gt. 0) then 
+      if (len_trim(this%volume) .gt. 0) then
 !
             if (len_trim(this%journal) .eq. 0) &
                call output%error_msg('a citation with a volume must also have a journal.')
 !
-            string = trim(string)         &
-            // ' '                        &
-            // trim(this%volume)          
+            write(string, '(3a)') trim(string), ' ', trim(this%volume)
 !
       endif
 !
@@ -211,22 +210,16 @@ contains
             if (len_trim(this%journal) .eq. 0) &
                call output%error_msg('a citation with an issue must also have a journal.')
 !
-            string = trim(string)         &
-            // ' '                        &
-            // '('                        & 
-            // trim(this%issue)           &
-            // ')'                      
+            write(string, '(4a)') trim(string), ' (', trim(this%issue), ')'
 !
       endif
 !
-      if (len_trim(this%pages) .gt. 0) then 
+      if (len_trim(this%pages) .gt. 0) then
 !
             if (len_trim(this%journal) .eq. 0) &
                call output%error_msg('a citation with pages must also have a journal.')
 !
-            string = trim(string)         &
-            // ', '                       & 
-            // trim(this%pages)           
+            write(string, '(3a)') trim(string), ', ', trim(this%pages)
 !
       endif
 !

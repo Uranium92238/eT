@@ -216,6 +216,7 @@ set(eT_fortran_sources
 #
    src/tools/citation_printer_class.F90
    src/tools/citation_class.F90
+   src/tools/eT_references_class.F90
 #
    src/various/butcher_tables.F90
    src/various/continuous_output_coefficients.F90

@@ -253,17 +253,14 @@ contains
 !!    Initialize
 !!    Written by Rolf H. Myhre and Alexander C. Paul, 2018
 !!
-      use wavefunction_class,       only: wavefunction
-      use citation_class,           only: citation
-      use citation_printer_class,   only: eT_citations
+      use wavefunction_class,     only: wavefunction
+      use citation_printer_class, only: eT_citations
 !
       implicit none
 !
       class(cc3), intent(inout) :: wf
 !
       class(wavefunction), intent(in) :: template_wf
-!
-      type(citation), allocatable :: reference
 !
       wf%name_ = 'cc3'
 !
@@ -282,19 +279,7 @@ contains
 !
       call wf%print_amplitude_info()
 !
-      reference = citation(implementation = 'CC3',                                          &
-                           journal        = 'J. Chem. Theory Comput.',                      &
-                           title_         = 'New and Efficient Implementation of CC3',      &
-                           volume         = '17',                                           &
-                           issue          = '1',                                            &
-                           pages          = '117–126',                                      &
-                           year           = '2021',                                         &
-                           doi            = '10.1021/acs.jctc.0c00686',                     &
-                           authors        = [character(len=25) :: 'Alexander C. Paul',      &
-                                                                  'Rolf H. Myhre',          &
-                                                                  'Henrik Koch'])
-!
-      call eT_citations%add(reference)
+      call eT_citations%add("CC3")
 !
    end subroutine initialize_cc3
 !
