@@ -7,10 +7,6 @@ do
    ground state
 end do
 
-print 
-   output print level: debug 
-end print
-
 memory
    available: 8
 end memory

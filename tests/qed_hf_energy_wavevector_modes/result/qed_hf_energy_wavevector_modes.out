@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy (development)
   ------------------------------------------------------------
-  Configuration date: 2021-10-20 15:53:52 UTC +02:00
-  Git branch:         QEDHF_get_integrals
-  Git hash:           293f91b11c377cab08a6e0100968e5934a214577
-  Fortran compiler:   GNU 11.1.0
-  C compiler:         GNU 11.1.0
-  C++ compiler:       GNU 11.1.0
-  LAPACK type:        SYSTEM_NATIVE
+  Configuration date: 2022-01-25 08:49:03 UTC +01:00
+  Git branch:         qed_tests_print_level
+  Git hash:           4d864f799adcee7936740aea8eebe8fe8b2f57c4
+  Fortran compiler:   GNU 9.3.0
+  C compiler:         GNU 9.3.0
+  C++ compiler:       GNU 9.3.0
+  LAPACK type:        MKL
   BLAS type:          MKL
   64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
-  Runtime checks:     OFF
+  Runtime checks:     ON
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-20 15:59:42 UTC +02:00
+  Calculation started: 2022-01-25 08:49:34 UTC +01:00
 
 
   :: Input file
@@ -47,10 +47,6 @@
      do
         ground state
      end do
-
-     print
-        output print level: debug
-     end print
 
      memory
         available: 8
@@ -80,8 +76,6 @@
 
   :: QED-RHF wavefunction
   ==========================
-
-  Libint electron repulsion integral precision:  0.1000E-23
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -133,10 +127,6 @@
 
 
   1) Generate initial SAD density
-     Generated atomic density for H  using UHF/cc-pvdz
-     Generated atomic density for F  using UHF/cc-pvdz
-     Generated atomic density for O  using UHF/cc-pvdz
-     Generated atomic density for He using UHF/cc-pvdz
 
 
   2) Calculation of reference state (SCF-DIIS algorithm)
@@ -152,7 +142,7 @@
      Exchange screening threshold:   0.1000E-13
      ERI cutoff:                     0.1000E-15
      One-electron integral  cutoff:  0.1000E-20
-     Cumulative Fock threshold:      0.0000E+00
+     Cumulative Fock threshold:      0.1000E+01
 
   - SCF solver settings:
 
@@ -171,94 +161,26 @@
      Storage (solver scf_errors): memory
      Storage (solver scf_parameters): memory
 
-  Doing preparations for storer solver scf_errors
-
-  Doing preparations for storer solver scf_parameters
-
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1          -177.388308248768     0.7765E-01     0.1774E+03
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
      2          -177.414692897632     0.1110E-01     0.2638E-01
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-     3          -177.415698431587     0.4044E-02     0.1006E-02
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
+     3          -177.415698431588     0.4044E-02     0.1006E-02
      4          -177.415817185332     0.1320E-02     0.1188E-03
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
      5          -177.415830578843     0.3473E-03     0.1339E-04
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
      6          -177.415831602698     0.8902E-04     0.1024E-05
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
      7          -177.415831682526     0.2129E-04     0.7983E-07
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
      8          -177.415831692601     0.4701E-05     0.1008E-07
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
      9          -177.415831693293     0.1061E-05     0.6917E-09
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
     10          -177.415831693322     0.2134E-06     0.2916E-10
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-    11          -177.415831693323     0.4853E-07     0.8527E-12
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-    12          -177.415831693323     0.9511E-08     0.5684E-13
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-    13          -177.415831693323     0.2879E-08     0.2842E-13
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-    14          -177.415831693323     0.5877E-09     0.0000E+00
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-    15          -177.415831693323     0.1915E-09     0.1137E-12
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-    16          -177.415831693323     0.7426E-10     0.1705E-12
+    11          -177.415831693323     0.4853E-07     0.7390E-12
+    12          -177.415831693323     0.9511E-08     0.1705E-12
+    13          -177.415831693323     0.2879E-08     0.8527E-13
+    14          -177.415831693323     0.5877E-09     0.1421E-12
+    15          -177.415831693323     0.1915E-09     0.1705E-12
+    16          -177.415831693323     0.7425E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
-
-  Doing finalizations for storer solver scf_errors
-
-  Doing finalizations for storer solver scf_parameters
 
   - Summary of QED-RHF wavefunction energetics (a.u.):
 
@@ -270,103 +192,115 @@
   - QED Parameters and properties
 
      Optimize photons?   :    True
+     Complete basis?     :    False
 
      Mode 1
       Frequency          :    0.500000000000
       Polarization       :    1.000000000000    0.000000000000    0.000000000000
-      Coupling           :    0.050000000000
-         Bilinear        :    0.025000000000
-         Self            :    0.001250000000
+      Coupling
+       sqrt(1/eps V)     :    0.050000000000
+       Bilinear          :    0.025000000000
+       Quadratic         :    0.001250000000
       Coherent state     :   -0.031525791406
 
      Mode 2
       Frequency          :    0.500000000000
       Polarization       :    0.000000000000    1.000000000000    0.000000000000
-      Coupling           :    0.050000000000
-         Bilinear        :    0.025000000000
-         Self            :    0.001250000000
+      Coupling
+       sqrt(1/eps V)     :    0.050000000000
+       Bilinear          :    0.025000000000
+       Quadratic         :    0.001250000000
       Coherent state     :   -0.023097849655
 
      Mode 3
       Frequency          :    1.000000000000
       Polarization       :    1.000000000000    0.000000000000    0.000000000000
-      Coupling           :    0.050000000000
-         Bilinear        :    0.035355339059
-         Self            :    0.001250000000
+      Coupling
+       sqrt(1/eps V)     :    0.050000000000
+       Bilinear          :    0.035355339059
+       Quadratic         :    0.001250000000
       Coherent state     :   -0.022292100886
 
      Mode 4
       Frequency          :    1.000000000000
       Polarization       :    0.000000000000    1.000000000000    0.000000000000
-      Coupling           :    0.050000000000
-         Bilinear        :    0.035355339059
-         Self            :    0.001250000000
+      Coupling
+       sqrt(1/eps V)     :    0.050000000000
+       Bilinear          :    0.035355339059
+       Quadratic         :    0.001250000000
       Coherent state     :   -0.016332646122
 
      Mode 5
       Frequency          :    1.500000000000
       Polarization       :    1.000000000000    0.000000000000    0.000000000000
-      Coupling           :    0.050000000000
-         Bilinear        :    0.043301270189
-         Self            :    0.001250000000
+      Coupling
+       sqrt(1/eps V)     :    0.050000000000
+       Bilinear          :    0.043301270189
+       Quadratic         :    0.001250000000
       Coherent state     :   -0.018201424155
 
      Mode 6
       Frequency          :    1.500000000000
       Polarization       :    0.000000000000    1.000000000000    0.000000000000
-      Coupling           :    0.050000000000
-         Bilinear        :    0.043301270189
-         Self            :    0.001250000000
+      Coupling
+       sqrt(1/eps V)     :    0.050000000000
+       Bilinear          :    0.043301270189
+       Quadratic         :    0.001250000000
       Coherent state     :   -0.013335549716
 
      Mode 7
       Frequency          :    2.000000000000
       Polarization       :    1.000000000000    0.000000000000    0.000000000000
-      Coupling           :    0.050000000000
-         Bilinear        :    0.050000000000
-         Self            :    0.001250000000
+      Coupling
+       sqrt(1/eps V)     :    0.050000000000
+       Bilinear          :    0.050000000000
+       Quadratic         :    0.001250000000
       Coherent state     :   -0.015762895703
 
      Mode 8
       Frequency          :    2.000000000000
       Polarization       :    0.000000000000    1.000000000000    0.000000000000
-      Coupling           :    0.050000000000
-         Bilinear        :    0.050000000000
-         Self            :    0.001250000000
+      Coupling
+       sqrt(1/eps V)     :    0.050000000000
+       Bilinear          :    0.050000000000
+       Quadratic         :    0.001250000000
       Coherent state     :   -0.011548924828
 
      Mode 9
       Frequency          :    2.500000000000
       Polarization       :    1.000000000000    0.000000000000    0.000000000000
-      Coupling           :    0.050000000000
-         Bilinear        :    0.055901699437
-         Self            :    0.001250000000
+      Coupling
+       sqrt(1/eps V)     :    0.050000000000
+       Bilinear          :    0.055901699437
+       Quadratic         :    0.001250000000
       Coherent state     :   -0.014098762526
 
      Mode 10
       Frequency          :    2.500000000000
       Polarization       :    0.000000000000    1.000000000000    0.000000000000
-      Coupling           :    0.050000000000
-         Bilinear        :    0.055901699437
-         Self            :    0.001250000000
+      Coupling
+       sqrt(1/eps V)     :    0.050000000000
+       Bilinear          :    0.055901699437
+       Quadratic         :    0.001250000000
       Coherent state     :   -0.010329672393
 
   - Timings for the QED-RHF ground state calculation
 
-     Total wall time (sec):              1.11584
-     Total cpu time (sec):               4.42450
+     Total wall time (sec):              1.12881
+     Total cpu time (sec):               4.41280
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 738.184 KB
+  Peak memory usage during the execution of eT: 472.512 KB
 
-  Total wall time in eT (sec):              1.14304
-  Total cpu time in eT (sec):               4.46269
+  Total wall time in eT (sec):              1.15345
+  Total cpu time in eT (sec):               4.44355
 
-  Calculation ended: 2021-10-20 15:59:43 UTC +02:00
+  Calculation ended: 2022-01-25 08:49:35 UTC +01:00
 
   - Implementation references:
 
      eT: https://doi.org/10.1063/5.0004713
+     QED-HF: https://doi.org/10.1103/PhysRevX.10.041043
 
   eT terminated successfully!
