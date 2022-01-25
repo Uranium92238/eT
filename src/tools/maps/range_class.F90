@@ -118,35 +118,6 @@ contains
    end function copy_range
 !
 !
-   elemental function range_from_first_last(first, last, step) result(this)
-!!
-!!    Range from first and last
-!!    Written by Rolf H. Myhre, Apr 2021
-!!
-      implicit none
-!
-      integer, intent(in) :: first, last
-      integer, optional, intent(in) :: step
-!
-      type(range_) :: this
-!
-      integer :: step_
-!
-      step_ = 1
-      if (present(step)) step_ = step
-!
-      if (((last - first) .ge. 0 .and. step_ .gt. 0) .or. &
-          ((last - first) .lt. 0 .and. step_ .lt. 0)) then
-         this%first  = first
-         this%length = (last - first)/step_ + 1
-         this%step   = step_
-      else
-         error stop "Inconsistent first, last, and step in range_from_first_last"
-      endif
-!
-   end function range_from_first_last
-!
-!
    elemental function is_equal_range(this, that) result(is_equal)
 !!
 !!    Is equal

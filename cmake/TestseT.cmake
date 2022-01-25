@@ -77,6 +77,7 @@ add_eT_runtest(restart_hf                                   "eT;short;hf;restart
 #
 add_eT_runtest(hf_visualization                             "eT;short;hf;visualization")
 add_eT_runtest(plot_benzene_mos                             "eT;short;hf;visualization")
+add_eT_runtest(plot_He_orbitals                             "eT;short;hf;visualization;5z")
 add_eT_runtest(plot_ntos_ccs                                "eT;short;ccs;visualization")
 add_eT_runtest(plot_ntos_ccsd                               "eT;short;ccsd;visualization")
 add_eT_runtest(plot_cntos_ccsd                              "eT;short;ccsd;visualization")
@@ -327,4 +328,3 @@ if (NOT ENABLE_FORCED_BATCHING)
    add_eT_runtest(cc3_gs_energy_multimodel_nr               "eT;short;cc3;gs;newton-raphson;multimodel")
    add_eT_runtest(cc3_dipole_nr                             "eT;short;cc3;gs;newton-raphson;dipole")
 endif()
-
