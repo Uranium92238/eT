@@ -883,8 +883,8 @@ contains
                                      t_updater=t_updater, &
                                      storage = storage)
 !
-      call cc_gs_solver_diis%run(cc2_wf)
-      call cc_gs_solver_diis%cleanup(cc2_wf)
+      call cc_gs_solver_diis%run()
+      call cc_gs_solver_diis%cleanup()
       call timer_gs%turn_off()
 !
 !     Excited states
@@ -895,8 +895,8 @@ contains
       call cc2_wf%construct_fock('es')
 !
       cc_es_solver_davidson = davidson_cc_es(transformation, cc2_wf, restart=.false.)
-      call cc_es_solver_davidson%run(cc2_wf)
-      call cc_es_solver_davidson%cleanup(cc2_wf)
+      call cc_es_solver_davidson%run()
+      call cc_es_solver_davidson%cleanup()
 !
       call timer_es%turn_off()
 !

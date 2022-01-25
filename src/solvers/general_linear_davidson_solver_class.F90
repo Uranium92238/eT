@@ -49,21 +49,24 @@ module general_linear_davidson_solver_class
    use memory_manager_class, only: mem
    use linear_davidson_tool_class, only: linear_davidson_tool
 !
-   use transformation_tool_class,              only: transformation_tool
-   use linear_storage_tool_class,              only: linear_storage_tool
-   use start_vector_tool_class,                only: start_vector_tool
-   use preconditioner_getter_class,            only: preconditioner_getter
-   use rhs_linear_equation_tool_class,         only: rhs_linear_equation_tool
-   use linear_davidson_print_tool_class,       only: linear_davidson_print_tool
+   use transformation_tool_class,        only: transformation_tool
+   use linear_storage_tool_class,        only: linear_storage_tool
+   use start_vector_tool_class,          only: start_vector_tool
+   use preconditioner_getter_class,      only: preconditioner_getter
+   use rhs_linear_equation_tool_class,   only: rhs_linear_equation_tool
+   use linear_davidson_print_tool_class, only: linear_davidson_print_tool
+!
+   use abstract_solver_class, only: abstract_solver
 !
    implicit none
 !
-   type :: general_linear_davidson_solver
+   type, extends(abstract_solver) :: general_linear_davidson_solver
 !
       integer  :: n_solutions
       integer  :: n_rhs
       integer, private  :: max_iterations
       real(dp), private :: residual_threshold
+      real(dp), dimension(:), allocatable :: frequencies
 !
       class(linear_davidson_tool), allocatable, private :: davidson
 !
@@ -81,7 +84,7 @@ module general_linear_davidson_solver_class
 !
       procedure, private :: test_convergence_and_add_trials
 !
-end type general_linear_davidson_solver
+   end type general_linear_davidson_solver
 !
    interface general_linear_davidson_solver
 !
@@ -101,7 +104,8 @@ contains
                                                n_rhs,               &
                                                n_solutions,         &
                                                max_iterations,      &
-                                               residual_threshold) result(this)
+                                               residual_threshold,  &
+                                               frequencies) result(this)
 !!
 !!    New general linear Davidson
 !!    Written by Sarai D. Folkestad, May 2021
@@ -119,6 +123,7 @@ contains
       class(linear_davidson_print_tool), intent(in) :: printer
       integer,                           intent(in) :: max_iterations, n_solutions, n_rhs
       real(dp),                          intent(in) :: residual_threshold
+      real(dp), dimension(n_solutions),  intent(in) :: frequencies
 !
 
       this%transformer         = transformer
@@ -133,11 +138,12 @@ contains
       this%n_rhs               = n_rhs
       this%max_iterations      = max_iterations
       this%residual_threshold  = residual_threshold
+      this%frequencies         = frequencies
 !
    end function new_general_linear_davidson_solver
 !
 !
-   subroutine run_general_linear_davidson_solver(this, frequencies)
+   subroutine run_general_linear_davidson_solver(this)
 !!
 !!    Run
 !!    Written by Regina Matveeva and Ida-Marie Høyvik, Sept 2021
@@ -147,9 +153,7 @@ contains
 !
       implicit none
 !
-      class(general_linear_davidson_solver) :: this
-!
-      real(dp), dimension(this%n_solutions), intent(in) :: frequencies
+      class(general_linear_davidson_solver), intent(inout) :: this
 !
       logical, dimension(:), allocatable  :: converged
 !
@@ -208,7 +212,7 @@ contains
       call this%davidson%initialize()
 !
       call this%davidson%set_rhs(rhs)
-      call this%davidson%set_frequencies(frequencies)
+      call this%davidson%set_frequencies(this%frequencies)
 !
       call mem%alloc(c, this%davidson%n_parameters)
       call this%preconditioner%get(c)
@@ -295,9 +299,7 @@ contains
    end subroutine run_general_linear_davidson_solver
 !
 !
-   subroutine test_convergence_and_add_trials(this,                     &
-                                              residual_norm,            &
-                                              converged)
+   subroutine test_convergence_and_add_trials(this, residual_norm, converged)
 !!
 !!    Test convergence and add trial
 !!    Written by Regina Matveeva, Sept 2021

@@ -354,8 +354,8 @@ contains
                                                 storage, 'solver cc gs')
 !
          diis_solver = diis_cc_gs(wf, engine%gs_restart, t_updater, storage)
-         call diis_solver%run(wf)
-         call diis_solver%cleanup(wf)
+         call diis_solver%run()
+         call diis_solver%cleanup()
 !
       endif
 !
@@ -559,13 +559,11 @@ contains
       class(gs_engine), intent(inout) :: engine
       class(ccs), intent(inout) :: wf
 !
-      class(general_linear_davidson_solver),     allocatable  :: solver
-      type(cc_multipliers_solver_factory)              :: solver_factory
-      type(diis_cc_multipliers),          allocatable  :: diis_solver
+      class(general_linear_davidson_solver),  allocatable :: solver
+      type(cc_multipliers_solver_factory) :: solver_factory
+      type(diis_cc_multipliers), allocatable  :: diis_solver
 !
       type(timings), allocatable :: timer
-!
-      real(dp), dimension(:), allocatable :: frequencies
 !
       class(amplitude_updater), allocatable :: tbar_updater
 !
@@ -595,14 +593,7 @@ contains
 !
          call solver_factory%create(wf, solver)
 !
-         call mem%alloc(frequencies, 1)
-         frequencies = zero
-!
-         call solver%run(frequencies)
-!
-         call mem%dealloc(frequencies, 1)
-!
-         call wf%cc_multipliers_summary()
+         call solver%run()
 !
       elseif (trim(engine%multipliers_algorithm) == 'diis' .or. &
               trim(engine%multipliers_algorithm) == 'newton-raphson') then
@@ -614,8 +605,8 @@ contains
                                                 storage, 'solver cc multipliers')
 !
          diis_solver = diis_cc_multipliers(wf, engine%multipliers_restart, tbar_updater)
-         call diis_solver%run(wf)
-         call diis_solver%cleanup(wf)
+         call diis_solver%run()
+         call diis_solver%cleanup()
 !
       else
 !
@@ -623,6 +614,8 @@ contains
                                chars=[trim(engine%multipliers_algorithm)])
 !
       endif
+!
+      call wf%cc_multipliers_summary()
 !
       call timer%turn_off()
 !

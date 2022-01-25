@@ -121,11 +121,11 @@ contains
 !!    Set default ES algorithm
 !!    Written by Eirik F. Kjønstad, 2021
 !!
-      implicit none 
+      implicit none
 !
-      class(es_engine), intent(inout) :: engine 
+      class(es_engine), intent(inout) :: engine
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
       if (wf%name_ .eq. 'ccsd(t)' .or. &
           wf%name_ .eq. 'mp2') then
@@ -295,8 +295,8 @@ contains
 !
          call engine%do_multipliers(wf)
          cc_es_solver_asymmetric_lanczos = asymmetric_lanczos_cc_es(wf)
-         call cc_es_solver_asymmetric_lanczos%run(wf)
-         call cc_es_solver_asymmetric_lanczos%cleanup(wf)
+         call cc_es_solver_asymmetric_lanczos%run()
+         call cc_es_solver_asymmetric_lanczos%cleanup()
 !
       else
 !
@@ -328,8 +328,8 @@ contains
 !
          call wf%construct_fock(task = 'es')
 !
-         call cc_es_solver%run(wf)
-         call cc_es_solver%cleanup(wf)
+         call cc_es_solver%run()
+         call cc_es_solver%cleanup()
 !
       endif
 !

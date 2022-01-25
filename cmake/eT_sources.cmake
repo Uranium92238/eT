@@ -154,6 +154,7 @@ set(eT_fortran_sources
    src/solver_tools/functions/function_class.F90
    src/solver_tools/functions/hf_energy_function_class.F90
 #
+   src/solvers/abstract_solver_class.F90
    src/solvers/hf/scf_solver_class.F90
    src/solvers/hf/accelerator_tool_class.F90
    src/solvers/hf/accelerator_factory_class.F90

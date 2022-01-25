@@ -1181,8 +1181,8 @@ contains
                                      t_updater = t_updater, &
                                      storage   = storage)
 !
-      call cc_gs_solver_diis%run(ccs_wf)
-      call cc_gs_solver_diis%cleanup(ccs_wf)
+      call cc_gs_solver_diis%run()
+      call cc_gs_solver_diis%cleanup()
 !
       call timer_gs%turn_off()
 !
@@ -1194,8 +1194,8 @@ contains
       call ccs_wf%construct_fock('es')
 !
       cc_es_solver_davidson = davidson_cc_es(transformation, ccs_wf, restart=.false.)
-      call cc_es_solver_davidson%run(ccs_wf)
-      call cc_es_solver_davidson%cleanup(ccs_wf)
+      call cc_es_solver_davidson%run()
+      call cc_es_solver_davidson%cleanup()
 !
       call timer_es%turn_off()
 !
