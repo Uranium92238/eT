@@ -45,7 +45,6 @@ module general_linear_davidson_solver_class
 !!
 !
    use parameters
-   use hf_class, only: hf
    use memory_manager_class, only: mem
    use linear_davidson_tool_class, only: linear_davidson_tool
 !

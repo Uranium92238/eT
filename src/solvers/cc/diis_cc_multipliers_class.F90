@@ -103,7 +103,6 @@ module diis_cc_multipliers_class
       procedure :: read_settings            => read_settings_diis_cc_multipliers
 !
       procedure :: print_banner             => print_banner_diis_cc_multipliers
-      !procedure :: print_summary            => print_summary_diis_cc_multipliers
 !
       procedure :: print_settings           => print_settings_diis_cc_multipliers
 !
@@ -337,24 +336,6 @@ contains
       call output%printf('m', this%description2, ffs='(/t3,a)')
 !
    end subroutine print_banner_diis_cc_multipliers
-!
-!
-  ! subroutine print_summary_diis_cc_multipliers(this, X)
-!!
-!!    Print summary
-!!    Written by Eirik F. Kjønstad, Dec 2018
-!!
-   !   implicit none
-!
-    !  class(diis_cc_multipliers), intent(in) :: this
-!
-    !  real(dp), dimension(this%wf%n_gs_amplitudes), intent(in) :: X
-!
-      !call output%printf('m', '- DIIS CC multipliers solver summary:', fs='(/t3,a)')
-!
-      !call this%wf%print_dominant_x_amplitudes(X, 'tbar')
-!
-   !end subroutine print_summary_diis_cc_multipliers
 !
 !
    subroutine read_settings_diis_cc_multipliers(this, records_in_memory, crop, diis_dimension)

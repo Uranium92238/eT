@@ -105,10 +105,6 @@ contains
 !!
 !!    for the determination of Coupled Cluster multipliers
 !!
-!      use linear_davidson_print_tool_class, only: linear_davidson_print_tool
-!      use linear_davidson_single_solution_print_tool_class, only: linear_davidson_single_solution_print_tool
-!      use linear_davidson_multiple_solutions_print_tool_class, only: linear_davidson_multiple_solutions_print_tool
-!
       implicit none
 !
       class(cc_multipliers_solver_factory),        intent(inout)  :: this
