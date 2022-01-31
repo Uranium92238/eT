@@ -280,9 +280,9 @@ def make_new_orbital_file(v0_path, vx_path, n_ao, endian):
     file_size = orbitals_file.stat().st_size
 
     # Each record has 4 bytes at the beginning and end
-    if file_size - 8 <= 8 * n_ao ** 2:
+    if file_size - 8 <= 8 * n_ao**2:
         n_records = 1
-    elif file_size - 16 <= 2 * 8 * n_ao ** 2:
+    elif file_size - 16 <= 2 * 8 * n_ao**2:
         n_records = 2
     else:
         raise Exception(

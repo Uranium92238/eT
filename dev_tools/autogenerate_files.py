@@ -398,7 +398,7 @@ def complexify_line(line, parameter_list, continuation_mem_batch_setup):
     # Complexify class names
     for class_ in class_translation:
         if class_[0] in line:
-            line = sub(fr"\b{class_[0]}\b", class_[1], line)
+            line = sub(rf"\b{class_[0]}\b", class_[1], line)
 
     # Complexify parameters
     line = complexify_from_set(line, parameter_list)

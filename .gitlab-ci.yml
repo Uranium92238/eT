@@ -12,7 +12,7 @@ pystyle:
   image: python:3-buster
   needs: []
   script:
-    - pip install black
+    - pip install black==22.1.0
     - black --check --diff .
   only:
     - master
