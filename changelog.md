@@ -1,3 +1,7 @@
+# eT v1.5.15
+### Bugfixes
+- Fixed bug where LR polarizabilities would be incorrect in cases where non-diagonal contributions are requested without the associated diagonal contributions. eT-program/eT!1025
+
 # eT v1.5.14
 ### Tests
 - Intel CI stage (like GNU) split into two jobs: build and run. eT-program/eT!1014

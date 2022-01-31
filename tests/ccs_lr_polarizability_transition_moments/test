@@ -24,6 +24,8 @@ threshold = 1.0e-10
 f = get_eom_filter(n_states, threshold)
 g = get_polarizability_filter(threshold)
 
+f.extend(g)
+
 # invoke the command line interface parser which returns options
 options = cli()
 

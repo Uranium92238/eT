@@ -490,6 +490,8 @@ contains
                   call engine%t_responses(freq, k, sign_)%read_(tk(:,sign_), wf%n_es_amplitudes)
                   call engine%t_responses(freq, k, sign_)%close_()
 !
+                  if (engine%lr) call wf%F_transformation(tk(:,sign_), Ftk(:,sign_))
+!
                enddo
 !
             endif
@@ -510,9 +512,6 @@ contains
 !
 !
                if (engine%lr) then
-!
-                  call wf%F_transformation(tk(:,1), Ftk(:,1))
-                  call wf%F_transformation(tk(:,2), Ftk(:,2))
 !
                   polarizability = polarizability + &
                                         ddot(wf%n_es_amplitudes, Ftk(:,2), 1, tk(:,1), 1)
