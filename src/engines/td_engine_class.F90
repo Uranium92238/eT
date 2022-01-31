@@ -452,6 +452,11 @@ contains
 !
       character(len=200) :: file_count_string
 !
+      type(timings) :: timer
+!
+      timer = timings('Plotting TDCC densities')
+      call timer%turn_on
+!
       call engine%tasks%print_('plotting')
 !
 !     Initialize the plotter
@@ -533,6 +538,7 @@ contains
       call mem%dealloc(density, wf%ao%n, wf%ao%n)
 !
       call plotter%cleanup()
+      call timer%turn_off
 !
    end subroutine do_td_visualization_td_engine
 !
