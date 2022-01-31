@@ -4,6 +4,7 @@
 - Added timers for calculate energy. eT-program/eT!993
 - Memory tracker now prints the batching tag and memory difference. eT-program/eT!1000
 - References are now collected in eT_references.F90. eT-program/eT!1019
+- Added timers for visualization. eT-program/eT!1024
 
 ### Optimization
 - Coupled cluster Fock matrix construction is N^4 scaling. eT-program/eT!973

@@ -547,7 +547,7 @@ contains
                   enddo
 !
                   if (engine%lr) then
-!  
+!
                      polarizability = polarizability +                  &
                            half*ddot(wf%n_es_amplitudes, Ftk(:,1), 1, tl(:,2), 1) + &
                            half*ddot(wf%n_es_amplitudes, Ftk(:,2), 1, tl(:,1), 1)
@@ -1808,6 +1808,11 @@ contains
       integer :: p, state_p, state_q
       character(len=10) :: tag
 !
+      type(timings) :: timer
+!
+      timer = timings('Plotting CC densities')
+      call timer%turn_on
+!
       call engine%tasks%print_('plotting')
 !
       visualizer = visualization(wf%ao)
@@ -1878,6 +1883,8 @@ contains
 !
       call mem%dealloc(c_D_ct, wf%ao%n, wf%ao%n)
       call visualizer%cleanup()
+!
+      call timer%turn_off
 !
    end subroutine visualize_cc_densities_response_engine
 !

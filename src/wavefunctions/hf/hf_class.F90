@@ -221,6 +221,10 @@ module hf_class
 !
       procedure :: flip_final_orbitals                         => flip_final_orbitals_hf
 !
+      procedure :: visualize_active_density &
+                => visualize_active_density_hf
+!
+!
       procedure :: prepare_for_scf => prepare_for_scf_hf
       procedure :: get_energy => get_energy_hf
 !
@@ -1473,16 +1477,11 @@ contains
 !
       class(hf) :: wf
 !
-      wf%frozen_core    = .false.
-      wf%frozen_hf_mos  = .false.
-!
-      wf%plot_active_density = .false.
-!
       wf%frozen_core = input%is_keyword_present('core', 'frozen orbitals')
       wf%frozen_hf_mos = input%is_keyword_present('hf', 'frozen orbitals')
 !
       wf%plot_active_density = input%is_keyword_present('plot hf active density', &
-            'visualization')
+                                                        'visualization')
 !
       if (wf%plot_active_density .and. .not.  (wf%frozen_core .or. wf%frozen_hf_mos)) &
          call output%warning_msg('no active density for CC to plot in HF, no plots produced.')

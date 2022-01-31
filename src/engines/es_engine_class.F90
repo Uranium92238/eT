@@ -430,6 +430,11 @@ contains
 !
       real(dp) :: threshold
 !
+      type(timings) :: timer
+!
+      timer = timings('Plotting NTOs')
+      call timer%turn_on
+!
       threshold = 0.1d0
 !
       call input%get_keyword('nto threshold', 'visualization', threshold)
@@ -454,6 +459,8 @@ contains
       enddo
 !
       call mem%dealloc(orbitals, wf%ao%n, wf%n_mo)
+!
+      call timer%turn_off
 !
    end subroutine do_nto_visualization_es_engine
 !
