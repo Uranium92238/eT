@@ -35,7 +35,7 @@ module parameters
 !
    integer, parameter :: major_version = 1
    integer, parameter :: minor_version = 5
-   integer, parameter :: patch_version = 14
+   integer, parameter :: patch_version = 15
 !
    character(len=27), parameter :: version_name = "Furia"
 !
