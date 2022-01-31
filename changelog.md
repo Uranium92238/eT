@@ -1,6 +1,8 @@
 # eT v1.5.15
 ### Bugfixes
 - Fixed bug where LR polarizabilities would be incorrect in cases where non-diagonal contributions are requested without the associated diagonal contributions. eT-program/eT!1025
+### CI 
+- Now using Black version 22.1.0. eT-program/eT!1028
 
 # eT v1.5.14
 ### Tests
