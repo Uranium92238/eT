@@ -51,14 +51,25 @@ module abstract_eri_cholesky_class
 !! results in the indices w and x of L_wx^J
 !! to not be partitioned.
 !!
-!
+!!
+!! The Cholesky vectors can be set using the 'set' routine
+!! and retrieved in two ways:
+!!
+!! 1. 'get' - Requires allocation of an array for the vectors,
+!!            this may lead to higher memory usage than necessary,
+!!            if the vectors are stored in memory.
+!!
+!! 2. 'load_block'         - Loads the requested block of the Cholesky factor into memory
+!!                           and returns a pointer to the block (or a contiguous part of it)
+!!    'offload_block'      - Frees the memory used for the loaded block, if any.
+!!
    use parameters
 !
-   use global_out,            only : output
-   use range_class,           only: range_
-   use memory_manager_class,  only: mem
-!
-   use observable_class, only: observable
+   use global_out,                only : output
+   use range_class,               only: range_
+   use memory_manager_class,      only: mem
+   use observable_class,          only: observable
+   use cholesky_block_list_class, only: cholesky_block_list
 !
    implicit none
 !
@@ -71,24 +82,39 @@ module abstract_eri_cholesky_class
       type(range_), dimension(:), allocatable :: index_ranges
       integer,      dimension(:), allocatable :: range_lengths
 !
+      type(cholesky_block_list), allocatable :: L_Jpq_loaded
+!
    contains
+!
+!     Routines that should only be used/overwritten in descendants
 !
       procedure :: set_dimensions
       procedure :: set_index_ranges
-      procedure :: get_range_indices_from_block
       procedure :: pq_in_block
-      procedure :: get_block_range_overlap
+      procedure :: get_block_overlaps
+      procedure :: is_contiguous_in_block
+      procedure :: get_contiguous_block_index
+      procedure :: load_block_to_linked_list
+      procedure :: offload_block_from_linked_list
+      procedure :: get_ranges_from_block
 !
-      procedure, public :: basis_transformation &
-                        => basis_transformation_abstract_eri_cholesky
+      procedure (get_block_abstract), deferred :: get_block
+      procedure (set_block_abstract), deferred :: set_block
 !
-      procedure :: set_equal_to &
-                => set_equal_to_abstract_eri_cholesky_class
+!     Public routines
 !
-      procedure (initialize_abstract),          public, deferred :: initialize
-      procedure (get_abstract),                 public, deferred :: get
-      procedure (set_abstract),                 public, deferred :: set
-      procedure (get_memory_estimate_abstract), public, deferred :: get_memory_estimate
+      procedure, public :: set
+      procedure, public :: get
+      procedure, public :: basis_transformation
+      procedure, public :: set_equal_to
+!
+      procedure (initialize_abstract),           public, deferred :: initialize
+      procedure (load_block_abstract),           public, deferred :: load_block
+      procedure (offload_block_abstract),        public, deferred :: offload_block
+      procedure (get_memory_estimate_abstract),  public, deferred :: get_memory_estimate
+      procedure (load_memory_estimate_abstract), public, deferred :: load_memory_estimate
+!
+      procedure, private :: overlaps_with_block
 !
    end type abstract_eri_cholesky
 !
@@ -103,44 +129,80 @@ module abstract_eri_cholesky_class
 
          class(abstract_eri_cholesky), intent(inout) :: this
 !
-         integer, intent(in) :: n_ranges, n_J
+         integer,                      intent(in) :: n_ranges, n_J
          integer, dimension(n_ranges), intent(in) :: range_lengths
 !
       end subroutine initialize_abstract
 !
-      subroutine set_abstract(this, L_Jpq, first_p, last_p, first_q, last_q)
+      subroutine set_block_abstract(this, block_, overlap_p, overlap_q, &
+                                    L_Jpq, range_p, range_q)
+!
+         use parameters
+         import abstract_eri_cholesky
+         import range_
+!!
+         implicit none
+!
+         class(abstract_eri_cholesky), intent(inout):: this
+!
+         type(range_), intent(in) :: overlap_p, overlap_q
+         type(range_), intent(in) :: range_p, range_q
+         integer,      intent(in) :: block_
+!
+         real(dp), dimension(this%n_J, range_p%length, range_q%length), intent(in)   :: L_Jpq
+!
+      end subroutine set_block_abstract
+!
+      subroutine get_block_abstract(this, block_, overlap_p, overlap_q, &
+                                    L_Jpq, range_p, range_q)
+!
+         use parameters
+         import abstract_eri_cholesky
+         import range_
+!
+         implicit none
+!
+         class(abstract_eri_cholesky), intent(inout):: this
+!
+         type(range_), intent(in) :: overlap_p, overlap_q
+         type(range_), intent(in) :: range_p, range_q
+
+         integer,      intent(in) :: block_
+!
+         real(dp), dimension(this%n_J, range_p%length, range_q%length), intent(out)   :: L_Jpq
+!
+      end subroutine get_block_abstract
+!
+!
+      subroutine load_block_abstract(this, L_Jpq, first_p, last_p, first_q, last_q)
 !
          use parameters
          import abstract_eri_cholesky
 !
          implicit none
 !
-         class(abstract_eri_cholesky), intent(inout):: this
-         integer,                     intent(in)   :: first_p, last_p
-         integer,                     intent(in)   :: first_q, last_q
+         class(abstract_eri_cholesky), intent(inout) :: this
+         integer,                      intent(in)    :: first_p, last_p
+         integer,                      intent(in)    :: first_q, last_q
 !
-         real(dp), dimension(this%n_J, first_p:last_p, first_q:last_q), intent(in)   :: L_Jpq
+         real(dp), dimension(:,:,:), pointer,   intent(out)   :: L_Jpq
 !
-      end subroutine set_abstract
+      end subroutine load_block_abstract
 !
-      subroutine get_abstract(this, L_Jpq, first_p, last_p, first_q, last_q)
 !
-         use parameters
+      subroutine offload_block_abstract(this, first_p, last_p, first_q, last_q)
+!
          import abstract_eri_cholesky
 !
          implicit none
 !
-         class(abstract_eri_cholesky), intent(inout):: this
-         integer,                     intent(in)   :: first_p, last_p
-         integer,                     intent(in)   :: first_q, last_q
+         class(abstract_eri_cholesky), intent(inout) :: this
+         integer,                      intent(in)    :: first_p, last_p
+         integer,                      intent(in)    :: first_q, last_q
 !
-         real(dp), dimension(this%n_J, first_p:last_p, first_q:last_q), intent(out)  :: L_Jpq
+      end subroutine offload_block_abstract
 !
-      end subroutine get_abstract
-!
-      function get_memory_estimate_abstract(this, &
-                                        first_p, last_p, &
-                                        first_q, last_q) result(memory)
+      function get_memory_estimate_abstract(this, first_p, last_p, first_q, last_q) result(memory)
 !
          use parameters
          import abstract_eri_cholesky
@@ -155,6 +217,23 @@ module abstract_eri_cholesky_class
          integer :: memory
 !
       end function get_memory_estimate_abstract
+!
+!
+      function load_memory_estimate_abstract(this, first_p, last_p, first_q, last_q) result(memory)
+!
+         use parameters
+         import abstract_eri_cholesky
+!
+         implicit none
+!
+         class(abstract_eri_cholesky), intent(in) :: this
+!
+         integer, intent(in) :: first_p, last_p
+         integer, intent(in) :: first_q, last_q
+!
+         integer :: memory
+!
+      end function load_memory_estimate_abstract
 !
    end interface
 !
@@ -183,7 +262,6 @@ contains
 !
    end subroutine set_dimensions
 !
-!
    subroutine set_index_ranges(this)
 !!
 !!    Set index ranges
@@ -209,7 +287,7 @@ contains
    end subroutine set_index_ranges
 !
 !
-   pure function get_range_indices_from_block(this, block_) result(p_and_q_range_indices)
+   subroutine get_ranges_from_block(this, block_, range_p, range_q)
 !!
 !!    Get ranges indices from block
 !!    Written by Sarai D. Folkestad, Sep 2021
@@ -225,14 +303,12 @@ contains
       class(abstract_eri_cholesky), intent(in) :: this
       integer,                      intent(in) :: block_
 !
-      integer, dimension(2) :: p_and_q_range_indices
+      type(range_), intent(out) :: range_p, range_q
 !
       integer :: p_range_index, q_range_index
       integer :: pq_block
 !
       pq_block = 0
-!
-      p_and_q_range_indices = 0
 !
       do p_range_index = 1, this%n_ranges
          do q_range_index = 1, this%n_ranges
@@ -240,20 +316,20 @@ contains
             pq_block = pq_block + 1
             if (pq_block == block_) then
 !
-               p_and_q_range_indices(1) = p_range_index
-               p_and_q_range_indices(2) = q_range_index
+               range_p = this%index_ranges(p_range_index)
+               range_q = this%index_ranges(q_range_index)
 !
             endif
 !
          enddo
       enddo
 !
-   end function get_range_indices_from_block
+   end subroutine get_ranges_from_block
 !
 !
-   pure function pq_in_block(this, p, q, block_) result(is_in_block)
+   function pq_in_block(this, p, q, block_) result(is_in_block)
 !!
-!!    pq in block_
+!!    pq in block
 !!    Written by Sarai D. Folkestad, Sep 2021
 !!
 !!    Returns .true. if the indices p and q are
@@ -264,54 +340,46 @@ contains
       class(abstract_eri_cholesky), intent(in) :: this
       integer, intent(in) :: p, q, block_
 !
-      integer, dimension(2) :: p_and_q_range
-      integer :: p_range, q_range
-!
       logical :: is_in_block
 !
-      p_and_q_range = this%get_range_indices_from_block(block_)
+      type(range_) :: range_r, range_s
 !
-      p_range = p_and_q_range(1)
-      q_range = p_and_q_range(2)
+      call this%get_ranges_from_block(block_, range_r, range_s)
 !
-      is_in_block = this%index_ranges(p_range)%contains_(p) .and. &
-                    this%index_ranges(q_range)%contains_(q)
+      is_in_block = range_r%contains_(p) .and. range_s%contains_(q)
 !
    end function pq_in_block
 !
 !
-   subroutine get_block_range_overlap(this, block_, p_range, q_range, &
-                                      overlap_range_p, overlap_range_q)
+   subroutine get_block_overlaps(this, block_, range_p, range_q, &
+                                 overlap_p_range, overlap_q_range)
 !!
 !!    Get block range overlap
 !!    Written by Sarai D. Folkestad, Sep 2021
 !!
 !!    Returns the overlap between the
 !!    ranges in the given block_ and the provided
-!!    ranges (p_range, q_range)
+!!    ranges (range_p, range_q)
 !!
+!
       implicit none
 !
       class(abstract_eri_cholesky), intent(in)  :: this
       integer,                      intent(in)  :: block_
-      type(range_),                 intent(in)  :: p_range, q_range
-      type(range_),                 intent(out) :: overlap_range_p, overlap_range_q
+      type(range_),                 intent(in)  :: range_p, range_q
+      type(range_),                 intent(out) :: overlap_p_range, overlap_q_range
 !
-      integer      :: r, s
-      integer, dimension(2) :: r_and_s
+      type(range_) :: range_r, range_s
 !
-      r_and_s = this%get_range_indices_from_block(block_)
+      call this%get_ranges_from_block(block_, range_r, range_s)
 !
-      r = r_and_s(1)
-      s = r_and_s(2)
+      overlap_p_range = range_r%get_overlap(range_p)
+      overlap_q_range = range_s%get_overlap(range_q)
 !
-      overlap_range_p = this%index_ranges(r)%get_overlap(p_range)
-      overlap_range_q = this%index_ranges(s)%get_overlap(q_range)
-!
-   end subroutine get_block_range_overlap
+   end subroutine get_block_overlaps
 !
 !
-   subroutine basis_transformation_abstract_eri_cholesky(this, T)
+   subroutine basis_transformation(this, T)
 !!
 !!    Basis transformation
 !!    Written by Rolf H. Myhre, May 2020
@@ -376,10 +444,10 @@ contains
          call this%get(L_J_1, batcher%first, batcher%get_last(), 1, this%dim_)
 !
          call dgemm('N', 'T',                                     &
-                    this%n_J*batcher%length, this%dim_, this%dim_,      &
+                    this%n_J*batcher%length, this%dim_, this%dim_,&
                     one,                                          &
                     L_J_1_p, this%n_J*batcher%length,             &
-                    T, this%dim_,                                    &
+                    T, this%dim_,                                 &
                     zero,                                         &
                     L_J_2_p, this%n_J*batcher%length)
 !
@@ -411,12 +479,12 @@ contains
             enddo
          endif
 !
-         call dgemm('N', 'T',                                  &
-                    this%n_J*batcher%length, this%dim_, this%dim_,   &
-                    one,                                       &
-                    L_J_1_p, this%n_J*batcher%length,          &
-                    T, this%dim_,                                 &
-                    zero,                                      &
+         call dgemm('N', 'T',                                       &
+                    this%n_J*batcher%length, this%dim_, this%dim_,  &
+                    one,                                            &
+                    L_J_1_p, this%n_J*batcher%length,               &
+                    T, this%dim_,                                   &
+                    zero,                                           &
                     L_J_2_p, this%n_J*batcher%length)
 
          L_J_1_p(1:this%n_J, 1:this%dim_, 1:batcher%length) => L_J_1
@@ -437,10 +505,9 @@ contains
       call mem%batch_finalize()
       call this%notify_observers()
 !
-   end subroutine basis_transformation_abstract_eri_cholesky
+   end subroutine basis_transformation
 !
-!
-   subroutine set_equal_to_abstract_eri_cholesky_class(this, that)
+   subroutine set_equal_to(this, that)
 !!
 !!    Set equal to
 !!    Written by Sarai D. Folkestad, Sep 2021
@@ -485,7 +552,207 @@ contains
 !
       call this%notify_observers()
 !
-   end subroutine set_equal_to_abstract_eri_cholesky_class
+   end subroutine set_equal_to
+!
+!
+   function is_contiguous_in_block(this, range_p, range_q) result(contiguous_)
+!!
+!!    Is contiguous in block
+!!    Written by Sarai Dery Folkestad, Jan 2022
+!!
+!!    Returns true if the given ranges correspond to contiguous chunk
+!!    in a block
+!!
+      implicit none
+!
+      class(abstract_eri_cholesky), intent(in) :: this
+      type(range_), intent(in) :: range_p, range_q
+!
+      logical :: contiguous_
+!
+      integer :: p, q
+!
+      contiguous_ = .false.
+!
+      do p = 1, this%n_ranges
+!
+         if (.not. range_p == this%index_ranges(p)) cycle
+!
+         do q = 1, this%n_ranges
+!
+            if (this%index_ranges(q)%contains_(range_q)) then
+               contiguous_ = .true.
+               return
+            endif
+!
+         enddo
+      enddo
+!
+   end function is_contiguous_in_block
+!
+!
+   function get_contiguous_block_index(this, range_p, range_q) result(index)
+!!
+!!    Get contiguous block index
+!!    Written by Sarai Dery Folkestad, Jan 2022
+!!
+!!    Returns the block where the given ranges correspond to a contiguous chunk,
+!!    returns -1 if no such block exists
+!!
+      implicit none
+!
+      class(abstract_eri_cholesky), intent(inout):: this
+      type(range_), intent(in) :: range_p, range_q
+!
+      integer :: index
+      integer ::  block_, p, q
+!
+      index = -1
+      block_ = 0
+!
+      do p = 1, this%n_ranges
+!
+         do q = 1, this%n_ranges
+!
+            block_ = block_ + 1
+!
+            if (.not. range_p == this%index_ranges(p)) cycle
+!
+            if (this%index_ranges(q)%contains_(range_q)) then
+               index = block_
+               return
+            endif
+!
+         enddo
+      enddo
+!
+   end function get_contiguous_block_index
+!
+!
+   subroutine load_block_to_linked_list(this, range_p, range_q)
+!!
+!!    Load block to linked list
+!!    Written by Sarai Dery Folkestad, Jan 2022
+!!
+!!    Loads a block (given by the ranges) into the
+!!    L_pq_loaded list
+!!
+      implicit none
+!
+      class(abstract_eri_cholesky), intent(inout):: this
+      type(range_),                 intent(in)   :: range_p, range_q
+!
+      real(dp), dimension(:,:,:), pointer :: L_ptr
+!
+      call this%L_Jpq_loaded%push_back(range_p, range_q)
+      call this%L_Jpq_loaded%get_array(L_ptr, range_p, range_q)
+!
+      call this%get(L_ptr, range_p%first, range_p%get_last(), range_q%first, range_q%get_last())
+!
+   end subroutine load_block_to_linked_list
+!
+!
+   subroutine offload_block_from_linked_list(this, range_p, range_q)
+!!
+!!    Offload block from linked list
+!!    Written by Sarai Dery Folkestad, Jan 2022
+!!
+!!    Offloads a block (given by the ranges) into the
+!!    L_pq_loaded list
+!!
+      implicit none
+!
+      class(abstract_eri_cholesky), intent(inout):: this
+      type(range_),                 intent(in)   :: range_p, range_q
+!
+      call this%L_Jpq_loaded%remove(range_p, range_q)
+!
+   end subroutine offload_block_from_linked_list
+!
+!
+   subroutine set(this, L_Jpq, first_p, last_p, first_q, last_q)
+!!
+!!    Set
+!!    Written by Sarai D. Folkestad, Sep 2021
+!!
+      implicit none
+!
+      class(abstract_eri_cholesky), intent(inout) :: this
+      integer,                      intent(in)    :: first_p, last_p
+      integer,                      intent(in)    :: first_q, last_q
+!
+      real(dp), dimension(this%n_J, first_p:last_p, first_q:last_q), intent(in)   :: L_Jpq
+!
+      type(range_) :: overlap_p, overlap_q, range_p, range_q
+!
+      integer :: block_
+!
+      range_p = range_(first_p, last_p - first_p + 1)
+      range_q = range_(first_q, last_q - first_q + 1)
+!
+      do block_ = 1, this%n_blocks
+!
+         if (.not. this%overlaps_with_block(range_p, range_q, block_)) cycle
+         call this%get_block_overlaps(block_, range_p, range_q, overlap_p, overlap_q)
+         call this%set_block(block_,  overlap_p, overlap_q, L_Jpq, range_p, range_q)
+!
+      enddo
+!
+   end subroutine set
+!
+!
+   subroutine get(this, L_Jpq, first_p, last_p, first_q, last_q)
+!!
+!!    Get
+!!    Written by Sarai D. Folkestad, Sep 2021
+!!
+      implicit none
+!
+      class(abstract_eri_cholesky), intent(inout):: this
+      integer,                      intent(in)   :: first_p, last_p
+      integer,                      intent(in)   :: first_q, last_q
+!
+      real(dp), dimension(this%n_J, first_p:last_p, first_q:last_q), intent(out)   :: L_Jpq
+!
+      type(range_) :: overlap_p, overlap_q, range_p, range_q
+!
+      integer :: block_
+!
+      range_p = range_(first_p, last_p - first_p + 1)
+      range_q = range_(first_q, last_q - first_q + 1)
+!
+      do block_ = 1, this%n_blocks
+!
+         if (.not. this%overlaps_with_block(range_p, range_q, block_)) cycle
+         call this%get_block_overlaps(block_, range_p, range_q, overlap_p, overlap_q)
+         call this%get_block(block_, overlap_p, overlap_q, L_Jpq, range_p, range_q)
+!
+      enddo
+!
+   end subroutine get
+!
+!
+   function overlaps_with_block(this, range_p, range_q, block_) result(overlaps)
+!!
+!!    Overlaps with block
+!!    Written by Sarai D. Folkestad, Sep 2021
+!!
+      implicit none
+!
+      class(abstract_eri_cholesky), intent(in):: this
+!
+      type(range_), intent(in) :: range_p, range_q
+!
+      integer, intent(in) :: block_
+!
+      logical :: overlaps
+!
+      type(range_) :: range_r, range_s
+!
+      call this%get_ranges_from_block(block_, range_r, range_s)
+      overlaps = (range_p%overlaps(range_r)) .and. (range_q%overlaps(range_s))
+!
+   end function overlaps_with_block
 !
 !
 end module abstract_eri_cholesky_class

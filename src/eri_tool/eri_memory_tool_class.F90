@@ -264,27 +264,26 @@ contains
 !
       class(eri_memory_tool), intent(inout) :: this
 !
-      real(dp), dimension(:,:,:), allocatable :: L
+      real(dp), dimension(:,:,:), pointer :: L
 !
       if (.not. allocated(this%g)) call mem%alloc(this%g, this%L%dim_, this%L%dim_, this%L%dim_, this%L%dim_)
 !
-      call mem%alloc(L, this%L%n_J, this%L%dim_, this%L%dim_)
-      call this%L%get(L, 1, this%L%dim_, 1, this%L%dim_)
+      call this%L%load_block(L, 1, this%L%dim_, 1, this%L%dim_)
 !
-      call dgemm('T', 'N',    &
+      call dgemm('T', 'N',       &
                  this%L%dim_**2, &
                  this%L%dim_**2, &
-                 this%L%n_J,  &
-                 one,         &
-                 L,           &
-                 this%L%n_J,  &
-                 L,           &
-                 this%L%n_J,  &
-                 zero,        &
-                 this%g,      &
+                 this%L%n_J,     &
+                 one,            &
+                 L,              &
+                 this%L%n_J,     &
+                 L,              &
+                 this%L%n_J,     &
+                 zero,           &
+                 this%g,         &
                  this%L%dim_**2)
 !
-      call mem%dealloc(L, this%L%n_J, this%L%dim_, this%L%dim_)
+      call this%L%offload_block(1, this%L%dim_, 1, this%L%dim_)
 !
    end subroutine update_eri_memory_tool
 !

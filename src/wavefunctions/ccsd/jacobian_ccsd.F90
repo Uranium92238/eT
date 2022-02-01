@@ -29,7 +29,7 @@ submodule (ccsd_class) jacobian_ccsd
 !!
 !!    where
 !!
-!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
+!!    A_μ,ν = < μ |exp(-T) [H, τ_ν] exp(T) | R >.
 !!
 !!
 !!
@@ -662,7 +662,10 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: c_kc, N_vv, X_vv, Z_vv
 !
-      real(dp), dimension(:,:,:), allocatable :: L_J_ov, L_J_vv, M_J_vo, V_J_vo, V_vJo
+      real(dp), dimension(:,:,:), allocatable :: M_J_vo, V_J_vo, V_vJo
+!
+      real(dp), dimension(:,:,:), pointer :: L_J_ov, L_J_vv
+!
       real(dp), dimension(:,:,:), allocatable :: W_J_oo, Z_J_vo
 !
       real(dp), dimension(:,:,:,:), allocatable :: rho_ajbi, t_aijd, t_aikc, t_ajdk
@@ -706,8 +709,7 @@ contains
 !
 !     W_J,ki = L_J,kc c_ci
 !
-      call mem%alloc(L_J_ov, wf%L_t1%n_J, wf%n_o, wf%n_v)
-      call wf%L_t1%get(L_J_ov, 1, wf%n_o, wf%n_o + 1, wf%n_mo)
+      call wf%L_t1%load_block(L_J_ov, 1, wf%n_o, wf%n_o + 1, wf%n_mo)
 !
       call mem%alloc(W_J_oo, wf%L_t1%n_J, wf%n_o, wf%n_o)
 !
@@ -732,12 +734,12 @@ contains
       call sort_12_to_21(c_ai, c_kc, wf%n_v, wf%n_o)
 !
       call dgemm('N', 'N',          &
-                  wf%L_t1%n_J,       &
+                  wf%L_t1%n_J,      &
                   1,                &
                   wf%n_o * wf%n_v,  &
                   one,              &
                   L_J_ov,           &
-                  wf%L_t1%n_J,       &
+                  wf%L_t1%n_J,      &
                   c_kc,             &
                   wf%n_o * wf%n_v,  &
                   zero,             &
@@ -758,34 +760,32 @@ contains
       call zero_array(N_vv, wf%n_v**2)
 !
       req0 = 0
-      req1 = wf%L_t1%n_J * wf%n_v
+      req1 = wf%L_t1%load_memory_estimate(wf%n_o + 1, wf%n_mo, wf%n_o + 1, wf%n_o + 1)
 !
       batch_v = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_v, req0, req1, 'jacobian_ccsd_d2')
 !
-      call mem%alloc(L_J_vv, wf%L_t1%n_J, wf%n_v, batch_v%max_length)
-!
       do batch = 1, batch_v%num_batches
 !
          call batch_v%determine_limits(batch)
 !
-         call wf%L_t1%get(L_J_vv(:,:,1:batch_v%length),   &
-                                     wf%n_o + 1,                     &
-                                     wf%n_mo,                        &
-                                     wf%n_o + batch_v%first,         &
-                                     wf%n_o + batch_v%get_last())
+         call wf%L_t1%load_block(L_J_vv,                      &
+                                 wf%n_o + 1,                  &
+                                 wf%n_mo,                     &
+                                 wf%n_o + batch_v%first,      &
+                                 wf%n_o + batch_v%get_last())
 !
 !        V_J,bj = L_J,bd c_dj
 !
          call dgemm('N', 'N',                      &
-                     wf%L_t1%n_J * wf%n_v,          &
+                     wf%L_t1%n_J * wf%n_v,         &
                      wf%n_o,                       &
                      batch_v%length,               &
                      one,                          &
-                     L_J_vv(:,:,1:batch_v%length), & ! L_Jb,d
-                     wf%L_t1%n_J * wf%n_v,          &
-                     c_ai(batch_v%first, 1),       & ! c_d,j
+                     L_J_vv(:,:,1:batch_v%length), &! L_Jb,d
+                     wf%L_t1%n_J * wf%n_v,         &
+                     c_ai(batch_v%first, 1),       &! c_d,j
                      wf%n_v,                       &
                      one,                          &
                      V_J_vo,                       &
@@ -796,12 +796,12 @@ contains
          call dgemm('T', 'N',                                           &
                      wf%n_o**2,                                         &
                      wf%n_v * batch_v%length,                           &
-                     wf%L_t1%n_J,                                        &
+                     wf%L_t1%n_J,                                       &
                      one,                                               &
                      W_J_oo,                                            &
-                     wf%L_t1%n_J,                                        &
+                     wf%L_t1%n_J,                                       &
                      L_J_vv(:,:,1:batch_v%length),                      &
-                     wf%L_t1%n_J,                                        &
+                     wf%L_t1%n_J,                                       &
                      one,                                               &
                      WL_oovv(:,:,:,batch_v%first:batch_v%get_last()),   &
                      wf%n_o**2)
@@ -811,19 +811,22 @@ contains
          call dgemm('T','N',                          &
                      wf%n_v * batch_v%length,         &
                      1,                               &
-                     wf%L_t1%n_J,                      &
+                     wf%L_t1%n_J,                     &
                      one,                             &
                      L_J_vv(:,:,1:batch_v%length),    &
-                     wf%L_t1%n_J,                      &
+                     wf%L_t1%n_J,                     &
                      Y_J,                             &
-                     wf%L_t1%n_J,                      &
+                     wf%L_t1%n_J,                     &
                      one,                             &
                      N_vv(1, batch_v%first),          &
                      wf%n_v * batch_v%length)
 !
-      enddo
+         call wf%L_t1%offload_block(wf%n_o + 1,                  &
+                                    wf%n_mo,                     &
+                                    wf%n_o + batch_v%first,      &
+                                    wf%n_o + batch_v%get_last())
 !
-      call mem%dealloc(L_J_vv, wf%L_t1%n_J, wf%n_v, batch_v%max_length)
+      enddo
 !
       call mem%batch_finalize()
 !
@@ -840,12 +843,12 @@ contains
       call dgemm('N', 'N',             &
                   wf%n_v,              &
                   wf%n_v,              &
-                  wf%L_t1%n_J * wf%n_o, &
+                  wf%L_t1%n_J * wf%n_o,&
                   one,                 &
-                  V_vJo,               & ! V_b,Jk
+                  V_vJo,               &! V_b,Jk
                   wf%n_v,              &
-                  L_J_ov,              & ! L_Jk,d
-                  wf%L_t1%n_J * wf%n_o, &
+                  L_J_ov,              &! L_Jk,d
+                  wf%L_t1%n_J * wf%n_o,&
                   zero,                &
                   Z_vv,                &
                   wf%n_v)
@@ -877,13 +880,13 @@ contains
       call mem%alloc(Z_J_vo, wf%L_t1%n_J, wf%n_v, wf%n_o)
 !
       call dgemm('N', 'T',          &
-                  wf%L_t1%n_J,       &
+                  wf%L_t1%n_J,      &
                   wf%n_v * wf%n_o,  &
                   wf%n_v * wf%n_o,  &
                   one,              &
-                  L_J_ov,           & ! L_J,kc
-                  wf%L_t1%n_J,       &
-                  t_aikc,           & ! t_ai,kc
+                  L_J_ov,           &! L_J,kc
+                  wf%L_t1%n_J,      &
+                  t_aikc,           &! t_ai,kc
                   wf%n_v * wf%n_o,  &
                   zero,             &
                   Z_J_vo,           &
@@ -898,17 +901,20 @@ contains
       call mem%alloc(M_J_vo, wf%L_t1%n_J, wf%n_v, wf%n_o)
 !
       call dgemm('N', 'T',          &
-                  wf%L_t1%n_J,       &
+                  wf%L_t1%n_J,      &
                   wf%n_o * wf%n_v,  &
                   wf%n_o * wf%n_v,  &
                   one,              &
-                  L_J_ov,           & ! L_J,kc
-                  wf%L_t1%n_J,       &
-                  t_aikc,           & ! t_ai,kc
+                  L_J_ov,           &! L_J,kc
+                  wf%L_t1%n_J,      &
+                  t_aikc,           &! t_ai,kc
                   wf%n_o * wf%n_v,  &
                   zero,             &
                   M_J_vo,           &
                   wf%L_t1%n_J)
+!
+
+      call wf%L_t1%offload_block(1, wf%n_o, wf%n_o + 1, wf%n_mo)
 !
       call mem%dealloc(t_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
@@ -970,12 +976,12 @@ contains
       call dgemm('T', 'N',          &
                   wf%n_v * wf%n_o,  &
                   wf%n_v * wf%n_o,  &
-                  wf%L_t1%n_J,       &
+                  wf%L_t1%n_J,      &
                   -one,             &
                   M_J_vo,           &
-                  wf%L_t1%n_J,       &
+                  wf%L_t1%n_J,      &
                   V_J_vo,           &
-                  wf%L_t1%n_J,       &
+                  wf%L_t1%n_J,      &
                   one,              &
                   rho_aibj,         &
                   wf%n_v * wf%n_o)
@@ -987,12 +993,12 @@ contains
       call dgemm('T', 'N',          &
                   wf%n_v * wf%n_o,  &
                   wf%n_v * wf%n_o,  &
-                  wf%L_t1%n_J,       &
+                  wf%L_t1%n_J,      &
                   two,              &
                   Z_J_vo,           &
-                  wf%L_t1%n_J,       &
+                  wf%L_t1%n_J,      &
                   V_J_vo,           &
-                  wf%L_t1%n_J,       &
+                  wf%L_t1%n_J,      &
                   one,              &
                   rho_aibj,         &
                   wf%n_v * wf%n_o)
@@ -1028,7 +1034,7 @@ contains
 !
       call mem%dealloc(V_J_vo, wf%L_t1%n_J, wf%n_v, wf%n_o)
       call mem%dealloc(W_J_oo, wf%L_t1%n_J, wf%n_o, wf%n_o)
-      call mem%dealloc(L_J_ov, wf%L_t1%n_J, wf%n_o, wf%n_v)
+!
       call mem%dealloc(Y_J, wf%L_t1%n_J)
       call mem%dealloc(X_vv, wf%n_v, wf%n_v)
       call mem%dealloc(Z_J_vo, wf%L_t1%n_J, wf%n_v, wf%n_o)
@@ -1409,12 +1415,12 @@ contains
       call mem%alloc(W_J_vo, wf%eri_t1%n_J, wf%n_v, wf%n_o)
 !
       call dgemm('N', 'T',          &
-                  wf%eri_t1%n_J,       &
+                  wf%eri_t1%n_J,    &
                   wf%n_v * wf%n_o,  &
                   wf%n_v * wf%n_o,  &
                   one,              &
                   L_J_ov,           & ! L_J,kc
-                  wf%eri_t1%n_J,       &
+                  wf%eri_t1%n_J,    &
                   t_aikc,           &
                   wf%n_v * wf%n_o,  &
                   zero,             &
@@ -1431,12 +1437,12 @@ contains
       call mem%alloc(V_J_vo, wf%eri_t1%n_J, wf%n_v, wf%n_o)
 !
       call dgemm('N', 'N',          &
-                  wf%eri_t1%n_J,       &
+                  wf%eri_t1%n_J,    &
                   wf%n_v * wf%n_o,  &
                   wf%n_v * wf%n_o,  &
                   one,              &
-                  L_J_ov,           & ! L_J,ld
-                  wf%eri_t1%n_J,       &
+                  L_J_ov,           &  ! L_J,ld
+                  wf%eri_t1%n_J,    &
                   c_ldbj,           &
                   wf%n_v * wf%n_o,  &
                   zero,             &
@@ -1448,12 +1454,12 @@ contains
       call dgemm('T', 'N',          &
                   wf%n_v * wf%n_o,  &
                   wf%n_v * wf%n_o,  &
-                  wf%eri_t1%n_J,       &
+                  wf%eri_t1%n_J,    &
                   one,              &
                   W_J_vo,           &
-                  wf%eri_t1%n_J,       &
+                  wf%eri_t1%n_J,    &
                   V_J_vo,           &
-                  wf%eri_t1%n_J,       &
+                  wf%eri_t1%n_J,    &
                   one,              &
                   rho_aibj,         &
                   wf%n_v * wf%n_o)
@@ -1473,7 +1479,7 @@ contains
 !
       call mem%alloc(rho_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call dgemm('N', 'N', &
+      call dgemm('N', 'N',       &
                   wf%n_v*wf%n_o, &
                   wf%n_v*wf%n_o, &
                   wf%n_v*wf%n_o, &
@@ -1543,18 +1549,18 @@ contains
       call mem%alloc(L_J_ov, wf%eri_t1%n_J, wf%n_o, wf%n_v)
 !
       call wf%L_t1%get(L_J_ov,       &
-                       1, wf%n_o,  &
+                       1, wf%n_o,    &
                        wf%n_o + 1, wf%n_mo)
 !
       call mem%alloc(W_J_vo, wf%eri_t1%n_J, wf%n_v, wf%n_o)
 !
       call dgemm('N', 'N',             &
-                  wf%eri_t1%n_J,          &
+                  wf%eri_t1%n_J,       &
                   wf%n_o * wf%n_v,     &
                   wf%n_o * wf%n_v,     &
                   one,                 &
                   L_J_ov,              &
-                  wf%eri_t1%n_J,          &
+                  wf%eri_t1%n_J,       &
                   c_kcai,              &
                   wf%n_o * wf%n_v,     &
                   zero,                &
@@ -1567,20 +1573,20 @@ contains
       call mem%alloc(L_J_vo, wf%eri_t1%n_J, wf%n_v, wf%n_o)
 !
       call wf%L_t1%get(L_J_vo,                &
-                       wf%n_o + 1, wf%n_mo, &
+                       wf%n_o + 1, wf%n_mo,   &
                        1, wf%n_o)
 !
-      call dgemm('T', 'N',             &
-                  wf%n_o * wf%n_v,     &
-                  wf%n_o * wf%n_v,     &
-                  wf%eri_t1%n_J,          &
-                  -one,                &
-                  W_J_vo,              &
-                  wf%eri_t1%n_J,          &
-                  L_J_vo,              &
-                  wf%eri_t1%n_J,          &
-                  one,                 &
-                  rho_aibj,            &
+      call dgemm('T', 'N',          &
+                  wf%n_o * wf%n_v,  &
+                  wf%n_o * wf%n_v,  &
+                  wf%eri_t1%n_J,    &
+                  -one,             &
+                  W_J_vo,           &
+                  wf%eri_t1%n_J,    &
+                  L_J_vo,           &
+                  wf%eri_t1%n_J,    &
+                  one,              &
+                  rho_aibj,         &
                   (wf%n_o)*(wf%n_v))
 !
       call mem%dealloc(W_J_vo, wf%eri_t1%n_J, wf%n_v, wf%n_o)
