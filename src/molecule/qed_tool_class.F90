@@ -42,7 +42,7 @@ module qed_tool_class
       integer, public :: n_modes
 !
       real(dp), dimension(:), allocatable, public :: frequency
-      real(dp), dimension(:), allocatable, private :: coupling ! = (permittivity * V_eff)^(-0.5). Can be set public in developing branches.
+      real(dp), dimension(:), allocatable, private :: coupling ! = (permittivity * V_eff)^(-0.5)
       real(dp), dimension(:), allocatable, private :: coupling_bilinear, coupling_self ! n_modes
       real(dp), dimension(:, :), allocatable, private :: polarizations ! 3, n_modes
       real(dp), dimension(:), allocatable, public :: coherent_state ! n_modes
